@@ -23,9 +23,25 @@ import {
   Calendar,
   ShieldCheck,
   CornerDownRight,
-  ExternalLink
+  ExternalLink,
+  ShoppingBag,
+  Star,
+  Play,
+  BookOpen,
+  DollarSign,
+  Key,
+  Copy,
+  Zap,
+  Info,
+  Eye
 } from "lucide-react"
 import { Post, ReactionType, Comment, UserProfile, PollData } from "@/lib/linkedin-data"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 interface FeedPostCardProps {
   post: Post
@@ -64,6 +80,11 @@ export function FeedPostCard({
   const [showMenu, setShowMenu] = useState(false)
   const [copiedLink, setCopiedLink] = useState(false)
   const [isFollowing, setIsFollowing] = useState(post.author.isFollowing ?? false)
+
+  // Product Discovery Modal State
+  const [activeProductModal, setActiveProductModal] = useState<'view' | 'demo' | 'docs' | 'pricing' | 'trial' | 'buy' | null>(null)
+  const [trialKey, setTrialKey] = useState("")
+  const [copiedTrialKey, setCopiedTrialKey] = useState(false)
 
   // Document Carousel State
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0)
@@ -391,6 +412,142 @@ export function FeedPostCard({
         </div>
       )}
 
+      {/* 4. EMBEDDED PRODUCT DISCOVERY CARD (6-ACTION COMMERCE ENGINE) */}
+      {post.embeddedProduct && (
+        <div className="mx-4 my-3 overflow-hidden rounded-2xl border border-purple-500/30 bg-gradient-to-br from-slate-900 via-indigo-950/90 to-purple-950 p-4 sm:p-5 text-white shadow-lg">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-tr from-purple-500 to-indigo-600 text-2xl shadow-md shrink-0">
+                {post.embeddedProduct.icon}
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h4 className="font-black text-sm sm:text-base text-white">
+                    {post.embeddedProduct.name}
+                  </h4>
+                  <span className="rounded-full bg-purple-500/30 px-2 py-0.5 text-[10px] font-bold text-purple-200 border border-purple-400/40">
+                    {post.embeddedProduct.badge}
+                  </span>
+                </div>
+                <p className="text-xs font-semibold text-purple-200/90">
+                  {post.embeddedProduct.tagline}
+                </p>
+                <div className="flex items-center gap-3 text-xs text-purple-300/80 pt-0.5">
+                  <span className="font-bold text-emerald-400">
+                    {post.embeddedProduct.pricing}
+                  </span>
+                  {post.embeddedProduct.rating && (
+                    <span className="flex items-center gap-1 text-amber-300 font-bold">
+                      <Star className="h-3 w-3 fill-amber-300" />
+                      {post.embeddedProduct.rating} ({post.embeddedProduct.reviewsCount} reviews)
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-xs text-zinc-300 leading-relaxed mt-3">
+            {post.embeddedProduct.description}
+          </p>
+
+          {/* Key Features Checklist */}
+          {post.embeddedProduct.keyFeatures && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-3 pb-1 border-t border-white/10 mt-3">
+              {post.embeddedProduct.keyFeatures.map((feat, idx) => (
+                <div key={idx} className="flex items-center gap-1.5 text-[11px] text-zinc-300">
+                  <Check className="h-3 w-3 text-emerald-400 shrink-0" />
+                  <span className="truncate">{feat}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 6-ACTION PRODUCT DISCOVERY ENGINE BAR */}
+          <div className="mt-4 pt-3 border-t border-white/10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1.5">
+            {/* 1. View Product */}
+            <button
+              onClick={() => setActiveProductModal('view')}
+              className="rounded-lg bg-white/10 hover:bg-white/20 py-2 px-2 text-[11px] font-bold text-white transition-all flex items-center justify-center gap-1 border border-white/15 shadow-2xs"
+              title="View Product Overview"
+            >
+              <Eye className="h-3.5 w-3.5 text-sky-400" />
+              <span>View</span>
+            </button>
+
+            {/* 2. Demo */}
+            {post.embeddedProduct.demoUrl ? (
+              <a
+                href={post.embeddedProduct.demoUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-lg bg-white/10 hover:bg-white/20 py-2 px-2 text-[11px] font-bold text-white transition-all flex items-center justify-center gap-1 border border-white/15 shadow-2xs"
+                title="Live Sandbox Demo"
+              >
+                <Play className="h-3.5 w-3.5 text-emerald-400" />
+                <span>Demo</span>
+              </a>
+            ) : (
+              <button
+                onClick={() => setActiveProductModal('demo')}
+                className="rounded-lg bg-white/10 hover:bg-white/20 py-2 px-2 text-[11px] font-bold text-white transition-all flex items-center justify-center gap-1 border border-white/15"
+              >
+                <Play className="h-3.5 w-3.5 text-emerald-400" />
+                <span>Demo</span>
+              </button>
+            )}
+
+            {/* 3. Documentation */}
+            <a
+              href={post.embeddedProduct.docsUrl || "https://portal.expediteconsults.com"}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-lg bg-white/10 hover:bg-white/20 py-2 px-2 text-[11px] font-bold text-white transition-all flex items-center justify-center gap-1 border border-white/15 shadow-2xs"
+              title="Technical Docs & Architecture"
+            >
+              <BookOpen className="h-3.5 w-3.5 text-amber-400" />
+              <span>Docs</span>
+            </a>
+
+            {/* 4. Pricing */}
+            <button
+              onClick={() => setActiveProductModal('pricing')}
+              className="rounded-lg bg-white/10 hover:bg-white/20 py-2 px-2 text-[11px] font-bold text-white transition-all flex items-center justify-center gap-1 border border-white/15 shadow-2xs"
+              title="View Pricing & Plans"
+            >
+              <DollarSign className="h-3.5 w-3.5 text-teal-400" />
+              <span>Pricing</span>
+            </button>
+
+            {/* 5. Start Trial */}
+            <button
+              onClick={() => {
+                const key = 'TRIAL-EXP-' + Math.random().toString(36).substring(2, 6).toUpperCase() + '-2026'
+                setTrialKey(key)
+                setActiveProductModal('trial')
+              }}
+              className="rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 py-2 px-2 text-[11px] font-extrabold text-white transition-all flex items-center justify-center gap-1 shadow-md border border-purple-400/40"
+              title="Generate Instant 14-Day Trial License"
+            >
+              <Zap className="h-3.5 w-3.5 text-amber-300 animate-pulse" />
+              <span>Trial</span>
+            </button>
+
+            {/* 6. Buy / License */}
+            <a
+              href={post.embeddedProduct.buyUrl || "https://portal.expediteconsults.com"}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-lg bg-emerald-600 hover:bg-emerald-500 py-2 px-2 text-[11px] font-extrabold text-white transition-all flex items-center justify-center gap-1 shadow-md"
+              title="Buy Commercial License"
+            >
+              <ShoppingBag className="h-3.5 w-3.5" />
+              <span>Buy</span>
+            </a>
+          </div>
+        </div>
+      )}
+
       {/* Standard Image Media */}
       {post.media && post.media.type === 'image' && (
         <div className="relative mt-2 w-full overflow-hidden bg-zinc-100 dark:bg-zinc-800 max-h-[480px]">
@@ -632,6 +789,172 @@ export function FeedPostCard({
             ))}
           </div>
         </div>
+      )}
+
+      {/* 5. PRODUCT ACTION MODALS (View Product, Pricing, Trial License) */}
+      {post.embeddedProduct && (
+        <Dialog open={Boolean(activeProductModal)} onOpenChange={() => setActiveProductModal(null)}>
+          <DialogContent className="max-w-lg">
+            {/* VIEW PRODUCT MODAL */}
+            {activeProductModal === 'view' && (
+              <div className="space-y-4">
+                <DialogHeader>
+                  <div className="flex items-center gap-2">
+                    <span className="text-3xl">{post.embeddedProduct.icon}</span>
+                    <div>
+                      <DialogTitle className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
+                        {post.embeddedProduct.name}
+                      </DialogTitle>
+                      <span className="text-xs text-purple-600 font-semibold">{post.embeddedProduct.category}</span>
+                    </div>
+                  </div>
+                </DialogHeader>
+
+                <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+                  {post.embeddedProduct.tagline}
+                </p>
+                <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                  {post.embeddedProduct.description}
+                </p>
+
+                {post.embeddedProduct.keyFeatures && (
+                  <div className="space-y-1.5 pt-2">
+                    <h5 className="font-bold text-xs text-zinc-800 dark:text-zinc-200">Capabilities Included:</h5>
+                    {post.embeddedProduct.keyFeatures.map((f, i) => (
+                      <div key={i} className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
+                        <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                        <span>{f}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                  <span className="font-bold text-sm text-emerald-600 dark:text-emerald-400">
+                    {post.embeddedProduct.pricing}
+                  </span>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setActiveProductModal('trial')}
+                      className="rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-1.5 text-xs font-bold text-white shadow-xs"
+                    >
+                      Start Free Trial
+                    </button>
+                    {post.embeddedProduct.demoUrl && (
+                      <a
+                        href={post.embeddedProduct.demoUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded-full bg-[#0A66C2] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#004182]"
+                      >
+                        Open Sandbox →
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* PRICING MODAL */}
+            {activeProductModal === 'pricing' && (
+              <div className="space-y-4">
+                <DialogHeader>
+                  <DialogTitle className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                    <DollarSign className="h-5 w-5 text-emerald-600" />
+                    <span>Pricing & Subscription Tiers</span>
+                  </DialogTitle>
+                </DialogHeader>
+
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <div className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800 space-y-2">
+                    <span className="text-xs font-bold text-zinc-500 uppercase">Standard Enterprise</span>
+                    <p className="text-xl font-black text-zinc-900 dark:text-zinc-100">$499 <span className="text-xs font-normal text-zinc-400">/ mo</span></p>
+                    <ul className="text-[11px] text-zinc-600 dark:text-zinc-400 space-y-1">
+                      <li>✓ Continuous AppSec scanning</li>
+                      <li>✓ AI-BOM & LLM analyzer</li>
+                      <li>✓ Standard SLAs</li>
+                    </ul>
+                  </div>
+                  <div className="rounded-xl border border-purple-400 bg-purple-50/50 p-4 dark:border-purple-800 dark:bg-purple-950/20 space-y-2">
+                    <span className="text-xs font-bold text-purple-600 uppercase">Defense Enclave</span>
+                    <p className="text-xl font-black text-zinc-900 dark:text-zinc-100">$1,499 <span className="text-xs font-normal text-zinc-400">/ mo</span></p>
+                    <ul className="text-[11px] text-zinc-600 dark:text-zinc-400 space-y-1">
+                      <li>✓ Autonomous pentest queue</li>
+                      <li>✓ XM Cyber Choke Point graph</li>
+                      <li>✓ 24/7 Red Team support</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <button
+                    onClick={() => setActiveProductModal('trial')}
+                    className="rounded-full bg-[#0A66C2] px-5 py-2 text-xs font-bold text-white hover:bg-[#004182]"
+                  >
+                    Activate 14-Day Trial
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* TRIAL KEY ACTIVATION MODAL */}
+            {activeProductModal === 'trial' && (
+              <div className="space-y-4">
+                <DialogHeader>
+                  <DialogTitle className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                    <Zap className="h-5 w-5 text-amber-500" />
+                    <span>Instant 14-Day Trial Activation</span>
+                  </DialogTitle>
+                </DialogHeader>
+
+                <div className="space-y-3 pt-1 text-xs">
+                  <p className="text-zinc-600 dark:text-zinc-400">
+                    Your sandbox trial key for <strong>{post.embeddedProduct.name}</strong> has been generated and provisioned. No credit card required.
+                  </p>
+
+                  <div className="space-y-1">
+                    <label className="font-bold text-zinc-700 dark:text-zinc-300">
+                      License Key
+                    </label>
+                    <div className="flex items-center justify-between rounded-lg border border-zinc-300 bg-zinc-100 p-2.5 font-mono text-xs dark:border-zinc-700 dark:bg-zinc-800">
+                      <span className="font-bold text-purple-600 dark:text-purple-400">
+                        {trialKey || 'TRIAL-EXP-9X42-2026'}
+                      </span>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard?.writeText(trialKey || 'TRIAL-EXP-9X42-2026')
+                          setCopiedTrialKey(true)
+                          setTimeout(() => setCopiedTrialKey(false), 2000)
+                        }}
+                        className="rounded-md bg-white px-2 py-1 text-[11px] font-bold text-zinc-700 shadow-2xs dark:bg-zinc-700 dark:text-zinc-200"
+                      >
+                        {copiedTrialKey ? "Copied!" : "Copy"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                  <button
+                    onClick={() => setActiveProductModal(null)}
+                    className="rounded-full px-4 py-1.5 text-xs font-bold text-zinc-600"
+                  >
+                    Done
+                  </button>
+                  <a
+                    href={post.embeddedProduct.demoUrl || "https://portal.expediteconsults.com"}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-full bg-[#0A66C2] px-5 py-2 text-xs font-bold text-white hover:bg-[#004182] flex items-center gap-1"
+                  >
+                    <span>Launch Trial Environment</span>
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       )}
     </article>
   )

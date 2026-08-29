@@ -110,6 +110,25 @@ export interface DocumentSlide {
   bgColor?: string
 }
 
+export interface EmbeddedProductData {
+  id: string
+  name: string
+  tagline: string
+  icon: string
+  badge: string
+  category: string
+  pricing: string
+  demoUrl?: string
+  docsUrl?: string
+  buyUrl?: string
+  trialDuration?: string
+  description: string
+  keyFeatures: string[]
+  screenshots?: string[]
+  rating?: number
+  reviewsCount?: number
+}
+
 export interface Post {
   id: string
   author: {
@@ -124,7 +143,10 @@ export interface Post {
   visibility: 'Public' | 'Connections'
   content: string
   hashtags?: string[]
-  postType?: 'standard' | 'poll' | 'document' | 'celebration'
+  postType?: 'standard' | 'poll' | 'document' | 'celebration' | 'product_announcement'
+  feedCategory?: 'for_you' | 'products' | 'research' | 'following'
+  feedSubCategory?: string
+  embeddedProduct?: EmbeddedProductData
   poll?: PollData
   document?: {
     title: string
@@ -419,17 +441,142 @@ Proven track record of scaling high-availability Next.js, Kubernetes, and AWS/GC
 
 export const initialPosts: Post[] = [
   {
+    id: 'post_product_strike',
+    author: {
+      id: 'author_expedite',
+      name: 'Expedite Consults Product Lab',
+      headline: 'Autonomous Cyber Defense & AI AppSec Engineering',
+      avatar: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=400&auto=format&fit=crop&q=80',
+      connectionDegree: '1st',
+      isFollowing: true
+    },
+    timestamp: '20m ago · 🚀 Product Launch · 🌐',
+    visibility: 'Public',
+    postType: 'product_announcement',
+    feedCategory: 'products',
+    feedSubCategory: 'Launches',
+    content: `🚀 We just released our new AI-powered cloud security & offensive AppSec platform: Expedite Strike & Fusion 2026!
+
+Tired of fragmented scanners and 500-page alert noise? Expedite Strike combines autonomous pentesting, hybrid scanning (Fusion™), AI-BOM analysis, Checkmarx MCP servers, and XM Cyber choke point attack graphs into one continuous defense hub.
+
+Explore the capabilities below — view docs, try an interactive demo, or start a free enterprise trial in 1 click! 👇`,
+    hashtags: ['#ProductLaunch', '#AppSec', '#CyberSecurity', '#AI', '#CloudSecurity'],
+    embeddedProduct: {
+      id: 'prod_strike_fusion',
+      name: 'Expedite Strike & Fusion 2026',
+      tagline: 'Autonomous Pentest, ASPM & Hybrid AI AppSec Platform',
+      icon: '⚡',
+      badge: '⚡ Flagship AppSec',
+      category: 'Cybersecurity & SaaS',
+      pricing: '$499 / mo · 14-Day Free Trial',
+      demoUrl: 'http://localhost:9012/',
+      docsUrl: 'https://portal.expediteconsults.com',
+      buyUrl: 'https://portal.expediteconsults.com',
+      trialDuration: '14-Day Free Trial',
+      description: 'Enterprise offensive security suite with hybrid scanning, AI-BOM LLM scanner, Checkmarx MCP server, Triage auto-PR assist, and 10-section board PDF dossiers.',
+      keyFeatures: [
+        'Autonomous Multi-Target Asset Discovery',
+        'AI-BOM & LLM Tool Security Guardrails',
+        'Checkmarx MCP Server & Auto-PR Triage',
+        'XM Cyber Blast Radius Choke Point Graphs'
+      ],
+      rating: 4.98,
+      reviewsCount: 142
+    },
+    stats: {
+      likesCount: 412,
+      commentsCount: 56,
+      repostsCount: 88,
+      reactionsBreakdown: {
+        like: 230,
+        celebrate: 110,
+        support: 24,
+        love: 38,
+        insightful: 10,
+        funny: 0
+      }
+    },
+    userReaction: null,
+    isSaved: false,
+    comments: [
+      {
+        id: 'c_prod_1',
+        author: {
+          name: 'Marcus Vance',
+          headline: 'VP of Engineering at CloudScale Global · Ex-AWS',
+          avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+          connectionDegree: '1st'
+        },
+        content: 'The Checkmarx MCP server integration and automated PR triage is a massive time-saver. Spinning up a trial instance today for our staging cluster.',
+        timestamp: '10m ago',
+        likesCount: 21
+      }
+    ]
+  },
+  {
+    id: 'post_research_1',
+    author: {
+      id: 'author_elena',
+      name: 'Dr. Elena Rostova',
+      headline: 'Chief AI Research Scientist | Stanford AI Lab Fellow | Ex-Google Brain',
+      avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80',
+      connectionDegree: '1st',
+      isFollowing: true
+    },
+    timestamp: '45m ago · 📑 Technical Whitepaper · 🌐',
+    visibility: 'Public',
+    postType: 'standard',
+    feedCategory: 'research',
+    feedSubCategory: 'Whitepapers',
+    content: `📑 [Technical Whitepaper Released] Deterministic Tool Sandboxing and Memory Poisoning Immunity in Autonomous Multi-Agent Swarms.
+
+Our research team has published the 2026 benchmark evaluating over 10,000 multi-agent tool execution cycles across Kubernetes microVM enclaves and WebAssembly runtimes.
+
+Key findings:
+• Zero-trust memory nonces reduce latent vector poisoning by 99.4%.
+• MicroVM execution overhead is now sub-4ms per tool call with eBPF hooks.
+• Replay-resistant cryptographic tokens prevent cross-agent privilege escalation.
+
+Read the full open-access technical report and architecture blueprint below:`,
+    hashtags: ['#ResearchPaper', '#AIContainment', '#AgenticAI', '#CyberSecurity'],
+    media: {
+      type: 'article',
+      url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop&q=80',
+      title: 'Deterministic Tool Sandboxing in Distributed Agent Trees (IEEE/ACM 2026)',
+      domain: 'research.expediteconsults.com',
+      description: 'Formal verification, cryptographic token validation, and memory isolation benchmarks for autonomous generative systems.'
+    },
+    stats: {
+      likesCount: 328,
+      commentsCount: 44,
+      repostsCount: 65,
+      reactionsBreakdown: {
+        like: 180,
+        celebrate: 22,
+        support: 14,
+        love: 32,
+        insightful: 80,
+        funny: 0
+      }
+    },
+    userReaction: null,
+    isSaved: true,
+    comments: []
+  },
+  {
     id: 'post_poll_1',
     author: {
-      id: 'author_alex_poll',
+      id: 'author_alex',
       name: 'Alex Taylor',
-      headline: 'Principal Cloud & Security Architect @ Expedite Consults',
+      headline: 'Principal Cloud & Security Architect | AI Infrastructure & Zero Trust Lead @ Expedite Consults',
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
       connectionDegree: 'You'
     },
     timestamp: '1h · 🌐',
     visibility: 'Public',
     postType: 'poll',
+    feedCategory: 'for_you',
+    feedSubCategory: 'AI discussions',
     content: `📊 Industry Pulse Check for Enterprise Architects & Security Leaders:
 
 When deploying Multi-Agent Generative AI systems in production, what is your team's #1 containment concern for 2026?
@@ -491,6 +638,8 @@ Cast your vote below and share your reasoning in the comments! 👇`,
     timestamp: '3h · 🌐',
     visibility: 'Public',
     postType: 'document',
+    feedCategory: 'for_you',
+    feedSubCategory: 'Technology',
     content: `📑 SLIDE DECK: The 2026 Enterprise Next.js & Turbopack Performance Playbook
 
 Swipe through all 4 slides below for the exact micro-optimizations we implemented to achieve sub-50ms TTFB and 100/100 Core Web Vitals at scale.

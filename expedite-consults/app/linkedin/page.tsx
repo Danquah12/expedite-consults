@@ -68,11 +68,13 @@ export default function LinkedInPage() {
   const [suggestedPeople, setSuggestedPeople] = useState<SuggestedConnection[]>(suggestedConnections)
   const [feedSort, setFeedSort] = useState<'top' | 'recent'>('top')
   const [feedTypeFilter, setFeedTypeFilter] = useState<'all' | 'saved' | 'polls' | 'documents'>('all')
+  const [activeFeedCategory, setActiveFeedCategory] = useState<'for_you' | 'products' | 'research' | 'following'>('for_you')
+  const [activeFeedSubCategory, setActiveFeedSubCategory] = useState<string>('All')
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedTagFilter, setSelectedTagFilter] = useState<string | null>(null)
   const [hasHydrated, setHasHydrated] = useState(false)
 
-  // Hydrate from storage on mount
+  // Persist state changes
   useEffect(() => {
     const savedPosts = loadStoredPosts()
     const savedUser = loadStoredUser()
@@ -267,12 +269,67 @@ export default function LinkedInPage() {
     }))
   }
 
-  // Filter Posts based on Search Query, Feed Type, or Tag
+  // Feed Categories Configuration
+  const FEED_CATEGORIES = [
+    {
+      id: 'for_you' as const,
+      label: 'For You',
+      icon: '🔥',
+      subCategories: ['All', 'AI discussions', 'Cybersecurity', 'Cloud', 'Technology', 'Business', 'Career']
+    },
+    {
+      id: 'products' as const,
+      label: 'Products',
+      icon: '🚀',
+      subCategories: ['All', 'Launches', 'Demos', 'Updates', 'Deals', 'New software', 'Recommended solutions']
+    },
+    {
+      id: 'research' as const,
+      label: 'Research',
+      icon: '📑',
+      subCategories: ['All', 'Papers', 'Whitepapers', 'Technical reports', 'Case studies']
+    },
+    {
+      id: 'following' as const,
+      label: 'Following',
+      icon: '👥',
+      subCategories: ['All', 'People', 'Companies', 'Products', 'Topics']
+    }
+  ]
+
+  const activeCategoryConfig = FEED_CATEGORIES.find(c => c.id === activeFeedCategory) || FEED_CATEGORIES[0]
+
+  // Filter Posts based on Stream, Sub-category, Search Query, Feed Type, or Tag
   const filteredPosts = posts.filter(post => {
+    // 1. Feed Stream Category
+    if (activeFeedCategory === 'products') {
+      if (post.feedCategory !== 'products' && !post.embeddedProduct && post.postType !== 'product_announcement') return false
+    } else if (activeFeedCategory === 'research') {
+      if (post.feedCategory !== 'research' && !post.hashtags?.some(h => h.toLowerCase().includes('research') || h.toLowerCase().includes('whitepaper'))) return false
+    } else if (activeFeedCategory === 'following') {
+      if (post.author.connectionDegree === 'You' || (!post.author.isFollowing && post.author.connectionDegree !== '1st')) return false
+    }
+
+    // 2. Sub-Category Filtering
+    if (activeFeedSubCategory && activeFeedSubCategory !== 'All') {
+      const sub = activeFeedSubCategory.toLowerCase()
+      const matchPostSub = post.feedSubCategory?.toLowerCase().includes(sub)
+      const matchContent = post.content.toLowerCase().includes(sub)
+      const matchHashtags = post.hashtags?.some(h => h.toLowerCase().includes(sub.replace(/\s+/g, '')))
+      const matchEmbedded = post.embeddedProduct && (
+        post.embeddedProduct.category.toLowerCase().includes(sub) ||
+        post.embeddedProduct.name.toLowerCase().includes(sub) ||
+        post.embeddedProduct.badge.toLowerCase().includes(sub)
+      )
+      if (!matchPostSub && !matchContent && !matchHashtags && !matchEmbedded) return false
+    }
+
+    // 3. Format Scope Filter
     if (feedTypeFilter === 'saved' && !post.isSaved) return false
     if (feedTypeFilter === 'polls' && post.postType !== 'poll') return false
     if (feedTypeFilter === 'documents' && post.postType !== 'document') return false
 
+    // 4. Tag Filtering
     if (selectedTagFilter) {
       const matchTag = post.hashtags?.some(h =>
         h.toLowerCase().includes(selectedTagFilter.toLowerCase().replace('#', ''))
@@ -280,12 +337,18 @@ export default function LinkedInPage() {
       if (!matchTag) return false
     }
 
+    // 5. Global Search Filter
     if (!searchQuery) return true
     const q = searchQuery.toLowerCase()
     return (
       post.content.toLowerCase().includes(q) ||
       post.author.name.toLowerCase().includes(q) ||
-      post.author.headline.toLowerCase().includes(q)
+      post.author.headline.toLowerCase().includes(q) ||
+      (post.embeddedProduct && (
+        post.embeddedProduct.name.toLowerCase().includes(q) ||
+        post.embeddedProduct.tagline.toLowerCase().includes(q) ||
+        post.embeddedProduct.category.toLowerCase().includes(q)
+      ))
     )
   })
 
@@ -321,6 +384,57 @@ export default function LinkedInPage() {
 
             {/* Center Rail (Post Creator & Post Feed) */}
             <div className="md:col-span-8 lg:col-span-6 space-y-3">
+              {/* 1. PRIMARY MULTI-STREAM FEED CATEGORY TABS */}
+              <div className="rounded-xl border border-zinc-200 bg-white p-2.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-2">
+                <div className="flex items-center justify-between gap-1 border-b border-zinc-100 dark:border-zinc-800 pb-2">
+                  <div className="flex items-center gap-1.5 overflow-x-auto w-full">
+                    {FEED_CATEGORIES.map((cat) => {
+                      const isSelected = activeFeedCategory === cat.id
+                      return (
+                        <button
+                          key={cat.id}
+                          onClick={() => {
+                            setActiveFeedCategory(cat.id)
+                            setActiveFeedSubCategory('All')
+                          }}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all shrink-0 ${
+                            isSelected
+                              ? "bg-[#0A66C2] text-white shadow-2xs"
+                              : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                          }`}
+                        >
+                          <span>{cat.icon}</span>
+                          <span>{cat.label}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Dynamic Sub-Category Filter Ribbon */}
+                <div className="flex items-center gap-1.5 overflow-x-auto text-[11px] pt-0.5">
+                  <span className="text-zinc-400 font-semibold text-[10px] uppercase tracking-wider shrink-0 mr-1">
+                    Filter:
+                  </span>
+                  {activeCategoryConfig.subCategories.map((sub) => {
+                    const isSelected = activeFeedSubCategory === sub
+                    return (
+                      <button
+                        key={sub}
+                        onClick={() => setActiveFeedSubCategory(sub)}
+                        className={`rounded-full px-2.5 py-0.5 font-semibold transition-colors whitespace-nowrap ${
+                          isSelected
+                            ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-bold"
+                            : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400"
+                        }`}
+                      >
+                        {sub}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
               {/* Filter Active Badge if Tag is selected */}
               {selectedTagFilter && (
                 <div className="flex items-center justify-between rounded-xl border border-blue-200 bg-sky-50 px-4 py-2 text-xs font-semibold text-[#0A66C2] dark:border-blue-900/50 dark:bg-sky-950/30">
@@ -333,28 +447,6 @@ export default function LinkedInPage() {
                   </button>
                 </div>
               )}
-
-              {/* Feed Scope Filter Pills */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-                {[
-                  { id: 'all', label: 'All Posts' },
-                  { id: 'polls', label: '📊 Polls', icon: Vote },
-                  { id: 'documents', label: '📑 Slide Decks', icon: BookOpen },
-                  { id: 'saved', label: '📌 Saved Posts', icon: Bookmark }
-                ].map((f) => (
-                  <button
-                    key={f.id}
-                    onClick={() => setFeedTypeFilter(f.id as any)}
-                    className={`rounded-full px-3 py-1 font-semibold transition-colors whitespace-nowrap ${
-                      feedTypeFilter === f.id
-                        ? "bg-[#0A66C2] text-white shadow-2xs"
-                        : "bg-white text-zinc-600 border border-zinc-200 hover:bg-zinc-100 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-300"
-                    }`}
-                  >
-                    {f.label}
-                  </button>
-                ))}
-              </div>
 
               {/* "Start a post" Creator */}
               <PostCreator user={userData} onAddPost={handleAddPost} />
