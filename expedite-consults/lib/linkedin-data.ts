@@ -205,6 +205,9 @@ export interface JobItem {
   isSaved?: boolean
   description: string
   requirements: string[]
+  applyUrl?: string
+  source?: string
+  tags?: string[]
 }
 
 export interface MessageThread {

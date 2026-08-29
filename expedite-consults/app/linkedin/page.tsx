@@ -437,7 +437,9 @@ export default function LinkedInPage() {
         )}
 
         {/* VIEW 4: JOBS VIEW */}
-        {activeTab === 'jobs' && <JobsView />}
+        {activeTab === 'jobs' && (
+          <JobsView onNavigateCareerSuite={() => setActiveTab('careersuite')} />
+        )}
 
         {/* VIEW 5: LEARNING VIEW */}
         {activeTab === 'learning' && (
