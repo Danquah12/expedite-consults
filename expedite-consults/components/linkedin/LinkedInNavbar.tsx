@@ -37,7 +37,8 @@ import {
   Lock,
   Wrench,
   Bot,
-  Zap
+  Zap,
+  Tv
 } from "lucide-react"
 import { UserProfile } from "@/lib/linkedin-data"
 
@@ -95,6 +96,7 @@ export function LinkedInNavbar({
     { id: "network", label: "Network", icon: Users, badge: 2 },
     { id: "jobs", label: "Jobs", icon: Briefcase, badge: 0 },
     { id: "marketplace", label: "Marketplace 🛍️", icon: ShoppingBag, badge: 0, isMarketplace: true },
+    { id: "media", label: "Media 🎥", icon: Tv, badge: 0 },
     { id: "pulserooms", label: "Pulse 📰", icon: Radio, badge: 1 },
     { id: "learning", label: "Learning 🎓", icon: GraduationCap, badge: 0 },
     { id: "messaging", label: "Messages 💬", icon: MessageSquare, badge: unreadMessagesCount },

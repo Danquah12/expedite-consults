@@ -34,6 +34,7 @@ import { CollaborationIdeasView } from "@/components/linkedin/CollaborationIdeas
 import { MentorshipCreatorView } from "@/components/linkedin/MentorshipCreatorView"
 import { LabsView } from "@/components/linkedin/LabsView"
 import { UniversalSearchModal } from "@/components/linkedin/UniversalSearchModal"
+import { MediaView } from "@/components/linkedin/MediaView"
 import {
   currentUser as initialCurrentUser,
   initialPosts,
@@ -65,6 +66,7 @@ export default function LinkedInPage() {
     | 'peerreview'
     | 'compensation'
     | 'marketplace'
+    | 'media'
     | 'ecosystem'
     | 'company'
     | 'sellercenter'
@@ -606,6 +608,14 @@ export default function LinkedInPage() {
           <MarketplaceView
             currentUser={userData}
             onLaunchCareerSuite={() => setActiveTab('careersuite')}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+          />
+        )}
+
+        {/* VIEW: CONNECTIN MEDIA & VIDEO PLATFORM */}
+        {activeTab === 'media' && (
+          <MediaView
+            currentUser={userData}
             onNavigateTab={(tab) => setActiveTab(tab as any)}
           />
         )}
