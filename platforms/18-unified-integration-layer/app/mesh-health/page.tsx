@@ -1,19 +1,9 @@
 "use client";
 import { useState } from "react";
 import {
-  Cpu,
-  Activity,
-  Layers,
-  Zap,
-  Radio,
-  CheckCircle,
-  AlertTriangle,
-  RefreshCw,
-  ShieldAlert,
-  Server,
-  Sliders,
-  Play,
-  RotateCcw
+  Cpu, Activity, Layers, Zap, Radio, CheckCircle, AlertTriangle,
+  RefreshCw, ShieldAlert, Server, Sliders, Play, RotateCcw, HelpCircle,
+  Info, CheckCircle2, ShieldCheck
 } from "lucide-react";
 import { MESH_SERVICE_NODES } from "@/data/integrationData";
 import { MeshServiceNode } from "@/types/integration";
@@ -22,6 +12,7 @@ export default function MeshHealthPage() {
   const [nodes, setNodes] = useState<MeshServiceNode[]>(MESH_SERVICE_NODES);
   const [selectedNode, setSelectedNode] = useState<MeshServiceNode>(MESH_SERVICE_NODES[0]);
   const [simulatedSpanActive, setSimulatedSpanActive] = useState<boolean>(false);
+  const [activeWaterfallSpan, setActiveWaterfallSpan] = useState<string | null>("gateway");
 
   const handleToggleCircuitBreaker = (nodeId: string) => {
     setNodes(nodes.map((n) => {
@@ -33,104 +24,135 @@ export default function MeshHealthPage() {
     }));
   };
 
+  const handleEmitTrace = () => {
+    setSimulatedSpanActive(true);
+    setTimeout(() => setSimulatedSpanActive(false), 2200);
+  };
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      {/* Header Banner */}
+    <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 1600, margin: "0 auto" }}>
+      
+      {/* ── Top Executive Header Banner ── */}
       <div style={{
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        background: "var(--surface)",
-        border: "1px solid var(--border)",
-        borderRadius: 10,
-        padding: "16px 20px"
+        background: "linear-gradient(135deg, rgba(16,185,129,0.12) 0%, rgba(6,182,212,0.08) 100%)",
+        border: "1px solid rgba(16,185,129,0.3)",
+        borderRadius: 12,
+        padding: "18px 24px",
+        boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+        flexWrap: "wrap",
+        gap: 16
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <div style={{
-            width: 40,
-            height: 40,
-            borderRadius: 8,
-            background: "rgba(16,185,129,0.15)",
-            border: "1px solid rgba(16,185,129,0.3)",
+            width: 48,
+            height: 48,
+            borderRadius: 10,
+            background: "linear-gradient(135deg, #10b981 0%, #06b6d4 100%)",
             display: "flex",
             alignItems: "center",
-            justifyContent: "center"
+            justifyContent: "center",
+            boxShadow: "0 0 20px rgba(16,185,129,0.35)"
           }}>
-            <Cpu size={20} color="#10b981" />
+            <Cpu size={24} color="#050811" />
           </div>
           <div>
-            <h1 style={{ fontSize: 18, fontWeight: 900, color: "#f8fafc", margin: 0 }}>
-              Distributed Microservices Mesh & Service Health Telemetry
-            </h1>
-            <p style={{ fontSize: 12, color: "var(--muted)", margin: "2px 0 0 0" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <h1 style={{ fontSize: 20, fontWeight: 900, color: "#f8fafc", margin: 0, letterSpacing: "-0.02em" }}>
+                Distributed Microservices Mesh & Service Health Telemetry
+              </h1>
+              <span style={{
+                fontSize: 10,
+                fontWeight: 800,
+                background: "rgba(16,185,129,0.15)",
+                color: "#10b981",
+                border: "1px solid rgba(16,185,129,0.3)",
+                padding: "2px 8px",
+                borderRadius: 4,
+                fontFamily: "monospace"
+              }}>
+                ALL 6 NODES ONLINE
+              </span>
+            </div>
+            <p style={{ fontSize: 12.5, color: "var(--muted)", margin: "3px 0 0 0" }}>
               OpenTelemetry distributed trace waterfalls, gRPC connection pool health, and automated circuit-breaker monitors.
             </p>
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <button
-            onClick={() => {
-              setSimulatedSpanActive(true);
-              setTimeout(() => setSimulatedSpanActive(false), 2000);
-            }}
-            className="btn-primary"
-          >
-            <Play size={14} />
-            <span>{simulatedSpanActive ? "Emitting OTel Trace..." : "Emit OTel Trace Span"}</span>
-          </button>
+        <button
+          onClick={handleEmitTrace}
+          disabled={simulatedSpanActive}
+          className="btn-primary"
+          style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, padding: "8px 16px" }}
+        >
+          <Play size={13} fill="#fff" />
+          <span>{simulatedSpanActive ? "Emitting OTel Span..." : "Emit OTel Trace Span"}</span>
+        </button>
+      </div>
+
+      {/* ── Plain-English Helper Card ── */}
+      <div style={{
+        background: "rgba(16,185,129,0.06)",
+        border: "1px solid rgba(16,185,129,0.25)",
+        borderRadius: 10,
+        padding: "14px 18px",
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 12
+      }}>
+        <HelpCircle size={20} color="#10b981" style={{ flexShrink: 0, marginTop: 2 }} />
+        <div style={{ fontSize: 12, lineHeight: 1.5, color: "var(--foreground-muted)" }}>
+          <strong style={{ color: "#10b981" }}>What Is A Microservices Mesh? </strong>
+          The 16 cybersecurity platforms communicate through 6 internal background microservices. This health monitor tracks CPU/memory loads, ensures data is moving with sub-5 millisecond latency, and allows operators to test automated "Circuit Breakers" that isolate unhealthy services without crashing the network.
         </div>
       </div>
 
-      {/* Cluster Overview Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
+      {/* ── 4 Cluster Stats ── */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
         {[
           { label: "Mesh Service Health", val: "100.0%", sub: "6/6 Nodes Operational", color: "#10b981" },
           { label: "Active gRPC Streams", val: "564 Active", sub: "HTTP/2 Multiplexed", color: "#06b6d4" },
           { label: "Avg Cluster Latency", val: "4.8ms", sub: "Envoy sidecar proxies", color: "#a855f7" },
           { label: "OTel Traces Processed", val: "20.1M Spans", sub: "Jaeger / OTLP Collector", color: "#f59e0b" }
         ].map((m, i) => (
-          <div key={i} className="card-tactical" style={{ padding: "12px 16px" }}>
-            <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase" }}>{m.label}</div>
-            <div style={{ fontSize: 20, fontWeight: 900, color: "#f8fafc", margin: "4px 0" }}>{m.val}</div>
-            <div style={{ fontSize: 10.5, color: m.color, fontWeight: 600 }}>{m.sub}</div>
+          <div key={i} className="card-tactical" style={{ padding: "14px 18px" }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{m.label}</div>
+            <div style={{ fontSize: 22, fontWeight: 900, color: "#f8fafc", margin: "4px 0" }}>{m.val}</div>
+            <div style={{ fontSize: 11, color: m.color, fontWeight: 600 }}>{m.sub}</div>
           </div>
         ))}
       </div>
 
-      {/* Microservices Nodes Grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
+      {/* ── 6 Microservice Nodes with Interactive Circuit Breaker Toggles ── */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 14 }}>
         {nodes.map((node) => {
-          const isSelected = selectedNode.id === node.id;
           const isClosed = node.circuitBreakerStatus === "CLOSED";
-
           return (
             <div
               key={node.id}
-              onClick={() => setSelectedNode(node)}
               style={{
-                background: isSelected ? "rgba(16,185,129,0.12)" : "var(--surface-2)",
-                border: `1px solid ${isSelected ? "#10b981" : "var(--border)"}`,
-                borderRadius: 8,
-                padding: 14,
-                cursor: "pointer",
+                background: isClosed ? "var(--surface-2)" : "rgba(244,63,94,0.08)",
+                border: `1px solid ${isClosed ? "var(--border)" : "rgba(244,63,94,0.4)"}`,
+                borderRadius: 10,
+                padding: 16,
                 display: "flex",
                 flexDirection: "column",
                 gap: 10
               }}
             >
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div style={{ fontSize: 12.5, fontWeight: 800, color: "#f8fafc" }}>
-                  {node.serviceName}
-                </div>
+                <strong style={{ fontSize: 13.5, color: "#f8fafc" }}>{node.serviceName}</strong>
                 <span style={{
                   fontSize: 9.5,
-                  fontWeight: 800,
-                  background: isClosed ? "rgba(16,185,129,0.15)" : "rgba(244,63,94,0.15)",
-                  color: isClosed ? "#10b981" : "#f43f5e",
+                  fontWeight: 900,
                   padding: "2px 6px",
                   borderRadius: 4,
-                  fontFamily: "monospace"
+                  background: isClosed ? "rgba(16,185,129,0.15)" : "rgba(244,63,94,0.2)",
+                  color: isClosed ? "#10b981" : "#f43f5e",
+                  border: `1px solid ${isClosed ? "rgba(16,185,129,0.3)" : "rgba(244,63,94,0.4)"}`
                 }}>
                   {node.circuitBreakerStatus}
                 </span>
@@ -139,32 +161,28 @@ export default function MeshHealthPage() {
               <div style={{ background: "var(--surface-3)", padding: 8, borderRadius: 6, fontSize: 11, display: "flex", flexDirection: "column", gap: 4 }}>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span style={{ color: "var(--muted)" }}>CPU / RAM:</span>
-                  <span style={{ color: "var(--fg-2)" }}>{node.cpuPercent}% / {node.memoryPercent}%</span>
+                  <strong style={{ color: "#06b6d4" }}>{node.cpuUsagePercent}% / {node.memoryUsagePercent}%</strong>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span style={{ color: "var(--muted)" }}>gRPC Pool:</span>
-                  <span style={{ color: "#06b6d4" }}>{node.grpcPoolActive} / {node.grpcPoolMax} conns</span>
+                  <span style={{ color: "#f8fafc" }}>{node.grpcPoolActive} / {node.grpcPoolMax} conns</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span style={{ color: "var(--muted)" }}>P99 Latency:</span>
-                  <strong style={{ color: "#10b981" }}>{node.p99LatencyMs}ms</strong>
+                  <strong style={{ color: "#10b981" }}>{node.latencyP99Ms}ms</strong>
                 </div>
               </div>
 
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <span style={{ fontSize: 10, color: "var(--muted)", fontFamily: "monospace" }}>
-                  {node.cluster}
-                </span>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid var(--border)", paddingTop: 6 }}>
+                <span style={{ fontSize: 10, color: "var(--muted)", fontFamily: "monospace" }}>{node.k8sPodName}</span>
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleToggleCircuitBreaker(node.id);
-                  }}
+                  onClick={() => handleToggleCircuitBreaker(node.id)}
                   style={{
-                    background: "rgba(255,255,255,0.06)",
-                    border: "1px solid var(--border)",
-                    color: "var(--fg-2)",
+                    background: isClosed ? "rgba(244,63,94,0.15)" : "rgba(16,185,129,0.2)",
+                    border: `1px solid ${isClosed ? "rgba(244,63,94,0.3)" : "#10b981"}`,
+                    color: isClosed ? "#f43f5e" : "#10b981",
                     fontSize: 10,
+                    fontWeight: 700,
                     padding: "3px 8px",
                     borderRadius: 4,
                     cursor: "pointer"
@@ -178,57 +196,65 @@ export default function MeshHealthPage() {
         })}
       </div>
 
-      {/* OpenTelemetry Distributed Tracing Waterfall Visualizer */}
+      {/* ── OpenTelemetry (OTel) Distributed Trace Waterfall ── */}
       <div className="card-tactical" style={{ padding: 20 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <Activity size={16} color="#06b6d4" />
-            <h2 style={{ fontSize: 14, fontWeight: 800, color: "#f8fafc", margin: 0 }}>
+            <Activity size={17} color="#06b6d4" />
+            <h3 style={{ fontSize: 14, fontWeight: 800, color: "#f8fafc", margin: 0 }}>
               OpenTelemetry (OTel) Distributed Trace Waterfall (Trace ID: 4bf92f3577b34da6a3ce929d0e0e4736)
-            </h2>
+            </h3>
           </div>
-          <span style={{ fontSize: 11, color: "#10b981", fontWeight: 700 }}>
+          <span style={{ fontSize: 11, color: "#10b981", fontWeight: 700, fontFamily: "monospace" }}>
             Total Span: 18.2ms
           </span>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, background: "var(--surface-2)", padding: 14, borderRadius: 8, border: "1px solid var(--border)" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {[
-            { span: "POST /v1/telemetry/events/ingest", service: "federated-graphql-gateway", duration: "18.2ms", width: "100%", offset: "0%", color: "#a855f7" },
-            { span: "Auth JWT Signature Verification", service: "identity-oauth2-pki-vault", duration: "2.1ms", width: "18%", offset: "5%", color: "#10b981" },
-            { span: "gRPC Proto Buffer Parse & Dispatch", service: "telemetry-bus-kafka-broker-01", duration: "3.4ms", width: "24%", offset: "24%", color: "#06b6d4" },
-            { span: "STIX 2.1 Threat Intel IOC Matching", service: "stix-ioc-sync-engine", duration: "4.2ms", width: "32%", offset: "48%", color: "#f59e0b" },
-            { span: "OpenSearch Bulk Index Ingestion", service: "data-lake-opensearch-bridge", duration: "5.1ms", width: "38%", offset: "62%", color: "#f43f5e" }
-          ].map((item, idx) => (
-            <div key={idx} style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 11 }}>
-              <div style={{ width: 220, fontFamily: "monospace", color: "#f8fafc", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {item.span}
-              </div>
-              <div style={{ width: 180, color: "var(--muted)" }}>
-                {item.service}
-              </div>
-              <div style={{ flex: 1, position: "relative", height: 18, background: "rgba(255,255,255,0.04)", borderRadius: 4, overflow: "hidden" }}>
-                <div style={{
-                  position: "absolute",
-                  left: item.offset,
-                  width: item.width,
-                  height: "100%",
-                  background: item.color,
-                  borderRadius: 4,
-                  display: "flex",
-                  alignItems: "center",
-                  paddingLeft: 6,
-                  fontSize: 10,
-                  fontWeight: 800,
-                  color: "#050811"
-                }}>
-                  {item.duration}
+            { id: "gateway", service: "POST /v1/telemetry/events/ingest", node: "federated-graphql-gateway", time: "10.2ms", color: "#a855f7", width: "100%" },
+            { id: "auth", service: "Auth JWT Signature Verification", node: "identity-oauth2-pki-vault", time: "2.1ms", color: "#10b981", width: "22%", offset: "12%" },
+            { id: "kafka", service: "gRPC Proto Buffer Parse & Dispatch", node: "telemetry-bus-kafka-broker-01", time: "3.4ms", color: "#06b6d4", width: "35%", offset: "35%" },
+            { id: "stix", service: "STIX 2.1 Threat Intel IOC Matching", node: "stix-ioc-sync-engine", time: "4.2ms", color: "#f59e0b", width: "42%", offset: "50%" },
+            { id: "opensearch", service: "OpenSearch Bulk Index Ingestion", node: "data-lake-opensearch-bridge", time: "5.1ms", color: "#f43f5e", width: "52%", offset: "48%" }
+          ].map(span => (
+            <div
+              key={span.id}
+              onClick={() => setActiveWaterfallSpan(span.id)}
+              style={{
+                background: activeWaterfallSpan === span.id ? "var(--surface-3)" : "var(--surface-2)",
+                border: `1px solid ${activeWaterfallSpan === span.id ? span.color : "var(--border)"}`,
+                borderRadius: 6,
+                padding: "8px 12px",
+                cursor: "pointer",
+                display: "flex",
+                flexDirection: "column",
+                gap: 6
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 11.5 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontWeight: 800, color: "#f8fafc" }}>{span.service}</span>
+                  <span style={{ color: "var(--muted)", fontSize: 10 }}>({span.node})</span>
                 </div>
+                <strong style={{ color: span.color }}>{span.time}</strong>
+              </div>
+
+              {/* Progress Waterfall Bar */}
+              <div style={{ width: "100%", height: 6, background: "rgba(0,0,0,0.3)", borderRadius: 3, overflow: "hidden" }}>
+                <div style={{
+                  height: "100%",
+                  width: span.width,
+                  marginLeft: span.offset || "0%",
+                  background: span.color,
+                  borderRadius: 3
+                }} />
               </div>
             </div>
           ))}
         </div>
       </div>
+
     </div>
   );
 }
