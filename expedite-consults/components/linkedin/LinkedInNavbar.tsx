@@ -190,15 +190,23 @@ export function LinkedInNavbar({
               </button>
             )
           })}
+        </nav>
 
-          {/* "More ▾" Dropdown Menu */}
+        {/* Right Side Controls (More Dropdown + AI Assistant + Notifications + Me Profile + Theme) */}
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 pl-1">
+          {/* "More ▾" Dropdown Menu (Outside scroll container so never clipped!) */}
           <div className="relative shrink-0">
             <button
               onClick={() => {
                 setIsMoreOpen(!isMoreOpen)
                 setIsMeOpen(false)
               }}
-              className="flex min-w-[48px] flex-col items-center justify-center py-1 text-xs text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 cursor-pointer"
+              className={`flex min-w-[44px] flex-col items-center justify-center py-1 text-xs transition-colors cursor-pointer ${
+                isMoreOpen
+                  ? "text-[#0A66C2] font-bold"
+                  : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+              }`}
+              title="More Modules & Hubs"
             >
               <Grid3X3 className="h-4.5 w-4.5" />
               <span className="flex items-center gap-0.5 text-[10px] lg:text-[11px] mt-0.5 font-medium">
@@ -208,7 +216,7 @@ export function LinkedInNavbar({
 
             {isMoreOpen && (
               <>
-                <div className="fixed inset-0 z-40" onClick={() => setIsMoreOpen(false)} />
+                <div className="fixed inset-0 z-50 bg-black/10" onClick={() => setIsMoreOpen(false)} />
                 <div className="absolute right-0 top-12 z-50 w-72 rounded-2xl border border-zinc-200 bg-white p-3 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 space-y-2">
                   <div className="border-b border-zinc-100 pb-2 dark:border-zinc-800">
                     <p className="font-bold text-xs text-zinc-900 dark:text-zinc-100">
@@ -219,7 +227,7 @@ export function LinkedInNavbar({
                     </p>
                   </div>
 
-                  <div className="space-y-1">
+                  <div className="space-y-1 max-h-[70vh] overflow-y-auto">
                     {moreMenuItems.map((menu) => (
                       <button
                         key={menu.id + menu.label}
@@ -227,7 +235,7 @@ export function LinkedInNavbar({
                           onSelectTab(menu.id)
                           setIsMoreOpen(false)
                         }}
-                        className="w-full rounded-xl p-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors flex items-center justify-between group"
+                        className="w-full rounded-xl p-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors flex items-center justify-between group cursor-pointer"
                       >
                         <div>
                           <p className="font-bold text-xs text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2]">
@@ -242,10 +250,6 @@ export function LinkedInNavbar({
               </>
             )}
           </div>
-        </nav>
-
-        {/* Right Side Controls (AI Assistant + Notifications + Me Profile + Theme) */}
-        <div className="flex items-center gap-1.5 shrink-0 pl-1">
           {/* ConnectIn AI Launcher Button */}
           <button
             onClick={onOpenAIAssistant}
