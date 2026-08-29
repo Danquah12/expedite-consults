@@ -1,0 +1,217 @@
+@import "tailwindcss";
+
+:root {
+  --bg:        #0c0c0e;
+  --bg-2:      #111114;
+  --surface:   #16161a;
+  --surface-2: #1c1c22;
+  --surface-3: #22222a;
+  --border:    #2a2a34;
+  --border-2:  #343442;
+  --fg:        #d8d8e8;
+  --fg-2:      #9898b0;
+  --muted:     #606072;
+  --primary:   #ff6b35;
+  --primary-2: #e85d2a;
+  --green:     #3ddc84;
+  --blue:      #4fc3f7;
+  --yellow:    #ffb74d;
+  --red:       #ef5350;
+  --purple:    #ce93d8;
+}
+
+@layer base {
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    background-color: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-geist-sans, 'Inter', system-ui, sans-serif);
+    -webkit-font-smoothing: antialiased;
+    font-size: 13px;
+  }
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 2px; }
+  ::selection { background: rgba(255,107,53,0.2); }
+}
+
+/* Tool panel */
+.tool-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.tool-panel-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+  border-radius: 6px 6px 0 0;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fg-2);
+}
+
+/* HTTP display */
+.http-raw {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Menlo', monospace;
+  font-size: 11.5px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: var(--fg);
+  background: var(--bg);
+  padding: 14px;
+  overflow-y: auto;
+  tab-size: 2;
+}
+.http-method-line  { color: #ff8c42; font-weight: 700; }
+.http-header-name  { color: #80cbc4; }
+.http-header-value { color: #a5d6a7; }
+.http-body         { color: #dce775; }
+.http-status-2     { color: #3ddc84; }
+.http-status-3     { color: #4fc3f7; }
+.http-status-4     { color: #ffb74d; }
+.http-status-5     { color: #ef5350; }
+.http-comment      { color: #616161; font-style: italic; }
+
+/* Table */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+  background: var(--surface-2);
+  color: var(--fg-2);
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 7px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  position: sticky; top: 0;
+}
+.data-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.data-table tr:hover td { background: rgba(255,107,53,0.04); cursor: pointer; }
+.data-table tr.selected td { background: rgba(255,107,53,0.1); border-left: 2px solid var(--primary); }
+.data-table tr.selected td:first-child { padding-left: 8px; }
+
+/* Tabs */
+.tab-bar {
+  display: flex; border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+.tab-item {
+  padding: 7px 14px; font-size: 11.5px; color: var(--muted);
+  border-right: 1px solid var(--border); cursor: pointer;
+  white-space: nowrap; flex-shrink: 0;
+  border-bottom: 2px solid transparent;
+  transition: all 0.1s;
+}
+.tab-item:hover { color: var(--fg); background: var(--surface-3); }
+.tab-item.active { color: var(--primary); border-bottom-color: var(--primary); background: var(--surface); }
+
+/* Editor */
+.http-editor {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Menlo', monospace;
+  font-size: 11.5px;
+  line-height: 1.65;
+  background: var(--bg);
+  color: var(--fg);
+  border: none;
+  outline: none;
+  resize: none;
+  width: 100%;
+  padding: 14px;
+  tab-size: 2;
+}
+
+/* Btn */
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+}
+.btn-primary:hover { opacity: 0.88; }
+.btn-secondary {
+  background: var(--surface-3);
+  color: var(--fg);
+  border: 1px solid var(--border-2);
+  padding: 5px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 5px;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.btn-secondary:hover { border-color: var(--primary); color: var(--primary); }
+
+/* Status pill */
+.pill {
+  display: inline-block; padding: 1px 7px; border-radius: 3px;
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Split pane */
+.split-h { display: flex; height: 100%; overflow: hidden; }
+.split-v { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+.pane { flex: 1; min-width: 0; min-height: 0; overflow: hidden; }
+.split-divider-v { width: 4px; background: var(--border); cursor: col-resize; flex-shrink: 0; }
+.split-divider-v:hover { background: var(--primary); }
+.split-divider-h { height: 4px; background: var(--border); flex-shrink: 0; }
+
+/* Scanner terminal */
+.scanner-log {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Menlo', monospace;
+  font-size: 11px; line-height: 1.6;
+  background: var(--bg);
+  color: var(--muted);
+  padding: 12px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Badge */
+.badge-sev { padding: 2px 7px; border-radius: 3px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+
+/* Progress bar */
+.progress-bar { height: 3px; background: var(--surface-3); border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 2px; background: var(--primary); transition: width 0.3s; }
+
+/* Input */
+.tool-input {
+  background: var(--bg);
+  border: 1px solid var(--border-2);
+  color: var(--fg);
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 12px;
+  outline: none;
+  font-family: 'JetBrains Mono', monospace;
+  width: 100%;
+}
+.tool-input:focus { border-color: var(--primary); }
+
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+.cursor::after { content: '█'; animation: blink 1s step-end infinite; color: var(--primary); font-size: 10px; }

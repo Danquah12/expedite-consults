@@ -1,0 +1,720 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "AXIOM",
+          "version": "4.0.0",
+          "rules": [
+            {
+              "id": "NMAP-F001",
+              "name": "Open FTP Service Detected",
+              "shortDescription": {
+                "text": "Open FTP Service Detected"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "NMAP-F003",
+              "name": "Open TELNET Service Detected",
+              "shortDescription": {
+                "text": "Open TELNET Service Detected"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "NMAP-F006",
+              "name": "Open NETBIOS-SSN Service Detected",
+              "shortDescription": {
+                "text": "Open NETBIOS-SSN Service Detected"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "NMAP-F005",
+              "name": "Open NETBIOS-SSN Service Detected",
+              "shortDescription": {
+                "text": "Open NETBIOS-SSN Service Detected"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "MSF-F3440",
+              "name": "vsftpd 2.3.4 Backdoor",
+              "shortDescription": {
+                "text": "vsftpd 2.3.4 Backdoor"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "MSF-F8253",
+              "name": "Samba usermap_script RCE",
+              "shortDescription": {
+                "text": "Samba usermap_script RCE"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "MSF-F5096",
+              "name": "Samba usermap_script RCE",
+              "shortDescription": {
+                "text": "Samba usermap_script RCE"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "MSF-F6048",
+              "name": "MySQL Empty Root Password",
+              "shortDescription": {
+                "text": "MySQL Empty Root Password"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "MSF-F7528",
+              "name": "Apache Tomcat Manager RCE",
+              "shortDescription": {
+                "text": "Apache Tomcat Manager RCE"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "MSF-F2478",
+              "name": "PHP CGI Argument Injection RCE",
+              "shortDescription": {
+                "text": "PHP CGI Argument Injection RCE"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "MSF-F7730",
+              "name": "Samba usermap_script RCE",
+              "shortDescription": {
+                "text": "Samba usermap_script RCE"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "MSF-F7493",
+              "name": "Samba usermap_script RCE",
+              "shortDescription": {
+                "text": "Samba usermap_script RCE"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "NMAP-F004",
+              "name": "Open HTTP Service Detected",
+              "shortDescription": {
+                "text": "Open HTTP Service Detected"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "NMAP-F007",
+              "name": "Open MYSQL Service Detected",
+              "shortDescription": {
+                "text": "Open MYSQL Service Detected"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "NMAP-F008",
+              "name": "Open VNC Service Detected",
+              "shortDescription": {
+                "text": "Open VNC Service Detected"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "NMAP-F002",
+              "name": "Open HTTP Service Detected",
+              "shortDescription": {
+                "text": "Open HTTP Service Detected"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "NMAP-F006",
+              "name": "Open HTTP-PROXY Service Detected",
+              "shortDescription": {
+                "text": "Open HTTP-PROXY Service Detected"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "MSF-F7151",
+              "name": "FTP Anonymous / Weak Credentials",
+              "shortDescription": {
+                "text": "FTP Anonymous / Weak Credentials"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "MSF-F9688",
+              "name": "SSH Default / Weak Credentials",
+              "shortDescription": {
+                "text": "SSH Default / Weak Credentials"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "MSF-F8644",
+              "name": "Telnet Cleartext Protocol Exposed",
+              "shortDescription": {
+                "text": "Telnet Cleartext Protocol Exposed"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "MSF-F1257",
+              "name": "VNC No Authentication / Weak Password",
+              "shortDescription": {
+                "text": "VNC No Authentication / Weak Password"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "MSF-F2540",
+              "name": "SSH Default / Weak Credentials",
+              "shortDescription": {
+                "text": "SSH Default / Weak Credentials"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "NMAP-F002",
+              "name": "Open SSH Service Detected",
+              "shortDescription": {
+                "text": "Open SSH Service Detected"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            },
+            {
+              "id": "NMAP-F001",
+              "name": "Open SSH Service Detected",
+              "shortDescription": {
+                "text": "Open SSH Service Detected"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            },
+            {
+              "id": "NMAP-F004",
+              "name": "Open SSL/HTTPS? Service Detected",
+              "shortDescription": {
+                "text": "Open SSL/HTTPS? Service Detected"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            },
+            {
+              "id": "NMAP-F005",
+              "name": "Open NETBIOS-SSN Service Detected",
+              "shortDescription": {
+                "text": "Open NETBIOS-SSN Service Detected"
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              }
+            },
+            {
+              "id": "NMAP-F003",
+              "name": "Open NETBIOS-SSN Service Detected",
+              "shortDescription": {
+                "text": "Open NETBIOS-SSN Service Detected"
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "NMAP-F001",
+          "level": "error",
+          "message": {
+            "text": "Port 21/tcp is open running ftp vsftpd 2.3.4. FTP transmits credentials in cleartext. Anonymous access may be enabled."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "tcp://192.168.195.139:21"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "NMAP-F003",
+          "level": "error",
+          "message": {
+            "text": "Port 23/tcp is open running telnet Linux telnetd. Telnet is unencrypted and obsolete. Replace with SSH immediately."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "tcp://192.168.195.139:23"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "NMAP-F006",
+          "level": "error",
+          "message": {
+            "text": "Port 445/tcp is open running netbios-ssn Samba smbd 3.0.20-Debian (workgroup: WORKGROUP). SMB exposed — high risk for ransomware (WannaCry, EternalBlue)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "tcp://192.168.195.139:445"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "NMAP-F005",
+          "level": "error",
+          "message": {
+            "text": "Port 445/tcp is open running netbios-ssn Samba smbd 3.X - 4.X (workgroup: WORKGROUP). SMB exposed — high risk for ransomware (WannaCry, EternalBlue)."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "tcp://192.168.195.140:445"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "MSF-F3440",
+          "level": "error",
+          "message": {
+            "text": "vsftpd 2.3.4 Backdoor — CVE: CVE-2011-2523. Target version: vsftpd 2.3.4. ⚠️ Version fingerprint matches known vulnerable version."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "http://192.168.195.139:21"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "MSF-F8253",
+          "level": "error",
+          "message": {
+            "text": "Samba usermap_script RCE — CVE: CVE-2007-2447. Target version: Samba smbd 3.X - 4.X (workgroup: WORKGROUP). ⚠️ Version fingerprint matches known vulnerable version."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "http://192.168.195.139:139"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "MSF-F5096",
+          "level": "error",
+          "message": {
+            "text": "Samba usermap_script RCE — CVE: CVE-2007-2447. Target version: Samba smbd 3.0.20-Debian (workgroup: WORKGROUP). ⚠️ Version fingerprint matches known vulnerable version."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "http://192.168.195.139:445"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "MSF-F6048",
+          "level": "error",
+          "message": {
+            "text": "MySQL Empty Root Password — CVE: CWE-521. Target version: MySQL 5.0.51a-3ubuntu5. ⚠️ Version fingerprint matches known vulnerable version."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "http://192.168.195.139:3306"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "MSF-F7528",
+          "level": "error",
+          "message": {
+            "text": "Apache Tomcat Manager RCE — CVE: CVE-2009-3843. Target version: Apache Tomcat/Coyote JSP engine 1.1. ⚠️ Version fingerprint matches known vulnerable version."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "http://192.168.195.139:8180"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "MSF-F2478",
+          "level": "error",
+          "message": {
+            "text": "PHP CGI Argument Injection RCE — CVE: CVE-2012-1823. Target version: Apache httpd 2.2.14 ((Ubuntu) mod_mono/2.4.3 PHP/5.3.2-1ubuntu4.30 with Suhosin-Patch proxy_html/3.0.1 mod_python/3.3.1 Python/2.6.5 mod_ssl/2.2.14 OpenSSL...). ⚠️ Version fingerprint matches known vulnerable version."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "http://192.168.195.140:80"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "MSF-F7730",
+          "level": "error",
+          "message": {
+            "text": "Samba usermap_script RCE — CVE: CVE-2007-2447. Target version: Samba smbd 3.X - 4.X (workgroup: WORKGROUP). ⚠️ Version fingerprint matches known vulnerable version."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "http://192.168.195.140:139"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "MSF-F7493",
+          "level": "error",
+          "message": {
+            "text": "Samba usermap_script RCE — CVE: CVE-2007-2447. Target version: Samba smbd 3.X - 4.X (workgroup: WORKGROUP). ⚠️ Version fingerprint matches known vulnerable version."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "http://192.168.195.140:445"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "NMAP-F004",
+          "level": "error",
+          "message": {
+            "text": "Port 80/tcp is open running http Apache httpd 2.2.8 ((Ubuntu) DAV/2). HTTP service exposed — check for web vulnerabilities."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "tcp://192.168.195.139:80"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "NMAP-F007",
+          "level": "error",
+          "message": {
+            "text": "Port 3306/tcp is open running mysql MySQL 5.0.51a-3ubuntu5. MySQL exposed — brute force and remote access risk."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "tcp://192.168.195.139:3306"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "NMAP-F008",
+          "level": "error",
+          "message": {
+            "text": "Port 5900/tcp is open running vnc VNC (protocol 3.3). VNC exposed — often has weak authentication."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "tcp://192.168.195.139:5900"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "NMAP-F002",
+          "level": "error",
+          "message": {
+            "text": "Port 80/tcp is open running http Apache httpd 2.2.14 ((Ubuntu) mod_mono/2.4.3 PHP/5.3.2-1ubuntu4.30 with Suhosin-Patch proxy_html/3.0.1 mod_python/3.3.1 Python/2.6.5 mod_ssl/2.2.14 OpenSSL...). HTTP service exposed — check for web vulnerabilities."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "tcp://192.168.195.140:80"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "NMAP-F006",
+          "level": "error",
+          "message": {
+            "text": "Port 8080/tcp is open running http-proxy Apache-Coyote/1.1. HTTP proxy/Tomcat — check for manager console access."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "tcp://192.168.195.140:8080"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "MSF-F7151",
+          "level": "error",
+          "message": {
+            "text": "FTP Anonymous / Weak Credentials — CVE: CWE-521. Target version: vsftpd 2.3.4. ⚠️ Version fingerprint matches known vulnerable version."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "http://192.168.195.139:21"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "MSF-F9688",
+          "level": "error",
+          "message": {
+            "text": "SSH Default / Weak Credentials — CVE: CWE-521. Target version: OpenSSH 4.7p1 Debian 8ubuntu1 (protocol 2.0). ⚠️ Version fingerprint matches known vulnerable version."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "http://192.168.195.139:22"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "MSF-F8644",
+          "level": "error",
+          "message": {
+            "text": "Telnet Cleartext Protocol Exposed — CVE: CWE-319. Target version: Linux telnetd. ⚠️ Version fingerprint matches known vulnerable version."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "http://192.168.195.139:23"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "MSF-F1257",
+          "level": "error",
+          "message": {
+            "text": "VNC No Authentication / Weak Password — CVE: CWE-306. Target version: VNC (protocol 3.3). ⚠️ Version fingerprint matches known vulnerable version."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "http://192.168.195.139:5900"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "MSF-F2540",
+          "level": "error",
+          "message": {
+            "text": "SSH Default / Weak Credentials — CVE: CWE-521. Target version: OpenSSH 5.3p1 Debian 3ubuntu4 (Ubuntu Linux; protocol 2.0). ⚠️ Version fingerprint matches known vulnerable version."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "http://192.168.195.140:22"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "NMAP-F002",
+          "level": "warning",
+          "message": {
+            "text": "Port 22/tcp is open running ssh OpenSSH 4.7p1 Debian 8ubuntu1 (protocol 2.0). SSH exposed — brute force risk. Ensure key-based auth only."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "tcp://192.168.195.139:22"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "NMAP-F001",
+          "level": "warning",
+          "message": {
+            "text": "Port 22/tcp is open running ssh OpenSSH 5.3p1 Debian 3ubuntu4 (Ubuntu Linux; protocol 2.0). SSH exposed — brute force risk. Ensure key-based auth only."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "tcp://192.168.195.140:22"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "NMAP-F004",
+          "level": "warning",
+          "message": {
+            "text": "Port 443/tcp is open running ssl/https? . Service on port 443 should be reviewed."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "tcp://192.168.195.140:443"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "NMAP-F005",
+          "level": "note",
+          "message": {
+            "text": "Port 139/tcp is open running netbios-ssn Samba smbd 3.X - 4.X (workgroup: WORKGROUP). NetBIOS session service — legacy SMB, EternalBlue risk."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "tcp://192.168.195.139:139"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "NMAP-F003",
+          "level": "note",
+          "message": {
+            "text": "Port 139/tcp is open running netbios-ssn Samba smbd 3.X - 4.X (workgroup: WORKGROUP). NetBIOS session service — legacy SMB, EternalBlue risk."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "tcp://192.168.195.140:139"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+    "zap":  {
+                "port":  8090,
+                "host":  "localhost",
+                "apiKey":  "axiom-zap-key"
+            },
+    "target":  {
+                   "profile":  "Standard",
+                   "url":  "http://192.168.195.140",
+                   "name":  "OWASP Broken Web Apps v1.2"
+               },
+    "backend":  {
+                    "port":  3001
+                }
+}

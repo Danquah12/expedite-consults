@@ -1,0 +1,158 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { GitBranch, Sparkles, Layers, ExternalLink } from "lucide-react";
+
+const NAV_LINKS = [
+  { label: "Overview", href: "/" },
+  { label: "Create Model", href: "/scan" },
+  { label: "STRIDE Studio", href: "/stride-analyzer", badge: "STRIDE" },
+  { label: "DFD Canvas", href: "/dfd-studio", badge: "CANVAS" },
+  { label: "Attack Trees", href: "/attack-trees", badge: "SIMULATE" },
+  { label: "MITRE & CAPEC", href: "/mitre-capec-bridge" },
+  { label: "Countermeasures", href: "/countermeasure-planner" },
+  { label: "Dashboard", href: "/dashboard" },
+];
+
+export default function Navbar() {
+  const pathname = usePathname();
+
+  return (
+    <>
+      <div style={{
+        background: "linear-gradient(90deg, #7c3aed 0%, #00f0ff 50%, #10b981 100%)",
+        padding: "4px 16px",
+        fontSize: 11,
+        fontWeight: 800,
+        textAlign: "center",
+        color: "#070414",
+        letterSpacing: "0.04em",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8
+      }}>
+        <span style={{ background: "#070414", color: "#00f0ff", padding: "1px 6px", borderRadius: 4, fontSize: 9.5 }}>
+          ★ EXPEDITE ENTERPRISE DEFENSE
+        </span>
+        <span>
+          AXIOM THREAT MODELING &middot; Automated STRIDE DFD Generation, Attack Tree Simulation &amp; MITRE ATT&CK / CAPEC
+        </span>
+      </div>
+
+      <header
+        style={{
+          height: 60,
+          background: "rgba(14, 8, 38, 0.85)",
+          backdropFilter: "blur(16px)",
+          borderBottom: "1px solid rgba(139, 92, 246, 0.25)",
+          position: "sticky",
+          top: 0,
+          zIndex: 50
+        }}
+      >
+        <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 20px", height: "100%", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
+            <div style={{
+              width: 34,
+              height: 34,
+              borderRadius: 8,
+              background: "linear-gradient(135deg, #00f0ff 0%, #8b5cf6 100%)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 0 15px rgba(0, 240, 255, 0.4)"
+            }}>
+              <GitBranch size={18} color="#070414" />
+            </div>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ fontSize: 14, fontWeight: 900, letterSpacing: "0.06em", color: "#f8fafc" }}>
+                  AXIOM <span style={{ color: "#00f0ff" }}>THREAT MODELING</span>
+                </span>
+                <span style={{
+                  fontSize: 9,
+                  fontWeight: 800,
+                  padding: "1px 5px",
+                  borderRadius: 4,
+                  background: "rgba(0, 240, 255, 0.15)",
+                  color: "#00f0ff",
+                  border: "1px solid rgba(0, 240, 255, 0.3)"
+                }}>
+                  STRIDE &middot; DFD v4.2
+                </span>
+              </div>
+              <div style={{ fontSize: 10, color: "var(--muted)" }}>
+                Architecture &amp; Design Security &middot; Platform 15
+              </div>
+            </div>
+          </Link>
+
+          <nav className="hidden lg:flex items-center gap-1">
+            {NAV_LINKS.map(link => {
+              const active = pathname === link.href;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  style={{
+                    padding: "6px 12px",
+                    borderRadius: 6,
+                    fontSize: 12,
+                    fontWeight: active ? 800 : 600,
+                    color: active ? "#00f0ff" : "#cbd5e1",
+                    background: active ? "rgba(0, 240, 255, 0.12)" : "transparent",
+                    border: active ? "1px solid rgba(0, 240, 255, 0.3)" : "1px solid transparent",
+                    textDecoration: "none",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6
+                  }}
+                >
+                  <span>{link.label}</span>
+                  {link.badge && (
+                    <span style={{
+                      fontSize: 8.5,
+                      fontWeight: 800,
+                      padding: "1px 4px",
+                      borderRadius: 3,
+                      background: link.badge === "STRIDE" ? "rgba(244, 63, 94, 0.25)" : "rgba(139, 92, 246, 0.25)",
+                      color: link.badge === "STRIDE" ? "#f43f5e" : "#c4b5fd"
+                    }}>
+                      {link.badge}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            
+
+            <Link
+              href="/scan"
+              style={{
+                background: "linear-gradient(135deg, #00f0ff, #8b5cf6)",
+                color: "#070414",
+                padding: "6px 14px",
+                borderRadius: 6,
+                fontSize: 12,
+                fontWeight: 800,
+                textDecoration: "none",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                boxShadow: "0 0 15px rgba(0, 240, 255, 0.4)"
+              }}
+            >
+              <Sparkles size={13} />
+              <span>New Model</span>
+            </Link>
+          </div>
+        </div>
+      </header>
+    </>
+  );
+}

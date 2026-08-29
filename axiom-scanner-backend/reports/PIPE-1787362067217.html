@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AXIOM Security Report — 2026-08-22</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Segoe UI',Arial,sans-serif; background:#0d0d0d; color:#e0e0e0; line-height:1.6; }
+  .header { background:linear-gradient(135deg,#e8912d,#c96c10); padding:32px 48px; }
+  .header h1 { font-size:28px; font-weight:900; color:#fff; }
+  .header p  { color:rgba(255,255,255,0.8); font-size:14px; margin-top:4px; }
+  .content { max-width:1200px; margin:0 auto; padding:32px 24px; }
+  .section { background:#161616; border:1px solid #2a2a2a; border-radius:8px; padding:24px; margin-bottom:24px; }
+  .section h2 { font-size:18px; font-weight:700; color:#e8912d; margin-bottom:16px; padding-bottom:8px; border-bottom:1px solid #2a2a2a; }
+  .section h3 { font-size:14px; font-weight:700; color:#fff; margin:12px 0 6px; }
+  .stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+  .stat-card { background:#1a1a1a; border-radius:6px; padding:16px; text-align:center; }
+  .stat-num  { font-size:32px; font-weight:900; }
+  .stat-label{ font-size:11px; color:#888; margin-top:2px; }
+  .critical  { color:#ff4444; } .high { color:#ff8800; }
+  .medium    { color:#ffcc00; } .low  { color:#44bb44; }
+  .finding-card { background:#1a1a1a; border-left:4px solid #555; border-radius:4px; padding:14px; margin-bottom:10px; }
+  .finding-card.Critical { border-color:#ff4444; }
+  .finding-card.High     { border-color:#ff8800; }
+  .finding-card.Medium   { border-color:#ffcc00; }
+  .finding-card.Low      { border-color:#44bb44; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:3px; font-size:10px; font-weight:700; margin-right:6px; }
+  .badge-crit { background:#ff4444; color:#fff; }
+  .badge-high { background:#ff8800; color:#fff; }
+  .badge-med  { background:#ffcc00; color:#000; }
+  .badge-low  { background:#44bb44; color:#fff; }
+  .badge-src  { background:#2a2a2a; color:#aaa; }
+  table { width:100%; border-collapse:collapse; font-size:12px; }
+  th    { background:#1a1a1a; padding:8px 10px; text-align:left; color:#888; font-weight:600; border-bottom:1px solid #2a2a2a; }
+  td    { padding:7px 10px; border-bottom:1px solid #1e1e1e; }
+  tr:hover td { background:#1a1a1a; }
+  code  { background:#1e1e1e; padding:2px 6px; border-radius:3px; font-size:11px; font-family:monospace; color:#4fc3f7; word-break:break-all; }
+  .pill { display:inline-block; background:#2a2a2a; border-radius:12px; padding:2px 10px; font-size:11px; color:#aaa; margin:2px; }
+  .progress-bar { background:#2a2a2a; border-radius:4px; height:8px; overflow:hidden; margin:4px 0; }
+  .progress-fill { height:100%; border-radius:4px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div style="max-width:1200px;margin:0 auto;">
+    <div style="display:flex;align-items:center;gap:16px;">
+      <div style="width:50px;height:50px;background:rgba(255,255,255,0.15);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;">🧠</div>
+      <div>
+        <h1>AXIOM Security Assessment Report</h1>
+        <p>Pipeline ID: PIPE-1787362067217 &nbsp;·&nbsp; Generated: 8/21/2026, 9:32:14 PM &nbsp;·&nbsp; Targets: 192.168.195.139, 192.168.195.140</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- Executive Summary -->
+  <div class="section">
+    <h2>📊 Executive Summary</h2>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num critical">12</div><div class="stat-label">CRITICAL</div></div>
+      <div class="stat-card"><div class="stat-num high">10</div><div class="stat-label">HIGH</div></div>
+      <div class="stat-card"><div class="stat-num medium">3</div><div class="stat-label">MEDIUM</div></div>
+      <div class="stat-card"><div class="stat-num low">2</div><div class="stat-label">LOW</div></div>
+    </div>
+    <div style="margin-top:16px; padding:12px; background:#1a1a1a; border-radius:6px; font-size:13px; color:#aaa;">
+      <strong style="color:#fff;">Risk Rating: 🔴 CRITICAL</strong> &nbsp;·&nbsp;
+      27 total findings &nbsp;·&nbsp;
+      Scanned 2 target(s) &nbsp;·&nbsp;
+      Engines: Nmap + ZAP + OpenVAS
+    </div>
+    <div style="margin-top:12px; font-size:13px; color:#ccc; line-height:1.8;">
+      <strong style="color:#ff4444;">12 critical vulnerabilities</strong> were identified requiring immediate remediation. 10 high severity findings were confirmed. 3 medium severity issues were detected. Assessment covered 2 target(s) using automated DAST + SAST scanning via ZAP, Nmap, and OpenVAS.
+    </div>
+  </div>
+
+  <!-- Scan Coverage -->
+  <div class="section">
+    <h2>🎯 Scan Coverage & Engines</h2>
+    <table>
+      <tr><th>Engine</th><th>Target(s)</th><th>Status</th><th>Findings</th><th>Duration</th></tr>
+      <tr>
+      <td>🔍 Nmap Network Scan</td>
+      <td style="font-size:11px;color:#888;">192.168.195.139, 192.168.195.140</td>
+      <td><span style="color:#555;font-weight:700;">PENDING</span></td>
+      <td>8</td>
+      <td style="color:#888;">-</td>
+    </tr><tr>
+      <td>🕷 ZAP Spider</td>
+      <td style="font-size:11px;color:#888;">192.168.195.139, 192.168.195.140</td>
+      <td><span style="color:#555;font-weight:700;">PENDING</span></td>
+      <td>-</td>
+      <td style="color:#888;">-</td>
+    </tr><tr>
+      <td>⚡ ZAP Active Scan</td>
+      <td style="font-size:11px;color:#888;">192.168.195.139, 192.168.195.140</td>
+      <td><span style="color:#555;font-weight:700;">PENDING</span></td>
+      <td>-</td>
+      <td style="color:#888;">-</td>
+    </tr><tr>
+      <td>🛡 OpenVAS Scan</td>
+      <td style="font-size:11px;color:#888;">192.168.195.139, 192.168.195.140</td>
+      <td><span style="color:#555;font-weight:700;">PENDING</span></td>
+      <td>-</td>
+      <td style="color:#888;">-</td>
+    </tr><tr>
+      <td>🔬 Post-Exploit Valid.</td>
+      <td style="font-size:11px;color:#888;">192.168.195.139, 192.168.195.140</td>
+      <td><span style="color:#555;font-weight:700;">PENDING</span></td>
+      <td>27</td>
+      <td style="color:#888;">-</td>
+    </tr><tr>
+      <td>📊 Report Generation</td>
+      <td style="font-size:11px;color:#888;">192.168.195.139, 192.168.195.140</td>
+      <td><span style="color:#555;font-weight:700;">PENDING</span></td>
+      <td>-</td>
+      <td style="color:#888;">-</td>
+    </tr>
+    </table>
+  </div>
+
+  <!-- Attack Surface (Nmap) -->
+  
+  <div class="section">
+    <h2>📡 Network Attack Surface (Nmap)</h2>
+    <p style="font-size:12px;color:#888;margin-bottom:12px;">Target: 192.168.195.139 &nbsp;·&nbsp; OS: Unknown &nbsp;·&nbsp; 20 open ports</p>
+    <table>
+      <tr><th>Port</th><th>Protocol</th><th>Service</th><th>Version</th><th>Risk</th></tr>
+      <tr>
+        <td><strong>21</strong></td>
+        <td>tcp</td>
+        <td>ftp</td>
+        <td style="font-size:11px;color:#888;">vsftpd 2.3.4</td>
+        <td><span class="badge badge-high">HIGH</span></td>
+      </tr><tr>
+        <td><strong>22</strong></td>
+        <td>tcp</td>
+        <td>ssh</td>
+        <td style="font-size:11px;color:#888;">OpenSSH 4.7p1 Debian 8ubuntu1 (protocol 2.0)</td>
+        <td><span class="badge badge-high">HIGH</span></td>
+      </tr><tr>
+        <td><strong>23</strong></td>
+        <td>tcp</td>
+        <td>telnet</td>
+        <td style="font-size:11px;color:#888;">Linux telnetd</td>
+        <td><span class="badge badge-high">HIGH</span></td>
+      </tr><tr>
+        <td><strong>25</strong></td>
+        <td>tcp</td>
+        <td>smtp</td>
+        <td style="font-size:11px;color:#888;">Postfix smtpd</td>
+        <td><span class="badge badge-low">LOW</span></td>
+      </tr><tr>
+        <td><strong>53</strong></td>
+        <td>tcp</td>
+        <td>domain</td>
+        <td style="font-size:11px;color:#888;">ISC BIND 9.4.2</td>
+        <td><span class="badge badge-low">LOW</span></td>
+      </tr><tr>
+        <td><strong>80</strong></td>
+        <td>tcp</td>
+        <td>http</td>
+        <td style="font-size:11px;color:#888;">Apache httpd 2.2.8 ((Ubuntu) DAV/2)</td>
+        <td><span class="badge badge-high">HIGH</span></td>
+      </tr><tr>
+        <td><strong>111</strong></td>
+        <td>tcp</td>
+        <td>rpcbind</td>
+        <td style="font-size:11px;color:#888;">2 (RPC #100000)</td>
+        <td><span class="badge badge-low">LOW</span></td>
+      </tr><tr>
+        <td><strong>139</strong></td>
+        <td>tcp</td>
+        <td>netbios-ssn</td>
+        <td style="font-size:11px;color:#888;">Samba smbd 3.X - 4.X (workgroup: WORKGROUP)</td>
+        <td><span class="badge badge-high">HIGH</span></td>
+      </tr><tr>
+        <td><strong>445</strong></td>
+        <td>tcp</td>
+        <td>netbios-ssn</td>
+        <td style="font-size:11px;color:#888;">Samba smbd 3.0.20-Debian (workgroup: WORKGROUP)</td>
+        <td><span class="badge badge-high">HIGH</span></td>
+      </tr><tr>
+        <td><strong>512</strong></td>
+        <td>tcp</td>
+        <td>exec</td>
+        <td style="font-size:11px;color:#888;">netkit-rsh rexecd</td>
+        <td><span class="badge badge-low">LOW</span></td>
+      </tr><tr>
+        <td><strong>513</strong></td>
+        <td>tcp</td>
+        <td>login?</td>
+        <td style="font-size:11px;color:#888;">-</td>
+        <td><span class="badge badge-low">LOW</span></td>
+      </tr><tr>
+        <td><strong>514</strong></td>
+        <td>tcp</td>
+        <td>tcpwrapped</td>
+        <td style="font-size:11px;color:#888;">-</td>
+        <td><span class="badge badge-low">LOW</span></td>
+      </tr><tr>
+        <td><strong>1524</strong></td>
+        <td>tcp</td>
+        <td>bindshell</td>
+        <td style="font-size:11px;color:#888;">Metasploitable root shell</td>
+        <td><span class="badge badge-low">LOW</span></td>
+      </tr><tr>
+        <td><strong>2049</strong></td>
+        <td>tcp</td>
+        <td>nfs</td>
+        <td style="font-size:11px;color:#888;">2-4 (RPC #100003)</td>
+        <td><span class="badge badge-low">LOW</span></td>
+      </tr><tr>
+        <td><strong>3306</strong></td>
+        <td>tcp</td>
+        <td>mysql</td>
+        <td style="font-size:11px;color:#888;">MySQL 5.0.51a-3ubuntu5</td>
+        <td><span class="badge badge-high">HIGH</span></td>
+      </tr><tr>
+        <td><strong>5432</strong></td>
+        <td>tcp</td>
+        <td>postgresql</td>
+        <td style="font-size:11px;color:#888;">PostgreSQL DB 8.3.0 - 8.3.7</td>
+        <td><span class="badge badge-low">LOW</span></td>
+      </tr><tr>
+        <td><strong>5900</strong></td>
+        <td>tcp</td>
+        <td>vnc</td>
+        <td style="font-size:11px;color:#888;">VNC (protocol 3.3)</td>
+        <td><span class="badge badge-high">HIGH</span></td>
+      </tr><tr>
+        <td><strong>8009</strong></td>
+        <td>tcp</td>
+        <td>ajp13</td>
+        <td style="font-size:11px;color:#888;">Apache Jserv (Protocol v1.3)</td>
+        <td><span class="badge badge-low">LOW</span></td>
+      </tr><tr>
+        <td><strong>8180</strong></td>
+        <td>tcp</td>
+        <td>http</td>
+        <td style="font-size:11px;color:#888;">Apache Tomcat/Coyote JSP engine 1.1</td>
+        <td><span class="badge badge-low">LOW</span></td>
+      </tr><tr>
+        <td><strong>8787</strong></td>
+        <td>tcp</td>
+        <td>drb</td>
+        <td style="font-size:11px;color:#888;">Ruby DRb RMI (Ruby 1.8; path /usr/lib/ruby/1.8/drb)</td>
+        <td><span class="badge badge-low">LOW</span></td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Critical & High Findings -->
+  <div class="section">
+    <h2>🔴 Critical & High Severity Findings</h2>
+    
+  <div class="finding-card Critical">
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;">
+      <div>
+        <span class="badge badge-crit">Critical</span>
+        <span class="badge badge-src">Nmap</span>
+        <span class="badge badge-src">CVSS 9.8</span>
+        <code style="font-size:11px;">NMAP-F001</code>
+      </div>
+    </div>
+    <div style="font-weight:700;font-size:14px;color:#fff;margin-bottom:6px;">Open FTP Service Detected</div>
+    <div style="font-size:12px;color:#aaa;margin-bottom:6px;">Port 21/tcp is open running ftp vsftpd 2.3.4. FTP transmits credentials in cleartext. Anonymous access may be enabled.</div>
+    <div style="font-size:11px;color:#666;"><strong style="color:#888;">URL:</strong> <code>tcp://192.168.195.139:21</code></div>
+    
+    <div style="font-size:11px;color:#4caf50;margin-top:6px;"><strong>Remediation:</strong> Disable FTP. Use SFTP/SCP. If required, enable TLS and disable anonymous access.</div>
+  </div>
+  <div class="finding-card Critical">
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;">
+      <div>
+        <span class="badge badge-crit">Critical</span>
+        <span class="badge badge-src">Nmap</span>
+        <span class="badge badge-src">CVSS 9.8</span>
+        <code style="font-size:11px;">NMAP-F003</code>
+      </div>
+    </div>
+    <div style="font-weight:700;font-size:14px;color:#fff;margin-bottom:6px;">Open TELNET Service Detected</div>
+    <div style="font-size:12px;color:#aaa;margin-bottom:6px;">Port 23/tcp is open running telnet Linux telnetd. Telnet is unencrypted and obsolete. Replace with SSH immediately.</div>
+    <div style="font-size:11px;color:#666;"><strong style="color:#888;">URL:</strong> <code>tcp://192.168.195.139:23</code></div>
+    
+    <div style="font-size:11px;color:#4caf50;margin-top:6px;"><strong>Remediation:</strong> Disable Telnet immediately. Replace with SSH.</div>
+  </div>
+  <div class="finding-card Critical">
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;">
+      <div>
+        <span class="badge badge-crit">Critical</span>
+        <span class="badge badge-src">Nmap</span>
+        <span class="badge badge-src">CVSS 9.8</span>
+        <code style="font-size:11px;">NMAP-F006</code>
+      </div>
+    </div>
+    <div style="font-weight:700;font-size:14px;color:#fff;margin-bottom:6px;">Open NETBIOS-SSN Service Detected</div>
+    <div style="font-size:12px;color:#aaa;margin-bottom:6px;">Port 445/tcp is open running netbios-ssn Samba smbd 3.0.20-Debian (workgroup: WORKGROUP). SMB exposed — high risk for ransomware (WannaCry, EternalBlue).</div>
+    <div style="font-size:11px;color:#666;"><strong style="color:#888;">URL:</strong> <code>tcp://192.168.195.139:445</code></div>
+    
+    <div style="font-size:11px;color:#4caf50;margin-top:6px;"><strong>Remediation:</strong> Apply MS17-010 patch. Restrict SMB access via firewall. Disable SMBv1.</div>
+  </div>
+  <div class="finding-card Critical">
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;">
+      <div>
+        <span class="badge badge-crit">Critical</span>
+        <span class="badge badge-src">Nmap</span>
+        <span class="badge badge-src">CVSS 9.8</span>
+        <code style="font-size:11px;">NMAP-F005</code>
+      </div>
+    </div>
+    <div style="font-weight:700;font-size:14px;color:#fff;margin-bottom:6px;">Open NETBIOS-SSN Service Detected</div>
+    <div style="font-size:12px;color:#aaa;margin-bottom:6px;">Port 445/tcp is open running netbios-ssn Samba smbd 3.X - 4.X (workgroup: WORKGROUP). SMB exposed — high risk for ransomware (WannaCry, EternalBlue).</div>
+    <div style="font-size:11px;color:#666;"><strong style="color:#888;">URL:</strong> <code>tcp://192.168.195.140:445</code></div>
+    
+    <div style="font-size:11px;color:#4caf50;margin-top:6px;"><strong>Remediation:</strong> Apply MS17-010 patch. Restrict SMB access via firewall. Disable SMBv1.</div>
+  </div>
+  <div class="finding-card Critical">
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;">
+      <div>
+        <span class="badge badge-crit">Critical</span>
+        <span class="badge badge-src">Metasploit Framework</span>
+        <span class="badge badge-src">CVSS 10</span>
+        <code style="font-size:11px;">MSF-F3440</code>
+      </div>
+    </div>
+    <div style="font-weight:700;font-size:14px;color:#fff;margin-bottom:6px;">vsftpd 2.3.4 Backdoor</div>
+    <div style="font-size:12px;color:#aaa;margin-bottom:6px;">vsftpd 2.3.4 Backdoor — CVE: CVE-2011-2523. Target version: vsftpd 2.3.4. ⚠️ Version fingerprint matches known vulnerable version.</div>
+    <div style="font-size:11px;color:#666;"><strong style="color:#888;">URL:</strong> <code>http://192.168.195.139:21</code></div>
+    <div style="font-size:11px;color:#666;margin-top:4px;"><strong style="color:#888;">Attack:</strong> <code>cmd/unix/interact</code></div>
+    <div style="font-size:11px;color:#4caf50;margin-top:6px;"><strong>Remediation:</strong> Upgrade vsftpd immediately. This version has a deliberately planted backdoor. CVE-2011-2523.</div>
+  </div>
+  <div class="finding-card Critical">
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;">
+      <div>
+        <span class="badge badge-crit">Critical</span>
+        <span class="badge badge-src">Metasploit Framework</span>
+        <span class="badge badge-src">CVSS 10</span>
+        <code style="font-size:11px;">MSF-F8253</code>
+      </div>
+    </div>
+    <div style="font-weight:700;font-size:14px;color:#fff;margin-bottom:6px;">Samba usermap_script RCE</div>
+    <div style="font-size:12px;color:#aaa;margin-bottom:6px;">Samba usermap_script RCE — CVE: CVE-2007-2447. Target version: Samba smbd 3.X - 4.X (workgroup: WORKGROUP). ⚠️ Version fingerprint matches known vulnerable version.</div>
+    <div style="font-size:11px;color:#666;"><strong style="color:#888;">URL:</strong> <code>http://192.168.195.139:139</code></div>
+    <div style="font-size:11px;color:#666;margin-top:4px;"><strong style="color:#888;">Attack:</strong> <code>cmd/unix/reverse_netcat</code></div>
+    <div style="font-size:11px;color:#4caf50;margin-top:6px;"><strong>Remediation:</strong> Upgrade Samba to 3.0.26 or later. Restrict SMB to internal network. CVE-2007-2447.</div>
+  </div>
+  <div class="finding-card Critical">
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;">
+      <div>
+        <span class="badge badge-crit">Critical</span>
+        <span class="badge badge-src">Metasploit Framework</span>
+        <span class="badge badge-src">CVSS 10</span>
+        <code style="font-size:11px;">MSF-F5096</code>
+      </div>
+    </div>
+    <div style="font-weight:700;font-size:14px;color:#fff;margin-bottom:6px;">Samba usermap_script RCE</div>
+    <div style="font-size:12px;color:#aaa;margin-bottom:6px;">Samba usermap_script RCE — CVE: CVE-2007-2447. Target version: Samba smbd 3.0.20-Debian (workgroup: WORKGROUP). ⚠️ Version fingerprint matches known vulnerable version.</div>
+    <div style="font-size:11px;color:#666;"><strong style="color:#888;">URL:</strong> <code>http://192.168.195.139:445</code></div>
+    <div style="font-size:11px;color:#666;margin-top:4px;"><strong style="color:#888;">Attack:</strong> <code>cmd/unix/reverse_netcat</code></div>
+    <div style="font-size:11px;color:#4caf50;margin-top:6px;"><strong>Remediation:</strong> Upgrade Samba to 3.0.26 or later. Restrict SMB to internal network. CVE-2007-2447.</div>
+  </div>
+  <div class="finding-card Critical">
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;">
+      <div>
+        <span class="badge badge-crit">Critical</span>
+        <span class="badge badge-src">Metasploit Framework</span>
+        <span class="badge badge-src">CVSS 9.8</span>
+        <code style="font-size:11px;">MSF-F6048</code>
+      </div>
+    </div>
+    <div style="font-weight:700;font-size:14px;color:#fff;margin-bottom:6px;">MySQL Empty Root Password</div>
+    <div style="font-size:12px;color:#aaa;margin-bottom:6px;">MySQL Empty Root Password — CVE: CWE-521. Target version: MySQL 5.0.51a-3ubuntu5. ⚠️ Version fingerprint matches known vulnerable version.</div>
+    <div style="font-size:11px;color:#666;"><strong style="color:#888;">URL:</strong> <code>http://192.168.195.139:3306</code></div>
+    <div style="font-size:11px;color:#666;margin-top:4px;"><strong style="color:#888;">Attack:</strong> <code>N/A</code></div>
+    <div style="font-size:11px;color:#4caf50;margin-top:6px;"><strong>Remediation:</strong> Set a strong root password: ALTER USER root@localhost IDENTIFIED BY 'strong_pass';</div>
+  </div>
+  <div class="finding-card Critical">
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;">
+      <div>
+        <span class="badge badge-crit">Critical</span>
+        <span class="badge badge-src">Metasploit Framework</span>
+        <span class="badge badge-src">CVSS 9</span>
+        <code style="font-size:11px;">MSF-F7528</code>
+      </div>
+    </div>
+    <div style="font-weight:700;font-size:14px;color:#fff;margin-bottom:6px;">Apache Tomcat Manager RCE</div>
+    <div style="font-size:12px;color:#aaa;margin-bottom:6px;">Apache Tomcat Manager RCE — CVE: CVE-2009-3843. Target version: Apache Tomcat/Coyote JSP engine 1.1. ⚠️ Version fingerprint matches known vulnerable version.</div>
+    <div style="font-size:11px;color:#666;"><strong style="color:#888;">URL:</strong> <code>http://192.168.195.139:8180</code></div>
+    <div style="font-size:11px;color:#666;margin-top:4px;"><strong style="color:#888;">Attack:</strong> <code>java/meterpreter/reverse_tcp</code></div>
+    <div style="font-size:11px;color:#4caf50;margin-top:6px;"><strong>Remediation:</strong> Change Tomcat manager credentials. Restrict manager access to localhost. CVE-2009-3843.</div>
+  </div>
+  <div class="finding-card Critical">
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;">
+      <div>
+        <span class="badge badge-crit">Critical</span>
+        <span class="badge badge-src">Metasploit Framework</span>
+        <span class="badge badge-src">CVSS 9.8</span>
+        <code style="font-size:11px;">MSF-F2478</code>
+      </div>
+    </div>
+    <div style="font-weight:700;font-size:14px;color:#fff;margin-bottom:6px;">PHP CGI Argument Injection RCE</div>
+    <div style="font-size:12px;color:#aaa;margin-bottom:6px;">PHP CGI Argument Injection RCE — CVE: CVE-2012-1823. Target version: Apache httpd 2.2.14 ((Ubuntu) mod_mono/2.4.3 PHP/5.3.2-1ubuntu4.30 with Suhosin-Patch proxy_html/3.0.1 mod_python/3.3.1 Python/2.6.5 mod_ssl/2.2.14 OpenSSL...). ⚠️ Version fingerprint matches known vulnerable version.</div>
+    <div style="font-size:11px;color:#666;"><strong style="color:#888;">URL:</strong> <code>http://192.168.195.140:80</code></div>
+    <div style="font-size:11px;color:#666;margin-top:4px;"><strong style="color:#888;">Attack:</strong> <code>php/meterpreter/reverse_tcp</code></div>
+    <div style="font-size:11px;color:#4caf50;margin-top:6px;"><strong>Remediation:</strong> Upgrade PHP. Disable CGI mode. Use mod_rewrite to block malicious query strings. CVE-2012-1823.</div>
+  </div>
+  <div class="finding-card Critical">
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;">
+      <div>
+        <span class="badge badge-crit">Critical</span>
+        <span class="badge badge-src">Metasploit Framework</span>
+        <span class="badge badge-src">CVSS 10</span>
+        <code style="font-size:11px;">MSF-F7730</code>
+      </div>
+    </div>
+    <div style="font-weight:700;font-size:14px;color:#fff;margin-bottom:6px;">Samba usermap_script RCE</div>
+    <div style="font-size:12px;color:#aaa;margin-bottom:6px;">Samba usermap_script RCE — CVE: CVE-2007-2447. Target version: Samba smbd 3.X - 4.X (workgroup: WORKGROUP). ⚠️ Version fingerprint matches known vulnerable version.</div>
+    <div style="font-size:11px;color:#666;"><strong style="color:#888;">URL:</strong> <code>http://192.168.195.140:139</code></div>
+    <div style="font-size:11px;color:#666;margin-top:4px;"><strong style="color:#888;">Attack:</strong> <code>cmd/unix/reverse_netcat</code></div>
+    <div style="font-size:11px;color:#4caf50;margin-top:6px;"><strong>Remediation:</strong> Upgrade Samba to 3.0.26 or later. Restrict SMB to internal network. CVE-2007-2447.</div>
+  </div>
+  <div class="finding-card Critical">
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;">
+      <div>
+        <span class="badge badge-crit">Critical</span>
+        <span class="badge badge-src">Metasploit Framework</span>
+        <span class="badge badge-src">CVSS 10</span>
+        <code style="font-size:11px;">MSF-F7493</code>
+      </div>
+    </div>
+    <div style="font-weight:700;font-size:14px;color:#fff;margin-bottom:6px;">Samba usermap_script RCE</div>
+    <div style="font-size:12px;color:#aaa;margin-bottom:6px;">Samba usermap_script RCE — CVE: CVE-2007-2447. Target version: Samba smbd 3.X - 4.X (workgroup: WORKGROUP). ⚠️ Version fingerprint matches known vulnerable version.</div>
+    <div style="font-size:11px;color:#666;"><strong style="color:#888;">URL:</strong> <code>http://192.168.195.140:445</code></div>
+    <div style="font-size:11px;color:#666;margin-top:4px;"><strong style="color:#888;">Attack:</strong> <code>cmd/unix/reverse_netcat</code></div>
+    <div style="font-size:11px;color:#4caf50;margin-top:6px;"><strong>Remediation:</strong> Upgrade Samba to 3.0.26 or later. Restrict SMB to internal network. CVE-2007-2447.</div>
+  </div>
+  <div class="finding-card High">
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;">
+      <div>
+        <span class="badge badge-high">High</span>
+        <span class="badge badge-src">Nmap</span>
+        <span class="badge badge-src">CVSS 5</span>
+        <code style="font-size:11px;">NMAP-F004</code>
+      </div>
+    </div>
+    <div style="font-weight:700;font-size:14px;color:#fff;margin-bottom:6px;">Open HTTP Service Detected</div>
+    <div style="font-size:12px;color:#aaa;margin-bottom:6px;">Port 80/tcp is open running http Apache httpd 2.2.8 ((Ubuntu) DAV/2). HTTP service exposed — check for web vulnerabilities.</div>
+    <div style="font-size:11px;color:#666;"><strong style="color:#888;">URL:</strong> <code>tcp://192.168.195.139:80</code></div>
+    
+    <div style="font-size:11px;color:#4caf50;margin-top:6px;"><strong>Remediation:</strong> Redirect HTTP to HTTPS. Review web application for OWASP Top 10 vulnerabilities.</div>
+  </div>
+  <div class="finding-card High">
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;">
+      <div>
+        <span class="badge badge-high">High</span>
+        <span class="badge badge-src">Nmap</span>
+        <span class="badge badge-src">CVSS 8.2</span>
+        <code style="font-size:11px;">NMAP-F007</code>
+      </div>
+    </div>
+    <div style="font-weight:700;font-size:14px;color:#fff;margin-bottom:6px;">Open MYSQL Service Detected</div>
+    <div style="font-size:12px;color:#aaa;margin-bottom:6px;">Port 3306/tcp is open running mysql MySQL 5.0.51a-3ubuntu5. MySQL exposed — brute force and remote access risk.</div>
+    <div style="font-size:11px;color:#666;"><strong style="color:#888;">URL:</strong> <code>tcp://192.168.195.139:3306</code></div>
+    
+    <div style="font-size:11px;color:#4caf50;margin-top:6px;"><strong>Remediation:</strong> Bind MySQL to 127.0.0.1. Use strong credentials. Restrict remote access.</div>
+  </div>
+  <div class="finding-card High">
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;">
+      <div>
+        <span class="badge badge-high">High</span>
+        <span class="badge badge-src">Nmap</span>
+        <span class="badge badge-src">CVSS 7.5</span>
+        <code style="font-size:11px;">NMAP-F008</code>
+      </div>
+    </div>
+    <div style="font-weight:700;font-size:14px;color:#fff;margin-bottom:6px;">Open VNC Service Detected</div>
+    <div style="font-size:12px;color:#aaa;margin-bottom:6px;">Port 5900/tcp is open running vnc VNC (protocol 3.3). VNC exposed — often has weak authentication.</div>
+    <div style="font-size:11px;color:#666;"><strong style="color:#888;">URL:</strong> <code>tcp://192.168.195.139:5900</code></div>
+    
+    <div style="font-size:11px;color:#4caf50;margin-top:6px;"><strong>Remediation:</strong> Require VNC authentication. Restrict to trusted IPs. Prefer SSH tunnel.</div>
+  </div>
+  <div class="finding-card High">
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;">
+      <div>
+        <span class="badge badge-high">High</span>
+        <span class="badge badge-src">Nmap</span>
+        <span class="badge badge-src">CVSS 5</span>
+        <code style="font-size:11px;">NMAP-F002</code>
+      </div>
+    </div>
+    <div style="font-weight:700;font-size:14px;color:#fff;margin-bottom:6px;">Open HTTP Service Detected</div>
+    <div style="font-size:12px;color:#aaa;margin-bottom:6px;">Port 80/tcp is open running http Apache httpd 2.2.14 ((Ubuntu) mod_mono/2.4.3 PHP/5.3.2-1ubuntu4.30 with Suhosin-Patch proxy_html/3.0.1 mod_python/3.3.1 Python/2.6.5 mod_ssl/2.2.14 OpenSSL...). HTTP service exposed — check for web vulnerabilities.</div>
+    <div style="font-size:11px;color:#666;"><strong style="color:#888;">URL:</strong> <code>tcp://192.168.195.140:80</code></div>
+    
+    <div style="font-size:11px;color:#4caf50;margin-top:6px;"><strong>Remediation:</strong> Redirect HTTP to HTTPS. Review web application for OWASP Top 10 vulnerabilities.</div>
+  </div>
+  <div class="finding-card High">
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;">
+      <div>
+        <span class="badge badge-high">High</span>
+        <span class="badge badge-src">Nmap</span>
+        <span class="badge badge-src">CVSS 5</span>
+        <code style="font-size:11px;">NMAP-F006</code>
+      </div>
+    </div>
+    <div style="font-weight:700;font-size:14px;color:#fff;margin-bottom:6px;">Open HTTP-PROXY Service Detected</div>
+    <div style="font-size:12px;color:#aaa;margin-bottom:6px;">Port 8080/tcp is open running http-proxy Apache-Coyote/1.1. HTTP proxy/Tomcat — check for manager console access.</div>
+    <div style="font-size:11px;color:#666;"><strong style="color:#888;">URL:</strong> <code>tcp://192.168.195.140:8080</code></div>
+    
+    <div style="font-size:11px;color:#4caf50;margin-top:6px;"><strong>Remediation:</strong> Secure Tomcat manager. Change default credentials. Remove unused apps.</div>
+  </div>
+  <div class="finding-card High">
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;">
+      <div>
+        <span class="badge badge-high">High</span>
+        <span class="badge badge-src">Metasploit Framework</span>
+        <span class="badge badge-src">CVSS 7.5</span>
+        <code style="font-size:11px;">MSF-F7151</code>
+      </div>
+    </div>
+    <div style="font-weight:700;font-size:14px;color:#fff;margin-bottom:6px;">FTP Anonymous / Weak Credentials</div>
+    <div style="font-size:12px;color:#aaa;margin-bottom:6px;">FTP Anonymous / Weak Credentials — CVE: CWE-521. Target version: vsftpd 2.3.4. ⚠️ Version fingerprint matches known vulnerable version.</div>
+    <div style="font-size:11px;color:#666;"><strong style="color:#888;">URL:</strong> <code>http://192.168.195.139:21</code></div>
+    <div style="font-size:11px;color:#666;margin-top:4px;"><strong style="color:#888;">Attack:</strong> <code>N/A</code></div>
+    <div style="font-size:11px;color:#4caf50;margin-top:6px;"><strong>Remediation:</strong> Disable anonymous FTP. Use SFTP/FTPS. Require strong credentials.</div>
+  </div>
+  <div class="finding-card High">
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;">
+      <div>
+        <span class="badge badge-high">High</span>
+        <span class="badge badge-src">Metasploit Framework</span>
+        <span class="badge badge-src">CVSS 8.1</span>
+        <code style="font-size:11px;">MSF-F9688</code>
+      </div>
+    </div>
+    <div style="font-weight:700;font-size:14px;color:#fff;margin-bottom:6px;">SSH Default / Weak Credentials</div>
+    <div style="font-size:12px;color:#aaa;margin-bottom:6px;">SSH Default / Weak Credentials — CVE: CWE-521. Target version: OpenSSH 4.7p1 Debian 8ubuntu1 (protocol 2.0). ⚠️ Version fingerprint matches known vulnerable version.</div>
+    <div style="font-size:11px;color:#666;"><strong style="color:#888;">URL:</strong> <code>http://192.168.195.139:22</code></div>
+    <div style="font-size:11px;color:#666;margin-top:4px;"><strong style="color:#888;">Attack:</strong> <code>N/A</code></div>
+    <div style="font-size:11px;color:#4caf50;margin-top:6px;"><strong>Remediation:</strong> Disable password auth. Use SSH keys only. Add fail2ban. Change default credentials.</div>
+  </div>
+  <div class="finding-card High">
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;">
+      <div>
+        <span class="badge badge-high">High</span>
+        <span class="badge badge-src">Metasploit Framework</span>
+        <span class="badge badge-src">CVSS 7.5</span>
+        <code style="font-size:11px;">MSF-F8644</code>
+      </div>
+    </div>
+    <div style="font-weight:700;font-size:14px;color:#fff;margin-bottom:6px;">Telnet Cleartext Protocol Exposed</div>
+    <div style="font-size:12px;color:#aaa;margin-bottom:6px;">Telnet Cleartext Protocol Exposed — CVE: CWE-319. Target version: Linux telnetd. ⚠️ Version fingerprint matches known vulnerable version.</div>
+    <div style="font-size:11px;color:#666;"><strong style="color:#888;">URL:</strong> <code>http://192.168.195.139:23</code></div>
+    <div style="font-size:11px;color:#666;margin-top:4px;"><strong style="color:#888;">Attack:</strong> <code>N/A</code></div>
+    <div style="font-size:11px;color:#4caf50;margin-top:6px;"><strong>Remediation:</strong> Disable telnet. Replace with SSH: systemctl disable telnetd && systemctl enable sshd.</div>
+  </div>
+  <div class="finding-card High">
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;">
+      <div>
+        <span class="badge badge-high">High</span>
+        <span class="badge badge-src">Metasploit Framework</span>
+        <span class="badge badge-src">CVSS 8.5</span>
+        <code style="font-size:11px;">MSF-F1257</code>
+      </div>
+    </div>
+    <div style="font-weight:700;font-size:14px;color:#fff;margin-bottom:6px;">VNC No Authentication / Weak Password</div>
+    <div style="font-size:12px;color:#aaa;margin-bottom:6px;">VNC No Authentication / Weak Password — CVE: CWE-306. Target version: VNC (protocol 3.3). ⚠️ Version fingerprint matches known vulnerable version.</div>
+    <div style="font-size:11px;color:#666;"><strong style="color:#888;">URL:</strong> <code>http://192.168.195.139:5900</code></div>
+    <div style="font-size:11px;color:#666;margin-top:4px;"><strong style="color:#888;">Attack:</strong> <code>N/A</code></div>
+    <div style="font-size:11px;color:#4caf50;margin-top:6px;"><strong>Remediation:</strong> Enable VNC authentication. Use VeNCrypt. Restrict to trusted IPs via firewall.</div>
+  </div>
+  <div class="finding-card High">
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;">
+      <div>
+        <span class="badge badge-high">High</span>
+        <span class="badge badge-src">Metasploit Framework</span>
+        <span class="badge badge-src">CVSS 8.1</span>
+        <code style="font-size:11px;">MSF-F2540</code>
+      </div>
+    </div>
+    <div style="font-weight:700;font-size:14px;color:#fff;margin-bottom:6px;">SSH Default / Weak Credentials</div>
+    <div style="font-size:12px;color:#aaa;margin-bottom:6px;">SSH Default / Weak Credentials — CVE: CWE-521. Target version: OpenSSH 5.3p1 Debian 3ubuntu4 (Ubuntu Linux; protocol 2.0). ⚠️ Version fingerprint matches known vulnerable version.</div>
+    <div style="font-size:11px;color:#666;"><strong style="color:#888;">URL:</strong> <code>http://192.168.195.140:22</code></div>
+    <div style="font-size:11px;color:#666;margin-top:4px;"><strong style="color:#888;">Attack:</strong> <code>N/A</code></div>
+    <div style="font-size:11px;color:#4caf50;margin-top:6px;"><strong>Remediation:</strong> Disable password auth. Use SSH keys only. Add fail2ban. Change default credentials.</div>
+  </div>
+  </div>
+
+  <!-- Medium Findings -->
+  <div class="section">
+    <h2>🟡 Medium Severity Findings</h2>
+    <table>
+      <tr><th>ID</th><th>Title</th><th>Source</th><th>URL/Target</th><th>CVSS</th></tr>
+      
+        <tr>
+          <td><code>NMAP-F002</code></td>
+          <td>Open SSH Service Detected</td>
+          <td><span class="pill">Nmap</span></td>
+          <td style="font-size:10px;max-width:300px;overflow:hidden;text-overflow:ellipsis;">tcp://192.168.195.139:22</td>
+          <td>5</td>
+        </tr>
+        <tr>
+          <td><code>NMAP-F001</code></td>
+          <td>Open SSH Service Detected</td>
+          <td><span class="pill">Nmap</span></td>
+          <td style="font-size:10px;max-width:300px;overflow:hidden;text-overflow:ellipsis;">tcp://192.168.195.140:22</td>
+          <td>5</td>
+        </tr>
+        <tr>
+          <td><code>NMAP-F004</code></td>
+          <td>Open SSL/HTTPS? Service Detected</td>
+          <td><span class="pill">Nmap</span></td>
+          <td style="font-size:10px;max-width:300px;overflow:hidden;text-overflow:ellipsis;">tcp://192.168.195.140:443</td>
+          <td>5</td>
+        </tr>
+    </table>
+  </div>
+
+  <!-- All Findings Table -->
+  <div class="section">
+    <h2>📋 All Findings (27 total)</h2>
+    <table>
+      <tr><th>ID</th><th>Severity</th><th>Title</th><th>Source</th><th>URL</th><th>CVSS</th></tr>
+      
+        <tr>
+          <td><code>NMAP-F001</code></td>
+          <td><span class="badge badge-crit">Critical</span></td>
+          <td style="font-size:12px;">Open FTP Service Detected</td>
+          <td><span class="pill">Nmap</span></td>
+          <td style="font-size:10px;max-width:250px;overflow:hidden;text-overflow:ellipsis;">tcp://192.168.195.139:21</td>
+          <td>9.8</td>
+        </tr>
+        <tr>
+          <td><code>NMAP-F003</code></td>
+          <td><span class="badge badge-crit">Critical</span></td>
+          <td style="font-size:12px;">Open TELNET Service Detected</td>
+          <td><span class="pill">Nmap</span></td>
+          <td style="font-size:10px;max-width:250px;overflow:hidden;text-overflow:ellipsis;">tcp://192.168.195.139:23</td>
+          <td>9.8</td>
+        </tr>
+        <tr>
+          <td><code>NMAP-F006</code></td>
+          <td><span class="badge badge-crit">Critical</span></td>
+          <td style="font-size:12px;">Open NETBIOS-SSN Service Detected</td>
+          <td><span class="pill">Nmap</span></td>
+          <td style="font-size:10px;max-width:250px;overflow:hidden;text-overflow:ellipsis;">tcp://192.168.195.139:445</td>
+          <td>9.8</td>
+        </tr>
+        <tr>
+          <td><code>NMAP-F005</code></td>
+          <td><span class="badge badge-crit">Critical</span></td>
+          <td style="font-size:12px;">Open NETBIOS-SSN Service Detected</td>
+          <td><span class="pill">Nmap</span></td>
+          <td style="font-size:10px;max-width:250px;overflow:hidden;text-overflow:ellipsis;">tcp://192.168.195.140:445</td>
+          <td>9.8</td>
+        </tr>
+        <tr>
+          <td><code>MSF-F3440</code></td>
+          <td><span class="badge badge-crit">Critical</span></td>
+          <td style="font-size:12px;">vsftpd 2.3.4 Backdoor</td>
+          <td><span class="pill">Metasploit Framework</span></td>
+          <td style="font-size:10px;max-width:250px;overflow:hidden;text-overflow:ellipsis;">http://192.168.195.139:21</td>
+          <td>10</td>
+        </tr>
+        <tr>
+          <td><code>MSF-F8253</code></td>
+          <td><span class="badge badge-crit">Critical</span></td>
+          <td style="font-size:12px;">Samba usermap_script RCE</td>
+          <td><span class="pill">Metasploit Framework</span></td>
+          <td style="font-size:10px;max-width:250px;overflow:hidden;text-overflow:ellipsis;">http://192.168.195.139:139</td>
+          <td>10</td>
+        </tr>
+        <tr>
+          <td><code>MSF-F5096</code></td>
+          <td><span class="badge badge-crit">Critical</span></td>
+          <td style="font-size:12px;">Samba usermap_script RCE</td>
+          <td><span class="pill">Metasploit Framework</span></td>
+          <td style="font-size:10px;max-width:250px;overflow:hidden;text-overflow:ellipsis;">http://192.168.195.139:445</td>
+          <td>10</td>
+        </tr>
+        <tr>
+          <td><code>MSF-F6048</code></td>
+          <td><span class="badge badge-crit">Critical</span></td>
+          <td style="font-size:12px;">MySQL Empty Root Password</td>
+          <td><span class="pill">Metasploit Framework</span></td>
+          <td style="font-size:10px;max-width:250px;overflow:hidden;text-overflow:ellipsis;">http://192.168.195.139:3306</td>
+          <td>9.8</td>
+        </tr>
+        <tr>
+          <td><code>MSF-F7528</code></td>
+          <td><span class="badge badge-crit">Critical</span></td>
+          <td style="font-size:12px;">Apache Tomcat Manager RCE</td>
+          <td><span class="pill">Metasploit Framework</span></td>
+          <td style="font-size:10px;max-width:250px;overflow:hidden;text-overflow:ellipsis;">http://192.168.195.139:8180</td>
+          <td>9</td>
+        </tr>
+        <tr>
+          <td><code>MSF-F2478</code></td>
+          <td><span class="badge badge-crit">Critical</span></td>
+          <td style="font-size:12px;">PHP CGI Argument Injection RCE</td>
+          <td><span class="pill">Metasploit Framework</span></td>
+          <td style="font-size:10px;max-width:250px;overflow:hidden;text-overflow:ellipsis;">http://192.168.195.140:80</td>
+          <td>9.8</td>
+        </tr>
+        <tr>
+          <td><code>MSF-F7730</code></td>
+          <td><span class="badge badge-crit">Critical</span></td>
+          <td style="font-size:12px;">Samba usermap_script RCE</td>
+          <td><span class="pill">Metasploit Framework</span></td>
+          <td style="font-size:10px;max-width:250px;overflow:hidden;text-overflow:ellipsis;">http://192.168.195.140:139</td>
+          <td>10</td>
+        </tr>
+        <tr>
+          <td><code>MSF-F7493</code></td>
+          <td><span class="badge badge-crit">Critical</span></td>
+          <td style="font-size:12px;">Samba usermap_script RCE</td>
+          <td><span class="pill">Metasploit Framework</span></td>
+          <td style="font-size:10px;max-width:250px;overflow:hidden;text-overflow:ellipsis;">http://192.168.195.140:445</td>
+          <td>10</td>
+        </tr>
+        <tr>
+          <td><code>NMAP-F004</code></td>
+          <td><span class="badge badge-high">High</span></td>
+          <td style="font-size:12px;">Open HTTP Service Detected</td>
+          <td><span class="pill">Nmap</span></td>
+          <td style="font-size:10px;max-width:250px;overflow:hidden;text-overflow:ellipsis;">tcp://192.168.195.139:80</td>
+          <td>5</td>
+        </tr>
+        <tr>
+          <td><code>NMAP-F007</code></td>
+          <td><span class="badge badge-high">High</span></td>
+          <td style="font-size:12px;">Open MYSQL Service Detected</td>
+          <td><span class="pill">Nmap</span></td>
+          <td style="font-size:10px;max-width:250px;overflow:hidden;text-overflow:ellipsis;">tcp://192.168.195.139:3306</td>
+          <td>8.2</td>
+        </tr>
+        <tr>
+          <td><code>NMAP-F008</code></td>
+          <td><span class="badge badge-high">High</span></td>
+          <td style="font-size:12px;">Open VNC Service Detected</td>
+          <td><span class="pill">Nmap</span></td>
+          <td style="font-size:10px;max-width:250px;overflow:hidden;text-overflow:ellipsis;">tcp://192.168.195.139:5900</td>
+          <td>7.5</td>
+        </tr>
+        <tr>
+          <td><code>NMAP-F002</code></td>
+          <td><span class="badge badge-high">High</span></td>
+          <td style="font-size:12px;">Open HTTP Service Detected</td>
+          <td><span class="pill">Nmap</span></td>
+          <td style="font-size:10px;max-width:250px;overflow:hidden;text-overflow:ellipsis;">tcp://192.168.195.140:80</td>
+          <td>5</td>
+        </tr>
+        <tr>
+          <td><code>NMAP-F006</code></td>
+          <td><span class="badge badge-high">High</span></td>
+          <td style="font-size:12px;">Open HTTP-PROXY Service Detected</td>
+          <td><span class="pill">Nmap</span></td>
+          <td style="font-size:10px;max-width:250px;overflow:hidden;text-overflow:ellipsis;">tcp://192.168.195.140:8080</td>
+          <td>5</td>
+        </tr>
+        <tr>
+          <td><code>MSF-F7151</code></td>
+          <td><span class="badge badge-high">High</span></td>
+          <td style="font-size:12px;">FTP Anonymous / Weak Credentials</td>
+          <td><span class="pill">Metasploit Framework</span></td>
+          <td style="font-size:10px;max-width:250px;overflow:hidden;text-overflow:ellipsis;">http://192.168.195.139:21</td>
+          <td>7.5</td>
+        </tr>
+        <tr>
+          <td><code>MSF-F9688</code></td>
+          <td><span class="badge badge-high">High</span></td>
+          <td style="font-size:12px;">SSH Default / Weak Credentials</td>
+          <td><span class="pill">Metasploit Framework</span></td>
+          <td style="font-size:10px;max-width:250px;overflow:hidden;text-overflow:ellipsis;">http://192.168.195.139:22</td>
+          <td>8.1</td>
+        </tr>
+        <tr>
+          <td><code>MSF-F8644</code></td>
+          <td><span class="badge badge-high">High</span></td>
+          <td style="font-size:12px;">Telnet Cleartext Protocol Exposed</td>
+          <td><span class="pill">Metasploit Framework</span></td>
+          <td style="font-size:10px;max-width:250px;overflow:hidden;text-overflow:ellipsis;">http://192.168.195.139:23</td>
+          <td>7.5</td>
+        </tr>
+        <tr>
+          <td><code>MSF-F1257</code></td>
+          <td><span class="badge badge-high">High</span></td>
+          <td style="font-size:12px;">VNC No Authentication / Weak Password</td>
+          <td><span class="pill">Metasploit Framework</span></td>
+          <td style="font-size:10px;max-width:250px;overflow:hidden;text-overflow:ellipsis;">http://192.168.195.139:5900</td>
+          <td>8.5</td>
+        </tr>
+        <tr>
+          <td><code>MSF-F2540</code></td>
+          <td><span class="badge badge-high">High</span></td>
+          <td style="font-size:12px;">SSH Default / Weak Credentials</td>
+          <td><span class="pill">Metasploit Framework</span></td>
+          <td style="font-size:10px;max-width:250px;overflow:hidden;text-overflow:ellipsis;">http://192.168.195.140:22</td>
+          <td>8.1</td>
+        </tr>
+        <tr>
+          <td><code>NMAP-F002</code></td>
+          <td><span class="badge badge-medi">Medium</span></td>
+          <td style="font-size:12px;">Open SSH Service Detected</td>
+          <td><span class="pill">Nmap</span></td>
+          <td style="font-size:10px;max-width:250px;overflow:hidden;text-overflow:ellipsis;">tcp://192.168.195.139:22</td>
+          <td>5</td>
+        </tr>
+        <tr>
+          <td><code>NMAP-F001</code></td>
+          <td><span class="badge badge-medi">Medium</span></td>
+          <td style="font-size:12px;">Open SSH Service Detected</td>
+          <td><span class="pill">Nmap</span></td>
+          <td style="font-size:10px;max-width:250px;overflow:hidden;text-overflow:ellipsis;">tcp://192.168.195.140:22</td>
+          <td>5</td>
+        </tr>
+        <tr>
+          <td><code>NMAP-F004</code></td>
+          <td><span class="badge badge-medi">Medium</span></td>
+          <td style="font-size:12px;">Open SSL/HTTPS? Service Detected</td>
+          <td><span class="pill">Nmap</span></td>
+          <td style="font-size:10px;max-width:250px;overflow:hidden;text-overflow:ellipsis;">tcp://192.168.195.140:443</td>
+          <td>5</td>
+        </tr>
+        <tr>
+          <td><code>NMAP-F005</code></td>
+          <td><span class="badge badge-low">Low</span></td>
+          <td style="font-size:12px;">Open NETBIOS-SSN Service Detected</td>
+          <td><span class="pill">Nmap</span></td>
+          <td style="font-size:10px;max-width:250px;overflow:hidden;text-overflow:ellipsis;">tcp://192.168.195.139:139</td>
+          <td>5</td>
+        </tr>
+        <tr>
+          <td><code>NMAP-F003</code></td>
+          <td><span class="badge badge-low">Low</span></td>
+          <td style="font-size:12px;">Open NETBIOS-SSN Service Detected</td>
+          <td><span class="pill">Nmap</span></td>
+          <td style="font-size:10px;max-width:250px;overflow:hidden;text-overflow:ellipsis;">tcp://192.168.195.140:139</td>
+          <td>5</td>
+        </tr>
+    </table>
+  </div>
+
+  <!-- Remediation Roadmap -->
+  <div class="section">
+    <h2>🛠 Remediation Roadmap</h2>
+    <table>
+    <tr><th>Priority</th><th>Finding</th><th>Source</th><th>Remediation</th></tr>
+    <tr>
+      <td><span class="badge badge-crit">IMMEDIATE</span></td>
+      <td style="font-size:12px;">Open FTP Service Detected</td>
+      <td><span class="pill">Nmap</span></td>
+      <td style="font-size:11px;color:#aaa;">Disable FTP. Use SFTP/SCP. If required, enable TLS and disable anonymous access.</td>
+    </tr><tr>
+      <td><span class="badge badge-crit">IMMEDIATE</span></td>
+      <td style="font-size:12px;">Open TELNET Service Detected</td>
+      <td><span class="pill">Nmap</span></td>
+      <td style="font-size:11px;color:#aaa;">Disable Telnet immediately. Replace with SSH.</td>
+    </tr><tr>
+      <td><span class="badge badge-crit">IMMEDIATE</span></td>
+      <td style="font-size:12px;">Open NETBIOS-SSN Service Detected</td>
+      <td><span class="pill">Nmap</span></td>
+      <td style="font-size:11px;color:#aaa;">Apply MS17-010 patch. Restrict SMB access via firewall. Disable SMBv1.</td>
+    </tr><tr>
+      <td><span class="badge badge-crit">IMMEDIATE</span></td>
+      <td style="font-size:12px;">Open NETBIOS-SSN Service Detected</td>
+      <td><span class="pill">Nmap</span></td>
+      <td style="font-size:11px;color:#aaa;">Apply MS17-010 patch. Restrict SMB access via firewall. Disable SMBv1.</td>
+    </tr><tr>
+      <td><span class="badge badge-crit">IMMEDIATE</span></td>
+      <td style="font-size:12px;">vsftpd 2.3.4 Backdoor</td>
+      <td><span class="pill">Metasploit Framework</span></td>
+      <td style="font-size:11px;color:#aaa;">Upgrade vsftpd immediately. This version has a deliberately planted backdoor. CVE-2011-2523.</td>
+    </tr><tr>
+      <td><span class="badge badge-crit">IMMEDIATE</span></td>
+      <td style="font-size:12px;">Samba usermap_script RCE</td>
+      <td><span class="pill">Metasploit Framework</span></td>
+      <td style="font-size:11px;color:#aaa;">Upgrade Samba to 3.0.26 or later. Restrict SMB to internal network. CVE-2007-2447.</td>
+    </tr><tr>
+      <td><span class="badge badge-crit">IMMEDIATE</span></td>
+      <td style="font-size:12px;">Samba usermap_script RCE</td>
+      <td><span class="pill">Metasploit Framework</span></td>
+      <td style="font-size:11px;color:#aaa;">Upgrade Samba to 3.0.26 or later. Restrict SMB to internal network. CVE-2007-2447.</td>
+    </tr><tr>
+      <td><span class="badge badge-crit">IMMEDIATE</span></td>
+      <td style="font-size:12px;">MySQL Empty Root Password</td>
+      <td><span class="pill">Metasploit Framework</span></td>
+      <td style="font-size:11px;color:#aaa;">Set a strong root password: ALTER USER root@localhost IDENTIFIED BY 'strong_pass';</td>
+    </tr><tr>
+      <td><span class="badge badge-crit">IMMEDIATE</span></td>
+      <td style="font-size:12px;">Apache Tomcat Manager RCE</td>
+      <td><span class="pill">Metasploit Framework</span></td>
+      <td style="font-size:11px;color:#aaa;">Change Tomcat manager credentials. Restrict manager access to localhost. CVE-2009-3843.</td>
+    </tr><tr>
+      <td><span class="badge badge-crit">IMMEDIATE</span></td>
+      <td style="font-size:12px;">PHP CGI Argument Injection RCE</td>
+      <td><span class="pill">Metasploit Framework</span></td>
+      <td style="font-size:11px;color:#aaa;">Upgrade PHP. Disable CGI mode. Use mod_rewrite to block malicious query strings. CVE-2012-1823.</td>
+    </tr><tr>
+      <td><span class="badge badge-crit">IMMEDIATE</span></td>
+      <td style="font-size:12px;">Samba usermap_script RCE</td>
+      <td><span class="pill">Metasploit Framework</span></td>
+      <td style="font-size:11px;color:#aaa;">Upgrade Samba to 3.0.26 or later. Restrict SMB to internal network. CVE-2007-2447.</td>
+    </tr><tr>
+      <td><span class="badge badge-crit">IMMEDIATE</span></td>
+      <td style="font-size:12px;">Samba usermap_script RCE</td>
+      <td><span class="pill">Metasploit Framework</span></td>
+      <td style="font-size:11px;color:#aaa;">Upgrade Samba to 3.0.26 or later. Restrict SMB to internal network. CVE-2007-2447.</td>
+    </tr><tr>
+      <td><span class="badge badge-high">SHORT-TERM</span></td>
+      <td style="font-size:12px;">Open HTTP Service Detected</td>
+      <td><span class="pill">Nmap</span></td>
+      <td style="font-size:11px;color:#aaa;">Redirect HTTP to HTTPS. Review web application for OWASP Top 10 vulnerabilities.</td>
+    </tr><tr>
+      <td><span class="badge badge-high">SHORT-TERM</span></td>
+      <td style="font-size:12px;">Open MYSQL Service Detected</td>
+      <td><span class="pill">Nmap</span></td>
+      <td style="font-size:11px;color:#aaa;">Bind MySQL to 127.0.0.1. Use strong credentials. Restrict remote access.</td>
+    </tr><tr>
+      <td><span class="badge badge-high">SHORT-TERM</span></td>
+      <td style="font-size:12px;">Open VNC Service Detected</td>
+      <td><span class="pill">Nmap</span></td>
+      <td style="font-size:11px;color:#aaa;">Require VNC authentication. Restrict to trusted IPs. Prefer SSH tunnel.</td>
+    </tr><tr>
+      <td><span class="badge badge-high">SHORT-TERM</span></td>
+      <td style="font-size:12px;">Open HTTP Service Detected</td>
+      <td><span class="pill">Nmap</span></td>
+      <td style="font-size:11px;color:#aaa;">Redirect HTTP to HTTPS. Review web application for OWASP Top 10 vulnerabilities.</td>
+    </tr><tr>
+      <td><span class="badge badge-high">SHORT-TERM</span></td>
+      <td style="font-size:12px;">Open HTTP-PROXY Service Detected</td>
+      <td><span class="pill">Nmap</span></td>
+      <td style="font-size:11px;color:#aaa;">Secure Tomcat manager. Change default credentials. Remove unused apps.</td>
+    </tr><tr>
+      <td><span class="badge badge-high">SHORT-TERM</span></td>
+      <td style="font-size:12px;">FTP Anonymous / Weak Credentials</td>
+      <td><span class="pill">Metasploit Framework</span></td>
+      <td style="font-size:11px;color:#aaa;">Disable anonymous FTP. Use SFTP/FTPS. Require strong credentials.</td>
+    </tr><tr>
+      <td><span class="badge badge-high">SHORT-TERM</span></td>
+      <td style="font-size:12px;">SSH Default / Weak Credentials</td>
+      <td><span class="pill">Metasploit Framework</span></td>
+      <td style="font-size:11px;color:#aaa;">Disable password auth. Use SSH keys only. Add fail2ban. Change default credentials.</td>
+    </tr><tr>
+      <td><span class="badge badge-high">SHORT-TERM</span></td>
+      <td style="font-size:12px;">Telnet Cleartext Protocol Exposed</td>
+      <td><span class="pill">Metasploit Framework</span></td>
+      <td style="font-size:11px;color:#aaa;">Disable telnet. Replace with SSH: systemctl disable telnetd && systemctl enable sshd.</td>
+    </tr><tr>
+      <td><span class="badge badge-high">SHORT-TERM</span></td>
+      <td style="font-size:12px;">VNC No Authentication / Weak Password</td>
+      <td><span class="pill">Metasploit Framework</span></td>
+      <td style="font-size:11px;color:#aaa;">Enable VNC authentication. Use VeNCrypt. Restrict to trusted IPs via firewall.</td>
+    </tr><tr>
+      <td><span class="badge badge-high">SHORT-TERM</span></td>
+      <td style="font-size:12px;">SSH Default / Weak Credentials</td>
+      <td><span class="pill">Metasploit Framework</span></td>
+      <td style="font-size:11px;color:#aaa;">Disable password auth. Use SSH keys only. Add fail2ban. Change default credentials.</td>
+    </tr><tr>
+      <td><span class="badge badge-med">MEDIUM-TERM</span></td>
+      <td style="font-size:12px;">Open SSH Service Detected</td>
+      <td><span class="pill">Nmap</span></td>
+      <td style="font-size:11px;color:#aaa;">Restrict SSH to key-based auth. Use fail2ban. Limit to trusted IPs via firewall.</td>
+    </tr><tr>
+      <td><span class="badge badge-med">MEDIUM-TERM</span></td>
+      <td style="font-size:12px;">Open SSH Service Detected</td>
+      <td><span class="pill">Nmap</span></td>
+      <td style="font-size:11px;color:#aaa;">Restrict SSH to key-based auth. Use fail2ban. Limit to trusted IPs via firewall.</td>
+    </tr><tr>
+      <td><span class="badge badge-med">MEDIUM-TERM</span></td>
+      <td style="font-size:12px;">Open SSL/HTTPS? Service Detected</td>
+      <td><span class="pill">Nmap</span></td>
+      <td style="font-size:11px;color:#aaa;">Review service necessity and restrict access to trusted sources only.</td>
+    </tr>
+  </table>
+  </div>
+
+</div>
+</body>
+</html>

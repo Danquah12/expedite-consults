@@ -1,0 +1,212 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-critical: var(--critical);
+  --color-high: var(--high);
+  --color-medium: var(--medium);
+  --color-low: var(--low);
+}
+
+:root {
+  --background:  #0a0f1a;
+  --surface:     #0f1629;
+  --surface-2:   #131e35;
+  --foreground:  #e2e8f0;
+  --muted:       #64748b;
+  --border:      #1e2d4a;
+  --primary:     #00d4ff;
+  --primary-dim: #00d4ff22;
+  --critical:    #ff3b30;
+  --high:        #ff9500;
+  --medium:      #ffcc00;
+  --low:         #34c759;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-geist-sans, system-ui, -apple-system, sans-serif);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.6;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--surface);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--muted);
+  }
+
+  ::selection {
+    background: #00d4ff33;
+    color: #e2e8f0;
+  }
+}
+
+/* ── Glow utilities ─────────────────────────────────────────── */
+.glow-cyan {
+  box-shadow: 0 0 40px rgba(0, 212, 255, 0.12),
+              0 0 80px rgba(0, 212, 255, 0.06);
+}
+
+.glow-red {
+  box-shadow: 0 0 20px rgba(255, 59, 48, 0.15);
+}
+
+.glow-orange {
+  box-shadow: 0 0 20px rgba(255, 149, 0, 0.12);
+}
+
+/* ── Terminal styles ────────────────────────────────────────── */
+.terminal {
+  background: #050a12;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  font-size: 0.82rem;
+  line-height: 1.7;
+}
+
+.terminal-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  background: #080e1a;
+  border-radius: 0.75rem 0.75rem 0 0;
+}
+
+.terminal-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+/* ── Scan progress bar ──────────────────────────────────────── */
+@keyframes progress-scan {
+  0%   { width: 0%; }
+  100% { width: var(--target-width); }
+}
+
+/* ── Code highlight ─────────────────────────────────────────── */
+.code-block {
+  background: #050a12;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  font-size: 0.8rem;
+  line-height: 1.8;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.code-vulnerable {
+  color: #ff6b6b;
+  background: rgba(255, 59, 48, 0.05);
+  display: block;
+  padding: 0 0.5rem;
+  margin: 0 -1rem;
+}
+
+.code-fixed {
+  color: #69db7c;
+  background: rgba(52, 199, 89, 0.05);
+  display: block;
+  padding: 0 0.5rem;
+  margin: 0 -1rem;
+}
+
+/* ── Attack path ────────────────────────────────────────────── */
+.attack-node {
+  position: relative;
+}
+
+.attack-node::after {
+  content: '';
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 20px;
+  background: linear-gradient(to bottom, var(--border), transparent);
+}
+
+.attack-node:last-child::after {
+  display: none;
+}
+
+/* ── Marquee animation ──────────────────────────────────────── */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.marquee-track {
+  animation: marquee 30s linear infinite;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+/* ── Pulse glow ─────────────────────────────────────────────── */
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 0.8; }
+}
+
+.pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+/* ── Typing cursor ──────────────────────────────────────────── */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+.cursor-blink::after {
+  content: '█';
+  animation: blink 1s step-end infinite;
+  color: var(--primary);
+}
+
+/* ── Scan line ──────────────────────────────────────────────── */
+@keyframes scan-line {
+  0%   { transform: translateY(-100%); opacity: 0; }
+  10%  { opacity: 0.6; }
+  90%  { opacity: 0.6; }
+  100% { transform: translateY(100vh); opacity: 0; }
+}

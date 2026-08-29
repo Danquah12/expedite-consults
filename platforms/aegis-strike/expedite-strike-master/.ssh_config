@@ -1,0 +1,10 @@
+# Aegis SCAP Legacy SSH Config
+# Enables ssh-rsa for older targets (OWASP BWA, legacy VMs)
+# Used via: ssh -F /opt/vuln_intel/app/.ssh_config ...
+
+Host *
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+    HostKeyAlgorithms +ssh-rsa
+    PubkeyAcceptedAlgorithms +ssh-rsa
+    ConnectTimeout 10

@@ -1,0 +1,140 @@
+import type { ContainerImage, RegistrySummary } from "@/types/container";
+
+export const IMAGES: ContainerImage[] = [
+  {
+    id: "IMG-001", name: "acme/customer-api", tag: "latest",
+    digest: "sha256:a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456",
+    baseImage: "ubuntu:20.04", os: "Linux/Ubuntu 20.04", arch: "amd64",
+    sizeBytes: 524_288_000, layerCount: 14, pushedAt: "2026-08-19T10:30:00Z",
+    registry: "registry.acme.com", status: "Critical",
+    criticalCount: 3, highCount: 8, mediumCount: 12, lowCount: 21, totalVulns: 44,
+    cves: [
+      { id: "CVE-2023-4911", severity: "Critical", cvss: 9.8, packageName: "glibc", installedVer: "2.31-13", fixedVer: "2.31-14", layer: "sha256:a1b2", description: "Looney Tunables — privilege escalation via buffer overflow in glibc's dynamic loader. Allows local user to gain root.", publishedAt: "2023-10-03", fixStatus: "Fixed" },
+      { id: "CVE-2023-44487", severity: "Critical", cvss: 7.5, packageName: "nghttp2", installedVer: "1.40.0", fixedVer: "1.57.0", layer: "sha256:a1b2", description: "HTTP/2 Rapid Reset Attack — allows remote attacker to cause denial of service by rapidly sending and cancelling HTTP/2 requests.", publishedAt: "2023-10-10", fixStatus: "Fixed" },
+      { id: "CVE-2022-3602", severity: "Critical", cvss: 9.8, packageName: "openssl", installedVer: "3.0.2", fixedVer: "3.0.7", layer: "sha256:c3d4", description: "OpenSSL buffer overflow in certificate verification — X.509 certificate with punycode encoded email can trigger 4-byte stack overflow.", publishedAt: "2022-11-01", fixStatus: "Fixed" },
+      { id: "CVE-2023-2650", severity: "High", cvss: 7.8, packageName: "openssl", installedVer: "3.0.2", fixedVer: "3.0.9", layer: "sha256:c3d4", description: "Denial of service in PKCS12 processing — specially crafted PKCS12 file can cause OID processing to consume excessive CPU.", publishedAt: "2023-05-30", fixStatus: "Fixed" },
+    ],
+    misconfigs: [
+      { id: "MC-001", rule: "CIS Docker 4.1", title: "Container running as root", severity: "Critical", description: "The container USER directive is not set, causing all processes to run as UID 0 (root). If exploited, attacker gains root in container.", remediation: "Add USER 1001:1001 to your Dockerfile before the final CMD/ENTRYPOINT", reference: "https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#user" },
+      { id: "MC-002", rule: "CIS Docker 5.7", title: "Privileged container", severity: "Critical", description: "Container runs with --privileged flag, disabling all security mechanisms and giving full host kernel access.", remediation: "Remove --privileged flag. Add only specific capabilities needed with --cap-add", reference: "https://docs.docker.com/engine/reference/run/#runtime-privilege-and-linux-capabilities" },
+      { id: "MC-003", rule: "CIS Docker 5.12", title: "Root filesystem not read-only", severity: "High", description: "Container filesystem is writable. This allows a compromised container to modify its own binary or write malware.", remediation: "Add --read-only flag to docker run command and mount specific directories with tmpfs", reference: "https://docs.docker.com/engine/reference/commandline/run/" },
+    ],
+    layers: [
+      { digest: "sha256:a1b2c3d4", command: "FROM ubuntu:20.04", size: 72_351_744, createdAt: "2026-08-01", vulnCount: 28 },
+      { digest: "sha256:c3d4e5f6", command: "RUN apt-get update && apt-get install -y openssl libssl-dev curl", size: 48_234_496, createdAt: "2026-08-10", vulnCount: 8 },
+      { digest: "sha256:e5f6a7b8", command: "COPY . /app", size: 15_728_640, createdAt: "2026-08-19", vulnCount: 0 },
+      { digest: "sha256:a7b8c9d0", command: "RUN npm install --production", size: 124_780_544, createdAt: "2026-08-19", vulnCount: 8 },
+    ],
+    isRunning: true, replicaCount: 8, namespace: "production", internetFacing: true,
+    hasRootUser: true, hasPrivileged: true, noReadOnly: true,
+    baseImageFix: "ubuntu:22.04",
+    remediationSteps: [
+      "Rebuild immediately using ubuntu:22.04 base to resolve 22 CVEs",
+      "Add USER 1001:1001 directive to Dockerfile",
+      "Remove --privileged flag from Kubernetes deployment spec",
+      "Add readOnlyRootFilesystem: true to securityContext",
+      "Implement image scanning in CI/CD pipeline to catch before push",
+    ],
+    complianceRefs: [
+      { framework: "PCI DSS", ref: "6.3.3", description: "Install applicable patches within defined timeframes" },
+      { framework: "CIS Docker", ref: "4.1", description: "Create a user for the container" },
+    ],
+    scannedAt: "2026-08-20T22:00:00Z", scanner: "ContainerShield v0.46 + LayerDissector + Syft",
+    owner: "Platform Team", slaDeadline: "2026-08-21",
+  },
+  {
+    id: "IMG-002", name: "acme/auth-service", tag: "v2.1.3",
+    digest: "sha256:b2c3d4e5f678901234567890123456789012345678901234567890abcdef1234",
+    baseImage: "node:18-alpine", os: "Linux/Alpine 3.17", arch: "amd64",
+    sizeBytes: 187_244_544, layerCount: 8, pushedAt: "2026-08-18T14:00:00Z",
+    registry: "registry.acme.com", status: "Vulnerable",
+    criticalCount: 0, highCount: 3, mediumCount: 7, lowCount: 11, totalVulns: 21,
+    cves: [
+      { id: "CVE-2023-45133", severity: "High", cvss: 8.8, packageName: "@babel/traverse", installedVer: "7.22.10", fixedVer: "7.23.2", layer: "sha256:npm1", description: "Arbitrary code execution via prototype pollution in Babel's traversal. Untrusted input passed to traversal can execute arbitrary code.", publishedAt: "2023-10-12", fixStatus: "Fixed" },
+      { id: "CVE-2023-44270", severity: "High", cvss: 7.5, packageName: "postcss", installedVer: "8.4.28", fixedVer: "8.4.31", layer: "sha256:npm1", description: "ReDoS in PostCSS grid-template parsing — crafted CSS input causes catastrophic backtracking.", publishedAt: "2023-09-15", fixStatus: "Fixed" },
+    ],
+    misconfigs: [
+      { id: "MC-010", rule: "CIS Docker 4.6", title: "HEALTHCHECK not defined", severity: "Medium", description: "No HEALTHCHECK instruction in Dockerfile. Kubernetes cannot detect unhealthy containers and route traffic away from them.", remediation: "Add HEALTHCHECK --interval=30s --timeout=3s CMD curl -f http://localhost:8080/health || exit 1", reference: "https://docs.docker.com/engine/reference/builder/#healthcheck" },
+    ],
+    layers: [
+      { digest: "sha256:alpine1", command: "FROM node:18-alpine", size: 45_088_768, createdAt: "2026-07-15", vulnCount: 4 },
+      { digest: "sha256:npm1", command: "RUN npm ci --only=production", size: 98_566_144, createdAt: "2026-08-18", vulnCount: 17 },
+    ],
+    isRunning: true, replicaCount: 3, namespace: "production", internetFacing: false,
+    hasRootUser: false, hasPrivileged: false, noReadOnly: true,
+    baseImageFix: "node:18-alpine3.18",
+    remediationSteps: [
+      "Run npm update @babel/traverse postcss in the service",
+      "Rebuild image and push as v2.1.4",
+      "Update Kubernetes deployment to use new tag",
+      "Add HEALTHCHECK to Dockerfile",
+      "Enable readOnlyRootFilesystem in securityContext",
+    ],
+    complianceRefs: [{ framework: "NIST 800-53", ref: "SI-2", description: "Flaw Remediation" }],
+    scannedAt: "2026-08-20T22:01:00Z", scanner: "ContainerShield v0.46",
+    owner: "Auth Team", slaDeadline: "2026-08-25",
+  },
+  {
+    id: "IMG-003", name: "acme/ml-pipeline", tag: "v1.0.0",
+    digest: "sha256:c3d4e5f6789012345678901234567890123456789012345678901234567890ab",
+    baseImage: "python:3.9-slim", os: "Linux/Debian 11", arch: "amd64",
+    sizeBytes: 2_147_483_648, layerCount: 18, pushedAt: "2026-07-01T09:00:00Z",
+    registry: "registry.acme.com", status: "Critical",
+    criticalCount: 2, highCount: 11, mediumCount: 19, lowCount: 28, totalVulns: 60,
+    cves: [
+      { id: "CVE-2023-38325", severity: "Critical", cvss: 9.1, packageName: "cryptography", installedVer: "39.0.0", fixedVer: "41.0.2", layer: "sha256:pip1", description: "SSH key parsing vulnerability in cryptography library allows remote attacker to crash or potentially execute code via crafted keys.", publishedAt: "2023-07-14", fixStatus: "Fixed" },
+      { id: "CVE-2023-37276", severity: "Critical", cvss: 7.5, packageName: "aiohttp", installedVer: "3.8.4", fixedVer: "3.8.5", layer: "sha256:pip1", description: "HTTP request smuggling — attacker can bypass security controls or poison HTTP caches.", publishedAt: "2023-07-19", fixStatus: "Fixed" },
+    ],
+    misconfigs: [
+      { id: "MC-020", rule: "CIS Docker 4.2", title: "Root user in container", severity: "Critical", description: "ML pipeline container runs as root with 2 GB image and no read-only filesystem.", remediation: "Create non-root user, add USER directive, split into smaller purpose-built images", reference: "https://docs.docker.com/develop/develop-images/dockerfile_best-practices/" },
+      { id: "MC-021", rule: "CIS Docker 4.7", title: "apt-get cache not cleaned", severity: "Low", description: "Package manager cache retained in image layers, unnecessarily increasing image size by ~300 MB.", remediation: "Add rm -rf /var/lib/apt/lists/* after apt-get install in same RUN layer", reference: "https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#run" },
+    ],
+    layers: [
+      { digest: "sha256:python1", command: "FROM python:3.9-slim", size: 123_731_968, createdAt: "2026-06-01", vulnCount: 18 },
+      { digest: "sha256:pip1", command: "RUN pip install -r requirements.txt", size: 1_887_436_800, createdAt: "2026-07-01", vulnCount: 42 },
+    ],
+    isRunning: true, replicaCount: 2, namespace: "ml-training", internetFacing: false,
+    hasRootUser: true, hasPrivileged: false, noReadOnly: true,
+    baseImageFix: "python:3.11-slim",
+    remediationSteps: [
+      "Upgrade to python:3.11-slim base to resolve OS-level CVEs",
+      "Upgrade cryptography to 41.0.2+, aiohttp to 3.8.5+",
+      "Split image: separate training and inference images",
+      "Add USER 1001 and clean apt cache",
+    ],
+    complianceRefs: [{ framework: "PCI DSS", ref: "6.3.3", description: "Install applicable patches" }],
+    scannedAt: "2026-08-20T22:02:00Z", scanner: "ContainerShield v0.46 + LayerDissector",
+    owner: "ML Team", slaDeadline: "2026-08-28",
+  },
+  {
+    id: "IMG-004", name: "acme/nginx-frontend", tag: "v3.2.0",
+    digest: "sha256:d4e5f6a7b890123456789012345678901234567890abcdef123456789012abcd",
+    baseImage: "nginx:1.24-alpine", os: "Linux/Alpine 3.18", arch: "amd64",
+    sizeBytes: 42_991_616, layerCount: 5, pushedAt: "2026-08-15T08:00:00Z",
+    registry: "registry.acme.com", status: "Vulnerable",
+    criticalCount: 0, highCount: 1, mediumCount: 2, lowCount: 4, totalVulns: 7,
+    cves: [
+      { id: "CVE-2023-44487", severity: "High", cvss: 7.5, packageName: "nghttp2", installedVer: "1.55.1", fixedVer: "1.57.0", layer: "sha256:nginx1", description: "HTTP/2 Rapid Reset Attack — allows remote attacker to cause DoS by sending rapid stream resets.", publishedAt: "2023-10-10", fixStatus: "Fixed" },
+    ],
+    misconfigs: [],
+    layers: [
+      { digest: "sha256:nginx1", command: "FROM nginx:1.24-alpine", size: 39_845_888, createdAt: "2026-07-20", vulnCount: 7 },
+      { digest: "sha256:conf1",  command: "COPY nginx.conf /etc/nginx/nginx.conf", size: 4096, createdAt: "2026-08-15", vulnCount: 0 },
+    ],
+    isRunning: true, replicaCount: 5, namespace: "production", internetFacing: true,
+    hasRootUser: false, hasPrivileged: false, noReadOnly: false,
+    baseImageFix: "nginx:1.25-alpine",
+    remediationSteps: [
+      "Update to nginx:1.25-alpine to resolve HTTP/2 Rapid Reset CVE",
+      "Rebuild and redeploy — this is a small image (43 MB), change is fast",
+    ],
+    complianceRefs: [],
+    scannedAt: "2026-08-20T22:03:00Z", scanner: "ContainerShield v0.46",
+    owner: "Frontend Team", slaDeadline: "2026-08-28",
+  },
+];
+
+export const REGISTRY_SUMMARY: RegistrySummary = {
+  totalImages: 4, cleanImages: 0, vulnerableImages: 2, criticalImages: 2,
+  totalVulns: 132, totalMisconfigs: 6,
+};

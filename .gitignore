@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js build output
+.next/
+out/
+build/
+dist/
+
+# Backups and archives
+BACKUPS/
+*.tar.gz
+*.zip
+*.exe
+*.iso
+*.dmg
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment and secrets
+.env*.local
+.env
+.vercel
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Scratch and temp logs
+scratch/logs/
+
+**/.env*
+.env*
+*.env

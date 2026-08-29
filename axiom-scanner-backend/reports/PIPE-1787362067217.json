@@ -1,0 +1,701 @@
+{
+  "report": {
+    "id": "PIPE-1787362067217",
+    "generated": "2026-08-22T01:32:14.011Z",
+    "targets": [
+      "192.168.195.139",
+      "192.168.195.140"
+    ],
+    "summary": {
+      "critical": 12,
+      "high": 10,
+      "medium": 3,
+      "low": 2,
+      "total": 27
+    },
+    "rating": "🔴 CRITICAL"
+  },
+  "findings": [
+    {
+      "id": "NMAP-F001",
+      "title": "Open FTP Service Detected",
+      "severity": "Critical",
+      "confidence": "HIGH",
+      "status": "VERIFIED",
+      "source": "Nmap",
+      "plugin": "NetworkEnum",
+      "method": "TCP",
+      "url": "tcp://192.168.195.139:21",
+      "parameter": "port:21",
+      "description": "Port 21/tcp is open running ftp vsftpd 2.3.4. FTP transmits credentials in cleartext. Anonymous access may be enabled.",
+      "solution": "Disable FTP. Use SFTP/SCP. If required, enable TLS and disable anonymous access.",
+      "cvss": 9.8,
+      "normalizedAt": "2026-08-22T01:29:07.940Z"
+    },
+    {
+      "id": "NMAP-F003",
+      "title": "Open TELNET Service Detected",
+      "severity": "Critical",
+      "confidence": "HIGH",
+      "status": "VERIFIED",
+      "source": "Nmap",
+      "plugin": "NetworkEnum",
+      "method": "TCP",
+      "url": "tcp://192.168.195.139:23",
+      "parameter": "port:23",
+      "description": "Port 23/tcp is open running telnet Linux telnetd. Telnet is unencrypted and obsolete. Replace with SSH immediately.",
+      "solution": "Disable Telnet immediately. Replace with SSH.",
+      "cvss": 9.8,
+      "normalizedAt": "2026-08-22T01:29:07.940Z"
+    },
+    {
+      "id": "NMAP-F006",
+      "title": "Open NETBIOS-SSN Service Detected",
+      "severity": "Critical",
+      "confidence": "HIGH",
+      "status": "VERIFIED",
+      "source": "Nmap",
+      "plugin": "NetworkEnum",
+      "method": "TCP",
+      "url": "tcp://192.168.195.139:445",
+      "parameter": "port:445",
+      "description": "Port 445/tcp is open running netbios-ssn Samba smbd 3.0.20-Debian (workgroup: WORKGROUP). SMB exposed — high risk for ransomware (WannaCry, EternalBlue).",
+      "solution": "Apply MS17-010 patch. Restrict SMB access via firewall. Disable SMBv1.",
+      "cvss": 9.8,
+      "normalizedAt": "2026-08-22T01:29:07.940Z"
+    },
+    {
+      "id": "NMAP-F005",
+      "title": "Open NETBIOS-SSN Service Detected",
+      "severity": "Critical",
+      "confidence": "HIGH",
+      "status": "VERIFIED",
+      "source": "Nmap",
+      "plugin": "NetworkEnum",
+      "method": "TCP",
+      "url": "tcp://192.168.195.140:445",
+      "parameter": "port:445",
+      "description": "Port 445/tcp is open running netbios-ssn Samba smbd 3.X - 4.X (workgroup: WORKGROUP). SMB exposed — high risk for ransomware (WannaCry, EternalBlue).",
+      "solution": "Apply MS17-010 patch. Restrict SMB access via firewall. Disable SMBv1.",
+      "cvss": 9.8,
+      "normalizedAt": "2026-08-22T01:31:22.226Z"
+    },
+    {
+      "id": "MSF-F3440",
+      "title": "vsftpd 2.3.4 Backdoor",
+      "severity": "Critical",
+      "confidence": "MEDIUM",
+      "status": "FINGERPRINT_MATCH",
+      "source": "Metasploit Framework",
+      "plugin": "ExploitEngine",
+      "method": "EXPLOIT",
+      "url": "http://192.168.195.139:21",
+      "parameter": "port:21",
+      "description": "vsftpd 2.3.4 Backdoor — CVE: CVE-2011-2523. Target version: vsftpd 2.3.4. ⚠️ Version fingerprint matches known vulnerable version.",
+      "solution": "Upgrade vsftpd immediately. This version has a deliberately planted backdoor. CVE-2011-2523.",
+      "cvss": 10,
+      "cve": "CVE-2011-2523",
+      "evidence": {
+        "exploit": "exploit/unix/ftp/vsftpd_234_backdoor",
+        "payload": "cmd/unix/interact",
+        "options": {
+          "RHOSTS": "192.168.195.139",
+          "RPORT": 21
+        },
+        "exploitOutput": "Metasploit not available — finding based on version fingerprint",
+        "success": null
+      },
+      "ttp": {
+        "tactic": "Initial Access",
+        "technique": "exploit/unix/ftp/vsftpd_234_backdoor",
+        "id": "T1133"
+      },
+      "remediation": "Upgrade vsftpd immediately. This version has a deliberately planted backdoor. CVE-2011-2523.",
+      "normalizedAt": "2026-08-22T01:32:10.077Z"
+    },
+    {
+      "id": "MSF-F8253",
+      "title": "Samba usermap_script RCE",
+      "severity": "Critical",
+      "confidence": "MEDIUM",
+      "status": "FINGERPRINT_MATCH",
+      "source": "Metasploit Framework",
+      "plugin": "ExploitEngine",
+      "method": "EXPLOIT",
+      "url": "http://192.168.195.139:139",
+      "parameter": "port:139",
+      "description": "Samba usermap_script RCE — CVE: CVE-2007-2447. Target version: Samba smbd 3.X - 4.X (workgroup: WORKGROUP). ⚠️ Version fingerprint matches known vulnerable version.",
+      "solution": "Upgrade Samba to 3.0.26 or later. Restrict SMB to internal network. CVE-2007-2447.",
+      "cvss": 10,
+      "cve": "CVE-2007-2447",
+      "evidence": {
+        "exploit": "exploit/multi/samba/usermap_script",
+        "payload": "cmd/unix/reverse_netcat",
+        "options": {
+          "RHOSTS": "192.168.195.139",
+          "RPORT": 139
+        },
+        "exploitOutput": "Metasploit not available — finding based on version fingerprint",
+        "success": null
+      },
+      "ttp": {
+        "tactic": "Initial Access",
+        "technique": "exploit/multi/samba/usermap_script",
+        "id": "T1190"
+      },
+      "remediation": "Upgrade Samba to 3.0.26 or later. Restrict SMB to internal network. CVE-2007-2447.",
+      "normalizedAt": "2026-08-22T01:32:11.440Z"
+    },
+    {
+      "id": "MSF-F5096",
+      "title": "Samba usermap_script RCE",
+      "severity": "Critical",
+      "confidence": "MEDIUM",
+      "status": "FINGERPRINT_MATCH",
+      "source": "Metasploit Framework",
+      "plugin": "ExploitEngine",
+      "method": "EXPLOIT",
+      "url": "http://192.168.195.139:445",
+      "parameter": "port:445",
+      "description": "Samba usermap_script RCE — CVE: CVE-2007-2447. Target version: Samba smbd 3.0.20-Debian (workgroup: WORKGROUP). ⚠️ Version fingerprint matches known vulnerable version.",
+      "solution": "Upgrade Samba to 3.0.26 or later. Restrict SMB to internal network. CVE-2007-2447.",
+      "cvss": 10,
+      "cve": "CVE-2007-2447",
+      "evidence": {
+        "exploit": "exploit/multi/samba/usermap_script",
+        "payload": "cmd/unix/reverse_netcat",
+        "options": {
+          "RHOSTS": "192.168.195.139",
+          "RPORT": 139
+        },
+        "exploitOutput": "Metasploit not available — finding based on version fingerprint",
+        "success": null
+      },
+      "ttp": {
+        "tactic": "Initial Access",
+        "technique": "exploit/multi/samba/usermap_script",
+        "id": "T1190"
+      },
+      "remediation": "Upgrade Samba to 3.0.26 or later. Restrict SMB to internal network. CVE-2007-2447.",
+      "normalizedAt": "2026-08-22T01:32:11.776Z"
+    },
+    {
+      "id": "MSF-F6048",
+      "title": "MySQL Empty Root Password",
+      "severity": "Critical",
+      "confidence": "MEDIUM",
+      "status": "FINGERPRINT_MATCH",
+      "source": "Metasploit Framework",
+      "plugin": "ExploitEngine",
+      "method": "EXPLOIT",
+      "url": "http://192.168.195.139:3306",
+      "parameter": "port:3306",
+      "description": "MySQL Empty Root Password — CVE: CWE-521. Target version: MySQL 5.0.51a-3ubuntu5. ⚠️ Version fingerprint matches known vulnerable version.",
+      "solution": "Set a strong root password: ALTER USER root@localhost IDENTIFIED BY 'strong_pass';",
+      "cvss": 9.8,
+      "cve": "CWE-521",
+      "evidence": {
+        "exploit": "auxiliary/scanner/mysql/mysql_login",
+        "payload": "N/A",
+        "options": {
+          "RHOSTS": "192.168.195.139",
+          "RPORT": 3306,
+          "USERNAME": "root",
+          "PASSWORD": ""
+        },
+        "exploitOutput": "Metasploit not available — finding based on version fingerprint",
+        "success": null
+      },
+      "ttp": {
+        "tactic": "Initial Access",
+        "technique": "auxiliary/scanner/mysql/mysql_login",
+        "id": "T1190"
+      },
+      "remediation": "Set a strong root password: ALTER USER root@localhost IDENTIFIED BY 'strong_pass';",
+      "normalizedAt": "2026-08-22T01:32:12.094Z"
+    },
+    {
+      "id": "MSF-F7528",
+      "title": "Apache Tomcat Manager RCE",
+      "severity": "Critical",
+      "confidence": "MEDIUM",
+      "status": "FINGERPRINT_MATCH",
+      "source": "Metasploit Framework",
+      "plugin": "ExploitEngine",
+      "method": "EXPLOIT",
+      "url": "http://192.168.195.139:8180",
+      "parameter": "port:8180",
+      "description": "Apache Tomcat Manager RCE — CVE: CVE-2009-3843. Target version: Apache Tomcat/Coyote JSP engine 1.1. ⚠️ Version fingerprint matches known vulnerable version.",
+      "solution": "Change Tomcat manager credentials. Restrict manager access to localhost. CVE-2009-3843.",
+      "cvss": 9,
+      "cve": "CVE-2009-3843",
+      "evidence": {
+        "exploit": "exploit/multi/http/tomcat_mgr_upload",
+        "payload": "java/meterpreter/reverse_tcp",
+        "options": {
+          "RHOSTS": "192.168.195.139",
+          "RPORT": 8180,
+          "HttpUsername": "tomcat",
+          "HttpPassword": "tomcat"
+        },
+        "exploitOutput": "Metasploit not available — finding based on version fingerprint",
+        "success": null
+      },
+      "ttp": {
+        "tactic": "Initial Access",
+        "technique": "exploit/multi/http/tomcat_mgr_upload",
+        "id": "T1190"
+      },
+      "remediation": "Change Tomcat manager credentials. Restrict manager access to localhost. CVE-2009-3843.",
+      "normalizedAt": "2026-08-22T01:32:12.717Z"
+    },
+    {
+      "id": "MSF-F2478",
+      "title": "PHP CGI Argument Injection RCE",
+      "severity": "Critical",
+      "confidence": "MEDIUM",
+      "status": "FINGERPRINT_MATCH",
+      "source": "Metasploit Framework",
+      "plugin": "ExploitEngine",
+      "method": "EXPLOIT",
+      "url": "http://192.168.195.140:80",
+      "parameter": "port:80",
+      "description": "PHP CGI Argument Injection RCE — CVE: CVE-2012-1823. Target version: Apache httpd 2.2.14 ((Ubuntu) mod_mono/2.4.3 PHP/5.3.2-1ubuntu4.30 with Suhosin-Patch proxy_html/3.0.1 mod_python/3.3.1 Python/2.6.5 mod_ssl/2.2.14 OpenSSL...). ⚠️ Version fingerprint matches known vulnerable version.",
+      "solution": "Upgrade PHP. Disable CGI mode. Use mod_rewrite to block malicious query strings. CVE-2012-1823.",
+      "cvss": 9.8,
+      "cve": "CVE-2012-1823",
+      "evidence": {
+        "exploit": "exploit/multi/http/php_cgi_arg_injection",
+        "payload": "php/meterpreter/reverse_tcp",
+        "options": {
+          "RHOSTS": "192.168.195.140",
+          "RPORT": 80,
+          "TARGETURI": "/"
+        },
+        "exploitOutput": "Metasploit not available — finding based on version fingerprint",
+        "success": null
+      },
+      "ttp": {
+        "tactic": "Initial Access",
+        "technique": "exploit/multi/http/php_cgi_arg_injection",
+        "id": "T1190"
+      },
+      "remediation": "Upgrade PHP. Disable CGI mode. Use mod_rewrite to block malicious query strings. CVE-2012-1823.",
+      "normalizedAt": "2026-08-22T01:32:13.358Z"
+    },
+    {
+      "id": "MSF-F7730",
+      "title": "Samba usermap_script RCE",
+      "severity": "Critical",
+      "confidence": "MEDIUM",
+      "status": "FINGERPRINT_MATCH",
+      "source": "Metasploit Framework",
+      "plugin": "ExploitEngine",
+      "method": "EXPLOIT",
+      "url": "http://192.168.195.140:139",
+      "parameter": "port:139",
+      "description": "Samba usermap_script RCE — CVE: CVE-2007-2447. Target version: Samba smbd 3.X - 4.X (workgroup: WORKGROUP). ⚠️ Version fingerprint matches known vulnerable version.",
+      "solution": "Upgrade Samba to 3.0.26 or later. Restrict SMB to internal network. CVE-2007-2447.",
+      "cvss": 10,
+      "cve": "CVE-2007-2447",
+      "evidence": {
+        "exploit": "exploit/multi/samba/usermap_script",
+        "payload": "cmd/unix/reverse_netcat",
+        "options": {
+          "RHOSTS": "192.168.195.140",
+          "RPORT": 139
+        },
+        "exploitOutput": "Metasploit not available — finding based on version fingerprint",
+        "success": null
+      },
+      "ttp": {
+        "tactic": "Initial Access",
+        "technique": "exploit/multi/samba/usermap_script",
+        "id": "T1190"
+      },
+      "remediation": "Upgrade Samba to 3.0.26 or later. Restrict SMB to internal network. CVE-2007-2447.",
+      "normalizedAt": "2026-08-22T01:32:13.675Z"
+    },
+    {
+      "id": "MSF-F7493",
+      "title": "Samba usermap_script RCE",
+      "severity": "Critical",
+      "confidence": "MEDIUM",
+      "status": "FINGERPRINT_MATCH",
+      "source": "Metasploit Framework",
+      "plugin": "ExploitEngine",
+      "method": "EXPLOIT",
+      "url": "http://192.168.195.140:445",
+      "parameter": "port:445",
+      "description": "Samba usermap_script RCE — CVE: CVE-2007-2447. Target version: Samba smbd 3.X - 4.X (workgroup: WORKGROUP). ⚠️ Version fingerprint matches known vulnerable version.",
+      "solution": "Upgrade Samba to 3.0.26 or later. Restrict SMB to internal network. CVE-2007-2447.",
+      "cvss": 10,
+      "cve": "CVE-2007-2447",
+      "evidence": {
+        "exploit": "exploit/multi/samba/usermap_script",
+        "payload": "cmd/unix/reverse_netcat",
+        "options": {
+          "RHOSTS": "192.168.195.140",
+          "RPORT": 139
+        },
+        "exploitOutput": "Metasploit not available — finding based on version fingerprint",
+        "success": null
+      },
+      "ttp": {
+        "tactic": "Initial Access",
+        "technique": "exploit/multi/samba/usermap_script",
+        "id": "T1190"
+      },
+      "remediation": "Upgrade Samba to 3.0.26 or later. Restrict SMB to internal network. CVE-2007-2447.",
+      "normalizedAt": "2026-08-22T01:32:14.008Z"
+    },
+    {
+      "id": "NMAP-F004",
+      "title": "Open HTTP Service Detected",
+      "severity": "High",
+      "confidence": "HIGH",
+      "status": "VERIFIED",
+      "source": "Nmap",
+      "plugin": "NetworkEnum",
+      "method": "TCP",
+      "url": "tcp://192.168.195.139:80",
+      "parameter": "port:80",
+      "description": "Port 80/tcp is open running http Apache httpd 2.2.8 ((Ubuntu) DAV/2). HTTP service exposed — check for web vulnerabilities.",
+      "solution": "Redirect HTTP to HTTPS. Review web application for OWASP Top 10 vulnerabilities.",
+      "cvss": 5,
+      "normalizedAt": "2026-08-22T01:29:07.940Z"
+    },
+    {
+      "id": "NMAP-F007",
+      "title": "Open MYSQL Service Detected",
+      "severity": "High",
+      "confidence": "HIGH",
+      "status": "VERIFIED",
+      "source": "Nmap",
+      "plugin": "NetworkEnum",
+      "method": "TCP",
+      "url": "tcp://192.168.195.139:3306",
+      "parameter": "port:3306",
+      "description": "Port 3306/tcp is open running mysql MySQL 5.0.51a-3ubuntu5. MySQL exposed — brute force and remote access risk.",
+      "solution": "Bind MySQL to 127.0.0.1. Use strong credentials. Restrict remote access.",
+      "cvss": 8.2,
+      "normalizedAt": "2026-08-22T01:29:07.940Z"
+    },
+    {
+      "id": "NMAP-F008",
+      "title": "Open VNC Service Detected",
+      "severity": "High",
+      "confidence": "HIGH",
+      "status": "VERIFIED",
+      "source": "Nmap",
+      "plugin": "NetworkEnum",
+      "method": "TCP",
+      "url": "tcp://192.168.195.139:5900",
+      "parameter": "port:5900",
+      "description": "Port 5900/tcp is open running vnc VNC (protocol 3.3). VNC exposed — often has weak authentication.",
+      "solution": "Require VNC authentication. Restrict to trusted IPs. Prefer SSH tunnel.",
+      "cvss": 7.5,
+      "normalizedAt": "2026-08-22T01:29:07.940Z"
+    },
+    {
+      "id": "NMAP-F002",
+      "title": "Open HTTP Service Detected",
+      "severity": "High",
+      "confidence": "HIGH",
+      "status": "VERIFIED",
+      "source": "Nmap",
+      "plugin": "NetworkEnum",
+      "method": "TCP",
+      "url": "tcp://192.168.195.140:80",
+      "parameter": "port:80",
+      "description": "Port 80/tcp is open running http Apache httpd 2.2.14 ((Ubuntu) mod_mono/2.4.3 PHP/5.3.2-1ubuntu4.30 with Suhosin-Patch proxy_html/3.0.1 mod_python/3.3.1 Python/2.6.5 mod_ssl/2.2.14 OpenSSL...). HTTP service exposed — check for web vulnerabilities.",
+      "solution": "Redirect HTTP to HTTPS. Review web application for OWASP Top 10 vulnerabilities.",
+      "cvss": 5,
+      "normalizedAt": "2026-08-22T01:31:22.226Z"
+    },
+    {
+      "id": "NMAP-F006",
+      "title": "Open HTTP-PROXY Service Detected",
+      "severity": "High",
+      "confidence": "HIGH",
+      "status": "VERIFIED",
+      "source": "Nmap",
+      "plugin": "NetworkEnum",
+      "method": "TCP",
+      "url": "tcp://192.168.195.140:8080",
+      "parameter": "port:8080",
+      "description": "Port 8080/tcp is open running http-proxy Apache-Coyote/1.1. HTTP proxy/Tomcat — check for manager console access.",
+      "solution": "Secure Tomcat manager. Change default credentials. Remove unused apps.",
+      "cvss": 5,
+      "normalizedAt": "2026-08-22T01:31:22.226Z"
+    },
+    {
+      "id": "MSF-F7151",
+      "title": "FTP Anonymous / Weak Credentials",
+      "severity": "High",
+      "confidence": "MEDIUM",
+      "status": "FINGERPRINT_MATCH",
+      "source": "Metasploit Framework",
+      "plugin": "ExploitEngine",
+      "method": "EXPLOIT",
+      "url": "http://192.168.195.139:21",
+      "parameter": "port:21",
+      "description": "FTP Anonymous / Weak Credentials — CVE: CWE-521. Target version: vsftpd 2.3.4. ⚠️ Version fingerprint matches known vulnerable version.",
+      "solution": "Disable anonymous FTP. Use SFTP/FTPS. Require strong credentials.",
+      "cvss": 7.5,
+      "cve": "CWE-521",
+      "evidence": {
+        "exploit": "auxiliary/scanner/ftp/ftp_login",
+        "payload": "N/A",
+        "options": {
+          "RHOSTS": "192.168.195.139",
+          "RPORT": 21,
+          "USERNAME": "anonymous",
+          "PASSWORD": "anonymous@"
+        },
+        "exploitOutput": "Metasploit not available — finding based on version fingerprint",
+        "success": null
+      },
+      "ttp": {
+        "tactic": "Initial Access",
+        "technique": "auxiliary/scanner/ftp/ftp_login",
+        "id": "T1110"
+      },
+      "remediation": "Disable anonymous FTP. Use SFTP/FTPS. Require strong credentials.",
+      "normalizedAt": "2026-08-22T01:32:10.447Z"
+    },
+    {
+      "id": "MSF-F9688",
+      "title": "SSH Default / Weak Credentials",
+      "severity": "High",
+      "confidence": "MEDIUM",
+      "status": "FINGERPRINT_MATCH",
+      "source": "Metasploit Framework",
+      "plugin": "ExploitEngine",
+      "method": "EXPLOIT",
+      "url": "http://192.168.195.139:22",
+      "parameter": "port:22",
+      "description": "SSH Default / Weak Credentials — CVE: CWE-521. Target version: OpenSSH 4.7p1 Debian 8ubuntu1 (protocol 2.0). ⚠️ Version fingerprint matches known vulnerable version.",
+      "solution": "Disable password auth. Use SSH keys only. Add fail2ban. Change default credentials.",
+      "cvss": 8.1,
+      "cve": "CWE-521",
+      "evidence": {
+        "exploit": "auxiliary/scanner/ssh/ssh_login",
+        "payload": "N/A",
+        "options": {
+          "RHOSTS": "192.168.195.139",
+          "RPORT": 22,
+          "USERNAME": "msfadmin",
+          "PASSWORD": "msfadmin"
+        },
+        "exploitOutput": "Metasploit not available — finding based on version fingerprint",
+        "success": null
+      },
+      "ttp": {
+        "tactic": "Initial Access",
+        "technique": "auxiliary/scanner/ssh/ssh_login",
+        "id": "T1110"
+      },
+      "remediation": "Disable password auth. Use SSH keys only. Add fail2ban. Change default credentials.",
+      "normalizedAt": "2026-08-22T01:32:10.776Z"
+    },
+    {
+      "id": "MSF-F8644",
+      "title": "Telnet Cleartext Protocol Exposed",
+      "severity": "High",
+      "confidence": "MEDIUM",
+      "status": "FINGERPRINT_MATCH",
+      "source": "Metasploit Framework",
+      "plugin": "ExploitEngine",
+      "method": "EXPLOIT",
+      "url": "http://192.168.195.139:23",
+      "parameter": "port:23",
+      "description": "Telnet Cleartext Protocol Exposed — CVE: CWE-319. Target version: Linux telnetd. ⚠️ Version fingerprint matches known vulnerable version.",
+      "solution": "Disable telnet. Replace with SSH: systemctl disable telnetd && systemctl enable sshd.",
+      "cvss": 7.5,
+      "cve": "CWE-319",
+      "evidence": {
+        "exploit": "auxiliary/scanner/telnet/telnet_login",
+        "payload": "N/A",
+        "options": {
+          "RHOSTS": "192.168.195.139",
+          "RPORT": 23,
+          "USERNAME": "root",
+          "PASSWORD": ""
+        },
+        "exploitOutput": "Metasploit not available — finding based on version fingerprint",
+        "success": null
+      },
+      "ttp": {
+        "tactic": "Initial Access",
+        "technique": "auxiliary/scanner/telnet/telnet_login",
+        "id": "T1021"
+      },
+      "remediation": "Disable telnet. Replace with SSH: systemctl disable telnetd && systemctl enable sshd.",
+      "normalizedAt": "2026-08-22T01:32:11.124Z"
+    },
+    {
+      "id": "MSF-F1257",
+      "title": "VNC No Authentication / Weak Password",
+      "severity": "High",
+      "confidence": "MEDIUM",
+      "status": "FINGERPRINT_MATCH",
+      "source": "Metasploit Framework",
+      "plugin": "ExploitEngine",
+      "method": "EXPLOIT",
+      "url": "http://192.168.195.139:5900",
+      "parameter": "port:5900",
+      "description": "VNC No Authentication / Weak Password — CVE: CWE-306. Target version: VNC (protocol 3.3). ⚠️ Version fingerprint matches known vulnerable version.",
+      "solution": "Enable VNC authentication. Use VeNCrypt. Restrict to trusted IPs via firewall.",
+      "cvss": 8.5,
+      "cve": "CWE-306",
+      "evidence": {
+        "exploit": "auxiliary/scanner/vnc/vnc_login",
+        "payload": "N/A",
+        "options": {
+          "RHOSTS": "192.168.195.139",
+          "RPORT": 5900,
+          "PASSWORD": ""
+        },
+        "exploitOutput": "Metasploit not available — finding based on version fingerprint",
+        "success": null
+      },
+      "ttp": {
+        "tactic": "Initial Access",
+        "technique": "auxiliary/scanner/vnc/vnc_login",
+        "id": "T1021.005"
+      },
+      "remediation": "Enable VNC authentication. Use VeNCrypt. Restrict to trusted IPs via firewall.",
+      "normalizedAt": "2026-08-22T01:32:12.411Z"
+    },
+    {
+      "id": "MSF-F2540",
+      "title": "SSH Default / Weak Credentials",
+      "severity": "High",
+      "confidence": "MEDIUM",
+      "status": "FINGERPRINT_MATCH",
+      "source": "Metasploit Framework",
+      "plugin": "ExploitEngine",
+      "method": "EXPLOIT",
+      "url": "http://192.168.195.140:22",
+      "parameter": "port:22",
+      "description": "SSH Default / Weak Credentials — CVE: CWE-521. Target version: OpenSSH 5.3p1 Debian 3ubuntu4 (Ubuntu Linux; protocol 2.0). ⚠️ Version fingerprint matches known vulnerable version.",
+      "solution": "Disable password auth. Use SSH keys only. Add fail2ban. Change default credentials.",
+      "cvss": 8.1,
+      "cve": "CWE-521",
+      "evidence": {
+        "exploit": "auxiliary/scanner/ssh/ssh_login",
+        "payload": "N/A",
+        "options": {
+          "RHOSTS": "192.168.195.140",
+          "RPORT": 22,
+          "USERNAME": "msfadmin",
+          "PASSWORD": "msfadmin"
+        },
+        "exploitOutput": "Metasploit not available — finding based on version fingerprint",
+        "success": null
+      },
+      "ttp": {
+        "tactic": "Initial Access",
+        "technique": "auxiliary/scanner/ssh/ssh_login",
+        "id": "T1110"
+      },
+      "remediation": "Disable password auth. Use SSH keys only. Add fail2ban. Change default credentials.",
+      "normalizedAt": "2026-08-22T01:32:13.042Z"
+    },
+    {
+      "id": "NMAP-F002",
+      "title": "Open SSH Service Detected",
+      "severity": "Medium",
+      "confidence": "HIGH",
+      "status": "VERIFIED",
+      "source": "Nmap",
+      "plugin": "NetworkEnum",
+      "method": "TCP",
+      "url": "tcp://192.168.195.139:22",
+      "parameter": "port:22",
+      "description": "Port 22/tcp is open running ssh OpenSSH 4.7p1 Debian 8ubuntu1 (protocol 2.0). SSH exposed — brute force risk. Ensure key-based auth only.",
+      "solution": "Restrict SSH to key-based auth. Use fail2ban. Limit to trusted IPs via firewall.",
+      "cvss": 5,
+      "normalizedAt": "2026-08-22T01:29:07.940Z"
+    },
+    {
+      "id": "NMAP-F001",
+      "title": "Open SSH Service Detected",
+      "severity": "Medium",
+      "confidence": "HIGH",
+      "status": "VERIFIED",
+      "source": "Nmap",
+      "plugin": "NetworkEnum",
+      "method": "TCP",
+      "url": "tcp://192.168.195.140:22",
+      "parameter": "port:22",
+      "description": "Port 22/tcp is open running ssh OpenSSH 5.3p1 Debian 3ubuntu4 (Ubuntu Linux; protocol 2.0). SSH exposed — brute force risk. Ensure key-based auth only.",
+      "solution": "Restrict SSH to key-based auth. Use fail2ban. Limit to trusted IPs via firewall.",
+      "cvss": 5,
+      "normalizedAt": "2026-08-22T01:31:22.226Z"
+    },
+    {
+      "id": "NMAP-F004",
+      "title": "Open SSL/HTTPS? Service Detected",
+      "severity": "Medium",
+      "confidence": "HIGH",
+      "status": "VERIFIED",
+      "source": "Nmap",
+      "plugin": "NetworkEnum",
+      "method": "TCP",
+      "url": "tcp://192.168.195.140:443",
+      "parameter": "port:443",
+      "description": "Port 443/tcp is open running ssl/https? . Service on port 443 should be reviewed.",
+      "solution": "Review service necessity and restrict access to trusted sources only.",
+      "cvss": 5,
+      "normalizedAt": "2026-08-22T01:31:22.226Z"
+    },
+    {
+      "id": "NMAP-F005",
+      "title": "Open NETBIOS-SSN Service Detected",
+      "severity": "Low",
+      "confidence": "HIGH",
+      "status": "VERIFIED",
+      "source": "Nmap",
+      "plugin": "NetworkEnum",
+      "method": "TCP",
+      "url": "tcp://192.168.195.139:139",
+      "parameter": "port:139",
+      "description": "Port 139/tcp is open running netbios-ssn Samba smbd 3.X - 4.X (workgroup: WORKGROUP). NetBIOS session service — legacy SMB, EternalBlue risk.",
+      "solution": "Disable NetBIOS over TCP/IP unless required. Apply MS17-010 patch.",
+      "cvss": 5,
+      "normalizedAt": "2026-08-22T01:29:07.940Z"
+    },
+    {
+      "id": "NMAP-F003",
+      "title": "Open NETBIOS-SSN Service Detected",
+      "severity": "Low",
+      "confidence": "HIGH",
+      "status": "VERIFIED",
+      "source": "Nmap",
+      "plugin": "NetworkEnum",
+      "method": "TCP",
+      "url": "tcp://192.168.195.140:139",
+      "parameter": "port:139",
+      "description": "Port 139/tcp is open running netbios-ssn Samba smbd 3.X - 4.X (workgroup: WORKGROUP). NetBIOS session service — legacy SMB, EternalBlue risk.",
+      "solution": "Disable NetBIOS over TCP/IP unless required. Apply MS17-010 patch.",
+      "cvss": 5,
+      "normalizedAt": "2026-08-22T01:31:22.226Z"
+    }
+  ],
+  "engines": [
+    {
+      "stage": "enumeration",
+      "findings": 14
+    },
+    {
+      "stage": "exploitation",
+      "findings": 13
+    },
+    {
+      "stage": "postExploit",
+      "findings": 27
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/veritaslens/sync",
+      "schedule": "0 0 * * *"
+    }
+  ]
+}

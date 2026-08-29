@@ -1,0 +1,16 @@
+name: VeritasLens Automated 15-Min News Sync
+
+on:
+  schedule:
+    # Run every 15 minutes automatically
+    - cron: '*/15 * * * *'
+  workflow_dispatch: # Allows manual trigger anytime from GitHub UI
+
+jobs:
+  sync_news_feeds:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping VeritasLens Production Sync API
+        run: |
+          curl -X GET "https://expedite-consults.vercel.app/api/veritaslens/sync" \
+            -H "User-Agent: VeritasLens-GitHub-Cron/2.4"
