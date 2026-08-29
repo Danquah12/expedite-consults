@@ -42,6 +42,8 @@ import { ProfessionalIDModal } from "@/components/linkedin/ProfessionalIDModal"
 import { GatedGuildsView } from "@/components/linkedin/GatedGuildsView"
 import { BountiesHackathonsView } from "@/components/linkedin/BountiesHackathonsView"
 import { InboundBountiesModal } from "@/components/linkedin/InboundBountiesModal"
+import { AccountSecurityView } from "@/components/linkedin/AccountSecurityView"
+import { AdminIAMConsoleView } from "@/components/linkedin/AdminIAMConsoleView"
 import {
   currentUser as initialCurrentUser,
   initialPosts,
@@ -78,6 +80,8 @@ export default function LinkedInPage() {
     | 'wallet'
     | 'guilds'
     | 'bounties'
+    | 'accountsecurity'
+    | 'adminiam'
     | 'media'
     | 'ecosystem'
     | 'company'
@@ -672,6 +676,22 @@ export default function LinkedInPage() {
         {/* VIEW: ENTERPRISE BOUNTIES & HACKATHONS */}
         {activeTab === 'bounties' && (
           <BountiesHackathonsView
+            currentUser={userData}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+          />
+        )}
+
+        {/* VIEW: USER ACCOUNT SECURITY & PASSKEYS CENTER */}
+        {activeTab === 'accountsecurity' && (
+          <AccountSecurityView
+            currentUser={userData}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+          />
+        )}
+
+        {/* VIEW: ADMINISTRATIVE IAM & MODERATION CONSOLE */}
+        {activeTab === 'adminiam' && (
+          <AdminIAMConsoleView
             currentUser={userData}
             onNavigateTab={(tab) => setActiveTab(tab as any)}
           />

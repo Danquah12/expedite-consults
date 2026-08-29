@@ -44,6 +44,8 @@ export function LeftSidebarProfile({
   const [isRecentExpanded, setIsRecentExpanded] = useState(true)
 
   const workspaceShortcuts = [
+    { id: 'accountsecurity', label: '🔐 Security & Passkeys', badge: 'FIDO2' },
+    { id: 'adminiam', label: '🛡️ Admin IAM Console', badge: 'Privileged' },
     { id: 'inbound_bounty', label: '💰 Paid Inbound Bounty', badge: '+$250 Escrow' },
     { id: 'bounties', label: '🏆 Enterprise Bounties', badge: '$15K-$25K' },
     { id: 'guilds', label: '🛡️ Gated Guilds & Enclaves', badge: '3 Enclaves' },

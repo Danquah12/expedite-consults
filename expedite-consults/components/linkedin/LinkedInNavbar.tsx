@@ -113,6 +113,7 @@ export function LinkedInNavbar({
       items: [
         { id: "procurement", label: "🏢 Procurement & RFPs", desc: "$2.4M enterprise spend & bids" },
         { id: "bounties", label: "🏆 Enterprise Bounties", desc: "$15K–$50K hackathons in escrow" },
+        { id: "adminiam", label: "🛡️ Admin & IAM Console", desc: "User enforcement, 4-eyes & audit log" },
         { id: "company", label: "🏛️ Company Hub", desc: "Expedite Consults enterprise profile" },
         { id: "sellercenter", label: "💼 Seller Center", desc: "Manage software & $122.7K MRR" },
         { id: "wallet", label: "💳 Pay, Wallet & Invoicing", desc: "$2,430 Balance & SOWs" },
@@ -138,6 +139,7 @@ export function LinkedInNavbar({
     {
       category: "Trust & Community 🛡️",
       items: [
+        { id: "accountsecurity", label: "🔐 Account Security & Passkeys", desc: "FIDO2, sessions & privacy" },
         { id: "guilds", label: "🛡️ Gated Guilds & Enclaves", desc: "TS/SCI & Founder roundtables" },
         { id: "trustcenter", label: "🛡️ Trust Center", desc: "SOC 2, FedRAMP & 99.99% uptime" },
         { id: "peerreview", label: "⭐ Peer Review", desc: "Verified expert validation ($150/hr)" },
@@ -453,6 +455,27 @@ export function LinkedInNavbar({
                     >
                       View Unified Profile &amp; Portfolio 📁
                     </button>
+
+                    <div className="grid grid-cols-2 gap-1.5 pt-1">
+                      <button
+                        onClick={() => {
+                          onSelectTab('accountsecurity')
+                          setIsMeOpen(false)
+                        }}
+                        className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 p-1.5 text-center text-[11px] font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100"
+                      >
+                        🔐 Security &amp; Keys
+                      </button>
+                      <button
+                        onClick={() => {
+                          onSelectTab('adminiam')
+                          setIsMeOpen(false)
+                        }}
+                        className="rounded-xl border border-red-200 dark:border-red-800/60 bg-red-50/50 dark:bg-red-950/40 p-1.5 text-center text-[11px] font-bold text-red-700 dark:text-red-300 hover:bg-red-100"
+                      >
+                        🛡️ Admin Console
+                      </button>
+                    </div>
                   </div>
 
                   <div className="mt-3 space-y-1 border-t border-zinc-100 pt-2 text-xs text-zinc-600 dark:border-zinc-800 dark:text-zinc-300">
