@@ -52,6 +52,8 @@ interface LinkedInNavbarProps {
   unreadNotificationsCount?: number
   onOpenAIAssistant?: () => void
   onOpenUniversalSearch?: () => void
+  activeWorkspace?: 'personal' | 'enterprise' | 'creator' | 'seller'
+  onSelectWorkspace?: (ws: 'personal' | 'enterprise' | 'creator' | 'seller') => void
 }
 
 export function LinkedInNavbar({
@@ -63,10 +65,13 @@ export function LinkedInNavbar({
   unreadMessagesCount = 1,
   unreadNotificationsCount = 3,
   onOpenAIAssistant,
-  onOpenUniversalSearch
+  onOpenUniversalSearch,
+  activeWorkspace = 'personal',
+  onSelectWorkspace
 }: LinkedInNavbarProps) {
   const [isMeOpen, setIsMeOpen] = useState(false)
   const [isMoreOpen, setIsMoreOpen] = useState(false)
+  const [isWorkspaceMenuOpen, setIsWorkspaceMenuOpen] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [isSearchFocused, setIsSearchFocused] = useState(false)
 
@@ -338,33 +343,95 @@ export function LinkedInNavbar({
                   </div>
 
                   <div className="pt-2 space-y-1.5">
+                    <p className="px-2 py-0.5 font-bold text-zinc-900 dark:text-zinc-100 text-[10px] uppercase tracking-wider font-mono">
+                      Active Workspace Switcher
+                    </p>
+
+                    {/* 4 Persona Cards */}
+                    <div className="grid grid-cols-2 gap-1.5 text-xs">
+                      <button
+                        onClick={() => {
+                          if (onSelectWorkspace) onSelectWorkspace('personal')
+                          onSelectTab('home')
+                          setIsMeOpen(false)
+                        }}
+                        className={`p-2 rounded-xl text-left border transition-all ${
+                          activeWorkspace === 'personal'
+                            ? "bg-blue-50 border-[#0A66C2] text-[#0A66C2] font-bold dark:bg-blue-950/40 dark:border-blue-700"
+                            : "bg-zinc-50 border-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300"
+                        }`}
+                      >
+                        <p className="font-bold text-[11px]">👤 Personal</p>
+                        <p className="text-[9px] opacity-70">Feed, Jobs &amp; Labs</p>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          if (onSelectWorkspace) onSelectWorkspace('enterprise')
+                          onSelectTab('procurement')
+                          setIsMeOpen(false)
+                        }}
+                        className={`p-2 rounded-xl text-left border transition-all ${
+                          activeWorkspace === 'enterprise'
+                            ? "bg-emerald-50 border-emerald-600 text-emerald-700 font-bold dark:bg-emerald-950/40 dark:border-emerald-700"
+                            : "bg-zinc-50 border-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300"
+                        }`}
+                      >
+                        <p className="font-bold text-[11px]">🏢 Enterprise</p>
+                        <p className="text-[9px] opacity-70">$2.4M Spend Desk</p>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          if (onSelectWorkspace) onSelectWorkspace('creator')
+                          onSelectTab('media')
+                          setIsMeOpen(false)
+                        }}
+                        className={`p-2 rounded-xl text-left border transition-all ${
+                          activeWorkspace === 'creator'
+                            ? "bg-purple-50 border-purple-600 text-purple-700 font-bold dark:bg-purple-950/40 dark:border-purple-700"
+                            : "bg-zinc-50 border-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300"
+                        }`}
+                      >
+                        <p className="font-bold text-[11px]">🎬 Studio</p>
+                        <p className="text-[9px] opacity-70">Video &amp; Podcasts</p>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          if (onSelectWorkspace) onSelectWorkspace('seller')
+                          onSelectTab('sellercenter')
+                          setIsMeOpen(false)
+                        }}
+                        className={`p-2 rounded-xl text-left border transition-all ${
+                          activeWorkspace === 'seller'
+                            ? "bg-amber-50 border-amber-600 text-amber-700 font-bold dark:bg-amber-950/40 dark:border-amber-700"
+                            : "bg-zinc-50 border-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300"
+                        }`}
+                      >
+                        <p className="font-bold text-[11px]">💼 Seller</p>
+                        <p className="text-[9px] opacity-70">$122.7K MRR</p>
+                      </button>
+                    </div>
+
                     <button
                       onClick={() => {
                         onSelectTab('profile')
                         setIsMeOpen(false)
                       }}
-                      className="w-full rounded-full bg-[#0A66C2] py-2 text-center text-xs font-bold text-white hover:bg-[#004182] transition-colors shadow-sm"
+                      className="w-full rounded-xl bg-[#0A66C2] py-2 text-center text-xs font-bold text-white hover:bg-[#004182] transition-colors shadow-xs mt-2"
                     >
-                      View Unified Profile &amp; Workspace 👤
-                    </button>
-                    <button
-                      onClick={() => {
-                        onSelectTab('sellercenter')
-                        setIsMeOpen(false)
-                      }}
-                      className="w-full rounded-full border border-purple-500 py-1.5 text-center text-xs font-bold text-purple-600 hover:bg-purple-50 dark:text-purple-300 dark:hover:bg-purple-950/40 transition-colors"
-                    >
-                      Seller Center &amp; MRR ($122.7K) 💼
+                      View Unified Profile &amp; Portfolio 📁
                     </button>
                   </div>
 
                   <div className="mt-3 space-y-1 border-t border-zinc-100 pt-2 text-xs text-zinc-600 dark:border-zinc-800 dark:text-zinc-300">
                     <p className="px-2 py-1 font-bold text-zinc-900 dark:text-zinc-100 text-[11px] uppercase tracking-wider">
-                      Unified Identity Roles
+                      Verified Identity Roles
                     </p>
                     <div className="px-2 text-[11px] text-zinc-500 space-y-0.5">
                       <p>• Professional: Cloud Security Architect</p>
-                      <p>• Expert: Zero Trust Fellow (4.98 ★)</p>
+                      <p>• Clearance: TS/SCI with Polygraph</p>
                       <p>• Seller: AXIOM Suite &amp; Expedite Strike</p>
                     </div>
                     <button

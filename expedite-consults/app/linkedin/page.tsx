@@ -97,6 +97,7 @@ export default function LinkedInPage() {
   const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false)
   const [isUniversalSearchOpen, setIsUniversalSearchOpen] = useState(false)
   const [isIDModalOpen, setIsIDModalOpen] = useState(false)
+  const [activeWorkspace, setActiveWorkspace] = useState<'personal' | 'enterprise' | 'creator' | 'seller'>('personal')
 
   const [userData, setUserData] = useState<UserProfile>(initialCurrentUser)
   const [posts, setPosts] = useState<Post[]>(initialPosts)
@@ -402,6 +403,14 @@ export default function LinkedInPage() {
         onSearchChange={setSearchQuery}
         onOpenAIAssistant={() => setIsAIAssistantOpen(true)}
         onOpenUniversalSearch={() => setIsUniversalSearchOpen(true)}
+        activeWorkspace={activeWorkspace}
+        onSelectWorkspace={(ws) => {
+          setActiveWorkspace(ws)
+          if (ws === 'personal') setActiveTab('home')
+          else if (ws === 'enterprise') setActiveTab('procurement')
+          else if (ws === 'creator') setActiveTab('media')
+          else if (ws === 'seller') setActiveTab('sellercenter')
+        }}
       />
 
       {/* Main Content Area */}
