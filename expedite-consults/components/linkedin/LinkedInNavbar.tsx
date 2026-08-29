@@ -83,10 +83,9 @@ export function LinkedInNavbar({
     { id: "network", label: "Network", icon: Users, badge: 2 },
     { id: "jobs", label: "Jobs", icon: Briefcase, badge: 0 },
     { id: "marketplace", label: "Marketplace 🛍️", icon: ShoppingBag, badge: 0, isMarketplace: true },
-    { id: "ecosystem", label: "Ecosystem 🌐", icon: Grid3X3, badge: 0 },
     { id: "pulserooms", label: "Pulse 📰", icon: Radio, badge: 1 },
     { id: "peerreview", label: "Peer Review ⭐", icon: Layers, badge: 0 },
-    { id: "compensation", label: "Salary Insights 💰", icon: DollarSign, badge: 0 },
+    { id: "compensation", label: "Compensation 💰", icon: DollarSign, badge: 0 },
     { id: "learning", label: "Learning 🎓", icon: GraduationCap, badge: 0 },
     { id: "messaging", label: "Messaging 💬", icon: MessageSquare, badge: unreadMessagesCount },
     { id: "notifications", label: "Notifications 🔔", icon: Bell, badge: unreadNotificationsCount },
@@ -321,6 +320,27 @@ export function LinkedInNavbar({
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 text-xs">
+                    <button
+                      onClick={() => {
+                        onSelectTab('ecosystem')
+                        setIsAppsOpen(false)
+                      }}
+                      className="col-span-2 rounded-xl border border-sky-300 bg-gradient-to-r from-slate-900 to-sky-950 p-2.5 text-left text-white hover:border-sky-400 transition-all flex items-center justify-between shadow-md"
+                    >
+                      <div>
+                        <span className="font-bold text-sky-300 flex items-center gap-1.5 text-xs">
+                          <Grid3X3 className="h-4 w-4 text-amber-300" />
+                          Enterprise Ecosystem Platform
+                        </span>
+                        <p className="text-[10px] text-zinc-300 mt-0.5">
+                          Developers API/SDKs, Multi-Cloud Integrations &amp; GSA Partners
+                        </p>
+                      </div>
+                      <span className="rounded-full bg-sky-500 px-2 py-0.5 text-[9px] font-bold text-zinc-950 uppercase">
+                        Platform 🌐
+                      </span>
+                    </button>
+
                     <button
                       onClick={() => {
                         onSelectTab('careersuite')

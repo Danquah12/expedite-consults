@@ -551,7 +551,10 @@ export default function LinkedInPage() {
 
         {/* VIEW 6: PULSE ROOMS (LIVE AUDIO) */}
         {activeTab === 'pulserooms' && (
-          <PulseRoomsView currentUser={userData} />
+          <PulseRoomsView
+            currentUser={userData}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+          />
         )}
 
         {/* VIEW 7: PEER REVIEW EXCHANGE */}
@@ -574,6 +577,7 @@ export default function LinkedInPage() {
           <MarketplaceView
             currentUser={userData}
             onLaunchCareerSuite={() => setActiveTab('careersuite')}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
           />
         )}
 

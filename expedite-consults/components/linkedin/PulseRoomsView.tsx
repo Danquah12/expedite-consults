@@ -56,6 +56,7 @@ import {
 
 interface PulseRoomsViewProps {
   currentUser: UserProfile
+  onNavigateTab?: (tab: string) => void
 }
 
 export function PulseRoomsView({ currentUser }: PulseRoomsViewProps) {
@@ -729,6 +730,115 @@ export function PulseRoomsView({ currentUser }: PulseRoomsViewProps) {
                         <span className="text-[10px] text-zinc-400 font-mono ml-2 shrink-0">{link.domain}</span>
                       </a>
                     ))}
+                  </div>
+                </div>
+
+                {/* THE MASTER INTERCONNECTED FLYWHEEL (CONTENT -> PROBLEM -> SOLUTION -> PRODUCT -> DEMO -> TRIAL -> PURCHASE -> SUPPORT -> REVIEW) */}
+                <div className="rounded-2xl border border-sky-500/40 bg-gradient-to-br from-slate-900 via-sky-950/90 to-indigo-950 p-5 text-white shadow-xl space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-full bg-sky-500/20 px-2.5 py-0.5 text-[11px] font-bold text-sky-300 border border-sky-400/30 flex items-center gap-1">
+                        <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+                        ConnectIn Interconnected Flywheel
+                      </span>
+                      <span className="text-[11px] text-zinc-400 hidden sm:inline">
+                        Content → Problem → Solution → Product
+                      </span>
+                    </div>
+                    <span className="text-[10px] uppercase font-mono text-emerald-400 font-bold">
+                      ● Contextual Action Match
+                    </span>
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm sm:text-base font-black text-white">
+                      Identified Professional Context: Cloud Security &amp; AppSec Threat
+                    </h4>
+                    <p className="text-xs text-zinc-300 leading-relaxed mt-0.5">
+                      Since you are researching this vulnerability, ConnectIn has mapped solutions, training labs, peer reviews, and open roles:
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs">
+                    {/* 1. Marketplace & Solutions */}
+                    <div className="rounded-xl bg-white/10 p-3 border border-white/10 space-y-2 flex flex-col justify-between">
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-bold text-purple-300 uppercase tracking-wider block">
+                          🛍️ Marketplace &amp; Solutions
+                        </span>
+                        <h5 className="font-bold text-white text-xs">AXIOM &amp; Expedite Strike</h5>
+                        <p className="text-[11px] text-zinc-300">Automated zero-trust scanner &amp; cATO pipeline defense.</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setSelectedArticle(null)
+                          if (onNavigateTab) onNavigateTab('marketplace')
+                        }}
+                        className="rounded-lg bg-purple-600 hover:bg-purple-700 py-1.5 px-2 text-center font-bold text-white text-[11px] transition-colors"
+                      >
+                        Try Free Trial →
+                      </button>
+                    </div>
+
+                    {/* 2. Hands-On Learning */}
+                    <div className="rounded-xl bg-white/10 p-3 border border-white/10 space-y-2 flex flex-col justify-between">
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-bold text-sky-300 uppercase tracking-wider block">
+                          🎓 Interactive Learning
+                        </span>
+                        <h5 className="font-bold text-white text-xs">Zero Trust Sandbox Lab</h5>
+                        <p className="text-[11px] text-zinc-300">Hands-on interactive lab: "Defending Multi-Cloud Ingress".</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setSelectedArticle(null)
+                          if (onNavigateTab) onNavigateTab('learning')
+                        }}
+                        className="rounded-lg bg-[#0A66C2] hover:bg-[#004182] py-1.5 px-2 text-center font-bold text-white text-[11px] transition-colors"
+                      >
+                        Launch Lab →
+                      </button>
+                    </div>
+
+                    {/* 3. Peer Review */}
+                    <div className="rounded-xl bg-white/10 p-3 border border-white/10 space-y-2 flex flex-col justify-between">
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-bold text-amber-300 uppercase tracking-wider block">
+                          ⭐ Peer Validation
+                        </span>
+                        <h5 className="font-bold text-white text-xs">Expert Architecture Review</h5>
+                        <p className="text-[11px] text-zinc-300">127 verified architects discussing this remediation patch.</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setSelectedArticle(null)
+                          if (onNavigateTab) onNavigateTab('peerreview')
+                        }}
+                        className="rounded-lg bg-amber-600 hover:bg-amber-700 py-1.5 px-2 text-center font-bold text-white text-[11px] transition-colors"
+                      >
+                        Explore Reviews →
+                      </button>
+                    </div>
+
+                    {/* 4. Active Job Openings */}
+                    <div className="rounded-xl bg-white/10 p-3 border border-white/10 space-y-2 flex flex-col justify-between">
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-bold text-emerald-300 uppercase tracking-wider block">
+                          💼 Active Hiring Matches
+                        </span>
+                        <h5 className="font-bold text-white text-xs">Lead Cloud Security Architect</h5>
+                        <p className="text-[11px] text-zinc-300">$195K - $225K TC · 14 Open Defense Positions.</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setSelectedArticle(null)
+                          if (onNavigateTab) onNavigateTab('jobs')
+                        }}
+                        className="rounded-lg bg-emerald-600 hover:bg-emerald-700 py-1.5 px-2 text-center font-bold text-white text-[11px] transition-colors"
+                      >
+                        View Jobs →
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
