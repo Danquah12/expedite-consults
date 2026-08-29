@@ -105,31 +105,31 @@ export function LinkedInNavbar({
 
   const navItems = [
     { id: 'home', label: 'Home', icon: Home, badge: 0 },
-    { id: 'network', label: 'My Network', icon: Users, badge: networkInvitesCount },
+    { id: 'network', label: 'Network', icon: Users, badge: networkInvitesCount },
     { id: 'jobs', label: 'Jobs', icon: Briefcase, badge: 0 },
-    { id: 'marketplace', label: 'App Store 🛒', icon: ShoppingBag, badge: 0 },
-    { id: 'pulserooms', label: 'Pulse 🎙️', icon: Radio, badge: 1 },
-    { id: 'peerreview', label: 'Peer Review', icon: Layers, badge: 0 },
-    { id: 'compensation', label: 'Comp TC 💰', icon: DollarSign, badge: 0 },
-    { id: 'learning', label: 'Learning', icon: GraduationCap, badge: 0 },
-    { id: 'messaging', label: 'Messaging', icon: MessageSquare, badge: unreadMessagesCount },
-    { id: 'notifications', label: 'Notifications', icon: Bell, badge: 3 }
+    { id: 'marketplace', label: 'Marketplace 🛍️', icon: ShoppingBag, badge: 0, isMarketplace: true },
+    { id: 'pulserooms', label: 'Pulse 📰', icon: Radio, badge: 1 },
+    { id: 'peerreview', label: 'Peer Review ⭐', icon: Layers, badge: 0 },
+    { id: 'compensation', label: 'Pricing/Comp 💰', icon: DollarSign, badge: 0 },
+    { id: 'learning', label: 'Learning 🎓', icon: GraduationCap, badge: 0 },
+    { id: 'messaging', label: 'Messaging 💬', icon: MessageSquare, badge: unreadMessagesCount },
+    { id: 'notifications', label: 'Notifications 🔔', icon: Bell, badge: 3 }
   ] as const
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-zinc-200 bg-white/95 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/95">
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-3 sm:px-6">
+    <header className="sticky top-0 z-40 w-full border-b border-zinc-200 bg-white/95 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/95 shadow-xs">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-2 sm:px-4 lg:px-6">
         {/* Left Side: Brand Logo & Search Bar */}
-        <div className="flex items-center gap-3 flex-1 max-w-md">
+        <div className="flex items-center gap-2.5 flex-1 max-w-xs sm:max-w-sm">
           <button
             onClick={() => onSelectTab('home')}
-            className="flex items-center gap-1.5 focus:outline-none group"
+            className="flex items-center gap-1.5 focus:outline-none group shrink-0"
             title="ConnectIn Home"
           >
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-[#0052cc] via-[#0070f3] to-[#00c6ff] text-white font-black text-lg tracking-tight shadow-md shadow-sky-500/25 transition-transform group-hover:scale-105">
               E
             </div>
-            <span className="hidden sm:inline-block font-extrabold text-base tracking-tight text-zinc-900 dark:text-zinc-100">
+            <span className="hidden xl:inline-block font-extrabold text-base tracking-tight text-zinc-900 dark:text-zinc-100">
               Connect<span className="text-[#0A66C2]">In</span>
             </span>
           </button>
@@ -137,26 +137,26 @@ export function LinkedInNavbar({
           {/* Search Box */}
           <div className="relative flex-1">
             <div
-              className={`flex items-center gap-2 rounded-md bg-[#EDF3F8] px-3 py-1.5 transition-all dark:bg-zinc-800/80 ${
+              className={`flex items-center gap-2 rounded-md bg-[#EDF3F8] px-2.5 py-1.5 transition-all dark:bg-zinc-800/80 ${
                 isSearchFocused ? "ring-2 ring-[#0A66C2] bg-white shadow-xs dark:bg-zinc-900" : ""
               }`}
             >
-              <Search className="h-4 w-4 text-zinc-500 shrink-0" />
+              <Search className="h-3.5 w-3.5 text-zinc-500 shrink-0" />
               <input
                 type="text"
-                placeholder="Search by name, skills, jobs, posts..."
+                placeholder="Search products, people, jobs..."
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
                 onFocus={() => setIsSearchFocused(true)}
                 onBlur={() => setIsSearchFocused(false)}
-                className="w-full bg-transparent text-xs text-zinc-900 placeholder:text-zinc-500 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-400 sm:text-sm"
+                className="w-full bg-transparent text-xs text-zinc-900 placeholder:text-zinc-500 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-400"
               />
               {searchQuery && (
                 <button
                   onClick={() => onSearchChange("")}
                   className="rounded-full p-0.5 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-700"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <X className="h-3 w-3" />
                 </button>
               )}
             </div>
@@ -164,7 +164,7 @@ export function LinkedInNavbar({
         </div>
 
         {/* Center/Right Navigation Icons */}
-        <nav className="flex items-center gap-1 sm:gap-2">
+        <nav className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto">
           {navItems.map((item) => {
             const Icon = item.icon
             const isActive = activeTab === item.id
@@ -173,21 +173,25 @@ export function LinkedInNavbar({
               <button
                 key={item.id}
                 onClick={() => onSelectTab(item.id)}
-                className={`relative flex min-w-[52px] sm:min-w-[64px] flex-col items-center justify-center py-1 text-xs transition-colors group ${
+                className={`relative flex min-w-[48px] sm:min-w-[56px] lg:min-w-[62px] flex-col items-center justify-center py-1 text-xs transition-all group ${
                   isActive
                     ? "text-[#0A66C2] font-semibold border-b-2 border-[#0A66C2]"
+                    : item.isMarketplace
+                    ? "text-purple-600 dark:text-purple-400 font-medium hover:text-purple-700"
                     : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
                 }`}
               >
                 <div className="relative">
-                  <Icon className={`h-5 w-5 transition-transform group-hover:scale-110 ${isActive ? "text-[#0A66C2]" : ""}`} />
+                  <Icon className={`h-4.5 w-4.5 sm:h-5 sm:w-5 transition-transform group-hover:scale-110 ${
+                    isActive ? "text-[#0A66C2]" : item.isMarketplace ? "text-purple-600 dark:text-purple-400" : ""
+                  }`} />
                   {item.badge > 0 && (
                     <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white shadow-xs">
                       {item.badge}
                     </span>
                   )}
                 </div>
-                <span className="hidden sm:inline-block text-[11px] mt-0.5 truncate max-w-[68px]">
+                <span className="hidden md:inline-block text-[10px] lg:text-[11px] mt-0.5 truncate max-w-[70px]">
                   {item.label}
                 </span>
               </button>
