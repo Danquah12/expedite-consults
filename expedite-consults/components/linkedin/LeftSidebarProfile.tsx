@@ -19,7 +19,8 @@ import {
   DollarSign,
   BarChart3,
   Sparkles,
-  ShieldCheck
+  ShieldCheck,
+  Flame
 } from "lucide-react"
 import { UserProfile } from "@/lib/linkedin-data"
 
