@@ -1,126 +1,101 @@
 "use client"
 
-import React, { useState } from "react"
-import Link from "next/link"
-import Image from "next/image"
+import React, { useState, useEffect } from "react"
 import {
-  Home,
+  Search,
+  House,
   Users,
   Briefcase,
   MessageSquare,
   Bell,
-  Search,
   Grid3X3,
+  Award,
+  Radio,
+  SlidersHorizontal,
   ChevronDown,
-  X,
   Sparkles,
-  ShieldCheck,
-  LogOut,
-  Settings,
-  Bookmark,
-  BookOpen,
-  GraduationCap,
   Sun,
   Moon,
-  Radio,
-  Layers,
-  DollarSign,
+  Bookmark,
+  LogOut,
   UserCheck,
-  Rocket,
-  EyeOff,
+  Building,
+  ShieldCheck,
+  Layers,
+  ShoppingBag,
   Flame,
-  Award,
+  EyeOff,
+  Rocket,
   FileCheck,
-  ShoppingBag
+  X,
+  GraduationCap,
+  Store,
+  DollarSign
 } from "lucide-react"
 import { UserProfile } from "@/lib/linkedin-data"
 
 interface LinkedInNavbarProps {
-  activeTab:
-    | 'home'
-    | 'network'
-    | 'jobs'
-    | 'learning'
-    | 'pulserooms'
-    | 'peerreview'
-    | 'compensation'
-    | 'marketplace'
-    | 'launchpad'
-    | 'watercooler'
-    | 'advisory'
-    | 'startups'
-    | 'careersuite'
-    | 'messaging'
-    | 'notifications'
-    | 'profile'
-  onSelectTab: (
-    tab:
-      | 'home'
-      | 'network'
-      | 'jobs'
-      | 'learning'
-      | 'pulserooms'
-      | 'peerreview'
-      | 'compensation'
-      | 'marketplace'
-      | 'launchpad'
-      | 'watercooler'
-      | 'advisory'
-      | 'startups'
-      | 'careersuite'
-      | 'messaging'
-      | 'notifications'
-      | 'profile'
-  ) => void
   user: UserProfile
-  unreadMessagesCount: number
-  networkInvitesCount: number
+  activeTab: string
+  onSelectTab: (tabId: string) => void
   searchQuery: string
   onSearchChange: (q: string) => void
+  unreadMessagesCount?: number
+  unreadNotificationsCount?: number
 }
 
 export function LinkedInNavbar({
+  user,
   activeTab,
   onSelectTab,
-  user,
-  unreadMessagesCount,
-  networkInvitesCount,
   searchQuery,
-  onSearchChange
+  onSearchChange,
+  unreadMessagesCount = 1,
+  unreadNotificationsCount = 3
 }: LinkedInNavbarProps) {
   const [isMeOpen, setIsMeOpen] = useState(false)
   const [isAppsOpen, setIsAppsOpen] = useState(false)
-  const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(false)
+  const [isSearchFocused, setIsSearchFocused] = useState(false)
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const isDark = document.documentElement.classList.contains("dark")
+      setIsDarkMode(isDark)
+    }
+  }, [])
 
   const toggleTheme = () => {
-    const next = !isDarkMode
-    setIsDarkMode(next)
-    if (next) {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
+    if (typeof window !== "undefined") {
+      const root = document.documentElement
+      if (root.classList.contains("dark")) {
+        root.classList.remove("dark")
+        setIsDarkMode(false)
+      } else {
+        root.classList.add("dark")
+        setIsDarkMode(true)
+      }
     }
   }
 
   const navItems = [
-    { id: 'home', label: 'Home', icon: Home, badge: 0 },
-    { id: 'network', label: 'Network', icon: Users, badge: networkInvitesCount },
-    { id: 'jobs', label: 'Jobs', icon: Briefcase, badge: 0 },
-    { id: 'marketplace', label: 'Marketplace 🛍️', icon: ShoppingBag, badge: 0, isMarketplace: true },
-    { id: 'pulserooms', label: 'Pulse 📰', icon: Radio, badge: 1 },
-    { id: 'peerreview', label: 'Peer Review ⭐', icon: Layers, badge: 0 },
-    { id: 'compensation', label: 'Salary Insights 💰', icon: DollarSign, badge: 0 },
-    { id: 'learning', label: 'Learning 🎓', icon: GraduationCap, badge: 0 },
-    { id: 'messaging', label: 'Messaging 💬', icon: MessageSquare, badge: unreadMessagesCount },
-    { id: 'notifications', label: 'Notifications 🔔', icon: Bell, badge: 3 }
-  ] as const
+    { id: "home", label: "Home", icon: House, badge: 0 },
+    { id: "network", label: "Network", icon: Users, badge: 2 },
+    { id: "jobs", label: "Jobs", icon: Briefcase, badge: 0 },
+    { id: "marketplace", label: "Marketplace 🛍️", icon: ShoppingBag, badge: 0, isMarketplace: true },
+    { id: "pulserooms", label: "Pulse 📰", icon: Radio, badge: 1 },
+    { id: "peerreview", label: "Peer Review ⭐", icon: Layers, badge: 0 },
+    { id: "compensation", label: "Salary Insights 💰", icon: DollarSign, badge: 0 },
+    { id: "learning", label: "Learning 🎓", icon: GraduationCap, badge: 0 },
+    { id: "messaging", label: "Messaging 💬", icon: MessageSquare, badge: unreadMessagesCount },
+    { id: "notifications", label: "Notifications 🔔", icon: Bell, badge: unreadNotificationsCount },
+  ]
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-zinc-200 bg-white/95 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/95 shadow-xs">
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-2 sm:px-4 lg:px-6">
-        {/* Left Side: Brand Logo & Search Bar */}
-        <div className="flex items-center gap-2.5 flex-1 max-w-xs sm:max-w-sm">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-2 sm:px-4 lg:px-6 gap-2">
+        {/* Left Side: Brand Logo & Global Search */}
+        <div className="flex items-center gap-2.5 flex-1 max-w-xs sm:max-w-sm shrink-0">
           <button
             onClick={() => onSelectTab('home')}
             className="flex items-center gap-1.5 focus:outline-none group shrink-0"
@@ -134,7 +109,7 @@ export function LinkedInNavbar({
             </span>
           </button>
 
-          {/* Search Box */}
+          {/* Search Input Box */}
           <div className="relative flex-1">
             <div
               className={`flex items-center gap-2 rounded-md bg-[#EDF3F8] px-2.5 py-1.5 transition-all dark:bg-zinc-800/80 ${
@@ -163,8 +138,8 @@ export function LinkedInNavbar({
           </div>
         </div>
 
-        {/* Center/Right Navigation Icons */}
-        <nav className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto">
+        {/* Center Navigation Tabs (Horizontally Scrollable) */}
+        <nav className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto scrollbar-none py-1">
           {navItems.map((item) => {
             const Icon = item.icon
             const isActive = activeTab === item.id
@@ -173,7 +148,7 @@ export function LinkedInNavbar({
               <button
                 key={item.id}
                 onClick={() => onSelectTab(item.id)}
-                className={`relative flex min-w-[48px] sm:min-w-[56px] lg:min-w-[62px] flex-col items-center justify-center py-1 text-xs transition-all group ${
+                className={`relative flex min-w-[48px] sm:min-w-[56px] lg:min-w-[62px] flex-col items-center justify-center py-1 text-xs transition-all group shrink-0 ${
                   isActive
                     ? "text-[#0A66C2] font-semibold border-b-2 border-[#0A66C2]"
                     : item.isMarketplace
@@ -197,12 +172,18 @@ export function LinkedInNavbar({
               </button>
             )
           })}
+        </nav>
 
+        {/* Right Side Utility & Dropdowns (OUTSIDE of overflow-x-auto) */}
+        <div className="flex items-center gap-1 shrink-0 pl-1">
           {/* "Me" Profile Menu Dropdown */}
-          <div className="relative ml-1">
+          <div className="relative">
             <button
-              onClick={() => setIsMeOpen(!isMeOpen)}
-              className={`flex min-w-[50px] flex-col items-center justify-center py-1 text-xs transition-colors ${
+              onClick={() => {
+                setIsMeOpen(prev => !prev)
+                setIsAppsOpen(false)
+              }}
+              className={`flex min-w-[50px] flex-col items-center justify-center py-1 text-xs transition-colors cursor-pointer ${
                 activeTab === 'profile'
                   ? "text-[#0A66C2] font-semibold border-b-2 border-[#0A66C2]"
                   : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
@@ -224,19 +205,19 @@ export function LinkedInNavbar({
             {isMeOpen && (
               <>
                 <div
-                  className="fixed inset-0 z-30"
+                  className="fixed inset-0 z-40"
                   onClick={() => setIsMeOpen(false)}
                 />
-                <div className="absolute right-0 top-12 z-40 w-72 rounded-xl border border-zinc-200 bg-white p-3 shadow-xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95">
+                <div className="absolute right-0 top-12 z-50 w-72 rounded-2xl border border-zinc-200 bg-white p-3.5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95">
                   <div className="flex items-start gap-3 border-b border-zinc-100 pb-3 dark:border-zinc-800">
                     <img
                       src={user.avatar}
                       alt={user.name}
-                      className="h-12 w-12 rounded-full object-cover ring-2 ring-[#0A66C2]/20"
+                      className="h-12 w-12 rounded-full object-cover ring-2 ring-[#0A66C2]/20 shrink-0"
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1">
-                        <p className="font-semibold text-sm text-zinc-900 truncate dark:text-zinc-100">
+                        <p className="font-bold text-sm text-zinc-900 truncate dark:text-zinc-100">
                           {user.name}
                         </p>
                         <ShieldCheck className="h-4 w-4 text-[#0A66C2] shrink-0" />
@@ -253,7 +234,7 @@ export function LinkedInNavbar({
                         onSelectTab('profile')
                         setIsMeOpen(false)
                       }}
-                      className="w-full rounded-full bg-[#0A66C2] py-1.5 text-center text-xs font-bold text-white hover:bg-[#004182] transition-colors shadow-xs"
+                      className="w-full rounded-full bg-[#0A66C2] py-2 text-center text-xs font-bold text-white hover:bg-[#004182] transition-colors shadow-sm"
                     >
                       View My Workspace 👤
                     </button>
@@ -262,15 +243,15 @@ export function LinkedInNavbar({
                         onSelectTab('marketplace')
                         setIsMeOpen(false)
                       }}
-                      className="w-full rounded-full border border-purple-500 py-1 text-center text-xs font-bold text-purple-600 hover:bg-purple-50 dark:text-purple-300 dark:hover:bg-purple-950/40 transition-colors"
+                      className="w-full rounded-full border border-purple-500 py-1.5 text-center text-xs font-bold text-purple-600 hover:bg-purple-50 dark:text-purple-300 dark:hover:bg-purple-950/40 transition-colors"
                     >
                       Seller Hub &amp; Storefront 🛍️
                     </button>
                   </div>
 
                   <div className="mt-3 space-y-1 border-t border-zinc-100 pt-2 text-xs text-zinc-600 dark:border-zinc-800 dark:text-zinc-300">
-                    <p className="px-2 py-1 font-semibold text-zinc-900 dark:text-zinc-100 text-[11px] uppercase tracking-wider">
-                      Account & Access
+                    <p className="px-2 py-1 font-bold text-zinc-900 dark:text-zinc-100 text-[11px] uppercase tracking-wider">
+                      Workspace Navigation
                     </p>
                     <button
                       onClick={() => {
@@ -280,7 +261,7 @@ export function LinkedInNavbar({
                       className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                     >
                       <UserCheck className="h-4 w-4 text-zinc-500" />
-                      <span>Settings & Privacy</span>
+                      <span>Portfolio &amp; Verified Skills</span>
                     </button>
                     <button
                       onClick={() => {
@@ -290,11 +271,11 @@ export function LinkedInNavbar({
                       className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                     >
                       <Bookmark className="h-4 w-4 text-zinc-500" />
-                      <span>Saved Posts & Articles</span>
+                      <span>Saved Posts &amp; Articles</span>
                     </button>
                     <button
                       onClick={() => setIsMeOpen(false)}
-                      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+                      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 font-semibold"
                     >
                       <LogOut className="h-4 w-4" />
                       <span>Sign Out</span>
@@ -310,7 +291,10 @@ export function LinkedInNavbar({
           {/* ConnectIn Ecosystem Super-Menu Launcher */}
           <div className="relative">
             <button
-              onClick={() => setIsAppsOpen(!isAppsOpen)}
+              onClick={() => {
+                setIsAppsOpen(prev => !prev)
+                setIsMeOpen(false)
+              }}
               className="hidden md:flex flex-col items-center justify-center min-w-[50px] text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 cursor-pointer focus:outline-none"
             >
               <Grid3X3 className="h-5 w-5" />
@@ -322,16 +306,16 @@ export function LinkedInNavbar({
             {isAppsOpen && (
               <>
                 <div
-                  className="fixed inset-0 z-30"
+                  className="fixed inset-0 z-40"
                   onClick={() => setIsAppsOpen(false)}
                 />
-                <div className="absolute right-0 top-12 z-40 w-80 rounded-2xl border border-zinc-200 bg-white p-4 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 space-y-3">
+                <div className="absolute right-0 top-12 z-50 w-80 rounded-2xl border border-zinc-200 bg-white p-4 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 space-y-3">
                   <div className="border-b border-zinc-100 pb-2 dark:border-zinc-800">
                     <p className="font-bold text-xs text-zinc-900 dark:text-zinc-100">
                       ConnectIn Super-App Ecosystem
                     </p>
                     <p className="text-[11px] text-zinc-400">
-                      Tools inspired by Product Hunt, Blind, Toptal, Wellfound & Bento
+                      Tools inspired by Product Hunt, Blind, Toptal, Wellfound &amp; Bento
                     </p>
                   </div>
 
@@ -346,10 +330,10 @@ export function LinkedInNavbar({
                       <div>
                         <span className="font-bold text-[#0A66C2] dark:text-sky-300 flex items-center gap-1.5">
                           <FileCheck className="h-4 w-4 text-[#0A66C2]" />
-                          Expedite CareerSuite™ (AI Resume & ATS)
+                          Expedite CareerSuite™ (AI Resume &amp; ATS)
                         </span>
                         <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">
-                          Profile Maximizer, Resume Tailor & Job Tracker (tuhousing.vercel.app)
+                          Profile Maximizer, Resume Tailor &amp; Job Tracker
                         </p>
                       </div>
                       <span className="rounded-full bg-[#0A66C2] px-2 py-0.5 text-[9px] font-bold text-white uppercase">
@@ -367,7 +351,7 @@ export function LinkedInNavbar({
                       <span className="font-bold text-orange-600 flex items-center gap-1">
                         <Flame className="h-3.5 w-3.5 fill-orange-500" /> Launchpad
                       </span>
-                      <p className="text-[10px] text-zinc-400 mt-0.5">Product Hunt daily launches & upvotes</p>
+                      <p className="text-[10px] text-zinc-400 mt-0.5">Product Hunt daily launches &amp; upvotes</p>
                     </button>
 
                     <button
@@ -406,7 +390,7 @@ export function LinkedInNavbar({
                       <span className="font-bold text-purple-600 flex items-center gap-1">
                         <Rocket className="h-3.5 w-3.5" /> Startups
                       </span>
-                      <p className="text-[10px] text-zinc-400 mt-0.5">Wellfound equity % & direct founder DM</p>
+                      <p className="text-[10px] text-zinc-400 mt-0.5">Wellfound equity % &amp; founder DM</p>
                     </button>
                   </div>
                 </div>
@@ -429,13 +413,13 @@ export function LinkedInNavbar({
 
           {/* Try Premium Pill */}
           <button
-            onClick={() => onSelectTab('learning')}
+            onClick={() => onSelectTab('marketplace')}
             className="hidden lg:flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-900 border border-amber-200/80 hover:bg-amber-100 transition-colors dark:bg-amber-950/40 dark:border-amber-700/50 dark:text-amber-300"
           >
             <Sparkles className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
             <span>Try Premium for $0</span>
           </button>
-        </nav>
+        </div>
       </div>
     </header>
   )
