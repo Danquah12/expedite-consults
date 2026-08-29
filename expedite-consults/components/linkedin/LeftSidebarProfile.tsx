@@ -27,19 +27,24 @@ import { UserProfile } from "@/lib/linkedin-data"
 interface LeftSidebarProfileProps {
   user: UserProfile
   onViewProfile: () => void
-  onSelectTag?: (tag: string) => void
+  onSelectTag: (tag: string) => void
   onNavigateTab?: (tab: string) => void
+  onOpenIDModal?: () => void
 }
 
 export function LeftSidebarProfile({
   user,
   onViewProfile,
   onSelectTag,
-  onNavigateTab
+  onNavigateTab,
+  onOpenIDModal
 }: LeftSidebarProfileProps) {
   const [isRecentExpanded, setIsRecentExpanded] = useState(true)
 
   const workspaceShortcuts = [
+    { id: 'aiagents', label: '🤖 AI Agents Store', badge: '8 Agents' },
+    { id: 'code', label: '🧑‍💻 ConnectIn Code', badge: '3 Repos' },
+    { id: 'wallet', label: '💳 Pay & Invoicing', badge: '$2,430' },
     { id: 'missions', label: '🔥 Career Mission (72%)', badge: '+1,850 XP' },
     { id: 'labs', label: '🧪 Security Labs Sandbox', badge: 'Active' },
     { id: 'procurement', label: '🏢 Corporate Procurement', badge: '$2.4M Spend' },
@@ -103,6 +108,19 @@ export function LeftSidebarProfile({
               {user.headline}
             </p>
           </button>
+
+          {/* Portable Professional ID Button */}
+          {onOpenIDModal && (
+            <div className="pt-2">
+              <button
+                onClick={onOpenIDModal}
+                className="w-full rounded-lg bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 px-2.5 py-1 text-[11px] font-bold text-[#0A66C2] dark:text-sky-300 hover:bg-sky-100 transition-colors flex items-center justify-center gap-1.5"
+              >
+                <span>🪪 ConnectIn ID (#alex-taylor)</span>
+                <span className="text-[9px] font-mono bg-sky-200/60 dark:bg-sky-900 px-1 rounded">TS/SCI</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Profile Strength & Career Mission Gauge */}

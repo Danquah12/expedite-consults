@@ -103,6 +103,9 @@ export function LinkedInNavbar({
   ]
 
   const moreMenuItems = [
+    { id: "aiagents", label: "🤖 AI Agents Marketplace", desc: "Discover, test & deploy autonomous agents" },
+    { id: "code", label: "🧑‍💻 ConnectIn Code & Repos", desc: "GitHub sync & recruit by verified code" },
+    { id: "wallet", label: "💳 Pay, Wallet & Invoicing", desc: "$2,430 Balance, Escrow & SOWs" },
     { id: "missions", label: "🔥 Career Missions & Journey", desc: "Trackable progression & XP (72%)" },
     { id: "procurement", label: "🏢 Corporate Procurement & RFPs", desc: "$2.4M enterprise spend & bids" },
     { id: "collaboration", label: "🤝 Co-Founders & Ideas Incubator", desc: "Crowdsource, build & co-found" },

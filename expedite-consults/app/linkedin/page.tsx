@@ -35,6 +35,10 @@ import { MentorshipCreatorView } from "@/components/linkedin/MentorshipCreatorVi
 import { LabsView } from "@/components/linkedin/LabsView"
 import { UniversalSearchModal } from "@/components/linkedin/UniversalSearchModal"
 import { MediaView } from "@/components/linkedin/MediaView"
+import { AIAgentsStorefrontView } from "@/components/linkedin/AIAgentsStorefrontView"
+import { DeveloperCodeView } from "@/components/linkedin/DeveloperCodeView"
+import { WalletInvoicingView } from "@/components/linkedin/WalletInvoicingView"
+import { ProfessionalIDModal } from "@/components/linkedin/ProfessionalIDModal"
 import {
   currentUser as initialCurrentUser,
   initialPosts,
@@ -66,6 +70,9 @@ export default function LinkedInPage() {
     | 'peerreview'
     | 'compensation'
     | 'marketplace'
+    | 'aiagents'
+    | 'code'
+    | 'wallet'
     | 'media'
     | 'ecosystem'
     | 'company'
@@ -89,6 +96,7 @@ export default function LinkedInPage() {
 
   const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false)
   const [isUniversalSearchOpen, setIsUniversalSearchOpen] = useState(false)
+  const [isIDModalOpen, setIsIDModalOpen] = useState(false)
 
   const [userData, setUserData] = useState<UserProfile>(initialCurrentUser)
   const [posts, setPosts] = useState<Post[]>(initialPosts)
@@ -411,6 +419,7 @@ export default function LinkedInPage() {
                   setActiveFeedCategory('for_you')
                 }}
                 onNavigateTab={(tab) => setActiveTab(tab as any)}
+                onOpenIDModal={() => setIsIDModalOpen(true)}
               />
             </div>
 
@@ -612,6 +621,30 @@ export default function LinkedInPage() {
           />
         )}
 
+        {/* VIEW: AUTONOMOUS AI AGENTS MARKETPLACE */}
+        {activeTab === 'aiagents' && (
+          <AIAgentsStorefrontView
+            currentUser={userData}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+          />
+        )}
+
+        {/* VIEW: CONNECTIN CODE & REPOSITORIES */}
+        {activeTab === 'code' && (
+          <DeveloperCodeView
+            currentUser={userData}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+          />
+        )}
+
+        {/* VIEW: CONNECTIN PAY, WALLET & INVOICING */}
+        {activeTab === 'wallet' && (
+          <WalletInvoicingView
+            currentUser={userData}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+          />
+        )}
+
         {/* VIEW: CONNECTIN MEDIA & VIDEO PLATFORM */}
         {activeTab === 'media' && (
           <MediaView
@@ -759,6 +792,13 @@ export default function LinkedInPage() {
         onClose={() => setIsUniversalSearchOpen(false)}
         initialQuery={searchQuery}
         onNavigateTab={(tab) => setActiveTab(tab as any)}
+      />
+
+      {/* ConnectIn Portable Professional ID Modal */}
+      <ProfessionalIDModal
+        isOpen={isIDModalOpen}
+        onClose={() => setIsIDModalOpen(false)}
+        currentUser={userData}
       />
     </div>
   )

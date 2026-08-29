@@ -98,67 +98,61 @@ export const CORPORATE_PROCUREMENT_DATA: ProcurementSpendDashboard = {
     { step: 4, role: 'Corporate Procurement Sign-off', status: 'Upcoming', assignee: 'Procurement Board' }
   ],
   activeRequisitions: [
-    { id: 'REQ-9941', product: 'AXIOM Enterprise Cyber Suite (GovCloud 500-Node)', vendor: 'Expedite Consults', requestedBy: 'Alex Taylor', department: 'Cloud Defense', amount: '$54,000 / yr', status: 'Pending Security Review', date: 'Aug 29, 2026' },
-    { id: 'REQ-9940', product: 'Expedite Strike ASPM & Checkmarx MCP Gateway', vendor: 'Expedite Strike Labs', requestedBy: 'David K.', department: 'AppSec Engineering', amount: '$18,500 / yr', status: 'Pending Procurement Approval', date: 'Aug 28, 2026' },
-    { id: 'REQ-9939', product: 'Microsoft Sentinel Multi-Tenant Ingress Connector', vendor: 'Microsoft Partner Hub', requestedBy: 'Elena Rostova', department: 'SOC Operations', amount: '$12,000 / yr', status: 'Approved', date: 'Aug 25, 2026' }
+    { id: 'REQ-9481', product: 'AXIOM AI Cyber Suite (50 Enclave Licenses)', vendor: 'Expedite Consults', requestedBy: 'Alex Taylor', department: 'Cloud Infrastructure', amount: '$24,950 / yr', status: 'Approved', date: 'August 27, 2026' },
+    { id: 'REQ-9482', product: 'CrowdStrike Falcon GovCloud EDR', vendor: 'CrowdStrike Federal', requestedBy: 'Dave Reynolds', department: 'SecOps', amount: '$85,000 / yr', status: 'Pending Security Review', date: 'August 28, 2026' },
+    { id: 'REQ-9483', product: 'Red Team Penetration Testing SOW', vendor: 'Mandiant Solutions', requestedBy: 'Elena Rostova', department: 'AppSec', amount: '$60,000 SOW', status: 'Pending Procurement Approval', date: 'August 29, 2026' }
   ]
 }
 
 export interface RFPQuoteRequest {
   id: string
   title: string
-  clientName: string
-  clientType: 'Enterprise (Fortune 500)' | 'Defense Contractor' | 'Federal Agency'
-  scope: string
+  clientType: string
   budgetRange: string
   deadline: string
+  scope: string
   bids: {
     vendorName: string
     vendorLogo: string
     bidAmount: string
+    rating: string
     estimatedTimeline: string
-    rating: number
-    verifiedBadges: string[]
     deliverables: string[]
   }[]
 }
 
 export const RFP_MARKETPLACE_DATA: RFPQuoteRequest[] = [
   {
-    id: 'rfp_1',
-    title: 'Full-Scope Red Team Adversary Emulation & Penetration Test (2,000 Hosts)',
-    clientName: 'Global Financial Infrastructure Corp',
-    clientType: 'Enterprise (Fortune 500)',
-    scope: 'External ingress assessment, Active Directory privilege escalation, eBPF container escapes, and tested GitHub fix PRs.',
-    budgetRange: '$25,000 - $35,000',
-    deadline: 'Bids close in 3 days',
+    id: 'rfp_pentest_2000',
+    title: 'RFP-2026-08: 2,000-Host External & Cloud Micro-Segmentation Penetration Test',
+    clientType: 'Federal Defense Contractor (Tier 1)',
+    budgetRange: '$50,000 – $80,000',
+    deadline: 'Bids Close Sept 15, 2026',
+    scope: 'Full-scope blackbox & greybox adversary emulation across AWS GovCloud, on-prem VMware, and Cilium Kubernetes clusters with continuous OSCAL reporting.',
     bids: [
       {
-        vendorName: 'Expedite Consults Advisory',
+        vendorName: 'Expedite Strike Defense',
         vendorLogo: '🛡️',
-        bidAmount: '$28,000',
-        estimatedTimeline: '10 Business Days',
-        rating: 4.98,
-        verifiedBadges: ['FedRAMP 3PAO Audited', 'TS/SCI Cleared Cadre', 'Zero-Day Exploitation Verified'],
-        deliverables: ['Automated PR Fixes for SAST/SCA', 'Executive Board PDF Dossier', 'Live Re-Testing Guarantee']
+        bidAmount: '$58,500',
+        rating: '4.99 ★ (94 Audits)',
+        estimatedTimeline: '18 Days',
+        deliverables: ['Live Attack Graph', 'Automated GitHub PR Patches', 'OSCAL cATO Telemetry Machine Export']
       },
       {
-        vendorName: 'Deloitte Cyber Risk Practice',
-        vendorLogo: '🏛️',
-        bidAmount: '$34,000',
-        estimatedTimeline: '3 Weeks',
-        rating: 4.85,
-        verifiedBadges: ['Big 4 Global Firm', 'ISO 27001 Certified'],
-        deliverables: ['Compliance Gap Matrix', 'Formal Attestation Letter', 'C-Suite Briefing']
+        vendorName: 'Deloitte Cyber Risk',
+        vendorLogo: '🏢',
+        bidAmount: '$74,000',
+        rating: '4.85 ★ (210 Audits)',
+        estimatedTimeline: '30 Days',
+        deliverables: ['Executive Board PDF Deck', 'Compliance Attestation', 'Bi-weekly Briefings']
       },
       {
-        vendorName: 'Mandiant Threat Labs',
-        vendorLogo: '⚡',
-        bidAmount: '$31,500',
-        estimatedTimeline: '2 Weeks',
-        rating: 4.92,
-        verifiedBadges: ['Google Cloud Security', 'Nation-State Threat Intel'],
-        deliverables: ['Adversary TTP Mapping', 'SIEM Rule Packs', 'Debrief Workshop']
+        vendorName: 'Mandiant Red Team',
+        vendorLogo: '⚔️',
+        bidAmount: '$79,500',
+        rating: '4.92 ★ (160 Audits)',
+        estimatedTimeline: '21 Days',
+        deliverables: ['Nation-State Emulation', 'Threat Actor Dossier', 'Remediation Workshop']
       }
     ]
   }
@@ -167,40 +161,26 @@ export const RFP_MARKETPLACE_DATA: RFPQuoteRequest[] = [
 export interface CollaborationPost {
   id: string
   authorName: string
-  authorAvatar: string
   authorRole: string
-  seekingRole: string
+  authorAvatar: string
   projectTitle: string
+  seekingRole: string
+  equityOrComp: string
   description: string
   requiredSkills: string[]
-  equityOrComp: string
-  responsesCount: number
 }
 
 export const COLLABORATION_DATA: CollaborationPost[] = [
   {
     id: 'collab_1',
-    authorName: 'Marcus Vance',
-    authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
-    authorRole: 'Founder @ Stealth Sec (Ex-Palantir / NSA)',
-    seekingRole: 'Co-Founder & Chief AI Safety Architect',
-    projectTitle: 'Autonomous MCP Guardrail Protocol for Defense AI Enclaves',
-    description: 'We are building an Ed25519 cryptographic token firewall for agentic LLMs operating on AWS GovCloud. Looking for a technical co-founder with deep eBPF and NIST AI RMF expertise.',
-    requiredSkills: ['Model Context Protocol (MCP)', 'Rust / eBPF', 'NIST AI RMF', 'TS/SCI Clearance'],
-    equityOrComp: '18% - 25% Equity + Seed Retainer',
-    responsesCount: 14
-  },
-  {
-    id: 'collab_2',
-    authorName: 'Elena Rostova',
-    authorAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
-    authorRole: 'Stanford AI Fellow & Research Lead',
-    seekingRole: 'Senior Rust Systems Engineer (Part-Time / Contributor)',
-    projectTitle: 'VeritasLens Fact-Radar Open-Source Engine',
-    description: 'Building an open-source real-time news clustering parser that detects editorial blindspots and validates statutory legal references.',
-    requiredSkills: ['Rust', 'Vector Databases', 'NLP Transformers', 'Open Source'],
-    equityOrComp: '$8,000 Grant Milestone + Core Maintainer Rights',
-    responsesCount: 8
+    authorName: 'Alex Taylor (Fellow)',
+    authorRole: 'Principal Cloud Security Architect',
+    authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+    projectTitle: 'Building Autonomous AI-BOM & Ed25519 Prompt Injection Firewall',
+    seekingRole: 'Co-Founder & Lead AI Safety ML Researcher',
+    equityOrComp: '18% Equity + Co-Founder Seat',
+    description: 'We have early enterprise pilot demand for an autonomous MCP token firewall. Seeking an ML safety researcher with PyTorch & kernel hook experience to partner on seed funding.',
+    requiredSkills: ['Model Context Protocol', 'PyTorch', 'eBPF', 'Zero Trust']
   }
 ]
 
@@ -209,37 +189,25 @@ export interface IdeaItem {
   title: string
   author: string
   authorAvatar: string
-  category: 'AI Defense' | 'Cloud Security' | 'DevSecOps' | 'Compliance'
-  supportCount: number
-  commentsCount: number
+  category: string
   pitch: string
   lookingFor: string[]
+  supportCount: number
+  commentsCount: number
   hasSupported?: boolean
 }
 
 export const COMMUNITY_IDEAS_DATA: IdeaItem[] = [
   {
     id: 'idea_1',
-    title: 'AI-Powered RMF & Continuous OSCAL Automation for Defense Subcontractors',
-    author: 'Col. Raymond Sterling (Ret.)',
-    authorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
-    category: 'Compliance',
-    supportCount: 2381,
-    commentsCount: 142,
-    pitch: 'Small defense vendors spend 9 months and $150K writing static Word doc SSPs. Let’s build an automated parser that queries AWS Config and outputs instant NIST 800-53 OSCAL JSON packages for automated approval.',
-    lookingFor: ['Rust Developers', 'FedRAMP 3PAO Auditors', 'Seed Investors'],
-    hasSupported: true
-  },
-  {
-    id: 'idea_2',
-    title: 'Dynamic Honeytoken Deception Mesh for Agentic LLM MCP Tools',
-    author: 'Alex Taylor',
-    authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
-    category: 'AI Defense',
-    supportCount: 1840,
-    commentsCount: 96,
-    pitch: 'Inject fake synthetic AWS credentials and database connections into agentic tool memory. When a prompt injection adversary attempts to exfiltrate keys, trigger instant automated containment.',
-    lookingFor: ['AppSec Researchers', 'Python MCP Engineers', 'Beta Enterprise Testers'],
+    title: 'OpenOSCAL: Instant WebAssembly Validator for NIST 800-53 Machine Baselines',
+    author: 'Elena Rostova',
+    authorAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
+    category: 'GovTech & Compliance',
+    pitch: 'What if compliance engineers could validate a 5,000-control OSCAL JSON file locally inside the browser with zero cloud dependencies using Rust WebAssembly?',
+    lookingFor: ['Rust WASM Developer', '3PAO Compliance Auditor', 'UI Engineer'],
+    supportCount: 342,
+    commentsCount: 48,
     hasSupported: false
   }
 ]
@@ -247,42 +215,29 @@ export const COMMUNITY_IDEAS_DATA: IdeaItem[] = [
 export interface MentorProfile {
   id: string
   name: string
-  avatar: string
   role: string
   company: string
-  rating: number
+  avatar: string
+  bio: string
+  specialties: string[]
+  rating: string
   reviewsCount: number
   pricing: string
-  specialties: string[]
-  bio: string
   slotsAvailable: number
 }
 
 export const MENTORS_DATA: MentorProfile[] = [
   {
-    id: 'mentor_1',
+    id: 'm1',
     name: 'Dr. Sarah Jenkins',
+    role: 'Former Federal CISO & Senior Fellow',
+    company: 'Expedite Consults Advisory',
     avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
-    role: 'Chief Information Security Officer',
-    company: 'Federal Defense Technologies',
-    rating: 5.0,
+    bio: 'Mentoring cybersecurity directors, staff architects, and aspiring CISOs on FedRAMP authorizations, board communication, and multi-cloud security transformations.',
+    specialties: ['CISO Career Progression', 'FedRAMP High / DoD ATO', 'Board Presentations'],
+    rating: '5.0 ★',
     reviewsCount: 68,
-    pricing: '$75 / 45-min Session · $250 / Month',
-    specialties: ['CISO Transition', 'FedRAMP cATO Strategy', 'Executive Board Communications'],
-    bio: '20+ years leading enterprise cyber defenses. Mentored 40+ senior architects into VP and CISO leadership roles across Fortune 500 and defense agencies.',
-    slotsAvailable: 2
-  },
-  {
-    id: 'mentor_2',
-    name: 'Alex Taylor (Fellow)',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
-    role: 'Principal Cloud Security Architect',
-    company: 'Expedite Consults',
-    rating: 4.98,
-    reviewsCount: 127,
-    pricing: '$60 / 45-min Session · $200 / Month',
-    specialties: ['AWS GovCloud Landing Zones', 'Zero Trust NIST 800-207', 'Exploit Triage & Auto-PR'],
-    bio: 'Specialist in multi-account cloud security, eBPF micro-segmentation, and high-compensation cleared architecture roles.',
+    pricing: '$75 / 45-min Session · $250 / mo Retainer',
     slotsAvailable: 3
   }
 ]
@@ -293,7 +248,7 @@ export interface CreatorCampaign {
   brandLogo: string
   campaignTitle: string
   compensation: string
-  deliverableType: 'Technical Deep Dive Post' | 'Webinar Demo' | 'Architecture Whitepaper' | 'Product Benchmark'
+  deliverableType: string
   description: string
   applicantsCount: number
 }
@@ -308,16 +263,6 @@ export const CREATOR_CAMPAIGNS_DATA: CreatorCampaign[] = [
     deliverableType: 'Technical Deep Dive Post',
     description: 'Looking for verified Cloud & AppSec Fellows to run a benchmark comparing SAST false positive rates with vs without MCP auto-PR triage.',
     applicantsCount: 12
-  },
-  {
-    id: 'camp_2',
-    brandName: 'Expedite Consults Product Lab',
-    brandLogo: '🛡️',
-    campaignTitle: 'Live Architecture Teardown: Autonomous cATO with OSCAL',
-    compensation: '$3,500 / Webinar & Code Repo',
-    deliverableType: 'Webinar Demo',
-    description: 'Co-host a live ConnectIn Stage demonstrating automated OSCAL JSON telemetry synchronization across multi-account AWS environments.',
-    applicantsCount: 19
   }
 ]
 
@@ -342,25 +287,204 @@ export const SECURITY_LABS_DATA: SecurityLabExercise[] = [
     skillsGained: ['eBPF Socket Sniffing', 'Cilium ClusterMesh', 'Zero-Trust Pod Isolation'],
     description: 'Deploy real-time network policy rules via Linux kernel eBPF probes. Block unauthorized cross-namespace egress without iptables performance bottlenecks.',
     isStarted: false
-  },
-  {
-    id: 'lab_2',
-    title: 'Adversary Emulation: Escaping AWS IAM Permissions Boundaries',
-    difficulty: 'Master',
-    duration: '60 Minutes',
-    environment: 'AWS GovCloud MicroVM',
-    skillsGained: ['IAM Privilege Escalation', 'CloudTrail Evasion', 'KMS Key Re-encryption'],
-    description: 'Investigate a misconfigured assume-role chain in an isolated AWS GovCloud environment and construct an automated remediation guardrail.',
-    isStarted: true
-  },
-  {
-    id: 'lab_3',
-    title: 'Prompt Injection Defense: Hardening Model Context Protocol (MCP) Gateways',
-    difficulty: 'Intermediate',
-    duration: '30 Minutes',
-    environment: 'Firecracker Sandbox',
-    skillsGained: ['Ed25519 Nonce Validation', 'WASM Sandbox Boundaries', 'AI-BOM Scanning'],
-    description: 'Execute adversarial jailbreak prompts against an unhardened MCP agent, then implement cryptographic parameter validation middleware.',
-    isStarted: false
   }
 ]
+
+// ==========================================
+// 4. CONNECTIN AI AGENT MARKETPLACE
+// ==========================================
+export interface AIAgentItem {
+  id: string
+  name: string
+  icon: string
+  creator: string
+  rating: string
+  category: 'Recruiting' | 'Cybersecurity' | 'Compliance' | 'DevOps' | 'Sales' | 'Research'
+  pricing: string
+  description: string
+  capabilities: string[]
+  deployCount: string
+  isVerified: boolean
+}
+
+export const AI_AGENTS_MARKETPLACE_DATA: AIAgentItem[] = [
+  {
+    id: 'agent_pentest',
+    name: 'Autonomous Pentest & Exploit Agent',
+    icon: '🛡️',
+    creator: 'Expedite Consults Product Lab',
+    rating: '4.98 ★',
+    category: 'Cybersecurity',
+    pricing: '$149 / mo per cluster',
+    description: 'Continuously emulates nation-state adversary tactics against cloud workloads, discovering misconfigurations and generating automated GitHub PR fixes.',
+    capabilities: ['AWS GovCloud Auditing', 'eBPF Probe Ingress', 'Automated Patch PRs', 'OSCAL Generation'],
+    deployCount: '1,420 Enclaves',
+    isVerified: true
+  },
+  {
+    id: 'agent_recruiting',
+    name: 'Cleared Talent Recruiter Agent',
+    icon: '💼',
+    creator: 'ConnectIn AI Labs',
+    rating: '4.92 ★',
+    category: 'Recruiting',
+    pricing: '$99 / mo',
+    description: 'Scans verified professional dossiers, assesses clearance attestations, conducts proctored skill challenges, and matches top 1% defense architects.',
+    capabilities: ['TS/SCI Clearance Attestation', 'Automated Screening', 'Compensation Alignment', 'Direct Interview Booking'],
+    deployCount: '3,840 Placements',
+    isVerified: true
+  },
+  {
+    id: 'agent_compliance',
+    name: 'NIST 800-53 & FedRAMP cATO Agent',
+    icon: '📋',
+    creator: 'Expedite Consults Product Lab',
+    rating: '5.0 ★',
+    category: 'Compliance',
+    pricing: '$299 / mo',
+    description: 'Continuously maps cloud infrastructure telemetry to 340+ NIST 800-53 controls and exports cryptographically validated OSCAL JSON for 3PAO auditors.',
+    capabilities: ['Continuous cATO Sync', 'OSCAL JSON Export', 'Control Drift Alerts', 'Audit Readiness'],
+    deployCount: '890 Federal Enclaves',
+    isVerified: true
+  },
+  {
+    id: 'agent_coding',
+    name: 'Zero-Trust Terraform & eBPF Refactor Agent',
+    icon: '🧑‍💻',
+    creator: 'Open Security Guild',
+    rating: '4.88 ★',
+    category: 'DevOps',
+    pricing: 'Free / Open Source',
+    description: 'Analyzes Infrastructure as Code (IaC) repositories, enforces least-privilege IAM policies, and automatically inserts Cilium eBPF network perimeters.',
+    capabilities: ['Terraform AST Parsing', 'IAM Privilege Hardening', 'Cilium Mesh Injection', 'CI/CD Pipeline Hooks'],
+    deployCount: '6,100 Repos',
+    isVerified: true
+  }
+]
+
+// ==========================================
+// 5. CONNECTIN CODE & DEVELOPER ECOSYSTEM
+// ==========================================
+export interface DeveloperRepository {
+  id: string
+  name: string
+  stars: number
+  forks: number
+  language: string
+  languageColor: string
+  description: string
+  lastCommit: string
+  isVerifiedProject: boolean
+  contributorsCount: number
+  connectedJobRole?: string
+}
+
+export const DEVELOPER_REPOSITORIES_DATA: DeveloperRepository[] = [
+  {
+    id: 'repo_aws_govcloud',
+    name: 'danquah/aws-govcloud-zero-trust-blueprint',
+    stars: 1420,
+    forks: 284,
+    language: 'HCL / Terraform',
+    languageColor: '#7B42BC',
+    description: 'Production-ready multi-account AWS GovCloud landing zone with automated SCP guardrails, transit gateway mesh, and NIST 800-53 Rev 5 compliance baselines.',
+    lastCommit: '2 hours ago · Commit 9f8a1c by Alex Taylor',
+    isVerifiedProject: true,
+    contributorsCount: 14,
+    connectedJobRole: 'Lead Cloud Security Architect ($235K)'
+  },
+  {
+    id: 'repo_ebpf_k8s',
+    name: 'danquah/cilium-ebpf-microsegmentation-enclave',
+    stars: 980,
+    forks: 165,
+    language: 'Go / eBPF',
+    languageColor: '#00ADD8',
+    description: 'Linux kernel eBPF probe for zero-overhead socket packet inspection and micro-segmentation in high-density Kubernetes clusters.',
+    lastCommit: 'Yesterday · Commit 3b129a by Alex Taylor',
+    isVerifiedProject: true,
+    contributorsCount: 8,
+    connectedJobRole: 'Staff Infrastructure Security Engineer ($220K)'
+  },
+  {
+    id: 'repo_mcp_firewall',
+    name: 'danquah/model-context-protocol-prompt-guard',
+    stars: 2150,
+    forks: 412,
+    language: 'TypeScript / Rust',
+    languageColor: '#3178C6',
+    description: 'Cryptographic perimeter firewall for Model Context Protocol (MCP) tool agents preventing prompt injection and unauthorized tool execution.',
+    lastCommit: '3 days ago · Commit 71ef28 by Alex Taylor',
+    isVerifiedProject: true,
+    contributorsCount: 22,
+    connectedJobRole: 'Staff AI Security Engineer ($385K)'
+  }
+]
+
+// ==========================================
+// 6. CONNECTIN PAY, WALLET & INVOICING
+// ==========================================
+export interface WalletTransaction {
+  id: string
+  type: 'Marketplace Sale' | 'Advisory Payout' | 'Creator Sponsorship' | 'Product Purchase'
+  amount: string
+  status: 'Completed' | 'In Escrow'
+  counterparty: string
+  date: string
+}
+
+export interface ConnectInWallet {
+  availableBalance: string
+  escrowBalance: string
+  totalEarnedYTD: string
+  currency: string
+  payoutMethod: string
+  transactions: WalletTransaction[]
+}
+
+export const USER_WALLET_DATA: ConnectInWallet = {
+  availableBalance: '$2,430.00',
+  escrowBalance: '$3,500.00',
+  totalEarnedYTD: '$48,750.00',
+  currency: 'USD',
+  payoutMethod: 'Direct Deposit (Chase Federal ···· 4821)',
+  transactions: [
+    { id: 'TX-891', type: 'Advisory Payout', amount: '+$350.00', status: 'Completed', counterparty: 'Stripe Security Team (2h Session)', date: 'August 28, 2026' },
+    { id: 'TX-890', type: 'Creator Sponsorship', amount: '+$2,500.00', status: 'In Escrow', counterparty: 'Checkmarx Enterprise AppSec', date: 'August 27, 2026' },
+    { id: 'TX-889', type: 'Marketplace Sale', amount: '+$499.00', status: 'Completed', counterparty: 'AXIOM License (Defense Contractor)', date: 'August 25, 2026' },
+    { id: 'TX-888', type: 'Product Purchase', amount: '-$149.00', status: 'Completed', counterparty: 'Autonomous Pentest Agent (Cluster Sub)', date: 'August 20, 2026' }
+  ]
+}
+
+// ==========================================
+// 7. PORTABLE PROFESSIONAL ID (connectin.com/id/alex)
+// ==========================================
+export interface PortableProfessionalID {
+  customHandle: string
+  fullName: string
+  headline: string
+  verifiedClearance: string
+  clearanceVerifiedBy: string
+  clearanceExpiry: string
+  reputationScore: number
+  topVerifiedSkills: string[]
+  publicationsCount: number
+  citationsCount: number
+  activePatentsCount: number
+  cryptographicHashProof: string
+}
+
+export const USER_PROFESSIONAL_ID_DATA: PortableProfessionalID = {
+  customHandle: 'alex-taylor',
+  fullName: 'Alex Taylor',
+  headline: 'Principal Cloud & Zero Trust Security Architect (Fellow)',
+  verifiedClearance: 'TS/SCI with Polygraph',
+  clearanceVerifiedBy: 'ConnectIn Defense Identity Trust Network',
+  clearanceExpiry: 'Valid through 2029',
+  reputationScore: 98,
+  topVerifiedSkills: ['AWS GovCloud Architecture', 'Linux eBPF Kernel Probes', 'cATO & NIST 800-53 OSCAL', 'Model Context Protocol Security'],
+  publicationsCount: 23,
+  citationsCount: 412,
+  activePatentsCount: 3,
+  cryptographicHashProof: '0x8f9c1b4e87a23d091e4f9b8c27a61e05d4b8f3a9'
+}
