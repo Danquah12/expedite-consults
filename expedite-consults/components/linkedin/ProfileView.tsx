@@ -21,239 +21,303 @@ import {
   FileText,
   Star,
   MessageSquarePlus,
-  Check
+  Check,
+  ShoppingBag,
+  Store,
+  Layers,
+  Code2,
+  Globe,
+  DollarSign,
+  Users,
+  Shield,
+  Zap,
+  Key,
+  FolderGit2,
+  BarChart3,
+  Tag,
+  ArrowRight
 } from "lucide-react"
 import { UserProfile } from "@/lib/linkedin-data"
+import {
+  WORKSPACE_PORTFOLIO_DATA,
+  WORKSPACE_VERIFIED_SKILLS_DATA,
+  WORKSPACE_CERTIFICATIONS_DATA,
+  WORKSPACE_EXPERIENCE_DATA,
+  WORKSPACE_PUBLICATIONS_DATA,
+  WORKSPACE_REVIEWS_DATA,
+  MY_PRODUCTS_DATA,
+  VendorProductItem
+} from "@/lib/my-workspace-data"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { ProofOfWorkSandbox } from "./ProofOfWorkSandbox"
-import { BentoPortfolioView } from "./BentoPortfolioView"
 
 interface ProfileViewProps {
   user: UserProfile
   onBackToFeed?: () => void
+  onNavigateMarketplace?: () => void
 }
 
-export function ProfileView({ user, onBackToFeed }: ProfileViewProps) {
-  const [profileLayout, setProfileLayout] = useState<'classic' | 'bento'>('classic')
-  const [skillsList, setSkillsList] = useState(user.skills)
-  const [recommendationsList, setRecommendationsList] = useState(user.recommendations)
-  const [activeRecTab, setActiveRecTab] = useState<'received' | 'given'>('received')
-  const [isAskRecModalOpen, setIsAskRecModalOpen] = useState(false)
-  const [recColleague, setRecColleague] = useState("")
-  const [recMessage, setRecMessage] = useState("")
-  const [recSubmitted, setRecSubmitted] = useState(false)
+export function ProfileView({
+  user,
+  onBackToFeed,
+  onNavigateMarketplace
+}: ProfileViewProps) {
+  // 8 Workspace Sub-Sections
+  const [workspaceSection, setWorkspaceSection] = useState<
+    'profile' | 'portfolio' | 'skills' | 'certifications' | 'experience' | 'publications' | 'reviews' | 'products'
+  >('profile')
 
-  const handleEndorse = (skillName: string) => {
-    setSkillsList(prev =>
-      prev.map(s => (s.name === skillName ? { ...s, endorsements: s.endorsements + 1 } : s))
+  // Developer / Company Products State
+  const [myProducts, setMyProducts] = useState<VendorProductItem[]>(MY_PRODUCTS_DATA)
+  const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false)
+  const [newProductName, setNewProductName] = useState("")
+  const [newProductCategory, setNewProductCategory] = useState<'Software' | 'Training' | 'Services' | 'Enterprise Solutions'>('Software')
+  const [newProductPrice, setNewProductPrice] = useState("")
+  const [productAddedSuccess, setProductAddedSuccess] = useState(false)
+
+  // Skill Endorsement State
+  const [skills, setSkills] = useState(WORKSPACE_VERIFIED_SKILLS_DATA)
+
+  const handleEndorseSkill = (skillName: string) => {
+    setSkills(prev =>
+      prev.map(s => (s.name === skillName ? { ...s, endorsementsCount: s.endorsementsCount + 1 } : s))
     )
   }
 
-  const handleSendRecRequest = (e: React.FormEvent) => {
+  const handleCreateProductListing = (e: React.FormEvent) => {
     e.preventDefault()
-    setRecSubmitted(true)
+    if (!newProductName.trim()) return
+
+    const newProd: VendorProductItem = {
+      id: 'prod_' + Date.now(),
+      name: newProductName.trim(),
+      category: newProductCategory,
+      icon: newProductCategory === 'Software' ? '🛡️' : newProductCategory === 'Training' ? '🎓' : '⚡',
+      pricingModel: 'Monthly Subscription',
+      price: newProductPrice.trim() || '$299 / mo',
+      activeLicensesCount: 1,
+      activeTrialsCount: 5,
+      mrrOrRevenue: '$299 / mo MRR',
+      rating: 5.0,
+      reviewsCount: 1,
+      status: 'Active Listing',
+      leadsCount: 3
+    }
+
+    setMyProducts(prev => [newProd, ...prev])
+    setProductAddedSuccess(true)
     setTimeout(() => {
-      setIsAskRecModalOpen(false)
-      setRecSubmitted(false)
-      setRecColleague("")
-      setRecMessage("")
+      setIsAddProductModalOpen(false)
+      setProductAddedSuccess(false)
+      setNewProductName("")
+      setNewProductPrice("")
     }, 1500)
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-4 pb-12">
-      {/* Layout Mode Switcher Bar */}
-      <div className="flex items-center justify-between rounded-xl border border-zinc-200 bg-white p-2.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
-        <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300 pl-2">
-          Profile Presentation Mode:
-        </span>
-        <div className="flex items-center gap-1.5">
-          <button
-            onClick={() => setProfileLayout('classic')}
-            className={`rounded-lg px-3.5 py-1 text-xs font-bold transition-all ${
-              profileLayout === 'classic'
-                ? "bg-[#0A66C2] text-white shadow-xs"
-                : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-            }`}
-          >
-            Classic Profile
-          </button>
-          <button
-            onClick={() => setProfileLayout('bento')}
-            className={`rounded-lg px-3.5 py-1 text-xs font-bold transition-all flex items-center gap-1 ${
-              profileLayout === 'bento'
-                ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-xs"
-                : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-            }`}
-          >
-            <span>🍱 Bento Showcase (Read.cv Style)</span>
-          </button>
-        </div>
-      </div>
-
-      {profileLayout === 'bento' ? (
-        <BentoPortfolioView user={user} />
-      ) : (
-        <>
-      {/* Top Header Card */}
-      <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
-        {/* Cover Photo */}
-        <div className="relative h-44 sm:h-56 w-full bg-gradient-to-r from-blue-700 via-sky-600 to-indigo-900">
-          <img
-            src={user.coverImage}
-            alt="Cover"
-            className="h-full w-full object-cover opacity-75"
-          />
-          <button className="absolute right-4 top-4 rounded-full bg-white/80 p-2 text-zinc-700 backdrop-blur-xs hover:bg-white transition-colors dark:bg-zinc-900/80 dark:text-zinc-200">
-            <Edit3 className="h-4 w-4" />
-          </button>
-        </div>
-
-        {/* Profile Info Row */}
-        <div className="relative px-6 pb-6 pt-0">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between -mt-16 sm:-mt-20 mb-4 gap-4">
-            <div className="relative h-32 w-32 rounded-full border-4 border-white bg-white shadow-lg overflow-hidden dark:border-zinc-900">
-              <img
-                src={user.avatar}
-                alt={user.name}
-                className="h-full w-full object-cover"
-              />
-              <div className="absolute inset-x-0 bottom-0 bg-[#0A66C2]/90 py-0.5 text-center text-[10px] font-bold text-white uppercase tracking-wider">
-                #OPEN_TO_WORK
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button className="rounded-full bg-[#0A66C2] px-5 py-1.5 text-xs sm:text-sm font-semibold text-white hover:bg-[#004182] transition-colors shadow-xs">
-                Open to
-              </button>
-              <button className="rounded-full border border-[#0A66C2] px-4 py-1.5 text-xs sm:text-sm font-semibold text-[#0A66C2] hover:bg-[#0A66C2]/10 transition-colors">
-                Add profile section
-              </button>
-              <button className="rounded-full border border-zinc-400 p-1.5 text-zinc-600 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300">
-                <Share2 className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-                {user.name}
-              </h1>
-              <ShieldCheck className="h-5 w-5 text-[#0A66C2]" />
-              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-[#0A66C2] dark:bg-blue-950/40">
-                1st
+    <div className="mx-auto max-w-6xl space-y-6 pb-20">
+      {/* 1. TOP MY WORKSPACE COMMAND BAR */}
+      <div className="rounded-2xl border border-indigo-500/30 bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 p-6 text-white shadow-xl">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="rounded-full bg-indigo-500/20 px-3 py-0.5 text-xs font-bold text-indigo-300 border border-indigo-400/40 flex items-center gap-1.5">
+                <ShieldCheck className="h-3.5 w-3.5 text-amber-300" />
+                ConnectIn Developer &amp; Professional Workspace
+              </span>
+              <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-xs font-bold text-emerald-300 border border-emerald-500/40">
+                TS/SCI Polygraph Verified · Fellow Grade
               </span>
             </div>
 
-            <p className="mt-1 text-sm sm:text-base text-zinc-800 dark:text-zinc-200">
-              {user.headline}
+            <h1 className="text-2xl sm:text-3xl font-black text-white">
+              My Workspace
+            </h1>
+            <p className="text-xs sm:text-sm text-zinc-300 max-w-2xl leading-relaxed">
+              Manage your professional identity, completed technical portfolios, verified skills &amp; certifications, peer reviews, and your <strong>commercial products &amp; seller storefront</strong>.
             </p>
+          </div>
 
-            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
-              <span className="flex items-center gap-1">
-                <MapPin className="h-3.5 w-3.5 text-zinc-400" />
-                {user.location}
-              </span>
-              <span className="font-semibold text-[#0A66C2] hover:underline cursor-pointer">
-                {user.connectionsCount}+ connections
-              </span>
-              <span>·</span>
-              <span>{user.followersCount.toLocaleString()} followers</span>
+          {/* Quick Metrics */}
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="rounded-2xl bg-black/40 border border-white/15 p-3.5 text-center min-w-[140px]">
+              <span className="text-[10px] uppercase font-mono text-purple-300">Seller MRR</span>
+              <p className="text-xl font-black text-emerald-400">$122.7K</p>
+              <span className="text-[10px] text-zinc-400">4 Active Listings</span>
+            </div>
+            <div className="rounded-2xl bg-black/40 border border-white/15 p-3.5 text-center min-w-[140px]">
+              <span className="text-[10px] uppercase font-mono text-indigo-300">Expert Reviewer</span>
+              <p className="text-xl font-black text-amber-300">4.98 ⭐</p>
+              <span className="text-[10px] text-zinc-400">127 Reviews Done</span>
             </div>
           </div>
-
-          {/* Open To Work Callout Box */}
-          {user.openToWork.isOpen && (
-            <div className="mt-5 rounded-xl border border-blue-200 bg-sky-50/60 p-3.5 dark:border-blue-900/50 dark:bg-sky-950/20">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h4 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">
-                    Open to work
-                  </h4>
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">
-                    {user.openToWork.roles.join(' · ')}
-                  </p>
-                  <p className="text-[11px] text-zinc-500 mt-0.5">
-                    {user.openToWork.locations.join(' · ')} ({user.openToWork.jobTypes.join(', ')})
-                  </p>
-                </div>
-                <button className="rounded-full p-1 text-zinc-500 hover:bg-sky-100 dark:hover:bg-sky-900/40">
-                  <Edit3 className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          )}
         </div>
-      </div>
 
-      {/* Profile Strength Meter (All-Star 100%) */}
-      <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-amber-500" />
-            <h3 className="font-bold text-sm sm:text-base text-zinc-900 dark:text-zinc-100">
-              Profile Strength: All-Star
-            </h3>
-          </div>
-          <span className="rounded-full bg-emerald-100 px-3 py-0.5 text-xs font-bold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-            100% Completed
-          </span>
-        </div>
-        <p className="mt-1 text-xs text-zinc-500">
-          Members with All-Star profiles receive up to 40x more recruiter inboxes and search impressions.
-        </p>
-        <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
-          <div className="h-full rounded-full bg-gradient-to-r from-[#0A66C2] to-emerald-500 w-full" />
-        </div>
-      </div>
-
-      {/* Featured Items Carousel */}
-      {user.featured && user.featured.length > 0 && (
-        <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
-          <div className="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800">
-            <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100">
-              Featured Publications & Blueprints
-            </h3>
-            <button className="rounded-full p-1.5 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800">
-              <Plus className="h-4 w-4" />
-            </button>
-          </div>
-
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {user.featured.map((item) => (
-              <div
-                key={item.id}
-                className="overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50/50 dark:border-zinc-800 dark:bg-zinc-800/40 flex flex-col justify-between"
+        {/* 8 Workspace Sections Switcher Ribbon */}
+        <div className="mt-6 pt-4 border-t border-white/10 flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+          {[
+            { id: 'profile', label: '👤 Profile', icon: ShieldCheck },
+            { id: 'portfolio', label: '💼 Portfolio', icon: FolderGit2 },
+            { id: 'skills', label: '🛡️ Verified Skills', icon: Zap },
+            { id: 'certifications', label: '📜 Certifications', icon: Award },
+            { id: 'experience', label: '🏛️ Experience', icon: Briefcase },
+            { id: 'publications', label: '📑 Publications', icon: FileText },
+            { id: 'reviews', label: '⭐ Peer Reviews', icon: Star },
+            { id: 'products', label: '🛍️ My Products (Seller Desk)', icon: Store, isHighlight: true }
+          ].map((sec) => {
+            const isSelected = workspaceSection === sec.id
+            return (
+              <button
+                key={sec.id}
+                onClick={() => setWorkspaceSection(sec.id as any)}
+                className={`rounded-xl px-3.5 py-2 text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+                  isSelected
+                    ? sec.isHighlight
+                      ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md font-extrabold"
+                      : "bg-white text-zinc-950 shadow-md font-extrabold"
+                    : sec.isHighlight
+                    ? "bg-purple-500/20 text-purple-200 hover:bg-purple-500/30 border border-purple-400/40"
+                    : "bg-white/10 text-white/80 hover:bg-white/20 hover:text-white"
+                }`}
               >
-                <div>
-                  <img
-                    src={item.thumbnail}
-                    alt={item.title}
-                    className="h-32 w-full object-cover"
-                  />
-                  <div className="p-3.5 space-y-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#0A66C2]">
-                      {item.type}
-                    </span>
-                    <h4 className="font-bold text-xs sm:text-sm text-zinc-900 leading-snug dark:text-zinc-100 line-clamp-2">
-                      {item.title}
-                    </h4>
-                    <p className="text-xs text-zinc-600 line-clamp-2 dark:text-zinc-400">
-                      {item.description}
+                <span>{sec.label}</span>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 1. PROFILE IDENTITY VIEW */}
+      {/* ========================================================================= */}
+      {workspaceSection === 'profile' && (
+        <div className="space-y-5">
+          <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+            {/* Banner Cover */}
+            <div className="relative h-44 w-full bg-gradient-to-r from-[#0A66C2] via-indigo-700 to-purple-800">
+              <img
+                src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop&q=80"
+                alt="Banner"
+                className="h-full w-full object-cover opacity-50"
+              />
+            </div>
+
+            {/* Profile Avatar & Primary Details */}
+            <div className="relative px-6 pb-6 pt-0">
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between -mt-16 gap-4">
+                <div className="flex items-end gap-4">
+                  <div className="relative h-28 w-28 rounded-2xl border-4 border-white bg-white shadow-xl overflow-hidden dark:border-zinc-900 shrink-0">
+                    <img
+                      src={user.avatar}
+                      alt={user.name}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+
+                  <div className="space-y-1 mb-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h2 className="text-2xl font-black text-zinc-900 dark:text-zinc-100">
+                        {user.name}
+                      </h2>
+                      <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-[#0A66C2] dark:bg-blue-950 dark:text-blue-300 flex items-center gap-1">
+                        <ShieldCheck className="h-3.5 w-3.5" />
+                        Verified Fellow
+                      </span>
+                    </div>
+                    <p className="text-xs sm:text-sm font-semibold text-zinc-600 dark:text-zinc-300">
+                      {user.headline}
+                    </p>
+                    <p className="text-xs text-zinc-500 flex items-center gap-2">
+                      <span>📍 {user.location}</span>
+                      <span>·</span>
+                      <span className="text-[#0A66C2] font-semibold">{user.connectionsCount} connections</span>
+                      <span>·</span>
+                      <span className="text-emerald-600 font-bold">TS/SCI Polygraph Active</span>
                     </p>
                   </div>
                 </div>
 
-                <div className="p-3.5 pt-0 flex items-center justify-between text-[11px] text-zinc-400 border-t border-zinc-200/60 dark:border-zinc-700/60 mt-2">
-                  <span>{item.engagement}</span>
-                  <ExternalLink className="h-3.5 w-3.5 text-zinc-500 hover:text-[#0A66C2] cursor-pointer" />
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => setWorkspaceSection('products')}
+                    className="rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 px-4 py-2 text-xs font-bold text-white shadow-md flex items-center gap-1.5"
+                  >
+                    <Store className="h-3.5 w-3.5" />
+                    <span>Manage My Products</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Bio & Statement */}
+              <div className="mt-6 pt-5 border-t border-zinc-100 dark:border-zinc-800 space-y-2">
+                <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
+                  About &amp; Architectural Focus
+                </h3>
+                <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed max-w-4xl">
+                  {user.about}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 2. PORTFOLIO (COMPLETED PROJECTS) */}
+      {/* ========================================================================= */}
+      {workspaceSection === 'portfolio' && (
+        <div className="space-y-5">
+          <div className="flex items-center justify-between">
+            <h3 className="font-black text-lg text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+              <FolderGit2 className="h-5 w-5 text-indigo-600" />
+              <span>Completed Engineering Projects &amp; Architectures ({WORKSPACE_PORTFOLIO_DATA.length})</span>
+            </h3>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {WORKSPACE_PORTFOLIO_DATA.map((proj) => (
+              <div
+                key={proj.id}
+                className="rounded-2xl border border-zinc-200 bg-white overflow-hidden shadow-xs hover:border-indigo-500 hover:shadow-lg transition-all dark:border-zinc-800 dark:bg-zinc-900 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="relative h-40 w-full overflow-hidden bg-slate-950">
+                    <img src={proj.coverImage} alt="" className="h-full w-full object-cover opacity-80" />
+                    <div className="absolute top-3 left-3 rounded-full bg-black/75 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold text-white border border-white/20">
+                      {proj.category}
+                    </div>
+                  </div>
+
+                  <div className="p-5 space-y-3">
+                    <div className="flex items-center justify-between text-[11px] text-zinc-400">
+                      <span>{proj.clientOrOrg}</span>
+                      <span className="font-mono">{proj.completionDate}</span>
+                    </div>
+
+                    <h4 className="font-bold text-sm sm:text-base text-zinc-900 dark:text-zinc-100 leading-snug">
+                      {proj.title}
+                    </h4>
+
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                      {proj.summary}
+                    </p>
+
+                    <div className="rounded-xl bg-indigo-50/50 p-2.5 text-xs text-indigo-900 dark:bg-indigo-950/20 dark:text-indigo-300 font-semibold border border-indigo-100 dark:border-indigo-900">
+                      ⚡ Key Result: {proj.metrics}
+                    </div>
+
+                    <div className="flex flex-wrap gap-1 pt-1">
+                      {proj.techStack.map((tech) => (
+                        <span key={tech} className="rounded bg-zinc-100 px-2 py-0.5 text-[10px] font-mono text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                          {tech}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
@@ -261,291 +325,382 @@ export function ProfileView({ user, onBackToFeed }: ProfileViewProps) {
         </div>
       )}
 
-      {/* Live Proof-of-Work Architecture Sandbox */}
-      <ProofOfWorkSandbox />
-
-      {/* Analytics Dashboard */}
-      <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
-        <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100">
-          Analytics
-        </h3>
-        <p className="text-xs text-zinc-500 flex items-center gap-1 mt-0.5">
-          <Eye className="h-3.5 w-3.5" /> Private to you
-        </p>
-
-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div className="rounded-lg bg-zinc-50 p-3 dark:bg-zinc-800/50">
-            <div className="flex items-center gap-2 text-zinc-500">
-              <Eye className="h-4 w-4 text-[#0A66C2]" />
-              <span className="text-xs font-semibold">Profile viewers</span>
+      {/* ========================================================================= */}
+      {/* 3. VERIFIED SKILLS */}
+      {/* ========================================================================= */}
+      {workspaceSection === 'skills' && (
+        <div className="space-y-5">
+          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-black text-lg text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                <Zap className="h-5 w-5 text-amber-500" />
+                <span>Verified Skill Capability Graph</span>
+              </h3>
             </div>
-            <p className="mt-1 text-xl font-bold text-zinc-900 dark:text-zinc-100">
-              {user.profileViews.toLocaleString()}
-            </p>
-            <p className="text-[11px] text-emerald-600 font-medium">↑ 18% past 7 days</p>
-          </div>
 
-          <div className="rounded-lg bg-zinc-50 p-3 dark:bg-zinc-800/50">
-            <div className="flex items-center gap-2 text-zinc-500">
-              <TrendingUp className="h-4 w-4 text-emerald-600" />
-              <span className="text-xs font-semibold">Post impressions</span>
-            </div>
-            <p className="mt-1 text-xl font-bold text-zinc-900 dark:text-zinc-100">
-              {user.postImpressions.toLocaleString()}
-            </p>
-            <p className="text-[11px] text-emerald-600 font-medium">↑ 42% this month</p>
-          </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {skills.map((skill) => (
+                <div
+                  key={skill.name}
+                  className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/40 flex items-center justify-between gap-3"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
+                        {skill.name}
+                      </h4>
+                      <span className="rounded-full bg-emerald-100 px-2 py-0.2 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                        Verified ✓
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-500">
+                      Validated by: <strong>{skill.verifiedBy}</strong>
+                    </p>
+                    <span className="text-[11px] font-mono text-indigo-600 dark:text-indigo-400">
+                      {skill.proficiencyLevel} · {skill.endorsementsCount} endorsements
+                    </span>
+                  </div>
 
-          <div className="rounded-lg bg-zinc-50 p-3 dark:bg-zinc-800/50">
-            <div className="flex items-center gap-2 text-zinc-500">
-              <Search className="h-4 w-4 text-amber-500" />
-              <span className="text-xs font-semibold">Search appearances</span>
+                  <button
+                    onClick={() => handleEndorseSkill(skill.name)}
+                    className="rounded-lg bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 px-3 py-1.5 text-xs font-bold text-zinc-800 dark:text-zinc-100 hover:bg-[#0A66C2] hover:text-white transition-all shadow-xs"
+                  >
+                    + Endorse ({skill.endorsementsCount})
+                  </button>
+                </div>
+              ))}
             </div>
-            <p className="mt-1 text-xl font-bold text-zinc-900 dark:text-zinc-100">
-              {user.searchAppearances.toLocaleString()}
-            </p>
-            <p className="text-[11px] text-zinc-500">Found by top tech recruiters</p>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* About Section */}
-      <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex items-center justify-between">
-          <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100">
-            About
-          </h3>
-          <button className="rounded-full p-1.5 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800">
-            <Edit3 className="h-4 w-4" />
-          </button>
-        </div>
-        <p className="mt-3 text-xs sm:text-sm text-zinc-700 leading-relaxed dark:text-zinc-300 whitespace-pre-line">
-          {user.about}
-        </p>
-      </div>
+      {/* ========================================================================= */}
+      {/* 4. CERTIFICATIONS */}
+      {/* ========================================================================= */}
+      {workspaceSection === 'certifications' && (
+        <div className="space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {WORKSPACE_CERTIFICATIONS_DATA.map((cert) => (
+              <div
+                key={cert.credentialId}
+                className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 flex items-start gap-4"
+              >
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-2xl border border-amber-200 dark:bg-amber-950/40 dark:border-amber-900 shrink-0">
+                  {cert.badgeIcon}
+                </div>
 
-      {/* Experience Timeline */}
-      <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800">
-          <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100">
-            Experience
-          </h3>
-          <div className="flex items-center gap-1">
-            <button className="rounded-full p-1.5 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800">
-              <Plus className="h-4 w-4" />
-            </button>
-            <button className="rounded-full p-1.5 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800">
-              <Edit3 className="h-4 w-4" />
-            </button>
+                <div className="space-y-1">
+                  <h4 className="font-bold text-sm sm:text-base text-zinc-900 dark:text-zinc-100">
+                    {cert.name}
+                  </h4>
+                  <p className="text-xs text-zinc-500 font-semibold">{cert.issuingBody}</p>
+                  <p className="text-[11px] text-zinc-400">{cert.issueDate}</p>
+                  <p className="text-[11px] font-mono text-indigo-600 dark:text-indigo-400">
+                    Credential ID: {cert.credentialId} · Verified Badge ✓
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
+      )}
 
-        <div className="mt-4 space-y-6">
-          {user.experience.map((exp) => (
-            <div key={exp.id} className="flex items-start gap-4">
-              <img
-                src={exp.companyLogo}
-                alt={exp.company}
-                className="h-12 w-12 rounded-md object-cover ring-1 ring-zinc-200 dark:ring-zinc-800"
-              />
-              <div className="min-w-0 flex-1">
-                <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
-                  {exp.role}
-                </h4>
-                <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-                  {exp.company} · {exp.employmentType}
-                </p>
-                <p className="text-[11px] text-zinc-400">{exp.duration}</p>
-                <p className="text-[11px] text-zinc-400">{exp.location}</p>
-                <p className="mt-2 text-xs text-zinc-700 leading-normal dark:text-zinc-300">
-                  {exp.description}
-                </p>
+      {/* ========================================================================= */}
+      {/* 5. EXPERIENCE */}
+      {/* ========================================================================= */}
+      {workspaceSection === 'experience' && (
+        <div className="space-y-4">
+          {WORKSPACE_EXPERIENCE_DATA.map((exp, i) => (
+            <div
+              key={i}
+              className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-3"
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <h4 className="font-bold text-base text-zinc-900 dark:text-zinc-100">
+                    {exp.role}
+                  </h4>
+                  <p className="text-xs sm:text-sm font-semibold text-[#0A66C2]">{exp.company}</p>
+                  <p className="text-xs text-zinc-400">{exp.period} · {exp.location}</p>
+                </div>
+                {exp.isCurrent && (
+                  <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                    Present Role
+                  </span>
+                )}
+              </div>
+
+              <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">
+                {exp.description}
+              </p>
+
+              <div className="space-y-1 text-xs pt-1">
+                <p className="font-bold text-zinc-700 dark:text-zinc-300">Key Security &amp; Architectural Milestones:</p>
+                <ul className="space-y-1 text-zinc-600 dark:text-zinc-400">
+                  {exp.achievements.map((ach, idx) => (
+                    <li key={idx} className="flex items-start gap-1.5">
+                      <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                      <span>{ach}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
           ))}
         </div>
-      </div>
+      )}
 
-      {/* Licenses & Certifications */}
-      {user.certifications && (
-        <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
-          <div className="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800">
-            <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-              <Award className="h-5 w-5 text-amber-600" />
-              Licenses & Certifications
-            </h3>
-            <button className="rounded-full p-1.5 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800">
-              <Plus className="h-4 w-4" />
-            </button>
-          </div>
-
-          <div className="mt-4 space-y-5">
-            {user.certifications.map((cert) => (
-              <div key={cert.id} className="flex items-start gap-4">
-                <img
-                  src={cert.issuerLogo}
-                  alt={cert.issuer}
-                  className="h-12 w-12 rounded-md object-cover ring-1 ring-zinc-200 dark:ring-zinc-800"
-                />
-                <div className="min-w-0 flex-1">
-                  <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
-                    {cert.title}
-                  </h4>
-                  <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-                    {cert.issuer}
-                  </p>
-                  <p className="text-[11px] text-zinc-400">{cert.issueDate}</p>
-                  <p className="text-[11px] text-zinc-500 mt-1">
-                    Credential ID: <span className="font-mono">{cert.credentialId}</span>
-                  </p>
-                  <a
-                    href={cert.credentialUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-2 inline-flex items-center gap-1 rounded-full border border-zinc-300 px-3 py-1 text-xs font-semibold text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300"
-                  >
-                    Show credential <ExternalLink className="h-3 w-3" />
-                  </a>
-                </div>
+      {/* ========================================================================= */}
+      {/* 6. PUBLICATIONS */}
+      {/* ========================================================================= */}
+      {workspaceSection === 'publications' && (
+        <div className="space-y-4">
+          {WORKSPACE_PUBLICATIONS_DATA.map((pub, i) => (
+            <div
+              key={i}
+              className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-2"
+            >
+              <div className="flex items-center justify-between">
+                <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-[10px] font-bold text-purple-800 dark:bg-purple-950 dark:text-purple-300">
+                  {pub.type}
+                </span>
+                <span className="text-xs text-zinc-400 font-mono">{pub.citationsCount} Citations</span>
               </div>
-            ))}
-          </div>
+
+              <h4 className="font-bold text-base text-zinc-900 dark:text-zinc-100">
+                {pub.title}
+              </h4>
+              <p className="text-xs text-zinc-500">{pub.publisher} · {pub.date}</p>
+              <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed">{pub.summary}</p>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* Recommendations Received & Given */}
-      <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800 gap-3">
-          <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100">
-            Recommendations
-          </h3>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setIsAskRecModalOpen(true)}
-              className="flex items-center gap-1 text-xs font-semibold text-[#0A66C2] hover:underline"
-            >
-              <MessageSquarePlus className="h-3.5 w-3.5" /> Ask for a recommendation
-            </button>
-          </div>
-        </div>
+      {/* ========================================================================= */}
+      {/* 7. PEER REVIEWS */}
+      {/* ========================================================================= */}
+      {workspaceSection === 'reviews' && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {WORKSPACE_REVIEWS_DATA.map((rev, i) => (
+              <div
+                key={i}
+                className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-3"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <img src={rev.reviewerAvatar} alt="" className="h-10 w-10 rounded-full object-cover" />
+                    <div>
+                      <h4 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">{rev.reviewerName}</h4>
+                      <p className="text-[11px] text-zinc-500">{rev.reviewerRole}</p>
+                    </div>
+                  </div>
 
-        {/* Rec Tabs */}
-        <div className="flex gap-2">
-          <button
-            onClick={() => setActiveRecTab('received')}
-            className={`rounded-full px-3.5 py-1 text-xs font-semibold transition-colors ${
-              activeRecTab === 'received'
-                ? "bg-[#0A66C2] text-white"
-                : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300"
-            }`}
-          >
-            Received ({recommendationsList.filter(r => r.type === 'received').length})
-          </button>
-          <button
-            onClick={() => setActiveRecTab('given')}
-            className={`rounded-full px-3.5 py-1 text-xs font-semibold transition-colors ${
-              activeRecTab === 'given'
-                ? "bg-[#0A66C2] text-white"
-                : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300"
-            }`}
-          >
-            Given (0)
-          </button>
-        </div>
-
-        {/* Recommendations List */}
-        <div className="space-y-4 divide-y divide-zinc-100 dark:divide-zinc-800">
-          {recommendationsList
-            .filter(r => r.type === activeRecTab)
-            .map((rec) => (
-              <div key={rec.id} className="pt-4 space-y-2">
-                <div className="flex items-start gap-3">
-                  <img
-                    src={rec.authorAvatar}
-                    alt={rec.authorName}
-                    className="h-11 w-11 rounded-full object-cover"
-                  />
-                  <div>
-                    <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
-                      {rec.authorName}
-                    </h4>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                      {rec.authorHeadline}
-                    </p>
-                    <p className="text-[11px] text-zinc-400">
-                      {rec.date} · {rec.relationship}
-                    </p>
+                  <div className="flex items-center gap-1 text-amber-500 font-bold text-xs">
+                    <Star className="h-3.5 w-3.5 fill-amber-500" />
+                    <span>{rev.rating}</span>
                   </div>
                 </div>
-                <p className="text-xs sm:text-sm text-zinc-700 leading-relaxed dark:text-zinc-300 pl-14">
-                  &ldquo;{rec.text}&rdquo;
+
+                <p className="text-xs text-zinc-600 dark:text-zinc-300 italic leading-relaxed">
+                  "{rev.comment}"
                 </p>
+                <span className="text-[10px] text-zinc-400 font-mono">{rev.reviewType} · {rev.date}</span>
               </div>
             ))}
+          </div>
         </div>
-      </div>
-      </>
       )}
 
-      {/* Ask for Recommendation Modal Dialog */}
-      <Dialog open={isAskRecModalOpen} onOpenChange={setIsAskRecModalOpen}>
-        <DialogContent className="max-w-md p-0 overflow-hidden sm:rounded-xl">
-          <DialogHeader className="border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
-            <DialogTitle className="text-base font-bold text-zinc-900 dark:text-zinc-100">
-              Ask for a recommendation
+      {/* ========================================================================= */}
+      {/* 8. 🛍️ MY PRODUCTS (DEVELOPER & COMPANY COMMERCIAL DESK) */}
+      {/* ========================================================================= */}
+      {workspaceSection === 'products' && (
+        <div className="space-y-6">
+          {/* Seller Performance Executive Strip */}
+          <div className="rounded-2xl border border-purple-500/40 bg-gradient-to-r from-slate-900 via-purple-950 to-indigo-950 p-6 text-white shadow-xl space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <span className="rounded-full bg-purple-500/30 px-3 py-0.5 text-xs font-bold text-purple-200 border border-purple-400/40">
+                  Seller &amp; Developer Hub
+                </span>
+                <h3 className="text-xl sm:text-2xl font-black text-white">
+                  My Products &amp; Storefront Management
+                </h3>
+                <p className="text-xs sm:text-sm text-purple-200">
+                  Manage everything you sell through ConnectIn Marketplace: software subscriptions, masterclasses, and consulting retainers.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setIsAddProductModalOpen(true)}
+                className="rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 px-4 py-2.5 text-xs font-black text-white shadow-md flex items-center gap-1.5 shrink-0"
+              >
+                <Plus className="h-4 w-4" />
+                <span>+ List New Product</span>
+              </button>
+            </div>
+
+            {/* Seller KPIs */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+              <div className="rounded-xl bg-black/40 border border-white/15 p-3 text-center">
+                <span className="text-[10px] text-zinc-400 uppercase font-mono">Total Monthly MRR</span>
+                <p className="text-lg sm:text-xl font-black text-emerald-400">$122,790</p>
+              </div>
+              <div className="rounded-xl bg-black/40 border border-white/15 p-3 text-center">
+                <span className="text-[10px] text-zinc-400 uppercase font-mono">Active Licenses</span>
+                <p className="text-lg sm:text-xl font-black text-white">634 Units</p>
+              </div>
+              <div className="rounded-xl bg-black/40 border border-white/15 p-3 text-center">
+                <span className="text-[10px] text-zinc-400 uppercase font-mono">Staging Trials</span>
+                <p className="text-lg sm:text-xl font-black text-amber-300">44 Active</p>
+              </div>
+              <div className="rounded-xl bg-black/40 border border-white/15 p-3 text-center">
+                <span className="text-[10px] text-zinc-400 uppercase font-mono">Sales Inquiries</span>
+                <p className="text-lg sm:text-xl font-black text-sky-400">207 Leads</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Active Product Listings Table */}
+          <div className="space-y-4">
+            <h4 className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+              <Store className="h-5 w-5 text-purple-600" />
+              <span>Your Active Marketplace Listings ({myProducts.length})</span>
+            </h4>
+
+            <div className="space-y-3">
+              {myProducts.map((prod) => (
+                <div
+                  key={prod.id}
+                  className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs hover:border-purple-400 hover:shadow-md transition-all dark:border-zinc-800 dark:bg-zinc-900 flex flex-col md:flex-row md:items-center justify-between gap-4"
+                >
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-50 text-2xl border border-purple-200 dark:bg-purple-950/40 dark:border-purple-900 shrink-0">
+                      {prod.icon}
+                    </div>
+
+                    <div className="space-y-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-bold text-sm sm:text-base text-zinc-900 dark:text-zinc-100 truncate">
+                          {prod.name}
+                        </h4>
+                        <span className="rounded-full bg-purple-100 px-2 py-0.2 text-[10px] font-bold text-purple-800 dark:bg-purple-950 dark:text-purple-300">
+                          {prod.category}
+                        </span>
+                        <span className="rounded-full bg-emerald-100 px-2 py-0.2 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                          {prod.status}
+                        </span>
+                      </div>
+
+                      <p className="text-xs text-zinc-500">
+                        Pricing: <strong>{prod.price}</strong> ({prod.pricingModel}) · Rating: <strong>{prod.rating} ⭐ ({prod.reviewsCount})</strong>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-6 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-zinc-100 dark:border-zinc-800">
+                    <div className="text-right">
+                      <span className="text-[10px] font-mono text-zinc-400 uppercase">Revenue / MRR</span>
+                      <p className="text-sm font-black text-emerald-600 dark:text-emerald-400">{prod.mrrOrRevenue}</p>
+                      <p className="text-[10px] text-zinc-500">{prod.activeLicensesCount} licenses · {prod.leadsCount} leads</p>
+                    </div>
+
+                    <button
+                      onClick={onNavigateMarketplace}
+                      className="rounded-xl bg-[#0A66C2] hover:bg-[#004182] px-3.5 py-1.5 text-xs font-bold text-white shadow-xs"
+                    >
+                      View Live Page →
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: LIST NEW PRODUCT */}
+      <Dialog
+        open={isAddProductModalOpen}
+        onOpenChange={(open) => {
+          if (!open) setIsAddProductModalOpen(false)
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+              <Store className="h-5 w-5 text-purple-600" />
+              <span>List New Product on Marketplace</span>
             </DialogTitle>
           </DialogHeader>
 
-          {recSubmitted ? (
-            <div className="p-8 text-center space-y-2">
-              <CheckCircle2 className="h-10 w-10 text-emerald-600 mx-auto" />
-              <h4 className="font-bold text-base text-zinc-900 dark:text-zinc-100">
-                Request Sent!
+          {productAddedSuccess ? (
+            <div className="py-6 text-center space-y-2">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                <Check className="h-6 w-6" />
+              </div>
+              <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
+                Product Listing Created!
               </h4>
               <p className="text-xs text-zinc-500">
-                Your recommendation request has been delivered to your colleague.
+                Your product is now active in the ConnectIn Marketplace and ready to receive customer orders.
               </p>
             </div>
           ) : (
-            <form onSubmit={handleSendRecRequest} className="p-6 space-y-4 text-xs">
-              <div>
-                <label className="font-semibold text-zinc-700 dark:text-zinc-300">
-                  Who do you want to ask?
-                </label>
+            <form onSubmit={handleCreateProductListing} className="space-y-4 text-xs">
+              <div className="space-y-1">
+                <label className="font-bold text-zinc-700 dark:text-zinc-300">Product Name</label>
                 <input
                   type="text"
-                  placeholder="e.g. Dr. Elena Rostova or Marcus Vance"
-                  value={recColleague}
-                  onChange={(e) => setRecColleague(e.target.value)}
+                  placeholder="e.g. AXIOM Cloud Defense Gateway"
+                  value={newProductName}
+                  onChange={(e) => setNewProductName(e.target.value)}
                   required
-                  className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900 focus:border-[#0A66C2] focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                  className="w-full rounded-lg border border-zinc-300 p-2.5 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                 />
               </div>
 
-              <div>
-                <label className="font-semibold text-zinc-700 dark:text-zinc-300">
-                  Personalize your message
-                </label>
-                <textarea
-                  rows={4}
-                  defaultValue="Hi! Would you be willing to write a brief recommendation regarding our joint cybersecurity and cloud architecture work at Expedite?"
-                  className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900 focus:border-[#0A66C2] focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 resize-none"
+              <div className="space-y-1">
+                <label className="font-bold text-zinc-700 dark:text-zinc-300">Category</label>
+                <select
+                  value={newProductCategory}
+                  onChange={(e) => setNewProductCategory(e.target.value as any)}
+                  className="w-full rounded-lg border border-zinc-300 p-2.5 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                >
+                  <option value="Software">Software</option>
+                  <option value="Training">Training</option>
+                  <option value="Services">Services</option>
+                  <option value="Enterprise Solutions">Enterprise Solutions</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-zinc-700 dark:text-zinc-300">Pricing Tier</label>
+                <input
+                  type="text"
+                  placeholder="e.g. $499 / mo or $199 one-time"
+                  value={newProductPrice}
+                  onChange={(e) => setNewProductPrice(e.target.value)}
+                  required
+                  className="w-full rounded-lg border border-zinc-300 p-2.5 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2">
+              <div className="pt-2 flex justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => setIsAskRecModalOpen(false)}
-                  className="rounded-full px-4 py-1.5 font-semibold text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300"
+                  onClick={() => setIsAddProductModalOpen(false)}
+                  className="rounded-lg bg-zinc-200 px-4 py-2 font-semibold text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="rounded-full bg-[#0A66C2] px-5 py-1.5 font-semibold text-white hover:bg-[#004182]"
+                  className="rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-2 font-bold text-white shadow-md hover:from-purple-500 hover:to-indigo-500"
                 >
-                  Send Request
+                  Publish Listing ✓
                 </button>
               </div>
             </form>

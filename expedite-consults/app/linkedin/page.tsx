@@ -512,11 +512,12 @@ export default function LinkedInPage() {
           </div>
         )}
 
-        {/* VIEW 2: PROFILE VIEW */}
+        {/* VIEW 2: MY WORKSPACE (PROFILE, PORTFOLIO, SKILLS, PRODUCTS) */}
         {activeTab === 'profile' && (
           <ProfileView
             user={userData}
             onBackToFeed={() => setActiveTab('home')}
+            onNavigateMarketplace={() => setActiveTab('marketplace')}
           />
         )}
 

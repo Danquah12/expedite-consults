@@ -247,15 +247,24 @@ export function LinkedInNavbar({
                     </div>
                   </div>
 
-                  <div className="pt-2">
+                  <div className="pt-2 space-y-1.5">
                     <button
                       onClick={() => {
                         onSelectTab('profile')
                         setIsMeOpen(false)
                       }}
-                      className="w-full rounded-full border border-[#0A66C2] py-1 text-center text-xs font-semibold text-[#0A66C2] hover:bg-[#0A66C2]/10 transition-colors"
+                      className="w-full rounded-full bg-[#0A66C2] py-1.5 text-center text-xs font-bold text-white hover:bg-[#004182] transition-colors shadow-xs"
                     >
-                      View Full Profile
+                      View My Workspace 👤
+                    </button>
+                    <button
+                      onClick={() => {
+                        onSelectTab('marketplace')
+                        setIsMeOpen(false)
+                      }}
+                      className="w-full rounded-full border border-purple-500 py-1 text-center text-xs font-bold text-purple-600 hover:bg-purple-50 dark:text-purple-300 dark:hover:bg-purple-950/40 transition-colors"
+                    >
+                      Seller Hub &amp; Storefront 🛍️
                     </button>
                   </div>
 
