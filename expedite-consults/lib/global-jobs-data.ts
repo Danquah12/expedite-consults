@@ -20,6 +20,13 @@ export interface GlobalJobItem {
   hub: string
   workplaceType: 'Remote' | 'Hybrid' | 'On-site'
   employmentType: 'Full-time' | 'Contract'
+  domainCategory?: 'Recommended' | 'Government' | 'Defense' | 'Cybersecurity' | 'Remote' | 'Contract' | 'Full-time'
+  requiredProductExperience?: string[]
+  recommendedLearningCourse?: {
+    title: string
+    provider: string
+    url?: string
+  }
   postedTime: string
   applicantsCount: number
   salaryRange: string
@@ -32,6 +39,37 @@ export interface GlobalJobItem {
   source: string
   tags: string[]
   clearanceRequired?: string
+}
+
+export interface JobApplicationItem {
+  id: string
+  jobTitle: string
+  company: string
+  companyLogo: string
+  location: string
+  salary: string
+  stage: 'applied' | 'interview' | 'offer' | 'rejected'
+  appliedDate: string
+  nextStep?: string
+  recruiterName?: string
+  productVerifiedMatch?: string
+  interviewDate?: string
+  offerDetails?: string
+}
+
+export interface CandidateProfile {
+  id: string
+  name: string
+  headline: string
+  avatar: string
+  location: string
+  clearance?: string
+  experienceYears: number
+  capabilities: string[]
+  verifiedProducts: string[]
+  certifications: string[]
+  matchScore: number
+  currentStatus: 'Open to Offers' | 'Interviewing' | 'Ready to Start'
 }
 
 export const COUNTRIES_CONFIG: CountryConfig[] = [
@@ -669,5 +707,133 @@ export const GLOBAL_JOBS_CATALOG: GlobalJobItem[] = [
     applyUrl: 'https://www.atlassian.com/company/careers',
     source: 'Greenhouse ATS',
     tags: ['Sydney', 'EssentialEight', 'AWS', 'Atlassian']
+  }
+]
+
+export const initialUserApplications: JobApplicationItem[] = [
+  {
+    id: 'app_1',
+    jobTitle: 'Principal Cyber Threat Hunter (TS/SCI Eligible)',
+    company: 'Palantir Technologies',
+    companyLogo: 'https://images.unsplash.com/photo-1572021335469-31706a17aaef?w=100&auto=format&fit=crop&q=80',
+    location: 'Washington, DC / Northern VA',
+    salary: '$210,000 - $285,000 / yr',
+    stage: 'interview',
+    appliedDate: 'Applied 3 days ago',
+    nextStep: 'Final Architecture Defense Panel (Thu, 2:00 PM EST)',
+    recruiterName: 'Sarah Jenkins (GovTech Talent Lead)',
+    productVerifiedMatch: 'Expedite Strike & Fusion 2026 Certified',
+    interviewDate: 'Sept 4, 2026 at 2:00 PM EST'
+  },
+  {
+    id: 'app_2',
+    jobTitle: 'Lead Cloud Security Architect',
+    company: 'Expedite Consults',
+    companyLogo: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=100&auto=format&fit=crop&q=80',
+    location: 'New York, NY (Hybrid)',
+    salary: '$195,000 - $240,000 / yr',
+    stage: 'offer',
+    appliedDate: 'Applied 1 week ago',
+    nextStep: 'Offer Letter Pending Review',
+    recruiterName: 'Elena Rostova (Hiring Partner)',
+    productVerifiedMatch: 'Zero Trust & eBPF Telemetry Verified',
+    offerDetails: '$225,000 Base + $45,000 Annual Bonus + 0.35% Equity'
+  },
+  {
+    id: 'app_3',
+    jobTitle: 'Staff AI Safety & Red Teaming Engineer',
+    company: 'Anthropic',
+    companyLogo: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=100&auto=format&fit=crop&q=80',
+    location: 'San Francisco, CA (Remote)',
+    salary: '$240,000 - $310,000 / yr',
+    stage: 'applied',
+    appliedDate: 'Applied 2 days ago',
+    nextStep: 'Technical Resume Screening in Progress',
+    recruiterName: 'Anthropic Talent Ops',
+    productVerifiedMatch: 'Multi-Agent Sandbox Security'
+  },
+  {
+    id: 'app_4',
+    jobTitle: 'Senior DevSecOps & eBPF Security Engineer',
+    company: 'Booz Allen Cyber',
+    companyLogo: 'https://images.unsplash.com/photo-1541354329998-f4d9a9f9297f?w=100&auto=format&fit=crop&q=80',
+    location: 'McLean, VA / DC Corridor',
+    salary: '$185,000 - $235,000 / yr',
+    stage: 'applied',
+    appliedDate: 'Applied 4 days ago',
+    nextStep: 'Under Hiring Manager Review',
+    recruiterName: 'David Vance',
+    productVerifiedMatch: 'RMF Level III & NIST 800-53'
+  },
+  {
+    id: 'app_5',
+    jobTitle: 'Senior Cloud Threat Detection Engineer',
+    company: 'CrowdStrike',
+    companyLogo: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=100&auto=format&fit=crop&q=80',
+    location: 'Austin, TX (Remote)',
+    salary: '$190,000 - $245,000 / yr',
+    stage: 'rejected',
+    appliedDate: 'Applied 2 weeks ago',
+    nextStep: 'Position Filled Internally',
+    recruiterName: 'CrowdStrike Talent Team'
+  }
+]
+
+export const initialCandidatesData: CandidateProfile[] = [
+  {
+    id: 'cand_1',
+    name: 'Kavita Patel',
+    headline: 'Director of Cloud Governance & Zero Trust Architect | Ex-AWS',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+    location: 'New York, NY (Hybrid / Remote)',
+    clearance: 'Secret Eligible',
+    experienceYears: 11,
+    capabilities: ['Cloud Security', 'Zero Trust', 'DevSecOps', 'RMF'],
+    verifiedProducts: ['Expedite Strike 2026 Verified ✓', 'Checkmarx MCP ✓', 'AWS Security Hub Pro ✓'],
+    certifications: ['CISSP', 'CCSP', 'AWS Security Specialty'],
+    matchScore: 98,
+    currentStatus: 'Open to Offers'
+  },
+  {
+    id: 'cand_2',
+    name: 'David Sterling',
+    headline: 'Principal AI Security & Autonomous Red Team Lead | OSCP / OSCE',
+    avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&auto=format&fit=crop&q=80',
+    location: 'San Francisco, CA / Remote',
+    clearance: 'None (Commercial Focus)',
+    experienceYears: 8,
+    capabilities: ['AI Security', 'Penetration Testing', 'Cloud Security'],
+    verifiedProducts: ['ÆGIS SOC Pentest Verified ✓', 'Llama Guardrail Suite ✓'],
+    certifications: ['OSCP', 'OSCE', 'PyTorch Security Certified'],
+    matchScore: 94,
+    currentStatus: 'Interviewing'
+  },
+  {
+    id: 'cand_3',
+    name: 'Alexander Novak',
+    headline: 'Head of Infrastructure Security & FedRAMP RMF Lead',
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&auto=format&fit=crop&q=80',
+    location: 'Washington, DC / Northern VA',
+    clearance: 'Active Top Secret / SCI',
+    experienceYears: 14,
+    capabilities: ['RMF', 'Zero Trust', 'Cloud Security', 'GovTech'],
+    verifiedProducts: ['FedRAMP 3PAO Automated Suite ✓', 'NIST 800-53 Engine ✓'],
+    certifications: ['CISSP-ISSAP', 'RMF Level III Lead', 'CISM'],
+    matchScore: 97,
+    currentStatus: 'Ready to Start'
+  },
+  {
+    id: 'cand_4',
+    name: 'Grace Hopper-Bellingham',
+    headline: 'Staff DevSecOps & eBPF Telemetry Engineer',
+    avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&auto=format&fit=crop&q=80',
+    location: 'Boston, MA / US Remote',
+    clearance: 'Confidential',
+    experienceYears: 7,
+    capabilities: ['DevSecOps', 'Cloud Security', 'Next.js / Kubernetes'],
+    verifiedProducts: ['KernelGuard eBPF Engine ✓', 'Next.js 16 Turbopack Pro ✓'],
+    certifications: ['CKS (Certified Kubernetes Security)', 'AWS DevOps Pro'],
+    matchScore: 91,
+    currentStatus: 'Open to Offers'
   }
 ]

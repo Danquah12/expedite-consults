@@ -530,7 +530,11 @@ export default function LinkedInPage() {
 
         {/* VIEW 4: JOBS VIEW */}
         {activeTab === 'jobs' && (
-          <JobsView onNavigateCareerSuite={() => setActiveTab('careersuite')} />
+          <JobsView
+            onNavigateCareerSuite={() => setActiveTab('careersuite')}
+            onNavigateLearning={() => setActiveTab('learning')}
+            onNavigateMarketplace={() => setActiveTab('marketplace')}
+          />
         )}
 
         {/* VIEW 5: LEARNING VIEW */}
