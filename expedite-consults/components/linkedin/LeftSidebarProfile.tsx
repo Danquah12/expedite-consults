@@ -30,6 +30,7 @@ interface LeftSidebarProfileProps {
   onSelectTag: (tag: string) => void
   onNavigateTab?: (tab: string) => void
   onOpenIDModal?: () => void
+  onOpenInboundBountiesModal?: () => void
 }
 
 export function LeftSidebarProfile({
@@ -37,11 +38,15 @@ export function LeftSidebarProfile({
   onViewProfile,
   onSelectTag,
   onNavigateTab,
-  onOpenIDModal
+  onOpenIDModal,
+  onOpenInboundBountiesModal
 }: LeftSidebarProfileProps) {
   const [isRecentExpanded, setIsRecentExpanded] = useState(true)
 
   const workspaceShortcuts = [
+    { id: 'inbound_bounty', label: '💰 Paid Inbound Bounty', badge: '+$250 Escrow' },
+    { id: 'bounties', label: '🏆 Enterprise Bounties', badge: '$15K-$25K' },
+    { id: 'guilds', label: '🛡️ Gated Guilds & Enclaves', badge: '3 Enclaves' },
     { id: 'aiagents', label: '🤖 AI Agents Store', badge: '8 Agents' },
     { id: 'code', label: '🧑‍💻 ConnectIn Code', badge: '3 Repos' },
     { id: 'wallet', label: '💳 Pay & Invoicing', badge: '$2,430' },
@@ -185,10 +190,15 @@ export function LeftSidebarProfile({
             <button
               key={ws.id + ws.label}
               onClick={() => {
-                if (onNavigateTab) onNavigateTab(ws.id)
-                else onViewProfile()
+                if (ws.id === 'inbound_bounty' && onOpenInboundBountiesModal) {
+                  onOpenInboundBountiesModal()
+                } else if (onNavigateTab) {
+                  onNavigateTab(ws.id)
+                } else {
+                  onViewProfile()
+                }
               }}
-              className="flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left text-zinc-700 hover:bg-white hover:shadow-xs dark:text-zinc-300 dark:hover:bg-zinc-800 transition-all group"
+              className="flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left text-zinc-700 hover:bg-white hover:shadow-xs dark:text-zinc-300 dark:hover:bg-zinc-800 transition-all group cursor-pointer"
             >
               <span className="font-medium truncate group-hover:text-[#0A66C2]">{ws.label}</span>
               <span className="rounded-md bg-zinc-100 px-1.5 py-0.2 text-[9px] font-bold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">

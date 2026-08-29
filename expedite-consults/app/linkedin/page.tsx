@@ -39,6 +39,9 @@ import { AIAgentsStorefrontView } from "@/components/linkedin/AIAgentsStorefront
 import { DeveloperCodeView } from "@/components/linkedin/DeveloperCodeView"
 import { WalletInvoicingView } from "@/components/linkedin/WalletInvoicingView"
 import { ProfessionalIDModal } from "@/components/linkedin/ProfessionalIDModal"
+import { GatedGuildsView } from "@/components/linkedin/GatedGuildsView"
+import { BountiesHackathonsView } from "@/components/linkedin/BountiesHackathonsView"
+import { InboundBountiesModal } from "@/components/linkedin/InboundBountiesModal"
 import {
   currentUser as initialCurrentUser,
   initialPosts,
@@ -73,6 +76,8 @@ export default function LinkedInPage() {
     | 'aiagents'
     | 'code'
     | 'wallet'
+    | 'guilds'
+    | 'bounties'
     | 'media'
     | 'ecosystem'
     | 'company'
@@ -97,6 +102,7 @@ export default function LinkedInPage() {
   const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false)
   const [isUniversalSearchOpen, setIsUniversalSearchOpen] = useState(false)
   const [isIDModalOpen, setIsIDModalOpen] = useState(false)
+  const [isInboundBountiesModalOpen, setIsInboundBountiesModalOpen] = useState(false)
   const [activeWorkspace, setActiveWorkspace] = useState<'personal' | 'enterprise' | 'creator' | 'seller'>('personal')
 
   const [userData, setUserData] = useState<UserProfile>(initialCurrentUser)
@@ -429,6 +435,7 @@ export default function LinkedInPage() {
                 }}
                 onNavigateTab={(tab) => setActiveTab(tab as any)}
                 onOpenIDModal={() => setIsIDModalOpen(true)}
+                onOpenInboundBountiesModal={() => setIsInboundBountiesModalOpen(true)}
               />
             </div>
 
@@ -654,6 +661,22 @@ export default function LinkedInPage() {
           />
         )}
 
+        {/* VIEW: GATED GUILDS & PRIVATE ENCLAVES */}
+        {activeTab === 'guilds' && (
+          <GatedGuildsView
+            currentUser={userData}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+          />
+        )}
+
+        {/* VIEW: ENTERPRISE BOUNTIES & HACKATHONS */}
+        {activeTab === 'bounties' && (
+          <BountiesHackathonsView
+            currentUser={userData}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+          />
+        )}
+
         {/* VIEW: CONNECTIN MEDIA & VIDEO PLATFORM */}
         {activeTab === 'media' && (
           <MediaView
@@ -808,6 +831,14 @@ export default function LinkedInPage() {
         isOpen={isIDModalOpen}
         onClose={() => setIsIDModalOpen(false)}
         currentUser={userData}
+      />
+
+      {/* ConnectIn $250 Paid Inbound Recruiter Bounties Modal */}
+      <InboundBountiesModal
+        isOpen={isInboundBountiesModalOpen}
+        onClose={() => setIsInboundBountiesModalOpen(false)}
+        currentUser={userData}
+        onNavigateTab={(tab) => setActiveTab(tab as any)}
       />
     </div>
   )

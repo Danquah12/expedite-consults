@@ -488,3 +488,128 @@ export const USER_PROFESSIONAL_ID_DATA: PortableProfessionalID = {
   activePatentsCount: 3,
   cryptographicHashProof: '0x8f9c1b4e87a23d091e4f9b8c27a61e05d4b8f3a9'
 }
+
+// ==========================================
+// 8. TOKEN & CLEARANCE-GATED GUILDS
+// ==========================================
+export interface GatedGuild {
+  id: string
+  name: string
+  badgeIcon: string
+  entryRequirement: string
+  membersCount: number
+  activeDiscussions: number
+  treasuryBalance: string
+  description: string
+  isMember: boolean
+}
+
+export const GATED_GUILDS_DATA: GatedGuild[] = [
+  {
+    id: 'guild_ciso_cleared',
+    name: 'TS/SCI Cleared Defense CISOs Enclave',
+    badgeIcon: '🛡️',
+    entryRequirement: 'Cryptographic TS/SCI Attestation',
+    membersCount: 412,
+    activeDiscussions: 28,
+    treasuryBalance: '$45,000 Group RFP Fund',
+    description: 'Confidential roundtable for cleared security directors and principal architects managing DoD Impact Level 5/6 GovCloud enclaves.',
+    isMember: true
+  },
+  {
+    id: 'guild_ai_founders',
+    name: 'Series A+ Enterprise AI Founders Syndicate',
+    badgeIcon: '🤖',
+    entryRequirement: 'Verified Company Revenue >$1M ARR',
+    membersCount: 185,
+    activeDiscussions: 14,
+    treasuryBalance: '$120,000 Co-Investment Pool',
+    description: 'Private syndicate sharing enterprise sales playbooks, security questionnaire shortcuts, and collaborative GPU compute clusters.',
+    isMember: false
+  },
+  {
+    id: 'guild_ebpf_staff',
+    name: 'Staff Linux Kernel & eBPF Guild',
+    badgeIcon: '⚡',
+    entryRequirement: '90%+ Verified Skill Passport in eBPF',
+    membersCount: 640,
+    activeDiscussions: 39,
+    treasuryBalance: '$18,500 Open-Source Bounty Fund',
+    description: 'High-signal technical guild dedicated to zero-overhead socket inspection, Cilium ClusterMesh architectures, and kernel security probes.',
+    isMember: true
+  }
+]
+
+// ==========================================
+// 9. ENTERPRISE BOUNTIES & HACKATHONS
+// ==========================================
+export interface EnterpriseBounty {
+  id: string
+  title: string
+  company: string
+  companyLogo: string
+  bountyAmount: string
+  deadline: string
+  submissionsCount: number
+  tags: string[]
+  description: string
+  status: 'Open for PRs' | 'Evaluating' | 'Awarded'
+}
+
+export const ENTERPRISE_BOUNTIES_DATA: EnterpriseBounty[] = [
+  {
+    id: 'bounty_1',
+    title: 'Zero-Day Jailbreak Defense on Model Context Protocol (MCP) Gateways',
+    company: 'Anthropic & Expedite Labs',
+    companyLogo: '🤖',
+    bountyAmount: '$15,000 USD in Escrow',
+    deadline: 'Closes Sept 20, 2026',
+    submissionsCount: 18,
+    tags: ['AI Security', 'MCP Firewall', 'Ed25519', 'PyTorch'],
+    description: 'Submit an automated token parameter validation filter that stops indirect prompt injection without degrading tool execution latency past 2ms.',
+    status: 'Open for PRs'
+  },
+  {
+    id: 'bounty_2',
+    title: 'Automated NIST 800-53 OSCAL Telemetry Sync for Kubernetes Pods',
+    company: 'Federal Defense Taskforce',
+    companyLogo: '🏛️',
+    bountyAmount: '$25,000 USD in Escrow',
+    deadline: 'Closes Oct 01, 2026',
+    submissionsCount: 9,
+    tags: ['NIST 800-53', 'OSCAL JSON', 'eBPF', 'GovCloud'],
+    description: 'Build a lightweight eBPF probe daemon that auto-generates cryptographically signed OSCAL component definitions from live Linux syscall events.',
+    status: 'Open for PRs'
+  }
+]
+
+// ==========================================
+// 10. $250 PAID INBOUND RECRUITER BOUNTIES
+// ==========================================
+export interface RecruiterInboundBounty {
+  id: string
+  recruiterName: string
+  companyName: string
+  companyLogo: string
+  roleTitle: string
+  compensationOffer: string
+  escrowBountyAmount: string
+  status: 'Pending Candidate Review' | 'Accepted & Paid' | 'Declined'
+  date: string
+  message: string
+}
+
+export const RECRUITER_INBOUND_BOUNTIES_DATA: RecruiterInboundBounty[] = [
+  {
+    id: 'bounty_rec_1',
+    recruiterName: 'Sarah Lin (Lead Technical Recruiter)',
+    companyName: 'Northrop Grumman Mission Systems',
+    companyLogo: '🛡️',
+    roleTitle: 'Principal Zero Trust Architect (TS/SCI)',
+    compensationOffer: '$225,000 – $250,000 Base + Bonus',
+    escrowBountyAmount: '$250.00 Deposited in Escrow',
+    status: 'Pending Candidate Review',
+    date: 'Today, 3:15 PM',
+    message: 'Alex, we reviewed your verified 94.8% Skill Passport and multi-account GovCloud landing zone. We have deposited $250 into your ConnectIn Escrow for a 30-minute intro call.'
+  }
+]

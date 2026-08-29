@@ -92,6 +92,27 @@ export function MediaView({
   const [isEpisodeVideoMode, setIsEpisodeVideoMode] = useState(false)
   const [podcastSearchQuery, setPodcastSearchQuery] = useState("")
 
+  // Live Terminal Sandbox State
+  const [isTerminalSandboxOpen, setIsTerminalSandboxOpen] = useState(false)
+  const [terminalLogs, setTerminalLogs] = useState<string[]>([
+    "root@microvm-govcloud:~# cilium status",
+    "✓ Cilium kernel BPF filesystem mounted at /sys/fs/bpf",
+    "✓ ClusterMesh: 4 nodes connected (Zero-Trust policy enforcement active)"
+  ])
+
+  const handleExecuteCommand = (cmd: string) => {
+    setTerminalLogs(prev => [
+      ...prev,
+      `root@microvm-govcloud:~# ${cmd}`,
+      cmd.includes('cilium')
+        ? "✓ Cilium probe initialized. Micro-segmentation rule active across namespace default."
+        : cmd.includes('ebpf')
+        ? "✓ eBPF socket tracer sniffing AF_INET packets. 0 unauthorized egress packets detected."
+        : "✓ OSCAL 1.0.0 JSON telemetry validated against NIST SP 800-53 Rev 5 control SC-13. Cryptographic hash verified.",
+      "★ Earned +50 XP (Interactive Lab Milestone Completed!)"
+    ])
+  }
+
   const mediaNavTabs = [
     { id: 'for_you', label: '🔥 For You' },
     { id: 'following', label: '👥 Following' },
@@ -282,6 +303,17 @@ export function MediaView({
                       </div>
 
                       <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setIsTerminalSandboxOpen(!isTerminalSandboxOpen)}
+                          className={`rounded-full px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1.5 ${
+                            isTerminalSandboxOpen
+                              ? "bg-emerald-600 text-white shadow-md ring-2 ring-emerald-400"
+                              : "bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950"
+                          }`}
+                        >
+                          <Terminal className="h-3.5 w-3.5" />
+                          <span>{isTerminalSandboxOpen ? "Close Sandbox" : "🖥️ Live Sandbox"}</span>
+                        </button>
                         <button className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white px-4 py-1.5 text-xs font-bold shadow-xs">
                           Follow Channel
                         </button>
@@ -294,6 +326,48 @@ export function MediaView({
                       </div>
                     </div>
                   </div>
+
+                  {/* 1.5. LIVE SIDE-BY-SIDE TERMINAL SANDBOX */}
+                  {isTerminalSandboxOpen && (
+                    <div className="rounded-2xl border border-zinc-700 bg-black p-4 text-white shadow-2xl space-y-3 font-mono text-xs animate-in fade-in zoom-in-95">
+                      <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="h-3 w-3 rounded-full bg-emerald-500 animate-pulse" />
+                          <span className="font-bold text-zinc-200 text-xs">Firecracker MicroVM · GovCloud Linux 6.8 (Follow Along Mode)</span>
+                        </div>
+                        <span className="text-[10px] text-zinc-400 font-mono">Status: Connected · +50 XP Active</span>
+                      </div>
+
+                      <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-800 text-emerald-400 font-mono text-[11px] leading-relaxed min-h-[120px] max-h-[220px] overflow-y-auto space-y-1">
+                        <p className="text-zinc-400"># Welcome to ConnectIn Interactive Sandbox. Execute commands live alongside the video:</p>
+                        {terminalLogs.map((log, i) => (
+                          <p key={i}>{log}</p>
+                        ))}
+                      </div>
+
+                      <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                        <span className="text-[10px] text-zinc-400">Quick Commands:</span>
+                        <button
+                          onClick={() => handleExecuteCommand('cilium status --wait')}
+                          className="rounded-lg bg-zinc-800 hover:bg-zinc-700 text-sky-300 px-2 py-1 text-[10px] font-mono border border-zinc-700"
+                        >
+                          $ cilium status
+                        </button>
+                        <button
+                          onClick={() => handleExecuteCommand('ebpf-trace-sockets --enclave govcloud-prod')}
+                          className="rounded-lg bg-zinc-800 hover:bg-zinc-700 text-emerald-300 px-2 py-1 text-[10px] font-mono border border-zinc-700"
+                        >
+                          $ ebpf-trace-sockets
+                        </button>
+                        <button
+                          onClick={() => handleExecuteCommand('oscal-validate --file /var/cato/nist-800-53.json')}
+                          className="rounded-lg bg-zinc-800 hover:bg-zinc-700 text-amber-300 px-2 py-1 text-[10px] font-mono border border-zinc-700"
+                        >
+                          $ oscal-validate
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   {/* 2. CONNECTIN AI VIDEO INTELLIGENCE & JUMP TO TIMESTAMP */}
                   <div className="rounded-2xl border border-purple-500/30 bg-purple-50/50 p-4 dark:bg-purple-950/20 space-y-3 text-xs">

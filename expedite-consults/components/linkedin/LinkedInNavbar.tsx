@@ -112,6 +112,7 @@ export function LinkedInNavbar({
       category: "Business & Enterprise 🏢",
       items: [
         { id: "procurement", label: "🏢 Procurement & RFPs", desc: "$2.4M enterprise spend & bids" },
+        { id: "bounties", label: "🏆 Enterprise Bounties", desc: "$15K–$50K hackathons in escrow" },
         { id: "company", label: "🏛️ Company Hub", desc: "Expedite Consults enterprise profile" },
         { id: "sellercenter", label: "💼 Seller Center", desc: "Manage software & $122.7K MRR" },
         { id: "wallet", label: "💳 Pay, Wallet & Invoicing", desc: "$2,430 Balance & SOWs" },
@@ -137,6 +138,7 @@ export function LinkedInNavbar({
     {
       category: "Trust & Community 🛡️",
       items: [
+        { id: "guilds", label: "🛡️ Gated Guilds & Enclaves", desc: "TS/SCI & Founder roundtables" },
         { id: "trustcenter", label: "🛡️ Trust Center", desc: "SOC 2, FedRAMP & 99.99% uptime" },
         { id: "peerreview", label: "⭐ Peer Review", desc: "Verified expert validation ($150/hr)" },
         { id: "compensation", label: "💰 Compensation Intelligence", desc: "Salary benchmarks & contractor rates" },
