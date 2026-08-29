@@ -22,6 +22,7 @@ import { AdvisoryMarketplaceView } from "@/components/linkedin/AdvisoryMarketpla
 import { StartupVentureView } from "@/components/linkedin/StartupVentureView"
 import { CareerSuiteView } from "@/components/linkedin/CareerSuiteView"
 import { MarketplaceView } from "@/components/linkedin/MarketplaceView"
+import { EcosystemView } from "@/components/linkedin/EcosystemView"
 import {
   currentUser as initialCurrentUser,
   initialPosts,
@@ -53,6 +54,7 @@ export default function LinkedInPage() {
     | 'peerreview'
     | 'compensation'
     | 'marketplace'
+    | 'ecosystem'
     | 'launchpad'
     | 'watercooler'
     | 'advisory'
@@ -572,6 +574,15 @@ export default function LinkedInPage() {
           <MarketplaceView
             currentUser={userData}
             onLaunchCareerSuite={() => setActiveTab('careersuite')}
+          />
+        )}
+
+        {/* VIEW 9.5: ENTERPRISE ECOSYSTEM (DEVELOPERS, INTEGRATIONS, PARTNERS, APPS) */}
+        {activeTab === 'ecosystem' && (
+          <EcosystemView
+            currentUser={userData}
+            onNavigateMarketplace={() => setActiveTab('marketplace')}
+            onNavigateCommunityChat={() => setActiveTab('messaging')}
           />
         )}
 

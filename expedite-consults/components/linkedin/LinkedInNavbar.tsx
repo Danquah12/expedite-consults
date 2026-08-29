@@ -83,6 +83,7 @@ export function LinkedInNavbar({
     { id: "network", label: "Network", icon: Users, badge: 2 },
     { id: "jobs", label: "Jobs", icon: Briefcase, badge: 0 },
     { id: "marketplace", label: "Marketplace 🛍️", icon: ShoppingBag, badge: 0, isMarketplace: true },
+    { id: "ecosystem", label: "Ecosystem 🌐", icon: Grid3X3, badge: 0 },
     { id: "pulserooms", label: "Pulse 📰", icon: Radio, badge: 1 },
     { id: "peerreview", label: "Peer Review ⭐", icon: Layers, badge: 0 },
     { id: "compensation", label: "Salary Insights 💰", icon: DollarSign, badge: 0 },
