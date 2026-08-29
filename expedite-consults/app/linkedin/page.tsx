@@ -44,6 +44,7 @@ import { BountiesHackathonsView } from "@/components/linkedin/BountiesHackathons
 import { InboundBountiesModal } from "@/components/linkedin/InboundBountiesModal"
 import { AccountSecurityView } from "@/components/linkedin/AccountSecurityView"
 import { AdminIAMConsoleView } from "@/components/linkedin/AdminIAMConsoleView"
+import { ConnectInAuthModal } from "@/components/linkedin/ConnectInAuthModal"
 import {
   currentUser as initialCurrentUser,
   initialPosts,
@@ -107,6 +108,7 @@ export default function LinkedInPage() {
   const [isUniversalSearchOpen, setIsUniversalSearchOpen] = useState(false)
   const [isIDModalOpen, setIsIDModalOpen] = useState(false)
   const [isInboundBountiesModalOpen, setIsInboundBountiesModalOpen] = useState(false)
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [activeWorkspace, setActiveWorkspace] = useState<'personal' | 'enterprise' | 'creator' | 'seller'>('personal')
 
   const [userData, setUserData] = useState<UserProfile>(initialCurrentUser)
@@ -413,6 +415,7 @@ export default function LinkedInPage() {
         onSearchChange={setSearchQuery}
         onOpenAIAssistant={() => setIsAIAssistantOpen(true)}
         onOpenUniversalSearch={() => setIsUniversalSearchOpen(true)}
+        onOpenAuthModal={() => setIsAuthModalOpen(true)}
         activeWorkspace={activeWorkspace}
         onSelectWorkspace={(ws) => {
           setActiveWorkspace(ws)
@@ -440,6 +443,7 @@ export default function LinkedInPage() {
                 onNavigateTab={(tab) => setActiveTab(tab as any)}
                 onOpenIDModal={() => setIsIDModalOpen(true)}
                 onOpenInboundBountiesModal={() => setIsInboundBountiesModalOpen(true)}
+                onOpenAuthModal={() => setIsAuthModalOpen(true)}
               />
             </div>
 
@@ -859,6 +863,17 @@ export default function LinkedInPage() {
         onClose={() => setIsInboundBountiesModalOpen(false)}
         currentUser={userData}
         onNavigateTab={(tab) => setActiveTab(tab as any)}
+      />
+
+      {/* ConnectIn Role-Aware Identity & Auth Portal Gate Modal */}
+      <ConnectInAuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onLoginSuccess={(authenticatedUser, targetTab, targetWorkspace) => {
+          setUserData(authenticatedUser)
+          setActiveWorkspace(targetWorkspace)
+          setActiveTab(targetTab as any)
+        }}
       />
     </div>
   )

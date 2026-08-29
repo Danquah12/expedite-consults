@@ -38,7 +38,8 @@ import {
   Wrench,
   Bot,
   Zap,
-  Tv
+  Tv,
+  Key
 } from "lucide-react"
 import { UserProfile } from "@/lib/linkedin-data"
 
@@ -52,6 +53,7 @@ interface LinkedInNavbarProps {
   unreadNotificationsCount?: number
   onOpenAIAssistant?: () => void
   onOpenUniversalSearch?: () => void
+  onOpenAuthModal?: () => void
   activeWorkspace?: 'personal' | 'enterprise' | 'creator' | 'seller'
   onSelectWorkspace?: (ws: 'personal' | 'enterprise' | 'creator' | 'seller') => void
 }
@@ -66,6 +68,7 @@ export function LinkedInNavbar({
   unreadNotificationsCount = 3,
   onOpenAIAssistant,
   onOpenUniversalSearch,
+  onOpenAuthModal,
   activeWorkspace = 'personal',
   onSelectWorkspace
 }: LinkedInNavbarProps) {
@@ -347,6 +350,16 @@ export function LinkedInNavbar({
               </span>
             </button>
 
+            {onOpenAuthModal && (
+              <button
+                onClick={onOpenAuthModal}
+                className="hidden md:flex items-center gap-1.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 px-3 py-1 text-xs font-bold shadow-xs hover:opacity-90 transition-all shrink-0 ml-1 cursor-pointer"
+              >
+                <Key className="h-3.5 w-3.5 text-amber-300" />
+                <span>Auth / Role Gate</span>
+              </button>
+            )}
+
             {/* Dropdown Menu Modal/Popover */}
             {isMeOpen && (
               <>
@@ -487,12 +500,29 @@ export function LinkedInNavbar({
                       <p>• Clearance: TS/SCI with Polygraph</p>
                       <p>• Seller: AXIOM Suite &amp; Expedite Strike</p>
                     </div>
+
+                    {onOpenAuthModal && (
+                      <button
+                        onClick={() => {
+                          onOpenAuthModal()
+                          setIsMeOpen(false)
+                        }}
+                        className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-950 py-2 text-xs font-bold shadow-xs hover:opacity-90 transition-all mt-2 cursor-pointer"
+                      >
+                        <Key className="h-3.5 w-3.5 text-amber-300" />
+                        <span>Switch Persona / Auth Gate 🔑</span>
+                      </button>
+                    )}
+
                     <button
-                      onClick={() => setIsMeOpen(false)}
-                      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 font-semibold mt-2"
+                      onClick={() => {
+                        if (onOpenAuthModal) onOpenAuthModal()
+                        setIsMeOpen(false)
+                      }}
+                      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 font-semibold mt-1.5"
                     >
                       <LogOut className="h-4 w-4" />
-                      <span>Sign Out</span>
+                      <span>Sign Out &amp; Switch Account</span>
                     </button>
                   </div>
                 </div>

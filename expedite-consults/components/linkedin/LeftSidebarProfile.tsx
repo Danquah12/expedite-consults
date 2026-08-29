@@ -31,6 +31,7 @@ interface LeftSidebarProfileProps {
   onNavigateTab?: (tab: string) => void
   onOpenIDModal?: () => void
   onOpenInboundBountiesModal?: () => void
+  onOpenAuthModal?: () => void
 }
 
 export function LeftSidebarProfile({
@@ -39,11 +40,13 @@ export function LeftSidebarProfile({
   onSelectTag,
   onNavigateTab,
   onOpenIDModal,
-  onOpenInboundBountiesModal
+  onOpenInboundBountiesModal,
+  onOpenAuthModal
 }: LeftSidebarProfileProps) {
   const [isRecentExpanded, setIsRecentExpanded] = useState(true)
 
   const workspaceShortcuts = [
+    { id: 'auth_gate', label: '🔑 Switch Persona / Role', badge: '6 Roles' },
     { id: 'accountsecurity', label: '🔐 Security & Passkeys', badge: 'FIDO2' },
     { id: 'adminiam', label: '🛡️ Admin IAM Console', badge: 'Privileged' },
     { id: 'inbound_bounty', label: '💰 Paid Inbound Bounty', badge: '+$250 Escrow' },
@@ -192,7 +195,9 @@ export function LeftSidebarProfile({
             <button
               key={ws.id + ws.label}
               onClick={() => {
-                if (ws.id === 'inbound_bounty' && onOpenInboundBountiesModal) {
+                if (ws.id === 'auth_gate' && onOpenAuthModal) {
+                  onOpenAuthModal()
+                } else if (ws.id === 'inbound_bounty' && onOpenInboundBountiesModal) {
                   onOpenInboundBountiesModal()
                 } else if (onNavigateTab) {
                   onNavigateTab(ws.id)
