@@ -191,7 +191,42 @@ export const compensationCitiesData: CompensationCity[] = [
 
 export const productLaunchesData: ProductLaunchItem[] = [
   {
+    id: 'launch_0',
+    title: 'ConnectIn Next-Gen Ecosystem',
+    tagline: 'Professional network surpassing LinkedIn with AI Virality, Pulse Audio, and App Store',
+    thumbnail: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80',
+    makers: [
+      { name: 'Alex Taylor', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80' },
+      { name: 'Dr. Elena Rostova', avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80' }
+    ],
+    upvotesCount: 528,
+    hasUpvoted: true,
+    category: 'Enterprise SaaS',
+    productUrl: 'https://expedite-consults.vercel.app/connectin',
+    description: 'The definitive next-generation professional network uniting career mobility, real-time Pulse audio stages, 16 flagship services, and 137 Sphera apps.',
+    screenshots: [
+      'https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=600&auto=format&fit=crop&q=80'
+    ],
+    commentsCount: 42
+  },
+  {
     id: 'launch_1',
+    title: 'Expedite CareerSuite™ Pro',
+    tagline: 'AI-Powered Resume Tailoring, Profile Maximizer & ATS Optimizer Suite',
+    thumbnail: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=600&auto=format&fit=crop&q=80',
+    makers: [
+      { name: 'Alex Taylor', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80' }
+    ],
+    upvotesCount: 412,
+    hasUpvoted: true,
+    category: 'AI & Data',
+    productUrl: 'https://tuhousing.vercel.app/',
+    description: 'Tailor master resumes against target job descriptions in seconds and maximize profile visibility for recruiters.',
+    screenshots: [],
+    commentsCount: 36
+  },
+  {
+    id: 'launch_2',
     title: 'VeritasLens eBPF Security Radar',
     tagline: 'Zero-overhead kernel observability and agent containment loop engine',
     thumbnail: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600&auto=format&fit=crop&q=80',
@@ -201,7 +236,7 @@ export const productLaunchesData: ProductLaunchItem[] = [
     upvotesCount: 342,
     hasUpvoted: false,
     category: 'Developer Tools & Security',
-    productUrl: 'https://github.com/expedite-consults/veritaslens',
+    productUrl: 'https://expedite-consults.vercel.app/veritaslens',
     description: 'An open-source eBPF probe engine built to detect latent semantic drift in autonomous AI agent tool executions.',
     screenshots: [],
     commentsCount: 28
