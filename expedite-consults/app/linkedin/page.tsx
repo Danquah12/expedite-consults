@@ -555,8 +555,15 @@ export default function LinkedInPage() {
           <PeerReviewView currentUser={userData} />
         )}
 
-        {/* VIEW 8: TOTAL COMPENSATION SIMULATOR */}
-        {activeTab === 'compensation' && <CompensationCalculator />}
+        {/* VIEW 8: SALARY INSIGHTS & COMPENSATION INTELLIGENCE */}
+        {activeTab === 'compensation' && (
+          <CompensationCalculator
+            onNavigateJobs={(searchKeyword) => {
+              if (searchKeyword) setSearchQuery(searchKeyword)
+              setActiveTab('jobs')
+            }}
+          />
+        )}
 
         {/* VIEW 9: APP & SOLUTIONS MARKETPLACE */}
         {activeTab === 'marketplace' && (

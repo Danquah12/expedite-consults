@@ -110,7 +110,7 @@ export function LinkedInNavbar({
     { id: 'marketplace', label: 'Marketplace 🛍️', icon: ShoppingBag, badge: 0, isMarketplace: true },
     { id: 'pulserooms', label: 'Pulse 📰', icon: Radio, badge: 1 },
     { id: 'peerreview', label: 'Peer Review ⭐', icon: Layers, badge: 0 },
-    { id: 'compensation', label: 'Pricing/Comp 💰', icon: DollarSign, badge: 0 },
+    { id: 'compensation', label: 'Salary Insights 💰', icon: DollarSign, badge: 0 },
     { id: 'learning', label: 'Learning 🎓', icon: GraduationCap, badge: 0 },
     { id: 'messaging', label: 'Messaging 💬', icon: MessageSquare, badge: unreadMessagesCount },
     { id: 'notifications', label: 'Notifications 🔔', icon: Bell, badge: 3 }
