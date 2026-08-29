@@ -366,47 +366,74 @@ export function ProfileView({
       )}
 
       {/* ========================================================================= */}
-      {/* 3. VERIFIED SKILLS */}
+      {/* 3. VERIFIED SKILL PASSPORT & EVIDENCE GRAPH */}
       {/* ========================================================================= */}
       {workspaceSection === 'skills' && (
-        <div className="space-y-5">
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-black text-lg text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                <Zap className="h-5 w-5 text-amber-500" />
-                <span>Verified Skill Capability Graph</span>
-              </h3>
+        <div className="space-y-6">
+          {/* Top Skill Passport Overview Card */}
+          <div className="rounded-2xl border border-indigo-500/30 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-950 p-6 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <span className="rounded-full bg-indigo-500/20 px-3 py-0.5 text-xs font-bold text-indigo-300 border border-indigo-400/40 flex items-center gap-1.5 w-fit">
+                <ShieldCheck className="h-3.5 w-3.5 text-sky-400" />
+                ConnectIn Verified Skill Passport
+              </span>
+              <h2 className="text-2xl font-black text-white">
+                Multi-Factor Verified Competency Graph
+              </h2>
+              <p className="text-xs text-zinc-300 max-w-xl leading-relaxed">
+                Evidence-based verification combining proctored scenario exams, live cloud labs, verified production code repositories, and employer attestations.
+              </p>
             </div>
+
+            <div className="rounded-2xl bg-black/40 p-4 border border-white/15 text-center min-w-[170px] shrink-0 space-y-1">
+              <span className="text-[10px] uppercase font-mono text-zinc-400">Passport Score</span>
+              <p className="text-3xl font-black text-sky-400">94.8%</p>
+              <span className="text-[10px] text-emerald-400 font-bold block">Top 1% Fellow Grade</span>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-4">
+            <h3 className="font-black text-lg text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+              <Zap className="h-5 w-5 text-amber-500" />
+              <span>Verified Skill Capabilities &amp; Multi-Factor Evidence</span>
+            </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {skills.map((skill) => (
                 <div
                   key={skill.name}
-                  className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/40 flex items-center justify-between gap-3"
+                  className="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/40 space-y-3"
                 >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
-                        {skill.name}
-                      </h4>
-                      <span className="rounded-full bg-emerald-100 px-2 py-0.2 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                        Verified ✓
-                      </span>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
+                          {skill.name}
+                        </h4>
+                        <span className="rounded-full bg-emerald-100 px-2 py-0.2 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                          Verified ✓
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-zinc-500">
+                        Validated by: <strong>{skill.verifiedBy}</strong>
+                      </p>
                     </div>
-                    <p className="text-xs text-zinc-500">
-                      Validated by: <strong>{skill.verifiedBy}</strong>
-                    </p>
-                    <span className="text-[11px] font-mono text-indigo-600 dark:text-indigo-400">
-                      {skill.proficiencyLevel} · {skill.endorsementsCount} endorsements
-                    </span>
+
+                    <button
+                      onClick={() => handleEndorseSkill(skill.name)}
+                      className="rounded-lg bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 px-2.5 py-1 text-[11px] font-bold text-zinc-800 dark:text-zinc-100 hover:bg-[#0A66C2] hover:text-white transition-all shadow-xs shrink-0"
+                    >
+                      + Endorse ({skill.endorsementsCount})
+                    </button>
                   </div>
 
-                  <button
-                    onClick={() => handleEndorseSkill(skill.name)}
-                    className="rounded-lg bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 px-3 py-1.5 text-xs font-bold text-zinc-800 dark:text-zinc-100 hover:bg-[#0A66C2] hover:text-white transition-all shadow-xs"
-                  >
-                    + Endorse ({skill.endorsementsCount})
-                  </button>
+                  {/* 4-Factor Evidence Breakdown */}
+                  <div className="grid grid-cols-2 gap-1.5 text-[10px] font-mono bg-white dark:bg-zinc-900 p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700/60">
+                    <span className="text-emerald-600 dark:text-emerald-400">✓ Exam: 96/100</span>
+                    <span className="text-sky-600 dark:text-sky-400">✓ 4 Live Labs</span>
+                    <span className="text-purple-600 dark:text-purple-400">✓ GitHub Code</span>
+                    <span className="text-amber-600 dark:text-amber-400">✓ Employer Signed</span>
+                  </div>
                 </div>
               ))}
             </div>

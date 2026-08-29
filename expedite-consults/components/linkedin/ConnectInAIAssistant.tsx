@@ -192,29 +192,141 @@ Would you like to finalize and dispatch with 1 click?`,
             }
           ]
         }
-      } else if (lower.includes('vulnerability') || lower.includes('5,000') || lower.includes('recommend')) {
+      } else if (lower.includes('missing') || lower.includes('skills am i missing')) {
         reply = {
           id: `ai_${Date.now()}`,
           sender: 'assistant',
-          text: `Based on your multi-tenant environment (5,000 users, AWS GovCloud, FedRAMP requirement), **ConnectIn AI Product Advisor** calculated these top 3 matches:
+          text: `🔍 **ConnectIn AI Skill Gap Analysis:**
+Target Role: **Lead Cloud Security Architect ($235K Base Requisition)**
 
-1. **Expedite Strike & Fusion 2026** (94% Match) — Best for automated ASPM and eliminating 90% of false-positive alert noise via GitHub auto-PR triage.
-2. **AXIOM AI-Powered Cyber Suite** (91% Match) — Best for real-time zero trust blast-radius mapping and continuous cATO evidence.
-3. **Sphera Zero-Trust Validator** (86% Match) — Micro-app add-on for Kubernetes Cilium eBPF packet enforcement.`,
+Your Current Match Rate: **84%**
+
+⚠️ **Missing or Under-Verified Skills:**
+1. **Kubernetes Cilium eBPF Micro-Segmentation** — Missing practical lab validation.
+2. **NIST SP 800-53 Rev 5 Machine OSCAL Generation** — Certified, but missing live deployment telemetry proof.
+3. **Ed25519 Token Signing for Model Context Protocol (MCP)** — Emerging requirement (+320% job mentions).
+
+💡 **1-Click Remediation Plan:** Complete the **Kubernetes Cilium eBPF Lab** (+400 XP) to raise your match rate to **98%**.`,
           suggestedCards: [
             {
-              title: "Expedite Strike 14-Day Free Sandbox",
-              category: "Recommended Tool #1",
-              actionText: "Launch Sandbox",
-              targetTab: "marketplace",
-              matchPercent: "94% Match"
+              title: "Launch Cilium eBPF Micro-Segmentation Lab",
+              category: "Interactive Practice Sandbox",
+              actionText: "Launch MicroVM",
+              targetTab: "labs",
+              matchPercent: "+14% Gap Fix"
             },
             {
-              title: "Book 1:1 Architecture Briefing with Fellow",
-              category: "Advisory Practice",
-              actionText: "Book Consultation",
-              targetTab: "peerreview",
-              matchPercent: "$150 / hr"
+              title: "View Target Job Description ($235K)",
+              category: "Target Requisition",
+              actionText: "Inspect Job",
+              targetTab: "jobs",
+              matchPercent: "84% Current"
+            }
+          ]
+        }
+      } else if (lower.includes('learn next') || lower.includes('what should i learn')) {
+        reply = {
+          id: `ai_${Date.now()}`,
+          sender: 'assistant',
+          text: `🎓 **Personalized Career Learning Recommendation:**
+
+Based on your verified TS/SCI clearance and senior architect trajectory, here is your highest ROI learning path for 2026:
+
+1. **Continuous cATO with OSCAL & WebAssembly** (High Demand, Low Supply)
+2. **eBPF Linux Kernel Probes for Zero-Trust Pod Isolation** (Top 1% Architect Skill)
+3. **Model Context Protocol (MCP) Prompt Injection Defense** (Critical AI Security Trend)
+
+Would you like to enroll in the **DoD cATO Masterclass** or launch the **eBPF Sandbox**?`,
+          suggestedCards: [
+            {
+              title: "DoD cATO & Automated OSCAL Masterclass",
+              category: "Verified Certification Track",
+              actionText: "Start Masterclass",
+              targetTab: "learning",
+              matchPercent: "Top Recommendation"
+            },
+            {
+              title: "Interactive eBPF Kernel Defense Lab",
+              category: "Hands-On MicroVM",
+              actionText: "Launch Lab",
+              targetTab: "labs",
+              matchPercent: "+400 XP"
+            }
+          ]
+        }
+      } else if (lower.includes('network with') || lower.includes('who should i network')) {
+        reply = {
+          id: `ai_${Date.now()}`,
+          sender: 'assistant',
+          text: `🤝 **High-Value Professional Networking Recommendations:**
+
+ConnectIn AI analyzed the graph for mutual clearance levels, shared publications, and complementary skillsets:
+
+1. **Dr. Sarah Jenkins** (Senior Fellow, Former Federal CISO) — Mutual interest in FedRAMP cATO & OSCAL standards.
+2. **Marcus Vance** (VP of Security Architecture @ Defense Contractor) — Actively hiring 3 Principal Cloud Architects.
+3. **Elena Rostova** (AppSec Fellow & OpenOSCAL Founder) — Seeking a co-founder for an AI-BOM validation project.`,
+          suggestedCards: [
+            {
+              title: "Connect with Dr. Sarah Jenkins (Senior Fellow)",
+              category: "Mutual Clearance Match",
+              actionText: "View Profile & Connect",
+              targetTab: "network",
+              matchPercent: "99% Synergy"
+            },
+            {
+              title: "Inspect Elena's Co-Founder Pitch",
+              category: "Collaboration & Ideas",
+              actionText: "Open Pitch",
+              targetTab: "collaboration",
+              matchPercent: "AI Safety ML"
+            }
+          ]
+        }
+      } else if (lower.includes('expert') || lower.includes('aws security expert')) {
+        reply = {
+          id: `ai_${Date.now()}`,
+          sender: 'assistant',
+          text: `⭐ **Matched 3 Verified AWS Security Experts Available for 1:1 Architecture Teardowns:**
+
+1. **Alex Taylor (You / Fellow Grade)** — 94.8% Skill Passport, TS/SCI Attestation ($175 / hr).
+2. **Col. Raymond Sterling** (Principal Cloud Architect @ Expedite Consults) — 4.99 ★ (94 Audits, $200 / hr).
+3. **Dr. Sarah Jenkins** (Former Federal CISO) — Board presentations & FedRAMP authorizations ($250 / mo retainer).`,
+          suggestedCards: [
+            {
+              title: "Book 45-Min Architecture Teardown with Col. Sterling",
+              category: "Verified Expert Session",
+              actionText: "Book Session",
+              targetTab: "mentorship",
+              matchPercent: "4.99 ★ (94 Reviews)"
+            }
+          ]
+        }
+      } else if (lower.includes('problem') || lower.includes('solve') || lower.includes('product') || lower.includes('vulnerability') || lower.includes('recommend')) {
+        reply = {
+          id: `ai_${Date.now()}`,
+          sender: 'assistant',
+          text: `🎯 **ConnectIn AI Solutions & Product Matcher:**
+
+To solve your business problem, ConnectIn recommends combining **Software + Services + Experts + Learning**:
+
+• **Software:** **AXIOM AI-Powered Cyber Suite** ($499/mo) — Autonomous pentest & eBPF blast-radius mapping.
+• **Services:** **Expedite Strike cATO Readiness SOW** — 18-day fixed-scope compliance package.
+• **Expert:** **Dr. Sarah Jenkins** — Fractional CISO oversight.
+• **Learning:** **DoD Continuous Authorization Masterclass** for your engineering team.`,
+          suggestedCards: [
+            {
+              title: "Launch AXIOM 14-Day Free Evaluation",
+              category: "Recommended Software",
+              actionText: "Start Free Trial",
+              targetTab: "marketplace",
+              matchPercent: "96% Match"
+            },
+            {
+              title: "Request SOW Proposal & RFP Quote",
+              category: "Services & SOW",
+              actionText: "Open RFP Desk",
+              targetTab: "procurement",
+              matchPercent: "Fixed Scope"
             }
           ]
         }

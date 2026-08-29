@@ -107,23 +107,42 @@ export function LinkedInNavbar({
     { id: "messaging", label: "Messages 💬", icon: MessageSquare, badge: unreadMessagesCount },
   ]
 
-  const moreMenuItems = [
-    { id: "aiagents", label: "🤖 AI Agents Marketplace", desc: "Discover, test & deploy autonomous agents" },
-    { id: "code", label: "🧑‍💻 ConnectIn Code & Repos", desc: "GitHub sync & recruit by verified code" },
-    { id: "wallet", label: "💳 Pay, Wallet & Invoicing", desc: "$2,430 Balance, Escrow & SOWs" },
-    { id: "missions", label: "🔥 Career Missions & Journey", desc: "Trackable progression & XP (72%)" },
-    { id: "procurement", label: "🏢 Corporate Procurement & RFPs", desc: "$2.4M enterprise spend & bids" },
-    { id: "collaboration", label: "🤝 Co-Founders & Ideas Incubator", desc: "Crowdsource, build & co-found" },
-    { id: "mentorship", label: "👨‍🏫 Mentorship & Creator Economy", desc: "1:1 CISO bookings & brand briefs" },
-    { id: "labs", label: "🧪 Interactive Security Labs", desc: "Firecracker microVM sandboxes" },
-    { id: "marketplace", label: "🎯 Solutions Hub", desc: "Outcome packages & blueprints" },
-    { id: "company", label: "🏢 Company Page (Expedite Consults)", desc: "Enterprise corporate hub" },
-    { id: "sellercenter", label: "💼 Seller Center", desc: "Manage products, sales & escrow" },
-    { id: "trustcenter", label: "🛡️ Trust Center", desc: "SOC 2, FedRAMP & security telemetry" },
-    { id: "events", label: "📅 Events & Demos", desc: "Webinars & live teardowns" },
-    { id: "peerreview", label: "⭐ Peer Review", desc: "Verified expert validation platform" },
-    { id: "compensation", label: "💰 Compensation", desc: "Salary benchmarks & contractor rates" },
-    { id: "ecosystem", label: "🌐 Ecosystem Platform", desc: "Developers API/SDKs & multi-cloud" },
+  const categorizedMoreMenu = [
+    {
+      category: "Business & Enterprise 🏢",
+      items: [
+        { id: "procurement", label: "🏢 Procurement & RFPs", desc: "$2.4M enterprise spend & bids" },
+        { id: "company", label: "🏛️ Company Hub", desc: "Expedite Consults enterprise profile" },
+        { id: "sellercenter", label: "💼 Seller Center", desc: "Manage software & $122.7K MRR" },
+        { id: "wallet", label: "💳 Pay, Wallet & Invoicing", desc: "$2,430 Balance & SOWs" },
+      ]
+    },
+    {
+      category: "AI & Innovation 🤖",
+      items: [
+        { id: "aiagents", label: "🤖 AI Agents Marketplace", desc: "Test & deploy autonomous agents" },
+        { id: "missions", label: "🔥 Career Missions & Journey", desc: "10-step lifecycle & +1,850 XP" },
+        { id: "collaboration", label: "🤝 Co-Founders & Ideas", desc: "Incubator & crowdsourced pilots" },
+        { id: "mentorship", label: "👨‍🏫 Mentorship & Creators", desc: "1:1 CISO bookings & brand briefs" },
+      ]
+    },
+    {
+      category: "Developer & Defense Labs 🧪",
+      items: [
+        { id: "code", label: "🧑‍💻 ConnectIn Code", desc: "GitHub repo sync & recruit by code" },
+        { id: "labs", label: "🧪 Security Labs Sandbox", desc: "Firecracker microVM sandboxes" },
+        { id: "ecosystem", label: "🌐 Ecosystem Platform", desc: "APIs, SDKs & multi-cloud connectors" },
+      ]
+    },
+    {
+      category: "Trust & Community 🛡️",
+      items: [
+        { id: "trustcenter", label: "🛡️ Trust Center", desc: "SOC 2, FedRAMP & 99.99% uptime" },
+        { id: "peerreview", label: "⭐ Peer Review", desc: "Verified expert validation ($150/hr)" },
+        { id: "compensation", label: "💰 Compensation Intelligence", desc: "Salary benchmarks & contractor rates" },
+        { id: "events", label: "📅 Events & Live Demos", desc: "Webinars & live teardowns" },
+      ]
+    }
   ]
 
   return (
@@ -236,23 +255,32 @@ export function LinkedInNavbar({
                     </p>
                   </div>
 
-                  <div className="space-y-1 max-h-[70vh] overflow-y-auto">
-                    {moreMenuItems.map((menu) => (
-                      <button
-                        key={menu.id + menu.label}
-                        onClick={() => {
-                          onSelectTab(menu.id)
-                          setIsMoreOpen(false)
-                        }}
-                        className="w-full rounded-xl p-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors flex items-center justify-between group cursor-pointer"
-                      >
-                        <div>
-                          <p className="font-bold text-xs text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2]">
-                            {menu.label}
-                          </p>
-                          <p className="text-[10px] text-zinc-400">{menu.desc}</p>
+                  <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
+                    {categorizedMoreMenu.map((group) => (
+                      <div key={group.category} className="space-y-1">
+                        <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 px-2">
+                          {group.category}
+                        </p>
+                        <div className="space-y-0.5">
+                          {group.items.map((menu) => (
+                            <button
+                              key={menu.id + menu.label}
+                              onClick={() => {
+                                onSelectTab(menu.id)
+                                setIsMoreOpen(false)
+                              }}
+                              className="w-full rounded-xl p-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors flex items-center justify-between group cursor-pointer"
+                            >
+                              <div>
+                                <p className="font-bold text-xs text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2]">
+                                  {menu.label}
+                                </p>
+                                <p className="text-[10px] text-zinc-400">{menu.desc}</p>
+                              </div>
+                            </button>
+                          ))}
                         </div>
-                      </button>
+                      </div>
                     ))}
                   </div>
                 </div>
