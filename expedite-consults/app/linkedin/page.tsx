@@ -602,8 +602,13 @@ export default function LinkedInPage() {
           <CareerSuiteView currentUser={userData} />
         )}
 
-        {/* VIEW 15: MESSAGING VIEW */}
-        {activeTab === 'messaging' && <MessagingView />}
+        {/* VIEW 15: B2B MESSAGING PLATFORM */}
+        {activeTab === 'messaging' && (
+          <MessagingView
+            onNavigateMarketplace={() => setActiveTab('marketplace')}
+            onNavigateJobs={() => setActiveTab('jobs')}
+          />
+        )}
 
         {/* VIEW 16: NOTIFICATIONS VIEW */}
         {activeTab === 'notifications' && <NotificationsView />}
