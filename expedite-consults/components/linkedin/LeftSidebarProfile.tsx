@@ -39,10 +39,14 @@ export function LeftSidebarProfile({
   const [isRecentExpanded, setIsRecentExpanded] = useState(true)
 
   const workspaceShortcuts = [
+    { id: 'missions', label: '🔥 Career Mission (72%)', badge: '+1,850 XP' },
+    { id: 'labs', label: '🧪 Security Labs Sandbox', badge: 'Active' },
+    { id: 'procurement', label: '🏢 Corporate Procurement', badge: '$2.4M Spend' },
+    { id: 'collaboration', label: '🤝 Co-Founders & Ideas', badge: 'Trending' },
+    { id: 'mentorship', label: '👨‍🏫 Mentorship & Creator', badge: '1:1 Open' },
     { id: 'profile', label: '📁 Portfolio & Evidence', badge: '6 Projects' },
     { id: 'sellercenter', label: '🛍️ My Products & Sales', badge: '$122.7K MRR' },
     { id: 'jobs', label: '💼 Active Applications', badge: '4 Status' },
-    { id: 'learning', label: '🎓 Learning & Labs', badge: '3 In Progress' },
     { id: 'peerreview', label: '⭐ Peer Reviews', badge: '4.98 ★' },
     { id: 'compensation', label: '💰 Compensation Benchmarks', badge: 'Top 5%' },
   ]
@@ -100,14 +104,31 @@ export function LeftSidebarProfile({
           </button>
         </div>
 
-        {/* Profile Strength Indicator */}
-        <div className="border-t border-zinc-100 px-4 py-2.5 dark:border-zinc-800/80 space-y-1.5">
-          <div className="flex items-center justify-between text-[11px]">
-            <span className="font-semibold text-zinc-700 dark:text-zinc-300">Profile Strength (Verified)</span>
-            <span className="font-black text-[#0A66C2]">94%</span>
+        {/* Profile Strength & Career Mission Gauge */}
+        <div className="border-t border-zinc-100 px-4 py-2.5 dark:border-zinc-800/80 space-y-2">
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="font-semibold text-zinc-700 dark:text-zinc-300">Profile Strength</span>
+              <span className="font-black text-[#0A66C2]">94%</span>
+            </div>
+            <div className="h-1.5 w-full rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+              <div className="h-full rounded-full bg-gradient-to-r from-[#0A66C2] to-emerald-500 w-[94%]" />
+            </div>
           </div>
-          <div className="h-1.5 w-full rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
-            <div className="h-full rounded-full bg-gradient-to-r from-[#0A66C2] to-emerald-500 w-[94%]" />
+
+          <div
+            onClick={() => onNavigateTab && onNavigateTab('missions')}
+            className="rounded-lg bg-amber-500/10 p-2 border border-amber-400/30 cursor-pointer hover:bg-amber-500/20 transition-colors space-y-1"
+          >
+            <div className="flex items-center justify-between text-[10px] font-bold">
+              <span className="text-amber-800 dark:text-amber-300 flex items-center gap-1">
+                <Flame className="h-3 w-3 text-amber-500" /> Career Mission
+              </span>
+              <span className="text-amber-700 dark:text-amber-300 font-mono">72%</span>
+            </div>
+            <div className="h-1 w-full rounded-full bg-amber-200/50 dark:bg-amber-950 overflow-hidden">
+              <div className="h-full rounded-full bg-amber-500 w-[72%]" />
+            </div>
           </div>
         </div>
 

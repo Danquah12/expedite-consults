@@ -50,6 +50,7 @@ interface LinkedInNavbarProps {
   unreadMessagesCount?: number
   unreadNotificationsCount?: number
   onOpenAIAssistant?: () => void
+  onOpenUniversalSearch?: () => void
 }
 
 export function LinkedInNavbar({
@@ -60,7 +61,8 @@ export function LinkedInNavbar({
   onSearchChange,
   unreadMessagesCount = 1,
   unreadNotificationsCount = 3,
-  onOpenAIAssistant
+  onOpenAIAssistant,
+  onOpenUniversalSearch
 }: LinkedInNavbarProps) {
   const [isMeOpen, setIsMeOpen] = useState(false)
   const [isMoreOpen, setIsMoreOpen] = useState(false)
@@ -99,6 +101,11 @@ export function LinkedInNavbar({
   ]
 
   const moreMenuItems = [
+    { id: "missions", label: "🔥 Career Missions & Journey", desc: "Trackable progression & XP (72%)" },
+    { id: "procurement", label: "🏢 Corporate Procurement & RFPs", desc: "$2.4M enterprise spend & bids" },
+    { id: "collaboration", label: "🤝 Co-Founders & Ideas Incubator", desc: "Crowdsource, build & co-found" },
+    { id: "mentorship", label: "👨‍🏫 Mentorship & Creator Economy", desc: "1:1 CISO bookings & brand briefs" },
+    { id: "labs", label: "🧪 Interactive Security Labs", desc: "Firecracker microVM sandboxes" },
     { id: "marketplace", label: "🎯 Solutions Hub", desc: "Outcome packages & blueprints" },
     { id: "company", label: "🏢 Company Page (Expedite Consults)", desc: "Enterprise corporate hub" },
     { id: "sellercenter", label: "💼 Seller Center", desc: "Manage products, sales & escrow" },
@@ -127,31 +134,23 @@ export function LinkedInNavbar({
             </span>
           </button>
 
-          {/* Search Input Box */}
+          {/* Search Input Box (Clicks open Universal Omnisearch) */}
           <div className="relative flex-1">
             <div
-              className={`flex items-center gap-2 rounded-md bg-[#EDF3F8] px-2.5 py-1.5 transition-all dark:bg-zinc-800/80 ${
+              onClick={() => onOpenUniversalSearch && onOpenUniversalSearch()}
+              className={`flex items-center gap-2 rounded-md bg-[#EDF3F8] px-2.5 py-1.5 transition-all dark:bg-zinc-800/80 cursor-pointer ${
                 isSearchFocused ? "ring-2 ring-[#0A66C2] bg-white shadow-xs dark:bg-zinc-900" : ""
               }`}
             >
               <Search className="h-3.5 w-3.5 text-zinc-500 shrink-0" />
               <input
                 type="text"
-                placeholder="Search products, people, jobs..."
+                placeholder="Universal Search (people, jobs, tools, RFPs...)"
                 value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
-                onFocus={() => setIsSearchFocused(true)}
-                onBlur={() => setIsSearchFocused(false)}
-                className="w-full bg-transparent text-xs text-zinc-900 placeholder:text-zinc-500 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-400"
+                readOnly
+                className="w-full bg-transparent text-xs text-zinc-900 placeholder:text-zinc-500 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-400 cursor-pointer"
               />
-              {searchQuery && (
-                <button
-                  onClick={() => onSearchChange("")}
-                  className="rounded-full p-0.5 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-700"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              )}
+              <span className="text-[9px] font-mono bg-zinc-200 dark:bg-zinc-700 px-1.5 py-0.5 rounded text-zinc-600 dark:text-zinc-300 font-bold hidden sm:inline">⌘K</span>
             </div>
           </div>
         </div>

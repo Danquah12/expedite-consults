@@ -115,7 +115,59 @@ export function ConnectInAIAssistant({
 
       const lower = promptText.toLowerCase()
 
-      if (lower.includes('compare') || lower.includes('axiom')) {
+      if (lower.includes('focus') || lower.includes('week') || lower.includes('copilot') || lower.includes('what should i do')) {
+        reply = {
+          id: `ai_${Date.now()}`,
+          sender: 'assistant',
+          text: `📊 **Your Personal Professional AI Weekly Briefing:**
+
+• **Recruiter Inbound:** You have **3 recruiters** actively reviewing your cleared Zero Trust profile.
+• **Applications:** **2 applications** awaiting response (Northrop Grumman & Stripe).
+• **Skill Trends:** Your **AWS GovCloud & eBPF skills** are in the top 3% of market demand this week.
+
+🎯 **My Recommended High-Impact Actions:**
+1. Complete the **Kubernetes Cilium eBPF Lab** (+400 XP) to reach 100% on your Career Mission.
+2. Submit your profile to the new **Lead Cloud Security Architect** opening ($235K).
+3. Connect with **2 Fellow reviewers** discussing the CISA CVE advisory.`,
+          suggestedCards: [
+            {
+              title: "Launch Kubernetes Cilium eBPF Lab",
+              category: "Career Mission #1",
+              actionText: "Open Lab Sandbox",
+              targetTab: "labs",
+              matchPercent: "+400 XP"
+            },
+            {
+              title: "Apply to Lead Cloud Security Architect ($235K)",
+              category: "Recruiter Match",
+              actionText: "1-Click Apply",
+              targetTab: "jobs",
+              matchPercent: "98% Match"
+            }
+          ]
+        }
+      } else if (lower.includes('apply') && (lower.includes('1') || lower.includes('3') || lower.includes('action'))) {
+        reply = {
+          id: `ai_${Date.now()}`,
+          sender: 'assistant',
+          text: `⚡ **Action Executed by ConnectIn Agent:**
+
+I have pre-populated your **Verified Professional Identity**, **TS/SCI Clearance Attestation**, and **Terraform Multi-Account Portfolio Dossier** for:
+1. **Lead Cloud Security Architect** @ Northrop Grumman ($225K TC)
+2. **Staff AI Security Engineer** @ Stripe ($385K TC)
+
+Would you like to finalize and dispatch with 1 click?`,
+          suggestedCards: [
+            {
+              title: "Confirm & Submit 2 Applications",
+              category: "Agent Action",
+              actionText: "Submit Applications",
+              targetTab: "jobs",
+              matchPercent: "Instant Dispatch"
+            }
+          ]
+        }
+      } else if (lower.includes('compare') || lower.includes('axiom')) {
         reply = {
           id: `ai_${Date.now()}`,
           sender: 'assistant',

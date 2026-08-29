@@ -28,6 +28,12 @@ import { SellerCenterView } from "@/components/linkedin/SellerCenterView"
 import { TrustCenterView } from "@/components/linkedin/TrustCenterView"
 import { EventsView } from "@/components/linkedin/EventsView"
 import { ConnectInAIAssistant } from "@/components/linkedin/ConnectInAIAssistant"
+import { ProfessionalMissionsView } from "@/components/linkedin/ProfessionalMissionsView"
+import { ProcurementRFPView } from "@/components/linkedin/ProcurementRFPView"
+import { CollaborationIdeasView } from "@/components/linkedin/CollaborationIdeasView"
+import { MentorshipCreatorView } from "@/components/linkedin/MentorshipCreatorView"
+import { LabsView } from "@/components/linkedin/LabsView"
+import { UniversalSearchModal } from "@/components/linkedin/UniversalSearchModal"
 import {
   currentUser as initialCurrentUser,
   initialPosts,
@@ -64,6 +70,11 @@ export default function LinkedInPage() {
     | 'sellercenter'
     | 'trustcenter'
     | 'events'
+    | 'missions'
+    | 'procurement'
+    | 'collaboration'
+    | 'mentorship'
+    | 'labs'
     | 'launchpad'
     | 'watercooler'
     | 'advisory'
@@ -75,6 +86,7 @@ export default function LinkedInPage() {
   >('home')
 
   const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false)
+  const [isUniversalSearchOpen, setIsUniversalSearchOpen] = useState(false)
 
   const [userData, setUserData] = useState<UserProfile>(initialCurrentUser)
   const [posts, setPosts] = useState<Post[]>(initialPosts)
@@ -379,6 +391,7 @@ export default function LinkedInPage() {
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         onOpenAIAssistant={() => setIsAIAssistantOpen(true)}
+        onOpenUniversalSearch={() => setIsUniversalSearchOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -637,6 +650,46 @@ export default function LinkedInPage() {
           />
         )}
 
+        {/* VIEW: CAREER MISSIONS & PROGRESSION */}
+        {activeTab === 'missions' && (
+          <ProfessionalMissionsView
+            currentUser={userData}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+          />
+        )}
+
+        {/* VIEW: CORPORATE PROCUREMENT & RFPS */}
+        {activeTab === 'procurement' && (
+          <ProcurementRFPView
+            currentUser={userData}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+          />
+        )}
+
+        {/* VIEW: COLLABORATION & IDEAS INCUBATOR */}
+        {activeTab === 'collaboration' && (
+          <CollaborationIdeasView
+            currentUser={userData}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+          />
+        )}
+
+        {/* VIEW: MENTORSHIP & CREATOR ECONOMY */}
+        {activeTab === 'mentorship' && (
+          <MentorshipCreatorView
+            currentUser={userData}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+          />
+        )}
+
+        {/* VIEW: INTERACTIVE DEFENSE LABS */}
+        {activeTab === 'labs' && (
+          <LabsView
+            currentUser={userData}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+          />
+        )}
+
         {/* VIEW 10: LAUNCHPAD (PRODUCT HUNT STYLE) */}
         {activeTab === 'launchpad' && (
           <ProductLaunchLeaderboard
@@ -687,6 +740,14 @@ export default function LinkedInPage() {
         isOpen={isAIAssistantOpen}
         onClose={() => setIsAIAssistantOpen(false)}
         currentUser={userData}
+        onNavigateTab={(tab) => setActiveTab(tab as any)}
+      />
+
+      {/* ConnectIn Universal Omnisearch Modal */}
+      <UniversalSearchModal
+        isOpen={isUniversalSearchOpen}
+        onClose={() => setIsUniversalSearchOpen(false)}
+        initialQuery={searchQuery}
         onNavigateTab={(tab) => setActiveTab(tab as any)}
       />
     </div>
