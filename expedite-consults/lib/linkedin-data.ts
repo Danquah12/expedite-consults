@@ -208,8 +208,55 @@ export interface SuggestedConnection {
   coverImage?: string
   mutualConnections: number
   mutualName?: string
+  capabilities: string[]
+  verifiedBadges?: string[]
+  circle?: string
+  matchScore?: number
   isConnected?: boolean
   isPending?: boolean
+}
+
+export interface CompanyNetworkItem {
+  id: string
+  name: string
+  tagline: string
+  logo: string
+  industry: string
+  followersCount: string
+  capabilities: string[]
+  jobOpeningsCount: number
+  isFollowing?: boolean
+}
+
+export interface OrganizationNetworkItem {
+  id: string
+  name: string
+  tagline: string
+  logo: string
+  type: 'Federal Agency' | 'Standards Body' | 'Non-Profit Consortium' | 'Defense Entity'
+  capabilities: string[]
+  membersCount: string
+  isFollowing?: boolean
+}
+
+export interface ProfessionalCircleItem {
+  id: string
+  name: string
+  icon: string
+  description: string
+  primaryCapability: string
+  membersCount: string
+  recentActivity: string
+  isJoined?: boolean
+}
+
+export interface FollowedTopicItem {
+  id: string
+  name: string
+  hashtag: string
+  followersCount: string
+  category: string
+  isFollowing?: boolean
 }
 
 export interface JobItem {
@@ -903,17 +950,25 @@ export const suggestedConnections: SuggestedConnection[] = [
     coverImage: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=600&auto=format&fit=crop&q=80',
     mutualConnections: 24,
     mutualName: 'Elena Rostova',
+    capabilities: ['Cloud Security', 'Zero Trust', 'DevSecOps', 'RMF'],
+    verifiedBadges: ['✓ CISSP', '✓ Zero Trust Architect'],
+    circle: 'Zero Trust Defense Circle',
+    matchScore: 96,
     isConnected: false,
     isPending: false
   },
   {
     id: 'sug_2',
     name: 'David Sterling',
-    headline: 'Principal AI Security Engineer @ Apex Defense Labs',
+    headline: 'Principal AI Security & Red Team Lead @ Apex Defense Labs',
     avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&auto=format&fit=crop&q=80',
     coverImage: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=600&auto=format&fit=crop&q=80',
     mutualConnections: 18,
     mutualName: 'Marcus Vance',
+    capabilities: ['AI Security', 'Penetration Testing', 'Cloud Security'],
+    verifiedBadges: ['✓ OSCP', '✓ Red Team Lead'],
+    circle: 'Autonomous AI Red Teaming Guild',
+    matchScore: 92,
     isConnected: false,
     isPending: false
   },
@@ -925,20 +980,210 @@ export const suggestedConnections: SuggestedConnection[] = [
     coverImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80',
     mutualConnections: 41,
     mutualName: 'Devon Hughes',
+    capabilities: ['DevSecOps', 'Next.js / TypeScript', 'Cloud Security'],
+    verifiedBadges: ['✓ Vercel Contributor', '✓ Cloud Architect'],
+    circle: 'AppSec & DevSecOps Platform Guild',
+    matchScore: 88,
     isConnected: false,
     isPending: false
   },
   {
     id: 'sug_4',
     name: 'Alexander Novak',
-    headline: 'Head of Infrastructure Security @ Quantico Capital',
+    headline: 'Head of Infrastructure Security & FedRAMP RMF @ Quantico Capital',
     avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&auto=format&fit=crop&q=80',
     coverImage: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=600&auto=format&fit=crop&q=80',
     mutualConnections: 12,
     mutualName: 'Samantha Wei',
+    capabilities: ['RMF', 'Zero Trust', 'Cloud Security', 'Penetration Testing'],
+    verifiedBadges: ['✓ RMF Level III', '✓ FedRAMP 3PAO'],
+    circle: 'FedRAMP & DoD RMF Practitioners',
+    matchScore: 94,
+    isConnected: false,
+    isPending: false
+  },
+  {
+    id: 'sug_5',
+    name: 'Dr. Tariq Al-Mansoor',
+    headline: 'Senior Penetration Tester & Exploit Developer @ ÆGIS Labs',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=600&auto=format&fit=crop&q=80',
+    mutualConnections: 29,
+    mutualName: 'Alex Taylor',
+    capabilities: ['Penetration Testing', 'AI Security', 'Zero Trust'],
+    verifiedBadges: ['✓ OSCE', '✓ Exploit Dev'],
+    circle: 'Autonomous AI Red Teaming Guild',
+    matchScore: 98,
+    isConnected: false,
+    isPending: false
+  },
+  {
+    id: 'sug_6',
+    name: 'Grace Hopper-Bellingham',
+    headline: 'Lead DevSecOps & eBPF Telemetry Engineer @ KernelGuard',
+    avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=600&auto=format&fit=crop&q=80',
+    mutualConnections: 16,
+    mutualName: 'Kavita Patel',
+    capabilities: ['DevSecOps', 'Cloud Security', 'RMF'],
+    verifiedBadges: ['✓ CKS (Kubernetes Security)', '✓ eBPF Fellow'],
+    circle: 'AppSec & DevSecOps Platform Guild',
+    matchScore: 91,
     isConnected: false,
     isPending: false
   }
+]
+
+export const companiesNetworkData: CompanyNetworkItem[] = [
+  {
+    id: 'comp_1',
+    name: 'Expedite Consults',
+    tagline: 'Enterprise Autonomous Cyber Defense & AI AppSec Suite',
+    logo: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=100&auto=format&fit=crop&q=80',
+    industry: 'Cybersecurity & AI',
+    followersCount: '48.2k followers',
+    capabilities: ['Cloud Security', 'Penetration Testing', 'AI Security', 'Zero Trust', 'DevSecOps', 'RMF'],
+    jobOpeningsCount: 8,
+    isFollowing: true
+  },
+  {
+    id: 'comp_2',
+    name: 'Palantir Technologies',
+    tagline: 'Foundational Defense & Critical Infrastructure Intelligence',
+    logo: 'https://images.unsplash.com/photo-1572021335469-31706a17aaef?w=100&auto=format&fit=crop&q=80',
+    industry: 'Defense Tech & Big Data',
+    followersCount: '410k followers',
+    capabilities: ['RMF', 'Zero Trust', 'Cloud Security'],
+    jobOpeningsCount: 14,
+    isFollowing: false
+  },
+  {
+    id: 'comp_3',
+    name: 'Anthropic',
+    tagline: 'AI Safety, Alignment Research & Frontier Red Teaming',
+    logo: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=100&auto=format&fit=crop&q=80',
+    industry: 'Artificial Intelligence',
+    followersCount: '320k followers',
+    capabilities: ['AI Security', 'Penetration Testing'],
+    jobOpeningsCount: 6,
+    isFollowing: true
+  },
+  {
+    id: 'comp_4',
+    name: 'CrowdStrike',
+    tagline: 'Cloud-Native Endpoint Security & Adversary Threat Intelligence',
+    logo: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=100&auto=format&fit=crop&q=80',
+    industry: 'Cybersecurity',
+    followersCount: '650k followers',
+    capabilities: ['Cloud Security', 'Penetration Testing', 'Zero Trust'],
+    jobOpeningsCount: 19,
+    isFollowing: false
+  }
+]
+
+export const organizationsNetworkData: OrganizationNetworkItem[] = [
+  {
+    id: 'org_1',
+    name: 'CISA (Cybersecurity & Infrastructure Security Agency)',
+    tagline: 'Defending America\'s Cyber Frontiers & Public Key Infrastructure',
+    logo: 'https://images.unsplash.com/photo-1541354329998-f4d9a9f9297f?w=100&auto=format&fit=crop&q=80',
+    type: 'Federal Agency',
+    capabilities: ['RMF', 'Zero Trust', 'Penetration Testing', 'Cloud Security'],
+    membersCount: '120k members',
+    isFollowing: true
+  },
+  {
+    id: 'org_2',
+    name: 'Cloud Security Alliance (CSA)',
+    tagline: 'Global Leader in Defining Cloud Security Best Practices & CCM',
+    logo: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=100&auto=format&fit=crop&q=80',
+    type: 'Non-Profit Consortium',
+    capabilities: ['Cloud Security', 'Zero Trust', 'DevSecOps'],
+    membersCount: '85k members',
+    isFollowing: true
+  },
+  {
+    id: 'org_3',
+    name: 'NIST Computer Security Division',
+    tagline: 'Custodians of SP 800-53, SP 800-37 (RMF), and Zero Trust SP 800-207',
+    logo: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=100&auto=format&fit=crop&q=80',
+    type: 'Standards Body',
+    capabilities: ['RMF', 'Zero Trust', 'Cloud Security'],
+    membersCount: '94k members',
+    isFollowing: false
+  },
+  {
+    id: 'org_4',
+    name: 'OWASP® Foundation',
+    tagline: 'Open Worldwide Application Security Project (Top 10 & LLM Security)',
+    logo: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=100&auto=format&fit=crop&q=80',
+    type: 'Non-Profit Consortium',
+    capabilities: ['Penetration Testing', 'AI Security', 'DevSecOps'],
+    membersCount: '160k members',
+    isFollowing: true
+  }
+]
+
+export const professionalCirclesData: ProfessionalCircleItem[] = [
+  {
+    id: 'circle_1',
+    name: 'Zero Trust & Edge Defense Circle',
+    icon: '🔒',
+    description: 'Enterprise architects eliminating perimeter VPNs with micro-segmentation, mTLS, and continuous IAM telemetry.',
+    primaryCapability: 'Zero Trust',
+    membersCount: '1,420 members',
+    recentActivity: 'Active today · 14 new architecture debates',
+    isJoined: true
+  },
+  {
+    id: 'circle_2',
+    name: 'Autonomous AI Red Teaming Guild',
+    icon: '🤖',
+    description: 'Researchers and offensive practitioners evaluating LLM tool sandboxing, prompt fuzzing, and agent guardrails.',
+    primaryCapability: 'AI Security',
+    membersCount: '890 members',
+    recentActivity: 'Active today · 9 new PoC exploits shared',
+    isJoined: true
+  },
+  {
+    id: 'circle_3',
+    name: 'FedRAMP & DoD RMF Practitioners',
+    icon: '🏛️',
+    description: 'Compliance officers, ISSOs, and assessors navigating NIST 800-53 Rev 5, 3PAO assessments, and Continuous ATO.',
+    primaryCapability: 'RMF',
+    membersCount: '2,150 members',
+    recentActivity: 'Active 2h ago · 26 discussions',
+    isJoined: false
+  },
+  {
+    id: 'circle_4',
+    name: 'AppSec & DevSecOps Platform Guild',
+    icon: '⚡',
+    description: 'Engineers embedding SAST/DAST, eBPF telemetry, and policy-as-code into Next.js and Kubernetes CI/CD pipelines.',
+    primaryCapability: 'DevSecOps',
+    membersCount: '3,400 members',
+    recentActivity: 'Active 10m ago · 42 discussions',
+    isJoined: false
+  },
+  {
+    id: 'circle_5',
+    name: 'Offensive Exploitation & Pentest Hub',
+    icon: '🎯',
+    description: 'Certified penetration testers, reverse engineers, and bug bounty hunters sharing weaponized automation playbooks.',
+    primaryCapability: 'Penetration Testing',
+    membersCount: '1,890 members',
+    recentActivity: 'Active today · 18 live PoCs',
+    isJoined: false
+  }
+]
+
+export const followedTopicsData: FollowedTopicItem[] = [
+  { id: 'topic_1', name: 'Zero Trust Architecture', hashtag: '#ZeroTrust', followersCount: '480k followers', category: 'Security Architecture', isFollowing: true },
+  { id: 'topic_2', name: 'Autonomous AI Security', hashtag: '#AISecurity', followersCount: '620k followers', category: 'Artificial Intelligence', isFollowing: true },
+  { id: 'topic_3', name: 'Offensive Penetration Testing', hashtag: '#PenetrationTesting', followersCount: '310k followers', category: 'AppSec', isFollowing: true },
+  { id: 'topic_4', name: 'Risk Management Framework', hashtag: '#RMF', followersCount: '140k followers', category: 'Governance & GovTech', isFollowing: true },
+  { id: 'topic_5', name: 'DevSecOps & Platform Engineering', hashtag: '#DevSecOps', followersCount: '530k followers', category: 'Cloud Infrastructure', isFollowing: false },
+  { id: 'topic_6', name: 'Cloud Security Posture Management', hashtag: '#CloudSecurity', followersCount: '780k followers', category: 'Cloud Infrastructure', isFollowing: true }
 ]
 
 export const initialJobs: JobItem[] = [
