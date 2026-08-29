@@ -23,6 +23,11 @@ import { StartupVentureView } from "@/components/linkedin/StartupVentureView"
 import { CareerSuiteView } from "@/components/linkedin/CareerSuiteView"
 import { MarketplaceView } from "@/components/linkedin/MarketplaceView"
 import { EcosystemView } from "@/components/linkedin/EcosystemView"
+import { CompanyPageView } from "@/components/linkedin/CompanyPageView"
+import { SellerCenterView } from "@/components/linkedin/SellerCenterView"
+import { TrustCenterView } from "@/components/linkedin/TrustCenterView"
+import { EventsView } from "@/components/linkedin/EventsView"
+import { ConnectInAIAssistant } from "@/components/linkedin/ConnectInAIAssistant"
 import {
   currentUser as initialCurrentUser,
   initialPosts,
@@ -55,6 +60,10 @@ export default function LinkedInPage() {
     | 'compensation'
     | 'marketplace'
     | 'ecosystem'
+    | 'company'
+    | 'sellercenter'
+    | 'trustcenter'
+    | 'events'
     | 'launchpad'
     | 'watercooler'
     | 'advisory'
@@ -64,6 +73,8 @@ export default function LinkedInPage() {
     | 'notifications'
     | 'profile'
   >('home')
+
+  const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false)
 
   const [userData, setUserData] = useState<UserProfile>(initialCurrentUser)
   const [posts, setPosts] = useState<Post[]>(initialPosts)
@@ -360,14 +371,14 @@ export default function LinkedInPage() {
       <LinkedInNavbar
         activeTab={activeTab}
         onSelectTab={(tab) => {
-          setActiveTab(tab)
+          setActiveTab(tab as any)
           setSelectedTagFilter(null)
         }}
         user={userData}
         unreadMessagesCount={1}
-        networkInvitesCount={2}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        onOpenAIAssistant={() => setIsAIAssistantOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -380,7 +391,11 @@ export default function LinkedInPage() {
               <LeftSidebarProfile
                 user={userData}
                 onViewProfile={() => setActiveTab('profile')}
-                onSelectTag={(tag) => setSelectedTagFilter(tag)}
+                onSelectTag={(tag) => {
+                  setSelectedTagFilter(tag)
+                  setActiveFeedCategory('for_you')
+                }}
+                onNavigateTab={(tab) => setActiveTab(tab as any)}
               />
             </div>
 
@@ -509,6 +524,7 @@ export default function LinkedInPage() {
                 suggestedPeople={suggestedPeople}
                 onToggleConnect={handleToggleConnect}
                 onNewsClick={(headline) => setSearchQuery(headline.slice(0, 15))}
+                onNavigateTab={(tab) => setActiveTab(tab as any)}
               />
             </div>
           </div>
@@ -590,6 +606,37 @@ export default function LinkedInPage() {
           />
         )}
 
+        {/* VIEW: COMPANY PAGE (EXPEDITE CONSULTS) */}
+        {activeTab === 'company' && (
+          <CompanyPageView
+            currentUser={userData}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+          />
+        )}
+
+        {/* VIEW: SELLER CENTER & REVENUE OPERATIONS */}
+        {activeTab === 'sellercenter' && (
+          <SellerCenterView
+            currentUser={userData}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+          />
+        )}
+
+        {/* VIEW: TRUST & COMPLIANCE CENTER */}
+        {activeTab === 'trustcenter' && (
+          <TrustCenterView
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+          />
+        )}
+
+        {/* VIEW: EVENTS & LIVE DEMO HUBS */}
+        {activeTab === 'events' && (
+          <EventsView
+            currentUser={userData}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+          />
+        )}
+
         {/* VIEW 10: LAUNCHPAD (PRODUCT HUNT STYLE) */}
         {activeTab === 'launchpad' && (
           <ProductLaunchLeaderboard
@@ -634,6 +681,14 @@ export default function LinkedInPage() {
 
       {/* Signature Persistent Floating Bottom-Right Messaging Dock */}
       <FloatingMessagingDock currentUser={userData} />
+
+      {/* ConnectIn AI Global Platform Assistant Modal */}
+      <ConnectInAIAssistant
+        isOpen={isAIAssistantOpen}
+        onClose={() => setIsAIAssistantOpen(false)}
+        currentUser={userData}
+        onNavigateTab={(tab) => setActiveTab(tab as any)}
+      />
     </div>
   )
 }

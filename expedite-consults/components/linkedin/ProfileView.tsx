@@ -261,6 +261,46 @@ export function ProfileView({
                   {user.about}
                 </p>
               </div>
+
+              {/* PROFESSIONAL REPUTATION INDEX & 5-LEVEL VERIFICATION HIERARCHY */}
+              <div className="mt-6 pt-5 border-t border-zinc-100 dark:border-zinc-800 space-y-4">
+                <div className="rounded-2xl border border-indigo-500/30 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-5 text-white shadow-md space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="space-y-0.5">
+                      <span className="text-[10px] uppercase font-mono text-purple-300 font-bold">
+                        ⚡ Evidence-Based Credibility Index
+                      </span>
+                      <h4 className="text-base font-black text-white flex items-center gap-2">
+                        <span>Professional Reputation Index</span>
+                        <span className="text-emerald-400 font-mono text-lg">94 / 100</span>
+                      </h4>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 flex-wrap text-[10px] font-mono">
+                      <span className="rounded-md bg-white/10 px-2 py-1">Skills: <strong>96</strong></span>
+                      <span className="rounded-md bg-white/10 px-2 py-1">Credentials: <strong>98</strong></span>
+                      <span className="rounded-md bg-white/10 px-2 py-1">Projects: <strong>95</strong></span>
+                      <span className="rounded-md bg-white/10 px-2 py-1">Experience: <strong>92</strong></span>
+                      <span className="rounded-md bg-white/10 px-2 py-1">Reviews: <strong>91</strong></span>
+                      <span className="rounded-md bg-white/10 px-2 py-1">Community: <strong>89</strong></span>
+                    </div>
+                  </div>
+
+                  {/* 5-Level Verification Progression */}
+                  <div className="pt-2 border-t border-white/10 space-y-1.5">
+                    <span className="text-[10px] uppercase font-mono text-zinc-400">
+                      5-Level Verification Progression:
+                    </span>
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 text-center text-[10px] font-mono">
+                      <div className="rounded-lg bg-emerald-500/20 text-emerald-300 p-1.5 border border-emerald-500/40">1. Self-Reported ✓</div>
+                      <div className="rounded-lg bg-emerald-500/20 text-emerald-300 p-1.5 border border-emerald-500/40">2. Assessment ✓</div>
+                      <div className="rounded-lg bg-emerald-500/20 text-emerald-300 p-1.5 border border-emerald-500/40">3. Credentialed ✓</div>
+                      <div className="rounded-lg bg-emerald-500/20 text-emerald-300 p-1.5 border border-emerald-500/40">4. Employer ✓</div>
+                      <div className="rounded-lg bg-purple-500/30 text-purple-200 font-bold p-1.5 border border-purple-400/50">5. Fellow Verified ★</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
