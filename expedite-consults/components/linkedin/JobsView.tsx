@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useTransition } from "react"
+import React, { useState, useEffect } from "react"
 import {
   Briefcase,
   Search,
@@ -19,7 +19,9 @@ import {
   RefreshCw,
   Zap,
   Check,
-  FileText
+  FileText,
+  Shield,
+  DollarSign
 } from "lucide-react"
 import { JobItem, initialJobs } from "@/lib/linkedin-data"
 import {
@@ -35,9 +37,9 @@ interface JobsViewProps {
 }
 
 export function JobsView({ onNavigateCareerSuite }: JobsViewProps) {
-  const [jobs, setJobs] = useState<JobItem[]>(initialJobs)
+  const [jobs, setJobs] = useState<JobItem[]>([])
   const [searchQuery, setSearchQuery] = useState("")
-  const [locationQuery, setLocationQuery] = useState("")
+  const [selectedHub, setSelectedHub] = useState<string>("All US")
   const [selectedWorkplace, setSelectedWorkplace] = useState<string>("All")
   const [selectedJob, setSelectedJob] = useState<JobItem | null>(null)
   const [careerTwinJob, setCareerTwinJob] = useState<JobItem | null>(null)
@@ -47,11 +49,22 @@ export function JobsView({ onNavigateCareerSuite }: JobsViewProps) {
   const [applyStep, setApplyStep] = useState<'form' | 'success'>('form')
   const [isLoadingLiveJobs, setIsLoadingLiveJobs] = useState(false)
   const [liveSources, setLiveSources] = useState<string[]>([
-    'Expedite Direct ATS',
-    'Greenhouse Public Boards',
-    'Lever API',
-    'Arbeitnow Web Feed'
+    'Expedite Direct ATS (US)',
+    'Greenhouse Public US Boards',
+    'Lever US Enterprise Feed',
+    'US Tech & Cyber Corridor'
   ])
+
+  const usHubs = [
+    { label: '🇺🇸 All US', value: 'All US' },
+    { label: '🗽 New York, NY', value: 'New York, NY' },
+    { label: '🌉 San Francisco, CA', value: 'San Francisco, CA' },
+    { label: '🏛️ Washington, DC / MD / VA', value: 'Washington, DC / VA / MD' },
+    { label: '🤠 Austin, TX', value: 'Austin, TX' },
+    { label: '🌲 Seattle, WA', value: 'Seattle, WA' },
+    { label: '🦞 Boston, MA', value: 'Boston, MA' },
+    { label: '🌐 US Remote', value: 'US Remote (Nationwide)' }
+  ]
 
   const filterOptions = ["All", "Remote", "Hybrid", "Full-time"]
 
@@ -61,56 +74,46 @@ export function JobsView({ onNavigateCareerSuite }: JobsViewProps) {
     'Next.js / React',
     'Zero Trust Architect',
     'Kubernetes SRE',
-    'AppSec Lead'
+    'GovTech Defense Cyber'
   ]
 
-  // Function to fetch live jobs from our aggregation API
-  const fetchLiveJobs = async (query: string = '', location: string = '', isRemote: boolean = false) => {
+  // Function to fetch live jobs from US aggregation API
+  const fetchLiveJobs = async (query: string = '', hub: string = 'All US', isRemote: boolean = false) => {
     setIsLoadingLiveJobs(true)
     try {
       const params = new URLSearchParams()
       if (query) params.set('q', query)
-      if (location) params.set('location', location)
+      if (hub && hub !== 'All US') params.set('hub', hub)
       if (isRemote) params.set('remote', 'true')
 
       const res = await fetch(`/api/jobs/search?${params.toString()}`)
       if (res.ok) {
         const data = await res.json()
-        if (data && Array.isArray(data.jobs) && data.jobs.length > 0) {
+        if (data && Array.isArray(data.jobs)) {
           setJobs(data.jobs)
           if (data.sourcesConnected) setLiveSources(data.sourcesConnected)
         }
       }
     } catch (err) {
-      console.error("Failed to fetch live jobs:", err)
+      console.error("Failed to fetch US jobs:", err)
     } finally {
       setIsLoadingLiveJobs(false)
     }
   }
 
+  useEffect(() => {
+    fetchLiveJobs('', selectedHub, selectedWorkplace === 'Remote')
+  }, [selectedHub, selectedWorkplace])
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    fetchLiveJobs(searchQuery, locationQuery, selectedWorkplace === 'Remote')
+    fetchLiveJobs(searchQuery, selectedHub, selectedWorkplace === 'Remote')
   }
 
   const handleTrendingClick = (term: string) => {
     setSearchQuery(term)
-    fetchLiveJobs(term, locationQuery, selectedWorkplace === 'Remote')
+    fetchLiveJobs(term, selectedHub, selectedWorkplace === 'Remote')
   }
-
-  const filteredJobs = jobs.filter((job) => {
-    const matchesSearch =
-      !searchQuery ||
-      job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (job.tags && job.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase())))
-
-    const matchesWorkplace =
-      selectedWorkplace === "All" ||
-      job.workplaceType === selectedWorkplace ||
-      job.employmentType === selectedWorkplace
-    return matchesSearch && matchesWorkplace
-  })
 
   const toggleSaveJob = (jobId: string) => {
     setJobs(prev =>
@@ -137,17 +140,22 @@ export function JobsView({ onNavigateCareerSuite }: JobsViewProps) {
       {/* Left Sidebar Filters */}
       <div className="md:col-span-4 lg:col-span-3 space-y-3">
         <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
-          <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100 mb-3 flex items-center gap-2">
-            <Filter className="h-4 w-4 text-zinc-500" />
-            Job Preferences
-          </h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+              <Filter className="h-4 w-4 text-zinc-500" />
+              US Job Preferences
+            </h3>
+            <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-[#0A66C2] dark:bg-blue-950/40">
+              🇺🇸 USA Only
+            </span>
+          </div>
           <div className="space-y-1 text-xs text-zinc-600 dark:text-zinc-300">
             <div className="flex items-center justify-between py-2 px-2 rounded-md bg-sky-50 font-semibold text-[#0A66C2] dark:bg-sky-950/40 cursor-pointer">
-              <span>My Jobs</span>
+              <span>My US Applications</span>
               <span className="text-xs">{appliedJobIds.length > 0 ? appliedJobIds.length : '4'}</span>
             </div>
             <div className="flex items-center justify-between py-2 px-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer">
-              <span>Job alerts</span>
+              <span>US Job alerts</span>
               <span className="text-xs text-zinc-400">2 active</span>
             </div>
             <div
@@ -160,7 +168,8 @@ export function JobsView({ onNavigateCareerSuite }: JobsViewProps) {
               <Sparkles className="h-3.5 w-3.5 text-amber-500 animate-pulse" />
             </div>
             <div className="flex items-center justify-between py-2 px-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer">
-              <span>Salary insights</span>
+              <span>US Salary bands</span>
+              <span className="text-[11px] font-bold text-emerald-600">$180k - $310k</span>
             </div>
           </div>
         </div>
@@ -170,18 +179,18 @@ export function JobsView({ onNavigateCareerSuite }: JobsViewProps) {
           <div className="flex items-center justify-between">
             <h4 className="font-bold text-xs text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping"></span>
-              Live Job Feeds Connected
+              Live US Feeds Connected
             </h4>
             <button
-              onClick={() => fetchLiveJobs(searchQuery, locationQuery)}
+              onClick={() => fetchLiveJobs(searchQuery, selectedHub, selectedWorkplace === 'Remote')}
               className="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
-              title="Refresh Live Feeds"
+              title="Refresh US Feeds"
             >
               <RefreshCw className={`h-3 w-3 ${isLoadingLiveJobs ? 'animate-spin' : ''}`} />
             </button>
           </div>
           <p className="text-[11px] text-zinc-500 leading-relaxed">
-            Real-time multi-source pipeline aggregating direct enterprise ATS boards, Greenhouse, Lever, and tech job APIs.
+            Live pipeline indexing verified enterprise openings across US tech hubs and federal defense sectors.
           </p>
           <div className="space-y-1 pt-1">
             {liveSources.map((src, i) => (
@@ -203,7 +212,7 @@ export function JobsView({ onNavigateCareerSuite }: JobsViewProps) {
               <Search className="h-4 w-4 text-zinc-400 mr-2 shrink-0" />
               <input
                 type="text"
-                placeholder="Search real jobs (e.g. Cloud Security, Next.js, AI Engineer)..."
+                placeholder="Search real US jobs (e.g. Cloud Security, Next.js, AI Engineer, CISO)..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-transparent text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-500 focus:outline-none dark:text-zinc-100"
@@ -223,16 +232,45 @@ export function JobsView({ onNavigateCareerSuite }: JobsViewProps) {
               {isLoadingLiveJobs ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Searching...</span>
+                  <span>Searching US...</span>
                 </>
               ) : (
                 <>
                   <Zap className="h-4 w-4" />
-                  <span>Search Real Jobs</span>
+                  <span>Search US Jobs</span>
                 </>
               )}
             </button>
           </form>
+
+          {/* US Tech Hubs Pills Selector */}
+          <div className="space-y-1.5 pt-1">
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="font-bold text-zinc-700 dark:text-zinc-300">
+                🇺🇸 US Regional Tech Hubs:
+              </span>
+              <span className="text-zinc-400">Targeting United States</span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {usHubs.map((hub) => {
+                const isSelected = selectedHub === hub.value
+                return (
+                  <button
+                    key={hub.value}
+                    type="button"
+                    onClick={() => setSelectedHub(hub.value)}
+                    className={`rounded-full px-3 py-1 text-xs font-semibold transition-all ${
+                      isSelected
+                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xs"
+                        : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300"
+                    }`}
+                  >
+                    {hub.label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
 
           {/* Trending Searches Pills */}
           <div className="flex items-center gap-1.5 flex-wrap pt-1 text-xs">
@@ -248,16 +286,13 @@ export function JobsView({ onNavigateCareerSuite }: JobsViewProps) {
             ))}
           </div>
 
-          {/* Filter Pills */}
+          {/* Workplace Filters */}
           <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-zinc-800">
             <div className="flex items-center gap-1.5 overflow-x-auto text-xs">
               {filterOptions.map((opt) => (
                 <button
                   key={opt}
-                  onClick={() => {
-                    setSelectedWorkplace(opt)
-                    fetchLiveJobs(searchQuery, locationQuery, opt === 'Remote')
-                  }}
+                  onClick={() => setSelectedWorkplace(opt)}
                   className={`rounded-full px-3 py-1 font-semibold transition-colors whitespace-nowrap ${
                     selectedWorkplace === opt
                       ? "bg-[#0A66C2] text-white"
@@ -270,7 +305,7 @@ export function JobsView({ onNavigateCareerSuite }: JobsViewProps) {
             </div>
 
             <span className="text-xs text-zinc-500 font-medium">
-              {filteredJobs.length} live openings found
+              {jobs.length} verified US openings
             </span>
           </div>
         </div>
@@ -279,17 +314,20 @@ export function JobsView({ onNavigateCareerSuite }: JobsViewProps) {
         <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-4">
           <div className="flex items-center justify-between pb-2 border-b border-zinc-100 dark:border-zinc-800">
             <div>
-              <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
-                Recommended for you
+              <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                <span>Recommended US Openings</span>
+                <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                  🇺🇸 Verified US Compensation
+                </span>
               </h3>
               <p className="text-[11px] text-zinc-500">
-                Based on your profile, zero-trust cybersecurity expertise, and live ATS feeds
+                Directly from US enterprise ATS systems, defense cloud enclaves, and venture-backed tech innovators.
               </p>
             </div>
           </div>
 
           <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
-            {filteredJobs.map((job) => {
+            {jobs.map((job) => {
               const isApplied = appliedJobIds.includes(job.id)
 
               return (
@@ -324,12 +362,12 @@ export function JobsView({ onNavigateCareerSuite }: JobsViewProps) {
                       </p>
 
                       <div className="flex items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400 flex-wrap">
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3.5 w-3.5 text-zinc-400" />
-                          {job.location} · {job.workplaceType}
+                        <span className="flex items-center gap-1 font-medium text-zinc-700 dark:text-zinc-300">
+                          <MapPin className="h-3.5 w-3.5 text-[#0A66C2]" />
+                          {job.location}
                         </span>
                         {job.salaryRange && (
-                          <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                          <span className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
                             {job.salaryRange}
                           </span>
                         )}
@@ -341,7 +379,7 @@ export function JobsView({ onNavigateCareerSuite }: JobsViewProps) {
                         {job.description}
                       </p>
 
-                      {/* Skills Tags */}
+                      {/* Skills & Location Tags */}
                       {job.tags && job.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1 pt-1.5">
                           {job.tags.map((tag) => (
@@ -425,7 +463,7 @@ export function JobsView({ onNavigateCareerSuite }: JobsViewProps) {
               <DialogHeader>
                 <div className="flex items-center gap-2 text-xs text-[#0A66C2] font-semibold">
                   <Building className="h-3.5 w-3.5" />
-                  <span>{selectedJob.company}</span>
+                  <span>{selectedJob.company} (USA)</span>
                 </div>
                 <DialogTitle className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
                   Apply for {selectedJob.title}
@@ -441,6 +479,9 @@ export function JobsView({ onNavigateCareerSuite }: JobsViewProps) {
                     <p className="text-zinc-500">
                       Principal Cloud & Security Architect | alex.taylor@expediteconsults.com
                     </p>
+                    <p className="text-[11px] text-emerald-600 font-medium">
+                      📍 Location: United States Citizen / Authorized to Work in the US
+                    </p>
                   </div>
 
                   <div className="space-y-1.5">
@@ -451,7 +492,7 @@ export function JobsView({ onNavigateCareerSuite }: JobsViewProps) {
                       <div className="flex items-center gap-2">
                         <FileText className="h-4 w-4 text-[#0A66C2]" />
                         <span className="font-medium text-zinc-800 dark:text-zinc-200">
-                          Alex_Taylor_ZeroTrust_Architect_2026.pdf
+                          Alex_Taylor_US_ZeroTrust_Architect_2026.pdf
                         </span>
                       </div>
                       <span className="rounded bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold text-zinc-600 dark:bg-zinc-800">
@@ -466,7 +507,7 @@ export function JobsView({ onNavigateCareerSuite }: JobsViewProps) {
                     </label>
                     <textarea
                       rows={3}
-                      placeholder="Highlight relevant experience in zero-trust architecture, multi-cloud governance, or agentic security..."
+                      placeholder="Highlight relevant experience in zero-trust architecture, US multi-cloud enclaves, or agentic security..."
                       className="w-full rounded-lg border border-zinc-300 p-2 text-xs text-zinc-900 placeholder:text-zinc-400 focus:border-[#0A66C2] focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                     />
                   </div>
@@ -484,7 +525,7 @@ export function JobsView({ onNavigateCareerSuite }: JobsViewProps) {
                       className="rounded-full bg-[#0A66C2] px-5 py-1.5 text-xs font-bold text-white hover:bg-[#004182] flex items-center gap-1.5 shadow-xs"
                     >
                       <Send className="h-3.5 w-3.5" />
-                      <span>Submit Application</span>
+                      <span>Submit US Application</span>
                     </button>
                   </div>
                 </form>
@@ -494,10 +535,10 @@ export function JobsView({ onNavigateCareerSuite }: JobsViewProps) {
                     <Check className="h-6 w-6" />
                   </div>
                   <h4 className="font-bold text-base text-zinc-900 dark:text-zinc-100">
-                    Application Submitted!
+                    US Application Submitted!
                   </h4>
                   <p className="text-xs text-zinc-500 max-w-sm mx-auto">
-                    Your profile and verified credentials have been transmitted directly to the hiring team at {selectedJob.company}.
+                    Your profile and verified credentials have been transmitted directly to the US hiring team at {selectedJob.company}.
                   </p>
                   <button
                     onClick={() => setIsApplyModalOpen(false)}
