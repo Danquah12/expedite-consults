@@ -3,14 +3,49 @@ import { useState } from "react";
 import {
   Cpu, Activity, Layers, Zap, Radio, CheckCircle, AlertTriangle,
   RefreshCw, ShieldAlert, Server, Sliders, Play, RotateCcw, HelpCircle,
-  Info, CheckCircle2, ShieldCheck
+  Info, CheckCircle2, ShieldCheck, Share2, Database, Key, Globe, ArrowRight,
+  ChevronRight, Network
 } from "lucide-react";
 import { MESH_SERVICE_NODES } from "@/data/integrationData";
 import { MeshServiceNode } from "@/types/integration";
 
+// Connected systems mapping for each microservice node
+const SYSTEM_CONNECTIONS: Record<string, { role: string; connectedSystems: string[]; downstreamTargets: string[] }> = {
+  "telemetry-bus-kafka-broker-01": {
+    role: "High-speed streaming event bus broadcasting real-time detections across all platforms.",
+    connectedSystems: ["CERBERUS-RE (Plat 16)", "Aegis Recovery (Plat 17)", "AXIOM DAST (Plat 11)", "Apache Kafka Cluster", "Envoy Sidecars"],
+    downstreamTargets: ["stix-ioc-sync-engine", "data-lake-opensearch-bridge"]
+  },
+  "stix-ioc-sync-engine": {
+    role: "Automated threat intelligence disseminator translating IOCs into STIX 2.1 format.",
+    connectedSystems: ["Shared Threat Intel Hub", "CrowdStrike Falcon EDR", "Microsoft Sentinel SIEM", "Suricata IDS", "MISP Taxii"],
+    downstreamTargets: ["All Enterprise EDR Endpoints", "Firewall Perimeter"]
+  },
+  "soar-orchestrator-core": {
+    role: "Autonomous incident response engine executing microsecond quarantine and containment playbooks.",
+    connectedSystems: ["Aegis WORM S3 Locker", "Envoy WAF Proxy Rules", "Okta Key Rotation", "ServiceNow SIR", "PagerDuty API"],
+    downstreamTargets: ["Kubernetes Cluster Nodes", "AWS IAM Roles"]
+  },
+  "federated-graphql-gateway": {
+    role: "Unified API gateway proxy and entry point connecting frontend dashboards to backend microservices.",
+    connectedSystems: ["Expedite Launchpad (Port 3018)", "All 16 Platform Frontends", "OpenAPI 3.1 Proxy", "gRPC Clients"],
+    downstreamTargets: ["All 6 Internal Microservices"]
+  },
+  "data-lake-opensearch-bridge": {
+    role: "Bulk indexing pipeline feeding decompiled binaries, PCAP streams, and audit logs into OpenSearch.",
+    connectedSystems: ["OpenSearch v2.14 Cluster (44.2 TB)", "AWS S3 Glacier Vault", "Zeek PCAP Sniffer", "AST Parser"],
+    downstreamTargets: ["Forensic Data Lake Shards (24/24)"]
+  },
+  "identity-oauth2-pki-vault": {
+    role: "Zero-Trust authentication and HSM token-signing authority securing all inter-service communications.",
+    connectedSystems: ["Okta SSO", "Microsoft Entra ID", "PingFederate", "AWS KMS Hardware HSM", "mTLS Vault"],
+    downstreamTargets: ["All API Tokens & User Sessions"]
+  }
+};
+
 export default function MeshHealthPage() {
   const [nodes, setNodes] = useState<MeshServiceNode[]>(MESH_SERVICE_NODES);
-  const [selectedNode, setSelectedNode] = useState<MeshServiceNode>(MESH_SERVICE_NODES[0]);
+  const [selectedNode, setSelectedNode] = useState<MeshServiceNode | null>(null);
   const [simulatedSpanActive, setSimulatedSpanActive] = useState<boolean>(false);
   const [activeWaterfallSpan, setActiveWaterfallSpan] = useState<string | null>("gateway");
 
@@ -93,7 +128,7 @@ export default function MeshHealthPage() {
         </button>
       </div>
 
-      {/* ── Plain-English Helper Card ── */}
+      {/* ── Plain-English Helper Banner ── */}
       <div style={{
         background: "rgba(16,185,129,0.06)",
         border: "1px solid rgba(16,185,129,0.25)",
@@ -105,8 +140,8 @@ export default function MeshHealthPage() {
       }}>
         <HelpCircle size={20} color="#10b981" style={{ flexShrink: 0, marginTop: 2 }} />
         <div style={{ fontSize: 12, lineHeight: 1.5, color: "var(--foreground-muted)" }}>
-          <strong style={{ color: "#10b981" }}>What Is A Microservices Mesh? </strong>
-          The 16 cybersecurity platforms communicate through 6 internal background microservices. This health monitor tracks CPU/memory loads, ensures data is moving with sub-5 millisecond latency, and allows operators to test automated "Circuit Breakers" that isolate unhealthy services without crashing the network.
+          <strong style={{ color: "#10b981" }}>Which Systems Does This Connect To? </strong>
+          The 6 background nodes below act as the nervous system connecting all <strong>16 cybersecurity platforms</strong> (SAST, DAST, CERBERUS-RE, Aegis Recovery, Cloud Security) to your enterprise infrastructure: <strong>CrowdStrike Falcon EDR</strong>, <strong>Microsoft Sentinel SIEM</strong>, <strong>Splunk</strong>, <strong>AWS S3 Vaults</strong>, <strong>OpenSearch</strong>, and <strong>Okta SSO</strong>.
         </div>
       </div>
 
@@ -126,10 +161,16 @@ export default function MeshHealthPage() {
         ))}
       </div>
 
-      {/* ── 6 Microservice Nodes with Interactive Circuit Breaker Toggles ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 14 }}>
+      {/* ── 6 Microservice Nodes with Explicit "Connected Systems" & Controls ── */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 14 }}>
         {nodes.map((node) => {
           const isClosed = node.circuitBreakerStatus === "CLOSED";
+          const connInfo = SYSTEM_CONNECTIONS[node.serviceName] || {
+            role: "Enterprise service bridge.",
+            connectedSystems: ["Expedite Ecosystem Platforms", "Envoy Proxy"],
+            downstreamTargets: ["Internal Event Bus"]
+          };
+
           return (
             <div
               key={node.id}
@@ -140,9 +181,12 @@ export default function MeshHealthPage() {
                 padding: 16,
                 display: "flex",
                 flexDirection: "column",
-                gap: 10
+                gap: 10,
+                transition: "all 0.15s"
               }}
+              className="hover:border-emerald-500"
             >
+              {/* Node Header */}
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <strong style={{ fontSize: 13.5, color: "#f8fafc" }}>{node.serviceName}</strong>
                 <span style={{
@@ -158,23 +202,54 @@ export default function MeshHealthPage() {
                 </span>
               </div>
 
-              <div style={{ background: "var(--surface-3)", padding: 8, borderRadius: 6, fontSize: 11, display: "flex", flexDirection: "column", gap: 4 }}>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "var(--muted)" }}>CPU / RAM:</span>
-                  <strong style={{ color: "#06b6d4" }}>{node.cpuUsagePercent}% / {node.memoryUsagePercent}%</strong>
+              <p style={{ fontSize: 11, color: "var(--muted)", margin: 0, lineHeight: 1.4 }}>
+                {connInfo.role}
+              </p>
+
+              {/* Connected Systems Badges */}
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 800, color: "var(--muted)", textTransform: "uppercase", marginBottom: 4 }}>
+                  CONNECTED SYSTEMS & PLATFORMS:
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "var(--muted)" }}>gRPC Pool:</span>
-                  <span style={{ color: "#f8fafc" }}>{node.grpcPoolActive} / {node.grpcPoolMax} conns</span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "var(--muted)" }}>P99 Latency:</span>
-                  <strong style={{ color: "#10b981" }}>{node.latencyP99Ms}ms</strong>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                  {connInfo.connectedSystems.map((sys, sIdx) => (
+                    <span
+                      key={sIdx}
+                      style={{
+                        fontSize: 9.5,
+                        fontWeight: 700,
+                        background: "rgba(6,182,212,0.1)",
+                        color: "#06b6d4",
+                        border: "1px solid rgba(6,182,212,0.25)",
+                        padding: "1px 6px",
+                        borderRadius: 3
+                      }}
+                    >
+                      {sys}
+                    </span>
+                  ))}
                 </div>
               </div>
 
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid var(--border)", paddingTop: 6 }}>
-                <span style={{ fontSize: 10, color: "var(--muted)", fontFamily: "monospace" }}>{node.k8sPodName}</span>
+              {/* Performance Metrics Row */}
+              <div style={{ background: "var(--surface-3)", padding: "8px 10px", borderRadius: 6, fontSize: 11, display: "flex", flexDirection: "column", gap: 4 }}>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "var(--muted)" }}>CPU / RAM Load:</span>
+                  <strong style={{ color: "#06b6d4" }}>{node.cpuPercent}% / {node.memoryPercent}%</strong>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "var(--muted)" }}>gRPC Connection Pool:</span>
+                  <span style={{ color: "#f8fafc" }}>{node.grpcPoolActive} / {node.grpcPoolMax} conns</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "var(--muted)" }}>P99 Mesh Latency:</span>
+                  <strong style={{ color: "#10b981" }}>{node.p99LatencyMs}ms</strong>
+                </div>
+              </div>
+
+              {/* Card Footer Actions */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid var(--border)", paddingTop: 6, marginTop: 2 }}>
+                <span style={{ fontSize: 10, color: "var(--muted)", fontFamily: "monospace" }}>{node.cluster}</span>
                 <button
                   onClick={() => handleToggleCircuitBreaker(node.id)}
                   style={{
@@ -187,6 +262,7 @@ export default function MeshHealthPage() {
                     borderRadius: 4,
                     cursor: "pointer"
                   }}
+                  title="Test Automatic Service Isolation"
                 >
                   {isClosed ? "Trip Breaker" : "Reset Breaker"}
                 </button>
