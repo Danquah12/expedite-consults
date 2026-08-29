@@ -542,6 +542,7 @@ export default function LinkedInPage() {
           <LearningView
             user={userData}
             onAddCertificateToProfile={handleAddCertificateToProfile}
+            onNavigateMarketplace={() => setActiveTab('marketplace')}
           />
         )}
 
