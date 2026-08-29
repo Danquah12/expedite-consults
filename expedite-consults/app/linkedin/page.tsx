@@ -610,8 +610,10 @@ export default function LinkedInPage() {
           />
         )}
 
-        {/* VIEW 16: NOTIFICATIONS VIEW */}
-        {activeTab === 'notifications' && <NotificationsView />}
+        {/* VIEW 16: CATEGORIZED NOTIFICATIONS HUB */}
+        {activeTab === 'notifications' && (
+          <NotificationsView onNavigateTab={(tab) => setActiveTab(tab as any)} />
+        )}
       </main>
 
       {/* Signature Persistent Floating Bottom-Right Messaging Dock */}

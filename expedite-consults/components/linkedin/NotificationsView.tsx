@@ -12,83 +12,54 @@ import {
   Award,
   Calendar,
   Filter,
-  Check
+  Check,
+  AlertTriangle,
+  Shield,
+  ShoppingBag,
+  GraduationCap,
+  Users,
+  Clock,
+  ArrowRight,
+  TrendingUp,
+  Tag,
+  Store,
+  Layers
 } from "lucide-react"
+import {
+  CategorizedNotificationItem,
+  INITIAL_CATEGORIZED_NOTIFICATIONS
+} from "@/lib/notifications-engine-data"
 
-interface NotificationItem {
-  id: string
-  type: 'reaction' | 'comment' | 'job' | 'anniversary' | 'security' | 'mention'
-  actorName: string
-  actorAvatar?: string
-  actorRole?: string
-  headline: string
-  timeAgo: string
-  unread: boolean
-  actionText?: string
-  actionCompleted?: boolean
+interface NotificationsViewProps {
+  onNavigateTab?: (tab: string) => void
 }
 
-export function NotificationsView() {
-  const [activeCategory, setActiveCategory] = useState<'all' | 'posts' | 'mentions' | 'jobs'>('all')
-  const [notifications, setNotifications] = useState<NotificationItem[]>([
-    {
-      id: 'notif_1',
-      type: 'anniversary',
-      actorName: 'Kavita Patel',
-      actorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
-      actorRole: 'Director of Cloud Governance @ CyberNova',
-      headline: 'is celebrating 3 years at CyberNova today.',
-      timeAgo: '1h ago',
-      unread: true,
-      actionText: 'Say Congrats 🎉',
-      actionCompleted: false
-    },
-    {
-      id: 'notif_2',
-      type: 'reaction',
-      actorName: 'Dr. Elena Rostova',
-      actorAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
-      actorRole: 'Chief AI Research Scientist',
-      headline: 'found your post insightful: "Autonomous agentic systems are entering production at record speed..."',
-      timeAgo: '3h ago',
-      unread: true,
-      actionText: 'View post'
-    },
-    {
-      id: 'notif_3',
-      type: 'job',
-      actorName: 'Expedite Consults',
-      actorAvatar: 'https://images.unsplash.com/photo-1572021335469-31706a17aaef?w=100&auto=format&fit=crop&q=80',
-      headline: 'Job alert matching your preferences: Lead Cloud Security Architect in New York, NY.',
-      timeAgo: '5h ago',
-      unread: false,
-      actionText: 'Apply now'
-    },
-    {
-      id: 'notif_4',
-      type: 'mention',
-      actorName: 'Marcus Vance',
-      actorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
-      actorRole: 'VP of Engineering at CloudScale Global',
-      headline: 'quoted your post in a discussion on Cryptographic Nonces and Replay resistance.',
-      timeAgo: '1d ago',
-      unread: false,
-      actionText: 'View quote'
-    },
-    {
-      id: 'notif_5',
-      type: 'security',
-      actorName: 'ConnectIn Security',
-      headline: 'Your profile appeared in 342 recruiter searches this week. High engagement from Fortune 500 CISOs.',
-      timeAgo: '2d ago',
-      unread: false,
-      actionText: 'See analytics'
-    }
-  ])
+export function NotificationsView({ onNavigateTab }: NotificationsViewProps) {
+  const [selectedCategory, setSelectedCategory] = useState<'All' | 'Security' | 'Career' | 'Marketplace' | 'Learning' | 'Social'>('All')
+  const [notifications, setNotifications] = useState<CategorizedNotificationItem[]>(INITIAL_CATEGORIZED_NOTIFICATIONS)
+  const [unreadOnly, setUnreadOnly] = useState(false)
 
-  const handlePerformAction = (id: string) => {
+  // Category counts
+  const getCategoryCount = (cat: string) => {
+    if (cat === 'All') return notifications.length
+    return notifications.filter(n => n.category === cat).length
+  }
+
+  const getUnreadCount = (cat: string) => {
+    if (cat === 'All') return notifications.filter(n => n.unread).length
+    return notifications.filter(n => n.category === cat && n.unread).length
+  }
+
+  // Filtered Notifications
+  const filteredNotifications = notifications.filter(n => {
+    const matchCategory = selectedCategory === 'All' || n.category === selectedCategory
+    const matchUnread = !unreadOnly || n.unread
+    return matchCategory && matchUnread
+  })
+
+  const handleMarkAsRead = (id: string) => {
     setNotifications(prev =>
-      prev.map(n => (n.id === id ? { ...n, actionCompleted: true, unread: false } : n))
+      prev.map(n => (n.id === id ? { ...n, unread: false } : n))
     )
   }
 
@@ -96,117 +67,196 @@ export function NotificationsView() {
     setNotifications(prev => prev.map(n => ({ ...n, unread: false })))
   }
 
-  const filteredNotifications = notifications.filter(n => {
-    if (activeCategory === 'all') return true
-    if (activeCategory === 'posts') return n.type === 'reaction' || n.type === 'comment'
-    if (activeCategory === 'mentions') return n.type === 'mention'
-    if (activeCategory === 'jobs') return n.type === 'job'
-    return true
-  })
+  const handleNotificationAction = (item: CategorizedNotificationItem) => {
+    handleMarkAsRead(item.id)
+    if (onNavigateTab) {
+      onNavigateTab(item.targetTab)
+    }
+  }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4 pb-12">
-      {/* Category Pills & Header */}
-      <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800">
-          <h2 className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-            <Bell className="h-5 w-5 text-[#0A66C2]" />
-            Notifications
-          </h2>
-          <button
-            onClick={handleMarkAllRead}
-            className="text-xs font-semibold text-[#0A66C2] hover:underline"
-          >
-            Mark all as read
-          </button>
+    <div className="mx-auto max-w-5xl space-y-6 pb-20">
+      {/* 1. TOP NOTIFICATIONS HERO BANNER */}
+      <div className="rounded-2xl border border-zinc-200 bg-gradient-to-r from-slate-900 via-indigo-950 to-purple-950 p-6 text-white shadow-xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <span className="rounded-full bg-purple-500/20 px-3 py-0.5 text-xs font-bold text-purple-300 border border-purple-400/40 flex items-center gap-1.5 w-fit">
+              <Bell className="h-3.5 w-3.5 text-amber-300" />
+              ConnectIn Intelligent Notifications Hub
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white mt-1.5">
+              Updates, Security Advisories &amp; Career Signals
+            </h1>
+            <p className="text-xs sm:text-sm text-zinc-300 max-w-xl">
+              Categorized intelligence across Social engagements, Career job matches, Marketplace updates, Learning milestones, and critical Security advisories.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={handleMarkAllRead}
+              className="rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-2 text-xs font-bold text-white transition-all flex items-center gap-1.5 shadow-sm"
+            >
+              <Check className="h-4 w-4 text-emerald-300" />
+              <span>Mark All as Read</span>
+            </button>
+          </div>
         </div>
 
-        <div className="flex flex-wrap gap-2 pt-3">
-          {[
-            { id: 'all', label: 'All' },
-            { id: 'posts', label: 'My Posts & Reactions' },
-            { id: 'mentions', label: 'Mentions & Quotes' },
-            { id: 'jobs', label: 'Job Alerts' }
-          ].map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setActiveCategory(cat.id as any)}
-              className={`rounded-full px-3.5 py-1 text-xs font-semibold transition-colors ${
-                activeCategory === cat.id
-                  ? "bg-[#0A66C2] text-white"
-                  : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300"
-              }`}
-            >
-              {cat.label}
-            </button>
-          ))}
+        {/* 5 Master Notification Categories Filter Ribbon */}
+        <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+            {[
+              { id: 'All', label: '🌐 All', count: getCategoryCount('All'), unread: getUnreadCount('All') },
+              { id: 'Security', label: '🛡️ Security', count: getCategoryCount('Security'), unread: getUnreadCount('Security') },
+              { id: 'Career', label: '💼 Career', count: getCategoryCount('Career'), unread: getUnreadCount('Career') },
+              { id: 'Marketplace', label: '🛍️ Marketplace', count: getCategoryCount('Marketplace'), unread: getUnreadCount('Marketplace') },
+              { id: 'Learning', label: '🎓 Learning', count: getCategoryCount('Learning'), unread: getUnreadCount('Learning') },
+              { id: 'Social', label: '💬 Social', count: getCategoryCount('Social'), unread: getUnreadCount('Social') }
+            ].map((cat) => {
+              const isSelected = selectedCategory === cat.id
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id as any)}
+                  className={`rounded-xl px-3.5 py-2 text-xs font-bold transition-all shrink-0 flex items-center gap-2 ${
+                    isSelected
+                      ? "bg-white text-zinc-950 shadow-md font-extrabold"
+                      : "bg-white/10 text-white/80 hover:bg-white/20 hover:text-white"
+                  }`}
+                >
+                  <span>{cat.label}</span>
+                  {cat.unread > 0 ? (
+                    <span className="rounded-full bg-red-600 px-1.5 py-0.2 text-[10px] font-bold text-white">
+                      {cat.unread}
+                    </span>
+                  ) : (
+                    <span className={`text-[10px] rounded-full px-1.5 py-0.2 ${isSelected ? "bg-zinc-900 text-white" : "bg-white/20 text-white/90"}`}>
+                      {cat.count}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+
+          <button
+            onClick={() => setUnreadOnly(!unreadOnly)}
+            className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1.5 ${
+              unreadOnly
+                ? "bg-amber-400 text-zinc-950 font-black shadow-xs"
+                : "bg-white/10 text-white/80 hover:bg-white/20"
+            }`}
+          >
+            <Filter className="h-3.5 w-3.5" />
+            <span>{unreadOnly ? "Showing Unread Only" : "Show All"}</span>
+          </button>
         </div>
       </div>
 
-      {/* Notifications List */}
-      <div className="rounded-xl border border-zinc-200 bg-white overflow-hidden shadow-xs dark:border-zinc-800 dark:bg-zinc-900 divide-y divide-zinc-100 dark:divide-zinc-800">
-        {filteredNotifications.map((notif) => (
-          <div
-            key={notif.id}
-            className={`flex items-start justify-between p-4 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-850 gap-3 ${
-              notif.unread ? "bg-sky-50/40 dark:bg-sky-950/20" : ""
-            }`}
-          >
-            <div className="flex items-start gap-3 min-w-0">
-              {notif.actorAvatar ? (
-                <div className="relative shrink-0">
-                  <img
-                    src={notif.actorAvatar}
-                    alt={notif.actorName}
-                    className="h-11 w-11 rounded-full object-cover ring-1 ring-zinc-200 dark:ring-zinc-800"
-                  />
-                  {notif.type === 'reaction' && (
-                    <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#0A66C2] text-[10px] text-white">
-                      👍
-                    </span>
-                  )}
-                  {notif.type === 'anniversary' && (
-                    <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-[10px] text-white">
-                      🎉
-                    </span>
-                  )}
-                </div>
-              ) : (
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-100 text-[#0A66C2] dark:bg-blue-950">
-                  <ShieldCheck className="h-6 w-6" />
-                </div>
-              )}
+      {/* 2. NOTIFICATIONS STREAM */}
+      <div className="space-y-3">
+        {filteredNotifications.map((notif) => {
+          const isCriticalSecurity = notif.priority === 'critical'
+          const isHighPriority = notif.priority === 'high'
 
-              <div className="min-w-0 flex-1 text-xs">
-                <p className="text-zinc-800 dark:text-zinc-200 leading-snug">
-                  <strong className="font-bold text-zinc-900 dark:text-zinc-100">
-                    {notif.actorName}
-                  </strong>{" "}
-                  {notif.headline}
-                </p>
-                <p className="mt-1 text-[11px] text-zinc-400">{notif.timeAgo}</p>
+          return (
+            <div
+              key={notif.id}
+              className={`rounded-2xl border p-4 sm:p-5 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+                isCriticalSecurity
+                  ? "border-red-500 bg-red-50/40 dark:bg-red-950/20 shadow-md ring-2 ring-red-500/20"
+                  : notif.unread
+                  ? "border-[#0A66C2]/40 bg-sky-50/40 dark:bg-sky-950/20 shadow-xs"
+                  : "border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900"
+              }`}
+            >
+              <div className="flex items-start gap-3.5 min-w-0">
+                {/* Category Icon / Actor Avatar */}
+                <div className="relative shrink-0 mt-0.5">
+                  {notif.actor.avatar ? (
+                    <img
+                      src={notif.actor.avatar}
+                      alt=""
+                      className="h-12 w-12 rounded-xl object-cover ring-1 ring-zinc-200 dark:ring-zinc-800"
+                    />
+                  ) : (
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-100 text-purple-700 text-xl font-black dark:bg-purple-950 dark:text-purple-300">
+                      🔔
+                    </div>
+                  )}
+
+                  {/* Channel Tag Badge */}
+                  <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-white text-[11px] shadow-xs dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700">
+                    {notif.category === 'Security'
+                      ? '🛡️'
+                      : notif.category === 'Career'
+                      ? '💼'
+                      : notif.category === 'Marketplace'
+                      ? '🛍️'
+                      : notif.category === 'Learning'
+                      ? '🎓'
+                      : '💬'}
+                  </span>
+                </div>
+
+                {/* Content */}
+                <div className="space-y-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="rounded-full bg-zinc-100 px-2 py-0.2 text-[10px] font-bold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                      {notif.subType}
+                    </span>
+                    <span className="text-[11px] text-zinc-400 font-mono">
+                      {notif.timestamp}
+                    </span>
+                    {notif.unread && (
+                      <span className="h-2 w-2 rounded-full bg-[#0A66C2] animate-ping" />
+                    )}
+                  </div>
+
+                  <h3 className={`font-bold text-sm sm:text-base leading-snug ${
+                    isCriticalSecurity ? "text-red-700 dark:text-red-300 font-black" : "text-zinc-900 dark:text-zinc-100"
+                  }`}>
+                    {notif.title}
+                  </h3>
+
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                    {notif.description}
+                  </p>
+                </div>
+              </div>
+
+              {/* 1-Click Action Button */}
+              <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                <button
+                  onClick={() => handleNotificationAction(notif)}
+                  className={`rounded-full px-4 py-2 text-xs font-extrabold text-white transition-all flex items-center gap-1.5 shadow-sm ${
+                    isCriticalSecurity
+                      ? "bg-red-600 hover:bg-red-700"
+                      : notif.category === 'Marketplace'
+                      ? "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500"
+                      : "bg-[#0A66C2] hover:bg-[#004182]"
+                  }`}
+                >
+                  <span>{notif.actionText}</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </button>
               </div>
             </div>
+          )
+        })}
 
-            {/* Quick Action Button */}
-            {notif.actionText && (
-              <div className="shrink-0 self-center">
-                {notif.actionCompleted ? (
-                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-3 py-1 rounded-full">
-                    <Check className="h-3.5 w-3.5" /> Sent
-                  </span>
-                ) : (
-                  <button
-                    onClick={() => handlePerformAction(notif.id)}
-                    className="rounded-full border border-[#0A66C2] px-3.5 py-1 text-xs font-semibold text-[#0A66C2] hover:bg-[#0A66C2]/10 transition-colors"
-                  >
-                    {notif.actionText}
-                  </button>
-                )}
-              </div>
-            )}
+        {filteredNotifications.length === 0 && (
+          <div className="rounded-2xl border border-zinc-200 bg-white p-12 text-center dark:border-zinc-800 dark:bg-zinc-900 space-y-2">
+            <Bell className="mx-auto h-8 w-8 text-zinc-400" />
+            <h4 className="font-bold text-base text-zinc-900 dark:text-zinc-100">
+              No notifications in this category
+            </h4>
+            <p className="text-xs text-zinc-500">
+              You are completely up to date with all signals.
+            </p>
           </div>
-        ))}
+        )}
       </div>
     </div>
   )
