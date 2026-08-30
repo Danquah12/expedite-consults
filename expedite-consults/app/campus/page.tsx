@@ -4107,32 +4107,51 @@ export default function CampusSyncApp() {
         {/* ========================================================================= */}
         {/* TAB 8: ⋯ MORE (POWERFUL APPLICATION LAUNCHER) */}
         {/* ========================================================================= */}
+        {/* ========================================================================= */}
+        {/* TAB 8: ⋯ MORE (POWERFUL APPLICATION LAUNCHER & SUB-SYSTEMS) */}
+        {/* ========================================================================= */}
         {activeTab === "more" && (
           <div className="space-y-6">
-            {/* Header / Sub-view Switcher */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 bg-white dark:bg-zinc-900 p-2.5 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm text-xs font-bold">
-              {[
-                { id: "launcher", label: "📱 App Launcher", icon: "🍱" },
-                { id: "transcript", label: "🏆 Tiger Record & Passport", icon: "🎓" },
-                { id: "tv", label: "🎥 Towson TV & Reels", icon: "📺" },
-                { id: "games", label: "🎮 Campus Games", icon: "👾" },
-                { id: "market", label: "🛍️ Marketplace", icon: "🛒" },
-                { id: "career", label: "💼 Career & Jobs", icon: "👔" },
-                { id: "ai", label: "🤖 Campus AI Assistant", icon: "⚡" },
-              ].map((sub) => (
+            {/* Top Navigation Bar with Back-to-Launcher Button */}
+            <div className="flex items-center justify-between flex-wrap gap-2 bg-white dark:bg-zinc-900 p-2.5 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm text-xs font-bold">
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                {[
+                  { id: "launcher", label: "📱 App Launcher", icon: "🍱" },
+                  { id: "tv", label: "🎥 Towson TV & Reels", icon: "📺" },
+                  { id: "career", label: "💼 Career & Jobs", icon: "👔" },
+                  { id: "market", label: "🛍️ Marketplace", icon: "🛒" },
+                  { id: "games", label: "🎮 Campus Games", icon: "👾" },
+                  { id: "transcript", label: "🏆 Tiger Record", icon: "🎓" },
+                  { id: "ai", label: "🤖 Campus AI", icon: "⚡" },
+                ].map((sub) => (
+                  <button
+                    key={sub.id}
+                    type="button"
+                    onClick={() => {
+                      setMoreSubView(sub.id as any);
+                      triggerToast(`Navigated to ${sub.label}`);
+                    }}
+                    className={`px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 shrink-0 ${
+                      moreSubView === sub.id
+                        ? "bg-amber-500 text-black shadow-xs font-black"
+                        : "text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                    }`}
+                  >
+                    <span>{sub.icon}</span>
+                    <span>{sub.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {moreSubView !== "launcher" && moreSubView !== "map" && (
                 <button
-                  key={sub.id}
-                  onClick={() => setMoreSubView(sub.id as any)}
-                  className={`px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 shrink-0 ${
-                    moreSubView === sub.id
-                      ? "bg-amber-500 text-black shadow-xs font-black"
-                      : "text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
-                  }`}
+                  type="button"
+                  onClick={() => setMoreSubView("launcher")}
+                  className="bg-slate-100 dark:bg-zinc-800 hover:bg-amber-500 hover:text-black text-slate-700 dark:text-zinc-300 font-black px-3.5 py-1.5 rounded-xl text-xs transition flex items-center gap-1 shrink-0"
                 >
-                  <span>{sub.icon}</span>
-                  <span>{sub.label}</span>
+                  <span>← Back to Launcher</span>
                 </button>
-              ))}
+              )}
             </div>
 
             {/* SUB-VIEW 1: 🍱 APPLICATION LAUNCHER GRID (DEFAULT) */}
@@ -4145,42 +4164,46 @@ export default function CampusSyncApp() {
                     </span>
                     <h1 className="text-2xl font-black mt-0.5">Explore All Campus Modules & Services</h1>
                     <p className="text-xs text-slate-300 mt-1 max-w-xl">
-                      Access all student media, campus games, career opportunities, marketplace products, and administrative systems.
+                      Access student media, career opportunities, campus games, marketplace products, and administrative systems.
                     </p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {[
-                    { id: "tv", title: "Towson TV & Reels", desc: "Live streams, 60s reels, video channels, student creator shows.", icon: "🎥", bg: "bg-rose-500/10 text-rose-500 border-rose-500/20", tab: "more", sub: "tv" },
-                    { id: "games", title: "Campus Games & XP", desc: "Tiger trivia, campus scavenger hunt, esports leagues.", icon: "🎮", bg: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20", tab: "more", sub: "games" },
-                    { id: "market", title: "Towson Marketplace", desc: "Official TowsonSync store, student buy/sell, campus services.", icon: "🛍️", bg: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20", tab: "more", sub: "market" },
-                    { id: "career", title: "Career & Internships", desc: "Handshake sync, verified student jobs, alumni mentorship.", icon: "💼", bg: "bg-amber-500/10 text-amber-500 border-amber-500/20", tab: "more", sub: "career" },
-                    { id: "transcript", title: "Tiger Record & Passport", desc: "Verified service certificates, leadership roles, campus passport.", icon: "🏆", bg: "bg-purple-500/10 text-purple-500 border-purple-500/20", tab: "more", sub: "transcript" },
-                    { id: "weather", title: "NOAA Campus Weather", desc: "Authoritative NWS forecasts, Doppler radar, emergency alerts.", icon: "🌦️", bg: "bg-sky-500/10 text-sky-500 border-sky-500/20", modal: "weather" },
-                    { id: "map", title: "Live Campus Map", desc: "TigerOrbit 360, indoor floor blueprints, GPS Tiger Ride shuttles.", icon: "🗺️", bg: "bg-amber-500/10 text-amber-500 border-amber-500/20", tab: "map" },
-                    { id: "housing", title: "TUHousing Platform", desc: "Verified student apartments, roommate mesh, maintenance.", icon: "🏠", bg: "bg-blue-500/10 text-blue-500 border-blue-500/20", tab: "housing" },
-                    { id: "ai", title: "TowsonSync Campus AI", desc: "Interactive intelligence assistant across all campus services.", icon: "🤖", bg: "bg-amber-500/10 text-amber-500 border-amber-500/20", tab: "more", sub: "ai" },
-                    { id: "study", title: "Study Pods & Peer Match", desc: "Reserve study spaces in Cook Library & Science Complex.", icon: "📚", bg: "bg-teal-500/10 text-teal-500 border-teal-500/20", tab: "campus" },
-                    { id: "311", title: "Campus 311 Reports", desc: "Report campus maintenance, broken fixtures, facilities requests.", icon: "🔧", bg: "bg-slate-500/10 text-slate-500 border-slate-500/20", action: "311" },
-                    { id: "settings", title: "Privacy & Ghost Mode", desc: "Customize location sharing duration, notifications, role switcher.", icon: "⚙️", bg: "bg-zinc-500/10 text-zinc-500 border-zinc-500/20", action: "orbit" },
+                    { id: "tv", title: "Towson TV & Reels", desc: "Live streams, 60s reels, video channels, student creator shows.", icon: "🎥", bg: "bg-rose-500/10 text-rose-500 border-rose-500/20", type: "subview", target: "tv" },
+                    { id: "career", title: "Career & Internships", desc: "Handshake sync, verified student jobs, alumni mentorship.", icon: "💼", bg: "bg-amber-500/10 text-amber-500 border-amber-500/20", type: "subview", target: "career" },
+                    { id: "market", title: "Towson Marketplace", desc: "Official TowsonSync store, student buy/sell, campus services.", icon: "🛍️", bg: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20", type: "subview", target: "market" },
+                    { id: "games", title: "Campus Games & XP", desc: "Tiger trivia, campus scavenger hunt, esports leagues.", icon: "🎮", bg: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20", type: "subview", target: "games" },
+                    { id: "transcript", title: "Tiger Record & Passport", desc: "Verified service certificates, leadership roles, campus passport.", icon: "🏆", bg: "bg-purple-500/10 text-purple-500 border-purple-500/20", type: "subview", target: "transcript" },
+                    { id: "weather", title: "NOAA Campus Weather", desc: "Authoritative NWS forecasts, Doppler radar, emergency alerts.", icon: "🌦️", bg: "bg-sky-500/10 text-sky-500 border-sky-500/20", type: "modal", target: "weather" },
+                    { id: "map", title: "Live Campus Map", desc: "TigerOrbit 360, indoor floor blueprints, GPS Tiger Ride shuttles.", icon: "🗺️", bg: "bg-amber-500/10 text-amber-500 border-amber-500/20", type: "tab", target: "map" },
+                    { id: "housing", title: "TUHousing Platform", desc: "Verified student apartments, roommate mesh, maintenance.", icon: "🏠", bg: "bg-blue-500/10 text-blue-500 border-blue-500/20", type: "tab", target: "housing" },
+                    { id: "ai", title: "TowsonSync Campus AI", desc: "Interactive intelligence assistant across all campus services.", icon: "🤖", bg: "bg-amber-500/10 text-amber-500 border-amber-500/20", type: "subview", target: "ai" },
+                    { id: "study", title: "Study Pods & Peer Match", desc: "Reserve study spaces in Cook Library & Science Complex.", icon: "📚", bg: "bg-teal-500/10 text-teal-500 border-teal-500/20", type: "tab", target: "campus" },
+                    { id: "311", title: "Campus 311 Reports", desc: "Report campus maintenance, broken fixtures, facilities requests.", icon: "🔧", bg: "bg-slate-500/10 text-slate-500 border-slate-500/20", type: "action", target: "311" },
+                    { id: "settings", title: "Privacy & Ghost Mode", desc: "Customize location sharing duration, notifications, role switcher.", icon: "⚙️", bg: "bg-zinc-500/10 text-zinc-500 border-zinc-500/20", type: "action", target: "orbit" },
                   ].map((item) => (
-                    <div
+                    <button
                       key={item.id}
+                      type="button"
                       onClick={() => {
-                        if (item.modal === "weather") {
+                        if (item.type === "modal" && item.target === "weather") {
                           setShowWeatherModal(true);
                           setWeatherModalTab("now");
-                        } else if (item.action === "311") {
+                        } else if (item.type === "action" && item.target === "311") {
                           setShow311Modal(true);
-                        } else if (item.action === "orbit") {
+                        } else if (item.type === "action" && item.target === "orbit") {
                           setShowLocationSharePicker(true);
-                        } else if (item.tab) {
-                          setActiveTab(item.tab as any);
-                          if (item.sub) setMoreSubView(item.sub as any);
+                        } else if (item.type === "subview") {
+                          setMoreSubView(item.target as any);
+                          triggerToast(`🚀 Launched ${item.title}`);
+                        } else if (item.type === "tab") {
+                          setActiveTab(item.target as any);
+                          triggerToast(`🚀 Switched to ${item.title}`);
                         }
                       }}
-                      className="bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-slate-200 dark:border-zinc-800 shadow-sm hover:shadow-lg transition cursor-pointer flex flex-col justify-between group space-y-3"
+                      className="bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-slate-200 dark:border-zinc-800 shadow-sm hover:shadow-xl transition cursor-pointer flex flex-col justify-between group space-y-3 text-left w-full hover:border-amber-500/50"
                     >
                       <div className="space-y-2">
                         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl border ${item.bg} group-hover:scale-110 transition`}>
@@ -4194,9 +4217,62 @@ export default function CampusSyncApp() {
                         </p>
                       </div>
 
-                      <div className="flex items-center gap-1 text-[11px] font-bold text-amber-600 dark:text-amber-400 pt-2 border-t">
+                      <div className="flex items-center gap-1 text-[11px] font-bold text-amber-600 dark:text-amber-400 pt-2 border-t w-full">
                         <span>Launch Module</span>
                         <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition" />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* SUB-VIEW 2: 🎥 TOWSON TV & REELS */}
+            {moreSubView === "tv" && (
+              <div className="space-y-6">
+                <div className="bg-gradient-to-r from-rose-900 via-slate-900 to-rose-950 p-6 rounded-3xl text-white shadow-xl flex items-center justify-between flex-wrap gap-4 border border-rose-500/30">
+                  <div>
+                    <span className="text-xs font-extrabold uppercase tracking-widest text-rose-400">Towson TV & Student Creator Studio</span>
+                    <h2 className="text-2xl font-black mt-0.5">Campus Life, Sports, News & Housing Video Tours</h2>
+                    <p className="text-xs text-slate-300 mt-1">Watch 60s vertical campus reels and official university broadcast channels.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerToast("🎬 Creator Studio: Reel upload dialog ready.");
+                      setShowUploadReelModal(true);
+                    }}
+                    className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-black px-4 py-2.5 rounded-2xl shadow-lg flex items-center gap-1.5"
+                  >
+                    <Film className="w-4 h-4" />
+                    <span>Upload 60s Reel</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                  {(reels.length > 0 ? reels : initialCampusReels).map((reel, idx) => (
+                    <div
+                      key={reel.id}
+                      onClick={() => {
+                        setCurrentReelIndex(idx);
+                        triggerToast(`🎬 Playing Reel: ${reel.title}`);
+                      }}
+                      className="bg-black rounded-3xl overflow-hidden shadow-xl border-2 border-slate-800 relative group cursor-pointer aspect-[9/14] flex flex-col justify-between p-4"
+                    >
+                      <img src={reel.thumbnailUrl} alt={reel.title} className="absolute inset-0 w-full h-full object-cover opacity-75 group-hover:scale-105 transition duration-500" />
+                      <div className="relative z-10 flex justify-between">
+                        <span className="bg-black/60 backdrop-blur-md text-white text-[10px] font-black px-2.5 py-1 rounded-full">
+                          {reel.category}
+                        </span>
+                        <span className="bg-rose-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                          ▶ {reel.viewsCount?.toLocaleString() || "1.2K"}
+                        </span>
+                      </div>
+
+                      <div className="relative z-10 bg-gradient-to-t from-black via-black/80 to-transparent p-3 rounded-2xl space-y-1 text-white">
+                        <div className="text-xs font-black">{reel.creatorName}</div>
+                        <p className="text-xs leading-tight line-clamp-2">{reel.title}</p>
+                        <span className="text-[10px] text-slate-300 block">🎵 {reel.audioTrack}</span>
                       </div>
                     </div>
                   ))}
@@ -4204,7 +4280,201 @@ export default function CampusSyncApp() {
               </div>
             )}
 
-            {/* SUB-VIEW 2: 🏆 EXPERIENCE TRANSCRIPT & CAMPUS PASSPORT */}
+            {/* SUB-VIEW 3: 💼 CAREER & INTERNSHIPS */}
+            {moreSubView === "career" && (
+              <div className="space-y-6">
+                <div className="bg-gradient-to-r from-amber-950 via-slate-900 to-amber-950 p-6 rounded-3xl text-white shadow-xl flex items-center justify-between flex-wrap gap-4 border border-amber-500/30">
+                  <div>
+                    <span className="text-xs font-extrabold uppercase tracking-widest text-amber-400">Towson Career & Internship Mesh</span>
+                    <h2 className="text-2xl font-black mt-0.5">Verified Student Jobs, Internships & Research Fellowships</h2>
+                    <p className="text-xs text-slate-300 mt-1">Direct synchronization with Handshake, TU Career Center, and corporate alumni networks.</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    {
+                      id: "job-1",
+                      title: "Undergraduate AI Cyber Defense Research Fellow",
+                      employer: "TU Autonomous Security Lab (ASSL)",
+                      jobType: "Paid Campus Research",
+                      location: "Science Complex Rm 304",
+                      wage: "$22.50 / hr + 3 Academic Credits",
+                      desc: "Develop automated vulnerability scanning scripts and LLM honeypots under Dr. Catherine Hayes.",
+                      deadline: "April 15, 2026",
+                    },
+                    {
+                      id: "job-2",
+                      title: "IT Support & Cloud Infrastructure Assistant",
+                      employer: "Towson University Office of Technology (OTS)",
+                      jobType: "Student Employment",
+                      location: "Cook Library Lower Level",
+                      wage: "$18.00 / hr",
+                      desc: "Assist students and faculty with TU network access, dual-factor authentication, and hardware diagnostics.",
+                      deadline: "May 01, 2026",
+                    },
+                    {
+                      id: "job-3",
+                      title: "Student Community Engagement Lead",
+                      employer: "Towson Student Affairs",
+                      jobType: "Part-Time",
+                      location: "University Union Rm 204",
+                      wage: "$17.50 / hr",
+                      desc: "Coordinate campus-wide volunteer drives, service days, and official Tiger Record certifications.",
+                      deadline: "April 30, 2026",
+                    },
+                    {
+                      id: "job-4",
+                      title: "Cyber Threat Intelligence Intern",
+                      employer: "T. Rowe Price / Baltimore Cyber Center",
+                      jobType: "Summer Corporate Internship",
+                      location: "Downtown Baltimore (Hybrid)",
+                      wage: "$32.00 / hr",
+                      desc: "Analyze real-time threat vectors, build incident playbooks, and participate in red/blue team simulations.",
+                      deadline: "March 25, 2026",
+                    },
+                  ].map((job) => (
+                    <div key={job.id} className="bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-zinc-800 p-5 space-y-3 flex flex-col justify-between shadow-sm hover:shadow-md transition">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-amber-600">{job.employer}</span>
+                          <span className="text-[10px] font-mono bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded font-bold">{job.jobType}</span>
+                        </div>
+                        <h3 className="text-base font-bold">{job.title}</h3>
+                        <p className="text-xs text-slate-500">📍 {job.location} • 💵 {job.wage}</p>
+                        <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">{job.desc}</p>
+                        <span className="text-[10px] text-slate-400 font-semibold block">⏰ Deadline: {job.deadline}</span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => triggerToast(`💼 Application submitted for ${job.title} at ${job.employer} using your verified Tiger Record!`)}
+                        className="w-full bg-amber-500 hover:bg-amber-600 text-black font-black py-2.5 rounded-xl text-xs shadow-md transition"
+                      >
+                        1-Click Apply with Tiger Record
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* SUB-VIEW 4: 🛍️ MARKETPLACE & OFFICIAL STORE */}
+            {moreSubView === "market" && (
+              <div className="space-y-6">
+                <div className="bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-950 p-6 rounded-3xl text-white shadow-xl flex items-center justify-between flex-wrap gap-4 border border-emerald-500/30">
+                  <div>
+                    <span className="text-xs font-extrabold uppercase tracking-widest text-emerald-400">Towson Student & Official Store</span>
+                    <h2 className="text-2xl font-black mt-0.5">Buy, Sell & Explore Verified Campus Products</h2>
+                    <p className="text-xs text-slate-300 mt-1">Official Towson University merchandise, textbooks, electronics, and student creator gear.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerToast("🛍️ Marketplace Lister: Fill out your listing details.");
+                      setShowListMarketItemModal(true);
+                    }}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black px-4 py-2.5 rounded-2xl shadow-lg flex items-center gap-1.5"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Sell an Item / Product</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {(marketItems.length > 0 ? marketItems : initialMarketplaceItems).map((item) => (
+                    <div key={item.id} className="bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-zinc-800 p-4 shadow-sm space-y-3 flex flex-col justify-between">
+                      <div className="space-y-2">
+                        <div className="h-36 rounded-2xl overflow-hidden bg-slate-800 relative">
+                          <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
+                          <span className="absolute top-2 right-2 bg-black/75 backdrop-blur-md text-white text-[10px] font-black px-2 py-0.5 rounded-full">
+                            ${item.price}
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded-full">
+                          {item.category}
+                        </span>
+                        <h4 className="text-xs font-bold text-slate-900 dark:text-zinc-100">{item.title}</h4>
+                        <p className="text-[11px] text-slate-500 line-clamp-2">{item.condition || "Verified Item"}</p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => triggerToast(`🛒 Connected with seller for "${item.title}" ($${item.price})!`)}
+                        className="w-full bg-slate-900 dark:bg-zinc-800 hover:bg-emerald-600 text-white text-xs font-bold py-2 rounded-xl transition"
+                      >
+                        Contact Seller (${item.price})
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* SUB-VIEW 5: 🎮 CAMPUS GAMES & TRIVIA */}
+            {moreSubView === "games" && (
+              <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-6">
+                <div className="flex items-center justify-between flex-wrap gap-4 border-b pb-4">
+                  <div>
+                    <h2 className="text-xl font-black text-slate-900 dark:text-zinc-100">Tiger Trivia Championship & Campus XP</h2>
+                    <p className="text-xs text-slate-500">Test your Towson University knowledge and earn points toward your Tiger Record.</p>
+                  </div>
+                  <div className="bg-amber-50 dark:bg-amber-950 px-4 py-2 rounded-2xl border border-amber-200 font-mono text-xs font-black text-amber-700 dark:text-amber-300">
+                    ⭐ Campus XP Score: {triviaScore * 50} pts
+                  </div>
+                </div>
+
+                <div className="p-6 bg-slate-50 dark:bg-zinc-800/50 rounded-3xl border space-y-4 max-w-xl mx-auto">
+                  <div className="flex justify-between text-xs font-bold text-slate-400">
+                    <span>Question {activeTriviaQuestionIdx + 1} of {(games[0]?.questions || initialCampusGames[0]?.questions || []).length}</span>
+                    <span>Category: TU Traditions</span>
+                  </div>
+
+                  <h3 className="text-base font-black text-slate-900 dark:text-zinc-100">
+                    {(games[0]?.questions || initialCampusGames[0]?.questions)?.[activeTriviaQuestionIdx]?.question || "In what year was Towson University originally founded as Maryland State Normal School?"}
+                  </h3>
+
+                  <div className="space-y-2">
+                    {((games[0]?.questions || initialCampusGames[0]?.questions)?.[activeTriviaQuestionIdx]?.options || ["1866", "1912", "1935", "1976"]).map((opt, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => {
+                          setTriviaSelectedOption(i);
+                          const correctIdx = (games[0]?.questions || initialCampusGames[0]?.questions)?.[activeTriviaQuestionIdx]?.correctIndex ?? 0;
+                          if (i === correctIdx) {
+                            setTriviaScore((prev) => prev + 1);
+                            triggerToast("🎉 Correct answer! +50 Campus XP");
+                          } else {
+                            triggerToast("❌ Incorrect! Try the next question.");
+                          }
+                          setTimeout(() => {
+                            const totalQ = (games[0]?.questions || initialCampusGames[0]?.questions)?.length || 5;
+                            if (activeTriviaQuestionIdx + 1 < totalQ) {
+                              setActiveTriviaQuestionIdx((prev) => prev + 1);
+                              setTriviaSelectedOption(null);
+                            } else {
+                              setTriviaGameOver(true);
+                              triggerToast(`🏆 Trivia completed! Final score: ${(triviaScore + (i === correctIdx ? 1 : 0)) * 50} XP`);
+                            }
+                          }, 1000);
+                        }}
+                        className={`w-full text-left p-3.5 rounded-2xl border text-xs font-bold transition flex items-center justify-between ${
+                          triviaSelectedOption === i
+                            ? "bg-amber-500 text-black border-amber-500 font-black"
+                            : "bg-white dark:bg-zinc-900 hover:border-amber-500 border-slate-200 dark:border-zinc-700"
+                        }`}
+                      >
+                        <span>{opt}</span>
+                        <span>{triviaSelectedOption === i ? "✓" : "→"}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* SUB-VIEW 6: 🏆 EXPERIENCE TRANSCRIPT & CAMPUS PASSPORT */}
             {moreSubView === "transcript" && (
               <div className="space-y-6">
                 <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-6">
@@ -4225,6 +4495,7 @@ export default function CampusSyncApp() {
                     </div>
 
                     <button
+                      type="button"
                       onClick={() => setShowCertificateModal(true)}
                       className="bg-amber-500 hover:bg-amber-600 text-black font-black text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow-md"
                     >
@@ -4295,195 +4566,6 @@ export default function CampusSyncApp() {
                       ))}
                     </div>
                   </div>
-                </div>
-              </div>
-            )}
-
-            {/* SUB-VIEW 3: 🎥 TOWSON TV & REELS */}
-            {moreSubView === "tv" && (
-              <div className="space-y-6">
-                <div className="bg-gradient-to-r from-rose-900 via-slate-900 to-rose-950 p-6 rounded-3xl text-white shadow-xl flex items-center justify-between flex-wrap gap-4 border border-rose-500/30">
-                  <div>
-                    <span className="text-xs font-extrabold uppercase tracking-widest text-rose-400">Towson TV & Student Creator Studio</span>
-                    <h2 className="text-2xl font-black mt-0.5">Campus Life, Sports, News & Housing Video Tours</h2>
-                  </div>
-                  <button
-                    onClick={() => setShowUploadReelModal(true)}
-                    className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-black px-4 py-2.5 rounded-2xl shadow-lg flex items-center gap-1.5"
-                  >
-                    <Film className="w-4 h-4" />
-                    <span>Upload 60s Reel</span>
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                  {reels.map((reel) => (
-                    <div
-                      key={reel.id}
-                      onClick={() => {
-                        setActiveReel(reel);
-                        triggerToast(`🎬 Now Playing: ${reel.title}`);
-                      }}
-                      className="bg-black rounded-3xl overflow-hidden shadow-xl border-2 border-slate-800 relative group cursor-pointer aspect-[9/14] flex flex-col justify-between p-4"
-                    >
-                      <img src={reel.thumbnailUrl} alt={reel.title} className="absolute inset-0 w-full h-full object-cover opacity-75 group-hover:scale-105 transition duration-500" />
-                      <div className="relative z-10 flex justify-between">
-                        <span className="bg-black/60 backdrop-blur-md text-white text-[10px] font-black px-2.5 py-1 rounded-full">
-                          {reel.category}
-                        </span>
-                        <span className="bg-rose-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                          ▶ {reel.viewsCount.toLocaleString()}
-                        </span>
-                      </div>
-
-                      <div className="relative z-10 bg-gradient-to-t from-black via-black/80 to-transparent p-2 rounded-2xl space-y-1 text-white">
-                        <div className="text-xs font-black">{reel.creatorName}</div>
-                        <p className="text-xs leading-tight line-clamp-2">{reel.title}</p>
-                        <span className="text-[10px] text-slate-300 block">🎵 {reel.audioTrack}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* SUB-VIEW 4: 🎮 CAMPUS GAMES & TRIVIA */}
-            {moreSubView === "games" && (
-              <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-6">
-                <div className="flex items-center justify-between flex-wrap gap-4 border-b pb-4">
-                  <div>
-                    <h2 className="text-xl font-black text-slate-900 dark:border-zinc-100">Tiger Trivia Championship & Campus XP</h2>
-                    <p className="text-xs text-slate-500">Test your Towson University history knowledge and earn points toward your Tiger Record.</p>
-                  </div>
-                  <div className="bg-amber-50 dark:bg-amber-950 px-4 py-2 rounded-2xl border border-amber-200 font-mono text-xs font-black text-amber-700 dark:text-amber-300">
-                    ⭐ Campus XP Score: {triviaScore * 50} pts
-                  </div>
-                </div>
-
-                <div className="p-6 bg-slate-50 dark:bg-zinc-800/50 rounded-3xl border space-y-4 max-w-xl mx-auto">
-                  <div className="flex justify-between text-xs font-bold text-slate-400">
-                    <span>Question {activeTriviaQuestionIdx + 1} of {(games[0]?.questions || []).length}</span>
-                    <span>Category: TU Traditions</span>
-                  </div>
-
-                  <h3 className="text-base font-black text-slate-900 dark:text-zinc-100">
-                    {games[0]?.questions[activeTriviaQuestionIdx]?.questionText || "In what year was Towson University originally founded as Maryland State Normal School?"}
-                  </h3>
-
-                  <div className="space-y-2">
-                    {(games[0]?.questions[activeTriviaQuestionIdx]?.options || ["1866", "1912", "1935", "1976"]).map((opt, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => {
-                          setTriviaSelectedOption(i);
-                          if (i === (games[0]?.questions[activeTriviaQuestionIdx]?.correctIndex ?? 0)) {
-                            setTriviaScore((prev) => prev + 1);
-                            triggerToast("🎉 Correct answer! +50 Campus XP");
-                          } else {
-                            triggerToast("❌ Incorrect! Try the next question.");
-                          }
-                          setTimeout(() => {
-                            if (activeTriviaQuestionIdx + 1 < (games[0]?.questions?.length || 4)) {
-                              setActiveTriviaQuestionIdx((prev) => prev + 1);
-                              setTriviaSelectedOption(null);
-                            } else {
-                              setTriviaGameOver(true);
-                            }
-                          }, 1000);
-                        }}
-                        className={`w-full text-left p-3.5 rounded-2xl border text-xs font-bold transition flex items-center justify-between ${
-                          triviaSelectedOption === i
-                            ? "bg-amber-500 text-black border-amber-500 font-black"
-                            : "bg-white dark:bg-zinc-900 hover:border-amber-500 border-slate-200 dark:border-zinc-700"
-                        }`}
-                      >
-                        <span>{opt}</span>
-                        <span>{triviaSelectedOption === i ? "✓" : "→"}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* SUB-VIEW 5: 🛍️ MARKETPLACE & OFFICIAL STORE */}
-            {moreSubView === "market" && (
-              <div className="space-y-6">
-                <div className="bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-950 p-6 rounded-3xl text-white shadow-xl flex items-center justify-between flex-wrap gap-4 border border-emerald-500/30">
-                  <div>
-                    <span className="text-xs font-extrabold uppercase tracking-widest text-emerald-400">Towson Student & Official Store</span>
-                    <h2 className="text-2xl font-black mt-0.5">Buy, Sell & Explore Verified Campus Products</h2>
-                  </div>
-                  <button
-                    onClick={() => setShowListMarketItemModal(true)}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black px-4 py-2.5 rounded-2xl shadow-lg flex items-center gap-1.5"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Sell an Item / Product</span>
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {(marketItems || []).map((item) => (
-                    <div key={item.id} className="bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-zinc-800 p-4 shadow-sm space-y-3 flex flex-col justify-between">
-                      <div className="space-y-2">
-                        <div className="h-36 rounded-2xl overflow-hidden bg-slate-800 relative">
-                          <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
-                          <span className="absolute top-2 right-2 bg-black/75 backdrop-blur-md text-white text-[10px] font-black px-2 py-0.5 rounded-full">
-                            ${item.price}
-                          </span>
-                        </div>
-                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded-full">
-                          {item.category}
-                        </span>
-                        <h4 className="text-xs font-bold text-slate-900 dark:text-zinc-100">{item.title}</h4>
-                        <p className="text-[11px] text-slate-500 line-clamp-2">{item.description}</p>
-                      </div>
-
-                      <button
-                        onClick={() => triggerToast(`🛒 Added "${item.title}" to your orders.`)}
-                        className="w-full bg-slate-900 dark:bg-zinc-800 hover:bg-emerald-600 text-white text-xs font-bold py-2 rounded-xl transition"
-                      >
-                        Contact Seller (${item.price})
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* SUB-VIEW 6: 💼 CAREER & JOBS */}
-            {moreSubView === "career" && (
-              <div className="space-y-6">
-                <div className="bg-gradient-to-r from-amber-950 via-slate-900 to-amber-950 p-6 rounded-3xl text-white shadow-xl flex items-center justify-between flex-wrap gap-4 border border-amber-500/30">
-                  <div>
-                    <span className="text-xs font-extrabold uppercase tracking-widest text-amber-400">Towson Career & Internship Mesh</span>
-                    <h2 className="text-2xl font-black mt-0.5">Verified Student Jobs, Internships & Alumni Mentors</h2>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {(campusJobs || []).map((job) => (
-                    <div key={job.id} className="bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-zinc-800 p-5 space-y-3 flex flex-col justify-between">
-                      <div className="space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-amber-600">{job.employer}</span>
-                          <span className="text-[10px] font-mono bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded font-bold">{job.jobType}</span>
-                        </div>
-                        <h3 className="text-base font-bold">{job.title}</h3>
-                        <p className="text-xs text-slate-500">📍 {job.location} • 💵 {job.wageOrSalary}</p>
-                        <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">{job.description}</p>
-                      </div>
-
-                      <button
-                        onClick={() => triggerToast(`💼 Application submitted for ${job.title} at ${job.employer}!`)}
-                        className="w-full bg-amber-500 hover:bg-amber-600 text-black font-black py-2.5 rounded-xl text-xs shadow-md transition"
-                      >
-                        1-Click Apply with Tiger Record
-                      </button>
-                    </div>
-                  ))}
                 </div>
               </div>
             )}
