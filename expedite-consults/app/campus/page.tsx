@@ -2046,6 +2046,270 @@ export default function CampusSyncApp() {
         </div>
       )}
 
+      {/* 4.5 MODAL: UNIVERSAL SPOTLIGHT SEARCH (CMD/CTRL + K) */}
+      {showOmniSearch && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-start justify-center p-4 pt-16 sm:pt-24"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowOmniSearch(false);
+          }}
+        >
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl max-w-2xl w-full p-6 relative shadow-2xl space-y-4 text-slate-900 dark:text-zinc-100 animate-in zoom-in-95">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2.5">
+                <Search className="w-5 h-5 text-amber-500" />
+                <h3 className="text-base font-black">Universal Campus Search</h3>
+              </div>
+              <button
+                onClick={() => setShowOmniSearch(false)}
+                className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-400"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search people, housing, events, clubs, products, jobs, classes..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                autoFocus
+                className="w-full bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-3.5 text-xs text-slate-400 hover:text-slate-600"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+
+            {/* Quick Result Clusters */}
+            <div className="max-h-80 overflow-y-auto space-y-3 pt-2 text-xs">
+              {/* Buildings & Places */}
+              {omniResults.buildings.length > 0 && (
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">🏫 Campus Places & Rooms</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {omniResults.buildings.slice(0, 4).map((b) => (
+                      <div
+                        key={b.id}
+                        onClick={() => {
+                          setSelectedBuildingModal(b);
+                          setShowOmniSearch(false);
+                        }}
+                        className="p-3 bg-slate-50 dark:bg-zinc-800/60 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-xl border border-slate-200 dark:border-zinc-700 cursor-pointer flex items-center justify-between transition"
+                      >
+                        <div className="font-bold">{b.name}</div>
+                        <span className="text-[10px] font-mono text-amber-600 font-bold">{b.code}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Events */}
+              {omniResults.events.length > 0 && (
+                <div className="space-y-1.5 pt-2">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">📅 Campus Events</span>
+                  <div className="space-y-1.5">
+                    {omniResults.events.slice(0, 3).map((ev) => (
+                      <div
+                        key={ev.id}
+                        onClick={() => {
+                          setActiveTab("events");
+                          setShowOmniSearch(false);
+                        }}
+                        className="p-3 bg-slate-50 dark:bg-zinc-800/60 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-xl border border-slate-200 dark:border-zinc-700 cursor-pointer flex items-center justify-between transition"
+                      >
+                        <div>
+                          <div className="font-bold">{ev.title}</div>
+                          <span className="text-[10px] text-slate-400">📍 {ev.location} • {ev.time}</span>
+                        </div>
+                        <span className="text-[10px] font-bold text-amber-600">View Event →</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* People */}
+              {omniResults.people.length > 0 && (
+                <div className="space-y-1.5 pt-2">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">👥 Students & Peers</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    {omniResults.people.slice(0, 4).map((p) => (
+                      <div
+                        key={p.id}
+                        onClick={() => {
+                          setActiveTab("messages");
+                          setShowOmniSearch(false);
+                        }}
+                        className="p-2.5 bg-slate-50 dark:bg-zinc-800/60 rounded-xl border border-slate-200 dark:border-zinc-700 flex items-center gap-2 cursor-pointer"
+                      >
+                        <img src={p.avatar} alt={p.name} className="w-7 h-7 rounded-full object-cover" />
+                        <div className="truncate">
+                          <div className="font-bold truncate">{p.name}</div>
+                          <span className="text-[10px] text-slate-400 truncate block">{p.major}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="pt-2 border-t flex items-center justify-between text-[11px] text-slate-400">
+              <span>ProTip: Press <kbd className="px-1.5 py-0.5 bg-slate-200 dark:bg-zinc-800 rounded font-mono text-[10px]">Esc</kbd> anytime to exit</span>
+              <button
+                onClick={() => {
+                  setActiveTab("more");
+                  setMoreSubView("ai");
+                  setShowOmniSearch(false);
+                }}
+                className="text-amber-600 font-bold hover:underline"
+              >
+                Ask Campus AI Instead →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 4.6 DRAWER: GLOBAL NOTIFICATION CENTER */}
+      {showNotifDrawer && (
+        <div
+          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex justify-end"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowNotifDrawer(false);
+          }}
+        >
+          <div className="bg-white dark:bg-zinc-900 border-l border-slate-200 dark:border-zinc-800 w-full max-w-md h-full p-6 relative shadow-2xl space-y-4 flex flex-col justify-between text-slate-900 dark:text-zinc-100 animate-in slide-in-from-right">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between border-b pb-3">
+                <div className="flex items-center gap-2.5">
+                  <Bell className="w-5 h-5 text-amber-500" />
+                  <h3 className="text-base font-black">Towson Notifications</h3>
+                </div>
+                <button
+                  onClick={() => setShowNotifDrawer(false)}
+                  className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-400"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Notification Filter Chips */}
+              <div className="flex items-center gap-1 overflow-x-auto text-[11px] font-bold">
+                {(["ALL", "EVENT", "ORG", "SOCIAL", "SYSTEM"] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setNotifFilterTab(tab)}
+                    className={`px-3 py-1 rounded-xl transition ${
+                      notifFilterTab === tab ? "bg-amber-500 text-black font-black" : "bg-slate-100 dark:bg-zinc-800 text-slate-500"
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
+
+              {/* Notification Stream */}
+              <div className="space-y-2.5 max-h-[70vh] overflow-y-auto text-xs">
+                {[
+                  { id: "1", title: "🏠 Housing Match Alert", msg: "A new 2BR unit matched your budget near University Village ($875/mo).", time: "5m ago", type: "HOUSING", read: false },
+                  { id: "2", title: "🎟️ Event RSVP Reminder", msg: "Towson Cybersecurity Keynote starts today at 5:00 PM in Science Complex.", time: "45m ago", type: "EVENT", read: false },
+                  { id: "3", title: "🌦️ NOAA Weather Update", msg: "NOAA reports 20% precipitation chance. Good conditions for outdoor campus walking.", time: "2h ago", type: "WEATHER", read: true },
+                  { id: "4", title: "👥 ASA Towson Announcement", msg: "General body meeting confirmed for Thursday 6:30 PM in Union Rm 302.", time: "4h ago", type: "ORG", read: true },
+                ].map((notif) => (
+                  <div
+                    key={notif.id}
+                    className={`p-3.5 rounded-2xl border transition space-y-1 ${
+                      !notif.read ? "bg-amber-50/60 dark:bg-amber-950/30 border-amber-300 dark:border-amber-800" : "bg-slate-50 dark:bg-zinc-800/40 border-slate-200 dark:border-zinc-800"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between font-bold">
+                      <span className="text-slate-900 dark:text-zinc-100">{notif.title}</span>
+                      <span className="text-[10px] text-slate-400">{notif.time}</span>
+                    </div>
+                    <p className="text-[11px] text-slate-600 dark:text-zinc-400">{notif.msg}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                triggerToast("🔔 All notifications marked as read.");
+                setShowNotifDrawer(false);
+              }}
+              className="w-full bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 font-bold py-2.5 rounded-xl text-xs transition"
+            >
+              Mark All as Read
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 4.7 MODAL: OFFICIAL SERVICE CERTIFICATE */}
+      {showCertificateModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowCertificateModal(false);
+          }}
+        >
+          <div className="bg-white dark:bg-zinc-900 border-4 border-amber-500 rounded-3xl max-w-xl w-full p-8 relative shadow-2xl space-y-6 text-center text-slate-900 dark:text-zinc-100 animate-in zoom-in-95">
+            <button
+              onClick={() => setShowCertificateModal(false)}
+              className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-500"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="w-16 h-16 rounded-3xl bg-amber-500 text-black flex items-center justify-center mx-auto text-3xl font-black shadow-lg">
+              TU
+            </div>
+
+            <div className="space-y-1">
+              <span className="text-[11px] font-extrabold uppercase tracking-widest text-amber-600">Towson University Office of Civic Engagement</span>
+              <h2 className="text-2xl font-black">Official Certificate of Student Leadership</h2>
+              <p className="text-xs text-slate-500">This certifies that</p>
+              <h3 className="text-xl font-black text-amber-600">{currentUser.name}</h3>
+              <p className="text-xs text-slate-500 max-w-md mx-auto">
+                has completed <strong>{currentUser.volunteerHoursLogged ?? 48} verified volunteer hours</strong> and attended <strong>{currentUser.eventsAttendedCount ?? 12} official campus engagement programs</strong> during the 2025–2026 academic term.
+              </p>
+            </div>
+
+            <div className="p-4 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border text-xs font-mono flex items-center justify-between">
+              <span>Verification Hash: 0x9f4a...81c2</span>
+              <span className="text-emerald-600 font-bold">Verified Tiger Record ✓</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <button
+                onClick={() => {
+                  triggerToast("📥 Certificate downloaded as verified PDF.");
+                  setShowCertificateModal(false);
+                }}
+                className="bg-amber-500 hover:bg-amber-600 text-black font-black py-3 rounded-2xl text-xs shadow-md transition"
+              >
+                Download PDF
+              </button>
+              <button
+                onClick={() => setShowCertificateModal(false)}
+                className="bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-bold py-3 rounded-2xl text-xs transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* TOP GLOBAL NAVIGATION BAR */}
       <header className="sticky top-0 z-40 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-b border-slate-200 dark:border-zinc-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
@@ -3382,6 +3646,101 @@ export default function CampusSyncApp() {
                 </div>
               </div>
 
+              {/* ASK CAMPUS AI QUICK LAUNCHER BAR */}
+              <div className="bg-white dark:bg-zinc-900 rounded-3xl p-4 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-amber-500 flex items-center justify-center text-black font-black text-xs">
+                    ⚡
+                  </div>
+                  <span className="text-xs font-black uppercase tracking-wider text-slate-400">Ask TowsonSync AI</span>
+                </div>
+
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!aiChatQuery.trim()) return;
+                    setActiveTab("more");
+                    setMoreSubView("ai");
+                    handleSendAiPrompt(e);
+                  }}
+                  className="flex gap-2"
+                >
+                  <input
+                    type="text"
+                    placeholder='Ask AI anything: "What events are tonight?", "Find a 2BR apartment under $900", "Where is Cook Library?"...'
+                    value={aiChatQuery}
+                    onChange={(e) => setAiChatQuery(e.target.value)}
+                    className="flex-1 bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 rounded-2xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium"
+                  />
+                  <button
+                    type="submit"
+                    className="bg-amber-500 hover:bg-amber-600 text-black font-black px-4 py-2.5 rounded-2xl text-xs shadow-md transition shrink-0"
+                  >
+                    Ask AI
+                  </button>
+                </form>
+
+                {/* AI Prompt Pills */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-[11px]">
+                  {[
+                    "What's happening tonight?",
+                    "Find apartment under $900",
+                    "Navigate to Cook Library",
+                    "COSC 421 study groups",
+                    "Shuttle schedule to York Rd",
+                  ].map((pill) => (
+                    <button
+                      key={pill}
+                      type="button"
+                      onClick={() => {
+                        setAiChatQuery(pill);
+                        setActiveTab("more");
+                        setMoreSubView("ai");
+                      }}
+                      className="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-zinc-800 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-slate-600 dark:text-zinc-300 font-semibold shrink-0 border border-slate-200 dark:border-zinc-700 transition"
+                    >
+                      💡 {pill}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* SOCIAL FEED FILTER TABS */}
+              <div className="flex items-center justify-between flex-wrap gap-2 pt-2">
+                <div className="flex items-center gap-1 overflow-x-auto text-xs font-bold bg-white dark:bg-zinc-900 p-1.5 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm">
+                  {[
+                    { id: "ALL", label: "🌟 All Feed" },
+                    { id: "POSTS", label: "📝 Posts" },
+                    { id: "REELS", label: "🎬 Reels" },
+                    { id: "EVENTS", label: "📅 Events" },
+                    { id: "POLLS", label: "📊 Polls" },
+                  ].map((f) => (
+                    <button
+                      key={f.id}
+                      onClick={() => {
+                        if (f.id === "REELS") {
+                          setActiveTab("more");
+                          setMoreSubView("tv");
+                        } else if (f.id === "EVENTS") {
+                          setActiveTab("events");
+                        }
+                      }}
+                      className={`px-3 py-1.5 rounded-xl transition ${
+                        f.id === "ALL" || f.id === "POSTS"
+                          ? "bg-amber-500 text-black font-black"
+                          : "text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+
+                <span className="text-[11px] text-slate-400 font-semibold">
+                  Live Stream: <strong>Towson Main Feed</strong>
+                </span>
+              </div>
+
               {/* POST COMPOSER */}
               <div className="bg-white dark:bg-zinc-900 rounded-3xl p-4 border border-slate-200 dark:border-zinc-800 shadow-sm">
                 <div className="flex items-center gap-3 mb-3">
@@ -3746,155 +4105,420 @@ export default function CampusSyncApp() {
         )}
 
         {/* ========================================================================= */}
-        {/* TAB 7: ⋯ MORE (REELS, GAMES, TRANSCRIPT, AI) */}
+        {/* TAB 8: ⋯ MORE (POWERFUL APPLICATION LAUNCHER) */}
         {/* ========================================================================= */}
         {activeTab === "more" && (
           <div className="space-y-6">
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 bg-white dark:bg-zinc-900 p-2 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm text-xs font-bold">
-              <button
-                onClick={() => setMoreSubView("map")}
-                className={`px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 ${
-                  moreSubView === "map" ? "bg-amber-500 text-black font-black" : "text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                <MapIcon className="w-3.5 h-3.5" />
-                <span>Towson Live Map</span>
-              </button>
-
-              <button
-                onClick={() => setMoreSubView("transcript")}
-                className={`px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 ${
-                  moreSubView === "transcript" ? "bg-amber-500 text-black font-black" : "text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                <Trophy className="w-3.5 h-3.5" />
-                <span>Experience Transcript</span>
-              </button>
-
-              <button
-                onClick={() => setMoreSubView("reels")}
-                className={`px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 ${
-                  moreSubView === "reels" ? "bg-rose-600 text-white" : "text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                <Film className="w-3.5 h-3.5" />
-                <span>Towson Reels</span>
-              </button>
-
-              <button
-                onClick={() => setMoreSubView("games")}
-                className={`px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 ${
-                  moreSubView === "games" ? "bg-indigo-600 text-white" : "text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                <Gamepad2 className="w-3.5 h-3.5" />
-                <span>Tiger Trivia</span>
-              </button>
-
-              <button
-                onClick={() => setMoreSubView("ai")}
-                className={`px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 ${
-                  moreSubView === "ai" ? "bg-amber-500 text-black font-black" : "text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                <Bot className="w-3.5 h-3.5" />
-                <span>Campus AI</span>
-              </button>
+            {/* Header / Sub-view Switcher */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 bg-white dark:bg-zinc-900 p-2.5 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm text-xs font-bold">
+              {[
+                { id: "launcher", label: "📱 App Launcher", icon: "🍱" },
+                { id: "transcript", label: "🏆 Tiger Record & Passport", icon: "🎓" },
+                { id: "tv", label: "🎥 Towson TV & Reels", icon: "📺" },
+                { id: "games", label: "🎮 Campus Games", icon: "👾" },
+                { id: "market", label: "🛍️ Marketplace", icon: "🛒" },
+                { id: "career", label: "💼 Career & Jobs", icon: "👔" },
+                { id: "ai", label: "🤖 Campus AI Assistant", icon: "⚡" },
+              ].map((sub) => (
+                <button
+                  key={sub.id}
+                  onClick={() => setMoreSubView(sub.id as any)}
+                  className={`px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 shrink-0 ${
+                    moreSubView === sub.id
+                      ? "bg-amber-500 text-black shadow-xs font-black"
+                      : "text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                  }`}
+                >
+                  <span>{sub.icon}</span>
+                  <span>{sub.label}</span>
+                </button>
+              ))}
             </div>
 
-            {/* SUB-VIEW: 🏆 EXPERIENCE TRANSCRIPT */}
-            {moreSubView === "transcript" && (
-              <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-6">
-                <div className="flex items-start justify-between flex-wrap gap-4 border-b pb-6">
-                  <div className="flex items-center gap-4">
-                    <img src={currentUser.avatar} alt={currentUser.name} className="w-16 h-16 rounded-3xl object-cover ring-4 ring-amber-500" />
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h2 className="text-xl font-black text-slate-900 dark:text-zinc-100">{currentUser.name}</h2>
-                        <span className="text-[10px] font-bold bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full border border-emerald-200">
-                          Verified Towson Tiger ✓
-                        </span>
+            {/* SUB-VIEW 1: 🍱 APPLICATION LAUNCHER GRID (DEFAULT) */}
+            {(moreSubView === "launcher" || !moreSubView || moreSubView === "map") && (
+              <div className="space-y-6">
+                <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 rounded-3xl text-white shadow-xl flex items-center justify-between flex-wrap gap-4 border border-indigo-500/30">
+                  <div>
+                    <span className="text-xs font-extrabold uppercase tracking-widest text-amber-400">
+                      TowsonSync Application Suite
+                    </span>
+                    <h1 className="text-2xl font-black mt-0.5">Explore All Campus Modules & Services</h1>
+                    <p className="text-xs text-slate-300 mt-1 max-w-xl">
+                      Access all student media, campus games, career opportunities, marketplace products, and administrative systems.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {[
+                    { id: "tv", title: "Towson TV & Reels", desc: "Live streams, 60s reels, video channels, student creator shows.", icon: "🎥", bg: "bg-rose-500/10 text-rose-500 border-rose-500/20", tab: "more", sub: "tv" },
+                    { id: "games", title: "Campus Games & XP", desc: "Tiger trivia, campus scavenger hunt, esports leagues.", icon: "🎮", bg: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20", tab: "more", sub: "games" },
+                    { id: "market", title: "Towson Marketplace", desc: "Official TowsonSync store, student buy/sell, campus services.", icon: "🛍️", bg: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20", tab: "more", sub: "market" },
+                    { id: "career", title: "Career & Internships", desc: "Handshake sync, verified student jobs, alumni mentorship.", icon: "💼", bg: "bg-amber-500/10 text-amber-500 border-amber-500/20", tab: "more", sub: "career" },
+                    { id: "transcript", title: "Tiger Record & Passport", desc: "Verified service certificates, leadership roles, campus passport.", icon: "🏆", bg: "bg-purple-500/10 text-purple-500 border-purple-500/20", tab: "more", sub: "transcript" },
+                    { id: "weather", title: "NOAA Campus Weather", desc: "Authoritative NWS forecasts, Doppler radar, emergency alerts.", icon: "🌦️", bg: "bg-sky-500/10 text-sky-500 border-sky-500/20", modal: "weather" },
+                    { id: "map", title: "Live Campus Map", desc: "TigerOrbit 360, indoor floor blueprints, GPS Tiger Ride shuttles.", icon: "🗺️", bg: "bg-amber-500/10 text-amber-500 border-amber-500/20", tab: "map" },
+                    { id: "housing", title: "TUHousing Platform", desc: "Verified student apartments, roommate mesh, maintenance.", icon: "🏠", bg: "bg-blue-500/10 text-blue-500 border-blue-500/20", tab: "housing" },
+                    { id: "ai", title: "TowsonSync Campus AI", desc: "Interactive intelligence assistant across all campus services.", icon: "🤖", bg: "bg-amber-500/10 text-amber-500 border-amber-500/20", tab: "more", sub: "ai" },
+                    { id: "study", title: "Study Pods & Peer Match", desc: "Reserve study spaces in Cook Library & Science Complex.", icon: "📚", bg: "bg-teal-500/10 text-teal-500 border-teal-500/20", tab: "campus" },
+                    { id: "311", title: "Campus 311 Reports", desc: "Report campus maintenance, broken fixtures, facilities requests.", icon: "🔧", bg: "bg-slate-500/10 text-slate-500 border-slate-500/20", action: "311" },
+                    { id: "settings", title: "Privacy & Ghost Mode", desc: "Customize location sharing duration, notifications, role switcher.", icon: "⚙️", bg: "bg-zinc-500/10 text-zinc-500 border-zinc-500/20", action: "orbit" },
+                  ].map((item) => (
+                    <div
+                      key={item.id}
+                      onClick={() => {
+                        if (item.modal === "weather") {
+                          setShowWeatherModal(true);
+                          setWeatherModalTab("now");
+                        } else if (item.action === "311") {
+                          setShow311Modal(true);
+                        } else if (item.action === "orbit") {
+                          setShowLocationSharePicker(true);
+                        } else if (item.tab) {
+                          setActiveTab(item.tab as any);
+                          if (item.sub) setMoreSubView(item.sub as any);
+                        }
+                      }}
+                      className="bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-slate-200 dark:border-zinc-800 shadow-sm hover:shadow-lg transition cursor-pointer flex flex-col justify-between group space-y-3"
+                    >
+                      <div className="space-y-2">
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl border ${item.bg} group-hover:scale-110 transition`}>
+                          {item.icon}
+                        </div>
+                        <h3 className="font-bold text-sm text-slate-900 dark:text-zinc-100 group-hover:text-amber-500 transition">
+                          {item.title}
+                        </h3>
+                        <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
+                          {item.desc}
+                        </p>
                       </div>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        Major: <strong>{currentUser.major}</strong> • ID: <code className="font-mono">{currentUser.studentId}</code>
-                      </p>
+
+                      <div className="flex items-center gap-1 text-[11px] font-bold text-amber-600 dark:text-amber-400 pt-2 border-t">
+                        <span>Launch Module</span>
+                        <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* SUB-VIEW 2: 🏆 EXPERIENCE TRANSCRIPT & CAMPUS PASSPORT */}
+            {moreSubView === "transcript" && (
+              <div className="space-y-6">
+                <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-6">
+                  <div className="flex items-start justify-between flex-wrap gap-4 border-b pb-6">
+                    <div className="flex items-center gap-4">
+                      <img src={currentUser.avatar} alt={currentUser.name} className="w-16 h-16 rounded-3xl object-cover ring-4 ring-amber-500" />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h2 className="text-xl font-black text-slate-900 dark:text-zinc-100">{currentUser.name}</h2>
+                          <span className="text-[10px] font-bold bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full border border-emerald-200">
+                            Verified Towson Tiger ✓
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Major: <strong>{currentUser.major}</strong> • ID: <code className="font-mono">{currentUser.studentId}</code>
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => setShowCertificateModal(true)}
+                      className="bg-amber-500 hover:bg-amber-600 text-black font-black text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow-md"
+                    >
+                      <Award className="w-3.5 h-3.5" />
+                      <span>Official Service Certificate</span>
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                    <div className="bg-amber-50 dark:bg-amber-950/40 p-4 rounded-2xl border border-amber-100 dark:border-amber-900">
+                      <span className="text-2xl font-black text-amber-600 block leading-none">{currentUser.volunteerHoursLogged ?? 48} hrs</span>
+                      <span className="text-[10px] text-slate-500 uppercase font-bold mt-1 block">Volunteer Hours</span>
+                    </div>
+                    <div className="bg-slate-50 dark:bg-zinc-800/40 p-4 rounded-2xl border">
+                      <span className="text-2xl font-black text-slate-900 dark:text-zinc-100 block leading-none">{currentUser.eventsAttendedCount ?? 12}</span>
+                      <span className="text-[10px] text-slate-500 uppercase font-bold mt-1 block">Events Attended</span>
+                    </div>
+                    <div className="bg-slate-50 dark:bg-zinc-800/40 p-4 rounded-2xl border">
+                      <span className="text-2xl font-black text-emerald-600 block leading-none">{(currentUser.leadershipRoles || []).length || 2}</span>
+                      <span className="text-[10px] text-slate-500 uppercase font-bold mt-1 block">Leadership Roles</span>
+                    </div>
+                    <div className="bg-slate-50 dark:bg-zinc-800/40 p-4 rounded-2xl border">
+                      <span className="text-2xl font-black text-purple-600 block leading-none">{(currentUser.achievements || []).length || 5}</span>
+                      <span className="text-[10px] text-slate-500 uppercase font-bold mt-1 block">Honor Badges</span>
                     </div>
                   </div>
 
+                  {/* 🎓 CAMPUS PASSPORT CHECKLIST */}
+                  <div className="pt-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">🎓</span>
+                        <h3 className="text-base font-black text-slate-900 dark:text-zinc-100">Official Towson Campus Passport</h3>
+                      </div>
+                      <span className="text-xs font-bold text-amber-600 bg-amber-50 dark:bg-amber-950 px-2.5 py-1 rounded-full border border-amber-200">
+                        5 of 7 Milestones Completed (71%)
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 text-xs">
+                      {[
+                        { title: "New Student Orientation Completed", status: "VERIFIED", date: "Aug 2024", icon: "✓" },
+                        { title: "Joined Verified Student Org (ASA Towson)", status: "VERIFIED", date: "Sep 2024", icon: "✓" },
+                        { title: "Attended Spring Career & Internship Fair", status: "VERIFIED", date: "Feb 2026", icon: "✓" },
+                        { title: "Logged 40+ Community Service Hours", status: "VERIFIED", date: "Mar 2026", icon: "✓" },
+                        { title: "Participated in Cyber Security Hackathon", status: "VERIFIED", date: "Apr 2026", icon: "✓" },
+                        { title: "Complete Leadership Certificate Academy", status: "IN_PROGRESS", date: "Due May 2026", icon: "○" },
+                        { title: "Attend Senior Alumni Networking Gala", status: "UPCOMING", date: "Fall 2026", icon: "○" },
+                      ].map((item, idx) => (
+                        <div
+                          key={idx}
+                          className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 ${
+                            item.status === "VERIFIED"
+                              ? "bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-950 dark:text-emerald-200"
+                              : "bg-slate-50 dark:bg-zinc-800/40 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ${
+                              item.status === "VERIFIED" ? "bg-emerald-600 text-white" : "bg-slate-200 dark:bg-zinc-700 text-slate-500"
+                            }`}>
+                              {item.icon}
+                            </div>
+                            <span className="font-bold">{item.title}</span>
+                          </div>
+                          <span className="text-[10px] font-mono text-slate-400 font-semibold">{item.date}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* SUB-VIEW 3: 🎥 TOWSON TV & REELS */}
+            {moreSubView === "tv" && (
+              <div className="space-y-6">
+                <div className="bg-gradient-to-r from-rose-900 via-slate-900 to-rose-950 p-6 rounded-3xl text-white shadow-xl flex items-center justify-between flex-wrap gap-4 border border-rose-500/30">
+                  <div>
+                    <span className="text-xs font-extrabold uppercase tracking-widest text-rose-400">Towson TV & Student Creator Studio</span>
+                    <h2 className="text-2xl font-black mt-0.5">Campus Life, Sports, News & Housing Video Tours</h2>
+                  </div>
                   <button
-                    onClick={() => setShowCertificateModal(true)}
-                    className="bg-amber-500 hover:bg-amber-600 text-black font-black text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5"
+                    onClick={() => setShowUploadReelModal(true)}
+                    className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-black px-4 py-2.5 rounded-2xl shadow-lg flex items-center gap-1.5"
                   >
-                    <Award className="w-3.5 h-3.5" />
-                    <span>Official Service Certificate</span>
+                    <Film className="w-4 h-4" />
+                    <span>Upload 60s Reel</span>
                   </button>
                 </div>
 
-                <div className="grid grid-cols-4 gap-3 text-center">
-                  <div className="bg-amber-50 dark:bg-amber-950/40 p-4 rounded-2xl border border-amber-100 dark:border-amber-900">
-                    <span className="text-2xl font-black text-amber-600 block leading-none">{currentUser.volunteerHoursLogged ?? 48} hrs</span>
-                    <span className="text-[10px] text-slate-500 uppercase font-bold mt-1 block">Volunteer Hours</span>
-                  </div>
-                  <div className="bg-slate-50 dark:bg-zinc-800/40 p-4 rounded-2xl border">
-                    <span className="text-2xl font-black text-slate-900 dark:text-zinc-100 block leading-none">{currentUser.eventsAttendedCount ?? 12}</span>
-                    <span className="text-[10px] text-slate-500 uppercase font-bold mt-1 block">Events Attended</span>
-                  </div>
-                  <div className="bg-slate-50 dark:bg-zinc-800/40 p-4 rounded-2xl border">
-                    <span className="text-2xl font-black text-emerald-600 block leading-none">{(currentUser.leadershipRoles || []).length}</span>
-                    <span className="text-[10px] text-slate-500 uppercase font-bold mt-1 block">Leadership Titles</span>
-                  </div>
-                  <div className="bg-slate-50 dark:bg-zinc-800/40 p-4 rounded-2xl border">
-                    <span className="text-2xl font-black text-purple-600 block leading-none">{(currentUser.achievements || []).length}</span>
-                    <span className="text-[10px] text-slate-500 uppercase font-bold mt-1 block">Honor Badges</span>
-                  </div>
-                </div>
-              </div>
-            )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                  {reels.map((reel) => (
+                    <div
+                      key={reel.id}
+                      onClick={() => {
+                        setActiveReel(reel);
+                        triggerToast(`🎬 Now Playing: ${reel.title}`);
+                      }}
+                      className="bg-black rounded-3xl overflow-hidden shadow-xl border-2 border-slate-800 relative group cursor-pointer aspect-[9/14] flex flex-col justify-between p-4"
+                    >
+                      <img src={reel.thumbnailUrl} alt={reel.title} className="absolute inset-0 w-full h-full object-cover opacity-75 group-hover:scale-105 transition duration-500" />
+                      <div className="relative z-10 flex justify-between">
+                        <span className="bg-black/60 backdrop-blur-md text-white text-[10px] font-black px-2.5 py-1 rounded-full">
+                          {reel.category}
+                        </span>
+                        <span className="bg-rose-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                          ▶ {reel.viewsCount.toLocaleString()}
+                        </span>
+                      </div>
 
-            {/* SUB-VIEW: 🎬 REELS */}
-            {moreSubView === "reels" && (
-              <div className="space-y-6">
-                <div className="flex justify-center">
-                  <div className="w-full max-w-sm h-[560px] bg-black rounded-3xl overflow-hidden relative shadow-2xl flex flex-col justify-between border-4 border-slate-900">
-                    <img src={activeReel.thumbnailUrl} alt={activeReel.title} className="absolute inset-0 w-full h-full object-cover opacity-75" />
-                    <div className="relative z-20 p-4 bg-gradient-to-t from-black/90 to-transparent space-y-2 text-white mt-auto">
-                      <div className="text-xs font-black">{activeReel.creatorName}</div>
-                      <p className="text-xs leading-snug">{activeReel.title}</p>
-                      <span className="text-[10px] text-slate-300">🎵 {activeReel.audioTrack}</span>
+                      <div className="relative z-10 bg-gradient-to-t from-black via-black/80 to-transparent p-2 rounded-2xl space-y-1 text-white">
+                        <div className="text-xs font-black">{reel.creatorName}</div>
+                        <p className="text-xs leading-tight line-clamp-2">{reel.title}</p>
+                        <span className="text-[10px] text-slate-300 block">🎵 {reel.audioTrack}</span>
+                      </div>
                     </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* SUB-VIEW 4: 🎮 CAMPUS GAMES & TRIVIA */}
+            {moreSubView === "games" && (
+              <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-6">
+                <div className="flex items-center justify-between flex-wrap gap-4 border-b pb-4">
+                  <div>
+                    <h2 className="text-xl font-black text-slate-900 dark:border-zinc-100">Tiger Trivia Championship & Campus XP</h2>
+                    <p className="text-xs text-slate-500">Test your Towson University history knowledge and earn points toward your Tiger Record.</p>
+                  </div>
+                  <div className="bg-amber-50 dark:bg-amber-950 px-4 py-2 rounded-2xl border border-amber-200 font-mono text-xs font-black text-amber-700 dark:text-amber-300">
+                    ⭐ Campus XP Score: {triviaScore * 50} pts
+                  </div>
+                </div>
+
+                <div className="p-6 bg-slate-50 dark:bg-zinc-800/50 rounded-3xl border space-y-4 max-w-xl mx-auto">
+                  <div className="flex justify-between text-xs font-bold text-slate-400">
+                    <span>Question {activeTriviaQuestionIdx + 1} of {(games[0]?.questions || []).length}</span>
+                    <span>Category: TU Traditions</span>
+                  </div>
+
+                  <h3 className="text-base font-black text-slate-900 dark:text-zinc-100">
+                    {games[0]?.questions[activeTriviaQuestionIdx]?.questionText || "In what year was Towson University originally founded as Maryland State Normal School?"}
+                  </h3>
+
+                  <div className="space-y-2">
+                    {(games[0]?.questions[activeTriviaQuestionIdx]?.options || ["1866", "1912", "1935", "1976"]).map((opt, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => {
+                          setTriviaSelectedOption(i);
+                          if (i === (games[0]?.questions[activeTriviaQuestionIdx]?.correctIndex ?? 0)) {
+                            setTriviaScore((prev) => prev + 1);
+                            triggerToast("🎉 Correct answer! +50 Campus XP");
+                          } else {
+                            triggerToast("❌ Incorrect! Try the next question.");
+                          }
+                          setTimeout(() => {
+                            if (activeTriviaQuestionIdx + 1 < (games[0]?.questions?.length || 4)) {
+                              setActiveTriviaQuestionIdx((prev) => prev + 1);
+                              setTriviaSelectedOption(null);
+                            } else {
+                              setTriviaGameOver(true);
+                            }
+                          }, 1000);
+                        }}
+                        className={`w-full text-left p-3.5 rounded-2xl border text-xs font-bold transition flex items-center justify-between ${
+                          triviaSelectedOption === i
+                            ? "bg-amber-500 text-black border-amber-500 font-black"
+                            : "bg-white dark:bg-zinc-900 hover:border-amber-500 border-slate-200 dark:border-zinc-700"
+                        }`}
+                      >
+                        <span>{opt}</span>
+                        <span>{triviaSelectedOption === i ? "✓" : "→"}</span>
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
             )}
 
-            {/* SUB-VIEW: 🎮 GAMES */}
-            {moreSubView === "games" && (
-              <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border space-y-4">
-                <h3 className="text-base font-bold">{games[0]?.title}</h3>
-                <p className="text-xs text-slate-500">{games[0]?.description}</p>
+            {/* SUB-VIEW 5: 🛍️ MARKETPLACE & OFFICIAL STORE */}
+            {moreSubView === "market" && (
+              <div className="space-y-6">
+                <div className="bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-950 p-6 rounded-3xl text-white shadow-xl flex items-center justify-between flex-wrap gap-4 border border-emerald-500/30">
+                  <div>
+                    <span className="text-xs font-extrabold uppercase tracking-widest text-emerald-400">Towson Student & Official Store</span>
+                    <h2 className="text-2xl font-black mt-0.5">Buy, Sell & Explore Verified Campus Products</h2>
+                  </div>
+                  <button
+                    onClick={() => setShowListMarketItemModal(true)}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black px-4 py-2.5 rounded-2xl shadow-lg flex items-center gap-1.5"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Sell an Item / Product</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {(marketItems || []).map((item) => (
+                    <div key={item.id} className="bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-zinc-800 p-4 shadow-sm space-y-3 flex flex-col justify-between">
+                      <div className="space-y-2">
+                        <div className="h-36 rounded-2xl overflow-hidden bg-slate-800 relative">
+                          <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
+                          <span className="absolute top-2 right-2 bg-black/75 backdrop-blur-md text-white text-[10px] font-black px-2 py-0.5 rounded-full">
+                            ${item.price}
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded-full">
+                          {item.category}
+                        </span>
+                        <h4 className="text-xs font-bold text-slate-900 dark:text-zinc-100">{item.title}</h4>
+                        <p className="text-[11px] text-slate-500 line-clamp-2">{item.description}</p>
+                      </div>
+
+                      <button
+                        onClick={() => triggerToast(`🛒 Added "${item.title}" to your orders.`)}
+                        className="w-full bg-slate-900 dark:bg-zinc-800 hover:bg-emerald-600 text-white text-xs font-bold py-2 rounded-xl transition"
+                      >
+                        Contact Seller (${item.price})
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
-            {/* SUB-VIEW: 🤖 AI */}
+            {/* SUB-VIEW 6: 💼 CAREER & JOBS */}
+            {moreSubView === "career" && (
+              <div className="space-y-6">
+                <div className="bg-gradient-to-r from-amber-950 via-slate-900 to-amber-950 p-6 rounded-3xl text-white shadow-xl flex items-center justify-between flex-wrap gap-4 border border-amber-500/30">
+                  <div>
+                    <span className="text-xs font-extrabold uppercase tracking-widest text-amber-400">Towson Career & Internship Mesh</span>
+                    <h2 className="text-2xl font-black mt-0.5">Verified Student Jobs, Internships & Alumni Mentors</h2>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {(campusJobs || []).map((job) => (
+                    <div key={job.id} className="bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-zinc-800 p-5 space-y-3 flex flex-col justify-between">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-amber-600">{job.employer}</span>
+                          <span className="text-[10px] font-mono bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded font-bold">{job.jobType}</span>
+                        </div>
+                        <h3 className="text-base font-bold">{job.title}</h3>
+                        <p className="text-xs text-slate-500">📍 {job.location} • 💵 {job.wageOrSalary}</p>
+                        <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">{job.description}</p>
+                      </div>
+
+                      <button
+                        onClick={() => triggerToast(`💼 Application submitted for ${job.title} at ${job.employer}!`)}
+                        className="w-full bg-amber-500 hover:bg-amber-600 text-black font-black py-2.5 rounded-xl text-xs shadow-md transition"
+                      >
+                        1-Click Apply with Tiger Record
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* SUB-VIEW 7: 🤖 CAMPUS AI ASSISTANT */}
             {moreSubView === "ai" && (
-              <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border space-y-4">
-                <div className="space-y-3 bg-slate-50 dark:bg-zinc-950 p-4 rounded-2xl max-h-80 overflow-y-auto text-xs">
+              <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-4 max-w-2xl mx-auto">
+                <div className="flex items-center gap-3 border-b pb-3">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-500 flex items-center justify-center text-black font-black text-xl">
+                    ⚡
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-base">TowsonSync Campus AI Assistant</h3>
+                    <p className="text-xs text-slate-500">Ask about dining menus, class schedules, housing, weather, and campus events.</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3 bg-slate-50 dark:bg-zinc-950 p-4 rounded-2xl max-h-96 overflow-y-auto text-xs">
                   {aiChatHistory.map((m, i) => (
-                    <div key={i} className={`p-3 rounded-2xl ${m.role === "user" ? "bg-amber-500 text-black ml-auto" : "bg-white dark:bg-zinc-900"}`}>
+                    <div key={i} className={`p-3.5 rounded-2xl max-w-[85%] ${m.role === "user" ? "bg-amber-500 text-black ml-auto font-semibold" : "bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-200"}`}>
                       {m.text}
                     </div>
                   ))}
                 </div>
+
                 <form onSubmit={handleSendAiPrompt} className="flex gap-2">
                   <input
                     type="text"
-                    placeholder="Ask Towson Campus AI..."
+                    placeholder="Ask Towson Campus AI anything..."
                     value={aiChatQuery}
                     onChange={(e) => setAiChatQuery(e.target.value)}
-                    className="flex-1 bg-slate-100 dark:bg-zinc-800 border rounded-xl px-4 py-2 text-xs"
+                    className="flex-1 bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-2xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
                   />
-                  <button type="submit" className="bg-amber-500 text-black font-bold px-4 py-2 rounded-xl text-xs">
-                    Ask
+                  <button type="submit" className="bg-amber-500 text-black font-black px-5 py-2.5 rounded-2xl text-xs shadow-md">
+                    Send
                   </button>
                 </form>
               </div>
