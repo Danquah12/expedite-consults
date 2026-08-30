@@ -1117,7 +1117,14 @@ export default function CampusSyncApp() {
 
             {/* Actions */}
             <div className="pt-2 flex items-center justify-between gap-3">
-              <span className="text-[10px] text-slate-400">Accessible Entrance: {selectedBuildingModal.accessibleEntrance}</span>
+              <button
+                type="button"
+                onClick={() => setSelectedBuildingModal(null)}
+                className="bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 font-bold px-4 py-2.5 rounded-xl text-xs flex items-center gap-1.5 transition"
+              >
+                <X className="w-4 h-4" />
+                <span>Close</span>
+              </button>
               <button
                 onClick={() => {
                   setSelectedBuildingModal(null);
@@ -1261,11 +1268,18 @@ export default function CampusSyncApp() {
 
       {/* 4.1 MODAL: TUHOUSING TOUR BOOKING */}
       {showTourBookingModal && tourFormProperty && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div
+          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowTourBookingModal(false);
+          }}
+        >
           <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl max-w-md w-full p-6 relative shadow-2xl space-y-4 text-slate-900 dark:text-zinc-100 animate-in zoom-in-95">
             <button
+              type="button"
               onClick={() => setShowTourBookingModal(false)}
-              className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-400 transition"
+              className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 transition"
+              title="Close modal"
             >
               <X className="w-5 h-5" />
             </button>
@@ -1339,12 +1353,23 @@ export default function CampusSyncApp() {
                 🛡️ <strong>Verified Contact:</strong> Managed by {tourFormProperty.landlordName} ({tourFormProperty.landlordContact}).
               </div>
 
-              <button
-                type="submit"
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-3 rounded-2xl text-xs shadow-md transition"
-              >
-                Confirm Tour Appointment
-              </button>
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowTourBookingModal(false)}
+                  className="bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 font-bold py-3 rounded-2xl text-xs transition flex items-center justify-center gap-1.5"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>Cancel</span>
+                </button>
+
+                <button
+                  type="submit"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-black py-3 rounded-2xl text-xs shadow-md transition"
+                >
+                  Confirm Tour
+                </button>
+              </div>
             </form>
           </div>
         </div>
@@ -1352,11 +1377,18 @@ export default function CampusSyncApp() {
 
       {/* 4.2 MODAL: TUHOUSING MAINTENANCE REQUEST */}
       {showMaintenanceModal && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div
+          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowMaintenanceModal(false);
+          }}
+        >
           <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl max-w-md w-full p-6 relative shadow-2xl space-y-4 text-slate-900 dark:text-zinc-100 animate-in zoom-in-95">
             <button
+              type="button"
               onClick={() => setShowMaintenanceModal(false)}
-              className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-400 transition"
+              className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 transition"
+              title="Close modal"
             >
               <X className="w-5 h-5" />
             </button>
@@ -1433,13 +1465,24 @@ export default function CampusSyncApp() {
                 />
               </div>
 
-              <button
-                type="submit"
-                disabled={!newMaintDesc.trim()}
-                className="w-full bg-amber-500 hover:bg-amber-600 text-black font-black py-3 rounded-2xl text-xs shadow-md transition disabled:opacity-50"
-              >
-                Dispatch Repair Request
-              </button>
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowMaintenanceModal(false)}
+                  className="bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 font-bold py-3 rounded-2xl text-xs transition flex items-center justify-center gap-1.5"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>Cancel</span>
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={!newMaintDesc.trim()}
+                  className="w-full bg-amber-500 hover:bg-amber-600 text-black font-black py-3 rounded-2xl text-xs shadow-md transition disabled:opacity-50"
+                >
+                  Dispatch Request
+                </button>
+              </div>
             </form>
           </div>
         </div>
@@ -1447,11 +1490,19 @@ export default function CampusSyncApp() {
 
       {/* 4.3 MODAL: SELECTED HOUSING PROPERTY DETAILS */}
       {selectedHousingListing && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSelectedHousingListing(null);
+          }}
+        >
           <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl max-w-2xl w-full p-6 relative shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto text-slate-900 dark:text-zinc-100 animate-in zoom-in-95">
+            {/* Prominent Floating Close Button */}
             <button
+              type="button"
               onClick={() => setSelectedHousingListing(null)}
-              className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-400 transition z-10"
+              className="absolute top-4 right-4 p-2.5 rounded-full bg-black/80 hover:bg-black text-white transition z-30 shadow-lg"
+              title="Close window"
             >
               <X className="w-5 h-5" />
             </button>
@@ -1525,26 +1576,39 @@ export default function CampusSyncApp() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 pt-2">
-              <button
-                onClick={() => {
-                  setTourFormProperty(selectedHousingListing);
-                  setShowTourBookingModal(true);
-                  setSelectedHousingListing(null);
-                }}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-black py-3 rounded-2xl text-xs shadow-md flex items-center justify-center gap-1.5"
-              >
-                <Calendar className="w-4 h-4" />
-                <span>Schedule a Tour</span>
-              </button>
+            {/* Modal Actions with Clear Cancel / Close Button */}
+            <div className="space-y-2 pt-2">
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTourFormProperty(selectedHousingListing);
+                    setShowTourBookingModal(true);
+                    setSelectedHousingListing(null);
+                  }}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-black py-3 rounded-2xl text-xs shadow-md flex items-center justify-center gap-1.5"
+                >
+                  <Calendar className="w-4 h-4" />
+                  <span>Schedule a Tour</span>
+                </button>
 
-              <a
-                href={`tel:${selectedHousingListing.landlordContact.replace(/\D/g, "")}`}
-                className="bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-2xl text-xs flex items-center justify-center gap-1.5 text-center"
+                <a
+                  href={`tel:${selectedHousingListing.landlordContact.replace(/\D/g, "")}`}
+                  className="bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-2xl text-xs flex items-center justify-center gap-1.5 text-center"
+                >
+                  <PhoneCall className="w-4 h-4" />
+                  <span>Contact Landlord</span>
+                </a>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedHousingListing(null)}
+                className="w-full bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 font-bold py-2.5 rounded-2xl text-xs flex items-center justify-center gap-1.5 transition border border-slate-200 dark:border-zinc-700"
               >
-                <PhoneCall className="w-4 h-4" />
-                <span>Contact Landlord ({selectedHousingListing.landlordContact})</span>
-              </a>
+                <X className="w-4 h-4" />
+                <span>Close / Cancel</span>
+              </button>
             </div>
           </div>
         </div>
