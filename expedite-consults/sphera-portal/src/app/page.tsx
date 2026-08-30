@@ -5,6 +5,26 @@ import { useState, useEffect } from "react";
 /* ─── data ─── */
 const products = [
   {
+    name: "The Digital Campus (CampusSync)",
+    tagline: "Decoupled Campus Operating Platform with Reels, Games & Co-Curricular Records",
+    description:
+      "All-in-one university community operating engine — 🔴 Live On Campus pulse, Campus Reels vertical video, Campus Games & Cybersecurity Challenge, Find My People peer matchmaker, 30s Quick Groups, Opportunity Hub, and verified Co-Curricular service transcripts.",
+    url: "https://expedite-consults.vercel.app/campus",
+    color: "#6366f1",
+    icon: "🎓",
+    status: "live",
+  },
+  {
+    name: "Student Verification & Onboarding",
+    tagline: ".edu Institutional SSO & 3-Step Student Profile Onboarding",
+    description:
+      "Verified academic authentication wizard for students, student club officers, and university faculty advisors.",
+    url: "https://expedite-consults.vercel.app/campus/login",
+    color: "#10b981",
+    icon: "🔐",
+    status: "live",
+  },
+  {
     name: "Ægis — Mission Control",
     tagline: "Unified Fleet Gateway & Security Operations Command",
     description:
