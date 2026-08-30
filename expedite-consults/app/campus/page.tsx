@@ -2062,7 +2062,7 @@ export default function CampusSyncApp() {
 
               {/* 7. TUHousing Off-Campus Listings */}
               {(mapLayerFilter === "ALL" || mapLayerFilter === "HOUSING") &&
-                housingListings.map((hse) => (
+                (housingListings || []).map((hse) => (
                   <button
                     key={hse.id}
                     onClick={() => {
@@ -2245,8 +2245,8 @@ export default function CampusSyncApp() {
               {[
                 { id: "find", label: "🔍 Find Homes" },
                 { id: "roommates", label: "👥 Roommate Matchmaker" },
-                { id: "tours", label: `📅 Booked Tours (${housingTours.length})` },
-                { id: "maintenance", label: `🔧 Resident Maintenance (${housingTickets.length})` },
+                { id: "tours", label: `📅 Booked Tours (${(housingTours || []).length})` },
+                { id: "maintenance", label: `🔧 Resident Maintenance (${(housingTickets || []).length})` },
                 { id: "calculator", label: "💡 Cost of Living Calculator" },
               ].map((sub) => (
                 <button
@@ -2303,7 +2303,7 @@ export default function CampusSyncApp() {
 
                 {/* Listings Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {housingListings
+                  {(housingListings || [])
                     .filter((h) => housingFilterType === "ALL" || h.propertyType === housingFilterType)
                     .filter((h) => h.monthlyRent <= housingMaxRent)
                     .map((listing) => (
@@ -2379,7 +2379,7 @@ export default function CampusSyncApp() {
 
                             {/* Amenities Chips */}
                             <div className="flex flex-wrap gap-1 pt-1">
-                              {listing.amenities.slice(0, 4).map((amenity) => (
+                              {(listing.amenities || []).slice(0, 4).map((amenity) => (
                                 <span
                                   key={amenity}
                                   className="text-[10px] bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-semibold px-2 py-0.5 rounded-lg border border-indigo-100 dark:border-indigo-900"
@@ -2433,7 +2433,7 @@ export default function CampusSyncApp() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {roommateProfiles.map((rm) => (
+                  {(roommateProfiles || []).map((rm) => (
                     <div
                       key={rm.id}
                       className="bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-zinc-800 p-6 shadow-sm space-y-4 flex flex-col justify-between"
@@ -2470,7 +2470,7 @@ export default function CampusSyncApp() {
 
                         {/* Match Tags */}
                         <div className="space-y-1">
-                          {rm.compatibilityTags.map((tag) => (
+                          {(rm.compatibilityTags || []).map((tag) => (
                             <div key={tag} className="text-[11px] text-emerald-600 font-bold flex items-center gap-1">
                               <span>{tag}</span>
                             </div>
@@ -2500,11 +2500,11 @@ export default function CampusSyncApp() {
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-black text-slate-900 dark:text-zinc-100">Your Scheduled Property Tours</h2>
-                  <span className="text-xs font-bold text-slate-500">{housingTours.length} Active Tours</span>
+                  <span className="text-xs font-bold text-slate-500">{(housingTours || []).length} Active Tours</span>
                 </div>
 
                 <div className="space-y-4">
-                  {housingTours.map((tour) => (
+                  {(housingTours || []).map((tour) => (
                     <div
                       key={tour.id}
                       className="bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-zinc-800 p-6 shadow-sm flex items-center justify-between flex-wrap gap-4"
@@ -2573,7 +2573,7 @@ export default function CampusSyncApp() {
                 </div>
 
                 <div className="space-y-4">
-                  {housingTickets.map((tkt) => (
+                  {(housingTickets || []).map((tkt) => (
                     <div
                       key={tkt.id}
                       className="bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-zinc-800 p-6 shadow-sm space-y-3"
