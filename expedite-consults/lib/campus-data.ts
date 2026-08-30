@@ -1880,3 +1880,281 @@ export const initialChatMessages: ChatMessage[] = [
     createdAt: new Date().toISOString(),
   },
 ];
+
+// ─────────────────────────────────────────────────────────────
+// 31. TUHOUSING DOMAIN MODELS & SEED DATASETS
+// ─────────────────────────────────────────────────────────────
+
+export interface HousingListing {
+  id: string;
+  title: string;
+  propertyType: "Apartment" | "Shared House" | "Private Room" | "Sublease" | "University Dorm";
+  address: string;
+  neighborhood: string;
+  monthlyRent: number;
+  estimatedUtilities: number;
+  estimatedTotalMonthly: number;
+  bedrooms: number;
+  bathrooms: number;
+  sqft: number;
+  distanceFromCampusMiles: number;
+  walkTimeMinutes: number;
+  bikeTimeMinutes: number;
+  driveTimeMinutes: number;
+  transitTimeMinutes: number;
+  shuttleRouteName: string;
+  nextShuttleEtaMinutes: number;
+  isVerifiedLandlord: boolean;
+  trustScorePercent: number;
+  rating: number;
+  reviewsCount: number;
+  images: string[];
+  videoWalkthroughUrl?: string;
+  hasVirtualTour: boolean;
+  amenities: string[];
+  availableMoveInDate: string;
+  leaseDuration: string;
+  landlordName: string;
+  landlordContact: string;
+  roomsAvailable: number;
+  mapCoords: { x: number; y: number };
+  isSaved: boolean;
+  description: string;
+}
+
+export interface RoommateProfile {
+  id: string;
+  name: string;
+  avatar: string;
+  major: string;
+  gradYear: number;
+  classStanding: string;
+  budgetMonthly: string;
+  targetMoveIn: string;
+  sleepSchedule: "Early Bird (10 PM - 6 AM)" | "Night Owl (1 AM - 9 AM)" | "Flexible";
+  cleanliness: "Spotless / Super Neat" | "Moderate / Normal" | "Relaxed";
+  studyHabits: "Quiet Study at Home" | "Library Person" | "Group Study Host";
+  petPreference: "Loves Dogs/Cats" | "No Pets Allowed";
+  compatibilityPercent: number;
+  compatibilityTags: string[];
+  bio: string;
+  preferredLocations: string[];
+  isConnected: boolean;
+}
+
+export interface HousingTourBooking {
+  id: string;
+  propertyId: string;
+  propertyTitle: string;
+  propertyAddress: string;
+  tourDate: string;
+  tourTimeSlot: string;
+  tourType: "In-Person Guided Tour" | "Live Video Walkthrough";
+  status: "Confirmed" | "Pending Landlord Confirmation";
+  landlordName: string;
+  contactNumber: string;
+}
+
+export interface HousingMaintenanceTicket {
+  id: string;
+  ticketNumber: string;
+  propertyAddress: string;
+  unitNumber: string;
+  category: "Plumbing" | "Electrical" | "Heating / AC" | "Appliance" | "Lock & Key";
+  urgency: "Standard" | "Urgent" | "Emergency";
+  description: string;
+  status: "Submitted" | "Assigned to Tech" | "In Progress" | "Resolved";
+  submittedDate: string;
+  assignedTech?: string;
+}
+
+export const initialHousingListings: HousingListing[] = [
+  {
+    id: "hse-1",
+    title: "University Village Towson — 2BR Renovated Suite",
+    propertyType: "Apartment",
+    address: "201 E Joppa Rd, Towson, MD 21286",
+    neighborhood: "Towson Town Center District",
+    monthlyRent: 925,
+    estimatedUtilities: 85,
+    estimatedTotalMonthly: 1010,
+    bedrooms: 2,
+    bathrooms: 2,
+    sqft: 940,
+    distanceFromCampusMiles: 0.7,
+    walkTimeMinutes: 14,
+    bikeTimeMinutes: 5,
+    driveTimeMinutes: 3,
+    transitTimeMinutes: 7,
+    shuttleRouteName: "Tiger Bus Gold Route #14",
+    nextShuttleEtaMinutes: 4,
+    isVerifiedLandlord: true,
+    trustScorePercent: 98,
+    rating: 4.8,
+    reviewsCount: 34,
+    images: [
+      "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&auto=format&fit=crop&q=80",
+    ],
+    videoWalkthroughUrl: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&auto=format&fit=crop&q=80",
+    hasVirtualTour: true,
+    amenities: ["Furnished", "In-Unit Washer/Dryer", "High-Speed Wi-Fi", "Pet Friendly", "Fitness Center", "Gated Parking"],
+    availableMoveInDate: "August 15, 2026",
+    leaseDuration: "12 Months (Student Lease)",
+    landlordName: "Towson Village Residential Mgmt",
+    landlordContact: "(410) 825-4490",
+    roomsAvailable: 1,
+    mapCoords: { x: 55, y: 22 },
+    isSaved: true,
+    description: "Modern student apartment with individual leases, private bathroom per room, study lounge, and direct stop for the Towson Gold Shuttle.",
+  },
+  {
+    id: "hse-2",
+    title: "The Quarters at Towson Town Center — 4BR Shared House",
+    propertyType: "Shared House",
+    address: "8600 LaSalle Rd, Towson, MD 21286",
+    neighborhood: "LaSalle Academic Corridor",
+    monthlyRent: 780,
+    estimatedUtilities: 60,
+    estimatedTotalMonthly: 840,
+    bedrooms: 4,
+    bathrooms: 2,
+    sqft: 1650,
+    distanceFromCampusMiles: 1.1,
+    walkTimeMinutes: 20,
+    bikeTimeMinutes: 7,
+    driveTimeMinutes: 4,
+    transitTimeMinutes: 9,
+    shuttleRouteName: "TU Express Shuttle #8",
+    nextShuttleEtaMinutes: 8,
+    isVerifiedLandlord: true,
+    trustScorePercent: 95,
+    rating: 4.6,
+    reviewsCount: 19,
+    images: [
+      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80",
+    ],
+    hasVirtualTour: true,
+    amenities: ["Free Parking (4 Cars)", "Backyard & BBQ", "Dishwasher", "Central AC", "Storage Shed"],
+    availableMoveInDate: "July 1, 2026",
+    leaseDuration: "12 Months",
+    landlordName: "David Sterling (Verified TU Alum Owner)",
+    landlordContact: "(410) 555-0192",
+    roomsAvailable: 2,
+    mapCoords: { x: 72, y: 18 },
+    isSaved: false,
+    description: "Spacious colonial student house with hard-wood floors, high-speed fiber internet, and quiet residential neighborhood 1 mile from Cook Library.",
+  },
+  {
+    id: "hse-3",
+    title: "Altus Towson Row — Modern Studio Suite",
+    propertyType: "Apartment",
+    address: "109 E Chesapeake Ave, Towson, MD 21286",
+    neighborhood: "Downtown Towson Hub",
+    monthlyRent: 1150,
+    estimatedUtilities: 0,
+    estimatedTotalMonthly: 1150,
+    bedrooms: 1,
+    bathrooms: 1,
+    sqft: 520,
+    distanceFromCampusMiles: 0.5,
+    walkTimeMinutes: 10,
+    bikeTimeMinutes: 3,
+    driveTimeMinutes: 2,
+    transitTimeMinutes: 5,
+    shuttleRouteName: "Tiger Bus Downtown Line",
+    nextShuttleEtaMinutes: 2,
+    isVerifiedLandlord: true,
+    trustScorePercent: 99,
+    rating: 4.9,
+    reviewsCount: 48,
+    images: [
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&auto=format&fit=crop&q=80",
+    ],
+    hasVirtualTour: true,
+    amenities: ["All Utilities Included", "Rooftop Pool & Deck", "24/7 Study Lounge", "Amazon Hub Lockers", "Bicycle Storage"],
+    availableMoveInDate: "August 1, 2026",
+    leaseDuration: "10 or 12 Months",
+    landlordName: "Towson Row Properties",
+    landlordContact: "(410) 704-8800",
+    roomsAvailable: 1,
+    mapCoords: { x: 42, y: 15 },
+    isSaved: false,
+    description: "Luxury off-campus student high-rise right above Whole Foods and Target in Downtown Towson. 10-minute walk to Freedom Square.",
+  },
+];
+
+export const initialRoommateProfiles: RoommateProfile[] = [
+  {
+    id: "rm-1",
+    name: "Marcus Taylor",
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+    major: "Computer Science",
+    gradYear: 2027,
+    classStanding: "Sophomore",
+    budgetMonthly: "$800 – $1,050/mo",
+    targetMoveIn: "Fall 2026 (August)",
+    sleepSchedule: "Night Owl (1 AM - 9 AM)",
+    cleanliness: "Spotless / Super Neat",
+    studyHabits: "Quiet Study at Home",
+    petPreference: "Loves Dogs/Cats",
+    compatibilityPercent: 94,
+    compatibilityTags: ["✓ Same Budget Range", "✓ Similar CS Major Schedule", "✓ Shared Cleanliness Priority"],
+    bio: "CS sophomore looking for 1 or 2 roommates for a 2-4BR apartment near Towson Town Center. Quiet during weeknights, into gaming and gym on weekends.",
+    preferredLocations: ["University Village", "Towson Row", "The Quarters"],
+    isConnected: false,
+  },
+  {
+    id: "rm-2",
+    name: "Sarah Jenkins",
+    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+    major: "Nursing & Health Professions",
+    gradYear: 2026,
+    classStanding: "Junior",
+    budgetMonthly: "$900 – $1,200/mo",
+    targetMoveIn: "July / August 2026",
+    sleepSchedule: "Early Bird (10 PM - 6 AM)",
+    cleanliness: "Spotless / Super Neat",
+    studyHabits: "Library Person",
+    petPreference: "No Pets Allowed",
+    compatibilityPercent: 88,
+    compatibilityTags: ["✓ Match on Quiet Hours", "✓ Target Move-in August", "✓ Verified TU Student"],
+    bio: "TU Nursing junior with clinical rotations. Need a respectful, peaceful place to study and recharge.",
+    preferredLocations: ["Altus Towson Row", "Cardiff Hall Apts"],
+    isConnected: false,
+  },
+];
+
+export const initialHousingTours: HousingTourBooking[] = [
+  {
+    id: "tour-1",
+    propertyId: "hse-1",
+    propertyTitle: "University Village Towson — 2BR Renovated Suite",
+    propertyAddress: "201 E Joppa Rd, Towson, MD",
+    tourDate: "Saturday, Mar 08, 2026",
+    tourTimeSlot: "11:00 AM",
+    tourType: "In-Person Guided Tour",
+    status: "Confirmed",
+    landlordName: "Towson Village Residential Mgmt",
+    contactNumber: "(410) 825-4490",
+  },
+];
+
+export const initialHousingMaintenanceTickets: HousingMaintenanceTicket[] = [
+  {
+    id: "maint-1",
+    ticketNumber: "#TUH-9412",
+    propertyAddress: "201 E Joppa Rd (Univ. Village)",
+    unitNumber: "Apt 304-B",
+    category: "Heating / AC",
+    urgency: "Standard",
+    description: "Thermostat fan making clicking noise during heating cycle.",
+    status: "In Progress",
+    submittedDate: "Yesterday at 3:15 PM",
+    assignedTech: "Carlos M. (Facilities Tech #4)",
+  },
+];
+

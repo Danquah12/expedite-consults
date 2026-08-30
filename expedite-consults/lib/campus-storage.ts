@@ -34,6 +34,10 @@ import {
   TowsonParkingGarage,
   SafetyBeacon,
   ScavengerHuntCheckpoint,
+  HousingListing,
+  RoommateProfile,
+  HousingTourBooking,
+  HousingMaintenanceTicket,
   defaultCurrentUser,
   initialCampusPosts,
   initialCampusEvents,
@@ -65,6 +69,10 @@ import {
   initialTowsonParking,
   initialTowsonSafetyBeacons,
   initialTowsonScavengerCheckpoints,
+  initialHousingListings,
+  initialRoommateProfiles,
+  initialHousingTours,
+  initialHousingMaintenanceTickets,
 } from "./campus-data";
 
 const STORAGE_KEYS = {
@@ -100,6 +108,10 @@ const STORAGE_KEYS = {
   TOWSON_PARKING: "campussync_tu_parking_v6",
   TOWSON_SAFETY: "campussync_tu_safety_v6",
   TOWSON_SCAVENGER: "campussync_tu_scavenger_v6",
+  HOUSING_LISTINGS: "campussync_housing_listings_v6",
+  ROOMMATE_PROFILES: "campussync_roommates_v6",
+  HOUSING_TOURS: "campussync_housing_tours_v6",
+  HOUSING_MAINTENANCE: "campussync_housing_maint_v6",
   LAST_SYNC: "campussync_last_sync_v6",
 };
 
@@ -353,6 +365,37 @@ export function loadMarketplaceItems(): MarketItem[] {
 }
 export function saveMarketplaceItems(items: MarketItem[]): void {
   safeSave(STORAGE_KEYS.MARKETPLACE, items);
+}
+
+// ─────────────────────────────────────────────────────────────
+// TUHOUSING STORAGE API
+// ─────────────────────────────────────────────────────────────
+export function loadHousingListings(): HousingListing[] {
+  return safeLoad(STORAGE_KEYS.HOUSING_LISTINGS, initialHousingListings);
+}
+export function saveHousingListings(listings: HousingListing[]): void {
+  safeSave(STORAGE_KEYS.HOUSING_LISTINGS, listings);
+}
+
+export function loadRoommateProfiles(): RoommateProfile[] {
+  return safeLoad(STORAGE_KEYS.ROOMMATE_PROFILES, initialRoommateProfiles);
+}
+export function saveRoommateProfiles(profiles: RoommateProfile[]): void {
+  safeSave(STORAGE_KEYS.ROOMMATE_PROFILES, profiles);
+}
+
+export function loadHousingTours(): HousingTourBooking[] {
+  return safeLoad(STORAGE_KEYS.HOUSING_TOURS, initialHousingTours);
+}
+export function saveHousingTours(tours: HousingTourBooking[]): void {
+  safeSave(STORAGE_KEYS.HOUSING_TOURS, tours);
+}
+
+export function loadHousingMaintenanceTickets(): HousingMaintenanceTicket[] {
+  return safeLoad(STORAGE_KEYS.HOUSING_MAINTENANCE, initialHousingMaintenanceTickets);
+}
+export function saveHousingMaintenanceTickets(tickets: HousingMaintenanceTicket[]): void {
+  safeSave(STORAGE_KEYS.HOUSING_MAINTENANCE, tickets);
 }
 
 export function loadChatMessages(): ChatMessage[] {
