@@ -28,6 +28,12 @@ import {
   CampusNotification,
   NotificationPreferences,
   ContentReport,
+  TowsonBuilding,
+  LocationCircle,
+  TowsonShuttle,
+  TowsonParkingGarage,
+  SafetyBeacon,
+  ScavengerHuntCheckpoint,
   defaultCurrentUser,
   initialCampusPosts,
   initialCampusEvents,
@@ -53,36 +59,48 @@ import {
   initialCampusGames,
   initialCampusNotifications,
   defaultNotificationPreferences,
+  initialTowsonBuildings,
+  initialTowsonCircles,
+  initialTowsonShuttles,
+  initialTowsonParking,
+  initialTowsonSafetyBeacons,
+  initialTowsonScavengerCheckpoints,
 } from "./campus-data";
 
 const STORAGE_KEYS = {
-  POSTS: "campussync_posts_v5",
-  EVENTS: "campussync_events_v5",
-  COURSES: "campussync_courses_v5",
-  CLUBS: "campussync_clubs_v5",
-  MARKETPLACE: "campussync_market_v5",
-  MESSAGES: "campussync_messages_v5",
-  USER: "campussync_user_v5",
-  VOLUNTEER: "campussync_volunteer_v5",
-  RESEARCH: "campussync_research_v5",
-  JOBS: "campussync_jobs_v5",
-  POLLS: "campussync_polls_v5",
-  ALERTS: "campussync_alerts_v5",
-  MEDIA: "campussync_media_v5",
-  STUDY_PODS: "campussync_pods_v5",
-  LIVE_ACT: "campussync_live_v5",
-  PEER_MATCH: "campussync_peers_v5",
-  QUICK_GROUPS: "campussync_qgroups_v5",
-  OPPORTUNITIES: "campussync_opps_v5",
-  SERVICE_REQ: "campussync_311_v5",
-  EVENT_MEMORIES: "campussync_memories_v5",
-  OFFICE_HOURS: "campussync_oh_v5",
-  REELS: "campussync_reels_v5",
-  GAMES: "campussync_games_v5",
-  NOTIFICATIONS: "campussync_notifs_v5",
-  NOTIF_PREFS: "campussync_notif_prefs_v5",
-  REPORTS: "campussync_reports_v5",
-  LAST_SYNC: "campussync_last_sync_v5",
+  POSTS: "campussync_posts_v6",
+  EVENTS: "campussync_events_v6",
+  COURSES: "campussync_courses_v6",
+  CLUBS: "campussync_clubs_v6",
+  MARKETPLACE: "campussync_market_v6",
+  MESSAGES: "campussync_messages_v6",
+  USER: "campussync_user_v6",
+  VOLUNTEER: "campussync_volunteer_v6",
+  RESEARCH: "campussync_research_v6",
+  JOBS: "campussync_jobs_v6",
+  POLLS: "campussync_polls_v6",
+  ALERTS: "campussync_alerts_v6",
+  MEDIA: "campussync_media_v6",
+  STUDY_PODS: "campussync_pods_v6",
+  LIVE_ACT: "campussync_live_v6",
+  PEER_MATCH: "campussync_peers_v6",
+  QUICK_GROUPS: "campussync_qgroups_v6",
+  OPPORTUNITIES: "campussync_opps_v6",
+  SERVICE_REQ: "campussync_311_v6",
+  EVENT_MEMORIES: "campussync_memories_v6",
+  OFFICE_HOURS: "campussync_oh_v6",
+  REELS: "campussync_reels_v6",
+  GAMES: "campussync_games_v6",
+  NOTIFICATIONS: "campussync_notifs_v6",
+  NOTIF_PREFS: "campussync_notif_prefs_v6",
+  REPORTS: "campussync_reports_v6",
+  TOWSON_BUILDINGS: "campussync_tu_buildings_v6",
+  TOWSON_CIRCLES: "campussync_tu_circles_v6",
+  TOWSON_SHUTTLES: "campussync_tu_shuttles_v6",
+  TOWSON_PARKING: "campussync_tu_parking_v6",
+  TOWSON_SAFETY: "campussync_tu_safety_v6",
+  TOWSON_SCAVENGER: "campussync_tu_scavenger_v6",
+  LAST_SYNC: "campussync_last_sync_v6",
 };
 
 function safeLoad<T>(key: string, fallback: T): T {
@@ -107,7 +125,55 @@ function safeSave<T>(key: string, value: T): void {
   }
 }
 
-// 1. Reels Storage
+// 1. Towson Buildings
+export function loadTowsonBuildings(): TowsonBuilding[] {
+  return safeLoad(STORAGE_KEYS.TOWSON_BUILDINGS, initialTowsonBuildings);
+}
+export function saveTowsonBuildings(buildings: TowsonBuilding[]): void {
+  safeSave(STORAGE_KEYS.TOWSON_BUILDINGS, buildings);
+}
+
+// 2. Towson Circles (Life360 Groups)
+export function loadTowsonCircles(): LocationCircle[] {
+  return safeLoad(STORAGE_KEYS.TOWSON_CIRCLES, initialTowsonCircles);
+}
+export function saveTowsonCircles(circles: LocationCircle[]): void {
+  safeSave(STORAGE_KEYS.TOWSON_CIRCLES, circles);
+}
+
+// 3. Towson Shuttles (Tiger Ride)
+export function loadTowsonShuttles(): TowsonShuttle[] {
+  return safeLoad(STORAGE_KEYS.TOWSON_SHUTTLES, initialTowsonShuttles);
+}
+export function saveTowsonShuttles(shuttles: TowsonShuttle[]): void {
+  safeSave(STORAGE_KEYS.TOWSON_SHUTTLES, shuttles);
+}
+
+// 4. Towson Parking
+export function loadTowsonParking(): TowsonParkingGarage[] {
+  return safeLoad(STORAGE_KEYS.TOWSON_PARKING, initialTowsonParking);
+}
+export function saveTowsonParking(parking: TowsonParkingGarage[]): void {
+  safeSave(STORAGE_KEYS.TOWSON_PARKING, parking);
+}
+
+// 5. Towson Safety Beacons (TUPD)
+export function loadTowsonSafetyBeacons(): SafetyBeacon[] {
+  return safeLoad(STORAGE_KEYS.TOWSON_SAFETY, initialTowsonSafetyBeacons);
+}
+export function saveTowsonSafetyBeacons(beacons: SafetyBeacon[]): void {
+  safeSave(STORAGE_KEYS.TOWSON_SAFETY, beacons);
+}
+
+// 6. Towson Scavenger Hunt Checkpoints
+export function loadTowsonScavengerCheckpoints(): ScavengerHuntCheckpoint[] {
+  return safeLoad(STORAGE_KEYS.TOWSON_SCAVENGER, initialTowsonScavengerCheckpoints);
+}
+export function saveTowsonScavengerCheckpoints(checkpoints: ScavengerHuntCheckpoint[]): void {
+  safeSave(STORAGE_KEYS.TOWSON_SCAVENGER, checkpoints);
+}
+
+// 7. Reels Storage
 export function loadCampusReels(): CampusReel[] {
   return safeLoad(STORAGE_KEYS.REELS, initialCampusReels);
 }
@@ -115,7 +181,7 @@ export function saveCampusReels(reels: CampusReel[]): void {
   safeSave(STORAGE_KEYS.REELS, reels);
 }
 
-// 2. Games & Leaderboards Storage
+// 8. Games & Leaderboards Storage
 export function loadCampusGames(): CampusGame[] {
   return safeLoad(STORAGE_KEYS.GAMES, initialCampusGames);
 }
@@ -123,7 +189,7 @@ export function saveCampusGames(games: CampusGame[]): void {
   safeSave(STORAGE_KEYS.GAMES, games);
 }
 
-// 3. Notifications Storage
+// 9. Notifications Storage
 export function loadCampusNotifications(): CampusNotification[] {
   return safeLoad(STORAGE_KEYS.NOTIFICATIONS, initialCampusNotifications);
 }
@@ -131,7 +197,7 @@ export function saveCampusNotifications(notifs: CampusNotification[]): void {
   safeSave(STORAGE_KEYS.NOTIFICATIONS, notifs);
 }
 
-// 4. Notification Preferences
+// 10. Notification Preferences
 export function loadNotificationPreferences(): NotificationPreferences {
   return safeLoad(STORAGE_KEYS.NOTIF_PREFS, defaultNotificationPreferences);
 }
@@ -139,7 +205,7 @@ export function saveNotificationPreferences(prefs: NotificationPreferences): voi
   safeSave(STORAGE_KEYS.NOTIF_PREFS, prefs);
 }
 
-// 5. Reports Pipeline
+// 11. Reports Pipeline
 export function loadContentReports(): ContentReport[] {
   return safeLoad(STORAGE_KEYS.REPORTS, []);
 }
@@ -148,7 +214,7 @@ export function saveContentReport(report: ContentReport): void {
   safeSave(STORAGE_KEYS.REPORTS, [report, ...reports]);
 }
 
-// 6. Live Activities Storage
+// 12. Live Activities Storage
 export function loadLiveActivities(): LiveCampusActivity[] {
   return safeLoad(STORAGE_KEYS.LIVE_ACT, initialLiveActivities);
 }
@@ -156,7 +222,7 @@ export function saveLiveActivities(acts: LiveCampusActivity[]): void {
   safeSave(STORAGE_KEYS.LIVE_ACT, acts);
 }
 
-// 7. Peer Matches ("Find My People")
+// 13. Peer Matches ("Find My People")
 export function loadPeerMatches(): PeerMatch[] {
   return safeLoad(STORAGE_KEYS.PEER_MATCH, initialPeerMatches);
 }
@@ -164,7 +230,7 @@ export function savePeerMatches(peers: PeerMatch[]): void {
   safeSave(STORAGE_KEYS.PEER_MATCH, peers);
 }
 
-// 8. Quick Groups ("30-Second Groups")
+// 14. Quick Groups ("30-Second Groups")
 export function loadQuickGroups(): QuickGroup[] {
   return safeLoad(STORAGE_KEYS.QUICK_GROUPS, initialQuickGroups);
 }
@@ -172,7 +238,7 @@ export function saveQuickGroups(groups: QuickGroup[]): void {
   safeSave(STORAGE_KEYS.QUICK_GROUPS, groups);
 }
 
-// 9. Consolidated Opportunities
+// 15. Consolidated Opportunities
 export function loadCampusOpportunities(): CampusOpportunity[] {
   return safeLoad(STORAGE_KEYS.OPPORTUNITIES, initialCampusOpportunities);
 }
@@ -180,7 +246,7 @@ export function saveCampusOpportunities(opps: CampusOpportunity[]): void {
   safeSave(STORAGE_KEYS.OPPORTUNITIES, opps);
 }
 
-// 10. 311 Service Requests
+// 16. 311 Service Requests
 export function loadServiceRequests(): CampusServiceRequest[] {
   return safeLoad(STORAGE_KEYS.SERVICE_REQ, initialServiceRequests);
 }
@@ -188,7 +254,7 @@ export function saveServiceRequests(reqs: CampusServiceRequest[]): void {
   safeSave(STORAGE_KEYS.SERVICE_REQ, reqs);
 }
 
-// 11. Event Memories
+// 17. Event Memories
 export function loadEventMemories(): EventMemory[] {
   return safeLoad(STORAGE_KEYS.EVENT_MEMORIES, initialEventMemories);
 }
@@ -196,7 +262,7 @@ export function saveEventMemories(mems: EventMemory[]): void {
   safeSave(STORAGE_KEYS.EVENT_MEMORIES, mems);
 }
 
-// 12. Office Hours
+// 18. Office Hours
 export function loadOfficeHours(): OfficeHourSlot[] {
   return safeLoad(STORAGE_KEYS.OFFICE_HOURS, initialOfficeHours);
 }
@@ -204,7 +270,7 @@ export function saveOfficeHours(oh: OfficeHourSlot[]): void {
   safeSave(STORAGE_KEYS.OFFICE_HOURS, oh);
 }
 
-// 13. Core Domain Getters
+// 19. Core Domain Getters
 export function loadCampusPosts(): CampusPost[] {
   return safeLoad(STORAGE_KEYS.POSTS, initialCampusPosts);
 }
@@ -308,6 +374,8 @@ export function loadCurrentUser(): UserProfile {
     goals: Array.isArray(loaded?.goals) ? loaded.goals : defaultCurrentUser.goals || [],
     volunteerHoursLogged: typeof loaded?.volunteerHoursLogged === "number" ? loaded.volunteerHoursLogged : defaultCurrentUser.volunteerHoursLogged,
     eventsAttendedCount: typeof loaded?.eventsAttendedCount === "number" ? loaded.eventsAttendedCount : defaultCurrentUser.eventsAttendedCount,
+    isLocationSharing: loaded?.isLocationSharing ?? false,
+    ghostModeEnabled: loaded?.ghostModeEnabled ?? false,
   };
 }
 export function saveCurrentUser(user: UserProfile): void {
