@@ -2720,41 +2720,131 @@ You have currently completed **${currentUser.volunteerHoursLogged} verified volu
             {/* SUB-VIEW 5: 🏆 EXPERIENCE TRANSCRIPT */}
             {moreSubView === "transcript" && (
               <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-6">
-                <div className="flex items-start justify-between flex-wrap gap-4 border-b pb-6">
+                
+                {/* Header Profile & Export Actions */}
+                <div className="flex items-start justify-between flex-wrap gap-4 border-b border-slate-200 dark:border-zinc-800 pb-6">
                   <div className="flex items-center gap-4">
-                    <img src={currentUser.avatar} alt={currentUser.name} className="w-16 h-16 rounded-3xl object-cover ring-4 ring-indigo-500/30" />
+                    <img
+                      src={currentUser?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"}
+                      alt={currentUser?.name || "Student"}
+                      className="w-16 h-16 rounded-3xl object-cover ring-4 ring-indigo-500/30"
+                    />
                     <div>
-                      <h2 className="text-xl font-black">{currentUser.name}</h2>
-                      <p className="text-xs text-slate-500">Major: {currentUser.major} • ID: {currentUser.studentId}</p>
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-xl font-black text-slate-900 dark:text-zinc-100">{currentUser?.name || "Kwesi Asiedu"}</h2>
+                        <span className="text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950 text-emerald-600 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+                          Verified Student Account ✓
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
+                        Major: <strong className="text-slate-800 dark:text-zinc-200">{currentUser?.major || "Information Technology"}</strong> • Minor: {currentUser?.minor || "Cybersecurity"} • Student ID: <code className="font-mono">{currentUser?.studentId || "#9412-IT-26"}</code> • Class of {currentUser?.gradYear || 2026}
+                      </p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => setShowCertificateModal(true)}
-                    className="bg-amber-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl flex items-center gap-1.5"
-                  >
-                    <Award className="w-3.5 h-3.5" />
-                    <span>Official Service Certificate</span>
-                  </button>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setShowCertificateModal(true)}
+                      className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-md flex items-center gap-1.5 transition"
+                    >
+                      <Award className="w-3.5 h-3.5 text-amber-100" />
+                      <span>Official Certificate</span>
+                    </button>
+                    <button
+                      onClick={() => triggerToast("📄 Verified Campus Experience Transcript PDF exported!")}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-md flex items-center gap-1.5 transition"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      <span>Export Transcript PDF</span>
+                    </button>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-4 gap-3 text-center">
-                  <div className="bg-slate-50 dark:bg-zinc-800/40 p-4 rounded-2xl">
-                    <span className="text-2xl font-black text-indigo-600 block">{currentUser.volunteerHoursLogged}</span>
-                    <span className="text-[10px] text-slate-400 uppercase font-bold">Volunteer Hours</span>
+                {/* 4 Stat Summary Cards */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                  <div className="bg-indigo-50 dark:bg-indigo-950/40 p-4 rounded-2xl border border-indigo-100 dark:border-indigo-900/60">
+                    <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400 block leading-none">
+                      {currentUser?.volunteerHoursLogged ?? 48} hrs
+                    </span>
+                    <span className="text-[10px] text-slate-500 dark:text-zinc-400 uppercase font-bold mt-1 block">Verified Volunteer Hours</span>
                   </div>
-                  <div className="bg-slate-50 dark:bg-zinc-800/40 p-4 rounded-2xl">
-                    <span className="text-2xl font-black text-amber-500 block">{currentUser.eventsAttendedCount}</span>
-                    <span className="text-[10px] text-slate-400 uppercase font-bold">Events Attended</span>
+                  <div className="bg-amber-50 dark:bg-amber-950/40 p-4 rounded-2xl border border-amber-100 dark:border-amber-900/60">
+                    <span className="text-2xl font-black text-amber-600 dark:text-amber-400 block leading-none">
+                      {currentUser?.eventsAttendedCount ?? 12}
+                    </span>
+                    <span className="text-[10px] text-slate-500 dark:text-zinc-400 uppercase font-bold mt-1 block">Events Attended</span>
                   </div>
-                  <div className="bg-slate-50 dark:bg-zinc-800/40 p-4 rounded-2xl">
-                    <span className="text-2xl font-black text-emerald-500 block">{currentUser.leadershipRoles.length}</span>
-                    <span className="text-[10px] text-slate-400 uppercase font-bold">Leadership Roles</span>
+                  <div className="bg-emerald-50 dark:bg-emerald-950/40 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-900/60">
+                    <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 block leading-none">
+                      {(currentUser?.leadershipRoles || []).length}
+                    </span>
+                    <span className="text-[10px] text-slate-500 dark:text-zinc-400 uppercase font-bold mt-1 block">Leadership Titles</span>
                   </div>
-                  <div className="bg-slate-50 dark:bg-zinc-800/40 p-4 rounded-2xl">
-                    <span className="text-2xl font-black text-purple-500 block">{currentUser.achievements.length}</span>
-                    <span className="text-[10px] text-slate-400 uppercase font-bold">Achievements</span>
+                  <div className="bg-purple-50 dark:bg-purple-950/40 p-4 rounded-2xl border border-purple-100 dark:border-purple-900/60">
+                    <span className="text-2xl font-black text-purple-600 dark:text-purple-400 block leading-none">
+                      {(currentUser?.achievements || []).length}
+                    </span>
+                    <span className="text-[10px] text-slate-500 dark:text-zinc-400 uppercase font-bold mt-1 block">Honor Badges</span>
                   </div>
                 </div>
+
+                {/* Section 1: Leadership & Co-Curricular Roles */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Campus Leadership & Officer Positions</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {(currentUser?.leadershipRoles || ["Cybersecurity Club — Treasurer", "AI Research Society — Lead Builder"]).map((role, i) => (
+                      <div key={i} className="p-3 bg-slate-50 dark:bg-zinc-800/40 rounded-2xl border border-slate-100 dark:border-zinc-800 flex items-center gap-2.5 text-xs">
+                        <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950 text-amber-600 flex items-center justify-center font-bold">
+                          👑
+                        </div>
+                        <div>
+                          <div className="font-bold text-slate-900 dark:text-zinc-100">{role}</div>
+                          <span className="text-[10px] text-emerald-600 font-semibold">Active Appointment • Student Affairs Verified</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Section 2: Recognitions & Honor Badges */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Honor Badges & Campus Achievements</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {(currentUser?.achievements || ["🏆 Hackathon 1st Place Finalist", "🏆 University Volunteer Recognition", "🏆 Trivia Champion"]).map((ach, i) => (
+                      <span key={i} className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-300 text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-xs">
+                        <span>{ach}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Section 3: Research & Campus Projects */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Research Lab Appointments & Projects</h4>
+                  <div className="space-y-2 text-xs">
+                    {(currentUser?.projects || ["AI Security & Cyber Threat Detection", "Campus Distributed Mesh Network"]).map((proj, i) => (
+                      <div key={i} className="p-3 bg-slate-50 dark:bg-zinc-800/40 rounded-2xl border border-slate-100 dark:border-zinc-800 flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <Microscope className="w-4 h-4 text-indigo-500 shrink-0" />
+                          <span className="font-bold text-slate-900 dark:text-zinc-100">{proj}</span>
+                        </div>
+                        <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-950 px-2 py-0.5 rounded">
+                          3 Academic Credits
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Institutional Accreditation Footer */}
+                <div className="p-4 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border border-slate-200 dark:border-zinc-700 flex items-center justify-between flex-wrap gap-3 text-xs text-slate-500">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-5 h-5 text-emerald-500" />
+                    <span>Official Co-Curricular Transcript Record • Division of Student Affairs</span>
+                  </div>
+                  <span className="font-mono text-[11px] text-slate-400">Verification Hash: #AUTH-2026-STU88</span>
+                </div>
+
               </div>
             )}
 

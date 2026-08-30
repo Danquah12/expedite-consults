@@ -59,6 +59,13 @@ export default function CampusLoginPage() {
     avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
     isVerified: true,
     role: "STUDENT",
+    interests: ["Cybersecurity", "AI", "Basketball", "Robotics"],
+    goals: ["Find Study Partners", "Research Opportunities"],
+    eventsAttendedCount: 0,
+    volunteerHoursLogged: 0,
+    leadershipRoles: [],
+    achievements: ["🎓 Enrolled Student"],
+    projects: [],
   });
 
   // Onboarding starter selections

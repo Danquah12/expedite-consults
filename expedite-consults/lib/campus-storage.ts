@@ -297,7 +297,18 @@ export function saveChatMessages(messages: ChatMessage[]): void {
 }
 
 export function loadCurrentUser(): UserProfile {
-  return safeLoad(STORAGE_KEYS.USER, defaultCurrentUser);
+  const loaded = safeLoad<UserProfile>(STORAGE_KEYS.USER, defaultCurrentUser);
+  return {
+    ...defaultCurrentUser,
+    ...loaded,
+    leadershipRoles: Array.isArray(loaded?.leadershipRoles) ? loaded.leadershipRoles : defaultCurrentUser.leadershipRoles || [],
+    achievements: Array.isArray(loaded?.achievements) ? loaded.achievements : defaultCurrentUser.achievements || [],
+    projects: Array.isArray(loaded?.projects) ? loaded.projects : defaultCurrentUser.projects || [],
+    interests: Array.isArray(loaded?.interests) ? loaded.interests : defaultCurrentUser.interests || [],
+    goals: Array.isArray(loaded?.goals) ? loaded.goals : defaultCurrentUser.goals || [],
+    volunteerHoursLogged: typeof loaded?.volunteerHoursLogged === "number" ? loaded.volunteerHoursLogged : defaultCurrentUser.volunteerHoursLogged,
+    eventsAttendedCount: typeof loaded?.eventsAttendedCount === "number" ? loaded.eventsAttendedCount : defaultCurrentUser.eventsAttendedCount,
+  };
 }
 export function saveCurrentUser(user: UserProfile): void {
   safeSave(STORAGE_KEYS.USER, user);
