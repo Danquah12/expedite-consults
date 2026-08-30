@@ -100,6 +100,9 @@ import {
   Sunrise,
   Sunset,
   Moon,
+  CreditCard,
+  Wallet,
+  Activity,
 } from "lucide-react";
 
 import {
@@ -155,6 +158,11 @@ import {
   RoommateProfile,
   HousingTourBooking,
   HousingMaintenanceTicket,
+  TigerWalletPass,
+  LiveFacilityDensity,
+  SafeWalkSession,
+  AlumniMentor,
+  CourseDeliverable,
   defaultCurrentUser,
   defaultNotificationPreferences,
   initialTowsonBuildings,
@@ -167,6 +175,10 @@ import {
   initialRoommateProfiles,
   initialHousingTours,
   initialHousingMaintenanceTickets,
+  initialTigerWalletPass,
+  initialFacilityDensities,
+  initialSafeWalkSession,
+  initialAlumniMentors,
   sampleTowsonRoute,
 } from "@/lib/campus-data";
 
@@ -422,6 +434,16 @@ export default function CampusSyncApp() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [activeChannel, setActiveChannel] = useState("#general-announcements");
   const [inputMsg, setInputMsg] = useState("");
+
+  // 5 Enterprise Campus Systems State
+  const [selectedCourseForCanvas, setSelectedCourseForCanvas] = useState<CampusCourse | null>(null);
+  const [showTigerWalletModal, setShowTigerWalletModal] = useState<boolean>(false);
+  const [tigerWallet, setTigerWallet] = useState<TigerWalletPass>(initialTigerWalletPass);
+  const [facilityDensities, setFacilityDensities] = useState<LiveFacilityDensity[]>(initialFacilityDensities);
+  const [showSafeWalkModal, setShowSafeWalkModal] = useState<boolean>(false);
+  const [safeWalkSession, setSafeWalkSession] = useState<SafeWalkSession>(initialSafeWalkSession);
+  const [alumniMentors, setAlumniMentors] = useState<AlumniMentor[]>(initialAlumniMentors);
+  const [careerSubFilter, setCareerSubFilter] = useState<"jobs" | "mentors" | "projects">("jobs");
 
   // Post Composer State
   const [newPostContent, setNewPostContent] = useState("");
@@ -2080,6 +2102,399 @@ export default function CampusSyncApp() {
         </div>
       )}
 
+      {/* 4.1 MODAL: CANVAS SYNC & ASSIGNMENT RADAR */}
+      {selectedCourseForCanvas && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSelectedCourseForCanvas(null);
+          }}
+        >
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl max-w-lg w-full p-6 relative shadow-2xl space-y-4 text-slate-900 dark:text-zinc-100 animate-in zoom-in-95">
+            <div className="flex items-start justify-between border-b pb-3">
+              <div className="flex items-center gap-3">
+                <img
+                  src={selectedCourseForCanvas.imageUrl || "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=200&auto=format&fit=crop&q=80"}
+                  alt={selectedCourseForCanvas.code}
+                  className="w-12 h-12 rounded-xl object-cover ring-2 ring-amber-500/20"
+                />
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-black text-amber-600 dark:text-amber-400 text-sm">
+                      {selectedCourseForCanvas.code}
+                    </span>
+                    <span className="text-[10px] bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold px-2 py-0.5 rounded-full">
+                      Canvas Synced ✓
+                    </span>
+                  </div>
+                  <h3 className="text-sm font-black line-clamp-1">{selectedCourseForCanvas.name}</h3>
+                  <span className="text-xs text-slate-500">👨‍🏫 {selectedCourseForCanvas.professor} • 📍 {selectedCourseForCanvas.room}</span>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedCourseForCanvas(null)}
+                className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-400"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Canvas Grade Summary */}
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div className="bg-slate-50 dark:bg-zinc-800/60 p-2.5 rounded-2xl border">
+                <span className="text-[10px] text-slate-400 font-bold uppercase block">Current Grade</span>
+                <span className="text-sm font-black text-amber-600 dark:text-amber-400">{selectedCourseForCanvas.grade || "A (94%)"}</span>
+              </div>
+              <div className="bg-slate-50 dark:bg-zinc-800/60 p-2.5 rounded-2xl border">
+                <span className="text-[10px] text-slate-400 font-bold uppercase block">Credits</span>
+                <span className="text-sm font-black">{selectedCourseForCanvas.credits || 3.0} CR</span>
+              </div>
+              <div className="bg-slate-50 dark:bg-zinc-800/60 p-2.5 rounded-2xl border">
+                <span className="text-[10px] text-slate-400 font-bold uppercase block">Study Pods</span>
+                <span className="text-sm font-black text-emerald-500">{selectedCourseForCanvas.studyGroupsCount || 8} Active</span>
+              </div>
+            </div>
+
+            {/* Upcoming Assignments / Deliverables */}
+            <div className="space-y-2">
+              <span className="text-xs font-black uppercase tracking-wider text-slate-400 block">
+                📅 Upcoming Deliverables & Exams
+              </span>
+
+              <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                {(selectedCourseForCanvas.deliverables || [
+                  { id: "d1", title: "Assignment Deliverable 1", dueText: "Today at 11:59 PM", dueHoursLeft: 6, points: 100, type: "Lab", isSubmitted: false, activeStudyPodsCount: 4 }
+                ]).map((del) => (
+                  <div
+                    key={del.id}
+                    className="p-3.5 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border border-slate-200 dark:border-zinc-700/80 space-y-2"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">
+                            {del.type}
+                          </span>
+                          <span className="text-xs font-bold">{del.title}</span>
+                        </div>
+                        <div className="text-[11px] text-slate-500 mt-1 flex items-center gap-2">
+                          <span className="text-amber-600 font-semibold">⏳ {del.dueText}</span>
+                          <span>•</span>
+                          <span>{del.points} Pts</span>
+                        </div>
+                      </div>
+
+                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                        del.isSubmitted ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+                      }`}>
+                        {del.isSubmitted ? "Submitted ✓" : `${del.dueHoursLeft}h left`}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1 text-xs">
+                      <button
+                        onClick={() => {
+                          setSelectedCourseForCanvas(null);
+                          setActiveTab("campus");
+                          triggerToast(`👥 Joined study pod for ${del.title}`);
+                        }}
+                        className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+                      >
+                        <span>👥 Join Study Pod ({del.activeStudyPodsCount || 3} online)</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          triggerToast(`🚀 Submitted ${del.title} to Towson Canvas!`);
+                        }}
+                        className="text-[11px] font-bold bg-amber-500 hover:bg-amber-600 text-black px-3 py-1 rounded-xl transition"
+                      >
+                        {del.isSubmitted ? "Resubmit" : "Submit File"}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="pt-2 border-t flex items-center gap-2">
+              <button
+                onClick={() => {
+                  setSelectedCourseForCanvas(null);
+                  setActiveTab("campus");
+                }}
+                className="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-2xl text-xs transition"
+              >
+                Open Course Hub & Notes
+              </button>
+              <button
+                onClick={() => setSelectedCourseForCanvas(null)}
+                className="px-4 bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 font-bold py-2.5 rounded-2xl text-xs transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 4.2 MODAL: DIGITAL TIGER CARD & DINING WALLET PASS */}
+      {showTigerWalletModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowTigerWalletModal(false);
+          }}
+        >
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl max-w-md w-full p-6 relative shadow-2xl space-y-5 text-slate-900 dark:text-zinc-100 animate-in zoom-in-95">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2">
+                <CreditCard className="w-5 h-5 text-amber-500" />
+                <h3 className="text-base font-black">Towson Digital Tiger OneCard</h3>
+              </div>
+              <button
+                onClick={() => setShowTigerWalletModal(false)}
+                className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-400"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* The Digital Tiger Card Visual (Gold/Black Luxe Design) */}
+            <div className="bg-gradient-to-br from-amber-500 via-amber-600 to-black rounded-3xl p-5 text-white shadow-2xl relative overflow-hidden space-y-4 border border-amber-400/40">
+              <div className="absolute right-0 bottom-0 w-48 h-48 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:12px_12px] opacity-20" />
+              
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🐯</span>
+                  <div>
+                    <span className="text-[11px] font-black uppercase tracking-widest text-amber-200 block leading-none">TOWSON UNIVERSITY</span>
+                    <span className="text-[9px] text-amber-100 uppercase tracking-wider font-mono">OneCard • Digital Pass</span>
+                  </div>
+                </div>
+                <div className="w-6 h-6 rounded-md bg-white/20 flex items-center justify-center text-xs font-mono font-bold">
+                  NFC
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <img
+                  src={currentUser.avatar}
+                  alt={currentUser.name}
+                  className="w-14 h-14 rounded-2xl object-cover ring-2 ring-white/60 shadow-lg"
+                />
+                <div>
+                  <h4 className="text-base font-black leading-tight text-white">{currentUser.name}</h4>
+                  <span className="text-xs text-amber-100 block">{currentUser.major}</span>
+                  <span className="text-[11px] font-mono text-amber-300 font-bold block mt-0.5">ID: {currentUser.studentId}</span>
+                </div>
+              </div>
+
+              {/* Scannable Barcode */}
+              <div className="bg-white p-2.5 rounded-2xl space-y-1 text-center text-black">
+                <div className="h-9 flex items-center justify-center gap-1 overflow-hidden px-4">
+                  {Array.from({ length: 48 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="bg-black h-full"
+                      style={{ width: `${(i % 3) + 1.5}px`, opacity: i % 5 === 0 ? 0.4 : 1 }}
+                    />
+                  ))}
+                </div>
+                <span className="text-[10px] font-mono font-bold tracking-widest text-slate-800">{tigerWallet.barcodeNumber}</span>
+              </div>
+            </div>
+
+            {/* Live Campus Balances */}
+            <div className="space-y-2">
+              <span className="text-xs font-black uppercase tracking-wider text-slate-400 block">
+                💳 Live Dining & Student Accounts
+              </span>
+              
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="p-3 bg-amber-50 dark:bg-amber-950/40 rounded-2xl border border-amber-200 dark:border-amber-900 space-y-1">
+                  <span className="text-[10px] text-amber-700 dark:text-amber-300 font-bold uppercase block">Meal Swipes</span>
+                  <span className="text-xl font-black text-amber-900 dark:text-amber-100">{tigerWallet.mealSwipesRemaining} Swipes</span>
+                  <span className="text-[9px] text-slate-400 block">Resets Sunday midnight</span>
+                </div>
+
+                <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl border border-emerald-200 dark:border-emerald-900 space-y-1">
+                  <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold uppercase block">Dining Dollars</span>
+                  <span className="text-xl font-black text-emerald-900 dark:text-emerald-100">${tigerWallet.diningDollarsBalance.toFixed(2)}</span>
+                  <span className="text-[9px] text-slate-400 block">All campus dining + Dunkin'</span>
+                </div>
+
+                <div className="p-3 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border space-y-1">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Retail Points</span>
+                  <span className="text-base font-black">${tigerWallet.retailPointsBalance.toFixed(2)}</span>
+                  <span className="text-[9px] text-slate-400 block">Bookstore & concessions</span>
+                </div>
+
+                <div className="p-3 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border space-y-1">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Print Quota</span>
+                  <span className="text-base font-black">${tigerWallet.printQuotaBalance.toFixed(2)}</span>
+                  <span className="text-[9px] text-slate-400 block">Cook Library Printers</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Dorm Access Zone */}
+            <div className="p-3 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border text-xs flex items-center justify-between">
+              <div>
+                <span className="text-[10px] text-slate-400 font-bold block">DORM KEYCARD ACCESS</span>
+                <span className="font-bold text-slate-900 dark:text-zinc-100">{tigerWallet.dormAccessZone}</span>
+              </div>
+              <span className="text-[10px] bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-black px-2 py-0.5 rounded-full">
+                ACTIVE
+              </span>
+            </div>
+
+            {/* Actions */}
+            <div className="space-y-2 pt-1">
+              <button
+                onClick={() => triggerToast("📲 Added Towson OneCard pass to Apple Wallet & Google Wallet!")}
+                className="w-full bg-black hover:bg-slate-900 text-white font-black py-3 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg transition border border-white/20"
+              >
+                <span> Add to Apple Wallet & Google Wallet</span>
+              </button>
+              <button
+                onClick={() => {
+                  setTigerWallet({
+                    ...tigerWallet,
+                    diningDollarsBalance: tigerWallet.diningDollarsBalance + 50,
+                  });
+                  triggerToast("💳 Reloaded +$50.00 to Towson Dining Dollars!");
+                }}
+                className="w-full bg-amber-500 hover:bg-amber-600 text-black font-black py-2.5 rounded-2xl text-xs transition"
+              >
+                + Quick Reload ($50 Dining Dollars)
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* 4.3 MODAL: TIGER SAFEWALK VIRTUAL NIGHT ESCORT */}
+      {showSafeWalkModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowSafeWalkModal(false);
+          }}
+        >
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl max-w-md w-full p-6 relative shadow-2xl space-y-4 text-slate-900 dark:text-zinc-100 animate-in zoom-in-95">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-emerald-500" />
+                <h3 className="text-base font-black">Tiger SafeWalk Virtual Escort</h3>
+              </div>
+              <button
+                onClick={() => setShowSafeWalkModal(false)}
+                className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-400"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Active Escort Status */}
+            <div className="bg-emerald-950/60 border border-emerald-500/40 rounded-3xl p-4 text-white space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-900/60 px-2 py-0.5 rounded-full">
+                  LIVE SESSION ACTIVE
+                </span>
+                <span className="text-xs font-mono text-emerald-300 font-black">ETA: ~{safeWalkSession.estimatedMinutes} Mins</span>
+              </div>
+
+              <div className="space-y-1">
+                <div className="text-xs text-slate-300">
+                  📍 Origin: <strong>{safeWalkSession.originName}</strong>
+                </div>
+                <div className="text-xs text-slate-300">
+                  🏁 Destination: <strong>{safeWalkSession.destinationName}</strong>
+                </div>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="space-y-1 pt-1">
+                <div className="flex items-center justify-between text-[11px] text-slate-300">
+                  <span>Route Progress</span>
+                  <span className="font-bold text-emerald-400">{safeWalkSession.currentProgressPercent}%</span>
+                </div>
+                <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-emerald-400 rounded-full transition-all duration-500"
+                    style={{ width: `${safeWalkSession.currentProgressPercent}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Guardian Info */}
+            <div className="p-3.5 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border space-y-2 text-xs">
+              <span className="text-[10px] text-slate-400 font-black uppercase tracking-wider block">
+                👀 Companion Guardian Monitoring You:
+              </span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <img
+                    src={safeWalkSession.guardianAvatar}
+                    alt={safeWalkSession.guardianName}
+                    className="w-10 h-10 rounded-full object-cover ring-2 ring-emerald-500"
+                  />
+                  <div>
+                    <h5 className="font-bold text-slate-900 dark:text-zinc-100">{safeWalkSession.guardianName}</h5>
+                    <span className="text-[10px] text-emerald-600 font-medium">Tracking live via TigerOrbit 360</span>
+                  </div>
+                </div>
+                <a
+                  href={`tel:${safeWalkSession.guardianPhone}`}
+                  className="p-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-black font-bold flex items-center gap-1 transition"
+                  title="Call Guardian"
+                >
+                  <PhoneCall className="w-4 h-4" />
+                </a>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-2 pt-1">
+              <button
+                onClick={() => {
+                  setSafeWalkSession({ ...safeWalkSession, currentProgressPercent: 100, status: "ARRIVED" });
+                  setShowSafeWalkModal(false);
+                  triggerToast("🎉 Arrived safely! Your SafeWalk session has ended.");
+                }}
+                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg transition"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>I Have Arrived Safely ✓</span>
+              </button>
+
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <button
+                  onClick={() => triggerToast("📞 Triggering simulated incoming check-in call...")}
+                  className="bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 text-slate-700 dark:text-zinc-300 font-bold py-2.5 rounded-xl transition"
+                >
+                  📱 Fake Check-in Call
+                </button>
+                <button
+                  onClick={() => {
+                    setSafeWalkSession({ ...safeWalkSession, status: "EMERGENCY_DISPATCHED" });
+                    triggerToast("🚨 TUPD Emergency Dispatch alerted with your exact GPS coordinates!");
+                  }}
+                  className="bg-rose-600 hover:bg-rose-700 text-white font-black py-2.5 rounded-xl transition flex items-center justify-center gap-1"
+                >
+                  <AlertOctagon className="w-3.5 h-3.5" />
+                  <span>1-Tap TUPD SOS</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
       {/* 4.5 MODAL: UNIVERSAL SPOTLIGHT SEARCH (CMD/CTRL + K) */}
       {showOmniSearch && (
         <div
@@ -2516,25 +2931,34 @@ export default function CampusSyncApp() {
           </nav>
 
           {/* Right Tools */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             
-            {/* TigerOrbit 360 Location Sharing Pill */}
+            {/* Digital Tiger Wallet Quick Pill */}
             <button
-              onClick={() => setShowLocationSharePicker(true)}
-              className={`px-3 py-1.5 rounded-full text-xs font-bold border transition flex items-center gap-1.5 ${
-                currentUser.isLocationSharing
-                  ? "bg-emerald-500 text-black border-emerald-400 animate-pulse shadow-md font-black"
-                  : "bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-slate-200 dark:border-zinc-700 hover:border-amber-500"
-              }`}
+              onClick={() => setShowTigerWalletModal(true)}
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700/80 text-amber-900 dark:text-amber-200 hover:border-amber-500 transition shadow-xs"
+              title="Open Towson Digital OneCard & Balances"
             >
-              <span className={`w-2 h-2 rounded-full ${currentUser.isLocationSharing ? "bg-black" : "bg-emerald-500"}`} />
-              <span>{currentUser.isLocationSharing ? `Orbit: ${currentUser.locationShareExpiresAt || "Live"}` : "TigerOrbit 360"}</span>
+              <CreditCard className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+              <span className="font-mono">{tigerWallet.mealSwipesRemaining} Swipes</span>
+              <span className="text-slate-400">·</span>
+              <span className="font-mono text-emerald-600 dark:text-emerald-400 font-black">${tigerWallet.diningDollarsBalance.toFixed(0)}</span>
+            </button>
+
+            {/* TigerOrbit 360 & SafeWalk Escort Pill */}
+            <button
+              onClick={() => setShowSafeWalkModal(true)}
+              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-700/80 text-emerald-900 dark:text-emerald-200 hover:border-emerald-500 transition shadow-xs"
+              title="Tiger SafeWalk Virtual Escort"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>SafeWalk</span>
             </button>
 
             <button
               onClick={() => setShowOmniSearch(true)}
               className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 transition"
-              title="Search Campus"
+              title="Search Campus (Cmd + K)"
             >
               <Search className="w-4 h-4" />
             </button>
@@ -2621,6 +3045,23 @@ export default function CampusSyncApp() {
                       <span className="text-[10px] font-mono text-amber-600 font-bold block mt-0.5">🪪 ID: {currentUser.studentId}</span>
                     </div>
 
+                    {/* Quick Access Card: Tiger OneCard */}
+                    <button
+                      onClick={() => {
+                        setShowTigerWalletModal(true);
+                        setShowUserDropdown(false);
+                      }}
+                      className="w-full bg-gradient-to-r from-amber-500/10 to-amber-600/10 hover:from-amber-500/20 hover:to-amber-600/20 border border-amber-500/30 p-2.5 rounded-2xl flex items-center justify-between text-xs font-bold transition"
+                    >
+                      <div className="flex items-center gap-2">
+                        <CreditCard className="w-4 h-4 text-amber-500" />
+                        <span className="text-slate-900 dark:text-zinc-100">Digital OneCard Wallet</span>
+                      </div>
+                      <span className="text-[10px] font-mono font-black text-amber-600 dark:text-amber-400">
+                        {tigerWallet.mealSwipesRemaining} Swipes • ${tigerWallet.diningDollarsBalance.toFixed(0)}
+                      </span>
+                    </button>
+
                     {/* Enrolled Courses Preview inside dropdown */}
                     <div className="pt-2 border-t border-slate-100 dark:border-zinc-800 space-y-1.5">
                       <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
@@ -2628,7 +3069,14 @@ export default function CampusSyncApp() {
                       </span>
                       <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1 text-xs">
                         {(courses.length > 0 ? courses : initialCampusCourses).map((c) => (
-                          <div key={c.id} className="flex items-center gap-2.5 p-1.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700/60">
+                          <div
+                            key={c.id}
+                            onClick={() => {
+                              setSelectedCourseForCanvas(c);
+                              setShowUserDropdown(false);
+                            }}
+                            className="flex items-center gap-2.5 p-1.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700/60 hover:border-amber-500 cursor-pointer transition"
+                          >
                             <img src={c.imageUrl || "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=100&auto=format&fit=crop&q=80"} alt={c.code} className="w-8 h-8 rounded-lg object-cover" />
                             <div className="flex-1 min-w-0">
                               <span className="font-bold text-[11px] block truncate text-slate-900 dark:text-zinc-100">{c.code}: {c.name}</span>
@@ -2670,6 +3118,16 @@ export default function CampusSyncApp() {
                     </div>
 
                     <div className="border-t pt-2 space-y-1 text-xs">
+                      <button
+                        onClick={() => {
+                          setShowSafeWalkModal(true);
+                          setShowUserDropdown(false);
+                        }}
+                        className="w-full text-left p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 font-bold flex items-center gap-2 text-emerald-600 dark:text-emerald-400"
+                      >
+                        <ShieldCheck className="w-4 h-4" />
+                        <span>Tiger SafeWalk Night Escort</span>
+                      </button>
                       <button
                         onClick={() => {
                           setShowLocationSharePicker(true);
@@ -3771,9 +4229,12 @@ export default function CampusSyncApp() {
                       {(courses.length > 0 ? courses : initialCampusCourses).map((course) => (
                         <div
                           key={course.id}
-                          className="bg-slate-50 dark:bg-zinc-800/50 rounded-2xl p-2.5 border border-slate-200 dark:border-zinc-700/70 hover:border-amber-500 transition group space-y-2"
+                          className="bg-slate-50 dark:bg-zinc-800/50 rounded-2xl p-3 border border-slate-200 dark:border-zinc-700/70 hover:border-amber-500 transition group space-y-2.5"
                         >
-                          <div className="flex items-center gap-3">
+                          <div
+                            onClick={() => setSelectedCourseForCanvas(course)}
+                            className="flex items-center gap-3 cursor-pointer"
+                          >
                             <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-800 shrink-0 relative">
                               <img
                                 src={course.imageUrl || "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=300&auto=format&fit=crop&q=80"}
@@ -3796,7 +4257,7 @@ export default function CampusSyncApp() {
                                   {course.credits || 3.0} cr
                                 </span>
                               </div>
-                              <h4 className="text-xs font-bold text-slate-900 dark:text-zinc-100 truncate">
+                              <h4 className="text-xs font-bold text-slate-900 dark:text-zinc-100 truncate group-hover:text-amber-500 transition">
                                 {course.name}
                               </h4>
                               <p className="text-[10px] text-slate-500 dark:text-zinc-400 truncate">
@@ -3805,16 +4266,26 @@ export default function CampusSyncApp() {
                             </div>
                           </div>
 
-                          <div className="flex items-center justify-between pt-1.5 border-t border-slate-200/60 dark:border-zinc-700/60 text-[10px] font-semibold text-slate-500 dark:text-zinc-400">
+                          {/* Canvas Next Assignment Radar Pill */}
+                          {course.nextAssignment && (
+                            <button
+                              onClick={() => setSelectedCourseForCanvas(course)}
+                              className="w-full text-left p-1.5 px-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-amber-200/80 dark:border-amber-800/80 text-[10px] font-bold text-amber-900 dark:text-amber-200 flex items-center justify-between transition"
+                            >
+                              <span className="truncate">⏳ {course.nextAssignment}</span>
+                              <span className="text-[9px] font-extrabold text-amber-600 dark:text-amber-400 shrink-0 ml-1">Canvas →</span>
+                            </button>
+                          )}
+
+                          <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-zinc-700/60 text-[10px] font-semibold text-slate-500 dark:text-zinc-400">
                             <span>🕒 {course.schedule.split("•")[0]}</span>
                             <button
                               onClick={() => {
-                                setActiveTab("campus");
-                                triggerToast(`📚 Opened Study Hub for ${course.code}`);
+                                setSelectedCourseForCanvas(course);
                               }}
-                              className="text-amber-600 dark:text-amber-400 hover:underline font-bold"
+                              className="text-indigo-600 dark:text-indigo-400 hover:underline font-bold flex items-center gap-1"
                             >
-                              Study Pod →
+                              <span>Study Pods ({course.studyGroupsCount || 4}) →</span>
                             </button>
                           </div>
                         </div>
@@ -4103,6 +4574,61 @@ export default function CampusSyncApp() {
                 <div className="flex items-center justify-between pt-2 border-t text-[11px] font-bold text-amber-600 dark:text-amber-400">
                   <span>High: {weatherReport.highToday}° / Low: {weatherReport.lowToday}°</span>
                   <span>Radar →</span>
+                </div>
+              </div>
+
+              {/* LIVE FACILITY DENSITY & STUDY CROWD RADAR */}
+              <div className="bg-white dark:bg-zinc-900 rounded-3xl p-5 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-amber-500" />
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">
+                      Live Campus Density
+                    </h3>
+                  </div>
+                  <span className="text-[10px] font-mono text-emerald-500 font-black">Live IoT</span>
+                </div>
+
+                <div className="space-y-2 text-xs">
+                  {facilityDensities.slice(0, 3).map((fac) => (
+                    <div
+                      key={fac.id}
+                      className="p-2.5 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border border-slate-200/80 dark:border-zinc-700/60 space-y-1.5"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-base">{fac.icon}</span>
+                          <div>
+                            <div className="font-bold leading-tight text-slate-900 dark:text-zinc-100">{fac.facilityName}</div>
+                            <span className="text-[10px] text-slate-400">{fac.zoneName}</span>
+                          </div>
+                        </div>
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                          fac.statusLevel === "Quiet"
+                            ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300"
+                            : fac.statusLevel === "Moderate"
+                            ? "bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300"
+                            : "bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300"
+                        }`}>
+                          {fac.occupancyPercent}% ({fac.statusLevel})
+                        </span>
+                      </div>
+
+                      <div className="w-full h-1.5 bg-slate-200 dark:bg-zinc-700 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${
+                            fac.occupancyPercent < 45 ? "bg-emerald-500" : fac.occupancyPercent < 70 ? "bg-amber-500" : "bg-rose-500"
+                          }`}
+                          style={{ width: `${fac.occupancyPercent}%` }}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between text-[10px] text-slate-400 pt-0.5">
+                        <span>✨ {fac.availableDesksOrSpots} spots open</span>
+                        <span>{fac.bestStudyTime}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -4508,81 +5034,155 @@ export default function CampusSyncApp() {
             )}
 
             {/* SUB-VIEW 3: 💼 CAREER & INTERNSHIPS */}
+            {/* SUB-VIEW 3: 💼 CAREER & INTERNSHIPS MESH + ALUMNI MENTORS */}
             {moreSubView === "career" && (
               <div className="space-y-6">
                 <div className="bg-gradient-to-r from-amber-950 via-slate-900 to-amber-950 p-6 rounded-3xl text-white shadow-xl flex items-center justify-between flex-wrap gap-4 border border-amber-500/30">
                   <div>
-                    <span className="text-xs font-extrabold uppercase tracking-widest text-amber-400">Towson Career & Internship Mesh</span>
-                    <h2 className="text-2xl font-black mt-0.5">Verified Student Jobs, Internships & Research Fellowships</h2>
-                    <p className="text-xs text-slate-300 mt-1">Direct synchronization with Handshake, TU Career Center, and corporate alumni networks.</p>
+                    <span className="text-xs font-extrabold uppercase tracking-widest text-amber-400">Towson Career, Research & Alumni Mesh</span>
+                    <h2 className="text-2xl font-black mt-0.5">Verified Student Opportunities & Alumni Mentorship</h2>
+                    <p className="text-xs text-slate-300 mt-1">Direct synchronization with Handshake, TU Career Center, and verified corporate alumni.</p>
+                  </div>
+
+                  {/* Career Filter Switcher */}
+                  <div className="flex items-center gap-1.5 bg-black/50 p-1.5 rounded-2xl border border-white/10 text-xs font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setCareerSubFilter("jobs")}
+                      className={`px-3 py-1.5 rounded-xl transition ${careerSubFilter === "jobs" ? "bg-amber-500 text-black font-black" : "text-slate-300 hover:text-white"}`}
+                    >
+                      💼 Jobs & Research (4)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCareerSubFilter("mentors")}
+                      className={`px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 ${careerSubFilter === "mentors" ? "bg-amber-500 text-black font-black" : "text-slate-300 hover:text-white"}`}
+                    >
+                      <GraduationCap className="w-3.5 h-3.5" />
+                      <span>Alumni Mentors ({alumniMentors.length})</span>
+                    </button>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {[
-                    {
-                      id: "job-1",
-                      title: "Undergraduate AI Cyber Defense Research Fellow",
-                      employer: "TU Autonomous Security Lab (ASSL)",
-                      jobType: "Paid Campus Research",
-                      location: "Science Complex Rm 304",
-                      wage: "$22.50 / hr + 3 Academic Credits",
-                      desc: "Develop automated vulnerability scanning scripts and LLM honeypots under Dr. Catherine Hayes.",
-                      deadline: "April 15, 2026",
-                    },
-                    {
-                      id: "job-2",
-                      title: "IT Support & Cloud Infrastructure Assistant",
-                      employer: "Towson University Office of Technology (OTS)",
-                      jobType: "Student Employment",
-                      location: "Cook Library Lower Level",
-                      wage: "$18.00 / hr",
-                      desc: "Assist students and faculty with TU network access, dual-factor authentication, and hardware diagnostics.",
-                      deadline: "May 01, 2026",
-                    },
-                    {
-                      id: "job-3",
-                      title: "Student Community Engagement Lead",
-                      employer: "Towson Student Affairs",
-                      jobType: "Part-Time",
-                      location: "University Union Rm 204",
-                      wage: "$17.50 / hr",
-                      desc: "Coordinate campus-wide volunteer drives, service days, and official Tiger Record certifications.",
-                      deadline: "April 30, 2026",
-                    },
-                    {
-                      id: "job-4",
-                      title: "Cyber Threat Intelligence Intern",
-                      employer: "T. Rowe Price / Baltimore Cyber Center",
-                      jobType: "Summer Corporate Internship",
-                      location: "Downtown Baltimore (Hybrid)",
-                      wage: "$32.00 / hr",
-                      desc: "Analyze real-time threat vectors, build incident playbooks, and participate in red/blue team simulations.",
-                      deadline: "March 25, 2026",
-                    },
-                  ].map((job) => (
-                    <div key={job.id} className="bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-zinc-800 p-5 space-y-3 flex flex-col justify-between shadow-sm hover:shadow-md transition">
-                      <div className="space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-amber-600">{job.employer}</span>
-                          <span className="text-[10px] font-mono bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded font-bold">{job.jobType}</span>
+                {/* TAB 1: JOBS & RESEARCH */}
+                {careerSubFilter === "jobs" && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {[
+                      {
+                        id: "job-1",
+                        title: "Undergraduate AI Cyber Defense Research Fellow",
+                        employer: "TU Autonomous Security Lab (ASSL)",
+                        jobType: "Paid Campus Research",
+                        location: "Science Complex Rm 304",
+                        wage: "$22.50 / hr + 3 Academic Credits",
+                        desc: "Develop automated vulnerability scanning scripts and LLM honeypots under Dr. Catherine Hayes.",
+                        deadline: "April 15, 2026",
+                      },
+                      {
+                        id: "job-2",
+                        title: "IT Support & Cloud Infrastructure Assistant",
+                        employer: "Towson University Office of Technology (OTS)",
+                        jobType: "Student Employment",
+                        location: "Cook Library Lower Level",
+                        wage: "$18.00 / hr",
+                        desc: "Assist students and faculty with TU network access, dual-factor authentication, and hardware diagnostics.",
+                        deadline: "May 01, 2026",
+                      },
+                      {
+                        id: "job-3",
+                        title: "Student Community Engagement Lead",
+                        employer: "Towson Student Affairs",
+                        jobType: "Part-Time",
+                        location: "University Union Rm 204",
+                        wage: "$17.50 / hr",
+                        desc: "Coordinate campus-wide volunteer drives, service days, and official Tiger Record certifications.",
+                        deadline: "April 30, 2026",
+                      },
+                      {
+                        id: "job-4",
+                        title: "Cyber Threat Intelligence Intern",
+                        employer: "T. Rowe Price / Baltimore Cyber Center",
+                        jobType: "Summer Corporate Internship",
+                        location: "Downtown Baltimore (Hybrid)",
+                        wage: "$32.00 / hr",
+                        desc: "Analyze real-time threat vectors, build incident playbooks, and participate in red/blue team simulations.",
+                        deadline: "March 25, 2026",
+                      },
+                    ].map((job) => (
+                      <div key={job.id} className="bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-zinc-800 p-5 space-y-3 flex flex-col justify-between shadow-sm hover:shadow-md transition">
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-amber-600 dark:text-amber-400">{job.employer}</span>
+                            <span className="text-[10px] font-mono bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded font-bold">{job.jobType}</span>
+                          </div>
+                          <h3 className="text-base font-bold text-slate-900 dark:text-zinc-100">{job.title}</h3>
+                          <p className="text-xs text-slate-500">📍 {job.location} • 💵 {job.wage}</p>
+                          <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">{job.desc}</p>
+                          <span className="text-[10px] text-slate-400 font-semibold block">⏰ Deadline: {job.deadline}</span>
                         </div>
-                        <h3 className="text-base font-bold">{job.title}</h3>
-                        <p className="text-xs text-slate-500">📍 {job.location} • 💵 {job.wage}</p>
-                        <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">{job.desc}</p>
-                        <span className="text-[10px] text-slate-400 font-semibold block">⏰ Deadline: {job.deadline}</span>
-                      </div>
 
-                      <button
-                        type="button"
-                        onClick={() => triggerToast(`💼 Application submitted for ${job.title} at ${job.employer} using your verified Tiger Record!`)}
-                        className="w-full bg-amber-500 hover:bg-amber-600 text-black font-black py-2.5 rounded-xl text-xs shadow-md transition"
+                        <button
+                          type="button"
+                          onClick={() => triggerToast(`💼 Application submitted for ${job.title} at ${job.employer} using your verified Tiger Record!`)}
+                          className="w-full bg-amber-500 hover:bg-amber-600 text-black font-black py-2.5 rounded-xl text-xs shadow-md transition"
+                        >
+                          1-Click Apply with Tiger Record
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* TAB 2: ALUMNI MENTORS */}
+                {careerSubFilter === "mentors" && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    {alumniMentors.map((mentor) => (
+                      <div
+                        key={mentor.id}
+                        className="bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-zinc-800 p-5 space-y-4 shadow-sm hover:shadow-md transition flex flex-col justify-between"
                       >
-                        1-Click Apply with Tiger Record
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                        <div className="space-y-3">
+                          <div className="flex items-start gap-3">
+                            <img
+                              src={mentor.avatar}
+                              alt={mentor.name}
+                              className="w-14 h-14 rounded-2xl object-cover ring-2 ring-amber-500/30"
+                            />
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <h4 className="text-sm font-black text-slate-900 dark:text-zinc-100">{mentor.name}</h4>
+                                <ShieldCheck className="w-3.5 h-3.5 text-blue-500" />
+                              </div>
+                              <span className="text-xs font-bold text-amber-600 dark:text-amber-400 block">{mentor.currentRole}</span>
+                              <span className="text-[11px] text-slate-500 font-semibold block">🏢 {mentor.company} • Class of '{mentor.gradYear.toString().slice(2)}</span>
+                            </div>
+                          </div>
+
+                          <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
+                            {mentor.bio}
+                          </p>
+
+                          <div className="flex flex-wrap gap-1 pt-1">
+                            {mentor.matchedSkills.map((sk) => (
+                              <span key={sk} className="text-[9px] font-bold bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 px-2 py-0.5 rounded-md">
+                                {sk}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => triggerToast(`☕ Coffee Chat requested with ${mentor.name} (${mentor.company})! They will connect via Tiger Message.`)}
+                          className="w-full bg-slate-900 dark:bg-zinc-100 hover:bg-amber-500 dark:hover:bg-amber-400 text-white dark:text-black font-black py-2.5 rounded-2xl text-xs transition flex items-center justify-center gap-1.5 shadow-sm"
+                        >
+                          <Coffee className="w-3.5 h-3.5" />
+                          <span>Request 15-Min Coffee Chat</span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 

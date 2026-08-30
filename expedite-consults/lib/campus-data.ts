@@ -458,6 +458,17 @@ export interface CourseStudyPod {
   isJoined: boolean;
 }
 
+export interface CourseDeliverable {
+  id: string;
+  title: string;
+  dueText: string;
+  dueHoursLeft: number;
+  points: number;
+  type: "Lab" | "Project" | "Quiz" | "Exam" | "Homework";
+  isSubmitted: boolean;
+  activeStudyPodsCount?: number;
+}
+
 export interface CampusCourse {
   id: string;
   code: string;
@@ -474,6 +485,8 @@ export interface CampusCourse {
   reviewSessionsCount: number;
   tutorsCount: number;
   isEnrolled: boolean;
+  nextAssignment?: string;
+  deliverables?: CourseDeliverable[];
   resources: { id: string; title: string; type: "Notes" | "Past Exam Review" | "Formula Sheet" | "Syllabus"; uploader: string; downloadsCount: number; size: string }[];
 }
 
@@ -1821,6 +1834,11 @@ export const initialCampusCourses: CampusCourse[] = [
     reviewSessionsCount: 3,
     tutorsCount: 7,
     isEnrolled: true,
+    nextAssignment: "Lab 3: Virtual Memory Pager (Due in 6h)",
+    deliverables: [
+      { id: "del-1", title: "Lab 3: Kernel Virtual Memory Paging", dueText: "Today at 11:59 PM", dueHoursLeft: 6, points: 100, type: "Lab", isSubmitted: false, activeStudyPodsCount: 4 },
+      { id: "del-2", title: "Midterm Exam 1 (Ch 1-6)", dueText: "Wednesday, Mar 12", dueHoursLeft: 120, points: 200, type: "Exam", isSubmitted: false, activeStudyPodsCount: 8 },
+    ],
     resources: [
       { id: "r1", title: "COSC 421 Midterm Study Guide 2026.pdf", type: "Past Exam Review", uploader: "Dr. Hayes", downloadsCount: 248, size: "1.4 MB" },
     ],
@@ -1841,6 +1859,10 @@ export const initialCampusCourses: CampusCourse[] = [
     reviewSessionsCount: 2,
     tutorsCount: 4,
     isEnrolled: true,
+    nextAssignment: "Honeypot Attack Simulation (Due Friday)",
+    deliverables: [
+      { id: "del-3", title: "Project 2: Containerized Honeypot Mesh", dueText: "Friday at 5:00 PM", dueHoursLeft: 48, points: 150, type: "Project", isSubmitted: true, activeStudyPodsCount: 2 },
+    ],
     resources: [
       { id: "r2", title: "Zero-Day Honeypot Setup Lab.pdf", type: "Notes", uploader: "Dr. Vance", downloadsCount: 192, size: "2.1 MB" },
     ],
@@ -1861,6 +1883,10 @@ export const initialCampusCourses: CampusCourse[] = [
     reviewSessionsCount: 4,
     tutorsCount: 5,
     isEnrolled: true,
+    nextAssignment: "Milestone 4: Next.js SSR Integration",
+    deliverables: [
+      { id: "del-4", title: "Milestone 4: Serverless API Architecture", dueText: "Sunday at 11:59 PM", dueHoursLeft: 96, points: 120, type: "Project", isSubmitted: false, activeStudyPodsCount: 5 },
+    ],
     resources: [
       { id: "r3", title: "Next.js Fullstack Microservices.pdf", type: "Formula Sheet", uploader: "Prof. Sterling", downloadsCount: 310, size: "3.4 MB" },
     ],
@@ -1881,6 +1907,10 @@ export const initialCampusCourses: CampusCourse[] = [
     reviewSessionsCount: 5,
     tutorsCount: 8,
     isEnrolled: true,
+    nextAssignment: "Problem Set 6: Graph Eulerian Circuits",
+    deliverables: [
+      { id: "del-5", title: "Problem Set 6: Graph Isomorphisms", dueText: "Tuesday at 11:00 AM", dueHoursLeft: 42, points: 50, type: "Homework", isSubmitted: false, activeStudyPodsCount: 3 },
+    ],
     resources: [
       { id: "r4", title: "Graph Theory & Combinatorics Review.pdf", type: "Notes", uploader: "Dr. Rostova", downloadsCount: 280, size: "1.8 MB" },
     ],
@@ -2225,6 +2255,188 @@ export const initialHousingMaintenanceTickets: HousingMaintenanceTicket[] = [
     status: "In Progress",
     submittedDate: "Yesterday at 3:15 PM",
     assignedTech: "Carlos M. (Facilities Tech #4)",
+  },
+];
+
+// ─────────────────────────────────────────────────────────────
+// 32. DIGITAL TIGER CARD WALLET & DINING DOLLARS
+// ─────────────────────────────────────────────────────────────
+export interface TigerWalletPass {
+  studentName: string;
+  studentId: string;
+  major: string;
+  classStanding: string;
+  mealSwipesRemaining: number;
+  diningDollarsBalance: number;
+  retailPointsBalance: number;
+  printQuotaBalance: number;
+  dormAccessZone: string;
+  barcodeNumber: string;
+  lastUsedTime: string;
+  lastUsedLocation: string;
+}
+
+export const initialTigerWalletPass: TigerWalletPass = {
+  studentName: "Kwesi Asiedu",
+  studentId: "#8492-KWESI",
+  major: "Information Technology",
+  classStanding: "Junior",
+  mealSwipesRemaining: 14,
+  diningDollarsBalance: 284.50,
+  retailPointsBalance: 120.00,
+  printQuotaBalance: 42.50,
+  dormAccessZone: "West Village • Marshall Hall Suite 304",
+  barcodeNumber: "2849201948201",
+  lastUsedTime: "Today at 12:45 PM",
+  lastUsedLocation: "Newell Dining Hall (1 Swipe)",
+};
+
+// ─────────────────────────────────────────────────────────────
+// 33. LIVE CAMPUS FACILITY & DENSITY TELEMETRY
+// ─────────────────────────────────────────────────────────────
+export interface LiveFacilityDensity {
+  id: string;
+  facilityName: string;
+  zoneName: string;
+  occupancyPercent: number;
+  statusLevel: "Quiet" | "Moderate" | "Busy" | "Peak";
+  availableDesksOrSpots: number;
+  icon: string;
+  bestStudyTime: string;
+}
+
+export const initialFacilityDensities: LiveFacilityDensity[] = [
+  {
+    id: "fac-1",
+    facilityName: "Albert S. Cook Library",
+    zoneName: "Floor 2 & 3 Quiet Pods",
+    occupancyPercent: 38,
+    statusLevel: "Quiet",
+    availableDesksOrSpots: 64,
+    icon: "📚",
+    bestStudyTime: "Now - 4:00 PM (Ideal study window)",
+  },
+  {
+    id: "fac-2",
+    facilityName: "Burdick Hall Fitness Center",
+    zoneName: "Cardio & Free Weight Deck",
+    occupancyPercent: 74,
+    statusLevel: "Busy",
+    availableDesksOrSpots: 18,
+    icon: "🏋️",
+    bestStudyTime: "Best after 7:30 PM",
+  },
+  {
+    id: "fac-3",
+    facilityName: "University Union Food Court",
+    zoneName: "Dunkin' & Main Seating Atrium",
+    occupancyPercent: 45,
+    statusLevel: "Moderate",
+    availableDesksOrSpots: 52,
+    icon: "🍔",
+    bestStudyTime: "Short lines right now",
+  },
+  {
+    id: "fac-4",
+    facilityName: "Science Complex Commons",
+    zoneName: "3rd Floor Tech Collaboration Area",
+    occupancyPercent: 22,
+    statusLevel: "Quiet",
+    availableDesksOrSpots: 35,
+    icon: "🔬",
+    bestStudyTime: "High-speed Wi-Fi & open screens",
+  },
+];
+
+// ─────────────────────────────────────────────────────────────
+// 34. TIGER SAFEWALK — VIRTUAL NIGHT ESCORT
+// ─────────────────────────────────────────────────────────────
+export interface SafeWalkSession {
+  id: string;
+  originName: string;
+  destinationName: string;
+  estimatedMinutes: number;
+  guardianName: string;
+  guardianAvatar: string;
+  guardianPhone: string;
+  status: "ACTIVE" | "ARRIVED" | "EMERGENCY_DISPATCHED";
+  startedAt: string;
+  currentProgressPercent: number;
+}
+
+export const initialSafeWalkSession: SafeWalkSession = {
+  id: "sw-1",
+  originName: "Albert S. Cook Library",
+  destinationName: "West Village • Marshall Hall",
+  estimatedMinutes: 8,
+  guardianName: "Maya Chen (Cybersecurity Circle)",
+  guardianAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+  guardianPhone: "(410) 555-0182",
+  status: "ACTIVE",
+  startedAt: "3 mins ago",
+  currentProgressPercent: 45,
+};
+
+// ─────────────────────────────────────────────────────────────
+// 35. TOWSON ALUMNI MENTORSHIP & CAREER SYNC
+// ─────────────────────────────────────────────────────────────
+export interface AlumniMentor {
+  id: string;
+  name: string;
+  gradYear: number;
+  major: string;
+  currentRole: string;
+  company: string;
+  location: string;
+  avatar: string;
+  industry: string;
+  bio: string;
+  isAvailableForCoffeeChat: boolean;
+  matchedSkills: string[];
+}
+
+export const initialAlumniMentors: AlumniMentor[] = [
+  {
+    id: "alum-1",
+    name: "Brandon Vance",
+    gradYear: 2022,
+    major: "Computer Science",
+    currentRole: "Senior Cloud Security Engineer",
+    company: "T. Rowe Price",
+    location: "Baltimore, MD (Downtown)",
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+    industry: "Financial Technology & Cyber",
+    bio: "Former Towson Cybersecurity Club president. Passionate about helping TU undergraduates break into cloud zero-trust and enterprise threat hunting.",
+    isAvailableForCoffeeChat: true,
+    matchedSkills: ["AWS GovCloud", "Zero Trust", "Python", "Kubernetes"],
+  },
+  {
+    id: "alum-2",
+    name: "Dr. Rachel Sterling",
+    gradYear: 2019,
+    major: "Information Systems",
+    currentRole: "Principal Cyber Defense Researcher",
+    company: "Northrop Grumman",
+    location: "Linthicum / Annapolis Junction",
+    avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
+    industry: "Aerospace & Defense Systems",
+    bio: "TU IT alumna mentoring underrepresented students in AI-driven vulnerability management and DoD cATO compliance.",
+    isAvailableForCoffeeChat: true,
+    matchedSkills: ["Threat Intelligence", "DevSecOps", "Security Clearance prep"],
+  },
+  {
+    id: "alum-3",
+    name: "Darren O'Connor",
+    gradYear: 2023,
+    major: "Software Engineering",
+    currentRole: "Fullstack AI Engineer",
+    company: "Amazon Web Services (AWS)",
+    location: "Arlington, VA (HQ2)",
+    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+    industry: "Cloud & Generative AI",
+    bio: "Towson Hackathon winner now building agentic cloud pipelines. Offering resume reviews and mock technical interviews.",
+    isAvailableForCoffeeChat: true,
+    matchedSkills: ["Next.js", "TypeScript", "LLM Fine-Tuning", "DynamoDB"],
   },
 ];
 
