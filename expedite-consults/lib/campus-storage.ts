@@ -75,6 +75,13 @@ import {
   initialHousingMaintenanceTickets,
 } from "./campus-data";
 
+import {
+  CampusWeatherReport,
+  WeatherNotificationPreferences,
+  initialTowsonMainWeather,
+  defaultWeatherPreferences,
+} from "./campus-weather-data";
+
 const STORAGE_KEYS = {
   POSTS: "campussync_posts_v10",
   EVENTS: "campussync_events_v10",
@@ -112,6 +119,8 @@ const STORAGE_KEYS = {
   ROOMMATE_PROFILES: "campussync_roommates_v10",
   HOUSING_TOURS: "campussync_housing_tours_v10",
   HOUSING_MAINTENANCE: "campussync_housing_maint_v10",
+  CAMPUS_WEATHER: "campussync_weather_v10",
+  WEATHER_PREFS: "campussync_weather_prefs_v10",
   LAST_SYNC: "campussync_last_sync_v10",
 };
 
@@ -171,6 +180,25 @@ export function loadHousingMaintenanceTickets(): HousingMaintenanceTicket[] {
 }
 export function saveHousingMaintenanceTickets(tickets: HousingMaintenanceTicket[]): void {
   safeSave(STORAGE_KEYS.HOUSING_MAINTENANCE, tickets);
+}
+
+// ─────────────────────────────────────────────────────────────
+// NOAA / NWS CAMPUS WEATHER STORAGE API
+// ─────────────────────────────────────────────────────────────
+export function loadCampusWeather(): CampusWeatherReport {
+  const loaded = safeLoad<CampusWeatherReport>(STORAGE_KEYS.CAMPUS_WEATHER, initialTowsonMainWeather);
+  return loaded && loaded.currentTemp ? loaded : initialTowsonMainWeather;
+}
+export function saveCampusWeather(report: CampusWeatherReport): void {
+  safeSave(STORAGE_KEYS.CAMPUS_WEATHER, report);
+}
+
+export function loadWeatherPreferences(): WeatherNotificationPreferences {
+  const loaded = safeLoad<WeatherNotificationPreferences>(STORAGE_KEYS.WEATHER_PREFS, defaultWeatherPreferences);
+  return { ...defaultWeatherPreferences, ...loaded };
+}
+export function saveWeatherPreferences(prefs: WeatherNotificationPreferences): void {
+  safeSave(STORAGE_KEYS.WEATHER_PREFS, prefs);
 }
 
 // ─────────────────────────────────────────────────────────────
