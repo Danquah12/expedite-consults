@@ -39,7 +39,8 @@ import {
   RotateCcw,
   RotateCw,
   Sliders,
-  Sparkle
+  Sparkle,
+  Terminal
 } from "lucide-react"
 import {
   FEATURED_VIDEOS_DATA,
