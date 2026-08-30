@@ -103,6 +103,8 @@ import {
   CreditCard,
   Wallet,
   Activity,
+  Shield,
+  RefreshCw,
 } from "lucide-react";
 
 import {
@@ -180,6 +182,14 @@ import {
   initialSafeWalkSession,
   initialAlumniMentors,
   sampleTowsonRoute,
+  UserRole,
+  initialCampusPersonas,
+  AdminVerificationRequest,
+  initialAdminVerifications,
+  AdminSecurityAuditLog,
+  initialAdminAuditLogs,
+  AdminSystemHealth,
+  initialAdminSystemHealth,
 } from "@/lib/campus-data";
 
 import {
@@ -444,6 +454,18 @@ export default function CampusSyncApp() {
   const [safeWalkSession, setSafeWalkSession] = useState<SafeWalkSession>(initialSafeWalkSession);
   const [alumniMentors, setAlumniMentors] = useState<AlumniMentor[]>(initialAlumniMentors);
   const [careerSubFilter, setCareerSubFilter] = useState<"jobs" | "mentors" | "projects">("jobs");
+
+  // Core Identity & RBAC Personas
+  const [personas] = useState<UserProfile[]>(initialCampusPersonas);
+  const [activePersonaIndex, setActivePersonaIndex] = useState<number>(0);
+  const [showAskAiModal, setShowAskAiModal] = useState<boolean>(false);
+  const [showTigerRecordExportModal, setShowTigerRecordExportModal] = useState<boolean>(false);
+
+  // TowsonSync Administration Center State
+  const [adminVerifications, setAdminVerifications] = useState<AdminVerificationRequest[]>(initialAdminVerifications);
+  const [adminAuditLogs, setAdminAuditLogs] = useState<AdminSecurityAuditLog[]>(initialAdminAuditLogs);
+  const [adminSystemHealth, setAdminSystemHealth] = useState<AdminSystemHealth>(initialAdminSystemHealth);
+  const [adminActiveSubTab, setAdminActiveSubTab] = useState<"verifications" | "housing" | "marketplace" | "events" | "security" | "health">("verifications");
 
   // Post Composer State
   const [newPostContent, setNewPostContent] = useState("");
@@ -3074,30 +3096,61 @@ export default function CampusSyncApp() {
                       </div>
                     </div>
 
-                    {/* Switch Account View */}
-                    <div className="pt-2 border-t border-slate-100 dark:border-zinc-800 space-y-1 text-xs font-bold">
-                      <span className="text-[10px] uppercase tracking-wider text-slate-400 block px-1">Switch Persona:</span>
-                      <div className="grid grid-cols-3 gap-1">
-                        <button
-                          onClick={() => handleSwitchUserRole("student")}
-                          className={`p-1.5 rounded-xl text-[11px] font-bold text-center transition ${currentUser.role === "STUDENT" ? "bg-amber-500 text-black font-black" : "bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200"}`}
-                        >
-                          🐯 Student
-                        </button>
-                        <button
-                          onClick={() => handleSwitchUserRole("officer")}
-                          className={`p-1.5 rounded-xl text-[11px] font-bold text-center transition ${currentUser.role === "CLUB_LEAD" ? "bg-amber-500 text-black font-black" : "bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200"}`}
-                        >
-                          🌍 Officer
-                        </button>
-                        <button
-                          onClick={() => handleSwitchUserRole("faculty")}
-                          className={`p-1.5 rounded-xl text-[11px] font-bold text-center transition ${currentUser.role === "FACULTY" ? "bg-amber-500 text-black font-black" : "bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200"}`}
-                        >
-                          🔬 Faculty
-                        </button>
+                    {/* Switch Account Persona & Roles */}
+                    <div className="pt-2 border-t border-slate-100 dark:border-zinc-800 space-y-1.5 text-xs font-bold">
+                      <div className="flex items-center justify-between px-1">
+                        <span className="text-[10px] uppercase tracking-wider text-slate-400">Switch Identity & Role:</span>
+                        <span className="text-[9px] font-mono text-emerald-500 font-bold">RBAC ACTIVE</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {personas.map((persona, pIdx) => (
+                          <button
+                            key={persona.id}
+                            onClick={() => {
+                              setActivePersonaIndex(pIdx);
+                              setCurrentUser(persona);
+                              setShowUserDropdown(false);
+                              triggerToast(`👤 Switched identity to ${persona.name} (${persona.role})`);
+                              if (persona.role === "ADMIN") {
+                                setActiveTab("more");
+                                setMoreSubView("admin");
+                              }
+                            }}
+                            className={`p-2 rounded-xl text-left transition flex items-center gap-2 border ${
+                              currentUser.id === persona.id
+                                ? "bg-amber-500 text-black border-amber-600 font-black shadow-xs"
+                                : "bg-slate-50 dark:bg-zinc-800/70 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-slate-200 dark:border-zinc-700"
+                            }`}
+                          >
+                            <img src={persona.avatar} alt={persona.name} className="w-6 h-6 rounded-full object-cover shrink-0" />
+                            <div className="min-w-0">
+                              <span className="text-[11px] block truncate font-bold">{persona.name.split(" ")[0]}</span>
+                              <span className="text-[9px] block opacity-75 font-mono uppercase">{persona.role}</span>
+                            </div>
+                          </button>
+                        ))}
                       </div>
                     </div>
+
+                    {/* Admin Console Shortcut for Admins & Staff */}
+                    {currentUser.role === "ADMIN" && (
+                      <div className="pt-2 border-t border-slate-100 dark:border-zinc-800">
+                        <button
+                          onClick={() => {
+                            setActiveTab("more");
+                            setMoreSubView("admin");
+                            setShowUserDropdown(false);
+                          }}
+                          className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white p-2.5 rounded-2xl flex items-center justify-between text-xs font-black shadow-md transition"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Shield className="w-4 h-4 text-amber-300" />
+                            <span>TowsonSync Administration</span>
+                          </div>
+                          <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">Open →</span>
+                        </button>
+                      </div>
+                    )}
 
                     <div className="border-t pt-2 space-y-1 text-xs">
                       <button
@@ -3112,13 +3165,23 @@ export default function CampusSyncApp() {
                       </button>
                       <button
                         onClick={() => {
+                          setShowAskAiModal(true);
+                          setShowUserDropdown(false);
+                        }}
+                        className="w-full text-left p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 font-bold flex items-center gap-2 text-indigo-600 dark:text-indigo-400"
+                      >
+                        <Sparkles className="w-4 h-4" />
+                        <span>✨ Ask TowsonSync AI</span>
+                      </button>
+                      <button
+                        onClick={() => {
                           setShowLocationSharePicker(true);
                           setShowUserDropdown(false);
                         }}
                         className="w-full text-left p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 font-bold flex items-center gap-2"
                       >
                         <span>🪐</span>
-                        <span>TigerOrbit 360 Privacy</span>
+                        <span>TigerOrbit 360 Privacy (Opt-in)</span>
                       </button>
                       <button
                         onClick={() => {
@@ -3139,10 +3202,13 @@ export default function CampusSyncApp() {
                           setMoreSubView("transcript");
                           setShowUserDropdown(false);
                         }}
-                        className="w-full text-left p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 font-bold flex items-center gap-2"
+                        className="w-full text-left p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 font-bold flex items-center justify-between text-amber-600 dark:text-amber-400"
                       >
-                        <span>🏆</span>
-                        <span>Experience Transcript & Passport</span>
+                        <div className="flex items-center gap-2">
+                          <Trophy className="w-4 h-4" />
+                          <span>Tiger Record & Passport</span>
+                        </div>
+                        <span className="text-[10px] font-mono">5/7 ✓</span>
                       </button>
                     </div>
                   </div>
@@ -5415,10 +5481,525 @@ export default function CampusSyncApp() {
               </div>
             )}
 
+            {/* SUB-VIEW 8: 🛡️ TOWSONSYNC ADMINISTRATION CENTER */}
+            {moreSubView === "admin" && (
+              <div className="space-y-6">
+                {/* Admin Header Banner */}
+                <div className="bg-gradient-to-r from-indigo-950 via-slate-900 to-slate-950 p-6 rounded-3xl text-white shadow-2xl border border-indigo-500/40 space-y-4">
+                  <div className="flex items-center justify-between flex-wrap gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-black uppercase tracking-widest text-amber-400 bg-amber-500/20 px-2.5 py-0.5 rounded-full border border-amber-400/30">
+                          🛡️ TowsonSync Security & Operations Center
+                        </span>
+                        <span className="text-[10px] font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-2 py-0.5 rounded-full font-bold">
+                          ● ALL SYSTEMS HEALTHY
+                        </span>
+                      </div>
+                      <h2 className="text-2xl font-black">University Administration & Moderation Console</h2>
+                      <p className="text-xs text-slate-300">
+                        Authenticated as: <strong>{currentUser.name}</strong> ({currentUser.studentId} • {currentUser.major})
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          triggerToast("🔄 Synchronized live campus records with PeopleSoft / TU OneCard & Canvas SIS.");
+                        }}
+                        className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black px-4 py-2.5 rounded-2xl transition flex items-center gap-1.5 shadow-md"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" />
+                        <span>Sync University SIS</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* High-Level Metric Tiles */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                    <div className="bg-white/5 p-3.5 rounded-2xl border border-white/10">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Active Users</span>
+                      <span className="text-xl font-black text-white">22,410</span>
+                      <span className="text-[9px] text-emerald-400 font-bold block mt-0.5">98.4% ID Verified</span>
+                    </div>
+                    <div className="bg-white/5 p-3.5 rounded-2xl border border-white/10">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Verification Queue</span>
+                      <span className="text-xl font-black text-amber-400">{adminVerifications.filter(v => v.status === "PENDING").length} Pending</span>
+                      <span className="text-[9px] text-slate-400 font-bold block mt-0.5">Avg Review: 18 mins</span>
+                    </div>
+                    <div className="bg-white/5 p-3.5 rounded-2xl border border-white/10">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">TUPD Blue Lights</span>
+                      <span className="text-xl font-black text-emerald-400">24 / 24</span>
+                      <span className="text-[9px] text-emerald-400 font-bold block mt-0.5">100% Operational</span>
+                    </div>
+                    <div className="bg-white/5 p-3.5 rounded-2xl border border-white/10">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Server API Latency</span>
+                      <span className="text-xl font-black text-sky-400">{adminSystemHealth.apiLatencyMs}ms</span>
+                      <span className="text-[9px] text-slate-400 font-bold block mt-0.5">{adminSystemHealth.uptimePercent}% Uptime</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Admin Sub-Nav Filter Tabs */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-bold bg-white dark:bg-zinc-900 p-2 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm">
+                  {[
+                    { id: "verifications", label: `👥 User Verifications (${adminVerifications.filter(v => v.status === "PENDING").length})` },
+                    { id: "housing", label: "🏠 Housing Provider Moderation (1)" },
+                    { id: "marketplace", label: "🛍️ Marketplace Escrow & Reports" },
+                    { id: "events", label: "📅 Organization & Event Charters" },
+                    { id: "security", label: "🔒 Security & Audit Trail" },
+                    { id: "health", label: "💻 Telemetry & IoT Status" },
+                  ].map((subTab) => (
+                    <button
+                      key={subTab.id}
+                      onClick={() => setAdminActiveSubTab(subTab.id as any)}
+                      className={`px-3.5 py-2 rounded-xl transition shrink-0 ${
+                        adminActiveSubTab === subTab.id
+                          ? "bg-indigo-600 text-white font-black shadow-xs"
+                          : "text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                      }`}
+                    >
+                      {subTab.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* TAB 1: USER & ID VERIFICATION QUEUE */}
+                {adminActiveSubTab === "verifications" && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-black text-slate-900 dark:text-zinc-100">
+                        Identity Verification Requests ({adminVerifications.length})
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAdminVerifications((prev) => prev.map(v => ({ ...v, status: "APPROVED" })));
+                          triggerToast("✅ Approved all pending verification requests.");
+                        }}
+                        className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
+                      >
+                        Approve All Pending →
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {adminVerifications.map((req) => (
+                        <div
+                          key={req.id}
+                          className="bg-white dark:bg-zinc-900 rounded-3xl p-5 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-3 flex flex-col justify-between"
+                        >
+                          <div className="space-y-3">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-center gap-3">
+                                <img
+                                  src={req.idCardImageUrl}
+                                  alt={req.applicantName}
+                                  className="w-12 h-12 rounded-2xl object-cover ring-2 ring-indigo-500/20"
+                                />
+                                <div>
+                                  <div className="flex items-center gap-1.5">
+                                    <h4 className="text-sm font-black text-slate-900 dark:text-zinc-100">{req.applicantName}</h4>
+                                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300">
+                                      {req.type}
+                                    </span>
+                                  </div>
+                                  <span className="text-xs text-slate-500 block">{req.email}</span>
+                                  <span className="text-[10px] font-mono text-indigo-600 dark:text-indigo-400 font-bold block">{req.studentOrFacultyId} • {req.departmentOrMajor}</span>
+                                </div>
+                              </div>
+
+                              <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                                req.status === "APPROVED"
+                                  ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300"
+                                  : "bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300"
+                              }`}>
+                                {req.status}
+                              </span>
+                            </div>
+
+                            <p className="text-xs text-slate-500">
+                              Submitted {req.submittedAt} with verified official TU document upload.
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-zinc-800">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAdminVerifications((prev) => prev.map(v => v.id === req.id ? { ...v, status: "APPROVED" } : v));
+                                triggerToast(`✅ Approved ${req.applicantName}. Verified badge issued.`);
+                              }}
+                              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-black py-2 rounded-xl text-xs transition"
+                            >
+                              Approve Badge
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAdminVerifications((prev) => prev.map(v => v.id === req.id ? { ...v, status: "REJECTED" } : v));
+                                triggerToast(`❌ Rejected verification for ${req.applicantName}. Notification sent.`);
+                              }}
+                              className="px-3 py-2 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 font-bold rounded-xl text-xs transition"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 2: HOUSING PROVIDER MODERATION */}
+                {adminActiveSubTab === "housing" && (
+                  <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-4">
+                    <h3 className="text-sm font-black text-slate-900 dark:text-zinc-100">
+                      Off-Campus Housing Safety & Landlord Verification
+                    </h3>
+                    <div className="p-4 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border border-slate-200 dark:border-zinc-700 space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <span className="text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-950 px-2 py-0.5 rounded-full">
+                            Pending Safety Inspection
+                          </span>
+                          <h4 className="text-sm font-black text-slate-900 dark:text-zinc-100 mt-1">The York Towson Residences • 4 Bed / 4 Bath Penthouse</h4>
+                          <span className="text-xs text-slate-500">Provider: The York Towson Property Management (License #MD-9042)</span>
+                        </div>
+                        <span className="text-base font-black text-emerald-600">$1,150 / mo</span>
+                      </div>
+                      <p className="text-xs text-slate-600 dark:text-zinc-400">
+                        Submitted safety certifications: Fire Marshal Approval 2026, Towson Shuttle Route Direct Stop, Secure RFID Fob entry.
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => triggerToast("✅ Housing listing approved & verified on TUHousing live map.")}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-4 py-2 rounded-xl text-xs"
+                        >
+                          Approve Housing Listing
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => triggerToast("📋 Requested additional lease safety documentation.")}
+                          className="bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 px-3 py-2 rounded-xl text-xs font-bold"
+                        >
+                          Request Documents
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 3: MARKETPLACE MODERATION */}
+                {adminActiveSubTab === "marketplace" && (
+                  <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-4">
+                    <h3 className="text-sm font-black text-slate-900 dark:text-zinc-100">
+                      Peer-to-Peer Marketplace Moderation & Escrow Safety
+                    </h3>
+                    <div className="p-4 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-900 dark:text-zinc-100">Flagged Item: "TI-84 Plus CE Graphing Calculator" ($75)</span>
+                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded-full">Seller Verified</span>
+                      </div>
+                      <p className="text-xs text-slate-500">Report Reason: Price discrepancy. Automated AI Scan resolved: Price conforms to fair campus market standard.</p>
+                      <button
+                        type="button"
+                        onClick={() => triggerToast("🛡️ Listing verified & cleared of flags.")}
+                        className="bg-indigo-600 text-white font-black px-3 py-1.5 rounded-xl text-xs"
+                      >
+                        Clear Flag & Keep Active
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 4: EVENT & CHARTER APPROVALS */}
+                {adminActiveSubTab === "events" && (
+                  <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-4">
+                    <h3 className="text-sm font-black text-slate-900 dark:text-zinc-100">
+                      Student Organization Event & Room Booking Charters
+                    </h3>
+                    <div className="p-4 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-black text-slate-900 dark:text-zinc-100">Towson Spring Hackathon & Cyber CTF</h4>
+                        <span className="text-xs font-bold text-amber-600 bg-amber-50 dark:bg-amber-950 px-2 py-0.5 rounded-full">Requires Union Rm 204</span>
+                      </div>
+                      <p className="text-xs text-slate-500">Host: Towson Cybersecurity Club • Expected Attendance: 250 students • Budget: $1,500 SGA Grant</p>
+                      <button
+                        type="button"
+                        onClick={() => triggerToast("🎉 Event charter approved! Union Rm 204 booked on Campus Calendar.")}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-4 py-2 rounded-xl text-xs"
+                      >
+                        Approve Event & Room Booking
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 5: SECURITY AUDIT LOGS */}
+                {adminActiveSubTab === "security" && (
+                  <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-black text-slate-900 dark:text-zinc-100">
+                        Real-Time Platform Security & Audit Trail
+                      </h3>
+                      <span className="text-[10px] font-mono text-emerald-500 font-bold">LIVE STREAMING</span>
+                    </div>
+
+                    <div className="space-y-2 font-mono text-xs">
+                      {adminAuditLogs.map((log) => (
+                        <div
+                          key={log.id}
+                          className="p-3 bg-slate-50 dark:bg-zinc-950 rounded-2xl border border-slate-200 dark:border-zinc-800 flex items-center justify-between flex-wrap gap-2"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className={`w-2 h-2 rounded-full ${
+                              log.severity === "CRITICAL" ? "bg-rose-500 animate-ping" : log.severity === "WARNING" ? "bg-amber-500" : "bg-emerald-500"
+                            }`} />
+                            <div>
+                              <span className="font-bold text-slate-900 dark:text-zinc-100">{log.eventType}</span>
+                              <span className="text-slate-400 block text-[11px] font-sans">{log.details}</span>
+                            </div>
+                          </div>
+
+                          <div className="text-right text-[10px] text-slate-400">
+                            <span>{log.actor}</span>
+                            <span className="block">{log.timestamp} • {log.ipAddress}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 6: SERVER HEALTH & IOT TELEMETRY */}
+                {adminActiveSubTab === "health" && (
+                  <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-5">
+                    <h3 className="text-sm font-black text-slate-900 dark:text-zinc-100">
+                      TowsonSync Infrastructure & Geographic IoT Telemetry
+                    </h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                      <div className="p-4 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border space-y-1">
+                        <span className="font-bold text-slate-400 uppercase text-[10px]">Database Engine</span>
+                        <div className="text-base font-black text-slate-900 dark:text-zinc-100">{adminSystemHealth.databaseSyncStatus}</div>
+                        <span className="text-[10px] text-emerald-500 font-bold block">Zero Replication Lag</span>
+                      </div>
+                      <div className="p-4 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border space-y-1">
+                        <span className="font-bold text-slate-400 uppercase text-[10px]">Active WebSockets</span>
+                        <div className="text-base font-black text-indigo-600 dark:text-indigo-400">{adminSystemHealth.activeSessionsCount.toLocaleString()} Connected</div>
+                        <span className="text-[10px] text-slate-400 block">Encrypted TLS 1.3</span>
+                      </div>
+                      <div className="p-4 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border space-y-1">
+                        <span className="font-bold text-slate-400 uppercase text-[10px]">Campus Blue Light Network</span>
+                        <div className="text-base font-black text-emerald-600">{adminSystemHealth.tupdBeaconHealth}</div>
+                        <span className="text-[10px] text-emerald-500 font-bold block">TUPD Dispatch Linked</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
           </div>
         )}
 
       </main>
+
+      {/* ========================================================================= */}
+      {/* FLOATING ACTION TRIGGER: ✨ ASK TOWSONSYNC AI */}
+      {/* ========================================================================= */}
+      <button
+        type="button"
+        onClick={() => setShowAskAiModal(true)}
+        className="fixed bottom-6 right-6 z-40 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 hover:scale-105 text-white p-3.5 px-5 rounded-full shadow-2xl flex items-center gap-2 font-black text-xs border border-white/20 transition group"
+        title="Ask TowsonSync AI anything about your classes, housing, schedule, or campus"
+      >
+        <Sparkles className="w-4 h-4 text-amber-300 group-hover:rotate-12 transition duration-300" />
+        <span>Ask TowsonSync</span>
+      </button>
+
+      {/* ========================================================================= */}
+      {/* MODAL 1: ✨ ASK TOWSONSYNC AI ASSISTANT MODAL */}
+      {/* ========================================================================= */}
+      {showAskAiModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 dark:border-zinc-800 space-y-4 animate-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-md">
+                  <Sparkles className="w-4 h-4 text-amber-300" />
+                </div>
+                <div>
+                  <h3 className="font-black text-base text-slate-900 dark:text-zinc-100">Ask TowsonSync AI</h3>
+                  <p className="text-[11px] text-slate-500">Autonomous context engine for {currentUser.name}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAskAiModal(false)}
+                className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Quick Context Prompt Chips */}
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                "⏳ What assignments are due today?",
+                "📚 Quiet study spots at Cook Library?",
+                "🚌 When is the next Tiger Ride shuttle?",
+                "🌦️ What's the weather advisory?",
+                "💼 Find cybersecurity research jobs",
+              ].map((chip) => (
+                <button
+                  key={chip}
+                  type="button"
+                  onClick={() => {
+                    setAiChatQuery(chip);
+                    setAiChatHistory((prev) => [
+                      ...prev,
+                      { role: "user", text: chip },
+                      {
+                        role: "ai",
+                        text: chip.includes("assignments")
+                          ? "Here are your upcoming Canvas deadlines:\n1. Lab 3: Virtual Memory Pager (COSC 421) — Due in 6 hours (100 pts)\n2. Midterm Sprint Demo (COSC 484) — Due in 3 days\nWould you like to open the Study Pod for COSC 421?"
+                          : chip.includes("Cook Library")
+                          ? "Albert S. Cook Library is currently at 38% capacity (Quiet). 3rd floor quiet pods and collaborative tables currently have 64 open seats."
+                          : chip.includes("shuttle")
+                          ? "Tiger Ride Shuttle #14 (Gold Route) is currently 2 minutes away from Cook Library stop, heading to West Village."
+                          : "Here is what TowsonSync recommends based on your profile and verified courses.",
+                      },
+                    ]);
+                  }}
+                  className="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-zinc-800 hover:bg-indigo-50 dark:hover:bg-indigo-950 text-slate-700 dark:text-zinc-300 text-[11px] font-bold transition border border-slate-200/60 dark:border-zinc-700/60"
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
+
+            {/* Chat Messages */}
+            <div className="space-y-3 bg-slate-50 dark:bg-zinc-950 p-4 rounded-2xl max-h-80 overflow-y-auto text-xs">
+              {aiChatHistory.map((msg, i) => (
+                <div
+                  key={i}
+                  className={`p-3.5 rounded-2xl max-w-[85%] leading-relaxed ${
+                    msg.role === "user"
+                      ? "bg-indigo-600 text-white ml-auto font-bold"
+                      : "bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-200"
+                  }`}
+                >
+                  <p className="whitespace-pre-line">{msg.text}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Query Input */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!aiChatQuery.trim()) return;
+                const userQ = aiChatQuery;
+                setAiChatQuery("");
+                setAiChatHistory((prev) => [
+                  ...prev,
+                  { role: "user", text: userQ },
+                  {
+                    role: "ai",
+                    text: `TowsonSync AI responded to "${userQ}": Everything is synchronized across your courses, housing, shuttle schedules, and campus map.`,
+                  },
+                ]);
+              }}
+              className="flex gap-2"
+            >
+              <input
+                type="text"
+                placeholder="Ask anything about classes, rooms, dining, or events..."
+                value={aiChatQuery}
+                onChange={(e) => setAiChatQuery(e.target.value)}
+                className="flex-1 bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-2xl px-4 py-2.5 text-xs text-slate-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+              />
+              <button
+                type="submit"
+                disabled={!aiChatQuery.trim()}
+                className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-black px-5 py-2.5 rounded-2xl text-xs shadow-md transition"
+              >
+                Ask
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 2: 🎓 OFFICIAL TIGER RECORD & PASSPORT GRADUATION EXPORT */}
+      {/* ========================================================================= */}
+      {showTigerRecordExportModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-zinc-800 space-y-4 animate-in zoom-in-95">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🎓</span>
+                <div>
+                  <h3 className="font-black text-base text-slate-900 dark:text-zinc-100">Official TowsonSync Campus Record</h3>
+                  <p className="text-xs text-slate-500">Verified Digital Portfolio & Graduation Passport</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowTigerRecordExportModal(false)}
+                className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-5 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-zinc-800/80 dark:to-zinc-900 rounded-2xl border border-amber-200 dark:border-amber-800/60 space-y-3 text-xs">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-black text-sm text-slate-900 dark:text-zinc-100">{currentUser.name}</h4>
+                  <span className="text-[11px] text-slate-500">B.S. {currentUser.major} • Class of {currentUser.gradYear}</span>
+                </div>
+                <span className="font-mono text-[10px] bg-amber-500 text-black px-2 py-0.5 rounded-full font-black">
+                  VERIFIED SEAL
+                </span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 text-center pt-2 border-t border-amber-200/60 dark:border-zinc-700">
+                <div>
+                  <span className="font-black text-sm text-slate-900 dark:text-zinc-100">{currentUser.volunteerHoursLogged}h</span>
+                  <span className="text-[9px] text-slate-400 block">Service Hours</span>
+                </div>
+                <div>
+                  <span className="font-black text-sm text-slate-900 dark:text-zinc-100">{currentUser.eventsAttendedCount}</span>
+                  <span className="text-[9px] text-slate-400 block">Campus Events</span>
+                </div>
+                <div>
+                  <span className="font-black text-sm text-emerald-600 font-mono">5 / 7 ✓</span>
+                  <span className="text-[9px] text-slate-400 block">Milestones</span>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                triggerToast("📄 Generating Official Towson University Verified Digital PDF Portfolio...");
+                setTimeout(() => {
+                  triggerToast("✅ Download ready: TowsonSync_CampusRecord_KwesiAsiedu.pdf");
+                  setShowTigerRecordExportModal(false);
+                }, 1500);
+              }}
+              className="w-full bg-amber-500 hover:bg-amber-600 text-black font-black py-3 rounded-2xl text-xs shadow-lg transition flex items-center justify-center gap-2"
+            >
+              <Download className="w-4 h-4" />
+              <span>Download Official Digital Graduation Record (PDF)</span>
+            </button>
+          </div>
+        </div>
+      )}
 
     </div>
   );

@@ -2440,3 +2440,256 @@ export const initialAlumniMentors: AlumniMentor[] = [
   },
 ];
 
+// ─────────────────────────────────────────────────────────────
+// 36. TOWSONSYNC IDENTITY PERSONAS & ROLE-BASED ACCESS CONTROL (RBAC)
+// ─────────────────────────────────────────────────────────────
+export type UserRole = "STUDENT" | "FACULTY" | "CLUB_LEAD" | "STAFF" | "ADMIN";
+
+export const initialCampusPersonas: UserProfile[] = [
+  {
+    id: "usr-1",
+    name: "Kwesi Asiedu",
+    email: "kasiedu@students.towson.edu",
+    studentId: "#8492-KWESI",
+    major: "Information Technology",
+    minor: "Cybersecurity & Autonomous Systems",
+    gradYear: 2026,
+    classStanding: "Senior",
+    dormBuilding: "Marshall Hall (West Village)",
+    bio: "Undergraduate researcher focused on Cloud Security, Autonomous Perimeter Defense, and Zero-Trust campus architectures. SGA Technology Liaison.",
+    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80",
+    coverImage: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80",
+    isVerified: true,
+    role: "STUDENT",
+    interests: ["Cloud Security", "Full-Stack Dev", "Zero Trust", "AI Agents", "Campus Gov"],
+    goals: ["Present Research at CyberSummit 2026", "Complete Senior Capstone", "Lead HackTowson"],
+    eventsAttendedCount: 28,
+    volunteerHoursLogged: 42.5,
+    leadershipRoles: ["SGA Tech Chair", "Cybersecurity Club Vice President"],
+    achievements: ["Dean's List 5x", "Towson Innovator Grant 2025", "Certified Tiger Leader"],
+    projects: ["TowsonSync Platform", "AXIOM Zero-Trust Suite", "Campus Beacon Map"],
+    isLocationSharing: true,
+    ghostModeEnabled: false,
+    currentLocationName: "Albert S. Cook Library • 3rd Floor",
+  },
+  {
+    id: "usr-2",
+    name: "Dr. Catherine Hayes",
+    email: "chayes@towson.edu",
+    studentId: "#FAC-2091",
+    major: "Faculty / Computer Science",
+    minor: "Director, ASSL Research Lab",
+    gradYear: 2012,
+    classStanding: "Graduate",
+    dormBuilding: "Faculty Commons • Science Complex",
+    bio: "Associate Professor of Computer & Information Sciences. Principal Investigator for the Towson Autonomous Security Systems Lab.",
+    avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&auto=format&fit=crop&q=80",
+    coverImage: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&auto=format&fit=crop&q=80",
+    isVerified: true,
+    role: "FACULTY",
+    interests: ["Adversarial AI", "DoD Security", "Undergraduate Research", "Curriculum Design"],
+    goals: ["Publish IEEE Cyber Paper", "Expand NSF Student Grants"],
+    eventsAttendedCount: 45,
+    volunteerHoursLogged: 60,
+    leadershipRoles: ["Faculty Senate Member", "Cyber Curriculum Chair"],
+    achievements: ["Towson Excellence in Teaching 2024", "NSF Career Award"],
+    projects: ["Autonomous Threat Mitigation", "Secure Microkernel Architecture"],
+    isLocationSharing: true,
+    ghostModeEnabled: false,
+    currentLocationName: "Science Complex Rm 304",
+  },
+  {
+    id: "usr-3",
+    name: "Darren Vance",
+    email: "dvance2@students.towson.edu",
+    studentId: "#8210-DARREN",
+    major: "Cybersecurity Operations",
+    gradYear: 2026,
+    classStanding: "Senior",
+    dormBuilding: "Carroll Hall",
+    bio: "Towson Cybersecurity Club President & SGA Senator. Passionate about collegiate cyber defense competitions and student advocacy.",
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80",
+    coverImage: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80",
+    isVerified: true,
+    role: "CLUB_LEAD",
+    interests: ["Red Teaming", "CTF Competitions", "Student Orgs", "Campus Radio"],
+    goals: ["Qualify for National CCDC", "Host 500-student TigerCTF"],
+    eventsAttendedCount: 36,
+    volunteerHoursLogged: 55,
+    leadershipRoles: ["Cybersecurity Club President", "SGA Senator"],
+    achievements: ["Mid-Atlantic CCDC Finalist", "Student Leadership Award"],
+    projects: ["TigerCTF Cyber Range", "Student Discord Bot"],
+    isLocationSharing: true,
+    ghostModeEnabled: false,
+    currentLocationName: "University Union Food Court",
+  },
+  {
+    id: "usr-4",
+    name: "Dean Marcus Vance",
+    email: "mvance@towson.edu",
+    studentId: "#ADM-001",
+    major: "Student Affairs & Security Ops",
+    minor: "Chief Administration Officer",
+    gradYear: 2004,
+    classStanding: "Graduate",
+    dormBuilding: "Administration Building Rm 400",
+    bio: "Executive Administrator for Towson University Digital Campus Operations, Emergency Preparedness & Student Life Systems.",
+    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80",
+    coverImage: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&auto=format&fit=crop&q=80",
+    isVerified: true,
+    role: "ADMIN",
+    interests: ["Campus Safety", "Institutional Policy", "Emergency Management", "Student Welfare"],
+    goals: ["Achieve 100% Digital TowsonSync Campus Coverage", "Zero Safety Incident Tolerance"],
+    eventsAttendedCount: 120,
+    volunteerHoursLogged: 150,
+    leadershipRoles: ["Dean of Student Affairs", "Emergency Management Council Chair"],
+    achievements: ["State of Maryland Higher Ed Leadership Medal", "TUPD Commendation"],
+    projects: ["TowsonSync Master Campus Mesh", "Blue Light Digital Beacon Network"],
+    isLocationSharing: false,
+    ghostModeEnabled: true,
+    currentLocationName: "Administration Building",
+  },
+];
+
+// ─────────────────────────────────────────────────────────────
+// 37. TOWSONSYNC ADMINISTRATION CENTER DATASETS
+// ─────────────────────────────────────────────────────────────
+export interface AdminVerificationRequest {
+  id: string;
+  applicantName: string;
+  email: string;
+  studentOrFacultyId: string;
+  departmentOrMajor: string;
+  submittedAt: string;
+  idCardImageUrl: string;
+  type: "STUDENT" | "FACULTY" | "ORGANIZATION_CHARTER" | "LANDLORD";
+  status: "PENDING" | "APPROVED" | "REJECTED";
+}
+
+export const initialAdminVerifications: AdminVerificationRequest[] = [
+  {
+    id: "ver-1",
+    applicantName: "Aiden Vance",
+    email: "avance5@students.towson.edu",
+    studentOrFacultyId: "#9021-AIDEN",
+    departmentOrMajor: "B.S. Cyber Operations '27",
+    submittedAt: "12 mins ago",
+    idCardImageUrl: "https://images.unsplash.com/photo-1544717305-2782549b5136?w=300&auto=format&fit=crop&q=80",
+    type: "STUDENT",
+    status: "PENDING",
+  },
+  {
+    id: "ver-2",
+    applicantName: "Dr. Evelyn Reed",
+    email: "ereed@towson.edu",
+    studentOrFacultyId: "#FAC-4019",
+    departmentOrMajor: "Department of Physics & Astronomy",
+    submittedAt: "1 hour ago",
+    idCardImageUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&auto=format&fit=crop&q=80",
+    type: "FACULTY",
+    status: "PENDING",
+  },
+  {
+    id: "ver-3",
+    applicantName: "Towson Robotics & Autonomous Drone Club",
+    email: "robotics@clubs.towson.edu",
+    studentOrFacultyId: "#ORG-883",
+    departmentOrMajor: "Student Government Association",
+    submittedAt: "3 hours ago",
+    idCardImageUrl: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=300&auto=format&fit=crop&q=80",
+    type: "ORGANIZATION_CHARTER",
+    status: "PENDING",
+  },
+  {
+    id: "ver-4",
+    applicantName: "The York Towson Student Residences",
+    email: "leasing@theyorktowson.com",
+    studentOrFacultyId: "#LL-5012",
+    departmentOrMajor: "Verified Off-Campus Housing Provider",
+    submittedAt: "5 hours ago",
+    idCardImageUrl: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=300&auto=format&fit=crop&q=80",
+    type: "LANDLORD",
+    status: "PENDING",
+  },
+];
+
+export interface AdminSecurityAuditLog {
+  id: string;
+  timestamp: string;
+  eventType: "AUTH_LOGIN" | "ROLE_ELEVATION" | "SAFEWALK_ALERT" | "CONTENT_MODERATION" | "ID_VERIFICATION" | "TUPD_DISPATCH";
+  severity: "INFO" | "WARNING" | "CRITICAL";
+  actor: string;
+  details: string;
+  ipAddress: string;
+}
+
+export const initialAdminAuditLogs: AdminSecurityAuditLog[] = [
+  {
+    id: "log-1",
+    timestamp: "Just now",
+    eventType: "SAFEWALK_ALERT",
+    severity: "INFO",
+    actor: "Kwesi Asiedu (#8492)",
+    details: "SafeWalk escort initiated: Cook Library ➔ Marshall Hall Dorm (Companion: Maya Chen)",
+    ipAddress: "10.24.88.19 (Campus WiFi-eduroam)",
+  },
+  {
+    id: "log-2",
+    timestamp: "4 mins ago",
+    eventType: "AUTH_LOGIN",
+    severity: "INFO",
+    actor: "Dr. Catherine Hayes (#FAC-2091)",
+    details: "Duo MFA 2-Factor Authentication verified successfully from Science Complex Lab",
+    ipAddress: "10.24.12.44 (Faculty Ethernet)",
+  },
+  {
+    id: "log-3",
+    timestamp: "18 mins ago",
+    eventType: "CONTENT_MODERATION",
+    severity: "WARNING",
+    actor: "Automated AI Guardrail",
+    details: "Spam listing flagged in Marketplace ('Unverified Crypto Mining Rig') - auto-quarantined",
+    ipAddress: "192.168.1.1 (Internal System)",
+  },
+  {
+    id: "log-4",
+    timestamp: "32 mins ago",
+    eventType: "ID_VERIFICATION",
+    severity: "INFO",
+    actor: "Dean Marcus Vance (#ADM-001)",
+    details: "Approved verified student badge for 14 incoming transfer students",
+    ipAddress: "10.24.1.2 (Admin Office)",
+  },
+  {
+    id: "log-5",
+    timestamp: "1 hour ago",
+    eventType: "TUPD_DISPATCH",
+    severity: "INFO",
+    actor: "TigerOrbit Blue Light #04",
+    details: "Routine 24h health-check beacon ping passed (Burgett Quad)",
+    ipAddress: "10.24.99.4 (IoT Safety Beacon)",
+  },
+];
+
+export interface AdminSystemHealth {
+  apiLatencyMs: number;
+  databaseSyncStatus: string;
+  activeSessionsCount: number;
+  cpuLoadPercent: number;
+  memoryUsagePercent: number;
+  uptimePercent: number;
+  tupdBeaconHealth: string;
+  noaaApiStatus: string;
+}
+
+export const initialAdminSystemHealth: AdminSystemHealth = {
+  apiLatencyMs: 14,
+  databaseSyncStatus: "100% Synced (Neon Serverless Postgres)",
+  activeSessionsCount: 4892,
+  cpuLoadPercent: 18,
+  memoryUsagePercent: 32,
+  uptimePercent: 99.98,
+  tupdBeaconHealth: "24/24 Blue Light Beacons Operational",
+  noaaApiStatus: "Connected (api.weather.gov)",
+};
+
