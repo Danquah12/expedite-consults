@@ -2761,40 +2761,35 @@ export default function CampusSyncApp() {
 
       {/* TOP GLOBAL NAVIGATION BAR */}
       <header className="sticky top-0 z-40 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-b border-slate-200 dark:border-zinc-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+        <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-5 lg:px-6 h-16 flex items-center justify-between gap-2.5">
           
-          {/* Logo & Towson Campus Switcher & Live NOAA Weather Pill */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => setActiveTab("home")}>
-              <div className="w-9 h-9 rounded-xl bg-amber-500 flex items-center justify-center text-black font-black text-lg shadow-md shadow-amber-500/30">
+          {/* Left: Logo & Campus Selector & NOAA Weather */}
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 cursor-pointer shrink-0" onClick={() => setActiveTab("home")}>
+              <div className="w-8 h-8 rounded-xl bg-amber-500 flex items-center justify-center text-black font-black text-base shadow-sm">
                 TU
               </div>
-              <div className="hidden sm:block">
-                <span className="font-black text-base tracking-tight text-slate-900 dark:text-zinc-100">
+              <div className="hidden xl:block">
+                <span className="font-black text-sm tracking-tight text-slate-900 dark:text-zinc-100 block leading-tight">
                   TowsonSync
                 </span>
-                <span className="block text-[10px] text-amber-600 dark:text-amber-400 font-bold leading-none">Towson University Digital Campus</span>
+                <span className="text-[9px] text-amber-600 dark:text-amber-400 font-bold block">Digital Campus</span>
               </div>
             </div>
 
-            <div className="hidden md:flex items-center bg-slate-100 dark:bg-zinc-800 p-1 rounded-xl text-xs font-bold border border-slate-200 dark:border-zinc-700">
-              {(["Towson Main Campus", "TU Downtown", "TU Health Complex"] as const).map((camp) => (
-                <button
-                  key={camp}
-                  onClick={() => {
-                    setSelectedCampus(camp);
-                    triggerToast(`📍 Switched view to ${camp}`);
-                  }}
-                  className={`px-2.5 py-1 rounded-lg transition ${
-                    selectedCampus === camp
-                      ? "bg-amber-500 text-black shadow-xs font-black"
-                      : "text-slate-500 hover:text-slate-800"
-                  }`}
-                >
-                  {camp.split(" ")[1] || camp.split(" ")[0]}
-                </button>
-              ))}
-            </div>
+            {/* Sleek Compact Campus Selector */}
+            <select
+              value={selectedCampus}
+              onChange={(e) => {
+                setSelectedCampus(e.target.value as any);
+                triggerToast(`📍 Switched to ${e.target.value}`);
+              }}
+              className="bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 font-bold text-xs rounded-xl px-2.5 py-1.5 focus:outline-none cursor-pointer shrink-0"
+            >
+              <option value="Towson Main Campus">🏛️ Main Campus</option>
+              <option value="TU Downtown">🏙️ TU Downtown</option>
+              <option value="TU Health Complex">🏥 Health Complex</option>
+            </select>
 
             {/* Authoritative NOAA / NWS Compact Weather Pill */}
             <div
@@ -2802,25 +2797,22 @@ export default function CampusSyncApp() {
                 setShowWeatherModal(true);
                 setWeatherModalTab("now");
               }}
-              className="hidden sm:flex items-center gap-2 bg-sky-50/80 hover:bg-sky-100 dark:bg-zinc-800/80 dark:hover:bg-zinc-700 px-3 py-1 rounded-xl border border-sky-200 dark:border-zinc-700 cursor-pointer transition text-xs shadow-xs group"
-              title="Click for NOAA National Weather Service Forecast, Live Doppler Radar & Campus Alerts"
+              className="flex items-center gap-1.5 bg-sky-50/80 hover:bg-sky-100 dark:bg-zinc-800/80 dark:hover:bg-zinc-700 px-2.5 py-1.5 rounded-xl border border-sky-200 dark:border-zinc-700 cursor-pointer transition text-xs shadow-xs shrink-0 font-bold text-slate-900 dark:text-zinc-100"
+              title="Click for NOAA NWS Radar & Campus Weather"
             >
-              <span className="text-sm group-hover:scale-110 transition">{weatherReport.conditionIcon}</span>
-              <div className="flex items-center gap-1 font-black text-slate-900 dark:text-zinc-100">
-                <span>{weatherReport.currentTemp}°F</span>
-                <span className="text-[10px] text-slate-400 font-normal hidden lg:inline">· {weatherReport.conditionText.split(" ")[0]}</span>
-              </div>
+              <span className="text-sm">{weatherReport.conditionIcon}</span>
+              <span>{weatherReport.currentTemp}°F</span>
               {(weatherReport.activeAlerts || []).length > 0 && (
-                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" title="Active NWS Weather Advisory" />
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" title="Active Advisory" />
               )}
             </div>
           </div>
 
-          {/* Clean Main Navigation Menu */}
-          <nav className="hidden lg:flex items-center gap-1">
+          {/* Center: Clean Navigation Menu (No Wrapping) */}
+          <nav className="hidden lg:flex items-center gap-1 shrink-0 overflow-x-auto">
             <button
               onClick={() => setActiveTab("home")}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
                 activeTab === "home"
                   ? "bg-amber-500 text-black shadow-xs font-black"
                   : "text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
@@ -2835,7 +2827,7 @@ export default function CampusSyncApp() {
                 setActiveTab("map");
                 setMoreSubView("map");
               }}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
                 activeTab === "map"
                   ? "bg-amber-500 text-black shadow-xs font-black"
                   : "text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
@@ -2847,7 +2839,7 @@ export default function CampusSyncApp() {
 
             <button
               onClick={() => setActiveTab("housing")}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
                 activeTab === "housing"
                   ? "bg-amber-500 text-black shadow-xs font-black"
                   : "text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
@@ -2859,7 +2851,7 @@ export default function CampusSyncApp() {
 
             <button
               onClick={() => setActiveTab("campus")}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
                 activeTab === "campus"
                   ? "bg-amber-500 text-black shadow-xs font-black"
                   : "text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
@@ -2871,7 +2863,7 @@ export default function CampusSyncApp() {
 
             <button
               onClick={() => setActiveTab("organizations")}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
                 activeTab === "organizations"
                   ? "bg-amber-500 text-black shadow-xs font-black"
                   : "text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
@@ -2883,7 +2875,7 @@ export default function CampusSyncApp() {
 
             <button
               onClick={() => setActiveTab("events")}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
                 activeTab === "events"
                   ? "bg-amber-500 text-black shadow-xs font-black"
                   : "text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
@@ -2895,7 +2887,7 @@ export default function CampusSyncApp() {
 
             <button
               onClick={() => setActiveTab("activities")}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
                 activeTab === "activities"
                   ? "bg-amber-500 text-black shadow-xs font-black"
                   : "text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
@@ -2907,7 +2899,7 @@ export default function CampusSyncApp() {
 
             <button
               onClick={() => setActiveTab("messages")}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
                 activeTab === "messages"
                   ? "bg-amber-500 text-black shadow-xs font-black"
                   : "text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
@@ -2919,7 +2911,7 @@ export default function CampusSyncApp() {
 
             <button
               onClick={() => setActiveTab("more")}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
                 activeTab === "more"
                   ? "bg-amber-500 text-black shadow-xs font-black"
                   : "text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
@@ -2930,53 +2922,43 @@ export default function CampusSyncApp() {
             </button>
           </nav>
 
-          {/* Right Tools */}
-          <div className="flex items-center gap-2">
+          {/* Right: Streamlined Utility Tools */}
+          <div className="flex items-center gap-1.5 shrink-0">
             
-            {/* Digital Tiger Wallet Quick Pill */}
+            {/* Digital Tiger OneCard Button */}
             <button
               onClick={() => setShowTigerWalletModal(true)}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700/80 text-amber-900 dark:text-amber-200 hover:border-amber-500 transition shadow-xs"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700/80 text-amber-900 dark:text-amber-200 hover:border-amber-500 transition shrink-0"
               title="Open Towson Digital OneCard & Balances"
             >
               <CreditCard className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-              <span className="font-mono">{tigerWallet.mealSwipesRemaining} Swipes</span>
-              <span className="text-slate-400">·</span>
-              <span className="font-mono text-emerald-600 dark:text-emerald-400 font-black">${tigerWallet.diningDollarsBalance.toFixed(0)}</span>
+              <span className="font-mono text-[11px] font-bold">{tigerWallet.mealSwipesRemaining} Swipes</span>
             </button>
 
-            {/* TigerOrbit 360 & SafeWalk Escort Pill */}
-            <button
-              onClick={() => setShowSafeWalkModal(true)}
-              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-700/80 text-emerald-900 dark:text-emerald-200 hover:border-emerald-500 transition shadow-xs"
-              title="Tiger SafeWalk Virtual Escort"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span>SafeWalk</span>
-            </button>
-
+            {/* Search */}
             <button
               onClick={() => setShowOmniSearch(true)}
-              className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 transition"
+              className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 transition shrink-0"
               title="Search Campus (Cmd + K)"
             >
               <Search className="w-4 h-4" />
             </button>
 
+            {/* Notification Center */}
             <button
               onClick={() => setShowNotifDrawer(true)}
-              className="relative p-2 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 transition"
+              className="relative p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 transition shrink-0"
               title="Notification Center"
             >
               <Bell className="w-4 h-4" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
             </button>
 
             {/* Dark / Light Mode Toggle Button */}
             <button
               type="button"
               onClick={handleToggleTheme}
-              className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 transition border border-transparent hover:border-slate-200 dark:hover:border-zinc-700"
+              className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 transition border border-transparent hover:border-slate-200 dark:hover:border-zinc-700 shrink-0"
               title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
             >
               {isDarkMode ? (
