@@ -1766,6 +1766,22 @@ export const initialResearchProjects: ResearchOpportunity[] = [
   },
 ];
 
+// 25b. Initial Campus Jobs
+export const initialCampusJobs: CampusJob[] = [
+  {
+    id: "job-1",
+    title: "Cook Library Student Technology Assistant",
+    department: "Albert S. Cook Library · Tech Desk",
+    type: "Student Assistant",
+    payRate: "$16.50 / hr",
+    hoursPerWeek: "12-15 hrs/week",
+    location: "Cook Library 1st Floor",
+    description: "Assist students and faculty with laptop checkout, dual display setup, printing, and general tech troubleshooting.",
+    deadline: "Mar 10, 2026",
+    hasApplied: false,
+  },
+];
+
 // 26. Initial Study Pods & Courses
 export const initialStudyPods: CourseStudyPod[] = [
   {
