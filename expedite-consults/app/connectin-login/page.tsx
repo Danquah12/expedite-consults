@@ -15,6 +15,12 @@ import {
   Fingerprint
 } from "lucide-react"
 import { DEMO_AUTH_PERSONAS, AuthPersona } from "@/components/linkedin/ConnectInAuthModal"
+import {
+  saveStoredUser,
+  saveStoredSessionRoute,
+  registerNewUserInDirectory
+} from "@/lib/connectin-storage"
+import { UserProfile } from "@/lib/linkedin-data"
 
 export default function ConnectInLoginPage() {
   const router = useRouter()
@@ -41,9 +47,39 @@ export default function ConnectInLoginPage() {
       `✓ FIDO2 Identity Verified: ${persona.name} (${persona.badge}). Session ID: sess_${Date.now().toString(36)}. Directing to: ${persona.defaultTab.toUpperCase()}...`
     )
 
+    const authenticatedUser: UserProfile = {
+      name: persona.name,
+      headline: persona.title,
+      avatar: persona.avatar,
+      coverImage: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80',
+      location: 'Washington DC-Baltimore Area · TS/SCI Polygraph Cleared',
+      connectionsCount: 14820,
+      followersCount: 38910,
+      profileViews: 4120,
+      postImpressions: 128900,
+      clearanceLevel: 'TS/SCI with Full Scope Polygraph',
+      fido2MfaVerified: true,
+      cryptoVerificationBadge: '0xED25519_GOVCLOUD_AUTH_VERIFIED',
+      skillMatrixScore: 94.8,
+      about: `Verified ${persona.title} with high-assurance multi-factor cryptographic identity on ConnectIn.`,
+      skills: ['AWS GovCloud Security', 'Kubernetes Zero Trust', 'cATO OSCAL Automation', 'eBPF Security Probes'],
+      experience: [],
+      education: []
+    }
+
+    saveStoredUser(authenticatedUser)
+    saveStoredSessionRoute(persona.defaultTab, persona.defaultWorkspace)
+    registerNewUserInDirectory({
+      id: `USR-${Math.floor(10000 + Math.random() * 90000)}`,
+      name: persona.name,
+      email: persona.email,
+      roles: [persona.title],
+      organization: 'Verified ConnectIn Enclave'
+    })
+
     setTimeout(() => {
       router.push(`/connectin`)
-    }, 1200)
+    }, 1000)
   }
 
   const handleRegisterSubmit = (e: React.FormEvent) => {
@@ -55,13 +91,54 @@ export default function ConnectInLoginPage() {
   const handleVerifyRegistrationCode = () => {
     setIsAuthenticating(true)
     const fullName = `${regFirstName} ${regLastName}`.trim() || "New ConnectIn Member"
+    const targetTab =
+      regRole === 'enterprise' ? 'procurement' :
+      regRole === 'creator' ? 'media' :
+      regRole === 'seller' ? 'sellercenter' :
+      regRole === 'developer' ? 'code' : 'home'
+
+    const targetWorkspace: 'personal' | 'enterprise' | 'creator' | 'seller' =
+      regRole === 'enterprise' ? 'enterprise' :
+      regRole === 'creator' ? 'creator' :
+      regRole === 'seller' ? 'seller' : 'personal'
+
     setStatusFeedback(
       `✓ Email verified & FIDO2 Passkey initialized for ${fullName}! Session created: sess_${Date.now().toString(36)}. Launching platform...`
     )
 
+    const newRegisteredUser: UserProfile = {
+      name: fullName,
+      headline: `${regRole.charAt(0).toUpperCase() + regRole.slice(1)} Executive · Verified ConnectIn Identity`,
+      avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(fullName)}&backgroundColor=0a66c2`,
+      coverImage: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80',
+      location: 'United States · Cryptographically Verified Member',
+      connectionsCount: 1,
+      followersCount: 5,
+      profileViews: 1,
+      postImpressions: 12,
+      clearanceLevel: 'Standard Verified Identity (Level 2)',
+      fido2MfaVerified: true,
+      cryptoVerificationBadge: '0xED25519_SESSION_INITIALIZED',
+      skillMatrixScore: 88.0,
+      about: `Registered as ${regRole} on ConnectIn Identity platform.`,
+      skills: ['Cloud Engineering', 'Security Operations', 'Zero Trust Architecture'],
+      experience: [],
+      education: []
+    }
+
+    saveStoredUser(newRegisteredUser)
+    saveStoredSessionRoute(targetTab, targetWorkspace)
+    registerNewUserInDirectory({
+      id: `USR-${Math.floor(10000 + Math.random() * 90000)}`,
+      name: fullName,
+      email: regEmail,
+      roles: [`${regRole.charAt(0).toUpperCase() + regRole.slice(1)}`],
+      organization: 'Verified ConnectIn Enterprise'
+    })
+
     setTimeout(() => {
       router.push(`/connectin`)
-    }, 1200)
+    }, 1000)
   }
 
   const handleSubmit = (e: React.FormEvent) => {

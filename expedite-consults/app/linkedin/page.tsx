@@ -62,7 +62,8 @@ import {
   loadStoredUser,
   saveStoredUser,
   loadStoredConnections,
-  saveStoredConnections
+  saveStoredConnections,
+  loadStoredSessionRoute
 } from "@/lib/connectin-storage"
 import { SlidersHorizontal, Sparkles, Bell, CheckCircle2, ShieldCheck, Filter, Bookmark, Vote, BookOpen } from "lucide-react"
 
@@ -127,9 +128,12 @@ export default function LinkedInPage() {
     const savedPosts = loadStoredPosts()
     const savedUser = loadStoredUser()
     const savedConnections = loadStoredConnections()
+    const savedRoute = loadStoredSessionRoute()
     if (savedPosts && savedPosts.length > 0) setPosts(savedPosts)
     if (savedUser) setUserData(savedUser)
     if (savedConnections && savedConnections.length > 0) setSuggestedPeople(savedConnections)
+    if (savedRoute.tab) setActiveTab(savedRoute.tab as any)
+    if (savedRoute.workspace) setActiveWorkspace(savedRoute.workspace)
     setHasHydrated(true)
   }, [])
 

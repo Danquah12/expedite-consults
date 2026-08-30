@@ -21,6 +21,11 @@ import {
   Code
 } from "lucide-react"
 import { UserProfile } from "@/lib/linkedin-data"
+import {
+  saveStoredUser,
+  saveStoredSessionRoute,
+  registerNewUserInDirectory
+} from "@/lib/connectin-storage"
 
 export interface AuthPersona {
   id: string
@@ -183,6 +188,16 @@ export function ConnectInAuthModal({
         education: []
       }
 
+      saveStoredUser(authenticatedUser)
+      saveStoredSessionRoute(personaToLogin.defaultTab, personaToLogin.defaultWorkspace)
+      registerNewUserInDirectory({
+        id: `USR-${Math.floor(10000 + Math.random() * 90000)}`,
+        name: personaToLogin.name,
+        email: personaToLogin.email,
+        roles: [personaToLogin.title],
+        organization: 'Verified ConnectIn Enclave'
+      })
+
       onLoginSuccess(authenticatedUser, personaToLogin.defaultTab, personaToLogin.defaultWorkspace)
     }, 1200)
   }
@@ -211,32 +226,41 @@ export function ConnectInAuthModal({
       `✓ Email verified & FIDO2 Passkey initialized for ${fullName}! Session created: sess_${Date.now().toString(36)}. Launching ${regRole.toUpperCase()} workspace...`
     )
 
+    const newRegisteredUser: UserProfile = {
+      name: fullName,
+      headline: `${regRole.charAt(0).toUpperCase() + regRole.slice(1)} Professional · Verified ConnectIn Identity`,
+      avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(fullName)}&backgroundColor=0a66c2`,
+      coverImage: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80',
+      location: 'United States · Cryptographically Verified Member',
+      connectionsCount: 1,
+      followersCount: 5,
+      profileViews: 1,
+      postImpressions: 12,
+      clearanceLevel: 'Standard Verified Identity (Level 2)',
+      fido2MfaVerified: true,
+      cryptoVerificationBadge: '0xED25519_SESSION_INITIALIZED',
+      skillMatrixScore: 88.0,
+      about: `New registered ${regRole} on ConnectIn Identity platform with active session registry.`,
+      skills: ['Cloud Engineering', 'Security Operations', 'Zero Trust Architecture'],
+      experience: [],
+      education: []
+    }
+
+    saveStoredUser(newRegisteredUser)
+    saveStoredSessionRoute(targetTab, targetWorkspace)
+    registerNewUserInDirectory({
+      id: `USR-${Math.floor(10000 + Math.random() * 90000)}`,
+      name: fullName,
+      email: regEmail,
+      roles: [`${regRole.charAt(0).toUpperCase() + regRole.slice(1)}`],
+      organization: 'Verified ConnectIn Enterprise'
+    })
+
     setTimeout(() => {
       setIsAuthenticating(false)
       setAuthSuccessMessage(null)
       setRegStep('form')
       onClose()
-
-      const newRegisteredUser: UserProfile = {
-        name: fullName,
-        headline: `${regRole.charAt(0).toUpperCase() + regRole.slice(1)} Professional · Verified ConnectIn Identity`,
-        avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(fullName)}&backgroundColor=0a66c2`,
-        coverImage: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80',
-        location: 'United States · Cryptographically Verified Member',
-        connectionsCount: 1,
-        followersCount: 5,
-        profileViews: 1,
-        postImpressions: 12,
-        clearanceLevel: 'Standard Verified Identity (Level 2)',
-        fido2MfaVerified: true,
-        cryptoVerificationBadge: '0xED25519_SESSION_INITIALIZED',
-        skillMatrixScore: 88.0,
-        about: `New registered ${regRole} on ConnectIn Identity platform with active session registry.`,
-        skills: ['Cloud Engineering', 'Security Operations', 'Zero Trust Architecture'],
-        experience: [],
-        education: []
-      }
-
       onLoginSuccess(newRegisteredUser, targetTab, targetWorkspace)
     }, 1300)
   }

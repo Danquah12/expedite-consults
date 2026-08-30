@@ -39,6 +39,7 @@ import {
   UserEnforcementStatus
 } from "@/lib/connectin-iam-data"
 import { UserProfile } from "@/lib/linkedin-data"
+import { loadStoredAdminUsers } from "@/lib/connectin-storage"
 
 interface AdminIAMConsoleViewProps {
   currentUser: UserProfile
@@ -54,6 +55,13 @@ export function AdminIAMConsoleView({
   >('users')
 
   const [users, setUsers] = useState<AdminUserRecord[]>(ADMIN_USERS_DIRECTORY)
+
+  React.useEffect(() => {
+    const stored = loadStoredAdminUsers()
+    if (stored && stored.length > 0) {
+      setUsers(stored)
+    }
+  }, [])
   const [cases, setCases] = useState<ModerationCase[]>(MODERATION_CASES_DATA)
   const [approvals, setApprovals] = useState<FourEyesApprovalItem[]>(FOUR_EYES_APPROVALS_DATA)
   const [auditLogs, setAuditLogs] = useState<AdminAuditLogEntry[]>(ADMIN_AUDIT_LOG_DATA)

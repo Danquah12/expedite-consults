@@ -1,13 +1,17 @@
 "use client"
 
 import { Post, UserProfile, MessageThread, SuggestedConnection, initialPosts, currentUser, initialMessages, suggestedConnections } from "./linkedin-data"
+import { AdminUserRecord, ADMIN_USERS_DIRECTORY } from "./connectin-iam-data"
 
 const STORAGE_KEYS = {
   POSTS: 'connectin_posts_v1',
   USER: 'connectin_user_v1',
   MESSAGES: 'connectin_messages_v1',
   CONNECTIONS: 'connectin_connections_v1',
-  THEME: 'connectin_theme_v1'
+  THEME: 'connectin_theme_v1',
+  TAB: 'connectin_active_tab_v1',
+  WORKSPACE: 'connectin_active_workspace_v1',
+  ADMIN_USERS: 'connectin_admin_users_v1'
 }
 
 export function loadStoredPosts(): Post[] {
@@ -47,6 +51,75 @@ export function saveStoredUser(user: UserProfile) {
     localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user))
   } catch (e) {
     console.error('Failed to save user to storage', e)
+  }
+}
+
+export function loadStoredSessionRoute(): { tab?: string; workspace?: 'personal' | 'enterprise' | 'creator' | 'seller' } {
+  if (typeof window === 'undefined') return {}
+  try {
+    const tab = localStorage.getItem(STORAGE_KEYS.TAB) || undefined
+    const workspace = (localStorage.getItem(STORAGE_KEYS.WORKSPACE) as any) || undefined
+    return { tab, workspace }
+  } catch (e) {
+    return {}
+  }
+}
+
+export function saveStoredSessionRoute(tab: string, workspace: string) {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.setItem(STORAGE_KEYS.TAB, tab)
+    localStorage.setItem(STORAGE_KEYS.WORKSPACE, workspace)
+  } catch (e) {
+    console.error('Failed to save session route', e)
+  }
+}
+
+export function loadStoredAdminUsers(): AdminUserRecord[] {
+  if (typeof window === 'undefined') return ADMIN_USERS_DIRECTORY
+  try {
+    const saved = localStorage.getItem(STORAGE_KEYS.ADMIN_USERS)
+    return saved ? JSON.parse(saved) : ADMIN_USERS_DIRECTORY
+  } catch (e) {
+    return ADMIN_USERS_DIRECTORY
+  }
+}
+
+export function saveStoredAdminUsers(users: AdminUserRecord[]) {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.setItem(STORAGE_KEYS.ADMIN_USERS, JSON.stringify(users))
+  } catch (e) {
+    console.error('Failed to save admin users to storage', e)
+  }
+}
+
+export function registerNewUserInDirectory(newUser: {
+  id: string
+  name: string
+  email: string
+  roles: string[]
+  organization: string
+}) {
+  if (typeof window === 'undefined') return
+  try {
+    const current = loadStoredAdminUsers()
+    const newRecord: AdminUserRecord = {
+      id: newUser.id,
+      name: newUser.name,
+      email: newUser.email,
+      roles: newUser.roles,
+      enforcementStatus: 'Active',
+      mfaStatus: 'FIDO2 Passkey ✓',
+      riskLevel: 'Low',
+      organization: newUser.organization,
+      lastLogin: 'Active Now',
+      reportsCount: 0
+    }
+    const updated = [newRecord, ...current.filter(u => u.email !== newUser.email)]
+    saveStoredAdminUsers(updated)
+  } catch (e) {
+    console.error('Failed to register new user in directory', e)
   }
 }
 
