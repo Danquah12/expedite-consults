@@ -463,6 +463,11 @@ export interface CampusCourse {
   code: string;
   name: string;
   professor: string;
+  professorAvatar?: string;
+  imageUrl?: string;
+  credits?: number;
+  grade?: string;
+  room?: string;
   schedule: string;
   studentsEnrolled: number;
   studyGroupsCount: number;
@@ -1805,7 +1810,12 @@ export const initialCampusCourses: CampusCourse[] = [
     code: "COSC 421",
     name: "Operating Systems & Kernel Architecture",
     professor: "Dr. Catherine Hayes",
-    schedule: "Mon/Wed 10:00 AM - 11:30 AM • Science Complex 204",
+    professorAvatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
+    imageUrl: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=600&auto=format&fit=crop&q=80",
+    credits: 4.0,
+    grade: "A (94%)",
+    room: "Science Complex 204",
+    schedule: "Mon/Wed 10:00 AM - 11:30 AM",
     studentsEnrolled: 342,
     studyGroupsCount: 12,
     reviewSessionsCount: 3,
@@ -1813,6 +1823,66 @@ export const initialCampusCourses: CampusCourse[] = [
     isEnrolled: true,
     resources: [
       { id: "r1", title: "COSC 421 Midterm Study Guide 2026.pdf", type: "Past Exam Review", uploader: "Dr. Hayes", downloadsCount: 248, size: "1.4 MB" },
+    ],
+  },
+  {
+    id: "crs-2",
+    code: "ITEC 385",
+    name: "Autonomous Cyber Defense & Threat Hunting",
+    professor: "Dr. Marcus Vance",
+    professorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+    imageUrl: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=600&auto=format&fit=crop&q=80",
+    credits: 3.0,
+    grade: "A (96%)",
+    room: "7800 York Road Rm 314",
+    schedule: "Tue/Thu 2:00 PM - 3:30 PM",
+    studentsEnrolled: 185,
+    studyGroupsCount: 8,
+    reviewSessionsCount: 2,
+    tutorsCount: 4,
+    isEnrolled: true,
+    resources: [
+      { id: "r2", title: "Zero-Day Honeypot Setup Lab.pdf", type: "Notes", uploader: "Dr. Vance", downloadsCount: 192, size: "2.1 MB" },
+    ],
+  },
+  {
+    id: "crs-3",
+    code: "COSC 484",
+    name: "Web Application & Distributed Cloud Architecture",
+    professor: "Prof. David Sterling",
+    professorAvatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+    imageUrl: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&auto=format&fit=crop&q=80",
+    credits: 3.0,
+    grade: "A- (91%)",
+    room: "Science Complex 118",
+    schedule: "Friday 1:00 PM - 3:30 PM",
+    studentsEnrolled: 260,
+    studyGroupsCount: 9,
+    reviewSessionsCount: 4,
+    tutorsCount: 5,
+    isEnrolled: true,
+    resources: [
+      { id: "r3", title: "Next.js Fullstack Microservices.pdf", type: "Formula Sheet", uploader: "Prof. Sterling", downloadsCount: 310, size: "3.4 MB" },
+    ],
+  },
+  {
+    id: "crs-4",
+    code: "MATH 274",
+    name: "Discrete Mathematics & Algorithmic Logic",
+    professor: "Dr. Elena Rostova",
+    professorAvatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80",
+    imageUrl: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=600&auto=format&fit=crop&q=80",
+    credits: 4.0,
+    grade: "B+ (88%)",
+    room: "Smith Hall Rm 402",
+    schedule: "Tue/Thu 11:00 AM - 12:30 PM",
+    studentsEnrolled: 410,
+    studyGroupsCount: 15,
+    reviewSessionsCount: 5,
+    tutorsCount: 8,
+    isEnrolled: true,
+    resources: [
+      { id: "r4", title: "Graph Theory & Combinatorics Review.pdf", type: "Notes", uploader: "Dr. Rostova", downloadsCount: 280, size: "1.8 MB" },
     ],
   },
 ];

@@ -99,6 +99,7 @@ import {
   Gauge,
   Sunrise,
   Sunset,
+  Moon,
 } from "lucide-react";
 
 import {
@@ -339,6 +340,39 @@ export default function CampusSyncApp() {
   const [showNotificationToast, setShowNotificationToast] = useState<string | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+
+  useEffect(() => {
+    try {
+      const savedTheme = typeof window !== "undefined" ? localStorage.getItem("towson_theme") : null;
+      const prefersDark = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const shouldBeDark = savedTheme === "dark" || (!savedTheme && prefersDark);
+      setIsDarkMode(shouldBeDark);
+      if (shouldBeDark) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+    } catch (_) {}
+  }, []);
+
+  const handleToggleTheme = () => {
+    const newMode = !isDarkMode;
+    setIsDarkMode(newMode);
+    try {
+      if (newMode) {
+        document.documentElement.classList.add("dark");
+        localStorage.setItem("towson_theme", "dark");
+        setShowNotificationToast("🌙 Dark Mode Enabled");
+        setTimeout(() => setShowNotificationToast(null), 2500);
+      } else {
+        document.documentElement.classList.remove("dark");
+        localStorage.setItem("towson_theme", "light");
+        setShowNotificationToast("☀️ Light Mode Enabled");
+        setTimeout(() => setShowNotificationToast(null), 2500);
+      }
+    } catch (_) {}
+  };
 
   // Reels Player State
   const [currentReelIndex, setCurrentReelIndex] = useState(0);
@@ -2514,81 +2548,163 @@ export default function CampusSyncApp() {
               <span className="absolute top-1 right-1 w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
             </button>
 
-            {/* Profile Dropdown */}
+            {/* Dark / Light Mode Toggle Button */}
+            <button
+              type="button"
+              onClick={handleToggleTheme}
+              className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 transition border border-transparent hover:border-slate-200 dark:hover:border-zinc-700"
+              title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            >
+              {isDarkMode ? (
+                <Sun className="w-4 h-4 text-amber-400 hover:rotate-45 transition duration-300" />
+              ) : (
+                <Moon className="w-4 h-4 text-slate-600 hover:-rotate-12 transition duration-300" />
+              )}
+            </button>
+
+            {/* Profile Dropdown with "Me ⌵" (as in image media_1788129714840.png) */}
             <div className="relative pl-1 border-l border-slate-200 dark:border-zinc-800">
               <button
+                type="button"
                 onClick={() => setShowUserDropdown(!showUserDropdown)}
-                className="flex items-center gap-2 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 transition"
+                className="flex flex-col items-center justify-center px-1.5 py-1 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 transition group cursor-pointer"
+                title="Account & Profile"
               >
-                <img
-                  src={currentUser.avatar}
-                  alt={currentUser.name}
-                  className="w-8 h-8 rounded-full object-cover ring-2 ring-amber-500"
-                />
-                <div className="hidden md:block text-left">
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs font-bold leading-tight">{currentUser.name.split(" ")[0]}</span>
-                    <ChevronDown className="w-3 h-3 text-slate-400" />
-                  </div>
-                  <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold block -mt-0.5">
-                    {currentUser.role === "CLUB_LEAD" ? "👑 ASA Lead" : currentUser.role === "FACULTY" ? "🏛️ TU Faculty" : "🐯 Verified Tiger"}
-                  </span>
+                <div className="relative">
+                  <img
+                    src={currentUser.avatar}
+                    alt={currentUser.name}
+                    className="w-7 h-7 rounded-full object-cover ring-2 ring-amber-500"
+                  />
+                  <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-900" />
+                </div>
+                <div className="flex items-center gap-0.5 text-[11px] font-bold text-slate-600 dark:text-zinc-300 group-hover:text-amber-500 leading-none mt-1">
+                  <span>Me</span>
+                  <ChevronDown className="w-3 h-3 text-slate-400 group-hover:text-amber-500 transition" />
                 </div>
               </button>
 
-              {/* User Dropdown Menu */}
+              {/* User Dropdown Menu with Full Cover & Enrolled Courses */}
               {showUserDropdown && (
-                <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-zinc-800 p-4 space-y-3 z-50 animate-in zoom-in-95">
-                  <div className="border-b pb-3">
-                    <span className="text-sm font-black block">{currentUser.name}</span>
-                    <span className="text-xs text-slate-500 block">{currentUser.major}</span>
-                    <span className="text-[10px] text-amber-600 font-mono font-bold">{currentUser.studentId}</span>
+                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-zinc-800 overflow-hidden z-50 animate-in zoom-in-95">
+                  {/* Banner */}
+                  <div className="h-16 bg-gradient-to-r from-amber-600 via-indigo-900 to-slate-900 relative">
+                    <img
+                      src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80"
+                      alt="Profile Banner"
+                      className="w-full h-full object-cover opacity-50 mix-blend-overlay"
+                    />
                   </div>
 
-                  <div className="space-y-1 text-xs font-bold">
-                    <span className="text-[10px] uppercase tracking-wider text-slate-400 block px-1">Switch Account View:</span>
-                    <button
-                      onClick={() => handleSwitchUserRole("student")}
-                      className={`w-full text-left p-2 rounded-xl transition ${currentUser.role === "STUDENT" ? "bg-amber-500 text-black font-black" : "hover:bg-slate-100 dark:hover:bg-zinc-800"}`}
-                    >
-                      🐯 Student: Kwesi Asiedu
-                    </button>
-                    <button
-                      onClick={() => handleSwitchUserRole("officer")}
-                      className={`w-full text-left p-2 rounded-xl transition ${currentUser.role === "CLUB_LEAD" ? "bg-amber-500 text-black font-black" : "hover:bg-slate-100 dark:hover:bg-zinc-800"}`}
-                    >
-                      🌍 Club Lead: Amara Diallo
-                    </button>
-                    <button
-                      onClick={() => handleSwitchUserRole("faculty")}
-                      className={`w-full text-left p-2 rounded-xl transition ${currentUser.role === "FACULTY" ? "bg-amber-500 text-black font-black" : "hover:bg-slate-100 dark:hover:bg-zinc-800"}`}
-                    >
-                      🔬 Faculty: Dr. Catherine Hayes
-                    </button>
-                  </div>
+                  {/* Profile Header */}
+                  <div className="p-4 pt-0 relative space-y-3">
+                    <div className="flex items-end justify-between -mt-8">
+                      <div className="relative">
+                        <img
+                          src={currentUser.avatar}
+                          alt={currentUser.name}
+                          className="w-16 h-16 rounded-full object-cover ring-4 ring-white dark:ring-zinc-900 shadow-md"
+                        />
+                        <span className="absolute bottom-1 right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-900" />
+                      </div>
+                      <span className="text-[10px] font-bold bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800 px-2.5 py-0.5 rounded-full">
+                        {currentUser.role === "CLUB_LEAD" ? "👑 Club Lead" : currentUser.role === "FACULTY" ? "🏛️ TU Faculty" : "🐯 Verified Tiger"}
+                      </span>
+                    </div>
 
-                  <div className="border-t pt-2 space-y-1 text-xs">
-                    <button
-                      onClick={() => {
-                        setShowLocationSharePicker(true);
-                        setShowUserDropdown(false);
-                      }}
-                      className="w-full text-left p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 font-bold flex items-center gap-2"
-                    >
-                      <span>🪐</span>
-                      <span>TigerOrbit 360 Controls</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setActiveTab("more");
-                        setMoreSubView("transcript");
-                        setShowUserDropdown(false);
-                      }}
-                      className="w-full text-left p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 font-bold flex items-center gap-2"
-                    >
-                      <span>🏆</span>
-                      <span>Experience Transcript</span>
-                    </button>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <h4 className="text-sm font-black text-slate-900 dark:text-zinc-100">{currentUser.name}</h4>
+                        <ShieldCheck className="w-3.5 h-3.5 text-blue-500" />
+                      </div>
+                      <p className="text-xs text-slate-500">{currentUser.major} • Class of {currentUser.gradYear}</p>
+                      <span className="text-[10px] font-mono text-amber-600 font-bold block mt-0.5">🪪 ID: {currentUser.studentId}</span>
+                    </div>
+
+                    {/* Enrolled Courses Preview inside dropdown */}
+                    <div className="pt-2 border-t border-slate-100 dark:border-zinc-800 space-y-1.5">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
+                        Enrolled Courses ({(courses.length > 0 ? courses : initialCampusCourses).length}):
+                      </span>
+                      <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1 text-xs">
+                        {(courses.length > 0 ? courses : initialCampusCourses).map((c) => (
+                          <div key={c.id} className="flex items-center gap-2.5 p-1.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700/60">
+                            <img src={c.imageUrl || "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=100&auto=format&fit=crop&q=80"} alt={c.code} className="w-8 h-8 rounded-lg object-cover" />
+                            <div className="flex-1 min-w-0">
+                              <span className="font-bold text-[11px] block truncate text-slate-900 dark:text-zinc-100">{c.code}: {c.name}</span>
+                              <span className="text-[9px] text-slate-400 block truncate">👨‍🏫 {c.professor}</span>
+                            </div>
+                            {c.grade && (
+                              <span className="text-[9px] font-black bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">
+                                {c.grade.split(" ")[0]}
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Switch Account View */}
+                    <div className="pt-2 border-t border-slate-100 dark:border-zinc-800 space-y-1 text-xs font-bold">
+                      <span className="text-[10px] uppercase tracking-wider text-slate-400 block px-1">Switch Persona:</span>
+                      <div className="grid grid-cols-3 gap-1">
+                        <button
+                          onClick={() => handleSwitchUserRole("student")}
+                          className={`p-1.5 rounded-xl text-[11px] font-bold text-center transition ${currentUser.role === "STUDENT" ? "bg-amber-500 text-black font-black" : "bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200"}`}
+                        >
+                          🐯 Student
+                        </button>
+                        <button
+                          onClick={() => handleSwitchUserRole("officer")}
+                          className={`p-1.5 rounded-xl text-[11px] font-bold text-center transition ${currentUser.role === "CLUB_LEAD" ? "bg-amber-500 text-black font-black" : "bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200"}`}
+                        >
+                          🌍 Officer
+                        </button>
+                        <button
+                          onClick={() => handleSwitchUserRole("faculty")}
+                          className={`p-1.5 rounded-xl text-[11px] font-bold text-center transition ${currentUser.role === "FACULTY" ? "bg-amber-500 text-black font-black" : "bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200"}`}
+                        >
+                          🔬 Faculty
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="border-t pt-2 space-y-1 text-xs">
+                      <button
+                        onClick={() => {
+                          setShowLocationSharePicker(true);
+                          setShowUserDropdown(false);
+                        }}
+                        className="w-full text-left p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 font-bold flex items-center gap-2"
+                      >
+                        <span>🪐</span>
+                        <span>TigerOrbit 360 Privacy</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          handleToggleTheme();
+                          setShowUserDropdown(false);
+                        }}
+                        className="w-full text-left p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 font-bold flex items-center justify-between"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span>{isDarkMode ? "☀️" : "🌙"}</span>
+                          <span>{isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}</span>
+                        </div>
+                        <span className="text-[10px] text-slate-400 font-mono">{isDarkMode ? "Dark" : "Light"}</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setActiveTab("more");
+                          setMoreSubView("transcript");
+                          setShowUserDropdown(false);
+                        }}
+                        className="w-full text-left p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 font-bold flex items-center gap-2"
+                      >
+                        <span>🏆</span>
+                        <span>Experience Transcript & Passport</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -3556,231 +3672,305 @@ export default function CampusSyncApp() {
         {/* ========================================================================= */}
         {/* TAB 1: 🏠 HOME */}
         {/* ========================================================================= */}
+        {/* ========================================================================= */}
+        {/* TAB 1: 🏠 HOME (LINKEDIN-STYLE STUDENT INTELLIGENCE FEED) */}
+        {/* ========================================================================= */}
         {activeTab === "home" && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             
-            {/* Main Center Stream */}
-            <div className="lg:col-span-8 space-y-6">
+            {/* ========================================================================= */}
+            {/* LEFT COLUMN: 🧑‍🎓 STUDENT PROFILE & UNDERTAKEN COURSES (WITH PICTURES) */}
+            {/* ========================================================================= */}
+            <div className="lg:col-span-4 space-y-6">
               
-              {/* Personalized Greeting & Today's Schedule Card */}
-              <div className="bg-gradient-to-r from-slate-900 via-amber-950 to-slate-950 rounded-3xl p-6 text-white shadow-xl border border-amber-500/40 relative overflow-hidden">
-                <div className="absolute right-0 top-0 w-80 h-full bg-[radial-gradient(#f59e0b_1px,transparent_1px)] [background-size:16px_16px] opacity-20" />
-                
-                <div className="relative z-10 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-[11px] font-extrabold uppercase tracking-widest text-amber-400">
-                        {selectedCampus} • Today's Dashboard
-                      </span>
-                      <h1 className="text-2xl font-black mt-0.5">Good afternoon, {currentUser.name.split(" ")[0]}!</h1>
-                      <p className="text-xs text-slate-300">
-                        🐯 {currentUser.major} • Class of {currentUser.gradYear}
-                      </p>
-                    </div>
+              {/* Profile & Enrolled Courses Card Container */}
+              <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden text-slate-900 dark:text-zinc-100">
+                {/* Tech / Circuit Cover Banner */}
+                <div className="h-24 bg-gradient-to-r from-amber-600 via-indigo-900 to-slate-900 relative overflow-hidden">
+                  <img
+                    src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80"
+                    alt="Campus Cover"
+                    className="w-full h-full object-cover opacity-50 mix-blend-overlay"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                </div>
 
-                    <div className="flex items-center gap-2">
+                {/* Overlapping Circular Avatar & Live Status Dot */}
+                <div className="px-5 pb-5 pt-0 relative space-y-3">
+                  <div className="flex items-end justify-between -mt-10">
+                    <div className="relative">
+                      <img
+                        src={currentUser.avatar}
+                        alt={currentUser.name}
+                        className="w-20 h-20 rounded-full object-cover ring-4 ring-white dark:ring-zinc-900 shadow-xl"
+                      />
+                      <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-900" title="Online on Towson Campus" />
+                    </div>
+                    
+                    <button
+                      onClick={() => {
+                        setActiveTab("more");
+                        setMoreSubView("transcript");
+                      }}
+                      className="text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:text-amber-500 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 px-3 py-1 rounded-full transition"
+                    >
+                      View Profile
+                    </button>
+                  </div>
+
+                  {/* Student Name & Verified Checkmark */}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1.5">
+                      <h2 className="text-base font-black text-slate-900 dark:text-zinc-100">
+                        {currentUser.name}
+                      </h2>
+                      <span className="text-[11px] text-blue-500" title="Verified Towson Student">
+                        <ShieldCheck className="w-4 h-4 inline" />
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 dark:text-zinc-400 font-medium">
+                      B.S. {currentUser.major} • Class of {currentUser.gradYear} ({currentUser.classStanding})
+                    </p>
+                    
+                    {/* Digital Campus Student ID Pill */}
+                    <div className="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-zinc-800/80 px-2.5 py-1 rounded-xl text-[10px] font-mono font-bold text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 mt-1">
+                      <span>🪪 Towson ID ({currentUser.studentId})</span>
+                      <span className="text-emerald-500 font-black">ACTIVE</span>
+                    </div>
+                  </div>
+
+                  {/* Profile Strength Progress Bar */}
+                  <div className="pt-2 border-t border-slate-100 dark:border-zinc-800 space-y-1.5">
+                    <div className="flex items-center justify-between text-xs font-bold">
+                      <span className="text-slate-500 text-[11px]">Profile Strength</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-black">94%</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                      <div className="w-[94%] h-full bg-emerald-500 rounded-full" />
+                    </div>
+                  </div>
+
+                  {/* 📚 ENROLLED COURSES UNDERTAKEN (WITH PICTURES) */}
+                  <div className="pt-3 border-t border-slate-100 dark:border-zinc-800 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <BookOpen className="w-3.5 h-3.5 text-amber-500" />
+                        <h3 className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-zinc-300">
+                          Enrolled Courses ({(courses.length > 0 ? courses : initialCampusCourses).length})
+                        </h3>
+                      </div>
                       <button
-                        onClick={() => {
-                          setActiveTab("map");
-                          setMoreSubView("map");
-                        }}
-                        className="bg-amber-500 hover:bg-amber-600 text-black font-black px-3.5 py-2 rounded-xl text-xs transition flex items-center gap-1.5 shadow-md"
+                        onClick={() => setActiveTab("campus")}
+                        className="text-[10px] font-bold text-amber-600 dark:text-amber-400 hover:underline"
                       >
-                        <MapIcon className="w-3.5 h-3.5 text-black" />
-                        <span>Open Live Map</span>
+                        Explore All →
                       </button>
                     </div>
-                  </div>
 
-                  {/* Daily Campus Weather Briefing */}
-                  <div
-                    onClick={() => {
-                      setShowWeatherModal(true);
-                      setWeatherModalTab("now");
-                    }}
-                    className="p-3 bg-white/10 hover:bg-white/15 backdrop-blur-md rounded-2xl border border-white/10 flex items-center justify-between flex-wrap gap-2 cursor-pointer transition"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-2xl">{weatherReport.conditionIcon}</span>
-                      <div className="text-xs">
-                        <div className="font-bold flex items-center gap-1.5 text-white">
-                          <span>{weatherReport.currentTemp}°F {weatherReport.conditionText}</span>
-                          <span className="text-sky-300 font-mono">· Feels {weatherReport.feelsLike}°</span>
+                    <div className="space-y-2.5">
+                      {(courses.length > 0 ? courses : initialCampusCourses).map((course) => (
+                        <div
+                          key={course.id}
+                          className="bg-slate-50 dark:bg-zinc-800/50 rounded-2xl p-2.5 border border-slate-200 dark:border-zinc-700/70 hover:border-amber-500 transition group space-y-2"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-800 shrink-0 relative">
+                              <img
+                                src={course.imageUrl || "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=300&auto=format&fit=crop&q=80"}
+                                alt={course.name}
+                                className="w-full h-full object-cover group-hover:scale-110 transition duration-300"
+                              />
+                              {course.grade && (
+                                <span className="absolute bottom-0.5 right-0.5 bg-black/80 text-[8px] font-black text-amber-400 px-1 rounded">
+                                  {course.grade.split(" ")[0]}
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="text-xs font-mono font-black text-amber-600 dark:text-amber-400 truncate">
+                                  {course.code}
+                                </span>
+                                <span className="text-[10px] font-bold bg-slate-200 dark:bg-zinc-700 text-slate-700 dark:text-zinc-300 px-1.5 py-0.5 rounded">
+                                  {course.credits || 3.0} cr
+                                </span>
+                              </div>
+                              <h4 className="text-xs font-bold text-slate-900 dark:text-zinc-100 truncate">
+                                {course.name}
+                              </h4>
+                              <p className="text-[10px] text-slate-500 dark:text-zinc-400 truncate">
+                                👨‍🏫 {course.professor} • 📍 {course.room || "Science Complex"}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between pt-1.5 border-t border-slate-200/60 dark:border-zinc-700/60 text-[10px] font-semibold text-slate-500 dark:text-zinc-400">
+                            <span>🕒 {course.schedule.split("•")[0]}</span>
+                            <button
+                              onClick={() => {
+                                setActiveTab("campus");
+                                triggerToast(`📚 Opened Study Hub for ${course.code}`);
+                              }}
+                              className="text-amber-600 dark:text-amber-400 hover:underline font-bold"
+                            >
+                              Study Pod →
+                            </button>
+                          </div>
                         </div>
-                        <span className="text-[11px] text-slate-300">
-                          {weatherReport.clothingRecommendation} {weatherReport.umbrellaNeeded ? "☔ Umbrella recommended." : "✨ No rain gear needed today."}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-[10px] text-amber-300 font-bold bg-black/40 px-2.5 py-1 rounded-xl">
-                      <span>High: {weatherReport.highToday}° / Low: {weatherReport.lowToday}°</span>
-                      <span>·</span>
-                      <span className="underline">View Radar & Alerts →</span>
+                      ))}
                     </div>
                   </div>
 
-                  {/* Today's Schedule Timeline */}
-                  <div className="pt-2 border-t border-white/10">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
-                      📅 Your Schedule Today
-                    </span>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                      <div className="bg-white/5 p-2.5 rounded-xl border border-white/10 text-xs">
-                        <span className="text-amber-400 font-bold font-mono">10:00 AM</span>
-                        <div className="font-bold text-white truncate">COSC 421 OS Class</div>
-                        <span className="text-[10px] text-slate-400">Science Complex 204</span>
-                      </div>
-                      <div className="bg-white/5 p-2.5 rounded-xl border border-white/10 text-xs">
-                        <span className="text-amber-400 font-bold font-mono">2:00 PM</span>
-                        <div className="font-bold text-white truncate">Cybersecurity Club</div>
-                        <span className="text-[10px] text-slate-400">7800 York Rd Rm 214</span>
-                      </div>
-                      <div className="bg-white/5 p-2.5 rounded-xl border border-white/10 text-xs">
-                        <span className="text-emerald-400 font-bold font-mono">5:00 PM</span>
-                        <div className="font-bold text-white truncate">AI Security Keynote</div>
-                        <span className="text-[10px] text-slate-400">Science Complex Atrium</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* ASK CAMPUS AI QUICK LAUNCHER BAR */}
-              <div className="bg-white dark:bg-zinc-900 rounded-3xl p-4 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-lg bg-amber-500 flex items-center justify-center text-black font-black text-xs">
-                    ⚡
-                  </div>
-                  <span className="text-xs font-black uppercase tracking-wider text-slate-400">Ask TowsonSync AI</span>
-                </div>
-
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    if (!aiChatQuery.trim()) return;
-                    setActiveTab("more");
-                    setMoreSubView("ai");
-                    handleSendAiPrompt(e);
-                  }}
-                  className="flex gap-2"
-                >
-                  <input
-                    type="text"
-                    placeholder='Ask AI anything: "What events are tonight?", "Find a 2BR apartment under $900", "Where is Cook Library?"...'
-                    value={aiChatQuery}
-                    onChange={(e) => setAiChatQuery(e.target.value)}
-                    className="flex-1 bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 rounded-2xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium"
-                  />
-                  <button
-                    type="submit"
-                    className="bg-amber-500 hover:bg-amber-600 text-black font-black px-4 py-2.5 rounded-2xl text-xs shadow-md transition shrink-0"
-                  >
-                    Ask AI
-                  </button>
-                </form>
-
-                {/* AI Prompt Pills */}
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-[11px]">
-                  {[
-                    "What's happening tonight?",
-                    "Find apartment under $900",
-                    "Navigate to Cook Library",
-                    "COSC 421 study groups",
-                    "Shuttle schedule to York Rd",
-                  ].map((pill) => (
+                  {/* Tiger Record Quick Card */}
+                  <div className="pt-3 border-t border-slate-100 dark:border-zinc-800 space-y-2">
                     <button
-                      key={pill}
-                      type="button"
                       onClick={() => {
-                        setAiChatQuery(pill);
                         setActiveTab("more");
-                        setMoreSubView("ai");
+                        setMoreSubView("transcript");
                       }}
-                      className="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-zinc-800 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-slate-600 dark:text-zinc-300 font-semibold shrink-0 border border-slate-200 dark:border-zinc-700 transition"
+                      className="w-full bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 border border-amber-200 dark:border-amber-800/80 p-3 rounded-2xl flex items-center justify-between text-xs font-bold text-amber-800 dark:text-amber-200 transition"
                     >
-                      💡 {pill}
+                      <div className="flex items-center gap-2">
+                        <span>🏆</span>
+                        <span>Tiger Record & Passport</span>
+                      </div>
+                      <span className="font-mono text-[10px] bg-amber-500 text-black px-2 py-0.5 rounded-full font-black">
+                        5 / 7 Milestones
+                      </span>
                     </button>
-                  ))}
+                  </div>
+
                 </div>
               </div>
 
-              {/* SOCIAL FEED FILTER TABS */}
-              <div className="flex items-center justify-between flex-wrap gap-2 pt-2">
-                <div className="flex items-center gap-1 overflow-x-auto text-xs font-bold bg-white dark:bg-zinc-900 p-1.5 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm">
+            </div>
+
+            {/* ========================================================================= */}
+            {/* CENTER COLUMN: 📰 SOCIAL FEED & INTERACTIVE POST COMPOSER */}
+            {/* ========================================================================= */}
+            <div className="lg:col-span-5 space-y-6">
+              
+              {/* FEED CATEGORY TABS & FILTER PILLS */}
+              <div className="bg-white dark:bg-zinc-900 rounded-3xl p-3 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-2.5">
+                <div className="flex items-center gap-1.5 overflow-x-auto text-xs font-bold pb-1">
                   {[
-                    { id: "ALL", label: "🌟 All Feed" },
-                    { id: "POSTS", label: "📝 Posts" },
-                    { id: "REELS", label: "🎬 Reels" },
-                    { id: "EVENTS", label: "📅 Events" },
-                    { id: "POLLS", label: "📊 Polls" },
-                  ].map((f) => (
+                    { id: "foryou", label: "🔥 For You", active: true },
+                    { id: "products", label: "🚀 Products", active: false },
+                    { id: "research", label: "📄 Research", active: false },
+                    { id: "following", label: "👥 Following", active: false },
+                  ].map((tab) => (
                     <button
-                      key={f.id}
+                      key={tab.id}
                       onClick={() => {
-                        if (f.id === "REELS") {
+                        if (tab.id === "products") {
                           setActiveTab("more");
-                          setMoreSubView("tv");
-                        } else if (f.id === "EVENTS") {
-                          setActiveTab("events");
+                          setMoreSubView("market");
+                        } else if (tab.id === "research") {
+                          setActiveTab("more");
+                          setMoreSubView("career");
                         }
                       }}
-                      className={`px-3 py-1.5 rounded-xl transition ${
-                        f.id === "ALL" || f.id === "POSTS"
-                          ? "bg-amber-500 text-black font-black"
+                      className={`px-3 py-1.5 rounded-xl transition shrink-0 ${
+                        tab.id === "foryou"
+                          ? "bg-amber-500 text-black font-black shadow-xs"
                           : "text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800"
                       }`}
                     >
-                      {f.label}
+                      {tab.label}
                     </button>
                   ))}
                 </div>
 
-                <span className="text-[11px] text-slate-400 font-semibold">
-                  Live Stream: <strong>Towson Main Feed</strong>
-                </span>
+                <div className="flex items-center gap-1.5 overflow-x-auto text-[11px] pt-1 border-t border-slate-100 dark:border-zinc-800">
+                  <span className="text-[10px] font-black uppercase text-slate-400 shrink-0">FILTER:</span>
+                  {[
+                    "All",
+                    "AI Discussions",
+                    "Cybersecurity",
+                    "Cloud",
+                    "Technology",
+                    "Business",
+                    "Career",
+                  ].map((chip, idx) => (
+                    <button
+                      key={chip}
+                      className={`px-2.5 py-0.5 rounded-full font-bold transition shrink-0 ${
+                        idx === 0
+                          ? "bg-slate-900 dark:bg-zinc-100 text-white dark:text-black"
+                          : "bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200"
+                      }`}
+                    >
+                      {chip}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              {/* POST COMPOSER */}
-              <div className="bg-white dark:bg-zinc-900 rounded-3xl p-4 border border-slate-200 dark:border-zinc-800 shadow-sm">
-                <div className="flex items-center gap-3 mb-3">
+              {/* LINKEDIN-STYLE POST COMPOSER */}
+              <div className="bg-white dark:bg-zinc-900 rounded-3xl p-4 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-3">
+                <div className="flex items-center gap-3">
                   <img
                     src={currentUser.avatar}
                     alt={currentUser.name}
-                    className="w-10 h-10 rounded-full object-cover ring-2 ring-amber-500"
+                    className="w-10 h-10 rounded-full object-cover ring-2 ring-amber-500 shrink-0"
                   />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold">{currentUser.name}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <form onSubmit={handleCreatePost}>
-                  <textarea
-                    placeholder="Share an announcement, event, or student project at Towson..."
+                  <input
+                    type="text"
+                    placeholder="Start a post, share insights or milestones..."
                     value={newPostContent}
                     onChange={(e) => setNewPostContent(e.target.value)}
-                    rows={3}
-                    className="w-full text-sm bg-slate-50 dark:bg-zinc-800/50 rounded-2xl p-3.5 border border-slate-200 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none transition"
+                    className="flex-1 bg-slate-100 dark:bg-zinc-800/80 rounded-full px-4 py-2.5 text-xs text-slate-900 dark:text-zinc-100 placeholder-slate-400 border border-slate-200 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium"
                   />
+                </div>
 
-                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100 dark:border-zinc-800">
-                    <div className="flex items-center gap-1 text-xs text-slate-500 bg-slate-100 dark:bg-zinc-800 px-2.5 py-1.5 rounded-lg">
-                      <MapPin className="w-3.5 h-3.5 text-amber-500" />
-                      <span>{newPostLocation}</span>
-                    </div>
-
+                {/* Composer Actions */}
+                <div className="flex items-center justify-between flex-wrap gap-2 pt-2 border-t border-slate-100 dark:border-zinc-800 text-xs">
+                  <div className="flex items-center gap-1.5 flex-wrap">
                     <button
-                      type="submit"
-                      disabled={!newPostContent.trim()}
-                      className="bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-black text-xs font-black px-4 py-2 rounded-xl transition flex items-center gap-1.5 shadow-md"
+                      type="button"
+                      onClick={() => setShowImageInput(!showImageInput)}
+                      className="px-2.5 py-1 rounded-xl text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 font-bold flex items-center gap-1 text-[11px]"
                     >
-                      <Send className="w-3.5 h-3.5" />
-                      <span>Post to Campus</span>
+                      <Camera className="w-3.5 h-3.5 text-sky-500" />
+                      <span>Media</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => triggerToast("📊 Poll creator activated.")}
+                      className="px-2.5 py-1 rounded-xl text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 font-bold flex items-center gap-1 text-[11px]"
+                    >
+                      <BarChart3 className="w-3.5 h-3.5 text-amber-500" />
+                      <span>Create a Poll</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => triggerToast("🎉 Celebrate student milestone.")}
+                      className="px-2.5 py-1 rounded-xl text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 font-bold flex items-center gap-1 text-[11px]"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+                      <span>Celebrate</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => triggerToast("📄 Document upload ready.")}
+                      className="px-2.5 py-1 rounded-xl text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 font-bold flex items-center gap-1 text-[11px]"
+                    >
+                      <FileText className="w-3.5 h-3.5 text-orange-500" />
+                      <span>Document</span>
                     </button>
                   </div>
-                </form>
+
+                  <button
+                    type="button"
+                    onClick={handleCreatePost}
+                    disabled={!newPostContent.trim()}
+                    className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-black px-4 py-1.5 rounded-xl transition flex items-center gap-1.5 shadow-md"
+                  >
+                    <span>Write with AI</span>
+                    <Sparkles className="w-3 h-3 text-amber-300" />
+                  </button>
+                </div>
               </div>
 
               {/* POSTS LIST */}
@@ -3795,7 +3985,7 @@ export default function CampusSyncApp() {
                         <img src={post.authorAvatar} alt={post.authorName} className="w-10 h-10 rounded-full object-cover ring-2 ring-amber-500/20" />
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-bold">{post.authorName}</span>
+                            <span className="text-sm font-bold text-slate-900 dark:text-zinc-100">{post.authorName}</span>
                           </div>
                           <div className="text-xs text-slate-500 mt-0.5">
                             <span>{post.authorMajor}</span> • <span>{post.timeAgo}</span>
@@ -3840,15 +4030,88 @@ export default function CampusSyncApp() {
 
             </div>
 
-            {/* Right Rail */}
-            <div className="lg:col-span-4 space-y-6">
+            {/* ========================================================================= */}
+            {/* RIGHT COLUMN: 🌟 RECOMMENDED OPPORTUNITIES & WEATHER RADAR */}
+            {/* ========================================================================= */}
+            <div className="lg:col-span-3 space-y-6">
               
-              {/* Quick Map Radar Teaser */}
+              {/* RECOMMENDED OPPORTUNITY CARD (MATCHING USER SCREENSHOT) */}
+              <div className="bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-950 text-white rounded-3xl p-5 border border-indigo-500/40 shadow-xl space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-indigo-400 bg-indigo-900/60 px-2 py-0.5 rounded-full border border-indigo-400/30">
+                    ✨ Recommended for you
+                  </span>
+                  <span className="text-[10px] font-mono text-emerald-400 font-black">92% Match</span>
+                </div>
+
+                <div className="space-y-1.5">
+                  <span className="text-[11px] text-slate-400">Because you follow <strong>Cloud Security & Zero Trust</strong>:</span>
+                  
+                  <div className="p-3 bg-white/5 rounded-2xl border border-white/10 space-y-2 mt-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white">
+                        <ShieldCheck className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-black text-white leading-tight">AXIOM Cyber Defense Suite</h4>
+                        <span className="text-[10px] text-slate-400">Autonomous Zero-Trust & cATO</span>
+                      </div>
+                    </div>
+                    
+                    <p className="text-[11px] text-slate-300 leading-snug">
+                      Deploy identity perimeters and continuous automated compliance across campus lab nodes.
+                    </p>
+                    
+                    <button
+                      onClick={() => {
+                        setActiveTab("more");
+                        setMoreSubView("career");
+                        triggerToast("💼 Research opportunity details loaded.");
+                      }}
+                      className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white text-xs font-black py-2 rounded-xl transition shadow-md"
+                    >
+                      1-Click Apply →
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Authoritative NOAA Campus Weather Briefing */}
+              <div
+                onClick={() => {
+                  setShowWeatherModal(true);
+                  setWeatherModalTab("now");
+                }}
+                className="bg-white dark:bg-zinc-900 rounded-3xl p-5 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-3 cursor-pointer group hover:border-amber-500 transition"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400">
+                    NOAA Campus Weather
+                  </span>
+                  <span className="text-2xl group-hover:scale-110 transition">{weatherReport.conditionIcon}</span>
+                </div>
+
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-black text-slate-900 dark:text-zinc-100">{weatherReport.currentTemp}°F</span>
+                  <span className="text-xs text-slate-500">{weatherReport.conditionText}</span>
+                </div>
+
+                <p className="text-xs text-slate-500 leading-tight">
+                  {weatherReport.clothingRecommendation}
+                </p>
+
+                <div className="flex items-center justify-between pt-2 border-t text-[11px] font-bold text-amber-600 dark:text-amber-400">
+                  <span>High: {weatherReport.highToday}° / Low: {weatherReport.lowToday}°</span>
+                  <span>Radar →</span>
+                </div>
+              </div>
+
+              {/* Live Campus Radar Mini-Card */}
               <div className="bg-slate-900 text-white rounded-3xl p-5 border border-slate-800 shadow-sm space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <MapIcon className="w-4 h-4 text-amber-400" />
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400">Towson Live Map Radar</h3>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400">Campus Radar</h3>
                   </div>
                   <button
                     onClick={() => {
@@ -3874,42 +4137,6 @@ export default function CampusSyncApp() {
                 >
                   <Navigation className="w-3.5 h-3.5 text-black" />
                   <span>Launch Live Campus Map</span>
-                </button>
-              </div>
-
-              {/* Verified Student Engagement Record Mini-Card */}
-              <div className="bg-white dark:bg-zinc-900 rounded-3xl p-5 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Trophy className="w-4 h-4 text-amber-500" />
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Tiger Record</h3>
-                  </div>
-                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-                    Verified ✓
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 text-center">
-                  <div className="bg-amber-50 dark:bg-amber-950/40 p-3 rounded-2xl border border-amber-100 dark:border-amber-900">
-                    <span className="block text-2xl font-black text-amber-600 dark:text-amber-400 leading-none">
-                      {currentUser.volunteerHoursLogged}
-                    </span>
-                    <span className="text-[10px] font-bold text-slate-500 mt-1 block">Volunteer Hours</span>
-                  </div>
-                  <div className="bg-slate-50 dark:bg-zinc-800/40 p-3 rounded-2xl border">
-                    <span className="block text-2xl font-black text-slate-900 dark:text-zinc-100 leading-none">
-                      {currentUser.eventsAttendedCount}
-                    </span>
-                    <span className="text-[10px] font-bold text-slate-500 mt-1 block">Events Attended</span>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => setShowCertificateModal(true)}
-                  className="w-full bg-amber-500 hover:bg-amber-600 text-black text-xs font-black py-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-md"
-                >
-                  <Award className="w-3.5 h-3.5" />
-                  <span>Official Service Certificate</span>
                 </button>
               </div>
 
