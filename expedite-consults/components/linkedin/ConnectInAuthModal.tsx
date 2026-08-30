@@ -132,10 +132,20 @@ export function ConnectInAuthModal({
   onClose,
   onLoginSuccess
 }: ConnectInAuthModalProps) {
-  const [authMode, setAuthMode] = useState<'signin' | 'register' | 'sso'>('signin')
+  const [authMode, setAuthMode] = useState<'signin' | 'register' | 'credentials' | 'sso'>('signin')
   const [selectedPersona, setSelectedPersona] = useState<AuthPersona>(DEMO_AUTH_PERSONAS[0])
   const [emailInput, setEmailInput] = useState("")
   const [passwordInput, setPasswordInput] = useState("")
+
+  // Registration State
+  const [regFirstName, setRegFirstName] = useState("")
+  const [regLastName, setRegLastName] = useState("")
+  const [regEmail, setRegEmail] = useState("")
+  const [regPassword, setRegPassword] = useState("")
+  const [regRole, setRegRole] = useState<'personal' | 'enterprise' | 'creator' | 'seller' | 'developer'>('personal')
+  const [regStep, setRegStep] = useState<'form' | 'verify'>('form')
+  const [verificationCode, setVerificationCode] = useState("749204")
+
   const [isAuthenticating, setIsAuthenticating] = useState(false)
   const [authSuccessMessage, setAuthSuccessMessage] = useState<string | null>(null)
 
@@ -144,7 +154,7 @@ export function ConnectInAuthModal({
   const handleExecuteLogin = (personaToLogin: AuthPersona) => {
     setIsAuthenticating(true)
     setAuthSuccessMessage(
-      `✓ Authenticated via FIDO2 Passkey. Identity verified: ${personaToLogin.name} (${personaToLogin.badge}). Redirecting to: ${personaToLogin.defaultTab.toUpperCase()}...`
+      `✓ Authenticated via FIDO2 Passkey. Identity verified: ${personaToLogin.name} (${personaToLogin.badge}). Session ID: sess_${Date.now().toString(36)}. Redirecting...`
     )
 
     setTimeout(() => {
@@ -177,9 +187,62 @@ export function ConnectInAuthModal({
     }, 1200)
   }
 
+  const handleRegisterSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!regEmail || !regFirstName) return
+    setRegStep('verify')
+  }
+
+  const handleVerifyRegistrationCode = () => {
+    setIsAuthenticating(true)
+    const fullName = `${regFirstName} ${regLastName}`.trim() || "New ConnectIn Member"
+    const targetTab =
+      regRole === 'enterprise' ? 'procurement' :
+      regRole === 'creator' ? 'media' :
+      regRole === 'seller' ? 'sellercenter' :
+      regRole === 'developer' ? 'code' : 'home'
+
+    const targetWorkspace: 'personal' | 'enterprise' | 'creator' | 'seller' =
+      regRole === 'enterprise' ? 'enterprise' :
+      regRole === 'creator' ? 'creator' :
+      regRole === 'seller' ? 'seller' : 'personal'
+
+    setAuthSuccessMessage(
+      `✓ Email verified & FIDO2 Passkey initialized for ${fullName}! Session created: sess_${Date.now().toString(36)}. Launching ${regRole.toUpperCase()} workspace...`
+    )
+
+    setTimeout(() => {
+      setIsAuthenticating(false)
+      setAuthSuccessMessage(null)
+      setRegStep('form')
+      onClose()
+
+      const newRegisteredUser: UserProfile = {
+        name: fullName,
+        headline: `${regRole.charAt(0).toUpperCase() + regRole.slice(1)} Professional · Verified ConnectIn Identity`,
+        avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(fullName)}&backgroundColor=0a66c2`,
+        coverImage: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80',
+        location: 'United States · Cryptographically Verified Member',
+        connectionsCount: 1,
+        followersCount: 5,
+        profileViews: 1,
+        postImpressions: 12,
+        clearanceLevel: 'Standard Verified Identity (Level 2)',
+        fido2MfaVerified: true,
+        cryptoVerificationBadge: '0xED25519_SESSION_INITIALIZED',
+        skillMatrixScore: 88.0,
+        about: `New registered ${regRole} on ConnectIn Identity platform with active session registry.`,
+        skills: ['Cloud Engineering', 'Security Operations', 'Zero Trust Architecture'],
+        experience: [],
+        education: []
+      }
+
+      onLoginSuccess(newRegisteredUser, targetTab, targetWorkspace)
+    }, 1300)
+  }
+
   const handleManualFormSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // Find matching persona or match by domain/role
     let matched = DEMO_AUTH_PERSONAS.find(p => p.email.toLowerCase() === emailInput.toLowerCase())
     if (!matched) {
       if (emailInput.includes('admin')) matched = DEMO_AUTH_PERSONAS[4]
@@ -210,7 +273,7 @@ export function ConnectInAuthModal({
                   </span>
                 </h2>
                 <p className="text-xs text-zinc-300">
-                  Role-Aware Authentication · Instant Persona Routing
+                  Register New Session · Role-Aware Authentication Gate
                 </p>
               </div>
             </div>
@@ -226,28 +289,38 @@ export function ConnectInAuthModal({
 
         {/* Live Feedback Toast */}
         {authSuccessMessage && (
-          <div className="rounded-xl bg-emerald-500/20 border border-emerald-400/40 p-3.5 text-xs font-bold text-emerald-300 text-center animate-in zoom-in-95 flex items-center justify-center gap-2">
+          <div className="rounded-xl bg-emerald-500/20 border border-emerald-400/40 p-3.5 text-xs font-bold text-emerald-300 text-center animate-in zoom-in-95 flex items-center justify-center gap-2 font-mono">
             <CheckCircle2 className="h-4 w-4 shrink-0 animate-bounce" />
             <span>{authSuccessMessage}</span>
           </div>
         )}
 
-        {/* Tab Selection: Sign In / 1-Click Role Switcher / SSO */}
-        <div className="flex items-center gap-2 border-b border-white/10 pb-3 text-xs">
+        {/* Tab Selection */}
+        <div className="flex items-center gap-1.5 border-b border-white/10 pb-3 text-xs overflow-x-auto">
           <button
             onClick={() => setAuthMode('signin')}
-            className={`rounded-xl px-4 py-2 font-bold transition-all ${
+            className={`rounded-xl px-3.5 py-2 font-bold transition-all shrink-0 ${
               authMode === 'signin'
                 ? "bg-[#0A66C2] text-white shadow-md"
                 : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
             }`}
           >
-            🔑 1-Click Persona Login
+            🔑 1-Click Role Logins
           </button>
           <button
             onClick={() => setAuthMode('register')}
-            className={`rounded-xl px-4 py-2 font-bold transition-all ${
+            className={`rounded-xl px-3.5 py-2 font-bold transition-all shrink-0 ${
               authMode === 'register'
+                ? "bg-emerald-600 text-white shadow-md"
+                : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            🆕 Register Account
+          </button>
+          <button
+            onClick={() => setAuthMode('credentials')}
+            className={`rounded-xl px-3.5 py-2 font-bold transition-all shrink-0 ${
+              authMode === 'credentials'
                 ? "bg-[#0A66C2] text-white shadow-md"
                 : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
             }`}
@@ -256,21 +329,21 @@ export function ConnectInAuthModal({
           </button>
           <button
             onClick={() => setAuthMode('sso')}
-            className={`rounded-xl px-4 py-2 font-bold transition-all ${
+            className={`rounded-xl px-3.5 py-2 font-bold transition-all shrink-0 ${
               authMode === 'sso'
                 ? "bg-[#0A66C2] text-white shadow-md"
                 : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
             }`}
           >
-            🏛️ Enterprise SSO (SAML/SCIM)
+            🏛️ Enterprise SSO
           </button>
         </div>
 
-        {/* MODE 1: 1-CLICK ROLE-BASED PERSONA AUTHENTICATION */}
+        {/* TAB 1: 1-CLICK PERSONA LOGIN */}
         {authMode === 'signin' && (
           <div className="space-y-4">
             <p className="text-xs text-zinc-300">
-              Select any role below to authenticate instantly and observe the automated, role-aware navigation flow:
+              Select any pre-configured identity below to authenticate instantly and launch its dedicated workspace:
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-1">
@@ -305,8 +378,127 @@ export function ConnectInAuthModal({
           </div>
         )}
 
-        {/* MODE 2: CREDENTIALS & PASSKEYS FORM */}
+        {/* TAB 2: REGISTER NEW USER ACCOUNT & MINT SESSION */}
         {authMode === 'register' && (
+          <div className="space-y-4 text-xs">
+            {regStep === 'form' ? (
+              <form onSubmit={handleRegisterSubmit} className="space-y-3.5">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-zinc-300 font-bold mb-1">First Name</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Kwesi"
+                      value={regFirstName}
+                      onChange={(e) => setRegFirstName(e.target.value)}
+                      className="w-full rounded-xl bg-white/10 border border-white/15 px-3 py-2 text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 text-xs"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-zinc-300 font-bold mb-1">Last Name</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Asiedu"
+                      value={regLastName}
+                      onChange={(e) => setRegLastName(e.target.value)}
+                      className="w-full rounded-xl bg-white/10 border border-white/15 px-3 py-2 text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 text-xs"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-zinc-300 font-bold mb-1">Work / Personal Email</label>
+                  <input
+                    type="email"
+                    placeholder="e.g. kwesi@expedite-consults.com"
+                    value={regEmail}
+                    onChange={(e) => setRegEmail(e.target.value)}
+                    className="w-full rounded-xl bg-white/10 border border-white/15 px-3 py-2 text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 text-xs"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-zinc-300 font-bold mb-1">Password / Passkey</label>
+                  <input
+                    type="password"
+                    placeholder="••••••••••••"
+                    value={regPassword}
+                    onChange={(e) => setRegPassword(e.target.value)}
+                    className="w-full rounded-xl bg-white/10 border border-white/15 px-3 py-2 text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 text-xs"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-zinc-300 font-bold mb-1">Account Role &amp; Workspace</label>
+                  <select
+                    value={regRole}
+                    onChange={(e) => setRegRole(e.target.value as any)}
+                    className="w-full rounded-xl bg-slate-900 border border-white/20 px-3 py-2 text-white text-xs focus:outline-none"
+                  >
+                    <option value="personal">👤 Individual Professional (Feed &amp; Skill Passport)</option>
+                    <option value="enterprise">🏢 Enterprise Buyer (Procurement Desk &amp; RFPs)</option>
+                    <option value="creator">🎬 Creator &amp; Studio Host (Video &amp; Podcasts)</option>
+                    <option value="seller">💼 Marketplace Seller (Storefront &amp; Licenses)</option>
+                    <option value="developer">🧑‍💻 Defense &amp; Kernel Developer (Code &amp; Labs)</option>
+                  </select>
+                </div>
+
+                <div className="pt-2 flex justify-end">
+                  <button
+                    type="submit"
+                    className="rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black px-5 py-2.5 shadow-lg transition-all flex items-center gap-1.5"
+                  >
+                    <span>Create Account &amp; Send Code →</span>
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="space-y-4 text-center py-2 animate-in zoom-in-95">
+                <div className="h-12 w-12 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 flex items-center justify-center mx-auto text-xl">
+                  ✉️
+                </div>
+                <div className="space-y-1">
+                  <h3 className="font-bold text-sm text-white">We sent a 6-digit verification code</h3>
+                  <p className="text-zinc-400 text-[11px]">Sent to: <strong className="text-white">{regEmail}</strong></p>
+                </div>
+
+                <div className="max-w-xs mx-auto">
+                  <input
+                    type="text"
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value)}
+                    className="w-full text-center text-xl font-mono font-bold tracking-widest rounded-xl bg-white/10 border border-emerald-400/40 p-2 text-emerald-300 focus:outline-none"
+                    maxLength={6}
+                  />
+                </div>
+
+                <div className="flex items-center justify-center gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setRegStep('form')}
+                    className="rounded-xl bg-white/10 px-4 py-2 text-zinc-300 font-bold"
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleVerifyRegistrationCode}
+                    className="rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-6 py-2 shadow-lg"
+                  >
+                    Verify &amp; Launch Session 🚀
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB 3: CREDENTIALS & PASSKEYS FORM */}
+        {authMode === 'credentials' && (
           <form onSubmit={handleManualFormSubmit} className="space-y-4 text-xs">
             <div className="space-y-3">
               <div>
@@ -361,7 +553,7 @@ export function ConnectInAuthModal({
           </form>
         )}
 
-        {/* MODE 3: ENTERPRISE SSO / SAML */}
+        {/* TAB 4: ENTERPRISE SSO / SAML */}
         {authMode === 'sso' && (
           <div className="space-y-4 text-xs">
             <p className="text-zinc-300 leading-relaxed">

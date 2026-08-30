@@ -21,18 +21,45 @@ export default function ConnectInLoginPage() {
   const [selectedPersona, setSelectedPersona] = useState<AuthPersona>(DEMO_AUTH_PERSONAS[0])
   const [emailInput, setEmailInput] = useState("")
   const [passwordInput, setPasswordInput] = useState("")
-  const [authMode, setAuthMode] = useState<'signin' | 'register' | 'sso'>('signin')
+  const [authMode, setAuthMode] = useState<'signin' | 'register' | 'credentials' | 'sso'>('signin')
+
+  // Registration State
+  const [regFirstName, setRegFirstName] = useState("")
+  const [regLastName, setRegLastName] = useState("")
+  const [regEmail, setRegEmail] = useState("")
+  const [regPassword, setRegPassword] = useState("")
+  const [regRole, setRegRole] = useState<'personal' | 'enterprise' | 'creator' | 'seller' | 'developer'>('personal')
+  const [regStep, setRegStep] = useState<'form' | 'verify'>('form')
+  const [verificationCode, setVerificationCode] = useState("749204")
+
   const [isAuthenticating, setIsAuthenticating] = useState(false)
   const [statusFeedback, setStatusFeedback] = useState<string | null>(null)
 
   const handleLogin = (persona: AuthPersona) => {
     setIsAuthenticating(true)
     setStatusFeedback(
-      `✓ FIDO2 Identity Verified: ${persona.name} (${persona.badge}). Directing to: ${persona.defaultTab.toUpperCase()}...`
+      `✓ FIDO2 Identity Verified: ${persona.name} (${persona.badge}). Session ID: sess_${Date.now().toString(36)}. Directing to: ${persona.defaultTab.toUpperCase()}...`
     )
 
     setTimeout(() => {
-      // Direct user to ConnectIn platform
+      router.push(`/connectin`)
+    }, 1200)
+  }
+
+  const handleRegisterSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!regEmail || !regFirstName) return
+    setRegStep('verify')
+  }
+
+  const handleVerifyRegistrationCode = () => {
+    setIsAuthenticating(true)
+    const fullName = `${regFirstName} ${regLastName}`.trim() || "New ConnectIn Member"
+    setStatusFeedback(
+      `✓ Email verified & FIDO2 Passkey initialized for ${fullName}! Session created: sess_${Date.now().toString(36)}. Launching platform...`
+    )
+
+    setTimeout(() => {
       router.push(`/connectin`)
     }, 1200)
   }
@@ -69,7 +96,7 @@ export default function ConnectInLoginPage() {
             ConnectIn Identity &amp; Access Gate
           </h1>
           <p className="text-xs text-zinc-400 max-w-md mx-auto">
-            Universal role-aware authentication. Your identity dynamically routes your workspace and permissions.
+            Universal role-aware authentication. Your identity dynamically routes your workspace and active sessions.
           </p>
         </div>
 
@@ -81,10 +108,10 @@ export default function ConnectInLoginPage() {
         )}
 
         {/* Tab Selection */}
-        <div className="flex items-center gap-2 border-b border-white/10 pb-3 text-xs justify-center">
+        <div className="flex items-center gap-1.5 border-b border-white/10 pb-3 text-xs justify-center overflow-x-auto">
           <button
             onClick={() => setAuthMode('signin')}
-            className={`rounded-xl px-4 py-2 font-bold transition-all ${
+            className={`rounded-xl px-3.5 py-2 font-bold transition-all shrink-0 ${
               authMode === 'signin'
                 ? "bg-[#0A66C2] text-white shadow-md"
                 : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
@@ -94,8 +121,18 @@ export default function ConnectInLoginPage() {
           </button>
           <button
             onClick={() => setAuthMode('register')}
-            className={`rounded-xl px-4 py-2 font-bold transition-all ${
+            className={`rounded-xl px-3.5 py-2 font-bold transition-all shrink-0 ${
               authMode === 'register'
+                ? "bg-emerald-600 text-white shadow-md"
+                : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            🆕 Register Account
+          </button>
+          <button
+            onClick={() => setAuthMode('credentials')}
+            className={`rounded-xl px-3.5 py-2 font-bold transition-all shrink-0 ${
+              authMode === 'credentials'
                 ? "bg-[#0A66C2] text-white shadow-md"
                 : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
             }`}
@@ -104,7 +141,7 @@ export default function ConnectInLoginPage() {
           </button>
           <button
             onClick={() => setAuthMode('sso')}
-            className={`rounded-xl px-4 py-2 font-bold transition-all ${
+            className={`rounded-xl px-3.5 py-2 font-bold transition-all shrink-0 ${
               authMode === 'sso'
                 ? "bg-[#0A66C2] text-white shadow-md"
                 : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
@@ -148,8 +185,127 @@ export default function ConnectInLoginPage() {
           </div>
         )}
 
-        {/* Mode 2: Form */}
+        {/* Mode 2: Register Account */}
         {authMode === 'register' && (
+          <div className="space-y-4 text-xs">
+            {regStep === 'form' ? (
+              <form onSubmit={handleRegisterSubmit} className="space-y-3.5">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-zinc-300 font-bold mb-1">First Name</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Kwesi"
+                      value={regFirstName}
+                      onChange={(e) => setRegFirstName(e.target.value)}
+                      className="w-full rounded-xl bg-white/10 border border-white/15 px-3 py-2 text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 text-xs"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-zinc-300 font-bold mb-1">Last Name</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Asiedu"
+                      value={regLastName}
+                      onChange={(e) => setRegLastName(e.target.value)}
+                      className="w-full rounded-xl bg-white/10 border border-white/15 px-3 py-2 text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 text-xs"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-zinc-300 font-bold mb-1">Work / Personal Email</label>
+                  <input
+                    type="email"
+                    placeholder="e.g. kwesi@expedite-consults.com"
+                    value={regEmail}
+                    onChange={(e) => setRegEmail(e.target.value)}
+                    className="w-full rounded-xl bg-white/10 border border-white/15 px-3 py-2 text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 text-xs"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-zinc-300 font-bold mb-1">Password</label>
+                  <input
+                    type="password"
+                    placeholder="••••••••••••"
+                    value={regPassword}
+                    onChange={(e) => setRegPassword(e.target.value)}
+                    className="w-full rounded-xl bg-white/10 border border-white/15 px-3 py-2 text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 text-xs"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-zinc-300 font-bold mb-1">Account Role &amp; Workspace</label>
+                  <select
+                    value={regRole}
+                    onChange={(e) => setRegRole(e.target.value as any)}
+                    className="w-full rounded-xl bg-slate-900 border border-white/20 px-3 py-2 text-white text-xs focus:outline-none"
+                  >
+                    <option value="personal">👤 Individual Professional (Feed &amp; Skill Passport)</option>
+                    <option value="enterprise">🏢 Enterprise Buyer (Procurement Desk &amp; RFPs)</option>
+                    <option value="creator">🎬 Creator &amp; Studio Host (Video &amp; Podcasts)</option>
+                    <option value="seller">💼 Marketplace Seller (Storefront &amp; Licenses)</option>
+                    <option value="developer">🧑‍💻 Defense &amp; Kernel Developer (Code &amp; Labs)</option>
+                  </select>
+                </div>
+
+                <div className="pt-2 flex justify-end">
+                  <button
+                    type="submit"
+                    className="rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black px-5 py-2.5 shadow-lg transition-all"
+                  >
+                    Create Account &amp; Send Code →
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="space-y-4 text-center py-2 animate-in zoom-in-95">
+                <div className="h-12 w-12 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 flex items-center justify-center mx-auto text-xl">
+                  ✉️
+                </div>
+                <div className="space-y-1">
+                  <h3 className="font-bold text-sm text-white">We sent a 6-digit verification code</h3>
+                  <p className="text-zinc-400 text-[11px]">Sent to: <strong className="text-white">{regEmail}</strong></p>
+                </div>
+
+                <div className="max-w-xs mx-auto">
+                  <input
+                    type="text"
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value)}
+                    className="w-full text-center text-xl font-mono font-bold tracking-widest rounded-xl bg-white/10 border border-emerald-400/40 p-2 text-emerald-300 focus:outline-none"
+                    maxLength={6}
+                  />
+                </div>
+
+                <div className="flex items-center justify-center gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setRegStep('form')}
+                    className="rounded-xl bg-white/10 px-4 py-2 text-zinc-300 font-bold"
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleVerifyRegistrationCode}
+                    className="rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-6 py-2 shadow-lg"
+                  >
+                    Verify &amp; Launch Session 🚀
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Mode 3: Form */}
+        {authMode === 'credentials' && (
           <form onSubmit={handleSubmit} className="space-y-4 text-xs">
             <div className="space-y-3">
               <div>
@@ -204,7 +360,7 @@ export default function ConnectInLoginPage() {
           </form>
         )}
 
-        {/* Mode 3: SSO */}
+        {/* Mode 4: SSO */}
         {authMode === 'sso' && (
           <div className="space-y-3 text-xs">
             <button
