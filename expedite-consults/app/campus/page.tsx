@@ -1274,17 +1274,17 @@ export default function CampusSyncApp() {
           {/* Right Tools */}
           <div className="flex items-center gap-2.5">
             
-            {/* Location Sharing Pill */}
+            {/* TigerOrbit 360 Location Sharing Pill */}
             <button
               onClick={() => setShowLocationSharePicker(true)}
               className={`px-3 py-1.5 rounded-full text-xs font-bold border transition flex items-center gap-1.5 ${
                 currentUser.isLocationSharing
-                  ? "bg-emerald-500 text-black border-emerald-400 animate-pulse shadow-md"
-                  : "bg-slate-100 dark:bg-zinc-800 text-slate-600 border-slate-200 hover:border-amber-500"
+                  ? "bg-emerald-500 text-black border-emerald-400 animate-pulse shadow-md font-black"
+                  : "bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-slate-200 dark:border-zinc-700 hover:border-amber-500"
               }`}
             >
-              <span className={`w-2 h-2 rounded-full ${currentUser.isLocationSharing ? "bg-black" : "bg-rose-500"}`} />
-              <span className="hidden sm:inline">{currentUser.isLocationSharing ? `Sharing (${currentUser.locationShareExpiresAt})` : "Share Location"}</span>
+              <span className={`w-2 h-2 rounded-full ${currentUser.isLocationSharing ? "bg-black" : "bg-emerald-500"}`} />
+              <span>{currentUser.isLocationSharing ? `Orbit: ${currentUser.locationShareExpiresAt || "Live"}` : "TigerOrbit 360"}</span>
             </button>
 
             <button
@@ -1325,6 +1325,63 @@ export default function CampusSyncApp() {
                   </span>
                 </div>
               </button>
+
+              {/* User Dropdown Menu */}
+              {showUserDropdown && (
+                <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-zinc-800 p-4 space-y-3 z-50 animate-in zoom-in-95">
+                  <div className="border-b pb-3">
+                    <span className="text-sm font-black block">{currentUser.name}</span>
+                    <span className="text-xs text-slate-500 block">{currentUser.major}</span>
+                    <span className="text-[10px] text-amber-600 font-mono font-bold">{currentUser.studentId}</span>
+                  </div>
+
+                  <div className="space-y-1 text-xs font-bold">
+                    <span className="text-[10px] uppercase tracking-wider text-slate-400 block px-1">Switch Account View:</span>
+                    <button
+                      onClick={() => handleSwitchUserRole("student")}
+                      className={`w-full text-left p-2 rounded-xl transition ${currentUser.role === "STUDENT" ? "bg-amber-500 text-black font-black" : "hover:bg-slate-100 dark:hover:bg-zinc-800"}`}
+                    >
+                      🐯 Student: Kwesi Asiedu
+                    </button>
+                    <button
+                      onClick={() => handleSwitchUserRole("officer")}
+                      className={`w-full text-left p-2 rounded-xl transition ${currentUser.role === "CLUB_LEAD" ? "bg-amber-500 text-black font-black" : "hover:bg-slate-100 dark:hover:bg-zinc-800"}`}
+                    >
+                      🌍 Club Lead: Amara Diallo
+                    </button>
+                    <button
+                      onClick={() => handleSwitchUserRole("faculty")}
+                      className={`w-full text-left p-2 rounded-xl transition ${currentUser.role === "FACULTY" ? "bg-amber-500 text-black font-black" : "hover:bg-slate-100 dark:hover:bg-zinc-800"}`}
+                    >
+                      🔬 Faculty: Dr. Catherine Hayes
+                    </button>
+                  </div>
+
+                  <div className="border-t pt-2 space-y-1 text-xs">
+                    <button
+                      onClick={() => {
+                        setShowLocationSharePicker(true);
+                        setShowUserDropdown(false);
+                      }}
+                      className="w-full text-left p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 font-bold flex items-center gap-2"
+                    >
+                      <span>🪐</span>
+                      <span>TigerOrbit 360 Controls</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActiveTab("more");
+                        setMoreSubView("transcript");
+                        setShowUserDropdown(false);
+                      }}
+                      className="w-full text-left p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 font-bold flex items-center gap-2"
+                    >
+                      <span>🏆</span>
+                      <span>Experience Transcript</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
           </div>
