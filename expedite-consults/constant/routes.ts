@@ -21,6 +21,14 @@ export const routes = {
 	incidentResponse: "/incident-response",
 	legal: "/legal",
 	assessment: "/assessment",
+	campus: {
+		title: "Digital Campus (CampusSync)",
+		url: "/campus",
+	},
+	campusLogin: {
+		title: "Student Verification & Onboarding",
+		url: "/campus/login",
+	},
 	contact: {
 		title: "Contact Us",
 		url: "/contact-us",
@@ -50,6 +58,14 @@ export const subroutes = {
 		{
 			title: "VeritasLens Media Intelligence",
 			url: "/veritaslens",
+		},
+		{
+			title: "🎓 Digital Campus Platform",
+			url: "/campus",
+		},
+		{
+			title: "🔐 Student Verification & Onboarding",
+			url: "/campus/login",
 		},
 	],
 };

@@ -29,6 +29,15 @@ const NavList = ({ services }: { services: GetServicesQueryResult }) => {
 			>
 				<div className="flex items-center gap-3 ml-auto mt-8">
 					<Link
+						href={routes.campus.url}
+						className={cn(
+							"hidden lg:flex items-center gap-2 text-white font-semibold text-sm bg-gradient-to-r from-indigo-600/90 to-blue-600/90 px-4 py-1.5 border border-indigo-400/40 rounded-full hover:from-indigo-500 hover:to-blue-500 transition-all duration-300 shadow-[0_0_15px_rgba(99,102,241,0.3)] hover:shadow-[0_0_20px_rgba(99,102,241,0.5)]"
+						)}
+					>
+						<span className="text-xs">🎓</span>
+						Campus Launchpad
+					</Link>
+					<Link
 						href={routes.incidentResponse}
 						className={cn(
 							"hidden lg:flex items-center gap-2 text-white text-sm bg-primary/10 px-4 py-1.5 border border-primary/10 rounded-full hover:bg-primary/20 transition-all duration-300"
