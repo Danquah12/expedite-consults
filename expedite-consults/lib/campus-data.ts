@@ -851,7 +851,7 @@ export const initialTowsonBuildings: TowsonBuilding[] = [
   },
 ];
 
-// 3. Towson Life360-Style Circles (Privacy-Preserving Groups)
+// 3. TigerOrbit 360 — Privacy-Preserving Campus Orbits & Circles
 export const initialTowsonCircles: LocationCircle[] = [
   {
     id: "circle-cyber",

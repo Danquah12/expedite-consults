@@ -1005,7 +1005,7 @@ export default function CampusSyncApp() {
         </div>
       )}
 
-      {/* 3. MODAL: LIFE360-STYLE CIRCLE LOCATION SHARING MANAGER */}
+      {/* 3. MODAL: TIGERORBIT 360 LOCATION SHARING MANAGER */}
       {showLocationSharePicker && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl max-w-md w-full p-6 relative shadow-2xl space-y-4">
@@ -1021,8 +1021,8 @@ export default function CampusSyncApp() {
                 <MapPin className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-lg font-black text-slate-900 dark:text-zinc-100">Location Sharing Controls</h3>
-                <p className="text-xs text-slate-500">Privacy-First Life360 Circles with temporary timers.</p>
+                <h3 className="text-lg font-black text-slate-900 dark:text-zinc-100">TigerOrbit 360 Controls</h3>
+                <p className="text-xs text-slate-500">Privacy-First Campus Orbits & Circles with temporary timers.</p>
               </div>
             </div>
 
@@ -1372,11 +1372,11 @@ export default function CampusSyncApp() {
             <div className="bg-gradient-to-r from-slate-900 via-amber-950 to-slate-900 rounded-3xl p-6 text-white shadow-xl flex items-center justify-between flex-wrap gap-4 border border-amber-500/30">
               <div>
                 <span className="text-xs font-extrabold uppercase tracking-widest text-amber-400">
-                  Towson University • Geographic Platform & Life360 Circles
+                  Towson University • Geographic Platform & TigerOrbit 360
                 </span>
                 <h1 className="text-2xl font-black mt-0.5">Towson Campus Live Map & Indoor Radar</h1>
                 <p className="text-xs text-slate-300 mt-1 max-w-2xl">
-                  Explore academic buildings, floor plans, live Tiger Ride shuttles, parking garages, TUPD Blue Lights, and temporary location sharing circles.
+                  Explore academic buildings, floor plans, live Tiger Ride shuttles, parking garages, TUPD Blue Lights, and temporary TigerOrbit 360 circles.
                 </p>
               </div>
 
@@ -1398,7 +1398,7 @@ export default function CampusSyncApp() {
                   className="bg-amber-500 hover:bg-amber-600 text-black text-xs font-black px-4 py-2.5 rounded-2xl shadow-lg flex items-center gap-1.5"
                 >
                   <MapPin className="w-4 h-4" />
-                  <span>{currentUser.isLocationSharing ? "Manage Circles" : "Share My Location"}</span>
+                  <span>{currentUser.isLocationSharing ? "Manage Orbits" : "Share My Location"}</span>
                 </button>
               </div>
             </div>
@@ -1408,7 +1408,7 @@ export default function CampusSyncApp() {
               {[
                 { id: "ALL", label: "🌐 All Campus" },
                 { id: "BUILDINGS", label: "🏛️ Academic Buildings" },
-                { id: "CIRCLES", label: "👥 Life360 Circles" },
+                { id: "CIRCLES", label: "👥 TigerOrbit 360" },
                 { id: "SHUTTLES", label: "🚌 Tiger Ride GPS" },
                 { id: "PARKING", label: "🅿️ Parking Garages" },
                 { id: "SAFETY", label: "🚨 TUPD Blue Lights" },
@@ -1485,7 +1485,7 @@ export default function CampusSyncApp() {
                   </button>
                 ))}
 
-              {/* 2. Life360 Circles Friend Pins */}
+              {/* 2. TigerOrbit 360 Friend Pins */}
               {(mapLayerFilter === "ALL" || mapLayerFilter === "CIRCLES") &&
                 towsonCircles[0]?.members.map((mem) => (
                   <button
@@ -1594,18 +1594,18 @@ export default function CampusSyncApp() {
             {/* 3 Grid Summary Cards Below Map */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               
-              {/* 1. Life360 Circles Panel */}
+              {/* 1. TigerOrbit 360 Panel */}
               <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-slate-200 dark:border-zinc-800 shadow-sm space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Users className="w-5 h-5 text-amber-500" />
-                    <h3 className="text-sm font-bold">My Circles (Life360)</h3>
+                    <h3 className="text-sm font-bold">TigerOrbit 360 (My Orbits)</h3>
                   </div>
                   <button
                     onClick={() => setShowLocationSharePicker(true)}
                     className="text-xs font-bold text-amber-600 hover:underline"
                   >
-                    Manage
+                    Manage Orbits
                   </button>
                 </div>
 
