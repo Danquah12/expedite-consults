@@ -4595,33 +4595,183 @@ export default function CampusSyncApp() {
                 </div>
               </div>
 
-              {/* Authoritative NOAA Campus Weather Briefing */}
-              <div
-                onClick={() => {
-                  setShowWeatherModal(true);
-                  setWeatherModalTab("now");
-                }}
-                className="bg-white dark:bg-zinc-900 rounded-3xl p-5 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-3 cursor-pointer group hover:border-amber-500 transition"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400">
-                    NOAA Campus Weather
+              {/* ========================================================================= */}
+              {/* 📅 "MY DAY" — STUDENT PERSONAL COMMAND CENTER */}
+              {/* ========================================================================= */}
+              <div className="bg-white dark:bg-zinc-900 rounded-3xl p-5 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-3.5">
+                
+                {/* Header: Greeting & Quick Weather Snippet */}
+                <div className="flex items-start justify-between">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-base">☀️</span>
+                      <h3 className="text-sm font-black text-slate-900 dark:text-zinc-100">
+                        My Day • {currentUser.name.split(" ")[0]}
+                      </h3>
+                    </div>
+                    <p className="text-[11px] text-slate-500 font-medium">
+                      {weatherReport.conditionIcon} {weatherReport.currentTemp}°F • {weatherReport.clothingRecommendation.split(".")[0]}
+                    </p>
+                  </div>
+
+                  <span className="text-[10px] font-mono font-bold bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 px-2 py-0.5 rounded-full shrink-0">
+                    7 Actions
                   </span>
-                  <span className="text-2xl group-hover:scale-110 transition">{weatherReport.conditionIcon}</span>
                 </div>
 
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-black text-slate-900 dark:text-zinc-100">{weatherReport.currentTemp}°F</span>
-                  <span className="text-xs text-slate-500">{weatherReport.conditionText}</span>
+                {/* Interactive Agenda & Daily Timeline */}
+                <div className="space-y-2 text-xs">
+                  
+                  {/* 1. Next Class */}
+                  <div
+                    onClick={() => {
+                      if (courses[0]) setSelectedCourseForCanvas(courses[0]);
+                      else triggerToast("📚 Class details loaded: COSC 421");
+                    }}
+                    className="p-2.5 bg-indigo-50/70 dark:bg-indigo-950/40 rounded-2xl border border-indigo-200/80 dark:border-indigo-800/60 hover:border-indigo-500 cursor-pointer transition space-y-1 group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">📚</span>
+                        <span className="font-black text-slate-900 dark:text-zinc-100">10:00 AM • COSC 421</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 group-hover:underline">Study Pod →</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-zinc-400 pl-6">
+                      📍 Science Complex Rm 304 • Dr. Catherine Hayes
+                    </p>
+                  </div>
+
+                  {/* 2. Assignment Deadline */}
+                  <div
+                    onClick={() => {
+                      if (courses[0]) setSelectedCourseForCanvas(courses[0]);
+                      else triggerToast("📝 Canvas Deliverable: Lab 3 Due in 6h");
+                    }}
+                    className="p-2.5 bg-amber-50/70 dark:bg-amber-950/40 rounded-2xl border border-amber-200/80 dark:border-amber-800/60 hover:border-amber-500 cursor-pointer transition space-y-1 group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">📝</span>
+                        <span className="font-black text-slate-900 dark:text-zinc-100">Lab 3 Due Tonight (11:59 PM)</span>
+                      </div>
+                      <span className="text-[10px] font-black text-amber-600 dark:text-amber-400 group-hover:underline">Canvas (100 pts) →</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-zinc-400 pl-6">
+                      ⏳ Virtual Memory Pager • 4 Study Pod members online
+                    </p>
+                  </div>
+
+                  {/* 3. Dining Special */}
+                  <div
+                    onClick={() => setShowTigerWalletModal(true)}
+                    className="p-2.5 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border border-slate-200/80 dark:border-zinc-700/60 hover:border-amber-500 cursor-pointer transition space-y-1 group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">🍔</span>
+                        <span className="font-black text-slate-900 dark:text-zinc-100">12:15 PM • Newell Dining Special</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400">1 Swipe • Wallet →</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-zinc-400 pl-6">
+                      Maryland Crab Cakes & Tiger Crisp Salad • $9.50
+                    </p>
+                  </div>
+
+                  {/* 4. Live Shuttle ETA */}
+                  <div
+                    onClick={() => {
+                      setActiveTab("map");
+                      setMoreSubView("map");
+                      triggerToast("🚌 Tiger Ride GPS live tracking active.");
+                    }}
+                    className="p-2.5 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border border-slate-200/80 dark:border-zinc-700/60 hover:border-amber-500 cursor-pointer transition space-y-1 group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">🚌</span>
+                        <span className="font-black text-slate-900 dark:text-zinc-100">Tiger Ride Shuttle #14</span>
+                      </div>
+                      <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400">4m ETA (Map) →</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-zinc-400 pl-6">
+                      Arriving at Cook Library Stop ➔ West Village
+                    </p>
+                  </div>
+
+                  {/* 5. Housing Match */}
+                  <div
+                    onClick={() => {
+                      setActiveTab("housing");
+                      triggerToast("🏠 Loaded 3 verified off-campus housing matches.");
+                    }}
+                    className="p-2.5 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border border-slate-200/80 dark:border-zinc-700/60 hover:border-amber-500 cursor-pointer transition space-y-1 group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">🏠</span>
+                        <span className="font-black text-slate-900 dark:text-zinc-100">3 New Housing Matches</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 group-hover:underline">Explore →</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-zinc-400 pl-6">
+                      West Village 2-Bed Sublease ($925/mo) • 0.3 mi
+                    </p>
+                  </div>
+
+                  {/* 6. Evening Event */}
+                  <div
+                    onClick={() => {
+                      setActiveTab("events");
+                      triggerToast("🎉 Towson Cyber Summit & Cultural Gala loaded.");
+                    }}
+                    className="p-2.5 bg-purple-50/70 dark:bg-purple-950/40 rounded-2xl border border-purple-200/80 dark:border-purple-800/60 hover:border-purple-500 cursor-pointer transition space-y-1 group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">🎉</span>
+                        <span className="font-black text-slate-900 dark:text-zinc-100">7:00 PM • Cultural Gala</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 group-hover:underline">RSVP →</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-zinc-400 pl-6">
+                      University Union Ballrooms • Free Food & Campus XP
+                    </p>
+                  </div>
+
+                  {/* 7. Volunteer Service */}
+                  <div
+                    onClick={() => {
+                      setActiveTab("activities");
+                      triggerToast("🤝 Volunteer opportunity loaded: +3.5h Tiger Record");
+                    }}
+                    className="p-2.5 bg-emerald-50/70 dark:bg-emerald-950/40 rounded-2xl border border-emerald-200/80 dark:border-emerald-800/60 hover:border-emerald-500 cursor-pointer transition space-y-1 group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">🤝</span>
+                        <span className="font-black text-slate-900 dark:text-zinc-100">Volunteer Opportunity</span>
+                      </div>
+                      <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 group-hover:underline">+3.5h Record →</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-zinc-400 pl-6">
+                      Towson Campus Green Planting Drive
+                    </p>
+                  </div>
+
                 </div>
 
-                <p className="text-xs text-slate-500 leading-tight">
-                  {weatherReport.clothingRecommendation}
-                </p>
-
-                <div className="flex items-center justify-between pt-2 border-t text-[11px] font-bold text-amber-600 dark:text-amber-400">
-                  <span>High: {weatherReport.highToday}° / Low: {weatherReport.lowToday}°</span>
-                  <span>Radar →</span>
+                <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-zinc-800 text-[11px] font-bold">
+                  <span className="text-slate-400">Synced with Canvas & Calendar</span>
+                  <button
+                    type="button"
+                    onClick={() => setShowAskAiModal(true)}
+                    className="text-indigo-600 dark:text-indigo-400 hover:underline font-black flex items-center gap-1"
+                  >
+                    <Sparkles className="w-3 h-3 text-amber-500" />
+                    <span>Ask AI for Today →</span>
+                  </button>
                 </div>
               </div>
 
