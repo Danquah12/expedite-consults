@@ -5,6 +5,26 @@ import { useState, useEffect } from "react";
 /* ─── data ─── */
 const products = [
   {
+    name: "ConnectIn — Autonomous AI Professional Ecosystem",
+    tagline: "Next-Gen Professional Network, 2FA Passkeys, MicroVM Sandboxes, Enterprise Bounties & Admin IAM",
+    description:
+      "Enterprise professional intelligence & networking ecosystem — ⚡ Home Feed & Skill Passport (94.8%), 🏢 $2.4M Procurement Spend Desk & RFPs, 🎬 ConnectIn Studio & Podcasts ($92.4K Attribution), 💼 Seller Center ($122.7K MRR), 🏆 $15K–$50K Bounties, 🛡️ TS/SCI Cleared Guilds, 🖥️ Side-by-Side MicroVM Video Sandboxes, and 🔐 Platform IAM Enclave with 4-Eyes Approvals.",
+    url: "https://expedite-consults.vercel.app/connectin",
+    color: "#0A66C2",
+    icon: "💼",
+    status: "live",
+  },
+  {
+    name: "ConnectIn Identity & Auth Gate",
+    tagline: "FIDO2 Passkeys, 2FA Email/SMS Verification & Role Routing",
+    description:
+      "Universal cryptographic authentication portal with Two-Factor confirmation (Email & SMS text codes), biometric passkeys, dynamic persona switching, and automated workspace routing.",
+    url: "https://expedite-consults.vercel.app/connectin-login",
+    color: "#10b981",
+    icon: "🔐",
+    status: "live",
+  },
+  {
     name: "The Digital Campus (CampusSync)",
     tagline: "Decoupled Campus Operating Platform with Reels, Games & Co-Curricular Records",
     description:
@@ -216,6 +236,25 @@ interface Category {
 }
 
 const categories: Category[] = [
+  {
+    id: "connectin",
+    title: "ConnectIn — AI Professional & Enterprise Suite",
+    subtitle: "10-tool autonomous intelligence layer, verified identities, microVM sandboxes & escrow bounties",
+    icon: "💼",
+    color: "#0A66C2",
+    apps: [
+      { name: "ConnectIn Main Feed", icon: "in", description: "Home Feed, Skill Passport (94.8%) & AI Network", badge: "HOT", url: "https://expedite-consults.vercel.app/connectin", status: "available" },
+      { name: "2FA & Auth Gate", icon: "🔐", description: "Email & SMS 2FA, Passkeys & Session Registry", badge: "2FA", url: "https://expedite-consults.vercel.app/connectin-login", status: "available" },
+      { name: "Media & Live Sandbox", icon: "🎥", description: "Interactive video player with Firecracker Linux sandbox", badge: "SANDBOX", url: "https://expedite-consults.vercel.app/connectin", status: "available" },
+      { name: "AI Agents Marketplace", icon: "🤖", description: "Deploy autonomous security, recruiting & sales agents", badge: "AGENTS", url: "https://expedite-consults.vercel.app/connectin", status: "available" },
+      { name: "Enterprise Bounties", icon: "🏆", description: "$15K–$50K hackathons and GitHub PR bounty submissions", badge: "$50K", url: "https://expedite-consults.vercel.app/connectin", status: "available" },
+      { name: "TS/SCI Gated Guilds", icon: "🛡️", description: "Polygraph-cleared defense enclaves & $120K founder pools", badge: "TS/SCI", url: "https://expedite-consults.vercel.app/connectin", status: "available" },
+      { name: "Admin IAM & 4-Eyes", icon: "⚖️", description: "4.28M User directory, 6 enforcement states & audit log", badge: "IAM", url: "https://expedite-consults.vercel.app/connectin", status: "available" },
+      { name: "ConnectIn Code", icon: "🧑‍💻", description: "GitHub repo sync & recruit by verified commit telemetry", badge: "CODE", url: "https://expedite-consults.vercel.app/connectin", status: "available" },
+      { name: "Seller Center", icon: "💼", description: "$122.7K MRR software storefront, licenses & escrow payout", badge: "$122K", url: "https://expedite-consults.vercel.app/connectin", status: "available" },
+      { name: "Procurement Desk", icon: "🏢", description: "$2.4M spend desk, active GovCloud RFPs & vendor bids", badge: "$2.4M", url: "https://expedite-consults.vercel.app/connectin", status: "available" },
+    ],
+  },
   {
     id: "profile",
     title: "Profile & Identity",
