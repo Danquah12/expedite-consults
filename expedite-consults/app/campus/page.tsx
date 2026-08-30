@@ -9,6 +9,7 @@ import {
   ShoppingBag,
   Home,
   Heart,
+  DollarSign,
   MessageCircle,
   Share2,
   MapPin,
