@@ -159,6 +159,10 @@ export default function AxiomConnectWorkspace({
   const [showCreateEventModal, setShowCreateEventModal] = useState(false);
   const [newEventTitle, setNewEventTitle] = useState("");
   const [newEventTime, setNewEventTime] = useState("2:00 PM – 2:30 PM");
+  const [newEventDescription, setNewEventDescription] = useState("");
+  const [newEventLocation, setNewEventLocation] = useState("Axiom Virtual Room 1");
+  const [newEventCategory, setNewEventCategory] = useState<"LECTURE" | "TEAM_SYNC" | "ONE_ON_ONE" | "ALL_HANDS" | "CAMPUS">("TEAM_SYNC");
+  const [newEventAttendees, setNewEventAttendees] = useState("catherine.hayes@towson.edu, marcus.rivera@towson.edu");
 
   // Teams Meetings State
   const [meetingSession, setMeetingSession] = useState<TeamsMeetingSession>(initialActiveTeamsMeeting);
@@ -2186,6 +2190,174 @@ export default function AxiomConnectWorkspace({
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: 📅 SCHEDULE MEETING & CALENDAR EVENT */}
+      {/* ========================================================================= */}
+      {showCreateEventModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-zinc-800 space-y-4 animate-in zoom-in-95">
+            <div className="flex items-center justify-between border-b pb-3 border-slate-200 dark:border-zinc-800">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-amber-500 text-black flex items-center justify-center font-black text-sm">
+                  📅
+                </div>
+                <div>
+                  <h3 className="font-black text-sm text-slate-900 dark:text-zinc-100">Schedule Meeting & Sync</h3>
+                  <p className="text-[11px] text-slate-500">Add to Outlook Calendar & generate Teams WebRTC link</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowCreateEventModal(false)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!newEventTitle.trim()) return;
+
+                const newEvent: CalendarEvent = {
+                  id: `evt-${Date.now()}`,
+                  title: newEventTitle.trim(),
+                  dateLabel: "Today",
+                  timeLabel: newEventTime || "2:00 PM – 2:30 PM",
+                  category: newEventCategory,
+                  description: newEventDescription || "Sync and discussion via Axiom Teams encrypted conference link.",
+                  location: newEventLocation || "Axiom Virtual Room 1",
+                  teamsMeetingId: `AXM-${Math.floor(100 + Math.random() * 900)}-${Math.floor(100 + Math.random() * 900)}`,
+                  attendees: newEventAttendees.split(",").map(s => s.trim()).filter(Boolean),
+                };
+
+                setCalendarEvents((prev) => [newEvent, ...prev]);
+                setShowCreateEventModal(false);
+                setNewEventTitle("");
+                setNewEventDescription("");
+                triggerToast(`📅 Meeting "${newEvent.title}" scheduled & Teams link generated!`);
+              }}
+              className="space-y-3.5 text-xs font-semibold"
+            >
+              <div className="space-y-1">
+                <label className="text-slate-700 dark:text-zinc-300 block text-[11px] font-bold">
+                  Meeting Title *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g., COSC 421 Lab 3 Code Review & Standup"
+                  value={newEventTitle}
+                  onChange={(e) => setNewEventTitle(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-zinc-100 font-medium focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-slate-700 dark:text-zinc-300 block text-[11px] font-bold">
+                    Time Slot
+                  </label>
+                  <select
+                    value={newEventTime}
+                    onChange={(e) => setNewEventTime(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-medium focus:ring-2 focus:ring-amber-500 focus:outline-none text-slate-900 dark:text-zinc-100"
+                  >
+                    <option value="9:00 AM – 9:30 AM">9:00 AM – 9:30 AM</option>
+                    <option value="10:00 AM – 11:15 AM">10:00 AM – 11:15 AM</option>
+                    <option value="1:00 PM – 1:30 PM">1:00 PM – 1:30 PM</option>
+                    <option value="2:00 PM – 2:30 PM">2:00 PM – 2:30 PM</option>
+                    <option value="3:30 PM – 4:30 PM">3:30 PM – 4:30 PM</option>
+                    <option value="5:00 PM – 6:00 PM">5:00 PM – 6:00 PM</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-slate-700 dark:text-zinc-300 block text-[11px] font-bold">
+                    Category
+                  </label>
+                  <select
+                    value={newEventCategory}
+                    onChange={(e) => setNewEventCategory(e.target.value as any)}
+                    className="w-full bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-medium focus:ring-2 focus:ring-amber-500 focus:outline-none text-slate-900 dark:text-zinc-100"
+                  >
+                    <option value="TEAM_SYNC">Team Sync</option>
+                    <option value="ONE_ON_ONE">1-on-1 Mentorship</option>
+                    <option value="LECTURE">Class / Lecture</option>
+                    <option value="ALL_HANDS">All Hands / Gala</option>
+                    <option value="CAMPUS">Campus Event</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-slate-700 dark:text-zinc-300 block text-[11px] font-bold">
+                  Location / Teams Room
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Science Complex Rm 304 or Axiom Virtual Room 1"
+                  value={newEventLocation}
+                  onChange={(e) => setNewEventLocation(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-zinc-100 font-medium focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-slate-700 dark:text-zinc-300 block text-[11px] font-bold">
+                  Attendees (comma-separated emails)
+                </label>
+                <input
+                  type="text"
+                  placeholder="catherine.hayes@towson.edu, marcus.rivera@towson.edu"
+                  value={newEventAttendees}
+                  onChange={(e) => setNewEventAttendees(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-zinc-100 font-medium focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-slate-700 dark:text-zinc-300 block text-[11px] font-bold">
+                  Agenda / Description
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Brief meeting agenda, goals, and preparation requirements..."
+                  value={newEventDescription}
+                  onChange={(e) => setNewEventDescription(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl p-3 text-xs text-slate-900 dark:text-zinc-100 font-medium focus:ring-2 focus:ring-amber-500 focus:outline-none resize-none"
+                />
+              </div>
+
+              <div className="p-3 bg-amber-50 dark:bg-amber-950/40 rounded-2xl border border-amber-200 dark:border-amber-900/60 flex items-center justify-between text-[11px] text-amber-900 dark:text-amber-300">
+                <div className="flex items-center gap-1.5 font-bold">
+                  <Video className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Auto-generate 1080p Teams Meeting link</span>
+                </div>
+                <span className="font-mono font-bold text-[10px] bg-amber-500 text-black px-2 py-0.5 rounded-full">Active</span>
+              </div>
+
+              <div className="flex gap-2.5 pt-2 border-t border-slate-200 dark:border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateEventModal(false)}
+                  className="flex-1 py-2.5 text-xs font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 bg-amber-500 hover:bg-amber-400 text-black font-black py-2.5 rounded-xl text-xs shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Confirm & Schedule</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
