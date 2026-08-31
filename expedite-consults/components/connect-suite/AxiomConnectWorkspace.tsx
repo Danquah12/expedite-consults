@@ -82,6 +82,13 @@ import {
   initialContactsList,
 } from "@/lib/connect-suite-data";
 
+import {
+  generateGlobalCopilotResponse,
+  CopilotAction,
+  CopilotMessage,
+  COPILOT_SUGGESTIONS,
+} from "@/lib/global-copilot-engine";
+
 interface AxiomConnectWorkspaceProps {
   initialApp?: "mail" | "calendar" | "teams" | "meetings" | "drive" | "contacts" | "ai" | "settings";
   currentUserName?: string;
@@ -99,6 +106,25 @@ export default function AxiomConnectWorkspace({
 }: AxiomConnectWorkspaceProps) {
   // Global Workspace App Navigation
   const [activeApp, setActiveApp] = useState<"mail" | "calendar" | "teams" | "meetings" | "drive" | "contacts" | "ai" | "settings">(initialApp);
+
+  // Global Copilot in Workspace State
+  const [copilotHistory, setCopilotHistory] = useState<CopilotMessage[]>([
+    {
+      id: "ws-ai-init",
+      role: "assistant",
+      text: `Hello **${currentUserName}**! I'm the **Axiom Cross-Ecosystem AI Copilot**.\n\nI can assist you across:\n- ✉️ **Communications**: Email thread summarization, 1-click replies, Sweep cleanup rules, Viva focus time.\n- 🎥 **Teams Meetings**: WebRTC conference rooms, action item delegation, transcripts.\n- 🎓 **Campus Life**: Classes, Canvas deadlines, Dining balances, Shuttle schedules.\n- 🏢 **Enterprise Architecture**: Change requests, Zero-Trust compliance, cATO governance.`,
+      timestamp: "Just now",
+      category: "GENERAL",
+      actions: [
+        { label: "📧 Summarize unread emails", app: "mail" },
+        { label: "🎥 Launch instant Teams meeting", app: "meetings" },
+        { label: "📅 Check today's calendar", app: "calendar" },
+        { label: "🛡️ View cATO retention policy", modal: "policy" },
+      ],
+    },
+  ]);
+  const [copilotInput, setCopilotInput] = useState("");
+  const [isCopilotTyping, setIsCopilotTyping] = useState(false);
 
   // Email State
   const [emails, setEmails] = useState<EmailMessage[]>(initialEmailMessages);
@@ -1623,38 +1649,215 @@ export default function AxiomConnectWorkspace({
           )}
 
           {/* ========================================================================= */}
-          {/* VIEW F: 🤖 AXIOM AI EMAIL & MEETING COPILOT */}
+          {/* VIEW F: 🤖 AXIOM AI EMAIL & MULTI-DOMAIN COPILOT */}
           {/* ========================================================================= */}
           {activeApp === "ai" && (
-            <div className="flex-1 bg-white dark:bg-zinc-900 flex flex-col p-6 overflow-y-auto space-y-6 max-w-3xl mx-auto">
-              <div className="flex items-center gap-3 border-b pb-4">
-                <div className="w-10 h-10 rounded-2xl bg-amber-500 flex items-center justify-center text-black font-black text-xl">
-                  ⚡
+            <div className="flex-1 bg-white dark:bg-zinc-900 flex flex-col h-full overflow-hidden">
+              {/* Header */}
+              <div className="p-4 px-6 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between bg-slate-50/50 dark:bg-zinc-950/40">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-500 flex items-center justify-center text-black font-black text-xl shadow-xs">
+                    ⚡
+                  </div>
+                  <div>
+                    <h2 className="text-base font-black text-slate-900 dark:text-zinc-100">Axiom Global AI Copilot</h2>
+                    <p className="text-xs text-slate-500">Autonomous communications, schedule optimization, and campus intelligence</p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-xl font-black text-slate-900 dark:text-zinc-100">Axiom Communications AI Copilot</h2>
-                  <p className="text-xs text-slate-500">Autonomous email summarization, schedule conflict resolution, and meeting action items</p>
-                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCopilotHistory([
+                      {
+                        id: `ws-clear-${Date.now()}`,
+                        role: "assistant",
+                        text: "Conversation refreshed. How can I assist you across email, meetings, courses, or enterprise systems?",
+                        timestamp: "Just now",
+                        category: "GENERAL",
+                      },
+                    ]);
+                  }}
+                  className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-zinc-800 transition cursor-pointer"
+                  title="Clear conversation"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </button>
               </div>
 
-              <div className="space-y-3">
-                <span className="text-xs font-black uppercase text-slate-400">Quick AI Actions</span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Chat Stream */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 max-w-4xl w-full mx-auto">
+                {copilotHistory.map((msg) => {
+                  const isAi = msg.role === "assistant";
+                  return (
+                    <div key={msg.id} className={`flex items-start gap-3 ${isAi ? "justify-start" : "justify-end"}`}>
+                      {isAi && (
+                        <div className="w-8 h-8 rounded-2xl bg-amber-500 text-black flex items-center justify-center font-black text-xs shrink-0 shadow-xs">
+                          ⚡
+                        </div>
+                      )}
+                      <div
+                        className={`max-w-2xl rounded-3xl p-4 sm:p-5 space-y-2.5 text-xs sm:text-sm ${
+                          isAi
+                            ? "bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-zinc-100"
+                            : "bg-indigo-600 text-white rounded-tr-xs"
+                        }`}
+                      >
+                        {isAi && msg.category && (
+                          <div className="text-[10px] font-black uppercase text-amber-600 dark:text-amber-400 border-b pb-1">
+                            {msg.category === "CAMPUS" && "🎓 TowsonSync Campus Intelligence"}
+                            {msg.category === "COMMUNICATIONS" && "✉️ Axiom Communications & Security"}
+                            {msg.category === "ENTERPRISE" && "🏢 Expedite Consults Enterprise"}
+                            {msg.category === "VERITAS" && "🔍 VeritasLens Fact Engine"}
+                            {msg.category === "GENERAL" && "⚡ Cross-Ecosystem Global Response"}
+                          </div>
+                        )}
+                        <div className="leading-relaxed whitespace-pre-line">{msg.text}</div>
+
+                        {/* Action Chips */}
+                        {isAi && msg.actions && msg.actions.length > 0 && (
+                          <div className="pt-2 border-t border-slate-200/60 dark:border-zinc-700/60 space-y-1.5">
+                            <span className="text-[10px] font-black uppercase text-slate-400 block">Actions:</span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {msg.actions.map((act, aIdx) => (
+                                <button
+                                  key={aIdx}
+                                  type="button"
+                                  onClick={() => {
+                                    if (act.app) {
+                                      setActiveApp(act.app);
+                                    }
+                                    if (act.modal === "compose") {
+                                      setShowComposeModal(true);
+                                    } else if (act.modal === "sweep") {
+                                      setShowSweepModal(true);
+                                    } else if (act.modal === "viva") {
+                                      setShowVivaModal(true);
+                                    } else if (act.modal === "policy") {
+                                      setShowRetentionPolicyModal(true);
+                                    }
+                                    if (act.href) {
+                                      window.location.href = act.href;
+                                    }
+                                    triggerToast(`⚡ Executed: ${act.label}`);
+                                  }}
+                                  className="bg-white dark:bg-zinc-900 hover:bg-amber-500 hover:text-black dark:hover:bg-amber-500 dark:hover:text-black text-slate-800 dark:text-zinc-200 font-bold px-2.5 py-1 rounded-xl text-xs border border-slate-200 dark:border-zinc-700 hover:border-amber-500 transition flex items-center gap-1 shadow-xs cursor-pointer"
+                                >
+                                  <Sparkles className="w-3 h-3 text-amber-500" />
+                                  <span>{act.label}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {isCopilotTyping && (
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-2xl bg-amber-500 text-black flex items-center justify-center font-black text-xs shrink-0">
+                      ⚡
+                    </div>
+                    <div className="bg-slate-50 dark:bg-zinc-800 p-3 rounded-2xl border border-slate-200 dark:border-zinc-700 flex items-center gap-2 text-xs text-slate-400">
+                      <div className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+                      <span>Synthesizing cross-ecosystem answer...</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Suggestions and Input */}
+              <div className="p-4 bg-slate-50 dark:bg-zinc-950 border-t border-slate-200 dark:border-zinc-800 space-y-2.5 max-w-4xl w-full mx-auto">
+                <div className="flex items-center gap-2 overflow-x-auto text-[11px] pb-1">
                   {[
-                    "📧 Summarize all unread emails from Dr. Hayes",
-                    "📅 Find a free 30-min slot for Teams sync tomorrow",
-                    "🛡️ Run zero-trust phishing analysis on recent emails",
-                    "📝 Draft a polite follow-up to T. Rowe Price interview",
-                  ].map((prompt, i) => (
+                    "📧 Summarize unread emails",
+                    "🎥 Start instant Teams meeting",
+                    "🧹 How does Sweep clean inbox?",
+                    "📚 What is due in CS 421 tonight?",
+                    "💳 Check dining dollars",
+                    "🏢 What is CR-892?",
+                  ].map((p, i) => (
                     <button
                       key={i}
-                      onClick={() => triggerToast(`🤖 AI Copilot processed: "${prompt}"`)}
-                      className="p-3.5 text-left rounded-2xl bg-slate-50 dark:bg-zinc-800 hover:border-amber-500 border border-slate-200 dark:border-zinc-700 text-xs font-semibold transition space-y-1"
+                      type="button"
+                      onClick={() => {
+                        const userMsg: CopilotMessage = {
+                          id: `user-${Date.now()}`,
+                          role: "user",
+                          text: p,
+                          timestamp: "Just now",
+                        };
+                        setCopilotHistory((prev) => [...prev, userMsg]);
+                        setIsCopilotTyping(true);
+                        setTimeout(() => {
+                          const resp = generateGlobalCopilotResponse(p);
+                          const aiMsg: CopilotMessage = {
+                            id: `ai-${Date.now()}`,
+                            role: "assistant",
+                            text: resp.text,
+                            timestamp: "Just now",
+                            category: resp.category,
+                            actions: resp.actions,
+                          };
+                          setCopilotHistory((prev) => [...prev, aiMsg]);
+                          setIsCopilotTyping(false);
+                        }, 400);
+                      }}
+                      className="px-2.5 py-1 rounded-xl bg-white dark:bg-zinc-800 hover:bg-amber-50 dark:hover:bg-amber-950 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 whitespace-nowrap font-medium transition cursor-pointer"
                     >
-                      <span>{prompt}</span>
+                      {p}
                     </button>
                   ))}
                 </div>
+
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!copilotInput.trim() || isCopilotTyping) return;
+                    const text = copilotInput.trim();
+                    setCopilotInput("");
+                    const userMsg: CopilotMessage = {
+                      id: `user-${Date.now()}`,
+                      role: "user",
+                      text,
+                      timestamp: "Just now",
+                    };
+                    setCopilotHistory((prev) => [...prev, userMsg]);
+                    setIsCopilotTyping(true);
+                    setTimeout(() => {
+                      const resp = generateGlobalCopilotResponse(text);
+                      const aiMsg: CopilotMessage = {
+                        id: `ai-${Date.now()}`,
+                        role: "assistant",
+                        text: resp.text,
+                        timestamp: "Just now",
+                        category: resp.category,
+                        actions: resp.actions,
+                      };
+                      setCopilotHistory((prev) => [...prev, aiMsg]);
+                      setIsCopilotTyping(false);
+                    }, 400);
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <input
+                    type="text"
+                    value={copilotInput}
+                    onChange={(e) => setCopilotInput(e.target.value)}
+                    placeholder="Ask Axiom Copilot anything across mail, teams, courses, or enterprise..."
+                    className="flex-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-medium focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!copilotInput.trim() || isCopilotTyping}
+                    className="bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-black font-black px-4 py-2.5 rounded-2xl text-xs flex items-center gap-1.5 transition cursor-pointer"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span>Send</span>
+                  </button>
+                </form>
               </div>
             </div>
           )}

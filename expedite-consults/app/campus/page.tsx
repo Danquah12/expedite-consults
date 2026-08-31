@@ -274,8 +274,32 @@ import {
   resetCampusDemoData,
 } from "@/lib/campus-storage";
 
+import GlobalCopilotModal from "@/components/global-copilot/GlobalCopilotModal";
+import { CopilotAction } from "@/lib/global-copilot-engine";
+
 export default function CampusSyncApp() {
   const router = useRouter();
+
+  // Global Copilot Modal State
+  const [showGlobalCopilot, setShowGlobalCopilot] = useState(false);
+  const [copilotInitialQuery, setCopilotInitialQuery] = useState<string | undefined>(undefined);
+
+  const handlePerformCopilotAction = (action: CopilotAction) => {
+    if (action.tab) {
+      setActiveTab(action.tab);
+    }
+    if (action.subView) {
+      setMoreSubView(action.subView as any);
+    }
+    if (action.modal === "wallet") {
+      setShowTigerWalletModal(true);
+    } else if (action.modal === "weather") {
+      setShowWeatherModal(true);
+    } else if (action.modal === "navigation") {
+      setShowNavigationRouteModal(true);
+    }
+    triggerToast(`⚡ Navigated via AI Copilot: ${action.label}`);
+  };
 
   // Primary Navigation
   const [activeTab, setActiveTab] = useState<
@@ -2961,6 +2985,19 @@ export default function CampusSyncApp() {
               <span className="font-mono text-[11px] font-bold">{tigerWallet.mealSwipesRemaining} Swipes</span>
             </button>
 
+            {/* Global AI Copilot Button */}
+            <button
+              onClick={() => {
+                setCopilotInitialQuery(undefined);
+                setShowGlobalCopilot(true);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-gradient-to-r from-amber-500 to-amber-400 text-black hover:from-amber-400 hover:to-amber-300 shadow-xs transition shrink-0 animate-in fade-in cursor-pointer"
+              title="Open Global AI Copilot (Cross-Ecosystem Intelligence)"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Ask AI</span>
+            </button>
+
             {/* Search */}
             <button
               onClick={() => setShowOmniSearch(true)}
@@ -4789,8 +4826,11 @@ export default function CampusSyncApp() {
                   <span className="text-slate-400">Synced with Canvas & Calendar</span>
                   <button
                     type="button"
-                    onClick={() => setShowAskAiModal(true)}
-                    className="text-indigo-600 dark:text-indigo-400 hover:underline font-black flex items-center gap-1"
+                    onClick={() => {
+                      setCopilotInitialQuery("What is my schedule, next class, and assignment deadlines for today?");
+                      setShowGlobalCopilot(true);
+                    }}
+                    className="text-indigo-600 dark:text-indigo-400 hover:underline font-black flex items-center gap-1 cursor-pointer"
                   >
                     <Sparkles className="w-3 h-3 text-amber-500" />
                     <span>Ask AI for Today →</span>
@@ -6248,6 +6288,38 @@ export default function CampusSyncApp() {
           </div>
         </div>
       )}
+
+      {/* ========================================================================= */}
+      {/* GLOBAL FLOATING AI COPILOT LAUNCHER BADGE */}
+      {/* ========================================================================= */}
+      <div className="fixed bottom-6 right-6 z-40">
+        <button
+          onClick={() => {
+            setCopilotInitialQuery(undefined);
+            setShowGlobalCopilot(true);
+          }}
+          className="bg-gradient-to-tr from-amber-500 via-amber-400 to-amber-300 hover:from-amber-400 hover:to-amber-200 text-black font-black p-3.5 rounded-2xl shadow-2xl flex items-center gap-2.5 transition duration-300 hover:scale-105 group border border-amber-300 ring-4 ring-amber-500/20 cursor-pointer"
+          title="Open Global AI Copilot (Cross-Domain Intelligence)"
+        >
+          <div className="relative">
+            <Sparkles className="w-5 h-5 group-hover:rotate-45 transition duration-300" />
+            <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-indigo-600 animate-ping" />
+          </div>
+          <span className="text-xs font-black tracking-tight hidden sm:inline">Ask Copilot</span>
+        </button>
+      </div>
+
+      {/* GLOBAL COPILOT MODAL */}
+      <GlobalCopilotModal
+        isOpen={showGlobalCopilot}
+        onClose={() => {
+          setShowGlobalCopilot(false);
+          setCopilotInitialQuery(undefined);
+        }}
+        onPerformAction={handlePerformCopilotAction}
+        currentUserName={currentUser?.name || "Kwesi"}
+        initialQuery={copilotInitialQuery}
+      />
 
     </div>
   );
