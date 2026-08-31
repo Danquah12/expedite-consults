@@ -102,7 +102,7 @@ export default function AxiomConnectWorkspace({
 
   // Email State
   const [emails, setEmails] = useState<EmailMessage[]>(initialEmailMessages);
-  const [selectedEmailId, setSelectedEmailId] = useState<string>(initialEmailMessages[0].id);
+  const [selectedEmailId, setSelectedEmailId] = useState<string>(initialEmailMessages[0]?.id || "mail-101");
   const [mailFolder, setMailFolder] = useState<"inbox" | "sent" | "drafts" | "archive" | "spam" | "trash" | "snoozed">("inbox");
   const [mailCategory, setMailCategory] = useState<"all" | "primary" | "updates" | "security">("all");
   const [mailSearchQuery, setMailSearchQuery] = useState("");
@@ -124,7 +124,6 @@ export default function AxiomConnectWorkspace({
   const [showQuickStepsDropdown, setShowQuickStepsDropdown] = useState(false);
   const [showMoveDropdown, setShowMoveDropdown] = useState(false);
   const [showCategorizeDropdown, setShowCategorizeDropdown] = useState(false);
-  const [showSnoozeDropdown, setShowSnoozeDropdown] = useState(false);
   const [showBlockDropdown, setShowBlockDropdown] = useState(false);
   const [showReportDropdown, setShowReportDropdown] = useState(false);
 
@@ -146,7 +145,7 @@ export default function AxiomConnectWorkspace({
 
   // Teams Channels State
   const [channels, setChannels] = useState<TeamsChannel[]>(initialTeamsChannels);
-  const [activeChannelId, setActiveChannelId] = useState<string>(initialTeamsChannels[0].id);
+  const [activeChannelId, setActiveChannelId] = useState<string>(initialTeamsChannels[0]?.id || "ch-1");
   const [channelPostInput, setChannelPostInput] = useState("");
 
   // Drive & Contacts
@@ -169,15 +168,15 @@ export default function AxiomConnectWorkspace({
     const matchesCat = mailCategory === "all" || m.category === mailCategory;
     const matchesSearch =
       mailSearchQuery === "" ||
-      m.subject.toLowerCase().includes(mailSearchQuery.toLowerCase()) ||
-      m.from.name.toLowerCase().includes(mailSearchQuery.toLowerCase()) ||
-      m.from.email.toLowerCase().includes(mailSearchQuery.toLowerCase()) ||
-      m.body.toLowerCase().includes(mailSearchQuery.toLowerCase());
+      (m.subject && m.subject.toLowerCase().includes(mailSearchQuery.toLowerCase())) ||
+      (m.from?.name && m.from.name.toLowerCase().includes(mailSearchQuery.toLowerCase())) ||
+      (m.from?.email && m.from.email.toLowerCase().includes(mailSearchQuery.toLowerCase())) ||
+      (m.body && m.body.toLowerCase().includes(mailSearchQuery.toLowerCase()));
     return matchesFolder && matchesCat && matchesSearch;
   });
 
-  const selectedEmail = emails.find((m) => m.id === selectedEmailId) || emails[0];
-  const activeChannel = channels.find((c) => c.id === activeChannelId) || channels[0];
+  const selectedEmail: EmailMessage | undefined = emails.find((m) => m.id === selectedEmailId) || emails[0];
+  const activeChannel: TeamsChannel | undefined = channels.find((c) => c.id === activeChannelId) || channels[0];
 
   // Helper actions for Outlook Command Bar
   const handleDeleteEmail = (emailId: string) => {
@@ -185,7 +184,7 @@ export default function AxiomConnectWorkspace({
     if (!target) return;
     setLastAction({ type: "DELETE", email: target });
     setEmails((prev) => prev.map((m) => (m.id === emailId ? { ...m, folder: "trash" } : m)));
-    triggerToast(`🗑️ Moved "${target.subject.slice(0, 24)}..." to Trash.`);
+    triggerToast(`🗑️ Moved "${target.subject?.slice(0, 24)}..." to Trash.`);
   };
 
   const handleArchiveEmail = (emailId: string) => {
@@ -193,7 +192,7 @@ export default function AxiomConnectWorkspace({
     if (!target) return;
     setLastAction({ type: "ARCHIVE", email: target });
     setEmails((prev) => prev.map((m) => (m.id === emailId ? { ...m, folder: "archive" } : m)));
-    triggerToast(`📥 Archived "${target.subject.slice(0, 24)}...".`);
+    triggerToast(`📥 Archived "${target.subject?.slice(0, 24)}...".`);
   };
 
   const handleUndo = () => {
@@ -306,7 +305,7 @@ export default function AxiomConnectWorkspace({
           <div className="flex items-center gap-2 pl-2 border-l border-white/10">
             <div className="relative">
               <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-amber-300 font-black text-xs">
-                {currentUserName.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                {(currentUserName || "User").split(" ").map((n) => n[0]).join("").slice(0, 2)}
               </div>
               <span className={`w-2.5 h-2.5 rounded-full absolute -bottom-0.5 -right-0.5 border-2 border-[#030c1d] ${
                 userPresence === "AVAILABLE" ? "bg-emerald-400" : userPresence === "IN_MEETING" ? "bg-purple-400" : "bg-amber-400"
@@ -582,17 +581,17 @@ export default function AxiomConnectWorkspace({
                         <ChevronDown className="w-2.5 h-2.5 text-slate-400" />
                       </button>
 
-                      {showBlockDropdown && (
+                      {showBlockDropdown && selectedEmail && (
                         <div className="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-zinc-800 p-1 z-30 animate-in zoom-in-95 space-y-0.5">
                           <button
                             onClick={() => {
-                              triggerToast(`🚫 Blocked sender: ${selectedEmail.from.email}`);
+                              triggerToast(`🚫 Blocked sender: ${selectedEmail.from?.email || "sender"}`);
                               setShowBlockDropdown(false);
                             }}
                             className="w-full text-left p-2 text-xs font-bold rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-600 flex items-center gap-2"
                           >
                             <ShieldX className="w-3.5 h-3.5" />
-                            <span>Block {selectedEmail.from.email}</span>
+                            <span>Block {selectedEmail.from?.email || "sender"}</span>
                           </button>
                         </div>
                       )}
@@ -664,10 +663,11 @@ export default function AxiomConnectWorkspace({
                     <button
                       type="button"
                       onClick={() => {
+                        if (!selectedEmail) return;
                         setShowComposeModal(true);
-                        setComposeTo(selectedEmail.from.email);
-                        setComposeSubject(`Re: ${selectedEmail.subject}`);
-                        setComposeBody(`\n\n--- On ${selectedEmail.date} at ${selectedEmail.time}, ${selectedEmail.from.name} wrote:\n${selectedEmail.body}`);
+                        setComposeTo(selectedEmail.from?.email || "");
+                        setComposeSubject(`Re: ${selectedEmail.subject || ""}`);
+                        setComposeBody(`\n\n--- On ${selectedEmail.date} at ${selectedEmail.time}, ${selectedEmail.from?.name || "Sender"} wrote:\n${selectedEmail.body || ""}`);
                       }}
                       className="px-2 py-1 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-950 text-indigo-600 dark:text-indigo-400 font-semibold flex items-center gap-1"
                       title="Reply"
@@ -679,9 +679,10 @@ export default function AxiomConnectWorkspace({
                     <button
                       type="button"
                       onClick={() => {
+                        if (!selectedEmail) return;
                         setShowComposeModal(true);
-                        setComposeTo(`${selectedEmail.from.email}, ${selectedEmail.to.map(t => t.email).join(", ")}`);
-                        setComposeSubject(`Re: ${selectedEmail.subject}`);
+                        setComposeTo(`${selectedEmail.from?.email || ""}, ${(selectedEmail.to || []).map(t => t.email).join(", ")}`);
+                        setComposeSubject(`Re: ${selectedEmail.subject || ""}`);
                       }}
                       className="px-2 py-1 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-950 text-indigo-600 dark:text-indigo-400 font-semibold flex items-center gap-1"
                       title="Reply All"
@@ -693,9 +694,10 @@ export default function AxiomConnectWorkspace({
                     <button
                       type="button"
                       onClick={() => {
+                        if (!selectedEmail) return;
                         setShowComposeModal(true);
-                        setComposeSubject(`Fwd: ${selectedEmail.subject}`);
-                        setComposeBody(`\n\n---------- Forwarded message ---------\nFrom: ${selectedEmail.from.name} <${selectedEmail.from.email}>\nSubject: ${selectedEmail.subject}\n\n${selectedEmail.body}`);
+                        setComposeSubject(`Fwd: ${selectedEmail.subject || ""}`);
+                        setComposeBody(`\n\n---------- Forwarded message ---------\nFrom: ${selectedEmail.from?.name || ""} <${selectedEmail.from?.email || ""}>\nSubject: ${selectedEmail.subject || ""}\n\n${selectedEmail.body || ""}`);
                       }}
                       className="px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 font-semibold flex items-center gap-1"
                       title="Forward"
@@ -856,7 +858,7 @@ export default function AxiomConnectWorkspace({
                               key={c}
                               onClick={() => {
                                 setEmails((prev) =>
-                                  prev.map((m) => (m.id === selectedEmailId ? { ...m, labels: [...m.labels, c] } : m))
+                                  prev.map((m) => (m.id === selectedEmailId ? { ...m, labels: [...(m.labels || []), c] } : m))
                                 );
                                 triggerToast(`🏷️ Categorized as ${c}.`);
                                 setShowCategorizeDropdown(false);
@@ -874,7 +876,7 @@ export default function AxiomConnectWorkspace({
                       type="button"
                       onClick={() => handleToggleFlag(selectedEmailId)}
                       className={`p-1.5 rounded-lg transition ${
-                        selectedEmail.isFlagged ? "bg-rose-50 text-rose-600 dark:bg-rose-950/60" : "hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300"
+                        selectedEmail?.isFlagged ? "bg-rose-50 text-rose-600 dark:bg-rose-950/60" : "hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300"
                       }`}
                       title="Flag Email"
                     >
@@ -996,7 +998,7 @@ export default function AxiomConnectWorkspace({
                               {isPinned && <Pin className="w-3.5 h-3.5 text-amber-500 fill-amber-500 shrink-0 rotate-45" />}
                               {msg.isStarred && <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500 shrink-0" />}
                               <span className={`text-xs truncate ${msg.isUnread ? "font-black text-slate-900 dark:text-zinc-100" : "text-slate-600 dark:text-zinc-300"}`}>
-                                {msg.from.name}
+                                {msg.from?.name || "Sender"}
                               </span>
                             </div>
                             <span className="text-[10px] font-mono text-slate-400 shrink-0">{msg.time}</span>
@@ -1018,7 +1020,7 @@ export default function AxiomConnectWorkspace({
                                   <span>Att</span>
                                 </span>
                               )}
-                              {msg.securityStatus.threatScore > 50 ? (
+                              {msg.securityStatus?.threatScore && msg.securityStatus.threatScore > 50 ? (
                                 <span className="text-[9px] font-bold bg-rose-100 dark:bg-rose-950 text-rose-600 px-1.5 py-0.2 rounded">
                                   ⚠️ Phishing Flag
                                 </span>
@@ -1038,19 +1040,19 @@ export default function AxiomConnectWorkspace({
                 </div>
 
                 {/* Right Pane: Detailed Email Viewer */}
-                {selectedEmail && (
+                {selectedEmail ? (
                   <div className="flex-1 bg-white dark:bg-zinc-900 flex flex-col overflow-y-auto p-6 space-y-6">
                     
                     {/* Subject & Action Bar */}
                     <div className="flex items-start justify-between flex-wrap gap-4 border-b border-slate-100 dark:border-zinc-800 pb-4">
                       <div className="space-y-1 flex-1">
                         <div className="flex items-center gap-2">
-                          {selectedEmail.labels.map((lbl) => (
+                          {(selectedEmail.labels || []).map((lbl) => (
                             <span key={lbl} className="text-[9px] font-bold bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 px-2 py-0.5 rounded-full">
                               {lbl}
                             </span>
                           ))}
-                          {selectedEmail.securityStatus.tlsEncrypted && (
+                          {selectedEmail.securityStatus?.tlsEncrypted && (
                             <span className="text-[9px] font-mono bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full flex items-center gap-1">
                               <Lock className="w-2.5 h-2.5" />
                               <span>TLS 1.3 Strict</span>
@@ -1064,9 +1066,9 @@ export default function AxiomConnectWorkspace({
                         <button
                           onClick={() => {
                             setShowComposeModal(true);
-                            setComposeTo(selectedEmail.from.email);
-                            setComposeSubject(`Re: ${selectedEmail.subject}`);
-                            setComposeBody(`\n\n--- On ${selectedEmail.date} at ${selectedEmail.time}, ${selectedEmail.from.name} wrote:\n${selectedEmail.body}`);
+                            setComposeTo(selectedEmail.from?.email || "");
+                            setComposeSubject(`Re: ${selectedEmail.subject || ""}`);
+                            setComposeBody(`\n\n--- On ${selectedEmail.date} at ${selectedEmail.time}, ${selectedEmail.from?.name || "Sender"} wrote:\n${selectedEmail.body || ""}`);
                           }}
                           className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition"
                         >
@@ -1105,9 +1107,9 @@ export default function AxiomConnectWorkspace({
                             <button
                               onClick={() => {
                                 setShowComposeModal(true);
-                                setComposeTo(selectedEmail.from.email);
-                                setComposeSubject(`Confirmed: ${selectedEmail.suggestedAction?.meetingDetails?.title}`);
-                                setComposeBody(`Hi ${selectedEmail.from.name.split(" ")[0]},\n\nI have confirmed our sync for ${selectedEmail.suggestedAction?.meetingDetails?.suggestedTime}.\n\nHere is our Axiom Teams meeting link:\nhttps://meet.axiom.com/AXM-${Math.floor(100 + Math.random() * 900)}-${Math.floor(100 + Math.random() * 900)}\n\nLooking forward to it!`);
+                                setComposeTo(selectedEmail.from?.email || "");
+                                setComposeSubject(`Confirmed: ${selectedEmail.suggestedAction?.meetingDetails?.title || "Meeting"}`);
+                                setComposeBody(`Hi ${(selectedEmail.from?.name || "there").split(" ")[0]},\n\nI have confirmed our sync for ${selectedEmail.suggestedAction?.meetingDetails?.suggestedTime || "the requested time"}.\n\nHere is our Axiom Teams meeting link:\nhttps://meet.axiom.com/AXM-492-831\n\nLooking forward to it!`);
                                 setComposeHasMeetingLink(true);
                               }}
                               className="bg-amber-500 hover:bg-amber-400 text-black font-black px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 shadow-md transition"
@@ -1123,16 +1125,16 @@ export default function AxiomConnectWorkspace({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <img
-                          src={selectedEmail.from.avatar}
-                          alt={selectedEmail.from.name}
+                          src={selectedEmail.from?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"}
+                          alt={selectedEmail.from?.name || "Sender"}
                           className="w-10 h-10 rounded-2xl object-cover ring-2 ring-indigo-500/20"
                         />
                         <div>
                           <div className="flex items-center gap-1.5">
-                            <h3 className="text-xs font-black text-slate-900 dark:text-zinc-100">{selectedEmail.from.name}</h3>
-                            <span className="text-[10px] text-slate-400">&lt;{selectedEmail.from.email}&gt;</span>
+                            <h3 className="text-xs font-black text-slate-900 dark:text-zinc-100">{selectedEmail.from?.name || "Sender"}</h3>
+                            <span className="text-[10px] text-slate-400">&lt;{selectedEmail.from?.email || ""}&gt;</span>
                           </div>
-                          <span className="text-[11px] text-slate-500">To: {selectedEmail.to.map((t) => t.name).join(", ")}</span>
+                          <span className="text-[11px] text-slate-500">To: {(selectedEmail.to || []).map((t) => t.name).join(", ")}</span>
                         </div>
                       </div>
 
@@ -1177,6 +1179,10 @@ export default function AxiomConnectWorkspace({
                       </div>
                     )}
 
+                  </div>
+                ) : (
+                  <div className="flex-1 flex items-center justify-center p-8 text-slate-400 text-xs">
+                    Select an email to view its content.
                   </div>
                 )}
               </div>
@@ -1673,7 +1679,7 @@ export default function AxiomConnectWorkspace({
             </div>
 
             <p className="text-xs text-slate-500 leading-relaxed">
-              For all messages from <strong>{selectedEmail.from.name}</strong> ({selectedEmail.from.email}):
+              For all messages from <strong>{selectedEmail?.from?.name || "Sender"}</strong> ({selectedEmail?.from?.email || ""}):
             </p>
 
             <div className="space-y-2 text-xs font-semibold">
@@ -1697,7 +1703,7 @@ export default function AxiomConnectWorkspace({
               </button>
               <button
                 onClick={() => {
-                  triggerToast(`🧹 Sweep executed: Cleaned all older messages from ${selectedEmail.from.name}.`);
+                  triggerToast(`🧹 Sweep executed: Cleaned all older messages from ${selectedEmail?.from?.name || "Sender"}.`);
                   setShowSweepModal(false);
                 }}
                 className="flex-1 bg-amber-500 hover:bg-amber-400 text-black font-black py-2 rounded-xl text-xs shadow-md"
@@ -1726,7 +1732,7 @@ export default function AxiomConnectWorkspace({
             </div>
 
             <p className="text-xs text-slate-500">
-              Cross-post <strong>"{selectedEmail.subject}"</strong> to a persistent team channel:
+              Cross-post <strong>"{selectedEmail?.subject || "Email"}"</strong> to a persistent team channel:
             </p>
 
             <div className="space-y-1.5 text-xs font-bold">
@@ -1750,7 +1756,7 @@ export default function AxiomConnectWorkspace({
                                     title: currentUserRole,
                                   },
                                   timestamp: "Just now",
-                                  content: `📢 [Shared from Email] ${selectedEmail.subject}\n\nFrom: ${selectedEmail.from.name}\n${selectedEmail.preview}`,
+                                  content: `📢 [Shared from Email] ${selectedEmail?.subject || ""}\n\nFrom: ${selectedEmail?.from?.name || ""}\n${selectedEmail?.preview || ""}`,
                                   reactions: [],
                                   repliesCount: 0,
                                 },
@@ -1881,7 +1887,7 @@ export default function AxiomConnectWorkspace({
                 <h3 className="font-black text-base text-slate-900 dark:text-zinc-100">New Email Message</h3>
               </div>
               <button onClick={() => setShowComposeModal(false)} className="p-1 text-slate-400 hover:text-slate-600">
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
@@ -1913,7 +1919,7 @@ export default function AxiomConnectWorkspace({
                 <button
                   type="button"
                   onClick={() => {
-                    const meetingCode = `AXM-${Math.floor(100 + Math.random() * 900)}-${Math.floor(100 + Math.random() * 900)}`;
+                    const meetingCode = "AXM-492-831";
                     setComposeBody((prev) => `${prev}\n\n🎥 Join Axiom Teams Meeting:\nhttps://meet.axiom.com/${meetingCode}\nMeeting ID: ${meetingCode}`);
                     setComposeHasMeetingLink(true);
                     triggerToast("🎥 Inserted Axiom Teams Meeting link!");
