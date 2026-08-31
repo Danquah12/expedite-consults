@@ -460,6 +460,7 @@ export default function CampusSyncApp() {
   const [activePersonaIndex, setActivePersonaIndex] = useState<number>(0);
   const [showAskAiModal, setShowAskAiModal] = useState<boolean>(false);
   const [showTigerRecordExportModal, setShowTigerRecordExportModal] = useState<boolean>(false);
+  const [launchpadFilter, setLaunchpadFilter] = useState<"ALL" | "ACADEMICS" | "SAFETY" | "MEDIA" | "OPERATIONS">("ALL");
 
   // TowsonSync Administration Center State
   const [adminVerifications, setAdminVerifications] = useState<AdminVerificationRequest[]>(initialAdminVerifications);
@@ -5108,72 +5109,149 @@ export default function CampusSyncApp() {
             {/* SUB-VIEW 1: 🍱 APPLICATION LAUNCHER GRID (DEFAULT) */}
             {(moreSubView === "launcher" || !moreSubView || moreSubView === "map") && (
               <div className="space-y-6">
+                {/* Launchpad Header */}
                 <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 rounded-3xl text-white shadow-xl flex items-center justify-between flex-wrap gap-4 border border-indigo-500/30">
                   <div>
-                    <span className="text-xs font-extrabold uppercase tracking-widest text-amber-400">
-                      TowsonSync Application Suite
-                    </span>
-                    <h1 className="text-2xl font-black mt-0.5">Explore All Campus Modules & Services</h1>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-extrabold uppercase tracking-widest text-amber-400">
+                        TowsonSync Enterprise Suite
+                      </span>
+                      <span className="text-[10px] font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-2 py-0.5 rounded-full font-bold">
+                        18 Modules Active
+                      </span>
+                    </div>
+                    <h1 className="text-2xl font-black mt-1">Application Launchpad & Campus Hub</h1>
                     <p className="text-xs text-slate-300 mt-1 max-w-xl">
-                      Access student media, career opportunities, campus games, marketplace products, and administrative systems.
+                      Access academics, safe transportation, digital wallet, student media, marketplace, AI intelligence, and administrative systems.
                     </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowAskAiModal(true)}
+                      className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white text-xs font-black px-4 py-2.5 rounded-2xl transition flex items-center gap-1.5 shadow-md"
+                    >
+                      <Sparkles className="w-4 h-4 text-amber-300" />
+                      <span>Ask AI Anything</span>
+                    </button>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {/* Launchpad Category Filter Tabs */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-bold bg-white dark:bg-zinc-900 p-2 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm">
                   {[
-                    { id: "tv", title: "Towson TV & Reels", desc: "Live streams, 60s reels, video channels, student creator shows.", icon: "🎥", bg: "bg-rose-500/10 text-rose-500 border-rose-500/20", type: "subview", target: "tv" },
-                    { id: "career", title: "Career & Internships", desc: "Handshake sync, verified student jobs, alumni mentorship.", icon: "💼", bg: "bg-amber-500/10 text-amber-500 border-amber-500/20", type: "subview", target: "career" },
-                    { id: "market", title: "Towson Marketplace", desc: "Official TowsonSync store, student buy/sell, campus services.", icon: "🛍️", bg: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20", type: "subview", target: "market" },
-                    { id: "games", title: "Campus Games & XP", desc: "Tiger trivia, campus scavenger hunt, esports leagues.", icon: "🎮", bg: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20", type: "subview", target: "games" },
-                    { id: "transcript", title: "Tiger Record & Passport", desc: "Verified service certificates, leadership roles, campus passport.", icon: "🏆", bg: "bg-purple-500/10 text-purple-500 border-purple-500/20", type: "subview", target: "transcript" },
-                    { id: "weather", title: "NOAA Campus Weather", desc: "Authoritative NWS forecasts, Doppler radar, emergency alerts.", icon: "🌦️", bg: "bg-sky-500/10 text-sky-500 border-sky-500/20", type: "modal", target: "weather" },
-                    { id: "map", title: "Live Campus Map", desc: "TigerOrbit 360, indoor floor blueprints, GPS Tiger Ride shuttles.", icon: "🗺️", bg: "bg-amber-500/10 text-amber-500 border-amber-500/20", type: "tab", target: "map" },
-                    { id: "housing", title: "TUHousing Platform", desc: "Verified student apartments, roommate mesh, maintenance.", icon: "🏠", bg: "bg-blue-500/10 text-blue-500 border-blue-500/20", type: "tab", target: "housing" },
-                    { id: "ai", title: "TowsonSync Campus AI", desc: "Interactive intelligence assistant across all campus services.", icon: "🤖", bg: "bg-amber-500/10 text-amber-500 border-amber-500/20", type: "subview", target: "ai" },
-                    { id: "study", title: "Study Pods & Peer Match", desc: "Reserve study spaces in Cook Library & Science Complex.", icon: "📚", bg: "bg-teal-500/10 text-teal-500 border-teal-500/20", type: "tab", target: "campus" },
-                    { id: "311", title: "Campus 311 Reports", desc: "Report campus maintenance, broken fixtures, facilities requests.", icon: "🔧", bg: "bg-slate-500/10 text-slate-500 border-slate-500/20", type: "action", target: "311" },
-                    { id: "settings", title: "Privacy & Ghost Mode", desc: "Customize location sharing duration, notifications, role switcher.", icon: "⚙️", bg: "bg-zinc-500/10 text-zinc-500 border-zinc-500/20", type: "action", target: "orbit" },
-                  ].map((item) => (
+                    { id: "ALL", label: "🍱 All Modules (18)" },
+                    { id: "ACADEMICS", label: "🎓 Academics & Career (4)" },
+                    { id: "SAFETY", label: "🛡️ Campus Life & Safety (5)" },
+                    { id: "MEDIA", label: "🛍️ Media & Marketplace (4)" },
+                    { id: "OPERATIONS", label: "🏛️ Operations & Tools (5)" },
+                  ].map((cat) => (
                     <button
-                      key={item.id}
+                      key={cat.id}
                       type="button"
-                      onClick={() => {
-                        if (item.type === "modal" && item.target === "weather") {
-                          setShowWeatherModal(true);
-                          setWeatherModalTab("now");
-                        } else if (item.type === "action" && item.target === "311") {
-                          setShow311Modal(true);
-                        } else if (item.type === "action" && item.target === "orbit") {
-                          setShowLocationSharePicker(true);
-                        } else if (item.type === "subview") {
-                          setMoreSubView(item.target as any);
-                          triggerToast(`🚀 Launched ${item.title}`);
-                        } else if (item.type === "tab") {
-                          setActiveTab(item.target as any);
-                          triggerToast(`🚀 Switched to ${item.title}`);
-                        }
-                      }}
-                      className="bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-slate-200 dark:border-zinc-800 shadow-sm hover:shadow-xl transition cursor-pointer flex flex-col justify-between group space-y-3 text-left w-full hover:border-amber-500/50"
+                      onClick={() => setLaunchpadFilter(cat.id as any)}
+                      className={`px-3.5 py-2 rounded-xl transition shrink-0 ${
+                        launchpadFilter === cat.id
+                          ? "bg-amber-500 text-black font-black shadow-xs"
+                          : "text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                      }`}
                     >
-                      <div className="space-y-2">
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl border ${item.bg} group-hover:scale-110 transition`}>
-                          {item.icon}
-                        </div>
-                        <h3 className="font-bold text-sm text-slate-900 dark:text-zinc-100 group-hover:text-amber-500 transition">
-                          {item.title}
-                        </h3>
-                        <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
-                          {item.desc}
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-1 text-[11px] font-bold text-amber-600 dark:text-amber-400 pt-2 border-t w-full">
-                        <span>Launch Module</span>
-                        <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition" />
-                      </div>
+                      {cat.label}
                     </button>
                   ))}
+                </div>
+
+                {/* 18-Module Responsive Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {[
+                    // Academics & Career
+                    { id: "canvas", category: "ACADEMICS", title: "Canvas & Assignment Radar", desc: "Live deadline countdowns, grade sync, and 1-click midterm study pods.", icon: "🎓", bg: "bg-amber-500/10 text-amber-500 border-amber-500/20", type: "action", target: "canvas" },
+                    { id: "alumni", category: "ACADEMICS", title: "Alumni Mentorship Mesh", desc: "15-min coffee chats with verified alumni at T. Rowe Price, Northrop, AWS.", icon: "🤝", bg: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20", type: "subview", target: "career" },
+                    { id: "career", category: "ACADEMICS", title: "Handshake & Campus Jobs", desc: "Direct Handshake sync, paid research fellowships, and student employment.", icon: "💼", bg: "bg-blue-500/10 text-blue-500 border-blue-500/20", type: "subview", target: "career" },
+                    { id: "study", category: "ACADEMICS", title: "Study Pods & Peer Match", desc: "Reserve study spaces in Cook Library & Science Complex with peers.", icon: "📚", bg: "bg-teal-500/10 text-teal-500 border-teal-500/20", type: "tab", target: "campus" },
+                    
+                    // Campus Life & Safety
+                    { id: "wallet", category: "SAFETY", title: "Digital Tiger OneCard", desc: "Meal Swipes (14), Dining Dollars ($284.50), NFC pass & Apple Wallet.", icon: "💳", bg: "bg-amber-500/10 text-amber-500 border-amber-500/20", type: "action", target: "wallet" },
+                    { id: "safewalk", category: "SAFETY", title: "Tiger SafeWalk Escort", desc: "Virtual night escort with live companion tracking, fake calls & TUPD SOS.", icon: "🛡️", bg: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20", type: "action", target: "safewalk" },
+                    { id: "density", category: "SAFETY", title: "Live Campus Density IoT", desc: "Real-time crowd heatmaps for Cook Library, Burdick Gym & Union.", icon: "📊", bg: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20", type: "action", target: "density" },
+                    { id: "weather", category: "SAFETY", title: "NOAA Campus Weather", desc: "Authoritative NWS forecasts, live Doppler radar, and severe weather alerts.", icon: "🌦️", bg: "bg-sky-500/10 text-sky-500 border-sky-500/20", type: "modal", target: "weather" },
+                    { id: "311", category: "SAFETY", title: "Campus 311 Maintenance", desc: "Report campus maintenance, facilities requests, and safety concerns.", icon: "🔧", bg: "bg-slate-500/10 text-slate-500 border-slate-500/20", type: "action", target: "311" },
+
+                    // Media & Marketplace
+                    { id: "tv", category: "MEDIA", title: "Towson TV & Reels", desc: "Live streams, 60s reels, video channels, and student creator shows.", icon: "🎥", bg: "bg-rose-500/10 text-rose-500 border-rose-500/20", type: "subview", target: "tv" },
+                    { id: "market", category: "MEDIA", title: "Towson Marketplace", desc: "Official TowsonSync store, student peer buy/sell, textbooks, and merch.", icon: "🛍️", bg: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20", type: "subview", target: "market" },
+                    { id: "games", category: "MEDIA", title: "Campus Games & XP", desc: "Tiger trivia championship, campus scavenger hunt, and XP leaderboard.", icon: "🎮", bg: "bg-purple-500/10 text-purple-500 border-purple-500/20", type: "subview", target: "games" },
+                    { id: "transcript", category: "MEDIA", title: "Tiger Record & Passport", desc: "Verified milestone certificates, digital passport, and PDF graduation export.", icon: "🏆", bg: "bg-amber-500/10 text-amber-500 border-amber-500/20", type: "subview", target: "transcript" },
+
+                    // Operations & Tools
+                    { id: "ai", category: "OPERATIONS", title: "Ask TowsonSync AI", desc: "Contextual intelligence assistant across schedules, dining, and maps.", icon: "🤖", bg: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20", type: "action", target: "ai" },
+                    { id: "admin", category: "OPERATIONS", title: "Administration Center", desc: "Identity verification queue, housing safety moderation, and security logs.", icon: "🏛️", bg: "bg-slate-900 text-amber-400 border-amber-500/30", type: "subview", target: "admin" },
+                    { id: "map", category: "OPERATIONS", title: "Live Campus Map OS", desc: "TigerOrbit 360, indoor blueprints, GPS Tiger Ride shuttles & parking.", icon: "🗺️", bg: "bg-amber-500/10 text-amber-500 border-amber-500/20", type: "tab", target: "map" },
+                    { id: "housing", category: "OPERATIONS", title: "TUHousing Platform", desc: "Verified off-campus student apartments, roommate mesh, and 3D tours.", icon: "🏠", bg: "bg-blue-500/10 text-blue-500 border-blue-500/20", type: "tab", target: "housing" },
+                    { id: "settings", category: "OPERATIONS", title: "Privacy & Ghost Mode", desc: "Customize location sharing duration, notifications, and security keys.", icon: "⚙️", bg: "bg-zinc-500/10 text-zinc-500 border-zinc-500/20", type: "action", target: "orbit" },
+                  ]
+                    .filter((item) => launchpadFilter === "ALL" || item.category === launchpadFilter)
+                    .map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => {
+                          if (item.type === "modal" && item.target === "weather") {
+                            setShowWeatherModal(true);
+                            setWeatherModalTab("now");
+                          } else if (item.type === "action" && item.target === "wallet") {
+                            setShowTigerWalletModal(true);
+                          } else if (item.type === "action" && item.target === "safewalk") {
+                            setShowSafeWalkModal(true);
+                          } else if (item.type === "action" && item.target === "canvas") {
+                            if (courses[0]) setSelectedCourseForCanvas(courses[0]);
+                            else triggerToast("🎓 Canvas LMS & Assignment Radar loaded.");
+                          } else if (item.type === "action" && item.target === "ai") {
+                            setShowAskAiModal(true);
+                          } else if (item.type === "action" && item.target === "density") {
+                            setActiveTab("home");
+                            triggerToast("📊 Live IoT Facility Density loaded on Home dashboard.");
+                          } else if (item.type === "action" && item.target === "311") {
+                            setShow311Modal(true);
+                          } else if (item.type === "action" && item.target === "orbit") {
+                            setShowLocationSharePicker(true);
+                          } else if (item.type === "subview") {
+                            setMoreSubView(item.target as any);
+                            triggerToast(`🚀 Launched ${item.title}`);
+                          } else if (item.type === "tab") {
+                            setActiveTab(item.target as any);
+                            triggerToast(`🚀 Switched to ${item.title}`);
+                          }
+                        }}
+                        className="bg-white dark:bg-zinc-900 p-5 rounded-3xl border border-slate-200 dark:border-zinc-800 shadow-sm hover:shadow-xl transition cursor-pointer flex flex-col justify-between group space-y-3 text-left w-full hover:border-amber-500/50"
+                      >
+                        <div className="space-y-2.5">
+                          <div className="flex items-center justify-between">
+                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl border ${item.bg} group-hover:scale-110 transition`}>
+                              {item.icon}
+                            </div>
+                            <span className="text-[9px] font-mono font-bold bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 px-2 py-0.5 rounded-full">
+                              {item.category}
+                            </span>
+                          </div>
+                          
+                          <div>
+                            <h3 className="font-bold text-sm text-slate-900 dark:text-zinc-100 group-hover:text-amber-500 transition">
+                              {item.title}
+                            </h3>
+                            <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed mt-1">
+                              {item.desc}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between text-[11px] font-bold text-amber-600 dark:text-amber-400 pt-2 border-t border-slate-100 dark:border-zinc-800 w-full">
+                          <span>Launch Module</span>
+                          <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition" />
+                        </div>
+                      </button>
+                    ))}
                 </div>
               </div>
             )}
