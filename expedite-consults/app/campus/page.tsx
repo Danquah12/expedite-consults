@@ -2930,8 +2930,8 @@ export default function CampusSyncApp() {
                   : "text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
               }`}
             >
-              <MessageSquare className="w-3.5 h-3.5" />
-              <span>Messages</span>
+              <Mail className="w-3.5 h-3.5" />
+              <span>Mail & Teams</span>
             </button>
 
             <button
@@ -5047,33 +5047,16 @@ export default function CampusSyncApp() {
         )}
 
         {/* ========================================================================= */}
-        {/* TAB 6: 💬 MESSAGES */}
+        {/* TAB 6: ✉️ AXIOM CONNECT (MAIL, CALENDAR, TEAMS & WORKSPACE) */}
         {/* ========================================================================= */}
         {activeTab === "messages" && (
-          <div className="bg-white dark:bg-zinc-900 rounded-3xl border p-4 h-[550px] flex flex-col justify-between">
-            <div className="text-sm font-bold border-b pb-2">{activeChannel}</div>
-            <div className="overflow-y-auto space-y-3 flex-1 py-3 text-xs">
-              {messages.map((m) => (
-                <div key={m.id} className={`flex items-start gap-2.5 ${m.isMe ? "flex-row-reverse" : ""}`}>
-                  <img src={m.avatar} alt={m.sender} className="w-7 h-7 rounded-full object-cover" />
-                  <div className={`p-3 rounded-2xl ${m.isMe ? "bg-amber-500 text-black" : "bg-slate-100 dark:bg-zinc-800"}`}>
-                    {m.text}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <form onSubmit={handleSendMessage} className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Message channel..."
-                value={inputMsg}
-                onChange={(e) => setInputMsg(e.target.value)}
-                className="flex-1 bg-slate-100 dark:bg-zinc-800 border rounded-xl px-3 py-2 text-xs"
-              />
-              <button type="submit" className="bg-amber-500 text-black p-2.5 rounded-xl font-bold">
-                <Send className="w-4 h-4" />
-              </button>
-            </form>
+          <div className="rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-zinc-800 min-h-[820px] flex flex-col">
+            <AxiomConnectWorkspace
+              initialApp="mail"
+              currentUserName={currentUser.name}
+              currentUserEmail={currentUser.studentId ? `${currentUser.name.toLowerCase().replace(" ", ".")}@towson.edu` : "kwesi@expediteconsults.com"}
+              currentUserRole={currentUser.role}
+            />
           </div>
         )}
 
