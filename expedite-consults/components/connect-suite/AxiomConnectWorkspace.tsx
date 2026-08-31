@@ -1261,19 +1261,23 @@ export default function AxiomConnectWorkspace({
                     </div>
 
                     <div className="flex items-center justify-between pt-2 border-t border-slate-200/60 dark:border-zinc-700">
-                      <span className="text-xs text-slate-400 font-medium">📍 {evt.location}</span>
-                      {evt.meetingLink && (
-                        <button
-                          onClick={() => {
-                            setActiveApp("meetings");
-                            triggerToast(`Joining ${evt.title}...`);
-                          }}
-                          className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1"
-                        >
-                          <Video className="w-3 h-3" />
-                          <span>Join Teams</span>
-                        </button>
-                      )}
+                      <span className="text-xs text-slate-400 font-medium truncate max-w-[50%]">📍 {evt.location || "Axiom Teams"}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMeetingSession((prev) => ({
+                            ...prev,
+                            title: evt.title,
+                            meetingId: evt.meetingId || "AXM-492-831",
+                          }));
+                          setActiveApp("meetings");
+                          triggerToast(`📹 Connected to Teams Meeting: ${evt.title} (${evt.meetingId || "AXM-492-831"})`);
+                        }}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-black px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 shadow-xs transition hover:scale-105 cursor-pointer shrink-0"
+                      >
+                        <Video className="w-3.5 h-3.5" />
+                        <span>Join Teams</span>
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -2223,23 +2227,32 @@ export default function AxiomConnectWorkspace({
                 e.preventDefault();
                 if (!newEventTitle.trim()) return;
 
+                const generatedMeetingId = `AXM-${Math.floor(100 + Math.random() * 900)}-${Math.floor(100 + Math.random() * 900)}`;
                 const newEvent: CalendarEvent = {
                   id: `evt-${Date.now()}`,
                   title: newEventTitle.trim(),
+                  description: newEventDescription || "Sync and discussion via Axiom Teams encrypted conference link.",
+                  startTime: "2026-08-31T14:00:00",
+                  endTime: "2026-08-31T14:30:00",
                   dateLabel: "Today",
                   timeLabel: newEventTime || "2:00 PM – 2:30 PM",
                   category: newEventCategory,
-                  description: newEventDescription || "Sync and discussion via Axiom Teams encrypted conference link.",
+                  color: "bg-indigo-500",
                   location: newEventLocation || "Axiom Virtual Room 1",
-                  teamsMeetingId: `AXM-${Math.floor(100 + Math.random() * 900)}-${Math.floor(100 + Math.random() * 900)}`,
-                  attendees: newEventAttendees.split(",").map(s => s.trim()).filter(Boolean),
+                  meetingLink: `https://meet.axiom.com/${generatedMeetingId}`,
+                  meetingId: generatedMeetingId,
+                  attendees: (newEventAttendees || "catherine.hayes@towson.edu").split(",").map((email, idx) => ({
+                    name: email.trim().split("@")[0] || `Attendee ${idx + 1}`,
+                    email: email.trim(),
+                    status: "ACCEPTED",
+                  })),
                 };
 
                 setCalendarEvents((prev) => [newEvent, ...prev]);
                 setShowCreateEventModal(false);
                 setNewEventTitle("");
                 setNewEventDescription("");
-                triggerToast(`📅 Meeting "${newEvent.title}" scheduled & Teams link generated!`);
+                triggerToast(`📅 Meeting "${newEvent.title}" scheduled with 1080p Teams room (${generatedMeetingId})!`);
               }}
               className="space-y-3.5 text-xs font-semibold"
             >
