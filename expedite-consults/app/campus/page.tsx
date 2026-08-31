@@ -1437,7 +1437,7 @@ export default function CampusSyncApp() {
                           : "border-slate-200 dark:border-zinc-700 hover:border-indigo-500"
                       }`}
                     >
-                      {t.split(" ")[0]} {t.split(" ")[1]}
+                      {t}
                     </button>
                   ))}
                 </div>
@@ -2345,19 +2345,19 @@ export default function CampusSyncApp() {
 
                 <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl border border-emerald-200 dark:border-emerald-900 space-y-1">
                   <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold uppercase block">Dining Dollars</span>
-                  <span className="text-xl font-black text-emerald-900 dark:text-emerald-100">${tigerWallet.diningDollarsBalance.toFixed(2)}</span>
+                  <span className="text-xl font-black text-emerald-900 dark:text-emerald-100">${(tigerWallet?.diningDollarsBalance ?? 428.5).toFixed(2)}</span>
                   <span className="text-[9px] text-slate-400 block">All campus dining + Dunkin'</span>
                 </div>
 
                 <div className="p-3 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border space-y-1">
                   <span className="text-[10px] text-slate-400 font-bold uppercase block">Retail Points</span>
-                  <span className="text-base font-black">${tigerWallet.retailPointsBalance.toFixed(2)}</span>
+                  <span className="text-base font-black">${(tigerWallet?.retailPointsBalance ?? 185.0).toFixed(2)}</span>
                   <span className="text-[9px] text-slate-400 block">Bookstore & concessions</span>
                 </div>
 
                 <div className="p-3 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border space-y-1">
                   <span className="text-[10px] text-slate-400 font-bold uppercase block">Print Quota</span>
-                  <span className="text-base font-black">${tigerWallet.printQuotaBalance.toFixed(2)}</span>
+                  <span className="text-base font-black">${(tigerWallet?.printQuotaBalance ?? 34.25).toFixed(2)}</span>
                   <span className="text-[9px] text-slate-400 block">Cook Library Printers</span>
                 </div>
               </div>
@@ -3048,8 +3048,8 @@ export default function CampusSyncApp() {
                         <h4 className="text-sm font-black text-slate-900 dark:text-zinc-100">{currentUser.name}</h4>
                         <ShieldCheck className="w-3.5 h-3.5 text-blue-500" />
                       </div>
-                      <p className="text-xs text-slate-500">{currentUser.major} • Class of {currentUser.gradYear}</p>
-                      <span className="text-[10px] font-mono text-amber-600 font-bold block mt-0.5">🪪 ID: {currentUser.studentId}</span>
+                      <p className="text-xs text-slate-500">{currentUser?.major || "Computer Science"} • Class of {currentUser?.gradYear || "2026"}</p>
+                      <span className="text-[10px] font-mono text-amber-600 font-bold block mt-0.5">🪪 ID: {currentUser?.studentId || "0982341"}</span>
                     </div>
 
                     {/* Quick Access Card: Tiger OneCard */}
@@ -3065,7 +3065,7 @@ export default function CampusSyncApp() {
                         <span className="text-slate-900 dark:text-zinc-100">Digital OneCard Wallet</span>
                       </div>
                       <span className="text-[10px] font-mono font-black text-amber-600 dark:text-amber-400">
-                        {tigerWallet.mealSwipesRemaining} Swipes • ${tigerWallet.diningDollarsBalance.toFixed(0)}
+                        {tigerWallet?.mealSwipesRemaining ?? 14} Swipes • ${(tigerWallet?.diningDollarsBalance ?? 428).toFixed(0)}
                       </span>
                     </button>
 
@@ -3091,7 +3091,7 @@ export default function CampusSyncApp() {
                             </div>
                             {c.grade && (
                               <span className="text-[9px] font-black bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">
-                                {c.grade.split(" ")[0]}
+                                {(c.grade || "").split(" ")[0]}
                               </span>
                             )}
                           </div>
@@ -3120,14 +3120,14 @@ export default function CampusSyncApp() {
                               }
                             }}
                             className={`p-2 rounded-xl text-left transition flex items-center gap-2 border ${
-                              currentUser.id === persona.id
+                              currentUser?.id === persona.id
                                 ? "bg-amber-500 text-black border-amber-600 font-black shadow-xs"
                                 : "bg-slate-50 dark:bg-zinc-800/70 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-slate-200 dark:border-zinc-700"
                             }`}
                           >
                             <img src={persona.avatar} alt={persona.name} className="w-6 h-6 rounded-full object-cover shrink-0" />
                             <div className="min-w-0">
-                              <span className="text-[11px] block truncate font-bold">{persona.name.split(" ")[0]}</span>
+                              <span className="text-[11px] block truncate font-bold">{(persona.name || "User").split(" ")[0]}</span>
                               <span className="text-[9px] block opacity-75 font-mono uppercase">{persona.role}</span>
                             </div>
                           </button>
@@ -3937,7 +3937,7 @@ export default function CampusSyncApp() {
                           </div>
                           <div className="bg-slate-50 dark:bg-zinc-800/50 p-2.5 rounded-xl border">
                             <span className="text-[10px] text-slate-400 font-bold block">SCHEDULE:</span>
-                            <span className="font-bold text-slate-800 dark:text-zinc-200">{rm.sleepSchedule.split("(")[0]}</span>
+                            <span className="font-bold text-slate-800 dark:text-zinc-200">{(rm.sleepSchedule || "").split("(")[0]}</span>
                           </div>
                         </div>
 
@@ -4313,7 +4313,7 @@ export default function CampusSyncApp() {
                               />
                               {course.grade && (
                                 <span className="absolute bottom-0.5 right-0.5 bg-black/80 text-[8px] font-black text-amber-400 px-1 rounded">
-                                  {course.grade.split(" ")[0]}
+                                  {(course.grade || "").split(" ")[0]}
                                 </span>
                               )}
                             </div>
@@ -4348,7 +4348,7 @@ export default function CampusSyncApp() {
                           )}
 
                           <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-zinc-700/60 text-[10px] font-semibold text-slate-500 dark:text-zinc-400">
-                            <span>🕒 {course.schedule.split("•")[0]}</span>
+                            <span>🕒 {(course.schedule || "").split("•")[0]}</span>
                             <button
                               onClick={() => {
                                 setSelectedCourseForCanvas(course);
@@ -5053,9 +5053,9 @@ export default function CampusSyncApp() {
           <div className="rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-zinc-800 min-h-[820px] flex flex-col">
             <AxiomConnectWorkspace
               initialApp="mail"
-              currentUserName={currentUser.name}
-              currentUserEmail={currentUser.studentId ? `${currentUser.name.toLowerCase().replace(" ", ".")}@towson.edu` : "kwesi@expediteconsults.com"}
-              currentUserRole={currentUser.role}
+              currentUserName={currentUser?.name || "Kwesi Asiedu"}
+              currentUserEmail={currentUser?.studentId ? `${(currentUser.name || "kwesi").toLowerCase().replace(/\s+/g, ".")}@towson.edu` : "kwesi@expediteconsults.com"}
+              currentUserRole={currentUser?.role || "Student & Lead Architect"}
             />
           </div>
         )}
@@ -5436,7 +5436,7 @@ export default function CampusSyncApp() {
                                 <ShieldCheck className="w-3.5 h-3.5 text-blue-500" />
                               </div>
                               <span className="text-xs font-bold text-amber-600 dark:text-amber-400 block">{mentor.currentRole}</span>
-                              <span className="text-[11px] text-slate-500 font-semibold block">🏢 {mentor.company} • Class of '{mentor.gradYear.toString().slice(2)}</span>
+                              <span className="text-[11px] text-slate-500 font-semibold block">🏢 {mentor.company} • Class of '{(mentor?.gradYear || "2024").toString().slice(-2)}</span>
                             </div>
                           </div>
 
@@ -6023,12 +6023,12 @@ export default function CampusSyncApp() {
                       </div>
                       <div className="p-4 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border space-y-1">
                         <span className="font-bold text-slate-400 uppercase text-[10px]">Active WebSockets</span>
-                        <div className="text-base font-black text-indigo-600 dark:text-indigo-400">{adminSystemHealth.activeSessionsCount.toLocaleString()} Connected</div>
+                        <div className="text-base font-black text-indigo-600 dark:text-indigo-400">{(adminSystemHealth?.activeSessionsCount || 1420).toLocaleString()} Connected</div>
                         <span className="text-[10px] text-slate-400 block">Encrypted TLS 1.3</span>
                       </div>
                       <div className="p-4 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border space-y-1">
                         <span className="font-bold text-slate-400 uppercase text-[10px]">Campus Blue Light Network</span>
-                        <div className="text-base font-black text-emerald-600">{adminSystemHealth.tupdBeaconHealth}</div>
+                        <div className="text-base font-black text-emerald-600">{adminSystemHealth?.tupdBeaconHealth || "100% Operational"}</div>
                         <span className="text-[10px] text-emerald-500 font-bold block">TUPD Dispatch Linked</span>
                       </div>
                     </div>
@@ -6042,9 +6042,9 @@ export default function CampusSyncApp() {
               <div className="rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-zinc-800 min-h-[750px] flex flex-col">
                 <AxiomConnectWorkspace
                   initialApp="mail"
-                  currentUserName={currentUser.name}
-                  currentUserEmail={currentUser.studentId ? `${currentUser.name.toLowerCase().replace(" ", ".")}@towson.edu` : "kwesi@expediteconsults.com"}
-                  currentUserRole={currentUser.role}
+                  currentUserName={currentUser?.name || "Kwesi Asiedu"}
+                  currentUserEmail={currentUser?.studentId ? `${(currentUser.name || "kwesi").toLowerCase().replace(/\s+/g, ".")}@towson.edu` : "kwesi@expediteconsults.com"}
+                  currentUserRole={currentUser?.role || "Student & Lead Architect"}
                   onBackToCampus={() => setMoreSubView("launcher")}
                 />
               </div>

@@ -187,7 +187,16 @@ export function saveHousingMaintenanceTickets(tickets: HousingMaintenanceTicket[
 // ─────────────────────────────────────────────────────────────
 export function loadCampusWeather(): CampusWeatherReport {
   const loaded = safeLoad<CampusWeatherReport>(STORAGE_KEYS.CAMPUS_WEATHER, initialTowsonMainWeather);
-  return loaded && loaded.currentTemp ? loaded : initialTowsonMainWeather;
+  return {
+    ...initialTowsonMainWeather,
+    ...(loaded || {}),
+    hourlyForecast: Array.isArray(loaded?.hourlyForecast) && loaded.hourlyForecast.length > 0 ? loaded.hourlyForecast : initialTowsonMainWeather.hourlyForecast,
+    dailyForecast: Array.isArray(loaded?.dailyForecast) && loaded.dailyForecast.length > 0 ? loaded.dailyForecast : initialTowsonMainWeather.dailyForecast,
+    activeAlerts: Array.isArray(loaded?.activeAlerts) ? loaded.activeAlerts : initialTowsonMainWeather.activeAlerts,
+    clothingRecommendation: loaded?.clothingRecommendation || initialTowsonMainWeather.clothingRecommendation,
+    conditionIcon: loaded?.conditionIcon || initialTowsonMainWeather.conditionIcon,
+    radarImageUrl: loaded?.radarImageUrl || initialTowsonMainWeather.radarImageUrl,
+  };
 }
 export function saveCampusWeather(report: CampusWeatherReport): void {
   safeSave(STORAGE_KEYS.CAMPUS_WEATHER, report);
@@ -455,7 +464,13 @@ export function loadCurrentUser(): UserProfile {
   const loaded = safeLoad<UserProfile>(STORAGE_KEYS.USER, defaultCurrentUser);
   return {
     ...defaultCurrentUser,
-    ...loaded,
+    ...(loaded || {}),
+    name: loaded?.name || defaultCurrentUser.name,
+    major: loaded?.major || defaultCurrentUser.major,
+    studentId: loaded?.studentId || defaultCurrentUser.studentId,
+    avatar: loaded?.avatar || defaultCurrentUser.avatar,
+    gradYear: loaded?.gradYear || defaultCurrentUser.gradYear,
+    role: loaded?.role || defaultCurrentUser.role,
     leadershipRoles: Array.isArray(loaded?.leadershipRoles) ? loaded.leadershipRoles : defaultCurrentUser.leadershipRoles || [],
     achievements: Array.isArray(loaded?.achievements) ? loaded.achievements : defaultCurrentUser.achievements || [],
     projects: Array.isArray(loaded?.projects) ? loaded.projects : defaultCurrentUser.projects || [],
