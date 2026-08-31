@@ -1,0 +1,95 @@
+version: '3.8'
+
+services:
+  # 1. PostgreSQL - Primary Relational & Full-Text Search Store
+  postgres:
+    image: postgres:16-alpine
+    container_name: axiom-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mailserver
+      POSTGRES_USER: mailuser
+      POSTGRES_PASSWORD: StrongSecureDBPassword_123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./config/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mailuser -d mailserver"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. Redis - In-Memory Cache, Queue & Session Store
+  redis:
+    image: redis:7-alpine
+    container_name: axiom-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  # 3. MinIO - S3-Compatible Object Store for Raw MIME & Large Attachments
+  minio:
+    image: minio/minio:latest
+    container_name: axiom-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadminpassword123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+  # 4. Mailpit - Local Mock SMTP / IMAP & Mail Inspector for Rapid Development
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: axiom-mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025" # Mock SMTP Ingress
+      - "8025:8025" # Web Inspection UI
+    environment:
+      MP_MAX_MESSAGES: 5000
+      MP_DATABASE: /data/mailpit.db
+    volumes:
+      - mailpit_data:/data
+
+  # 5. Core Mail Platform FastAPI Backend
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: axiom-backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+asyncpg://mailuser:StrongSecureDBPassword_123@postgres:5432/mailserver
+      REDIS_URL: redis://redis:6379/0
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadminpassword123
+      S3_BUCKET: axiom-attachments
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      JWT_SECRET: supersecret_axiom_jwt_key_2026_production
+      ENVIRONMENT: development
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      minio:
+        condition: service_started
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  mailpit_data:

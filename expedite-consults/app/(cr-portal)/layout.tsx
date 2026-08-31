@@ -12,6 +12,7 @@ export const metadata: Metadata = {
 const REQUESTOR_NAV = [
 	{ href: "/portal",      label: "My CRs",             icon: "📋" },
 	{ href: "/portal/new",  label: "New CR",             icon: "➕" },
+	{ href: "/mail",        label: "Axiom Mail & Teams", icon: "✉️" },
 	{ href: "/campus",      label: "TowsonSync Campus",  icon: "🎓" },
 	{ href: "/veritaslens", label: "VeritasLens AI",     icon: "🌐" },
 	{ href: "/connectin",   label: "ConnectIn Network",  icon: "💼" },
@@ -23,6 +24,7 @@ const MANAGER_NAV = [
 	{ href: "/portal/new",          label: "New CR",             icon: "➕" },
 	{ href: "/dashboard",           label: "Governance Hub",     icon: "📊" },
 	{ href: "/dashboard/calendar",  label: "CAB Calendar",       icon: "📅" },
+	{ href: "/mail",                label: "Axiom Mail & Teams", icon: "✉️" },
 	{ href: "/campus",              label: "TowsonSync Campus",  icon: "🎓" },
 	{ href: "/veritaslens",         label: "VeritasLens AI",     icon: "🌐" },
 	{ href: "/connectin",           label: "ConnectIn Network",  icon: "💼" },

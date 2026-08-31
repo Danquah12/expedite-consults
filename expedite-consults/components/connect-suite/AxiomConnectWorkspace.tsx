@@ -1,0 +1,1273 @@
+"use client";
+
+import React, { useState } from "react";
+import Link from "next/link";
+import {
+  Mail,
+  Calendar as CalendarIcon,
+  MessageSquare,
+  Video,
+  FileText,
+  Users,
+  Bot,
+  Settings,
+  Search,
+  Plus,
+  Star,
+  Trash2,
+  Archive,
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  Paperclip,
+  Send,
+  Sparkles,
+  Shield,
+  ShieldCheck,
+  ShieldAlert,
+  Mic,
+  MicOff,
+  Camera,
+  CameraOff,
+  Share2,
+  Hand,
+  PhoneOff,
+  MoreVertical,
+  ChevronRight,
+  ChevronDown,
+  Download,
+  ExternalLink,
+  RefreshCw,
+  Folder,
+  Tag,
+  Smile,
+  ArrowLeft,
+  X,
+  Check,
+  Maximize2,
+  Minimize2,
+  Radio,
+  Lock,
+  Layers,
+  HardDrive,
+} from "lucide-react";
+
+import {
+  EmailMessage,
+  CalendarEvent,
+  TeamsMeetingSession,
+  TeamsChannel,
+  DriveFile,
+  ContactEntry,
+  initialEmailMessages,
+  initialCalendarEvents,
+  initialActiveTeamsMeeting,
+  initialTeamsChannels,
+  initialDriveFiles,
+  initialContactsList,
+} from "@/lib/connect-suite-data";
+
+interface AxiomConnectWorkspaceProps {
+  initialApp?: "mail" | "calendar" | "teams" | "meetings" | "drive" | "contacts" | "ai" | "settings";
+  currentUserName?: string;
+  currentUserEmail?: string;
+  currentUserRole?: string;
+  onBackToCampus?: () => void;
+}
+
+export default function AxiomConnectWorkspace({
+  initialApp = "mail",
+  currentUserName = "Kwesi Asiedu",
+  currentUserEmail = "kwesi@towson.edu",
+  currentUserRole = "Student & Lead Architect",
+  onBackToCampus,
+}: AxiomConnectWorkspaceProps) {
+  // Global Workspace App Navigation
+  const [activeApp, setActiveApp] = useState<"mail" | "calendar" | "teams" | "meetings" | "drive" | "contacts" | "ai" | "settings">(initialApp);
+
+  // Email State
+  const [emails, setEmails] = useState<EmailMessage[]>(initialEmailMessages);
+  const [selectedEmailId, setSelectedEmailId] = useState<string>(initialEmailMessages[0].id);
+  const [mailFolder, setMailFolder] = useState<"inbox" | "sent" | "drafts" | "archive" | "spam" | "trash" | "snoozed">("inbox");
+  const [mailCategory, setMailCategory] = useState<"all" | "primary" | "updates" | "security">("all");
+  const [mailSearchQuery, setMailSearchQuery] = useState("");
+  const [showComposeModal, setShowComposeModal] = useState(false);
+  const [composeTo, setComposeTo] = useState("");
+  const [composeSubject, setComposeSubject] = useState("");
+  const [composeBody, setComposeBody] = useState("");
+  const [composeHasMeetingLink, setComposeHasMeetingLink] = useState(false);
+
+  // Calendar State
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>(initialCalendarEvents);
+  const [selectedDate, setSelectedDate] = useState<string>("2026-08-31");
+  const [showCreateEventModal, setShowCreateEventModal] = useState(false);
+  const [newEventTitle, setNewEventTitle] = useState("");
+  const [newEventTime, setNewEventTime] = useState("2:00 PM – 2:30 PM");
+
+  // Teams Meetings State
+  const [meetingSession, setMeetingSession] = useState<TeamsMeetingSession>(initialActiveTeamsMeeting);
+  const [isMicMuted, setIsMicMuted] = useState(false);
+  const [isVideoOff, setIsVideoOff] = useState(false);
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [isHandRaised, setIsHandRaised] = useState(false);
+  const [meetingTab, setMeetingTab] = useState<"video" | "chat" | "participants" | "ai_notes">("video");
+  const [meetingChatInput, setMeetingChatInput] = useState("");
+
+  // Teams Channels State
+  const [channels, setChannels] = useState<TeamsChannel[]>(initialTeamsChannels);
+  const [activeChannelId, setActiveChannelId] = useState<string>(initialTeamsChannels[0].id);
+  const [channelPostInput, setChannelPostInput] = useState("");
+
+  // Drive & Contacts
+  const [driveFiles, setDriveFiles] = useState<DriveFile[]>(initialDriveFiles);
+  const [contacts, setContacts] = useState<ContactEntry[]>(initialContactsList);
+
+  // Presence State
+  const [userPresence, setUserPresence] = useState<"AVAILABLE" | "BUSY" | "IN_MEETING" | "AWAY">("AVAILABLE");
+
+  // Toast State
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const triggerToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 3000);
+  };
+
+  // Filtered Emails
+  const filteredEmails = emails.filter((m) => {
+    const matchesFolder = m.folder === mailFolder;
+    const matchesCat = mailCategory === "all" || m.category === mailCategory;
+    const matchesSearch =
+      mailSearchQuery === "" ||
+      m.subject.toLowerCase().includes(mailSearchQuery.toLowerCase()) ||
+      m.from.name.toLowerCase().includes(mailSearchQuery.toLowerCase()) ||
+      m.from.email.toLowerCase().includes(mailSearchQuery.toLowerCase()) ||
+      m.body.toLowerCase().includes(mailSearchQuery.toLowerCase());
+    return matchesFolder && matchesCat && matchesSearch;
+  });
+
+  const selectedEmail = emails.find((m) => m.id === selectedEmailId) || emails[0];
+  const activeChannel = channels.find((c) => c.id === activeChannelId) || channels[0];
+
+  return (
+    <div className="bg-slate-100 dark:bg-zinc-950 min-h-screen text-slate-900 dark:text-zinc-100 flex flex-col font-sans antialiased selection:bg-amber-500 selection:text-black">
+      
+      {/* ========================================================================= */}
+      {/* GLOBAL TOP WORKSPACE NAVBAR */}
+      {/* ========================================================================= */}
+      <header className="bg-gradient-to-r from-[#030c1d] via-[#091e42] to-[#030c1d] border-b border-indigo-500/20 text-white px-4 py-2.5 flex items-center justify-between shadow-md shrink-0 z-30">
+        
+        {/* Left: Brand & Suite Identity */}
+        <div className="flex items-center gap-3">
+          {onBackToCampus && (
+            <button
+              onClick={onBackToCampus}
+              className="p-1.5 hover:bg-white/10 rounded-xl text-slate-300 hover:text-white transition flex items-center gap-1 text-xs font-bold mr-1"
+              title="Return to TowsonSync Campus"
+            >
+              <ArrowLeft className="w-4 h-4 text-amber-400" />
+              <span className="hidden sm:inline">Back</span>
+            </button>
+          )}
+
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-300 flex items-center justify-center text-black font-black text-base shadow-sm">
+              ⚡
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="font-black text-sm tracking-tight text-white">AXIOM CONNECT</span>
+                <span className="text-[9px] font-mono bg-amber-500/20 text-amber-300 border border-amber-400/30 px-1.5 py-0.2 rounded font-bold">
+                  v3.4 ENTERPRISE
+                </span>
+              </div>
+              <p className="text-[10px] text-slate-300 leading-none">Integrated Mail, Calendar & Teams Suite</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Center: Global Intelligent Omnisearch Bar */}
+        <div className="hidden md:flex items-center flex-1 max-w-xl mx-6">
+          <div className="relative w-full">
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder='Search emails, calendar events, Teams files, or type "from:catherine"...'
+              value={mailSearchQuery}
+              onChange={(e) => setMailSearchQuery(e.target.value)}
+              className="w-full bg-white/10 hover:bg-white/15 focus:bg-white text-white focus:text-black placeholder:text-slate-400 rounded-2xl pl-10 pr-4 py-1.5 text-xs transition border border-white/10 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            />
+          </div>
+        </div>
+
+        {/* Right: Quick Triggers & Authenticated Persona */}
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => {
+              setActiveApp("meetings");
+              triggerToast("🎥 Launched Instant Axiom Teams Video Meeting room.");
+            }}
+            className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 shadow-sm transition"
+          >
+            <Video className="w-3.5 h-3.5 text-amber-300" />
+            <span className="hidden sm:inline">Meet Now</span>
+          </button>
+
+          <button
+            onClick={() => setShowComposeModal(true)}
+            className="bg-amber-500 hover:bg-amber-400 text-black px-3.5 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 shadow-sm transition"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>New Mail</span>
+          </button>
+
+          {/* User Presence & Identity */}
+          <div className="flex items-center gap-2 pl-2 border-l border-white/10">
+            <div className="relative">
+              <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-amber-300 font-black text-xs">
+                {currentUserName.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+              </div>
+              <span className={`w-2.5 h-2.5 rounded-full absolute -bottom-0.5 -right-0.5 border-2 border-[#030c1d] ${
+                userPresence === "AVAILABLE" ? "bg-emerald-400" : userPresence === "IN_MEETING" ? "bg-purple-400" : "bg-amber-400"
+              }`} />
+            </div>
+            <div className="hidden lg:block text-left">
+              <div className="text-xs font-black text-white leading-tight">{currentUserName}</div>
+              <span className="text-[10px] text-slate-300">{currentUserEmail}</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* ========================================================================= */}
+      {/* MAIN WORKSPACE BODY (ZOHO VERTICAL APP RAIL + OUTLOOK PANE) */}
+      {/* ========================================================================= */}
+      <div className="flex flex-1 overflow-hidden">
+
+        {/* ── 1. ZOHO-STYLE LEFT VERTICAL APP RAIL ─────────────────────────────── */}
+        <aside className="w-16 bg-[#030c1d] border-r border-indigo-950/80 flex flex-col items-center py-3 gap-2 shrink-0 z-20">
+          {[
+            { id: "mail", label: "Mail", icon: Mail, badge: "2" },
+            { id: "calendar", label: "Calendar", icon: CalendarIcon },
+            { id: "teams", label: "Teams", icon: MessageSquare, badge: "4" },
+            { id: "meetings", label: "Meetings", icon: Video, pulse: true },
+            { id: "drive", label: "Drive", icon: HardDrive },
+            { id: "contacts", label: "Contacts", icon: Users },
+            { id: "ai", label: "Copilot", icon: Sparkles, gold: true },
+          ].map((app) => {
+            const IconComp = app.icon;
+            const isActive = activeApp === app.id;
+            return (
+              <button
+                key={app.id}
+                onClick={() => {
+                  setActiveApp(app.id as any);
+                  triggerToast(`Switched to Axiom ${app.label}`);
+                }}
+                className={`relative w-11 h-11 rounded-2xl flex flex-col items-center justify-center transition group ${
+                  isActive
+                    ? "bg-amber-500 text-black shadow-lg shadow-amber-500/20 font-black"
+                    : "text-slate-400 hover:text-white hover:bg-white/10"
+                }`}
+                title={app.label}
+              >
+                <IconComp className={`w-5 h-5 ${app.gold && !isActive ? "text-amber-400" : ""}`} />
+                <span className="text-[8px] font-bold mt-0.5 tracking-tighter leading-none">{app.label}</span>
+
+                {app.badge && !isActive && (
+                  <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center ring-2 ring-[#030c1d]">
+                    {app.badge}
+                  </span>
+                )}
+
+                {app.pulse && !isActive && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                )}
+              </button>
+            );
+          })}
+
+          <div className="mt-auto pt-2 border-t border-white/10 w-full flex flex-col items-center gap-2">
+            <button
+              onClick={() => {
+                setUserPresence((prev) => (prev === "AVAILABLE" ? "IN_MEETING" : prev === "IN_MEETING" ? "BUSY" : "AVAILABLE"));
+                triggerToast(`Presence status updated.`);
+              }}
+              className="w-10 h-10 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center text-xs"
+              title="Toggle Presence Status"
+            >
+              <Radio className="w-4 h-4 text-emerald-400" />
+            </button>
+          </div>
+        </aside>
+
+        {/* ── 2. SUB-NAVIGATION DRAWER (DEPENDS ON ACTIVE APP) ────────────────── */}
+        
+        {/* SUB-NAV: 📧 MAIL FOLDERS & LABELS */}
+        {activeApp === "mail" && (
+          <div className="w-56 bg-white dark:bg-zinc-900 border-r border-slate-200 dark:border-zinc-800 flex flex-col justify-between p-3 shrink-0">
+            <div className="space-y-4">
+              <button
+                onClick={() => setShowComposeModal(true)}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-2.5 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm transition"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Compose Email</span>
+              </button>
+
+              {/* System Inboxes */}
+              <div className="space-y-1">
+                <span className="text-[10px] uppercase font-black tracking-wider text-slate-400 px-2 block">
+                  Folders
+                </span>
+                {[
+                  { id: "inbox", label: "Inbox", icon: Mail, count: emails.filter((m) => m.folder === "inbox" && m.isUnread).length },
+                  { id: "drafts", label: "Drafts", icon: FileText, count: 1 },
+                  { id: "sent", label: "Sent Mail", icon: Send },
+                  { id: "archive", label: "Archive", icon: Archive },
+                  { id: "spam", label: "Spam & Quarantine", icon: ShieldAlert, alert: true },
+                  { id: "trash", label: "Trash", icon: Trash2 },
+                ].map((f) => {
+                  const IconC = f.icon;
+                  const isSelected = mailFolder === f.id;
+                  return (
+                    <button
+                      key={f.id}
+                      onClick={() => setMailFolder(f.id as any)}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition ${
+                        isSelected
+                          ? "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 font-black"
+                          : "text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <IconC className={`w-3.5 h-3.5 ${f.alert ? "text-rose-500" : ""}`} />
+                        <span>{f.label}</span>
+                      </div>
+                      {f.count !== undefined && f.count > 0 && (
+                        <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-amber-500 text-black font-black">
+                          {f.count}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Categories */}
+              <div className="space-y-1">
+                <span className="text-[10px] uppercase font-black tracking-wider text-slate-400 px-2 block">
+                  Categories
+                </span>
+                {[
+                  { id: "all", label: "All Items" },
+                  { id: "primary", label: "Primary" },
+                  { id: "security", label: "Security & cATO" },
+                  { id: "updates", label: "Canvas & System" },
+                ].map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setMailCategory(cat.id as any)}
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-semibold ${
+                      mailCategory === cat.id
+                        ? "text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50/50 dark:bg-indigo-950/40"
+                        : "text-slate-500 hover:text-slate-800 dark:hover:text-zinc-200"
+                    }`}
+                  >
+                    • {cat.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Storage Quota */}
+            <div className="p-3 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border border-slate-200 dark:border-zinc-700/60 space-y-1.5 text-xs">
+              <div className="flex items-center justify-between text-[10px] font-bold text-slate-500">
+                <span>Storage Vault</span>
+                <span>18.4 GB / 100 GB</span>
+              </div>
+              <div className="w-full h-1.5 bg-slate-200 dark:bg-zinc-700 rounded-full overflow-hidden">
+                <div className="w-[18.4%] h-full bg-amber-500 rounded-full" />
+              </div>
+              <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold block">
+                Zero-Trust S3 Encrypted
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* SUB-NAV: 💬 TEAMS CHANNELS */}
+        {activeApp === "teams" && (
+          <div className="w-56 bg-white dark:bg-zinc-900 border-r border-slate-200 dark:border-zinc-800 flex flex-col justify-between p-3 shrink-0">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-xs font-black text-slate-900 dark:text-zinc-100">Teams & Channels</span>
+                <button className="text-xs font-bold text-amber-600 hover:underline">+ New</button>
+              </div>
+
+              <div className="space-y-1">
+                {channels.map((ch) => (
+                  <button
+                    key={ch.id}
+                    onClick={() => setActiveChannelId(ch.id)}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition text-left ${
+                      activeChannelId === ch.id
+                        ? "bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 font-black"
+                        : "text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                      <span className="text-slate-400">#</span>
+                      <span className="truncate">{ch.name}</span>
+                    </div>
+                    {ch.unreadCount > 0 && (
+                      <span className="w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center">
+                        {ch.unreadCount}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              <div className="pt-2 border-t space-y-1">
+                <span className="text-[10px] uppercase font-black text-slate-400 px-2 block">Direct Messages</span>
+                {contacts.map((c) => (
+                  <div key={c.id} className="flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-800 text-xs">
+                    <div className="relative">
+                      <img src={c.avatar} alt={c.name} className="w-6 h-6 rounded-full object-cover" />
+                      <span className={`w-2 h-2 rounded-full absolute -bottom-0.5 -right-0.5 ${
+                        c.presence === "AVAILABLE" ? "bg-emerald-500" : c.presence === "IN_MEETING" ? "bg-purple-500" : "bg-amber-500"
+                      }`} />
+                    </div>
+                    <span className="truncate font-medium">{c.name.split(" ")[0]}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── 3. MAIN INTERACTIVE CONTENT AREA (MAIL / CALENDAR / TEAMS) ─────── */}
+        <main className="flex-1 flex overflow-hidden">
+          
+          {/* ========================================================================= */}
+          {/* VIEW A: 📧 OUTLOOK / ZOHO TRI-PANE EMAIL WORKSPACE */}
+          {/* ========================================================================= */}
+          {activeApp === "mail" && (
+            <div className="flex-1 flex overflow-hidden">
+              
+              {/* Middle Pane: Email List */}
+              <div className="w-80 lg:w-96 bg-slate-50 dark:bg-zinc-950 border-r border-slate-200 dark:border-zinc-800 flex flex-col overflow-y-auto shrink-0">
+                <div className="p-3 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between bg-white dark:bg-zinc-900 sticky top-0 z-10">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black uppercase text-slate-700 dark:text-zinc-300">
+                      {mailFolder.toUpperCase()} ({filteredEmails.length})
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => triggerToast("🔄 Synchronized with IMAP & TowsonSync Mailbox.")}
+                    className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                <div className="divide-y divide-slate-100 dark:divide-zinc-900">
+                  {filteredEmails.map((msg) => {
+                    const isSelected = selectedEmailId === msg.id;
+                    return (
+                      <div
+                        key={msg.id}
+                        onClick={() => {
+                          setSelectedEmailId(msg.id);
+                          setEmails((prev) => prev.map((m) => (m.id === msg.id ? { ...m, isUnread: false } : m)));
+                        }}
+                        className={`p-3.5 cursor-pointer transition flex flex-col gap-1.5 ${
+                          isSelected
+                            ? "bg-amber-500/10 border-l-4 border-amber-500 dark:bg-amber-500/5"
+                            : msg.isUnread
+                            ? "bg-white dark:bg-zinc-900 font-bold"
+                            : "hover:bg-slate-100 dark:hover:bg-zinc-900/60"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-1">
+                          <div className="flex items-center gap-2 truncate">
+                            {msg.isStarred && <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500 shrink-0" />}
+                            <span className={`text-xs truncate ${msg.isUnread ? "font-black text-slate-900 dark:text-zinc-100" : "text-slate-600 dark:text-zinc-300"}`}>
+                              {msg.from.name}
+                            </span>
+                          </div>
+                          <span className="text-[10px] font-mono text-slate-400 shrink-0">{msg.time}</span>
+                        </div>
+
+                        <h4 className={`text-xs line-clamp-1 ${msg.isUnread ? "font-black text-slate-900 dark:text-zinc-100" : "text-slate-700 dark:text-zinc-300"}`}>
+                          {msg.subject}
+                        </h4>
+
+                        <p className="text-[11px] text-slate-500 dark:text-zinc-400 line-clamp-2 leading-relaxed">
+                          {msg.preview}
+                        </p>
+
+                        <div className="flex items-center gap-1.5 pt-1">
+                          {msg.hasAttachment && (
+                            <span className="text-[9px] font-bold bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 px-1.5 py-0.2 rounded flex items-center gap-1">
+                              <Paperclip className="w-2.5 h-2.5" />
+                              <span>Att</span>
+                            </span>
+                          )}
+                          {msg.securityStatus.threatScore > 50 ? (
+                            <span className="text-[9px] font-bold bg-rose-100 dark:bg-rose-950 text-rose-600 px-1.5 py-0.2 rounded">
+                              ⚠️ Phishing Flag
+                            </span>
+                          ) : (
+                            <span className="text-[9px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                              SPF/DKIM ✓
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Right Pane: Detailed Email Viewer */}
+              {selectedEmail && (
+                <div className="flex-1 bg-white dark:bg-zinc-900 flex flex-col overflow-y-auto p-6 space-y-6">
+                  
+                  {/* Subject & Action Bar */}
+                  <div className="flex items-start justify-between flex-wrap gap-4 border-b border-slate-100 dark:border-zinc-800 pb-4">
+                    <div className="space-y-1 flex-1">
+                      <div className="flex items-center gap-2">
+                        {selectedEmail.labels.map((lbl) => (
+                          <span key={lbl} className="text-[9px] font-bold bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 px-2 py-0.5 rounded-full">
+                            {lbl}
+                          </span>
+                        ))}
+                        {selectedEmail.securityStatus.tlsEncrypted && (
+                          <span className="text-[9px] font-mono bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <Lock className="w-2.5 h-2.5" />
+                            <span>TLS 1.3 Strict</span>
+                          </span>
+                        )}
+                      </div>
+                      <h2 className="text-lg font-black text-slate-900 dark:text-zinc-100">{selectedEmail.subject}</h2>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setShowComposeModal(true);
+                          setComposeTo(selectedEmail.from.email);
+                          setComposeSubject(`Re: ${selectedEmail.subject}`);
+                          setComposeBody(`\n\n--- On ${selectedEmail.date} at ${selectedEmail.time}, ${selectedEmail.from.name} wrote:\n${selectedEmail.body}`);
+                        }}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition"
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        <span>Reply</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setActiveApp("meetings");
+                          triggerToast("🎥 Launched Axiom Teams video meeting for this email thread.");
+                        }}
+                        className="bg-purple-600 hover:bg-purple-700 text-white font-bold px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition"
+                      >
+                        <Video className="w-3.5 h-3.5" />
+                        <span>Teams Sync</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* AI Copilot Suggestion Box */}
+                  {selectedEmail.aiSummary && (
+                    <div className="bg-gradient-to-r from-amber-500/10 via-indigo-500/10 to-transparent p-4 rounded-2xl border border-amber-500/30 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-amber-500" />
+                        <span className="text-xs font-black text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                          Axiom AI Thread Copilot
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-700 dark:text-zinc-300 leading-relaxed font-medium">
+                        {selectedEmail.aiSummary}
+                      </p>
+
+                      {selectedEmail.suggestedAction && (
+                        <div className="pt-2">
+                          <button
+                            onClick={() => {
+                              setShowComposeModal(true);
+                              setComposeTo(selectedEmail.from.email);
+                              setComposeSubject(`Confirmed: ${selectedEmail.suggestedAction?.meetingDetails?.title}`);
+                              setComposeBody(`Hi ${selectedEmail.from.name.split(" ")[0]},\n\nI have confirmed our sync for ${selectedEmail.suggestedAction?.meetingDetails?.suggestedTime}.\n\nHere is our Axiom Teams meeting link:\nhttps://meet.axiom.com/AXM-${Math.floor(100 + Math.random() * 900)}-${Math.floor(100 + Math.random() * 900)}\n\nLooking forward to it!`);
+                              setComposeHasMeetingLink(true);
+                            }}
+                            className="bg-amber-500 hover:bg-amber-400 text-black font-black px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 shadow-md transition"
+                          >
+                            <span>📅 {selectedEmail.suggestedAction.label}</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Sender Profile Strip */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={selectedEmail.from.avatar}
+                        alt={selectedEmail.from.name}
+                        className="w-10 h-10 rounded-2xl object-cover ring-2 ring-indigo-500/20"
+                      />
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <h3 className="text-xs font-black text-slate-900 dark:text-zinc-100">{selectedEmail.from.name}</h3>
+                          <span className="text-[10px] text-slate-400">&lt;{selectedEmail.from.email}&gt;</span>
+                        </div>
+                        <span className="text-[11px] text-slate-500">To: {selectedEmail.to.map((t) => t.name).join(", ")}</span>
+                      </div>
+                    </div>
+
+                    <div className="text-right text-[11px] font-mono text-slate-400">
+                      <span>{selectedEmail.date} • {selectedEmail.time}</span>
+                    </div>
+                  </div>
+
+                  {/* Email Body */}
+                  <div className="text-xs text-slate-800 dark:text-zinc-200 whitespace-pre-line leading-relaxed font-normal bg-slate-50/50 dark:bg-zinc-950/30 p-5 rounded-2xl border border-slate-100 dark:border-zinc-800">
+                    {selectedEmail.body}
+                  </div>
+
+                  {/* Attachments List */}
+                  {selectedEmail.attachments && selectedEmail.attachments.length > 0 && (
+                    <div className="space-y-2">
+                      <span className="text-xs font-black text-slate-700 dark:text-zinc-300">
+                        Attachments ({selectedEmail.attachments.length})
+                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {selectedEmail.attachments.map((att) => (
+                          <div
+                            key={att.id}
+                            className="p-3 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border border-slate-200 dark:border-zinc-700 flex items-center justify-between gap-3"
+                          >
+                            <div className="flex items-center gap-2.5 truncate">
+                              <span className="text-xl">📄</span>
+                              <div className="truncate">
+                                <div className="text-xs font-bold text-slate-900 dark:text-zinc-100 truncate">{att.name}</div>
+                                <span className="text-[10px] text-slate-400 font-mono">{att.size}</span>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => triggerToast(`📥 Downloaded ${att.name}`)}
+                              className="p-1.5 rounded-xl hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300"
+                            >
+                              <Download className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* VIEW B: 📅 OUTLOOK-STYLE CALENDAR & AVAILABILITY SCHEDULER */}
+          {/* ========================================================================= */}
+          {activeApp === "calendar" && (
+            <div className="flex-1 bg-white dark:bg-zinc-900 flex flex-col p-6 overflow-y-auto space-y-6">
+              <div className="flex items-center justify-between flex-wrap gap-4 border-b pb-4">
+                <div>
+                  <h2 className="text-xl font-black text-slate-900 dark:text-zinc-100">Campus & Enterprise Schedule</h2>
+                  <p className="text-xs text-slate-500">Synchronized across Canvas courses, Axiom Standups, and Research Labs</p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowCreateEventModal(true)}
+                    className="bg-amber-500 hover:bg-amber-400 text-black font-black px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-md"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Schedule Meeting</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Event Timeline Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {calendarEvents.map((evt) => (
+                  <div
+                    key={evt.id}
+                    className="p-5 rounded-3xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700/60 space-y-3 flex flex-col justify-between"
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">
+                          {evt.dateLabel} • {evt.timeLabel}
+                        </span>
+                        <span className="text-[10px] font-bold text-slate-400">{evt.category}</span>
+                      </div>
+
+                      <h3 className="text-sm font-black text-slate-900 dark:text-zinc-100">{evt.title}</h3>
+                      <p className="text-xs text-slate-500 leading-relaxed">{evt.description}</p>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-200/60 dark:border-zinc-700">
+                      <span className="text-xs text-slate-400 font-medium">📍 {evt.location}</span>
+                      {evt.meetingLink && (
+                        <button
+                          onClick={() => {
+                            setActiveApp("meetings");
+                            triggerToast(`Joining ${evt.title}...`);
+                          }}
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1"
+                        >
+                          <Video className="w-3 h-3" />
+                          <span>Join Teams</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* VIEW C: 🎥 MICROSOFT TEAMS-STYLE REAL-TIME VIDEO MEETING ROOM */}
+          {/* ========================================================================= */}
+          {activeApp === "meetings" && (
+            <div className="flex-1 bg-slate-950 text-white flex flex-col overflow-hidden">
+              
+              {/* Meeting Header */}
+              <div className="p-3.5 bg-slate-900/90 border-b border-white/10 flex items-center justify-between px-6 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 rounded-full bg-rose-500 animate-ping" />
+                  <div>
+                    <h3 className="text-sm font-black text-white">{meetingSession.title}</h3>
+                    <span className="text-[10px] text-slate-400 font-mono">Meeting ID: {meetingSession.meetingId} • Passcode: {meetingSession.passcode}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 text-xs">
+                  {[
+                    { id: "video", label: "Video Grid" },
+                    { id: "chat", label: `Chat (${meetingSession.chatMessages.length})` },
+                    { id: "participants", label: `People (${meetingSession.participants.length})` },
+                    { id: "ai_notes", label: "✨ AI Notes" },
+                  ].map((tb) => (
+                    <button
+                      key={tb.id}
+                      onClick={() => setMeetingTab(tb.id as any)}
+                      className={`px-3 py-1.5 rounded-xl font-bold transition ${
+                        meetingTab === tb.id ? "bg-amber-500 text-black font-black" : "text-slate-300 hover:bg-white/10"
+                      }`}
+                    >
+                      {tb.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Center Meeting Space */}
+              <div className="flex-1 flex overflow-hidden p-4 gap-4">
+                
+                {/* Video Grid */}
+                <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3 overflow-y-auto">
+                  {meetingSession.participants.map((p) => (
+                    <div
+                      key={p.id}
+                      className={`relative bg-slate-900 rounded-3xl border overflow-hidden flex flex-col justify-between p-4 min-h-[180px] shadow-lg ${
+                        p.isSpeaking ? "border-amber-400 ring-2 ring-amber-400/40" : "border-slate-800"
+                      }`}
+                    >
+                      {/* Video Camera Simulator */}
+                      {p.isVideoOn && !isVideoOff ? (
+                        <img
+                          src={p.avatar}
+                          alt={p.name}
+                          className="absolute inset-0 w-full h-full object-cover opacity-80"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center bg-slate-900">
+                          <div className="w-16 h-16 rounded-full bg-indigo-600 flex items-center justify-center text-xl font-black text-white">
+                            {p.name.split(" ").map((n) => n[0]).join("")}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Top Badges */}
+                      <div className="relative z-10 flex items-center justify-between">
+                        <span className="text-[10px] font-bold bg-black/60 backdrop-blur-sm text-white px-2 py-0.5 rounded-full">
+                          {p.role}
+                        </span>
+                        {p.isHandRaised && (
+                          <span className="text-sm bg-amber-500 p-1 rounded-full text-black shadow-md">✋</span>
+                        )}
+                      </div>
+
+                      {/* Bottom Name Strip */}
+                      <div className="relative z-10 flex items-center justify-between bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded-2xl">
+                        <span className="text-xs font-bold text-white">{p.name}</span>
+                        {p.isMuted ? <MicOff className="w-3.5 h-3.5 text-rose-400" /> : <Mic className="w-3.5 h-3.5 text-emerald-400" />}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Right Drawer (Chat / Participants / AI Notes) */}
+                {meetingTab !== "video" && (
+                  <div className="w-80 bg-slate-900 border border-slate-800 rounded-3xl p-4 flex flex-col justify-between shrink-0 shadow-2xl">
+                    
+                    {meetingTab === "chat" && (
+                      <div className="flex-1 flex flex-col justify-between space-y-3">
+                        <h4 className="text-xs font-black text-slate-300 uppercase">Meeting Conversation</h4>
+                        <div className="space-y-3 overflow-y-auto flex-1 text-xs">
+                          {meetingSession.chatMessages.map((m) => (
+                            <div key={m.id} className={`p-3 rounded-2xl ${m.isAiNote ? "bg-amber-500/20 border border-amber-400/40 text-amber-300" : "bg-slate-800 text-white"}`}>
+                              <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1">
+                                <span className="font-bold">{m.sender}</span>
+                                <span>{m.time}</span>
+                              </div>
+                              <p className="leading-snug">{m.text}</p>
+                            </div>
+                          ))}
+                        </div>
+
+                        <form
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            if (!meetingChatInput.trim()) return;
+                            setMeetingSession((prev) => ({
+                              ...prev,
+                              chatMessages: [
+                                ...prev.chatMessages,
+                                {
+                                  id: `mc-${Date.now()}`,
+                                  sender: currentUserName,
+                                  time: "Just now",
+                                  text: meetingChatInput,
+                                },
+                              ],
+                            }));
+                            setMeetingChatInput("");
+                          }}
+                          className="flex gap-2 pt-2 border-t border-slate-800"
+                        >
+                          <input
+                            type="text"
+                            placeholder="Type meeting message..."
+                            value={meetingChatInput}
+                            onChange={(e) => setMeetingChatInput(e.target.value)}
+                            className="flex-1 bg-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                          />
+                          <button type="submit" className="bg-amber-500 text-black px-3 py-2 rounded-xl font-bold">
+                            <Send className="w-3.5 h-3.5" />
+                          </button>
+                        </form>
+                      </div>
+                    )}
+
+                    {meetingTab === "ai_notes" && (
+                      <div className="space-y-3 overflow-y-auto text-xs">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="w-4 h-4 text-amber-400" />
+                          <h4 className="font-black text-amber-400">Live AI Meeting Summary</h4>
+                        </div>
+                        <p className="text-slate-300 text-[11px] leading-relaxed">
+                          {meetingSession.aiSummaryNotes?.overview}
+                        </p>
+
+                        <div className="space-y-1.5 pt-2 border-t border-slate-800">
+                          <span className="text-[10px] font-black uppercase text-slate-400">Key Decisions</span>
+                          {meetingSession.aiSummaryNotes?.decisions.map((d, i) => (
+                            <div key={i} className="flex items-start gap-1.5 text-[11px] text-slate-300">
+                              <span className="text-emerald-400">✓</span>
+                              <span>{d}</span>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="space-y-1.5 pt-2 border-t border-slate-800">
+                          <span className="text-[10px] font-black uppercase text-slate-400">Assigned Action Items</span>
+                          {meetingSession.aiSummaryNotes?.actionItems.map((act, i) => (
+                            <div key={i} className="p-2 bg-slate-800 rounded-xl space-y-0.5">
+                              <div className="font-bold text-white text-[11px]">{act.task}</div>
+                              <span className="text-[10px] text-amber-400">Assignee: {act.assignee} ({act.due})</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {meetingTab === "participants" && (
+                      <div className="space-y-3 overflow-y-auto text-xs">
+                        <h4 className="text-xs font-black text-slate-300 uppercase">Participants ({meetingSession.participants.length})</h4>
+                        <div className="space-y-2">
+                          {meetingSession.participants.map((p) => (
+                            <div key={p.id} className="flex items-center justify-between p-2 bg-slate-800 rounded-xl">
+                              <div className="flex items-center gap-2">
+                                <img src={p.avatar} alt={p.name} className="w-7 h-7 rounded-full object-cover" />
+                                <div>
+                                  <div className="font-bold text-white text-xs">{p.name}</div>
+                                  <span className="text-[9px] text-slate-400">{p.role}</span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                {p.isMuted ? <MicOff className="w-3.5 h-3.5 text-rose-400" /> : <Mic className="w-3.5 h-3.5 text-emerald-400" />}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                  </div>
+                )}
+
+              </div>
+
+              {/* Bottom Meeting Controls Bar */}
+              <div className="p-4 bg-slate-900 border-t border-white/10 flex items-center justify-between px-6 shrink-0">
+                <div className="text-xs font-mono text-emerald-400">
+                  <span>● WebRTC SFU Encrypted (1080p60)</span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setIsMicMuted(!isMicMuted)}
+                    className={`p-3 rounded-2xl font-bold transition flex items-center gap-2 text-xs ${
+                      isMicMuted ? "bg-rose-600 text-white" : "bg-slate-800 hover:bg-slate-700 text-white"
+                    }`}
+                  >
+                    {isMicMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4 text-emerald-400" />}
+                    <span>{isMicMuted ? "Unmute" : "Mute"}</span>
+                  </button>
+
+                  <button
+                    onClick={() => setIsVideoOff(!isVideoOff)}
+                    className={`p-3 rounded-2xl font-bold transition flex items-center gap-2 text-xs ${
+                      isVideoOff ? "bg-rose-600 text-white" : "bg-slate-800 hover:bg-slate-700 text-white"
+                    }`}
+                  >
+                    {isVideoOff ? <CameraOff className="w-4 h-4" /> : <Camera className="w-4 h-4 text-indigo-400" />}
+                    <span>{isVideoOff ? "Start Video" : "Stop Video"}</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setIsScreenSharing(!isScreenSharing);
+                      triggerToast(isScreenSharing ? "Stopped screen sharing." : "Screen share active.");
+                    }}
+                    className={`p-3 rounded-2xl font-bold transition flex items-center gap-2 text-xs ${
+                      isScreenSharing ? "bg-emerald-600 text-white" : "bg-slate-800 hover:bg-slate-700 text-white"
+                    }`}
+                  >
+                    <Share2 className="w-4 h-4" />
+                    <span>Share</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setIsHandRaised(!isHandRaised);
+                      triggerToast(isHandRaised ? "Lowered hand." : "Raised hand.");
+                    }}
+                    className={`p-3 rounded-2xl font-bold transition flex items-center gap-2 text-xs ${
+                      isHandRaised ? "bg-amber-500 text-black font-black" : "bg-slate-800 hover:bg-slate-700 text-white"
+                    }`}
+                  >
+                    <Hand className="w-4 h-4" />
+                    <span>Hand</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setActiveApp("mail");
+                      triggerToast("Left meeting room.");
+                    }}
+                    className="p-3 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl font-black text-xs flex items-center gap-2 shadow-lg"
+                  >
+                    <PhoneOff className="w-4 h-4" />
+                    <span>Leave</span>
+                  </button>
+                </div>
+
+                <div className="text-right">
+                  <span className="text-[10px] text-slate-400">Axiom Media Engine</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* VIEW D: 📁 CLOUD DRIVE & FILES */}
+          {/* ========================================================================= */}
+          {activeApp === "drive" && (
+            <div className="flex-1 bg-white dark:bg-zinc-900 flex flex-col p-6 overflow-y-auto space-y-6">
+              <div className="flex items-center justify-between border-b pb-4">
+                <div>
+                  <h2 className="text-xl font-black text-slate-900 dark:text-zinc-100">Axiom Cloud Drive Vault</h2>
+                  <p className="text-xs text-slate-500">Secure zero-trust cloud file storage & direct email attachment integration</p>
+                </div>
+                <button
+                  onClick={() => triggerToast("📁 File upload completed to Axiom Drive.")}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-black px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-md"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Upload File</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                {driveFiles.map((file) => (
+                  <div
+                    key={file.id}
+                    className="p-4 rounded-3xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 space-y-3 flex flex-col justify-between hover:border-amber-500 transition"
+                  >
+                    <div className="space-y-2">
+                      <span className="text-3xl">{file.icon}</span>
+                      <h4 className="text-xs font-black text-slate-900 dark:text-zinc-100 line-clamp-2">{file.name}</h4>
+                      <span className="text-[10px] text-slate-400 font-mono block">{file.size} • {file.updatedAt}</span>
+                    </div>
+
+                    <div className="pt-2 border-t flex items-center justify-between">
+                      <span className="text-[10px] text-indigo-600 font-bold">{file.type}</span>
+                      <button
+                        onClick={() => triggerToast(`📥 Downloaded ${file.name}`)}
+                        className="text-xs font-bold text-slate-600 dark:text-zinc-300 hover:text-amber-500"
+                      >
+                        Download →
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* VIEW E: 👥 CONTACTS & ORGANIZATION DIRECTORY */}
+          {/* ========================================================================= */}
+          {activeApp === "contacts" && (
+            <div className="flex-1 bg-white dark:bg-zinc-900 flex flex-col p-6 overflow-y-auto space-y-6">
+              <div className="border-b pb-4">
+                <h2 className="text-xl font-black text-slate-900 dark:text-zinc-100">Unified Contacts & Faculty Directory</h2>
+                <p className="text-xs text-slate-500">Towson University faculty, students, and enterprise engineering staff</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {contacts.map((c) => (
+                  <div
+                    key={c.id}
+                    className="p-5 rounded-3xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700/60 flex items-center justify-between gap-4"
+                  >
+                    <div className="flex items-center gap-3.5">
+                      <div className="relative">
+                        <img src={c.avatar} alt={c.name} className="w-12 h-12 rounded-2xl object-cover" />
+                        <span className={`w-3 h-3 rounded-full absolute -bottom-0.5 -right-0.5 border-2 border-white ${
+                          c.presence === "AVAILABLE" ? "bg-emerald-500" : c.presence === "IN_MEETING" ? "bg-purple-500" : "bg-amber-500"
+                        }`} />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-black text-slate-900 dark:text-zinc-100">{c.name}</h4>
+                        <span className="text-xs text-slate-500 block">{c.role}</span>
+                        <span className="text-[10px] text-slate-400 font-mono">{c.email}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setActiveApp("mail");
+                          setShowComposeModal(true);
+                          setComposeTo(c.email);
+                        }}
+                        className="p-2 rounded-xl bg-slate-100 dark:bg-zinc-700 hover:bg-amber-500 hover:text-black transition"
+                        title="Send Email"
+                      >
+                        <Mail className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setActiveApp("meetings");
+                          triggerToast(`Starting Axiom Teams call with ${c.name}...`);
+                        }}
+                        className="p-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-500 transition"
+                        title="Start Teams Video Call"
+                      >
+                        <Video className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* VIEW F: 🤖 AXIOM AI EMAIL & MEETING COPILOT */}
+          {activeApp === "ai" && (
+            <div className="flex-1 bg-white dark:bg-zinc-900 flex flex-col p-6 overflow-y-auto space-y-6 max-w-3xl mx-auto">
+              <div className="flex items-center gap-3 border-b pb-4">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500 flex items-center justify-center text-black font-black text-xl">
+                  ⚡
+                </div>
+                <div>
+                  <h2 className="text-xl font-black text-slate-900 dark:text-zinc-100">Axiom Communications AI Copilot</h2>
+                  <p className="text-xs text-slate-500">Autonomous email summarization, schedule conflict resolution, and meeting action items</p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <span className="text-xs font-black uppercase text-slate-400">Quick AI Actions</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[
+                    "📧 Summarize all unread emails from Dr. Hayes",
+                    "📅 Find a free 30-min slot for Teams sync tomorrow",
+                    "🛡️ Run zero-trust phishing analysis on recent emails",
+                    "📝 Draft a polite follow-up to T. Rowe Price interview",
+                  ].map((prompt, i) => (
+                    <button
+                      key={i}
+                      onClick={() => triggerToast(`🤖 AI Copilot processed: "${prompt}"`)}
+                      className="p-3.5 text-left rounded-2xl bg-slate-50 dark:bg-zinc-800 hover:border-amber-500 border border-slate-200 dark:border-zinc-700 text-xs font-semibold transition space-y-1"
+                    >
+                      <span>{prompt}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+        </main>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* COMPOSE EMAIL MODAL */}
+      {/* ========================================================================= */}
+      {showComposeModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 dark:border-zinc-800 space-y-4 animate-in zoom-in-95">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">✉️</span>
+                <h3 className="font-black text-base text-slate-900 dark:text-zinc-100">New Email Message</h3>
+              </div>
+              <button onClick={() => setShowComposeModal(false)} className="p-1 text-slate-400 hover:text-slate-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-2.5 text-xs">
+              <div className="flex items-center gap-2 border-b pb-2">
+                <span className="w-14 font-bold text-slate-400">To:</span>
+                <input
+                  type="text"
+                  placeholder="recipient@domain.com"
+                  value={composeTo}
+                  onChange={(e) => setComposeTo(e.target.value)}
+                  className="flex-1 bg-transparent focus:outline-none font-medium text-slate-900 dark:text-zinc-100"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 border-b pb-2">
+                <span className="w-14 font-bold text-slate-400">Subject:</span>
+                <input
+                  type="text"
+                  placeholder="Subject line"
+                  value={composeSubject}
+                  onChange={(e) => setComposeSubject(e.target.value)}
+                  className="flex-1 bg-transparent focus:outline-none font-medium text-slate-900 dark:text-zinc-100"
+                />
+              </div>
+
+              {/* Action Ribbon for Compose */}
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const meetingCode = `AXM-${Math.floor(100 + Math.random() * 900)}-${Math.floor(100 + Math.random() * 900)}`;
+                    setComposeBody((prev) => `${prev}\n\n🎥 Join Axiom Teams Meeting:\nhttps://meet.axiom.com/${meetingCode}\nMeeting ID: ${meetingCode}`);
+                    setComposeHasMeetingLink(true);
+                    triggerToast("🎥 Inserted Axiom Teams Meeting link!");
+                  }}
+                  className="px-2.5 py-1 rounded-xl bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 text-[11px] font-bold border border-purple-200 dark:border-purple-800 flex items-center gap-1"
+                >
+                  <Video className="w-3 h-3" />
+                  <span>+ Add Teams Meeting</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setComposeBody((prev) => `Hi,\n\nThank you for reaching out. I would be glad to sync on this matter and review the technical deliverables.\n\nBest regards,\n${currentUserName}`);
+                    triggerToast("✨ AI drafted email response.");
+                  }}
+                  className="px-2.5 py-1 rounded-xl bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 text-[11px] font-bold border border-amber-200 dark:border-amber-800 flex items-center gap-1"
+                >
+                  <Sparkles className="w-3 h-3" />
+                  <span>AI Smart Draft</span>
+                </button>
+              </div>
+
+              <textarea
+                rows={8}
+                placeholder="Write your email message..."
+                value={composeBody}
+                onChange={(e) => setComposeBody(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-zinc-800/60 p-4 rounded-2xl border border-slate-200 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-normal leading-relaxed"
+              />
+            </div>
+
+            <div className="flex items-center justify-between pt-3 border-t">
+              <button
+                type="button"
+                onClick={() => triggerToast("📎 File attached to draft.")}
+                className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500"
+              >
+                <Paperclip className="w-4 h-4" />
+              </button>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowComposeModal(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100"
+                >
+                  Discard
+                </button>
+                <button
+                  onClick={() => {
+                    triggerToast(`🚀 Sent email to ${composeTo || "recipient"} via SMTP/TLS.`);
+                    setShowComposeModal(false);
+                    setComposeTo("");
+                    setComposeSubject("");
+                    setComposeBody("");
+                  }}
+                  className="bg-amber-500 hover:bg-amber-400 text-black font-black px-6 py-2 rounded-xl text-xs shadow-md transition flex items-center gap-1.5"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>Send</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TOAST NOTIFICATION */}
+      {/* ========================================================================= */}
+      {toastMsg && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#030c1d] text-white px-5 py-2.5 rounded-full shadow-2xl border border-amber-400/40 text-xs font-bold animate-in fade-in slide-in-from-bottom-2">
+          {toastMsg}
+        </div>
+      )}
+
+    </div>
+  );
+}

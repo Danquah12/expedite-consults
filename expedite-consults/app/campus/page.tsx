@@ -192,6 +192,8 @@ import {
   initialAdminSystemHealth,
 } from "@/lib/campus-data";
 
+import AxiomConnectWorkspace from "@/components/connect-suite/AxiomConnectWorkspace";
+
 import {
   loadCampusPosts,
   saveCampusPosts,
@@ -3153,6 +3155,25 @@ export default function CampusSyncApp() {
                       </div>
                     )}
 
+                    {/* Axiom Connect Mail & Teams Suite Quick Launch */}
+                    <div className="pt-2 border-t border-slate-100 dark:border-zinc-800">
+                      <button
+                        onClick={() => {
+                          setActiveTab("more");
+                          setMoreSubView("connect" as any);
+                          setShowUserDropdown(false);
+                          triggerToast("⚡ Launched Axiom Connect Mail & Teams Suite");
+                        }}
+                        className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black p-2.5 rounded-2xl flex items-center justify-between text-xs font-black shadow-md transition"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">⚡</span>
+                          <span>Axiom Mail & Teams Suite</span>
+                        </div>
+                        <span className="text-[10px] bg-black/10 px-2 py-0.5 rounded-full font-bold">Launch →</span>
+                      </button>
+                    </div>
+
                     <div className="border-t pt-2 space-y-1 text-xs">
                       <button
                         onClick={() => {
@@ -5069,6 +5090,7 @@ export default function CampusSyncApp() {
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
                 {[
                   { id: "launcher", label: "📱 App Launcher", icon: "🍱" },
+                  { id: "connect", label: "⚡ Mail & Teams", icon: "📧" },
                   { id: "tv", label: "🎥 Towson TV & Reels", icon: "📺" },
                   { id: "career", label: "💼 Career & Jobs", icon: "👔" },
                   { id: "market", label: "🛍️ Marketplace", icon: "🛒" },
@@ -5185,6 +5207,7 @@ export default function CampusSyncApp() {
                     { id: "transcript", category: "MEDIA", title: "Tiger Record & Passport", desc: "Verified milestone certificates, digital passport, and PDF graduation export.", icon: "🏆", bg: "bg-amber-500/10 text-amber-500 border-amber-500/20", type: "subview", target: "transcript" },
 
                     // Operations & Tools
+                    { id: "connect", category: "OPERATIONS", title: "Axiom Mail, Teams & Calendar", desc: "Integrated Zoho-style webmail, Outlook scheduler, and Teams WebRTC video meeting room.", icon: "⚡", bg: "bg-amber-500/10 text-amber-500 border-amber-500/20", type: "subview", target: "connect" },
                     { id: "ai", category: "OPERATIONS", title: "Ask TowsonSync AI", desc: "Contextual intelligence assistant across schedules, dining, and maps.", icon: "🤖", bg: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20", type: "action", target: "ai" },
                     { id: "admin", category: "OPERATIONS", title: "Administration Center", desc: "Identity verification queue, housing safety moderation, and security logs.", icon: "🏛️", bg: "bg-slate-900 text-amber-400 border-amber-500/30", type: "subview", target: "admin" },
                     { id: "map", category: "OPERATIONS", title: "Live Campus Map OS", desc: "TigerOrbit 360, indoor blueprints, GPS Tiger Ride shuttles & parking.", icon: "🗺️", bg: "bg-amber-500/10 text-amber-500 border-amber-500/20", type: "tab", target: "map" },
@@ -6028,6 +6051,19 @@ export default function CampusSyncApp() {
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* SUB-VIEW 9: ⚡ AXIOM CONNECT (MAIL, CALENDAR & TEAMS SUITE) */}
+            {moreSubView === "connect" && (
+              <div className="rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-zinc-800 min-h-[750px] flex flex-col">
+                <AxiomConnectWorkspace
+                  initialApp="mail"
+                  currentUserName={currentUser.name}
+                  currentUserEmail={currentUser.studentId ? `${currentUser.name.toLowerCase().replace(" ", ".")}@towson.edu` : "kwesi@expediteconsults.com"}
+                  currentUserRole={currentUser.role}
+                  onBackToCampus={() => setMoreSubView("launcher")}
+                />
               </div>
             )}
 

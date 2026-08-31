@@ -1,0 +1,5 @@
+hosts = postgres:5432
+user = mailuser
+password = StrongSecureDBPassword_123
+dbname = mailserver
+query = SELECT destination FROM aliases WHERE source='%s' AND is_active=TRUE
