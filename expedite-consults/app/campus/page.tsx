@@ -2825,9 +2825,9 @@ export default function CampusSyncApp() {
               className="flex items-center gap-1.5 bg-sky-50/80 hover:bg-sky-100 dark:bg-zinc-800/80 dark:hover:bg-zinc-700 px-2.5 py-1.5 rounded-xl border border-sky-200 dark:border-zinc-700 cursor-pointer transition text-xs shadow-xs shrink-0 font-bold text-slate-900 dark:text-zinc-100"
               title="Click for NOAA NWS Radar & Campus Weather"
             >
-              <span className="text-sm">{weatherReport.conditionIcon}</span>
-              <span>{weatherReport.currentTemp}°F</span>
-              {(weatherReport.activeAlerts || []).length > 0 && (
+              <span className="text-sm">{weatherReport?.conditionIcon || "☀️"}</span>
+              <span>{weatherReport?.currentTemp ?? 82}°F</span>
+              {((weatherReport?.activeAlerts) || []).length > 0 && (
                 <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" title="Active Advisory" />
               )}
             </div>
@@ -4628,11 +4628,11 @@ export default function CampusSyncApp() {
                     <div className="flex items-center gap-1.5">
                       <span className="text-base">☀️</span>
                       <h3 className="text-sm font-black text-slate-900 dark:text-zinc-100">
-                        My Day • {currentUser.name.split(" ")[0]}
+                        My Day • {(currentUser?.name || "Student").split(" ")[0]}
                       </h3>
                     </div>
                     <p className="text-[11px] text-slate-500 font-medium">
-                      {weatherReport.conditionIcon} {weatherReport.currentTemp}°F • {weatherReport.clothingRecommendation.split(".")[0]}
+                      {weatherReport?.conditionIcon || "☀️"} {weatherReport?.currentTemp ?? 82}°F • {(weatherReport?.clothingRecommendation || "Light apparel & sunglasses").split(".")[0]}
                     </p>
                   </div>
 
@@ -4982,8 +4982,8 @@ export default function CampusSyncApp() {
                 }}
                 className="flex items-center gap-2 bg-sky-50 dark:bg-sky-950/60 border border-sky-200 dark:border-sky-800 px-3 py-1.5 rounded-2xl cursor-pointer text-xs"
               >
-                <span>{weatherReport.conditionIcon}</span>
-                <span className="font-bold text-sky-900 dark:text-sky-200">{weatherReport.currentTemp}°F {weatherReport.conditionText}</span>
+                <span>{weatherReport?.conditionIcon || "☀️"}</span>
+                <span className="font-bold text-sky-900 dark:text-sky-200">{weatherReport?.currentTemp ?? 82}°F {weatherReport?.conditionText || "Partly Sunny"}</span>
                 <span className="text-slate-400">·</span>
                 <span className="text-[11px] text-emerald-600 font-bold">Outdoor Event Friendly ✓</span>
               </div>
@@ -5004,8 +5004,8 @@ export default function CampusSyncApp() {
                     
                     {/* Atmospheric Intelligence Badge */}
                     <div className="inline-flex items-center gap-1 text-[11px] font-bold text-sky-700 dark:text-sky-300 bg-sky-50/80 dark:bg-sky-950/40 px-2.5 py-1 rounded-xl border border-sky-100 dark:border-sky-900">
-                      <span>{weatherReport.conditionIcon}</span>
-                      <span>Weather: {weatherReport.currentTemp}°F · {ev.location.toLowerCase().includes("field") || ev.location.toLowerCase().includes("square") ? "Outdoor Ready" : "Indoor Climate Controlled"}</span>
+                      <span>{weatherReport?.conditionIcon || "☀️"}</span>
+                      <span>Weather: {weatherReport?.currentTemp ?? 82}°F · {(ev.location || "").toLowerCase().includes("field") || (ev.location || "").toLowerCase().includes("square") ? "Outdoor Ready" : "Indoor Climate Controlled"}</span>
                     </div>
                   </div>
 
