@@ -1038,11 +1038,11 @@ export default function CampusSyncApp() {
 
   // Global Omni-Search Filtered Results
   const omniResults = {
-    buildings: towsonBuildings.filter((b) => b.name.toLowerCase().includes(searchQuery.toLowerCase()) || b.code.toLowerCase().includes(searchQuery.toLowerCase())),
-    people: peerMatches.filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.major.toLowerCase().includes(searchQuery.toLowerCase())),
-    events: events.filter((e) => e.title.toLowerCase().includes(searchQuery.toLowerCase())),
-    reels: reels.filter((r) => r.title.toLowerCase().includes(searchQuery.toLowerCase())),
-    opportunities: opportunities.filter((o) => o.title.toLowerCase().includes(searchQuery.toLowerCase())),
+    buildings: (towsonBuildings || []).filter((b) => ((b?.name || "").toLowerCase().includes((searchQuery || "").toLowerCase()) || (b?.code || "").toLowerCase().includes((searchQuery || "").toLowerCase()))),
+    people: (peerMatches || []).filter((p) => ((p?.name || "").toLowerCase().includes((searchQuery || "").toLowerCase()) || (p?.major || "").toLowerCase().includes((searchQuery || "").toLowerCase()))),
+    events: (events || []).filter((e) => (e?.title || "").toLowerCase().includes((searchQuery || "").toLowerCase())),
+    reels: (reels || []).filter((r) => (r?.title || "").toLowerCase().includes((searchQuery || "").toLowerCase())),
+    opportunities: (opportunities || []).filter((o) => (o?.title || "").toLowerCase().includes((searchQuery || "").toLowerCase())),
   };
 
   if (!isHydrated) {
@@ -1056,7 +1056,7 @@ export default function CampusSyncApp() {
     );
   }
 
-  const activeReel = reels[currentReelIndex] || reels[0];
+  const activeReel = (reels && reels.length > 0) ? (reels[currentReelIndex] || reels[0]) : initialCampusReels[0];
 
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 flex flex-col font-sans selection:bg-amber-500 selection:text-black">
@@ -4228,8 +4228,8 @@ export default function CampusSyncApp() {
                   <div className="flex items-end justify-between -mt-10">
                     <div className="relative">
                       <img
-                        src={currentUser.avatar}
-                        alt={currentUser.name}
+                        src={currentUser?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80"}
+                        alt={currentUser?.name || "Student"}
                         className="w-20 h-20 rounded-full object-cover ring-4 ring-white dark:ring-zinc-900 shadow-xl"
                       />
                       <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-900" title="Online on Towson Campus" />
@@ -4250,19 +4250,19 @@ export default function CampusSyncApp() {
                   <div className="space-y-1">
                     <div className="flex items-center gap-1.5">
                       <h2 className="text-base font-black text-slate-900 dark:text-zinc-100">
-                        {currentUser.name}
+                        {currentUser?.name || "Kwesi Asiedu"}
                       </h2>
                       <span className="text-[11px] text-blue-500" title="Verified Towson Student">
                         <ShieldCheck className="w-4 h-4 inline" />
                       </span>
                     </div>
                     <p className="text-xs text-slate-600 dark:text-zinc-400 font-medium">
-                      B.S. {currentUser.major} • Class of {currentUser.gradYear} ({currentUser.classStanding})
+                      B.S. {currentUser?.major || "Computer Science"} • Class of {currentUser?.gradYear || "2026"} ({currentUser?.classStanding || "Senior"})
                     </p>
                     
                     {/* Digital Campus Student ID Pill */}
                     <div className="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-zinc-800/80 px-2.5 py-1 rounded-xl text-[10px] font-mono font-bold text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 mt-1">
-                      <span>🪪 Towson ID ({currentUser.studentId})</span>
+                      <span>🪪 Towson ID ({currentUser?.studentId || "0982341"})</span>
                       <span className="text-emerald-500 font-black">ACTIVE</span>
                     </div>
                   </div>
