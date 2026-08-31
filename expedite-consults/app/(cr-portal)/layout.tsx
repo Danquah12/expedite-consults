@@ -10,17 +10,22 @@ export const metadata: Metadata = {
 };
 
 const REQUESTOR_NAV = [
-	{ href: "/portal",     label: "My CRs",  icon: "📋" },
-	{ href: "/portal/new", label: "New CR",   icon: "➕" },
-	{ href: "/veritaslens", label: "VeritasLens Intelligence", icon: "🌐" },
+	{ href: "/portal",      label: "My CRs",             icon: "📋" },
+	{ href: "/portal/new",  label: "New CR",             icon: "➕" },
+	{ href: "/campus",      label: "TowsonSync Campus",  icon: "🎓" },
+	{ href: "/veritaslens", label: "VeritasLens AI",     icon: "🌐" },
+	{ href: "/connectin",   label: "ConnectIn Network",  icon: "💼" },
+	{ href: "/assessment",  label: "Cyber Assessment",   icon: "🛡️" },
 ];
 
 const MANAGER_NAV = [
-	{ href: "/portal",              label: "My CRs",    icon: "📋" },
-	{ href: "/portal/new",          label: "New CR",    icon: "➕" },
-	{ href: "/dashboard",           label: "Dashboard", icon: "📊" },
-	{ href: "/dashboard/calendar",  label: "Calendar",  icon: "📅" },
-	{ href: "/veritaslens",         label: "VeritasLens Intelligence", icon: "🌐" },
+	{ href: "/portal",              label: "My CRs",             icon: "📋" },
+	{ href: "/portal/new",          label: "New CR",             icon: "➕" },
+	{ href: "/dashboard",           label: "Governance Hub",     icon: "📊" },
+	{ href: "/dashboard/calendar",  label: "CAB Calendar",       icon: "📅" },
+	{ href: "/campus",              label: "TowsonSync Campus",  icon: "🎓" },
+	{ href: "/veritaslens",         label: "VeritasLens AI",     icon: "🌐" },
+	{ href: "/connectin",           label: "ConnectIn Network",  icon: "💼" },
 	{ href: "https://14-exploitability-platform.vercel.app", label: "AXIOM Exploitability", icon: "⚡" },
 	{ href: "https://15-threat-modeling-platform.vercel.app", label: "AXIOM Threat Modeler", icon: "📐" },
 ];

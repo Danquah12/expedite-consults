@@ -66,6 +66,75 @@ export default async function PortalPage() {
 				</Link>
 			</div>
 
+			{/* Expedite Consults Digital Ecosystem Suite Launcher */}
+			<div className="bg-gradient-to-r from-[#030c1d] via-[#091e42] to-[#030c1d] rounded-2xl p-6 text-white shadow-xl border border-[#43bbd1]/30 space-y-4">
+				<div className="flex items-center justify-between flex-wrap gap-2">
+					<div>
+						<div className="flex items-center gap-2">
+							<span className="text-[10px] font-black uppercase tracking-widest text-[#43bbd1] bg-[#43bbd1]/10 px-2.5 py-0.5 rounded-full border border-[#43bbd1]/20">
+								Enterprise Ecosystem Suite
+							</span>
+						</div>
+						<h2 className="text-xl font-black mt-1">Expedite Consults Portal — Digital Ecosystem</h2>
+						<p className="text-xs text-slate-300 mt-0.5">
+							Access TowsonSync Campus OS, VeritasLens™ AI, ConnectIn Network, and AXIOM Defense.
+						</p>
+					</div>
+				</div>
+
+				<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-1">
+					<Link
+						href="/campus"
+						className="p-3.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 hover:border-[#43bbd1]/50 transition group space-y-1.5"
+					>
+						<div className="flex items-center justify-between">
+							<span className="text-xl group-hover:scale-110 transition">🎓</span>
+							<span className="text-[10px] font-bold text-[#43bbd1]">Launch →</span>
+						</div>
+						<div className="font-bold text-sm text-white group-hover:text-[#43bbd1] transition">TowsonSync Campus</div>
+						<p className="text-[11px] text-slate-400 leading-snug">Canvas Radar, OneCard, SafeWalk, & Admin Center.</p>
+					</Link>
+
+					<Link
+						href="/veritaslens"
+						className="p-3.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 hover:border-[#43bbd1]/50 transition group space-y-1.5"
+					>
+						<div className="flex items-center justify-between">
+							<span className="text-xl group-hover:scale-110 transition">🌐</span>
+							<span className="text-[10px] font-bold text-[#43bbd1]">Launch →</span>
+						</div>
+						<div className="font-bold text-sm text-white group-hover:text-[#43bbd1] transition">VeritasLens™ AI</div>
+						<p className="text-[11px] text-slate-400 leading-snug">Autonomous OSINT scrapers & entity intelligence.</p>
+					</Link>
+
+					<Link
+						href="/connectin"
+						className="p-3.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 hover:border-[#43bbd1]/50 transition group space-y-1.5"
+					>
+						<div className="flex items-center justify-between">
+							<span className="text-xl group-hover:scale-110 transition">💼</span>
+							<span className="text-[10px] font-bold text-[#43bbd1]">Launch →</span>
+						</div>
+						<div className="font-bold text-sm text-white group-hover:text-[#43bbd1] transition">ConnectIn Network</div>
+						<p className="text-[11px] text-slate-400 leading-snug">Global Engineering & enterprise talent mesh.</p>
+					</Link>
+
+					<Link
+						href="https://14-exploitability-platform.vercel.app"
+						target="_blank"
+						rel="noopener noreferrer"
+						className="p-3.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 hover:border-[#43bbd1]/50 transition group space-y-1.5"
+					>
+						<div className="flex items-center justify-between">
+							<span className="text-xl group-hover:scale-110 transition">⚡</span>
+							<span className="text-[10px] font-bold text-[#43bbd1]">External ↗</span>
+						</div>
+						<div className="font-bold text-sm text-white group-hover:text-[#43bbd1] transition">AXIOM Cyber Suite</div>
+						<p className="text-[11px] text-slate-400 leading-snug">Exploitability platform & cATO defense.</p>
+					</Link>
+				</div>
+			</div>
+
 			{/* Empty state */}
 			{crs.length === 0 && (
 				<div className="text-center py-20 bg-white rounded-2xl border border-slate-200">
