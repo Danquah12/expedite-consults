@@ -25,6 +25,7 @@ import {
   Shield,
   ShieldCheck,
   ShieldAlert,
+  ShieldX,
   Mic,
   MicOff,
   Camera,
@@ -39,6 +40,7 @@ import {
   ExternalLink,
   RefreshCw,
   Folder,
+  FolderInput,
   Tag,
   Smile,
   ArrowLeft,
@@ -50,6 +52,19 @@ import {
   Lock,
   Layers,
   HardDrive,
+  Pin,
+  Flag,
+  Printer,
+  RotateCcw,
+  Zap,
+  Wind,
+  VolumeX,
+  Sliders,
+  Eye,
+  EyeOff,
+  UserX,
+  BookmarkPlus,
+  TrendingUp,
 } from "lucide-react";
 
 import {
@@ -91,11 +106,27 @@ export default function AxiomConnectWorkspace({
   const [mailFolder, setMailFolder] = useState<"inbox" | "sent" | "drafts" | "archive" | "spam" | "trash" | "snoozed">("inbox");
   const [mailCategory, setMailCategory] = useState<"all" | "primary" | "updates" | "security">("all");
   const [mailSearchQuery, setMailSearchQuery] = useState("");
+  const [pinnedEmailIds, setPinnedEmailIds] = useState<string[]>(["mail-101"]);
+  const [lastAction, setLastAction] = useState<{ type: string; email: EmailMessage } | null>(null);
+
+  // Compose State
   const [showComposeModal, setShowComposeModal] = useState(false);
   const [composeTo, setComposeTo] = useState("");
   const [composeSubject, setComposeSubject] = useState("");
   const [composeBody, setComposeBody] = useState("");
   const [composeHasMeetingLink, setComposeHasMeetingLink] = useState(false);
+
+  // Outlook Ribbon Interactive Modals & Dropdowns
+  const [showSweepModal, setShowSweepModal] = useState(false);
+  const [showShareToTeamsModal, setShowShareToTeamsModal] = useState(false);
+  const [showVivaInsightsModal, setShowVivaInsightsModal] = useState(false);
+  const [showPolicyModal, setShowPolicyModal] = useState(false);
+  const [showQuickStepsDropdown, setShowQuickStepsDropdown] = useState(false);
+  const [showMoveDropdown, setShowMoveDropdown] = useState(false);
+  const [showCategorizeDropdown, setShowCategorizeDropdown] = useState(false);
+  const [showSnoozeDropdown, setShowSnoozeDropdown] = useState(false);
+  const [showBlockDropdown, setShowBlockDropdown] = useState(false);
+  const [showReportDropdown, setShowReportDropdown] = useState(false);
 
   // Calendar State
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>(initialCalendarEvents);
@@ -129,7 +160,7 @@ export default function AxiomConnectWorkspace({
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const triggerToast = (msg: string) => {
     setToastMsg(msg);
-    setTimeout(() => setToastMsg(null), 3000);
+    setTimeout(() => setToastMsg(null), 3500);
   };
 
   // Filtered Emails
@@ -147,6 +178,57 @@ export default function AxiomConnectWorkspace({
 
   const selectedEmail = emails.find((m) => m.id === selectedEmailId) || emails[0];
   const activeChannel = channels.find((c) => c.id === activeChannelId) || channels[0];
+
+  // Helper actions for Outlook Command Bar
+  const handleDeleteEmail = (emailId: string) => {
+    const target = emails.find((m) => m.id === emailId);
+    if (!target) return;
+    setLastAction({ type: "DELETE", email: target });
+    setEmails((prev) => prev.map((m) => (m.id === emailId ? { ...m, folder: "trash" } : m)));
+    triggerToast(`🗑️ Moved "${target.subject.slice(0, 24)}..." to Trash.`);
+  };
+
+  const handleArchiveEmail = (emailId: string) => {
+    const target = emails.find((m) => m.id === emailId);
+    if (!target) return;
+    setLastAction({ type: "ARCHIVE", email: target });
+    setEmails((prev) => prev.map((m) => (m.id === emailId ? { ...m, folder: "archive" } : m)));
+    triggerToast(`📥 Archived "${target.subject.slice(0, 24)}...".`);
+  };
+
+  const handleUndo = () => {
+    if (!lastAction) {
+      triggerToast("No action to undo.");
+      return;
+    }
+    const { email } = lastAction;
+    setEmails((prev) => prev.map((m) => (m.id === email.id ? email : m)));
+    setLastAction(null);
+    triggerToast(`↩️ Restored email to ${email.folder}.`);
+  };
+
+  const handleTogglePin = (emailId: string) => {
+    if (pinnedEmailIds.includes(emailId)) {
+      setPinnedEmailIds((prev) => prev.filter((id) => id !== emailId));
+      triggerToast("📌 Unpinned email from top.");
+    } else {
+      setPinnedEmailIds((prev) => [...prev, emailId]);
+      triggerToast("📌 Pinned email to top of Inbox.");
+    }
+  };
+
+  const handleToggleFlag = (emailId: string) => {
+    setEmails((prev) =>
+      prev.map((m) => {
+        if (m.id === emailId) {
+          const next = !m.isFlagged;
+          triggerToast(next ? "🚩 Flagged email for follow-up." : "Cleared follow-up flag.");
+          return { ...m, isFlagged: next };
+        }
+        return m;
+      })
+    );
+  };
 
   return (
     <div className="bg-slate-100 dark:bg-zinc-950 min-h-screen text-slate-900 dark:text-zinc-100 flex flex-col font-sans antialiased selection:bg-amber-500 selection:text-black">
@@ -177,7 +259,7 @@ export default function AxiomConnectWorkspace({
               <div className="flex items-center gap-1.5">
                 <span className="font-black text-sm tracking-tight text-white">AXIOM CONNECT</span>
                 <span className="text-[9px] font-mono bg-amber-500/20 text-amber-300 border border-amber-400/30 px-1.5 py-0.2 rounded font-bold">
-                  v3.4 ENTERPRISE
+                  v3.5 OUTLOOK+TEAMS
                 </span>
               </div>
               <p className="text-[10px] text-slate-300 leading-none">Integrated Mail, Calendar & Teams Suite</p>
@@ -447,231 +529,657 @@ export default function AxiomConnectWorkspace({
         )}
 
         {/* ── 3. MAIN INTERACTIVE CONTENT AREA (MAIL / CALENDAR / TEAMS) ─────── */}
-        <main className="flex-1 flex overflow-hidden">
+        <main className="flex-1 flex flex-col overflow-hidden">
           
           {/* ========================================================================= */}
-          {/* VIEW A: 📧 OUTLOOK / ZOHO TRI-PANE EMAIL WORKSPACE */}
+          {/* VIEW A: 📧 OUTLOOK MODERN ACTION RIBBON & TRI-PANE EMAIL WORKSPACE */}
           {/* ========================================================================= */}
           {activeApp === "mail" && (
-            <div className="flex-1 flex overflow-hidden">
+            <div className="flex-1 flex flex-col overflow-hidden">
               
-              {/* Middle Pane: Email List */}
-              <div className="w-80 lg:w-96 bg-slate-50 dark:bg-zinc-950 border-r border-slate-200 dark:border-zinc-800 flex flex-col overflow-y-auto shrink-0">
-                <div className="p-3 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between bg-white dark:bg-zinc-900 sticky top-0 z-10">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-black uppercase text-slate-700 dark:text-zinc-300">
-                      {mailFolder.toUpperCase()} ({filteredEmails.length})
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => triggerToast("🔄 Synchronized with IMAP & TowsonSync Mailbox.")}
-                    className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500"
-                  >
-                    <RefreshCw className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-
-                <div className="divide-y divide-slate-100 dark:divide-zinc-900">
-                  {filteredEmails.map((msg) => {
-                    const isSelected = selectedEmailId === msg.id;
-                    return (
-                      <div
-                        key={msg.id}
-                        onClick={() => {
-                          setSelectedEmailId(msg.id);
-                          setEmails((prev) => prev.map((m) => (m.id === msg.id ? { ...m, isUnread: false } : m)));
-                        }}
-                        className={`p-3.5 cursor-pointer transition flex flex-col gap-1.5 ${
-                          isSelected
-                            ? "bg-amber-500/10 border-l-4 border-amber-500 dark:bg-amber-500/5"
-                            : msg.isUnread
-                            ? "bg-white dark:bg-zinc-900 font-bold"
-                            : "hover:bg-slate-100 dark:hover:bg-zinc-900/60"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-1">
-                          <div className="flex items-center gap-2 truncate">
-                            {msg.isStarred && <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500 shrink-0" />}
-                            <span className={`text-xs truncate ${msg.isUnread ? "font-black text-slate-900 dark:text-zinc-100" : "text-slate-600 dark:text-zinc-300"}`}>
-                              {msg.from.name}
-                            </span>
-                          </div>
-                          <span className="text-[10px] font-mono text-slate-400 shrink-0">{msg.time}</span>
-                        </div>
-
-                        <h4 className={`text-xs line-clamp-1 ${msg.isUnread ? "font-black text-slate-900 dark:text-zinc-100" : "text-slate-700 dark:text-zinc-300"}`}>
-                          {msg.subject}
-                        </h4>
-
-                        <p className="text-[11px] text-slate-500 dark:text-zinc-400 line-clamp-2 leading-relaxed">
-                          {msg.preview}
-                        </p>
-
-                        <div className="flex items-center gap-1.5 pt-1">
-                          {msg.hasAttachment && (
-                            <span className="text-[9px] font-bold bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 px-1.5 py-0.2 rounded flex items-center gap-1">
-                              <Paperclip className="w-2.5 h-2.5" />
-                              <span>Att</span>
-                            </span>
-                          )}
-                          {msg.securityStatus.threatScore > 50 ? (
-                            <span className="text-[9px] font-bold bg-rose-100 dark:bg-rose-950 text-rose-600 px-1.5 py-0.2 rounded">
-                              ⚠️ Phishing Flag
-                            </span>
-                          ) : (
-                            <span className="text-[9px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">
-                              SPF/DKIM ✓
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Right Pane: Detailed Email Viewer */}
-              {selectedEmail && (
-                <div className="flex-1 bg-white dark:bg-zinc-900 flex flex-col overflow-y-auto p-6 space-y-6">
+              {/* ========================================================================= */}
+              {/* ⚡ MICROSOFT OUTLOOK MODERN ACTION RIBBON COMMAND BAR */}
+              {/* ========================================================================= */}
+              <div className="bg-white dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 px-3 py-1.5 flex items-center justify-between overflow-x-auto gap-2 shrink-0 text-xs shadow-xs z-10 select-none">
+                
+                <div className="flex items-center gap-1 shrink-0">
                   
-                  {/* Subject & Action Bar */}
-                  <div className="flex items-start justify-between flex-wrap gap-4 border-b border-slate-100 dark:border-zinc-800 pb-4">
-                    <div className="space-y-1 flex-1">
-                      <div className="flex items-center gap-2">
-                        {selectedEmail.labels.map((lbl) => (
-                          <span key={lbl} className="text-[9px] font-bold bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 px-2 py-0.5 rounded-full">
-                            {lbl}
-                          </span>
-                        ))}
-                        {selectedEmail.securityStatus.tlsEncrypted && (
-                          <span className="text-[9px] font-mono bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full flex items-center gap-1">
-                            <Lock className="w-2.5 h-2.5" />
-                            <span>TLS 1.3 Strict</span>
-                          </span>
-                        )}
-                      </div>
-                      <h2 className="text-lg font-black text-slate-900 dark:text-zinc-100">{selectedEmail.subject}</h2>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => {
-                          setShowComposeModal(true);
-                          setComposeTo(selectedEmail.from.email);
-                          setComposeSubject(`Re: ${selectedEmail.subject}`);
-                          setComposeBody(`\n\n--- On ${selectedEmail.date} at ${selectedEmail.time}, ${selectedEmail.from.name} wrote:\n${selectedEmail.body}`);
-                        }}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition"
-                      >
-                        <Send className="w-3.5 h-3.5" />
-                        <span>Reply</span>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setActiveApp("meetings");
-                          triggerToast("🎥 Launched Axiom Teams video meeting for this email thread.");
-                        }}
-                        className="bg-purple-600 hover:bg-purple-700 text-white font-bold px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition"
-                      >
-                        <Video className="w-3.5 h-3.5" />
-                        <span>Teams Sync</span>
-                      </button>
-                    </div>
+                  {/* GROUP 1: NEW */}
+                  <div className="flex items-center pr-1.5 border-r border-slate-200 dark:border-zinc-800">
+                    <button
+                      type="button"
+                      onClick={() => setShowComposeModal(true)}
+                      className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-black flex items-center gap-1.5 shadow-xs transition"
+                      title="New Email"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>New</span>
+                      <ChevronDown className="w-2.5 h-2.5 opacity-80" />
+                    </button>
                   </div>
 
-                  {/* AI Copilot Suggestion Box */}
-                  {selectedEmail.aiSummary && (
-                    <div className="bg-gradient-to-r from-amber-500/10 via-indigo-500/10 to-transparent p-4 rounded-2xl border border-amber-500/30 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Sparkles className="w-4 h-4 text-amber-500" />
-                        <span className="text-xs font-black text-amber-600 dark:text-amber-400 uppercase tracking-wider">
-                          Axiom AI Thread Copilot
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-700 dark:text-zinc-300 leading-relaxed font-medium">
-                        {selectedEmail.aiSummary}
-                      </p>
+                  {/* GROUP 2: DELETE & CLEAN */}
+                  <div className="flex items-center gap-0.5 px-1.5 border-r border-slate-200 dark:border-zinc-800">
+                    <button
+                      type="button"
+                      onClick={() => triggerToast(`🔇 Thread muted: No further notifications.`)}
+                      className="px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 font-semibold flex items-center gap-1"
+                      title="Ignore Conversation"
+                    >
+                      <VolumeX className="w-3.5 h-3.5 text-slate-500" />
+                      <span className="hidden xl:inline">Ignore</span>
+                    </button>
 
-                      {selectedEmail.suggestedAction && (
-                        <div className="pt-2">
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowBlockDropdown(!showBlockDropdown)}
+                        className="px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 font-semibold flex items-center gap-1"
+                        title="Block Sender"
+                      >
+                        <UserX className="w-3.5 h-3.5 text-slate-500" />
+                        <span className="hidden xl:inline">Block</span>
+                        <ChevronDown className="w-2.5 h-2.5 text-slate-400" />
+                      </button>
+
+                      {showBlockDropdown && (
+                        <div className="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-zinc-800 p-1 z-30 animate-in zoom-in-95 space-y-0.5">
                           <button
                             onClick={() => {
-                              setShowComposeModal(true);
-                              setComposeTo(selectedEmail.from.email);
-                              setComposeSubject(`Confirmed: ${selectedEmail.suggestedAction?.meetingDetails?.title}`);
-                              setComposeBody(`Hi ${selectedEmail.from.name.split(" ")[0]},\n\nI have confirmed our sync for ${selectedEmail.suggestedAction?.meetingDetails?.suggestedTime}.\n\nHere is our Axiom Teams meeting link:\nhttps://meet.axiom.com/AXM-${Math.floor(100 + Math.random() * 900)}-${Math.floor(100 + Math.random() * 900)}\n\nLooking forward to it!`);
-                              setComposeHasMeetingLink(true);
+                              triggerToast(`🚫 Blocked sender: ${selectedEmail.from.email}`);
+                              setShowBlockDropdown(false);
                             }}
-                            className="bg-amber-500 hover:bg-amber-400 text-black font-black px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 shadow-md transition"
+                            className="w-full text-left p-2 text-xs font-bold rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-600 flex items-center gap-2"
                           >
-                            <span>📅 {selectedEmail.suggestedAction.label}</span>
+                            <ShieldX className="w-3.5 h-3.5" />
+                            <span>Block {selectedEmail.from.email}</span>
                           </button>
                         </div>
                       )}
                     </div>
-                  )}
 
-                  {/* Sender Profile Strip */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={selectedEmail.from.avatar}
-                        alt={selectedEmail.from.name}
-                        className="w-10 h-10 rounded-2xl object-cover ring-2 ring-indigo-500/20"
-                      />
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <h3 className="text-xs font-black text-slate-900 dark:text-zinc-100">{selectedEmail.from.name}</h3>
-                          <span className="text-[10px] text-slate-400">&lt;{selectedEmail.from.email}&gt;</span>
-                        </div>
-                        <span className="text-[11px] text-slate-500">To: {selectedEmail.to.map((t) => t.name).join(", ")}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteEmail(selectedEmailId)}
+                      className="px-2 py-1 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-600 font-semibold flex items-center gap-1"
+                      title="Delete Email (Del)"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                      <span className="hidden lg:inline">Delete</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleArchiveEmail(selectedEmailId)}
+                      className="px-2 py-1 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1"
+                      title="Archive Email (E)"
+                    >
+                      <Archive className="w-3.5 h-3.5 text-emerald-500" />
+                      <span className="hidden lg:inline">Archive</span>
+                    </button>
+                  </div>
+
+                  {/* GROUP 3: REPORT */}
+                  <div className="flex items-center px-1.5 border-r border-slate-200 dark:border-zinc-800 relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowReportDropdown(!showReportDropdown)}
+                      className="px-2 py-1 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950 text-rose-600 font-semibold flex items-center gap-1"
+                      title="Report Phishing / Junk"
+                    >
+                      <ShieldAlert className="w-3.5 h-3.5 text-rose-500" />
+                      <span className="hidden md:inline">Report</span>
+                      <ChevronDown className="w-2.5 h-2.5" />
+                    </button>
+
+                    {showReportDropdown && (
+                      <div className="absolute top-full left-0 mt-1 w-56 bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-zinc-800 p-1.5 z-30 animate-in zoom-in-95 space-y-1">
+                        <button
+                          onClick={() => {
+                            triggerToast("🛡️ Submitted Zero-Trust Phishing Forensic Report to AXIOM SOC.");
+                            setShowReportDropdown(false);
+                          }}
+                          className="w-full text-left p-2 text-xs font-bold rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950 text-rose-600 flex items-center gap-2"
+                        >
+                          <ShieldAlert className="w-4 h-4" />
+                          <span>Report Phishing Threat</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEmails((prev) => prev.map((m) => (m.id === selectedEmailId ? { ...m, folder: "spam" } : m)));
+                            triggerToast("Marked as Junk / Spam.");
+                            setShowReportDropdown(false);
+                          }}
+                          className="w-full text-left p-2 text-xs font-bold rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 flex items-center gap-2"
+                        >
+                          <AlertTriangle className="w-4 h-4 text-amber-500" />
+                          <span>Report Junk</span>
+                        </button>
                       </div>
-                    </div>
-
-                    <div className="text-right text-[11px] font-mono text-slate-400">
-                      <span>{selectedEmail.date} • {selectedEmail.time}</span>
-                    </div>
+                    )}
                   </div>
 
-                  {/* Email Body */}
-                  <div className="text-xs text-slate-800 dark:text-zinc-200 whitespace-pre-line leading-relaxed font-normal bg-slate-50/50 dark:bg-zinc-950/30 p-5 rounded-2xl border border-slate-100 dark:border-zinc-800">
-                    {selectedEmail.body}
+                  {/* GROUP 4: RESPOND */}
+                  <div className="flex items-center gap-0.5 px-1.5 border-r border-slate-200 dark:border-zinc-800">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowComposeModal(true);
+                        setComposeTo(selectedEmail.from.email);
+                        setComposeSubject(`Re: ${selectedEmail.subject}`);
+                        setComposeBody(`\n\n--- On ${selectedEmail.date} at ${selectedEmail.time}, ${selectedEmail.from.name} wrote:\n${selectedEmail.body}`);
+                      }}
+                      className="px-2 py-1 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-950 text-indigo-600 dark:text-indigo-400 font-semibold flex items-center gap-1"
+                      title="Reply"
+                    >
+                      <Send className="w-3.5 h-3.5 -rotate-45" />
+                      <span className="hidden sm:inline">Reply</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowComposeModal(true);
+                        setComposeTo(`${selectedEmail.from.email}, ${selectedEmail.to.map(t => t.email).join(", ")}`);
+                        setComposeSubject(`Re: ${selectedEmail.subject}`);
+                      }}
+                      className="px-2 py-1 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-950 text-indigo-600 dark:text-indigo-400 font-semibold flex items-center gap-1"
+                      title="Reply All"
+                    >
+                      <Users className="w-3.5 h-3.5" />
+                      <span className="hidden md:inline">Reply all</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowComposeModal(true);
+                        setComposeSubject(`Fwd: ${selectedEmail.subject}`);
+                        setComposeBody(`\n\n---------- Forwarded message ---------\nFrom: ${selectedEmail.from.name} <${selectedEmail.from.email}>\nSubject: ${selectedEmail.subject}\n\n${selectedEmail.body}`);
+                      }}
+                      className="px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 font-semibold flex items-center gap-1"
+                      title="Forward"
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
+                      <span className="hidden md:inline">Forward</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveApp("meetings");
+                        triggerToast("🟣 Schedule Teams meeting with attendees.");
+                      }}
+                      className="px-2 py-1 rounded-lg bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 font-black flex items-center gap-1 border border-purple-200 dark:border-purple-800"
+                      title="Schedule Meeting"
+                    >
+                      <Video className="w-3.5 h-3.5 text-purple-600" />
+                      <span>Meeting</span>
+                    </button>
                   </div>
 
-                  {/* Attachments List */}
-                  {selectedEmail.attachments && selectedEmail.attachments.length > 0 && (
-                    <div className="space-y-2">
-                      <span className="text-xs font-black text-slate-700 dark:text-zinc-300">
-                        Attachments ({selectedEmail.attachments.length})
-                      </span>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {selectedEmail.attachments.map((att) => (
-                          <div
-                            key={att.id}
-                            className="p-3 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border border-slate-200 dark:border-zinc-700 flex items-center justify-between gap-3"
-                          >
-                            <div className="flex items-center gap-2.5 truncate">
-                              <span className="text-xl">📄</span>
-                              <div className="truncate">
-                                <div className="text-xs font-bold text-slate-900 dark:text-zinc-100 truncate">{att.name}</div>
-                                <span className="text-[10px] text-slate-400 font-mono">{att.size}</span>
-                              </div>
-                            </div>
+                  {/* GROUP 5: SHARE TO TEAMS */}
+                  <div className="flex items-center px-1.5 border-r border-slate-200 dark:border-zinc-800">
+                    <button
+                      type="button"
+                      onClick={() => setShowShareToTeamsModal(true)}
+                      className="px-2 py-1 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-950 text-indigo-600 dark:text-indigo-400 font-bold flex items-center gap-1.5"
+                      title="Share to Teams Channel"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5 text-indigo-500" />
+                      <span className="hidden lg:inline">Share to Teams</span>
+                    </button>
+                  </div>
+
+                  {/* GROUP 6: MOVE & SWEEP */}
+                  <div className="flex items-center gap-0.5 px-1.5 border-r border-slate-200 dark:border-zinc-800 relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowSweepModal(true)}
+                      className="px-2 py-1 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-950 text-amber-700 dark:text-amber-300 font-semibold flex items-center gap-1"
+                      title="Sweep: Clean up older emails from sender"
+                    >
+                      <Wind className="w-3.5 h-3.5 text-amber-500" />
+                      <span className="hidden md:inline">Sweep</span>
+                    </button>
+
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowMoveDropdown(!showMoveDropdown)}
+                        className="px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 font-semibold flex items-center gap-1"
+                        title="Move to Folder"
+                      >
+                        <FolderInput className="w-3.5 h-3.5 text-slate-500" />
+                        <span className="hidden md:inline">Move</span>
+                        <ChevronDown className="w-2.5 h-2.5" />
+                      </button>
+
+                      {showMoveDropdown && (
+                        <div className="absolute top-full left-0 mt-1 w-44 bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-zinc-800 p-1 z-30 animate-in zoom-in-95 space-y-0.5">
+                          {["Archive", "Inbox", "Spam", "Trash"].map((f) => (
                             <button
-                              onClick={() => triggerToast(`📥 Downloaded ${att.name}`)}
-                              className="p-1.5 rounded-xl hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300"
+                              key={f}
+                              onClick={() => {
+                                setEmails((prev) => prev.map((m) => (m.id === selectedEmailId ? { ...m, folder: f.toLowerCase() as any } : m)));
+                                triggerToast(`Moved email to ${f}.`);
+                                setShowMoveDropdown(false);
+                              }}
+                              className="w-full text-left p-2 text-xs font-semibold rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800"
                             >
-                              <Download className="w-4 h-4" />
+                              📁 {f}
                             </button>
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
+
+                  {/* GROUP 7: QUICK STEPS */}
+                  <div className="flex items-center px-1.5 border-r border-slate-200 dark:border-zinc-800 relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowQuickStepsDropdown(!showQuickStepsDropdown)}
+                      className="px-2 py-1 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-950 text-amber-600 dark:text-amber-400 font-bold flex items-center gap-1 border border-amber-300/40"
+                      title="1-Click Automated Quick Steps"
+                    >
+                      <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                      <span>Quick steps</span>
+                      <ChevronDown className="w-2.5 h-2.5" />
+                    </button>
+
+                    {showQuickStepsDropdown && (
+                      <div className="absolute top-full left-0 mt-1 w-64 bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-zinc-800 p-2 z-30 animate-in zoom-in-95 space-y-1">
+                        <div className="text-[10px] font-black uppercase text-slate-400 px-2">Automated Macros</div>
+                        <button
+                          onClick={() => {
+                            triggerToast("⚡ Forwarded to Research Advisor & Archived email.");
+                            handleArchiveEmail(selectedEmailId);
+                            setShowQuickStepsDropdown(false);
+                          }}
+                          className="w-full text-left p-2 text-xs font-bold rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-950 text-slate-800 dark:text-zinc-200"
+                        >
+                          🎓 Forward to Advisor & Archive
+                        </button>
+                        <button
+                          onClick={() => {
+                            triggerToast("📝 Created Canvas Study Task & marked email read.");
+                            setShowQuickStepsDropdown(false);
+                          }}
+                          className="w-full text-left p-2 text-xs font-bold rounded-xl hover:bg-amber-50 dark:hover:bg-amber-950 text-slate-800 dark:text-zinc-200"
+                        >
+                          📝 Create Canvas Task & Mark Read
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEmails((prev) => prev.map((m) => (m.id === selectedEmailId ? { ...m, isStarred: true } : m)));
+                            triggerToast("⭐ Starred and moved to Projects.");
+                            setShowQuickStepsDropdown(false);
+                          }}
+                          className="w-full text-left p-2 text-xs font-bold rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-800 dark:text-zinc-200"
+                        >
+                          ⭐ Star & Move to Projects
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* GROUP 8: TAGS & STATUS */}
+                  <div className="flex items-center gap-0.5 px-1.5 border-r border-slate-200 dark:border-zinc-800">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEmails((prev) => prev.map((m) => (m.id === selectedEmailId ? { ...m, isUnread: !m.isUnread } : m)));
+                        triggerToast("Toggled read status.");
+                      }}
+                      className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300"
+                      title="Mark Read / Unread"
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                    </button>
+
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowCategorizeDropdown(!showCategorizeDropdown)}
+                        className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 flex items-center gap-0.5"
+                        title="Categorize"
+                      >
+                        <Tag className="w-3.5 h-3.5" />
+                        <ChevronDown className="w-2.5 h-2.5 text-slate-400" />
+                      </button>
+
+                      {showCategorizeDropdown && (
+                        <div className="absolute top-full left-0 mt-1 w-44 bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-zinc-800 p-1.5 z-30 animate-in zoom-in-95 space-y-1">
+                          {["Academics", "Research", "SGA", "Career", "Security"].map((c) => (
+                            <button
+                              key={c}
+                              onClick={() => {
+                                setEmails((prev) =>
+                                  prev.map((m) => (m.id === selectedEmailId ? { ...m, labels: [...m.labels, c] } : m))
+                                );
+                                triggerToast(`🏷️ Categorized as ${c}.`);
+                                setShowCategorizeDropdown(false);
+                              }}
+                              className="w-full text-left p-1.5 text-xs font-semibold rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800"
+                            >
+                              • {c}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleToggleFlag(selectedEmailId)}
+                      className={`p-1.5 rounded-lg transition ${
+                        selectedEmail.isFlagged ? "bg-rose-50 text-rose-600 dark:bg-rose-950/60" : "hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300"
+                      }`}
+                      title="Flag Email"
+                    >
+                      <Flag className="w-3.5 h-3.5" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleTogglePin(selectedEmailId)}
+                      className={`p-1.5 rounded-lg transition ${
+                        pinnedEmailIds.includes(selectedEmailId) ? "bg-amber-50 text-amber-600 dark:bg-amber-950/60" : "hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300"
+                      }`}
+                      title="Pin to Top"
+                    >
+                      <Pin className="w-3.5 h-3.5" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => triggerToast("⏱️ Snoozed email until Tomorrow at 8:00 AM.")}
+                      className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300"
+                      title="Snooze"
+                    >
+                      <Clock className="w-3.5 h-3.5" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowPolicyModal(true)}
+                      className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300"
+                      title="Retention & cATO Zero-Trust Policy"
+                    >
+                      <Shield className="w-3.5 h-3.5 text-emerald-500" />
+                    </button>
+                  </div>
+
+                  {/* GROUP 9: PRINT & ADD-INS / AI INSIGHTS */}
+                  <div className="flex items-center gap-0.5 px-1.5 border-r border-slate-200 dark:border-zinc-800">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        window.print();
+                        triggerToast("🖨️ Opened Print Preview.");
+                      }}
+                      className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300"
+                      title="Print"
+                    >
+                      <Printer className="w-3.5 h-3.5" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowVivaInsightsModal(true)}
+                      className="px-2 py-1 rounded-lg bg-gradient-to-r from-sky-500/10 to-indigo-500/10 text-sky-700 dark:text-sky-300 font-black flex items-center gap-1 border border-sky-400/30"
+                      title="Viva Insights & AI Workload Analytics"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-sky-500" />
+                      <span>Insights</span>
+                    </button>
+                  </div>
+
+                  {/* GROUP 10: UNDO */}
+                  <div className="flex items-center pl-1">
+                    <button
+                      type="button"
+                      onClick={handleUndo}
+                      disabled={!lastAction}
+                      className="px-2 py-1 rounded-lg disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-bold flex items-center gap-1 transition"
+                      title="Undo Last Action (Ctrl + Z)"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Undo</span>
+                    </button>
+                  </div>
 
                 </div>
-              )}
+              </div>
+
+              {/* Tri-Pane: Email List + Detailed Viewer */}
+              <div className="flex-1 flex overflow-hidden">
+                
+                {/* Middle Pane: Email List */}
+                <div className="w-80 lg:w-96 bg-slate-50 dark:bg-zinc-950 border-r border-slate-200 dark:border-zinc-800 flex flex-col overflow-y-auto shrink-0">
+                  <div className="p-3 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between bg-white dark:bg-zinc-900 sticky top-0 z-10">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-black uppercase text-slate-700 dark:text-zinc-300">
+                        {mailFolder.toUpperCase()} ({filteredEmails.length})
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => triggerToast("🔄 Synchronized with IMAP & TowsonSync Mailbox.")}
+                      className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  <div className="divide-y divide-slate-100 dark:divide-zinc-900">
+                    {filteredEmails.map((msg) => {
+                      const isSelected = selectedEmailId === msg.id;
+                      const isPinned = pinnedEmailIds.includes(msg.id);
+                      return (
+                        <div
+                          key={msg.id}
+                          onClick={() => {
+                            setSelectedEmailId(msg.id);
+                            setEmails((prev) => prev.map((m) => (m.id === msg.id ? { ...m, isUnread: false } : m)));
+                          }}
+                          className={`p-3.5 cursor-pointer transition flex flex-col gap-1.5 ${
+                            isSelected
+                              ? "bg-amber-500/10 border-l-4 border-amber-500 dark:bg-amber-500/5"
+                              : msg.isUnread
+                              ? "bg-white dark:bg-zinc-900 font-bold"
+                              : "hover:bg-slate-100 dark:hover:bg-zinc-900/60"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-1">
+                            <div className="flex items-center gap-2 truncate">
+                              {isPinned && <Pin className="w-3.5 h-3.5 text-amber-500 fill-amber-500 shrink-0 rotate-45" />}
+                              {msg.isStarred && <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500 shrink-0" />}
+                              <span className={`text-xs truncate ${msg.isUnread ? "font-black text-slate-900 dark:text-zinc-100" : "text-slate-600 dark:text-zinc-300"}`}>
+                                {msg.from.name}
+                              </span>
+                            </div>
+                            <span className="text-[10px] font-mono text-slate-400 shrink-0">{msg.time}</span>
+                          </div>
+
+                          <h4 className={`text-xs line-clamp-1 ${msg.isUnread ? "font-black text-slate-900 dark:text-zinc-100" : "text-slate-700 dark:text-zinc-300"}`}>
+                            {msg.subject}
+                          </h4>
+
+                          <p className="text-[11px] text-slate-500 dark:text-zinc-400 line-clamp-2 leading-relaxed">
+                            {msg.preview}
+                          </p>
+
+                          <div className="flex items-center justify-between pt-1">
+                            <div className="flex items-center gap-1.5">
+                              {msg.hasAttachment && (
+                                <span className="text-[9px] font-bold bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 px-1.5 py-0.2 rounded flex items-center gap-1">
+                                  <Paperclip className="w-2.5 h-2.5" />
+                                  <span>Att</span>
+                                </span>
+                              )}
+                              {msg.securityStatus.threatScore > 50 ? (
+                                <span className="text-[9px] font-bold bg-rose-100 dark:bg-rose-950 text-rose-600 px-1.5 py-0.2 rounded">
+                                  ⚠️ Phishing Flag
+                                </span>
+                              ) : (
+                                <span className="text-[9px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                                  SPF/DKIM ✓
+                                </span>
+                              )}
+                            </div>
+
+                            {msg.isFlagged && <Flag className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Right Pane: Detailed Email Viewer */}
+                {selectedEmail && (
+                  <div className="flex-1 bg-white dark:bg-zinc-900 flex flex-col overflow-y-auto p-6 space-y-6">
+                    
+                    {/* Subject & Action Bar */}
+                    <div className="flex items-start justify-between flex-wrap gap-4 border-b border-slate-100 dark:border-zinc-800 pb-4">
+                      <div className="space-y-1 flex-1">
+                        <div className="flex items-center gap-2">
+                          {selectedEmail.labels.map((lbl) => (
+                            <span key={lbl} className="text-[9px] font-bold bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 px-2 py-0.5 rounded-full">
+                              {lbl}
+                            </span>
+                          ))}
+                          {selectedEmail.securityStatus.tlsEncrypted && (
+                            <span className="text-[9px] font-mono bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full flex items-center gap-1">
+                              <Lock className="w-2.5 h-2.5" />
+                              <span>TLS 1.3 Strict</span>
+                            </span>
+                          )}
+                        </div>
+                        <h2 className="text-lg font-black text-slate-900 dark:text-zinc-100">{selectedEmail.subject}</h2>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            setShowComposeModal(true);
+                            setComposeTo(selectedEmail.from.email);
+                            setComposeSubject(`Re: ${selectedEmail.subject}`);
+                            setComposeBody(`\n\n--- On ${selectedEmail.date} at ${selectedEmail.time}, ${selectedEmail.from.name} wrote:\n${selectedEmail.body}`);
+                          }}
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition"
+                        >
+                          <Send className="w-3.5 h-3.5" />
+                          <span>Reply</span>
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setActiveApp("meetings");
+                            triggerToast("🎥 Launched Axiom Teams video meeting for this email thread.");
+                          }}
+                          className="bg-purple-600 hover:bg-purple-700 text-white font-bold px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition"
+                        >
+                          <Video className="w-3.5 h-3.5" />
+                          <span>Teams Sync</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* AI Copilot Suggestion Box */}
+                    {selectedEmail.aiSummary && (
+                      <div className="bg-gradient-to-r from-amber-500/10 via-indigo-500/10 to-transparent p-4 rounded-2xl border border-amber-500/30 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="w-4 h-4 text-amber-500" />
+                          <span className="text-xs font-black text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                            Axiom AI Thread Copilot
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-700 dark:text-zinc-300 leading-relaxed font-medium">
+                          {selectedEmail.aiSummary}
+                        </p>
+
+                        {selectedEmail.suggestedAction && (
+                          <div className="pt-2">
+                            <button
+                              onClick={() => {
+                                setShowComposeModal(true);
+                                setComposeTo(selectedEmail.from.email);
+                                setComposeSubject(`Confirmed: ${selectedEmail.suggestedAction?.meetingDetails?.title}`);
+                                setComposeBody(`Hi ${selectedEmail.from.name.split(" ")[0]},\n\nI have confirmed our sync for ${selectedEmail.suggestedAction?.meetingDetails?.suggestedTime}.\n\nHere is our Axiom Teams meeting link:\nhttps://meet.axiom.com/AXM-${Math.floor(100 + Math.random() * 900)}-${Math.floor(100 + Math.random() * 900)}\n\nLooking forward to it!`);
+                                setComposeHasMeetingLink(true);
+                              }}
+                              className="bg-amber-500 hover:bg-amber-400 text-black font-black px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 shadow-md transition"
+                            >
+                              <span>📅 {selectedEmail.suggestedAction.label}</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Sender Profile Strip */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={selectedEmail.from.avatar}
+                          alt={selectedEmail.from.name}
+                          className="w-10 h-10 rounded-2xl object-cover ring-2 ring-indigo-500/20"
+                        />
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <h3 className="text-xs font-black text-slate-900 dark:text-zinc-100">{selectedEmail.from.name}</h3>
+                            <span className="text-[10px] text-slate-400">&lt;{selectedEmail.from.email}&gt;</span>
+                          </div>
+                          <span className="text-[11px] text-slate-500">To: {selectedEmail.to.map((t) => t.name).join(", ")}</span>
+                        </div>
+                      </div>
+
+                      <div className="text-right text-[11px] font-mono text-slate-400">
+                        <span>{selectedEmail.date} • {selectedEmail.time}</span>
+                      </div>
+                    </div>
+
+                    {/* Email Body */}
+                    <div className="text-xs text-slate-800 dark:text-zinc-200 whitespace-pre-line leading-relaxed font-normal bg-slate-50/50 dark:bg-zinc-950/30 p-5 rounded-2xl border border-slate-100 dark:border-zinc-800">
+                      {selectedEmail.body}
+                    </div>
+
+                    {/* Attachments List */}
+                    {selectedEmail.attachments && selectedEmail.attachments.length > 0 && (
+                      <div className="space-y-2">
+                        <span className="text-xs font-black text-slate-700 dark:text-zinc-300">
+                          Attachments ({selectedEmail.attachments.length})
+                        </span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {selectedEmail.attachments.map((att) => (
+                            <div
+                              key={att.id}
+                              className="p-3 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border border-slate-200 dark:border-zinc-700 flex items-center justify-between gap-3"
+                            >
+                              <div className="flex items-center gap-2.5 truncate">
+                                <span className="text-xl">📄</span>
+                                <div className="truncate">
+                                  <div className="text-xs font-bold text-slate-900 dark:text-zinc-100 truncate">{att.name}</div>
+                                  <span className="text-[10px] text-slate-400 font-mono">{att.size}</span>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => triggerToast(`📥 Downloaded ${att.name}`)}
+                                className="p-1.5 rounded-xl hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300"
+                              >
+                                <Download className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -724,7 +1232,7 @@ export default function AxiomConnectWorkspace({
                             setActiveApp("meetings");
                             triggerToast(`Joining ${evt.title}...`);
                           }}
-                          className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1"
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1"
                         >
                           <Video className="w-3 h-3" />
                           <span>Join Teams</span>
@@ -1110,6 +1618,7 @@ export default function AxiomConnectWorkspace({
 
           {/* ========================================================================= */}
           {/* VIEW F: 🤖 AXIOM AI EMAIL & MEETING COPILOT */}
+          {/* ========================================================================= */}
           {activeApp === "ai" && (
             <div className="flex-1 bg-white dark:bg-zinc-900 flex flex-col p-6 overflow-y-auto space-y-6 max-w-3xl mx-auto">
               <div className="flex items-center gap-3 border-b pb-4">
@@ -1146,6 +1655,219 @@ export default function AxiomConnectWorkspace({
 
         </main>
       </div>
+
+      {/* ========================================================================= */}
+      {/* MODAL 1: 🧹 SWEEP AUTOMATION RULES MODAL */}
+      {/* ========================================================================= */}
+      {showSweepModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-zinc-800 space-y-4 animate-in zoom-in-95">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2">
+                <Wind className="w-5 h-5 text-amber-500" />
+                <h3 className="font-black text-sm text-slate-900 dark:text-zinc-100">Sweep Inbox Messages</h3>
+              </div>
+              <button onClick={() => setShowSweepModal(false)} className="text-slate-400 hover:text-slate-600">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-500 leading-relaxed">
+              For all messages from <strong>{selectedEmail.from.name}</strong> ({selectedEmail.from.email}):
+            </p>
+
+            <div className="space-y-2 text-xs font-semibold">
+              <label className="flex items-center gap-2.5 p-2.5 rounded-xl border border-slate-200 dark:border-zinc-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-800">
+                <input type="radio" name="sweepOption" defaultChecked className="accent-amber-500" />
+                <span>Move all messages from the Inbox folder</span>
+              </label>
+              <label className="flex items-center gap-2.5 p-2.5 rounded-xl border border-slate-200 dark:border-zinc-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-800">
+                <input type="radio" name="sweepOption" className="accent-amber-500" />
+                <span>Move all messages older than 10 days</span>
+              </label>
+              <label className="flex items-center gap-2.5 p-2.5 rounded-xl border border-slate-200 dark:border-zinc-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-800">
+                <input type="radio" name="sweepOption" className="accent-amber-500" />
+                <span>Always keep the latest message and delete the rest</span>
+              </label>
+            </div>
+
+            <div className="flex gap-2 pt-2 border-t">
+              <button onClick={() => setShowSweepModal(false)} className="flex-1 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-xl">
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  triggerToast(`🧹 Sweep executed: Cleaned all older messages from ${selectedEmail.from.name}.`);
+                  setShowSweepModal(false);
+                }}
+                className="flex-1 bg-amber-500 hover:bg-amber-400 text-black font-black py-2 rounded-xl text-xs shadow-md"
+              >
+                Execute Sweep
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 2: 💬 SHARE TO TEAMS CHANNEL MODAL */}
+      {/* ========================================================================= */}
+      {showShareToTeamsModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-zinc-800 space-y-4 animate-in zoom-in-95">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-indigo-500" />
+                <h3 className="font-black text-sm text-slate-900 dark:text-zinc-100">Share Email to Teams</h3>
+              </div>
+              <button onClick={() => setShowShareToTeamsModal(false)} className="text-slate-400 hover:text-slate-600">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-500">
+              Cross-post <strong>"{selectedEmail.subject}"</strong> to a persistent team channel:
+            </p>
+
+            <div className="space-y-1.5 text-xs font-bold">
+              {channels.map((ch) => (
+                <button
+                  key={ch.id}
+                  onClick={() => {
+                    setChannels((prev) =>
+                      prev.map((c) =>
+                        c.id === ch.id
+                          ? {
+                              ...c,
+                              posts: [
+                                ...c.posts,
+                                {
+                                  id: `post-${Date.now()}`,
+                                  sender: {
+                                    name: currentUserName,
+                                    email: currentUserEmail,
+                                    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+                                    title: currentUserRole,
+                                  },
+                                  timestamp: "Just now",
+                                  content: `📢 [Shared from Email] ${selectedEmail.subject}\n\nFrom: ${selectedEmail.from.name}\n${selectedEmail.preview}`,
+                                  reactions: [],
+                                  repliesCount: 0,
+                                },
+                              ],
+                            }
+                          : c
+                      )
+                    );
+                    triggerToast(`💬 Shared email thread into #${ch.name}!`);
+                    setShowShareToTeamsModal(false);
+                  }}
+                  className="w-full text-left p-2.5 rounded-xl border border-slate-200 dark:border-zinc-700 hover:border-indigo-500 hover:bg-indigo-50/50 dark:hover:bg-indigo-950 flex items-center justify-between"
+                >
+                  <span>#{ch.name}</span>
+                  <span className="text-[10px] text-slate-400 font-normal">{ch.membersCount} members</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 3: 🪢 VIVA INSIGHTS & AI WORKLOAD COPILOT MODAL */}
+      {/* ========================================================================= */}
+      {showVivaInsightsModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-zinc-800 space-y-4 animate-in zoom-in-95">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-sky-500" />
+                <h3 className="font-black text-sm text-slate-900 dark:text-zinc-100">Axiom Insights & Workload Copilot</h3>
+              </div>
+              <button onClick={() => setShowVivaInsightsModal(false)} className="text-slate-400 hover:text-slate-600">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2.5 text-center text-xs">
+              <div className="p-3 bg-sky-50 dark:bg-sky-950/60 rounded-2xl border border-sky-200 dark:border-sky-800">
+                <span className="text-lg font-black text-sky-600">3.5 hrs</span>
+                <span className="text-[10px] text-slate-400 block mt-0.5">Focus Time Today</span>
+              </div>
+              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/60 rounded-2xl border border-emerald-200 dark:border-emerald-800">
+                <span className="text-lg font-black text-emerald-600">92%</span>
+                <span className="text-[10px] text-slate-400 block mt-0.5">Response Rate</span>
+              </div>
+              <div className="p-3 bg-purple-50 dark:bg-purple-950/60 rounded-2xl border border-purple-200 dark:border-purple-800">
+                <span className="text-lg font-black text-purple-600">2 Syncs</span>
+                <span className="text-[10px] text-slate-400 block mt-0.5">Scheduled Today</span>
+              </div>
+            </div>
+
+            <div className="space-y-2 text-xs">
+              <span className="font-black uppercase text-slate-400 text-[10px]">AI Follow-Up Recommendations</span>
+              <div className="p-3 bg-slate-50 dark:bg-zinc-800 rounded-2xl border space-y-1">
+                <div className="font-bold text-slate-900 dark:text-zinc-100">Dr. Hayes (COSC 421)</div>
+                <p className="text-slate-500 text-[11px]">You committed to sharing the benchmark dataset by 5 PM today.</p>
+              </div>
+              <div className="p-3 bg-slate-50 dark:bg-zinc-800 rounded-2xl border space-y-1">
+                <div className="font-bold text-slate-900 dark:text-zinc-100">T. Rowe Price Recruiter</div>
+                <p className="text-slate-500 text-[11px]">Invitation pending for Summer 2026 technical interview.</p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                triggerToast("🛡️ AI scheduled 2 hours of protected focus time on your calendar.");
+                setShowVivaInsightsModal(false);
+              }}
+              className="w-full bg-sky-500 hover:bg-sky-600 text-white font-black py-2.5 rounded-xl text-xs shadow-md"
+            >
+              Book 2 Hours Focus Time
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 4: 🗂️ RETENTION & ZERO-TRUST POLICY MODAL */}
+      {/* ========================================================================= */}
+      {showPolicyModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-zinc-800 space-y-4 animate-in zoom-in-95">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2">
+                <Shield className="w-5 h-5 text-emerald-500" />
+                <h3 className="font-black text-sm text-slate-900 dark:text-zinc-100">Retention & cATO Compliance Policy</h3>
+              </div>
+              <button onClick={() => setShowPolicyModal(false)} className="text-slate-400 hover:text-slate-600">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-2 text-xs">
+              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/60 rounded-2xl border border-emerald-300 dark:border-emerald-800 space-y-1">
+                <span className="font-bold text-emerald-700 dark:text-emerald-300">Active Policy: Enterprise 7-Year cATO Vault</span>
+                <p className="text-slate-500 text-[11px]">All academic and research correspondence is cryptographically sealed with SHA-256 integrity checks.</p>
+              </div>
+              <div className="p-3 bg-slate-50 dark:bg-zinc-800 rounded-2xl border space-y-1">
+                <span className="font-bold text-slate-800 dark:text-zinc-200">Zero-Trust DLP Engine</span>
+                <p className="text-slate-500 text-[11px]">Automatic redaction enabled for PII, SSN, and student financial records.</p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                triggerToast("Policy updated & verified.");
+                setShowPolicyModal(false);
+              }}
+              className="w-full bg-indigo-600 text-white font-black py-2 rounded-xl text-xs"
+            >
+              Confirm Policy
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ========================================================================= */}
       {/* COMPOSE EMAIL MODAL */}
