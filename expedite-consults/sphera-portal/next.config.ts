@@ -1,25 +1,22 @@
 import type { NextConfig } from "next";
-import path from "path";
 
 const nextConfig: NextConfig = {
-  turbopack: {
-    root: path.resolve(__dirname),
+  allowedDevOrigins: ["localhost:3004", "127.0.0.1:3004", "192.168.61.1:3004", "192.168.61.1", "localhost", "127.0.0.1"],
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "utfs.io" },
+      { protocol: "https", hostname: "uploadthing.com" },
+      { protocol: "https", hostname: "image.mux.com" },
+      { protocol: "https", hostname: "stream.mux.com" },
+      { protocol: "https", hostname: "lh3.googleusercontent.com" },
+      { protocol: "https", hostname: "avatars.githubusercontent.com" },
+      { protocol: "https", hostname: "images.unsplash.com" },
+    ],
   },
-  async rewrites() {
-    return [
-      {
-        source: "/veritaslens",
-        destination: "https://expedite-consults.vercel.app/veritaslens",
-      },
-      {
-        source: "/veritaslens/:path*",
-        destination: "https://expedite-consults.vercel.app/veritaslens/:path*",
-      },
-      {
-        source: "/api/veritaslens/:path*",
-        destination: "https://expedite-consults.vercel.app/api/veritaslens/:path*",
-      },
-    ];
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "10mb",
+    },
   },
 };
 

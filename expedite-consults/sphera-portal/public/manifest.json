@@ -1,0 +1,47 @@
+{
+  "name": "SPHERA — Universal Social & Career Ecosystem",
+  "short_name": "SPHERA",
+  "description": "Unified Social Feed, Reels Theater, Encrypted Messenger, Local Bazaar, TS/SCI Career Bounties, and Esports.",
+  "start_url": "/feed",
+  "display": "standalone",
+  "background_color": "#08090d",
+  "theme_color": "#00d4ff",
+  "orientation": "portrait",
+  "categories": ["social", "productivity", "shopping", "gaming"],
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Home Feed",
+      "url": "/feed",
+      "description": "View latest posts and stories"
+    },
+    {
+      "name": "SpheraChat",
+      "url": "/messages",
+      "description": "Encrypted direct messages"
+    },
+    {
+      "name": "Reels & Shorts",
+      "url": "/reels",
+      "description": "Vertical cinema video stream"
+    },
+    {
+      "name": "Bazaar",
+      "url": "/bazaar",
+      "description": "Local peer-to-peer marketplace"
+    }
+  ]
+}

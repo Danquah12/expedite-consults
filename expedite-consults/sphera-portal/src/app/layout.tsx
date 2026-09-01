@@ -1,28 +1,38 @@
-import type { Metadata } from "next";
-import { Inter, Space_Grotesk } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
+import { Providers } from "@/components/providers";
 
 const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-inter",
+  display: "swap",
+  variable: "--font-sans",
 });
 
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-space",
-});
+export const viewport: Viewport = {
+  themeColor: "#00d4ff",
+  width: "device-width",
+  initialScale: 1,
+};
 
 export const metadata: Metadata = {
-  title: "Expedite Consults Portal — Your Digital Ecosystem",
+  title: {
+    default: "SpheraNet — Sovereign Social Network & Campus Graph",
+    template: "%s | SpheraNet",
+  },
   description:
-    "Access all Expedite Consults products and Sphera platform modules from one stunning portal. Cybersecurity, SkillHands, Sphera Social, and more.",
+    "SpheraNet is a next-generation decentralized social network: Universal Feed, 4K Reels, SpheraChat Messenger, Local Bazaar, Verified Skill Passport, Campus OS, and Esports Arena.",
   keywords: [
+    "SpheraNet",
+    "social network",
+    "sphera",
+    "decentralized social",
+    "marketplace",
+    "reels",
+    "career",
     "Expedite Consults",
-    "Sphera",
-    "SkillHands",
-    "Cybersecurity",
-    "Portal",
   ],
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({
@@ -31,9 +41,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${inter.variable} ${spaceGrotesk.variable} antialiased`}>
-        {children}
+    <html lang="en" className={inter.className} suppressHydrationWarning>
+      <body className="antialiased min-h-screen" suppressHydrationWarning>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
