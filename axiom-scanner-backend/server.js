@@ -57,7 +57,7 @@ app.get("/api/health", (req, res) => {
     activeScans: active,
     totalScans: Object.keys(scans).length,
     activePipelines: Object.values(pipelines||{}).filter(p=>p.status==="running").length,
-    multiTarget: true, maxTargets: 10,
+    multiTarget: true, maxTargets: 50,
     engines: ["nmap","zap","openvas","metasploit"],
     modules: stats,
   });
@@ -166,10 +166,10 @@ app.post("/api/scan/multi", async (req, res) => {
   let { targets } = req.body;
 
   if (!targets || !Array.isArray(targets) || targets.length === 0)
-    return res.status(400).json({ error:"targets array required (max 10)" });
+    return res.status(400).json({ error:"targets array required (max 50)" });
 
-  // Enforce max 10
-  targets = targets.slice(0, 10).filter(t => t && t.trim());
+  // Enforce max 50
+  targets = targets.slice(0, 50).filter(t => t && t.trim());
   if (targets.length === 0)
     return res.status(400).json({ error:"No valid targets provided" });
 
