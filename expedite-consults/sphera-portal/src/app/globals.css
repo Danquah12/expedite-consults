@@ -22,6 +22,22 @@
   --accent-indigo: #6366f1;
   --ambient-mesh-1: rgba(0, 212, 255, 0.06);
   --ambient-mesh-2: rgba(99, 102, 241, 0.05);
+
+  --color-bg-primary: #06060e;
+  --color-bg-secondary: #0d0d1a;
+  --color-bg-card: rgba(15, 15, 30, 0.6);
+  --color-bg-card-hover: rgba(25, 25, 50, 0.8);
+  --color-border-glass: rgba(255, 255, 255, 0.08);
+  --color-border-glow: rgba(0, 212, 255, 0.3);
+  --color-accent-cyan: #00d4ff;
+  --color-accent-purple: #8b5cf6;
+  --color-accent-pink: #ec4899;
+  --color-accent-green: #10b981;
+  --color-accent-orange: #f59e0b;
+  --color-accent-red: #ef4444;
+  --color-text-primary: #e2e8f0;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
 }
 
 /* ── 2. WHITE / SOLAR LUXURY THEME ─────────────────────────────── */
@@ -46,6 +62,22 @@
   --accent-indigo: #4f46e5;
   --ambient-mesh-1: rgba(2, 132, 199, 0.08);
   --ambient-mesh-2: rgba(79, 70, 229, 0.05);
+
+  --color-bg-primary: #f4f6f9;
+  --color-bg-secondary: #ffffff;
+  --color-bg-card: #ffffff;
+  --color-bg-card-hover: #f8fafc;
+  --color-border-glass: rgba(0, 0, 0, 0.08);
+  --color-border-glow: rgba(2, 132, 199, 0.3);
+  --color-accent-cyan: #0284c7;
+  --color-accent-purple: #7c3aed;
+  --color-accent-pink: #db2777;
+  --color-accent-green: #059669;
+  --color-accent-orange: #d97706;
+  --color-accent-red: #dc2626;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #334155;
+  --color-text-muted: #64748b;
 }
 
 /* ── 3. BLUE / SAPPHIRE CYBER THEME ─────────────────────────────── */
@@ -70,6 +102,22 @@
   --accent-indigo: #818cf8;
   --ambient-mesh-1: rgba(56, 189, 248, 0.14);
   --ambient-mesh-2: rgba(129, 140, 248, 0.1);
+
+  --color-bg-primary: #070d1e;
+  --color-bg-secondary: #0a142e;
+  --color-bg-card: rgba(13, 27, 62, 0.7);
+  --color-bg-card-hover: rgba(20, 39, 88, 0.85);
+  --color-border-glass: rgba(56, 189, 248, 0.15);
+  --color-border-glow: rgba(56, 189, 248, 0.4);
+  --color-accent-cyan: #38bdf8;
+  --color-accent-purple: #818cf8;
+  --color-accent-pink: #f472b6;
+  --color-accent-green: #34d399;
+  --color-accent-orange: #fbbf24;
+  --color-accent-red: #f87171;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #93c5fd;
+  --color-text-muted: #60a5fa;
 }
 
 * {
@@ -92,80 +140,162 @@ html, body {
   background-attachment: fixed;
 }
 
-/* ── Universal Theme Overrides for Light Mode ───────────────────── */
-[data-theme="light"] .bg-\[\#10121a\],
-[data-theme="light"] .bg-\[\#111827\],
-[data-theme="light"] .bg-\[\#161924\],
-[data-theme="light"] .bg-\[\#0d0f17\],
-[data-theme="light"] .bg-\[\#08090d\],
-[data-theme="light"] .bg-\[\#161d2d\],
-[data-theme="light"] .bg-zinc-900,
-[data-theme="light"] .bg-black {
-  background-color: var(--bg-card) !important;
-  color: var(--text-pure) !important;
+/* ── Launchpad Components & Cards ── */
+.glass-card {
+  background: var(--color-bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--color-border-glass);
+  border-radius: 16px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-[data-theme="light"] .border-\[\#1c202e\],
-[data-theme="light"] .border-\[\#1e2a3a\],
-[data-theme="light"] .border-zinc-800,
-[data-theme="light"] .border-white\/10 {
-  border-color: var(--border-subtle) !important;
+.glass-card:hover {
+  background: var(--color-bg-card-hover);
+  border-color: var(--color-border-glow);
+  transform: translateY(-4px);
+  box-shadow: 0 0 30px rgba(0, 212, 255, 0.1), 0 20px 40px rgba(0, 0, 0, 0.4);
 }
 
-[data-theme="light"] .text-white,
-[data-theme="light"] .text-\[\#ffffff\],
-[data-theme="light"] .text-\[\#f9fafb\] {
-  color: var(--text-pure) !important;
+.glow-text {
+  background: linear-gradient(135deg, var(--color-accent-cyan), var(--color-accent-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-[data-theme="light"] .text-\[\#cbd5e1\],
-[data-theme="light"] .text-\[\#e2e8f0\] {
-  color: var(--text-primary) !important;
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
-[data-theme="light"] .text-\[\#94a3b8\],
-[data-theme="light"] .text-\[\#9ca3af\] {
-  color: var(--text-secondary) !important;
+.badge-hot {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+.badge-new {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+.badge-live {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+.badge-pro {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+.badge-ai {
+  background: rgba(139, 92, 246, 0.15);
+  color: #8b5cf6;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+.badge-coming {
+  background: rgba(100, 116, 139, 0.15);
+  color: #94a3b8;
+  border: 1px solid rgba(100, 116, 139, 0.3);
 }
 
-[data-theme="light"] .text-\[\#64748b\],
-[data-theme="light"] .text-\[\#6b7280\] {
-  color: var(--text-muted) !important;
+.product-card {
+  background: linear-gradient(135deg, rgba(15, 15, 35, 0.8), rgba(20, 20, 45, 0.6));
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 20px;
+  padding: 2rem;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
 }
 
-/* ── Universal Theme Overrides for Sapphire Blue Mode ───────────── */
-[data-theme="blue"] .bg-\[\#10121a\],
-[data-theme="blue"] .bg-\[\#111827\],
-[data-theme="blue"] .bg-\[\#161924\],
-[data-theme="blue"] .bg-\[\#0d0f17\],
-[data-theme="blue"] .bg-\[\#08090d\],
-[data-theme="blue"] .bg-\[\#161d2d\],
-[data-theme="blue"] .bg-zinc-900,
-[data-theme="blue"] .bg-black {
-  background-color: var(--bg-card) !important;
-  color: var(--text-pure) !important;
+.product-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--card-accent, var(--color-accent-cyan)), transparent);
+  opacity: 0;
+  transition: opacity 0.4s;
 }
 
-[data-theme="blue"] .border-\[\#1c202e\],
-[data-theme="blue"] .border-\[\#1e2a3a\],
-[data-theme="blue"] .border-zinc-800,
-[data-theme="blue"] .border-white\/10 {
-  border-color: var(--border-subtle) !important;
+.product-card:hover::before {
+  opacity: 1;
 }
 
-[data-theme="blue"] .text-\[\#cbd5e1\],
-[data-theme="blue"] .text-\[\#e2e8f0\] {
-  color: var(--text-primary) !important;
+.product-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 50px rgba(0, 212, 255, 0.08), 0 30px 60px rgba(0, 0, 0, 0.5);
 }
 
-[data-theme="blue"] .text-\[\#94a3b8\],
-[data-theme="blue"] .text-\[\#9ca3af\] {
-  color: var(--text-secondary) !important;
+.section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.2), transparent);
+  margin: 1rem 0;
 }
 
-[data-theme="blue"] .text-\[\#64748b\],
-[data-theme="blue"] .text-\[\#6b7280\] {
-  color: var(--text-muted) !important;
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.category-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+/* Animations */
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out forwards;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  33% { transform: translateY(-15px) rotate(1deg); }
+  66% { transform: translateY(-8px) rotate(-1deg); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Custom Scrollbar */
@@ -188,20 +318,6 @@ html, body {
 ::selection {
   background: rgba(0, 212, 255, 0.3);
   color: #ffffff;
-}
-
-/* Luxury Card Utilities */
-.luxury-card {
-  background: var(--bg-card) !important;
-  border: 1px solid var(--border-subtle) !important;
-  color: var(--text-pure) !important;
-  border-radius: 18px;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.luxury-card:hover {
-  border-color: var(--border-hover) !important;
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.15);
 }
 
 /* Story Ring */
