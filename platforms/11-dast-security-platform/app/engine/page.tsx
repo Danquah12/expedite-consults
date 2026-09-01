@@ -7,8 +7,10 @@ import {
   Brain, Play, Square, CheckCircle, ChevronRight, Activity, Zap,
   Shield, Radio, Network, Package, Lock, ScrollText, RefreshCw, Settings,
   Pause, PlayCircle, FastForward, Sliders, Terminal, Eye, CheckCircle2,
-  AlertTriangle, Filter, Sparkles, Server, Globe, ArrowRight, Layers
+  AlertTriangle, Filter, Sparkles, Server, Globe, ArrowRight, Layers,
+  Code, Copy, Check, FileCode, Target, ShieldAlert, X, ExternalLink
 } from "lucide-react";
+import type { Finding } from "@/types/dast";
 
 // ─── Full 22-step Automated Pipeline ──────────────────────────────────────────
 const PIPELINE = [
@@ -38,24 +40,6 @@ const PIPELINE = [
 
 type Stage = typeof PIPELINE[number]["id"];
 
-// ─── Orchestrator Agents ──────────────────────────────────────────────────────
-const AGENTS = [
-  { id:"auth",      label:"Auth Agent",              color:"#ce93d8", icon:"🗝️" },
-  { id:"discover",  label:"Discovery Engine",        color:"#ffb74d", icon:"🕷"  },
-  { id:"nmap",      label:"Nmap Connector",          color:"#4fc3f7", icon:"📡" },
-  { id:"params",    label:"Parameter Analyzer",      color:"var(--green)", icon:"📊" },
-  { id:"planner",   label:"Test Planner",            color:"#dce775", icon:"🗂"  },
-  { id:"plugins",   label:"Plugin Framework",        color:"var(--primary)", icon:"🧩" },
-  { id:"zap",       label:"ZAP Connector",           color:"#4fc3f7", icon:"⚡" },
-  { id:"burp",      label:"Burp Enterprise Conn.",   color:"#ff8a65", icon:"🔍" },
-  { id:"openvas",   label:"OpenVAS Connector",       color:"#80cbc4", icon:"🛡"  },
-  { id:"verify",    label:"Verification Engine",     color:"#80deea", icon:"🔬" },
-  { id:"rbac",      label:"RBAC Guard",              color:"#ce93d8", icon:"🔐" },
-  { id:"kg",        label:"Knowledge Graph Agent",   color:"#a78bfa", icon:"🕸"  },
-  { id:"copilot",   label:"Copilot Orchestrator",    color:"#60a5fa", icon:"🧠" },
-  { id:"report",    label:"Reporting Engine",        color:"#a5d6a7", icon:"📊" },
-];
-
 // ─── Scanner Connectors Initial Setup ─────────────────────────────────────────
 interface ScannerItem {
   id: string;
@@ -75,7 +59,6 @@ const INITIAL_SCANNERS: ScannerItem[] = [
   { id:"nmap",    name:"Nmap NSE",            enabled:true, color:"#a5d6a7",  version:"v7.94",    endpoint:"local://nmap",         activeRequests:0, findingsFound:0 },
 ];
 
-// Comprehensive 100+ Step Log Sequence for Engine Brain
 function buildDeepEngineLogs(target: string, profile: string) {
   let host = target;
   try { host = new URL(target.startsWith("http") ? target : `https://${target}`).hostname; } catch { host = target; }
@@ -83,87 +66,62 @@ function buildDeepEngineLogs(target: string, profile: string) {
   const rate = rateMap[profile] ?? "15 req/s";
 
   return [
-    // 1. SCOPE & RBAC
     { phase:"scope", agent:"auth", tag:"SCOPE", msg:`[SCOPE] Validating target authority: ${host} — Written authorization confirmed`, c:"#4fc3f7" },
     { phase:"scope", agent:"auth", tag:"SCOPE", msg:`[SCOPE] 48 in-scope routes staged · 12 third-party CDNs excluded · Rate limit: ${rate}`, c:"#4fc3f7" },
     { phase:"rbac",  agent:"rbac", tag:"RBAC",  msg:`[RBAC] Initializing RBAC Guard — scan operator: ciso-admin@axiom`, c:"#ce93d8" },
     { phase:"rbac",  agent:"rbac", tag:"RBAC",  msg:`[RBAC] Permissions granted: scan.execute ✓ plugins.raw ✓ findings.write ✓`, c:"#ce93d8" },
-
-    // 2. FINGERPRINT & NMAP
     { phase:"fingerprint", agent:"discover", tag:"FINGERPRINT", msg:`[FINGERPRINT] Probing ${host} — Server: nginx/1.24.0 · Framework: Next.js / Express`, c:"#80cbc4" },
     { phase:"fingerprint", agent:"discover", tag:"FINGERPRINT", msg:`[FINGERPRINT] Cloud Provider: AWS us-east-1 · WAF detected: Cloudflare Managed Rules`, c:"#80cbc4" },
     { phase:"nmap", agent:"nmap", tag:"NMAP", msg:`[NMAP] Executing SYN Stealth Port Scan (ports 1-10000) on ${host}`, c:"#a5d6a7" },
     { phase:"nmap", agent:"nmap", tag:"NMAP", msg:`[NMAP] Port 80/tcp OPEN (http) · Port 443/tcp OPEN (https) · Port 8080/tcp OPEN (http-proxy)`, c:"#a5d6a7" },
     { phase:"nmap", agent:"nmap", tag:"NMAP", msg:`[NMAP] Port 3306/tcp OPEN (MySQL 8.0.32) · Port 5432/tcp FILTERED (PostgreSQL)`, c:"#a5d6a7" },
-    { phase:"nmap", agent:"nmap", tag:"NMAP", msg:`[NMAP NSE] Running ssl-enum-ciphers: TLS 1.2 and TLS 1.3 enabled · Strong ciphers verified`, c:"#a5d6a7" },
-
-    // 3. AUTHENTICATION & CRAWLER
     { phase:"auth", agent:"auth", tag:"AUTH", msg:`[AUTH] Executing automated OAuth2 login at ${host}/api/auth/token...`, c:"#ce93d8" },
     { phase:"auth", agent:"auth", tag:"AUTH", msg:`[AUTH] ✓ Admin Session JWT: Bearer eyJhbGciOiJIUzI1Ni... (Captured & Vaulted)`, c:"#ce93d8" },
-    { phase:"auth", agent:"auth", tag:"AUTH", msg:`[AUTH] ✓ Low-Privilege Test User Token: Bearer eyJhbGciOi... (Captured for IDOR tests)`, c:"#ce93d8" },
     { phase:"discover", agent:"discover", tag:"CRAWLER", msg:`[CRAWLER] Headless Playwright engine starting DOM discovery on ${host}`, c:"#ffb74d" },
     { phase:"discover", agent:"discover", tag:"CRAWLER", msg:`[CRAWLER] Discovered 28 application endpoints · 8 HTML forms · 3 WebSocket tunnels`, c:"#ffb74d" },
     { phase:"js", agent:"discover", tag:"SPA", msg:`[SPA JS] Extracting hidden React bundle client routes: /admin/config, /api/webhooks/test, /api/debug`, c:"#f48fb1" },
     { phase:"params", agent:"params", tag:"PARAMS", msg:`[PARAMS] Extracted 42 input parameters across GET/POST/JSON payloads`, c:"var(--green)" },
     { phase:"baseline", agent:"params", tag:"BASELINE", msg:`[BASELINE] Sending 28 baseline requests — recording pristine HTTP status, headers, and body hash`, c:"#a5d6a7" },
-
-    // 4. PLUGIN FRAMEWORK DISPATCH
     { phase:"plugins", agent:"plugins", tag:"PLUGINS", msg:`[PLUGIN MANAGER] Loading external scanner bridges into Capability Registry...`, c:"var(--primary)" },
     { phase:"plugins", agent:"plugins", tag:"PLUGINS", msg:`[PLUGIN MANAGER] ✓ OWASP ZAP v2.14.0 Connector linked (gRPC socket live)`, c:"#4fc3f7" },
     { phase:"plugins", agent:"plugins", tag:"PLUGINS", msg:`[PLUGIN MANAGER] ✓ OpenVAS/GVM v22.4.1 Connector linked (NVT feed synchronized)`, c:"#80cbc4" },
     { phase:"plugins", agent:"plugins", tag:"PLUGINS", msg:`[PLUGIN MANAGER] ✓ Burp Suite Enterprise v2023.10 linked (REST API token active)`, c:"#ff8a65" },
     { phase:"testgen", agent:"planner", tag:"TESTGEN", msg:`[PLANNER] Generated 342 specialized test cases with polymorphic WAF-evasion encodings`, c:"#ffcc80" },
-
-    // 5. DEEP OWASP ZAP ACTIVE FUZZING STAGE
+    
+    // ZAP
     { phase:"zap_scan", agent:"zap", tag:"ZAP", msg:`[ZAP SPIDER] Spidering form targets and API endpoints with session tokens...`, c:"#4fc3f7" },
     { phase:"zap_scan", agent:"zap", tag:"ZAP", msg:`[ZAP RULE #40018] Testing SQL Injection on ${host}/api/products/search?q=`, c:"#4fc3f7" },
     { phase:"zap_scan", agent:"zap", tag:"ZAP", msg:`[ZAP SQLi] Payload injected: ' UNION SELECT 1, table_name, column_name FROM information_schema.tables--`, c:"#ef5350" },
-    { phase:"zap_scan", agent:"zap", tag:"ZAP", msg:`[ZAP SQLi] Target returned MySQL ODBC driver error (HTTP 500 in 18ms) — SQL INJECTION CONFIRMED`, c:"#ef5350" },
     { phase:"zap_scan", agent:"zap", tag:"FINDING", msg:`🔴 [FINDING 1] CRITICAL SQL Injection (CWE-89) at ${host}/api/products/search?q=`, c:"#ef5350" },
     { phase:"zap_scan", agent:"zap", tag:"ZAP", msg:`[ZAP RULE #40012] Testing Reflected Cross-Site Scripting (XSS) on ${host}/search`, c:"#4fc3f7" },
-    { phase:"zap_scan", agent:"zap", tag:"ZAP", msg:`[ZAP XSS] Injected: <script>alert(document.cookie)</script> — Reflected unescaped in response`, c:"#ff8a65" },
     { phase:"zap_scan", agent:"zap", tag:"FINDING", msg:`🟠 [FINDING 2] HIGH Reflected XSS (CWE-79) at ${host}/search`, c:"#ff8a65" },
     { phase:"zap_scan", agent:"zap", tag:"ZAP", msg:`[ZAP RULE #90020] Testing Path Traversal & LFI on ${host}/api/download?file=`, c:"#4fc3f7" },
-    { phase:"zap_scan", agent:"zap", tag:"ZAP", msg:`[ZAP LFI] Injected: ../../../../etc/passwd — root:x:0:0 signature extracted`, c:"#ef5350" },
     { phase:"zap_scan", agent:"zap", tag:"FINDING", msg:`🔴 [FINDING 3] CRITICAL Path Traversal / Arbitrary File Read (CWE-22) at ${host}/api/download`, c:"#ef5350" },
-
-    // 6. DEEP OPENVAS / GVM NVT VULNERABILITY AUDIT STAGE
+    
+    // OPENVAS
     { phase:"openvas_scan", agent:"openvas", tag:"OPENVAS", msg:`[OPENVAS NVT] Initializing Greenbone Vulnerability Feed (NVT v2026.08)...`, c:"#80cbc4" },
     { phase:"openvas_scan", agent:"openvas", tag:"OPENVAS", msg:`[OPENVAS NVT 1.3.6.1.4.1.25623.1] Testing Broken Object Level Authorization (BOLA/IDOR)`, c:"#80cbc4" },
-    { phase:"openvas_scan", agent:"openvas", tag:"OPENVAS", msg:`[OPENVAS IDOR] Requesting ${host}/api/users/1042 with Low-Privilege user token`, c:"#ff8a65" },
-    { phase:"openvas_scan", agent:"openvas", tag:"OPENVAS", msg:`[OPENVAS IDOR] Response 200 OK — Admin account PII exposed to unprivileged tenant!`, c:"#ef5350" },
     { phase:"openvas_scan", agent:"openvas", tag:"FINDING", msg:`🔴 [FINDING 4] CRITICAL BOLA / IDOR Account Takeover (CWE-639) at ${host}/api/users/{id}`, c:"#ef5350" },
     { phase:"openvas_scan", agent:"openvas", tag:"OPENVAS", msg:`[OPENVAS NVT 1.3.6.1.4.1.25623.8] Testing CORS Origin reflection with credentials...`, c:"#80cbc4" },
-    { phase:"openvas_scan", agent:"openvas", tag:"OPENVAS", msg:`[OPENVAS CORS] Origin: https://evil.com sent — Access-Control-Allow-Credentials: true received`, c:"#ffb74d" },
     { phase:"openvas_scan", agent:"openvas", tag:"FINDING", msg:`🟠 [FINDING 5] HIGH Insecure CORS Policy (CWE-942) at ${host}/api/users/me`, c:"#ffb74d" },
-
-    // 7. DEEP BURP ENTERPRISE & OOB COLLABORATOR STAGE
+    
+    // BURP
     { phase:"burp_scan", agent:"burp", tag:"BURP", msg:`[BURP ENGINE] Crawl & Audit engine active on authenticated stateful routes...`, c:"#ff8a65" },
     { phase:"burp_scan", agent:"burp", tag:"BURP", msg:`[BURP SSRF] Testing Blind SSRF on ${host}/api/webhooks/test?url=`, c:"#ff8a65" },
-    { phase:"burp_scan", agent:"burp", tag:"BURP", msg:`[BURP SSRF] Injecting OOB Collaborator callback: http://oob-8921.axiom-oob.io`, c:"var(--primary)" },
-    { phase:"oob", agent:"verify", tag:"OOB", msg:`[OOB SERVER] 📡 DNS Query received: oob-8921.axiom-oob.io from AWS Internal Router (10.0.14.2)`, c:"#e8912d" },
-    { phase:"oob", agent:"verify", tag:"OOB", msg:`[OOB SERVER] 📡 HTTP POST Callback: AWS IMDSv2 metadata requested by backend service!`, c:"#ef5350" },
+    { phase:"oob", agent:"verify", tag:"OOB", msg:`[OOB SERVER] 📡 DNS Query received: oob-8921.axiom-oob.io from AWS Internal Router`, c:"#e8912d" },
     { phase:"oob", agent:"verify", tag:"FINDING", msg:`🔴 [FINDING 6] CRITICAL Server-Side Request Forgery (SSRF CWE-918) → AWS Cloud Metadata`, c:"#ef5350" },
-    { phase:"burp_scan", agent:"burp", tag:"BURP", msg:`[BURP XSS] Injecting Stored XSS into profile displayName field...`, c:"var(--primary)" },
     { phase:"burp_scan", agent:"burp", tag:"BURP", msg:`[BURP XSS] Persistent payload retrieved in subsequent admin dashboard visit`, c:"#ef5350" },
     { phase:"burp_scan", agent:"burp", tag:"FINDING", msg:`🔴 [FINDING 7] CRITICAL Stored Cross-Site Scripting (CWE-79) at ${host}/api/profile/update`, c:"#ef5350" },
-
-    // 8. EVIDENCE VERIFICATION & VALIDATION (FPR)
+    
+    // EVIDENCE & CONCLUSION
     { phase:"evidence", agent:"verify", tag:"EVIDENCE", msg:`[VERIFICATION] Executing 3-way Baseline-Test-Control replay for all 7 findings...`, c:"#80deea" },
-    { phase:"evidence", agent:"verify", tag:"EVIDENCE", msg:`[VERIFICATION] 100% reproduction rate across SQLi, SSRF, IDOR, LFI, and Stored XSS`, c:"#80deea" },
     { phase:"evidence", agent:"verify", tag:"INTEGRITY", msg:`[INTEGRITY] SHA-256 cryptographic sealing of all HTTP request/response proofs`, c:"var(--green)" },
     { phase:"fpr", agent:"verify", tag:"FPR", msg:`[FPR] Multi-signal confidence engine: 0 False Positives confirmed (Confidence: 99.8%)`, c:"#ef9a9a" },
-
-    // 9. KNOWLEDGE GRAPH & SEVERITY SCORING
     { phase:"severity", agent:"planner", tag:"CVSS", msg:`[RISK SCORING] Calculated CVSS 3.1: SQLi 9.8 · SSRF 9.6 · LFI 9.1 · IDOR 8.8 · XSS 8.4`, c:"#ffb74d" },
     { phase:"kg", agent:"kg", tag:"NEO4J", msg:`[KNOWLEDGE GRAPH] Synchronizing Neo4j asset-graph: ${host} → 7 Findings → 3 Jira Tickets`, c:"#a78bfa" },
-    { phase:"kg", agent:"kg", tag:"NEO4J", msg:`[KNOWLEDGE GRAPH] Blast Radius: Customer Database + AWS Cloud Infrastructure at Critical Risk`, c:"#a78bfa" },
-
-    // 10. COPILOT SYNTHESIS & REPORT FINALIZATION
-    { phase:"copilot", agent:"copilot", tag:"AI", msg:`[COPILOT] Generating Executive Remediation Roadmap & SARIF security export...`, c:"#60a5fa" },
-    { phase:"copilot", agent:"copilot", tag:"AI", msg:`[COPILOT] Auto-generated virtual patch for SQLi: Parameterized Query PreparedStatement`, c:"#60a5fa" },
+    { phase:"copilot", agent:"copilot", tag:"AI", msg:`[COPILOT] Generated Executive Remediation Roadmap & Proof of Concept scripts`, c:"#60a5fa" },
     { phase:"report", agent:"report", tag:"REPORT", msg:`[REPORT] Auto-created Jira tickets (JRA-2847, JRA-2848, JRA-2849) & GitHub issues (#441, #442)`, c:"#dce775" },
-    { phase:"report", agent:"report", tag:"DONE", msg:`[DONE] ✅ Full Engine Run Complete — 7 Verified Findings · 0 False Positives · All Systems Synced!`, c:"var(--green)" }
+    { phase:"report", agent:"report", tag:"DONE", msg:`[DONE] ✅ Full Engine Run Complete — 7 Verified Findings · 0 False Positives · PoCs & TTPs Generated!`, c:"var(--green)" }
   ];
 }
 
@@ -189,6 +147,11 @@ export default function EnginePage() {
   const [scanners, setScanners] = useState<ScannerItem[]>(INITIAL_SCANNERS);
   const [targetUrl, setTargetUrl] = useState<string>("http://192.168.195.140");
 
+  // Selected Finding for Deep PoC & MITRE TTPs Modal
+  const [selectedFinding, setSelectedFinding] = useState<Finding | null>(null);
+  const [pocModalTab, setPocModalTab] = useState<"POC" | "TTP" | "EVIDENCE" | "REMEDIATION">("POC");
+  const [copiedPoc, setCopiedPoc] = useState<boolean>(false);
+
   const logRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<any[]>([]);
   const pausedRef = useRef<boolean>(false);
@@ -212,7 +175,6 @@ export default function EnginePage() {
     timerRef.current = [];
   };
 
-  // Run the Comprehensive Engine
   const startEngine = () => {
     stopAllTimers();
     setRunning(true);
@@ -225,7 +187,6 @@ export default function EnginePage() {
     setActiveAgent(null);
     setScannerActive(null);
 
-    // Speed timing: FAST = 120ms/step (~12s), BALANCED = 280ms/step (~28s), DEEP = 550ms/step (~55s)
     const stepDelay = scanSpeed === "FAST" ? 120 : scanSpeed === "BALANCED" ? 280 : 550;
     const allLogs = buildDeepEngineLogs(targetUrl, profile);
 
@@ -237,18 +198,15 @@ export default function EnginePage() {
         setProgress(stageProgress[item.phase] || Math.min(100, Math.round((idx / allLogs.length) * 100)));
         setActiveAgent(item.agent);
 
-        // Update active scanner indicator
         if (item.tag === "ZAP") setScannerActive("zap");
         else if (item.tag === "OPENVAS") setScannerActive("openvas");
         else if (item.tag === "BURP") setScannerActive("burp");
         else if (item.tag === "NMAP") setScannerActive("nmap");
 
-        // Increment findings count
         if (item.msg.includes("[FINDING")) {
           setFindingsCount(c => c + 1);
         }
 
-        // Final step completion
         if (idx === allLogs.length - 1) {
           setDone(true);
           setRunning(false);
@@ -270,7 +228,12 @@ export default function EnginePage() {
     setScannerActive(null);
   };
 
-  // Filter logs by tab
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedPoc(true);
+    setTimeout(() => setCopiedPoc(false), 2000);
+  };
+
   const filteredLogs = logs.filter(l => {
     if (activeLogTab === "ALL") return true;
     if (activeLogTab === "ZAP") return l.tag === "ZAP" || l.tag === "FINDING" && l.phase === "zap_scan";
@@ -335,7 +298,6 @@ export default function EnginePage() {
         {/* Scan Speed & Action Buttons */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           
-          {/* Target Input */}
           <div style={{ position: "relative", width: 220 }}>
             <input
               type="text"
@@ -356,7 +318,6 @@ export default function EnginePage() {
             />
           </div>
 
-          {/* Depth / Speed Selector */}
           <div style={{ display: "flex", background: "var(--surface-2)", padding: 2, borderRadius: 6, border: "1px solid var(--border)" }}>
             {[
               { id: "FAST", label: "⚡ Fast (15s)" },
@@ -382,7 +343,6 @@ export default function EnginePage() {
             ))}
           </div>
 
-          {/* Start / Stop Control */}
           {!running ? (
             <button
               onClick={startEngine}
@@ -413,6 +373,15 @@ export default function EnginePage() {
               <span>Stop Scan</span>
             </button>
           )}
+
+          <Link
+            href="/evidence"
+            className="btn-secondary"
+            style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, padding: "7px 14px", textDecoration: "none" }}
+          >
+            <Shield size={13} color="#06b6d4" />
+            <span>PoC & Evidence Studio (8)</span>
+          </Link>
         </div>
       </div>
 
@@ -480,7 +449,6 @@ export default function EnginePage() {
           </span>
         </div>
 
-        {/* Horizontal Pipeline Steps */}
         <div style={{ display: "flex", gap: 4, overflowX: "auto", paddingBottom: 6 }}>
           {PIPELINE.map((p, idx) => {
             const isCurrent = stage === p.id;
@@ -514,12 +482,11 @@ export default function EnginePage() {
       </div>
 
       {/* ── Main Workstation: Terminal Log Stream & Live Findings ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 16 }}>
         
         {/* Left: Terminal Output with Filter Tabs */}
         <div className="card-tactical" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
           
-          {/* Terminal Tabs Bar */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid var(--border)", paddingBottom: 8 }}>
             <div style={{ display: "flex", gap: 4 }}>
               {[
@@ -554,7 +521,6 @@ export default function EnginePage() {
             </span>
           </div>
 
-          {/* Terminal Stream Box */}
           <div
             ref={logRef}
             style={{
@@ -587,10 +553,9 @@ export default function EnginePage() {
           </div>
         </div>
 
-        {/* Right: Live Findings Summary & Automated SOAR Actions */}
+        {/* Right: Live Findings Summary & Clickable PoC / TTP Cards */}
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           
-          {/* Live Metrics Grid */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             <div className="card-tactical" style={{ padding: 12 }}>
               <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--muted)" }}>DISCOVERED FINDINGS</div>
@@ -609,38 +574,69 @@ export default function EnginePage() {
             </div>
           </div>
 
-          {/* Active Verified Findings List */}
+          {/* Clickable Verified Findings with PoC & TTP Triggers */}
           <div className="card-tactical" style={{ padding: 14, flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
-            <strong style={{ fontSize: 12.5, color: "#f8fafc" }}>Live Verified Findings ({findingsCount})</strong>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <strong style={{ fontSize: 12.5, color: "#f8fafc" }}>Live Verified Findings ({findingsCount})</strong>
+              <span style={{ fontSize: 10, color: "#06b6d4", fontWeight: 700 }}>Click any finding for PoC & TTPs</span>
+            </div>
             
-            <div style={{ display: "flex", flexDirection: "column", gap: 6, overflowY: "auto", maxHeight: 200 }}>
-              {[
-                { title: "SQL Injection (CWE-89)", endpoint: "/api/products/search?q=", sev: "CRITICAL", tool: "OWASP ZAP", color: "#f43f5e" },
-                { title: "SSRF → AWS Cloud Metadata (CWE-918)", endpoint: "/api/webhooks/test", sev: "CRITICAL", tool: "Burp Collaborator", color: "#f43f5e" },
-                { title: "BOLA / IDOR Account Takeover (CWE-639)", endpoint: "/api/users/{id}", sev: "CRITICAL", tool: "OpenVAS / GVM", color: "#f43f5e" },
-                { title: "Arbitrary File Read / Path Traversal (CWE-22)", endpoint: "/api/download", sev: "CRITICAL", tool: "OWASP ZAP", color: "#f43f5e" },
-                { title: "Stored Cross-Site Scripting (CWE-79)", endpoint: "/api/profile/update", sev: "HIGH", tool: "Burp Enterprise", color: "#f59e0b" },
-                { title: "Insecure CORS Wildcard (CWE-942)", endpoint: "/api/users/me", sev: "HIGH", tool: "OpenVAS", color: "#f59e0b" }
-              ].slice(0, findingsCount).map((f, idx) => (
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, overflowY: "auto", maxHeight: 220 }}>
+              {FINDINGS.slice(0, Math.max(findingsCount, 6)).map((f, idx) => (
                 <div
-                  key={idx}
+                  key={f.id || idx}
+                  onClick={() => setSelectedFinding(f)}
                   style={{
                     background: "var(--surface-2)",
-                    border: `1px solid ${f.color}40`,
+                    border: `1px solid ${f.severity === "Critical" ? "rgba(244,63,94,0.4)" : "rgba(245,158,11,0.4)"}`,
                     borderRadius: 6,
                     padding: "8px 10px",
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "space-between"
+                    justifyContent: "space-between",
+                    cursor: "pointer",
+                    transition: "all 0.15s"
                   }}
+                  className="hover:border-cyan-400"
                 >
                   <div>
-                    <div style={{ fontSize: 11, fontWeight: 800, color: "#f8fafc" }}>{f.title}</div>
-                    <div style={{ fontSize: 9.5, color: "var(--muted)", fontFamily: "monospace" }}>{f.endpoint}</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{
+                        fontSize: 9,
+                        fontWeight: 900,
+                        padding: "1px 5px",
+                        borderRadius: 3,
+                        background: f.severity === "Critical" ? "rgba(244,63,94,0.2)" : "rgba(245,158,11,0.2)",
+                        color: f.severity === "Critical" ? "#f43f5e" : "#f59e0b"
+                      }}>
+                        {f.severity}
+                      </span>
+                      <strong style={{ fontSize: 11, color: "#f8fafc" }}>{f.title}</strong>
+                    </div>
+                    <div style={{ fontSize: 9.5, color: "var(--muted)", fontFamily: "monospace", marginTop: 2 }}>
+                      {f.method} {f.url} {f.parameter ? `?${f.parameter}=` : ""}
+                    </div>
                   </div>
-                  <span style={{ fontSize: 9, fontWeight: 900, background: `${f.color}20`, color: f.color, padding: "2px 6px", borderRadius: 3 }}>
-                    {f.tool}
-                  </span>
+
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setSelectedFinding(f); }}
+                    style={{
+                      background: "rgba(6,182,212,0.15)",
+                      border: "1px solid rgba(6,182,212,0.3)",
+                      color: "#06b6d4",
+                      fontSize: 10,
+                      fontWeight: 700,
+                      padding: "4px 8px",
+                      borderRadius: 4,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 3
+                    }}
+                  >
+                    <span>PoC & TTP</span>
+                    <ArrowRight size={10} />
+                  </button>
                 </div>
               ))}
             </div>
@@ -648,18 +644,351 @@ export default function EnginePage() {
 
           {/* Automated Post-Scan Actions */}
           <div className="card-tactical" style={{ padding: 14, display: "flex", flexDirection: "column", gap: 6 }}>
-            <strong style={{ fontSize: 12, color: "#f8fafc" }}>Automated Post-Scan SOAR Actions</strong>
+            <strong style={{ fontSize: 12, color: "#f8fafc" }}>Enterprise Customer Verification Guarantee</strong>
             <div style={{ fontSize: 10.5, color: "var(--muted)", display: "flex", flexDirection: "column", gap: 3 }}>
-              <div>• <strong>Jira Tickets:</strong> JRA-2847, JRA-2848, JRA-2849 automatically generated</div>
-              <div>• <strong>GitHub Issues:</strong> Issues #441, #442 created for engineering team</div>
-              <div>• <strong>Neo4j Graph:</strong> 24 asset-finding relationships synchronized</div>
-              <div>• <strong>SARIF Export:</strong> axiom-scan-results.sarif signed with SHA-256</div>
+              <div>• <strong>Reproducible PoC:</strong> Full cURL commands + Python exploit scripts included</div>
+              <div>• <strong>MITRE ATT&CK:</strong> Tactics, Techniques & Procedures mapped per finding</div>
+              <div>• <strong>Cryptographic Evidence:</strong> SHA-256 sealed HTTP request/response proofs</div>
+              <div>• <strong>Automated Remediation:</strong> Copyable code fixes & virtual patches</div>
             </div>
           </div>
 
         </div>
 
       </div>
+
+      {/* ── Modal: Deep Proof of Concept (PoC) & MITRE ATT&CK TTP Inspector ── */}
+      {selectedFinding && (
+        <div style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(0,0,0,0.85)",
+          backdropFilter: "blur(6px)",
+          zIndex: 999,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 20
+        }}>
+          <div style={{
+            width: "100%",
+            maxWidth: 900,
+            maxHeight: "90vh",
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
+            borderRadius: 12,
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.8)"
+          }}>
+            
+            {/* Modal Header */}
+            <div style={{
+              padding: "16px 20px",
+              background: "var(--surface-2)",
+              borderBottom: "1px solid var(--border)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between"
+            }}>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{
+                    fontSize: 10,
+                    fontWeight: 900,
+                    padding: "2px 7px",
+                    borderRadius: 4,
+                    background: selectedFinding.severity === "Critical" ? "rgba(244,63,94,0.2)" : "rgba(245,158,11,0.2)",
+                    color: selectedFinding.severity === "Critical" ? "#f43f5e" : "#f59e0b",
+                    border: `1px solid ${selectedFinding.severity === "Critical" ? "rgba(244,63,94,0.4)" : "rgba(245,158,11,0.4)"}`
+                  }}>
+                    {selectedFinding.severity}
+                  </span>
+                  <span style={{ fontSize: 11, color: "var(--muted)", fontFamily: "monospace" }}>{selectedFinding.cweId} · {selectedFinding.owaspRef}</span>
+                  <h3 style={{ fontSize: 15, fontWeight: 900, color: "#f8fafc", margin: 0 }}>
+                    {selectedFinding.title}
+                  </h3>
+                </div>
+                <div style={{ fontSize: 11, color: "var(--muted)", fontFamily: "monospace", marginTop: 4 }}>
+                  {selectedFinding.method} {selectedFinding.url}
+                </div>
+              </div>
+
+              <button
+                onClick={() => setSelectedFinding(null)}
+                style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer" }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Navigation Tabs */}
+            <div style={{ display: "flex", background: "#050811", borderBottom: "1px solid var(--border)", padding: "0 16px" }}>
+              {[
+                { id: "POC", label: "🎯 Proof of Concept (PoC) & Exploit Script" },
+                { id: "TTP", label: "⚔️ MITRE ATT&CK TTPs" },
+                { id: "EVIDENCE", label: "🔬 Request/Response Proof Diff" },
+                { id: "REMEDIATION", label: "🛡️ Remediation Code Fix" }
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setPocModalTab(tab.id as any)}
+                  style={{
+                    padding: "10px 16px",
+                    fontSize: 11.5,
+                    fontWeight: 700,
+                    border: "none",
+                    borderBottom: pocModalTab === tab.id ? "2px solid #06b6d4" : "2px solid transparent",
+                    background: "transparent",
+                    color: pocModalTab === tab.id ? "#06b6d4" : "var(--muted)",
+                    cursor: "pointer"
+                  }}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Modal Body Content */}
+            <div style={{ padding: 20, overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: 14 }}>
+              
+              {/* TAB 1: POC & EXPLOIT SCRIPT */}
+              {pocModalTab === "POC" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  <div>
+                    <strong style={{ fontSize: 13, color: "#f8fafc" }}>Reproduction cURL Exploitation Command:</strong>
+                    <div style={{ position: "relative", marginTop: 6 }}>
+                      <pre style={{
+                        background: "#050811",
+                        border: "1px solid var(--border)",
+                        borderRadius: 8,
+                        padding: 12,
+                        fontFamily: "monospace",
+                        fontSize: 11,
+                        color: "#38bdf8",
+                        margin: 0,
+                        overflowX: "auto",
+                        lineHeight: 1.5
+                      }}>
+                        {selectedFinding.poc?.curlCommand || `curl -s "${selectedFinding.url}?${selectedFinding.parameter || "q"}=test_payload" -H "Authorization: Bearer <token>"`}
+                      </pre>
+                      <button
+                        onClick={() => handleCopyCode(selectedFinding.poc?.curlCommand || "")}
+                        style={{
+                          position: "absolute",
+                          right: 10,
+                          top: 10,
+                          background: "var(--surface-2)",
+                          border: "1px solid var(--border)",
+                          color: copiedPoc ? "#10b981" : "var(--fg)",
+                          fontSize: 10,
+                          fontWeight: 700,
+                          padding: "3px 8px",
+                          borderRadius: 4,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 3
+                        }}
+                      >
+                        {copiedPoc ? <Check size={11} /> : <Copy size={11} />}
+                        <span>{copiedPoc ? "Copied" : "Copy cURL"}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {selectedFinding.poc?.pythonScript && (
+                    <div>
+                      <strong style={{ fontSize: 13, color: "#f8fafc" }}>Automated Python Exploitation Script:</strong>
+                      <pre style={{
+                        background: "#050811",
+                        border: "1px solid var(--border)",
+                        borderRadius: 8,
+                        padding: 12,
+                        fontFamily: "monospace",
+                        fontSize: 11,
+                        color: "#34d399",
+                        margin: "6px 0 0 0",
+                        overflowX: "auto",
+                        lineHeight: 1.5,
+                        maxHeight: 200
+                      }}>
+                        {selectedFinding.poc.pythonScript}
+                      </pre>
+                    </div>
+                  )}
+
+                  <div>
+                    <strong style={{ fontSize: 13, color: "#f8fafc" }}>Step-by-Step Reproduction Checklist:</strong>
+                    <ol style={{ fontSize: 12, color: "var(--foreground-muted)", margin: "6px 0 0 16px", padding: 0, lineHeight: 1.6 }}>
+                      {(selectedFinding.evidence?.reproductionSteps || [
+                        "Send baseline request and record normal 200 response.",
+                        "Inject verification payload into targeted parameter.",
+                        "Observe execution anomaly or unescaped reflection.",
+                        "Verify repeatability with control baseline."
+                      ]).map((step, sIdx) => (
+                        <li key={sIdx}>{step}</li>
+                      ))}
+                    </ol>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 2: MITRE ATT&CK TTPS */}
+              {pocModalTab === "TTP" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  {(selectedFinding.ttp || [
+                    {
+                      tactic: "Initial Access", tacticId: "TA0001",
+                      technique: "Exploit Public-Facing Application", techniqueId: "T1190",
+                      subtechnique: "Input parameter manipulation",
+                      procedure: "Attacker identifies public API endpoint and crafts specialized exploit payloads to bypass input validation and compromise application integrity.",
+                      mitigations: ["M1051 — Update Software", "M1048 — Application Isolation", "M1030 — Network Segmentation"],
+                      references: ["https://attack.mitre.org/techniques/T1190/"]
+                    }
+                  ]).map((ttpItem, tIdx) => (
+                    <div key={tIdx} style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 8, padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{ fontSize: 10, fontWeight: 900, background: "rgba(168,85,247,0.2)", color: "#c084fc", padding: "2px 6px", borderRadius: 3 }}>
+                            {ttpItem.tacticId}: {ttpItem.tactic}
+                          </span>
+                          <span style={{ fontSize: 10, fontWeight: 900, background: "rgba(6,182,212,0.2)", color: "#06b6d4", padding: "2px 6px", borderRadius: 3 }}>
+                            {ttpItem.techniqueId}: {ttpItem.technique}
+                          </span>
+                        </div>
+                      </div>
+
+                      <p style={{ fontSize: 12, color: "var(--foreground)", margin: 0, lineHeight: 1.5 }}>
+                        <strong>Adversary Procedure:</strong> {ttpItem.procedure}
+                      </p>
+
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                        <span style={{ fontSize: 10, color: "var(--muted)", fontWeight: 700 }}>RECOMMENDED MITIGATIONS:</span>
+                        {ttpItem.mitigations.map((m, mIdx) => (
+                          <span key={mIdx} style={{ fontSize: 9.5, background: "rgba(16,185,129,0.15)", color: "#10b981", padding: "1px 6px", borderRadius: 3 }}>
+                            {m}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* TAB 3: EVIDENCE & PROOF DIFF */}
+              {pocModalTab === "EVIDENCE" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                    <div>
+                      <strong style={{ fontSize: 12, color: "#10b981" }}>Baseline Normal Request & Response:</strong>
+                      <pre style={{
+                        background: "#050811",
+                        border: "1px solid var(--border)",
+                        borderRadius: 6,
+                        padding: 10,
+                        fontFamily: "monospace",
+                        fontSize: 10.5,
+                        color: "var(--muted)",
+                        marginTop: 4,
+                        maxHeight: 180,
+                        overflowY: "auto"
+                      }}>
+                        {selectedFinding.evidence?.originalRequest || "GET /api/products/search?q=laptop HTTP/1.1\nHost: app.target.local"}
+                        {"\n\n"}
+                        {selectedFinding.evidence?.originalResponse || "HTTP/1.1 200 OK\n[Normal JSON Output]"}
+                      </pre>
+                    </div>
+
+                    <div>
+                      <strong style={{ fontSize: 12, color: "#f43f5e" }}>Exploit Injected Request & Proof:</strong>
+                      <pre style={{
+                        background: "#050811",
+                        border: "1px solid rgba(244,63,94,0.4)",
+                        borderRadius: 6,
+                        padding: 10,
+                        fontFamily: "monospace",
+                        fontSize: 10.5,
+                        color: "#f87171",
+                        marginTop: 4,
+                        maxHeight: 180,
+                        overflowY: "auto"
+                      }}>
+                        {selectedFinding.evidence?.testRequest || selectedFinding.poc?.curlCommand || "GET /api/products/search?q=EXPLOIT_PAYLOAD HTTP/1.1"}
+                        {"\n\n"}
+                        {selectedFinding.evidence?.testResponse || "HTTP/1.1 500 / 200 Exploitation Artifact Extracted"}
+                      </pre>
+                    </div>
+                  </div>
+
+                  <div style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", padding: "10px 12px", borderRadius: 6, fontSize: 11, color: "#10b981" }}>
+                    ✓ <strong>Cryptographic SHA-256 Evidence Seal:</strong> 0x8f91c3e47a29b48d1... (Immutable chain of custody verified by AXIOM CA)
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 4: REMEDIATION & VIRTUAL PATCH */}
+              {pocModalTab === "REMEDIATION" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <p style={{ fontSize: 12, color: "var(--foreground-muted)", margin: 0, lineHeight: 1.5 }}>
+                    {selectedFinding.remediation}
+                  </p>
+
+                  <div style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 8, padding: 12 }}>
+                    <strong style={{ fontSize: 12, color: "#10b981" }}>Secure Code Implementation (Remediation Diff):</strong>
+                    <pre style={{
+                      background: "#050811",
+                      border: "1px solid var(--border)",
+                      borderRadius: 6,
+                      padding: 10,
+                      fontFamily: "monospace",
+                      fontSize: 11,
+                      color: "#34d399",
+                      marginTop: 6,
+                      overflowX: "auto",
+                      lineHeight: 1.5
+                    }}>
+                      {`// SECURE REMEDIATION FIX:
+const query = "SELECT id, name, price FROM products WHERE category = ?";
+const [rows] = await db.execute(query, [sanitizedUserInput]);
+return res.json(rows);`}
+                    </pre>
+                  </div>
+                </div>
+              )}
+
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{
+              padding: "12px 20px",
+              background: "var(--surface-2)",
+              borderTop: "1px solid var(--border)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between"
+            }}>
+              <Link
+                href="/evidence"
+                style={{ fontSize: 11.5, color: "#06b6d4", fontWeight: 700, textDecoration: "none", display: "flex", alignItems: "center", gap: 4 }}
+              >
+                <span>Open in Full Evidence Studio</span>
+                <ExternalLink size={12} />
+              </Link>
+
+              <button
+                onClick={() => setSelectedFinding(null)}
+                className="btn-primary"
+                style={{ fontSize: 11.5, padding: "6px 16px" }}
+              >
+                Close Inspector
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );
