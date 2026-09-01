@@ -186,9 +186,9 @@ export default function SettingsPage() {
               <FormField label="Default Scan Profile" placeholder="Standard" defaultValue="Standard" />
               <div style={{ marginBottom:10 }}>
                 <div style={{ fontSize:10.5, color:"var(--muted)", marginBottom:4 }}>Default Rate Limit</div>
-                <select className="tool-select" style={{ width:"100%" }}>
+                <select className="tool-select" style={{ width:"100%" }} defaultValue="15 req/s — Standard">
                   <option>5 req/s — Safe</option>
-                  <option selected>15 req/s — Standard</option>
+                  <option>15 req/s — Standard</option>
                   <option>30 req/s — Aggressive</option>
                   <option>Custom</option>
                 </select>
