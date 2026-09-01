@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Search,
   ExternalLink,
@@ -108,6 +108,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Building2,
   Workflow,
   Globe,
+  Activity,
 };
 
 type EnvMode = "vercel" | "local" | "github";
@@ -141,11 +142,12 @@ export default function EcosystemLaunchpad() {
         const matchDesc = app.description.toLowerCase().includes(q);
         const matchVercel = app.vercelUrl.toLowerCase().includes(q);
         const matchPort = app.localPort ? String(app.localPort).includes(q) : false;
+        const matchPath = app.localPath ? app.localPath.toLowerCase().includes(q) : false;
         const matchTech = app.techStack.some((t) => t.toLowerCase().includes(q));
         const matchFeature = app.features.some((f) => f.toLowerCase().includes(q));
         const matchCategory = app.categoryLabel.toLowerCase().includes(q);
         const matchGithub = app.githubRepo ? app.githubRepo.toLowerCase().includes(q) : false;
-        return matchName || matchCode || matchDesc || matchVercel || matchPort || matchTech || matchFeature || matchCategory || matchGithub;
+        return matchName || matchCode || matchDesc || matchVercel || matchPort || matchPath || matchTech || matchFeature || matchCategory || matchGithub;
       }
       return true;
     });
@@ -162,6 +164,12 @@ export default function EcosystemLaunchpad() {
       return app.customDomain || app.vercelUrl;
     }
     if (envMode === "local") {
+      if (app.localPath && (app.localPath.startsWith("http://") || app.localPath.startsWith("https://"))) {
+        return app.localPath;
+      }
+      if (app.localPort && app.localPath && app.localPath.startsWith("/")) {
+        return `http://localhost:${app.localPort}${app.localPath}`;
+      }
       if (app.localPort) return `http://localhost:${app.localPort}`;
       if (app.internalRoute) return app.internalRoute;
       return app.customDomain || app.vercelUrl;
@@ -170,6 +178,18 @@ export default function EcosystemLaunchpad() {
       return app.githubUrl || `https://github.com/${app.githubRepo || "Danquah12/expedite-consults"}`;
     }
     return app.customDomain || app.vercelUrl;
+  };
+
+  const getLocalLaunchUrl = (app: EcosystemApp) => {
+    if (app.localPath && (app.localPath.startsWith("http://") || app.localPath.startsWith("https://"))) {
+      return app.localPath;
+    }
+    if (app.localPort && app.localPath && app.localPath.startsWith("/")) {
+      return `http://localhost:${app.localPort}${app.localPath}`;
+    }
+    if (app.localPort) return `http://localhost:${app.localPort}`;
+    if (app.internalRoute) return app.internalRoute;
+    return `http://localhost:3000`;
   };
 
   const isExternalUrl = (url: string) => {
@@ -208,7 +228,7 @@ export default function EcosystemLaunchpad() {
             </div>
             <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-800/40 text-xs text-cyan-300 font-mono">
               <Cloud className="size-3 text-cyan-400" />
-              <span>34 Vercel Cloud Nodes</span>
+              <span>{ECOSYSTEM_APPS.length} Worldwide Cloud Nodes</span>
             </div>
           </div>
         </div>
@@ -217,7 +237,7 @@ export default function EcosystemLaunchpad() {
         <div className="py-8 sm:py-12">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-indigo-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-semibold uppercase tracking-wider mb-4 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
             <Globe className="size-3.5 text-cyan-400" />
-            Global Cloud Access from Anywhere in the World
+            Global Cloud & Local Studio Access from Anywhere
           </div>
 
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white mb-4">
@@ -228,7 +248,7 @@ export default function EcosystemLaunchpad() {
           </h1>
 
           <p className="text-base sm:text-lg text-slate-400 max-w-3xl leading-relaxed">
-            Direct, single-click global access to all 34 cyber defense platforms, autonomous testing loops (Platforms 05–19), Sphera simulation studio, ConnectIn professional super app, campus operating ecosystems, and live Vercel cloud deployments.
+            Direct single-click access across all {ECOSYSTEM_APPS.length} platforms: Live Command Center Studios (Port 3018), Autonomous AST Defense (Platforms 05–19), Expedite Strike 2026 (Port 9012), Ægis SOC Platform (Port 9011), Sphera Worlds, ConnectIn OS, and Campus Operating Ecosystems.
           </p>
 
           {/* Global Vercel Deployment Notice Banner */}
@@ -245,7 +265,7 @@ export default function EcosystemLaunchpad() {
                   </span>
                 </div>
                 <div className="text-xs text-slate-400 mt-0.5">
-                  Every application below has a live Vercel production URL. Click &quot;Launch Cloud App&quot; to open the live instance from any network or device.
+                  Every application has a live Vercel production URL and configured local port. Switch between Cloud, Local Dev Ports, or GitHub using the switcher.
                 </div>
               </div>
             </div>
@@ -269,18 +289,18 @@ export default function EcosystemLaunchpad() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-6">
             <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md">
               <div className="text-xs text-slate-400 font-medium">Total Applications</div>
-              <div className="text-2xl sm:text-3xl font-extrabold text-white mt-1">34</div>
-              <div className="text-[11px] text-cyan-400 mt-0.5">Across 7 Strategic Pillars</div>
+              <div className="text-2xl sm:text-3xl font-extrabold text-white mt-1">{ECOSYSTEM_APPS.length}</div>
+              <div className="text-[11px] text-cyan-400 mt-0.5">Across {ECOSYSTEM_PILLARS.length - 1} Strategic Pillars</div>
             </div>
             <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md">
               <div className="text-xs text-slate-400 font-medium">Vercel Deployments</div>
               <div className="text-2xl sm:text-3xl font-extrabold text-white mt-1">100%</div>
-              <div className="text-[11px] text-emerald-400 mt-0.5">34 Worldwide Cloud URLs</div>
+              <div className="text-[11px] text-emerald-400 mt-0.5">{ECOSYSTEM_APPS.length} Worldwide Cloud URLs</div>
             </div>
             <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md">
               <div className="text-xs text-slate-400 font-medium">Configured Local Ports</div>
-              <div className="text-2xl sm:text-3xl font-extrabold text-white mt-1">16</div>
-              <div className="text-[11px] text-indigo-400 mt-0.5">Ports 3000 – 3019, 8090</div>
+              <div className="text-2xl sm:text-3xl font-extrabold text-white mt-1">18+</div>
+              <div className="text-[11px] text-indigo-400 mt-0.5">Ports 3000–3019, 9000, 9011, 9012</div>
             </div>
             <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md">
               <div className="text-xs text-slate-400 font-medium">GitHub Repositories</div>
@@ -298,7 +318,7 @@ export default function EcosystemLaunchpad() {
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search by app name, Vercel URL, port (e.g. 3011), tech stack (Next.js, ZAP), keyword..."
+                placeholder="Search by app name, Vercel URL, port (e.g. 3018, 9012), path (/mesh-health), tech stack..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-10 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all font-sans"
@@ -457,6 +477,7 @@ export default function EcosystemLaunchpad() {
             {filteredApps.map((app) => {
               const IconComponent = ICON_MAP[app.icon] || Shield;
               const targetUrl = getLaunchTarget(app);
+              const localUrl = getLocalLaunchUrl(app);
               const isExternal = isExternalUrl(targetUrl);
               const globalVercelUrl = app.customDomain || app.vercelUrl;
 
@@ -491,7 +512,7 @@ export default function EcosystemLaunchpad() {
                             </span>
                             {app.localPort && (
                               <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800/60">
-                                Port :{app.localPort}
+                                :{app.localPort}
                               </span>
                             )}
                           </div>
@@ -555,7 +576,7 @@ export default function EcosystemLaunchpad() {
 
                   {/* Bottom Action Footer */}
                   <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between gap-2 mt-auto">
-                    {/* Secondary Quick Links (GitHub, Local Port, Copy) */}
+                    {/* Secondary Quick Links (GitHub, Local Port/Path, Copy) */}
                     <div className="flex items-center gap-1.5">
                       {app.githubUrl && (
                         <a
@@ -569,17 +590,15 @@ export default function EcosystemLaunchpad() {
                         </a>
                       )}
 
-                      {app.localPort && (
-                        <a
-                          href={`http://localhost:${app.localPort}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-1.5 rounded-lg bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-emerald-400 border border-slate-800 transition-colors"
-                          title={`Launch Localhost :${app.localPort}`}
-                        >
-                          <Terminal className="size-3.5" />
-                        </a>
-                      )}
+                      <a
+                        href={localUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1.5 rounded-lg bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-emerald-400 border border-slate-800 transition-colors"
+                        title={`Launch Local: ${localUrl}`}
+                      >
+                        <Terminal className="size-3.5" />
+                      </a>
 
                       <button
                         onClick={() => handleCopy(app.id, globalVercelUrl)}
@@ -600,7 +619,9 @@ export default function EcosystemLaunchpad() {
                       >
                         <span>
                           {envMode === "local"
-                            ? `Port ${app.localPort || 3000}`
+                            ? app.localPort
+                              ? `Port ${app.localPort}`
+                              : "Local"
                             : envMode === "github"
                             ? "Repo"
                             : "Launch Cloud App"}
@@ -630,7 +651,7 @@ export default function EcosystemLaunchpad() {
                   <th className="py-3 px-4">Code / App Name</th>
                   <th className="py-3 px-4">Pillar / Category</th>
                   <th className="py-3 px-4">Global Vercel Production URL</th>
-                  <th className="py-3 px-4">Local Port</th>
+                  <th className="py-3 px-4">Local Port / Route</th>
                   <th className="py-3 px-4">GitHub Repository</th>
                   <th className="py-3 px-4 text-right">Global Launch</th>
                 </tr>
@@ -638,6 +659,7 @@ export default function EcosystemLaunchpad() {
               <tbody className="divide-y divide-slate-800/60">
                 {filteredApps.map((app) => {
                   const globalVercelUrl = app.customDomain || app.vercelUrl;
+                  const localUrl = getLocalLaunchUrl(app);
 
                   return (
                     <tr key={app.id} className="hover:bg-slate-800/40 transition-colors">
@@ -660,14 +682,16 @@ export default function EcosystemLaunchpad() {
                           <ExternalLink className="size-3 shrink-0" />
                         </a>
                       </td>
-                      <td className="py-3 px-4">
-                        {app.localPort ? (
-                          <span className="font-mono text-emerald-400 font-bold bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/50">
-                            :{app.localPort}
-                          </span>
-                        ) : (
-                          <span className="text-slate-600 font-mono">—</span>
-                        )}
+                      <td className="py-3 px-4 font-mono">
+                        <a
+                          href={localUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-emerald-400 hover:underline inline-flex items-center gap-1 font-bold bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/50"
+                        >
+                          <span>{localUrl.replace("http://localhost:", ":")}</span>
+                          <ExternalLink className="size-2.5" />
+                        </a>
                       </td>
                       <td className="py-3 px-4 font-mono text-slate-400">
                         {app.githubRepo ? (
