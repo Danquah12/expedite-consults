@@ -21,6 +21,22 @@ export const routes = {
 	incidentResponse: "/incident-response",
 	legal: "/legal",
 	assessment: "/assessment",
+	launchpad: {
+		title: "Digital Ecosystem Launchpad",
+		url: "/launchpad",
+	},
+	ecosystem: {
+		title: "Digital Ecosystem",
+		url: "/ecosystem",
+	},
+	connectin: {
+		title: "ConnectIn Professional OS",
+		url: "/connectin",
+	},
+	connectinLogin: {
+		title: "ConnectIn IAM & Security",
+		url: "/connectin-login",
+	},
 	campus: {
 		title: "Digital Campus (CampusSync)",
 		url: "/campus",
@@ -48,12 +64,12 @@ export const subroutes = {
 	],
 	insight: [
 		{
-			title: "Blogs",
-			url: routes.insight.url + "/blogs",
+			title: "🚀 Digital Ecosystem Launchpad",
+			url: "/launchpad",
 		},
 		{
-			title: "News",
-			url: routes.insight.url + "/news",
+			title: "💼 ConnectIn Professional OS",
+			url: "/connectin",
 		},
 		{
 			title: "VeritasLens Media Intelligence",
@@ -62,6 +78,14 @@ export const subroutes = {
 		{
 			title: "🎓 Digital Campus Platform",
 			url: "/campus",
+		},
+		{
+			title: "Blogs",
+			url: routes.insight.url + "/blogs",
+		},
+		{
+			title: "News",
+			url: routes.insight.url + "/news",
 		},
 		{
 			title: "🔐 Student Verification & Onboarding",

@@ -76,13 +76,37 @@ async function Footer({ services }: { services: GetServicesQueryResult }) {
 						</div>
 						<div className="basis-[25%] space-y-3 md:space-y-5">
 							<h2 className="text-base font-semibold text-primary">
-								Quick Links
+								Digital Ecosystem
 							</h2>
 
 							<ul className="space-y-2">
 								<li>
 									<Link
-										className="text-[0.8rem] lg:text-sm"
+										className="text-[0.8rem] lg:text-sm text-cyan-400 font-semibold hover:underline flex items-center gap-1"
+										href={routes.launchpad.url}
+									>
+										<span>🚀</span> Launchpad (All 34 Apps)
+									</Link>
+								</li>
+								<li>
+									<Link
+										className="text-[0.8rem] lg:text-sm hover:text-white"
+										href={routes.connectin.url}
+									>
+										ConnectIn Professional OS
+									</Link>
+								</li>
+								<li>
+									<Link
+										className="text-[0.8rem] lg:text-sm hover:text-white"
+										href={routes.campus.url}
+									>
+										Digital Campus Platform
+									</Link>
+								</li>
+								<li>
+									<Link
+										className="text-[0.8rem] lg:text-sm hover:text-white"
 										href={routes.about.url}
 									>
 										About Expedite Consults
