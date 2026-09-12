@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 import { UserProfile } from "@/lib/linkedin-data"
 import { saveStoredUser, saveStoredSessionRoute } from "@/lib/connectin-storage"
+import { createUniqueUserProfile } from "@/lib/connectin-profile"
 import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
 
 export interface AuthPersona {
@@ -397,38 +398,38 @@ export function ConnectInAuthModal({
   const handlePersonaLogin = async (persona: AuthPersona) => {
     setIsLoading(true)
     try {
-      const res = await fetch("/api/connectin/auth/register", {
+      const cleanName = persona.name.replace(/\s*\([^)]*\)/g, "").trim()
+      const richProfile = createUniqueUserProfile({
+        id: persona.id,
+        name: cleanName,
+        email: persona.email,
+        role: persona.role,
+        avatar: persona.avatar,
+        headline: persona.title
+      })
+
+      saveStoredUser(richProfile)
+      saveStoredSessionRoute(persona.defaultTab, persona.defaultWorkspace)
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("connectin_is_signed_out")
+      }
+
+      // Notify parent app immediately for instant reactivity
+      onLoginSuccess(richProfile, persona.defaultTab, persona.defaultWorkspace)
+
+      // Sync in background
+      fetch("/api/connectin/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          firstName: persona.name.split(" ")[0],
-          lastName: persona.name.split(" ").slice(1).join(" "),
+          firstName: cleanName.split(" ")[0],
+          lastName: cleanName.split(" ").slice(1).join(" "),
           email: persona.email,
           role: persona.role,
           twoFactorChannel: "email"
         })
-      })
-      const data = await res.json()
+      }).catch(() => {})
 
-      const targetCode = data.backupCode || data.devCode || "749204"
-      const verifyRes = await fetch("/api/connectin/auth/verify-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          target: persona.email,
-          code: targetCode
-        })
-      })
-      const verifyData = await verifyRes.json()
-
-      if (verifyData.profile) {
-        saveStoredUser(verifyData.profile)
-        saveStoredSessionRoute(persona.defaultTab, persona.defaultWorkspace)
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("connectin_is_signed_out")
-        }
-        onLoginSuccess(verifyData.profile, persona.defaultTab, persona.defaultWorkspace)
-      }
       onClose()
     } catch {
       onClose()
