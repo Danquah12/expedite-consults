@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 import { UserProfile } from "@/lib/linkedin-data"
 import { saveStoredUser, saveStoredSessionRoute } from "@/lib/connectin-storage"
+import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
 
 export interface AuthPersona {
   id: string
@@ -342,14 +343,7 @@ export function ConnectInAuthModal({
       <div className="relative w-full max-w-[440px] bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-7 sm:p-8 text-zinc-900 dark:text-zinc-100 shadow-2xl space-y-5">
         {/* Top Bar */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0A66C2] text-white font-black text-lg">
-              in
-            </span>
-            <span className="font-bold text-lg text-[#0A66C2] dark:text-white">
-              Connect<span className="text-[#0A66C2]">In</span>
-            </span>
-          </div>
+          <ConnectInLogo size="sm" showSubtitle={true} />
 
           <button
             onClick={onClose}

@@ -20,6 +20,7 @@ import {
   ChevronDown,
   ChevronUp
 } from "lucide-react"
+import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
 import { DEMO_AUTH_PERSONAS, AuthPersona } from "@/components/linkedin/ConnectInAuthModal"
 import { saveStoredUser, saveStoredSessionRoute } from "@/lib/connectin-storage"
 
@@ -268,12 +269,7 @@ export default function ConnectInLoginPage() {
       {/* ─── 1. TOP LINKEDIN-STYLE NAVBAR ─── */}
       <header className="w-full bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 px-6 sm:px-12 py-3 flex items-center justify-between shadow-xs">
         <Link href="/connectin" className="flex items-center gap-1.5 group">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0A66C2] text-white font-black text-xl shadow-xs group-hover:scale-105 transition-transform">
-            in
-          </span>
-          <span className="font-bold text-xl tracking-tight text-[#0A66C2] dark:text-white">
-            Connect<span className="text-[#0A66C2]">In</span>
-          </span>
+          <ConnectInLogo size="md" showSubtitle={true} />
         </Link>
 
         {/* Right Switch Button: If on sign in, show Join now; if on join, show Sign in */}

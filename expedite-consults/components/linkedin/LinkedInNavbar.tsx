@@ -42,6 +42,7 @@ import {
   Key
 } from "lucide-react"
 import { UserProfile } from "@/lib/linkedin-data"
+import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
 
 interface LinkedInNavbarProps {
   user: UserProfile
@@ -159,15 +160,10 @@ export function LinkedInNavbar({
         <div className="flex items-center gap-2.5 flex-1 max-w-xs sm:max-w-sm shrink-0">
           <button
             onClick={() => onSelectTab('home')}
-            className="flex items-center gap-1.5 focus:outline-none group shrink-0"
+            className="flex items-center focus:outline-none group shrink-0"
             title="ConnectIn Home"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-[#0052cc] via-[#0070f3] to-[#00c6ff] text-white font-black text-lg tracking-tight shadow-md shadow-sky-500/25 transition-transform group-hover:scale-105">
-              E
-            </div>
-            <span className="hidden xl:inline-block font-extrabold text-base tracking-tight text-zinc-900 dark:text-zinc-100">
-              Connect<span className="text-[#0A66C2]">In</span>
-            </span>
+            <ConnectInLogo size="sm" showSubtitle={false} />
           </button>
 
           {/* Search Input Box (Clicks open Universal Omnisearch) */}
