@@ -19,18 +19,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid or expired verification code." }, { status: 401 })
     }
 
-    // Determine displayName intelligently
+    // Determine displayName intelligently from user input or email structure
     let displayName = incomingName?.trim()
-    if (!displayName || displayName.toLowerCase() === "kasiedu") {
-      if (cleanTarget.includes("kasiedu") || cleanTarget.includes("asiedudanquah") || cleanTarget.includes("asiedu") || cleanTarget.includes("emmanuel")) {
-        displayName = "Emmanuel Asiedu"
+    if (!displayName) {
+      const prefix = cleanTarget.split("@")[0] || ""
+      if (prefix.includes(".") || prefix.includes("_") || prefix.includes("-")) {
+        displayName = prefix.split(/[._-]/).filter(Boolean).map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)).join(" ")
       } else {
-        const prefix = cleanTarget.split("@")[0] || ""
-        if (prefix.includes(".") || prefix.includes("_") || prefix.includes("-")) {
-          displayName = prefix.split(/[._-]/).filter(Boolean).map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)).join(" ")
-        } else {
-          displayName = prefix.charAt(0).toUpperCase() + prefix.slice(1)
-        }
+        displayName = prefix ? prefix.charAt(0).toUpperCase() + prefix.slice(1) : "ConnectIn Member"
       }
     }
 

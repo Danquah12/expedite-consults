@@ -23,7 +23,7 @@ import {
 import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
 import { DEMO_AUTH_PERSONAS, AuthPersona } from "@/components/linkedin/ConnectInAuthModal"
 import { saveStoredUser, saveStoredSessionRoute } from "@/lib/connectin-storage"
-import { createUniqueUserProfile } from "@/lib/connectin-profile"
+import { createUniqueUserProfile, resolveDisplayName } from "@/lib/connectin-profile"
 
 export default function ConnectInLoginPage() {
   const router = useRouter()
@@ -47,16 +47,16 @@ export default function ConnectInLoginPage() {
   const [joinEmail, setJoinEmail] = useState("")
   const [joinPassword, setJoinPassword] = useState("")
   const [joinRole, setJoinRole] = useState<'personal' | 'enterprise' | 'creator' | 'seller' | 'developer'>('personal')
-  const [joinStep, setJoinStep] = useState<'form' | '2fa'>('form')
+  const [joinStep, setJoinStep] = useState<'details' | '2fa'>('details')
   const [join2FACode, setJoin2FACode] = useState("")
   const [joinBackupCode, setJoinBackupCode] = useState<string | null>(null)
 
-  // Loading & Feedback
+  // UI Feedback States
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
-  // Demo Personas Drawer (Collapsed by default for clean UX)
+  // Demo Persona Drawer Toggle
   const [isDemoDrawerOpen, setIsDemoDrawerOpen] = useState(false)
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -71,7 +71,7 @@ export default function ConnectInLoginPage() {
     setIsLoading(true)
     setErrorMessage(null)
     try {
-      const emailToUse = signInEmail.includes("@") ? signInEmail : "asiedudanquah@gmail.com"
+      const emailToUse = signInEmail.includes("@") ? signInEmail : "member@connectin.com"
       const resolvedName = resolveDisplayName(undefined, emailToUse)
 
       // Register or update profile with Google SSO
@@ -79,8 +79,8 @@ export default function ConnectInLoginPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          firstName: resolvedName.split(" ")[0] || "Emmanuel",
-          lastName: resolvedName.split(" ").slice(1).join(" ") || "Asiedu",
+          firstName: resolvedName.split(" ")[0] || "Member",
+          lastName: resolvedName.split(" ").slice(1).join(" ") || "",
           email: emailToUse,
           role: "personal",
           twoFactorChannel: "email"
@@ -127,15 +127,15 @@ export default function ConnectInLoginPage() {
     setIsLoading(true)
     setErrorMessage(null)
     try {
-      const emailToUse = signInEmail.includes("@") ? signInEmail : "kasiedu@expedite-consults.com"
+      const emailToUse = signInEmail.includes("@") ? signInEmail : "enterprise.member@expediteconsults.com"
       const resolvedName = resolveDisplayName(undefined, emailToUse)
 
       await fetch("/api/connectin/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          firstName: resolvedName.split(" ")[0] || "Emmanuel",
-          lastName: resolvedName.split(" ").slice(1).join(" ") || "Asiedu",
+          firstName: resolvedName.split(" ")[0] || "Executive",
+          lastName: resolvedName.split(" ").slice(1).join(" ") || "",
           email: emailToUse,
           role: "enterprise",
           twoFactorChannel: "email"

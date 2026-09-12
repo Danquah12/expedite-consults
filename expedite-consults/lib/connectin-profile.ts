@@ -12,19 +12,13 @@ export interface UserInitParams {
 }
 
 export function resolveDisplayName(rawName?: string, email?: string): string {
-  if (rawName && rawName.trim().length > 0 && rawName.trim().toLowerCase() !== "kasiedu") {
+  if (rawName && rawName.trim().length > 0) {
     return rawName.trim()
   }
   const cleanEmail = (email || "").toLowerCase().trim()
-  if (cleanEmail.includes("kasiedu") || cleanEmail.includes("asiedudanquah") || cleanEmail.includes("asiedu") || cleanEmail.includes("emmanuel")) {
-    return "Emmanuel Asiedu"
-  }
   const prefix = cleanEmail.split("@")[0] || ""
   if (prefix.includes(".") || prefix.includes("_") || prefix.includes("-")) {
     return prefix.split(/[._-]/).filter(Boolean).map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(" ")
-  }
-  if (rawName && rawName.trim().length > 0) {
-    return rawName.trim()
   }
   return prefix ? prefix.charAt(0).toUpperCase() + prefix.slice(1) : "ConnectIn Member"
 }

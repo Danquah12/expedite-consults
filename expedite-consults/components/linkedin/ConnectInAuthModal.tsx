@@ -150,15 +150,15 @@ export function ConnectInAuthModal({
     setIsLoading(true)
     setErrorMessage(null)
     try {
-      const emailToUse = signInEmail.includes("@") ? signInEmail : "asiedudanquah@gmail.com"
+      const emailToUse = signInEmail.includes("@") ? signInEmail : "member@connectin.com"
       const resolvedName = resolveDisplayName(undefined, emailToUse)
 
       await fetch("/api/connectin/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          firstName: resolvedName.split(" ")[0] || "Emmanuel",
-          lastName: resolvedName.split(" ").slice(1).join(" ") || "Asiedu",
+          firstName: resolvedName.split(" ")[0] || "Member",
+          lastName: resolvedName.split(" ").slice(1).join(" ") || "",
           email: emailToUse,
           role: "personal",
           twoFactorChannel: "email"
@@ -201,15 +201,15 @@ export function ConnectInAuthModal({
     setIsLoading(true)
     setErrorMessage(null)
     try {
-      const emailToUse = signInEmail.includes("@") ? signInEmail : "kasiedu@expedite-consults.com"
+      const emailToUse = signInEmail.includes("@") ? signInEmail : "enterprise.member@expediteconsults.com"
       const resolvedName = resolveDisplayName(undefined, emailToUse)
 
       await fetch("/api/connectin/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          firstName: resolvedName.split(" ")[0] || "Emmanuel",
-          lastName: resolvedName.split(" ").slice(1).join(" ") || "Asiedu",
+          firstName: resolvedName.split(" ")[0] || "Executive",
+          lastName: resolvedName.split(" ").slice(1).join(" ") || "",
           email: emailToUse,
           role: "enterprise",
           twoFactorChannel: "email"
