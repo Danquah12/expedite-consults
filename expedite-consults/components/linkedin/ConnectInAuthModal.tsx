@@ -199,7 +199,11 @@ export function ConnectInAuthModal({
         setOtpChallengeToken(data.otpChallengeToken)
       }
       setSignInStep('2fa')
-      setSuccessMessage(`Security code sent to ${data.target || signInEmail}`)
+      setSuccessMessage(
+        data.code
+          ? `Your access code is: ${data.code}`
+          : `Security code sent to ${data.target || signInEmail}`
+      )
     } catch (err: any) {
       setErrorMessage(err.message || "Failed to sign in")
     } finally {
@@ -233,11 +237,16 @@ export function ConnectInAuthModal({
         throw new Error(data.error || "Invalid verification code.")
       }
 
-      const profileToSave = data.profile || createUniqueUserProfile({
-        name: resolvedName,
+      // Always inject email — API's UserProfileRecord has no email field
+      const profileToSave = {
+        ...(data.profile || createUniqueUserProfile({
+          name: resolvedName,
+          email: signInEmail,
+          role: "personal"
+        })),
         email: signInEmail,
-        role: "personal"
-      })
+        id: data.profile?.userId || data.user?.id || data.profile?.id
+      }
 
       saveStoredUser(profileToSave)
       saveStoredSessionRoute('home', 'personal')
@@ -249,9 +258,6 @@ export function ConnectInAuthModal({
       setTimeout(() => {
         onLoginSuccess(profileToSave, 'home', 'personal')
         onClose()
-        if (typeof window !== "undefined") {
-          window.location.href = "/linkedin"
-        }
       }, 150)
     } catch (err: any) {
       setSuccessMessage(null)
@@ -340,11 +346,16 @@ export function ConnectInAuthModal({
         joinRole === 'creator' ? 'creator' :
         joinRole === 'seller' ? 'seller' : 'personal'
 
-      const profileToSave = data.profile || createUniqueUserProfile({
-        name: resolvedName,
+      // Always inject email — API's UserProfileRecord has no email field
+      const profileToSave = {
+        ...(data.profile || createUniqueUserProfile({
+          name: resolvedName,
+          email: joinEmail,
+          role: joinRole
+        })),
         email: joinEmail,
-        role: joinRole
-      })
+        id: data.profile?.userId || data.user?.id || data.profile?.id
+      }
 
       saveStoredUser(profileToSave)
       saveStoredSessionRoute(targetTab, targetWorkspace)
@@ -356,9 +367,6 @@ export function ConnectInAuthModal({
       setTimeout(() => {
         onLoginSuccess(profileToSave, targetTab, targetWorkspace)
         onClose()
-        if (typeof window !== "undefined") {
-          window.location.href = "/linkedin"
-        }
       }, 150)
     } catch (err: any) {
       setSuccessMessage(null)
