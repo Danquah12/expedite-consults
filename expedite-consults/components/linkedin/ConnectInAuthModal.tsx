@@ -420,6 +420,8 @@ export function ConnectInAuthModal({
     }
   }
 
+  if (!isOpen) return null
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-in fade-in duration-200">
       <div className="relative w-full max-w-[440px] bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-7 sm:p-8 text-zinc-900 dark:text-zinc-100 shadow-2xl space-y-5">
