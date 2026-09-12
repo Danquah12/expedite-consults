@@ -128,81 +128,67 @@ export default function LinkedInPage() {
   const [selectedTagFilter, setSelectedTagFilter] = useState<string | null>(null)
   const [hasHydrated, setHasHydrated] = useState(false)
 
-  // Authentication Lifecycle & Hydration Check (supports both Local Storage and NextAuth Google/Entra ID OAuth)
+  // Authentication Lifecycle — optimistic-first, never redirects, shows modal if needed
   useEffect(() => {
     let isMounted = true
 
     const initializeAuth = async () => {
       if (typeof window === "undefined") return
 
-      const explicitUser = getExplicitStoredUser()
       const isSignedOut = localStorage.getItem("connectin_is_signed_out") === "true"
-      const wasJustAuthenticated = sessionStorage.getItem("connectin_authenticated") === "true"
 
-      // 1. If user just authenticated this session, trust it immediately
-      if (wasJustAuthenticated && explicitUser) {
-        sessionStorage.removeItem("connectin_authenticated")
-        localStorage.removeItem("connectin_is_signed_out")
-        setIsAuthenticated(true)
-        setUserData(explicitUser)
-        const savedPosts = loadStoredPosts()
-        const savedConnections = loadStoredConnections()
-        const savedRoute = loadStoredSessionRoute()
-        if (savedPosts && savedPosts.length > 0) setPosts(savedPosts)
-        if (savedConnections && savedConnections.length > 0) setSuggestedPeople(savedConnections)
-        if (savedRoute.tab) setActiveTab(savedRoute.tab as any)
-        if (savedRoute.workspace) setActiveWorkspace(savedRoute.workspace)
-        setHasHydrated(true)
-        // Still refresh from server in background, but NEVER redirect
+      // If explicitly signed out, show auth modal immediately
+      if (isSignedOut) {
+        if (isMounted) {
+          setIsAuthenticated(false)
+          setIsAuthModalOpen(true)
+          setHasHydrated(true)
+        }
+        return
+      }
+
+      // Load whatever user data exists in localStorage (may be null for brand-new visitors)
+      const explicitUser = getExplicitStoredUser()
+
+      if (explicitUser) {
+        // User found in localStorage — hydrate immediately, stay on page
+        if (isMounted) {
+          setIsAuthenticated(true)
+          setUserData(explicitUser)
+          const savedPosts = loadStoredPosts()
+          const savedConnections = loadStoredConnections()
+          const savedRoute = loadStoredSessionRoute()
+          if (savedPosts && savedPosts.length > 0) setPosts(savedPosts)
+          if (savedConnections && savedConnections.length > 0) setSuggestedPeople(savedConnections)
+          if (savedRoute.tab) setActiveTab(savedRoute.tab as any)
+          if (savedRoute.workspace) setActiveWorkspace(savedRoute.workspace)
+          setHasHydrated(true)
+        }
+        // Refresh from server in background — never causes redirect or modal
         try {
           const meRes = await fetch("/api/connectin/auth/me")
           if (meRes.ok && isMounted) {
             const meData = await meRes.json()
             if (meData.authenticated && meData.profile) {
-              saveStoredUser(meData.profile)
-              setUserData(meData.profile)
+              const refreshed = { ...meData.profile, email: meData.profile.email || explicitUser.email }
+              saveStoredUser(refreshed)
+              setUserData(refreshed)
             }
           }
-        } catch (e) { /* silent */ }
+        } catch (e) { /* silent background refresh */ }
         return
       }
 
-      // 2. If explicit user is in localStorage and not signed out, stay on page
-      if (explicitUser && !isSignedOut) {
-        localStorage.removeItem("connectin_is_signed_out")
-        setIsAuthenticated(true)
-        setUserData(explicitUser)
-        const savedPosts = loadStoredPosts()
-        const savedConnections = loadStoredConnections()
-        const savedRoute = loadStoredSessionRoute()
-        if (savedPosts && savedPosts.length > 0) setPosts(savedPosts)
-        if (savedConnections && savedConnections.length > 0) setSuggestedPeople(savedConnections)
-        if (savedRoute.tab) setActiveTab(savedRoute.tab as any)
-        if (savedRoute.workspace) setActiveWorkspace(savedRoute.workspace)
-        setHasHydrated(true)
-        // Refresh from server in background, but NEVER redirect based on this
-        try {
-          const meRes = await fetch("/api/connectin/auth/me")
-          if (meRes.ok && isMounted) {
-            const meData = await meRes.json()
-            if (meData.authenticated && meData.profile) {
-              saveStoredUser(meData.profile)
-              setUserData(meData.profile)
-            }
-          }
-        } catch (e) { /* silent */ }
-        return
-      }
-
-      // 3. No localStorage user — check server session (NextAuth OAuth or signed cookie)
+      // No localStorage user — try server session
       try {
         const meRes = await fetch("/api/connectin/auth/me")
-        if (meRes.ok) {
+        if (meRes.ok && isMounted) {
           const meData = await meRes.json()
-          if (meData.authenticated && meData.profile && isMounted) {
+          if (meData.authenticated && meData.profile) {
             localStorage.removeItem("connectin_is_signed_out")
-            saveStoredUser(meData.profile)
-            setUserData(meData.profile)
+            const profile = { ...meData.profile, email: meData.profile.email || meData.user?.email || "" }
+            saveStoredUser(profile)
+            setUserData(profile)
             setIsAuthenticated(true)
             const savedPosts = loadStoredPosts()
             const savedConnections = loadStoredConnections()
@@ -213,21 +199,19 @@ export default function LinkedInPage() {
           }
         }
       } catch (e) {
-        console.warn("[Auth Lifecycle] /api/connectin/auth/me notice:", e)
+        console.warn("[Auth] /me check:", e)
       }
 
-      // 4. Truly no session anywhere — redirect to login
+      // No session anywhere — show auth modal IN-PAGE (no redirect, no bounce)
       if (isMounted) {
         setIsAuthenticated(false)
-        router.replace("/connectin-login")
+        setIsAuthModalOpen(true)
+        setHasHydrated(true)
       }
     }
 
     initializeAuth()
-
-    return () => {
-      isMounted = false
-    }
+    return () => { isMounted = false }
   }, [router])
 
   // Sign out handler: Completely signs out and redirects to login without background
@@ -513,11 +497,7 @@ export default function LinkedInPage() {
     )
   })
 
-  if (isAuthenticated === false) {
-    return null
-  }
-
-  if (isAuthenticated === null) {
+  if (isAuthenticated === null && !hasHydrated) {
     return (
       <div className="min-h-screen bg-[#F4F2EE] dark:bg-[#000000] flex flex-col items-center justify-center gap-3">
         <ConnectInLogo size="lg" showSubtitle={true} className="animate-pulse" />
