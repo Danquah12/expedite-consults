@@ -137,37 +137,64 @@ export default function LinkedInPage() {
 
       const explicitUser = getExplicitStoredUser()
       const isSignedOut = localStorage.getItem("connectin_is_signed_out") === "true"
+      const wasJustAuthenticated = sessionStorage.getItem("connectin_authenticated") === "true"
 
-      // 1. If explicit user profile is found, hydrate immediately and remain on workspace
-      if (explicitUser) {
+      // 1. If user just authenticated this session, trust it immediately
+      if (wasJustAuthenticated && explicitUser) {
+        sessionStorage.removeItem("connectin_authenticated")
         localStorage.removeItem("connectin_is_signed_out")
         setIsAuthenticated(true)
+        setUserData(explicitUser)
         const savedPosts = loadStoredPosts()
         const savedConnections = loadStoredConnections()
         const savedRoute = loadStoredSessionRoute()
         if (savedPosts && savedPosts.length > 0) setPosts(savedPosts)
-        setUserData(explicitUser)
         if (savedConnections && savedConnections.length > 0) setSuggestedPeople(savedConnections)
         if (savedRoute.tab) setActiveTab(savedRoute.tab as any)
         if (savedRoute.workspace) setActiveWorkspace(savedRoute.workspace)
         setHasHydrated(true)
-      } else if (!isSignedOut) {
-        const savedUser = loadStoredUser()
-        if (savedUser) {
-          setIsAuthenticated(true)
-          const savedPosts = loadStoredPosts()
-          const savedConnections = loadStoredConnections()
-          const savedRoute = loadStoredSessionRoute()
-          if (savedPosts && savedPosts.length > 0) setPosts(savedPosts)
-          setUserData(savedUser)
-          if (savedConnections && savedConnections.length > 0) setSuggestedPeople(savedConnections)
-          if (savedRoute.tab) setActiveTab(savedRoute.tab as any)
-          if (savedRoute.workspace) setActiveWorkspace(savedRoute.workspace)
-          setHasHydrated(true)
-        }
+        // Still refresh from server in background, but NEVER redirect
+        try {
+          const meRes = await fetch("/api/connectin/auth/me")
+          if (meRes.ok && isMounted) {
+            const meData = await meRes.json()
+            if (meData.authenticated && meData.profile) {
+              saveStoredUser(meData.profile)
+              setUserData(meData.profile)
+            }
+          }
+        } catch (e) { /* silent */ }
+        return
       }
 
-      // 2. Check server session (Stateless Signed Cookie or NextAuth Google/Microsoft Entra ID OAuth)
+      // 2. If explicit user is in localStorage and not signed out, stay on page
+      if (explicitUser && !isSignedOut) {
+        localStorage.removeItem("connectin_is_signed_out")
+        setIsAuthenticated(true)
+        setUserData(explicitUser)
+        const savedPosts = loadStoredPosts()
+        const savedConnections = loadStoredConnections()
+        const savedRoute = loadStoredSessionRoute()
+        if (savedPosts && savedPosts.length > 0) setPosts(savedPosts)
+        if (savedConnections && savedConnections.length > 0) setSuggestedPeople(savedConnections)
+        if (savedRoute.tab) setActiveTab(savedRoute.tab as any)
+        if (savedRoute.workspace) setActiveWorkspace(savedRoute.workspace)
+        setHasHydrated(true)
+        // Refresh from server in background, but NEVER redirect based on this
+        try {
+          const meRes = await fetch("/api/connectin/auth/me")
+          if (meRes.ok && isMounted) {
+            const meData = await meRes.json()
+            if (meData.authenticated && meData.profile) {
+              saveStoredUser(meData.profile)
+              setUserData(meData.profile)
+            }
+          }
+        } catch (e) { /* silent */ }
+        return
+      }
+
+      // 3. No localStorage user — check server session (NextAuth OAuth or signed cookie)
       try {
         const meRes = await fetch("/api/connectin/auth/me")
         if (meRes.ok) {
@@ -189,12 +216,7 @@ export default function LinkedInPage() {
         console.warn("[Auth Lifecycle] /api/connectin/auth/me notice:", e)
       }
 
-      // 3. If explicit user profile or saved active profile exists, keep them on workspace
-      if (explicitUser || (!isSignedOut && loadStoredUser())) {
-        return
-      }
-
-      // 4. Only redirect to login if no stored profile and no server session
+      // 4. Truly no session anywhere — redirect to login
       if (isMounted) {
         setIsAuthenticated(false)
         router.replace("/connectin-login")
