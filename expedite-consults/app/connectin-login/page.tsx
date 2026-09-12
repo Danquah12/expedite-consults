@@ -172,11 +172,17 @@ export default function ConnectInLoginPage() {
         throw new Error(data.error || "Invalid verification code.")
       }
 
-      const profileToSave = data.profile || createUniqueUserProfile({
-        name: resolvedName,
+      // Always inject email into profile — API returns UserProfileRecord which has no email field,
+      // but getExplicitStoredUser() requires email to detect a real stored user
+      const profileToSave = {
+        ...(data.profile || createUniqueUserProfile({
+          name: resolvedName,
+          email: signInEmail,
+          role: "personal"
+        })),
         email: signInEmail,
-        role: "personal"
-      })
+        id: data.profile?.userId || data.user?.id || data.profile?.id
+      }
 
       saveStoredUser(profileToSave)
       saveStoredSessionRoute('home', 'personal')
@@ -288,12 +294,16 @@ export default function ConnectInLoginPage() {
         joinRole === 'creator' ? 'creator' :
         joinRole === 'seller' ? 'seller' : 'personal'
 
-      const profileToSave = data.profile || createUniqueUserProfile({
-        name: resolvedName,
+      const profileToSave = {
+        ...(data.profile || createUniqueUserProfile({
+          name: resolvedName,
+          email: joinEmail,
+          phone: joinPhone,
+          role: joinRole
+        })),
         email: joinEmail,
-        phone: joinPhone,
-        role: joinRole
-      })
+        id: data.profile?.userId || data.user?.id || data.profile?.id
+      }
 
       saveStoredUser(profileToSave)
       saveStoredSessionRoute(targetTab, targetWorkspace)

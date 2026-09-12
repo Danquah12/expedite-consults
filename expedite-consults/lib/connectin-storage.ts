@@ -41,18 +41,21 @@ export function getExplicitStoredUser(): UserProfile | null {
     const saved = localStorage.getItem(STORAGE_KEYS.USER) || localStorage.getItem('connectin_user_v1')
     if (saved) {
       const parsed = JSON.parse(saved)
-      if (parsed && parsed.name && parsed.email) {
+      // Only require name — email may be missing from UserProfileRecord responses
+      if (parsed && parsed.name) {
+        const email = parsed.email || `${parsed.name.toLowerCase().replace(/\s+/g, '.')}@connectin.com`
         return {
           ...createUniqueUserProfile({
-            id: parsed.id,
+            id: parsed.id || parsed.userId,
             name: parsed.name,
-            email: parsed.email || `${parsed.name.toLowerCase().replace(/\s+/g, '.')}@connectin.com`,
+            email,
             avatar: parsed.avatar,
             headline: parsed.headline,
             location: parsed.location,
             role: parsed.role || 'personal'
           }),
-          ...parsed
+          ...parsed,
+          email // ensure email is always present
         }
       }
     }
