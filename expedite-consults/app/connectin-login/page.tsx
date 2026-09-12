@@ -157,6 +157,7 @@ export default function ConnectInLoginPage() {
     setSuccessMessage("Verifying security code...")
 
     try {
+      const resolvedName = resolveDisplayName("", signInEmail)
       const verifyTarget = activeSignInTarget || (signInChannel === 'email' ? signInEmail : (signInPhone || signInEmail))
       const res = await fetch("/api/connectin/auth/verify-otp", {
         method: "POST",
