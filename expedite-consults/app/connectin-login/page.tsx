@@ -2,59 +2,228 @@
 
 import React, { useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import {
-  ShieldCheck,
   Lock,
-  Key,
   Mail,
-  Smartphone,
-  User,
-  Building2,
-  Sparkles,
-  ArrowRight,
+  ShieldCheck,
   CheckCircle2,
   AlertCircle,
   Loader2,
-  Fingerprint
+  Eye,
+  EyeOff,
+  ArrowRight,
+  Sparkles,
+  Users,
+  Building2,
+  Briefcase,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react"
 import { DEMO_AUTH_PERSONAS, AuthPersona } from "@/components/linkedin/ConnectInAuthModal"
 import { saveStoredUser, saveStoredSessionRoute } from "@/lib/connectin-storage"
-import { UserProfile } from "@/lib/linkedin-data"
 
 export default function ConnectInLoginPage() {
   const router = useRouter()
-  const [selectedPersona, setSelectedPersona] = useState<AuthPersona>(DEMO_AUTH_PERSONAS[0])
-  const [authMode, setAuthMode] = useState<'credentials' | 'register' | 'signin' | 'sso'>('credentials')
 
-  // Sign In State
-  const [emailInput, setEmailInput] = useState("")
-  const [passwordInput, setPasswordInput] = useState("")
-  const [loginStep, setLoginStep] = useState<'credentials' | 'mfa'>('credentials')
-  const [login2faChannel, setLogin2faChannel] = useState<'email' | 'sms'>('email')
-  const [login2faCode, setLogin2faCode] = useState("")
-  const [loginBackupCode, setLoginBackupCode] = useState<string | null>(null)
+  // Main Mode: 'signin' (Sign in) vs 'join' (Join now / Register)
+  const [activeView, setActiveView] = useState<'signin' | 'join'>('signin')
 
-  // Registration State
-  const [regFirstName, setRegFirstName] = useState("")
-  const [regLastName, setRegLastName] = useState("")
-  const [regEmail, setRegEmail] = useState("")
-  const [regPhone, setRegPhone] = useState("+1 (240) 555-0192")
-  const [regPassword, setRegPassword] = useState("")
-  const [regRole, setRegRole] = useState<'personal' | 'enterprise' | 'creator' | 'seller' | 'developer'>('personal')
-  const [reg2faChannel, setReg2faChannel] = useState<'email' | 'sms'>('email')
-  const [regStep, setRegStep] = useState<'form' | 'verify' | 'confirmed'>('form')
-  const [verificationCode, setVerificationCode] = useState("")
-  const [regBackupCode, setRegBackupCode] = useState<string | null>(null)
+  // Password Visibility Toggle
+  const [showPassword, setShowPassword] = useState(false)
 
-  const [isAuthenticating, setIsAuthenticating] = useState(false)
-  const [statusFeedback, setStatusFeedback] = useState<string | null>(null)
+  // Sign In Form State
+  const [signInEmail, setSignInEmail] = useState("")
+  const [signInPassword, setSignInPassword] = useState("")
+  const [signInStep, setSignInStep] = useState<'credentials' | '2fa'>('credentials')
+  const [signIn2FACode, setSignIn2FACode] = useState("")
+  const [signInBackupCode, setSignInBackupCode] = useState<string | null>(null)
+
+  // Join Now (Registration) Form State
+  const [joinFirstName, setJoinFirstName] = useState("")
+  const [joinLastName, setJoinLastName] = useState("")
+  const [joinEmail, setJoinEmail] = useState("")
+  const [joinPassword, setJoinPassword] = useState("")
+  const [joinRole, setJoinRole] = useState<'personal' | 'enterprise' | 'creator' | 'seller' | 'developer'>('personal')
+  const [joinStep, setJoinStep] = useState<'form' | '2fa'>('form')
+  const [join2FACode, setJoin2FACode] = useState("")
+  const [joinBackupCode, setJoinBackupCode] = useState<string | null>(null)
+
+  // Loading & Feedback
+  const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
-  // 1. One-Click Persona Login (Anchor Demo)
-  const handlePersonaLogin = async (persona: AuthPersona) => {
-    setIsAuthenticating(true)
+  // Demo Personas Drawer (Collapsed by default for clean UX)
+  const [isDemoDrawerOpen, setIsDemoDrawerOpen] = useState(false)
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // 1. SIGN IN FLOW (Email & Password -> 2FA -> Instant Login)
+  // ─────────────────────────────────────────────────────────────────────────────
+  const handleSignInSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!signInEmail) return
+
+    setIsLoading(true)
     setErrorMessage(null)
-    setStatusFeedback(`✓ Authenticating ${persona.name}... Minting live session.`)
+
+    try {
+      const res = await fetch("/api/connectin/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: signInEmail,
+          password: signInPassword,
+          channel: "email"
+        })
+      })
+
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || "Sign in failed. Please check your credentials.")
+      }
+
+      setSignInBackupCode(data.backupCode || data.devCode || null)
+      setSignInStep('2fa')
+      setSuccessMessage(`Security code sent to ${data.target || signInEmail}`)
+    } catch (err: any) {
+      setErrorMessage(err.message || "Failed to sign in")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleVerifySignIn2FA = async (codeToSubmit?: string) => {
+    const code = codeToSubmit || signIn2FACode
+    if (!code) return
+
+    setIsLoading(true)
+    setErrorMessage(null)
+
+    try {
+      const res = await fetch("/api/connectin/auth/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          target: signInEmail,
+          code
+        })
+      })
+
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || "Invalid verification code.")
+      }
+
+      if (data.profile) {
+        saveStoredUser(data.profile)
+      }
+
+      setSuccessMessage("✓ Verified! Signing you in...")
+      setTimeout(() => {
+        router.push("/connectin")
+      }, 500)
+    } catch (err: any) {
+      setErrorMessage(err.message || "Verification failed.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // 2. JOIN NOW FLOW (Registration -> 2FA -> Direct Instant Login)
+  // ─────────────────────────────────────────────────────────────────────────────
+  const handleJoinSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!joinFirstName || !joinEmail) return
+
+    setIsLoading(true)
+    setErrorMessage(null)
+
+    try {
+      const res = await fetch("/api/connectin/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: joinFirstName,
+          lastName: joinLastName,
+          email: joinEmail,
+          password: joinPassword,
+          role: joinRole,
+          twoFactorChannel: "email"
+        })
+      })
+
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || "Registration failed.")
+      }
+
+      setJoinBackupCode(data.backupCode || data.devCode || null)
+      setJoinStep('2fa')
+      setSuccessMessage(`Verification code sent to ${joinEmail}`)
+    } catch (err: any) {
+      setErrorMessage(err.message || "Failed to create account.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleVerifyJoin2FA = async (codeToSubmit?: string) => {
+    const code = codeToSubmit || join2FACode
+    if (!code) return
+
+    setIsLoading(true)
+    setErrorMessage(null)
+
+    try {
+      const res = await fetch("/api/connectin/auth/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          target: joinEmail,
+          code
+        })
+      })
+
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || "Invalid verification code.")
+      }
+
+      const targetTab =
+        joinRole === 'enterprise' ? 'procurement' :
+        joinRole === 'creator' ? 'media' :
+        joinRole === 'seller' ? 'sellercenter' :
+        joinRole === 'developer' ? 'code' : 'home'
+
+      const targetWorkspace: 'personal' | 'enterprise' | 'creator' | 'seller' =
+        joinRole === 'enterprise' ? 'enterprise' :
+        joinRole === 'creator' ? 'creator' :
+        joinRole === 'seller' ? 'seller' : 'personal'
+
+      if (data.profile) {
+        saveStoredUser(data.profile)
+      }
+      saveStoredSessionRoute(targetTab, targetWorkspace)
+
+      setSuccessMessage("✓ Welcome to ConnectIn! Launching your workspace...")
+      setTimeout(() => {
+        router.push("/connectin")
+      }, 600)
+    } catch (err: any) {
+      setErrorMessage(err.message || "Verification failed.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // 3. ONE-CLICK DEMO PERSONA LOGIN
+  // ─────────────────────────────────────────────────────────────────────────────
+  const handlePersonaLogin = async (persona: AuthPersona) => {
+    setIsLoading(true)
+    setErrorMessage(null)
 
     try {
       const res = await fetch("/api/connectin/auth/register", {
@@ -86,666 +255,457 @@ export default function ConnectInLoginPage() {
         saveStoredSessionRoute(persona.defaultTab, persona.defaultWorkspace)
       }
 
-      setTimeout(() => {
-        router.push("/connectin")
-      }, 700)
-    } catch (err: any) {
+      router.push("/connectin")
+    } catch (err) {
       router.push("/connectin")
     } finally {
-      setIsAuthenticating(false)
-    }
-  }
-
-  // 2. Real Registration Submit (Sends real Resend Email OTP)
-  const handleRegisterSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!regEmail || !regFirstName) return
-
-    setIsAuthenticating(true)
-    setErrorMessage(null)
-    setStatusFeedback(`Dispatching 6-digit confirmation code via ${reg2faChannel.toUpperCase()}...`)
-
-    try {
-      const res = await fetch("/api/connectin/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          firstName: regFirstName,
-          lastName: regLastName,
-          email: regEmail,
-          phone: regPhone,
-          password: regPassword,
-          role: regRole,
-          twoFactorChannel: reg2faChannel
-        })
-      })
-
-      const data = await res.json()
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to register")
-      }
-
-      const backup = data.backupCode || data.devCode || null
-      setRegBackupCode(backup)
-
-      setStatusFeedback(`✓ Code dispatched to ${reg2faChannel === "sms" ? regPhone : regEmail}!`)
-      setRegStep('verify')
-    } catch (err: any) {
-      setErrorMessage(err.message || "Registration failed")
-    } finally {
-      setIsAuthenticating(false)
-    }
-  }
-
-  // 3. Confirm Real 2FA OTP Code
-  const handleConfirm2FACode = async (codeToUse?: string) => {
-    const code = codeToUse || verificationCode
-    if (!code) return
-
-    setIsAuthenticating(true)
-    setErrorMessage(null)
-    setStatusFeedback("Verifying cryptographic token & initializing database record...")
-
-    try {
-      const target = reg2faChannel === "sms" ? regPhone : regEmail
-      const res = await fetch("/api/connectin/auth/verify-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          target,
-          code
-        })
-      })
-
-      const data = await res.json()
-      if (!res.ok) {
-        throw new Error(data.error || "Invalid verification code")
-      }
-
-      const targetTab =
-        regRole === 'enterprise' ? 'procurement' :
-        regRole === 'creator' ? 'media' :
-        regRole === 'seller' ? 'sellercenter' :
-        regRole === 'developer' ? 'code' : 'home'
-
-      const targetWorkspace: 'personal' | 'enterprise' | 'creator' | 'seller' =
-        regRole === 'enterprise' ? 'enterprise' :
-        regRole === 'creator' ? 'creator' :
-        regRole === 'seller' ? 'seller' : 'personal'
-
-      if (data.profile) {
-        saveStoredUser(data.profile)
-      }
-      saveStoredSessionRoute(targetTab, targetWorkspace)
-      setRegStep('confirmed')
-      setStatusFeedback("✓ Account successfully created and verified!")
-    } catch (err: any) {
-      setErrorMessage(err.message || "Verification failed")
-    } finally {
-      setIsAuthenticating(false)
-    }
-  }
-
-  // 4. Return to Login
-  const handleReturnToLogin = () => {
-    setEmailInput(regEmail)
-    setPasswordInput("")
-    setAuthMode('credentials')
-    setLoginStep('credentials')
-    setErrorMessage(null)
-  }
-
-  // 5. Submit Credentials (Step 1 of Login -> Triggers 2FA Challenge)
-  const handleCredentialsSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!emailInput) return
-
-    setIsAuthenticating(true)
-    setErrorMessage(null)
-    setStatusFeedback("Authenticating credentials & issuing 2FA challenge...")
-
-    try {
-      const res = await fetch("/api/connectin/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: emailInput,
-          password: passwordInput,
-          channel: login2faChannel
-        })
-      })
-
-      const data = await res.json()
-      if (!res.ok) {
-        throw new Error(data.error || "Login challenge failed")
-      }
-
-      const backup = data.backupCode || data.devCode || null
-      setLoginBackupCode(backup)
-
-      setStatusFeedback(`✓ 2FA code sent to ${data.target}!`)
-      setLoginStep('mfa')
-    } catch (err: any) {
-      setErrorMessage(err.message || "Failed to log in")
-    } finally {
-      setIsAuthenticating(false)
-    }
-  }
-
-  // 6. Verify Login 2FA (Step 2 of Login -> Mint Session)
-  const handleVerifyLoginMFA = async (codeToUse?: string) => {
-    const code = codeToUse || login2faCode
-    if (!code) return
-
-    setIsAuthenticating(true)
-    setErrorMessage(null)
-    setStatusFeedback("Verifying 2FA code & minting active session...")
-
-    try {
-      const res = await fetch("/api/connectin/auth/verify-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          target: emailInput,
-          code
-        })
-      })
-
-      const data = await res.json()
-      if (!res.ok) {
-        throw new Error(data.error || "Invalid 2FA code")
-      }
-
-      if (data.profile) {
-        saveStoredUser(data.profile)
-      }
-
-      setStatusFeedback("✓ Identity verified! Launching workspace...")
-      setTimeout(() => {
-        router.push("/connectin")
-      }, 600)
-    } catch (err: any) {
-      setErrorMessage(err.message || "2FA verification failed")
-    } finally {
-      setIsAuthenticating(false)
+      setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center p-4 text-white font-sans selection:bg-[#0A66C2]">
-      {/* Background Glow */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -left-40 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl" />
-      </div>
-
-      <div className="relative w-full max-w-xl rounded-3xl border border-white/15 bg-gradient-to-b from-slate-900 via-indigo-950/80 to-slate-950 p-8 shadow-2xl space-y-6 backdrop-blur-xl">
-        {/* Brand Header */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#0A66C2] to-indigo-600 text-white font-black text-2xl shadow-xl">
+    <div className="min-h-screen bg-[#f3f2f0] dark:bg-[#000000] text-zinc-900 dark:text-zinc-100 flex flex-col justify-between font-sans selection:bg-[#0A66C2] selection:text-white">
+      {/* ─── 1. TOP LINKEDIN-STYLE NAVBAR ─── */}
+      <header className="w-full bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 px-6 sm:px-12 py-3 flex items-center justify-between shadow-xs">
+        <Link href="/connectin" className="flex items-center gap-1.5 group">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0A66C2] text-white font-black text-xl shadow-xs group-hover:scale-105 transition-transform">
             in
-          </div>
-          <h1 className="text-2xl font-black tracking-tight text-white">
-            ConnectIn Identity &amp; Auth Gate
-          </h1>
-          <p className="text-xs text-zinc-400 max-w-md mx-auto">
-            Live multi-tenant 2FA Email &amp; SMS verification with automated role routing.
-          </p>
-        </div>
+          </span>
+          <span className="font-bold text-xl tracking-tight text-[#0A66C2] dark:text-white">
+            Connect<span className="text-[#0A66C2]">In</span>
+          </span>
+        </Link>
 
-        {/* Live Feedback & Error Alerts */}
-        {statusFeedback && !errorMessage && (
-          <div className="rounded-xl bg-emerald-500/20 border border-emerald-400/40 p-3.5 text-xs font-bold text-emerald-300 text-center animate-in zoom-in-95 flex items-center justify-center gap-2 font-mono">
-            <CheckCircle2 className="h-4 w-4 shrink-0" />
-            <span>{statusFeedback}</span>
-          </div>
-        )}
-
-        {errorMessage && (
-          <div className="rounded-xl bg-red-500/20 border border-red-400/40 p-3.5 text-xs font-bold text-red-300 text-center animate-in zoom-in-95 flex items-center justify-center gap-2 font-mono">
-            <AlertCircle className="h-4 w-4 shrink-0 text-red-400" />
-            <span>{errorMessage}</span>
-          </div>
-        )}
-
-        {/* Tab Selection */}
-        <div className="flex items-center gap-1.5 border-b border-white/10 pb-3 text-xs justify-center overflow-x-auto">
-          <button
-            onClick={() => { setAuthMode('credentials'); setLoginStep('credentials'); setErrorMessage(null); }}
-            className={`rounded-xl px-3.5 py-2 font-bold transition-all shrink-0 ${
-              authMode === 'credentials'
-                ? "bg-[#0A66C2] text-white shadow-md"
-                : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
-            }`}
-          >
-            🔑 Sign In (Username &amp; Password)
-          </button>
-          <button
-            onClick={() => { setAuthMode('register'); setRegStep('form'); setErrorMessage(null); }}
-            className={`rounded-xl px-3.5 py-2 font-bold transition-all shrink-0 ${
-              authMode === 'register'
-                ? "bg-emerald-600 text-white shadow-md"
-                : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
-            }`}
-          >
-            🆕 Register Real Account
-          </button>
-          <button
-            onClick={() => { setAuthMode('signin'); setErrorMessage(null); }}
-            className={`rounded-xl px-3.5 py-2 font-bold transition-all shrink-0 ${
-              authMode === 'signin'
-                ? "bg-[#0A66C2] text-white shadow-md"
-                : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
-            }`}
-          >
-            ⚡ 1-Click Personas
-          </button>
-          <button
-            onClick={() => { setAuthMode('sso'); setErrorMessage(null); }}
-            className={`rounded-xl px-3.5 py-2 font-bold transition-all shrink-0 ${
-              authMode === 'sso'
-                ? "bg-[#0A66C2] text-white shadow-md"
-                : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
-            }`}
-          >
-            🏛️ Enterprise SSO
-          </button>
-        </div>
-
-        {/* Mode 1: Sign In with Username, Password and 2FA Step */}
-        {authMode === 'credentials' && (
-          <div className="space-y-4 text-xs">
-            {loginStep === 'credentials' ? (
-              <form onSubmit={handleCredentialsSubmit} className="space-y-3.5">
-                <div>
-                  <label className="block text-zinc-300 font-bold mb-1">Username / Email Address</label>
-                  <div className="flex items-center gap-2 rounded-xl bg-white/10 border border-white/15 px-3 py-2.5">
-                    <Mail className="h-4 w-4 text-zinc-400" />
-                    <input
-                      type="email"
-                      placeholder="e.g. asiedudanquah@gmail.com or alex.taylor@connectin.com"
-                      value={emailInput}
-                      onChange={(e) => setEmailInput(e.target.value)}
-                      className="w-full bg-transparent text-white placeholder-zinc-500 focus:outline-none"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-zinc-300 font-bold mb-1">Password</label>
-                  <div className="flex items-center gap-2 rounded-xl bg-white/10 border border-white/15 px-3 py-2.5">
-                    <Lock className="h-4 w-4 text-zinc-400" />
-                    <input
-                      type="password"
-                      placeholder="••••••••••••"
-                      value={passwordInput}
-                      onChange={(e) => setPasswordInput(e.target.value)}
-                      className="w-full bg-transparent text-white placeholder-zinc-500 focus:outline-none"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between pt-2">
-                  <button
-                    type="button"
-                    onClick={() => { setAuthMode('register'); setRegStep('form'); }}
-                    className="text-sky-400 hover:underline"
-                  >
-                    Create a new account →
-                  </button>
-
-                  <button
-                    type="submit"
-                    disabled={isAuthenticating}
-                    className="rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white font-black px-5 py-2.5 shadow-lg transition-all flex items-center gap-2"
-                  >
-                    {isAuthenticating && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                    <span>Proceed to 2FA Verification →</span>
-                  </button>
-                </div>
-              </form>
-            ) : (
-              /* Step 2: 2FA Verification (Email or SMS Text) */
-              <div className="space-y-4 text-center py-2 animate-in zoom-in-95">
-                <div className="space-y-1">
-                  <h3 className="font-bold text-base text-white">Second Factor Authentication (2FA)</h3>
-                  <p className="text-zinc-400 text-xs">
-                    Choose verification channel for: <strong className="text-white">{emailInput}</strong>
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 max-w-sm mx-auto">
-                  <button
-                    type="button"
-                    onClick={() => setLogin2faChannel('email')}
-                    className={`p-2.5 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                      login2faChannel === 'email'
-                        ? "bg-[#0A66C2] border-[#0A66C2] text-white"
-                        : "bg-white/5 border-white/10 text-zinc-400 hover:bg-white/10"
-                    }`}
-                  >
-                    <Mail className="h-3.5 w-3.5" />
-                    <span>Email Code</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setLogin2faChannel('sms')}
-                    className={`p-2.5 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                      login2faChannel === 'sms'
-                        ? "bg-[#0A66C2] border-[#0A66C2] text-white"
-                        : "bg-white/5 border-white/10 text-zinc-400 hover:bg-white/10"
-                    }`}
-                  >
-                    <Smartphone className="h-3.5 w-3.5" />
-                    <span>SMS / Text Code</span>
-                  </button>
-                </div>
-
-                <div className="max-w-xs mx-auto space-y-2">
-                  <span className="text-[10px] text-zinc-400 font-mono block">
-                    {login2faChannel === 'email' ? `Code sent to ${emailInput}` : `Code sent via SMS to ${regPhone}`}
-                  </span>
-                  <input
-                    type="text"
-                    placeholder="Enter 6-digit code"
-                    value={login2faCode}
-                    onChange={(e) => setLogin2faCode(e.target.value)}
-                    className="w-full text-center text-xl font-mono font-bold tracking-widest rounded-xl bg-white/10 border border-sky-400/50 p-2.5 text-sky-300 focus:outline-none"
-                    maxLength={6}
-                  />
-
-                  {/* Sandbox Instant Helper */}
-                  {loginBackupCode && (
-                    <div className="p-2.5 rounded-xl bg-indigo-950/80 border border-indigo-500/40 text-[11px] text-indigo-200 text-center space-y-1">
-                      <p className="text-zinc-300 text-[10px]">
-                        💡 Instant 2FA Access Token:
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setLogin2faCode(loginBackupCode)
-                          handleVerifyLoginMFA(loginBackupCode)
-                        }}
-                        className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white font-mono font-bold rounded-lg shadow-sm transition-all text-xs"
-                      >
-                        ⚡ Auto-Fill &amp; Sign In: {loginBackupCode}
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-center gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setLoginStep('credentials')}
-                    className="rounded-xl bg-white/10 px-4 py-2 text-zinc-300 font-bold"
-                  >
-                    Back
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleVerifyLoginMFA()}
-                    disabled={isAuthenticating}
-                    className="rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-6 py-2 shadow-lg transition-all flex items-center gap-1.5"
-                  >
-                    {isAuthenticating && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                    <span>Verify &amp; Sign In 🚀</span>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Mode 2: Register Account with Real Email/SMS 2FA and "Return to Login" */}
-        {authMode === 'register' && (
-          <div className="space-y-4 text-xs">
-            {regStep === 'form' ? (
-              <form onSubmit={handleRegisterSubmit} className="space-y-3.5">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-zinc-300 font-bold mb-1">First Name</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Kwesi"
-                      value={regFirstName}
-                      onChange={(e) => setRegFirstName(e.target.value)}
-                      className="w-full rounded-xl bg-white/10 border border-white/15 px-3 py-2 text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 text-xs"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-zinc-300 font-bold mb-1">Last Name</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Asiedu"
-                      value={regLastName}
-                      onChange={(e) => setRegLastName(e.target.value)}
-                      className="w-full rounded-xl bg-white/10 border border-white/15 px-3 py-2 text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 text-xs"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-zinc-300 font-bold mb-1">Work / Personal Email</label>
-                    <input
-                      type="email"
-                      placeholder="asiedudanquah@gmail.com"
-                      value={regEmail}
-                      onChange={(e) => setRegEmail(e.target.value)}
-                      className="w-full rounded-xl bg-white/10 border border-white/15 px-3 py-2 text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 text-xs"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-zinc-300 font-bold mb-1">Phone Number (for SMS 2FA)</label>
-                    <input
-                      type="tel"
-                      placeholder="+1 (240) 555-0192"
-                      value={regPhone}
-                      onChange={(e) => setRegPhone(e.target.value)}
-                      className="w-full rounded-xl bg-white/10 border border-white/15 px-3 py-2 text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 text-xs"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-zinc-300 font-bold mb-1">Password</label>
-                  <input
-                    type="password"
-                    placeholder="••••••••••••"
-                    value={regPassword}
-                    onChange={(e) => setRegPassword(e.target.value)}
-                    className="w-full rounded-xl bg-white/10 border border-white/15 px-3 py-2 text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 text-xs"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-zinc-300 font-bold mb-1">Account Role &amp; Target Workspace</label>
-                  <select
-                    value={regRole}
-                    onChange={(e) => setRegRole(e.target.value as any)}
-                    className="w-full rounded-xl bg-slate-900 border border-white/20 px-3 py-2 text-white text-xs focus:outline-none"
-                  >
-                    <option value="personal">👤 Individual Professional (Feed &amp; Skill Passport)</option>
-                    <option value="enterprise">🏢 Enterprise Buyer (Procurement Desk &amp; RFPs)</option>
-                    <option value="creator">🎬 Creator &amp; Studio Host (Video &amp; Podcasts)</option>
-                    <option value="seller">💼 Marketplace Seller (Storefront &amp; Licenses)</option>
-                    <option value="developer">🧑‍💻 Defense &amp; Kernel Developer (Code &amp; Labs)</option>
-                  </select>
-                </div>
-
-                <div className="pt-2 flex justify-end">
-                  <button
-                    type="submit"
-                    disabled={isAuthenticating}
-                    className="rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black px-5 py-2.5 shadow-lg transition-all flex items-center gap-1.5"
-                  >
-                    {isAuthenticating && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                    <span>Dispatch Real 2FA Code →</span>
-                  </button>
-                </div>
-              </form>
-            ) : regStep === 'verify' ? (
-              /* Step 2: Real 2FA Verification (Email or SMS Text) */
-              <div className="space-y-4 text-center py-2 animate-in zoom-in-95">
-                <div className="space-y-1">
-                  <h3 className="font-bold text-sm text-white">Enter Your 6-Digit Confirmation Code</h3>
-                  <p className="text-zinc-400 text-[11px]">
-                    We dispatched a code to: <strong className="text-white">{reg2faChannel === "sms" ? regPhone : regEmail}</strong>
-                  </p>
-                </div>
-
-                <div className="max-w-xs mx-auto space-y-2">
-                  <input
-                    type="text"
-                    placeholder="Enter 6-digit code"
-                    value={verificationCode}
-                    onChange={(e) => setVerificationCode(e.target.value)}
-                    className="w-full text-center text-xl font-mono font-bold tracking-widest rounded-xl bg-white/10 border border-emerald-400/40 p-2.5 text-emerald-300 focus:outline-none"
-                    maxLength={6}
-                  />
-
-                  {/* Sandbox Instant Helper */}
-                  {regBackupCode && (
-                    <div className="p-3 rounded-2xl bg-indigo-950/90 border border-indigo-500/50 text-[11px] text-indigo-200 text-center space-y-1.5 shadow-lg">
-                      <p className="text-zinc-300 text-[11px]">
-                        💡 <strong>Instant 2FA Confirmation Token:</strong>
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setVerificationCode(regBackupCode)
-                          handleConfirm2FACode(regBackupCode)
-                        }}
-                        className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-mono font-black rounded-xl shadow-md transition-all text-xs flex items-center justify-center gap-1.5 mx-auto"
-                      >
-                        ⚡ Auto-Fill &amp; Confirm Identity: {regBackupCode}
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-center gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setRegStep('form')}
-                    className="rounded-xl bg-white/10 px-4 py-2 text-zinc-300 font-bold"
-                  >
-                    Back
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleConfirm2FACode()}
-                    disabled={isAuthenticating}
-                    className="rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-6 py-2 shadow-lg flex items-center gap-1.5"
-                  >
-                    {isAuthenticating && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                    <span>Confirm &amp; Register Identity ✓</span>
-                  </button>
-                </div>
-              </div>
-            ) : (
-              /* Step 3: Registration Confirmed -> Click Button to Return to Sign In Screen */
-              <div className="space-y-4 text-center py-4 animate-in zoom-in-95">
-                <div className="h-14 w-14 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 flex items-center justify-center mx-auto text-2xl">
-                  🎉
-                </div>
-                <div className="space-y-1">
-                  <h3 className="font-bold text-base text-white">Registration &amp; 2FA Confirmed!</h3>
-                  <p className="text-zinc-300 text-xs max-w-md mx-auto leading-relaxed">
-                    Your account for <strong className="text-emerald-300">{regEmail}</strong> is now registered in the persistent database. You can return to the login screen to enter your username and password.
-                  </p>
-                </div>
-
-                <div className="p-3.5 rounded-2xl bg-black/40 border border-white/10 max-w-sm mx-auto text-left text-[11px] font-mono space-y-1">
-                  <p className="text-emerald-400">✓ Email &amp; SMS 2FA Attestation: Validated</p>
-                  <p className="text-zinc-300">✓ Assigned Role: {regRole.toUpperCase()}</p>
-                  <p className="text-zinc-400">✓ Identity registered in ConnectIn Persistent Database</p>
-                </div>
-
-                <div className="pt-2">
-                  <button
-                    type="button"
-                    onClick={handleReturnToLogin}
-                    className="rounded-2xl bg-gradient-to-r from-[#0A66C2] to-indigo-600 hover:from-blue-600 hover:to-indigo-500 text-white font-black px-8 py-3 text-xs shadow-xl transition-all flex items-center justify-center gap-2 mx-auto"
-                  >
-                    <Key className="h-4 w-4" />
-                    <span>Return to Login to Sign In with Username &amp; Password →</span>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Mode 3: 1-Click Persona Logins */}
-        {authMode === 'signin' && (
-          <div className="space-y-3">
-            <p className="text-[11px] text-zinc-400 text-center">
-              Select a pre-configured persona to experience tailored role-based redirection:
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[340px] overflow-y-auto pr-1">
-              {DEMO_AUTH_PERSONAS.map((p) => (
-                <div
-                  key={p.id}
-                  onClick={() => handlePersonaLogin(p)}
-                  className="p-3 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/15 hover:border-[#0A66C2] transition-all cursor-pointer space-y-2 group"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <img src={p.avatar} alt="" className="h-9 w-9 rounded-xl object-cover ring-1 ring-white/20" />
-                    <div className="overflow-hidden">
-                      <h4 className="font-bold text-xs text-white truncate group-hover:text-sky-300">
-                        {p.name}
-                      </h4>
-                      <span className={`inline-block rounded-full px-2 py-0.2 text-[8px] font-bold border mt-0.5 ${p.badgeColor}`}>
-                        {p.badge}
-                      </span>
-                    </div>
-                  </div>
-                  <p className="text-[9px] text-zinc-400 font-mono leading-tight">
-                    ➔ {p.redirectDescription}
-                  </p>
-                </div>
-              ))}
+        {/* Right Switch Button: If on sign in, show Join now; if on join, show Sign in */}
+        <div className="flex items-center gap-3">
+          {activeView === 'signin' ? (
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-zinc-500 dark:text-zinc-400 hidden sm:inline">New to ConnectIn?</span>
+              <button
+                onClick={() => {
+                  setActiveView('join')
+                  setJoinStep('form')
+                  setErrorMessage(null)
+                  setSuccessMessage(null)
+                }}
+                className="rounded-full border border-[#0A66C2] px-4 py-1.5 text-sm font-semibold text-[#0A66C2] dark:text-sky-400 hover:bg-[#0A66C2]/10 transition-colors"
+              >
+                Join now
+              </button>
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-zinc-500 dark:text-zinc-400 hidden sm:inline">Already on ConnectIn?</span>
+              <button
+                onClick={() => {
+                  setActiveView('signin')
+                  setSignInStep('credentials')
+                  setErrorMessage(null)
+                  setSuccessMessage(null)
+                }}
+                className="rounded-full border border-[#0A66C2] px-4 py-1.5 text-sm font-semibold text-[#0A66C2] dark:text-sky-400 hover:bg-[#0A66C2]/10 transition-colors"
+              >
+                Sign in
+              </button>
+            </div>
+          )}
+        </div>
+      </header>
 
-        {/* Mode 4: SSO */}
-        {authMode === 'sso' && (
-          <div className="space-y-3 text-xs">
-            <button
-              onClick={() => handlePersonaLogin(DEMO_AUTH_PERSONAS[1])}
-              className="w-full p-3.5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/15 text-left flex items-center justify-between transition-all"
-            >
-              <div>
-                <p className="font-bold text-white text-xs">🪟 Microsoft Entra ID (Azure AD GovCloud)</p>
-                <p className="text-[10px] text-zinc-400">Direct SAML 2.0 Identity Provider Federation</p>
-              </div>
-              <ArrowRight className="h-4 w-4 text-zinc-400" />
-            </button>
+      {/* ─── 2. MAIN CENTER CONTENT CARD ─── */}
+      <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 my-4">
+        <div className="w-full max-w-[420px] bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-7 sm:p-8 shadow-xl space-y-6">
 
-            <button
-              onClick={() => handlePersonaLogin(DEMO_AUTH_PERSONAS[0])}
-              className="w-full p-3.5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/15 text-left flex items-center justify-between transition-all"
-            >
-              <div>
-                <p className="font-bold text-white text-xs">🔍 Google Workspace Enterprise</p>
-                <p className="text-[10px] text-zinc-400">OIDC / PKCE Single Sign-On</p>
+          {/* Feedback Messages */}
+          {errorMessage && (
+            <div className="rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 p-3 text-xs text-red-700 dark:text-red-300 flex items-center gap-2 font-medium">
+              <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
+          {successMessage && !errorMessage && (
+            <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-3 text-xs text-emerald-700 dark:text-emerald-300 flex items-center gap-2 font-medium">
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+              <span>{successMessage}</span>
+            </div>
+          )}
+
+          {/* ═══════════════════════════════════════════════════════════════════ */}
+          {/* VIEW A: SIGN IN                                                    */}
+          {/* ═══════════════════════════════════════════════════════════════════ */}
+          {activeView === 'signin' && (
+            <>
+              {signInStep === 'credentials' ? (
+                <div className="space-y-5">
+                  <div className="space-y-1">
+                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+                      Sign in
+                    </h1>
+                    <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
+                      Stay updated on your professional world
+                    </p>
+                  </div>
+
+                  <form onSubmit={handleSignInSubmit} className="space-y-4">
+                    {/* Email Input */}
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                        Email or phone
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={signInEmail}
+                        onChange={(e) => setSignInEmail(e.target.value)}
+                        placeholder="e.g. asiedudanquah@gmail.com"
+                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3.5 py-2.5 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                      />
+                    </div>
+
+                    {/* Password Input */}
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                          Password
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="text-xs font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline"
+                        >
+                          {showPassword ? "Hide" : "Show"}
+                        </button>
+                      </div>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          required
+                          value={signInPassword}
+                          onChange={(e) => setSignInPassword(e.target.value)}
+                          placeholder="••••••••••••"
+                          className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3.5 py-2.5 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Primary Sign In Button */}
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white font-bold py-3 text-sm shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer mt-2"
+                    >
+                      {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                      <span>Sign in</span>
+                    </button>
+                  </form>
+
+                  {/* LinkedIn-style Divider */}
+                  <div className="relative flex items-center justify-center my-4">
+                    <div className="w-full border-t border-zinc-200 dark:border-zinc-800" />
+                    <span className="bg-white dark:bg-zinc-900 px-3 text-xs text-zinc-400 font-medium absolute">
+                      or
+                    </span>
+                  </div>
+
+                  {/* Enterprise SSO / Google */}
+                  <div className="space-y-2.5">
+                    <button
+                      type="button"
+                      onClick={() => handlePersonaLogin(DEMO_AUTH_PERSONAS[0])}
+                      className="w-full rounded-full border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800 py-2.5 text-xs font-semibold text-zinc-700 dark:text-zinc-200 transition-colors flex items-center justify-center gap-2"
+                    >
+                      <span>🌐 Continue with Google or Corporate SSO</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* Step 2: 2FA Verification (Seamless Code Entry) */
+                <div className="space-y-5 text-center">
+                  <div className="space-y-1">
+                    <div className="h-12 w-12 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-[#0A66C2] dark:text-sky-400 flex items-center justify-center mx-auto text-xl font-bold">
+                      🔐
+                    </div>
+                    <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+                      Two-Step Verification
+                    </h2>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      Enter the 6-digit verification code sent to <strong className="text-zinc-900 dark:text-zinc-200">{signInEmail}</strong>
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      autoFocus
+                      maxLength={6}
+                      value={signIn2FACode}
+                      onChange={(e) => setSignIn2FACode(e.target.value)}
+                      placeholder="Enter 6-digit code"
+                      className="w-full text-center text-2xl font-mono font-bold tracking-widest rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 p-3 text-[#0A66C2] dark:text-sky-400 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                    />
+
+                    {/* Auto-Fill Helper */}
+                    {signInBackupCode && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSignIn2FACode(signInBackupCode)
+                          handleVerifySignIn2FA(signInBackupCode)
+                        }}
+                        className="w-full rounded-xl bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-800 p-2.5 text-xs text-[#0A66C2] dark:text-sky-300 font-mono font-semibold transition-all flex items-center justify-center gap-1.5"
+                      >
+                        <span>⚡ Click to Auto-Fill Code: <strong>{signInBackupCode}</strong></span>
+                      </button>
+                    )}
+
+                    <div className="flex items-center gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setSignInStep('credentials')}
+                        className="flex-1 rounded-full border border-zinc-300 dark:border-zinc-700 py-2.5 text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                      >
+                        Back
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleVerifySignIn2FA()}
+                        disabled={isLoading}
+                        className="flex-1 rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white py-2.5 text-xs font-bold shadow-xs flex items-center justify-center gap-1.5"
+                      >
+                        {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                        <span>Verify &amp; Sign in</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ═══════════════════════════════════════════════════════════════════ */}
+          {/* VIEW B: JOIN NOW (REGISTRATION)                                    */}
+          {/* ═══════════════════════════════════════════════════════════════════ */}
+          {activeView === 'join' && (
+            <>
+              {joinStep === 'form' ? (
+                <div className="space-y-5">
+                  <div className="space-y-1">
+                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+                      Join ConnectIn
+                    </h1>
+                    <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
+                      Make the most of your professional life
+                    </p>
+                  </div>
+
+                  <form onSubmit={handleJoinSubmit} className="space-y-3.5">
+                    {/* Names Row */}
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <div className="space-y-1">
+                        <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">First name</label>
+                        <input
+                          type="text"
+                          required
+                          value={joinFirstName}
+                          onChange={(e) => setJoinFirstName(e.target.value)}
+                          placeholder="Kwesi"
+                          className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Last name</label>
+                        <input
+                          type="text"
+                          required
+                          value={joinLastName}
+                          onChange={(e) => setJoinLastName(e.target.value)}
+                          placeholder="Asiedu"
+                          className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Email */}
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Work / Personal Email</label>
+                      <input
+                        type="email"
+                        required
+                        value={joinEmail}
+                        onChange={(e) => setJoinEmail(e.target.value)}
+                        placeholder="asiedudanquah@gmail.com"
+                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                      />
+                    </div>
+
+                    {/* Password */}
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Password (6 or more characters)</label>
+                      <input
+                        type="password"
+                        required
+                        minLength={6}
+                        value={joinPassword}
+                        onChange={(e) => setJoinPassword(e.target.value)}
+                        placeholder="••••••••••••"
+                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                      />
+                    </div>
+
+                    {/* Primary Role Choice */}
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Your Primary Role</label>
+                      <select
+                        value={joinRole}
+                        onChange={(e) => setJoinRole(e.target.value as any)}
+                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                      >
+                        <option value="personal">👤 Individual Professional (Feed &amp; Skills)</option>
+                        <option value="enterprise">🏢 Enterprise Buyer (Procurement &amp; RFPs)</option>
+                        <option value="creator">🎬 Creator &amp; Studio Host (Video &amp; Podcasts)</option>
+                        <option value="seller">💼 Marketplace Seller (Storefront &amp; Licenses)</option>
+                        <option value="developer">🧑‍💻 Defense &amp; Kernel Developer (Code &amp; Labs)</option>
+                      </select>
+                    </div>
+
+                    <p className="text-[10px] text-zinc-500 leading-tight pt-1">
+                      By clicking Agree &amp; Join, you agree to the ConnectIn User Agreement, Privacy Policy, and Zero-Trust Identity Terms.
+                    </p>
+
+                    {/* Primary Join Button */}
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white font-bold py-3 text-sm shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer mt-2"
+                    >
+                      {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                      <span>Agree &amp; Join</span>
+                    </button>
+                  </form>
+                </div>
+              ) : (
+                /* Step 2: Confirm Email -> Immediately Log in & Launch */
+                <div className="space-y-5 text-center">
+                  <div className="space-y-1">
+                    <div className="h-12 w-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto text-xl font-bold">
+                      ✉️
+                    </div>
+                    <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+                      Confirm Your Email
+                    </h2>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      Type in the 6-digit code sent to <strong className="text-zinc-900 dark:text-zinc-200">{joinEmail}</strong>
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      autoFocus
+                      maxLength={6}
+                      value={join2FACode}
+                      onChange={(e) => setJoin2FACode(e.target.value)}
+                      placeholder="Enter 6-digit code"
+                      className="w-full text-center text-2xl font-mono font-bold tracking-widest rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 p-3 text-emerald-600 dark:text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+
+                    {/* Instant Auto-Fill Helper */}
+                    {joinBackupCode && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setJoin2FACode(joinBackupCode)
+                          handleVerifyJoin2FA(joinBackupCode)
+                        }}
+                        className="w-full rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-800 p-2.5 text-xs text-emerald-700 dark:text-emerald-300 font-mono font-semibold transition-all flex items-center justify-center gap-1.5"
+                      >
+                        <span>⚡ Click to Auto-Fill &amp; Join: <strong>{joinBackupCode}</strong></span>
+                      </button>
+                    )}
+
+                    <div className="flex items-center gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setJoinStep('form')}
+                        className="flex-1 rounded-full border border-zinc-300 dark:border-zinc-700 py-2.5 text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                      >
+                        Back
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleVerifyJoin2FA()}
+                        disabled={isLoading}
+                        className="flex-1 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 text-xs font-bold shadow-xs flex items-center justify-center gap-1.5"
+                      >
+                        {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                        <span>Confirm &amp; Join</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+        </div>
+
+        {/* ─── 3. COLLAPSIBLE BOTTOM DRAWER: 1-CLICK DEMO PERSONAS ─── */}
+        <div className="w-full max-w-[420px] mt-4">
+          <button
+            onClick={() => setIsDemoDrawerOpen(!isDemoDrawerOpen)}
+            className="w-full py-2.5 px-4 rounded-xl bg-white/70 dark:bg-zinc-900/70 border border-zinc-200 dark:border-zinc-800 hover:bg-white dark:hover:bg-zinc-900 text-xs text-zinc-600 dark:text-zinc-400 font-semibold flex items-center justify-between transition-colors shadow-2xs"
+          >
+            <span className="flex items-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5 text-[#0A66C2]" />
+              <span>⚡ Testing? Try 1-Click Demo Personas</span>
+            </span>
+            {isDemoDrawerOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </button>
+
+          {isDemoDrawerOpen && (
+            <div className="mt-2 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-3.5 shadow-lg space-y-2 animate-in fade-in zoom-in-95">
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                Instantly switch roles to test different workspace views:
+              </p>
+              <div className="grid grid-cols-1 gap-1.5 max-h-[220px] overflow-y-auto pr-1">
+                {DEMO_AUTH_PERSONAS.map((p) => (
+                  <div
+                    key={p.id}
+                    onClick={() => handlePersonaLogin(p)}
+                    className="p-2 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer flex items-center justify-between gap-2 transition-colors group"
+                  >
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      <img src={p.avatar} alt="" className="h-7 w-7 rounded-full object-cover ring-1 ring-zinc-300" />
+                      <div className="overflow-hidden">
+                        <p className="font-bold text-xs text-zinc-900 dark:text-zinc-100 truncate group-hover:text-[#0A66C2]">
+                          {p.name}
+                        </p>
+                        <p className="text-[10px] text-zinc-400 truncate">{p.title}</p>
+                      </div>
+                    </div>
+                    <span className="text-[9px] font-mono font-bold text-[#0A66C2] shrink-0 bg-blue-50 dark:bg-blue-950 px-2 py-0.5 rounded-md">
+                      Log In →
+                    </span>
+                  </div>
+                ))}
               </div>
-              <ArrowRight className="h-4 w-4 text-zinc-400" />
-            </button>
-          </div>
-        )}
-      </div>
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* ─── 4. LINKEDIN-STYLE CLEAN FOOTER ─── */}
+      <footer className="w-full bg-white dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800 py-4 px-6 text-center text-[11px] text-zinc-500 space-y-1">
+        <div className="flex items-center justify-center gap-4 flex-wrap">
+          <Link href="/about-us" className="hover:underline">About</Link>
+          <Link href="/assessment" className="hover:underline">Security Framework</Link>
+          <Link href="/legal/privacy-policy" className="hover:underline">Privacy Policy</Link>
+          <Link href="/services" className="hover:underline">Ecosystem Services</Link>
+          <Link href="/contact-us" className="hover:underline">Support</Link>
+        </div>
+        <p className="text-zinc-400">Expedite Consults LLC © 2026 · ConnectIn Zero-Trust Identity Protocol</p>
+      </footer>
     </div>
   )
 }
