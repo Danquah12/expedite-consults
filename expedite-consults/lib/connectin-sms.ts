@@ -37,7 +37,7 @@ export async function sendConnectInSMS({
     const fromPhone = process.env.TWILIO_PHONE_NUMBER
 
     const firstName = fullName.split(" ")[0] || "Member"
-    const messageBody = `Expedite Consults SSO: Hi ${firstName},\n\nYour one-time authentication code is: ${code}\n\nPlease enter this code to complete verification. Valid for 15 minutes. If you did not request this code, please ignore this message.`
+    const messageBody = `ConnectIn Security: Hi ${firstName},\n\nYour one-time authentication code is: ${code}\n\nPlease enter this code to complete verification. Valid for 15 minutes. If you did not request this code, please ignore this message.`
 
     console.log(`[Phone 2FA Dispatch Request] To: ${cleanPhone} via ${channel.toUpperCase()} (from: ${fromPhone || "default"})`)
 
@@ -47,7 +47,7 @@ export async function sendConnectInSMS({
       if (channel === "call") {
         // Direct Twilio Voice Call with TwiML speech synthesis speaking dynamic OTP
         const spokenCode = code.split("").join(", ")
-        const twiml = `<Response><Pause length="1"/><Say voice="Polly.Joanna">Hello, this is Expedite Consults Security. Your verification code is: ${spokenCode}. I repeat: ${spokenCode}. Thank you.</Say><Pause length="1"/><Say voice="Polly.Joanna">Goodbye.</Say></Response>`
+        const twiml = `<Response><Pause length="1"/><Say voice="Polly.Joanna">Hello, this is ConnectIn Security by Expedite Consults. Your one-time verification code is: ${spokenCode}. I repeat: ${spokenCode}. Thank you for using ConnectIn.</Say><Pause length="1"/><Say voice="Polly.Joanna">Goodbye.</Say></Response>`
 
         const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Calls.json`
         const params = new URLSearchParams()
