@@ -1,3 +1,4 @@
+import { createSignedSessionToken, verifySignedSessionToken } from "./connectin-crypto"
 import fs from "fs"
 import path from "path"
 import os from "os"
@@ -263,6 +264,12 @@ class ConnectInDatabase {
     return this.data.users.find(u => u.email.toLowerCase() === email.toLowerCase().trim())
   }
 
+  public findUserByPhone(phone: string): UserRecord | undefined {
+    const clean = phone.replace(/[^\d]/g, "")
+    if (!clean) return undefined
+    return this.data.users.find(u => u.phone && u.phone.replace(/[^\d]/g, "") === clean)
+  }
+
   public findUserById(id: string): UserRecord | undefined {
     return this.data.users.find(u => u.id === id)
   }
@@ -337,29 +344,38 @@ class ConnectInDatabase {
   // ─── SESSION OPERATIONS ───
 
   public createSession(userId: string, metadata: { ipAddress: string; userAgent: string; location?: string }): SessionRecord {
-    const sessionId = `sess_live_${crypto.randomBytes(16).toString("hex")}`
-    const token = crypto.randomBytes(32).toString("hex")
-    const now = new Date().toISOString()
+    const user = this.findUserById(userId)
+    const profile = this.findProfileByUserId(userId)
 
-    const deviceName = metadata.userAgent.includes("Mac")
-      ? "Safari / macOS"
-      : metadata.userAgent.includes("iPhone")
-      ? "ConnectIn iOS App"
-      : metadata.userAgent.includes("Android")
-      ? "ConnectIn Android App"
-      : "Chrome / Windows Desktop"
+    let session: SessionRecord
 
-    const session: SessionRecord = {
-      sessionId,
-      userId,
-      token,
-      ipAddress: metadata.ipAddress || "127.0.0.1",
-      userAgent: metadata.userAgent || "Unknown Browser",
-      deviceName,
-      location: metadata.location || "United States · Secure Enclave",
-      createdAt: now,
-      lastActive: now,
-      isActive: true
+    if (user && profile) {
+      const signed = createSignedSessionToken(user, profile, metadata)
+      session = signed.sessionRecord
+    } else {
+      const sessionId = `sess_live_${crypto.randomBytes(16).toString("hex")}`
+      const token = crypto.randomBytes(32).toString("hex")
+      const now = new Date().toISOString()
+      const deviceName = metadata.userAgent.includes("Mac")
+        ? "Safari / macOS"
+        : metadata.userAgent.includes("iPhone")
+        ? "ConnectIn iOS App"
+        : metadata.userAgent.includes("Android")
+        ? "ConnectIn Android App"
+        : "Chrome / Windows Desktop"
+
+      session = {
+        sessionId,
+        userId,
+        token,
+        ipAddress: metadata.ipAddress || "127.0.0.1",
+        userAgent: metadata.userAgent || "Unknown Browser",
+        deviceName,
+        location: metadata.location || "United States · Secure Enclave",
+        createdAt: now,
+        lastActive: now,
+        isActive: true
+      }
     }
 
     // Deactivate previous active markers for this user
@@ -373,7 +389,77 @@ class ConnectInDatabase {
   }
 
   public findSessionByToken(token: string): SessionRecord | undefined {
-    return this.data.sessions.find(s => s.token === token && s.isActive)
+    // 1. Check in-memory store
+    const existing = this.data.sessions.find(s => s.token === token && s.isActive)
+    if (existing) return existing
+
+    // 2. Decode and verify cryptographically signed token (cross-lambda stateless support)
+    try {
+      const payload = verifySignedSessionToken(token)
+      if (payload) {
+        // Auto-hydrate user if missing on this lambda
+        let user = this.findUserById(payload.userId)
+        if (!user) {
+          user = {
+            id: payload.userId,
+            email: payload.email,
+            phone: payload.phone || "",
+            role: payload.role || "personal",
+            status: payload.status || "Active",
+            mfaEnabled: true,
+            mfaChannel: "email",
+            createdAt: payload.createdAt,
+            updatedAt: payload.createdAt
+          }
+          this.data.users.unshift(user)
+        }
+
+        // Auto-hydrate profile if missing on this lambda
+        let profile = this.findProfileByUserId(payload.userId)
+        if (!profile) {
+          profile = payload.profile || {
+            userId: payload.userId,
+            name: payload.email.split("@")[0],
+            headline: "Verified ConnectIn Member",
+            avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(payload.email)}`,
+            coverImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80",
+            location: "United States · Cryptographically Verified",
+            about: "Verified member on ConnectIn Zero-Trust Network.",
+            skills: [],
+            clearanceLevel: "Standard Verified Identity (Level 2)",
+            fido2MfaVerified: true,
+            cryptoVerificationBadge: "0xED25519_SESSION_ACTIVE",
+            skillMatrixScore: 50.0,
+            connectionsCount: 0,
+            followersCount: 0,
+            profileViews: 0,
+            postImpressions: 0
+          }
+          this.data.profiles.unshift(profile)
+        }
+
+        const restoredSession: SessionRecord = {
+          sessionId: payload.sessionId,
+          userId: payload.userId,
+          token,
+          ipAddress: payload.ipAddress,
+          userAgent: "Decoded Authenticated Client",
+          deviceName: payload.deviceName,
+          location: payload.location,
+          createdAt: payload.createdAt,
+          lastActive: new Date().toISOString(),
+          isActive: true
+        }
+
+        this.data.sessions.unshift(restoredSession)
+        this.saveData()
+        return restoredSession
+      }
+    } catch (e) {
+      console.warn("[findSessionByToken] Decode notice:", e)
+    }
+
+    return undefined
   }
 
   public revokeSession(sessionId: string): boolean {

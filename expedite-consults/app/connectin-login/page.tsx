@@ -25,6 +25,8 @@ import { DEMO_AUTH_PERSONAS, AuthPersona } from "@/components/linkedin/ConnectIn
 import { saveStoredUser, saveStoredSessionRoute } from "@/lib/connectin-storage"
 import { createUniqueUserProfile, resolveDisplayName } from "@/lib/connectin-profile"
 
+import { signIn } from "next-auth/react"
+
 export default function ConnectInLoginPage() {
   const router = useRouter()
 
@@ -40,6 +42,11 @@ export default function ConnectInLoginPage() {
   const [signInStep, setSignInStep] = useState<'credentials' | '2fa'>('credentials')
   const [signIn2FACode, setSignIn2FACode] = useState("")
   const [signInBackupCode, setSignInBackupCode] = useState<string | null>(null)
+
+  // Challenge token for stateless OTP verification across serverless lambdas
+  const [otpChallengeToken, setOtpChallengeToken] = useState<string | null>(null)
+  // The actual OTP code (shown to user when email delivery is in demo mode)
+  const [signInOtpCode, setSignInOtpCode] = useState<string | null>(null)
 
   // Join Now (Registration) Form State
   const [joinFirstName, setJoinFirstName] = useState("")
@@ -66,122 +73,37 @@ export default function ConnectInLoginPage() {
   const [joinChannel, setJoinChannel] = useState<'email' | 'sms'>('email')
   const [joinPhone, setJoinPhone] = useState("")
 
-  // 1-Click Google Sign-In
+  // Real Google OAuth 2.0 Redirect (accounts.google.com)
   const handleGoogleSignIn = async () => {
     setIsLoading(true)
     setErrorMessage(null)
+    setSuccessMessage("Redirecting to Google Identity Services...")
     try {
-      const emailToUse = signInEmail.includes("@") ? signInEmail : "member@connectin.com"
-      const resolvedName = resolveDisplayName(undefined, emailToUse)
-
-      // Register or update profile with Google SSO
-      await fetch("/api/connectin/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          firstName: resolvedName.split(" ")[0] || "Member",
-          lastName: resolvedName.split(" ").slice(1).join(" ") || "",
-          email: emailToUse,
-          role: "personal",
-          twoFactorChannel: "email"
-        })
-      })
-
-      // Authenticate via verified SSO bypass
-      const verifyRes = await fetch("/api/connectin/auth/verify-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          target: emailToUse,
-          code: "123456",
-          name: resolvedName,
-          role: "personal"
-        })
-      })
-
-      const verifyData = await verifyRes.json()
-      const profileToSave = verifyData.profile || createUniqueUserProfile({
-        name: resolvedName,
-        email: emailToUse,
-        role: "personal"
-      })
-
-      saveStoredUser(profileToSave)
-      saveStoredSessionRoute("home", "personal")
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("connectin_is_signed_out")
-      }
-      setSuccessMessage(`✓ Authenticated as ${resolvedName}! Launching ConnectIn...`)
-      setTimeout(() => {
-        router.push("/connectin")
-      }, 500)
+      await signIn("google", { callbackUrl: "/linkedin" })
     } catch (err: any) {
-      setErrorMessage(err.message || "Google Sign-In failed.")
-    } finally {
-      setIsLoading(false)
+      window.location.href = "/api/auth/signin/google?callbackUrl=/linkedin"
     }
   }
 
-  // 1-Click Microsoft Azure Entra SSO
+  // Real Microsoft Entra ID (Azure AD) OAuth 2.0 Redirect (login.microsoftonline.com)
   const handleMicrosoftSignIn = async () => {
     setIsLoading(true)
     setErrorMessage(null)
+    setSuccessMessage("Redirecting to Microsoft Entra ID (Azure AD)...")
     try {
-      const emailToUse = signInEmail.includes("@") ? signInEmail : "enterprise.member@expediteconsults.com"
-      const resolvedName = resolveDisplayName(undefined, emailToUse)
-
-      await fetch("/api/connectin/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          firstName: resolvedName.split(" ")[0] || "Executive",
-          lastName: resolvedName.split(" ").slice(1).join(" ") || "",
-          email: emailToUse,
-          role: "enterprise",
-          twoFactorChannel: "email"
-        })
-      })
-
-      const verifyRes = await fetch("/api/connectin/auth/verify-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          target: emailToUse,
-          code: "123456",
-          name: resolvedName,
-          role: "enterprise"
-        })
-      })
-
-      const verifyData = await verifyRes.json()
-      const profileToSave = verifyData.profile || createUniqueUserProfile({
-        name: resolvedName,
-        email: emailToUse,
-        role: "enterprise"
-      })
-
-      saveStoredUser(profileToSave)
-      saveStoredSessionRoute("procurement", "enterprise")
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("connectin_is_signed_out")
-      }
-      setSuccessMessage(`✓ Authenticated as ${resolvedName}! Launching Enterprise Workspace...`)
-      setTimeout(() => {
-        router.push("/connectin")
-      }, 500)
+      await signIn("microsoft-entra-id", { callbackUrl: "/linkedin" })
     } catch (err: any) {
-      setErrorMessage(err.message || "Microsoft Sign-In failed.")
-    } finally {
-      setIsLoading(false)
+      window.location.href = "/api/auth/signin/microsoft-entra-id?callbackUrl=/linkedin"
     }
   }
 
-  const handleSignInSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  // Core sign-in logic — can be called from form onSubmit or programmatically (Resend button)
+  const doSignIn = async () => {
     if (!signInEmail) return
 
     setIsLoading(true)
     setErrorMessage(null)
+    setSignInOtpCode(null)
 
     try {
       const res = await fetch("/api/connectin/auth/login", {
@@ -199,8 +121,19 @@ export default function ConnectInLoginPage() {
         throw new Error(data.error || "Sign in failed. Please check your credentials.")
       }
 
+      if (data.otpChallengeToken) {
+        setOtpChallengeToken(data.otpChallengeToken)
+      }
+      // If API returns the actual code (demo/dev mode), store and display it
+      if (data.code) {
+        setSignInOtpCode(data.code)
+      }
       setSignInStep('2fa')
-      setSuccessMessage(`Security code sent to ${data.target || signInEmail}`)
+      setSuccessMessage(
+        data.code
+          ? `Your access code is: ${data.code}`
+          : `Security code sent to ${data.target || signInEmail}`
+      )
     } catch (err: any) {
       setErrorMessage(err.message || "Failed to sign in")
     } finally {
@@ -208,12 +141,18 @@ export default function ConnectInLoginPage() {
     }
   }
 
+  const handleSignInSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    await doSignIn()
+  }
+
   const handleVerifySignIn2FA = async (codeToSubmit?: string) => {
-    const code = codeToSubmit || signIn2FACode
-    if (!code) return
+    const code = (codeToSubmit || signIn2FACode || "").trim()
+    if (!code || code.length < 6) return
 
     setIsLoading(true)
     setErrorMessage(null)
+    setSuccessMessage("Verifying security code...")
 
     try {
       const resolvedName = resolveDisplayName(undefined, signInEmail)
@@ -223,7 +162,8 @@ export default function ConnectInLoginPage() {
         body: JSON.stringify({
           target: signInEmail,
           code,
-          name: resolvedName
+          name: resolvedName,
+          otpChallengeToken
         })
       })
 
@@ -239,17 +179,19 @@ export default function ConnectInLoginPage() {
       })
 
       saveStoredUser(profileToSave)
+      saveStoredSessionRoute('home', 'personal')
       if (typeof window !== "undefined") {
         localStorage.removeItem("connectin_is_signed_out")
+        sessionStorage.setItem("connectin_authenticated", "true")
       }
 
-      setSuccessMessage(`✓ Verified as ${profileToSave.name}! Signing you in...`)
+      setSuccessMessage(`✓ Verified as ${profileToSave.name}! Launching your workspace...`)
       setTimeout(() => {
-        router.push("/connectin")
-      }, 500)
+        window.location.href = "/linkedin"
+      }, 150)
     } catch (err: any) {
+      setSuccessMessage(null)
       setErrorMessage(err.message || "Verification failed.")
-    } finally {
       setIsLoading(false)
     }
   }
@@ -287,8 +229,18 @@ export default function ConnectInLoginPage() {
         throw new Error(data.error || "Registration failed.")
       }
 
+      if (data.otpChallengeToken) {
+        setOtpChallengeToken(data.otpChallengeToken)
+      }
+      if (data.code) {
+        setSignInOtpCode(data.code)
+      }
       setJoinStep('2fa')
-      setSuccessMessage(`Verification code sent to ${joinChannel === 'sms' && joinPhone ? joinPhone : joinEmail}`)
+      setSuccessMessage(
+        data.code
+          ? `Your verification code is: ${data.code}`
+          : `Verification code sent to ${joinChannel === 'sms' && joinPhone ? joinPhone : joinEmail}`
+      )
     } catch (err: any) {
       setErrorMessage(err.message || "Failed to create account.")
     } finally {
@@ -297,11 +249,12 @@ export default function ConnectInLoginPage() {
   }
 
   const handleVerifyJoin2FA = async (codeToSubmit?: string) => {
-    const code = codeToSubmit || join2FACode
-    if (!code) return
+    const code = (codeToSubmit || join2FACode || "").trim()
+    if (!code || code.length < 6) return
 
     setIsLoading(true)
     setErrorMessage(null)
+    setSuccessMessage("Verifying security code...")
 
     try {
       const fullName = `${joinFirstName} ${joinLastName}`.trim()
@@ -314,7 +267,8 @@ export default function ConnectInLoginPage() {
           target: joinChannel === 'sms' && joinPhone ? joinPhone : joinEmail,
           code,
           name: resolvedName,
-          role: joinRole
+          role: joinRole,
+          otpChallengeToken
         })
       })
 
@@ -345,15 +299,16 @@ export default function ConnectInLoginPage() {
       saveStoredSessionRoute(targetTab, targetWorkspace)
       if (typeof window !== "undefined") {
         localStorage.removeItem("connectin_is_signed_out")
+        sessionStorage.setItem("connectin_authenticated", "true")
       }
 
       setSuccessMessage(`✓ Welcome to ConnectIn, ${profileToSave.name}! Launching your workspace...`)
       setTimeout(() => {
-        router.push("/connectin")
-      }, 600)
+        window.location.href = "/linkedin"
+      }, 150)
     } catch (err: any) {
+      setSuccessMessage(null)
       setErrorMessage(err.message || "Verification failed.")
-    } finally {
       setIsLoading(false)
     }
   }
@@ -515,7 +470,6 @@ export default function ConnectInLoginPage() {
                       <div className="relative">
                         <input
                           type={showPassword ? "text" : "password"}
-                          required
                           value={signInPassword}
                           onChange={(e) => setSignInPassword(e.target.value)}
                           placeholder="••••••••••••"
@@ -580,7 +534,7 @@ export default function ConnectInLoginPage() {
                 </div>
               ) : (
                 /* Step 2: 2FA Verification (Authentic Code Entry) */
-                <div className="space-y-5 text-center">
+                <form onSubmit={(e) => { e.preventDefault(); handleVerifySignIn2FA(); }} className="space-y-5 text-center">
                   <div className="space-y-1">
                     <div className="h-12 w-12 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-[#0A66C2] dark:text-sky-400 flex items-center justify-center mx-auto text-xl font-bold">
                       🔐
@@ -596,10 +550,17 @@ export default function ConnectInLoginPage() {
                   <div className="space-y-4">
                     <input
                       type="text"
+                      inputMode="numeric"
                       autoFocus
                       maxLength={6}
                       value={signIn2FACode}
-                      onChange={(e) => setSignIn2FACode(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, "")
+                        setSignIn2FACode(val)
+                        if (val.length === 6) {
+                          handleVerifySignIn2FA(val)
+                        }
+                      }}
                       placeholder="000000"
                       className="w-full text-center text-3xl font-mono font-bold tracking-[8px] rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 p-3.5 text-[#0A66C2] dark:text-sky-400 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
                     />
@@ -607,20 +568,34 @@ export default function ConnectInLoginPage() {
                     <div className="flex items-center justify-between text-xs text-zinc-500">
                       <span>Didn't get the code?</span>
                       <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSignIn2FACode("123456")
-                            handleVerifySignIn2FA("123456")
-                          }}
-                          className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
-                        >
-                          ⚡ Autofill Access Code
-                        </button>
+                        {signInOtpCode && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSignIn2FACode(signInOtpCode)
+                              handleVerifySignIn2FA(signInOtpCode)
+                            }}
+                            className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
+                          >
+                            ⚡ Use Code: {signInOtpCode}
+                          </button>
+                        )}
+                        {!signInOtpCode && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSignIn2FACode("123456")
+                              handleVerifySignIn2FA("123456")
+                            }}
+                            className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
+                          >
+                            ⚡ Autofill Access Code
+                          </button>
+                        )}
                         <span>·</span>
                         <button
                           type="button"
-                          onClick={handleSignInSubmit}
+                          onClick={doSignIn}
                           disabled={isLoading}
                           className="font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline cursor-pointer"
                         >
@@ -638,8 +613,7 @@ export default function ConnectInLoginPage() {
                         Back
                       </button>
                       <button
-                        type="button"
-                        onClick={() => handleVerifySignIn2FA()}
+                        type="submit"
                         disabled={isLoading || signIn2FACode.length < 6}
                         className="flex-1 rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white py-2.5 text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                       >
@@ -668,7 +642,7 @@ export default function ConnectInLoginPage() {
                       </div>
                     </div>
                   </div>
-                </div>
+                </form>
               )}
             </>
           )}
@@ -858,7 +832,7 @@ export default function ConnectInLoginPage() {
                 </div>
               ) : (
                 /* Step 2: Confirm Email / SMS -> Pure Authentic Code Entry */
-                <div className="space-y-5 text-center">
+                <form onSubmit={(e) => { e.preventDefault(); handleVerifyJoin2FA(); }} className="space-y-5 text-center">
                   <div className="space-y-1">
                     <div className="h-12 w-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto text-xl font-bold">
                       {joinChannel === 'sms' && joinPhone ? '📱' : '✉️'}
@@ -874,10 +848,17 @@ export default function ConnectInLoginPage() {
                   <div className="space-y-4">
                     <input
                       type="text"
+                      inputMode="numeric"
                       autoFocus
                       maxLength={6}
                       value={join2FACode}
-                      onChange={(e) => setJoin2FACode(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, "")
+                        setJoin2FACode(val)
+                        if (val.length === 6) {
+                          handleVerifyJoin2FA(val)
+                        }
+                      }}
                       placeholder="000000"
                       className="w-full text-center text-3xl font-mono font-bold tracking-[8px] rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 p-3.5 text-emerald-600 dark:text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
@@ -916,8 +897,7 @@ export default function ConnectInLoginPage() {
                         Back
                       </button>
                       <button
-                        type="button"
-                        onClick={() => handleVerifyJoin2FA()}
+                        type="submit"
                         disabled={isLoading || join2FACode.length < 6}
                         className="flex-1 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                       >
@@ -946,7 +926,7 @@ export default function ConnectInLoginPage() {
                       </div>
                     </div>
                   </div>
-                </div>
+                </form>
               )}
             </>
           )}

@@ -22,8 +22,13 @@ export async function POST(req: NextRequest) {
 			console.log(`\n🔑 OTP for ${email}: \x1b[36m${code}\x1b[0m  (expires in 30 min)\n`);
 		}
 
+		const envFrom = process.env.RESEND_FORM_EMAIL;
+		const fromAddress = (envFrom && !envFrom.includes("resend.dev"))
+			? (envFrom.includes("<") ? envFrom : `ConnectIn Security <${envFrom}>`)
+			: "ConnectIn Security <auth@expediteconsults.com>";
+
 		await resend.emails.send({
-			from: process.env.RESEND_FORM_EMAIL ?? "ConnectIn Security <auth@expediteconsults.com>",
+			from: fromAddress,
 			to: email,
 			subject: `🔐 ConnectIn Security: Your Sign-In Code is ${code}`,
 			html: `

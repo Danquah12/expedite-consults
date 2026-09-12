@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --hopkins-heritage: #002D72;
+    --hopkins-spirit: #68ACE5;
+    --hopkins-white: #FFFFFF;
+  }
+}

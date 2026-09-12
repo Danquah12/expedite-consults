@@ -26,8 +26,10 @@ import {
 	EscalationEmail,
 } from "@/components/cr/email-templates/cr-templates";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM = `IT Change Management <${process.env.RESEND_FORM_EMAIL ?? "auth@expediteconsults.com"}>`;
+const envCrFrom = process.env.RESEND_FORM_EMAIL;
+const FROM = (envCrFrom && !envCrFrom.includes("resend.dev"))
+	? (envCrFrom.includes("<") ? envCrFrom : `IT Change Management <${envCrFrom}>`)
+	: "IT Change Management <auth@expediteconsults.com>";
 const CHANGE_MANAGER_EMAIL = process.env.CR_MANAGER_EMAIL ?? "sanity.expediteconsults@gmail.com";
 
 async function sendEmail(to: string | string[], subject: string, react: React.ReactElement) {

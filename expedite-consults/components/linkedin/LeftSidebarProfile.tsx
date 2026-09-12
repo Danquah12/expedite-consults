@@ -138,10 +138,13 @@ export function LeftSidebarProfile({
           <div className="space-y-1">
             <div className="flex items-center justify-between text-[11px]">
               <span className="font-semibold text-zinc-700 dark:text-zinc-300">Profile Strength</span>
-              <span className="font-black text-[#0A66C2]">94%</span>
+              <span className="font-black text-[#0A66C2]">{user.profileStrength ?? 50}%</span>
             </div>
             <div className="h-1.5 w-full rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
-              <div className="h-full rounded-full bg-gradient-to-r from-[#0A66C2] to-emerald-500 w-[94%]" />
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-[#0A66C2] to-emerald-500 transition-all duration-500"
+                style={{ width: `${Math.min(100, Math.max(10, user.profileStrength ?? 50))}%` }}
+              />
             </div>
           </div>
 
@@ -153,10 +156,7 @@ export function LeftSidebarProfile({
               <span className="text-amber-800 dark:text-amber-300 flex items-center gap-1">
                 <Flame className="h-3 w-3 text-amber-500" /> Career Mission
               </span>
-              <span className="text-amber-700 dark:text-amber-300 font-mono">72%</span>
-            </div>
-            <div className="h-1 w-full rounded-full bg-amber-200/50 dark:bg-amber-950 overflow-hidden">
-              <div className="h-full rounded-full bg-amber-500 w-[72%]" />
+              <span className="text-amber-700 dark:text-amber-300 font-mono">Active</span>
             </div>
           </div>
         </div>
@@ -168,21 +168,21 @@ export function LeftSidebarProfile({
             className="flex cursor-pointer items-center justify-between py-0.5 hover:text-[#0A66C2]"
           >
             <span className="text-zinc-500 dark:text-zinc-400">Profile viewers</span>
-            <span className="font-semibold text-[#0A66C2]">{user.profileViews.toLocaleString()}</span>
+            <span className="font-semibold text-[#0A66C2]">{(user.profileViews ?? 0).toLocaleString()}</span>
           </div>
           <div
             onClick={onViewProfile}
             className="flex cursor-pointer items-center justify-between py-0.5 hover:text-[#0A66C2]"
           >
             <span className="text-zinc-500 dark:text-zinc-400">Post impressions</span>
-            <span className="font-semibold text-[#0A66C2]">{user.postImpressions.toLocaleString()}</span>
+            <span className="font-semibold text-[#0A66C2]">{(user.postImpressions ?? 0).toLocaleString()}</span>
           </div>
           <div
             onClick={onViewProfile}
             className="flex cursor-pointer items-center justify-between py-0.5 hover:text-[#0A66C2]"
           >
             <span className="text-zinc-500 dark:text-zinc-400">Search appearances</span>
-            <span className="font-semibold text-emerald-600">76</span>
+            <span className="font-semibold text-emerald-600">{(user.searchAppearances ?? 0).toLocaleString()}</span>
           </div>
         </div>
 

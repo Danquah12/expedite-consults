@@ -5,16 +5,25 @@ import { validateOTP } from "@/lib/connectin-otp"
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { target, code, name: incomingName, role: incomingRole, headline: incomingHeadline } = body
+    const {
+      target,
+      code,
+      name: incomingName,
+      role: incomingRole,
+      headline: incomingHeadline,
+      otpChallengeToken: incomingChallengeToken
+    } = body
 
     if (!target || !code) {
       return NextResponse.json({ error: "Target email/phone and 6-digit code are required." }, { status: 400 })
     }
 
     const cleanTarget = target.toLowerCase().trim()
+    const cookieChallenge = req.cookies.get("connectin_otp_challenge")?.value
+    const challengeToken = incomingChallengeToken || cookieChallenge
 
-    // 1. Verify OTP using deterministic cryptographic signature and DB checks
-    const isValid = validateOTP(cleanTarget, code)
+    // 1. Verify OTP using signed cryptographic challenge, Twilio Verify API, and DB checks
+    const isValid = await validateOTP(cleanTarget, code, challengeToken)
     if (!isValid) {
       return NextResponse.json({ error: "Invalid or expired verification code." }, { status: 401 })
     }
@@ -24,7 +33,11 @@ export async function POST(req: NextRequest) {
     if (!displayName) {
       const prefix = cleanTarget.split("@")[0] || ""
       if (prefix.includes(".") || prefix.includes("_") || prefix.includes("-")) {
-        displayName = prefix.split(/[._-]/).filter(Boolean).map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)).join(" ")
+        displayName = prefix
+          .split(/[._-]/)
+          .filter(Boolean)
+          .map((s: string) => s.charAt(0).toUpperCase() + s.slice(1))
+          .join(" ")
       } else {
         displayName = prefix ? prefix.charAt(0).toUpperCase() + prefix.slice(1) : "ConnectIn Member"
       }
@@ -52,15 +65,15 @@ export async function POST(req: NextRequest) {
           coverImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80",
           location: "United States · Cryptographically Verified",
           about: `Verified ${userRole} member on ConnectIn Zero-Trust Network.`,
-          skills: ["Cloud Engineering", "Security Architecture", "Zero Trust"],
+          skills: [],
           clearanceLevel: "Standard Verified Identity (Level 2)",
           fido2MfaVerified: true,
           cryptoVerificationBadge: "0xED25519_SESSION_INITIALIZED",
-          skillMatrixScore: 88.0,
-          connectionsCount: 1,
-          followersCount: 5,
-          profileViews: 1,
-          postImpressions: 12
+          skillMatrixScore: 50.0,
+          connectionsCount: 0,
+          followersCount: 0,
+          profileViews: 0,
+          postImpressions: 0
         }
       )
       user = created.user
@@ -99,12 +112,22 @@ export async function POST(req: NextRequest) {
       }
     })
 
-    // Set secure HTTP-only session cookie
+    // Set secure HTTP-only session cookie (30 days)
     response.cookies.set("connectin_session", session.token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 30 * 24 * 60 * 60 // 30 days
+      path: "/",
+      maxAge: 30 * 24 * 60 * 60
+    })
+
+    // Clear consumed challenge cookie
+    response.cookies.set("connectin_otp_challenge", "", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 0
     })
 
     return response

@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --umbc-gold: #FDB515;
+    --umbc-black: #000000;
+    --umbc-red: #C8102E;
+  }
+}

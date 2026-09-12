@@ -17,6 +17,7 @@ import { UserProfile } from "@/lib/linkedin-data"
 import { saveStoredUser, saveStoredSessionRoute } from "@/lib/connectin-storage"
 import { createUniqueUserProfile, resolveDisplayName } from "@/lib/connectin-profile"
 import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
+import { signIn } from "next-auth/react"
 
 export interface AuthPersona {
   id: string
@@ -135,6 +136,9 @@ export function ConnectInAuthModal({
   const [join2FACode, setJoin2FACode] = useState("")
   const [joinBackupCode, setJoinBackupCode] = useState<string | null>(null)
 
+  // Challenge token for stateless OTP verification across serverless lambdas
+  const [otpChallengeToken, setOtpChallengeToken] = useState<string | null>(null)
+
   // Feedback & Loading
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -143,107 +147,27 @@ export function ConnectInAuthModal({
   // Demo Drawer
   const [isDemoDrawerOpen, setIsDemoDrawerOpen] = useState(false)
 
-  if (!isOpen) return null
-
-  // 1-Click Google Sign-In
+  // Real Google OAuth 2.0 Redirect (accounts.google.com)
   const handleGoogleSignIn = async () => {
     setIsLoading(true)
     setErrorMessage(null)
+    setSuccessMessage("Redirecting to Google Identity Services...")
     try {
-      const emailToUse = signInEmail.includes("@") ? signInEmail : "member@connectin.com"
-      const resolvedName = resolveDisplayName(undefined, emailToUse)
-
-      await fetch("/api/connectin/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          firstName: resolvedName.split(" ")[0] || "Member",
-          lastName: resolvedName.split(" ").slice(1).join(" ") || "",
-          email: emailToUse,
-          role: "personal",
-          twoFactorChannel: "email"
-        })
-      })
-
-      const verifyRes = await fetch("/api/connectin/auth/verify-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          target: emailToUse,
-          code: "123456",
-          name: resolvedName,
-          role: "personal"
-        })
-      })
-
-      const verifyData = await verifyRes.json()
-      const profileToSave = verifyData.profile || createUniqueUserProfile({
-        name: resolvedName,
-        email: emailToUse,
-        role: "personal"
-      })
-
-      saveStoredUser(profileToSave)
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("connectin_is_signed_out")
-      }
-      onLoginSuccess(profileToSave, 'home', 'personal')
-      onClose()
+      await signIn("google", { callbackUrl: "/linkedin" })
     } catch (err: any) {
-      setErrorMessage(err.message || "Google Sign-In failed.")
-    } finally {
-      setIsLoading(false)
+      window.location.href = "/api/auth/signin/google?callbackUrl=/linkedin"
     }
   }
 
-  // 1-Click Microsoft Azure Entra SSO
+  // Real Microsoft Entra ID (Azure AD) OAuth 2.0 Redirect (login.microsoftonline.com)
   const handleMicrosoftSignIn = async () => {
     setIsLoading(true)
     setErrorMessage(null)
+    setSuccessMessage("Redirecting to Microsoft Entra ID (Azure AD)...")
     try {
-      const emailToUse = signInEmail.includes("@") ? signInEmail : "enterprise.member@expediteconsults.com"
-      const resolvedName = resolveDisplayName(undefined, emailToUse)
-
-      await fetch("/api/connectin/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          firstName: resolvedName.split(" ")[0] || "Executive",
-          lastName: resolvedName.split(" ").slice(1).join(" ") || "",
-          email: emailToUse,
-          role: "enterprise",
-          twoFactorChannel: "email"
-        })
-      })
-
-      const verifyRes = await fetch("/api/connectin/auth/verify-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          target: emailToUse,
-          code: "123456",
-          name: resolvedName,
-          role: "enterprise"
-        })
-      })
-
-      const verifyData = await verifyRes.json()
-      const profileToSave = verifyData.profile || createUniqueUserProfile({
-        name: resolvedName,
-        email: emailToUse,
-        role: "enterprise"
-      })
-
-      saveStoredUser(profileToSave)
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("connectin_is_signed_out")
-      }
-      onLoginSuccess(profileToSave, 'procurement', 'enterprise')
-      onClose()
+      await signIn("microsoft-entra-id", { callbackUrl: "/linkedin" })
     } catch (err: any) {
-      setErrorMessage(err.message || "Microsoft Sign-In failed.")
-    } finally {
-      setIsLoading(false)
+      window.location.href = "/api/auth/signin/microsoft-entra-id?callbackUrl=/linkedin"
     }
   }
 
@@ -271,6 +195,9 @@ export function ConnectInAuthModal({
         throw new Error(data.error || "Sign in failed.")
       }
 
+      if (data.otpChallengeToken) {
+        setOtpChallengeToken(data.otpChallengeToken)
+      }
       setSignInStep('2fa')
       setSuccessMessage(`Security code sent to ${data.target || signInEmail}`)
     } catch (err: any) {
@@ -281,11 +208,12 @@ export function ConnectInAuthModal({
   }
 
   const handleVerifySignIn2FA = async (codeToSubmit?: string) => {
-    const code = codeToSubmit || signIn2FACode
-    if (!code) return
+    const code = (codeToSubmit || signIn2FACode || "").trim()
+    if (!code || code.length < 6 || isLoading) return
 
     setIsLoading(true)
     setErrorMessage(null)
+    setSuccessMessage("Verifying security code...")
 
     try {
       const resolvedName = resolveDisplayName(undefined, signInEmail)
@@ -295,13 +223,14 @@ export function ConnectInAuthModal({
         body: JSON.stringify({
           target: signInEmail,
           code,
-          name: resolvedName
+          name: resolvedName,
+          otpChallengeToken
         })
       })
 
       const data = await res.json()
       if (!res.ok) {
-        throw new Error(data.error || "Invalid code.")
+        throw new Error(data.error || "Invalid verification code.")
       }
 
       const profileToSave = data.profile || createUniqueUserProfile({
@@ -311,12 +240,21 @@ export function ConnectInAuthModal({
       })
 
       saveStoredUser(profileToSave)
+      saveStoredSessionRoute('home', 'personal')
       if (typeof window !== "undefined") {
         localStorage.removeItem("connectin_is_signed_out")
       }
-      onLoginSuccess(profileToSave, 'home', 'personal')
-      onClose()
+
+      setSuccessMessage(`✓ Authenticated! Welcome, ${profileToSave.name}`)
+      setTimeout(() => {
+        onLoginSuccess(profileToSave, 'home', 'personal')
+        onClose()
+        if (typeof window !== "undefined") {
+          window.location.href = "/linkedin"
+        }
+      }, 150)
     } catch (err: any) {
+      setSuccessMessage(null)
       setErrorMessage(err.message || "Verification failed.")
     } finally {
       setIsLoading(false)
@@ -350,6 +288,9 @@ export function ConnectInAuthModal({
         throw new Error(data.error || "Registration failed.")
       }
 
+      if (data.otpChallengeToken) {
+        setOtpChallengeToken(data.otpChallengeToken)
+      }
       setJoinStep('2fa')
       setSuccessMessage(`Verification code sent to ${joinEmail}`)
     } catch (err: any) {
@@ -360,11 +301,12 @@ export function ConnectInAuthModal({
   }
 
   const handleVerifyJoin2FA = async (codeToSubmit?: string) => {
-    const code = codeToSubmit || join2FACode
-    if (!code) return
+    const code = (codeToSubmit || join2FACode || "").trim()
+    if (!code || code.length < 6 || isLoading) return
 
     setIsLoading(true)
     setErrorMessage(null)
+    setSuccessMessage("Verifying security code...")
 
     try {
       const fullName = `${joinFirstName} ${joinLastName}`.trim()
@@ -377,13 +319,14 @@ export function ConnectInAuthModal({
           target: joinEmail,
           code,
           name: resolvedName,
-          role: joinRole
+          role: joinRole,
+          otpChallengeToken
         })
       })
 
       const data = await res.json()
       if (!res.ok) {
-        throw new Error(data.error || "Invalid code.")
+        throw new Error(data.error || "Invalid verification code.")
       }
 
       const targetTab =
@@ -408,10 +351,17 @@ export function ConnectInAuthModal({
       if (typeof window !== "undefined") {
         localStorage.removeItem("connectin_is_signed_out")
       }
-      onLoginSuccess(profileToSave, targetTab, targetWorkspace)
 
-      onClose()
+      setSuccessMessage(`✓ Account verified! Welcome, ${profileToSave.name}`)
+      setTimeout(() => {
+        onLoginSuccess(profileToSave, targetTab, targetWorkspace)
+        onClose()
+        if (typeof window !== "undefined") {
+          window.location.href = "/linkedin"
+        }
+      }, 150)
     } catch (err: any) {
+      setSuccessMessage(null)
       setErrorMessage(err.message || "Verification failed.")
     } finally {
       setIsLoading(false)
@@ -613,7 +563,7 @@ export function ConnectInAuthModal({
               </form>
             ) : (
               /* Sign In 2FA */
-              <div className="space-y-4 text-center">
+              <form onSubmit={(e) => { e.preventDefault(); handleVerifySignIn2FA(); }} className="space-y-4 text-center">
                 <div className="space-y-1">
                   <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100">Two-Step Verification</h3>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -624,10 +574,17 @@ export function ConnectInAuthModal({
                 <div className="space-y-3">
                   <input
                     type="text"
+                    inputMode="numeric"
                     autoFocus
                     maxLength={6}
                     value={signIn2FACode}
-                    onChange={(e) => setSignIn2FACode(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, "")
+                      setSignIn2FACode(val)
+                      if (val.length === 6) {
+                        handleVerifySignIn2FA(val)
+                      }
+                    }}
                     placeholder="000000"
                     className="w-full text-center text-3xl font-mono font-bold tracking-[8px] rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 p-3 text-[#0A66C2] dark:text-sky-400 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
                   />
@@ -666,8 +623,7 @@ export function ConnectInAuthModal({
                       Back
                     </button>
                     <button
-                      type="button"
-                      onClick={() => handleVerifySignIn2FA()}
+                      type="submit"
                       disabled={isLoading || signIn2FACode.length < 6}
                       className="flex-1 rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white py-2 text-xs font-bold cursor-pointer disabled:opacity-50"
                     >
@@ -696,7 +652,7 @@ export function ConnectInAuthModal({
                     </div>
                   </div>
                 </div>
-              </div>
+              </form>
             )}
           </>
         )}
@@ -823,7 +779,7 @@ export function ConnectInAuthModal({
               </div>
             ) : (
               /* Join 2FA -> Direct Launch */
-              <div className="space-y-4 text-center">
+              <form onSubmit={(e) => { e.preventDefault(); handleVerifyJoin2FA(); }} className="space-y-4 text-center">
                 <div className="space-y-1">
                   <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100">Confirm Your Code</h3>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -834,10 +790,17 @@ export function ConnectInAuthModal({
                 <div className="space-y-3">
                   <input
                     type="text"
+                    inputMode="numeric"
                     autoFocus
                     maxLength={6}
                     value={join2FACode}
-                    onChange={(e) => setJoin2FACode(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, "")
+                      setJoin2FACode(val)
+                      if (val.length === 6) {
+                        handleVerifyJoin2FA(val)
+                      }
+                    }}
                     placeholder="000000"
                     className="w-full text-center text-3xl font-mono font-bold tracking-[8px] rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 p-3 text-emerald-600 dark:text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
@@ -876,8 +839,7 @@ export function ConnectInAuthModal({
                       Back
                     </button>
                     <button
-                      type="button"
-                      onClick={() => handleVerifyJoin2FA()}
+                      type="submit"
                       disabled={isLoading || join2FACode.length < 6}
                       className="flex-1 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white py-2 text-xs font-bold cursor-pointer disabled:opacity-50"
                     >
@@ -906,7 +868,7 @@ export function ConnectInAuthModal({
                     </div>
                   </div>
                 </div>
-              </div>
+              </form>
             )}
           </>
         )}

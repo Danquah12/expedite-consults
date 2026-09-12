@@ -66,9 +66,14 @@ export async function POST(
 			// Build the review URL with the token
 			const reviewUrl = `${baseUrl}/review/${chg}?token=${token}`;
 
+			const envFrom = process.env.RESEND_FORM_EMAIL;
+			const fromAddress = (envFrom && !envFrom.includes("resend.dev"))
+				? (envFrom.includes("<") ? envFrom : `IT Change Management <${envFrom}>`)
+				: "IT Change Management <auth@expediteconsults.com>";
+
 			// Send the approval request email
 			await resend.emails.send({
-				from: process.env.RESEND_FORM_EMAIL ?? "onboarding@resend.dev",
+				from: fromAddress,
 				to: approver.email,
 				subject: `Action Required: CAB Approval for ${chg} — ${cr.shortDescription}`,
 				html: buildApprovalEmail({ cr, approver, reviewUrl, expiresAt }),

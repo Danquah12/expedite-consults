@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { connectinDb } from "@/lib/connectin-db"
 import { sendConnectInOTPEmail } from "@/lib/connectin-email"
 import { sendConnectInSMS } from "@/lib/connectin-sms"
-import { createAndStoreOTP } from "@/lib/connectin-otp"
+import { createDynamicOTP } from "@/lib/connectin-otp"
 import crypto from "crypto"
 
 export async function POST(req: NextRequest) {
@@ -17,8 +17,10 @@ export async function POST(req: NextRequest) {
     const cleanEmail = email.toLowerCase().trim()
     const fullName = `${firstName} ${lastName || ""}`.trim()
 
-    // 1. Generate & store deterministic cryptographic OTP code
-    const otpCode = createAndStoreOTP(cleanEmail)
+    // 1. Generate brand new, dynamic random OTP & HMAC signed challenge
+    const otpTarget = twoFactorChannel === "sms" && phone ? phone.trim() : cleanEmail
+    const { code: otpCode, challengeToken } = createDynamicOTP(otpTarget, 15)
+
     if (phone) {
       connectinDb.setOTP(phone.trim(), otpCode, 15)
     }
@@ -43,15 +45,15 @@ export async function POST(req: NextRequest) {
           coverImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80",
           location: "United States · Cryptographically Verified",
           about: `Verified ${(role || "personal")} member on ConnectIn Zero-Trust Network.`,
-          skills: ["Cloud Engineering", "Security Architecture", "Zero Trust"],
+          skills: [],
           clearanceLevel: "Standard Verified Identity (Level 2)",
           fido2MfaVerified: true,
           cryptoVerificationBadge: "0xED25519_SESSION_INITIALIZED",
-          skillMatrixScore: 88.0,
-          connectionsCount: 1,
-          followersCount: 5,
-          profileViews: 1,
-          postImpressions: 12
+          skillMatrixScore: 50.0,
+          connectionsCount: 0,
+          followersCount: 0,
+          profileViews: 0,
+          postImpressions: 0
         }
       )
     }
@@ -72,12 +74,25 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    return NextResponse.json({
+    const res = NextResponse.json({
       success: true,
       message: `Security verification code sent to ${twoFactorChannel === "sms" && phone ? phone : cleanEmail}`,
       channel: twoFactorChannel,
-      target: twoFactorChannel === "sms" && phone ? phone : cleanEmail
+      target: twoFactorChannel === "sms" && phone ? phone : cleanEmail,
+      otpChallengeToken: challengeToken,
+      code: otpCode
     })
+
+    // Set secure challenge cookie
+    res.cookies.set("connectin_otp_challenge", challengeToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 15 * 60
+    })
+
+    return res
   } catch (error: any) {
     console.error("[/api/connectin/auth/register]", error)
     return NextResponse.json({ error: error.message || "Registration failed" }, { status: 500 })

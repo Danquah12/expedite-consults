@@ -20,7 +20,10 @@ export async function sendConnectInOTPEmail({
       ? `🔐 ConnectIn Security: Your 2FA Sign-In Code is ${code}`
       : `🚀 Welcome to ConnectIn: Verify Your Account (${code})`
 
-    const fromAddress = process.env.RESEND_FORM_EMAIL || "ConnectIn Security <auth@expediteconsults.com>"
+    const envFrom = process.env.RESEND_FORM_EMAIL
+    const fromAddress = (envFrom && !envFrom.includes("resend.dev"))
+      ? (envFrom.includes("<") ? envFrom : `ConnectIn Security <${envFrom}>`)
+      : "ConnectIn Security <auth@expediteconsults.com>"
 
     console.log(`[ConnectIn Email Dispatch] Attempting send to: ${toEmail} using ${fromAddress}`)
 

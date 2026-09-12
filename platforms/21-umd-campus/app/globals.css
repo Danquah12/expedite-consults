@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --umd-red: #E03A3E;
+    --umd-gold: #FFD520;
+    --umd-black: #000000;
+  }
+}

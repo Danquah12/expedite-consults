@@ -35,24 +35,38 @@ export function saveStoredPosts(posts: Post[]) {
   }
 }
 
-export function loadStoredUser(): UserProfile {
-  if (typeof window === 'undefined') return currentUser
+export function getExplicitStoredUser(): UserProfile | null {
+  if (typeof window === 'undefined') return null
   try {
     const saved = localStorage.getItem(STORAGE_KEYS.USER) || localStorage.getItem('connectin_user_v1')
     if (saved) {
       const parsed = JSON.parse(saved)
-      if (parsed && parsed.name) {
-        return createUniqueUserProfile({
-          id: parsed.id,
-          name: parsed.name,
-          email: parsed.email || `${parsed.name.toLowerCase().replace(/\s+/g, '.')}@connectin.com`,
-          avatar: parsed.avatar,
-          headline: parsed.headline,
-          location: parsed.location,
-          role: parsed.role || 'personal'
-        })
+      if (parsed && parsed.name && parsed.email) {
+        return {
+          ...createUniqueUserProfile({
+            id: parsed.id,
+            name: parsed.name,
+            email: parsed.email || `${parsed.name.toLowerCase().replace(/\s+/g, '.')}@connectin.com`,
+            avatar: parsed.avatar,
+            headline: parsed.headline,
+            location: parsed.location,
+            role: parsed.role || 'personal'
+          }),
+          ...parsed
+        }
       }
     }
+    return null
+  } catch (e) {
+    return null
+  }
+}
+
+export function loadStoredUser(): UserProfile {
+  if (typeof window === 'undefined') return currentUser
+  try {
+    const explicit = getExplicitStoredUser()
+    if (explicit) return explicit
     return currentUser
   } catch (e) {
     console.error('Failed to load user from storage', e)
@@ -63,17 +77,9 @@ export function loadStoredUser(): UserProfile {
 export function saveStoredUser(user: UserProfile) {
   if (typeof window === 'undefined') return
   try {
-    const richProfile = createUniqueUserProfile({
-      id: user.id,
-      name: user.name,
-      email: (user as any).email || `${user.name.toLowerCase().replace(/\s+/g, '.')}@connectin.com`,
-      avatar: user.avatar,
-      headline: user.headline,
-      location: user.location,
-      role: (user as any).role || 'personal'
-    })
-    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(richProfile))
-    localStorage.setItem('connectin_user_v1', JSON.stringify(richProfile))
+    const serialized = JSON.stringify(user)
+    localStorage.setItem(STORAGE_KEYS.USER, serialized)
+    localStorage.setItem('connectin_user_v1', serialized)
   } catch (e) {
     console.error('Failed to save user to storage', e)
   }

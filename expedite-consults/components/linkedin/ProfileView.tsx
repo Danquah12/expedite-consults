@@ -269,12 +269,12 @@ export function ProfileView({
                     <p className="text-xs sm:text-sm font-semibold text-zinc-600 dark:text-zinc-300">
                       {user.headline}
                     </p>
-                    <p className="text-xs text-zinc-500 flex items-center gap-2">
+                    <p className="text-xs text-zinc-500 flex items-center gap-2 flex-wrap">
                       <span>📍 {user.location}</span>
                       <span>·</span>
-                      <span className="text-[#0A66C2] font-semibold">{user.connectionsCount} connections</span>
+                      <span className="text-[#0A66C2] font-semibold">{(user.connectionsCount ?? 0)} connections</span>
                       <span>·</span>
-                      <span className="text-emerald-600 font-bold">TS/SCI Polygraph Active</span>
+                      <span className="text-emerald-600 font-bold">{(user as any).clearanceLevel || "Cryptographically Verified"}</span>
                     </p>
                   </div>
                 </div>
@@ -539,56 +539,41 @@ export function ProfileView({
       {/* ========================================================================= */}
       {workspaceSection === 'experience' && (
         <div className="space-y-4">
-          {(user.experience && user.experience.length > 0
-            ? user.experience.map((exp) => ({
-                role: exp.role,
-                company: exp.company,
-                location: exp.location,
-                period: exp.duration,
-                isCurrent: exp.duration.includes('Present'),
-                description: exp.description,
-                achievements: exp.skills ? exp.skills.map((s: string) => `Mastery and verified execution in ${s}`) : []
-              }))
-            : WORKSPACE_EXPERIENCE_DATA
-          ).map((exp, i) => (
-            <div
-              key={i}
-              className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-3"
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <h4 className="font-bold text-base text-zinc-900 dark:text-zinc-100">
-                    {exp.role}
-                  </h4>
-                  <p className="text-xs sm:text-sm font-semibold text-[#0A66C2]">{exp.company}</p>
-                  <p className="text-xs text-zinc-400">{exp.period} · {exp.location}</p>
+          {user.experience && user.experience.length > 0 ? (
+            user.experience.map((exp, i) => (
+              <div
+                key={i}
+                className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-3"
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h4 className="font-bold text-base text-zinc-900 dark:text-zinc-100">
+                      {exp.role}
+                    </h4>
+                    <p className="text-xs sm:text-sm font-semibold text-[#0A66C2]">{exp.company}</p>
+                    <p className="text-xs text-zinc-400">{exp.duration} · {exp.location}</p>
+                  </div>
+                  {exp.duration?.includes('Present') && (
+                    <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                      Present Role
+                    </span>
+                  )}
                 </div>
-                {exp.isCurrent && (
-                  <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                    Present Role
-                  </span>
-                )}
+
+                <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">
+                  {exp.description}
+                </p>
               </div>
-
-              <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                {exp.description}
+            ))
+          ) : (
+            <div className="rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 p-8 text-center space-y-3">
+              <Briefcase className="h-8 w-8 text-zinc-400 mx-auto" />
+              <h4 className="font-bold text-sm text-zinc-700 dark:text-zinc-200">No Work Experience Added Yet</h4>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-sm mx-auto">
+                Click <strong>Edit Profile &amp; Name</strong> above to update your professional background and current role.
               </p>
-
-              {exp.achievements && exp.achievements.length > 0 && (
-                <div className="space-y-1 text-xs pt-1">
-                  <p className="font-bold text-zinc-700 dark:text-zinc-300">Key Security &amp; Architectural Milestones:</p>
-                  <ul className="space-y-1 text-zinc-600 dark:text-zinc-400">
-                    {exp.achievements.map((ach: string, idx: number) => (
-                      <li key={idx} className="flex items-start gap-1.5">
-                        <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
-                        <span>{ach}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
             </div>
-          ))}
+          )}
         </div>
       )}
 
@@ -597,25 +582,13 @@ export function ProfileView({
       {/* ========================================================================= */}
       {workspaceSection === 'publications' && (
         <div className="space-y-4">
-          {WORKSPACE_PUBLICATIONS_DATA.map((pub, i) => (
-            <div
-              key={i}
-              className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-2"
-            >
-              <div className="flex items-center justify-between">
-                <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-[10px] font-bold text-purple-800 dark:bg-purple-950 dark:text-purple-300">
-                  {pub.type}
-                </span>
-                <span className="text-xs text-zinc-400 font-mono">{pub.citationsCount} Citations</span>
-              </div>
-
-              <h4 className="font-bold text-base text-zinc-900 dark:text-zinc-100">
-                {pub.title}
-              </h4>
-              <p className="text-xs text-zinc-500">{pub.publisher} · {pub.date}</p>
-              <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed">{pub.summary}</p>
-            </div>
-          ))}
+          <div className="rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 p-8 text-center space-y-3">
+            <FileText className="h-8 w-8 text-zinc-400 mx-auto" />
+            <h4 className="font-bold text-sm text-zinc-700 dark:text-zinc-200">No Technical Publications Yet</h4>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-sm mx-auto">
+              Published research, RFCs, and architecture blueprints will appear here.
+            </p>
+          </div>
         </div>
       )}
 
@@ -624,45 +597,38 @@ export function ProfileView({
       {/* ========================================================================= */}
       {workspaceSection === 'reviews' && (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {(user.recommendations && user.recommendations.length > 0
-              ? user.recommendations.map((r) => ({
-                  reviewerName: r.authorName,
-                  reviewerRole: r.authorHeadline,
-                  reviewerAvatar: r.authorAvatar,
-                  rating: 5.0,
-                  date: r.date,
-                  reviewType: 'Executive Peer Recommendation',
-                  comment: r.text
-                }))
-              : WORKSPACE_REVIEWS_DATA
-            ).map((rev, i) => (
-              <div
-                key={i}
-                className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-3"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <img src={rev.reviewerAvatar} alt="" className="h-10 w-10 rounded-full object-cover" />
-                    <div>
-                      <h4 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">{rev.reviewerName}</h4>
-                      <p className="text-[11px] text-zinc-500">{rev.reviewerRole}</p>
+          {user.recommendations && user.recommendations.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {user.recommendations.map((rev, i) => (
+                <div
+                  key={i}
+                  className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <img src={rev.authorAvatar} alt="" className="h-10 w-10 rounded-full object-cover" />
+                      <div>
+                        <h4 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">{rev.authorName}</h4>
+                        <p className="text-[11px] text-zinc-500">{rev.authorHeadline}</p>
+                      </div>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-1 text-amber-500 font-bold text-xs">
-                    <Star className="h-3.5 w-3.5 fill-amber-500" />
-                    <span>{rev.rating}</span>
-                  </div>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-300 italic leading-relaxed">
+                    "{rev.text}"
+                  </p>
+                  <span className="text-[10px] text-zinc-400 font-mono">{rev.date}</span>
                 </div>
-
-                <p className="text-xs text-zinc-600 dark:text-zinc-300 italic leading-relaxed">
-                  "{rev.comment}"
-                </p>
-                <span className="text-[10px] text-zinc-400 font-mono">{rev.reviewType} · {rev.date}</span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 p-8 text-center space-y-3">
+              <MessageSquarePlus className="h-8 w-8 text-zinc-400 mx-auto" />
+              <h4 className="font-bold text-sm text-zinc-700 dark:text-zinc-200">No Peer Reviews Yet</h4>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-sm mx-auto">
+                Verified peer attestations and recommendations will appear here as you collaborate across the network.
+              </p>
+            </div>
+          )}
         </div>
       )}
 

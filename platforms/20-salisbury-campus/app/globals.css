@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --maroon: #8B1C3F;
+    --gold: #FFCC00;
+  }
+}

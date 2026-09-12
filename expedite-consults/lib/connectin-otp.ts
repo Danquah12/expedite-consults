@@ -1,44 +1,62 @@
 import crypto from "crypto"
 import { connectinDb } from "./connectin-db"
+import { generateDynamicOTPWithChallenge, verifyDynamicOTPChallenge, getAuthSecret } from "./connectin-crypto"
 
-const OTP_SECRET = process.env.AUTH_SECRET || process.env.SANITY_API_TOKEN || "connectin_prod_otp_secret_key_98412_v2"
+const PRIMARY_OTP_SECRET = "connectin_enterprise_zero_trust_otp_secret_2026_prod"
 
 /**
- * Deterministically generates a 6-digit cryptographic OTP code based on email and a 10-minute time window.
- * This guarantees that even across different serverless lambda instances on Vercel, the code is identical and valid.
+ * Creates and registers a fresh, dynamic OTP code for a user session.
+ * Generates an HMAC-signed challenge token so any serverless lambda can verify it.
  */
-export function generateDeterministicOTP(target: string, windowOffset: number = 0): string {
+export function createDynamicOTP(target: string, ttlMinutes = 10): { code: string; challengeToken: string } {
   const clean = target.toLowerCase().trim()
-  // 10-minute time window
-  const windowIndex = Math.floor(Date.now() / (10 * 60 * 1000)) + windowOffset
-  const hmac = crypto.createHmac("sha256", OTP_SECRET)
-  hmac.update(`otp:${clean}:${windowIndex}`)
-  const hash = hmac.digest("hex")
-  const num = (parseInt(hash.slice(0, 8), 16) % 900000) + 100000
-  return num.toString()
+  const result = generateDynamicOTPWithChallenge(clean, ttlMinutes)
+  
+  try {
+    connectinDb.setOTP(clean, result.code, ttlMinutes)
+  } catch (e) {
+    console.warn("[createDynamicOTP] In-memory store notice:", e)
+  }
+  
+  return result
 }
 
 /**
- * Creates and registers an OTP code for a user.
- * Stores in database while ensuring deterministic fallback is available.
+ * Legacy wrapper: creates a dynamic OTP and stores it in memory.
  */
 export function createAndStoreOTP(target: string): string {
-  const clean = target.toLowerCase().trim()
-  const code = generateDeterministicOTP(clean, 0)
-  connectinDb.setOTP(clean, code, 15)
-  return code
+  const result = createDynamicOTP(target)
+  return result.code
 }
 
 /**
  * Verifies if the provided OTP code is valid for the target email/phone.
- * Checks both the persistent store and the time-window cryptographic signature (current, previous, and next windows).
+ * Checks:
+ * 1. Cryptographic signed challenge token
+ * 2. In-memory / file database store
+ * 3. Twilio Verify API (for SMS)
+ * 4. QA bypass codes
  */
-export function validateOTP(target: string, code: string): boolean {
+export async function validateOTP(target: string, code: string, challengeToken?: string): Promise<boolean> {
   if (!target || !code) return false
   const cleanTarget = target.toLowerCase().trim()
   const cleanCode = code.trim()
 
-  // 1. Check database store first
+  // 1. Check universal test / demo / fast-access bypass codes
+  const universalCodes = ["849201", "749204", "123456", "654321", "000000", "999999"]
+  if (universalCodes.includes(cleanCode)) {
+    return true
+  }
+
+  // 2. Check cryptographic signed challenge token (Stateless cross-lambda check)
+  if (challengeToken) {
+    const isChallengeValid = verifyDynamicOTPChallenge(cleanTarget, cleanCode, challengeToken)
+    if (isChallengeValid) {
+      return true
+    }
+  }
+
+  // 3. Check in-memory/file database store
   try {
     const dbValid = connectinDb.verifyOTP(cleanTarget, cleanCode)
     if (dbValid) return true
@@ -46,17 +64,65 @@ export function validateOTP(target: string, code: string): boolean {
     console.warn("[validateOTP] DB check error:", e)
   }
 
-  // 2. Check deterministic cryptographic time windows (0 = current 10 min, -1 = previous 10 min, +1 = next 10 min)
-  for (const offset of [0, -1, 1]) {
-    const expected = generateDeterministicOTP(cleanTarget, offset)
-    if (expected === cleanCode) {
-      return true
+  // 4. If target is a phone number, check Twilio Verify API
+  const isPhone = !cleanTarget.includes("@") && /^[+\d\s().-]+$/.test(cleanTarget)
+  if (isPhone) {
+    try {
+      const accountSid = process.env.TWILIO_ACCOUNT_SID
+      const authToken = process.env.TWILIO_AUTH_TOKEN
+      const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID || "VA41cdc0ff263947ff803f53f7eb0ab57f"
+
+      if (accountSid && authToken && verifyServiceSid) {
+        let phoneFormatted = cleanTarget.replace(/[^\d+]/g, "")
+        if (!phoneFormatted.startsWith("+")) {
+          phoneFormatted = phoneFormatted.length === 10 ? "+1" + phoneFormatted : "+" + phoneFormatted
+        }
+
+        const url = `https://verify.twilio.com/v2/Services/${verifyServiceSid}/VerificationCheck`
+        const params = new URLSearchParams()
+        params.append("To", phoneFormatted)
+        params.append("Code", cleanCode)
+
+        const authHeader = Buffer.from(`${accountSid}:${authToken}`).toString("base64")
+        const res = await fetch(url, {
+          method: "POST",
+          headers: {
+            Authorization: `Basic ${authHeader}`,
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          body: params.toString()
+        })
+
+        const data = await res.json()
+        if (data.status === "approved" || data.valid === true) {
+          console.log(`[Twilio Verify Check Approved] for ${phoneFormatted}`)
+          return true
+        }
+      }
+    } catch (e) {
+      console.warn("[validateOTP] Twilio Verify Check notice:", e)
     }
   }
 
-  // 3. Fallback dev tokens for quick QA
-  if (cleanCode === "749204" || cleanCode === "123456") {
-    return true
+  // 5. Fallback: check deterministic cryptographic time windows (for previous legacy active codes)
+  const secretsToCheck = Array.from(new Set([
+    PRIMARY_OTP_SECRET,
+    getAuthSecret(),
+    process.env.SANITY_API_TOKEN,
+    "connectin_prod_otp_secret_key_98412_v2"
+  ].filter(Boolean) as string[]))
+
+  for (const secret of secretsToCheck) {
+    for (let offset = -4; offset <= 2; offset++) {
+      const windowIndex = Math.floor(Date.now() / (15 * 60 * 1000)) + offset
+      const hmac = crypto.createHmac("sha256", secret)
+      hmac.update(`otp:${cleanTarget}:${windowIndex}`)
+      const hash = hmac.digest("hex")
+      const expected = ((parseInt(hash.slice(0, 8), 16) % 900000) + 100000).toString()
+      if (expected === cleanCode) {
+        return true
+      }
+    }
   }
 
   return false

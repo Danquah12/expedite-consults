@@ -9,8 +9,13 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 export const send = async (formData: TContactFormValidator) => {
 	// console.log(formData);
 	try {
+		const envWebFrom = process.env.RESEND_FORM_EMAIL;
+		const fromAddress = (envWebFrom && !envWebFrom.includes("resend.dev"))
+			? (envWebFrom.includes("<") ? envWebFrom : `Expedite Consults Website <${envWebFrom}>`)
+			: "Expedite Consults Website <auth@expediteconsults.com>";
+
 		const { error } = await resend.emails.send({
-			from: `Expedite Consults Website <${process.env.RESEND_FORM_EMAIL}>`,
+			from: fromAddress,
 			to: ["sanity.expediteconsults@gmail.com"],
 			subject: `${formData.subject} - ${formData.first_name} ${formData.last_name}`,
 			replyTo: formData.email,
