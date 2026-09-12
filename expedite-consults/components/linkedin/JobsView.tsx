@@ -55,7 +55,10 @@ import {
 } from "@/components/ui/dialog"
 import { CareerTwinModal } from "./CareerTwinModal"
 
+import { UserProfile } from "@/lib/linkedin-data"
+
 interface JobsViewProps {
+  currentUser?: UserProfile
   onNavigateCareerSuite?: () => void
   onNavigateLearning?: () => void
   onNavigateMarketplace?: () => void
@@ -73,6 +76,7 @@ const DOMAIN_CATEGORIES = [
 ]
 
 export function JobsView({
+  currentUser,
   onNavigateCareerSuite,
   onNavigateLearning,
   onNavigateMarketplace
@@ -1042,10 +1046,10 @@ export function JobsView({
                 <form onSubmit={handleSubmitApplication} className="space-y-4 pt-2">
                   <div className="rounded-lg bg-zinc-50 p-3 text-xs dark:bg-zinc-800/60 space-y-1">
                     <p className="font-semibold text-zinc-800 dark:text-zinc-200">
-                      Submitting as Alex Taylor
+                      Submitting as {currentUser?.name || "Verified Professional"}
                     </p>
                     <p className="text-zinc-500">
-                      Principal Cloud & Security Architect | alex.taylor@expediteconsults.com
+                      {currentUser?.headline || "Verified Professional"} | {(currentUser as any)?.email || "verified.member@expediteconsults.com"}
                     </p>
                   </div>
 
@@ -1057,7 +1061,7 @@ export function JobsView({
                       <div className="flex items-center gap-2">
                         <FileText className="h-4 w-4 text-[#0A66C2]" />
                         <span className="font-medium text-zinc-800 dark:text-zinc-200">
-                          Alex_Taylor_Security_Architect_2026.pdf
+                          {currentUser?.name ? `${currentUser.name.replace(/\s+/g, '_')}_Verified_Resume_2026.pdf` : 'Verified_Resume_2026.pdf'}
                         </span>
                       </div>
                       <span className="rounded bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold text-zinc-600 dark:bg-zinc-800">

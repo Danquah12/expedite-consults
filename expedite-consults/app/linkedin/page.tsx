@@ -633,6 +633,7 @@ export default function LinkedInPage() {
             user={userData}
             onBackToFeed={() => setActiveTab('home')}
             onNavigateMarketplace={() => setActiveTab('marketplace')}
+            onUpdateUser={(updated) => setUserData(updated)}
           />
         )}
 
@@ -647,6 +648,7 @@ export default function LinkedInPage() {
         {/* VIEW 4: JOBS VIEW */}
         {activeTab === 'jobs' && (
           <JobsView
+            currentUser={userData}
             onNavigateCareerSuite={() => setActiveTab('careersuite')}
             onNavigateLearning={() => setActiveTab('learning')}
             onNavigateMarketplace={() => setActiveTab('marketplace')}

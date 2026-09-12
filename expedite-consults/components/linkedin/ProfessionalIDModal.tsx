@@ -31,13 +31,15 @@ export function ProfessionalIDModal({
   onClose,
   currentUser
 }: ProfessionalIDModalProps) {
-  const [idData] = useState<PortableProfessionalID>(USER_PROFESSIONAL_ID_DATA)
   const [hasCopied, setHasCopied] = useState(false)
 
   if (!isOpen) return null
 
+  const customHandle = currentUser.name ? currentUser.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') : 'member'
+  const proofHash = `0x${currentUser.id.replace(/[^a-f0-9]/gi, '').padEnd(32, 'a').slice(0, 32)}...`
+
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(`https://connectin.com/id/${idData.customHandle}`)
+    navigator.clipboard.writeText(`https://connectin.com/id/${customHandle}`)
     setHasCopied(true)
     setTimeout(() => setHasCopied(false), 2000)
   }
@@ -81,10 +83,10 @@ export function ProfessionalIDModal({
                 <h4 className="font-black text-lg text-white flex items-center gap-1.5">
                   <span>{currentUser.name}</span>
                   <span className="rounded-full bg-sky-500/20 px-2 py-0.2 text-[10px] font-bold text-sky-300 border border-sky-400/30">
-                    ID: #{idData.customHandle}
+                    ID: #{customHandle}
                   </span>
                 </h4>
-                <p className="text-xs text-zinc-300 leading-snug">{idData.headline}</p>
+                <p className="text-xs text-zinc-300 leading-snug">{currentUser.headline}</p>
               </div>
             </div>
 
@@ -99,17 +101,17 @@ export function ProfessionalIDModal({
               <span className="text-[9px] uppercase font-mono text-zinc-400">Clearance Attestation</span>
               <p className="font-bold text-emerald-400 text-xs flex items-center gap-1">
                 <ShieldCheck className="h-3.5 w-3.5" />
-                {idData.verifiedClearance}
+                Verified Professional (Level 2)
               </p>
-              <span className="text-[9px] text-zinc-400 block">{idData.clearanceExpiry}</span>
+              <span className="text-[9px] text-zinc-400 block">Valid · Continuous Monitoring</span>
             </div>
 
             <div className="p-2.5 rounded-xl bg-black/40 border border-white/10 space-y-0.5">
-              <span className="text-[9px] uppercase font-mono text-zinc-400">Research &amp; Citations</span>
+              <span className="text-[9px] uppercase font-mono text-zinc-400">Network Reach</span>
               <p className="font-bold text-amber-300 text-xs font-mono">
-                {idData.publicationsCount} Papers · {idData.citationsCount} Citations
+                {currentUser.connectionsCount || 840} Connections
               </p>
-              <span className="text-[9px] text-zinc-400 block">{idData.activePatentsCount} Granted Patents</span>
+              <span className="text-[9px] text-zinc-400 block">{currentUser.followersCount || 2400} Followers</span>
             </div>
           </div>
 
@@ -117,7 +119,7 @@ export function ProfessionalIDModal({
           <div className="space-y-1 pt-1">
             <span className="text-[10px] uppercase font-mono text-zinc-400">Top Verified Skills:</span>
             <div className="flex items-center gap-1.5 flex-wrap">
-              {idData.topVerifiedSkills.map((sk, i) => (
+              {(currentUser.skills && currentUser.skills.length > 0 ? currentUser.skills.map(s => typeof s === 'string' ? s : s.name) : ["Zero Trust", "Cloud Architecture", "Enterprise Security", "Next.js"]).slice(0, 5).map((sk, i) => (
                 <span key={i} className="rounded-md bg-white/10 px-2 py-0.5 text-[10px] font-mono text-zinc-200 border border-white/10">
                   {sk}
                 </span>
@@ -127,7 +129,7 @@ export function ProfessionalIDModal({
 
           {/* Cryptographic Hash Proof */}
           <div className="rounded-lg bg-black/60 p-2 text-[9px] font-mono text-zinc-400 flex items-center justify-between">
-            <span className="truncate pr-2">Proof: {idData.cryptographicHashProof}</span>
+            <span className="truncate pr-2">Proof: {proofHash}</span>
             <span className="text-emerald-400 font-bold shrink-0">✓ Ed25519 Signed</span>
           </div>
         </div>
@@ -139,7 +141,7 @@ export function ProfessionalIDModal({
             className="flex-1 rounded-xl bg-white text-zinc-950 font-black py-2.5 text-xs shadow-md hover:bg-zinc-100 transition-all flex items-center justify-center gap-1.5"
           >
             {hasCopied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
-            <span>{hasCopied ? "Copied ID Link!" : `connectin.com/id/${idData.customHandle}`}</span>
+            <span>{hasCopied ? "Copied ID Link!" : `connectin.com/id/${customHandle}`}</span>
           </button>
           <button
             onClick={onClose}

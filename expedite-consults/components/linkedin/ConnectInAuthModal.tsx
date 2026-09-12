@@ -15,7 +15,7 @@ import {
 } from "lucide-react"
 import { UserProfile } from "@/lib/linkedin-data"
 import { saveStoredUser, saveStoredSessionRoute } from "@/lib/connectin-storage"
-import { createUniqueUserProfile } from "@/lib/connectin-profile"
+import { createUniqueUserProfile, resolveDisplayName } from "@/lib/connectin-profile"
 import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
 
 export interface AuthPersona {
@@ -151,15 +151,14 @@ export function ConnectInAuthModal({
     setErrorMessage(null)
     try {
       const emailToUse = signInEmail.includes("@") ? signInEmail : "asiedudanquah@gmail.com"
-      const namePart = emailToUse.split("@")[0]
-      const capitalized = namePart.charAt(0).toUpperCase() + namePart.slice(1)
+      const resolvedName = resolveDisplayName(undefined, emailToUse)
 
       await fetch("/api/connectin/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          firstName: capitalized,
-          lastName: "(Google)",
+          firstName: resolvedName.split(" ")[0] || "Emmanuel",
+          lastName: resolvedName.split(" ").slice(1).join(" ") || "Asiedu",
           email: emailToUse,
           role: "personal",
           twoFactorChannel: "email"
@@ -171,19 +170,25 @@ export function ConnectInAuthModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           target: emailToUse,
-          code: "123456"
+          code: "123456",
+          name: resolvedName,
+          role: "personal"
         })
       })
 
       const verifyData = await verifyRes.json()
-      if (verifyData.profile) {
-        saveStoredUser(verifyData.profile)
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("connectin_is_signed_out")
-        }
-        onLoginSuccess(verifyData.profile, 'home', 'personal')
-        onClose()
+      const profileToSave = verifyData.profile || createUniqueUserProfile({
+        name: resolvedName,
+        email: emailToUse,
+        role: "personal"
+      })
+
+      saveStoredUser(profileToSave)
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("connectin_is_signed_out")
       }
+      onLoginSuccess(profileToSave, 'home', 'personal')
+      onClose()
     } catch (err: any) {
       setErrorMessage(err.message || "Google Sign-In failed.")
     } finally {
@@ -197,15 +202,14 @@ export function ConnectInAuthModal({
     setErrorMessage(null)
     try {
       const emailToUse = signInEmail.includes("@") ? signInEmail : "kasiedu@expedite-consults.com"
-      const namePart = emailToUse.split("@")[0]
-      const capitalized = namePart.charAt(0).toUpperCase() + namePart.slice(1)
+      const resolvedName = resolveDisplayName(undefined, emailToUse)
 
       await fetch("/api/connectin/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          firstName: capitalized,
-          lastName: "(Microsoft Entra)",
+          firstName: resolvedName.split(" ")[0] || "Emmanuel",
+          lastName: resolvedName.split(" ").slice(1).join(" ") || "Asiedu",
           email: emailToUse,
           role: "enterprise",
           twoFactorChannel: "email"
@@ -217,19 +221,25 @@ export function ConnectInAuthModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           target: emailToUse,
-          code: "123456"
+          code: "123456",
+          name: resolvedName,
+          role: "enterprise"
         })
       })
 
       const verifyData = await verifyRes.json()
-      if (verifyData.profile) {
-        saveStoredUser(verifyData.profile)
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("connectin_is_signed_out")
-        }
-        onLoginSuccess(verifyData.profile, 'procurement', 'enterprise')
-        onClose()
+      const profileToSave = verifyData.profile || createUniqueUserProfile({
+        name: resolvedName,
+        email: emailToUse,
+        role: "enterprise"
+      })
+
+      saveStoredUser(profileToSave)
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("connectin_is_signed_out")
       }
+      onLoginSuccess(profileToSave, 'procurement', 'enterprise')
+      onClose()
     } catch (err: any) {
       setErrorMessage(err.message || "Microsoft Sign-In failed.")
     } finally {
@@ -278,12 +288,14 @@ export function ConnectInAuthModal({
     setErrorMessage(null)
 
     try {
+      const resolvedName = resolveDisplayName(undefined, signInEmail)
       const res = await fetch("/api/connectin/auth/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           target: signInEmail,
-          code
+          code,
+          name: resolvedName
         })
       })
 
@@ -292,14 +304,17 @@ export function ConnectInAuthModal({
         throw new Error(data.error || "Invalid code.")
       }
 
-      if (data.profile) {
-        saveStoredUser(data.profile)
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("connectin_is_signed_out")
-        }
-        onLoginSuccess(data.profile, 'home', 'personal')
-      }
+      const profileToSave = data.profile || createUniqueUserProfile({
+        name: resolvedName,
+        email: signInEmail,
+        role: "personal"
+      })
 
+      saveStoredUser(profileToSave)
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("connectin_is_signed_out")
+      }
+      onLoginSuccess(profileToSave, 'home', 'personal')
       onClose()
     } catch (err: any) {
       setErrorMessage(err.message || "Verification failed.")
@@ -352,12 +367,17 @@ export function ConnectInAuthModal({
     setErrorMessage(null)
 
     try {
+      const fullName = `${joinFirstName} ${joinLastName}`.trim()
+      const resolvedName = resolveDisplayName(fullName, joinEmail)
+
       const res = await fetch("/api/connectin/auth/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           target: joinEmail,
-          code
+          code,
+          name: resolvedName,
+          role: joinRole
         })
       })
 
@@ -377,14 +397,18 @@ export function ConnectInAuthModal({
         joinRole === 'creator' ? 'creator' :
         joinRole === 'seller' ? 'seller' : 'personal'
 
-      if (data.profile) {
-        saveStoredUser(data.profile)
-        saveStoredSessionRoute(targetTab, targetWorkspace)
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("connectin_is_signed_out")
-        }
-        onLoginSuccess(data.profile, targetTab, targetWorkspace)
+      const profileToSave = data.profile || createUniqueUserProfile({
+        name: resolvedName,
+        email: joinEmail,
+        role: joinRole
+      })
+
+      saveStoredUser(profileToSave)
+      saveStoredSessionRoute(targetTab, targetWorkspace)
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("connectin_is_signed_out")
       }
+      onLoginSuccess(profileToSave, targetTab, targetWorkspace)
 
       onClose()
     } catch (err: any) {

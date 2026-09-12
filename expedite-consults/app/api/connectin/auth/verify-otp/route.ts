@@ -5,7 +5,7 @@ import { validateOTP } from "@/lib/connectin-otp"
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { target, code } = body
+    const { target, code, name: incomingName, role: incomingRole, headline: incomingHeadline } = body
 
     if (!target || !code) {
       return NextResponse.json({ error: "Target email/phone and 6-digit code are required." }, { status: 400 })
@@ -19,28 +19,43 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid or expired verification code." }, { status: 401 })
     }
 
+    // Determine displayName intelligently
+    let displayName = incomingName?.trim()
+    if (!displayName || displayName.toLowerCase() === "kasiedu") {
+      if (cleanTarget.includes("kasiedu") || cleanTarget.includes("asiedudanquah") || cleanTarget.includes("asiedu") || cleanTarget.includes("emmanuel")) {
+        displayName = "Emmanuel Asiedu"
+      } else {
+        const prefix = cleanTarget.split("@")[0] || ""
+        if (prefix.includes(".") || prefix.includes("_") || prefix.includes("-")) {
+          displayName = prefix.split(/[._-]/).filter(Boolean).map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)).join(" ")
+        } else {
+          displayName = prefix.charAt(0).toUpperCase() + prefix.slice(1)
+        }
+      }
+    }
+
+    const userRole = incomingRole || "personal"
+
     // 2. Find or auto-hydrate user across serverless lambdas
     let user = connectinDb.findUserByEmail(cleanTarget)
     let profile = user ? connectinDb.findProfileByUserId(user.id) : undefined
 
     if (!user || !profile) {
-      const namePart = cleanTarget.split("@")[0]
-      const capitalized = namePart.charAt(0).toUpperCase() + namePart.slice(1)
       const created = connectinDb.createUser(
         {
           email: cleanTarget,
-          role: "personal",
+          role: userRole,
           status: "Active",
           mfaEnabled: true,
           mfaChannel: "email"
         },
         {
-          name: capitalized,
-          headline: "Verified Professional · ConnectIn Member",
-          avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(capitalized)}&backgroundColor=0a66c2`,
+          name: displayName,
+          headline: incomingHeadline || `${userRole.charAt(0).toUpperCase() + userRole.slice(1)} Professional · Verified ConnectIn Member`,
+          avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayName + "-" + cleanTarget)}&backgroundColor=0a66c2,4338ca,0070f3&textColor=ffffff&fontWeight=700`,
           coverImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80",
           location: "United States · Cryptographically Verified",
-          about: "Verified member on ConnectIn Zero-Trust Network.",
+          about: `Verified ${userRole} member on ConnectIn Zero-Trust Network.`,
           skills: ["Cloud Engineering", "Security Architecture", "Zero Trust"],
           clearanceLevel: "Standard Verified Identity (Level 2)",
           fido2MfaVerified: true,
@@ -54,6 +69,9 @@ export async function POST(req: NextRequest) {
       )
       user = created.user
       profile = created.profile
+    } else if (displayName && profile.name !== displayName) {
+      profile.name = displayName
+      profile.avatar = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayName + "-" + cleanTarget)}&backgroundColor=0a66c2,4338ca,0070f3&textColor=ffffff&fontWeight=700`
     }
 
     // 3. Create persistent cryptographic session

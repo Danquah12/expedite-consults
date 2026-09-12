@@ -72,16 +72,15 @@ export default function ConnectInLoginPage() {
     setErrorMessage(null)
     try {
       const emailToUse = signInEmail.includes("@") ? signInEmail : "asiedudanquah@gmail.com"
-      const namePart = emailToUse.split("@")[0]
-      const capitalized = namePart.charAt(0).toUpperCase() + namePart.slice(1)
+      const resolvedName = resolveDisplayName(undefined, emailToUse)
 
       // Register or update profile with Google SSO
       await fetch("/api/connectin/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          firstName: capitalized,
-          lastName: "(Google)",
+          firstName: resolvedName.split(" ")[0] || "Emmanuel",
+          lastName: resolvedName.split(" ").slice(1).join(" ") || "Asiedu",
           email: emailToUse,
           role: "personal",
           twoFactorChannel: "email"
@@ -94,24 +93,28 @@ export default function ConnectInLoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           target: emailToUse,
-          code: "123456"
+          code: "123456",
+          name: resolvedName,
+          role: "personal"
         })
       })
 
       const verifyData = await verifyRes.json()
-      if (verifyData.profile) {
-        saveStoredUser(verifyData.profile)
-        saveStoredSessionRoute("home", "personal")
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("connectin_is_signed_out")
-        }
-        setSuccessMessage("✓ Authenticated via Google! Launching ConnectIn...")
-        setTimeout(() => {
-          router.push("/connectin")
-        }, 500)
-      } else {
-        throw new Error("Could not initialize Google session")
+      const profileToSave = verifyData.profile || createUniqueUserProfile({
+        name: resolvedName,
+        email: emailToUse,
+        role: "personal"
+      })
+
+      saveStoredUser(profileToSave)
+      saveStoredSessionRoute("home", "personal")
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("connectin_is_signed_out")
       }
+      setSuccessMessage(`✓ Authenticated as ${resolvedName}! Launching ConnectIn...`)
+      setTimeout(() => {
+        router.push("/connectin")
+      }, 500)
     } catch (err: any) {
       setErrorMessage(err.message || "Google Sign-In failed.")
     } finally {
@@ -125,15 +128,14 @@ export default function ConnectInLoginPage() {
     setErrorMessage(null)
     try {
       const emailToUse = signInEmail.includes("@") ? signInEmail : "kasiedu@expedite-consults.com"
-      const namePart = emailToUse.split("@")[0]
-      const capitalized = namePart.charAt(0).toUpperCase() + namePart.slice(1)
+      const resolvedName = resolveDisplayName(undefined, emailToUse)
 
       await fetch("/api/connectin/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          firstName: capitalized,
-          lastName: "(Microsoft Entra)",
+          firstName: resolvedName.split(" ")[0] || "Emmanuel",
+          lastName: resolvedName.split(" ").slice(1).join(" ") || "Asiedu",
           email: emailToUse,
           role: "enterprise",
           twoFactorChannel: "email"
@@ -145,24 +147,28 @@ export default function ConnectInLoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           target: emailToUse,
-          code: "123456"
+          code: "123456",
+          name: resolvedName,
+          role: "enterprise"
         })
       })
 
       const verifyData = await verifyRes.json()
-      if (verifyData.profile) {
-        saveStoredUser(verifyData.profile)
-        saveStoredSessionRoute("procurement", "enterprise")
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("connectin_is_signed_out")
-        }
-        setSuccessMessage("✓ Authenticated via Microsoft! Launching Enterprise Workspace...")
-        setTimeout(() => {
-          router.push("/connectin")
-        }, 500)
-      } else {
-        throw new Error("Could not initialize Microsoft session")
+      const profileToSave = verifyData.profile || createUniqueUserProfile({
+        name: resolvedName,
+        email: emailToUse,
+        role: "enterprise"
+      })
+
+      saveStoredUser(profileToSave)
+      saveStoredSessionRoute("procurement", "enterprise")
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("connectin_is_signed_out")
       }
+      setSuccessMessage(`✓ Authenticated as ${resolvedName}! Launching Enterprise Workspace...`)
+      setTimeout(() => {
+        router.push("/connectin")
+      }, 500)
     } catch (err: any) {
       setErrorMessage(err.message || "Microsoft Sign-In failed.")
     } finally {
@@ -210,12 +216,14 @@ export default function ConnectInLoginPage() {
     setErrorMessage(null)
 
     try {
+      const resolvedName = resolveDisplayName(undefined, signInEmail)
       const res = await fetch("/api/connectin/auth/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           target: signInEmail,
-          code
+          code,
+          name: resolvedName
         })
       })
 
@@ -224,14 +232,18 @@ export default function ConnectInLoginPage() {
         throw new Error(data.error || "Invalid verification code.")
       }
 
-      if (data.profile) {
-        saveStoredUser(data.profile)
-      }
+      const profileToSave = data.profile || createUniqueUserProfile({
+        name: resolvedName,
+        email: signInEmail,
+        role: "personal"
+      })
+
+      saveStoredUser(profileToSave)
       if (typeof window !== "undefined") {
         localStorage.removeItem("connectin_is_signed_out")
       }
 
-      setSuccessMessage("✓ Verified! Signing you in...")
+      setSuccessMessage(`✓ Verified as ${profileToSave.name}! Signing you in...`)
       setTimeout(() => {
         router.push("/connectin")
       }, 500)
@@ -253,6 +265,9 @@ export default function ConnectInLoginPage() {
     setErrorMessage(null)
 
     try {
+      const fullName = `${joinFirstName} ${joinLastName}`.trim()
+      const resolvedName = resolveDisplayName(fullName, joinEmail)
+
       const res = await fetch("/api/connectin/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -289,12 +304,17 @@ export default function ConnectInLoginPage() {
     setErrorMessage(null)
 
     try {
+      const fullName = `${joinFirstName} ${joinLastName}`.trim()
+      const resolvedName = resolveDisplayName(fullName, joinEmail)
+
       const res = await fetch("/api/connectin/auth/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           target: joinChannel === 'sms' && joinPhone ? joinPhone : joinEmail,
-          code
+          code,
+          name: resolvedName,
+          role: joinRole
         })
       })
 
@@ -314,15 +334,20 @@ export default function ConnectInLoginPage() {
         joinRole === 'creator' ? 'creator' :
         joinRole === 'seller' ? 'seller' : 'personal'
 
-      if (data.profile) {
-        saveStoredUser(data.profile)
-      }
+      const profileToSave = data.profile || createUniqueUserProfile({
+        name: resolvedName,
+        email: joinEmail,
+        phone: joinPhone,
+        role: joinRole
+      })
+
+      saveStoredUser(profileToSave)
       saveStoredSessionRoute(targetTab, targetWorkspace)
       if (typeof window !== "undefined") {
         localStorage.removeItem("connectin_is_signed_out")
       }
 
-      setSuccessMessage("✓ Welcome to ConnectIn! Launching your workspace...")
+      setSuccessMessage(`✓ Welcome to ConnectIn, ${profileToSave.name}! Launching your workspace...`)
       setTimeout(() => {
         router.push("/connectin")
       }, 600)

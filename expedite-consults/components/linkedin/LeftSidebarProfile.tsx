@@ -126,8 +126,8 @@ export function LeftSidebarProfile({
                 onClick={onOpenIDModal}
                 className="w-full rounded-lg bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 px-2.5 py-1 text-[11px] font-bold text-[#0A66C2] dark:text-sky-300 hover:bg-sky-100 transition-colors flex items-center justify-center gap-1.5"
               >
-                <span>🪪 ConnectIn ID (#alex-taylor)</span>
-                <span className="text-[9px] font-mono bg-sky-200/60 dark:bg-sky-900 px-1 rounded">TS/SCI</span>
+                <span>🪪 ConnectIn ID (#{user.name ? user.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') : 'member'})</span>
+                <span className="text-[9px] font-mono bg-sky-200/60 dark:bg-sky-900 px-1 rounded">Verified</span>
               </button>
             </div>
           )}

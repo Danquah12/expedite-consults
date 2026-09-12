@@ -54,22 +54,34 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { createUniqueUserProfile } from "@/lib/connectin-profile"
+import { saveStoredUser } from "@/lib/connectin-storage"
 
 interface ProfileViewProps {
   user: UserProfile
   onBackToFeed?: () => void
   onNavigateMarketplace?: () => void
+  onUpdateUser?: (updated: UserProfile) => void
 }
 
 export function ProfileView({
   user,
   onBackToFeed,
-  onNavigateMarketplace
+  onNavigateMarketplace,
+  onUpdateUser
 }: ProfileViewProps) {
   // 8 Workspace Sub-Sections
   const [workspaceSection, setWorkspaceSection] = useState<
     'profile' | 'portfolio' | 'skills' | 'certifications' | 'experience' | 'publications' | 'reviews' | 'products'
   >('profile')
+
+  // Edit Profile Modal State
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false)
+  const [editName, setEditName] = useState(user.name)
+  const [editHeadline, setEditHeadline] = useState(user.headline)
+  const [editLocation, setEditLocation] = useState(user.location)
+  const [editAbout, setEditAbout] = useState(user.about)
+  const [editSavedSuccess, setEditSavedSuccess] = useState(false)
 
   // Developer / Company Products State
   const [myProducts, setMyProducts] = useState<VendorProductItem[]>(MY_PRODUCTS_DATA)
@@ -78,6 +90,32 @@ export function ProfileView({
   const [newProductCategory, setNewProductCategory] = useState<'Software' | 'Training' | 'Services' | 'Enterprise Solutions'>('Software')
   const [newProductPrice, setNewProductPrice] = useState("")
   const [productAddedSuccess, setProductAddedSuccess] = useState(false)
+
+  const handleSaveProfile = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editName.trim()) return
+
+    const updated = createUniqueUserProfile({
+      id: user.id,
+      name: editName.trim(),
+      headline: editHeadline.trim(),
+      location: editLocation.trim(),
+      email: (user as any).email,
+      role: (user as any).role || 'personal'
+    })
+    updated.about = editAbout.trim()
+
+    saveStoredUser(updated)
+    if (onUpdateUser) {
+      onUpdateUser(updated)
+    }
+
+    setEditSavedSuccess(true)
+    setTimeout(() => {
+      setEditSavedSuccess(false)
+      setIsEditProfileOpen(false)
+    }, 1000)
+  }
 
   // Skill Endorsement State
   const [skills, setSkills] = useState(WORKSPACE_VERIFIED_SKILLS_DATA)
@@ -242,6 +280,19 @@ export function ProfileView({
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => {
+                      setEditName(user.name)
+                      setEditHeadline(user.headline)
+                      setEditLocation(user.location)
+                      setEditAbout(user.about)
+                      setIsEditProfileOpen(true)
+                    }}
+                    className="rounded-full bg-sky-50 dark:bg-sky-950/40 border border-sky-300 dark:border-sky-800 hover:bg-sky-100 dark:hover:bg-sky-900/60 px-4 py-2 text-xs font-bold text-[#0A66C2] dark:text-sky-300 shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                  >
+                    <Edit3 className="h-3.5 w-3.5" />
+                    <span>Edit Profile &amp; Name</span>
+                  </button>
                   <button
                     onClick={() => setWorkspaceSection('products')}
                     className="rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 px-4 py-2 text-xs font-bold text-white shadow-md flex items-center gap-1.5"
@@ -803,6 +854,93 @@ export function ProfileView({
                   className="rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-2 font-bold text-white shadow-md hover:from-purple-500 hover:to-indigo-500"
                 >
                   Publish Listing ✓
+                </button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Profile & Identity Modal */}
+      <Dialog open={isEditProfileOpen} onOpenChange={setIsEditProfileOpen}>
+        <DialogContent className="max-w-lg rounded-2xl bg-white p-6 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+              <Edit3 className="h-5 w-5 text-[#0A66C2]" />
+              <span>Edit Identity &amp; Profile</span>
+            </DialogTitle>
+          </DialogHeader>
+
+          {editSavedSuccess ? (
+            <div className="py-8 text-center space-y-2">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400">
+                <Check className="h-6 w-6" />
+              </div>
+              <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Profile Updated Successfully!</h3>
+              <p className="text-xs text-zinc-500">Your updated identity and details have been synchronized across ConnectIn.</p>
+            </div>
+          ) : (
+            <form onSubmit={handleSaveProfile} className="space-y-4 pt-2 text-xs">
+              <div className="space-y-1">
+                <label className="font-bold text-zinc-700 dark:text-zinc-300">Full Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Emmanuel Asiedu"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  required
+                  className="w-full rounded-lg border border-zinc-300 p-2.5 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 font-semibold"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-zinc-700 dark:text-zinc-300">Professional Headline</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Principal Cloud Security Architect &amp; Zero Trust Lead"
+                  value={editHeadline}
+                  onChange={(e) => setEditHeadline(e.target.value)}
+                  required
+                  className="w-full rounded-lg border border-zinc-300 p-2.5 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-zinc-700 dark:text-zinc-300">Location</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Washington DC-Baltimore Area · Cryptographically Verified"
+                  value={editLocation}
+                  onChange={(e) => setEditLocation(e.target.value)}
+                  required
+                  className="w-full rounded-lg border border-zinc-300 p-2.5 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-zinc-700 dark:text-zinc-300">About / Bio</label>
+                <textarea
+                  rows={4}
+                  placeholder="Describe your architectural background, career accomplishments, and technical specialties..."
+                  value={editAbout}
+                  onChange={(e) => setEditAbout(e.target.value)}
+                  className="w-full rounded-lg border border-zinc-300 p-2.5 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                />
+              </div>
+
+              <div className="pt-2 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditProfileOpen(false)}
+                  className="rounded-lg bg-zinc-200 px-4 py-2 font-semibold text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-lg bg-[#0A66C2] hover:bg-[#004182] px-5 py-2 font-bold text-white shadow-md transition-colors"
+                >
+                  Save Profile ✓
                 </button>
               </div>
             </form>

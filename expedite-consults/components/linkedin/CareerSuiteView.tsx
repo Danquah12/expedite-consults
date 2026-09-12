@@ -48,11 +48,11 @@ export function CareerSuiteView({ currentUser }: CareerSuiteViewProps) {
 
   // Resume Tailor State
   const [masterResume, setMasterResume] = useState(
-    `ALEX TAYLOR
-Principal Cloud Security Architect | New York, NY
+    `${currentUser.name.toUpperCase()}
+${currentUser.headline} | ${currentUser.location}
 Summary: 10+ years engineering zero-trust cloud security and container isolation.
 Experience:
-• Expedite Consults: Led multi-agent defense architectures for 20+ enterprise clients.
+• Expedite Consults: Led multi-agent defense architectures for enterprise clients.
 • Apex Defense: Designed Firecracker MicroVM sandboxes reducing containment latency by 74%.
 • Core Skills: AWS, Kubernetes, eBPF, Next.js, SOC 2, Zero Trust Architecture.`
   )
@@ -100,7 +100,7 @@ Experience:
           "Spearheaded enterprise-wide Zero Trust VPC migration across 4 multi-cloud regions, eliminating implicit lateral trust and meeting SOC 2 Type II controls.",
           "Engineered kernel-level packet inspection probes using eBPF and Cilium, reducing DDoS attack surface by 88%."
         ],
-        coverLetter: `Dear Hiring Committee,\n\nI am writing to express my strong interest in the Principal Security Architect role. With over a decade architecting zero-trust multi-cloud environments and authoring deterministic sandbox defense loops for enterprise AI tools at Expedite Consults, my background directly aligns with your mandate.\n\nI would welcome the opportunity to discuss how my hands-on experience in AWS VPC containment and SOC 2 compliance can accelerate your team's security posture.\n\nSincerely,\nAlex Taylor`
+        coverLetter: `Dear Hiring Committee,\n\nI am writing to express my strong interest in the Principal Security Architect role. With over a decade architecting zero-trust multi-cloud environments and authoring deterministic sandbox defense loops for enterprise AI tools at Expedite Consults, my background directly aligns with your mandate.\n\nI would welcome the opportunity to discuss how my hands-on experience in AWS VPC containment and SOC 2 compliance can accelerate your team's security posture.\n\nSincerely,\n${currentUser.name}`
       })
       setIsTailoring(false)
     }, 800)
