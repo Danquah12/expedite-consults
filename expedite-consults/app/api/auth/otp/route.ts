@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
 		}
 
 		await resend.emails.send({
-			from: process.env.RESEND_FORM_EMAIL ?? "onboarding@resend.dev",
+			from: process.env.RESEND_FORM_EMAIL ?? "auth@expediteconsults.com",
 			to: email,
 			subject: "Your IT Change Management Portal Sign-In Code",
 			html: `
