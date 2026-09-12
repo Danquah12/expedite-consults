@@ -447,7 +447,18 @@ export function ProfileView({
       {workspaceSection === 'certifications' && (
         <div className="space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {WORKSPACE_CERTIFICATIONS_DATA.map((cert) => (
+            {(user.certifications && user.certifications.length > 0
+              ? user.certifications.map((cert) => ({
+                  name: cert.title,
+                  issuingBody: cert.issuer,
+                  badgeIcon: '📜',
+                  issueDate: cert.issueDate,
+                  credentialId: cert.credentialId,
+                  verificationUrl: cert.credentialUrl,
+                  isVerifiedBadge: true
+                }))
+              : WORKSPACE_CERTIFICATIONS_DATA
+            ).map((cert) => (
               <div
                 key={cert.credentialId}
                 className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 flex items-start gap-4"
@@ -477,7 +488,18 @@ export function ProfileView({
       {/* ========================================================================= */}
       {workspaceSection === 'experience' && (
         <div className="space-y-4">
-          {WORKSPACE_EXPERIENCE_DATA.map((exp, i) => (
+          {(user.experience && user.experience.length > 0
+            ? user.experience.map((exp) => ({
+                role: exp.role,
+                company: exp.company,
+                location: exp.location,
+                period: exp.duration,
+                isCurrent: exp.duration.includes('Present'),
+                description: exp.description,
+                achievements: exp.skills ? exp.skills.map((s: string) => `Mastery and verified execution in ${s}`) : []
+              }))
+            : WORKSPACE_EXPERIENCE_DATA
+          ).map((exp, i) => (
             <div
               key={i}
               className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-3"
@@ -501,17 +523,19 @@ export function ProfileView({
                 {exp.description}
               </p>
 
-              <div className="space-y-1 text-xs pt-1">
-                <p className="font-bold text-zinc-700 dark:text-zinc-300">Key Security &amp; Architectural Milestones:</p>
-                <ul className="space-y-1 text-zinc-600 dark:text-zinc-400">
-                  {exp.achievements.map((ach, idx) => (
-                    <li key={idx} className="flex items-start gap-1.5">
-                      <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
-                      <span>{ach}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              {exp.achievements && exp.achievements.length > 0 && (
+                <div className="space-y-1 text-xs pt-1">
+                  <p className="font-bold text-zinc-700 dark:text-zinc-300">Key Security &amp; Architectural Milestones:</p>
+                  <ul className="space-y-1 text-zinc-600 dark:text-zinc-400">
+                    {exp.achievements.map((ach: string, idx: number) => (
+                      <li key={idx} className="flex items-start gap-1.5">
+                        <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                        <span>{ach}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -550,7 +574,18 @@ export function ProfileView({
       {workspaceSection === 'reviews' && (
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {WORKSPACE_REVIEWS_DATA.map((rev, i) => (
+            {(user.recommendations && user.recommendations.length > 0
+              ? user.recommendations.map((r) => ({
+                  reviewerName: r.authorName,
+                  reviewerRole: r.authorHeadline,
+                  reviewerAvatar: r.authorAvatar,
+                  rating: 5.0,
+                  date: r.date,
+                  reviewType: 'Executive Peer Recommendation',
+                  comment: r.text
+                }))
+              : WORKSPACE_REVIEWS_DATA
+            ).map((rev, i) => (
               <div
                 key={i}
                 className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-3"
