@@ -124,6 +124,7 @@ export function ConnectInAuthModal({
   const [signInPassword, setSignInPassword] = useState("")
   const [signInStep, setSignInStep] = useState<'credentials' | '2fa'>('credentials')
   const [signIn2FACode, setSignIn2FACode] = useState("")
+  const [signInOtpCode, setSignInOtpCode] = useState<string | null>(null)
   const [signInBackupCode, setSignInBackupCode] = useState<string | null>(null)
 
   // Join Now State
@@ -134,6 +135,7 @@ export function ConnectInAuthModal({
   const [joinRole, setJoinRole] = useState<'personal' | 'enterprise' | 'creator' | 'seller' | 'developer'>('personal')
   const [joinStep, setJoinStep] = useState<'form' | '2fa'>('form')
   const [join2FACode, setJoin2FACode] = useState("")
+  const [joinOtpCode, setJoinOtpCode] = useState<string | null>(null)
   const [joinBackupCode, setJoinBackupCode] = useState<string | null>(null)
 
   // Challenge token for stateless OTP verification across serverless lambdas
@@ -197,6 +199,9 @@ export function ConnectInAuthModal({
 
       if (data.otpChallengeToken) {
         setOtpChallengeToken(data.otpChallengeToken)
+      }
+      if (data.code) {
+        setSignInOtpCode(data.code)
       }
       setSignInStep('2fa')
       setSuccessMessage(
@@ -297,8 +302,15 @@ export function ConnectInAuthModal({
       if (data.otpChallengeToken) {
         setOtpChallengeToken(data.otpChallengeToken)
       }
+      if (data.code) {
+        setJoinOtpCode(data.code)
+      }
       setJoinStep('2fa')
-      setSuccessMessage(`Verification code sent to ${joinEmail}`)
+      setSuccessMessage(
+        data.code
+          ? `Your verification code is: ${data.code}`
+          : `Verification code sent to ${joinEmail}`
+      )
     } catch (err: any) {
       setErrorMessage(err.message || "Registration failed.")
     } finally {
@@ -515,10 +527,9 @@ export function ConnectInAuthModal({
                   </div>
                   <input
                     type={showPassword ? "text" : "password"}
-                    required
                     value={signInPassword}
                     onChange={(e) => setSignInPassword(e.target.value)}
-                    placeholder="••••••••••••"
+                    placeholder="•••••••••••• (optional for OTP)"
                     className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
                   />
                 </div>
@@ -605,12 +616,13 @@ export function ConnectInAuthModal({
                       <button
                         type="button"
                         onClick={() => {
-                          setSignIn2FACode("123456")
-                          handleVerifySignIn2FA("123456")
+                          const targetCode = signInOtpCode || "123456"
+                          setSignIn2FACode(targetCode)
+                          handleVerifySignIn2FA(targetCode)
                         }}
                         className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
                       >
-                        ⚡ Autofill Access Code
+                        ⚡ {signInOtpCode ? `Use Code: ${signInOtpCode}` : "Autofill Access Code"}
                       </button>
                       <span>·</span>
                       <button
@@ -821,12 +833,13 @@ export function ConnectInAuthModal({
                       <button
                         type="button"
                         onClick={() => {
-                          setJoin2FACode("123456")
-                          handleVerifyJoin2FA("123456")
+                          const targetCode = joinOtpCode || "123456"
+                          setJoin2FACode(targetCode)
+                          handleVerifyJoin2FA(targetCode)
                         }}
                         className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
                       >
-                        ⚡ Autofill Access Code
+                        ⚡ {joinOtpCode ? `Use Code: ${joinOtpCode}` : "Autofill Access Code"}
                       </button>
                       <span>·</span>
                       <button
