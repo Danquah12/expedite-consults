@@ -1,6 +1,6 @@
 // lib/campus-data.ts
 // Comprehensive domain models and seed dataset for The Campus Operating Platform
-// Specializing in Towson University (TU) Digital Campus & Geographic Engine
+// Specializing in University of Maryland, Baltimore County (UMBC) (TU) Digital Campus & Geographic Engine
 
 export interface UserProfile {
   id: string;
@@ -31,7 +31,7 @@ export interface UserProfile {
   currentLocationName?: string;
 }
 
-export interface TowsonRoom {
+export interface UMBCRoom {
   id: string;
   roomNumber: string;
   name: string;
@@ -42,7 +42,7 @@ export interface TowsonRoom {
   currentClassOrEvent?: string;
 }
 
-export interface TowsonFloor {
+export interface UMBCFloor {
   floorNumber: number;
   floorName: string;
   roomsCount: number;
@@ -50,10 +50,10 @@ export interface TowsonFloor {
   restrooms: string[];
   elevators: string[];
   emergencyExits: string[];
-  rooms: TowsonRoom[];
+  rooms: UMBCRoom[];
 }
 
-export interface TowsonBuilding {
+export interface UMBCBuilding {
   id: string;
   name: string;
   code: string;
@@ -71,7 +71,7 @@ export interface TowsonBuilding {
   classroomsCount: number;
   accessibleEntrance: string;
   floorsCount: number;
-  floors: TowsonFloor[];
+  floors: UMBCFloor[];
   image: string;
   icon: string;
 }
@@ -145,7 +145,7 @@ export interface LocationCircle {
   isAdmin?: boolean;
 }
 
-export interface TowsonShuttle {
+export interface UMBCShuttle {
   id: string;
   routeName: string;
   routeColor: string;
@@ -157,7 +157,7 @@ export interface TowsonShuttle {
   routePath: { x: number; y: number }[];
 }
 
-export interface TowsonParkingGarage {
+export interface UMBCParkingGarage {
   id: string;
   name: string;
   code: string;
@@ -610,18 +610,18 @@ export interface MapLocationPin {
   icon: string;
 }
 
-// 1. Initial Current User Profile (Towson Tiger)
+// 1. Initial Current User Profile (UMBC Retriever)
 export const defaultCurrentUser: UserProfile = {
   id: "usr-kwesi-asiedu",
   name: "Kwesi Asiedu",
-  email: "k.asiedu@students.towson.edu",
-  studentId: "#08412-TU-26",
+  email: "k.asiedu@students.umbc.edu",
+  studentId: "#04921-UMBC-26",
   major: "Information Technology",
   minor: "Cybersecurity & Systems",
   gradYear: 2026,
   classStanding: "Junior",
-  dormBuilding: "West Village, Marshall Hall #412",
-  bio: "TU Cybersecurity enthusiast. Student researcher in autonomous cyber defense loops. Treasurer of Towson Cybersecurity Club.",
+  dormBuilding: "Retriever Square, Marshall Hall #412",
+  bio: "UMBC Cybersecurity enthusiast. Student researcher in autonomous cyber defense loops. Treasurer of UMBC Cybersecurity Club.",
   avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
   isVerified: true,
   role: "STUDENT",
@@ -629,19 +629,19 @@ export const defaultCurrentUser: UserProfile = {
   goals: ["Find Study Partners", "Research Opportunities", "Project Partners"],
   eventsAttendedCount: 12,
   volunteerHoursLogged: 48,
-  leadershipRoles: ["Towson Cybersecurity Club — Treasurer", "AI Research Society — Lead Builder"],
-  achievements: ["🏆 TU Hackathon 1st Place Finalist", "🏆 Division of Student Affairs Service Award", "🏆 Tiger Trivia Champion"],
-  projects: ["AI Security & Cyber Threat Detection", "Towson Distributed Mesh Network"],
+  leadershipRoles: ["UMBC Cybersecurity Club — Treasurer", "AI Research Society — Lead Builder"],
+  achievements: ["🏆 UMBC Hackathon 1st Place Finalist", "🏆 Division of Student Affairs Service Award", "🏆 Retriever Trivia Champion"],
+  projects: ["AI Security & Cyber Threat Detection", "UMBC Distributed Mesh Network"],
   isLocationSharing: false,
   ghostModeEnabled: false,
-  currentLocationName: "Freedom Square (Near Cook Library)",
+  currentLocationName: "The Commons Plaza (Near AOK Library & Gallery)",
 };
 
-// 2. Towson University Campus Buildings Dataset (Authentic TU Landmarks)
-export const initialTowsonBuildings: TowsonBuilding[] = [
+// 2. University of Maryland, Baltimore County (UMBC) Campus Buildings Dataset (Authentic UMBC Landmarks)
+export const initialUMBCBuildings: UMBCBuilding[] = [
   {
     id: "bld-sc",
-    name: "Science Complex",
+    name: "Information Technology and Engineering (ITE) Building",
     code: "SC-300",
     shortCode: "SC",
     category: "Academic",
@@ -716,10 +716,10 @@ export const initialTowsonBuildings: TowsonBuilding[] = [
     ],
   },
   {
-    id: "bld-cook",
-    name: "Albert S. Cook Library",
-    code: "COOK-24",
-    shortCode: "COOK",
+    id: "bld-aok",
+    name: "Albert S. AOK Library & Gallery",
+    code: "AOK-24",
+    shortCode: "AOK",
     category: "Library",
     description: "Central 24/7 research hub with Starbucks cafe, tech checkout, silent study zones, and peer tutoring lounge.",
     x: 48,
@@ -778,11 +778,11 @@ export const initialTowsonBuildings: TowsonBuilding[] = [
   },
   {
     id: "bld-union",
-    name: "University Union",
+    name: "The Commons",
     code: "UNION-100",
     shortCode: "UNION",
     category: "Student Life",
-    description: "Heart of campus life featuring Chick-fil-A, Dunkin', Bento Sushi, SGA Senate Chamber, student organization offices, and Tiger Esports Arena.",
+    description: "Heart of campus life featuring Chick-fil-A, Retriever Coffee & Market, Chesapeake Roasting Co., SGA Senate Chamber, student organization offices, and Retriever Esports Arena.",
     x: 38,
     y: 58,
     distanceFt: 350,
@@ -792,7 +792,7 @@ export const initialTowsonBuildings: TowsonBuilding[] = [
     todayEventsCount: 5,
     studySpacesCount: 30,
     classroomsCount: 6,
-    accessibleEntrance: "West Entrance via Union Garage Skybridge",
+    accessibleEntrance: "West Entrance via Retriever Square Garage Skybridge",
     floorsCount: 3,
     image: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=600&auto=format&fit=crop&q=80",
     icon: "🍔",
@@ -806,8 +806,8 @@ export const initialTowsonBuildings: TowsonBuilding[] = [
         elevators: ["Main Union Elevator"],
         emergencyExits: ["Main North Plaza Exit", "Bus Loop Exit"],
         rooms: [
-          { id: "un-101", roomNumber: "UN 101", name: "Towson Food Court (Chick-fil-A / Dunkin)", type: "Lounge", capacity: 300, hasAV: false, status: "Available" },
-          { id: "un-108", roomNumber: "UN 108", name: "Tiger Esports & Gaming Arena", type: "Lab", capacity: 40, hasAV: true, status: "Available" },
+          { id: "un-101", roomNumber: "UN 101", name: "UMBC Food Court (Chick-fil-A / Dunkin)", type: "Lounge", capacity: 300, hasAV: false, status: "Available" },
+          { id: "un-108", roomNumber: "UN 108", name: "Retriever Esports & Gaming Arena", type: "Lab", capacity: 40, hasAV: true, status: "Available" },
         ],
       },
       {
@@ -826,10 +826,10 @@ export const initialTowsonBuildings: TowsonBuilding[] = [
     ],
   },
   {
-    id: "bld-7800",
-    name: "7800 York Road",
-    code: "YORK-7800",
-    shortCode: "YORK",
+    id: "bld-ite",
+    name: "bwtech@UMBC Research & Technology Park",
+    code: "ITE-100",
+    shortCode: "ITE",
     category: "Academic",
     description: "Home of Computer and Information Sciences (CIS), Cybersecurity Defense Labs, and Software Engineering project rooms.",
     x: 76,
@@ -841,7 +841,7 @@ export const initialTowsonBuildings: TowsonBuilding[] = [
     todayEventsCount: 2,
     studySpacesCount: 18,
     classroomsCount: 24,
-    accessibleEntrance: "Main York Road Entrance (East Ramp)",
+    accessibleEntrance: "Main Poplar Avenue & Walker Ave Entrance (East Ramp)",
     floorsCount: 3,
     image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=600&auto=format&fit=crop&q=80",
     icon: "💻",
@@ -861,10 +861,10 @@ export const initialTowsonBuildings: TowsonBuilding[] = [
     ],
   },
   {
-    id: "bld-burdick",
-    name: "Burdick Hall & Rec Center",
-    code: "BURDICK-REC",
-    shortCode: "BURDICK",
+    id: "bld-retriever-rac",
+    name: "Retriever Activities Center (RAC) (PAC) & Rec Center",
+    code: "RETRIEVER-RAC",
+    shortCode: "RETRIEVER-RAC",
     category: "Athletics",
     description: "Expanded fitness center with rock climbing wall, indoor turf gym, Olympic pool, and fitness studios.",
     x: 28,
@@ -884,7 +884,7 @@ export const initialTowsonBuildings: TowsonBuilding[] = [
   },
   {
     id: "bld-secu",
-    name: "SECU Arena & Unitas Stadium",
+    name: "Retriever Stadium & Retriever Stadium",
     code: "SECU-ARENA",
     shortCode: "SECU",
     category: "Athletics",
@@ -906,11 +906,11 @@ export const initialTowsonBuildings: TowsonBuilding[] = [
   },
   {
     id: "bld-west-village",
-    name: "West Village Commons & Dining",
+    name: "Retriever Square Commons & Dining",
     code: "WV-COMMONS",
     shortCode: "WV",
     category: "Residential",
-    description: "West Village student residential village featuring all-you-care-to-eat dining, Starbucks, convenience store, and Marshall Hall suites.",
+    description: "Retriever Square student residential village featuring all-you-care-to-eat dining, Starbucks, convenience store, and Marshall Hall suites.",
     x: 15,
     y: 35,
     distanceFt: 780,
@@ -928,11 +928,11 @@ export const initialTowsonBuildings: TowsonBuilding[] = [
   },
 ];
 
-// 3. TigerOrbit 360 — Privacy-Preserving Campus Orbits & Circles (Life360 Suite)
-export const initialTowsonPlaces: CirclePlaceAlert[] = [
+// 3. RetrieverOrbit 360 — Privacy-Preserving Campus Orbits & Circles (Life360 Suite)
+export const initialUMBCPlaces: CirclePlaceAlert[] = [
   {
     id: "place-library",
-    placeName: "Albert S. Cook Library",
+    placeName: "Albert S. AOK Library & Gallery",
     icon: "📚",
     radiusMeters: 100,
     coordinates: { x: 48, y: 48 },
@@ -942,7 +942,7 @@ export const initialTowsonPlaces: CirclePlaceAlert[] = [
   },
   {
     id: "place-union",
-    placeName: "University Union",
+    placeName: "The Commons",
     icon: "🍕",
     radiusMeters: 120,
     coordinates: { x: 38, y: 58 },
@@ -952,7 +952,7 @@ export const initialTowsonPlaces: CirclePlaceAlert[] = [
   },
   {
     id: "place-science",
-    placeName: "Science Complex",
+    placeName: "Information Technology and Engineering (ITE) Building",
     icon: "🔬",
     radiusMeters: 110,
     coordinates: { x: 62, y: 36 },
@@ -962,7 +962,7 @@ export const initialTowsonPlaces: CirclePlaceAlert[] = [
   },
   {
     id: "place-gym",
-    placeName: "Burdick Hall & Rec Center",
+    placeName: "Retriever Activities Center (RAC) (PAC) & Rec Center",
     icon: "🏋️",
     radiusMeters: 100,
     coordinates: { x: 50, y: 72 },
@@ -992,18 +992,18 @@ export const initialTowsonPlaces: CirclePlaceAlert[] = [
   },
 ];
 
-export const initialTowsonCircles: LocationCircle[] = [
+export const initialUMBCCircles: LocationCircle[] = [
   {
     id: "circle-cyber",
-    name: "Towson Cybersecurity Club",
+    name: "UMBC Cybersecurity Club",
     icon: "🛡️",
-    inviteCode: "TU-9X4K",
+    inviteCode: "UMBC-9X4K",
     category: "Club",
     membersCount: 12,
     activeSharingCount: 8,
     isUserMember: true,
     isAdmin: true,
-    places: initialTowsonPlaces,
+    places: initialUMBCPlaces,
     members: [
       {
         id: "m-kwesi",
@@ -1011,7 +1011,7 @@ export const initialTowsonCircles: LocationCircle[] = [
         avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
         major: "IT Junior",
         status: "on_campus",
-        currentBuilding: "Freedom Square / Cook Library",
+        currentBuilding: "The Commons Plaza / AOK Library & Gallery",
         currentFloor: "Ground Floor",
         exactRoom: "Commons Lounge",
         distanceFt: 0,
@@ -1038,8 +1038,8 @@ export const initialTowsonCircles: LocationCircle[] = [
           { time: "8:15 AM", location: "University Village (Joppa Rd)", activity: "Departed Dorm", icon: "🏠", duration: "10m" },
           { time: "8:35 AM", location: "South Parking Garage", activity: "Parked Car (2.1 mi)", icon: "🚗", duration: "5m", speedMph: 22 },
           { time: "9:00 AM – 11:30 AM", location: "Liberal Arts Bldg (LA 2210)", activity: "Cyber Ethics Lecture", icon: "🏛️", duration: "2h 30m" },
-          { time: "11:45 AM – 1:00 PM", location: "University Union Food Court", activity: "Lunch at Chick-fil-A", icon: "🍕", duration: "1h 15m" },
-          { time: "1:15 PM – Present", location: "Cook Library Ground Floor", activity: "Studying & Capstone Research", icon: "📚", duration: "Active" },
+          { time: "11:45 AM – 1:00 PM", location: "The Commons Food Court", activity: "Lunch at Chick-fil-A", icon: "🍕", duration: "1h 15m" },
+          { time: "1:15 PM – Present", location: "AOK Library & Gallery Ground Floor", activity: "Studying & Capstone Research", icon: "📚", duration: "Active" },
         ],
         breadcrumbTrail: [
           { x: 82, y: 22, timestamp: "8:15 AM" },
@@ -1055,7 +1055,7 @@ export const initialTowsonCircles: LocationCircle[] = [
         avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
         major: "CS Senior",
         status: "studying",
-        currentBuilding: "Science Complex",
+        currentBuilding: "Information Technology and Engineering (ITE) Building",
         currentFloor: "3rd Floor",
         exactRoom: "Room SC 304",
         distanceFt: 420,
@@ -1079,10 +1079,10 @@ export const initialTowsonCircles: LocationCircle[] = [
           lastTripDistanceMiles: 3.2,
         },
         timeline: [
-          { time: "8:45 AM", location: "West Village Quad", activity: "Departed Residence Hall", icon: "🏠", duration: "10m" },
-          { time: "9:00 AM – 11:30 AM", location: "Science Complex SC 304", activity: "Operating Systems Lab", icon: "🔬", duration: "2h 30m" },
-          { time: "11:45 AM – 12:30 PM", location: "University Union Starbucks", activity: "Coffee Break with Study Pod", icon: "☕", duration: "45m" },
-          { time: "12:45 PM – Present", location: "Science Complex 3rd Floor", activity: "Algorithms Study Session", icon: "💻", duration: "Active" },
+          { time: "8:45 AM", location: "Retriever Square Quad", activity: "Departed Residence Hall", icon: "🏠", duration: "10m" },
+          { time: "9:00 AM – 11:30 AM", location: "Information Technology and Engineering (ITE) Building SC 304", activity: "Operating Systems Lab", icon: "🔬", duration: "2h 30m" },
+          { time: "11:45 AM – 12:30 PM", location: "The Commons Starbucks", activity: "Coffee Break with Study Pod", icon: "☕", duration: "45m" },
+          { time: "12:45 PM – Present", location: "Information Technology and Engineering (ITE) Building 3rd Floor", activity: "Algorithms Study Session", icon: "💻", duration: "Active" },
         ],
         breadcrumbTrail: [
           { x: 20, y: 35, timestamp: "8:45 AM" },
@@ -1097,7 +1097,7 @@ export const initialTowsonCircles: LocationCircle[] = [
         avatar: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80",
         major: "Info Systems",
         status: "on_campus",
-        currentBuilding: "University Union",
+        currentBuilding: "The Commons",
         currentFloor: "2nd Floor",
         exactRoom: "Food Court Lounge",
         distanceFt: 350,
@@ -1108,7 +1108,7 @@ export const initialTowsonCircles: LocationCircle[] = [
         isCharging: false,
         speedMph: 0,
         movementType: "stationary",
-        wifiSignal: "TU-Student (88%)",
+        wifiSignal: "UMBC-Visitor (94%)",
         privacyMode: "precise",
         lastUpdated: "1m ago",
         isSharingLocation: true,
@@ -1122,8 +1122,8 @@ export const initialTowsonCircles: LocationCircle[] = [
         },
         timeline: [
           { time: "9:30 AM", location: "Millennium Hall Dorm", activity: "Left Apartment", icon: "🏠", duration: "8m" },
-          { time: "10:00 AM – 12:00 PM", location: "Hawkins Hall Rm 102", activity: "Business Info Tech Class", icon: "🏛️", duration: "2h" },
-          { time: "12:15 PM – Present", location: "University Union 2nd Floor", activity: "Lunch & SGA Project Meeting", icon: "🍕", duration: "Active" },
+          { time: "10:00 AM – 12:00 PM", location: "Sondheim Hall Rm 102", activity: "Business Info Tech Class", icon: "🏛️", duration: "2h" },
+          { time: "12:15 PM – Present", location: "The Commons 2nd Floor", activity: "Lunch & SGA Project Meeting", icon: "🍕", duration: "Active" },
         ],
         breadcrumbTrail: [
           { x: 75, y: 30, timestamp: "9:30 AM" },
@@ -1137,7 +1137,7 @@ export const initialTowsonCircles: LocationCircle[] = [
         avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
         major: "CS Senior",
         status: "studying",
-        currentBuilding: "Cook Library",
+        currentBuilding: "AOK Library & Gallery",
         currentFloor: "2nd Floor",
         exactRoom: "Study Pod B-12",
         distanceFt: 180,
@@ -1161,9 +1161,9 @@ export const initialTowsonCircles: LocationCircle[] = [
           lastTripDistanceMiles: 0.8,
         },
         timeline: [
-          { time: "10:00 AM", location: "Glen Complex Towers", activity: "Walked to Quad", icon: "🚶", duration: "12m" },
+          { time: "10:00 AM", location: "UMBC Residential Towers", activity: "Walked to Quad", icon: "🚶", duration: "12m" },
           { time: "10:30 AM – 1:00 PM", location: "Center for the Arts", activity: "Digital Audio Synthesis Studio", icon: "🎭", duration: "2h 30m" },
-          { time: "1:15 PM – Present", location: "Cook Library 2nd Floor Pod B", activity: "Cybersecurity Capture the Flag Prep", icon: "🛡️", duration: "Active" },
+          { time: "1:15 PM – Present", location: "AOK Library & Gallery 2nd Floor Pod B", activity: "Cybersecurity Capture the Flag Prep", icon: "🛡️", duration: "Active" },
         ],
         breadcrumbTrail: [
           { x: 60, y: 70, timestamp: "10:00 AM" },
@@ -1183,7 +1183,7 @@ export const initialTowsonCircles: LocationCircle[] = [
     activeSharingCount: 3,
     isUserMember: true,
     isAdmin: true,
-    places: initialTowsonPlaces,
+    places: initialUMBCPlaces,
     members: [
       {
         id: "m-kwesi",
@@ -1191,7 +1191,7 @@ export const initialTowsonCircles: LocationCircle[] = [
         avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
         major: "IT Junior",
         status: "on_campus",
-        currentBuilding: "Cook Library",
+        currentBuilding: "AOK Library & Gallery",
         currentFloor: "Ground Floor",
         exactRoom: "Commons",
         distanceFt: 0,
@@ -1212,7 +1212,7 @@ export const initialTowsonCircles: LocationCircle[] = [
         avatar: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80",
         major: "Info Systems",
         status: "on_campus",
-        currentBuilding: "University Union",
+        currentBuilding: "The Commons",
         currentFloor: "2nd Floor",
         exactRoom: "Food Court",
         distanceFt: 350,
@@ -1222,7 +1222,7 @@ export const initialTowsonCircles: LocationCircle[] = [
         isCharging: false,
         speedMph: 0,
         movementType: "stationary",
-        wifiSignal: "TU-Student (88%)",
+        wifiSignal: "UMBC-Visitor (94%)",
         privacyMode: "precise",
         lastUpdated: "1m ago",
         isSharingLocation: true,
@@ -1234,7 +1234,7 @@ export const initialTowsonCircles: LocationCircle[] = [
         major: "Finance Junior",
         status: "driving",
         currentBuilding: "En Route to University Village",
-        currentFloor: "York Road Northbound",
+        currentFloor: "Poplar Avenue & Walker Ave Northbound",
         exactRoom: "In Vehicle",
         distanceFt: 4200,
         distanceMiles: 0.8,
@@ -1257,9 +1257,9 @@ export const initialTowsonCircles: LocationCircle[] = [
           lastTripDistanceMiles: 5.1,
         },
         timeline: [
-          { time: "11:00 AM", location: "Stephens Hall (CBE)", activity: "Finance Midterm Exam", icon: "🏛️", duration: "1h 30m" },
-          { time: "1:00 PM", location: "Burdick Hall Gym", activity: "Weight Training Session", icon: "🏋️", duration: "1h" },
-          { time: "2:15 PM – Present", location: "Driving Northbound York Rd", activity: "Headed home to Apt 304", icon: "🚗", duration: "Active", speedMph: 24 },
+          { time: "11:00 AM", location: "Performing Arts & Humanities Building (PAHB) (CBE)", activity: "Finance Midterm Exam", icon: "🏛️", duration: "1h 30m" },
+          { time: "1:00 PM", location: "Retriever Activities Center (RAC) (PAC) Gym", activity: "Weight Training Session", icon: "🏋️", duration: "1h" },
+          { time: "2:15 PM – Present", location: "Driving on Hilltop Circle", activity: "Headed home to Apt 304", icon: "🚗", duration: "Active", speedMph: 24 },
         ],
       },
     ],
@@ -1274,7 +1274,7 @@ export const initialTowsonCircles: LocationCircle[] = [
     activeSharingCount: 4,
     isUserMember: true,
     isAdmin: false,
-    places: initialTowsonPlaces,
+    places: initialUMBCPlaces,
     members: [
       {
         id: "m-kwesi",
@@ -1282,7 +1282,7 @@ export const initialTowsonCircles: LocationCircle[] = [
         avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
         major: "IT Junior",
         status: "on_campus",
-        currentBuilding: "Cook Library Pod B",
+        currentBuilding: "AOK Library & Gallery Pod B",
         currentFloor: "2nd Floor",
         exactRoom: "Pod B-12",
         distanceFt: 0,
@@ -1299,7 +1299,7 @@ export const initialTowsonCircles: LocationCircle[] = [
         avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
         major: "CS Senior",
         status: "studying",
-        currentBuilding: "Science Complex",
+        currentBuilding: "Information Technology and Engineering (ITE) Building",
         currentFloor: "3rd Floor",
         exactRoom: "Room 304",
         distanceFt: 420,
@@ -1316,7 +1316,7 @@ export const initialTowsonCircles: LocationCircle[] = [
         avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
         major: "CS Senior",
         status: "studying",
-        currentBuilding: "Cook Library",
+        currentBuilding: "AOK Library & Gallery",
         currentFloor: "2nd Floor",
         exactRoom: "Pod B-12",
         distanceFt: 180,
@@ -1331,13 +1331,13 @@ export const initialTowsonCircles: LocationCircle[] = [
   },
 ];
 
-export const initialTowsonShuttles: TowsonShuttle[] = [
+export const initialUMBCShuttles: UMBCShuttle[] = [
   {
     id: "shuttle-gold",
     routeName: "Gold Route (Campus Loop)",
     routeColor: "#f59e0b",
-    busNumber: "Tiger Bus #14",
-    nextStop: "University Union Transit Plaza",
+    busNumber: "Retriever Bus #14",
+    nextStop: "The Commons Transit Plaza",
     etaMinutes: 2,
     occupancyStatus: "Seats Available",
     currentCoordinates: { x: 42, y: 52 },
@@ -1351,10 +1351,10 @@ export const initialTowsonShuttles: TowsonShuttle[] = [
   },
   {
     id: "shuttle-black",
-    routeName: "Black Route (Towson Town Center)",
+    routeName: "Black Route (UMBC Town Center)",
     routeColor: "#0f172a",
-    busNumber: "Tiger Bus #08",
-    nextStop: "Cook Library North Stop",
+    busNumber: "Retriever Bus #08",
+    nextStop: "AOK Library & Gallery North Stop",
     etaMinutes: 5,
     occupancyStatus: "Standing Room",
     currentCoordinates: { x: 55, y: 38 },
@@ -1366,10 +1366,10 @@ export const initialTowsonShuttles: TowsonShuttle[] = [
   },
   {
     id: "shuttle-west",
-    routeName: "West Village Express",
+    routeName: "Retriever Square Express",
     routeColor: "#6366f1",
-    busNumber: "Tiger Bus #22",
-    nextStop: "West Village Commons",
+    busNumber: "Retriever Bus #22",
+    nextStop: "Retriever Square Commons",
     etaMinutes: 8,
     occupancyStatus: "Seats Available",
     currentCoordinates: { x: 22, y: 40 },
@@ -1381,11 +1381,11 @@ export const initialTowsonShuttles: TowsonShuttle[] = [
   },
 ];
 
-// 5. Towson Parking Garages
-export const initialTowsonParking: TowsonParkingGarage[] = [
+// 5. UMBC Parking Garages
+export const initialUMBCParking: UMBCParkingGarage[] = [
   {
     id: "pkg-union",
-    name: "Union Garage (Levels 1-6)",
+    name: "Retriever Square Garage (Levels 1-6)",
     code: "UNION-GARAGE",
     totalSpaces: 1200,
     openSpaces: 184,
@@ -1397,9 +1397,9 @@ export const initialTowsonParking: TowsonParkingGarage[] = [
     y: 62,
   },
   {
-    id: "pkg-towsontown",
-    name: "Towsontown Garage",
-    code: "TOWSONTOWN-GARAGE",
+    id: "pkg-umbctown",
+    name: "UMBCtown Garage",
+    code: "ADMIN-DR-GARAGE",
     totalSpaces: 950,
     openSpaces: 42,
     status: "Limited",
@@ -1411,7 +1411,7 @@ export const initialTowsonParking: TowsonParkingGarage[] = [
   },
   {
     id: "pkg-west-village",
-    name: "West Village Garage",
+    name: "Retriever Square Garage",
     code: "WV-GARAGE",
     totalSpaces: 1400,
     openSpaces: 0,
@@ -1424,7 +1424,7 @@ export const initialTowsonParking: TowsonParkingGarage[] = [
   },
   {
     id: "pkg-glen",
-    name: "Glen Garage",
+    name: "Walker Avenue Garage",
     code: "GLEN-GARAGE",
     totalSpaces: 800,
     openSpaces: 112,
@@ -1437,13 +1437,13 @@ export const initialTowsonParking: TowsonParkingGarage[] = [
   },
 ];
 
-// 6. Towson University Safety Mode Beacons (TUPD Blue Lights & SafeWalk)
-export const initialTowsonSafetyBeacons: SafetyBeacon[] = [
+// 6. University of Maryland, Baltimore County (UMBC) Safety Mode Beacons (UMBC PD Blue Lights & SafeWalk)
+export const initialUMBCSafetyBeacons: SafetyBeacon[] = [
   {
     id: "saf-blue-1",
-    name: "Blue Light Phone #104 (Freedom Square)",
+    name: "Blue Light Phone #104 (The Commons Plaza)",
     type: "Blue Light Phone",
-    locationDescription: "Between Cook Library & Lecture Hall Plaza",
+    locationDescription: "Between AOK Library & Gallery & Lecture Hall Plaza",
     x: 46,
     y: 46,
     distanceFt: 90,
@@ -1454,7 +1454,7 @@ export const initialTowsonSafetyBeacons: SafetyBeacon[] = [
     id: "saf-blue-2",
     name: "Blue Light Phone #212 (Science Walkway)",
     type: "Blue Light Phone",
-    locationDescription: "Science Complex South Atrium Plaza",
+    locationDescription: "Information Technology and Engineering (ITE) Building South Atrium Plaza",
     x: 60,
     y: 38,
     distanceFt: 380,
@@ -1465,7 +1465,7 @@ export const initialTowsonSafetyBeacons: SafetyBeacon[] = [
     id: "saf-blue-3",
     name: "Blue Light Phone #088 (Union Skybridge)",
     type: "Blue Light Phone",
-    locationDescription: "Connecting University Union to Union Garage",
+    locationDescription: "Connecting The Commons to Retriever Square Garage",
     x: 36,
     y: 60,
     distanceFt: 340,
@@ -1473,10 +1473,10 @@ export const initialTowsonSafetyBeacons: SafetyBeacon[] = [
     emergencyPhone: "(410) 704-4444",
   },
   {
-    id: "saf-tupd",
-    name: "Towson University Police HQ (TUPD)",
+    id: "saf-umbcpd",
+    name: "University of Maryland, Baltimore County (UMBC) Police HQ (UMBC PD)",
     type: "Police HQ",
-    locationDescription: "TUPD Headquarters · 24/7 Dispatch Center",
+    locationDescription: "UMBC PD Headquarters · 24/7 Dispatch Center",
     x: 82,
     y: 18,
     distanceFt: 840,
@@ -1496,78 +1496,78 @@ export const initialTowsonSafetyBeacons: SafetyBeacon[] = [
   },
 ];
 
-// 7. Tiger Pride Map Scavenger & Treasure Hunt (Game Checkpoints)
-export const initialTowsonScavengerCheckpoints: ScavengerHuntCheckpoint[] = [
+// 7. Retriever Pride Map Scavenger & Treasure Hunt (Game Checkpoints)
+export const initialUMBCScavengerCheckpoints: ScavengerHuntCheckpoint[] = [
   {
     id: "chk-1",
-    title: "1. The Historic Towson Tiger Statue",
-    clue: "Seek the bronze mascot guarding Freedom Square where students gather before classes.",
-    landmark: "Freedom Square (Bronze Tiger Statue)",
+    title: "1. The Historic UMBC Retriever Statue",
+    clue: "Seek the bronze mascot guarding The Commons Plaza where students gather before classes.",
+    landmark: "The Commons Plaza (Bronze Retriever Statue)",
     points: 250,
     x: 48,
     y: 47,
-    qrCodeToken: "TU-TIGER-BRONZE-2026",
+    qrCodeToken: "UMBC-GRIT-GOLD-2026",
     isVisited: true,
-    badgeReward: "🐾 Tiger Pride Pioneer",
+    badgeReward: "🐾 Retriever Pride Pioneer",
   },
   {
     id: "chk-2",
-    title: "2. The Science Complex Rooftop Planetarium",
+    title: "2. The Information Technology and Engineering (ITE) Building Rooftop Planetarium",
     clue: "Look toward the stars from the top of TU's newest 320,000 sq ft research beacon.",
-    landmark: "Science Complex (Planetarium Dome)",
+    landmark: "Information Technology and Engineering (ITE) Building (Planetarium Dome)",
     points: 300,
     x: 62,
     y: 36,
-    qrCodeToken: "TU-SCI-PLANET-44",
+    qrCodeToken: "UMBC-SCI-PLANET-44",
     isVisited: false,
     badgeReward: "🔭 Quantum Explorer",
   },
   {
     id: "chk-3",
-    title: "3. Burdick Hall 30-Foot Climbing Wall",
+    title: "3. Retriever Activities Center (RAC) (PAC) 30-Foot Climbing Wall",
     clue: "Find the towering indoor peak inside campus recreation.",
-    landmark: "Burdick Hall Rec Center",
+    landmark: "Retriever Activities Center (RAC) (PAC) Rec Center",
     points: 250,
     x: 28,
     y: 68,
-    qrCodeToken: "TU-BURDICK-PEAK-09",
+    qrCodeToken: "UMBC-RETRIEVER-RAC-PEAK-09",
     isVisited: false,
     badgeReward: "🧗 Summit Champion",
   },
   {
     id: "chk-4",
-    title: "4. Step to the Clock Tower at Stephens Hall",
-    clue: "The historic brick facade and clock tower that has chimed for generations of Tigers.",
-    landmark: "Stephens Hall Clock Tower",
+    title: "4. Step to the Clock Tower at Performing Arts & Humanities Building (PAHB)",
+    clue: "The historic brick facade and clock tower that has chimed for generations of Retrievers.",
+    landmark: "Performing Arts & Humanities Building (PAHB) Clock Tower",
     points: 350,
     x: 54,
     y: 52,
-    qrCodeToken: "TU-STEPHENS-CLOCK-1866",
+    qrCodeToken: "UMBC-CLOCK-1866",
     isVisited: false,
     badgeReward: "🏆 Master Campus Explorer",
   },
 ];
 
-// 8. Turn-by-Turn Navigation Steps (Towson Route Simulator)
-export const sampleTowsonRoute: NavigationStep[] = [
+// 8. Turn-by-Turn Navigation Steps (UMBC Route Simulator)
+export const sampleUMBCRoute: NavigationStep[] = [
   {
     stepNumber: 1,
-    instruction: "Start at Freedom Square (Tiger Statue)",
-    detail: "Head Northeast along the paved University Mall path towards Science Complex.",
+    instruction: "Start at The Commons Plaza (Retriever Statue)",
+    detail: "Head Northeast along the paved University Mall path towards Information Technology and Engineering (ITE) Building.",
     icon: "walk",
     distanceFt: 180,
   },
   {
     stepNumber: 2,
     instruction: "Detour Alert: Avoid North Quad Repaving",
-    detail: "Turn slightly right around Smith Hall to avoid active maintenance work.",
+    detail: "Turn slightly right around Devilbiss Hall to avoid active maintenance work.",
     icon: "turn_right",
     distanceFt: 140,
     isDetourAvoidance: true,
   },
   {
     stepNumber: 3,
-    instruction: "Enter Science Complex via South Atrium",
+    instruction: "Enter Information Technology and Engineering (ITE) Building via South Atrium",
     detail: "Accessible ramp & automatic double doors on the ground level.",
     icon: "building",
     distanceFt: 60,
@@ -1599,13 +1599,13 @@ export const sampleTowsonRoute: NavigationStep[] = [
 export const initialCampusReels: CampusReel[] = [
   {
     id: "reel-1",
-    title: "Autonomous battlebot arena test run in Towson Science Complex Lab 304! 🤖🔥",
-    creatorName: "Towson Robotics Society",
+    title: "Autonomous battlebot arena test run in UMBC Information Technology and Engineering (ITE) Building Lab 304! 🤖🔥",
+    creatorName: "UMBC Robotics Society",
     creatorHandle: "@TURobotics",
     creatorAvatar: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=150&auto=format&fit=crop&q=80",
     videoUrl: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&auto=format&fit=crop&q=80",
     thumbnailUrl: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&auto=format&fit=crop&q=80",
-    audioTrack: "Original Sound — TU Science Complex",
+    audioTrack: "Original Sound — SU Information Technology and Engineering (ITE) Building",
     duration: "0:28",
     likesCount: 2450,
     isLiked: false,
@@ -1618,13 +1618,13 @@ export const initialCampusReels: CampusReel[] = [
   },
   {
     id: "reel-2",
-    title: "Simulated penetration test demo on our Towson containerized honeypot cluster 🛡️💻",
-    creatorName: "Towson Cybersecurity Club",
+    title: "Simulated penetration test demo on our UMBC containerized honeypot cluster 🛡️💻",
+    creatorName: "UMBC Cybersecurity Club",
     creatorHandle: "@TUCyberClub",
     creatorAvatar: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=150&auto=format&fit=crop&q=80",
     videoUrl: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80",
     thumbnailUrl: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80",
-    audioTrack: "Cyber Beats — TU Cyber Defense",
+    audioTrack: "Cyber Beats — UMBC Cyber Defense",
     duration: "0:42",
     likesCount: 1820,
     isLiked: true,
@@ -1637,13 +1637,13 @@ export const initialCampusReels: CampusReel[] = [
   },
   {
     id: "reel-3",
-    title: "Cultural Night dance rehearsal sneak peek at University Union Ballroom! 🎉🌍",
+    title: "Cultural Night dance rehearsal sneak peek at The Commons Ballroom! 🎉🌍",
     creatorName: "African Student Association",
-    creatorHandle: "@ASA_Towson",
+    creatorHandle: "@ASA_UMBC",
     creatorAvatar: "https://images.unsplash.com/photo-1511578314322-379afb476865?w=150&auto=format&fit=crop&q=80",
     videoUrl: "https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&auto=format&fit=crop&q=80",
     thumbnailUrl: "https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&auto=format&fit=crop&q=80",
-    audioTrack: "Afrobeats Fusion — TU Festival Mix",
+    audioTrack: "Afrobeats Fusion — UMBC Festival Mix",
     duration: "0:35",
     likesCount: 3100,
     isLiked: false,
@@ -1656,51 +1656,51 @@ export const initialCampusReels: CampusReel[] = [
   },
 ];
 
-// 10. Towson Trivia Challenge
+// 10. UMBC Trivia Challenge
 export const initialCampusGames: CampusGame[] = [
   {
-    id: "game-towson-cyber",
-    title: "Towson Tiger Tech & Cyber Challenge",
+    id: "game-umbc-cyber",
+    title: "UMBC Retriever Tech & Cyber Challenge",
     category: "Trivia",
-    description: "5 rapid-fire questions on Towson campus tech, network defense, and Cook Library systems. Earn points for the semester leaderboard!",
+    description: "5 rapid-fire questions on UMBC campus tech, network defense, and AOK Library & Gallery systems. Earn points for the semester leaderboard!",
     icon: "🐯",
     highScore: 9420,
     activePlayersCount: 214,
     questions: [
       {
         id: "q1",
-        question: "Which building houses the Cybersecurity & CIS Labs at Towson University?",
-        options: ["Smith Hall", "7800 York Road & Science Complex", "Burdick Hall", "Stephens Hall"],
+        question: "Which building houses the Cybersecurity & CIS Labs at University of Maryland, Baltimore County (UMBC)?",
+        options: ["Devilbiss Hall", "bwtech@UMBC Research & Technology Park & Information Technology and Engineering (ITE) Building", "Retriever Activities Center (RAC) (PAC)", "Performing Arts & Humanities Building (PAHB)"],
         correctIndex: 1,
-        explanation: "7800 York Road and the new Science Complex house TU's premier cybersecurity and CIS labs.",
+        explanation: "bwtech@UMBC Research & Technology Park and the new Information Technology and Engineering (ITE) Building house TU's premier cybersecurity and CIS labs.",
       },
       {
         id: "q2",
-        question: "What is the emergency phone number for Towson University Police (TUPD)?",
+        question: "What is the emergency phone number for University of Maryland, Baltimore County (UMBC) Police (UMBC PD)?",
         options: ["(410) 704-4444", "911 only", "(555) 019-9111", "(410) 555-0100"],
         correctIndex: 0,
-        explanation: "TUPD 24/7 Emergency Dispatch is reachable at (410) 704-4444 and via any campus Blue Light phone.",
+        explanation: "UMBC PD 24/7 Emergency Dispatch is reachable at (410) 704-4444 and via any campus Blue Light phone.",
       },
       {
         id: "q3",
-        question: "Where are the 24/7 quiet study pods located during midterms at Towson?",
-        options: ["University Union Food Court", "Albert S. Cook Library Floors 2-3", "SECU Arena", "Glen Garage"],
+        question: "Where are the 24/7 quiet study pods located during midterms at UMBC?",
+        options: ["The Commons Food Court", "Albert S. AOK Library & Gallery Floors 2-3", "Retriever Stadium", "Walker Avenue Garage"],
         correctIndex: 1,
-        explanation: "Cook Library floors remain open 24/7 for midterm and finals study sessions.",
+        explanation: "AOK Library & Gallery floors remain open 24/7 for midterm and finals study sessions.",
       },
       {
         id: "q4",
-        question: "What is the primary shuttle loop connecting West Village to University Union?",
+        question: "What is the primary shuttle loop connecting Retriever Square to The Commons?",
         options: ["Gold Route (Campus Loop)", "Green Line", "Silver Metro", "Purple Connector"],
         correctIndex: 0,
-        explanation: "The Gold Route provides continuous loops connecting Union, West Village, and SECU Arena.",
+        explanation: "The Gold Route provides continuous loops connecting Union, Retriever Square, and Retriever Stadium.",
       },
       {
         id: "q5",
-        question: "What is the bronze mascot landmark located at Freedom Square?",
-        options: ["Bronze Eagle", "Towson Tiger", "Golden Bear", "Black Hawk"],
+        question: "What is the bronze mascot landmark located at The Commons Plaza?",
+        options: ["Bronze Eagle", "UMBC Retriever", "Golden Bear", "Black Hawk"],
         correctIndex: 1,
-        explanation: "The iconic bronze Towson Tiger statue stands proudly at Freedom Square outside Cook Library.",
+        explanation: "The iconic bronze UMBC Retriever statue stands proudly at The Commons Plaza outside AOK Library & Gallery.",
       },
     ],
     leaderboard: [
@@ -1712,13 +1712,13 @@ export const initialCampusGames: CampusGame[] = [
   },
 ];
 
-// 11. Initial Towson Notifications
+// 11. Initial UMBC Notifications
 export const initialCampusNotifications: CampusNotification[] = [
   {
     id: "notif-1",
     type: "EVENT",
-    title: "AI Security Keynote in TU Science Complex",
-    body: "Dr. Marcus Vance's keynote in Science Complex Auditorium starts at 5:00 PM. Your QR pass is ready.",
+    title: "AI Security Keynote in SU Information Technology and Engineering (ITE) Building",
+    body: "Dr. Marcus Vance's keynote in Information Technology and Engineering (ITE) Building Auditorium starts at 5:00 PM. Your QR pass is ready.",
     timeAgo: "20m ago",
     isRead: false,
     actionUrl: "events",
@@ -1727,7 +1727,7 @@ export const initialCampusNotifications: CampusNotification[] = [
     id: "notif-2",
     type: "ORG",
     title: "African Student Association Announcement",
-    body: "Amara Diallo posted: Cultural Night rehearsal schedule at University Union Ballroom is set!",
+    body: "Amara Diallo posted: Cultural Night rehearsal schedule at The Commons Ballroom is set!",
     timeAgo: "1h ago",
     isRead: false,
     actionUrl: "organizations",
@@ -1736,7 +1736,7 @@ export const initialCampusNotifications: CampusNotification[] = [
     id: "notif-3",
     type: "SOCIAL",
     title: "Maya Chen shared location with Cybersecurity Club",
-    body: "Maya Chen is currently in Science Complex Rm 304.",
+    body: "Maya Chen is currently in Information Technology and Engineering (ITE) Building Rm 304.",
     timeAgo: "2m ago",
     isRead: false,
     actionUrl: "campus",
@@ -1753,22 +1753,22 @@ export const defaultNotificationPreferences: NotificationPreferences = {
   emailSocialDigest: false,
 };
 
-// 13. Initial Live Activities (🔴 LIVE AT TOWSON UNIVERSITY)
+// 13. Initial Live Activities (🔴 LIVE AT UMBC UNIVERSITY)
 export const initialLiveActivities: LiveCampusActivity[] = [
   {
     id: "live-1",
-    title: "Towson Tigers Basketball vs Delaware",
-    location: "SECU Arena",
+    title: "UMBC Retrievers Basketball vs Delaware",
+    location: "Retriever Stadium",
     attendeesCount: 3200,
     category: "Sports",
-    statusText: "4th Quarter • Tigers up by 4 (68-64)",
+    statusText: "4th Quarter • Retrievers up by 4 (68-64)",
     icon: "🏀",
     linkTab: "events",
   },
   {
     id: "live-2",
     title: "Autonomous LLM Agent Workshop",
-    location: "Science Complex Rm 304",
+    location: "Information Technology and Engineering (ITE) Building Rm 304",
     attendeesCount: 84,
     category: "Workshop",
     statusText: "Hands-on cyber defense coding",
@@ -1778,7 +1778,7 @@ export const initialLiveActivities: LiveCampusActivity[] = [
   {
     id: "live-3",
     title: "Campus Food Drive & Pantry Packing",
-    location: "University Union North Loading Dock",
+    location: "The Commons North Loading Dock",
     attendeesCount: 31,
     category: "Volunteering",
     statusText: "31 active student volunteers",
@@ -1808,7 +1808,7 @@ export const initialPeerMatches: PeerMatch[] = [
     compatibilityScore: 96,
     interests: ["Cybersecurity", "AI", "CTF Competitions"],
     goals: ["Find Study Partners", "Research Opportunities"],
-    sharedReason: "Both enrolled in CMSC 421 and members of Towson Cybersecurity Club",
+    sharedReason: "Both enrolled in CMSC 421 and members of UMBC Cybersecurity Club",
     isConnected: false,
   },
   {
@@ -1820,7 +1820,7 @@ export const initialPeerMatches: PeerMatch[] = [
     compatibilityScore: 91,
     interests: ["Entrepreneurship", "Basketball", "Cloud Architecture"],
     goals: ["Project Partners", "Find Friends"],
-    sharedReason: "Both interested in Cloud & frequent Burdick Hall gym",
+    sharedReason: "Both interested in Cloud & frequent Retriever Activities Center (RAC) (PAC) gym",
     isConnected: true,
   },
 ];
@@ -1829,7 +1829,7 @@ export const initialPeerMatches: PeerMatch[] = [
 export const initialQuickGroups: QuickGroup[] = [
   {
     id: "qg-1",
-    name: "TU AI Hackathon Autonomous Defense Team",
+    name: "UMBC AI Hackathon Autonomous Defense Team",
     purpose: "Build zero-day containment agent for the Spring Hackathon",
     creator: "Kwesi Asiedu",
     membersCount: 4,
@@ -1844,7 +1844,7 @@ export const initialCampusOpportunities: CampusOpportunity[] = [
     id: "opp-1",
     title: "AI Autonomous Cyber Defense Research Fellowship",
     type: "Paid Research",
-    departmentOrOrg: "TU Autonomous Security & Systems Lab (ASSL)",
+    departmentOrOrg: "UMBC Autonomous Cyber Lab (ASSL)",
     rewardOrPay: "$22.00 / hr + 3 Academic Credits",
     deadline: "Mar 15, 2026",
     description: "Paid undergraduate research position developing automated closed-loop defense agents under Dr. Catherine Hayes.",
@@ -1853,12 +1853,12 @@ export const initialCampusOpportunities: CampusOpportunity[] = [
   },
   {
     id: "opp-2",
-    title: "Towson $10,000 Tiger Innovation Hackathon Prize",
+    title: "UMBC $10,000 Retriever Innovation Hackathon Prize",
     type: "Hackathon",
     departmentOrOrg: "Fisher College of Science and Mathematics",
     rewardOrPay: "$10,000 Prize Pool",
     deadline: "Apr 04, 2026",
-    description: "48-hour campus hackathon in Science Complex with tracks in AI, Cybersecurity, and HealthTech.",
+    description: "48-hour campus hackathon in Information Technology and Engineering (ITE) Building with tracks in AI, Cybersecurity, and HealthTech.",
     matchReason: "Recommended because you are a Hackathon 1st Place Finalist",
     hasApplied: false,
   },
@@ -1870,8 +1870,8 @@ export const initialServiceRequests: CampusServiceRequest[] = [
     id: "req-1",
     ticketNumber: "#311-8492",
     category: "Wi-Fi & Network",
-    location: "Cook Library 2nd Floor Pod B",
-    description: "High packet loss and dropouts on TU-Secure Wi-Fi SSID near Pod B.",
+    location: "AOK Library & Gallery 2nd Floor Pod B",
+    description: "High packet loss and dropouts on UMBC-Secure Wi-Fi SSID near Pod B.",
     status: "In Progress",
     submittedTime: "2 hours ago",
   },
@@ -1887,7 +1887,7 @@ export const initialEventMemories: EventMemory[] = [
     projectsBuiltCount: 32,
     photosCount: 426,
     aiGeneratedRecap:
-      "Over 184 students converged in the University Union for 12 hours of rapid prototyping. 32 completed projects were demoed across autonomous security, campus sustainability, and accessible transit. Team 'CyberPulse' took first place with their automated honeypot mesh.",
+      "Over 184 students converged in the The Commons for 12 hours of rapid prototyping. 32 completed projects were demoed across autonomous security, campus sustainability, and accessible transit. Team 'CyberPulse' took first place with their automated honeypot mesh.",
     bannerUrl: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&auto=format&fit=crop&q=80",
   },
 ];
@@ -1899,7 +1899,7 @@ export const initialOfficeHours: OfficeHourSlot[] = [
     professorName: "Dr. Catherine Hayes",
     professorAvatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
     department: "Department of Computer and Information Sciences",
-    officeLocation: "Science Complex Rm 314",
+    officeLocation: "Information Technology and Engineering (ITE) Building Rm 314",
     dateDay: "Monday, Mar 03",
     timeRange: "2:00 PM - 4:00 PM (15-min slots)",
     slots: [
@@ -1935,9 +1935,9 @@ export const initialCampusPosts: CampusPost[] = [
     authorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
     clubName: "African Student Association",
     scope: "CAMPUS_WIDE",
-    location: "University Union Ballroom",
+    location: "The Commons Ballroom",
     content:
-      "🎉 Cultural Night is this Friday at 7:00 PM in the University Union! Experience live music, authentic African cuisines, cultural fashion runway, and student dance performances. Free admission for all Towson students!",
+      "🎉 Cultural Night is this Friday at 7:00 PM in the The Commons! Experience live music, authentic African cuisines, cultural fashion runway, and student dance performances. Free admission for all UMBC students!",
     imageUrl: "https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&auto=format&fit=crop&q=80",
     likesCount: 94,
     isLiked: false,
@@ -1952,14 +1952,14 @@ export const initialCampusPosts: CampusPost[] = [
   {
     id: "p2",
     authorId: "club-cs",
-    authorName: "Towson Cybersecurity Club",
+    authorName: "UMBC Cybersecurity Club",
     authorMajor: "Academic & Technology",
     authorAvatar: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=150&auto=format&fit=crop&q=80",
-    clubName: "Towson Cybersecurity Club",
+    clubName: "UMBC Cybersecurity Club",
     scope: "CLUB",
-    location: "Science Complex Rm 304",
+    location: "Information Technology and Engineering (ITE) Building Rm 304",
     content:
-      "📚 Hands-on AI Workshop tomorrow at 5:00 PM in Science Complex Rm 304! We will build LLM agent workflows and explore cybersecurity defense loops. 35 students already attending. Bring your laptops!",
+      "📚 Hands-on AI Workshop tomorrow at 5:00 PM in Information Technology and Engineering (ITE) Building Rm 304! We will build LLM agent workflows and explore cybersecurity defense loops. 35 students already attending. Bring your laptops!",
     imageUrl: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&auto=format&fit=crop&q=80",
     likesCount: 64,
     isLiked: true,
@@ -1975,9 +1975,9 @@ export const initialCampusEvents: CampusEvent[] = [
   {
     id: "ev-1",
     title: "Keynote: Autonomous AI & Cyber Defense Architectures",
-    clubName: "Towson Cybersecurity Club & CIS Dept",
+    clubName: "UMBC Cybersecurity Club & CIS Dept",
     category: "Guest Speaker",
-    location: "Science Complex Auditorium (SC-101)",
+    location: "Information Technology and Engineering (ITE) Building Auditorium (SC-101)",
     buildingCode: "SC-101",
     dateMonth: "MAR",
     dateDay: "03",
@@ -1985,17 +1985,17 @@ export const initialCampusEvents: CampusEvent[] = [
     capacity: 250,
     attendeesCount: 184,
     userRsvp: "GOING",
-    ticketPrice: "Free with OneCard",
+    ticketPrice: "Free with RedCard",
     ticketStatus: "Available",
     tags: ["Cybersecurity", "AI Agents", "NSA CAE-CD", "Keynote", "Networking"],
     weatherRequirement: "Indoor",
-    ticketCode: "TU-TKT-8492-CYBER",
-    gateEntrance: "Science Complex North Lobby Entrance",
+    ticketCode: "UMBC-TKT-8492-CYBER",
+    gateEntrance: "Information Technology and Engineering (ITE) Building North Lobby Entrance",
     recommendationReason: "Recommended because you follow Cybersecurity Club & attend CIS events",
-    description: "Distinguished guest lecture on autonomous loop defense systems, agentic offensive testing, and generative security models in the Science Complex Auditorium.",
+    description: "Distinguished guest lecture on autonomous loop defense systems, agentic offensive testing, and generative security models in the Information Technology and Engineering (ITE) Building Auditorium.",
     speakers: [
       { name: "Dr. Marcus Vance", title: "Principal AI Security Architect, DARPA Cyber Labs", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80" },
-      { name: "Maya Chen", title: "TU Cyber Club President & NSA Cyber Scholar", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" }
+      { name: "Maya Chen", title: "UMBC Cyber Club President & NSA Cyber Scholar", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" }
     ],
     agenda: [
       { time: "5:00 PM", topic: "Doors Open & Student Networking Reception (Catered)" },
@@ -2008,10 +2008,10 @@ export const initialCampusEvents: CampusEvent[] = [
   },
   {
     id: "ev-2",
-    title: "CAA Men's Basketball: Towson Tigers vs. Delaware Blue Hens (Gold Rush Game)",
-    clubName: "Towson Athletics & Doc's Army",
+    title: "CAA Men's Basketball: UMBC Retrievers vs. Delaware Blue Hens (Gold Rush Game)",
+    clubName: "UMBC Athletics & Doc's Army",
     category: "Athletics",
-    location: "SECU Arena Main Court",
+    location: "Retriever Stadium Main Court",
     buildingCode: "SECU-01",
     dateMonth: "MAR",
     dateDay: "06",
@@ -2019,21 +2019,21 @@ export const initialCampusEvents: CampusEvent[] = [
     capacity: 5200,
     attendeesCount: 4180,
     userRsvp: "GOING",
-    ticketPrice: "Free for All TU Students",
+    ticketPrice: "Free for All UMBC Students",
     ticketStatus: "Selling Fast",
     tags: ["Basketball", "Division-I", "CAA", "Gold Rush", "Doc's Army", "Free T-Shirts"],
     weatherRequirement: "Indoor",
-    ticketCode: "TU-TKT-9912-HOOPS",
-    gateEntrance: "SECU Arena Gate 1 (Student Section Pass)",
+    ticketCode: "UMBC-TKT-9912-HOOPS",
+    gateEntrance: "Retriever Stadium Gate 1 (Student Section Pass)",
     recommendationReason: "Rivalry Gold Rush Game — Free Gold T-Shirts to first 1,500 students in Doc's Army section!",
-    description: "The Towson Tigers host the Delaware Blue Hens in a pivotal CAA regular season showdown. Wear Gold! Concessions discounts and halftime student half-court shot for $10,000 tuition.",
+    description: "The UMBC Retrievers host the Delaware Blue Hens in a pivotal CAA regular season showdown. Wear Gold! Concessions discounts and halftime student half-court shot for $10,000 tuition.",
     speakers: [
-      { name: "Pat Skerry", title: "Towson Men's Basketball Head Coach", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80" }
+      { name: "Pat Skerry", title: "UMBC Men's Basketball Head Coach", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80" }
     ],
     agenda: [
       { time: "5:30 PM", topic: "Doc's Army Pre-Game Student Tailgate (Free Pizza & Face Painting)" },
-      { time: "6:15 PM", topic: "SECU Arena Student Gates Open" },
-      { time: "7:00 PM", topic: "Tip-Off: Towson Tigers vs. Delaware" },
+      { time: "6:15 PM", topic: "Retriever Stadium Student Gates Open" },
+      { time: "7:00 PM", topic: "Tip-Off: UMBC Retrievers vs. Delaware" },
       { time: "8:00 PM", topic: "Halftime $10,000 Tuition Shootout & Dance Team Showcase" }
     ],
     imageUrl: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=800&auto=format&fit=crop&q=80",
@@ -2041,10 +2041,10 @@ export const initialCampusEvents: CampusEvent[] = [
   },
   {
     id: "ev-3",
-    title: "TigerHacks 2026: 24-Hour Autonomous AI & Web3 Hackathon",
+    title: "RetrieverHacks 2026: 24-Hour Autonomous AI & Web3 Hackathon",
     clubName: "WiCS, Cyber Club & Major League Hacking",
     category: "Hackathon",
-    location: "Science Complex & 7800 York Road",
+    location: "Information Technology and Engineering (ITE) Building & bwtech@UMBC Research & Technology Park",
     buildingCode: "SC-304",
     dateMonth: "MAR",
     dateDay: "14",
@@ -2056,13 +2056,13 @@ export const initialCampusEvents: CampusEvent[] = [
     ticketStatus: "Available",
     tags: ["Hackathon", "Coding", "AI Agents", "Prizes", "MLH", "Sponsors"],
     weatherRequirement: "Indoor",
-    ticketCode: "TU-TKT-3304-HACKS",
-    gateEntrance: "Science Complex Center Atrium",
+    ticketCode: "UMBC-TKT-3304-HACKS",
+    gateEntrance: "Information Technology and Engineering (ITE) Building Center Atrium",
     recommendationReason: "$15,000 in sponsor prize bounties from Google Cloud, Northrop Grumman & T. Rowe Price!",
-    description: "Towson University's flagship annual 24-hour hackathon. Build software, AI agents, mobile apps, or hardware hacks with mentors, free meals, Red Bull stations, and recruiting booths.",
+    description: "University of Maryland, Baltimore County (UMBC)'s flagship annual 24-hour hackathon. Build software, AI agents, mobile apps, or hardware hacks with mentors, free meals, Red Bull stations, and recruiting booths.",
     speakers: [
       { name: "Elena Rostova", title: "Lead Hackathon Director, WiCS", avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80" },
-      { name: "Devon Brooks", title: "VP of Technology, Towson Software Guild", avatar: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80" }
+      { name: "Devon Brooks", title: "VP of Technology, UMBC Software Guild", avatar: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80" }
     ],
     agenda: [
       { time: "10:00 AM", topic: "Check-in, Sponsor Booths & Team Formation" },
@@ -2077,10 +2077,10 @@ export const initialCampusEvents: CampusEvent[] = [
   },
   {
     id: "ev-4",
-    title: "Tigerfest 2026: Spring Music Festival, Carnival & Concert",
+    title: "Retrieverfest 2026: Spring Music Festival, Carnival & Concert",
     clubName: "Campus Activities Board (CAB)",
     category: "Concert",
-    location: "Burdick Field & University Union Beach",
+    location: "Retriever Stadium Lawn & The Commons Beach",
     buildingCode: "BURD-01",
     dateMonth: "APR",
     dateDay: "25",
@@ -2090,11 +2090,11 @@ export const initialCampusEvents: CampusEvent[] = [
     userRsvp: "GOING",
     ticketPrice: "Free Student Admission (Wristband Required)",
     ticketStatus: "Selling Fast",
-    tags: ["Tigerfest", "Concert", "Carnival", "Food Trucks", "Tradition", "Spring"],
+    tags: ["Retrieverfest", "Concert", "Carnival", "Food Trucks", "Tradition", "Spring"],
     weatherRequirement: "Outdoor",
-    ticketCode: "TU-TKT-7714-TFEST",
-    gateEntrance: "Burdick Field South Entrance (ID Check)",
-    recommendationReason: "Towson's biggest tradition of the year! Live national headliners, ferris wheel, carnival games, and 12 local Baltimore food trucks.",
+    ticketCode: "UMBC-TKT-7714-TFEST",
+    gateEntrance: "Retriever Stadium Lawn South Entrance (ID Check)",
+    recommendationReason: "UMBC's biggest tradition of the year! Live national headliners, ferris wheel, carnival games, and 12 local Catonsville & Baltimore food trucks.",
     description: "The biggest music and arts celebration of the spring semester. Featuring two outdoor stages, carnival rides, inflatable obstacle courses, laser tag, and national hip-hop & indie headliners.",
     speakers: [
       { name: "Brianna Jenkins", title: "CAB Executive Concerts Director", avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80" }
@@ -2104,7 +2104,7 @@ export const initialCampusEvents: CampusEvent[] = [
       { time: "3:00 PM", topic: "Local Student Bands & Battle of the Bands Winner Showcase" },
       { time: "6:00 PM", topic: "Main Stage Opener: National Indie/Pop Touring Artist" },
       { time: "8:00 PM", topic: "Headline Act: Live Stadium Concert Performance" },
-      { time: "9:45 PM", topic: "Grand Finale Fireworks Show over Minnegan Field" }
+      { time: "9:45 PM", topic: "Grand Finale Fireworks Show over UMBC Stadium Turf Field" }
     ],
     imageUrl: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&auto=format&fit=crop&q=80",
     createdAt: new Date().toISOString(),
@@ -2112,9 +2112,9 @@ export const initialCampusEvents: CampusEvent[] = [
   {
     id: "ev-5",
     title: "Spring 2026 Mega STEM, Healthcare & Business Career Fair",
-    clubName: "Towson University Career Center",
+    clubName: "University of Maryland, Baltimore County (UMBC) Career Center",
     category: "Career Fair",
-    location: "SECU Arena Concourse & Arena Floor",
+    location: "Retriever Stadium Concourse & Arena Floor",
     buildingCode: "SECU-02",
     dateMonth: "MAR",
     dateDay: "18",
@@ -2126,12 +2126,12 @@ export const initialCampusEvents: CampusEvent[] = [
     ticketStatus: "Available",
     tags: ["Careers", "Internships", "STEM", "Healthcare", "Business", "Fortune 500"],
     weatherRequirement: "Indoor",
-    ticketCode: "TU-TKT-1102-FAIR",
-    gateEntrance: "SECU Arena Main Concourse Entrance",
+    ticketCode: "UMBC-TKT-1102-FAIR",
+    gateEntrance: "Retriever Stadium Main Concourse Entrance",
     recommendationReason: "120+ top employers actively hiring for Summer 2026 internships and full-time new grad roles.",
     description: "Connect with recruiters from Amazon, Lockheed Martin, Johns Hopkins Medicine, T. Rowe Price, Stanley Black & Decker, Under Armour, NSA, and CareFirst. Professional headshots available on site.",
     speakers: [
-      { name: "David Henderson", title: "Director of Employer Relations, TU Career Center", avatar: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80" }
+      { name: "David Henderson", title: "Director of Employer Relations, UMBC Career Center @ Math/Psychology", avatar: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80" }
     ],
     agenda: [
       { time: "11:00 AM", topic: "Doors Open & Free LinkedIn Professional Headshots Station" },
@@ -2147,7 +2147,7 @@ export const initialCampusEvents: CampusEvent[] = [
     title: "Annual Pan-African Gala, Fashion Showcase & Banquet",
     clubName: "African Student Association (ASA)",
     category: "Cultural Festival",
-    location: "University Union Ballrooms (UU-300)",
+    location: "The Commons Ballrooms (UU-300)",
     buildingCode: "UU-300",
     dateMonth: "MAR",
     dateDay: "27",
@@ -2159,9 +2159,9 @@ export const initialCampusEvents: CampusEvent[] = [
     ticketStatus: "Selling Fast",
     tags: ["Cultural", "Gala", "Fashion Show", "African Cuisine", "Afrobeats", "Dance"],
     weatherRequirement: "Indoor",
-    ticketCode: "TU-TKT-5512-GALA",
-    gateEntrance: "University Union 3rd Floor Ballroom Entrance",
-    recommendationReason: "Towson's most celebrated cultural formal! Features traditional 3-course dinner, runway fashion show, and live Afrobeats orchestra.",
+    ticketCode: "UMBC-TKT-5512-GALA",
+    gateEntrance: "The Commons 3rd Floor Ballroom Entrance",
+    recommendationReason: "UMBC's most celebrated cultural formal! Features traditional 3-course dinner, runway fashion show, and live Afrobeats orchestra.",
     description: "An unforgettable evening celebrating African heritage, student excellence, and diaspora unity. Formal African attire or black-tie requested. Includes gourmet multi-nation buffet.",
     speakers: [
       { name: "Amara Diallo", title: "ASA President & Master of Ceremonies", avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80" }
@@ -2178,10 +2178,10 @@ export const initialCampusEvents: CampusEvent[] = [
   },
   {
     id: "ev-7",
-    title: "NCAA Women's Lacrosse: Towson Tigers vs. Drexel Dragons (Senior Night)",
-    clubName: "Towson Athletics",
+    title: "NCAA Women's Lacrosse: UMBC Retrievers vs. Drexel Dragons (Senior Night)",
+    clubName: "UMBC Athletics",
     category: "Athletics",
-    location: "Johnny Unitas Stadium",
+    location: "Johnny Retriever Stadium",
     buildingCode: "UNITAS-01",
     dateMonth: "APR",
     dateDay: "10",
@@ -2189,20 +2189,20 @@ export const initialCampusEvents: CampusEvent[] = [
     capacity: 11198,
     attendeesCount: 1850,
     userRsvp: "INTERESTED",
-    ticketPrice: "Free with Student OneCard",
+    ticketPrice: "Free with Student RedCard",
     ticketStatus: "Available",
-    tags: ["Lacrosse", "Division-I", "Senior Night", "CAA", "Tigers"],
+    tags: ["Lacrosse", "Division-I", "Senior Night", "CAA", "Retrievers"],
     weatherRequirement: "Outdoor",
-    ticketCode: "TU-TKT-6601-LAX",
-    gateEntrance: "Unitas Stadium West Gate",
-    recommendationReason: "Senior Night under the lights! Free Towson Lacrosse bucket hats to first 500 students.",
-    description: "Cheer on the nationally ranked Towson Tigers Women's Lacrosse team in their premier CAA conference match against rival Drexel.",
+    ticketCode: "UMBC-TKT-6601-LAX",
+    gateEntrance: "Retriever Stadium West Gate",
+    recommendationReason: "Senior Night under the lights! Free UMBC Lacrosse bucket hats to first 500 students.",
+    description: "Cheer on the nationally ranked UMBC Retrievers Women's Lacrosse team in their premier CAA conference match against rival Drexel.",
     speakers: [
-      { name: "Kristen Carr", title: "Towson Women's Lacrosse Head Coach", avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80" }
+      { name: "Kristen Carr", title: "UMBC Women's Lacrosse Head Coach", avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80" }
     ],
     agenda: [
       { time: "5:30 PM", topic: "Senior Class Player Ceremony & Family Tribute" },
-      { time: "6:00 PM", topic: "Opening Faceoff: Towson vs. Drexel" },
+      { time: "6:00 PM", topic: "Opening Faceoff: UMBC vs. Drexel" },
       { time: "7:15 PM", topic: "Halftime Youth Lacrosse Scrimmage" }
     ],
     imageUrl: "https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?w=800&auto=format&fit=crop&q=80",
@@ -2211,9 +2211,9 @@ export const initialCampusEvents: CampusEvent[] = [
   {
     id: "ev-8",
     title: "Wall Street Quantitative Trading & AI Investment Forum",
-    clubName: "Towson Investment Group (TIG)",
+    clubName: "UMBC Investment Group (TIG)",
     category: "Academic",
-    location: "Stephens Hall Trading Room (SH-212)",
+    location: "Performing Arts & Humanities Building (PAHB) Trading Room (SH-212)",
     buildingCode: "SH-212",
     dateMonth: "MAR",
     dateDay: "25",
@@ -2225,12 +2225,12 @@ export const initialCampusEvents: CampusEvent[] = [
     ticketStatus: "Selling Fast",
     tags: ["Finance", "Trading", "Wall Street", "Bloomberg", "Quant", "Investing"],
     weatherRequirement: "Indoor",
-    ticketCode: "TU-TKT-9911-TIG",
-    gateEntrance: "Stephens Hall 2nd Floor Trading Suite",
+    ticketCode: "UMBC-TKT-9911-TIG",
+    gateEntrance: "Performing Arts & Humanities Building (PAHB) 2nd Floor Trading Suite",
     recommendationReason: "Exclusive hands-on workshop utilizing live Bloomberg Terminals and Python algorithmic backtesting models.",
     description: "Learn how hedge funds and asset managers utilize machine learning for alpha generation, risk parity modeling, and high-frequency execution.",
     speakers: [
-      { name: "Zachary Cohen", title: "Portfolio Manager, Towson Investment Group", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80" },
+      { name: "Zachary Cohen", title: "Portfolio Manager, UMBC Investment Group", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80" },
       { name: "Nadia Farooq", title: "Head of Quant Research, TIG", avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80" }
     ],
     agenda: [
@@ -2246,7 +2246,7 @@ export const initialCampusEvents: CampusEvent[] = [
     title: "Outdoor Starlight Cinema: Summer Blockbuster Lawn Screening",
     clubName: "Campus Activities Board (CAB)",
     category: "Tradition",
-    location: "University Union Amphitheater & Lawn",
+    location: "The Commons Amphitheater & Lawn",
     buildingCode: "UU-AMPH",
     dateMonth: "APR",
     dateDay: "17",
@@ -2258,7 +2258,7 @@ export const initialCampusEvents: CampusEvent[] = [
     ticketStatus: "Available",
     tags: ["Movies", "Outdoors", "Free Food", "Social", "Amphitheater"],
     weatherRequirement: "Outdoor",
-    ticketCode: "TU-TKT-4419-FILM",
+    ticketCode: "UMBC-TKT-4419-FILM",
     gateEntrance: "Union Amphitheater Lower Lawn",
     recommendationReason: "Massive 40-foot inflatable 4K projection screen under the stars. Free gourmet popcorn & hot chocolate!",
     description: "Bring blankets and lawn chairs for a relaxing outdoor movie night on the Union Amphitheater lawn. Weather backup location is Potomac Lounge.",
@@ -2276,7 +2276,7 @@ export const initialCampusEvents: CampusEvent[] = [
     title: "Greek Life Spring Step, Stroll & Unity Showcase",
     clubName: "National Pan-Hellenic Council (NPHC) & MGC",
     category: "Cultural Festival",
-    location: "Potomac Lounge (University Union)",
+    location: "Potomac Lounge (The Commons)",
     buildingCode: "UU-POTOMAC",
     dateMonth: "APR",
     dateDay: "04",
@@ -2288,7 +2288,7 @@ export const initialCampusEvents: CampusEvent[] = [
     ticketStatus: "Selling Fast",
     tags: ["Greek Life", "NPHC", "Divine Nine", "Step Show", "Stroll", "Tradition"],
     weatherRequirement: "Indoor",
-    ticketCode: "TU-TKT-2201-STEP",
+    ticketCode: "UMBC-TKT-2201-STEP",
     gateEntrance: "Potomac Lounge 2nd Floor Entrance",
     recommendationReason: "The most electrifying Greek tradition of the semester! High-energy step and stroll routines from all 9 NPHC chapters.",
     description: "Watch the Divine Nine and Multicultural Greek Council chapters compete for the 2026 Campus Unity Trophy in synchronized stepping, stroll exhibitions, and crowd interaction.",
@@ -2317,18 +2317,18 @@ export const initialCampusClubs: CampusClub[] = [
     membersCount: 220,
     isJoined: true,
     president: "Amara Diallo (Senior, Business)",
-    description: "Celebrating African heritage, fostering student unity, community service, and academic excellence at Towson University.",
+    description: "Celebrating African heritage, fostering student unity, community service, and academic excellence at University of Maryland, Baltimore County (UMBC).",
     logo: "🌍",
     banner: "https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&auto=format&fit=crop&q=80",
     nextEvent: "Annual Pan-African Gala (Friday 7 PM @ Union Ballroom)",
-    aboutText: "The African Student Association provides a welcoming, empowering space for cultural exchange, alumni mentorship, academic excellence, and philanthropic initiatives across the greater Baltimore community.",
+    aboutText: "The African Student Association provides a welcoming, empowering space for cultural exchange, alumni mentorship, academic excellence, and philanthropic initiatives across the greater Catonsville and Baltimore County community.",
     meetingTime: "Thursdays @ 6:00 PM",
-    meetingLocation: "University Union Rm 320",
+    meetingLocation: "The Commons Rm 320",
     foundedYear: 1994,
     tags: ["Cultural", "Pan-African", "Mentorship", "Community Service", "Gala"],
-    contactEmail: "asa@towson.edu",
-    instagram: "@towson_asa",
-    discordUrl: "https://discord.gg/towson-asa",
+    contactEmail: "asa@umbc.edu",
+    instagram: "@umbc_asa",
+    discordUrl: "https://discord.gg/umbc-asa",
     dues: "$15 / Semester",
     sgaBudget: 6800,
     council: "SGA",
@@ -2340,7 +2340,7 @@ export const initialCampusClubs: CampusClub[] = [
       { role: "Events Director", name: "Kofi Mensah", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80" }
     ],
     projects: [
-      { id: "p1", title: "Pan-African Library Book Drive", description: "Collecting 500 STEM and literature textbooks for Baltimore youth outreach centers.", status: "In Progress", lead: "Amara Diallo" },
+      { id: "p1", title: "Pan-African Library Book Drive", description: "Collecting 500 STEM and literature textbooks for local STEM & Arbutus youth outreach centers.", status: "In Progress", lead: "Amara Diallo" },
       { id: "p2", title: "Taste of Africa Food Festival", description: "Showcasing cuisines from 14 African nations in collaboration with Campus Dining.", status: "Recruiting", lead: "Kofi Mensah" }
     ],
     documents: [
@@ -2350,7 +2350,7 @@ export const initialCampusClubs: CampusClub[] = [
   },
   {
     id: "org-cyber",
-    name: "Towson Cybersecurity Club",
+    name: "UMBC Cybersecurity Club",
     category: "Academic",
     membersCount: 195,
     isJoined: true,
@@ -2359,15 +2359,15 @@ export const initialCampusClubs: CampusClub[] = [
     logo: "🛡️",
     banner: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80",
     nextEvent: "Capture The Flag (CTF) Practice (Thu 6 PM @ SC 304)",
-    aboutText: "We prepare TU students for top-tier careers in cyber defense, malware analysis, cloud security, and ethical hacking through hands-on virtual cyber range challenges and industry guest speakers.",
+    aboutText: "We prepare UMBC students for top-tier careers in cyber defense, malware analysis, cloud security, and ethical hacking through hands-on virtual cyber range challenges and industry guest speakers.",
     meetingTime: "Wednesdays @ 5:30 PM",
-    meetingLocation: "Science Complex Rm 304 & Cyber Range",
+    meetingLocation: "Information Technology and Engineering (ITE) Building Rm 304 & Cyber Range",
     foundedYear: 2012,
     tags: ["Cybersecurity", "CTF", "CCDC", "Ethical Hacking", "NSA CAE-CD"],
-    contactEmail: "cybersec@towson.edu",
-    instagram: "@towsoncyber",
-    discordUrl: "https://discord.gg/towson-cyber",
-    dues: "$0 / Free for all TU students",
+    contactEmail: "cybersec@umbc.edu",
+    instagram: "@umbccyber",
+    discordUrl: "https://discord.gg/umbc-cyber",
+    dues: "$0 / Free for all UMBC students",
     sgaBudget: 12500,
     council: "Academic Senate",
     status: "Featured",
@@ -2382,7 +2382,7 @@ export const initialCampusClubs: CampusClub[] = [
       { id: "p4", title: "Spring MACCDC Competition Team", description: "Training 8-student defensive team for collegiate cyber defense finals.", status: "In Progress", lead: "Alex Rivera" }
     ],
     documents: [
-      { id: "d3", name: "TU Cyber Lab Safety & Ethics Agreement.pdf", type: "PDF", size: "450 KB", url: "#" },
+      { id: "d3", name: "UMBC Cyber Lab Safety & Ethics Agreement.pdf", type: "PDF", size: "450 KB", url: "#" },
       { id: "d4", name: "CCDC Blue Team Playbook 2026.pdf", type: "PDF", size: "4.8 MB", url: "#" }
     ],
   },
@@ -2397,14 +2397,14 @@ export const initialCampusClubs: CampusClub[] = [
     logo: "✊🏾",
     banner: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&auto=format&fit=crop&q=80",
     nextEvent: "Town Hall on Campus Climate (Tuesday 6:30 PM @ Union 210)",
-    aboutText: "Founded in 1969, the Towson BSU empowers students through social activism, career development, community service, and cultural solidarity.",
+    aboutText: "Founded in 1969, the UMBC BSU empowers students through social activism, career development, community service, and cultural solidarity.",
     meetingTime: "Tuesdays @ 6:30 PM",
-    meetingLocation: "University Union Ballroom West",
+    meetingLocation: "The Commons Ballroom West",
     foundedYear: 1969,
     tags: ["Cultural", "Advocacy", "Leadership", "Black History", "Networking"],
-    contactEmail: "bsu@towson.edu",
-    instagram: "@towsonbsu",
-    discordUrl: "https://discord.gg/towson-bsu",
+    contactEmail: "bsu@umbc.edu",
+    instagram: "@umbcbsu",
+    discordUrl: "https://discord.gg/umbc-bsu",
     dues: "$10 / Year",
     sgaBudget: 14000,
     council: "SGA",
@@ -2415,7 +2415,7 @@ export const initialCampusClubs: CampusClub[] = [
       { role: "Secretary", name: "Tariq Edwards", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" }
     ],
     projects: [
-      { id: "p5", title: "Black Alumni Mentorship Pipeline", description: "Matching 100 undergraduates with TU alumni in Fortune 500 & government sectors.", status: "In Progress", lead: "Destiny Taylor" },
+      { id: "p5", title: "Black Alumni Mentorship Pipeline", description: "Matching 100 undergraduates with UMBC alumni in Fortune 500 & government sectors.", status: "In Progress", lead: "Destiny Taylor" },
       { id: "p6", title: "Freshman Transition Summit", description: "Orientation and academic success workshop series for incoming freshmen.", status: "Completed", lead: "Jordan Washington" }
     ],
     documents: [
@@ -2432,15 +2432,15 @@ export const initialCampusClubs: CampusClub[] = [
     description: "Empowering women and non-binary students in tech through technical workshops, Grace Hopper conference grants, and industry mentorship.",
     logo: "💻",
     banner: "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&auto=format&fit=crop&q=80",
-    nextEvent: "AI & Full-Stack Web Development Bootcamp (Sat 11 AM @ 7800 York)",
+    nextEvent: "AI & Full-Stack Web Development Bootcamp (Sat 11 AM @ ITE Building Rm 204)",
     aboutText: "WiCS strives to bridge the gender gap in computing fields by hosting mock technical interviews, hackathons, and corporate networking events with top tech employers.",
     meetingTime: "Mondays @ 5:00 PM",
-    meetingLocation: "7800 York Road Rm 425",
+    meetingLocation: "bwtech@UMBC Research & Technology Park Rm 425",
     foundedYear: 2016,
     tags: ["STEM", "Coding", "Diversity in Tech", "Grace Hopper", "Mentorship"],
-    contactEmail: "wics@towson.edu",
-    instagram: "@towson_wics",
-    discordUrl: "https://discord.gg/towson-wics",
+    contactEmail: "wics@umbc.edu",
+    instagram: "@umbc_wics",
+    discordUrl: "https://discord.gg/umbc-wics",
     dues: "$0 / Free",
     sgaBudget: 8500,
     council: "Academic Senate",
@@ -2463,18 +2463,18 @@ export const initialCampusClubs: CampusClub[] = [
     membersCount: 85,
     isJoined: false,
     president: "Kendall Hughes (Senior, Economics & Law)",
-    description: "The primary representative governing body for 20,000+ TU undergraduate students, overseeing policy, campus initiatives, and student org allocations.",
+    description: "The primary representative governing body for 20,000+ UMBC undergraduate students, overseeing policy, campus initiatives, and student org allocations.",
     logo: "🏛️",
     banner: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=800&auto=format&fit=crop&q=80",
     nextEvent: "Weekly Senate Legislative Session (Tuesday 5 PM @ Union 324)",
     aboutText: "SGA works directly with University President, Provost, and Board of Regents to champion student interests, safety, dining improvements, mental health, and equitable funding.",
     meetingTime: "Tuesdays @ 5:00 PM",
-    meetingLocation: "University Union Senate Chambers (Rm 324)",
+    meetingLocation: "The Commons Senate Chambers (Rm 324)",
     foundedYear: 1921,
     tags: ["Governance", "Student Advocacy", "Legislation", "Appropriations", "Leadership"],
-    contactEmail: "sga@towson.edu",
-    instagram: "@towson_sga",
-    discordUrl: "https://discord.gg/towson-sga",
+    contactEmail: "sga@umbc.edu",
+    instagram: "@umbc_sga",
+    discordUrl: "https://discord.gg/umbc-sga",
     dues: "$0 / Student Fee Funded",
     sgaBudget: 1240000,
     council: "SGA",
@@ -2495,23 +2495,23 @@ export const initialCampusClubs: CampusClub[] = [
   },
   {
     id: "org-tig",
-    name: "Towson Investment Group (TIG)",
+    name: "UMBC Investment Group (TIG)",
     category: "Professional",
     membersCount: 175,
     isJoined: false,
     president: "Zachary Cohen (Senior, Finance)",
-    description: "Undergraduate student-managed investment fund actively managing $250,000 of TU endowment assets across equities, fixed income, and REITs.",
+    description: "Undergraduate student-managed investment fund actively managing $250,000 of UMBC endowment assets across equities, fixed income, and REITs.",
     logo: "📈",
     banner: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&auto=format&fit=crop&q=80",
-    nextEvent: "Stock Pitch & Sector Pitch Deck Reviews (Wednesday 7 PM @ Stephens Hall)",
+    nextEvent: "Stock Pitch & Sector Pitch Deck Reviews (Wednesday 7 PM @ Performing Arts & Humanities Building (PAHB))",
     aboutText: "TIG provides rigorous training in financial modeling, DCF valuation, equity research, Bloomberg Terminal proficiency, and Wall Street interview preparation.",
     meetingTime: "Wednesdays @ 7:00 PM",
-    meetingLocation: "Stephens Hall Rm 212 (Trading Room)",
+    meetingLocation: "Performing Arts & Humanities Building (PAHB) Rm 212 (Trading Room)",
     foundedYear: 2005,
     tags: ["Finance", "Investing", "Wall Street", "Bloomberg", "Equity Research"],
-    contactEmail: "tig@towson.edu",
-    instagram: "@towsoninvestmentgroup",
-    discordUrl: "https://discord.gg/towson-tig",
+    contactEmail: "tig@umbc.edu",
+    instagram: "@umbcinvestmentgroup",
+    discordUrl: "https://discord.gg/umbc-tig",
     dues: "$20 / Semester",
     sgaBudget: 9200,
     council: "Professional",
@@ -2537,14 +2537,14 @@ export const initialCampusClubs: CampusClub[] = [
     description: "The first intercollegiate Greek-letter fraternity established for African American Men. First of All, Servants of All, We Shall Transcend All.",
     logo: "🔱",
     banner: "https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=800&auto=format&fit=crop&q=80",
-    nextEvent: "Black & Gold Informational & Stroll Showcase (Friday 7 PM @ West Village)",
-    aboutText: "Chartered at Towson University on January 15, 1971, the Eta Zeta chapter develops leaders, promotes brotherhood and academic excellence, while providing service and advocacy for our communities.",
+    nextEvent: "Black & Gold Informational & Stroll Showcase (Friday 7 PM @ Retriever Square)",
+    aboutText: "Chartered at University of Maryland, Baltimore County (UMBC) on January 15, 1971, the Eta Zeta chapter develops leaders, promotes brotherhood and academic excellence, while providing service and advocacy for our communities.",
     meetingTime: "Sundays @ 5:00 PM",
-    meetingLocation: "University Union Multipurpose Rm",
+    meetingLocation: "The Commons Multipurpose Rm",
     foundedYear: 1971,
     tags: ["Greek Life", "NPHC", "Divine Nine", "Brotherhood", "Philanthropy", "Leadership"],
-    contactEmail: "etazeta1906@towson.edu",
-    instagram: "@towson_alphas",
+    contactEmail: "etazeta1906@umbc.edu",
+    instagram: "@umbc_alphas",
     discordUrl: "#",
     dues: "$120 / Semester",
     sgaBudget: 4200,
@@ -2573,13 +2573,13 @@ export const initialCampusClubs: CampusClub[] = [
     logo: "🐘",
     banner: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&auto=format&fit=crop&q=80",
     nextEvent: "Crimson & Cream Women in Leadership Panel (Thursday 6 PM @ Union)",
-    aboutText: "Chartered at Towson University in 1973, Lambda Beta focuses on Educational Development, Economic Development, International Awareness, Physical and Mental Health, and Political Awareness & Involvement.",
+    aboutText: "Chartered at University of Maryland, Baltimore County (UMBC) in 1973, Lambda Beta focuses on Educational Development, Economic Development, International Awareness, Physical and Mental Health, and Political Awareness & Involvement.",
     meetingTime: "Sundays @ 6:30 PM",
-    meetingLocation: "University Union Rm 204",
+    meetingLocation: "The Commons Rm 204",
     foundedYear: 1973,
     tags: ["Greek Life", "NPHC", "Divine Nine", "Sisterhood", "Public Service"],
-    contactEmail: "lambdabeta_dst@towson.edu",
-    instagram: "@tu_deltas",
+    contactEmail: "lambdabeta_dst@umbc.edu",
+    instagram: "@umbc_deltas",
     discordUrl: "#",
     dues: "$125 / Semester",
     sgaBudget: 4500,
@@ -2603,18 +2603,18 @@ export const initialCampusClubs: CampusClub[] = [
     membersCount: 185,
     isJoined: false,
     president: "Mateo Hernandez (Junior, Business Administration)",
-    description: "Fostering cultural pride, community advocacy, and academic support for Latinx/Hispanic students and allies across Towson University.",
+    description: "Fostering cultural pride, community advocacy, and academic support for Latinx/Hispanic students and allies across University of Maryland, Baltimore County (UMBC).",
     logo: "💃🏽",
     banner: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&auto=format&fit=crop&q=80",
     nextEvent: "Noche Latina: Bailes, Comida & Música (Sat 8 PM @ Potomac Lounge)",
     aboutText: "LASO provides a home away from home with festive social gatherings, salsa dance workshops, DACA/Immigration advocacy forums, and Spanish/Portuguese study circles.",
     meetingTime: "Wednesdays @ 6:00 PM",
-    meetingLocation: "University Union Rm 314",
+    meetingLocation: "The Commons Rm 314",
     foundedYear: 1988,
     tags: ["Cultural", "Latinx", "Dance", "Advocacy", "Bilingual", "Socials"],
-    contactEmail: "laso@towson.edu",
-    instagram: "@towson_laso",
-    discordUrl: "https://discord.gg/towson-laso",
+    contactEmail: "laso@umbc.edu",
+    instagram: "@umbc_laso",
+    discordUrl: "https://discord.gg/umbc-laso",
     dues: "$10 / Year",
     sgaBudget: 5500,
     council: "SGA",
@@ -2632,7 +2632,7 @@ export const initialCampusClubs: CampusClub[] = [
   },
   {
     id: "org-esports",
-    name: "Towson Tigers Esports & Gaming",
+    name: "UMBC Retrievers Esports & Gaming",
     category: "Sports",
     membersCount: 340,
     isJoined: true,
@@ -2640,15 +2640,15 @@ export const initialCampusClubs: CampusClub[] = [
     description: "Competitive collegiate esports teams in Valorant, League of Legends, Rocket League, Smash Bros, and casual gaming LAN parties.",
     logo: "🎮",
     banner: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80",
-    nextEvent: "Super Smash Bros Ultimate LAN Tournament (Friday 6 PM @ Burdick 115)",
-    aboutText: "We host competitive scrims in the TU Esports Lounge, compete in NACE Starleague, and hold open game nights with VR setups, consoles, and PC rigs.",
+    nextEvent: "Super Smash Bros Ultimate LAN Tournament (Friday 6 PM @ Retriever Activities Center (RAC) Rm 110)",
+    aboutText: "We host competitive scrims in the Commons Retriever Esports Arena, compete in NACE Starleague, and hold open game nights with VR setups, consoles, and PC rigs.",
     meetingTime: "Fridays @ 6:00 PM",
-    meetingLocation: "Burdick Hall Esports Arena & Lounge",
+    meetingLocation: "Retriever Activities Center (RAC) (PAC) Esports Arena & Lounge",
     foundedYear: 2017,
     tags: ["Esports", "Gaming", "Valorant", "Smash Bros", "LAN", "Twitch"],
-    contactEmail: "esports@towson.edu",
+    contactEmail: "esports@umbc.edu",
     instagram: "@tuesports",
-    discordUrl: "https://discord.gg/towson-esports",
+    discordUrl: "https://discord.gg/umbc-esports",
     dues: "$0 / Free",
     sgaBudget: 11000,
     council: "Club Sports",
@@ -2661,7 +2661,7 @@ export const initialCampusClubs: CampusClub[] = [
       { id: "p15", title: "Mid-Atlantic Collegiate Invitational", description: "Hosting 16 regional universities for a $5,000 prize pool Valorant championship.", status: "In Progress", lead: "Austin Reed" }
     ],
     documents: [
-      { id: "d13", name: "TU Esports Arena Rules & Hardware Guide.pdf", type: "PDF", size: "1.1 MB", url: "#" }
+      { id: "d13", name: "Commons Retriever Esports Arena Rules & Hardware Guide.pdf", type: "PDF", size: "1.1 MB", url: "#" }
     ],
   },
   {
@@ -2671,13 +2671,13 @@ export const initialCampusClubs: CampusClub[] = [
     membersCount: 65,
     isJoined: false,
     president: "Hannah Sterling (Editor-in-Chief)",
-    description: "The independent student news organization serving the Towson University community since 1921 with award-winning investigative journalism.",
+    description: "The independent student news organization serving the University of Maryland, Baltimore County (UMBC) community since 1921 with award-winning investigative journalism.",
     logo: "📰",
     banner: "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&auto=format&fit=crop&q=80",
     nextEvent: "Pitch Meeting & Editorial Board (Mondays 4 PM @ Media Center)",
     aboutText: "The Towerlight is student-run and editorially independent, reporting on campus politics, arts, culture, sports, faculty affairs, and breaking news.",
     meetingTime: "Mondays @ 4:00 PM",
-    meetingLocation: "University Union Media Suite Rm 208",
+    meetingLocation: "The Commons Media Suite Rm 208",
     foundedYear: 1921,
     tags: ["Journalism", "Media", "Photography", "Podcasting", "Publishing"],
     contactEmail: "editor@thetowerlight.com",
@@ -2708,15 +2708,15 @@ export const initialCampusClubs: CampusClub[] = [
     description: "Preparing students for medical school (MD/DO), dental, PA, pharmacy, and nursing programs through MCAT study pods and shadowing.",
     logo: "🩺",
     banner: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&auto=format&fit=crop&q=80",
-    nextEvent: "Johns Hopkins & UMD Med Student Panel (Wednesday 6 PM @ Smith Hall)",
+    nextEvent: "Johns Hopkins & UMBC Med Student Panel (Wednesday 6 PM @ Devilbiss Hall)",
     aboutText: "We connect aspiring healthcare professionals with physician shadowing rotations at GBMC and St. Joseph Medical Center, suture clinics, and CPR certifications.",
     meetingTime: "Bi-Weekly Wednesdays @ 6:00 PM",
-    meetingLocation: "Smith Hall Rm 356",
+    meetingLocation: "Devilbiss Hall Rm 356",
     foundedYear: 1982,
     tags: ["Pre-Med", "Healthcare", "MCAT", "Shadowing", "Biology", "Clinical"],
-    contactEmail: "premed@towson.edu",
-    instagram: "@towson_premed",
-    discordUrl: "https://discord.gg/towson-premed",
+    contactEmail: "premed@umbc.edu",
+    instagram: "@umbc_premed",
+    discordUrl: "https://discord.gg/umbc-premed",
     dues: "$15 / Year",
     sgaBudget: 6200,
     council: "Academic Senate",
@@ -2739,17 +2739,17 @@ export const initialCampusClubs: CampusClub[] = [
     membersCount: 90,
     isJoined: false,
     president: "Brianna Jenkins (Senior, Communications)",
-    description: "The premier student-run programming board responsible for major campus concerts, Homecoming, Tigerfest, comedians, and outdoor movies.",
+    description: "The premier student-run programming board responsible for major campus concerts, Homecoming, Retrieverfest, comedians, and outdoor movies.",
     logo: "🎪",
     banner: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&auto=format&fit=crop&q=80",
-    nextEvent: "Tigerfest Spring Music Festival Artist Reveal (Friday 12 PM @ Beach)",
+    nextEvent: "Retrieverfest Spring Music Festival Artist Reveal (Friday 12 PM @ Beach)",
     aboutText: "CAB creates unforgettable college memories by programming over 50 campus-wide concerts, comedy nights, novelties, and spirit traditions each year.",
     meetingTime: "Wednesdays @ 5:00 PM",
-    meetingLocation: "University Union CAB Suite",
+    meetingLocation: "The Commons CAB Suite",
     foundedYear: 1968,
-    tags: ["Events", "Concerts", "Tigerfest", "Homecoming", "Entertainment"],
-    contactEmail: "cab@towson.edu",
-    instagram: "@towsoncab",
+    tags: ["Events", "Concerts", "Retrieverfest", "Homecoming", "Entertainment"],
+    contactEmail: "cab@umbc.edu",
+    instagram: "@umbccab",
     discordUrl: "#",
     dues: "$0 / Student Fee Funded",
     sgaBudget: 380000,
@@ -2760,7 +2760,7 @@ export const initialCampusClubs: CampusClub[] = [
       { role: "Concerts Chair", name: "Trevor Nelson", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80" }
     ],
     projects: [
-      { id: "p18", title: "Tigerfest 2026 Headliner Production", description: "Planning outdoor stadium stage, security, and food truck concourse for 6,000 attendees.", status: "In Progress", lead: "Brianna Jenkins" }
+      { id: "p18", title: "Retrieverfest 2026 Headliner Production", description: "Planning outdoor stadium stage, security, and food truck concourse for 6,000 attendees.", status: "In Progress", lead: "Brianna Jenkins" }
     ],
     documents: [
       { id: "d16", name: "CAB Event Planning Playbook 2026.pdf", type: "PDF", size: "2.4 MB", url: "#" }
@@ -2768,7 +2768,7 @@ export const initialCampusClubs: CampusClub[] = [
   },
   {
     id: "org-ama",
-    name: "American Marketing Association (AMA Towson)",
+    name: "American Marketing Association (AMA UMBC)",
     category: "Professional",
     membersCount: 120,
     isJoined: false,
@@ -2777,13 +2777,13 @@ export const initialCampusClubs: CampusClub[] = [
     logo: "🎯",
     banner: "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&auto=format&fit=crop&q=80",
     nextEvent: "Digital Ad Agency Field Trip to Under Armour HQ (Thursday 1 PM)",
-    aboutText: "AMA Towson is an affiliated collegiate chapter of the American Marketing Association providing certified training in Google Analytics, HubSpot, and SEO.",
+    aboutText: "AMA UMBC is an affiliated collegiate chapter of the American Marketing Association providing certified training in Google Analytics, HubSpot, and SEO.",
     meetingTime: "Thursdays @ 5:00 PM",
-    meetingLocation: "Stephens Hall Rm 110",
+    meetingLocation: "Performing Arts & Humanities Building (PAHB) Rm 110",
     foundedYear: 1978,
     tags: ["Marketing", "Branding", "Social Media", "Advertising", "SEO"],
-    contactEmail: "amatowson@gmail.com",
-    instagram: "@amatowson",
+    contactEmail: "amaumbc@gmail.com",
+    instagram: "@amaumbc",
     discordUrl: "#",
     dues: "$30 / Year (National AMA Membership)",
     sgaBudget: 5800,
@@ -2794,7 +2794,7 @@ export const initialCampusClubs: CampusClub[] = [
       { role: "Agency Director", name: "Kayla Higgins", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" }
     ],
     projects: [
-      { id: "p19", title: "Towson Local Business Re-Branding Challenge", description: "Student marketing teams designing digital advertising packages for 5 local restaurants.", status: "In Progress", lead: "Lucas Meyers" }
+      { id: "p19", title: "UMBC Local Business Re-Branding Challenge", description: "Student marketing teams designing digital advertising packages for 5 local restaurants.", status: "In Progress", lead: "Lucas Meyers" }
     ],
     documents: [
       { id: "d17", name: "AMA Collegiate Case Competition Brief.pdf", type: "PDF", size: "1.7 MB", url: "#" }
@@ -2802,23 +2802,23 @@ export const initialCampusClubs: CampusClub[] = [
   },
   {
     id: "org-glen",
-    name: "Environmental Action & Glen Arboretum Guardians",
+    name: "Environmental Action & Herbert Run Greenway & Conservation Forest Guardians",
     category: "Volunteer",
     membersCount: 130,
     isJoined: true,
     president: "Cora Sterling (Junior, Environmental Science)",
-    description: "Protecting Towson's 12-acre Glen Arboretum forest ecosystem, native species restoration, and campus sustainability initiatives.",
+    description: "Protecting UMBC's 12-acre Herbert Run Greenway & Conservation Forest forest ecosystem, native species restoration, and campus sustainability initiatives.",
     logo: "🌲",
     banner: "https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&auto=format&fit=crop&q=80",
-    nextEvent: "Glen Trail Restoration & Native Tree Planting (Saturday 10 AM @ Glen Pavilion)",
-    aboutText: "We maintain nature trails, eliminate invasive English ivy, monitor Towson Run stream water quality, and champion university zero-waste compost goals.",
+    nextEvent: "Pig Pen Pond Nature Walk Restoration & Native Tree Planting (Saturday 10 AM @ Pig Pen Pond Nature Walk Pavilion)",
+    aboutText: "We maintain nature trails, eliminate invasive English ivy, monitor UMBC Run stream water quality, and champion university zero-waste compost goals.",
     meetingTime: "Bi-Weekly Saturdays @ 10:00 AM",
-    meetingLocation: "Glen Arboretum Forest Pavilion",
+    meetingLocation: "Herbert Run Greenway & Conservation Forest Forest Pavilion",
     foundedYear: 2001,
     tags: ["Environment", "Sustainability", "Forestry", "Conservation", "Volunteer"],
-    contactEmail: "environment@towson.edu",
-    instagram: "@towson_green",
-    discordUrl: "https://discord.gg/towson-green",
+    contactEmail: "environment@umbc.edu",
+    instagram: "@umbc_green",
+    discordUrl: "https://discord.gg/umbc-green",
     dues: "$0 / Free",
     sgaBudget: 4900,
     council: "SGA",
@@ -2828,10 +2828,10 @@ export const initialCampusClubs: CampusClub[] = [
       { role: "Trail Operations Lead", name: "Darius Miller", avatar: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80" }
     ],
     projects: [
-      { id: "p20", title: "Towson Run Native Wetland Buffer Zone", description: "Planting 250 native ferns and red maple saplings to prevent stormwater runoff erosion.", status: "In Progress", lead: "Cora Sterling" }
+      { id: "p20", title: "UMBC Run Native Wetland Buffer Zone", description: "Planting 250 native ferns and red maple saplings to prevent stormwater runoff erosion.", status: "In Progress", lead: "Cora Sterling" }
     ],
     documents: [
-      { id: "d18", name: "Glen Arboretum Flora & Fauna Field Guide.pdf", type: "PDF", size: "3.9 MB", url: "#" }
+      { id: "d18", name: "Herbert Run Greenway & Conservation Forest Flora & Fauna Field Guide.pdf", type: "PDF", size: "3.9 MB", url: "#" }
     ],
   },
   {
@@ -2844,14 +2844,14 @@ export const initialCampusClubs: CampusClub[] = [
     description: "The oldest and largest co-ed professional business fraternity recognized worldwide for developing principled business leaders.",
     logo: "💼",
     banner: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&auto=format&fit=crop&q=80",
-    nextEvent: "Spring Professional Rush & Case Competition (Wednesday 7 PM @ Stephens)",
+    nextEvent: "Spring Professional Rush & Case Competition (Wednesday 7 PM @ Sondheim Hall)",
     aboutText: "Open to all majors, AKPsi provides professional resume workshops, corporate networking trips to NYC and DC, alumni mentorship, and philanthropic service.",
     meetingTime: "Sundays @ 7:00 PM",
-    meetingLocation: "Stephens Hall Rm 310",
+    meetingLocation: "Performing Arts & Humanities Building (PAHB) Rm 310",
     foundedYear: 2006,
     tags: ["Greek Life", "Business", "Co-Ed", "Professional", "Consulting", "Wall Street"],
     contactEmail: "akpsi.omegakappa@gmail.com",
-    instagram: "@towson_akpsi",
+    instagram: "@umbc_akpsi",
     discordUrl: "#",
     dues: "$95 / Semester",
     sgaBudget: 5100,
@@ -2876,9 +2876,9 @@ export const initialVolunteerActivities: VolunteerActivity[] = [
     id: "vol-1",
     title: "Campus Food Drive & Baltimore Pantry Distribution",
     category: "Food Drive",
-    organizer: "Towson Student Community Service Council & FoodShare",
+    organizer: "UMBC Student Community Service Council & FoodShare",
     organizerAvatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
-    location: "University Union North Loading Dock & Food Hub",
+    location: "The Commons North Loading Dock & Food Hub",
     date: "Saturday, Mar 08 • 9:00 AM - 2:00 PM",
     description: "Organizing and packaging 3,000 lbs of fresh produce and nutritious shelf-stable meals for food-insecure commuter students and Baltimore community pantries.",
     progressPercent: 68,
@@ -2900,13 +2900,13 @@ export const initialVolunteerActivities: VolunteerActivity[] = [
   },
   {
     id: "vol-2",
-    title: "Glen Arboretum Native Species Restoration & Trail Cleanup",
+    title: "Herbert Run Greenway & Conservation Forest Native Species Restoration & Trail Cleanup",
     category: "Campus Cleanup",
-    organizer: "TU Environmental Action Club & Glen Arboretum Board",
+    organizer: "UMBC Environmental Alliance & Herbert Run Greenway & Conservation Forest Board",
     organizerAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-    location: "Glen Arboretum Trailhead (Near Hawkins Hall)",
+    location: "Herbert Run Greenway & Conservation Forest Trailhead (Near Sondheim Hall)",
     date: "Sunday, Mar 09 • 10:00 AM - 1:30 PM",
-    description: "Removing invasive English ivy and multiflora rose while planting 120 Maryland native saplings across the 12-acre Glen Arboretum forest sanctuary.",
+    description: "Removing invasive English ivy and multiflora rose while planting 120 Maryland native saplings across the 12-acre Herbert Run Greenway & Conservation Forest forest sanctuary.",
     progressPercent: 80,
     goalMetric: "25 Volunteers",
     currentMetric: "20 Registered",
@@ -2914,7 +2914,7 @@ export const initialVolunteerActivities: VolunteerActivity[] = [
       "Identify and eradicate invasive vine patches",
       "Dig planting beds and mulch native oak saplings",
       "Reinforce wood trail borders and erosion swales",
-      "Collect and catalog recyclable litter along Glen Creek",
+      "Collect and catalog recyclable litter along Herbert Run Creek",
     ],
     status: "Recruiting",
     roles: [
@@ -2927,9 +2927,9 @@ export const initialVolunteerActivities: VolunteerActivity[] = [
     id: "vol-3",
     title: "Baltimore Youth Cyber & STEM Coding Weekend Lab",
     category: "Community Service",
-    organizer: "Towson Cybersecurity Club & Baltimore City Schools",
+    organizer: "UMBC Cybersecurity Club & Baltimore City Schools",
     organizerAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
-    location: "Science Complex Computer Lab SC-314",
+    location: "Information Technology and Engineering (ITE) Building Computer Lab SC-314",
     date: "Saturday, Mar 15 • 10:00 AM - 2:00 PM",
     description: "1-on-1 hands-on mentoring for local middle & high school students learning Python programming, password defense, and autonomous robotics fundamentals.",
     progressPercent: 55,
@@ -2952,9 +2952,9 @@ export const initialVolunteerActivities: VolunteerActivity[] = [
     id: "vol-4",
     title: "Maryland SPCA & Shelter Animal Companion Enrichment",
     category: "Community Service",
-    organizer: "Towson Pre-Veterinary Society & MD SPCA",
+    organizer: "UMBC Pre-Veterinary Society & MD SPCA",
     organizerAvatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80",
-    location: "Kenilworth Rescue Center & TU Campus Quad",
+    location: "Kenilworth Rescue Center & UMBC Campus Quad",
     date: "Saturday, Mar 22 • 11:00 AM - 3:30 PM",
     description: "Assisting rescue shelter staff with canine socialization, outdoor walking, grooming, feline stimulation toys, and public adoption matching.",
     progressPercent: 90,
@@ -2977,9 +2977,9 @@ export const initialVolunteerActivities: VolunteerActivity[] = [
     id: "vol-5",
     title: "Senior Living Digital Literacy & Smartphone Workshop",
     category: "Community Service",
-    organizer: "SGA Student Outreach & Towson Senior Center",
+    organizer: "SGA Student Outreach & UMBC Senior Center",
     organizerAvatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
-    location: "Towson Senior Center (Washington Ave)",
+    location: "UMBC Senior Center (Washington Ave)",
     date: "Wednesday, Mar 12 • 1:30 PM - 4:30 PM",
     description: "Empowering elderly community members with modern smartphone navigation, telehealth portal access, spam call filtering, and video calling family.",
     progressPercent: 75,
@@ -3001,9 +3001,9 @@ export const initialVolunteerActivities: VolunteerActivity[] = [
     id: "vol-6",
     title: "American Red Cross Blood & Bone Marrow Donor Drive",
     category: "Fundraiser",
-    organizer: "TU Pre-Med Association & Red Cross Greater Chesapeake",
+    organizer: "UMBC Pre-Med Association & Red Cross Greater Chesapeake",
     organizerAvatar: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&auto=format&fit=crop&q=80",
-    location: "Burdick Hall Multipurpose Activity Gym",
+    location: "Retriever Activities Center (RAC) (PAC) Multipurpose Activity Gym",
     date: "Thursday, Mar 20 • 9:00 AM - 4:00 PM",
     description: "Coordinating donor intake, hydration/recovery hospitality, and swab testing for the National Be The Match Bone Marrow Registry.",
     progressPercent: 60,
@@ -3023,13 +3023,13 @@ export const initialVolunteerActivities: VolunteerActivity[] = [
   },
   {
     id: "vol-7",
-    title: "Towson Community Clean-Up & York Road Corridor Spruce",
+    title: "UMBC Community Clean-Up & Poplar Avenue & Walker Ave Corridor Spruce",
     category: "Campus Cleanup",
-    organizer: "Towson Town & Gown Student Civic Coalition",
+    organizer: "UMBC Town & Gown Student Civic Coalition",
     organizerAvatar: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80",
-    location: "South Campus Gateway & York Road Sidewalks",
+    location: "South Campus Gateway & Poplar Avenue & Walker Ave Sidewalks",
     date: "Sunday, Mar 16 • 9:30 AM - 12:30 PM",
-    description: "Beautifying pedestrian avenues connecting campus to Downtown Towson with street sweeping, flower bed mulching, and graffiti removal.",
+    description: "Beautifying pedestrian avenues connecting campus to Downtown UMBC with street sweeping, flower bed mulching, and graffiti removal.",
     progressPercent: 85,
     goalMetric: "30 Volunteers",
     currentMetric: "26 Registered",
@@ -3049,9 +3049,9 @@ export const initialVolunteerActivities: VolunteerActivity[] = [
     id: "vol-8",
     title: "Reading Partners Baltimore Elementary Literacy Coaching",
     category: "Community Service",
-    organizer: "Towson College of Education Outreach",
+    organizer: "UMBC College of Education Outreach",
     organizerAvatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80",
-    location: "Towson Elementary Partner School (Free Shuttle Provided)",
+    location: "UMBC Elementary Partner School (Free Shuttle Provided)",
     date: "Friday, Mar 14 • 1:00 PM - 3:30 PM",
     description: "Providing structured 1-on-1 phonics and reading comprehension tutoring to elementary students falling below grade-level literacy.",
     progressPercent: 70,
@@ -3078,7 +3078,7 @@ export const initialResearchProjects: ResearchOpportunity[] = [
     professor: "Dr. Catherine Hayes",
     professorAvatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
     department: "Department of Computer & Information Sciences",
-    labName: "Autonomous Security & Systems Lab (Science Complex Rm 314)",
+    labName: "Autonomous Security & Systems Lab (Information Technology and Engineering (ITE) Building Rm 314)",
     openingsGrad: 2,
     openingsUndergrad: 1,
     requiredSkills: ["Python", "Machine Learning", "Cybersecurity", "Docker"],
@@ -3093,12 +3093,12 @@ export const initialResearchProjects: ResearchOpportunity[] = [
 export const initialCampusJobs: CampusJob[] = [
   {
     id: "job-1",
-    title: "Cook Library Student Technology Assistant",
-    department: "Albert S. Cook Library · Tech Desk",
+    title: "AOK Library & Gallery Student Technology Assistant",
+    department: "Albert S. AOK Library & Gallery · Tech Desk",
     type: "Student Assistant",
     payRate: "$16.50 / hr",
     hoursPerWeek: "12-15 hrs/week",
-    location: "Cook Library 1st Floor",
+    location: "AOK Library & Gallery 1st Floor",
     description: "Assist students and faculty with laptop checkout, dual display setup, printing, and general tech troubleshooting.",
     deadline: "Mar 10, 2026",
     hasApplied: false,
@@ -3112,7 +3112,7 @@ export const initialStudyPods: CourseStudyPod[] = [
     courseCode: "COSC 421",
     courseName: "Operating Systems",
     topic: "Virtual Memory & Paging Exam Prep",
-    roomLocation: "Albert S. Cook Library 2nd Floor, Pod B",
+    roomLocation: "Albert S. AOK Library & Gallery 2nd Floor, Pod B",
     meetingTime: "Today at 4:30 PM",
     maxMembers: 6,
     currentMembers: 4,
@@ -3132,7 +3132,7 @@ export const initialCampusCourses: CampusCourse[] = [
     imageUrl: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=600&auto=format&fit=crop&q=80",
     credits: 4.0,
     grade: "A (94%)",
-    room: "Science Complex 204",
+    room: "Information Technology and Engineering (ITE) Building 204",
     schedule: "Mon/Wed 10:00 AM - 11:30 AM",
     studentsEnrolled: 342,
     studyGroupsCount: 12,
@@ -3157,7 +3157,7 @@ export const initialCampusCourses: CampusCourse[] = [
     imageUrl: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=600&auto=format&fit=crop&q=80",
     credits: 3.0,
     grade: "A (96%)",
-    room: "7800 York Road Rm 314",
+    room: "bwtech@UMBC Research & Technology Park Rm 314",
     schedule: "Tue/Thu 2:00 PM - 3:30 PM",
     studentsEnrolled: 185,
     studyGroupsCount: 8,
@@ -3181,7 +3181,7 @@ export const initialCampusCourses: CampusCourse[] = [
     imageUrl: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&auto=format&fit=crop&q=80",
     credits: 3.0,
     grade: "A- (91%)",
-    room: "Science Complex 118",
+    room: "Information Technology and Engineering (ITE) Building 118",
     schedule: "Friday 1:00 PM - 3:30 PM",
     studentsEnrolled: 260,
     studyGroupsCount: 9,
@@ -3205,7 +3205,7 @@ export const initialCampusCourses: CampusCourse[] = [
     imageUrl: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=600&auto=format&fit=crop&q=80",
     credits: 4.0,
     grade: "B+ (88%)",
-    room: "Smith Hall Rm 402",
+    room: "Devilbiss Hall Rm 402",
     schedule: "Tue/Thu 11:00 AM - 12:30 PM",
     studentsEnrolled: 410,
     studyGroupsCount: 15,
@@ -3227,14 +3227,14 @@ export const initialCampusMedia: CampusMediaItem[] = [
   {
     id: "med-1",
     title: "Keynote Lecture: Zero-Day Loops & Autonomous Cyber Defense",
-    channelName: "Towson CIS Department",
+    channelName: "UMBC CIS Department",
     channelLogo: "🛡️",
     category: "Guest Lectures",
     duration: "48:20",
     viewsCount: 1420,
     likesCount: 180,
     thumbnailUrl: "https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=600&auto=format&fit=crop&q=80",
-    description: "Dr. Marcus Vance (DARPA Lab) presents autonomous loop defense systems, live containment architectures, and AI vulnerability analysis at the Science Complex.",
+    description: "Dr. Marcus Vance (DARPA Lab) presents autonomous loop defense systems, live containment architectures, and AI vulnerability analysis at the Information Technology and Engineering (ITE) Building.",
     publishedDate: "2 days ago",
   },
 ];
@@ -3244,14 +3244,14 @@ export const initialCampusPolls: CampusPoll[] = [
   {
     id: "poll-1",
     question: "Where should Student Government allocate the $10,000 spring surplus budget?",
-    organizer: "Towson Student Government Association (SGA)",
+    organizer: "UMBC Student Government Association (SGA)",
     scope: "Campus Wide",
     totalVotes: 842,
     userVotedOptionId: "opt-1",
     options: [
       { id: "opt-1", text: "A. Student Events & Cultural Festivals @ Union", votes: 380 },
-      { id: "opt-2", text: "B. Burdick Recreation & Climbing Wall Upgrades", votes: 190 },
-      { id: "opt-3", text: "C. Cook Library Quiet Pod Tech Displays", votes: 172 },
+      { id: "opt-2", text: "B. Retriever Activities Center (RAC) & Fitness Suites Upgrades", votes: 190 },
+      { id: "opt-3", text: "C. AOK Library & Gallery Quiet Pod Tech Displays", votes: 172 },
       { id: "opt-4", text: "D. Student Organization Travel Pool", votes: 100 },
     ],
   },
@@ -3277,9 +3277,9 @@ export const initialChatMessages: ChatMessage[] = [
   {
     id: "1",
     conversationId: "#general-announcements",
-    sender: "Towson Student Affairs",
+    sender: "UMBC Student Affairs",
     avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
-    text: "📢 Reminder: Spring Career Fair at SECU Arena registration closes Friday at 5:00 PM. 120+ employers attending.",
+    text: "📢 Reminder: Spring Career Fair at Retriever Stadium registration closes Friday at 5:00 PM. 120+ employers attending.",
     time: "2:00 PM",
     isMe: false,
     createdAt: new Date().toISOString(),
@@ -3287,7 +3287,7 @@ export const initialChatMessages: ChatMessage[] = [
 ];
 
 // ─────────────────────────────────────────────────────────────
-// 31. TUHOUSING DOMAIN MODELS & SEED DATASETS
+// 31. RETRIEVERHOUSING DOMAIN MODELS & SEBD DATASETS
 // ─────────────────────────────────────────────────────────────
 
 export interface HousingListing {
@@ -3376,10 +3376,10 @@ export interface HousingMaintenanceTicket {
 export const initialHousingListings: HousingListing[] = [
   {
     id: "hse-1",
-    title: "University Village Towson — 2BR Renovated Suite",
+    title: "University Village UMBC — 2BR Renovated Suite",
     propertyType: "Apartment",
-    address: "201 E Joppa Rd, Towson, MD 21286",
-    neighborhood: "Towson Town Center District",
+    address: "201 E Joppa Rd, UMBC, MD 21286",
+    neighborhood: "UMBC Town Center District",
     monthlyRent: 925,
     estimatedUtilities: 85,
     estimatedTotalMonthly: 1010,
@@ -3391,7 +3391,7 @@ export const initialHousingListings: HousingListing[] = [
     bikeTimeMinutes: 5,
     driveTimeMinutes: 3,
     transitTimeMinutes: 7,
-    shuttleRouteName: "Tiger Bus Gold Route #14",
+    shuttleRouteName: "Retriever Bus Gold Route #14",
     nextShuttleEtaMinutes: 4,
     isVerifiedLandlord: true,
     trustScorePercent: 98,
@@ -3407,18 +3407,18 @@ export const initialHousingListings: HousingListing[] = [
     amenities: ["Furnished", "In-Unit Washer/Dryer", "High-Speed Wi-Fi", "Pet Friendly", "Fitness Center", "Gated Parking"],
     availableMoveInDate: "August 15, 2026",
     leaseDuration: "12 Months (Student Lease)",
-    landlordName: "Towson Village Residential Mgmt",
+    landlordName: "UMBC Village Residential Mgmt",
     landlordContact: "(410) 825-4490",
     roomsAvailable: 1,
     mapCoords: { x: 55, y: 22 },
     isSaved: true,
-    description: "Modern student apartment with individual leases, private bathroom per room, study lounge, and direct stop for the Towson Gold Shuttle.",
+    description: "Modern student apartment with individual leases, private bathroom per room, study lounge, and direct stop for the UMBC Gold Shuttle.",
   },
   {
     id: "hse-2",
-    title: "The Quarters at Towson Town Center — 4BR Shared House",
+    title: "The Quarters at UMBC Town Center — 4BR Shared House",
     propertyType: "Shared House",
-    address: "8600 LaSalle Rd, Towson, MD 21286",
+    address: "8600 LaSalle Rd, UMBC, MD 21286",
     neighborhood: "LaSalle Academic Corridor",
     monthlyRent: 780,
     estimatedUtilities: 60,
@@ -3431,7 +3431,7 @@ export const initialHousingListings: HousingListing[] = [
     bikeTimeMinutes: 7,
     driveTimeMinutes: 4,
     transitTimeMinutes: 9,
-    shuttleRouteName: "TU Express Shuttle #8",
+    shuttleRouteName: "UMBC Transit Arbutus Express",
     nextShuttleEtaMinutes: 8,
     isVerifiedLandlord: true,
     trustScorePercent: 95,
@@ -3445,19 +3445,19 @@ export const initialHousingListings: HousingListing[] = [
     amenities: ["Free Parking (4 Cars)", "Backyard & BBQ", "Dishwasher", "Central AC", "Storage Shed"],
     availableMoveInDate: "July 1, 2026",
     leaseDuration: "12 Months",
-    landlordName: "David Sterling (Verified TU Alum Owner)",
+    landlordName: "David Sterling (Verified Verified UMBC Alum Owner)",
     landlordContact: "(410) 555-0192",
     roomsAvailable: 2,
     mapCoords: { x: 72, y: 18 },
     isSaved: false,
-    description: "Spacious colonial student house with hard-wood floors, high-speed fiber internet, and quiet residential neighborhood 1 mile from Cook Library.",
+    description: "Spacious colonial student house with hard-wood floors, high-speed fiber internet, and quiet residential neighborhood 1 mile from AOK Library & Gallery.",
   },
   {
     id: "hse-3",
-    title: "Altus Towson Row — Modern Studio Suite",
+    title: "Altus UMBC Row — Modern Studio Suite",
     propertyType: "Apartment",
-    address: "109 E Chesapeake Ave, Towson, MD 21286",
-    neighborhood: "Downtown Towson Hub",
+    address: "109 E Chesapeake Ave, UMBC, MD 21286",
+    neighborhood: "Downtown UMBC Hub",
     monthlyRent: 1150,
     estimatedUtilities: 0,
     estimatedTotalMonthly: 1150,
@@ -3469,7 +3469,7 @@ export const initialHousingListings: HousingListing[] = [
     bikeTimeMinutes: 3,
     driveTimeMinutes: 2,
     transitTimeMinutes: 5,
-    shuttleRouteName: "Tiger Bus Downtown Line",
+    shuttleRouteName: "Retriever Bus Downtown Line",
     nextShuttleEtaMinutes: 2,
     isVerifiedLandlord: true,
     trustScorePercent: 99,
@@ -3483,12 +3483,12 @@ export const initialHousingListings: HousingListing[] = [
     amenities: ["All Utilities Included", "Rooftop Pool & Deck", "24/7 Study Lounge", "Amazon Hub Lockers", "Bicycle Storage"],
     availableMoveInDate: "August 1, 2026",
     leaseDuration: "10 or 12 Months",
-    landlordName: "Towson Row Properties",
+    landlordName: "UMBC Row Properties",
     landlordContact: "(410) 704-8800",
     roomsAvailable: 1,
     mapCoords: { x: 42, y: 15 },
     isSaved: false,
-    description: "Luxury off-campus student high-rise right above Whole Foods and Target in Downtown Towson. 10-minute walk to Freedom Square.",
+    description: "Luxury off-campus student high-rise right above Whole Foods and Target in Downtown UMBC. 10-minute walk to The Commons Plaza.",
   },
 ];
 
@@ -3508,8 +3508,8 @@ export const initialRoommateProfiles: RoommateProfile[] = [
     petPreference: "Loves Dogs/Cats",
     compatibilityPercent: 94,
     compatibilityTags: ["✓ Same Budget Range", "✓ Similar CS Major Schedule", "✓ Shared Cleanliness Priority"],
-    bio: "CS sophomore looking for 1 or 2 roommates for a 2-4BR apartment near Towson Town Center. Quiet during weeknights, into gaming and gym on weekends.",
-    preferredLocations: ["University Village", "Towson Row", "The Quarters"],
+    bio: "CS sophomore looking for 1 or 2 roommates for a 2-4BR apartment near UMBC Town Center. Quiet during weeknights, into gaming and gym on weekends.",
+    preferredLocations: ["University Village", "UMBC Row", "The Quarters"],
     isConnected: false,
   },
   {
@@ -3526,9 +3526,9 @@ export const initialRoommateProfiles: RoommateProfile[] = [
     studyHabits: "Library Person",
     petPreference: "No Pets Allowed",
     compatibilityPercent: 88,
-    compatibilityTags: ["✓ Match on Quiet Hours", "✓ Target Move-in August", "✓ Verified TU Student"],
-    bio: "TU Nursing junior with clinical rotations. Need a respectful, peaceful place to study and recharge.",
-    preferredLocations: ["Altus Towson Row", "Cardiff Hall Apts"],
+    compatibilityTags: ["✓ Match on Quiet Hours", "✓ Target Move-in August", "✓ Verified UMBC Student"],
+    bio: "UMBC Nursing junior with clinical rotations. Need a respectful, peaceful place to study and recharge.",
+    preferredLocations: ["Altus UMBC Row", "Cardiff Hall Apts"],
     isConnected: false,
   },
 ];
@@ -3537,13 +3537,13 @@ export const initialHousingTours: HousingTourBooking[] = [
   {
     id: "tour-1",
     propertyId: "hse-1",
-    propertyTitle: "University Village Towson — 2BR Renovated Suite",
-    propertyAddress: "201 E Joppa Rd, Towson, MD",
+    propertyTitle: "University Village UMBC — 2BR Renovated Suite",
+    propertyAddress: "201 E Joppa Rd, UMBC, MD",
     tourDate: "Saturday, Mar 08, 2026",
     tourTimeSlot: "11:00 AM",
     tourType: "In-Person Guided Tour",
     status: "Confirmed",
-    landlordName: "Towson Village Residential Mgmt",
+    landlordName: "UMBC Village Residential Mgmt",
     contactNumber: "(410) 825-4490",
   },
 ];
@@ -3564,9 +3564,9 @@ export const initialHousingMaintenanceTickets: HousingMaintenanceTicket[] = [
 ];
 
 // ─────────────────────────────────────────────────────────────
-// 32. DIGITAL TIGER CARD WALLET & DINING DOLLARS
+// 32. DIGITAL REDCARD WALLET & DINING DOLLARS
 // ─────────────────────────────────────────────────────────────
-export interface TigerWalletPass {
+export interface RedCardPass {
   studentName: string;
   studentId: string;
   major: string;
@@ -3581,7 +3581,7 @@ export interface TigerWalletPass {
   lastUsedLocation: string;
 }
 
-export const initialTigerWalletPass: TigerWalletPass = {
+export const initialRedCardPass: RedCardPass = {
   studentName: "Kwesi Asiedu",
   studentId: "#8492-KWESI",
   major: "Information Technology",
@@ -3590,10 +3590,10 @@ export const initialTigerWalletPass: TigerWalletPass = {
   diningDollarsBalance: 284.50,
   retailPointsBalance: 120.00,
   printQuotaBalance: 42.50,
-  dormAccessZone: "West Village • Marshall Hall Suite 304",
+  dormAccessZone: "Retriever Square • Marshall Hall Suite 304",
   barcodeNumber: "2849201948201",
   lastUsedTime: "Today at 12:45 PM",
-  lastUsedLocation: "Newell Dining Hall (1 Swipe)",
+  lastUsedLocation: "Retriever Square Grill (1 Swipe)",
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -3613,7 +3613,7 @@ export interface LiveFacilityDensity {
 export const initialFacilityDensities: LiveFacilityDensity[] = [
   {
     id: "fac-1",
-    facilityName: "Albert S. Cook Library",
+    facilityName: "Albert S. AOK Library & Gallery",
     zoneName: "Floor 2 & 3 Quiet Pods",
     occupancyPercent: 38,
     statusLevel: "Quiet",
@@ -3623,7 +3623,7 @@ export const initialFacilityDensities: LiveFacilityDensity[] = [
   },
   {
     id: "fac-2",
-    facilityName: "Burdick Hall Fitness Center",
+    facilityName: "Retriever Activities Center (RAC) (PAC) Fitness Center",
     zoneName: "Cardio & Free Weight Deck",
     occupancyPercent: 74,
     statusLevel: "Busy",
@@ -3633,8 +3633,8 @@ export const initialFacilityDensities: LiveFacilityDensity[] = [
   },
   {
     id: "fac-3",
-    facilityName: "University Union Food Court",
-    zoneName: "Dunkin' & Main Seating Atrium",
+    facilityName: "The Commons Food Court",
+    zoneName: "Retriever Coffee & Market & Main Seating Atrium",
     occupancyPercent: 45,
     statusLevel: "Moderate",
     availableDesksOrSpots: 52,
@@ -3643,7 +3643,7 @@ export const initialFacilityDensities: LiveFacilityDensity[] = [
   },
   {
     id: "fac-4",
-    facilityName: "Science Complex Commons",
+    facilityName: "Information Technology and Engineering (ITE) Building Commons",
     zoneName: "3rd Floor Tech Collaboration Area",
     occupancyPercent: 22,
     statusLevel: "Quiet",
@@ -3654,7 +3654,7 @@ export const initialFacilityDensities: LiveFacilityDensity[] = [
 ];
 
 // ─────────────────────────────────────────────────────────────
-// 34. TIGER SAFEWALK — VIRTUAL NIGHT ESCORT
+// 34. RETRIEVER SAFEWALK — VIRTUAL NIGHT ESCORT
 // ─────────────────────────────────────────────────────────────
 export interface SafeWalkSession {
   id: string;
@@ -3671,8 +3671,8 @@ export interface SafeWalkSession {
 
 export const initialSafeWalkSession: SafeWalkSession = {
   id: "sw-1",
-  originName: "Albert S. Cook Library",
-  destinationName: "West Village • Marshall Hall",
+  originName: "Albert S. AOK Library & Gallery",
+  destinationName: "Retriever Square • Marshall Hall",
   estimatedMinutes: 8,
   guardianName: "Maya Chen (Cybersecurity Circle)",
   guardianAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
@@ -3683,7 +3683,7 @@ export const initialSafeWalkSession: SafeWalkSession = {
 };
 
 // ─────────────────────────────────────────────────────────────
-// 35. TOWSON ALUMNI MENTORSHIP & CAREER SYNC
+// 35. UMBC ALUMNI MENTORSHIP & CAREER SYNC
 // ─────────────────────────────────────────────────────────────
 export interface AlumniMentor {
   id: string;
@@ -3711,7 +3711,7 @@ export const initialAlumniMentors: AlumniMentor[] = [
     location: "Baltimore, MD (Downtown)",
     avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
     industry: "Financial Technology & Cyber",
-    bio: "Former Towson Cybersecurity Club president. Passionate about helping TU undergraduates break into cloud zero-trust and enterprise threat hunting.",
+    bio: "Former UMBC Cybersecurity Club president. Passionate about helping UMBC undergraduates break into cloud zero-trust and enretrieverrise threat hunting.",
     isAvailableForCoffeeChat: true,
     matchedSkills: ["AWS GovCloud", "Zero Trust", "Python", "Kubernetes"],
   },
@@ -3725,7 +3725,7 @@ export const initialAlumniMentors: AlumniMentor[] = [
     location: "Linthicum / Annapolis Junction",
     avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
     industry: "Aerospace & Defense Systems",
-    bio: "TU IT alumna mentoring underrepresented students in AI-driven vulnerability management and DoD cATO compliance.",
+    bio: "UMBC IT alumna mentoring underrepresented students in AI-driven vulnerability management and DoD cATO compliance.",
     isAvailableForCoffeeChat: true,
     matchedSkills: ["Threat Intelligence", "DevSecOps", "Security Clearance prep"],
   },
@@ -3739,14 +3739,14 @@ export const initialAlumniMentors: AlumniMentor[] = [
     location: "Arlington, VA (HQ2)",
     avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
     industry: "Cloud & Generative AI",
-    bio: "Towson Hackathon winner now building agentic cloud pipelines. Offering resume reviews and mock technical interviews.",
+    bio: "UMBC Hackathon winner now building agentic cloud pipelines. Offering resume reviews and mock technical interviews.",
     isAvailableForCoffeeChat: true,
     matchedSkills: ["Next.js", "TypeScript", "LLM Fine-Tuning", "DynamoDB"],
   },
 ];
 
 // ─────────────────────────────────────────────────────────────
-// 36. TOWSONSYNC IDENTITY PERSONAS & ROLE-BASED ACCESS CONTROL (RBAC)
+// 36. RETRIEVERSYNC IDENTITY PERSONAS & ROLE-BASED ACCESS CONTROL (RBAC)
 // ─────────────────────────────────────────────────────────────
 export type UserRole = "STUDENT" | "FACULTY" | "CLUB_LEAD" | "STAFF" | "ADMIN";
 
@@ -3754,40 +3754,40 @@ export const initialCampusPersonas: UserProfile[] = [
   {
     id: "usr-1",
     name: "Kwesi Asiedu",
-    email: "kasiedu@students.towson.edu",
+    email: "kasiedu@students.umbc.edu",
     studentId: "#8492-KWESI",
     major: "Information Technology",
     minor: "Cybersecurity & Autonomous Systems",
     gradYear: 2026,
     classStanding: "Senior",
-    dormBuilding: "Marshall Hall (West Village)",
+    dormBuilding: "Marshall Hall (Retriever Square)",
     bio: "Undergraduate researcher focused on Cloud Security, Autonomous Perimeter Defense, and Zero-Trust campus architectures. SGA Technology Liaison.",
     avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80",
     coverImage: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80",
     isVerified: true,
     role: "STUDENT",
     interests: ["Cloud Security", "Full-Stack Dev", "Zero Trust", "AI Agents", "Campus Gov"],
-    goals: ["Present Research at CyberSummit 2026", "Complete Senior Capstone", "Lead HackTowson"],
+    goals: ["Present Research at CyberSummit 2026", "Complete Senior Capstone", "Lead HackUMBC"],
     eventsAttendedCount: 28,
     volunteerHoursLogged: 42.5,
     leadershipRoles: ["SGA Tech Chair", "Cybersecurity Club Vice President"],
-    achievements: ["Dean's List 5x", "Towson Innovator Grant 2025", "Certified Tiger Leader"],
-    projects: ["TowsonSync Platform", "AXIOM Zero-Trust Suite", "Campus Beacon Map"],
+    achievements: ["Dean's List 5x", "UMBC Innovator Grant 2025", "Certified Retriever Leader"],
+    projects: ["UMBCSync Platform", "AXIOM Zero-Trust Suite", "Campus Beacon Map"],
     isLocationSharing: true,
     ghostModeEnabled: false,
-    currentLocationName: "Albert S. Cook Library • 3rd Floor",
+    currentLocationName: "Albert S. AOK Library & Gallery • 3rd Floor",
   },
   {
     id: "usr-2",
     name: "Dr. Catherine Hayes",
-    email: "chayes@towson.edu",
+    email: "chayes@umbc.edu",
     studentId: "#FAC-2091",
     major: "Faculty / Computer Science",
     minor: "Director, ASSL Research Lab",
     gradYear: 2012,
     classStanding: "Graduate",
-    dormBuilding: "Faculty Commons • Science Complex",
-    bio: "Associate Professor of Computer & Information Sciences. Principal Investigator for the Towson Autonomous Security Systems Lab.",
+    dormBuilding: "Faculty Commons • Information Technology and Engineering (ITE) Building",
+    bio: "Associate Professor of Computer & Information Sciences. Principal Investigator for the UMBC Autonomous Security Systems Lab.",
     avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&auto=format&fit=crop&q=80",
     coverImage: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&auto=format&fit=crop&q=80",
     isVerified: true,
@@ -3797,59 +3797,59 @@ export const initialCampusPersonas: UserProfile[] = [
     eventsAttendedCount: 45,
     volunteerHoursLogged: 60,
     leadershipRoles: ["Faculty Senate Member", "Cyber Curriculum Chair"],
-    achievements: ["Towson Excellence in Teaching 2024", "NSF Career Award"],
+    achievements: ["UMBC Excellence in Teaching 2024", "NSF Career Award"],
     projects: ["Autonomous Threat Mitigation", "Secure Microkernel Architecture"],
     isLocationSharing: true,
     ghostModeEnabled: false,
-    currentLocationName: "Science Complex Rm 304",
+    currentLocationName: "Information Technology and Engineering (ITE) Building Rm 304",
   },
   {
     id: "usr-3",
     name: "Darren Vance",
-    email: "dvance2@students.towson.edu",
+    email: "dvance2@students.umbc.edu",
     studentId: "#8210-DARREN",
     major: "Cybersecurity Operations",
     gradYear: 2026,
     classStanding: "Senior",
     dormBuilding: "Carroll Hall",
-    bio: "Towson Cybersecurity Club President & SGA Senator. Passionate about collegiate cyber defense competitions and student advocacy.",
+    bio: "UMBC Cybersecurity Club President & SGA Senator. Passionate about collegiate cyber defense competitions and student advocacy.",
     avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80",
     coverImage: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80",
     isVerified: true,
     role: "CLUB_LEAD",
     interests: ["Red Teaming", "CTF Competitions", "Student Orgs", "Campus Radio"],
-    goals: ["Qualify for National CCDC", "Host 500-student TigerCTF"],
+    goals: ["Qualify for National CCDC", "Host 500-student RetrieverCTF"],
     eventsAttendedCount: 36,
     volunteerHoursLogged: 55,
     leadershipRoles: ["Cybersecurity Club President", "SGA Senator"],
     achievements: ["Mid-Atlantic CCDC Finalist", "Student Leadership Award"],
-    projects: ["TigerCTF Cyber Range", "Student Discord Bot"],
+    projects: ["RetrieverCTF Cyber Range", "Student Discord Bot"],
     isLocationSharing: true,
     ghostModeEnabled: false,
-    currentLocationName: "University Union Food Court",
+    currentLocationName: "The Commons Food Court",
   },
   {
     id: "usr-4",
     name: "Dean Marcus Vance",
-    email: "mvance@towson.edu",
+    email: "mvance@umbc.edu",
     studentId: "#ADM-001",
     major: "Student Affairs & Security Ops",
     minor: "Chief Administration Officer",
     gradYear: 2004,
     classStanding: "Graduate",
     dormBuilding: "Administration Building Rm 400",
-    bio: "Executive Administrator for Towson University Digital Campus Operations, Emergency Preparedness & Student Life Systems.",
+    bio: "Executive Administrator for University of Maryland, Baltimore County (UMBC) Digital Campus Operations, Emergency Preparedness & Student Life Systems.",
     avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80",
     coverImage: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&auto=format&fit=crop&q=80",
     isVerified: true,
     role: "ADMIN",
     interests: ["Campus Safety", "Institutional Policy", "Emergency Management", "Student Welfare"],
-    goals: ["Achieve 100% Digital TowsonSync Campus Coverage", "Zero Safety Incident Tolerance"],
+    goals: ["Achieve 100% Digital UMBCSync Campus Coverage", "Zero Safety Incident Tolerance"],
     eventsAttendedCount: 120,
     volunteerHoursLogged: 150,
     leadershipRoles: ["Dean of Student Affairs", "Emergency Management Council Chair"],
-    achievements: ["State of Maryland Higher Ed Leadership Medal", "TUPD Commendation"],
-    projects: ["TowsonSync Master Campus Mesh", "Blue Light Digital Beacon Network"],
+    achievements: ["State of Maryland Higher Ed Leadership Medal", "UMBC PD Commendation"],
+    projects: ["UMBCSync Master Campus Mesh", "Blue Light Digital Beacon Network"],
     isLocationSharing: false,
     ghostModeEnabled: true,
     currentLocationName: "Administration Building",
@@ -3857,7 +3857,7 @@ export const initialCampusPersonas: UserProfile[] = [
 ];
 
 // ─────────────────────────────────────────────────────────────
-// 37. TOWSONSYNC ADMINISTRATION CENTER DATASETS
+// 37. RETRIEVERSYNC ADMINISTRATION CENTER DATASETS
 // ─────────────────────────────────────────────────────────────
 export interface AdminVerificationRequest {
   id: string;
@@ -3875,7 +3875,7 @@ export const initialAdminVerifications: AdminVerificationRequest[] = [
   {
     id: "ver-1",
     applicantName: "Aiden Vance",
-    email: "avance5@students.towson.edu",
+    email: "avance5@students.umbc.edu",
     studentOrFacultyId: "#9021-AIDEN",
     departmentOrMajor: "B.S. Cyber Operations '27",
     submittedAt: "12 mins ago",
@@ -3886,7 +3886,7 @@ export const initialAdminVerifications: AdminVerificationRequest[] = [
   {
     id: "ver-2",
     applicantName: "Dr. Evelyn Reed",
-    email: "ereed@towson.edu",
+    email: "ereed@umbc.edu",
     studentOrFacultyId: "#FAC-4019",
     departmentOrMajor: "Department of Physics & Astronomy",
     submittedAt: "1 hour ago",
@@ -3896,8 +3896,8 @@ export const initialAdminVerifications: AdminVerificationRequest[] = [
   },
   {
     id: "ver-3",
-    applicantName: "Towson Robotics & Autonomous Drone Club",
-    email: "robotics@clubs.towson.edu",
+    applicantName: "UMBC Robotics & Autonomous Drone Club",
+    email: "robotics@clubs.umbc.edu",
     studentOrFacultyId: "#ORG-883",
     departmentOrMajor: "Student Government Association",
     submittedAt: "3 hours ago",
@@ -3907,8 +3907,8 @@ export const initialAdminVerifications: AdminVerificationRequest[] = [
   },
   {
     id: "ver-4",
-    applicantName: "The York Towson Student Residences",
-    email: "leasing@theyorktowson.com",
+    applicantName: "The York UMBC Student Residences",
+    email: "leasing@theyorkumbc.com",
     studentOrFacultyId: "#LL-5012",
     departmentOrMajor: "Verified Off-Campus Housing Provider",
     submittedAt: "5 hours ago",
@@ -3921,7 +3921,7 @@ export const initialAdminVerifications: AdminVerificationRequest[] = [
 export interface AdminSecurityAuditLog {
   id: string;
   timestamp: string;
-  eventType: "AUTH_LOGIN" | "ROLE_ELEVATION" | "SAFEWALK_ALERT" | "CONTENT_MODERATION" | "ID_VERIFICATION" | "TUPD_DISPATCH";
+  eventType: "AUTH_LOGIN" | "ROLE_ELEVATION" | "SAFEWALK_ALERT" | "CONTENT_MODERATION" | "ID_VERIFICATION" | "UMBC PD_DISPATCH";
   severity: "INFO" | "WARNING" | "CRITICAL";
   actor: string;
   details: string;
@@ -3935,7 +3935,7 @@ export const initialAdminAuditLogs: AdminSecurityAuditLog[] = [
     eventType: "SAFEWALK_ALERT",
     severity: "INFO",
     actor: "Kwesi Asiedu (#8492)",
-    details: "SafeWalk escort initiated: Cook Library ➔ Marshall Hall Dorm (Companion: Maya Chen)",
+    details: "SafeWalk escort initiated: AOK Library & Gallery ➔ Walker Avenue Apartments (Companion: Maya Chen)",
     ipAddress: "10.24.88.19 (Campus WiFi-eduroam)",
   },
   {
@@ -3944,7 +3944,7 @@ export const initialAdminAuditLogs: AdminSecurityAuditLog[] = [
     eventType: "AUTH_LOGIN",
     severity: "INFO",
     actor: "Dr. Catherine Hayes (#FAC-2091)",
-    details: "Duo MFA 2-Factor Authentication verified successfully from Science Complex Lab",
+    details: "Duo MFA 2-Factor Authentication verified successfully from Information Technology and Engineering (ITE) Building Lab",
     ipAddress: "10.24.12.44 (Faculty Ethernet)",
   },
   {
@@ -3968,9 +3968,9 @@ export const initialAdminAuditLogs: AdminSecurityAuditLog[] = [
   {
     id: "log-5",
     timestamp: "1 hour ago",
-    eventType: "TUPD_DISPATCH",
+    eventType: "UMBC PD_DISPATCH",
     severity: "INFO",
-    actor: "TigerOrbit Blue Light #04",
+    actor: "RetrieverOrbit Blue Light #04",
     details: "Routine 24h health-check beacon ping passed (Burgett Quad)",
     ipAddress: "10.24.99.4 (IoT Safety Beacon)",
   },
@@ -3983,7 +3983,7 @@ export interface AdminSystemHealth {
   cpuLoadPercent: number;
   memoryUsagePercent: number;
   uptimePercent: number;
-  tupdBeaconHealth: string;
+  umbcBeaconHealth: string;
   noaaApiStatus: string;
 }
 
@@ -3994,7 +3994,7 @@ export const initialAdminSystemHealth: AdminSystemHealth = {
   cpuLoadPercent: 18,
   memoryUsagePercent: 32,
   uptimePercent: 99.98,
-  tupdBeaconHealth: "24/24 Blue Light Beacons Operational",
+  umbcBeaconHealth: "24/24 Blue Light Beacons Operational",
   noaaApiStatus: "Connected (api.weather.gov)",
 };
 

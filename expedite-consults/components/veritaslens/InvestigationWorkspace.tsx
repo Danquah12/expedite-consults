@@ -30,61 +30,114 @@ import {
 interface InvestigationWorkspaceProps {
   claims: ClaimRecord[];
   clusters: NewsCluster[];
+  isGhanaPlatform?: boolean;
 }
 
 export const InvestigationWorkspace: React.FC<InvestigationWorkspaceProps> = ({
   claims,
-  clusters
+  clusters,
+  isGhanaPlatform = false
 }) => {
-  const [messages, setMessages] = useState<CopilotMessage[]>([
-    {
-      id: 'msg-1',
-      sender: 'user',
-      content: 'Did the Senate pass HR 101? How confident are we and what evidence supports it?',
-      timestamp: '2026-08-25T18:05:00Z'
-    },
-    {
-      id: 'msg-2',
-      sender: 'copilot',
-      content: 'I have executed a GraphRAG multi-agent verification query across Congress.gov legislative tracking, historical public law indices, and wire reporting.',
-      timestamp: '2026-08-25T18:05:02Z',
-      structuredOutput: {
-        confidence: 96.5,
-        verdict: 'CONTEXT_DEPENDENT',
-        evidenceCitations: [
-          {
-            source: 'Congress.gov (118th US Congress 2023-2024)',
-            title: 'H.R. 101: Return to Work Act',
-            weight: 100,
-            finding: 'Contradicted: Referred to House Committee on Oversight & Accountability; it never passed the Senate or House.'
-          },
-          {
-            source: 'U.S. Senate Historical Archives (111th Congress 2010)',
-            title: 'Public Law 111-290: Continuing Appropriations Resolution',
-            weight: 100,
-            finding: 'Supported: Passed the Senate on Dec 18, 2010, and was signed into law.'
-          },
-          {
-            source: 'State Legislative Journals (KY / IL)',
-            title: 'House Resolution 101 (State Commendations)',
-            weight: 80,
-            finding: 'Irrelevant: Single-chamber resolutions that never proceed to any Senate.'
-          }
-        ],
-        propagationSummary: 'The statement is often erroneously asserted by cable segments without specifying congressional session dates, causing confusion between the active 118th bill and the historical 111th enactment.'
+  const [messages, setMessages] = useState<CopilotMessage[]>(
+    isGhanaPlatform ? [
+      {
+        id: 'msg-gh-1',
+        sender: 'user',
+        content: 'What is the verified operational status of the Komenda Sugar Factory as of Sept 2026?',
+        timestamp: '2026-09-04T18:05:00Z'
+      },
+      {
+        id: 'msg-gh-2',
+        sender: 'copilot',
+        content: 'I have executed a GraphRAG multi-agent verification query across Onua TV August 2024 documentary telemetry, Ministry of Trade & Industry SOE revamping assessments (Ghanaian Times, Jan 2026), and Central Regional Coordinating Council records.',
+        timestamp: '2026-09-04T18:05:02Z',
+        structuredOutput: {
+          confidence: 98.2,
+          verdict: 'UNFULFILLED',
+          evidenceCitations: [
+            {
+              source: 'Onua TV / Media General Investigative Desk (Aug 2024)',
+              title: 'Komenda Sugar Factory: Inside the Dormant Mill',
+              weight: 100,
+              finding: 'Contradicted: On-site inspection confirms plant remains idle with no domestic sugarcane outgrower supply.'
+            },
+            {
+              source: 'Ghanaian Times / Ministry of Trade & Industry (Jan 2026)',
+              title: 'Govt Assesses 5 Defunct SOEs for Revamping Under Rapid Industrialisation Initiative',
+              weight: 95,
+              finding: 'Supported: Minister for Trade confirms government is still evaluating diagnostic assessments and recruiting transaction advisers.'
+            },
+            {
+              source: 'Parliamentary Hansard & Central Region Economic Review (2025/2026)',
+              title: 'Committee on Trade, Industry and Tourism Oversight Brief',
+              weight: 90,
+              finding: 'Corroborated: Diagnostic study is not operational factory revival; no sugar output recorded.'
+            }
+          ],
+          propagationSummary: 'Campaign speeches promised immediate factory operation and thousands of direct jobs. Government statements in 2026 confirm the asset is undergoing preliminary feasibility evaluation rather than operating production.'
+        }
       }
-    }
-  ]);
+    ] : [
+      {
+        id: 'msg-1',
+        sender: 'user',
+        content: 'Did the Senate pass HR 101? How confident are we and what evidence supports it?',
+        timestamp: '2026-08-25T18:05:00Z'
+      },
+      {
+        id: 'msg-2',
+        sender: 'copilot',
+        content: 'I have executed a GraphRAG multi-agent verification query across Congress.gov legislative tracking, historical public law indices, and wire reporting.',
+        timestamp: '2026-08-25T18:05:02Z',
+        structuredOutput: {
+          confidence: 96.5,
+          verdict: 'CONTEXT_DEPENDENT',
+          evidenceCitations: [
+            {
+              source: 'Congress.gov (118th US Congress 2023-2024)',
+              title: 'H.R. 101: Return to Work Act',
+              weight: 100,
+              finding: 'Contradicted: Referred to House Committee on Oversight & Accountability; it never passed the Senate or House.'
+            },
+            {
+              source: 'U.S. Senate Historical Archives (111th Congress 2010)',
+              title: 'Public Law 111-290: Continuing Appropriations Resolution',
+              weight: 100,
+              finding: 'Supported: Passed the Senate on Dec 18, 2010, and was signed into law.'
+            },
+            {
+              source: 'State Legislative Journals (KY / IL)',
+              title: 'House Resolution 101 (State Commendations)',
+              weight: 80,
+              finding: 'Irrelevant: Single-chamber resolutions that never proceed to any Senate.'
+            }
+          ],
+          propagationSummary: 'The statement is often erroneously asserted by cable segments without specifying congressional session dates, causing confusion between the active 118th bill and the historical 111th enactment.'
+        }
+      }
+    ]
+  );
 
   const [inputQuery, setInputQuery] = useState('');
   const [isThinking, setIsThinking] = useState(false);
   const [activeTab, setActiveTab] = useState<'copilot' | 'dossier' | 'multimodal'>('copilot');
-  const [savedDossierItems, setSavedDossierItems] = useState<string[]>([
-    'H.R. 101 Legislative Audit - Session Ambiguity',
-    'Tom Homan NYC Sanctuary Jurisdictional Claim'
-  ]);
+  const [savedDossierItems, setSavedDossierItems] = useState<string[]>(
+    isGhanaPlatform ? [
+      'Komenda Sugar Factory Operational Status Audit',
+      'Pwalugu Tomato & Zuarungu Meat Revival Telemetry',
+      'Free SHS Enrolment & WASSCE Performance Dataset'
+    ] : [
+      'H.R. 101 Legislative Audit - Session Ambiguity',
+      'Tom Homan NYC Sanctuary Jurisdictional Claim'
+    ]
+  );
 
-  const PRESET_QUERIES = [
+  const PRESET_QUERIES = isGhanaPlatform ? [
+    'What is the verified operational status of the Komenda Sugar Factory?',
+    'Audit the 4-year Dumsor crisis and $1.2B annual take-or-pay energy debt.',
+    'Did universal Free SHS graduate 5.7 million students with record WASSCE passes?',
+    'Verify the 120-Day Social Contract commitments (30% Women, Ex-Gratia Abolition).'
+  ] : [
     'Did the Senate pass HR 101? How confident are we?',
     'What is the most trustworthy view of the ICE detention surge?',
     'Analyze the credibility of Fox News video on Abdul El-Sayed.',
@@ -110,7 +163,85 @@ export const InvestigationWorkspace: React.FC<InvestigationWorkspaceProps> = ({
       let botResponse: CopilotMessage;
       const lower = q.toLowerCase();
 
-      if (lower.includes('ice') || lower.includes('arrests')) {
+      if (lower.includes('komenda') || lower.includes('sugar')) {
+        botResponse = {
+          id: 'msg-bot-' + Date.now(),
+          sender: 'copilot',
+          content: 'Here is the empirical evidence synthesis regarding the Komenda Sugar Factory revival mandate.',
+          timestamp: new Date().toISOString(),
+          structuredOutput: {
+            confidence: 98.5,
+            verdict: 'UNFULFILLED',
+            evidenceCitations: [
+              {
+                source: 'Onua TV Video Footage (August 2024)',
+                title: 'Komenda Factory Audit by Captain Smart',
+                weight: 100,
+                finding: 'Documented: Factory machines remained dormant; local farmers transported sugar cane away to local distillers.'
+              },
+              {
+                source: 'Ghanaian Times (January 2026)',
+                title: 'Ministry of Trade & Industry 5-SOE Revamping Scheme',
+                weight: 95,
+                finding: 'Verified: Asset is under ongoing transactional diagnostic assessment.'
+              }
+            ],
+            propagationSummary: 'The empirical standard strictly classifies pre-revival studies as non-operational. As of Sept 4, 2026, the promise is rated Unfulfilled.'
+          }
+        };
+      } else if (lower.includes('dumsor') || lower.includes('power') || lower.includes('energy')) {
+        botResponse = {
+          id: 'msg-bot-' + Date.now(),
+          sender: 'copilot',
+          content: 'Here is the multi-source evidence audit for the 2013-2016 Dumsor power crisis and $1.2B annual take-or-pay IPP debt.',
+          timestamp: new Date().toISOString(),
+          structuredOutput: {
+            confidence: 97.4,
+            verdict: 'VERIFIED',
+            evidenceCitations: [
+              {
+                source: 'Ministry of Finance Energy Sector Recovery Programme (ESRP)',
+                title: 'Take-or-Pay Sovereign Liability Schedule',
+                weight: 100,
+                finding: 'Confirmed: 5,081 MW contracted vs 2,700 MW peak demand generated $1.2B annual unconsumed capacity penalty.'
+              },
+              {
+                source: 'Energy Commission of Ghana & GRIDCo Historical Logs',
+                title: 'National Load Shedding Duration Index 2013-2016',
+                weight: 95,
+                finding: 'Corroborated: Nationwide outages persisted across 4 consecutive years.'
+              }
+            ],
+            propagationSummary: 'Political messaging diverged with NDC attributing load shedding to inherited generation deficits, while official Energy Commission data confirms severe over-contracting of take-or-pay PPAs.'
+          }
+        };
+      } else if (lower.includes('free shs') || lower.includes('shs') || lower.includes('education')) {
+        botResponse = {
+          id: 'msg-bot-' + Date.now(),
+          sender: 'copilot',
+          content: 'Here is the data audit on Universal Free SHS outcomes and secondary school enrollment transformation.',
+          timestamp: new Date().toISOString(),
+          structuredOutput: {
+            confidence: 99.1,
+            verdict: 'VERIFIED',
+            evidenceCitations: [
+              {
+                source: 'WAEC International Office & Ministry of Education Bulletins',
+                title: 'WASSCE Pass Rates & Enrolment Data 2017-2024',
+                weight: 100,
+                finding: 'Confirmed: 5.7+ million students benefited; national secondary enrollment expanded from 881k to 1.45M.'
+              },
+              {
+                source: 'Auditor-General Education Infrastructure Reports',
+                title: 'Community Day E-Blocks Audit',
+                weight: 92,
+                finding: 'Corroborated: 29 out of 200 E-Blocks commissioned by Dec 2016, with Free SHS completing additional infrastructure.'
+              }
+            ],
+            propagationSummary: 'Government and WAEC records verify historic enrollment surge and gender parity across all 16 regions.'
+          }
+        };
+      } else if (lower.includes('ice') || lower.includes('arrests')) {
         botResponse = {
           id: 'msg-bot-' + Date.now(),
           sender: 'copilot',

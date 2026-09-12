@@ -42,7 +42,7 @@ export const KnowledgeGraphViewer: React.FC<KnowledgeGraphViewerProps> = ({
 
   const filteredNodes = nodes.filter(n => {
     const matchesFilter = filterType === 'ALL' || n.type === filterType;
-    const matchesSearch = n.label.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = (n.label?.toLowerCase() || '').includes((searchQuery || '').toLowerCase());
     return matchesFilter && matchesSearch;
   });
 

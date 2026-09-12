@@ -1,6 +1,6 @@
 // lib/campus-data.ts
 // Comprehensive domain models and seed dataset for The Campus Operating Platform
-// Specializing in Towson University (TU) Digital Campus & Geographic Engine
+// Specializing in Salisbury University (TU) Digital Campus & Geographic Engine
 
 export interface UserProfile {
   id: string;
@@ -31,7 +31,7 @@ export interface UserProfile {
   currentLocationName?: string;
 }
 
-export interface TowsonRoom {
+export interface SalisburyRoom {
   id: string;
   roomNumber: string;
   name: string;
@@ -42,7 +42,7 @@ export interface TowsonRoom {
   currentClassOrEvent?: string;
 }
 
-export interface TowsonFloor {
+export interface SalisburyFloor {
   floorNumber: number;
   floorName: string;
   roomsCount: number;
@@ -50,10 +50,10 @@ export interface TowsonFloor {
   restrooms: string[];
   elevators: string[];
   emergencyExits: string[];
-  rooms: TowsonRoom[];
+  rooms: SalisburyRoom[];
 }
 
-export interface TowsonBuilding {
+export interface SalisburyBuilding {
   id: string;
   name: string;
   code: string;
@@ -71,7 +71,7 @@ export interface TowsonBuilding {
   classroomsCount: number;
   accessibleEntrance: string;
   floorsCount: number;
-  floors: TowsonFloor[];
+  floors: SalisburyFloor[];
   image: string;
   icon: string;
 }
@@ -145,7 +145,7 @@ export interface LocationCircle {
   isAdmin?: boolean;
 }
 
-export interface TowsonShuttle {
+export interface SalisburyShuttle {
   id: string;
   routeName: string;
   routeColor: string;
@@ -157,7 +157,7 @@ export interface TowsonShuttle {
   routePath: { x: number; y: number }[];
 }
 
-export interface TowsonParkingGarage {
+export interface SalisburyParkingGarage {
   id: string;
   name: string;
   code: string;
@@ -610,18 +610,18 @@ export interface MapLocationPin {
   icon: string;
 }
 
-// 1. Initial Current User Profile (Towson Tiger)
+// 1. Initial Current User Profile (Salisbury Sea Gull)
 export const defaultCurrentUser: UserProfile = {
   id: "usr-kwesi-asiedu",
   name: "Kwesi Asiedu",
-  email: "k.asiedu@students.towson.edu",
-  studentId: "#08412-TU-26",
+  email: "k.asiedu@students.salisbury.edu",
+  studentId: "#89012-SU-26",
   major: "Information Technology",
   minor: "Cybersecurity & Systems",
   gradYear: 2026,
   classStanding: "Junior",
-  dormBuilding: "West Village, Marshall Hall #412",
-  bio: "TU Cybersecurity enthusiast. Student researcher in autonomous cyber defense loops. Treasurer of Towson Cybersecurity Club.",
+  dormBuilding: "Sea Gull Square, Marshall Hall #412",
+  bio: "Salisbury Cybersecurity enthusiast. Student researcher in autonomous cyber defense loops. Treasurer of Salisbury Cybersecurity Club.",
   avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
   isVerified: true,
   role: "STUDENT",
@@ -629,19 +629,19 @@ export const defaultCurrentUser: UserProfile = {
   goals: ["Find Study Partners", "Research Opportunities", "Project Partners"],
   eventsAttendedCount: 12,
   volunteerHoursLogged: 48,
-  leadershipRoles: ["Towson Cybersecurity Club — Treasurer", "AI Research Society — Lead Builder"],
-  achievements: ["🏆 TU Hackathon 1st Place Finalist", "🏆 Division of Student Affairs Service Award", "🏆 Tiger Trivia Champion"],
-  projects: ["AI Security & Cyber Threat Detection", "Towson Distributed Mesh Network"],
+  leadershipRoles: ["Salisbury Cybersecurity Club — Treasurer", "AI Research Society — Lead Builder"],
+  achievements: ["🏆 SU Hackathon 1st Place Finalist", "🏆 Division of Student Affairs Service Award", "🏆 Sea Gull Trivia Champion"],
+  projects: ["AI Security & Cyber Threat Detection", "Salisbury Distributed Mesh Network"],
   isLocationSharing: false,
   ghostModeEnabled: false,
-  currentLocationName: "Freedom Square (Near Cook Library)",
+  currentLocationName: "Red Square (Near Patricia R. Guerrieri Academic Commons (PAGAC))",
 };
 
-// 2. Towson University Campus Buildings Dataset (Authentic TU Landmarks)
-export const initialTowsonBuildings: TowsonBuilding[] = [
+// 2. Salisbury University Campus Buildings Dataset (Authentic SU Landmarks)
+export const initialSalisburyBuildings: SalisburyBuilding[] = [
   {
     id: "bld-sc",
-    name: "Science Complex",
+    name: "Richard A. Henson Science Hall",
     code: "SC-300",
     shortCode: "SC",
     category: "Academic",
@@ -716,10 +716,10 @@ export const initialTowsonBuildings: TowsonBuilding[] = [
     ],
   },
   {
-    id: "bld-cook",
-    name: "Albert S. Cook Library",
-    code: "COOK-24",
-    shortCode: "COOK",
+    id: "bld-pagac",
+    name: "Patricia R. Guerrieri Academic Commons (PAGAC)",
+    code: "PAGAC-24",
+    shortCode: "PAGAC",
     category: "Library",
     description: "Central 24/7 research hub with Starbucks cafe, tech checkout, silent study zones, and peer tutoring lounge.",
     x: 48,
@@ -778,11 +778,11 @@ export const initialTowsonBuildings: TowsonBuilding[] = [
   },
   {
     id: "bld-union",
-    name: "University Union",
+    name: "Guerrieri Student Union (GSU)",
     code: "UNION-100",
     shortCode: "UNION",
     category: "Student Life",
-    description: "Heart of campus life featuring Chick-fil-A, Dunkin', Bento Sushi, SGA Senate Chamber, student organization offices, and Tiger Esports Arena.",
+    description: "Heart of campus life featuring Chick-fil-A, Cool Beans Coffee (PAGAC), Chesapeake Roasting Co., SGA Senate Chamber, student organization offices, and Sea Gull Esports Arena.",
     x: 38,
     y: 58,
     distanceFt: 350,
@@ -792,7 +792,7 @@ export const initialTowsonBuildings: TowsonBuilding[] = [
     todayEventsCount: 5,
     studySpacesCount: 30,
     classroomsCount: 6,
-    accessibleEntrance: "West Entrance via Union Garage Skybridge",
+    accessibleEntrance: "West Entrance via Sea Gull Square Garage Skybridge",
     floorsCount: 3,
     image: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=600&auto=format&fit=crop&q=80",
     icon: "🍔",
@@ -806,8 +806,8 @@ export const initialTowsonBuildings: TowsonBuilding[] = [
         elevators: ["Main Union Elevator"],
         emergencyExits: ["Main North Plaza Exit", "Bus Loop Exit"],
         rooms: [
-          { id: "un-101", roomNumber: "UN 101", name: "Towson Food Court (Chick-fil-A / Dunkin)", type: "Lounge", capacity: 300, hasAV: false, status: "Available" },
-          { id: "un-108", roomNumber: "UN 108", name: "Tiger Esports & Gaming Arena", type: "Lab", capacity: 40, hasAV: true, status: "Available" },
+          { id: "un-101", roomNumber: "UN 101", name: "Salisbury Food Court (Chick-fil-A / Dunkin)", type: "Lounge", capacity: 300, hasAV: false, status: "Available" },
+          { id: "un-108", roomNumber: "UN 108", name: "Sea Gull Esports & Gaming Arena", type: "Lab", capacity: 40, hasAV: true, status: "Available" },
         ],
       },
       {
@@ -826,10 +826,10 @@ export const initialTowsonBuildings: TowsonBuilding[] = [
     ],
   },
   {
-    id: "bld-7800",
-    name: "7800 York Road",
-    code: "YORK-7800",
-    shortCode: "YORK",
+    id: "bld-perdue",
+    name: "Franklin P. Perdue Hall",
+    code: "PERDUE-100",
+    shortCode: "PERDUE",
     category: "Academic",
     description: "Home of Computer and Information Sciences (CIS), Cybersecurity Defense Labs, and Software Engineering project rooms.",
     x: 76,
@@ -841,7 +841,7 @@ export const initialTowsonBuildings: TowsonBuilding[] = [
     todayEventsCount: 2,
     studySpacesCount: 18,
     classroomsCount: 24,
-    accessibleEntrance: "Main York Road Entrance (East Ramp)",
+    accessibleEntrance: "Main Bateman Street Entrance (East Ramp)",
     floorsCount: 3,
     image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=600&auto=format&fit=crop&q=80",
     icon: "💻",
@@ -861,10 +861,10 @@ export const initialTowsonBuildings: TowsonBuilding[] = [
     ],
   },
   {
-    id: "bld-burdick",
-    name: "Burdick Hall & Rec Center",
-    code: "BURDICK-REC",
-    shortCode: "BURDICK",
+    id: "bld-maggs-pac",
+    name: "Maggs Physical Activities Center (PAC) & Rec Center",
+    code: "MAGGS-PAC",
+    shortCode: "MAGGS-PAC",
     category: "Athletics",
     description: "Expanded fitness center with rock climbing wall, indoor turf gym, Olympic pool, and fitness studios.",
     x: 28,
@@ -884,7 +884,7 @@ export const initialTowsonBuildings: TowsonBuilding[] = [
   },
   {
     id: "bld-secu",
-    name: "SECU Arena & Unitas Stadium",
+    name: "Sea Gull Stadium & Sea Gull Stadium",
     code: "SECU-ARENA",
     shortCode: "SECU",
     category: "Athletics",
@@ -906,11 +906,11 @@ export const initialTowsonBuildings: TowsonBuilding[] = [
   },
   {
     id: "bld-west-village",
-    name: "West Village Commons & Dining",
+    name: "Sea Gull Square Commons & Dining",
     code: "WV-COMMONS",
     shortCode: "WV",
     category: "Residential",
-    description: "West Village student residential village featuring all-you-care-to-eat dining, Starbucks, convenience store, and Marshall Hall suites.",
+    description: "Sea Gull Square student residential village featuring all-you-care-to-eat dining, Starbucks, convenience store, and Marshall Hall suites.",
     x: 15,
     y: 35,
     distanceFt: 780,
@@ -928,11 +928,11 @@ export const initialTowsonBuildings: TowsonBuilding[] = [
   },
 ];
 
-// 3. TigerOrbit 360 — Privacy-Preserving Campus Orbits & Circles (Life360 Suite)
-export const initialTowsonPlaces: CirclePlaceAlert[] = [
+// 3. SeaGullOrbit 360 — Privacy-Preserving Campus Orbits & Circles (Life360 Suite)
+export const initialSalisburyPlaces: CirclePlaceAlert[] = [
   {
     id: "place-library",
-    placeName: "Albert S. Cook Library",
+    placeName: "Albert S. Patricia R. Guerrieri Academic Commons (PAGAC)",
     icon: "📚",
     radiusMeters: 100,
     coordinates: { x: 48, y: 48 },
@@ -942,7 +942,7 @@ export const initialTowsonPlaces: CirclePlaceAlert[] = [
   },
   {
     id: "place-union",
-    placeName: "University Union",
+    placeName: "Guerrieri Student Union (GSU)",
     icon: "🍕",
     radiusMeters: 120,
     coordinates: { x: 38, y: 58 },
@@ -952,7 +952,7 @@ export const initialTowsonPlaces: CirclePlaceAlert[] = [
   },
   {
     id: "place-science",
-    placeName: "Science Complex",
+    placeName: "Richard A. Henson Science Hall",
     icon: "🔬",
     radiusMeters: 110,
     coordinates: { x: 62, y: 36 },
@@ -962,7 +962,7 @@ export const initialTowsonPlaces: CirclePlaceAlert[] = [
   },
   {
     id: "place-gym",
-    placeName: "Burdick Hall & Rec Center",
+    placeName: "Maggs Physical Activities Center (PAC) & Rec Center",
     icon: "🏋️",
     radiusMeters: 100,
     coordinates: { x: 50, y: 72 },
@@ -992,18 +992,18 @@ export const initialTowsonPlaces: CirclePlaceAlert[] = [
   },
 ];
 
-export const initialTowsonCircles: LocationCircle[] = [
+export const initialSalisburyCircles: LocationCircle[] = [
   {
     id: "circle-cyber",
-    name: "Towson Cybersecurity Club",
+    name: "Salisbury Cybersecurity Club",
     icon: "🛡️",
-    inviteCode: "TU-9X4K",
+    inviteCode: "SU-9X4K",
     category: "Club",
     membersCount: 12,
     activeSharingCount: 8,
     isUserMember: true,
     isAdmin: true,
-    places: initialTowsonPlaces,
+    places: initialSalisburyPlaces,
     members: [
       {
         id: "m-kwesi",
@@ -1011,7 +1011,7 @@ export const initialTowsonCircles: LocationCircle[] = [
         avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
         major: "IT Junior",
         status: "on_campus",
-        currentBuilding: "Freedom Square / Cook Library",
+        currentBuilding: "Red Square / Patricia R. Guerrieri Academic Commons (PAGAC)",
         currentFloor: "Ground Floor",
         exactRoom: "Commons Lounge",
         distanceFt: 0,
@@ -1038,8 +1038,8 @@ export const initialTowsonCircles: LocationCircle[] = [
           { time: "8:15 AM", location: "University Village (Joppa Rd)", activity: "Departed Dorm", icon: "🏠", duration: "10m" },
           { time: "8:35 AM", location: "South Parking Garage", activity: "Parked Car (2.1 mi)", icon: "🚗", duration: "5m", speedMph: 22 },
           { time: "9:00 AM – 11:30 AM", location: "Liberal Arts Bldg (LA 2210)", activity: "Cyber Ethics Lecture", icon: "🏛️", duration: "2h 30m" },
-          { time: "11:45 AM – 1:00 PM", location: "University Union Food Court", activity: "Lunch at Chick-fil-A", icon: "🍕", duration: "1h 15m" },
-          { time: "1:15 PM – Present", location: "Cook Library Ground Floor", activity: "Studying & Capstone Research", icon: "📚", duration: "Active" },
+          { time: "11:45 AM – 1:00 PM", location: "Guerrieri Student Union (GSU) Food Court", activity: "Lunch at Chick-fil-A", icon: "🍕", duration: "1h 15m" },
+          { time: "1:15 PM – Present", location: "Patricia R. Guerrieri Academic Commons (PAGAC) Ground Floor", activity: "Studying & Capstone Research", icon: "📚", duration: "Active" },
         ],
         breadcrumbTrail: [
           { x: 82, y: 22, timestamp: "8:15 AM" },
@@ -1055,7 +1055,7 @@ export const initialTowsonCircles: LocationCircle[] = [
         avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
         major: "CS Senior",
         status: "studying",
-        currentBuilding: "Science Complex",
+        currentBuilding: "Richard A. Henson Science Hall",
         currentFloor: "3rd Floor",
         exactRoom: "Room SC 304",
         distanceFt: 420,
@@ -1079,10 +1079,10 @@ export const initialTowsonCircles: LocationCircle[] = [
           lastTripDistanceMiles: 3.2,
         },
         timeline: [
-          { time: "8:45 AM", location: "West Village Quad", activity: "Departed Residence Hall", icon: "🏠", duration: "10m" },
-          { time: "9:00 AM – 11:30 AM", location: "Science Complex SC 304", activity: "Operating Systems Lab", icon: "🔬", duration: "2h 30m" },
-          { time: "11:45 AM – 12:30 PM", location: "University Union Starbucks", activity: "Coffee Break with Study Pod", icon: "☕", duration: "45m" },
-          { time: "12:45 PM – Present", location: "Science Complex 3rd Floor", activity: "Algorithms Study Session", icon: "💻", duration: "Active" },
+          { time: "8:45 AM", location: "Sea Gull Square Quad", activity: "Departed Residence Hall", icon: "🏠", duration: "10m" },
+          { time: "9:00 AM – 11:30 AM", location: "Richard A. Henson Science Hall SC 304", activity: "Operating Systems Lab", icon: "🔬", duration: "2h 30m" },
+          { time: "11:45 AM – 12:30 PM", location: "Guerrieri Student Union (GSU) Starbucks", activity: "Coffee Break with Study Pod", icon: "☕", duration: "45m" },
+          { time: "12:45 PM – Present", location: "Richard A. Henson Science Hall 3rd Floor", activity: "Algorithms Study Session", icon: "💻", duration: "Active" },
         ],
         breadcrumbTrail: [
           { x: 20, y: 35, timestamp: "8:45 AM" },
@@ -1097,7 +1097,7 @@ export const initialTowsonCircles: LocationCircle[] = [
         avatar: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80",
         major: "Info Systems",
         status: "on_campus",
-        currentBuilding: "University Union",
+        currentBuilding: "Guerrieri Student Union (GSU)",
         currentFloor: "2nd Floor",
         exactRoom: "Food Court Lounge",
         distanceFt: 350,
@@ -1108,7 +1108,7 @@ export const initialTowsonCircles: LocationCircle[] = [
         isCharging: false,
         speedMph: 0,
         movementType: "stationary",
-        wifiSignal: "TU-Student (88%)",
+        wifiSignal: "SU-Student (94%)",
         privacyMode: "precise",
         lastUpdated: "1m ago",
         isSharingLocation: true,
@@ -1122,8 +1122,8 @@ export const initialTowsonCircles: LocationCircle[] = [
         },
         timeline: [
           { time: "9:30 AM", location: "Millennium Hall Dorm", activity: "Left Apartment", icon: "🏠", duration: "8m" },
-          { time: "10:00 AM – 12:00 PM", location: "Hawkins Hall Rm 102", activity: "Business Info Tech Class", icon: "🏛️", duration: "2h" },
-          { time: "12:15 PM – Present", location: "University Union 2nd Floor", activity: "Lunch & SGA Project Meeting", icon: "🍕", duration: "Active" },
+          { time: "10:00 AM – 12:00 PM", location: "Fulton Hall Rm 102", activity: "Business Info Tech Class", icon: "🏛️", duration: "2h" },
+          { time: "12:15 PM – Present", location: "Guerrieri Student Union (GSU) 2nd Floor", activity: "Lunch & SGA Project Meeting", icon: "🍕", duration: "Active" },
         ],
         breadcrumbTrail: [
           { x: 75, y: 30, timestamp: "9:30 AM" },
@@ -1137,7 +1137,7 @@ export const initialTowsonCircles: LocationCircle[] = [
         avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
         major: "CS Senior",
         status: "studying",
-        currentBuilding: "Cook Library",
+        currentBuilding: "Patricia R. Guerrieri Academic Commons (PAGAC)",
         currentFloor: "2nd Floor",
         exactRoom: "Study Pod B-12",
         distanceFt: 180,
@@ -1161,9 +1161,9 @@ export const initialTowsonCircles: LocationCircle[] = [
           lastTripDistanceMiles: 0.8,
         },
         timeline: [
-          { time: "10:00 AM", location: "Glen Complex Towers", activity: "Walked to Quad", icon: "🚶", duration: "12m" },
+          { time: "10:00 AM", location: "SU Residential Towers", activity: "Walked to Quad", icon: "🚶", duration: "12m" },
           { time: "10:30 AM – 1:00 PM", location: "Center for the Arts", activity: "Digital Audio Synthesis Studio", icon: "🎭", duration: "2h 30m" },
-          { time: "1:15 PM – Present", location: "Cook Library 2nd Floor Pod B", activity: "Cybersecurity Capture the Flag Prep", icon: "🛡️", duration: "Active" },
+          { time: "1:15 PM – Present", location: "Patricia R. Guerrieri Academic Commons (PAGAC) 2nd Floor Pod B", activity: "Cybersecurity Capture the Flag Prep", icon: "🛡️", duration: "Active" },
         ],
         breadcrumbTrail: [
           { x: 60, y: 70, timestamp: "10:00 AM" },
@@ -1183,7 +1183,7 @@ export const initialTowsonCircles: LocationCircle[] = [
     activeSharingCount: 3,
     isUserMember: true,
     isAdmin: true,
-    places: initialTowsonPlaces,
+    places: initialSalisburyPlaces,
     members: [
       {
         id: "m-kwesi",
@@ -1191,7 +1191,7 @@ export const initialTowsonCircles: LocationCircle[] = [
         avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
         major: "IT Junior",
         status: "on_campus",
-        currentBuilding: "Cook Library",
+        currentBuilding: "Patricia R. Guerrieri Academic Commons (PAGAC)",
         currentFloor: "Ground Floor",
         exactRoom: "Commons",
         distanceFt: 0,
@@ -1212,7 +1212,7 @@ export const initialTowsonCircles: LocationCircle[] = [
         avatar: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80",
         major: "Info Systems",
         status: "on_campus",
-        currentBuilding: "University Union",
+        currentBuilding: "Guerrieri Student Union (GSU)",
         currentFloor: "2nd Floor",
         exactRoom: "Food Court",
         distanceFt: 350,
@@ -1222,7 +1222,7 @@ export const initialTowsonCircles: LocationCircle[] = [
         isCharging: false,
         speedMph: 0,
         movementType: "stationary",
-        wifiSignal: "TU-Student (88%)",
+        wifiSignal: "SU-Student (94%)",
         privacyMode: "precise",
         lastUpdated: "1m ago",
         isSharingLocation: true,
@@ -1234,7 +1234,7 @@ export const initialTowsonCircles: LocationCircle[] = [
         major: "Finance Junior",
         status: "driving",
         currentBuilding: "En Route to University Village",
-        currentFloor: "York Road Northbound",
+        currentFloor: "Bateman Street Northbound",
         exactRoom: "In Vehicle",
         distanceFt: 4200,
         distanceMiles: 0.8,
@@ -1257,9 +1257,9 @@ export const initialTowsonCircles: LocationCircle[] = [
           lastTripDistanceMiles: 5.1,
         },
         timeline: [
-          { time: "11:00 AM", location: "Stephens Hall (CBE)", activity: "Finance Midterm Exam", icon: "🏛️", duration: "1h 30m" },
-          { time: "1:00 PM", location: "Burdick Hall Gym", activity: "Weight Training Session", icon: "🏋️", duration: "1h" },
-          { time: "2:15 PM – Present", location: "Driving Northbound York Rd", activity: "Headed home to Apt 304", icon: "🚗", duration: "Active", speedMph: 24 },
+          { time: "11:00 AM", location: "Franklin P. Perdue Hall (CBE)", activity: "Finance Midterm Exam", icon: "🏛️", duration: "1h 30m" },
+          { time: "1:00 PM", location: "Maggs Physical Activities Center (PAC) Gym", activity: "Weight Training Session", icon: "🏋️", duration: "1h" },
+          { time: "2:15 PM – Present", location: "Driving Northbound S Salisbury Blvd (US-13)", activity: "Headed home to Apt 304", icon: "🚗", duration: "Active", speedMph: 24 },
         ],
       },
     ],
@@ -1274,7 +1274,7 @@ export const initialTowsonCircles: LocationCircle[] = [
     activeSharingCount: 4,
     isUserMember: true,
     isAdmin: false,
-    places: initialTowsonPlaces,
+    places: initialSalisburyPlaces,
     members: [
       {
         id: "m-kwesi",
@@ -1282,7 +1282,7 @@ export const initialTowsonCircles: LocationCircle[] = [
         avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
         major: "IT Junior",
         status: "on_campus",
-        currentBuilding: "Cook Library Pod B",
+        currentBuilding: "Patricia R. Guerrieri Academic Commons (PAGAC) Pod B",
         currentFloor: "2nd Floor",
         exactRoom: "Pod B-12",
         distanceFt: 0,
@@ -1299,7 +1299,7 @@ export const initialTowsonCircles: LocationCircle[] = [
         avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
         major: "CS Senior",
         status: "studying",
-        currentBuilding: "Science Complex",
+        currentBuilding: "Richard A. Henson Science Hall",
         currentFloor: "3rd Floor",
         exactRoom: "Room 304",
         distanceFt: 420,
@@ -1316,7 +1316,7 @@ export const initialTowsonCircles: LocationCircle[] = [
         avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
         major: "CS Senior",
         status: "studying",
-        currentBuilding: "Cook Library",
+        currentBuilding: "Patricia R. Guerrieri Academic Commons (PAGAC)",
         currentFloor: "2nd Floor",
         exactRoom: "Pod B-12",
         distanceFt: 180,
@@ -1331,13 +1331,13 @@ export const initialTowsonCircles: LocationCircle[] = [
   },
 ];
 
-export const initialTowsonShuttles: TowsonShuttle[] = [
+export const initialSalisburyShuttles: SalisburyShuttle[] = [
   {
     id: "shuttle-gold",
     routeName: "Gold Route (Campus Loop)",
     routeColor: "#f59e0b",
-    busNumber: "Tiger Bus #14",
-    nextStop: "University Union Transit Plaza",
+    busNumber: "Sea Gull Bus #14",
+    nextStop: "Guerrieri Student Union (GSU) Transit Plaza",
     etaMinutes: 2,
     occupancyStatus: "Seats Available",
     currentCoordinates: { x: 42, y: 52 },
@@ -1351,10 +1351,10 @@ export const initialTowsonShuttles: TowsonShuttle[] = [
   },
   {
     id: "shuttle-black",
-    routeName: "Black Route (Towson Town Center)",
+    routeName: "Black Route (Salisbury Town Center)",
     routeColor: "#0f172a",
-    busNumber: "Tiger Bus #08",
-    nextStop: "Cook Library North Stop",
+    busNumber: "Sea Gull Bus #08",
+    nextStop: "Patricia R. Guerrieri Academic Commons (PAGAC) North Stop",
     etaMinutes: 5,
     occupancyStatus: "Standing Room",
     currentCoordinates: { x: 55, y: 38 },
@@ -1366,10 +1366,10 @@ export const initialTowsonShuttles: TowsonShuttle[] = [
   },
   {
     id: "shuttle-west",
-    routeName: "West Village Express",
+    routeName: "Sea Gull Square Express",
     routeColor: "#6366f1",
-    busNumber: "Tiger Bus #22",
-    nextStop: "West Village Commons",
+    busNumber: "Sea Gull Bus #22",
+    nextStop: "Sea Gull Square Commons",
     etaMinutes: 8,
     occupancyStatus: "Seats Available",
     currentCoordinates: { x: 22, y: 40 },
@@ -1381,11 +1381,11 @@ export const initialTowsonShuttles: TowsonShuttle[] = [
   },
 ];
 
-// 5. Towson Parking Garages
-export const initialTowsonParking: TowsonParkingGarage[] = [
+// 5. Salisbury Parking Garages
+export const initialSalisburyParking: SalisburyParkingGarage[] = [
   {
     id: "pkg-union",
-    name: "Union Garage (Levels 1-6)",
+    name: "Sea Gull Square Garage (Levels 1-6)",
     code: "UNION-GARAGE",
     totalSpaces: 1200,
     openSpaces: 184,
@@ -1397,9 +1397,9 @@ export const initialTowsonParking: TowsonParkingGarage[] = [
     y: 62,
   },
   {
-    id: "pkg-towsontown",
-    name: "Towsontown Garage",
-    code: "TOWSONTOWN-GARAGE",
+    id: "pkg-salisburytown",
+    name: "Salisburytown Garage",
+    code: "WAYNE-ST-GARAGE",
     totalSpaces: 950,
     openSpaces: 42,
     status: "Limited",
@@ -1411,7 +1411,7 @@ export const initialTowsonParking: TowsonParkingGarage[] = [
   },
   {
     id: "pkg-west-village",
-    name: "West Village Garage",
+    name: "Sea Gull Square Garage",
     code: "WV-GARAGE",
     totalSpaces: 1400,
     openSpaces: 0,
@@ -1424,7 +1424,7 @@ export const initialTowsonParking: TowsonParkingGarage[] = [
   },
   {
     id: "pkg-glen",
-    name: "Glen Garage",
+    name: "Dogwood Village Lot",
     code: "GLEN-GARAGE",
     totalSpaces: 800,
     openSpaces: 112,
@@ -1437,13 +1437,13 @@ export const initialTowsonParking: TowsonParkingGarage[] = [
   },
 ];
 
-// 6. Towson University Safety Mode Beacons (TUPD Blue Lights & SafeWalk)
-export const initialTowsonSafetyBeacons: SafetyBeacon[] = [
+// 6. Salisbury University Safety Mode Beacons (SUPD Blue Lights & SafeWalk)
+export const initialSalisburySafetyBeacons: SafetyBeacon[] = [
   {
     id: "saf-blue-1",
-    name: "Blue Light Phone #104 (Freedom Square)",
+    name: "Blue Light Phone #104 (Red Square)",
     type: "Blue Light Phone",
-    locationDescription: "Between Cook Library & Lecture Hall Plaza",
+    locationDescription: "Between Patricia R. Guerrieri Academic Commons (PAGAC) & Lecture Hall Plaza",
     x: 46,
     y: 46,
     distanceFt: 90,
@@ -1454,7 +1454,7 @@ export const initialTowsonSafetyBeacons: SafetyBeacon[] = [
     id: "saf-blue-2",
     name: "Blue Light Phone #212 (Science Walkway)",
     type: "Blue Light Phone",
-    locationDescription: "Science Complex South Atrium Plaza",
+    locationDescription: "Richard A. Henson Science Hall South Atrium Plaza",
     x: 60,
     y: 38,
     distanceFt: 380,
@@ -1465,7 +1465,7 @@ export const initialTowsonSafetyBeacons: SafetyBeacon[] = [
     id: "saf-blue-3",
     name: "Blue Light Phone #088 (Union Skybridge)",
     type: "Blue Light Phone",
-    locationDescription: "Connecting University Union to Union Garage",
+    locationDescription: "Connecting Guerrieri Student Union (GSU) to Sea Gull Square Garage",
     x: 36,
     y: 60,
     distanceFt: 340,
@@ -1473,10 +1473,10 @@ export const initialTowsonSafetyBeacons: SafetyBeacon[] = [
     emergencyPhone: "(410) 704-4444",
   },
   {
-    id: "saf-tupd",
-    name: "Towson University Police HQ (TUPD)",
+    id: "saf-supd",
+    name: "Salisbury University Police HQ (SUPD)",
     type: "Police HQ",
-    locationDescription: "TUPD Headquarters · 24/7 Dispatch Center",
+    locationDescription: "SUPD Headquarters · 24/7 Dispatch Center",
     x: 82,
     y: 18,
     distanceFt: 840,
@@ -1496,78 +1496,78 @@ export const initialTowsonSafetyBeacons: SafetyBeacon[] = [
   },
 ];
 
-// 7. Tiger Pride Map Scavenger & Treasure Hunt (Game Checkpoints)
-export const initialTowsonScavengerCheckpoints: ScavengerHuntCheckpoint[] = [
+// 7. Sea Gull Pride Map Scavenger & Treasure Hunt (Game Checkpoints)
+export const initialSalisburyScavengerCheckpoints: ScavengerHuntCheckpoint[] = [
   {
     id: "chk-1",
-    title: "1. The Historic Towson Tiger Statue",
-    clue: "Seek the bronze mascot guarding Freedom Square where students gather before classes.",
-    landmark: "Freedom Square (Bronze Tiger Statue)",
+    title: "1. The Historic Salisbury Sea Gull Statue",
+    clue: "Seek the bronze mascot guarding Red Square where students gather before classes.",
+    landmark: "Red Square (Bronze Sea Gull Statue)",
     points: 250,
     x: 48,
     y: 47,
-    qrCodeToken: "TU-TIGER-BRONZE-2026",
+    qrCodeToken: "SU-GULL-BRONZE-2026",
     isVisited: true,
-    badgeReward: "🐾 Tiger Pride Pioneer",
+    badgeReward: "🐾 Sea Gull Pride Pioneer",
   },
   {
     id: "chk-2",
-    title: "2. The Science Complex Rooftop Planetarium",
+    title: "2. The Richard A. Henson Science Hall Rooftop Planetarium",
     clue: "Look toward the stars from the top of TU's newest 320,000 sq ft research beacon.",
-    landmark: "Science Complex (Planetarium Dome)",
+    landmark: "Richard A. Henson Science Hall (Planetarium Dome)",
     points: 300,
     x: 62,
     y: 36,
-    qrCodeToken: "TU-SCI-PLANET-44",
+    qrCodeToken: "SU-SCI-PLANET-44",
     isVisited: false,
     badgeReward: "🔭 Quantum Explorer",
   },
   {
     id: "chk-3",
-    title: "3. Burdick Hall 30-Foot Climbing Wall",
+    title: "3. Maggs Physical Activities Center (PAC) 30-Foot Climbing Wall",
     clue: "Find the towering indoor peak inside campus recreation.",
-    landmark: "Burdick Hall Rec Center",
+    landmark: "Maggs Physical Activities Center (PAC) Rec Center",
     points: 250,
     x: 28,
     y: 68,
-    qrCodeToken: "TU-BURDICK-PEAK-09",
+    qrCodeToken: "SU-MAGGS-PAC-PEAK-09",
     isVisited: false,
     badgeReward: "🧗 Summit Champion",
   },
   {
     id: "chk-4",
-    title: "4. Step to the Clock Tower at Stephens Hall",
-    clue: "The historic brick facade and clock tower that has chimed for generations of Tigers.",
-    landmark: "Stephens Hall Clock Tower",
+    title: "4. Step to the Clock Tower at Franklin P. Perdue Hall",
+    clue: "The historic brick facade and clock tower that has chimed for generations of Sea Gulls.",
+    landmark: "Franklin P. Perdue Hall Clock Tower",
     points: 350,
     x: 54,
     y: 52,
-    qrCodeToken: "TU-STEPHENS-CLOCK-1866",
+    qrCodeToken: "SU-CLOCK-1866",
     isVisited: false,
     badgeReward: "🏆 Master Campus Explorer",
   },
 ];
 
-// 8. Turn-by-Turn Navigation Steps (Towson Route Simulator)
-export const sampleTowsonRoute: NavigationStep[] = [
+// 8. Turn-by-Turn Navigation Steps (Salisbury Route Simulator)
+export const sampleSalisburyRoute: NavigationStep[] = [
   {
     stepNumber: 1,
-    instruction: "Start at Freedom Square (Tiger Statue)",
-    detail: "Head Northeast along the paved University Mall path towards Science Complex.",
+    instruction: "Start at Red Square (Sea Gull Statue)",
+    detail: "Head Northeast along the paved University Mall path towards Richard A. Henson Science Hall.",
     icon: "walk",
     distanceFt: 180,
   },
   {
     stepNumber: 2,
     instruction: "Detour Alert: Avoid North Quad Repaving",
-    detail: "Turn slightly right around Smith Hall to avoid active maintenance work.",
+    detail: "Turn slightly right around Devilbiss Hall to avoid active maintenance work.",
     icon: "turn_right",
     distanceFt: 140,
     isDetourAvoidance: true,
   },
   {
     stepNumber: 3,
-    instruction: "Enter Science Complex via South Atrium",
+    instruction: "Enter Richard A. Henson Science Hall via South Atrium",
     detail: "Accessible ramp & automatic double doors on the ground level.",
     icon: "building",
     distanceFt: 60,
@@ -1599,13 +1599,13 @@ export const sampleTowsonRoute: NavigationStep[] = [
 export const initialCampusReels: CampusReel[] = [
   {
     id: "reel-1",
-    title: "Autonomous battlebot arena test run in Towson Science Complex Lab 304! 🤖🔥",
-    creatorName: "Towson Robotics Society",
+    title: "Autonomous battlebot arena test run in Salisbury Richard A. Henson Science Hall Lab 304! 🤖🔥",
+    creatorName: "Salisbury Robotics Society",
     creatorHandle: "@TURobotics",
     creatorAvatar: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=150&auto=format&fit=crop&q=80",
     videoUrl: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&auto=format&fit=crop&q=80",
     thumbnailUrl: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&auto=format&fit=crop&q=80",
-    audioTrack: "Original Sound — TU Science Complex",
+    audioTrack: "Original Sound — SU Richard A. Henson Science Hall",
     duration: "0:28",
     likesCount: 2450,
     isLiked: false,
@@ -1618,13 +1618,13 @@ export const initialCampusReels: CampusReel[] = [
   },
   {
     id: "reel-2",
-    title: "Simulated penetration test demo on our Towson containerized honeypot cluster 🛡️💻",
-    creatorName: "Towson Cybersecurity Club",
+    title: "Simulated penetration test demo on our Salisbury containerized honeypot cluster 🛡️💻",
+    creatorName: "Salisbury Cybersecurity Club",
     creatorHandle: "@TUCyberClub",
     creatorAvatar: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=150&auto=format&fit=crop&q=80",
     videoUrl: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80",
     thumbnailUrl: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80",
-    audioTrack: "Cyber Beats — TU Cyber Defense",
+    audioTrack: "Cyber Beats — SU Cyber Defense",
     duration: "0:42",
     likesCount: 1820,
     isLiked: true,
@@ -1637,13 +1637,13 @@ export const initialCampusReels: CampusReel[] = [
   },
   {
     id: "reel-3",
-    title: "Cultural Night dance rehearsal sneak peek at University Union Ballroom! 🎉🌍",
+    title: "Cultural Night dance rehearsal sneak peek at Guerrieri Student Union (GSU) Ballroom! 🎉🌍",
     creatorName: "African Student Association",
-    creatorHandle: "@ASA_Towson",
+    creatorHandle: "@ASA_Salisbury",
     creatorAvatar: "https://images.unsplash.com/photo-1511578314322-379afb476865?w=150&auto=format&fit=crop&q=80",
     videoUrl: "https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&auto=format&fit=crop&q=80",
     thumbnailUrl: "https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&auto=format&fit=crop&q=80",
-    audioTrack: "Afrobeats Fusion — TU Festival Mix",
+    audioTrack: "Afrobeats Fusion — SU Festival Mix",
     duration: "0:35",
     likesCount: 3100,
     isLiked: false,
@@ -1656,51 +1656,51 @@ export const initialCampusReels: CampusReel[] = [
   },
 ];
 
-// 10. Towson Trivia Challenge
+// 10. Salisbury Trivia Challenge
 export const initialCampusGames: CampusGame[] = [
   {
-    id: "game-towson-cyber",
-    title: "Towson Tiger Tech & Cyber Challenge",
+    id: "game-salisbury-cyber",
+    title: "Salisbury Sea Gull Tech & Cyber Challenge",
     category: "Trivia",
-    description: "5 rapid-fire questions on Towson campus tech, network defense, and Cook Library systems. Earn points for the semester leaderboard!",
+    description: "5 rapid-fire questions on Salisbury campus tech, network defense, and Patricia R. Guerrieri Academic Commons (PAGAC) systems. Earn points for the semester leaderboard!",
     icon: "🐯",
     highScore: 9420,
     activePlayersCount: 214,
     questions: [
       {
         id: "q1",
-        question: "Which building houses the Cybersecurity & CIS Labs at Towson University?",
-        options: ["Smith Hall", "7800 York Road & Science Complex", "Burdick Hall", "Stephens Hall"],
+        question: "Which building houses the Cybersecurity & CIS Labs at Salisbury University?",
+        options: ["Devilbiss Hall", "East Campus Complex & Richard A. Henson Science Hall", "Maggs Physical Activities Center (PAC)", "Franklin P. Perdue Hall"],
         correctIndex: 1,
-        explanation: "7800 York Road and the new Science Complex house TU's premier cybersecurity and CIS labs.",
+        explanation: "East Campus Complex and the new Richard A. Henson Science Hall house TU's premier cybersecurity and CIS labs.",
       },
       {
         id: "q2",
-        question: "What is the emergency phone number for Towson University Police (TUPD)?",
+        question: "What is the emergency phone number for Salisbury University Police (SUPD)?",
         options: ["(410) 704-4444", "911 only", "(555) 019-9111", "(410) 555-0100"],
         correctIndex: 0,
-        explanation: "TUPD 24/7 Emergency Dispatch is reachable at (410) 704-4444 and via any campus Blue Light phone.",
+        explanation: "SUPD 24/7 Emergency Dispatch is reachable at (410) 704-4444 and via any campus Blue Light phone.",
       },
       {
         id: "q3",
-        question: "Where are the 24/7 quiet study pods located during midterms at Towson?",
-        options: ["University Union Food Court", "Albert S. Cook Library Floors 2-3", "SECU Arena", "Glen Garage"],
+        question: "Where are the 24/7 quiet study pods located during midterms at Salisbury?",
+        options: ["Guerrieri Student Union (GSU) Food Court", "Albert S. Patricia R. Guerrieri Academic Commons (PAGAC) Floors 2-3", "Sea Gull Stadium", "Dogwood Village Lot"],
         correctIndex: 1,
-        explanation: "Cook Library floors remain open 24/7 for midterm and finals study sessions.",
+        explanation: "Patricia R. Guerrieri Academic Commons (PAGAC) floors remain open 24/7 for midterm and finals study sessions.",
       },
       {
         id: "q4",
-        question: "What is the primary shuttle loop connecting West Village to University Union?",
+        question: "What is the primary shuttle loop connecting Sea Gull Square to Guerrieri Student Union (GSU)?",
         options: ["Gold Route (Campus Loop)", "Green Line", "Silver Metro", "Purple Connector"],
         correctIndex: 0,
-        explanation: "The Gold Route provides continuous loops connecting Union, West Village, and SECU Arena.",
+        explanation: "The Gold Route provides continuous loops connecting Union, Sea Gull Square, and Sea Gull Stadium.",
       },
       {
         id: "q5",
-        question: "What is the bronze mascot landmark located at Freedom Square?",
-        options: ["Bronze Eagle", "Towson Tiger", "Golden Bear", "Black Hawk"],
+        question: "What is the bronze mascot landmark located at Red Square?",
+        options: ["Bronze Eagle", "Salisbury Sea Gull", "Golden Bear", "Black Hawk"],
         correctIndex: 1,
-        explanation: "The iconic bronze Towson Tiger statue stands proudly at Freedom Square outside Cook Library.",
+        explanation: "The iconic bronze Salisbury Sea Gull statue stands proudly at Red Square outside Patricia R. Guerrieri Academic Commons (PAGAC).",
       },
     ],
     leaderboard: [
@@ -1712,13 +1712,13 @@ export const initialCampusGames: CampusGame[] = [
   },
 ];
 
-// 11. Initial Towson Notifications
+// 11. Initial Salisbury Notifications
 export const initialCampusNotifications: CampusNotification[] = [
   {
     id: "notif-1",
     type: "EVENT",
-    title: "AI Security Keynote in TU Science Complex",
-    body: "Dr. Marcus Vance's keynote in Science Complex Auditorium starts at 5:00 PM. Your QR pass is ready.",
+    title: "AI Security Keynote in SU Richard A. Henson Science Hall",
+    body: "Dr. Marcus Vance's keynote in Richard A. Henson Science Hall Auditorium starts at 5:00 PM. Your QR pass is ready.",
     timeAgo: "20m ago",
     isRead: false,
     actionUrl: "events",
@@ -1727,7 +1727,7 @@ export const initialCampusNotifications: CampusNotification[] = [
     id: "notif-2",
     type: "ORG",
     title: "African Student Association Announcement",
-    body: "Amara Diallo posted: Cultural Night rehearsal schedule at University Union Ballroom is set!",
+    body: "Amara Diallo posted: Cultural Night rehearsal schedule at Guerrieri Student Union (GSU) Ballroom is set!",
     timeAgo: "1h ago",
     isRead: false,
     actionUrl: "organizations",
@@ -1736,7 +1736,7 @@ export const initialCampusNotifications: CampusNotification[] = [
     id: "notif-3",
     type: "SOCIAL",
     title: "Maya Chen shared location with Cybersecurity Club",
-    body: "Maya Chen is currently in Science Complex Rm 304.",
+    body: "Maya Chen is currently in Richard A. Henson Science Hall Rm 304.",
     timeAgo: "2m ago",
     isRead: false,
     actionUrl: "campus",
@@ -1753,22 +1753,22 @@ export const defaultNotificationPreferences: NotificationPreferences = {
   emailSocialDigest: false,
 };
 
-// 13. Initial Live Activities (🔴 LIVE AT TOWSON UNIVERSITY)
+// 13. Initial Live Activities (🔴 LIVE AT SALISBURY UNIVERSITY)
 export const initialLiveActivities: LiveCampusActivity[] = [
   {
     id: "live-1",
-    title: "Towson Tigers Basketball vs Delaware",
-    location: "SECU Arena",
+    title: "Salisbury Sea Gulls Basketball vs Delaware",
+    location: "Sea Gull Stadium",
     attendeesCount: 3200,
     category: "Sports",
-    statusText: "4th Quarter • Tigers up by 4 (68-64)",
+    statusText: "4th Quarter • Sea Gulls up by 4 (68-64)",
     icon: "🏀",
     linkTab: "events",
   },
   {
     id: "live-2",
     title: "Autonomous LLM Agent Workshop",
-    location: "Science Complex Rm 304",
+    location: "Richard A. Henson Science Hall Rm 304",
     attendeesCount: 84,
     category: "Workshop",
     statusText: "Hands-on cyber defense coding",
@@ -1778,7 +1778,7 @@ export const initialLiveActivities: LiveCampusActivity[] = [
   {
     id: "live-3",
     title: "Campus Food Drive & Pantry Packing",
-    location: "University Union North Loading Dock",
+    location: "Guerrieri Student Union (GSU) North Loading Dock",
     attendeesCount: 31,
     category: "Volunteering",
     statusText: "31 active student volunteers",
@@ -1808,7 +1808,7 @@ export const initialPeerMatches: PeerMatch[] = [
     compatibilityScore: 96,
     interests: ["Cybersecurity", "AI", "CTF Competitions"],
     goals: ["Find Study Partners", "Research Opportunities"],
-    sharedReason: "Both enrolled in CMSC 421 and members of Towson Cybersecurity Club",
+    sharedReason: "Both enrolled in CMSC 421 and members of Salisbury Cybersecurity Club",
     isConnected: false,
   },
   {
@@ -1820,7 +1820,7 @@ export const initialPeerMatches: PeerMatch[] = [
     compatibilityScore: 91,
     interests: ["Entrepreneurship", "Basketball", "Cloud Architecture"],
     goals: ["Project Partners", "Find Friends"],
-    sharedReason: "Both interested in Cloud & frequent Burdick Hall gym",
+    sharedReason: "Both interested in Cloud & frequent Maggs Physical Activities Center (PAC) gym",
     isConnected: true,
   },
 ];
@@ -1829,7 +1829,7 @@ export const initialPeerMatches: PeerMatch[] = [
 export const initialQuickGroups: QuickGroup[] = [
   {
     id: "qg-1",
-    name: "TU AI Hackathon Autonomous Defense Team",
+    name: "SU AI Hackathon Autonomous Defense Team",
     purpose: "Build zero-day containment agent for the Spring Hackathon",
     creator: "Kwesi Asiedu",
     membersCount: 4,
@@ -1844,7 +1844,7 @@ export const initialCampusOpportunities: CampusOpportunity[] = [
     id: "opp-1",
     title: "AI Autonomous Cyber Defense Research Fellowship",
     type: "Paid Research",
-    departmentOrOrg: "TU Autonomous Security & Systems Lab (ASSL)",
+    departmentOrOrg: "SU Autonomous Cyber Lab (ASSL)",
     rewardOrPay: "$22.00 / hr + 3 Academic Credits",
     deadline: "Mar 15, 2026",
     description: "Paid undergraduate research position developing automated closed-loop defense agents under Dr. Catherine Hayes.",
@@ -1853,12 +1853,12 @@ export const initialCampusOpportunities: CampusOpportunity[] = [
   },
   {
     id: "opp-2",
-    title: "Towson $10,000 Tiger Innovation Hackathon Prize",
+    title: "Salisbury $10,000 Sea Gull Innovation Hackathon Prize",
     type: "Hackathon",
     departmentOrOrg: "Fisher College of Science and Mathematics",
     rewardOrPay: "$10,000 Prize Pool",
     deadline: "Apr 04, 2026",
-    description: "48-hour campus hackathon in Science Complex with tracks in AI, Cybersecurity, and HealthTech.",
+    description: "48-hour campus hackathon in Richard A. Henson Science Hall with tracks in AI, Cybersecurity, and HealthTech.",
     matchReason: "Recommended because you are a Hackathon 1st Place Finalist",
     hasApplied: false,
   },
@@ -1870,8 +1870,8 @@ export const initialServiceRequests: CampusServiceRequest[] = [
     id: "req-1",
     ticketNumber: "#311-8492",
     category: "Wi-Fi & Network",
-    location: "Cook Library 2nd Floor Pod B",
-    description: "High packet loss and dropouts on TU-Secure Wi-Fi SSID near Pod B.",
+    location: "Patricia R. Guerrieri Academic Commons (PAGAC) 2nd Floor Pod B",
+    description: "High packet loss and dropouts on SU-Secure Wi-Fi SSID near Pod B.",
     status: "In Progress",
     submittedTime: "2 hours ago",
   },
@@ -1887,7 +1887,7 @@ export const initialEventMemories: EventMemory[] = [
     projectsBuiltCount: 32,
     photosCount: 426,
     aiGeneratedRecap:
-      "Over 184 students converged in the University Union for 12 hours of rapid prototyping. 32 completed projects were demoed across autonomous security, campus sustainability, and accessible transit. Team 'CyberPulse' took first place with their automated honeypot mesh.",
+      "Over 184 students converged in the Guerrieri Student Union (GSU) for 12 hours of rapid prototyping. 32 completed projects were demoed across autonomous security, campus sustainability, and accessible transit. Team 'CyberPulse' took first place with their automated honeypot mesh.",
     bannerUrl: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&auto=format&fit=crop&q=80",
   },
 ];
@@ -1899,7 +1899,7 @@ export const initialOfficeHours: OfficeHourSlot[] = [
     professorName: "Dr. Catherine Hayes",
     professorAvatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
     department: "Department of Computer and Information Sciences",
-    officeLocation: "Science Complex Rm 314",
+    officeLocation: "Richard A. Henson Science Hall Rm 314",
     dateDay: "Monday, Mar 03",
     timeRange: "2:00 PM - 4:00 PM (15-min slots)",
     slots: [
@@ -1935,9 +1935,9 @@ export const initialCampusPosts: CampusPost[] = [
     authorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
     clubName: "African Student Association",
     scope: "CAMPUS_WIDE",
-    location: "University Union Ballroom",
+    location: "Guerrieri Student Union (GSU) Ballroom",
     content:
-      "🎉 Cultural Night is this Friday at 7:00 PM in the University Union! Experience live music, authentic African cuisines, cultural fashion runway, and student dance performances. Free admission for all Towson students!",
+      "🎉 Cultural Night is this Friday at 7:00 PM in the Guerrieri Student Union (GSU)! Experience live music, authentic African cuisines, cultural fashion runway, and student dance performances. Free admission for all Salisbury students!",
     imageUrl: "https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&auto=format&fit=crop&q=80",
     likesCount: 94,
     isLiked: false,
@@ -1952,14 +1952,14 @@ export const initialCampusPosts: CampusPost[] = [
   {
     id: "p2",
     authorId: "club-cs",
-    authorName: "Towson Cybersecurity Club",
+    authorName: "Salisbury Cybersecurity Club",
     authorMajor: "Academic & Technology",
     authorAvatar: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=150&auto=format&fit=crop&q=80",
-    clubName: "Towson Cybersecurity Club",
+    clubName: "Salisbury Cybersecurity Club",
     scope: "CLUB",
-    location: "Science Complex Rm 304",
+    location: "Richard A. Henson Science Hall Rm 304",
     content:
-      "📚 Hands-on AI Workshop tomorrow at 5:00 PM in Science Complex Rm 304! We will build LLM agent workflows and explore cybersecurity defense loops. 35 students already attending. Bring your laptops!",
+      "📚 Hands-on AI Workshop tomorrow at 5:00 PM in Richard A. Henson Science Hall Rm 304! We will build LLM agent workflows and explore cybersecurity defense loops. 35 students already attending. Bring your laptops!",
     imageUrl: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&auto=format&fit=crop&q=80",
     likesCount: 64,
     isLiked: true,
@@ -1975,9 +1975,9 @@ export const initialCampusEvents: CampusEvent[] = [
   {
     id: "ev-1",
     title: "Keynote: Autonomous AI & Cyber Defense Architectures",
-    clubName: "Towson Cybersecurity Club & CIS Dept",
+    clubName: "Salisbury Cybersecurity Club & CIS Dept",
     category: "Guest Speaker",
-    location: "Science Complex Auditorium (SC-101)",
+    location: "Richard A. Henson Science Hall Auditorium (SC-101)",
     buildingCode: "SC-101",
     dateMonth: "MAR",
     dateDay: "03",
@@ -1985,17 +1985,17 @@ export const initialCampusEvents: CampusEvent[] = [
     capacity: 250,
     attendeesCount: 184,
     userRsvp: "GOING",
-    ticketPrice: "Free with OneCard",
+    ticketPrice: "Free with Gull Card",
     ticketStatus: "Available",
     tags: ["Cybersecurity", "AI Agents", "NSA CAE-CD", "Keynote", "Networking"],
     weatherRequirement: "Indoor",
-    ticketCode: "TU-TKT-8492-CYBER",
-    gateEntrance: "Science Complex North Lobby Entrance",
+    ticketCode: "SU-TKT-8492-CYBER",
+    gateEntrance: "Richard A. Henson Science Hall North Lobby Entrance",
     recommendationReason: "Recommended because you follow Cybersecurity Club & attend CIS events",
-    description: "Distinguished guest lecture on autonomous loop defense systems, agentic offensive testing, and generative security models in the Science Complex Auditorium.",
+    description: "Distinguished guest lecture on autonomous loop defense systems, agentic offensive testing, and generative security models in the Richard A. Henson Science Hall Auditorium.",
     speakers: [
       { name: "Dr. Marcus Vance", title: "Principal AI Security Architect, DARPA Cyber Labs", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80" },
-      { name: "Maya Chen", title: "TU Cyber Club President & NSA Cyber Scholar", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" }
+      { name: "Maya Chen", title: "SU Cyber Club President & NSA Cyber Scholar", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" }
     ],
     agenda: [
       { time: "5:00 PM", topic: "Doors Open & Student Networking Reception (Catered)" },
@@ -2008,10 +2008,10 @@ export const initialCampusEvents: CampusEvent[] = [
   },
   {
     id: "ev-2",
-    title: "CAA Men's Basketball: Towson Tigers vs. Delaware Blue Hens (Gold Rush Game)",
-    clubName: "Towson Athletics & Doc's Army",
+    title: "CAA Men's Basketball: Salisbury Sea Gulls vs. Delaware Blue Hens (Gold Rush Game)",
+    clubName: "Salisbury Athletics & Doc's Army",
     category: "Athletics",
-    location: "SECU Arena Main Court",
+    location: "Sea Gull Stadium Main Court",
     buildingCode: "SECU-01",
     dateMonth: "MAR",
     dateDay: "06",
@@ -2019,21 +2019,21 @@ export const initialCampusEvents: CampusEvent[] = [
     capacity: 5200,
     attendeesCount: 4180,
     userRsvp: "GOING",
-    ticketPrice: "Free for All TU Students",
+    ticketPrice: "Free for All SU Students",
     ticketStatus: "Selling Fast",
     tags: ["Basketball", "Division-I", "CAA", "Gold Rush", "Doc's Army", "Free T-Shirts"],
     weatherRequirement: "Indoor",
-    ticketCode: "TU-TKT-9912-HOOPS",
-    gateEntrance: "SECU Arena Gate 1 (Student Section Pass)",
+    ticketCode: "SU-TKT-9912-HOOPS",
+    gateEntrance: "Sea Gull Stadium Gate 1 (Student Section Pass)",
     recommendationReason: "Rivalry Gold Rush Game — Free Gold T-Shirts to first 1,500 students in Doc's Army section!",
-    description: "The Towson Tigers host the Delaware Blue Hens in a pivotal CAA regular season showdown. Wear Gold! Concessions discounts and halftime student half-court shot for $10,000 tuition.",
+    description: "The Salisbury Sea Gulls host the Delaware Blue Hens in a pivotal CAA regular season showdown. Wear Gold! Concessions discounts and halftime student half-court shot for $10,000 tuition.",
     speakers: [
-      { name: "Pat Skerry", title: "Towson Men's Basketball Head Coach", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80" }
+      { name: "Pat Skerry", title: "Salisbury Men's Basketball Head Coach", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80" }
     ],
     agenda: [
       { time: "5:30 PM", topic: "Doc's Army Pre-Game Student Tailgate (Free Pizza & Face Painting)" },
-      { time: "6:15 PM", topic: "SECU Arena Student Gates Open" },
-      { time: "7:00 PM", topic: "Tip-Off: Towson Tigers vs. Delaware" },
+      { time: "6:15 PM", topic: "Sea Gull Stadium Student Gates Open" },
+      { time: "7:00 PM", topic: "Tip-Off: Salisbury Sea Gulls vs. Delaware" },
       { time: "8:00 PM", topic: "Halftime $10,000 Tuition Shootout & Dance Team Showcase" }
     ],
     imageUrl: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=800&auto=format&fit=crop&q=80",
@@ -2041,10 +2041,10 @@ export const initialCampusEvents: CampusEvent[] = [
   },
   {
     id: "ev-3",
-    title: "TigerHacks 2026: 24-Hour Autonomous AI & Web3 Hackathon",
+    title: "SeaGullHacks 2026: 24-Hour Autonomous AI & Web3 Hackathon",
     clubName: "WiCS, Cyber Club & Major League Hacking",
     category: "Hackathon",
-    location: "Science Complex & 7800 York Road",
+    location: "Richard A. Henson Science Hall & East Campus Complex",
     buildingCode: "SC-304",
     dateMonth: "MAR",
     dateDay: "14",
@@ -2056,13 +2056,13 @@ export const initialCampusEvents: CampusEvent[] = [
     ticketStatus: "Available",
     tags: ["Hackathon", "Coding", "AI Agents", "Prizes", "MLH", "Sponsors"],
     weatherRequirement: "Indoor",
-    ticketCode: "TU-TKT-3304-HACKS",
-    gateEntrance: "Science Complex Center Atrium",
+    ticketCode: "SU-TKT-3304-HACKS",
+    gateEntrance: "Richard A. Henson Science Hall Center Atrium",
     recommendationReason: "$15,000 in sponsor prize bounties from Google Cloud, Northrop Grumman & T. Rowe Price!",
-    description: "Towson University's flagship annual 24-hour hackathon. Build software, AI agents, mobile apps, or hardware hacks with mentors, free meals, Red Bull stations, and recruiting booths.",
+    description: "Salisbury University's flagship annual 24-hour hackathon. Build software, AI agents, mobile apps, or hardware hacks with mentors, free meals, Red Bull stations, and recruiting booths.",
     speakers: [
       { name: "Elena Rostova", title: "Lead Hackathon Director, WiCS", avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80" },
-      { name: "Devon Brooks", title: "VP of Technology, Towson Software Guild", avatar: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80" }
+      { name: "Devon Brooks", title: "VP of Technology, Salisbury Software Guild", avatar: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80" }
     ],
     agenda: [
       { time: "10:00 AM", topic: "Check-in, Sponsor Booths & Team Formation" },
@@ -2077,10 +2077,10 @@ export const initialCampusEvents: CampusEvent[] = [
   },
   {
     id: "ev-4",
-    title: "Tigerfest 2026: Spring Music Festival, Carnival & Concert",
+    title: "Sea Gullfest 2026: Spring Music Festival, Carnival & Concert",
     clubName: "Campus Activities Board (CAB)",
     category: "Concert",
-    location: "Burdick Field & University Union Beach",
+    location: "Sea Gull Stadium Lawn & Guerrieri Student Union (GSU) Beach",
     buildingCode: "BURD-01",
     dateMonth: "APR",
     dateDay: "25",
@@ -2090,11 +2090,11 @@ export const initialCampusEvents: CampusEvent[] = [
     userRsvp: "GOING",
     ticketPrice: "Free Student Admission (Wristband Required)",
     ticketStatus: "Selling Fast",
-    tags: ["Tigerfest", "Concert", "Carnival", "Food Trucks", "Tradition", "Spring"],
+    tags: ["Sea Gullfest", "Concert", "Carnival", "Food Trucks", "Tradition", "Spring"],
     weatherRequirement: "Outdoor",
-    ticketCode: "TU-TKT-7714-TFEST",
-    gateEntrance: "Burdick Field South Entrance (ID Check)",
-    recommendationReason: "Towson's biggest tradition of the year! Live national headliners, ferris wheel, carnival games, and 12 local Baltimore food trucks.",
+    ticketCode: "SU-TKT-7714-TFEST",
+    gateEntrance: "Sea Gull Stadium Lawn South Entrance (ID Check)",
+    recommendationReason: "Salisbury's biggest tradition of the year! Live national headliners, ferris wheel, carnival games, and 12 local Eastern Shore food trucks.",
     description: "The biggest music and arts celebration of the spring semester. Featuring two outdoor stages, carnival rides, inflatable obstacle courses, laser tag, and national hip-hop & indie headliners.",
     speakers: [
       { name: "Brianna Jenkins", title: "CAB Executive Concerts Director", avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80" }
@@ -2104,7 +2104,7 @@ export const initialCampusEvents: CampusEvent[] = [
       { time: "3:00 PM", topic: "Local Student Bands & Battle of the Bands Winner Showcase" },
       { time: "6:00 PM", topic: "Main Stage Opener: National Indie/Pop Touring Artist" },
       { time: "8:00 PM", topic: "Headline Act: Live Stadium Concert Performance" },
-      { time: "9:45 PM", topic: "Grand Finale Fireworks Show over Minnegan Field" }
+      { time: "9:45 PM", topic: "Grand Finale Fireworks Show over Sea Gull Stadium" }
     ],
     imageUrl: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&auto=format&fit=crop&q=80",
     createdAt: new Date().toISOString(),
@@ -2112,9 +2112,9 @@ export const initialCampusEvents: CampusEvent[] = [
   {
     id: "ev-5",
     title: "Spring 2026 Mega STEM, Healthcare & Business Career Fair",
-    clubName: "Towson University Career Center",
+    clubName: "Salisbury University Career Center",
     category: "Career Fair",
-    location: "SECU Arena Concourse & Arena Floor",
+    location: "Sea Gull Stadium Concourse & Arena Floor",
     buildingCode: "SECU-02",
     dateMonth: "MAR",
     dateDay: "18",
@@ -2126,12 +2126,12 @@ export const initialCampusEvents: CampusEvent[] = [
     ticketStatus: "Available",
     tags: ["Careers", "Internships", "STEM", "Healthcare", "Business", "Fortune 500"],
     weatherRequirement: "Indoor",
-    ticketCode: "TU-TKT-1102-FAIR",
-    gateEntrance: "SECU Arena Main Concourse Entrance",
+    ticketCode: "SU-TKT-1102-FAIR",
+    gateEntrance: "Sea Gull Stadium Main Concourse Entrance",
     recommendationReason: "120+ top employers actively hiring for Summer 2026 internships and full-time new grad roles.",
     description: "Connect with recruiters from Amazon, Lockheed Martin, Johns Hopkins Medicine, T. Rowe Price, Stanley Black & Decker, Under Armour, NSA, and CareFirst. Professional headshots available on site.",
     speakers: [
-      { name: "David Henderson", title: "Director of Employer Relations, TU Career Center", avatar: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80" }
+      { name: "David Henderson", title: "Director of Employer Relations, SU Career Services Center", avatar: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80" }
     ],
     agenda: [
       { time: "11:00 AM", topic: "Doors Open & Free LinkedIn Professional Headshots Station" },
@@ -2147,7 +2147,7 @@ export const initialCampusEvents: CampusEvent[] = [
     title: "Annual Pan-African Gala, Fashion Showcase & Banquet",
     clubName: "African Student Association (ASA)",
     category: "Cultural Festival",
-    location: "University Union Ballrooms (UU-300)",
+    location: "Guerrieri Student Union (GSU) Ballrooms (UU-300)",
     buildingCode: "UU-300",
     dateMonth: "MAR",
     dateDay: "27",
@@ -2159,9 +2159,9 @@ export const initialCampusEvents: CampusEvent[] = [
     ticketStatus: "Selling Fast",
     tags: ["Cultural", "Gala", "Fashion Show", "African Cuisine", "Afrobeats", "Dance"],
     weatherRequirement: "Indoor",
-    ticketCode: "TU-TKT-5512-GALA",
-    gateEntrance: "University Union 3rd Floor Ballroom Entrance",
-    recommendationReason: "Towson's most celebrated cultural formal! Features traditional 3-course dinner, runway fashion show, and live Afrobeats orchestra.",
+    ticketCode: "SU-TKT-5512-GALA",
+    gateEntrance: "Guerrieri Student Union (GSU) 3rd Floor Ballroom Entrance",
+    recommendationReason: "Salisbury's most celebrated cultural formal! Features traditional 3-course dinner, runway fashion show, and live Afrobeats orchestra.",
     description: "An unforgettable evening celebrating African heritage, student excellence, and diaspora unity. Formal African attire or black-tie requested. Includes gourmet multi-nation buffet.",
     speakers: [
       { name: "Amara Diallo", title: "ASA President & Master of Ceremonies", avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80" }
@@ -2178,10 +2178,10 @@ export const initialCampusEvents: CampusEvent[] = [
   },
   {
     id: "ev-7",
-    title: "NCAA Women's Lacrosse: Towson Tigers vs. Drexel Dragons (Senior Night)",
-    clubName: "Towson Athletics",
+    title: "NCAA Women's Lacrosse: Salisbury Sea Gulls vs. Drexel Dragons (Senior Night)",
+    clubName: "Salisbury Athletics",
     category: "Athletics",
-    location: "Johnny Unitas Stadium",
+    location: "Johnny Sea Gull Stadium",
     buildingCode: "UNITAS-01",
     dateMonth: "APR",
     dateDay: "10",
@@ -2189,20 +2189,20 @@ export const initialCampusEvents: CampusEvent[] = [
     capacity: 11198,
     attendeesCount: 1850,
     userRsvp: "INTERESTED",
-    ticketPrice: "Free with Student OneCard",
+    ticketPrice: "Free with Student Gull Card",
     ticketStatus: "Available",
-    tags: ["Lacrosse", "Division-I", "Senior Night", "CAA", "Tigers"],
+    tags: ["Lacrosse", "Division-I", "Senior Night", "CAA", "Sea Gulls"],
     weatherRequirement: "Outdoor",
-    ticketCode: "TU-TKT-6601-LAX",
-    gateEntrance: "Unitas Stadium West Gate",
-    recommendationReason: "Senior Night under the lights! Free Towson Lacrosse bucket hats to first 500 students.",
-    description: "Cheer on the nationally ranked Towson Tigers Women's Lacrosse team in their premier CAA conference match against rival Drexel.",
+    ticketCode: "SU-TKT-6601-LAX",
+    gateEntrance: "Sea Gull Stadium West Gate",
+    recommendationReason: "Senior Night under the lights! Free Salisbury Lacrosse bucket hats to first 500 students.",
+    description: "Cheer on the nationally ranked Salisbury Sea Gulls Women's Lacrosse team in their premier CAA conference match against rival Drexel.",
     speakers: [
-      { name: "Kristen Carr", title: "Towson Women's Lacrosse Head Coach", avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80" }
+      { name: "Kristen Carr", title: "Salisbury Women's Lacrosse Head Coach", avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80" }
     ],
     agenda: [
       { time: "5:30 PM", topic: "Senior Class Player Ceremony & Family Tribute" },
-      { time: "6:00 PM", topic: "Opening Faceoff: Towson vs. Drexel" },
+      { time: "6:00 PM", topic: "Opening Faceoff: Salisbury vs. Drexel" },
       { time: "7:15 PM", topic: "Halftime Youth Lacrosse Scrimmage" }
     ],
     imageUrl: "https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?w=800&auto=format&fit=crop&q=80",
@@ -2211,9 +2211,9 @@ export const initialCampusEvents: CampusEvent[] = [
   {
     id: "ev-8",
     title: "Wall Street Quantitative Trading & AI Investment Forum",
-    clubName: "Towson Investment Group (TIG)",
+    clubName: "Salisbury Investment Group (TIG)",
     category: "Academic",
-    location: "Stephens Hall Trading Room (SH-212)",
+    location: "Franklin P. Perdue Hall Trading Room (SH-212)",
     buildingCode: "SH-212",
     dateMonth: "MAR",
     dateDay: "25",
@@ -2225,12 +2225,12 @@ export const initialCampusEvents: CampusEvent[] = [
     ticketStatus: "Selling Fast",
     tags: ["Finance", "Trading", "Wall Street", "Bloomberg", "Quant", "Investing"],
     weatherRequirement: "Indoor",
-    ticketCode: "TU-TKT-9911-TIG",
-    gateEntrance: "Stephens Hall 2nd Floor Trading Suite",
+    ticketCode: "SU-TKT-9911-TIG",
+    gateEntrance: "Franklin P. Perdue Hall 2nd Floor Trading Suite",
     recommendationReason: "Exclusive hands-on workshop utilizing live Bloomberg Terminals and Python algorithmic backtesting models.",
     description: "Learn how hedge funds and asset managers utilize machine learning for alpha generation, risk parity modeling, and high-frequency execution.",
     speakers: [
-      { name: "Zachary Cohen", title: "Portfolio Manager, Towson Investment Group", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80" },
+      { name: "Zachary Cohen", title: "Portfolio Manager, Salisbury Investment Group", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80" },
       { name: "Nadia Farooq", title: "Head of Quant Research, TIG", avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80" }
     ],
     agenda: [
@@ -2246,7 +2246,7 @@ export const initialCampusEvents: CampusEvent[] = [
     title: "Outdoor Starlight Cinema: Summer Blockbuster Lawn Screening",
     clubName: "Campus Activities Board (CAB)",
     category: "Tradition",
-    location: "University Union Amphitheater & Lawn",
+    location: "Guerrieri Student Union (GSU) Amphitheater & Lawn",
     buildingCode: "UU-AMPH",
     dateMonth: "APR",
     dateDay: "17",
@@ -2258,7 +2258,7 @@ export const initialCampusEvents: CampusEvent[] = [
     ticketStatus: "Available",
     tags: ["Movies", "Outdoors", "Free Food", "Social", "Amphitheater"],
     weatherRequirement: "Outdoor",
-    ticketCode: "TU-TKT-4419-FILM",
+    ticketCode: "SU-TKT-4419-FILM",
     gateEntrance: "Union Amphitheater Lower Lawn",
     recommendationReason: "Massive 40-foot inflatable 4K projection screen under the stars. Free gourmet popcorn & hot chocolate!",
     description: "Bring blankets and lawn chairs for a relaxing outdoor movie night on the Union Amphitheater lawn. Weather backup location is Potomac Lounge.",
@@ -2276,7 +2276,7 @@ export const initialCampusEvents: CampusEvent[] = [
     title: "Greek Life Spring Step, Stroll & Unity Showcase",
     clubName: "National Pan-Hellenic Council (NPHC) & MGC",
     category: "Cultural Festival",
-    location: "Potomac Lounge (University Union)",
+    location: "Potomac Lounge (Guerrieri Student Union (GSU))",
     buildingCode: "UU-POTOMAC",
     dateMonth: "APR",
     dateDay: "04",
@@ -2288,7 +2288,7 @@ export const initialCampusEvents: CampusEvent[] = [
     ticketStatus: "Selling Fast",
     tags: ["Greek Life", "NPHC", "Divine Nine", "Step Show", "Stroll", "Tradition"],
     weatherRequirement: "Indoor",
-    ticketCode: "TU-TKT-2201-STEP",
+    ticketCode: "SU-TKT-2201-STEP",
     gateEntrance: "Potomac Lounge 2nd Floor Entrance",
     recommendationReason: "The most electrifying Greek tradition of the semester! High-energy step and stroll routines from all 9 NPHC chapters.",
     description: "Watch the Divine Nine and Multicultural Greek Council chapters compete for the 2026 Campus Unity Trophy in synchronized stepping, stroll exhibitions, and crowd interaction.",
@@ -2317,18 +2317,18 @@ export const initialCampusClubs: CampusClub[] = [
     membersCount: 220,
     isJoined: true,
     president: "Amara Diallo (Senior, Business)",
-    description: "Celebrating African heritage, fostering student unity, community service, and academic excellence at Towson University.",
+    description: "Celebrating African heritage, fostering student unity, community service, and academic excellence at Salisbury University.",
     logo: "🌍",
     banner: "https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&auto=format&fit=crop&q=80",
     nextEvent: "Annual Pan-African Gala (Friday 7 PM @ Union Ballroom)",
-    aboutText: "The African Student Association provides a welcoming, empowering space for cultural exchange, alumni mentorship, academic excellence, and philanthropic initiatives across the greater Baltimore community.",
+    aboutText: "The African Student Association provides a welcoming, empowering space for cultural exchange, alumni mentorship, academic excellence, and philanthropic initiatives across the greater Salisbury and Eastern Shore community.",
     meetingTime: "Thursdays @ 6:00 PM",
-    meetingLocation: "University Union Rm 320",
+    meetingLocation: "Guerrieri Student Union (GSU) Rm 320",
     foundedYear: 1994,
     tags: ["Cultural", "Pan-African", "Mentorship", "Community Service", "Gala"],
-    contactEmail: "asa@towson.edu",
-    instagram: "@towson_asa",
-    discordUrl: "https://discord.gg/towson-asa",
+    contactEmail: "asa@salisbury.edu",
+    instagram: "@salisbury_asa",
+    discordUrl: "https://discord.gg/salisbury-asa",
     dues: "$15 / Semester",
     sgaBudget: 6800,
     council: "SGA",
@@ -2340,7 +2340,7 @@ export const initialCampusClubs: CampusClub[] = [
       { role: "Events Director", name: "Kofi Mensah", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80" }
     ],
     projects: [
-      { id: "p1", title: "Pan-African Library Book Drive", description: "Collecting 500 STEM and literature textbooks for Baltimore youth outreach centers.", status: "In Progress", lead: "Amara Diallo" },
+      { id: "p1", title: "Pan-African Library Book Drive", description: "Collecting 500 STEM and literature textbooks for Eastern Shore and Wicomico youth outreach centers.", status: "In Progress", lead: "Amara Diallo" },
       { id: "p2", title: "Taste of Africa Food Festival", description: "Showcasing cuisines from 14 African nations in collaboration with Campus Dining.", status: "Recruiting", lead: "Kofi Mensah" }
     ],
     documents: [
@@ -2350,7 +2350,7 @@ export const initialCampusClubs: CampusClub[] = [
   },
   {
     id: "org-cyber",
-    name: "Towson Cybersecurity Club",
+    name: "Salisbury Cybersecurity Club",
     category: "Academic",
     membersCount: 195,
     isJoined: true,
@@ -2359,15 +2359,15 @@ export const initialCampusClubs: CampusClub[] = [
     logo: "🛡️",
     banner: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80",
     nextEvent: "Capture The Flag (CTF) Practice (Thu 6 PM @ SC 304)",
-    aboutText: "We prepare TU students for top-tier careers in cyber defense, malware analysis, cloud security, and ethical hacking through hands-on virtual cyber range challenges and industry guest speakers.",
+    aboutText: "We prepare SU students for top-tier careers in cyber defense, malware analysis, cloud security, and ethical hacking through hands-on virtual cyber range challenges and industry guest speakers.",
     meetingTime: "Wednesdays @ 5:30 PM",
-    meetingLocation: "Science Complex Rm 304 & Cyber Range",
+    meetingLocation: "Richard A. Henson Science Hall Rm 304 & Cyber Range",
     foundedYear: 2012,
     tags: ["Cybersecurity", "CTF", "CCDC", "Ethical Hacking", "NSA CAE-CD"],
-    contactEmail: "cybersec@towson.edu",
-    instagram: "@towsoncyber",
-    discordUrl: "https://discord.gg/towson-cyber",
-    dues: "$0 / Free for all TU students",
+    contactEmail: "cybersec@salisbury.edu",
+    instagram: "@salisburycyber",
+    discordUrl: "https://discord.gg/salisbury-cyber",
+    dues: "$0 / Free for all SU students",
     sgaBudget: 12500,
     council: "Academic Senate",
     status: "Featured",
@@ -2382,7 +2382,7 @@ export const initialCampusClubs: CampusClub[] = [
       { id: "p4", title: "Spring MACCDC Competition Team", description: "Training 8-student defensive team for collegiate cyber defense finals.", status: "In Progress", lead: "Alex Rivera" }
     ],
     documents: [
-      { id: "d3", name: "TU Cyber Lab Safety & Ethics Agreement.pdf", type: "PDF", size: "450 KB", url: "#" },
+      { id: "d3", name: "SU Cyber Lab Safety & Ethics Agreement.pdf", type: "PDF", size: "450 KB", url: "#" },
       { id: "d4", name: "CCDC Blue Team Playbook 2026.pdf", type: "PDF", size: "4.8 MB", url: "#" }
     ],
   },
@@ -2397,14 +2397,14 @@ export const initialCampusClubs: CampusClub[] = [
     logo: "✊🏾",
     banner: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&auto=format&fit=crop&q=80",
     nextEvent: "Town Hall on Campus Climate (Tuesday 6:30 PM @ Union 210)",
-    aboutText: "Founded in 1969, the Towson BSU empowers students through social activism, career development, community service, and cultural solidarity.",
+    aboutText: "Founded in 1969, the Salisbury BSU empowers students through social activism, career development, community service, and cultural solidarity.",
     meetingTime: "Tuesdays @ 6:30 PM",
-    meetingLocation: "University Union Ballroom West",
+    meetingLocation: "Guerrieri Student Union (GSU) Ballroom West",
     foundedYear: 1969,
     tags: ["Cultural", "Advocacy", "Leadership", "Black History", "Networking"],
-    contactEmail: "bsu@towson.edu",
-    instagram: "@towsonbsu",
-    discordUrl: "https://discord.gg/towson-bsu",
+    contactEmail: "bsu@salisbury.edu",
+    instagram: "@salisburybsu",
+    discordUrl: "https://discord.gg/salisbury-bsu",
     dues: "$10 / Year",
     sgaBudget: 14000,
     council: "SGA",
@@ -2415,7 +2415,7 @@ export const initialCampusClubs: CampusClub[] = [
       { role: "Secretary", name: "Tariq Edwards", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" }
     ],
     projects: [
-      { id: "p5", title: "Black Alumni Mentorship Pipeline", description: "Matching 100 undergraduates with TU alumni in Fortune 500 & government sectors.", status: "In Progress", lead: "Destiny Taylor" },
+      { id: "p5", title: "Black Alumni Mentorship Pipeline", description: "Matching 100 undergraduates with SU alumni in Fortune 500 & government sectors.", status: "In Progress", lead: "Destiny Taylor" },
       { id: "p6", title: "Freshman Transition Summit", description: "Orientation and academic success workshop series for incoming freshmen.", status: "Completed", lead: "Jordan Washington" }
     ],
     documents: [
@@ -2432,15 +2432,15 @@ export const initialCampusClubs: CampusClub[] = [
     description: "Empowering women and non-binary students in tech through technical workshops, Grace Hopper conference grants, and industry mentorship.",
     logo: "💻",
     banner: "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&auto=format&fit=crop&q=80",
-    nextEvent: "AI & Full-Stack Web Development Bootcamp (Sat 11 AM @ 7800 York)",
+    nextEvent: "AI & Full-Stack Web Development Bootcamp (Sat 11 AM @ Perdue Hall Rm 156)",
     aboutText: "WiCS strives to bridge the gender gap in computing fields by hosting mock technical interviews, hackathons, and corporate networking events with top tech employers.",
     meetingTime: "Mondays @ 5:00 PM",
-    meetingLocation: "7800 York Road Rm 425",
+    meetingLocation: "East Campus Complex Rm 425",
     foundedYear: 2016,
     tags: ["STEM", "Coding", "Diversity in Tech", "Grace Hopper", "Mentorship"],
-    contactEmail: "wics@towson.edu",
-    instagram: "@towson_wics",
-    discordUrl: "https://discord.gg/towson-wics",
+    contactEmail: "wics@salisbury.edu",
+    instagram: "@salisbury_wics",
+    discordUrl: "https://discord.gg/salisbury-wics",
     dues: "$0 / Free",
     sgaBudget: 8500,
     council: "Academic Senate",
@@ -2463,18 +2463,18 @@ export const initialCampusClubs: CampusClub[] = [
     membersCount: 85,
     isJoined: false,
     president: "Kendall Hughes (Senior, Economics & Law)",
-    description: "The primary representative governing body for 20,000+ TU undergraduate students, overseeing policy, campus initiatives, and student org allocations.",
+    description: "The primary representative governing body for 20,000+ SU undergraduate students, overseeing policy, campus initiatives, and student org allocations.",
     logo: "🏛️",
     banner: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=800&auto=format&fit=crop&q=80",
     nextEvent: "Weekly Senate Legislative Session (Tuesday 5 PM @ Union 324)",
     aboutText: "SGA works directly with University President, Provost, and Board of Regents to champion student interests, safety, dining improvements, mental health, and equitable funding.",
     meetingTime: "Tuesdays @ 5:00 PM",
-    meetingLocation: "University Union Senate Chambers (Rm 324)",
+    meetingLocation: "Guerrieri Student Union (GSU) Senate Chambers (Rm 324)",
     foundedYear: 1921,
     tags: ["Governance", "Student Advocacy", "Legislation", "Appropriations", "Leadership"],
-    contactEmail: "sga@towson.edu",
-    instagram: "@towson_sga",
-    discordUrl: "https://discord.gg/towson-sga",
+    contactEmail: "sga@salisbury.edu",
+    instagram: "@salisbury_sga",
+    discordUrl: "https://discord.gg/salisbury-sga",
     dues: "$0 / Student Fee Funded",
     sgaBudget: 1240000,
     council: "SGA",
@@ -2495,23 +2495,23 @@ export const initialCampusClubs: CampusClub[] = [
   },
   {
     id: "org-tig",
-    name: "Towson Investment Group (TIG)",
+    name: "Salisbury Investment Group (TIG)",
     category: "Professional",
     membersCount: 175,
     isJoined: false,
     president: "Zachary Cohen (Senior, Finance)",
-    description: "Undergraduate student-managed investment fund actively managing $250,000 of TU endowment assets across equities, fixed income, and REITs.",
+    description: "Undergraduate student-managed investment fund actively managing $250,000 of SU endowment assets across equities, fixed income, and REITs.",
     logo: "📈",
     banner: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&auto=format&fit=crop&q=80",
-    nextEvent: "Stock Pitch & Sector Pitch Deck Reviews (Wednesday 7 PM @ Stephens Hall)",
+    nextEvent: "Stock Pitch & Sector Pitch Deck Reviews (Wednesday 7 PM @ Franklin P. Perdue Hall)",
     aboutText: "TIG provides rigorous training in financial modeling, DCF valuation, equity research, Bloomberg Terminal proficiency, and Wall Street interview preparation.",
     meetingTime: "Wednesdays @ 7:00 PM",
-    meetingLocation: "Stephens Hall Rm 212 (Trading Room)",
+    meetingLocation: "Franklin P. Perdue Hall Rm 212 (Trading Room)",
     foundedYear: 2005,
     tags: ["Finance", "Investing", "Wall Street", "Bloomberg", "Equity Research"],
-    contactEmail: "tig@towson.edu",
-    instagram: "@towsoninvestmentgroup",
-    discordUrl: "https://discord.gg/towson-tig",
+    contactEmail: "tig@salisbury.edu",
+    instagram: "@salisburyinvestmentgroup",
+    discordUrl: "https://discord.gg/salisbury-tig",
     dues: "$20 / Semester",
     sgaBudget: 9200,
     council: "Professional",
@@ -2537,14 +2537,14 @@ export const initialCampusClubs: CampusClub[] = [
     description: "The first intercollegiate Greek-letter fraternity established for African American Men. First of All, Servants of All, We Shall Transcend All.",
     logo: "🔱",
     banner: "https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=800&auto=format&fit=crop&q=80",
-    nextEvent: "Black & Gold Informational & Stroll Showcase (Friday 7 PM @ West Village)",
-    aboutText: "Chartered at Towson University on January 15, 1971, the Eta Zeta chapter develops leaders, promotes brotherhood and academic excellence, while providing service and advocacy for our communities.",
+    nextEvent: "Black & Gold Informational & Stroll Showcase (Friday 7 PM @ Sea Gull Square)",
+    aboutText: "Chartered at Salisbury University on January 15, 1971, the Eta Zeta chapter develops leaders, promotes brotherhood and academic excellence, while providing service and advocacy for our communities.",
     meetingTime: "Sundays @ 5:00 PM",
-    meetingLocation: "University Union Multipurpose Rm",
+    meetingLocation: "Guerrieri Student Union (GSU) Multipurpose Rm",
     foundedYear: 1971,
     tags: ["Greek Life", "NPHC", "Divine Nine", "Brotherhood", "Philanthropy", "Leadership"],
-    contactEmail: "etazeta1906@towson.edu",
-    instagram: "@towson_alphas",
+    contactEmail: "etazeta1906@salisbury.edu",
+    instagram: "@salisbury_alphas",
     discordUrl: "#",
     dues: "$120 / Semester",
     sgaBudget: 4200,
@@ -2573,13 +2573,13 @@ export const initialCampusClubs: CampusClub[] = [
     logo: "🐘",
     banner: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&auto=format&fit=crop&q=80",
     nextEvent: "Crimson & Cream Women in Leadership Panel (Thursday 6 PM @ Union)",
-    aboutText: "Chartered at Towson University in 1973, Lambda Beta focuses on Educational Development, Economic Development, International Awareness, Physical and Mental Health, and Political Awareness & Involvement.",
+    aboutText: "Chartered at Salisbury University in 1973, Lambda Beta focuses on Educational Development, Economic Development, International Awareness, Physical and Mental Health, and Political Awareness & Involvement.",
     meetingTime: "Sundays @ 6:30 PM",
-    meetingLocation: "University Union Rm 204",
+    meetingLocation: "Guerrieri Student Union (GSU) Rm 204",
     foundedYear: 1973,
     tags: ["Greek Life", "NPHC", "Divine Nine", "Sisterhood", "Public Service"],
-    contactEmail: "lambdabeta_dst@towson.edu",
-    instagram: "@tu_deltas",
+    contactEmail: "lambdabeta_dst@salisbury.edu",
+    instagram: "@su_deltas",
     discordUrl: "#",
     dues: "$125 / Semester",
     sgaBudget: 4500,
@@ -2603,18 +2603,18 @@ export const initialCampusClubs: CampusClub[] = [
     membersCount: 185,
     isJoined: false,
     president: "Mateo Hernandez (Junior, Business Administration)",
-    description: "Fostering cultural pride, community advocacy, and academic support for Latinx/Hispanic students and allies across Towson University.",
+    description: "Fostering cultural pride, community advocacy, and academic support for Latinx/Hispanic students and allies across Salisbury University.",
     logo: "💃🏽",
     banner: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&auto=format&fit=crop&q=80",
     nextEvent: "Noche Latina: Bailes, Comida & Música (Sat 8 PM @ Potomac Lounge)",
     aboutText: "LASO provides a home away from home with festive social gatherings, salsa dance workshops, DACA/Immigration advocacy forums, and Spanish/Portuguese study circles.",
     meetingTime: "Wednesdays @ 6:00 PM",
-    meetingLocation: "University Union Rm 314",
+    meetingLocation: "Guerrieri Student Union (GSU) Rm 314",
     foundedYear: 1988,
     tags: ["Cultural", "Latinx", "Dance", "Advocacy", "Bilingual", "Socials"],
-    contactEmail: "laso@towson.edu",
-    instagram: "@towson_laso",
-    discordUrl: "https://discord.gg/towson-laso",
+    contactEmail: "laso@salisbury.edu",
+    instagram: "@salisbury_laso",
+    discordUrl: "https://discord.gg/salisbury-laso",
     dues: "$10 / Year",
     sgaBudget: 5500,
     council: "SGA",
@@ -2632,7 +2632,7 @@ export const initialCampusClubs: CampusClub[] = [
   },
   {
     id: "org-esports",
-    name: "Towson Tigers Esports & Gaming",
+    name: "Salisbury Sea Gulls Esports & Gaming",
     category: "Sports",
     membersCount: 340,
     isJoined: true,
@@ -2640,15 +2640,15 @@ export const initialCampusClubs: CampusClub[] = [
     description: "Competitive collegiate esports teams in Valorant, League of Legends, Rocket League, Smash Bros, and casual gaming LAN parties.",
     logo: "🎮",
     banner: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80",
-    nextEvent: "Super Smash Bros Ultimate LAN Tournament (Friday 6 PM @ Burdick 115)",
-    aboutText: "We host competitive scrims in the TU Esports Lounge, compete in NACE Starleague, and hold open game nights with VR setups, consoles, and PC rigs.",
+    nextEvent: "Super Smash Bros Ultimate LAN Tournament (Friday 6 PM @ Maggs PAC Rec Center Rm 110)",
+    aboutText: "We host competitive scrims in the GSU Esports & Gaming Lounge, compete in NACE Starleague, and hold open game nights with VR setups, consoles, and PC rigs.",
     meetingTime: "Fridays @ 6:00 PM",
-    meetingLocation: "Burdick Hall Esports Arena & Lounge",
+    meetingLocation: "Maggs Physical Activities Center (PAC) Esports Arena & Lounge",
     foundedYear: 2017,
     tags: ["Esports", "Gaming", "Valorant", "Smash Bros", "LAN", "Twitch"],
-    contactEmail: "esports@towson.edu",
+    contactEmail: "esports@salisbury.edu",
     instagram: "@tuesports",
-    discordUrl: "https://discord.gg/towson-esports",
+    discordUrl: "https://discord.gg/salisbury-esports",
     dues: "$0 / Free",
     sgaBudget: 11000,
     council: "Club Sports",
@@ -2661,7 +2661,7 @@ export const initialCampusClubs: CampusClub[] = [
       { id: "p15", title: "Mid-Atlantic Collegiate Invitational", description: "Hosting 16 regional universities for a $5,000 prize pool Valorant championship.", status: "In Progress", lead: "Austin Reed" }
     ],
     documents: [
-      { id: "d13", name: "TU Esports Arena Rules & Hardware Guide.pdf", type: "PDF", size: "1.1 MB", url: "#" }
+      { id: "d13", name: "GSU Esports & Gaming Lounge Rules & Hardware Guide.pdf", type: "PDF", size: "1.1 MB", url: "#" }
     ],
   },
   {
@@ -2671,13 +2671,13 @@ export const initialCampusClubs: CampusClub[] = [
     membersCount: 65,
     isJoined: false,
     president: "Hannah Sterling (Editor-in-Chief)",
-    description: "The independent student news organization serving the Towson University community since 1921 with award-winning investigative journalism.",
+    description: "The independent student news organization serving the Salisbury University community since 1921 with award-winning investigative journalism.",
     logo: "📰",
     banner: "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&auto=format&fit=crop&q=80",
     nextEvent: "Pitch Meeting & Editorial Board (Mondays 4 PM @ Media Center)",
     aboutText: "The Towerlight is student-run and editorially independent, reporting on campus politics, arts, culture, sports, faculty affairs, and breaking news.",
     meetingTime: "Mondays @ 4:00 PM",
-    meetingLocation: "University Union Media Suite Rm 208",
+    meetingLocation: "Guerrieri Student Union (GSU) Media Suite Rm 208",
     foundedYear: 1921,
     tags: ["Journalism", "Media", "Photography", "Podcasting", "Publishing"],
     contactEmail: "editor@thetowerlight.com",
@@ -2708,15 +2708,15 @@ export const initialCampusClubs: CampusClub[] = [
     description: "Preparing students for medical school (MD/DO), dental, PA, pharmacy, and nursing programs through MCAT study pods and shadowing.",
     logo: "🩺",
     banner: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&auto=format&fit=crop&q=80",
-    nextEvent: "Johns Hopkins & UMD Med Student Panel (Wednesday 6 PM @ Smith Hall)",
+    nextEvent: "Johns Hopkins & UMD Med Student Panel (Wednesday 6 PM @ Devilbiss Hall)",
     aboutText: "We connect aspiring healthcare professionals with physician shadowing rotations at GBMC and St. Joseph Medical Center, suture clinics, and CPR certifications.",
     meetingTime: "Bi-Weekly Wednesdays @ 6:00 PM",
-    meetingLocation: "Smith Hall Rm 356",
+    meetingLocation: "Devilbiss Hall Rm 356",
     foundedYear: 1982,
     tags: ["Pre-Med", "Healthcare", "MCAT", "Shadowing", "Biology", "Clinical"],
-    contactEmail: "premed@towson.edu",
-    instagram: "@towson_premed",
-    discordUrl: "https://discord.gg/towson-premed",
+    contactEmail: "premed@salisbury.edu",
+    instagram: "@salisbury_premed",
+    discordUrl: "https://discord.gg/salisbury-premed",
     dues: "$15 / Year",
     sgaBudget: 6200,
     council: "Academic Senate",
@@ -2726,7 +2726,7 @@ export const initialCampusClubs: CampusClub[] = [
       { role: "Clinical Shadowing Coordinator", name: "Brian Kelly", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80" }
     ],
     projects: [
-      { id: "p17", title: "Spring Free Clinic Volunteering in West Baltimore", description: "Mobile vitals screening and preventative health education.", status: "In Progress", lead: "Ananya Sharma" }
+      { id: "p17", title: "Spring Free Clinic Volunteering in Salisbury & Wicomico County", description: "Mobile vitals screening and preventative health education.", status: "In Progress", lead: "Ananya Sharma" }
     ],
     documents: [
       { id: "d15", name: "Medical School Application Timeline & Checklist.pdf", type: "PDF", size: "1.6 MB", url: "#" }
@@ -2739,17 +2739,17 @@ export const initialCampusClubs: CampusClub[] = [
     membersCount: 90,
     isJoined: false,
     president: "Brianna Jenkins (Senior, Communications)",
-    description: "The premier student-run programming board responsible for major campus concerts, Homecoming, Tigerfest, comedians, and outdoor movies.",
+    description: "The premier student-run programming board responsible for major campus concerts, Homecoming, Sea Gullfest, comedians, and outdoor movies.",
     logo: "🎪",
     banner: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&auto=format&fit=crop&q=80",
-    nextEvent: "Tigerfest Spring Music Festival Artist Reveal (Friday 12 PM @ Beach)",
+    nextEvent: "Sea Gullfest Spring Music Festival Artist Reveal (Friday 12 PM @ Beach)",
     aboutText: "CAB creates unforgettable college memories by programming over 50 campus-wide concerts, comedy nights, novelties, and spirit traditions each year.",
     meetingTime: "Wednesdays @ 5:00 PM",
-    meetingLocation: "University Union CAB Suite",
+    meetingLocation: "Guerrieri Student Union (GSU) CAB Suite",
     foundedYear: 1968,
-    tags: ["Events", "Concerts", "Tigerfest", "Homecoming", "Entertainment"],
-    contactEmail: "cab@towson.edu",
-    instagram: "@towsoncab",
+    tags: ["Events", "Concerts", "Sea Gullfest", "Homecoming", "Entertainment"],
+    contactEmail: "cab@salisbury.edu",
+    instagram: "@salisburycab",
     discordUrl: "#",
     dues: "$0 / Student Fee Funded",
     sgaBudget: 380000,
@@ -2760,7 +2760,7 @@ export const initialCampusClubs: CampusClub[] = [
       { role: "Concerts Chair", name: "Trevor Nelson", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80" }
     ],
     projects: [
-      { id: "p18", title: "Tigerfest 2026 Headliner Production", description: "Planning outdoor stadium stage, security, and food truck concourse for 6,000 attendees.", status: "In Progress", lead: "Brianna Jenkins" }
+      { id: "p18", title: "Sea Gullfest 2026 Headliner Production", description: "Planning outdoor stadium stage, security, and food truck concourse for 6,000 attendees.", status: "In Progress", lead: "Brianna Jenkins" }
     ],
     documents: [
       { id: "d16", name: "CAB Event Planning Playbook 2026.pdf", type: "PDF", size: "2.4 MB", url: "#" }
@@ -2768,7 +2768,7 @@ export const initialCampusClubs: CampusClub[] = [
   },
   {
     id: "org-ama",
-    name: "American Marketing Association (AMA Towson)",
+    name: "American Marketing Association (AMA Salisbury)",
     category: "Professional",
     membersCount: 120,
     isJoined: false,
@@ -2777,13 +2777,13 @@ export const initialCampusClubs: CampusClub[] = [
     logo: "🎯",
     banner: "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&auto=format&fit=crop&q=80",
     nextEvent: "Digital Ad Agency Field Trip to Under Armour HQ (Thursday 1 PM)",
-    aboutText: "AMA Towson is an affiliated collegiate chapter of the American Marketing Association providing certified training in Google Analytics, HubSpot, and SEO.",
+    aboutText: "AMA Salisbury is an affiliated collegiate chapter of the American Marketing Association providing certified training in Google Analytics, HubSpot, and SEO.",
     meetingTime: "Thursdays @ 5:00 PM",
-    meetingLocation: "Stephens Hall Rm 110",
+    meetingLocation: "Franklin P. Perdue Hall Rm 110",
     foundedYear: 1978,
     tags: ["Marketing", "Branding", "Social Media", "Advertising", "SEO"],
-    contactEmail: "amatowson@gmail.com",
-    instagram: "@amatowson",
+    contactEmail: "amasalisbury@gmail.com",
+    instagram: "@amasalisbury",
     discordUrl: "#",
     dues: "$30 / Year (National AMA Membership)",
     sgaBudget: 5800,
@@ -2794,7 +2794,7 @@ export const initialCampusClubs: CampusClub[] = [
       { role: "Agency Director", name: "Kayla Higgins", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" }
     ],
     projects: [
-      { id: "p19", title: "Towson Local Business Re-Branding Challenge", description: "Student marketing teams designing digital advertising packages for 5 local restaurants.", status: "In Progress", lead: "Lucas Meyers" }
+      { id: "p19", title: "Salisbury Local Business Re-Branding Challenge", description: "Student marketing teams designing digital advertising packages for 5 local restaurants.", status: "In Progress", lead: "Lucas Meyers" }
     ],
     documents: [
       { id: "d17", name: "AMA Collegiate Case Competition Brief.pdf", type: "PDF", size: "1.7 MB", url: "#" }
@@ -2802,23 +2802,23 @@ export const initialCampusClubs: CampusClub[] = [
   },
   {
     id: "org-glen",
-    name: "Environmental Action & Glen Arboretum Guardians",
+    name: "Environmental Action & Wicomico River Greenway Guardians",
     category: "Volunteer",
     membersCount: 130,
     isJoined: true,
     president: "Cora Sterling (Junior, Environmental Science)",
-    description: "Protecting Towson's 12-acre Glen Arboretum forest ecosystem, native species restoration, and campus sustainability initiatives.",
+    description: "Protecting Salisbury's 12-acre Wicomico River Greenway forest ecosystem, native species restoration, and campus sustainability initiatives.",
     logo: "🌲",
     banner: "https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&auto=format&fit=crop&q=80",
-    nextEvent: "Glen Trail Restoration & Native Tree Planting (Saturday 10 AM @ Glen Pavilion)",
-    aboutText: "We maintain nature trails, eliminate invasive English ivy, monitor Towson Run stream water quality, and champion university zero-waste compost goals.",
+    nextEvent: "East Campus Arboretum Restoration & Native Tree Planting (Saturday 10 AM @ East Campus Arboretum Pavilion)",
+    aboutText: "We maintain nature trails, eliminate invasive English ivy, monitor Salisbury Run stream water quality, and champion university zero-waste compost goals.",
     meetingTime: "Bi-Weekly Saturdays @ 10:00 AM",
-    meetingLocation: "Glen Arboretum Forest Pavilion",
+    meetingLocation: "Wicomico River Greenway Forest Pavilion",
     foundedYear: 2001,
     tags: ["Environment", "Sustainability", "Forestry", "Conservation", "Volunteer"],
-    contactEmail: "environment@towson.edu",
-    instagram: "@towson_green",
-    discordUrl: "https://discord.gg/towson-green",
+    contactEmail: "environment@salisbury.edu",
+    instagram: "@salisbury_green",
+    discordUrl: "https://discord.gg/salisbury-green",
     dues: "$0 / Free",
     sgaBudget: 4900,
     council: "SGA",
@@ -2828,10 +2828,10 @@ export const initialCampusClubs: CampusClub[] = [
       { role: "Trail Operations Lead", name: "Darius Miller", avatar: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80" }
     ],
     projects: [
-      { id: "p20", title: "Towson Run Native Wetland Buffer Zone", description: "Planting 250 native ferns and red maple saplings to prevent stormwater runoff erosion.", status: "In Progress", lead: "Cora Sterling" }
+      { id: "p20", title: "Salisbury Run Native Wetland Buffer Zone", description: "Planting 250 native ferns and red maple saplings to prevent stormwater runoff erosion.", status: "In Progress", lead: "Cora Sterling" }
     ],
     documents: [
-      { id: "d18", name: "Glen Arboretum Flora & Fauna Field Guide.pdf", type: "PDF", size: "3.9 MB", url: "#" }
+      { id: "d18", name: "Wicomico River Greenway Flora & Fauna Field Guide.pdf", type: "PDF", size: "3.9 MB", url: "#" }
     ],
   },
   {
@@ -2844,14 +2844,14 @@ export const initialCampusClubs: CampusClub[] = [
     description: "The oldest and largest co-ed professional business fraternity recognized worldwide for developing principled business leaders.",
     logo: "💼",
     banner: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&auto=format&fit=crop&q=80",
-    nextEvent: "Spring Professional Rush & Case Competition (Wednesday 7 PM @ Stephens)",
+    nextEvent: "Spring Professional Rush & Case Competition (Wednesday 7 PM @ Holloway Hall)",
     aboutText: "Open to all majors, AKPsi provides professional resume workshops, corporate networking trips to NYC and DC, alumni mentorship, and philanthropic service.",
     meetingTime: "Sundays @ 7:00 PM",
-    meetingLocation: "Stephens Hall Rm 310",
+    meetingLocation: "Franklin P. Perdue Hall Rm 310",
     foundedYear: 2006,
     tags: ["Greek Life", "Business", "Co-Ed", "Professional", "Consulting", "Wall Street"],
     contactEmail: "akpsi.omegakappa@gmail.com",
-    instagram: "@towson_akpsi",
+    instagram: "@salisbury_akpsi",
     discordUrl: "#",
     dues: "$95 / Semester",
     sgaBudget: 5100,
@@ -2874,13 +2874,13 @@ export const initialCampusClubs: CampusClub[] = [
 export const initialVolunteerActivities: VolunteerActivity[] = [
   {
     id: "vol-1",
-    title: "Campus Food Drive & Baltimore Pantry Distribution",
+    title: "Campus Food Drive & Wicomico Community Pantry Distribution",
     category: "Food Drive",
-    organizer: "Towson Student Community Service Council & FoodShare",
+    organizer: "Salisbury Student Community Service Council & FoodShare",
     organizerAvatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
-    location: "University Union North Loading Dock & Food Hub",
+    location: "Guerrieri Student Union (GSU) North Loading Dock & Food Hub",
     date: "Saturday, Mar 08 • 9:00 AM - 2:00 PM",
-    description: "Organizing and packaging 3,000 lbs of fresh produce and nutritious shelf-stable meals for food-insecure commuter students and Baltimore community pantries.",
+    description: "Organizing and packaging 3,000 lbs of fresh produce and nutritious shelf-stable meals for food-insecure commuter students and Eastern Shore community pantries.",
     progressPercent: 68,
     goalMetric: "32 Volunteers",
     currentMetric: "22 Registered",
@@ -2900,13 +2900,13 @@ export const initialVolunteerActivities: VolunteerActivity[] = [
   },
   {
     id: "vol-2",
-    title: "Glen Arboretum Native Species Restoration & Trail Cleanup",
+    title: "Wicomico River Greenway Native Species Restoration & Trail Cleanup",
     category: "Campus Cleanup",
-    organizer: "TU Environmental Action Club & Glen Arboretum Board",
+    organizer: "SU Environmental Alliance & Wicomico River Greenway Board",
     organizerAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-    location: "Glen Arboretum Trailhead (Near Hawkins Hall)",
+    location: "Wicomico River Greenway Trailhead (Near Fulton Hall)",
     date: "Sunday, Mar 09 • 10:00 AM - 1:30 PM",
-    description: "Removing invasive English ivy and multiflora rose while planting 120 Maryland native saplings across the 12-acre Glen Arboretum forest sanctuary.",
+    description: "Removing invasive English ivy and multiflora rose while planting 120 Maryland native saplings across the 12-acre Wicomico River Greenway forest sanctuary.",
     progressPercent: 80,
     goalMetric: "25 Volunteers",
     currentMetric: "20 Registered",
@@ -2914,7 +2914,7 @@ export const initialVolunteerActivities: VolunteerActivity[] = [
       "Identify and eradicate invasive vine patches",
       "Dig planting beds and mulch native oak saplings",
       "Reinforce wood trail borders and erosion swales",
-      "Collect and catalog recyclable litter along Glen Creek",
+      "Collect and catalog recyclable litter along Wicomico Creek",
     ],
     status: "Recruiting",
     roles: [
@@ -2925,11 +2925,11 @@ export const initialVolunteerActivities: VolunteerActivity[] = [
   },
   {
     id: "vol-3",
-    title: "Baltimore Youth Cyber & STEM Coding Weekend Lab",
+    title: "Eastern Shore Youth Cyber & STEM Coding Weekend Lab",
     category: "Community Service",
-    organizer: "Towson Cybersecurity Club & Baltimore City Schools",
+    organizer: "Salisbury Cybersecurity Club & Wicomico County Public Schools",
     organizerAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
-    location: "Science Complex Computer Lab SC-314",
+    location: "Richard A. Henson Science Hall Computer Lab SC-314",
     date: "Saturday, Mar 15 • 10:00 AM - 2:00 PM",
     description: "1-on-1 hands-on mentoring for local middle & high school students learning Python programming, password defense, and autonomous robotics fundamentals.",
     progressPercent: 55,
@@ -2952,9 +2952,9 @@ export const initialVolunteerActivities: VolunteerActivity[] = [
     id: "vol-4",
     title: "Maryland SPCA & Shelter Animal Companion Enrichment",
     category: "Community Service",
-    organizer: "Towson Pre-Veterinary Society & MD SPCA",
+    organizer: "Salisbury Pre-Veterinary Society & MD SPCA",
     organizerAvatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80",
-    location: "Kenilworth Rescue Center & TU Campus Quad",
+    location: "Kenilworth Rescue Center & SU Campus Quad",
     date: "Saturday, Mar 22 • 11:00 AM - 3:30 PM",
     description: "Assisting rescue shelter staff with canine socialization, outdoor walking, grooming, feline stimulation toys, and public adoption matching.",
     progressPercent: 90,
@@ -2977,9 +2977,9 @@ export const initialVolunteerActivities: VolunteerActivity[] = [
     id: "vol-5",
     title: "Senior Living Digital Literacy & Smartphone Workshop",
     category: "Community Service",
-    organizer: "SGA Student Outreach & Towson Senior Center",
+    organizer: "SGA Student Outreach & Salisbury Senior Center",
     organizerAvatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
-    location: "Towson Senior Center (Washington Ave)",
+    location: "Salisbury Senior Center (Washington Ave)",
     date: "Wednesday, Mar 12 • 1:30 PM - 4:30 PM",
     description: "Empowering elderly community members with modern smartphone navigation, telehealth portal access, spam call filtering, and video calling family.",
     progressPercent: 75,
@@ -3001,9 +3001,9 @@ export const initialVolunteerActivities: VolunteerActivity[] = [
     id: "vol-6",
     title: "American Red Cross Blood & Bone Marrow Donor Drive",
     category: "Fundraiser",
-    organizer: "TU Pre-Med Association & Red Cross Greater Chesapeake",
+    organizer: "SU Pre-Med Association & Red Cross Greater Chesapeake",
     organizerAvatar: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&auto=format&fit=crop&q=80",
-    location: "Burdick Hall Multipurpose Activity Gym",
+    location: "Maggs Physical Activities Center (PAC) Multipurpose Activity Gym",
     date: "Thursday, Mar 20 • 9:00 AM - 4:00 PM",
     description: "Coordinating donor intake, hydration/recovery hospitality, and swab testing for the National Be The Match Bone Marrow Registry.",
     progressPercent: 60,
@@ -3023,18 +3023,18 @@ export const initialVolunteerActivities: VolunteerActivity[] = [
   },
   {
     id: "vol-7",
-    title: "Towson Community Clean-Up & York Road Corridor Spruce",
+    title: "Salisbury Community Clean-Up & Bateman Street Corridor Spruce",
     category: "Campus Cleanup",
-    organizer: "Towson Town & Gown Student Civic Coalition",
+    organizer: "Salisbury Town & Gown Student Civic Coalition",
     organizerAvatar: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80",
-    location: "South Campus Gateway & York Road Sidewalks",
+    location: "South Campus Gateway & Bateman Street Sidewalks",
     date: "Sunday, Mar 16 • 9:30 AM - 12:30 PM",
-    description: "Beautifying pedestrian avenues connecting campus to Downtown Towson with street sweeping, flower bed mulching, and graffiti removal.",
+    description: "Beautifying pedestrian avenues connecting campus to Downtown Salisbury with street sweeping, flower bed mulching, and graffiti removal.",
     progressPercent: 85,
     goalMetric: "30 Volunteers",
     currentMetric: "26 Registered",
     tasks: [
-      "Sweep and pick up debris along York Rd pedestrian paths",
+      "Sweep and pick up debris along Camden Ave & Route 13 pedestrian paths",
       "Mulch roadside tree wells and replant native pansies",
       "Clean safety signage and blue light surrounds",
       "Sort glass, aluminum, and compostable organics",
@@ -3047,11 +3047,11 @@ export const initialVolunteerActivities: VolunteerActivity[] = [
   },
   {
     id: "vol-8",
-    title: "Reading Partners Baltimore Elementary Literacy Coaching",
+    title: "Reading Partners Wicomico Elementary Literacy Coaching",
     category: "Community Service",
-    organizer: "Towson College of Education Outreach",
+    organizer: "Salisbury College of Education Outreach",
     organizerAvatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80",
-    location: "Towson Elementary Partner School (Free Shuttle Provided)",
+    location: "Salisbury Elementary Partner School (Free Shuttle Provided)",
     date: "Friday, Mar 14 • 1:00 PM - 3:30 PM",
     description: "Providing structured 1-on-1 phonics and reading comprehension tutoring to elementary students falling below grade-level literacy.",
     progressPercent: 70,
@@ -3078,7 +3078,7 @@ export const initialResearchProjects: ResearchOpportunity[] = [
     professor: "Dr. Catherine Hayes",
     professorAvatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
     department: "Department of Computer & Information Sciences",
-    labName: "Autonomous Security & Systems Lab (Science Complex Rm 314)",
+    labName: "Autonomous Security & Systems Lab (Richard A. Henson Science Hall Rm 314)",
     openingsGrad: 2,
     openingsUndergrad: 1,
     requiredSkills: ["Python", "Machine Learning", "Cybersecurity", "Docker"],
@@ -3093,12 +3093,12 @@ export const initialResearchProjects: ResearchOpportunity[] = [
 export const initialCampusJobs: CampusJob[] = [
   {
     id: "job-1",
-    title: "Cook Library Student Technology Assistant",
-    department: "Albert S. Cook Library · Tech Desk",
+    title: "Patricia R. Guerrieri Academic Commons (PAGAC) Student Technology Assistant",
+    department: "Albert S. Patricia R. Guerrieri Academic Commons (PAGAC) · Tech Desk",
     type: "Student Assistant",
     payRate: "$16.50 / hr",
     hoursPerWeek: "12-15 hrs/week",
-    location: "Cook Library 1st Floor",
+    location: "Patricia R. Guerrieri Academic Commons (PAGAC) 1st Floor",
     description: "Assist students and faculty with laptop checkout, dual display setup, printing, and general tech troubleshooting.",
     deadline: "Mar 10, 2026",
     hasApplied: false,
@@ -3112,7 +3112,7 @@ export const initialStudyPods: CourseStudyPod[] = [
     courseCode: "COSC 421",
     courseName: "Operating Systems",
     topic: "Virtual Memory & Paging Exam Prep",
-    roomLocation: "Albert S. Cook Library 2nd Floor, Pod B",
+    roomLocation: "Albert S. Patricia R. Guerrieri Academic Commons (PAGAC) 2nd Floor, Pod B",
     meetingTime: "Today at 4:30 PM",
     maxMembers: 6,
     currentMembers: 4,
@@ -3132,7 +3132,7 @@ export const initialCampusCourses: CampusCourse[] = [
     imageUrl: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=600&auto=format&fit=crop&q=80",
     credits: 4.0,
     grade: "A (94%)",
-    room: "Science Complex 204",
+    room: "Richard A. Henson Science Hall 204",
     schedule: "Mon/Wed 10:00 AM - 11:30 AM",
     studentsEnrolled: 342,
     studyGroupsCount: 12,
@@ -3157,7 +3157,7 @@ export const initialCampusCourses: CampusCourse[] = [
     imageUrl: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=600&auto=format&fit=crop&q=80",
     credits: 3.0,
     grade: "A (96%)",
-    room: "7800 York Road Rm 314",
+    room: "East Campus Complex Rm 314",
     schedule: "Tue/Thu 2:00 PM - 3:30 PM",
     studentsEnrolled: 185,
     studyGroupsCount: 8,
@@ -3181,7 +3181,7 @@ export const initialCampusCourses: CampusCourse[] = [
     imageUrl: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&auto=format&fit=crop&q=80",
     credits: 3.0,
     grade: "A- (91%)",
-    room: "Science Complex 118",
+    room: "Richard A. Henson Science Hall 118",
     schedule: "Friday 1:00 PM - 3:30 PM",
     studentsEnrolled: 260,
     studyGroupsCount: 9,
@@ -3205,7 +3205,7 @@ export const initialCampusCourses: CampusCourse[] = [
     imageUrl: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=600&auto=format&fit=crop&q=80",
     credits: 4.0,
     grade: "B+ (88%)",
-    room: "Smith Hall Rm 402",
+    room: "Devilbiss Hall Rm 402",
     schedule: "Tue/Thu 11:00 AM - 12:30 PM",
     studentsEnrolled: 410,
     studyGroupsCount: 15,
@@ -3227,14 +3227,14 @@ export const initialCampusMedia: CampusMediaItem[] = [
   {
     id: "med-1",
     title: "Keynote Lecture: Zero-Day Loops & Autonomous Cyber Defense",
-    channelName: "Towson CIS Department",
+    channelName: "Salisbury CIS Department",
     channelLogo: "🛡️",
     category: "Guest Lectures",
     duration: "48:20",
     viewsCount: 1420,
     likesCount: 180,
     thumbnailUrl: "https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=600&auto=format&fit=crop&q=80",
-    description: "Dr. Marcus Vance (DARPA Lab) presents autonomous loop defense systems, live containment architectures, and AI vulnerability analysis at the Science Complex.",
+    description: "Dr. Marcus Vance (DARPA Lab) presents autonomous loop defense systems, live containment architectures, and AI vulnerability analysis at the Richard A. Henson Science Hall.",
     publishedDate: "2 days ago",
   },
 ];
@@ -3244,14 +3244,14 @@ export const initialCampusPolls: CampusPoll[] = [
   {
     id: "poll-1",
     question: "Where should Student Government allocate the $10,000 spring surplus budget?",
-    organizer: "Towson Student Government Association (SGA)",
+    organizer: "Salisbury Student Government Association (SGA)",
     scope: "Campus Wide",
     totalVotes: 842,
     userVotedOptionId: "opt-1",
     options: [
       { id: "opt-1", text: "A. Student Events & Cultural Festivals @ Union", votes: 380 },
-      { id: "opt-2", text: "B. Burdick Recreation & Climbing Wall Upgrades", votes: 190 },
-      { id: "opt-3", text: "C. Cook Library Quiet Pod Tech Displays", votes: 172 },
+      { id: "opt-2", text: "B. Maggs PAC Rec Center & Fitness Suites Upgrades", votes: 190 },
+      { id: "opt-3", text: "C. Patricia R. Guerrieri Academic Commons (PAGAC) Quiet Pod Tech Displays", votes: 172 },
       { id: "opt-4", text: "D. Student Organization Travel Pool", votes: 100 },
     ],
   },
@@ -3277,9 +3277,9 @@ export const initialChatMessages: ChatMessage[] = [
   {
     id: "1",
     conversationId: "#general-announcements",
-    sender: "Towson Student Affairs",
+    sender: "Salisbury Student Affairs",
     avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
-    text: "📢 Reminder: Spring Career Fair at SECU Arena registration closes Friday at 5:00 PM. 120+ employers attending.",
+    text: "📢 Reminder: Spring Career Fair at Sea Gull Stadium registration closes Friday at 5:00 PM. 120+ employers attending.",
     time: "2:00 PM",
     isMe: false,
     createdAt: new Date().toISOString(),
@@ -3287,7 +3287,7 @@ export const initialChatMessages: ChatMessage[] = [
 ];
 
 // ─────────────────────────────────────────────────────────────
-// 31. TUHOUSING DOMAIN MODELS & SEED DATASETS
+// 31. SUHOUSING DOMAIN MODELS & SEED DATASETS
 // ─────────────────────────────────────────────────────────────
 
 export interface HousingListing {
@@ -3376,10 +3376,10 @@ export interface HousingMaintenanceTicket {
 export const initialHousingListings: HousingListing[] = [
   {
     id: "hse-1",
-    title: "University Village Towson — 2BR Renovated Suite",
+    title: "University Village Salisbury — 2BR Renovated Suite",
     propertyType: "Apartment",
-    address: "201 E Joppa Rd, Towson, MD 21286",
-    neighborhood: "Towson Town Center District",
+    address: "201 E Joppa Rd, Salisbury, MD 21286",
+    neighborhood: "Salisbury Town Center District",
     monthlyRent: 925,
     estimatedUtilities: 85,
     estimatedTotalMonthly: 1010,
@@ -3391,7 +3391,7 @@ export const initialHousingListings: HousingListing[] = [
     bikeTimeMinutes: 5,
     driveTimeMinutes: 3,
     transitTimeMinutes: 7,
-    shuttleRouteName: "Tiger Bus Gold Route #14",
+    shuttleRouteName: "Sea Gull Bus Gold Route #14",
     nextShuttleEtaMinutes: 4,
     isVerifiedLandlord: true,
     trustScorePercent: 98,
@@ -3407,18 +3407,18 @@ export const initialHousingListings: HousingListing[] = [
     amenities: ["Furnished", "In-Unit Washer/Dryer", "High-Speed Wi-Fi", "Pet Friendly", "Fitness Center", "Gated Parking"],
     availableMoveInDate: "August 15, 2026",
     leaseDuration: "12 Months (Student Lease)",
-    landlordName: "Towson Village Residential Mgmt",
+    landlordName: "Salisbury Village Residential Mgmt",
     landlordContact: "(410) 825-4490",
     roomsAvailable: 1,
     mapCoords: { x: 55, y: 22 },
     isSaved: true,
-    description: "Modern student apartment with individual leases, private bathroom per room, study lounge, and direct stop for the Towson Gold Shuttle.",
+    description: "Modern student apartment with individual leases, private bathroom per room, study lounge, and direct stop for the Salisbury Gold Shuttle.",
   },
   {
     id: "hse-2",
-    title: "The Quarters at Towson Town Center — 4BR Shared House",
+    title: "The Quarters at Salisbury Town Center — 4BR Shared House",
     propertyType: "Shared House",
-    address: "8600 LaSalle Rd, Towson, MD 21286",
+    address: "8600 LaSalle Rd, Salisbury, MD 21286",
     neighborhood: "LaSalle Academic Corridor",
     monthlyRent: 780,
     estimatedUtilities: 60,
@@ -3431,7 +3431,7 @@ export const initialHousingListings: HousingListing[] = [
     bikeTimeMinutes: 7,
     driveTimeMinutes: 4,
     transitTimeMinutes: 9,
-    shuttleRouteName: "TU Express Shuttle #8",
+    shuttleRouteName: "Sea Gull Red Express #4",
     nextShuttleEtaMinutes: 8,
     isVerifiedLandlord: true,
     trustScorePercent: 95,
@@ -3445,19 +3445,19 @@ export const initialHousingListings: HousingListing[] = [
     amenities: ["Free Parking (4 Cars)", "Backyard & BBQ", "Dishwasher", "Central AC", "Storage Shed"],
     availableMoveInDate: "July 1, 2026",
     leaseDuration: "12 Months",
-    landlordName: "David Sterling (Verified TU Alum Owner)",
+    landlordName: "David Sterling (Verified Verified SU Alum Owner)",
     landlordContact: "(410) 555-0192",
     roomsAvailable: 2,
     mapCoords: { x: 72, y: 18 },
     isSaved: false,
-    description: "Spacious colonial student house with hard-wood floors, high-speed fiber internet, and quiet residential neighborhood 1 mile from Cook Library.",
+    description: "Spacious colonial student house with hard-wood floors, high-speed fiber internet, and quiet residential neighborhood 1 mile from Patricia R. Guerrieri Academic Commons (PAGAC).",
   },
   {
     id: "hse-3",
-    title: "Altus Towson Row — Modern Studio Suite",
+    title: "Altus Salisbury Row — Modern Studio Suite",
     propertyType: "Apartment",
-    address: "109 E Chesapeake Ave, Towson, MD 21286",
-    neighborhood: "Downtown Towson Hub",
+    address: "109 E Chesapeake Ave, Salisbury, MD 21286",
+    neighborhood: "Downtown Salisbury Hub",
     monthlyRent: 1150,
     estimatedUtilities: 0,
     estimatedTotalMonthly: 1150,
@@ -3469,7 +3469,7 @@ export const initialHousingListings: HousingListing[] = [
     bikeTimeMinutes: 3,
     driveTimeMinutes: 2,
     transitTimeMinutes: 5,
-    shuttleRouteName: "Tiger Bus Downtown Line",
+    shuttleRouteName: "Sea Gull Bus Downtown Line",
     nextShuttleEtaMinutes: 2,
     isVerifiedLandlord: true,
     trustScorePercent: 99,
@@ -3483,12 +3483,12 @@ export const initialHousingListings: HousingListing[] = [
     amenities: ["All Utilities Included", "Rooftop Pool & Deck", "24/7 Study Lounge", "Amazon Hub Lockers", "Bicycle Storage"],
     availableMoveInDate: "August 1, 2026",
     leaseDuration: "10 or 12 Months",
-    landlordName: "Towson Row Properties",
+    landlordName: "Salisbury Row Properties",
     landlordContact: "(410) 704-8800",
     roomsAvailable: 1,
     mapCoords: { x: 42, y: 15 },
     isSaved: false,
-    description: "Luxury off-campus student high-rise right above Whole Foods and Target in Downtown Towson. 10-minute walk to Freedom Square.",
+    description: "Luxury off-campus student high-rise right above Whole Foods and Target in Downtown Salisbury. 10-minute walk to Red Square.",
   },
 ];
 
@@ -3508,8 +3508,8 @@ export const initialRoommateProfiles: RoommateProfile[] = [
     petPreference: "Loves Dogs/Cats",
     compatibilityPercent: 94,
     compatibilityTags: ["✓ Same Budget Range", "✓ Similar CS Major Schedule", "✓ Shared Cleanliness Priority"],
-    bio: "CS sophomore looking for 1 or 2 roommates for a 2-4BR apartment near Towson Town Center. Quiet during weeknights, into gaming and gym on weekends.",
-    preferredLocations: ["University Village", "Towson Row", "The Quarters"],
+    bio: "CS sophomore looking for 1 or 2 roommates for a 2-4BR apartment near Salisbury Town Center. Quiet during weeknights, into gaming and gym on weekends.",
+    preferredLocations: ["University Village", "Salisbury Row", "The Quarters"],
     isConnected: false,
   },
   {
@@ -3526,9 +3526,9 @@ export const initialRoommateProfiles: RoommateProfile[] = [
     studyHabits: "Library Person",
     petPreference: "No Pets Allowed",
     compatibilityPercent: 88,
-    compatibilityTags: ["✓ Match on Quiet Hours", "✓ Target Move-in August", "✓ Verified TU Student"],
-    bio: "TU Nursing junior with clinical rotations. Need a respectful, peaceful place to study and recharge.",
-    preferredLocations: ["Altus Towson Row", "Cardiff Hall Apts"],
+    compatibilityTags: ["✓ Match on Quiet Hours", "✓ Target Move-in August", "✓ Verified SU Student"],
+    bio: "SU Nursing junior with clinical rotations. Need a respectful, peaceful place to study and recharge.",
+    preferredLocations: ["Altus Salisbury Row", "Cardiff Hall Apts"],
     isConnected: false,
   },
 ];
@@ -3537,13 +3537,13 @@ export const initialHousingTours: HousingTourBooking[] = [
   {
     id: "tour-1",
     propertyId: "hse-1",
-    propertyTitle: "University Village Towson — 2BR Renovated Suite",
-    propertyAddress: "201 E Joppa Rd, Towson, MD",
+    propertyTitle: "University Village Salisbury — 2BR Renovated Suite",
+    propertyAddress: "201 E Joppa Rd, Salisbury, MD",
     tourDate: "Saturday, Mar 08, 2026",
     tourTimeSlot: "11:00 AM",
     tourType: "In-Person Guided Tour",
     status: "Confirmed",
-    landlordName: "Towson Village Residential Mgmt",
+    landlordName: "Salisbury Village Residential Mgmt",
     contactNumber: "(410) 825-4490",
   },
 ];
@@ -3564,9 +3564,9 @@ export const initialHousingMaintenanceTickets: HousingMaintenanceTicket[] = [
 ];
 
 // ─────────────────────────────────────────────────────────────
-// 32. DIGITAL TIGER CARD WALLET & DINING DOLLARS
+// 32. DIGITAL GULLCARD WALLET & DINING DOLLARS
 // ─────────────────────────────────────────────────────────────
-export interface TigerWalletPass {
+export interface GullCardPass {
   studentName: string;
   studentId: string;
   major: string;
@@ -3581,7 +3581,7 @@ export interface TigerWalletPass {
   lastUsedLocation: string;
 }
 
-export const initialTigerWalletPass: TigerWalletPass = {
+export const initialGullCardPass: GullCardPass = {
   studentName: "Kwesi Asiedu",
   studentId: "#8492-KWESI",
   major: "Information Technology",
@@ -3590,10 +3590,10 @@ export const initialTigerWalletPass: TigerWalletPass = {
   diningDollarsBalance: 284.50,
   retailPointsBalance: 120.00,
   printQuotaBalance: 42.50,
-  dormAccessZone: "West Village • Marshall Hall Suite 304",
+  dormAccessZone: "Sea Gull Square • Marshall Hall Suite 304",
   barcodeNumber: "2849201948201",
   lastUsedTime: "Today at 12:45 PM",
-  lastUsedLocation: "Newell Dining Hall (1 Swipe)",
+  lastUsedLocation: "Sea Gull Square Grill (1 Swipe)",
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -3613,7 +3613,7 @@ export interface LiveFacilityDensity {
 export const initialFacilityDensities: LiveFacilityDensity[] = [
   {
     id: "fac-1",
-    facilityName: "Albert S. Cook Library",
+    facilityName: "Albert S. Patricia R. Guerrieri Academic Commons (PAGAC)",
     zoneName: "Floor 2 & 3 Quiet Pods",
     occupancyPercent: 38,
     statusLevel: "Quiet",
@@ -3623,7 +3623,7 @@ export const initialFacilityDensities: LiveFacilityDensity[] = [
   },
   {
     id: "fac-2",
-    facilityName: "Burdick Hall Fitness Center",
+    facilityName: "Maggs Physical Activities Center (PAC) Fitness Center",
     zoneName: "Cardio & Free Weight Deck",
     occupancyPercent: 74,
     statusLevel: "Busy",
@@ -3633,8 +3633,8 @@ export const initialFacilityDensities: LiveFacilityDensity[] = [
   },
   {
     id: "fac-3",
-    facilityName: "University Union Food Court",
-    zoneName: "Dunkin' & Main Seating Atrium",
+    facilityName: "Guerrieri Student Union (GSU) Food Court",
+    zoneName: "Cool Beans Coffee (PAGAC) & Main Seating Atrium",
     occupancyPercent: 45,
     statusLevel: "Moderate",
     availableDesksOrSpots: 52,
@@ -3643,7 +3643,7 @@ export const initialFacilityDensities: LiveFacilityDensity[] = [
   },
   {
     id: "fac-4",
-    facilityName: "Science Complex Commons",
+    facilityName: "Richard A. Henson Science Hall Commons",
     zoneName: "3rd Floor Tech Collaboration Area",
     occupancyPercent: 22,
     statusLevel: "Quiet",
@@ -3654,7 +3654,7 @@ export const initialFacilityDensities: LiveFacilityDensity[] = [
 ];
 
 // ─────────────────────────────────────────────────────────────
-// 34. TIGER SAFEWALK — VIRTUAL NIGHT ESCORT
+// 34. SEAGULL SAFEWALK — VIRTUAL NIGHT ESCORT
 // ─────────────────────────────────────────────────────────────
 export interface SafeWalkSession {
   id: string;
@@ -3671,8 +3671,8 @@ export interface SafeWalkSession {
 
 export const initialSafeWalkSession: SafeWalkSession = {
   id: "sw-1",
-  originName: "Albert S. Cook Library",
-  destinationName: "West Village • Marshall Hall",
+  originName: "Albert S. Patricia R. Guerrieri Academic Commons (PAGAC)",
+  destinationName: "Sea Gull Square • Marshall Hall",
   estimatedMinutes: 8,
   guardianName: "Maya Chen (Cybersecurity Circle)",
   guardianAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
@@ -3683,7 +3683,7 @@ export const initialSafeWalkSession: SafeWalkSession = {
 };
 
 // ─────────────────────────────────────────────────────────────
-// 35. TOWSON ALUMNI MENTORSHIP & CAREER SYNC
+// 35. SALISBURY ALUMNI MENTORSHIP & CAREER SYNC
 // ─────────────────────────────────────────────────────────────
 export interface AlumniMentor {
   id: string;
@@ -3708,10 +3708,10 @@ export const initialAlumniMentors: AlumniMentor[] = [
     major: "Computer Science",
     currentRole: "Senior Cloud Security Engineer",
     company: "T. Rowe Price",
-    location: "Baltimore, MD (Downtown)",
+    location: "Salisbury, MD (Downtown / Cyber Center)",
     avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
     industry: "Financial Technology & Cyber",
-    bio: "Former Towson Cybersecurity Club president. Passionate about helping TU undergraduates break into cloud zero-trust and enterprise threat hunting.",
+    bio: "Former Salisbury Cybersecurity Club president. Passionate about helping SU undergraduates break into cloud zero-trust and enterprise threat hunting.",
     isAvailableForCoffeeChat: true,
     matchedSkills: ["AWS GovCloud", "Zero Trust", "Python", "Kubernetes"],
   },
@@ -3725,7 +3725,7 @@ export const initialAlumniMentors: AlumniMentor[] = [
     location: "Linthicum / Annapolis Junction",
     avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
     industry: "Aerospace & Defense Systems",
-    bio: "TU IT alumna mentoring underrepresented students in AI-driven vulnerability management and DoD cATO compliance.",
+    bio: "SU IT alumna mentoring underrepresented students in AI-driven vulnerability management and DoD cATO compliance.",
     isAvailableForCoffeeChat: true,
     matchedSkills: ["Threat Intelligence", "DevSecOps", "Security Clearance prep"],
   },
@@ -3739,14 +3739,14 @@ export const initialAlumniMentors: AlumniMentor[] = [
     location: "Arlington, VA (HQ2)",
     avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
     industry: "Cloud & Generative AI",
-    bio: "Towson Hackathon winner now building agentic cloud pipelines. Offering resume reviews and mock technical interviews.",
+    bio: "Salisbury Hackathon winner now building agentic cloud pipelines. Offering resume reviews and mock technical interviews.",
     isAvailableForCoffeeChat: true,
     matchedSkills: ["Next.js", "TypeScript", "LLM Fine-Tuning", "DynamoDB"],
   },
 ];
 
 // ─────────────────────────────────────────────────────────────
-// 36. TOWSONSYNC IDENTITY PERSONAS & ROLE-BASED ACCESS CONTROL (RBAC)
+// 36. SEAGULLSYNC IDENTITY PERSONAS & ROLE-BASED ACCESS CONTROL (RBAC)
 // ─────────────────────────────────────────────────────────────
 export type UserRole = "STUDENT" | "FACULTY" | "CLUB_LEAD" | "STAFF" | "ADMIN";
 
@@ -3754,40 +3754,40 @@ export const initialCampusPersonas: UserProfile[] = [
   {
     id: "usr-1",
     name: "Kwesi Asiedu",
-    email: "kasiedu@students.towson.edu",
+    email: "kasiedu@students.salisbury.edu",
     studentId: "#8492-KWESI",
     major: "Information Technology",
     minor: "Cybersecurity & Autonomous Systems",
     gradYear: 2026,
     classStanding: "Senior",
-    dormBuilding: "Marshall Hall (West Village)",
+    dormBuilding: "Marshall Hall (Sea Gull Square)",
     bio: "Undergraduate researcher focused on Cloud Security, Autonomous Perimeter Defense, and Zero-Trust campus architectures. SGA Technology Liaison.",
     avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80",
     coverImage: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80",
     isVerified: true,
     role: "STUDENT",
     interests: ["Cloud Security", "Full-Stack Dev", "Zero Trust", "AI Agents", "Campus Gov"],
-    goals: ["Present Research at CyberSummit 2026", "Complete Senior Capstone", "Lead HackTowson"],
+    goals: ["Present Research at CyberSummit 2026", "Complete Senior Capstone", "Lead HackSalisbury"],
     eventsAttendedCount: 28,
     volunteerHoursLogged: 42.5,
     leadershipRoles: ["SGA Tech Chair", "Cybersecurity Club Vice President"],
-    achievements: ["Dean's List 5x", "Towson Innovator Grant 2025", "Certified Tiger Leader"],
-    projects: ["TowsonSync Platform", "AXIOM Zero-Trust Suite", "Campus Beacon Map"],
+    achievements: ["Dean's List 5x", "Salisbury Innovator Grant 2025", "Certified Sea Gull Leader"],
+    projects: ["SalisburySync Platform", "AXIOM Zero-Trust Suite", "Campus Beacon Map"],
     isLocationSharing: true,
     ghostModeEnabled: false,
-    currentLocationName: "Albert S. Cook Library • 3rd Floor",
+    currentLocationName: "Albert S. Patricia R. Guerrieri Academic Commons (PAGAC) • 3rd Floor",
   },
   {
     id: "usr-2",
     name: "Dr. Catherine Hayes",
-    email: "chayes@towson.edu",
+    email: "chayes@salisbury.edu",
     studentId: "#FAC-2091",
     major: "Faculty / Computer Science",
     minor: "Director, ASSL Research Lab",
     gradYear: 2012,
     classStanding: "Graduate",
-    dormBuilding: "Faculty Commons • Science Complex",
-    bio: "Associate Professor of Computer & Information Sciences. Principal Investigator for the Towson Autonomous Security Systems Lab.",
+    dormBuilding: "Faculty Commons • Richard A. Henson Science Hall",
+    bio: "Associate Professor of Computer & Information Sciences. Principal Investigator for the Salisbury Autonomous Security Systems Lab.",
     avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&auto=format&fit=crop&q=80",
     coverImage: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&auto=format&fit=crop&q=80",
     isVerified: true,
@@ -3797,59 +3797,59 @@ export const initialCampusPersonas: UserProfile[] = [
     eventsAttendedCount: 45,
     volunteerHoursLogged: 60,
     leadershipRoles: ["Faculty Senate Member", "Cyber Curriculum Chair"],
-    achievements: ["Towson Excellence in Teaching 2024", "NSF Career Award"],
+    achievements: ["Salisbury Excellence in Teaching 2024", "NSF Career Award"],
     projects: ["Autonomous Threat Mitigation", "Secure Microkernel Architecture"],
     isLocationSharing: true,
     ghostModeEnabled: false,
-    currentLocationName: "Science Complex Rm 304",
+    currentLocationName: "Richard A. Henson Science Hall Rm 304",
   },
   {
     id: "usr-3",
     name: "Darren Vance",
-    email: "dvance2@students.towson.edu",
+    email: "dvance2@students.salisbury.edu",
     studentId: "#8210-DARREN",
     major: "Cybersecurity Operations",
     gradYear: 2026,
     classStanding: "Senior",
     dormBuilding: "Carroll Hall",
-    bio: "Towson Cybersecurity Club President & SGA Senator. Passionate about collegiate cyber defense competitions and student advocacy.",
+    bio: "Salisbury Cybersecurity Club President & SGA Senator. Passionate about collegiate cyber defense competitions and student advocacy.",
     avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80",
     coverImage: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80",
     isVerified: true,
     role: "CLUB_LEAD",
     interests: ["Red Teaming", "CTF Competitions", "Student Orgs", "Campus Radio"],
-    goals: ["Qualify for National CCDC", "Host 500-student TigerCTF"],
+    goals: ["Qualify for National CCDC", "Host 500-student SeaGullCTF"],
     eventsAttendedCount: 36,
     volunteerHoursLogged: 55,
     leadershipRoles: ["Cybersecurity Club President", "SGA Senator"],
     achievements: ["Mid-Atlantic CCDC Finalist", "Student Leadership Award"],
-    projects: ["TigerCTF Cyber Range", "Student Discord Bot"],
+    projects: ["SeaGullCTF Cyber Range", "Student Discord Bot"],
     isLocationSharing: true,
     ghostModeEnabled: false,
-    currentLocationName: "University Union Food Court",
+    currentLocationName: "Guerrieri Student Union (GSU) Food Court",
   },
   {
     id: "usr-4",
     name: "Dean Marcus Vance",
-    email: "mvance@towson.edu",
+    email: "mvance@salisbury.edu",
     studentId: "#ADM-001",
     major: "Student Affairs & Security Ops",
     minor: "Chief Administration Officer",
     gradYear: 2004,
     classStanding: "Graduate",
     dormBuilding: "Administration Building Rm 400",
-    bio: "Executive Administrator for Towson University Digital Campus Operations, Emergency Preparedness & Student Life Systems.",
+    bio: "Executive Administrator for Salisbury University Digital Campus Operations, Emergency Preparedness & Student Life Systems.",
     avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80",
     coverImage: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&auto=format&fit=crop&q=80",
     isVerified: true,
     role: "ADMIN",
     interests: ["Campus Safety", "Institutional Policy", "Emergency Management", "Student Welfare"],
-    goals: ["Achieve 100% Digital TowsonSync Campus Coverage", "Zero Safety Incident Tolerance"],
+    goals: ["Achieve 100% Digital SalisburySync Campus Coverage", "Zero Safety Incident Tolerance"],
     eventsAttendedCount: 120,
     volunteerHoursLogged: 150,
     leadershipRoles: ["Dean of Student Affairs", "Emergency Management Council Chair"],
-    achievements: ["State of Maryland Higher Ed Leadership Medal", "TUPD Commendation"],
-    projects: ["TowsonSync Master Campus Mesh", "Blue Light Digital Beacon Network"],
+    achievements: ["State of Maryland Higher Ed Leadership Medal", "SUPD Commendation"],
+    projects: ["SalisburySync Master Campus Mesh", "Blue Light Digital Beacon Network"],
     isLocationSharing: false,
     ghostModeEnabled: true,
     currentLocationName: "Administration Building",
@@ -3857,7 +3857,7 @@ export const initialCampusPersonas: UserProfile[] = [
 ];
 
 // ─────────────────────────────────────────────────────────────
-// 37. TOWSONSYNC ADMINISTRATION CENTER DATASETS
+// 37. SEAGULLSYNC ADMINISTRATION CENTER DATASETS
 // ─────────────────────────────────────────────────────────────
 export interface AdminVerificationRequest {
   id: string;
@@ -3875,7 +3875,7 @@ export const initialAdminVerifications: AdminVerificationRequest[] = [
   {
     id: "ver-1",
     applicantName: "Aiden Vance",
-    email: "avance5@students.towson.edu",
+    email: "avance5@students.salisbury.edu",
     studentOrFacultyId: "#9021-AIDEN",
     departmentOrMajor: "B.S. Cyber Operations '27",
     submittedAt: "12 mins ago",
@@ -3886,7 +3886,7 @@ export const initialAdminVerifications: AdminVerificationRequest[] = [
   {
     id: "ver-2",
     applicantName: "Dr. Evelyn Reed",
-    email: "ereed@towson.edu",
+    email: "ereed@salisbury.edu",
     studentOrFacultyId: "#FAC-4019",
     departmentOrMajor: "Department of Physics & Astronomy",
     submittedAt: "1 hour ago",
@@ -3896,8 +3896,8 @@ export const initialAdminVerifications: AdminVerificationRequest[] = [
   },
   {
     id: "ver-3",
-    applicantName: "Towson Robotics & Autonomous Drone Club",
-    email: "robotics@clubs.towson.edu",
+    applicantName: "Salisbury Robotics & Autonomous Drone Club",
+    email: "robotics@clubs.salisbury.edu",
     studentOrFacultyId: "#ORG-883",
     departmentOrMajor: "Student Government Association",
     submittedAt: "3 hours ago",
@@ -3907,8 +3907,8 @@ export const initialAdminVerifications: AdminVerificationRequest[] = [
   },
   {
     id: "ver-4",
-    applicantName: "The York Towson Student Residences",
-    email: "leasing@theyorktowson.com",
+    applicantName: "The Avery Salisbury Student Residences",
+    email: "leasing@theaverysalisbury.com",
     studentOrFacultyId: "#LL-5012",
     departmentOrMajor: "Verified Off-Campus Housing Provider",
     submittedAt: "5 hours ago",
@@ -3921,7 +3921,7 @@ export const initialAdminVerifications: AdminVerificationRequest[] = [
 export interface AdminSecurityAuditLog {
   id: string;
   timestamp: string;
-  eventType: "AUTH_LOGIN" | "ROLE_ELEVATION" | "SAFEWALK_ALERT" | "CONTENT_MODERATION" | "ID_VERIFICATION" | "TUPD_DISPATCH";
+  eventType: "AUTH_LOGIN" | "ROLE_ELEVATION" | "SAFEWALK_ALERT" | "CONTENT_MODERATION" | "ID_VERIFICATION" | "SUPD_DISPATCH";
   severity: "INFO" | "WARNING" | "CRITICAL";
   actor: string;
   details: string;
@@ -3935,7 +3935,7 @@ export const initialAdminAuditLogs: AdminSecurityAuditLog[] = [
     eventType: "SAFEWALK_ALERT",
     severity: "INFO",
     actor: "Kwesi Asiedu (#8492)",
-    details: "SafeWalk escort initiated: Cook Library ➔ Marshall Hall Dorm (Companion: Maya Chen)",
+    details: "SafeWalk escort initiated: Patricia R. Guerrieri Academic Commons (PAGAC) ➔ Marshall Hall Dorm (Companion: Maya Chen)",
     ipAddress: "10.24.88.19 (Campus WiFi-eduroam)",
   },
   {
@@ -3944,7 +3944,7 @@ export const initialAdminAuditLogs: AdminSecurityAuditLog[] = [
     eventType: "AUTH_LOGIN",
     severity: "INFO",
     actor: "Dr. Catherine Hayes (#FAC-2091)",
-    details: "Duo MFA 2-Factor Authentication verified successfully from Science Complex Lab",
+    details: "Duo MFA 2-Factor Authentication verified successfully from Richard A. Henson Science Hall Lab",
     ipAddress: "10.24.12.44 (Faculty Ethernet)",
   },
   {
@@ -3968,9 +3968,9 @@ export const initialAdminAuditLogs: AdminSecurityAuditLog[] = [
   {
     id: "log-5",
     timestamp: "1 hour ago",
-    eventType: "TUPD_DISPATCH",
+    eventType: "SUPD_DISPATCH",
     severity: "INFO",
-    actor: "TigerOrbit Blue Light #04",
+    actor: "SeaGullOrbit Blue Light #04",
     details: "Routine 24h health-check beacon ping passed (Burgett Quad)",
     ipAddress: "10.24.99.4 (IoT Safety Beacon)",
   },
@@ -3994,7 +3994,7 @@ export const initialAdminSystemHealth: AdminSystemHealth = {
   cpuLoadPercent: 18,
   memoryUsagePercent: 32,
   uptimePercent: 99.98,
-  tupdBeaconHealth: "24/24 Blue Light Beacons Operational",
+  tupdBeaconHealth: "24/24 SUPD Blue Light Beacons Operational",
   noaaApiStatus: "Connected (api.weather.gov)",
 };
 

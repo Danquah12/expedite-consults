@@ -348,8 +348,7 @@ export const HotTopicsRadar: React.FC<HotTopicsRadarProps> = ({
     return topicsList.filter(t => {
       const matchCat = selectedCategory === 'ALL' || t.category === selectedCategory;
       const matchQuery = !searchQuery || 
-        t.topicTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        t.summary.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        ((t.topicTitle?.toLowerCase() || '').includes((searchQuery || '').toLowerCase()) || (t.summary?.toLowerCase() || '').includes((searchQuery || '').toLowerCase())) ||
         t.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())) ||
         t.undisputedFacts.some(f => f.toLowerCase().includes(searchQuery.toLowerCase()));
       return matchCat && matchQuery;

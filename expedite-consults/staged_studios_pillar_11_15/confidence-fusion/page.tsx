@@ -664,8 +664,8 @@ export default function ConfidenceFusionPage() {
                 <th>Source Name</th>
                 <th>Raw Probability $P(E_i)$</th>
                 <th>Reliability $\alpha_i$</th>
-                <th>Assigned Mass $m_i(\{M\})$</th>
-                <th>Assigned Mass $m_i(\{B\})$</th>
+                <th>Assigned Mass $m_i(&#123;M&#125;)$</th>
+                <th>Assigned Mass $m_i(&#123;B&#125;)$</th>
                 <th>Uncertainty $m_i(\Theta)$</th>
                 <th>Decision Contribution</th>
               </tr>

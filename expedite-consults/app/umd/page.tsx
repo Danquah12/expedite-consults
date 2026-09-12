@@ -13,9 +13,9 @@ import {
   NWSWeatherAlert,
   CampusOperatingStatus,
   WeatherNotificationPreferences,
-  initialTowsonMainWeather,
+  initialUmdMainWeather,
   defaultWeatherPreferences,
-} from "@/lib/campus-weather-data";
+} from "@/lib/umd-weather-data";
 
 import {
   CampusPost,
@@ -45,13 +45,13 @@ import {
   CampusNotification,
   NotificationPreferences,
   ContentReport,
-  TowsonBuilding,
-  TowsonFloor,
-  TowsonRoom,
+  UmdBuilding,
+  UmdFloor,
+  UmdRoom,
   LocationCircle,
   CircleMember,
-  TowsonShuttle,
-  TowsonParkingGarage,
+  UmdShuttle,
+  UmdParkingGarage,
   SafetyBeacon,
   ScavengerHuntCheckpoint,
   NavigationStep,
@@ -59,7 +59,7 @@ import {
   RoommateProfile,
   HousingTourBooking,
   HousingMaintenanceTicket,
-  TigerWalletPass,
+  TerpIDPass,
   LiveFacilityDensity,
   SafeWalkSession,
   AlumniMentor,
@@ -69,22 +69,22 @@ import {
   CirclePlaceAlert,
   DrivingSafetyScore,
   MemberLocationTimelineEntry,
-  initialTowsonPlaces,
-  initialTowsonBuildings,
-  initialTowsonCircles,
-  initialTowsonShuttles,
-  initialTowsonParking,
-  initialTowsonSafetyBeacons,
-  initialTowsonScavengerCheckpoints,
+  initialUmdPlaces,
+  initialUmdBuildings,
+  initialUmdCircles,
+  initialUmdShuttles,
+  initialUmdParking,
+  initialUmdSafetyBeacons,
+  initialUmdScavengerCheckpoints,
   initialHousingListings,
   initialRoommateProfiles,
   initialHousingTours,
   initialHousingMaintenanceTickets,
-  initialTigerWalletPass,
+  initialTerpIDPass,
   initialFacilityDensities,
   initialSafeWalkSession,
   initialAlumniMentors,
-  sampleTowsonRoute,
+  sampleUmdRoute,
   UserRole,
   initialCampusPersonas,
   AdminVerificationRequest,
@@ -93,7 +93,7 @@ import {
   initialAdminAuditLogs,
   AdminSystemHealth,
   initialAdminSystemHealth,
-} from "@/lib/campus-data";
+} from "@/lib/umd-data";
 
 import AxiomConnectWorkspace from "@/components/connect-suite/AxiomConnectWorkspace";
 
@@ -147,18 +147,18 @@ import {
   loadNotificationPreferences,
   saveNotificationPreferences,
   saveContentReport,
-  loadTowsonBuildings,
-  saveTowsonBuildings,
-  loadTowsonCircles,
-  saveTowsonCircles,
-  loadTowsonShuttles,
-  saveTowsonShuttles,
-  loadTowsonParking,
-  saveTowsonParking,
-  loadTowsonSafetyBeacons,
-  saveTowsonSafetyBeacons,
-  loadTowsonScavengerCheckpoints,
-  saveTowsonScavengerCheckpoints,
+  loadUmdBuildings,
+  saveUmdBuildings,
+  loadUmdCircles,
+  saveUmdCircles,
+  loadUmdShuttles,
+  saveUmdShuttles,
+  loadUmdParking,
+  saveUmdParking,
+  loadUmdSafetyBeacons,
+  saveUmdSafetyBeacons,
+  loadUmdScavengerCheckpoints,
+  saveUmdScavengerCheckpoints,
   loadHousingListings,
   saveHousingListings,
   loadRoommateProfiles,
@@ -174,7 +174,7 @@ import {
   loadCurrentUser,
   saveCurrentUser,
   resetCampusDemoData,
-} from "@/lib/campus-storage";
+} from "@/lib/umd-storage";
 
 import GlobalCopilotModal from "@/components/global-copilot/GlobalCopilotModal";
 import { CopilotAction } from "@/lib/global-copilot-engine";
@@ -194,7 +194,7 @@ export default function CampusSyncApp() {
       setMoreSubView(action.subView as any);
     }
     if (action.modal === "wallet") {
-      setShowTigerWalletModal(true);
+      setShowTerpIDModal(true);
     } else if (action.modal === "weather") {
       setShowWeatherModal(true);
     } else if (action.modal === "navigation") {
@@ -213,18 +213,18 @@ export default function CampusSyncApp() {
     "map" | "transcript" | "reels" | "games" | "opportunities" | "peermatch" | "studypods" | "media" | "marketplace" | "ai" | "admin"
   >("map");
 
-  // Multi-Campus Switcher (Towson University Flagship + Campuses)
-  const [selectedCampus, setSelectedCampus] = useState<"Towson Main Campus" | "TU Downtown" | "TU Health Complex">("Towson Main Campus");
+  // Multi-Campus Switcher (University of Maryland, College Park Flagship + Campuses)
+  const [selectedCampus, setSelectedCampus] = useState<"UMD College Park Main Campus" | "Discovery District & Innovation Hub" | "Downtown UMD College Park Plaza">("UMD College Park Main Campus");
 
   // Map Engine & Location Sharing State
-  const [towsonBuildings, setTowsonBuildings] = useState<TowsonBuilding[]>(initialTowsonBuildings);
-  const [towsonCircles, setTowsonCircles] = useState<LocationCircle[]>(initialTowsonCircles);
-  const [towsonShuttles, setTowsonShuttles] = useState<TowsonShuttle[]>(initialTowsonShuttles);
-  const [towsonParking, setTowsonParking] = useState<TowsonParkingGarage[]>(initialTowsonParking);
-  const [towsonSafetyBeacons, setTowsonSafetyBeacons] = useState<SafetyBeacon[]>(initialTowsonSafetyBeacons);
-  const [towsonScavenger, setTowsonScavenger] = useState<ScavengerHuntCheckpoint[]>(initialTowsonScavengerCheckpoints);
+  const [umdBuildings, setUmdBuildings] = useState<UmdBuilding[]>(initialUmdBuildings);
+  const [umdCircles, setUmdCircles] = useState<LocationCircle[]>(initialUmdCircles);
+  const [umdShuttles, setUmdShuttles] = useState<UmdShuttle[]>(initialUmdShuttles);
+  const [umdParking, setUmdParking] = useState<UmdParkingGarage[]>(initialUmdParking);
+  const [umdSafetyBeacons, setUmdSafetyBeacons] = useState<SafetyBeacon[]>(initialUmdSafetyBeacons);
+  const [umdScavenger, setUmdScavenger] = useState<ScavengerHuntCheckpoint[]>(initialUmdScavengerCheckpoints);
 
-  // TUHousing & Off-Campus Platform State
+  // TerpHousing & Off-Campus Platform State
   const [housingListings, setHousingListings] = useState<HousingListing[]>(initialHousingListings);
   const [roommateProfiles, setRoommateProfiles] = useState<RoommateProfile[]>(initialRoommateProfiles);
   const [housingTours, setHousingTours] = useState<HousingTourBooking[]>(initialHousingTours);
@@ -252,14 +252,14 @@ export default function CampusSyncApp() {
   const [calcParking, setCalcParking] = useState<number>(50);
 
   // NOAA / NWS Authoritative Campus Weather & Environmental Safety State
-  const [weatherReport, setWeatherReport] = useState<CampusWeatherReport>(initialTowsonMainWeather);
+  const [weatherReport, setWeatherReport] = useState<CampusWeatherReport>(initialUmdMainWeather);
   const [weatherPrefs, setWeatherPrefs] = useState<WeatherNotificationPreferences>(defaultWeatherPreferences);
   const [showWeatherModal, setShowWeatherModal] = useState<boolean>(false);
   const [weatherModalTab, setWeatherModalTab] = useState<"now" | "hourly" | "daily" | "radar" | "alerts" | "settings">("now");
 
   // Map Filters & View Modes
   const [mapLayerFilter, setMapLayerFilter] = useState<"ALL" | "BUILDINGS" | "CIRCLES" | "SHUTTLES" | "PARKING" | "SAFETY" | "SCAVENGER" | "HOUSING" | "WEATHER" | "FESTIVAL">("ALL");
-  const [selectedBuildingModal, setSelectedBuildingModal] = useState<TowsonBuilding | null>(null);
+  const [selectedBuildingModal, setSelectedBuildingModal] = useState<UmdBuilding | null>(null);
   const [selectedBuildingFloor, setSelectedBuildingFloor] = useState<number>(3);
   const [selectedCircle, setSelectedCircle] = useState<LocationCircle | null>(null);
   const [selectedCircleId, setSelectedCircleId] = useState<string>("circle-cyber");
@@ -278,10 +278,10 @@ export default function CampusSyncApp() {
   const [registeredShiftIds, setRegisteredShiftIds] = useState<string[]>(["vol-1"]);
   const [logHoursForm, setLogHoursForm] = useState({
     activityTitle: "Campus Food Drive & Baltimore Pantry Distribution",
-    organization: "Towson Student Community Service Council",
+    organization: "UMD College Park Student Community Service Council",
     hours: 4.0,
     date: "2026-03-08",
-    supervisorEmail: "service-learning@towson.edu",
+    supervisorEmail: "service-learning@umd.edu",
     reflection: "Helped sort 3,000 lbs of food supplies and distributed 140 family grocery packages to commuter students and local food pantries.",
   });
   const [hoveredBuildingId, setHoveredBuildingId] = useState<string | null>(null);
@@ -300,14 +300,14 @@ export default function CampusSyncApp() {
   const [newCircleCategory, setNewCircleCategory] = useState<LocationCircle["category"]>("Club");
   const [newCircleIcon, setNewCircleIcon] = useState<string>("🛡️");
   const [isMembersDrawerOpen, setIsMembersDrawerOpen] = useState<boolean>(true);
-  const [placesList, setPlacesList] = useState<CirclePlaceAlert[]>(initialTowsonPlaces);
+  const [placesList, setPlacesList] = useState<CirclePlaceAlert[]>(initialUmdPlaces);
   const [newPlaceName, setNewPlaceName] = useState<string>("");
   const [newPlaceIcon, setNewPlaceIcon] = useState<string>("📍");
   const [newPlaceRadius, setNewPlaceRadius] = useState<number>(100);
   const [activeTrajectoryMemberId, setActiveTrajectoryMemberId] = useState<string | null>(null);
 
   // Active circle computation
-  const activeCircle = towsonCircles.find((c) => c.id === selectedCircleId) || towsonCircles[0] || initialTowsonCircles[0];
+  const activeCircle = umdCircles.find((c) => c.id === selectedCircleId) || umdCircles[0] || initialUmdCircles[0];
 
   // Live Movement Simulation Effect
   useEffect(() => {
@@ -315,36 +315,36 @@ export default function CampusSyncApp() {
 
     const simulationWaypoints: Record<string, { x: number; y: number; building: string; room: string; speed: number; type: "walking" | "driving" }[]> = {
       "m-liam": [
-        { x: 62, y: 36, building: "Science Complex", room: "Lab 304", speed: 0, type: "walking" },
-        { x: 56, y: 40, building: "University Mall Walkway", room: "Near Smith Hall", speed: 3.2, type: "walking" },
-        { x: 48, y: 48, building: "Albert S. Cook Library", room: "Commons Study Pod", speed: 2.8, type: "walking" },
-        { x: 42, y: 54, building: "Freedom Square", room: "North Plaza", speed: 3.1, type: "walking" },
-        { x: 38, y: 58, building: "University Union", room: "Food Court", speed: 1.5, type: "walking" },
+        { x: 62, y: 36, building: "Brendan Iribe Center for Computer Science", room: "Lab 304", speed: 0, type: "walking" },
+        { x: 56, y: 40, building: "University Mall Walkway", room: "Near Devilbiss Hall", speed: 3.2, type: "walking" },
+        { x: 48, y: 48, building: "Albert S. McKeldin Library", room: "Commons Study Pod", speed: 2.8, type: "walking" },
+        { x: 42, y: 54, building: "Red Square", room: "North Plaza", speed: 3.1, type: "walking" },
+        { x: 38, y: 58, building: "Adele H. Stamp Student Union (GSU)", room: "Food Court", speed: 1.5, type: "walking" },
       ],
       "m-maya": [
-        { x: 50, y: 72, building: "Burdick Hall & Rec", room: "Fitness Floor", speed: 0, type: "walking" },
+        { x: 50, y: 72, building: "Eppley Recreation Center (ERC) (PAC) & Rec", room: "Fitness Floor", speed: 0, type: "walking" },
         { x: 45, y: 65, building: "Center for the Arts", room: "Atrium", speed: 3.0, type: "walking" },
-        { x: 38, y: 58, building: "University Union", room: "Tiger Lounge", speed: 2.4, type: "walking" },
-        { x: 48, y: 48, building: "Albert S. Cook Library", room: "2nd Floor Stacks", speed: 2.9, type: "walking" },
+        { x: 38, y: 58, building: "Adele H. Stamp Student Union (GSU)", room: "Terrapin Lounge", speed: 2.4, type: "walking" },
+        { x: 48, y: 48, building: "Albert S. McKeldin Library", room: "2nd Floor Stacks", speed: 2.9, type: "walking" },
       ],
       "m-tyler": [
         { x: 82, y: 22, building: "University Village", room: "Apt 304", speed: 0, type: "driving" },
-        { x: 60, y: 20, building: "Towsontown Blvd", room: "In Transit", speed: 24.5, type: "driving" },
-        { x: 30, y: 35, building: "Osler Drive", room: "In Transit", speed: 28.0, type: "driving" },
+        { x: 60, y: 20, building: "UMD College Parktown Blvd", room: "In Transit", speed: 24.5, type: "driving" },
+        { x: 30, y: 35, building: "Wayne Street", room: "In Transit", speed: 28.0, type: "driving" },
         { x: 26, y: 76, building: "South Parking Garage", room: "Level 2 Bay C", speed: 8.5, type: "driving" },
       ],
       "m-kwesi": [
-        { x: 48, y: 48, building: "Albert S. Cook Library", room: "Commons Lounge", speed: 0, type: "walking" },
-        { x: 46, y: 50, building: "Freedom Square", room: "Clock Tower", speed: 2.5, type: "walking" },
-        { x: 38, y: 58, building: "University Union", room: "SGA Tech Suite", speed: 3.1, type: "walking" },
-        { x: 62, y: 36, building: "Science Complex", room: "Cybersecurity Lab", speed: 3.4, type: "walking" },
+        { x: 48, y: 48, building: "Albert S. McKeldin Library", room: "Commons Lounge", speed: 0, type: "walking" },
+        { x: 46, y: 50, building: "Red Square", room: "Clock Tower", speed: 2.5, type: "walking" },
+        { x: 38, y: 58, building: "Adele H. Stamp Student Union (GSU)", room: "SGA Tech Suite", speed: 3.1, type: "walking" },
+        { x: 62, y: 36, building: "Brendan Iribe Center for Computer Science", room: "Cybersecurity Lab", speed: 3.4, type: "walking" },
       ],
     };
 
     let step = 0;
     const interval = setInterval(() => {
       step++;
-      setTowsonCircles((prevCircles) =>
+      setUmdCircles((prevCircles) =>
         prevCircles.map((circle) => ({
           ...circle,
           members: circle.members.map((member) => {
@@ -388,7 +388,7 @@ export default function CampusSyncApp() {
         setSosCountdown((c) => {
           if (c <= 1) {
             setSosActive(true);
-            triggerToast("🚨 EMERGENCY SOS BROADCASTED to all Circle Members & TUPD Dispatch (410-704-4444)!");
+            triggerToast("🚨 EMERGENCY SOS BROADCASTED to all Circle Members & UMPD Dispatch (410-704-4444)!");
             return 0;
           }
           return c - 1;
@@ -399,7 +399,7 @@ export default function CampusSyncApp() {
   }, [showSOSModal, sosCountdown, sosActive]);
   const [selectedSafetyBeacon, setSelectedSafetyBeacon] = useState<SafetyBeacon | null>(null);
   const [showNavigationRouteModal, setShowNavigationRouteModal] = useState<boolean>(false);
-  const [activeNavigationRoute, setActiveNavigationRoute] = useState<NavigationStep[]>(sampleTowsonRoute);
+  const [activeNavigationRoute, setActiveNavigationRoute] = useState<NavigationStep[]>(sampleUmdRoute);
   const [isSafetyModeActive, setIsSafetyModeActive] = useState<boolean>(false);
   const [isFestivalModeActive, setIsFestivalModeActive] = useState<boolean>(false);
   const [userLocationSharingTimer, setUserLocationSharingTimer] = useState<string | null>(null);
@@ -414,7 +414,7 @@ export default function CampusSyncApp() {
   const [showSgaGrantModal, setShowSgaGrantModal] = useState<boolean>(false);
   const [showStartClubModal, setShowStartClubModal] = useState<boolean>(false);
   const [showAttendanceQrModal, setShowAttendanceQrModal] = useState<CampusClub | null>(null);
-  const [sgaGrantFormData, setSgaGrantFormData] = useState({ clubName: "Towson Cybersecurity Club", amount: "1500", purpose: "Conference Travel & Registration", description: "Funding for 6 students to compete at MACCDC Regional Finals." });
+  const [sgaGrantFormData, setSgaGrantFormData] = useState({ clubName: "UMD College Park Cybersecurity Club", amount: "1500", purpose: "Conference Travel & Registration", description: "Funding for 6 students to compete at MACCDC Regional Finals." });
   const [sgaGrantSuccessToast, setSgaGrantSuccessToast] = useState<string | null>(null);
   const [newClubStep, setNewClubStep] = useState<number>(1);
   const [newClubData, setNewClubData] = useState({ name: "", category: "Academic", description: "", president: "", email: "", advisor: "" });
@@ -428,7 +428,7 @@ export default function CampusSyncApp() {
   const [selectedEventDrawerTab, setSelectedEventDrawerTab] = useState<"details" | "agenda" | "speakers" | "venue">("details");
   // showHostEventModal declared above
   const [hostEventStep, setHostEventStep] = useState<number>(1);
-  const [hostEventData, setHostEventData] = useState({ title: "", category: "Coding Workshop", location: "Science Complex Auditorium", date: "MAR 22", time: "6:00 PM - 8:00 PM", capacity: 150, description: "", organizer: "Student Club" });
+  const [hostEventData, setHostEventData] = useState({ title: "", category: "Coding Workshop", location: "Brendan Iribe Center for Computer Science Auditorium", date: "MAR 22", time: "6:00 PM - 8:00 PM", capacity: 150, description: "", organizer: "Student Club" });
   const [hostEventSuccess, setHostEventSuccess] = useState<boolean>(false);
   const [ticketClaimSuccessToast, setTicketClaimSuccessToast] = useState<string | null>(null);
   const [selectedMediaModal, setSelectedMediaModal] = useState<CampusMediaItem | null>(null);
@@ -453,7 +453,7 @@ export default function CampusSyncApp() {
 
   useEffect(() => {
     try {
-      const savedTheme = typeof window !== "undefined" ? localStorage.getItem("towson_theme") : null;
+      const savedTheme = typeof window !== "undefined" ? localStorage.getItem("terpsync_theme") : null;
       const prefersDark = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
       const shouldBeDark = savedTheme === "dark" || (!savedTheme && prefersDark);
       setIsDarkMode(shouldBeDark);
@@ -471,12 +471,12 @@ export default function CampusSyncApp() {
     try {
       if (newMode) {
         document.documentElement.classList.add("dark");
-        localStorage.setItem("towson_theme", "dark");
+        localStorage.setItem("terpsync_theme", "dark");
         setShowNotificationToast("🌙 Dark Mode Enabled");
         setTimeout(() => setShowNotificationToast(null), 2500);
       } else {
         document.documentElement.classList.remove("dark");
-        localStorage.setItem("towson_theme", "light");
+        localStorage.setItem("terpsync_theme", "light");
         setShowNotificationToast("☀️ Light Mode Enabled");
         setTimeout(() => setShowNotificationToast(null), 2500);
       }
@@ -501,7 +501,7 @@ export default function CampusSyncApp() {
   const [aiChatHistory, setAiChatHistory] = useState<{ role: "user" | "ai"; text: string }[]>([
     {
       role: "ai",
-      text: "Hello Kwesi! I'm your Towson Campus AI Assistant. Ask me about Cook Library study spaces, Science Complex labs, Tiger Ride shuttles, or student organizations on campus.",
+      text: "Hello Kwesi! I'm your UMD College Park Campus AI Assistant. Ask me about McKeldin Library study spaces, Brendan Iribe Center for Computer Science labs, Terrapin Ride shuttles, or student organizations on campus.",
     },
   ]);
 
@@ -534,8 +534,8 @@ export default function CampusSyncApp() {
 
   // 5 Enterprise Campus Systems State
   const [selectedCourseForCanvas, setSelectedCourseForCanvas] = useState<CampusCourse | null>(null);
-  const [showTigerWalletModal, setShowTigerWalletModal] = useState<boolean>(false);
-  const [tigerWallet, setTigerWallet] = useState<TigerWalletPass>(initialTigerWalletPass);
+  const [showTerpIDModal, setShowTerpIDModal] = useState<boolean>(false);
+  const [terpWallet, setTerpWallet] = useState<TerpIDPass>(initialTerpIDPass);
   const [facilityDensities, setFacilityDensities] = useState<LiveFacilityDensity[]>(initialFacilityDensities);
   const [showSafeWalkModal, setShowSafeWalkModal] = useState<boolean>(false);
   const [safeWalkSession, setSafeWalkSession] = useState<SafeWalkSession>(initialSafeWalkSession);
@@ -546,10 +546,10 @@ export default function CampusSyncApp() {
   const [personas] = useState<UserProfile[]>(initialCampusPersonas);
   const [activePersonaIndex, setActivePersonaIndex] = useState<number>(0);
   const [showAskAiModal, setShowAskAiModal] = useState<boolean>(false);
-  const [showTigerRecordExportModal, setShowTigerRecordExportModal] = useState<boolean>(false);
+  const [showTerpRecordExportModal, setShowTerpRecordExportModal] = useState<boolean>(false);
   const [launchpadFilter, setLaunchpadFilter] = useState<"ALL" | "ACADEMICS" | "SAFETY" | "MEDIA" | "OPERATIONS">("ALL");
 
-  // TowsonSync Administration Center State
+  // TerpSync Administration Center State
   const [adminVerifications, setAdminVerifications] = useState<AdminVerificationRequest[]>(initialAdminVerifications);
   const [adminAuditLogs, setAdminAuditLogs] = useState<AdminSecurityAuditLog[]>(initialAdminAuditLogs);
   const [adminSystemHealth, setAdminSystemHealth] = useState<AdminSystemHealth>(initialAdminSystemHealth);
@@ -558,7 +558,7 @@ export default function CampusSyncApp() {
   // Post Composer State
   const [newPostContent, setNewPostContent] = useState("");
   const [newPostScope, setNewPostScope] = useState<"CAMPUS_WIDE" | "CLUB" | "DEPARTMENT">("CAMPUS_WIDE");
-  const [newPostLocation, setNewPostLocation] = useState("Freedom Square / Cook Library");
+  const [newPostLocation, setNewPostLocation] = useState("Red Square / McKeldin Library");
   const [newPostImage, setNewPostImage] = useState<string>("");
   const [showImageInput, setShowImageInput] = useState(false);
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
@@ -566,7 +566,7 @@ export default function CampusSyncApp() {
   // Host Event Form State
   const [newEventTitle, setNewEventTitle] = useState("");
   const [newEventCategory, setNewEventCategory] = useState<CampusEvent["category"]>("Guest Speaker");
-  const [newEventLocation, setNewEventLocation] = useState("Science Complex Auditorium");
+  const [newEventLocation, setNewEventLocation] = useState("Brendan Iribe Center for Computer Science Auditorium");
   const [newEventTime, setNewEventTime] = useState("Wednesday, 6:00 PM");
   const [newEventSpeaker, setNewEventSpeaker] = useState("");
   const [newEventCapacity, setNewEventCapacity] = useState(150);
@@ -579,17 +579,17 @@ export default function CampusSyncApp() {
   // Reel Upload Form State
   const [newReelTitle, setNewReelTitle] = useState("");
   const [newReelCategory, setNewReelCategory] = useState<CampusReel["category"]>("Robotics");
-  const [newReelAudio, setNewReelAudio] = useState("Original Sound — TU Science Complex");
+  const [newReelAudio, setNewReelAudio] = useState("Original Sound — SU Brendan Iribe Center for Computer Science");
 
   // 311 Ticket Form State
   const [new311Category, setNew311Category] = useState<CampusServiceRequest["category"]>("Wi-Fi & Network");
-  const [new311Location, setNew311Location] = useState("Cook Library 2nd Floor Pod B");
+  const [new311Location, setNew311Location] = useState("McKeldin Library 2nd Floor Pod B");
   const [new311Description, setNew311Description] = useState("");
 
   // Study Pod Form State
   const [newPodCourse, setNewPodCourse] = useState("COSC 421");
   const [newPodTopic, setNewPodTopic] = useState("");
-  const [newPodRoom, setNewPodRoom] = useState("Cook Library 2nd Floor, Pod B");
+  const [newPodRoom, setNewPodRoom] = useState("McKeldin Library 2nd Floor, Pod B");
   const [newPodTime, setNewPodTime] = useState("Today at 4:30 PM");
 
   // Marketplace Item Form State
@@ -629,12 +629,12 @@ export default function CampusSyncApp() {
     setGames(loadCampusGames());
     setNotifications(loadCampusNotifications());
     setNotifPrefs(loadNotificationPreferences());
-    setTowsonBuildings(loadTowsonBuildings());
-    setTowsonCircles(loadTowsonCircles());
-    setTowsonShuttles(loadTowsonShuttles());
-    setTowsonParking(loadTowsonParking());
-    setTowsonSafetyBeacons(loadTowsonSafetyBeacons());
-    setTowsonScavenger(loadTowsonScavengerCheckpoints());
+    setUmdBuildings(loadUmdBuildings());
+    setUmdCircles(loadUmdCircles());
+    setUmdShuttles(loadUmdShuttles());
+    setUmdParking(loadUmdParking());
+    setUmdSafetyBeacons(loadUmdSafetyBeacons());
+    setUmdScavenger(loadUmdScavengerCheckpoints());
     setHousingListings(loadHousingListings());
     setRoommateProfiles(loadRoommateProfiles());
     setHousingTours(loadHousingTours());
@@ -678,12 +678,12 @@ export default function CampusSyncApp() {
       setGames(loadCampusGames());
       setNotifications(loadCampusNotifications());
       setNotifPrefs(loadNotificationPreferences());
-      setTowsonBuildings(loadTowsonBuildings());
-      setTowsonCircles(loadTowsonCircles());
-      setTowsonShuttles(loadTowsonShuttles());
-      setTowsonParking(loadTowsonParking());
-      setTowsonSafetyBeacons(loadTowsonSafetyBeacons());
-      setTowsonScavenger(loadTowsonScavengerCheckpoints());
+      setUmdBuildings(loadUmdBuildings());
+      setUmdCircles(loadUmdCircles());
+      setUmdShuttles(loadUmdShuttles());
+      setUmdParking(loadUmdParking());
+      setUmdSafetyBeacons(loadUmdSafetyBeacons());
+      setUmdScavenger(loadUmdScavengerCheckpoints());
       setHousingListings(loadHousingListings());
       setRoommateProfiles(loadRoommateProfiles());
       setHousingTours(loadHousingTours());
@@ -706,7 +706,7 @@ export default function CampusSyncApp() {
     setTimeout(() => setShowNotificationToast(null), 3500);
   };
 
-  // 1. Switch User Roles (Towson Personas)
+  // 1. Switch User Roles (UMD College Park Personas)
   const handleSwitchUserRole = (role: "student" | "officer" | "faculty") => {
     let user: UserProfile;
     if (role === "student") {
@@ -716,20 +716,20 @@ export default function CampusSyncApp() {
         ...defaultCurrentUser,
         id: "usr-amara",
         name: "Amara Diallo",
-        email: "a.diallo@students.towson.edu",
+        email: "a.diallo@students.umd.edu",
         major: "Business Administration & Marketing",
         role: "CLUB_LEAD",
-        leadershipRoles: ["African Student Association — President", "TU Global Student Council"],
+        leadershipRoles: ["African Student Association — President", "SU Student Government Association (SGA)"],
       };
     } else {
       user = {
         ...defaultCurrentUser,
         id: "usr-dr-hayes",
         name: "Dr. Catherine Hayes",
-        email: "c.hayes@towson.edu",
+        email: "c.hayes@umd.edu",
         major: "Department of Computer and Information Sciences",
         role: "FACULTY",
-        leadershipRoles: ["Principal Investigator — TU Autonomous Security Lab", "Faculty Advisor"],
+        leadershipRoles: ["Principal Investigator — SU Autonomous Cyber Defense Lab", "Faculty Advisor"],
       };
     }
     saveCurrentUser(user);
@@ -767,7 +767,7 @@ export default function CampusSyncApp() {
 
   // 3. Check-in at Scavenger Hunt Checkpoint
   const handleScavengerCheckIn = (checkpointId: string) => {
-    const updated = towsonScavenger.map((chk) => {
+    const updated = umdScavenger.map((chk) => {
       if (chk.id === checkpointId) {
         if (chk.isVisited) return chk;
         const newPoints = chk.points;
@@ -783,11 +783,11 @@ export default function CampusSyncApp() {
       return chk;
     });
 
-    setTowsonScavenger(updated);
-    saveTowsonScavengerCheckpoints(updated);
+    setUmdScavenger(updated);
+    saveUmdScavengerCheckpoints(updated);
   };
 
-  // 3.1 TUHousing Handlers
+  // 3.1 TerpHousing Handlers
   const handleToggleSaveHousing = (id: string) => {
     const updated = housingListings.map((h) => {
       if (h.id === id) {
@@ -839,7 +839,7 @@ export default function CampusSyncApp() {
       description: newMaintDesc.trim(),
       status: "Submitted",
       submittedDate: "Just now",
-      assignedTech: "Towson Facilities Dispatch",
+      assignedTech: "UMD College Park Facilities Dispatch",
     };
 
     const updatedTickets = [newTicket, ...housingTickets];
@@ -893,7 +893,7 @@ export default function CampusSyncApp() {
     setNewPostContent("");
     setNewPostImage("");
     setShowImageInput(false);
-    triggerToast("🎉 Post published to Towson campus feed!");
+    triggerToast("🎉 Post published to UMD College Park campus feed!");
   };
 
   // 5. Like Post
@@ -952,7 +952,7 @@ export default function CampusSyncApp() {
       creatorAvatar: currentUser.avatar,
       videoUrl: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80",
       thumbnailUrl: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80",
-      audioTrack: newReelAudio.trim() || "Original Sound — TU Science Complex",
+      audioTrack: newReelAudio.trim() || "Original Sound — SU Brendan Iribe Center for Computer Science",
       duration: "0:30",
       likesCount: 1,
       isLiked: true,
@@ -969,7 +969,7 @@ export default function CampusSyncApp() {
     saveCampusReels(updated);
     setShowUploadReelModal(false);
     setNewReelTitle("");
-    triggerToast("🎬 Reel transcoded (1080p, 720p, 480p) & published to Towson Reels feed!");
+    triggerToast("🎬 Reel transcoded (1080p, 720p, 480p) & published to UMD College Park Reels feed!");
   };
 
   // 8. Trivia Challenge Engine
@@ -996,7 +996,7 @@ export default function CampusSyncApp() {
         const updatedGames = games.map((g) => (g.id === currentGame.id ? { ...g, leaderboard: updatedLeaderboard } : g));
         setGames(updatedGames);
         saveCampusGames(updatedGames);
-        triggerToast(`🏆 Trivia Complete! Scored ${nextScore} pts. You ranked #1 on the TU Semester Leaderboard!`);
+        triggerToast(`🏆 Trivia Complete! Scored ${nextScore} pts. You ranked #1 on the UMD Semester Leaderboard!`);
       }
     }, 900);
   };
@@ -1026,7 +1026,7 @@ export default function CampusSyncApp() {
     saveContentReport(report);
     setReportTargetEntity(null);
     setReportDetails("");
-    triggerToast("🛡️ Content flagged and sent to Towson Student Affairs Moderation Queue for review.");
+    triggerToast("🛡️ Content flagged and sent to UMD College Park Student Affairs Moderation Queue for review.");
   };
 
   // 10. Event RSVP
@@ -1090,27 +1090,27 @@ export default function CampusSyncApp() {
     setAiChatHistory(newHistory);
     setAiChatQuery("");
 
-    let aiResponse = "I've searched the Towson University digital campus ecosystem for you:";
+    let aiResponse = "I've searched the University of Maryland, College Park digital campus ecosystem for you:";
     const lower = userText.toLowerCase();
 
-    if (lower.includes("map") || lower.includes("navigate") || lower.includes("science complex") || lower.includes("library")) {
-      aiResponse = `📍 Towson Live Map Highlights:
-• **Science Complex**: 420 ft away (SC 304 Cyber Lab on Floor 3).
-• **Albert S. Cook Library**: 180 ft away (Starbucks on Floor 1, 24/7 Pods on Floor 2).
-• **Tiger Ride Gold Shuttle**: Arrives in 2 minutes at University Union Transit Plaza.`;
+    if (lower.includes("map") || lower.includes("navigate") || lower.includes("iribe computer science complex") || lower.includes("library")) {
+      aiResponse = `📍 UMD College Park Live Map Highlights:
+• **Brendan Iribe Center for Computer Science**: 420 ft away (SC 304 Cyber Lab on Floor 3).
+• **Albert S. McKeldin Library**: 180 ft away (Starbucks on Floor 1, 24/7 Pods on Floor 2).
+• **Terrapin Ride Gold Shuttle**: Arrives in 2 minutes at Adele H. Stamp Student Union (GSU) Transit Plaza.`;
     } else if (lower.includes("shuttle") || lower.includes("bus") || lower.includes("gold route")) {
-      aiResponse = `🚌 Tiger Ride Live Radar:
-• **Gold Route (Campus Loop)**: Tiger Bus #14 is 2 mins away at University Union.
-• **Black Route (Towson Town Center)**: Tiger Bus #08 is 5 mins away at Cook Library North Stop.`;
+      aiResponse = `🚌 Terrapin Ride Live Radar:
+• **Gold Route (Campus Loop)**: Terrapin Bus #14 is 2 mins away at Adele H. Stamp Student Union (GSU).
+• **Black Route (UMD College Park Town Center)**: Terrapin Bus #08 is 5 mins away at McKeldin Library North Stop.`;
     } else if (lower.includes("parking") || lower.includes("garage")) {
-      aiResponse = `🅿️ Towson Parking Garage Status:
-• **Union Garage**: 🟢 184 spaces open (Levels 1-6, 8 EV chargers).
-• **Towsontown Garage**: 🟡 42 spaces open.
-• **West Village Garage**: 🔴 Full.`;
+      aiResponse = `🅿️ UMD College Park Parking Garage Status:
+• **Terrapin Square Garage**: 🟢 184 spaces open (Levels 1-6, 8 EV chargers).
+• **UMD College Parktown Garage**: 🟡 42 spaces open.
+• **Terrapin Square Garage**: 🔴 Full.`;
     } else if (lower.includes("police") || lower.includes("safety") || lower.includes("blue light")) {
-      aiResponse = `🚨 Towson Safety & TUPD:
-• **TUPD Emergency Dispatch**: (410) 704-4444.
-• **Nearest Blue Light Phone**: #104 at Freedom Square (90 ft away).
+      aiResponse = `🚨 UMD College Park Safety & UMPD:
+• **UMPD Emergency Dispatch**: (410) 704-4444.
+• **Nearest Blue Light Phone**: #104 at Red Square (90 ft away).
 • **SafeWalk Escort**: 1-tap dispatch available in Safety Mode.`;
     } else {
       aiResponse = `I found matching locations, events, and study pods matching "${userText}". Explore the live map under the Map tab!`;
@@ -1123,7 +1123,7 @@ export default function CampusSyncApp() {
 
   // Global Omni-Search Filtered Results
   const omniResults = {
-    buildings: (towsonBuildings || []).filter((b) => ((b?.name || "").toLowerCase().includes((searchQuery || "").toLowerCase()) || (b?.code || "").toLowerCase().includes((searchQuery || "").toLowerCase()))),
+    buildings: (umdBuildings || []).filter((b) => ((b?.name || "").toLowerCase().includes((searchQuery || "").toLowerCase()) || (b?.code || "").toLowerCase().includes((searchQuery || "").toLowerCase()))),
     people: (peerMatches || []).filter((p) => ((p?.name || "").toLowerCase().includes((searchQuery || "").toLowerCase()) || (p?.major || "").toLowerCase().includes((searchQuery || "").toLowerCase()))),
     events: (events || []).filter((e) => (e?.title || "").toLowerCase().includes((searchQuery || "").toLowerCase())),
     reels: (reels || []).filter((r) => (r?.title || "").toLowerCase().includes((searchQuery || "").toLowerCase())),
@@ -1135,7 +1135,7 @@ export default function CampusSyncApp() {
       <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white">
         <div className="flex items-center gap-3 text-sm font-bold">
           <div className="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
-          <span>Hydrating Towson University Campus Ecosystem...</span>
+          <span>Hydrating University of Maryland, College Park Campus Ecosystem...</span>
         </div>
       </div>
     );
@@ -1171,7 +1171,7 @@ export default function CampusSyncApp() {
               </div>
               <div>
                 <h3 className="text-lg font-black text-slate-900 dark:text-zinc-100">Turn-by-Turn Campus Navigation</h3>
-                <p className="text-xs text-slate-500">Freedom Square ➔ Science Complex Rm 304 (Cyber Lab)</p>
+                <p className="text-xs text-slate-500">Red Square ➔ Brendan Iribe Center for Computer Science Rm 304 (Cyber Lab)</p>
               </div>
             </div>
 
@@ -1353,7 +1353,7 @@ export default function CampusSyncApp() {
         </div>
       )}
 
-      {/* 3. MODAL: TIGERORBIT 360 LOCATION SHARING MANAGER */}
+      {/* 3. MODAL: TERPORBIT 360 LOCATION SHARING MANAGER */}
       {showLocationSharePicker && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl max-w-md w-full p-6 relative shadow-2xl space-y-4">
@@ -1369,7 +1369,7 @@ export default function CampusSyncApp() {
                 <MapPin className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-lg font-black text-slate-900 dark:text-zinc-100">TigerOrbit 360 Controls</h3>
+                <h3 className="text-lg font-black text-slate-900 dark:text-zinc-100">TerpOrbit 360 Controls</h3>
                 <p className="text-xs text-slate-500">Privacy-First Campus Orbits & Circles with temporary timers.</p>
               </div>
             </div>
@@ -1553,7 +1553,7 @@ export default function CampusSyncApp() {
                   <Wifi className="w-3.5 h-3.5 text-indigo-500" />
                 </div>
                 <div className="text-xs font-black text-slate-900 dark:text-zinc-100 truncate">
-                  TU-Secure
+                  UMD-Secure
                 </div>
                 <span className="text-[10px] text-emerald-500 font-bold">
                   {selectedLife360Member.wifiSignal || "5GHz Strong"}
@@ -1589,9 +1589,9 @@ export default function CampusSyncApp() {
               <div className="space-y-2 max-h-44 overflow-y-auto pr-1">
                 {(selectedLife360Member.timeline || [
                   { time: "8:30 AM", location: "University Village Apt 304", activity: "Departed Dorm", icon: "🏠", duration: "Night" },
-                  { time: "9:15 AM", location: "Albert S. Cook Library", activity: "Study Pod B-12", icon: "📚", duration: "2h 15m" },
-                  { time: "11:30 AM", location: "Science Complex", activity: "Cybersecurity Lab 304", icon: "🔬", duration: "1h 45m" },
-                  { time: "01:30 PM", location: "University Union", activity: "Lunch & SGA Meet", icon: "🍕", duration: "Current" },
+                  { time: "9:15 AM", location: "Albert S. McKeldin Library", activity: "Study Pod B-12", icon: "📚", duration: "2h 15m" },
+                  { time: "11:30 AM", location: "Brendan Iribe Center for Computer Science", activity: "Cybersecurity Lab 304", icon: "🔬", duration: "1h 45m" },
+                  { time: "01:30 PM", location: "Adele H. Stamp Student Union (GSU)", activity: "Lunch & SGA Meet", icon: "🍕", duration: "Current" },
                 ]).map((entry, idx) => (
                   <div key={idx} className="flex items-start gap-3 p-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800/40 border border-slate-100 dark:border-zinc-800 text-xs">
                     <span className="text-base">{entry.icon}</span>
@@ -1775,7 +1775,7 @@ export default function CampusSyncApp() {
               <div className="grid grid-cols-3 gap-2">
                 <input
                   type="text"
-                  placeholder="Place Name (e.g. West Village Dorm)"
+                  placeholder="Place Name (e.g. Terrapin Square Dorm)"
                   value={newPlaceName}
                   onChange={(e) => setNewPlaceName(e.target.value)}
                   className="col-span-2 p-2 rounded-xl bg-white dark:bg-zinc-800 border text-xs focus:outline-amber-500"
@@ -1856,8 +1856,8 @@ export default function CampusSyncApp() {
               </h3>
               <p className="text-xs text-slate-300">
                 {sosActive
-                  ? "Distress beacon sent to all Circle members, Towson Police & nearest Blue Light Beacon #04."
-                  : `Dispatching your exact GPS coordinates & indoor room to Circle & TUPD in ${sosCountdown} seconds.`}
+                  ? "Distress beacon sent to all Circle members, UMD College Park Police & nearest Blue Light Beacon #04."
+                  : `Dispatching your exact GPS coordinates & indoor room to Circle & UMPD in ${sosCountdown} seconds.`}
               </p>
             </div>
 
@@ -1890,7 +1890,7 @@ export default function CampusSyncApp() {
                   </div>
                   <div className="flex items-center justify-between font-mono text-[11px] text-rose-300">
                     <span>Location:</span>
-                    <span>Freedom Square Quad</span>
+                    <span>Red Square Quad</span>
                   </div>
                   <div className="flex items-center justify-between font-mono text-[11px] text-rose-300">
                     <span>Nearest Blue Light:</span>
@@ -1908,7 +1908,7 @@ export default function CampusSyncApp() {
                     className="p-3 bg-rose-600 hover:bg-rose-700 text-white font-black rounded-xl text-xs flex items-center justify-center gap-1.5 transition shadow-lg"
                   >
                     <PhoneCall className="w-4 h-4" />
-                    <span>Call TUPD Dispatch</span>
+                    <span>Call UMPD Dispatch</span>
                   </a>
                   <a
                     href="tel:911"
@@ -1962,7 +1962,7 @@ export default function CampusSyncApp() {
                 <label className="font-bold text-slate-700 dark:text-zinc-300">Orbit Name</label>
                 <input
                   type="text"
-                  placeholder="e.g. West Village Roommates 402"
+                  placeholder="e.g. Terrapin Square Roommates 402"
                   value={newCircleName}
                   onChange={(e) => setNewCircleName(e.target.value)}
                   className="w-full mt-1 p-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800 border text-xs focus:outline-amber-500"
@@ -1997,7 +1997,7 @@ export default function CampusSyncApp() {
                     <option value="📚">📚 Books</option>
                     <option value="💻">💻 Tech</option>
                     <option value="⚡">⚡ Lightning</option>
-                    <option value="🐾">🐾 Tiger</option>
+                    <option value="🐾">🐾 Terrapin</option>
                   </select>
                 </div>
               </div>
@@ -2008,7 +2008,7 @@ export default function CampusSyncApp() {
                     triggerToast("Please enter an orbit name");
                     return;
                   }
-                  const code = "TU-" + Math.random().toString(36).substring(2, 6).toUpperCase();
+                  const code = "UMD-" + Math.random().toString(36).substring(2, 6).toUpperCase();
                   const newCircle: LocationCircle = {
                     id: `circle-${Date.now()}`,
                     name: newCircleName.trim(),
@@ -2019,7 +2019,7 @@ export default function CampusSyncApp() {
                     activeSharingCount: 1,
                     isUserMember: true,
                     isAdmin: true,
-                    places: initialTowsonPlaces,
+                    places: initialUmdPlaces,
                     members: [
                       {
                         id: "m-kwesi",
@@ -2027,7 +2027,7 @@ export default function CampusSyncApp() {
                         avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
                         major: "IT Junior",
                         status: "on_campus",
-                        currentBuilding: "Freedom Square / Cook Library",
+                        currentBuilding: "Red Square / McKeldin Library",
                         currentFloor: "Ground Floor",
                         exactRoom: "Commons Lounge",
                         distanceFt: 0,
@@ -2039,7 +2039,7 @@ export default function CampusSyncApp() {
                       },
                     ],
                   };
-                  setTowsonCircles([newCircle, ...towsonCircles]);
+                  setUmdCircles([newCircle, ...umdCircles]);
                   setSelectedCircleId(newCircle.id);
                   setNewCircleName("");
                   setShowCreateCircleModal(false);
@@ -2071,7 +2071,7 @@ export default function CampusSyncApp() {
               </div>
               <div>
                 <h3 className="text-lg font-black text-slate-900 dark:text-zinc-100">Join an Orbit</h3>
-                <p className="text-xs text-slate-500">Enter a 6-character Towson circle invite code (e.g. TU-9X4K).</p>
+                <p className="text-xs text-slate-500">Enter a 6-character UMD College Park circle invite code (e.g. UMD-9X4K).</p>
               </div>
             </div>
 
@@ -2079,7 +2079,7 @@ export default function CampusSyncApp() {
               <div>
                 <input
                   type="text"
-                  placeholder="e.g. TU-9X4K"
+                  placeholder="e.g. UMD-9X4K"
                   value={inviteCodeInput}
                   onChange={(e) => setInviteCodeInput(e.target.value.toUpperCase())}
                   className="w-full p-3 rounded-2xl bg-slate-50 dark:bg-zinc-800 border text-center font-mono font-black text-lg uppercase tracking-widest focus:outline-amber-500"
@@ -2131,16 +2131,16 @@ export default function CampusSyncApp() {
             <div className="p-4 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border border-dashed border-amber-500 space-y-2">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Orbit Invite Code</span>
               <div className="text-2xl font-black font-mono tracking-widest text-amber-600 dark:text-amber-400">
-                {activeCircle.inviteCode || "TU-9X4K"}
+                {activeCircle.inviteCode || "UMD-9X4K"}
               </div>
             </div>
 
             <button
               onClick={() => {
                 if (navigator.clipboard) {
-                  navigator.clipboard.writeText(activeCircle.inviteCode || "TU-9X4K");
+                  navigator.clipboard.writeText(activeCircle.inviteCode || "UMD-9X4K");
                 }
-                triggerToast(`📋 Copied invite code ${activeCircle.inviteCode || "TU-9X4K"} to clipboard!`);
+                triggerToast(`📋 Copied invite code ${activeCircle.inviteCode || "UMD-9X4K"} to clipboard!`);
               }}
               className="w-full bg-amber-500 hover:bg-amber-600 text-black font-black py-3 rounded-2xl transition text-xs shadow-md flex items-center justify-center gap-1.5"
             >
@@ -2150,7 +2150,7 @@ export default function CampusSyncApp() {
         </div>
       )}
 
-      {/* 4. MODAL: SAFETY MODE & TUPD ASSISTANCE */}
+      {/* 4. MODAL: SAFETY MODE & UMPD ASSISTANCE */}
       {selectedSafetyBeacon && (
         <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl max-w-md w-full p-6 relative shadow-2xl space-y-4">
@@ -2179,7 +2179,7 @@ export default function CampusSyncApp() {
                 className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 rounded-2xl transition text-xs shadow-md flex items-center justify-center gap-2"
               >
                 <PhoneCall className="w-4 h-4" />
-                <span>Call TUPD Dispatch {selectedSafetyBeacon.emergencyPhone}</span>
+                <span>Call UMPD Dispatch {selectedSafetyBeacon.emergencyPhone}</span>
               </a>
 
               <button
@@ -2197,7 +2197,7 @@ export default function CampusSyncApp() {
         </div>
       )}
 
-      {/* 4.1 MODAL: TUHOUSING TOUR BOOKING */}
+      {/* 4.1 MODAL: TERPHOUSING TOUR BOOKING */}
       {showTourBookingModal && tourFormProperty && (
         <div
           className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4"
@@ -2306,7 +2306,7 @@ export default function CampusSyncApp() {
         </div>
       )}
 
-      {/* 4.2 MODAL: TUHOUSING MAINTENANCE REQUEST */}
+      {/* 4.2 MODAL: TERPHOUSING MAINTENANCE REQUEST */}
       {showMaintenanceModal && (
         <div
           className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4"
@@ -2330,7 +2330,7 @@ export default function CampusSyncApp() {
               </div>
               <div>
                 <h3 className="text-base font-black">Submit Resident Repair Ticket</h3>
-                <p className="text-xs text-slate-500">Towson Facilities & Off-Campus Dispatch</p>
+                <p className="text-xs text-slate-500">UMD College Park Facilities & Off-Campus Dispatch</p>
               </div>
             </div>
 
@@ -2474,7 +2474,7 @@ export default function CampusSyncApp() {
 
             {/* Commute & Shuttle Matrix */}
             <div className="p-4 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border space-y-2 text-xs">
-              <div className="font-bold text-slate-800 dark:text-zinc-200">Commute to Towson Main Campus (Freedom Square):</div>
+              <div className="font-bold text-slate-800 dark:text-zinc-200">Commute to UMD College Park Main Campus (Red Square):</div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
                 <div className="bg-white dark:bg-zinc-800 p-2 rounded-xl border">
                   <span className="text-[10px] text-slate-400 block font-bold">DISTANCE</span>
@@ -2576,7 +2576,7 @@ export default function CampusSyncApp() {
                   </span>
                   <span className="text-xs text-slate-400 font-semibold">{weatherReport.lastUpdated}</span>
                 </div>
-                <h2 className="text-xl font-black mt-0.5">Towson Campus Weather & Atmospheric Center</h2>
+                <h2 className="text-xl font-black mt-0.5">UMD College Park Campus Weather & Atmospheric Center</h2>
                 <p className="text-xs text-slate-500">
                   Forecast Office: <strong>{weatherReport.nwsOffice} (Baltimore/Washington)</strong> · Grid [{weatherReport.nwsGridX}, {weatherReport.nwsGridY}]
                 </p>
@@ -2736,7 +2736,7 @@ export default function CampusSyncApp() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-black">7-Day Extended NWS Outlook</h3>
-                  <span className="text-xs text-slate-400">Towson, MD Zone MDZ006</span>
+                  <span className="text-xs text-slate-400">UMD College Park, MD Zone MDZ006</span>
                 </div>
 
                 <div className="space-y-2.5">
@@ -2777,8 +2777,8 @@ export default function CampusSyncApp() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-black">Towson High-Definition Base Reflectivity Radar</h3>
-                    <p className="text-xs text-slate-500">NOAA KLWX Doppler Radar • Centered over Freedom Square & Cook Library</p>
+                    <h3 className="text-sm font-black">UMD College Park High-Definition Base Reflectivity Radar</h3>
+                    <p className="text-xs text-slate-500">NOAA KLWX Doppler Radar • Centered over Red Square & McKeldin Library</p>
                   </div>
                   <span className="text-[10px] bg-emerald-50 text-emerald-600 font-black px-2.5 py-1 rounded-full border border-emerald-200">
                     ● Live Feed Active
@@ -2793,10 +2793,10 @@ export default function CampusSyncApp() {
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full border border-sky-500/30 animate-pulse pointer-events-none" />
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 rounded-full border border-sky-500/20 pointer-events-none" />
                   
-                  {/* Towson Campus Quad Label */}
+                  {/* UMD College Park Campus Quad Label */}
                   <div className="relative z-10 flex items-center justify-between">
                     <div className="bg-black/75 backdrop-blur-md px-3 py-1 rounded-full text-[10px] text-white font-bold border border-white/20">
-                      📍 Towson Main Quad (0 dBZ · Clear Air)
+                      📍 UMD College Park Main Quad (0 dBZ · Clear Air)
                     </div>
                     <div className="bg-sky-950/80 text-sky-300 px-3 py-1 rounded-full text-[10px] font-mono border border-sky-500/40">
                       Scan Elevation: 0.5°
@@ -2854,7 +2854,7 @@ export default function CampusSyncApp() {
                 {/* Separate University Administration Operational Status */}
                 <div className="space-y-2 pt-2">
                   <span className="text-xs font-black uppercase tracking-wider text-slate-500">
-                    Towson University Official Operational Status
+                    University of Maryland, College Park Official Operational Status
                   </span>
                   <div className="p-4 bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl border border-emerald-300 dark:border-emerald-800 space-y-2 text-xs">
                     <div className="flex items-center justify-between">
@@ -2886,7 +2886,7 @@ export default function CampusSyncApp() {
 
                 <div className="space-y-2.5">
                   {[
-                    { key: "emergencyAlerts", title: "Emergency Tornado & Flash Flood Warnings", desc: "Immediate push alerts for imminent hazardous weather affecting Towson." },
+                    { key: "emergencyAlerts", title: "Emergency Tornado & Flash Flood Warnings", desc: "Immediate push alerts for imminent hazardous weather affecting UMD College Park." },
                     { key: "severeStormWatches", title: "Severe Thunderstorm Watches & Lightning", desc: "Advisories when severe storm conditions are favorable over northern Maryland." },
                     { key: "winterWeatherAlerts", title: "Winter Weather, Snow & Ice Closures", desc: "Alerts for campus delays, snow routes, and university schedule modifications." },
                     { key: "extremeHeatAdvisories", title: "Extreme Heat Index Warnings", desc: "Hydration and indoor cooling station reminders when Heat Index exceeds 100°F." },
@@ -3033,7 +3033,7 @@ export default function CampusSyncApp() {
 
                       <button
                         onClick={() => {
-                          triggerToast(`🚀 Submitted ${del.title} to Towson Canvas!`);
+                          triggerToast(`🚀 Submitted ${del.title} to UMD College Park Canvas!`);
                         }}
                         className="text-[11px] font-bold bg-amber-500 hover:bg-amber-600 text-black px-3 py-1 rounded-xl transition"
                       >
@@ -3066,29 +3066,29 @@ export default function CampusSyncApp() {
         </div>
       )}
 
-      {/* 4.2 MODAL: DIGITAL TIGER CARD & DINING WALLET PASS */}
-      {showTigerWalletModal && (
+      {/* 4.2 MODAL: DIGITAL TERPID & DINING WALLET PASS */}
+      {showTerpIDModal && (
         <div
           className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
           onClick={(e) => {
-            if (e.target === e.currentTarget) setShowTigerWalletModal(false);
+            if (e.target === e.currentTarget) setShowTerpIDModal(false);
           }}
         >
           <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl max-w-md w-full p-6 relative shadow-2xl space-y-5 text-slate-900 dark:text-zinc-100 animate-in zoom-in-95">
             <div className="flex items-center justify-between border-b pb-3">
               <div className="flex items-center gap-2">
                 <CreditCard className="w-5 h-5 text-amber-500" />
-                <h3 className="text-base font-black">Towson Digital Tiger OneCard</h3>
+                <h3 className="text-base font-black">UMD College Park Digital Terrapin TerpID</h3>
               </div>
               <button
-                onClick={() => setShowTigerWalletModal(false)}
+                onClick={() => setShowTerpIDModal(false)}
                 className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-400"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* The Digital Tiger Card Visual (Gold/Black Luxe Design) */}
+            {/* The Digital Terrapin Card Visual (Gold/Black Luxe Design) */}
             <div className="bg-gradient-to-br from-amber-500 via-amber-600 to-black rounded-3xl p-5 text-white shadow-2xl relative overflow-hidden space-y-4 border border-amber-400/40">
               <div className="absolute right-0 bottom-0 w-48 h-48 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:12px_12px] opacity-20" />
               
@@ -3096,8 +3096,8 @@ export default function CampusSyncApp() {
                 <div className="flex items-center gap-2">
                   <span className="text-xl">🐯</span>
                   <div>
-                    <span className="text-[11px] font-black uppercase tracking-widest text-amber-200 block leading-none">TOWSON UNIVERSITY</span>
-                    <span className="text-[9px] text-amber-100 uppercase tracking-wider font-mono">OneCard • Digital Pass</span>
+                    <span className="text-[11px] font-black uppercase tracking-widest text-amber-200 block leading-none">UMD UNIVERSITY</span>
+                    <span className="text-[9px] text-amber-100 uppercase tracking-wider font-mono">TerpID • Digital Pass</span>
                   </div>
                 </div>
                 <div className="w-6 h-6 rounded-md bg-white/20 flex items-center justify-center text-xs font-mono font-bold">
@@ -3129,7 +3129,7 @@ export default function CampusSyncApp() {
                     />
                   ))}
                 </div>
-                <span className="text-[10px] font-mono font-bold tracking-widest text-slate-800">{tigerWallet.barcodeNumber}</span>
+                <span className="text-[10px] font-mono font-bold tracking-widest text-slate-800">{terpWallet.barcodeNumber}</span>
               </div>
             </div>
 
@@ -3142,26 +3142,26 @@ export default function CampusSyncApp() {
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div className="p-3 bg-amber-50 dark:bg-amber-950/40 rounded-2xl border border-amber-200 dark:border-amber-900 space-y-1">
                   <span className="text-[10px] text-amber-700 dark:text-amber-300 font-bold uppercase block">Meal Swipes</span>
-                  <span className="text-xl font-black text-amber-900 dark:text-amber-100">{tigerWallet.mealSwipesRemaining} Swipes</span>
+                  <span className="text-xl font-black text-amber-900 dark:text-amber-100">{terpWallet.mealSwipesRemaining} Swipes</span>
                   <span className="text-[9px] text-slate-400 block">Resets Sunday midnight</span>
                 </div>
 
                 <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl border border-emerald-200 dark:border-emerald-900 space-y-1">
                   <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold uppercase block">Dining Dollars</span>
-                  <span className="text-xl font-black text-emerald-900 dark:text-emerald-100">${(tigerWallet?.diningDollarsBalance ?? 428.5).toFixed(2)}</span>
-                  <span className="text-[9px] text-slate-400 block">All campus dining + Dunkin'</span>
+                  <span className="text-xl font-black text-emerald-900 dark:text-emerald-100">${(terpWallet?.diningDollarsBalance ?? 428.5).toFixed(2)}</span>
+                  <span className="text-[9px] text-slate-400 block">All campus dining + Footnotes Cafe (McKeldin)</span>
                 </div>
 
                 <div className="p-3 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border space-y-1">
                   <span className="text-[10px] text-slate-400 font-bold uppercase block">Retail Points</span>
-                  <span className="text-base font-black">${(tigerWallet?.retailPointsBalance ?? 185.0).toFixed(2)}</span>
+                  <span className="text-base font-black">${(terpWallet?.retailPointsBalance ?? 185.0).toFixed(2)}</span>
                   <span className="text-[9px] text-slate-400 block">Bookstore & concessions</span>
                 </div>
 
                 <div className="p-3 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border space-y-1">
                   <span className="text-[10px] text-slate-400 font-bold uppercase block">Print Quota</span>
-                  <span className="text-base font-black">${(tigerWallet?.printQuotaBalance ?? 34.25).toFixed(2)}</span>
-                  <span className="text-[9px] text-slate-400 block">Cook Library Printers</span>
+                  <span className="text-base font-black">${(terpWallet?.printQuotaBalance ?? 34.25).toFixed(2)}</span>
+                  <span className="text-[9px] text-slate-400 block">McKeldin Library Printers</span>
                 </div>
               </div>
             </div>
@@ -3170,7 +3170,7 @@ export default function CampusSyncApp() {
             <div className="p-3 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border text-xs flex items-center justify-between">
               <div>
                 <span className="text-[10px] text-slate-400 font-bold block">DORM KEYCARD ACCESS</span>
-                <span className="font-bold text-slate-900 dark:text-zinc-100">{tigerWallet.dormAccessZone}</span>
+                <span className="font-bold text-slate-900 dark:text-zinc-100">{terpWallet.dormAccessZone}</span>
               </div>
               <span className="text-[10px] bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-black px-2 py-0.5 rounded-full">
                 ACTIVE
@@ -3180,18 +3180,18 @@ export default function CampusSyncApp() {
             {/* Actions */}
             <div className="space-y-2 pt-1">
               <button
-                onClick={() => triggerToast("📲 Added Towson OneCard pass to Apple Wallet & Google Wallet!")}
+                onClick={() => triggerToast("📲 Added UMD College Park TerpID pass to Apple Wallet & Google Wallet!")}
                 className="w-full bg-black hover:bg-slate-900 text-white font-black py-3 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg transition border border-white/20"
               >
                 <span> Add to Apple Wallet & Google Wallet</span>
               </button>
               <button
                 onClick={() => {
-                  setTigerWallet({
-                    ...tigerWallet,
-                    diningDollarsBalance: tigerWallet.diningDollarsBalance + 50,
+                  setTerpWallet({
+                    ...terpWallet,
+                    diningDollarsBalance: terpWallet.diningDollarsBalance + 50,
                   });
-                  triggerToast("💳 Reloaded +$50.00 to Towson Dining Dollars!");
+                  triggerToast("💳 Reloaded +$50.00 to UMD College Park Dining Dollars!");
                 }}
                 className="w-full bg-amber-500 hover:bg-amber-600 text-black font-black py-2.5 rounded-2xl text-xs transition"
               >
@@ -3203,7 +3203,7 @@ export default function CampusSyncApp() {
         </div>
       )}
 
-      {/* 4.3 MODAL: TIGER SAFEWALK VIRTUAL NIGHT ESCORT */}
+      {/* 4.3 MODAL: TERP SAFEWALK VIRTUAL NIGHT ESCORT */}
       {showSafeWalkModal && (
         <div
           className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
@@ -3215,7 +3215,7 @@ export default function CampusSyncApp() {
             <div className="flex items-center justify-between border-b pb-3">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-5 h-5 text-emerald-500" />
-                <h3 className="text-base font-black">Tiger SafeWalk Virtual Escort</h3>
+                <h3 className="text-base font-black">Terrapin SafeWalk Virtual Escort</h3>
               </div>
               <button
                 onClick={() => setShowSafeWalkModal(false)}
@@ -3272,7 +3272,7 @@ export default function CampusSyncApp() {
                   />
                   <div>
                     <h5 className="font-bold text-slate-900 dark:text-zinc-100">{safeWalkSession.guardianName}</h5>
-                    <span className="text-[10px] text-emerald-600 font-medium">Tracking live via TigerOrbit 360</span>
+                    <span className="text-[10px] text-emerald-600 font-medium">Tracking live via TerpOrbit 360</span>
                   </div>
                 </div>
                 <a
@@ -3309,12 +3309,12 @@ export default function CampusSyncApp() {
                 <button
                   onClick={() => {
                     setSafeWalkSession({ ...safeWalkSession, status: "EMERGENCY_DISPATCHED" });
-                    triggerToast("🚨 TUPD Emergency Dispatch alerted with your exact GPS coordinates!");
+                    triggerToast("🚨 UMPD Emergency Dispatch alerted with your exact GPS coordinates!");
                   }}
                   className="bg-rose-600 hover:bg-rose-700 text-white font-black py-2.5 rounded-xl transition flex items-center justify-center gap-1"
                 >
                   <AlertOctagon className="w-3.5 h-3.5" />
-                  <span>1-Tap TUPD SOS</span>
+                  <span>1-Tap UMPD SOS</span>
                 </button>
               </div>
             </div>
@@ -3469,7 +3469,7 @@ export default function CampusSyncApp() {
               <div className="flex items-center justify-between border-b pb-3">
                 <div className="flex items-center gap-2.5">
                   <Bell className="w-5 h-5 text-amber-500" />
-                  <h3 className="text-base font-black">Towson Notifications</h3>
+                  <h3 className="text-base font-black">UMD College Park Notifications</h3>
                 </div>
                 <button
                   onClick={() => setShowNotifDrawer(false)}
@@ -3498,9 +3498,9 @@ export default function CampusSyncApp() {
               <div className="space-y-2.5 max-h-[70vh] overflow-y-auto text-xs">
                 {[
                   { id: "1", title: "🏠 Housing Match Alert", msg: "A new 2BR unit matched your budget near University Village ($875/mo).", time: "5m ago", type: "HOUSING", read: false },
-                  { id: "2", title: "🎟️ Event RSVP Reminder", msg: "Towson Cybersecurity Keynote starts today at 5:00 PM in Science Complex.", time: "45m ago", type: "EVENT", read: false },
+                  { id: "2", title: "🎟️ Event RSVP Reminder", msg: "UMD College Park Cybersecurity Keynote starts today at 5:00 PM in Brendan Iribe Center for Computer Science.", time: "45m ago", type: "EVENT", read: false },
                   { id: "3", title: "🌦️ NOAA Weather Update", msg: "NOAA reports 20% precipitation chance. Good conditions for outdoor campus walking.", time: "2h ago", type: "WEATHER", read: true },
-                  { id: "4", title: "👥 ASA Towson Announcement", msg: "General body meeting confirmed for Thursday 6:30 PM in Union Rm 302.", time: "4h ago", type: "ORG", read: true },
+                  { id: "4", title: "👥 ASA UMD College Park Announcement", msg: "General body meeting confirmed for Thursday 6:30 PM in Union Rm 302.", time: "4h ago", type: "ORG", read: true },
                 ].map((notif) => (
                   <div
                     key={notif.id}
@@ -3547,12 +3547,10 @@ export default function CampusSyncApp() {
               <X className="w-5 h-5" />
             </button>
 
-            <div className="w-16 h-16 rounded-3xl bg-amber-500 text-black flex items-center justify-center mx-auto text-3xl font-black shadow-lg">
-              TU
-            </div>
+            <div className="w-16 h-16 rounded-3xl bg-amber-500 text-black flex items-center justify-center mx-auto text-3xl font-black shadow-lg">SU</div>
 
             <div className="space-y-1">
-              <span className="text-[11px] font-extrabold uppercase tracking-widest text-amber-600">Towson University Office of Civic Engagement</span>
+              <span className="text-[11px] font-extrabold uppercase tracking-widest text-amber-600">University of Maryland, College Park Office of Civic Engagement</span>
               <h2 className="text-2xl font-black">Official Certificate of Student Leadership</h2>
               <p className="text-xs text-slate-500">This certifies that</p>
               <h3 className="text-xl font-black text-amber-600">{currentUser.name}</h3>
@@ -3563,7 +3561,7 @@ export default function CampusSyncApp() {
 
             <div className="p-4 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border text-xs font-mono flex items-center justify-between">
               <span>Verification Hash: 0x9f4a...81c2</span>
-              <span className="text-emerald-600 font-bold">Verified Tiger Record ✓</span>
+              <span className="text-emerald-600 font-bold">Verified Terrapin Record ✓</span>
             </div>
 
             <div className="grid grid-cols-2 gap-3 pt-2">
@@ -3587,19 +3585,35 @@ export default function CampusSyncApp() {
         </div>
       )}
 
-      {/* TOP GLOBAL NAVIGATION BAR */}
+      {/* UMD BIG TEN LIVE TICKER BAR */}
+      <div className="bg-[#111827] text-slate-200 border-b border-[#E03A3E]/40 px-4 py-1.5 text-[11px] font-mono flex items-center justify-between overflow-x-auto gap-4">
+        <div className="flex items-center gap-3 shrink-0">
+          <span className="bg-[#E03A3E] text-white px-2 py-0.5 rounded font-black text-[10px] tracking-wider uppercase">B1G MARYLAND</span>
+          <span className="font-bold text-[#FFD520]">🐢 Testudo Spirit Meter: 99.4%</span>
+          <span className="text-slate-400">|</span>
+          <span className="text-emerald-400 font-bold">● SECU Stadium: Ready</span>
+          <span className="text-slate-400">|</span>
+          <span className="text-[#FFD520]">🏆 4x NCAA Men's Lacrosse Champs</span>
+        </div>
+        <div className="flex items-center gap-3 shrink-0 text-slate-400 text-[10px]">
+          <span>Shuttle-UM 104: 3m (Stamp)</span>
+          <span>•</span>
+          <span>Yahentamitsi: 84% Cap</span>
+          <span>•</span>
+          <span className="text-slate-300">College Park, MD (38.9869° N)</span>
+        </div>
+      </div>
+{/* TOP GLOBAL NAVIGATION BAR */}
       <header className="sticky top-0 z-40 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-b border-slate-200 dark:border-zinc-800">
         <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-5 lg:px-6 h-16 flex items-center justify-between gap-2.5">
           
           {/* Left: Logo & Campus Selector & NOAA Weather */}
           <div className="flex items-center gap-2 shrink-0">
             <div className="flex items-center gap-2 cursor-pointer shrink-0" onClick={() => setActiveTab("home")}>
-              <div className="w-8 h-8 rounded-xl bg-amber-500 flex items-center justify-center text-black font-black text-base shadow-sm">
-                TU
-              </div>
+              <div className="w-8 h-8 rounded-xl bg-[#E03A3E] border border-[#FFD520]/60 flex items-center justify-center text-[#FFD520] font-black text-sm shadow-sm">UMD</div>
               <div className="hidden xl:block">
                 <span className="font-black text-sm tracking-tight text-slate-900 dark:text-zinc-100 block leading-tight">
-                  TowsonSync
+                  TerpSync
                 </span>
                 <span className="text-[9px] text-amber-600 dark:text-amber-400 font-bold block">Digital Campus</span>
               </div>
@@ -3609,8 +3623,8 @@ export default function CampusSyncApp() {
             <select
               value={selectedCampus}
               onChange={(e) => {
-                if (e.target.value === "Salisbury University") {
-                window.location.href = "/salisbury";
+                if (e.target.value === "University of Maryland, College Park") {
+                window.location.href = "/campus";
                 return;
               }
               setSelectedCampus(e.target.value as any);
@@ -3618,10 +3632,10 @@ export default function CampusSyncApp() {
               }}
               className="bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 font-bold text-xs rounded-xl px-2.5 py-1.5 focus:outline-none cursor-pointer shrink-0"
             >
-              <option value="Towson Main Campus">🏛️ Main Campus</option>
-              <option value="TU Downtown">🏙️ TU Downtown</option>
-              <option value="TU Health Complex">🏥 Health Complex</option>
-              <option value="Salisbury University">🦅 Salisbury University (Sea Gulls)</option>
+              <option value="UMD College Park Main Campus">🏛️ Main Campus</option>
+              <option value="Discovery District & Innovation Hub">🏙️ Discovery District & Innovation Hub</option>
+              <option value="Downtown UMD College Park Plaza">🏥 Health Complex</option>
+              <option value="University of Maryland, College Park">🐯 University of Maryland, College Park (Terrapins)</option>
             </select>
 
             {/* Authoritative NOAA / NWS Compact Weather Pill */}
@@ -3758,14 +3772,14 @@ export default function CampusSyncApp() {
           {/* Right: Streamlined Utility Tools */}
           <div className="flex items-center gap-1.5 shrink-0">
             
-            {/* Digital Tiger OneCard Button */}
+            {/* Digital Terrapin TerpID Button */}
             <button
-              onClick={() => setShowTigerWalletModal(true)}
+              onClick={() => setShowTerpIDModal(true)}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700/80 text-amber-900 dark:text-amber-200 hover:border-amber-500 transition shrink-0"
-              title="Open Towson Digital OneCard & Balances"
+              title="Open UMD College Park Digital TerpID & Balances"
             >
               <CreditCard className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-              <span className="font-mono text-[11px] font-bold">{tigerWallet.mealSwipesRemaining} Swipes</span>
+              <span className="font-mono text-[11px] font-bold">{terpWallet.mealSwipesRemaining} Swipes</span>
             </button>
 
             {/* Global AI Copilot Button */}
@@ -3860,7 +3874,7 @@ export default function CampusSyncApp() {
                         <span className="absolute bottom-1 right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-900" />
                       </div>
                       <span className="text-[10px] font-bold bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800 px-2.5 py-0.5 rounded-full">
-                        {currentUser.role === "CLUB_LEAD" ? "👑 Club Lead" : currentUser.role === "FACULTY" ? "🏛️ TU Faculty" : "🐯 Verified Tiger"}
+                        {currentUser.role === "CLUB_LEAD" ? "👑 Club Lead" : currentUser.role === "FACULTY" ? "🏛️ UMD Faculty" : "🐯 Verified Terrapin"}
                       </span>
                     </div>
 
@@ -3873,20 +3887,20 @@ export default function CampusSyncApp() {
                       <span className="text-[10px] font-mono text-amber-600 font-bold block mt-0.5">🪪 ID: {currentUser?.studentId || "0982341"}</span>
                     </div>
 
-                    {/* Quick Access Card: Tiger OneCard */}
+                    {/* Quick Access Card: Terrapin TerpID */}
                     <button
                       onClick={() => {
-                        setShowTigerWalletModal(true);
+                        setShowTerpIDModal(true);
                         setShowUserDropdown(false);
                       }}
                       className="w-full bg-gradient-to-r from-amber-500/10 to-amber-600/10 hover:from-amber-500/20 hover:to-amber-600/20 border border-amber-500/30 p-2.5 rounded-2xl flex items-center justify-between text-xs font-bold transition"
                     >
                       <div className="flex items-center gap-2">
                         <CreditCard className="w-4 h-4 text-amber-500" />
-                        <span className="text-slate-900 dark:text-zinc-100">Digital OneCard Wallet</span>
+                        <span className="text-slate-900 dark:text-zinc-100">Digital TerpID Wallet</span>
                       </div>
                       <span className="text-[10px] font-mono font-black text-amber-600 dark:text-amber-400">
-                        {tigerWallet?.mealSwipesRemaining ?? 14} Swipes • ${(tigerWallet?.diningDollarsBalance ?? 428).toFixed(0)}
+                        {terpWallet?.mealSwipesRemaining ?? 14} Swipes • ${(terpWallet?.diningDollarsBalance ?? 428).toFixed(0)}
                       </span>
                     </button>
 
@@ -3969,7 +3983,7 @@ export default function CampusSyncApp() {
                         >
                           <div className="flex items-center gap-2">
                             <Shield className="w-4 h-4 text-amber-300" />
-                            <span>TowsonSync Administration</span>
+                            <span>TerpSync Administration</span>
                           </div>
                           <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">Open →</span>
                         </button>
@@ -4004,7 +4018,7 @@ export default function CampusSyncApp() {
                         className="w-full text-left p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 font-bold flex items-center gap-2 text-emerald-600 dark:text-emerald-400"
                       >
                         <ShieldCheck className="w-4 h-4" />
-                        <span>Tiger SafeWalk Night Escort</span>
+                        <span>Terrapin SafeWalk Night Escort</span>
                       </button>
                       <button
                         onClick={() => {
@@ -4014,7 +4028,7 @@ export default function CampusSyncApp() {
                         className="w-full text-left p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 font-bold flex items-center gap-2 text-indigo-600 dark:text-indigo-400"
                       >
                         <Sparkles className="w-4 h-4" />
-                        <span>✨ Ask TowsonSync AI</span>
+                        <span>✨ Ask TerpSync AI</span>
                       </button>
                       <button
                         onClick={() => {
@@ -4024,7 +4038,7 @@ export default function CampusSyncApp() {
                         className="w-full text-left p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 font-bold flex items-center gap-2"
                       >
                         <span>🪐</span>
-                        <span>TigerOrbit 360 Privacy (Opt-in)</span>
+                        <span>TerpOrbit 360 Privacy (Opt-in)</span>
                       </button>
                       <button
                         onClick={() => {
@@ -4049,7 +4063,7 @@ export default function CampusSyncApp() {
                       >
                         <div className="flex items-center gap-2">
                           <Trophy className="w-4 h-4" />
-                          <span>Tiger Record & Passport</span>
+                          <span>Terrapin Record & Passport</span>
                         </div>
                         <span className="text-[10px] font-mono">5/7 ✓</span>
                       </button>
@@ -4064,12 +4078,12 @@ export default function CampusSyncApp() {
         </div>
       </header>
 
-      {/* 🔴 AMBIENT LIVE ON TOWSON CAMPUS PULSE STRIP */}
+      {/* 🔴 AMBIENT LIVE ON UMD CAMPUS PULSE STRIP */}
       <div className="bg-slate-900 text-white border-b border-slate-800 px-4 py-2 text-xs">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 overflow-x-auto">
           <div className="flex items-center gap-2 shrink-0">
             <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping" />
-            <span className="font-black uppercase tracking-wider text-[11px] text-amber-400">Live At Towson</span>
+            <span className="font-black uppercase tracking-wider text-[11px] text-amber-400">Live At UMD College Park</span>
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
@@ -4095,7 +4109,7 @@ export default function CampusSyncApp() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full">
         
         {/* ========================================================================= */}
-        {/* 🗺️ DEDICATED MODULE: 📍 CAMPUS LIVE MAP (TOWSON UNIVERSITY) */}
+        {/* 🗺️ DEDICATED MODULE: 📍 CAMPUS LIVE MAP (UMD UNIVERSITY) */}
         {/* ========================================================================= */}
         {(activeTab === "map" || (activeTab === "more" && moreSubView === "map")) && (
           <div className="space-y-6">
@@ -4104,11 +4118,11 @@ export default function CampusSyncApp() {
             <div className="bg-gradient-to-r from-slate-900 via-amber-950 to-slate-900 rounded-3xl p-6 text-white shadow-xl flex items-center justify-between flex-wrap gap-4 border border-amber-500/30">
               <div>
                 <span className="text-xs font-extrabold uppercase tracking-widest text-amber-400">
-                  Towson University • Geographic Platform & TigerOrbit 360
+                  University of Maryland, College Park • Geographic Platform & TerpOrbit 360
                 </span>
-                <h1 className="text-2xl font-black mt-0.5">Towson Campus Live Map & Indoor Radar</h1>
+                <h1 className="text-2xl font-black mt-0.5">UMD College Park Campus Live Map & Indoor Radar</h1>
                 <p className="text-xs text-slate-300 mt-1 max-w-2xl">
-                  Explore academic buildings, floor plans, live Tiger Ride shuttles, parking garages, TUPD Blue Lights, and temporary TigerOrbit 360 circles.
+                  Explore academic buildings, floor plans, live Terrapin Ride shuttles, parking garages, UMPD Blue Lights, and temporary TerpOrbit 360 circles.
                 </p>
               </div>
 
@@ -4140,13 +4154,13 @@ export default function CampusSyncApp() {
               {[
                 { id: "ALL", label: "🌐 All Campus" },
                 { id: "BUILDINGS", label: "🏛️ Academic Buildings" },
-                { id: "CIRCLES", label: "👥 TigerOrbit 360" },
-                { id: "HOUSING", label: "🏠 TUHousing Off-Campus" },
+                { id: "CIRCLES", label: "👥 TerpOrbit 360" },
+                { id: "HOUSING", label: "🏠 TerpHousing Off-Campus" },
                 { id: "WEATHER", label: "🌦️ NOAA Weather & Radar" },
-                { id: "SHUTTLES", label: "🚌 Tiger Ride GPS" },
+                { id: "SHUTTLES", label: "🚌 Terrapin Ride GPS" },
                 { id: "PARKING", label: "🅿️ Parking Garages" },
-                { id: "SAFETY", label: "🚨 TUPD Blue Lights" },
-                { id: "SCAVENGER", label: "🐾 Tiger Scavenger Hunt" },
+                { id: "SAFETY", label: "🚨 UMPD Blue Lights" },
+                { id: "SCAVENGER", label: "🐾 Terrapin Scavenger Hunt" },
               ].map((pill) => (
                 <button
                   key={pill.id}
@@ -4194,7 +4208,7 @@ export default function CampusSyncApp() {
 
                 {/* ─── A. CAMPUS QUADRANTS & GREEN LAWNS ─── */}
                 
-                {/* 1. Academic Core Quad & Freedom Square */}
+                {/* 1. Academic Core Quad & Red Square */}
                 <path
                   d="M 360 220 L 660 160 L 680 380 L 360 420 Z"
                   fill="url(#lawnPattern)"
@@ -4203,10 +4217,10 @@ export default function CampusSyncApp() {
                   strokeDasharray="6 3"
                 />
                 <text x="510" y="270" fill="#34d399" fontSize="12" fontWeight="bold" letterSpacing="2" opacity="0.6" textAnchor="middle">
-                  🏛️ ACADEMIC QUAD & FREEDOM SQUARE
+                  🏛️ MCKELDIN MALL & TESTUDO PLAZA
                 </text>
 
-                {/* 2. Glen Arboretum & Nature Reserve (North-East) */}
+                {/* 2. Paint Branch Trail & Arboretum & Nature Reserve (North-East) */}
                 <path
                   d="M 680 60 L 920 60 L 900 240 L 700 220 Z"
                   fill="url(#forestPattern)"
@@ -4214,10 +4228,10 @@ export default function CampusSyncApp() {
                   strokeWidth="1.5"
                 />
                 <text x="800" y="140" fill="#10b981" fontSize="11" fontWeight="bold" letterSpacing="1.5" opacity="0.7" textAnchor="middle">
-                  🌲 GLEN ARBORETUM
+                  🌲 WASHINGTON QUAD & PEACE GARDEN
                 </text>
 
-                {/* 3. West Village Residential Quad (West) */}
+                {/* 3. Terrapin Square Residential Quad (West) */}
                 <path
                   d="M 80 200 L 260 200 L 250 440 L 70 420 Z"
                   fill="url(#lawnPattern)"
@@ -4225,21 +4239,21 @@ export default function CampusSyncApp() {
                   strokeWidth="1.5"
                 />
                 <text x="160" y="320" fill="#34d399" fontSize="11" fontWeight="bold" letterSpacing="1.5" opacity="0.6" textAnchor="middle">
-                  🏠 WEST VILLAGE QUAD
+                  🏠 MCKELDIN MALL & NORTH CAMPUS QUAD
                 </text>
 
-                {/* 4. Minnegan Athletic Complex & Stadium (South-West) */}
+                {/* 4. SECU Stadium & XFINITY Center Complex (South-West) */}
                 <g opacity="0.85">
                   {/* Outer Running Track Oval */}
                   <ellipse cx="280" cy="520" rx="90" ry="50" fill="#450a0a" stroke="#ef4444" strokeWidth="2" strokeDasharray="4 2" />
                   {/* Inner Turf Field */}
                   <ellipse cx="280" cy="520" rx="65" ry="32" fill="#064e3b" stroke="#10b981" strokeWidth="1.5" />
                   <text x="280" y="524" fill="#fca5a5" fontSize="10" fontWeight="bold" textAnchor="middle">
-                    🏃 MINNEGAN STADIUM
+                    🏃 SECU STADIUM & XFINITY CENTER
                   </text>
                 </g>
 
-                {/* 5. Towson Stream / Glen Creek Meander */}
+                {/* 5. UMD College Park Stream / Paint Branch Creek Meander */}
                 <path
                   d="M 690 40 Q 740 180 720 320 T 760 580"
                   fill="none"
@@ -4249,33 +4263,33 @@ export default function CampusSyncApp() {
                   opacity="0.35"
                 />
                 <text x="745" y="360" fill="#38bdf8" fontSize="9" fontWeight="bold" transform="rotate(75 745 360)" opacity="0.6">
-                  🌊 Towson Glen Creek
+                  🌊 UMD College Park Paint Branch Creek
                 </text>
 
                 {/* ─── B. MAJOR ARTERIAL ROADS & THOROUGHFARES ─── */}
                 
-                {/* 1. Towsontown Blvd (North Highway Corridor) */}
+                {/* 1. UMD College Parktown Blvd (North Highway Corridor) */}
                 <path d="M 50 120 L 950 120" stroke="#1e293b" strokeWidth="22" strokeLinecap="round" />
                 <path d="M 50 120 L 950 120" stroke="#334155" strokeWidth="18" strokeLinecap="round" />
                 <path d="M 50 120 L 950 120" stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="10 8" />
                 <text x="500" y="114" fill="#94a3b8" fontSize="10" fontWeight="bold" letterSpacing="3" textAnchor="middle">
-                  TOWSONTOWN BOULEVARD
+                  CAMPUS DRIVE & BALTIMORE AVE
                 </text>
 
-                {/* 2. Osler Drive (West Main Arterial) */}
+                {/* 2. Wayne Street (West Main Arterial) */}
                 <path d="M 160 50 L 320 600" stroke="#1e293b" strokeWidth="22" strokeLinecap="round" />
                 <path d="M 160 50 L 320 600" stroke="#334155" strokeWidth="18" strokeLinecap="round" />
                 <path d="M 160 50 L 320 600" stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="10 8" />
                 <text x="210" y="240" fill="#94a3b8" fontSize="10" fontWeight="bold" letterSpacing="3" transform="rotate(74 210 240)">
-                  OSLER DRIVE
+                  STADIUM DRIVE & REGENTS DR
                 </text>
 
-                {/* 3. York Road MD-45 (East Arterial Avenue) */}
+                {/* 3. Bateman Street MD-45 (East Arterial Avenue) */}
                 <path d="M 880 50 L 880 600" stroke="#1e293b" strokeWidth="26" strokeLinecap="round" />
                 <path d="M 880 50 L 880 600" stroke="#334155" strokeWidth="20" strokeLinecap="round" />
                 <path d="M 880 50 L 880 600" stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="10 8" />
                 <text x="895" y="320" fill="#94a3b8" fontSize="10" fontWeight="bold" letterSpacing="3" transform="rotate(90 895 320)">
-                  YORK ROAD (MD-45)
+                  BALTIMORE AVE / ROUTE 1 (US-1)
                 </text>
 
                 {/* 4. Cross Campus Drive (Central Connector) */}
@@ -4291,37 +4305,37 @@ export default function CampusSyncApp() {
 
                 {/* ─── C. ARCHITECTURAL BUILDING FOOTPRINTS ─── */}
 
-                {/* 1. Albert S. Cook Library (CK) Footprint */}
+                {/* 1. Albert S. McKeldin Library (CK) Footprint */}
                 <g opacity="0.95">
                   <rect x="430" y="275" width="100" height="70" rx="8" fill="#1e293b" stroke="#f59e0b" strokeWidth="2" />
                   <rect x="445" y="285" width="70" height="50" rx="4" fill="#0f172a" stroke="#fbbf24" strokeWidth="1" strokeDasharray="3 2" />
-                  <text x="480" y="315" fill="#fef3c7" fontSize="11" fontWeight="bold" textAnchor="middle">📚 COOK LIBRARY</text>
-                  <text x="480" y="330" fill="#f59e0b" fontSize="9" textAnchor="middle">Level 1-5 • Central Hub</text>
+                  <text x="480" y="315" fill="#fef3c7" fontSize="11" fontWeight="bold" textAnchor="middle">📚 MCKELDIN LIBRARY</text>
+                  <text x="480" y="330" fill="#f59e0b" fontSize="9" textAnchor="middle">Floors 1-7 • 24/7 TLC Hub</text>
                 </g>
 
-                {/* 2. Science Complex (SC) Footprint */}
+                {/* 2. Brendan Iribe Center for Computer Science (SC) Footprint */}
                 <g opacity="0.95">
                   {/* Multi-Wing Footprint */}
                   <path d="M 570 190 L 690 190 L 690 270 L 650 270 L 650 290 L 570 290 Z" fill="#1e293b" stroke="#06b6d4" strokeWidth="2" />
                   <rect x="585" y="205" width="50" height="70" rx="4" fill="#0f172a" stroke="#22d3ee" strokeWidth="1" strokeDasharray="3 2" />
-                  <text x="630" y="235" fill="#cffafe" fontSize="11" fontWeight="bold" textAnchor="middle">🔬 SCIENCE COMPLEX</text>
+                  <text x="630" y="235" fill="#cffafe" fontSize="11" fontWeight="bold" textAnchor="middle">🔬 IRIBE COMPUTER LABS</text>
                   <text x="630" y="250" fill="#06b6d4" fontSize="9" textAnchor="middle">Cyber Lab • Planetarium</text>
                 </g>
 
-                {/* 3. University Union (UU) Footprint */}
+                {/* 3. Adele H. Stamp Student Union (GSU) (UU) Footprint */}
                 <g opacity="0.95">
                   <rect x="330" y="340" width="100" height="70" rx="8" fill="#1e293b" stroke="#a855f7" strokeWidth="2" />
                   <rect x="345" y="352" width="70" height="46" rx="4" fill="#0f172a" stroke="#c084fc" strokeWidth="1" strokeDasharray="3 2" />
-                  <text x="380" y="375" fill="#f3e8ff" fontSize="11" fontWeight="bold" textAnchor="middle">🍕 UNIV. UNION</text>
-                  <text x="380" y="390" fill="#c084fc" fontSize="9" textAnchor="middle">Dining • Ballrooms • SGA</text>
+                  <text x="380" y="375" fill="#f3e8ff" fontSize="11" fontWeight="bold" textAnchor="middle">🍕 STAMP UNION</text>
+                  <text x="380" y="390" fill="#c084fc" fontSize="9" textAnchor="middle">Dining • Hoff Theater • SGA</text>
                 </g>
 
-                {/* 4. Burdick Hall & Rec Center (BD) Footprint */}
+                {/* 4. Eppley Recreation Center (ERC) (PAC) & Rec Center (BD) Footprint */}
                 <g opacity="0.95">
                   <rect x="440" y="425" width="110" height="75" rx="8" fill="#1e293b" stroke="#10b981" strokeWidth="2" />
                   <rect x="455" y="438" width="80" height="50" rx="4" fill="#0f172a" stroke="#34d399" strokeWidth="1" strokeDasharray="3 2" />
-                  <text x="495" y="465" fill="#d1fae5" fontSize="11" fontWeight="bold" textAnchor="middle">🏋️ BURDICK REC</text>
-                  <text x="495" y="480" fill="#34d399" fontSize="9" textAnchor="middle">Gym • Pool • Climbing</text>
+                  <text x="495" y="465" fill="#d1fae5" fontSize="11" fontWeight="bold" textAnchor="middle">🏋️ EPPLEY-ERC REC</text>
+                  <text x="495" y="480" fill="#34d399" fontSize="9" textAnchor="middle">ERC Gym • Pools • Climbing</text>
                 </g>
 
                 {/* 5. Center for the Arts (CA) Footprint */}
@@ -4331,39 +4345,39 @@ export default function CampusSyncApp() {
                   <text x="400" y="458" fill="#f472b6" fontSize="8" textAnchor="middle">Theater</text>
                 </g>
 
-                {/* 6. Stephens Hall (ST) Landmark Footprint */}
+                {/* 6. Robert H. Smith School of Business (Van Munching Hall) (ST) Landmark Footprint */}
                 <g opacity="0.9">
                   <rect x="540" y="150" width="70" height="40" rx="6" fill="#1e293b" stroke="#eab308" strokeWidth="1.5" />
-                  <text x="575" y="172" fill="#fef08a" fontSize="9" fontWeight="bold" textAnchor="middle">🎓 STEPHENS</text>
-                  <text x="575" y="184" fill="#eab308" fontSize="8" textAnchor="middle">Clocktower</text>
+                  <text x="575" y="172" fill="#fef08a" fontSize="9" fontWeight="bold" textAnchor="middle">🎓 TYDINGS HALL</text>
+                  <text x="575" y="184" fill="#eab308" fontSize="8" textAnchor="middle">Chapel & Admin</text>
                 </g>
 
-                {/* 7. 7800 York Road (Computer Science / IT) Footprint */}
+                {/* 7. Discovery District & Innovation Hub (Computer Science / IT) Footprint */}
                 <g opacity="0.9">
                   <rect x="710" y="275" width="85" height="50" rx="6" fill="#1e293b" stroke="#38bdf8" strokeWidth="1.5" />
-                  <text x="752" y="300" fill="#e0f2fe" fontSize="9" fontWeight="bold" textAnchor="middle">💻 7800 YORK</text>
-                  <text x="752" y="314" fill="#38bdf8" fontSize="8" textAnchor="middle">Comp Sci / CIS</text>
+                  <text x="752" y="300" fill="#e0f2fe" fontSize="9" fontWeight="bold" textAnchor="middle">💻 IRIBE CENTER</text>
+                  <text x="752" y="314" fill="#38bdf8" fontSize="8" textAnchor="middle">CS, AI & Cyber</text>
                 </g>
 
-                {/* 8. West Village Commons & Marshall/Carroll Dorms */}
+                {/* 8. Terrapin Square Commons & Marshall/Carroll Dorms */}
                 <g opacity="0.9">
                   <rect x="170" y="255" width="80" height="55" rx="6" fill="#1e293b" stroke="#10b981" strokeWidth="1.5" />
-                  <text x="210" y="282" fill="#d1fae5" fontSize="9" fontWeight="bold" textAnchor="middle">🏠 WEST VILLAGE</text>
-                  <text x="210" y="296" fill="#34d399" fontSize="8" textAnchor="middle">Commons & Dorms</text>
+                  <text x="210" y="282" fill="#d1fae5" fontSize="9" fontWeight="bold" textAnchor="middle">🏠 MCKELDIN NORTH QUAD</text>
+                  <text x="210" y="296" fill="#34d399" fontSize="8" textAnchor="middle">Student Apartments</text>
                 </g>
 
                 {/* 9. University Village Apartments Apt 304 Footprint */}
                 <g opacity="0.9">
                   <rect x="770" y="105" width="95" height="50" rx="6" fill="#1e293b" stroke="#818cf8" strokeWidth="1.5" />
-                  <text x="817" y="130" fill="#e0e7ff" fontSize="9" fontWeight="bold" textAnchor="middle">🏠 UNIV. VILLAGE</text>
-                  <text x="817" y="144" fill="#a5b4fc" fontSize="8" textAnchor="middle">Apt 304 Suites</text>
+                  <text x="817" y="130" fill="#e0e7ff" fontSize="9" fontWeight="bold" textAnchor="middle">🏠 SOUTH CAMPUS COMMONS</text>
+                  <text x="817" y="144" fill="#a5b4fc" fontSize="8" textAnchor="middle">Suites & Residences</text>
                 </g>
 
                 {/* 10. South Parking Garage (SG) Footprint */}
                 <g opacity="0.9">
                   <rect x="210" y="455" width="75" height="48" rx="6" fill="#1e293b" stroke="#3b82f6" strokeWidth="1.5" />
-                  <text x="247" y="480" fill="#dbeafe" fontSize="9" fontWeight="bold" textAnchor="middle">🅿️ SOUTH GARAGE</text>
-                  <text x="247" y="493" fill="#60a5fa" fontSize="8" textAnchor="middle">428 Open Spaces</text>
+                  <text x="247" y="480" fill="#dbeafe" fontSize="9" fontWeight="bold" textAnchor="middle">🅿️ REGENTS GARAGE</text>
+                  <text x="247" y="493" fill="#60a5fa" fontSize="8" textAnchor="middle">512 Open Spaces</text>
                 </g>
 
                 {/* ─── D. GEOFENCED PLACES (LIFE360 GEOFENCE RINGS) ─── */}
@@ -4386,7 +4400,7 @@ export default function CampusSyncApp() {
                 {/* ─── E. TRAJECTORY BREADCRUMBS & GLOWING PATHWAYS ─── */}
                 {(mapLayerFilter === "ALL" || mapLayerFilter === "CIRCLES") && (
                   <>
-                    {/* Liam's Path: Science -> Mall -> Cook Library -> Union */}
+                    {/* Liam's Path: Science -> Mall -> McKeldin Library -> Union */}
                     <polyline
                       points="630,230 560,260 480,310 420,350 380,370"
                       fill="none"
@@ -4406,7 +4420,7 @@ export default function CampusSyncApp() {
                       strokeLinecap="round"
                       opacity="0.9"
                     />
-                    {/* Tyler's Driving Path: U-Village -> Towsontown -> Osler -> Garage */}
+                    {/* Tyler's Driving Path: U-Village -> UMD College Parktown -> Stadium Drive -> Garage */}
                     <polyline
                       points="817,130 600,120 250,220 247,480"
                       fill="none"
@@ -4457,7 +4471,7 @@ export default function CampusSyncApp() {
                       onChange={(e) => setSelectedCircleId(e.target.value)}
                       className="bg-transparent text-white font-bold text-xs focus:outline-none cursor-pointer pr-2"
                     >
-                      {towsonCircles.map((c) => (
+                      {umdCircles.map((c) => (
                         <option key={c.id} value={c.id} className="bg-slate-900 text-white">
                           {c.icon} {c.name} ({c.members.length})
                         </option>
@@ -4472,7 +4486,7 @@ export default function CampusSyncApp() {
                     title="Click to view & share invite code"
                   >
                     <Tag className="w-3 h-3 text-amber-400" />
-                    <span>{activeCircle.inviteCode || "TU-9X4K"}</span>
+                    <span>{activeCircle.inviteCode || "UMD-9X4K"}</span>
                     <Copy className="w-2.5 h-2.5 ml-0.5 text-slate-400" />
                   </button>
 
@@ -4691,7 +4705,7 @@ export default function CampusSyncApp() {
 
               {/* A. Academic & Student Life Buildings */}
               {(mapLayerFilter === "ALL" || mapLayerFilter === "BUILDINGS") &&
-                towsonBuildings.map((bld) => (
+                umdBuildings.map((bld) => (
                   <button
                     key={bld.id}
                     onClick={() => {
@@ -4712,7 +4726,7 @@ export default function CampusSyncApp() {
                   </button>
                 ))}
 
-              {/* B. TigerOrbit 360 Life360 Member Pins (Avatar + Battery + Speed + Name) */}
+              {/* B. TerpOrbit 360 Life360 Member Pins (Avatar + Battery + Speed + Name) */}
               {(mapLayerFilter === "ALL" || mapLayerFilter === "CIRCLES") &&
                 activeCircle.members.map((mem) => (
                   <button
@@ -4766,9 +4780,9 @@ export default function CampusSyncApp() {
                   </button>
                 ))}
 
-              {/* C. Live GPS Tiger Ride Shuttles */}
+              {/* C. Live GPS Terrapin Ride Shuttles */}
               {(mapLayerFilter === "ALL" || mapLayerFilter === "SHUTTLES") &&
-                towsonShuttles.map((sht) => (
+                umdShuttles.map((sht) => (
                   <button
                     key={sht.id}
                     onClick={() => triggerToast(`🚌 ${sht.busNumber} (${sht.routeName}): ETA ${sht.etaMinutes} mins at ${sht.nextStop}`)}
@@ -4784,7 +4798,7 @@ export default function CampusSyncApp() {
 
               {/* D. Parking Garages */}
               {(mapLayerFilter === "ALL" || mapLayerFilter === "PARKING") &&
-                towsonParking.map((pkg) => (
+                umdParking.map((pkg) => (
                   <button
                     key={pkg.id}
                     onClick={() => triggerToast(`🅿️ ${pkg.name}: ${pkg.openSpaces} spaces available`)}
@@ -4800,7 +4814,7 @@ export default function CampusSyncApp() {
 
               {/* E. Safety Mode Blue Light Phones */}
               {(isSafetyModeActive || mapLayerFilter === "SAFETY") &&
-                towsonSafetyBeacons.map((bcn) => (
+                umdSafetyBeacons.map((bcn) => (
                   <button
                     key={bcn.id}
                     onClick={() => setSelectedSafetyBeacon(bcn)}
@@ -4819,7 +4833,7 @@ export default function CampusSyncApp() {
 
               {/* F. Scavenger Hunt Checkpoints */}
               {(mapLayerFilter === "ALL" || mapLayerFilter === "SCAVENGER") &&
-                towsonScavenger.map((chk) => (
+                umdScavenger.map((chk) => (
                   <button
                     key={chk.id}
                     onClick={() => handleScavengerCheckIn(chk.id)}
@@ -4835,7 +4849,7 @@ export default function CampusSyncApp() {
                   </button>
                 ))}
 
-              {/* G. TUHousing Off-Campus Listings */}
+              {/* G. TerpHousing Off-Campus Listings */}
               {(mapLayerFilter === "ALL" || mapLayerFilter === "HOUSING") &&
                 (housingListings || []).map((hse) => (
                   <button
@@ -4867,7 +4881,7 @@ export default function CampusSyncApp() {
                   >
                     <div className="px-2.5 py-1 rounded-xl bg-sky-950/90 border border-sky-400 text-sky-200 font-bold text-[10px] shadow-xl flex items-center gap-1 hover:scale-110 transition">
                       <CloudSun className="w-3.5 h-3.5 text-amber-300" />
-                      <span>Freedom Square: {weatherReport.currentTemp}°F</span>
+                      <span>Red Square: {weatherReport.currentTemp}°F</span>
                     </div>
                   </div>
 
@@ -4881,7 +4895,7 @@ export default function CampusSyncApp() {
                   >
                     <div className="px-2 py-0.5 rounded-lg bg-sky-950/80 border border-sky-500/60 text-sky-300 font-bold text-[9px] shadow-lg flex items-center gap-1">
                       <Wind className="w-3 h-3 text-sky-400" />
-                      <span>Burdick: {weatherReport.currentTemp - 1}°F · {weatherReport.windDirection} {weatherReport.windSpeedMph}mph</span>
+                      <span>Eppley Recreation Center (ERC): {weatherReport.currentTemp - 1}°F · {weatherReport.windDirection} {weatherReport.windSpeedMph}mph</span>
                     </div>
                   </div>
 
@@ -4906,17 +4920,17 @@ export default function CampusSyncApp() {
                 <div className="flex items-center gap-3">
                   <span className="font-bold text-white flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                    📍 Towson Flagship Campus Quad
+                    📍 UMD College Park Flagship Campus Quad
                   </span>
                   <span className="text-slate-600">|</span>
-                  <span>Nearest Shuttle: <strong className="text-amber-400">Tiger Bus #14 (2 mins away)</strong></span>
+                  <span>Nearest Shuttle: <strong className="text-amber-400">Terrapin Bus #14 (2 mins away)</strong></span>
                   <span className="hidden md:inline text-slate-600">|</span>
                   <span className="hidden md:inline text-[11px] text-slate-400 font-mono">Scale: 1 in ≈ 500 ft</span>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => triggerToast("🎯 Centered map on your current location (Freedom Square).")}
+                    onClick={() => triggerToast("🎯 Centered map on your current location (Red Square).")}
                     className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs transition border border-slate-700 flex items-center gap-1"
                   >
                     <Crosshair className="w-3.5 h-3.5 text-amber-400" />
@@ -4939,12 +4953,12 @@ export default function CampusSyncApp() {
             {/* 3 Grid Summary Cards Below Map */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               
-              {/* 1. TigerOrbit 360 Full Suite Hub */}
+              {/* 1. TerpOrbit 360 Full Suite Hub */}
               <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-slate-200 dark:border-zinc-800 shadow-sm space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Users className="w-5 h-5 text-amber-500" />
-                    <h3 className="text-sm font-bold">TigerOrbit 360 (Life360 Suite)</h3>
+                    <h3 className="text-sm font-bold">TerpOrbit 360 (Life360 Suite)</h3>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
@@ -4964,7 +4978,7 @@ export default function CampusSyncApp() {
 
                 {/* Circles List */}
                 <div className="space-y-2.5 text-xs">
-                  {towsonCircles.map((circle) => (
+                  {umdCircles.map((circle) => (
                     <div
                       key={circle.id}
                       onClick={() => setSelectedCircleId(circle.id)}
@@ -4996,7 +5010,7 @@ export default function CampusSyncApp() {
                           ))}
                         </div>
                         <span className="text-[10px] font-mono font-bold text-slate-400">
-                          Code: {circle.inviteCode || "TU-9X4K"}
+                          Code: {circle.inviteCode || "UMD-9X4K"}
                         </span>
                       </div>
                     </div>
@@ -5022,18 +5036,18 @@ export default function CampusSyncApp() {
                 </div>
               </div>
 
-              {/* 2. Tiger Ride Shuttle Radar */}
+              {/* 2. Terrapin Ride Shuttle Radar */}
               <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-slate-200 dark:border-zinc-800 shadow-sm space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Bus className="w-5 h-5 text-amber-500" />
-                    <h3 className="text-sm font-bold">Tiger Ride Live GPS</h3>
+                    <h3 className="text-sm font-bold">Terrapin Ride Live GPS</h3>
                   </div>
                   <span className="text-[10px] font-bold text-emerald-600">3 Buses Moving</span>
                 </div>
 
                 <div className="space-y-2.5 text-xs">
-                  {towsonShuttles.map((sht) => (
+                  {umdShuttles.map((sht) => (
                     <div key={sht.id} className="p-3 bg-slate-50 dark:bg-zinc-800/40 rounded-2xl border border-slate-100 dark:border-zinc-800 space-y-1">
                       <div className="flex items-center justify-between font-bold">
                         <span>{sht.routeName}</span>
@@ -5045,20 +5059,20 @@ export default function CampusSyncApp() {
                 </div>
               </div>
 
-              {/* 3. Tiger Scavenger Hunt & Treasure Radar */}
+              {/* 3. Terrapin Scavenger Hunt & Treasure Radar */}
               <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-slate-200 dark:border-zinc-800 shadow-sm space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Trophy className="w-5 h-5 text-amber-500" />
-                    <h3 className="text-sm font-bold">Tiger Pride Scavenger Hunt</h3>
+                    <h3 className="text-sm font-bold">Terrapin Pride Scavenger Hunt</h3>
                   </div>
                   <span className="text-xs font-bold text-amber-600">
-                    {towsonScavenger.filter((c) => c.isVisited).length} / {towsonScavenger.length} Visited
+                    {umdScavenger.filter((c) => c.isVisited).length} / {umdScavenger.length} Visited
                   </span>
                 </div>
 
                 <div className="space-y-2 text-xs">
-                  {towsonScavenger.map((chk) => (
+                  {umdScavenger.map((chk) => (
                     <div
                       key={chk.id}
                       onClick={() => handleScavengerCheckIn(chk.id)}
@@ -5088,7 +5102,7 @@ export default function CampusSyncApp() {
         )}
 
         {/* ========================================================================= */}
-        {/* 🏠 DEDICATED MODULE: TUHOUSING & OFF-CAMPUS PLATFORM */}
+        {/* 🏠 DEDICATED MODULE: TERPHOUSING & OFF-CAMPUS PLATFORM */}
         {/* ========================================================================= */}
         {activeTab === "housing" && (
           <div className="space-y-6">
@@ -5097,11 +5111,11 @@ export default function CampusSyncApp() {
             <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 text-white shadow-xl flex items-center justify-between flex-wrap gap-4 border border-indigo-500/30">
               <div>
                 <span className="text-xs font-extrabold uppercase tracking-widest text-indigo-400">
-                  Towson University • Off-Campus Housing & Roommate Mesh
+                  University of Maryland, College Park • Off-Campus Housing & Roommate Mesh
                 </span>
-                <h1 className="text-2xl font-black mt-0.5">TUHousing — Find Your Campus Home</h1>
+                <h1 className="text-2xl font-black mt-0.5">TerpHousing — Find Your Campus Home</h1>
                 <p className="text-xs text-slate-300 mt-1 max-w-2xl">
-                  Explore verified student apartments, colonial shared houses, roommate matching, virtual video walkthroughs, and direct Tiger Shuttle routes.
+                  Explore verified student apartments, colonial shared houses, roommate matching, virtual video walkthroughs, and direct Terrapin Shuttle routes.
                 </p>
               </div>
 
@@ -5252,7 +5266,7 @@ export default function CampusSyncApp() {
                             {/* Distance & Transit Matrix */}
                             <div className="p-3 bg-slate-50 dark:bg-zinc-800/50 rounded-2xl border border-slate-100 dark:border-zinc-800 space-y-1.5 text-xs">
                               <div className="flex items-center justify-between font-bold text-slate-700 dark:text-zinc-300">
-                                <span>📍 {listing.distanceFromCampusMiles} miles from Cook Library</span>
+                                <span>📍 {listing.distanceFromCampusMiles} miles from McKeldin Library</span>
                                 <span className="text-emerald-600">🚶 {listing.walkTimeMinutes} min walk</span>
                               </div>
                               <div className="flex items-center justify-between text-[11px] text-slate-500">
@@ -5308,7 +5322,7 @@ export default function CampusSyncApp() {
               <div className="space-y-6">
                 <div className="bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 p-6 rounded-3xl text-white shadow-xl flex items-center justify-between flex-wrap gap-4 border border-indigo-500/40">
                   <div>
-                    <span className="text-xs font-bold uppercase tracking-widest text-indigo-400">Towson Peer Matchmaker</span>
+                    <span className="text-xs font-bold uppercase tracking-widest text-indigo-400">UMD College Park Peer Matchmaker</span>
                     <h2 className="text-xl font-black mt-0.5">Find Compatible Roommates for Fall 2026</h2>
                     <p className="text-xs text-slate-300 mt-1 max-w-xl">
                       Matched by major, target rent budget, sleep schedule, study habits, and cleanliness standards.
@@ -5440,7 +5454,7 @@ export default function CampusSyncApp() {
               <div className="space-y-6">
                 <div className="bg-gradient-to-r from-slate-900 via-amber-950 to-slate-900 p-6 rounded-3xl text-white shadow-xl flex items-center justify-between flex-wrap gap-4 border border-amber-500/30">
                   <div>
-                    <span className="text-xs font-bold uppercase tracking-widest text-amber-400">Towson Resident Services</span>
+                    <span className="text-xs font-bold uppercase tracking-widest text-amber-400">UMD College Park Resident Services</span>
                     <h2 className="text-xl font-black mt-0.5">Off-Campus & Dorm Maintenance Portal</h2>
                     <p className="text-xs text-slate-300 mt-1 max-w-xl">
                       Report plumbing, heating/AC, electrical, or appliance issues with instant dispatch to authorized facilities techs.
@@ -5492,7 +5506,7 @@ export default function CampusSyncApp() {
             {housingSubTab === "calculator" && (
               <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-zinc-800 p-6 shadow-sm space-y-6">
                 <div>
-                  <h2 className="text-xl font-black text-slate-900 dark:text-zinc-100">Towson Student Cost of Living Calculator</h2>
+                  <h2 className="text-xl font-black text-slate-900 dark:text-zinc-100">UMD College Park Student Cost of Living Calculator</h2>
                   <p className="text-xs text-slate-500">Estimate your total monthly expenses across rent, gas/electric, high-speed Wi-Fi, and garage parking.</p>
                 </div>
 
@@ -5643,7 +5657,7 @@ export default function CampusSyncApp() {
                         alt={currentUser?.name || "Student"}
                         className="w-20 h-20 rounded-full object-cover ring-4 ring-white dark:ring-zinc-900 shadow-xl"
                       />
-                      <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-900" title="Online on Towson Campus" />
+                      <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-900" title="Online on UMD College Park Campus" />
                     </div>
                     
                     <button
@@ -5663,7 +5677,7 @@ export default function CampusSyncApp() {
                       <h2 className="text-base font-black text-slate-900 dark:text-zinc-100">
                         {currentUser?.name || "Kwesi Asiedu"}
                       </h2>
-                      <span className="text-[11px] text-blue-500" title="Verified Towson Student">
+                      <span className="text-[11px] text-blue-500" title="Verified UMD College Park Student">
                         <ShieldCheck className="w-4 h-4 inline" />
                       </span>
                     </div>
@@ -5673,7 +5687,7 @@ export default function CampusSyncApp() {
                     
                     {/* Digital Campus Student ID Pill */}
                     <div className="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-zinc-800/80 px-2.5 py-1 rounded-xl text-[10px] font-mono font-bold text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 mt-1">
-                      <span>🪪 Towson ID ({currentUser?.studentId || "0982341"})</span>
+                      <span>🪪 UMD College Park ID ({currentUser?.studentId || "0982341"})</span>
                       <span className="text-emerald-500 font-black">ACTIVE</span>
                     </div>
                   </div>
@@ -5742,7 +5756,7 @@ export default function CampusSyncApp() {
                                 {course.name}
                               </h4>
                               <p className="text-[10px] text-slate-500 dark:text-zinc-400 truncate">
-                                👨‍🏫 {course.professor} • 📍 {course.room || "Science Complex"}
+                                👨‍🏫 {course.professor} • 📍 {course.room || "Brendan Iribe Center for Computer Science"}
                               </p>
                             </div>
                           </div>
@@ -5774,7 +5788,7 @@ export default function CampusSyncApp() {
                     </div>
                   </div>
 
-                  {/* Tiger Record Quick Card */}
+                  {/* Terrapin Record Quick Card */}
                   <div className="pt-3 border-t border-slate-100 dark:border-zinc-800 space-y-2">
                     <button
                       onClick={() => {
@@ -5785,7 +5799,7 @@ export default function CampusSyncApp() {
                     >
                       <div className="flex items-center gap-2">
                         <span>🏆</span>
-                        <span>Tiger Record & Passport</span>
+                        <span>Terrapin Record & Passport</span>
                       </div>
                       <span className="font-mono text-[10px] bg-amber-500 text-black px-2 py-0.5 rounded-full font-black">
                         5 / 7 Milestones
@@ -6071,7 +6085,7 @@ export default function CampusSyncApp() {
                       <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 group-hover:underline">Study Pod →</span>
                     </div>
                     <p className="text-[11px] text-slate-500 dark:text-zinc-400 pl-6">
-                      📍 Science Complex Rm 304 • Dr. Catherine Hayes
+                      📍 Brendan Iribe Center for Computer Science Rm 304 • Dr. Catherine Hayes
                     </p>
                   </div>
 
@@ -6097,18 +6111,18 @@ export default function CampusSyncApp() {
 
                   {/* 3. Dining Special */}
                   <div
-                    onClick={() => setShowTigerWalletModal(true)}
+                    onClick={() => setShowTerpIDModal(true)}
                     className="p-2.5 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border border-slate-200/80 dark:border-zinc-700/60 hover:border-amber-500 cursor-pointer transition space-y-1 group"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="text-sm">🍔</span>
-                        <span className="font-black text-slate-900 dark:text-zinc-100">12:15 PM • Newell Dining Special</span>
+                        <span className="font-black text-slate-900 dark:text-zinc-100">12:15 PM • Prince Frederick Hall Market Special</span>
                       </div>
                       <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400">1 Swipe • Wallet →</span>
                     </div>
                     <p className="text-[11px] text-slate-500 dark:text-zinc-400 pl-6">
-                      Maryland Crab Cakes & Tiger Crisp Salad • $9.50
+                      Maryland Crab Cakes & Terrapin Crisp Salad • $9.50
                     </p>
                   </div>
 
@@ -6117,19 +6131,19 @@ export default function CampusSyncApp() {
                     onClick={() => {
                       setActiveTab("map");
                       setMoreSubView("map");
-                      triggerToast("🚌 Tiger Ride GPS live tracking active.");
+                      triggerToast("🚌 Terrapin Ride GPS live tracking active.");
                     }}
                     className="p-2.5 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border border-slate-200/80 dark:border-zinc-700/60 hover:border-amber-500 cursor-pointer transition space-y-1 group"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="text-sm">🚌</span>
-                        <span className="font-black text-slate-900 dark:text-zinc-100">Tiger Ride Shuttle #14</span>
+                        <span className="font-black text-slate-900 dark:text-zinc-100">Terrapin Ride Shuttle #14</span>
                       </div>
                       <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400">4m ETA (Map) →</span>
                     </div>
                     <p className="text-[11px] text-slate-500 dark:text-zinc-400 pl-6">
-                      Arriving at Cook Library Stop ➔ West Village
+                      Arriving at McKeldin Library Stop ➔ Terrapin Square
                     </p>
                   </div>
 
@@ -6149,7 +6163,7 @@ export default function CampusSyncApp() {
                       <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 group-hover:underline">Explore →</span>
                     </div>
                     <p className="text-[11px] text-slate-500 dark:text-zinc-400 pl-6">
-                      West Village 2-Bed Sublease ($925/mo) • 0.3 mi
+                      Terrapin Square 2-Bed Sublease ($925/mo) • 0.3 mi
                     </p>
                   </div>
 
@@ -6157,7 +6171,7 @@ export default function CampusSyncApp() {
                   <div
                     onClick={() => {
                       setActiveTab("events");
-                      triggerToast("🎉 Towson Cyber Summit & Cultural Gala loaded.");
+                      triggerToast("🎉 UMD College Park Cyber Summit & Cultural Gala loaded.");
                     }}
                     className="p-2.5 bg-purple-50/70 dark:bg-purple-950/40 rounded-2xl border border-purple-200/80 dark:border-purple-800/60 hover:border-purple-500 cursor-pointer transition space-y-1 group"
                   >
@@ -6169,7 +6183,7 @@ export default function CampusSyncApp() {
                       <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 group-hover:underline">RSVP →</span>
                     </div>
                     <p className="text-[11px] text-slate-500 dark:text-zinc-400 pl-6">
-                      University Union Ballrooms • Free Food & Campus XP
+                      Adele H. Stamp Student Union (GSU) Ballrooms • Free Food & Campus XP
                     </p>
                   </div>
 
@@ -6177,7 +6191,7 @@ export default function CampusSyncApp() {
                   <div
                     onClick={() => {
                       setActiveTab("activities");
-                      triggerToast("🤝 Volunteer opportunity loaded: +3.5h Tiger Record");
+                      triggerToast("🤝 Volunteer opportunity loaded: +3.5h Terrapin Record");
                     }}
                     className="p-2.5 bg-emerald-50/70 dark:bg-emerald-950/40 rounded-2xl border border-emerald-200/80 dark:border-emerald-800/60 hover:border-emerald-500 cursor-pointer transition space-y-1 group"
                   >
@@ -6189,7 +6203,7 @@ export default function CampusSyncApp() {
                       <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 group-hover:underline">+3.5h Record →</span>
                     </div>
                     <p className="text-[11px] text-slate-500 dark:text-zinc-400 pl-6">
-                      Towson Campus Green Planting Drive
+                      UMD College Park Campus Green Planting Drive
                     </p>
                   </div>
 
@@ -6285,7 +6299,7 @@ export default function CampusSyncApp() {
                 </div>
 
                 <p className="text-xs text-slate-300">
-                  📍 <strong>Cook Library</strong> (180 ft) · 🚌 <strong>Tiger Bus #14</strong> arriving in 2m.
+                  📍 <strong>McKeldin Library</strong> (180 ft) · 🚌 <strong>Terrapin Bus #14</strong> arriving in 2m.
                 </p>
 
                 <button
@@ -6306,7 +6320,7 @@ export default function CampusSyncApp() {
         )}
 
         {/* ========================================================================= */}
-        {/* TAB 2: 🏫 CAMPUS HUB (TOWSON UNIVERSITY FACILITIES & OPERATIONS) */}
+        {/* TAB 2: 🏫 CAMPUS HUB (UMD UNIVERSITY FACILITIES & OPERATIONS) */}
         {activeTab === "campus" && (
           <div className="space-y-6">
             
@@ -6316,7 +6330,7 @@ export default function CampusSyncApp() {
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs font-black uppercase tracking-widest text-amber-400 bg-amber-500/20 px-2.5 py-1 rounded-full border border-amber-500/30">
-                      Towson University Operations & Facilities
+                      University of Maryland, College Park Operations & Facilities
                     </span>
                     <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-2 py-0.5 rounded-full flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
@@ -6327,7 +6341,7 @@ export default function CampusSyncApp() {
                     {selectedCampus} Directory & Facilities Hub
                   </h1>
                   <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
-                    Explore academic buildings and indoor blueprints, check live dining hall menus and lines, reserve 24/7 library pods, track Tiger Ride shuttles, and check live parking availability.
+                    Explore academic buildings and indoor blueprints, check live dining hall menus and lines, reserve 24/7 library pods, track Terrapin Ride shuttles, and check live parking availability.
                   </p>
                 </div>
 
@@ -6358,7 +6372,7 @@ export default function CampusSyncApp() {
                     <span>BUILDINGS</span>
                     <Building2 className="w-3 h-3 text-amber-400" />
                   </div>
-                  <div className="text-lg font-black text-white font-mono">{towsonBuildings.length} Active</div>
+                  <div className="text-lg font-black text-white font-mono">{umdBuildings.length} Active</div>
                   <span className="text-[10px] text-emerald-400 font-bold block">120+ Classrooms</span>
                 </div>
 
@@ -6372,10 +6386,10 @@ export default function CampusSyncApp() {
                   <span className="text-[10px] text-amber-300 font-bold block">Avg Wait: 4.5 mins</span>
                 </div>
 
-                {/* 3. Cook Library Pods */}
+                {/* 3. McKeldin Library Pods */}
                 <div className="p-3 bg-black/40 rounded-2xl border border-white/10 space-y-1">
                   <div className="flex items-center justify-between text-slate-400 text-[10px] font-bold">
-                    <span>COOK LIBRARY</span>
+                    <span>MCKELDIN LIBRARY</span>
                     <BookOpen className="w-3 h-3 text-sky-400" />
                   </div>
                   <div className="text-lg font-black text-white font-mono">58% Busy</div>
@@ -6385,10 +6399,10 @@ export default function CampusSyncApp() {
                 {/* 4. Live Shuttles */}
                 <div className="p-3 bg-black/40 rounded-2xl border border-white/10 space-y-1">
                   <div className="flex items-center justify-between text-slate-400 text-[10px] font-bold">
-                    <span>TIGER RIDE</span>
+                    <span>SHUTTLE-UM BUS</span>
                     <Bus className="w-3 h-3 text-amber-400" />
                   </div>
-                  <div className="text-lg font-black text-white font-mono">{towsonShuttles.length} Buses Live</div>
+                  <div className="text-lg font-black text-white font-mono">{umdShuttles.length} Buses Live</div>
                   <span className="text-[10px] text-emerald-400 font-bold block">Gold Route: 2m ETA</span>
                 </div>
 
@@ -6399,7 +6413,7 @@ export default function CampusSyncApp() {
                     <Car className="w-3 h-3 text-indigo-400" />
                   </div>
                   <div className="text-lg font-black text-white font-mono">
-                    {towsonParking.reduce((acc, p) => acc + p.openSpaces, 0)} Spaces
+                    {umdParking.reduce((acc, p) => acc + p.openSpaces, 0)} Spaces
                   </div>
                   <span className="text-[10px] text-indigo-300 font-bold block">Across 3 Garages</span>
                 </div>
@@ -6411,8 +6425,8 @@ export default function CampusSyncApp() {
               {[
                 { id: "buildings", label: "🏛️ Academic Buildings & Blueprints" },
                 { id: "dining", label: "🍔 Dining Menus, Hours & Mobile Order" },
-                { id: "library", label: "📚 Cook Library 24/7 Pods & Tech" },
-                { id: "shuttles", label: "🚌 Tiger Ride Live GPS Shuttles" },
+                { id: "library", label: "📚 McKeldin Library 24/7 Pods & Tech" },
+                { id: "shuttles", label: "🚌 Terrapin Ride Live GPS Shuttles" },
                 { id: "parking", label: "🅿️ Parking Garages & EV Chargers" },
                 { id: "facilities", label: "🔧 Campus 311 & Maintenance Desk" },
               ].map((tab) => (
@@ -6440,7 +6454,7 @@ export default function CampusSyncApp() {
                       <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                       <input
                         type="text"
-                        placeholder="Search buildings, room numbers (e.g. SC-304), study pods, or departments..."
+                        placeholder="Search buildings, room numbers (e.g. IRB-2107), study pods, or departments..."
                         value={buildingSearchQuery}
                         onChange={(e) => setBuildingSearchQuery(e.target.value)}
                         className="w-full bg-slate-50 dark:bg-zinc-800 pl-10 pr-4 py-2.5 rounded-2xl text-xs border border-slate-200 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-amber-500"
@@ -6475,7 +6489,7 @@ export default function CampusSyncApp() {
 
                 {/* Buildings Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                  {towsonBuildings
+                  {umdBuildings
                     .filter((bld) => {
                       const matchCat = buildingCategoryFilter === "ALL" || bld.category === buildingCategoryFilter;
                       const matchSearch = !buildingSearchQuery ||
@@ -6589,7 +6603,7 @@ export default function CampusSyncApp() {
                     {
                       id: "din-1",
                       name: "Chick-fil-A",
-                      location: "University Union Food Court",
+                      location: "Adele H. Stamp Student Union (GSU) Food Court",
                       hours: "10:30 AM - 9:00 PM",
                       waitMins: 6,
                       icon: "🍗",
@@ -6601,8 +6615,8 @@ export default function CampusSyncApp() {
                     },
                     {
                       id: "din-2",
-                      name: "West Village Dining Hall",
-                      location: "West Village Commons (Floor 2)",
+                      name: "Terrapin Square Dining Hall",
+                      location: "Terrapin Square Commons (Floor 2)",
                       hours: "7:00 AM - 10:00 PM",
                       waitMins: 2,
                       icon: "🥗",
@@ -6614,8 +6628,8 @@ export default function CampusSyncApp() {
                     },
                     {
                       id: "din-3",
-                      name: "Dunkin' Donuts",
-                      location: "Cook Library Ground Floor & Union",
+                      name: "Footnotes Cafe (McKeldin) Donuts",
+                      location: "McKeldin Library Ground Floor & Union",
                       hours: "6:30 AM - 11:00 PM",
                       waitMins: 4,
                       icon: "☕",
@@ -6627,8 +6641,8 @@ export default function CampusSyncApp() {
                     },
                     {
                       id: "din-4",
-                      name: "Bento Sushi & Asian Kitchen",
-                      location: "University Union Food Court",
+                      name: "Chesapeake Roasting Co. & Asian Kitchen",
+                      location: "Adele H. Stamp Student Union (GSU) Food Court",
                       hours: "11:00 AM - 8:00 PM",
                       waitMins: 5,
                       icon: "🍱",
@@ -6641,7 +6655,7 @@ export default function CampusSyncApp() {
                     {
                       id: "din-5",
                       name: "Einstein Bros. Bagels",
-                      location: "Science Complex Main Atrium",
+                      location: "Brendan Iribe Center for Computer Science Main Atrium",
                       hours: "7:30 AM - 4:00 PM",
                       waitMins: 3,
                       icon: "🥑",
@@ -6654,7 +6668,7 @@ export default function CampusSyncApp() {
                     {
                       id: "din-6",
                       name: "The Market C-Store",
-                      location: "West Village Commons & Newell Hall",
+                      location: "Terrapin Square Commons & Prince Frederick Hall",
                       hours: "8:00 AM - Midnight",
                       waitMins: 1,
                       icon: "🥪",
@@ -6722,7 +6736,7 @@ export default function CampusSyncApp() {
               </div>
             )}
 
-            {/* 5. SUB-TAB 3: COOK LIBRARY 24/7 PODS & TECH CHECKOUT */}
+            {/* 5. SUB-TAB 3: MCKELDIN LIBRARY 24/7 PODS & TECH CHECKOUT */}
             {campusHubSubTab === "library" && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -6730,7 +6744,7 @@ export default function CampusSyncApp() {
                   <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-4">
                     <h3 className="text-sm font-black text-slate-900 dark:text-zinc-100 flex items-center gap-2">
                       <BookOpen className="w-4 h-4 text-amber-500" />
-                      <span>Cook Library Floor Occupancy</span>
+                      <span>McKeldin Library Floor Occupancy</span>
                     </h3>
 
                     <div className="space-y-2.5 text-xs">
@@ -6821,7 +6835,7 @@ export default function CampusSyncApp() {
                         </p>
                       </div>
                       <button
-                        onClick={() => triggerToast("💻 Tech Checkout requested! Pick up at Floor 1 Help Desk with Tiger OneCard.")}
+                        onClick={() => triggerToast("💻 Tech Checkout requested! Pick up at Floor 1 Help Desk with Terrapin TerpID.")}
                         className="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition border border-slate-700"
                       >
                         Request Device
@@ -6832,11 +6846,11 @@ export default function CampusSyncApp() {
               </div>
             )}
 
-            {/* 6. SUB-TAB 4: TIGER RIDE LIVE SHUTTLES */}
+            {/* 6. SUB-TAB 4: SHUTTLE-UM LIVE TRANSIT */}
             {campusHubSubTab === "shuttles" && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                  {towsonShuttles.map((sht) => (
+                  {umdShuttles.map((sht) => (
                     <div
                       key={sht.id}
                       className="bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-zinc-800 p-5 shadow-sm space-y-4"
@@ -6870,7 +6884,7 @@ export default function CampusSyncApp() {
                       <button
                         onClick={() => {
                           setActiveTab("map");
-                          triggerToast(`🚌 Tracking Tiger Ride Bus #${sht.busNumber} live on campus map.`);
+                          triggerToast(`🚌 Tracking Terrapin Ride Bus #${sht.busNumber} live on campus map.`);
                         }}
                         className="w-full bg-slate-900 dark:bg-zinc-800 hover:bg-amber-500 hover:text-black text-white font-bold text-xs py-2.5 rounded-xl transition"
                       >
@@ -6885,7 +6899,7 @@ export default function CampusSyncApp() {
             {/* 7. SUB-TAB 5: PARKING GARAGES & EV CHARGERS */}
             {campusHubSubTab === "parking" && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                {towsonParking.map((pkg) => (
+                {umdParking.map((pkg) => (
                   <div
                     key={pkg.id}
                     className="bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-zinc-800 p-5 shadow-sm space-y-4"
@@ -6941,7 +6955,7 @@ export default function CampusSyncApp() {
                   <div>
                     <h3 className="text-base font-black text-slate-900 dark:text-zinc-100 flex items-center gap-2">
                       <Wrench className="w-4 h-4 text-amber-500" />
-                      <span>Towson 311 Campus Facilities & Maintenance Dispatch</span>
+                      <span>UMD College Park 311 Campus Facilities & Maintenance Dispatch</span>
                     </h3>
                     <p className="text-xs text-slate-500">Report broken fixtures, heating/AC issues, lighting, and request urgent repairs.</p>
                   </div>
@@ -6955,9 +6969,9 @@ export default function CampusSyncApp() {
 
                 <div className="space-y-3">
                   {[
-                    { id: "req-1", title: "Water Bottle Refill Station Filter Replacement", location: "Science Complex 2nd Floor", status: "In Progress", eta: "Today by 4 PM", category: "Plumbing" },
-                    { id: "req-2", title: "Study Pod B-04 HDMI Cable Replacement", location: "Cook Library 2nd Floor", status: "Resolved ✓", eta: "Completed", category: "AV / Tech" },
-                    { id: "req-3", title: "West Village Pedestrian Path Light Bulb Out", location: "Near Marshall Hall", status: "Dispatched", eta: "Tomorrow 9 AM", category: "Lighting & Safety" },
+                    { id: "req-1", title: "Water Bottle Refill Station Filter Replacement", location: "Brendan Iribe Center for Computer Science 2nd Floor", status: "In Progress", eta: "Today by 4 PM", category: "Plumbing" },
+                    { id: "req-2", title: "Study Pod B-04 HDMI Cable Replacement", location: "McKeldin Library 2nd Floor", status: "Resolved ✓", eta: "Completed", category: "AV / Tech" },
+                    { id: "req-3", title: "Terrapin Square Pedestrian Path Light Bulb Out", location: "Near Marshall Hall", status: "Dispatched", eta: "Tomorrow 9 AM", category: "Lighting & Safety" },
                   ].map((ticket) => (
                     <div
                       key={ticket.id}
@@ -6997,7 +7011,7 @@ export default function CampusSyncApp() {
               <div>
                 <div className="flex items-center gap-2">
                   <span className="px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                    Towson Involvement & Leadership
+                    UMD College Park Involvement & Leadership
                   </span>
                   <span className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-bold">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
@@ -7045,7 +7059,7 @@ export default function CampusSyncApp() {
 
               <div className="p-4 rounded-2xl bg-white dark:bg-zinc-900/90 border border-slate-200/80 dark:border-zinc-800 shadow-xs space-y-1">
                 <div className="flex items-center justify-between text-slate-500 dark:text-zinc-400">
-                  <span className="text-xs font-semibold">Tigers Involved</span>
+                  <span className="text-xs font-semibold">Terrapins Involved</span>
                   <Sparkles className="w-4 h-4 text-blue-500" />
                 </div>
                 <div className="text-2xl font-black text-slate-900 dark:text-zinc-100">14,850</div>
@@ -7061,7 +7075,7 @@ export default function CampusSyncApp() {
                 </div>
                 <div className="text-2xl font-black text-slate-900 dark:text-zinc-100">42</div>
                 <div className="text-[11px] text-purple-600 dark:text-purple-400 font-bold">
-                  18 in University Union
+                  18 in Adele H. Stamp Student Union (GSU)
                 </div>
               </div>
 
@@ -7239,7 +7253,7 @@ export default function CampusSyncApp() {
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-                                  <span className="truncate">{org.meetingLocation || "University Union"}</span>
+                                  <span className="truncate">{org.meetingLocation || "Adele H. Stamp Student Union (GSU)"}</span>
                                 </div>
                               </div>
 
@@ -7326,7 +7340,7 @@ export default function CampusSyncApp() {
                       <span>My Active Memberships & Leadership Desk</span>
                     </h2>
                     <p className="text-xs text-slate-600 dark:text-zinc-400">
-                      You are currently active in {clubs.filter(c => c.isJoined).length} Towson organizations. Manage executive meeting check-ins, rosters, and budgets below.
+                      You are currently active in {clubs.filter(c => c.isJoined).length} UMD College Park organizations. Manage executive meeting check-ins, rosters, and budgets below.
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
@@ -7501,7 +7515,7 @@ export default function CampusSyncApp() {
                       <span>SGA Appropriations & Financial Grant Desk</span>
                     </h2>
                     <p className="text-xs text-slate-600 dark:text-zinc-400 mt-1 max-w-xl">
-                      Towson Student Government Association allocates over $1.24M annually to fund student org conferences, guest lecturers, equipment, and campus culture galas.
+                      UMD College Park Student Government Association allocates over $1.24M annually to fund student org conferences, guest lecturers, equipment, and campus culture galas.
                     </p>
                   </div>
                   <button
@@ -7522,11 +7536,11 @@ export default function CampusSyncApp() {
 
                   <div className="divide-y divide-slate-100 dark:divide-zinc-800 text-xs">
                     {[
-                      { org: "Towson Cybersecurity Club", amount: "$12,500", purpose: "MACCDC National Finals Defense Lab & Travel", status: "Approved & Disbursed", date: "Feb 28, 2026", type: "Conference Travel" },
+                      { org: "UMD College Park Cybersecurity Club", amount: "$12,500", purpose: "MACCDC National Finals Defense Lab & Travel", status: "Approved & Disbursed", date: "Feb 28, 2026", type: "Conference Travel" },
                       { org: "African Student Association", amount: "$6,800", purpose: "Annual Pan-African Cultural Gala & Catering", status: "Approved & Disbursed", date: "Feb 24, 2026", type: "Cultural Event" },
-                      { org: "Towson Tigers Esports", amount: "$11,000", purpose: "NACE Regional LAN Gaming Stations & Tournament Licenses", status: "Under Senate Review", date: "Mar 02, 2026", type: "Equipment" },
+                      { org: "UMD College Park Terrapins Esports", amount: "$11,000", purpose: "NACE Regional LAN Gaming Stations & Tournament Licenses", status: "Under Senate Review", date: "Mar 02, 2026", type: "Equipment" },
                       { org: "Women in Computer Science (WiCS)", amount: "$8,500", purpose: "Grace Hopper 2026 Student Travel Cohort", status: "Approved", date: "Feb 19, 2026", type: "Conference Travel" },
-                      { org: "Towson Investment Group", amount: "$9,200", purpose: "Bloomberg Terminal Student Lab Access Subscriptions", status: "Approved & Disbursed", date: "Feb 12, 2026", type: "Academic Software" },
+                      { org: "UMD College Park Investment Group", amount: "$9,200", purpose: "Bloomberg Terminal Student Lab Access Subscriptions", status: "Approved & Disbursed", date: "Feb 12, 2026", type: "Academic Software" },
                       { org: "Black Student Union (BSU)", amount: "$14,000", purpose: "Black History Month Keynote Speaker & Alumni Summit", status: "Approved & Disbursed", date: "Feb 05, 2026", type: "Keynote / Speaker" }
                     ].map((grant, idx) => (
                       <div key={idx} className="p-4.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50 dark:hover:bg-zinc-800/40 transition">
@@ -7564,7 +7578,7 @@ export default function CampusSyncApp() {
                 <div className="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex items-center justify-between">
                   <div>
                     <h2 className="text-lg font-black text-slate-900 dark:text-zinc-100">Weekly General Body Meetings (GBM) Schedule</h2>
-                    <p className="text-xs text-slate-500">All student org meetings are open to currently enrolled TU students.</p>
+                    <p className="text-xs text-slate-500">All student org meetings are open to currently enrolled UMD students.</p>
                   </div>
                   <span className="text-xs font-bold text-amber-600 dark:text-amber-400">42 Meetings This Week</span>
                 </div>
@@ -7585,7 +7599,7 @@ export default function CampusSyncApp() {
                           </div>
                           <div className="flex items-center gap-2">
                             <MapPin className="w-3.5 h-3.5 text-rose-500" />
-                            <span>{org.meetingLocation || "University Union"}</span>
+                            <span>{org.meetingLocation || "Adele H. Stamp Student Union (GSU)"}</span>
                           </div>
                         </div>
                         <button
@@ -7616,7 +7630,7 @@ export default function CampusSyncApp() {
                     <h2 className="text-xl font-black text-slate-900 dark:text-zinc-100">Student Organization Incubator</h2>
                   </div>
                   <p className="text-xs text-slate-600 dark:text-zinc-400">
-                    Want to start a new club at Towson? The Office of Student Involvement provides step-by-step incubation, SGA seed funding ($500), free room reservation privileges, and faculty mentorship.
+                    Want to start a new club at UMD College Park? The Office of Student Involvement provides step-by-step incubation, SGA seed funding ($500), free room reservation privileges, and faculty mentorship.
                   </p>
                 </div>
 
@@ -7675,7 +7689,7 @@ export default function CampusSyncApp() {
                             <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">Organization Proposed Name</label>
                             <input
                               type="text"
-                              placeholder="e.g. Towson Quantum Computing Club"
+                              placeholder="e.g. UMD College Park Quantum Computing Club"
                               value={newClubData.name}
                               onChange={(e) => setNewClubData({ ...newClubData, name: e.target.value })}
                               className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-sm focus:ring-2 focus:ring-amber-500 outline-hidden"
@@ -7709,12 +7723,12 @@ export default function CampusSyncApp() {
                       {newClubStep === 2 && (
                         <div className="space-y-4">
                           <h3 className="font-black text-base text-slate-900 dark:text-zinc-100">Step 2: Founding Executive Officers</h3>
-                          <p className="text-xs text-slate-500">Towson University requires a minimum of 3 executive officers in good academic standing (GPA {'>='} 2.50).</p>
+                          <p className="text-xs text-slate-500">University of Maryland, College Park requires a minimum of 3 executive officers in good academic standing (GPA {'>='} 2.50).</p>
                           <div>
                             <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">President Full Name & NetID</label>
                             <input
                               type="text"
-                              placeholder="e.g. Kwesi Asiedu (kasied1@students.towson.edu)"
+                              placeholder="e.g. Kwesi Asiedu (kasied1@students.umd.edu)"
                               value={newClubData.president}
                               onChange={(e) => setNewClubData({ ...newClubData, president: e.target.value })}
                               className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-sm focus:ring-2 focus:ring-amber-500 outline-hidden"
@@ -7724,7 +7738,7 @@ export default function CampusSyncApp() {
                             <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">Official Contact Email</label>
                             <input
                               type="email"
-                              placeholder="e.g. quantum@towson.edu"
+                              placeholder="e.g. quantum@umd.edu"
                               value={newClubData.email}
                               onChange={(e) => setNewClubData({ ...newClubData, email: e.target.value })}
                               className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-sm focus:ring-2 focus:ring-amber-500 outline-hidden"
@@ -7736,7 +7750,7 @@ export default function CampusSyncApp() {
                       {newClubStep === 3 && (
                         <div className="space-y-4">
                           <h3 className="font-black text-base text-slate-900 dark:text-zinc-100">Step 3: Faculty / Staff Advisor</h3>
-                          <p className="text-xs text-slate-500">All recognized organizations must have a full-time TU faculty or staff member as primary advisor.</p>
+                          <p className="text-xs text-slate-500">All recognized organizations must have a full-time UMD faculty or staff member as primary advisor.</p>
                           <div>
                             <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">Advisor Name & Department</label>
                             <input
@@ -7754,8 +7768,8 @@ export default function CampusSyncApp() {
                         <div className="space-y-4">
                           <h3 className="font-black text-base text-slate-900 dark:text-zinc-100">Step 4: Constitution & 10 Founding Roster</h3>
                           <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300 space-y-1">
-                            <span className="font-black">Standard TU Non-Discrimination Clause:</span>
-                            <p>Membership in this organization is open to all currently enrolled Towson University students without regard to race, religion, gender, sexual orientation, or disability.</p>
+                            <span className="font-black">Standard UMD Non-Discrimination Clause:</span>
+                            <p>Membership in this organization is open to all currently enrolled University of Maryland, College Park students without regard to race, religion, gender, sexual orientation, or disability.</p>
                           </div>
                           <div className="border-2 border-dashed border-slate-300 dark:border-zinc-700 rounded-2xl p-6 text-center text-xs text-slate-500 space-y-2">
                             <FileText className="w-8 h-8 mx-auto text-amber-500" />
@@ -7832,7 +7846,7 @@ export default function CampusSyncApp() {
                             <span className="px-2 py-0.5 rounded-full bg-amber-500 text-black font-black text-[10px]">
                               {selectedOrgModal.category}
                             </span>
-                            <span>• {selectedOrgModal.membersCount} Active Tigers</span>
+                            <span>• {selectedOrgModal.membersCount} Active Terrapins</span>
                             {selectedOrgModal.foundedYear && (
                               <span>• Est. {selectedOrgModal.foundedYear}</span>
                             )}
@@ -7924,7 +7938,7 @@ export default function CampusSyncApp() {
                             </div>
                             <div className="flex items-center gap-2 text-slate-700 dark:text-zinc-300">
                               <MapPin className="w-4 h-4 text-rose-500" />
-                              <span>{selectedOrgModal.meetingLocation || "University Union Rm 320"}</span>
+                              <span>{selectedOrgModal.meetingLocation || "Adele H. Stamp Student Union (GSU) Rm 320"}</span>
                             </div>
                           </div>
                         </div>
@@ -7933,11 +7947,11 @@ export default function CampusSyncApp() {
                         <div className="grid grid-cols-3 gap-3">
                           <div className="p-3 rounded-xl bg-slate-50 dark:bg-zinc-800/40 border border-slate-100 dark:border-zinc-800">
                             <span className="text-slate-400 text-[10px] uppercase font-bold block">Contact Email</span>
-                            <span className="font-semibold text-slate-900 dark:text-zinc-100">{selectedOrgModal.contactEmail || "studentorg@towson.edu"}</span>
+                            <span className="font-semibold text-slate-900 dark:text-zinc-100">{selectedOrgModal.contactEmail || "studentorg@umd.edu"}</span>
                           </div>
                           <div className="p-3 rounded-xl bg-slate-50 dark:bg-zinc-800/40 border border-slate-100 dark:border-zinc-800">
                             <span className="text-slate-400 text-[10px] uppercase font-bold block">Instagram</span>
-                            <span className="font-semibold text-amber-600 dark:text-amber-400">{selectedOrgModal.instagram || "@towson_tigers"}</span>
+                            <span className="font-semibold text-amber-600 dark:text-amber-400">{selectedOrgModal.instagram || "@umd_terps"}</span>
                           </div>
                           <div className="p-3 rounded-xl bg-slate-50 dark:bg-zinc-800/40 border border-slate-100 dark:border-zinc-800">
                             <span className="text-slate-400 text-[10px] uppercase font-bold block">Annual Dues</span>
@@ -8110,7 +8124,7 @@ export default function CampusSyncApp() {
                           value={sgaGrantFormData.description}
                           onChange={(e) => setSgaGrantFormData({ ...sgaGrantFormData, description: e.target.value })}
                           className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700"
-                          placeholder="Explain how these funds directly benefit TU students..."
+                          placeholder="Explain how these funds directly benefit UMD students..."
                         />
                       </div>
 
@@ -8186,7 +8200,7 @@ export default function CampusSyncApp() {
               <div>
                 <div className="flex items-center gap-2">
                   <span className="px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                    Towson Campus Life & Traditions
+                    UMD College Park Campus Life & Traditions
                   </span>
                   <div
                     onClick={() => {
@@ -8204,7 +8218,7 @@ export default function CampusSyncApp() {
                   Campus Events, Athletics & Ticket Box Office
                 </h1>
                 <p className="text-sm text-slate-600 dark:text-zinc-400 max-w-2xl mt-1">
-                  Discover official university keynotes, CAA Division-I sports matchups, Tigerfest concerts, career fairs, and claim student mobile tickets.
+                  Discover official university keynotes, CAA Division-I sports matchups, Terrapinfest concerts, career fairs, and claim student mobile tickets.
                 </p>
               </div>
 
@@ -8241,12 +8255,12 @@ export default function CampusSyncApp() {
 
               <div className="p-4 rounded-2xl bg-white dark:bg-zinc-900/90 border border-slate-200/80 dark:border-zinc-800 shadow-xs space-y-1">
                 <div className="flex items-center justify-between text-slate-500 dark:text-zinc-400">
-                  <span className="text-xs font-semibold">Tiger Athletics</span>
+                  <span className="text-xs font-semibold">Terrapin Athletics</span>
                   <Trophy className="w-4 h-4 text-blue-500" />
                 </div>
                 <div className="text-2xl font-black text-slate-900 dark:text-zinc-100">5 D-I Games</div>
                 <div className="text-[11px] text-blue-600 dark:text-blue-400 font-bold">
-                  SECU Arena & Unitas
+                  Terrapin Stadium & Unitas
                 </div>
               </div>
 
@@ -8263,12 +8277,12 @@ export default function CampusSyncApp() {
 
               <div className="p-4 rounded-2xl bg-white dark:bg-zinc-900/90 border border-slate-200/80 dark:border-zinc-800 shadow-xs space-y-1">
                 <div className="flex items-center justify-between text-slate-500 dark:text-zinc-400">
-                  <span className="text-xs font-semibold">Tigerfest 2026</span>
+                  <span className="text-xs font-semibold">Terrapinfest 2026</span>
                   <Flame className="w-4 h-4 text-rose-500" />
                 </div>
                 <div className="text-2xl font-black text-rose-600 dark:text-rose-400">48 Days</div>
                 <div className="text-[11px] text-slate-500 font-bold">
-                  Burdick Field Concert
+                  Terrapin Stadium Lawn Concert
                 </div>
               </div>
 
@@ -8288,8 +8302,8 @@ export default function CampusSyncApp() {
             <div className="flex items-center gap-2 border-b border-slate-200 dark:border-zinc-800 overflow-x-auto pb-2 scrollbar-none">
               {[
                 { id: "all", label: "All Campus Events", icon: Calendar, count: events.length },
-                { id: "athletics", label: "Tiger Athletics (D-I)", icon: Trophy, count: events.filter(e => e.category === "Athletics").length },
-                { id: "concerts", label: "Concerts & Tigerfest (CAB)", icon: Music, count: events.filter(e => e.category === "Concert" || e.category === "Tradition").length },
+                { id: "athletics", label: "Terrapin Athletics (D-I)", icon: Trophy, count: events.filter(e => e.category === "Athletics").length },
+                { id: "concerts", label: "Concerts & Terrapinfest (CAB)", icon: Music, count: events.filter(e => e.category === "Concert" || e.category === "Tradition").length },
                 { id: "my-tickets", label: "My Passes & Wallet", icon: Ticket, count: events.filter(e => e.userRsvp === "GOING").length },
                 { id: "career", label: "Career Fairs & Hacks", icon: Sparkles, count: events.filter(e => e.category === "Career Fair" || e.category === "Hackathon").length },
                 { id: "host", label: "Host / Reserve Space", icon: Plus, count: "Book" }
@@ -8521,7 +8535,7 @@ export default function CampusSyncApp() {
             )}
 
             {/* ========================================================================= */}
-            {/* SUB-TAB 2: 🏀 TIGER ATHLETICS (CAA DIVISION-I) */}
+            {/* SUB-TAB 2: 🏀 MARYLAND TERPIN ATHLETICS (NCAA D-I BIG TEN) */}
             {/* ========================================================================= */}
             {eventSubTab === "athletics" && (
               <div className="space-y-6">
@@ -8529,10 +8543,10 @@ export default function CampusSyncApp() {
                   <div className="space-y-1">
                     <h2 className="text-xl font-black text-slate-900 dark:text-zinc-100 flex items-center gap-2">
                       <Trophy className="w-5 h-5 text-amber-500" />
-                      <span>Towson Tiger Athletics (NCAA Division-I / CAA)</span>
+                      <span>UMD College Park Terrapin Athletics (NCAA Division-I / CAA)</span>
                     </h2>
                     <p className="text-xs text-slate-600 dark:text-zinc-400">
-                      All undergraduate & graduate students receive 100% free admission to SECU Arena and Johnny Unitas Stadium with valid Towson OneCard.
+                      All undergraduate & graduate students receive 100% free admission to Terrapin Stadium and Johnny Terrapin Stadium with valid UMD College Park TerpID.
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -8597,7 +8611,7 @@ export default function CampusSyncApp() {
             )}
 
             {/* ========================================================================= */}
-            {/* SUB-TAB 3: 🎤 CONCERTS & TIGERFEST (CAB) */}
+            {/* SUB-TAB 3: 🎤 CONCERTS & ART ATTACK (SEE) */}
             {/* ========================================================================= */}
             {eventSubTab === "concerts" && (
               <div className="space-y-6">
@@ -8608,7 +8622,7 @@ export default function CampusSyncApp() {
                       <span>Campus Activities Board (CAB) Concerts & Traditions</span>
                     </h2>
                     <p className="text-xs text-slate-600 dark:text-zinc-400">
-                      Major student concerts, Tigerfest music festival, comedy tours, and outdoor starlight cinema screenings.
+                      Major student concerts, Terrapinfest music festival, comedy tours, and outdoor starlight cinema screenings.
                     </p>
                   </div>
                 </div>
@@ -8653,7 +8667,7 @@ export default function CampusSyncApp() {
             )}
 
             {/* ========================================================================= */}
-            {/* SUB-TAB 4: 🎟️ MY TICKETS & TIGER WALLET PASSES */}
+            {/* SUB-TAB 4: 🎟️ MY TICKETS & TERPID PASSES */}
             {/* ========================================================================= */}
             {eventSubTab === "my-tickets" && (
               <div className="space-y-6">
@@ -8699,7 +8713,7 @@ export default function CampusSyncApp() {
                         <div className="p-4 rounded-2xl bg-slate-50 dark:bg-zinc-800/80 border border-dashed border-slate-300 dark:border-zinc-700 flex items-center justify-between">
                           <div>
                             <span className="text-[10px] uppercase font-bold text-slate-400">Pass Code</span>
-                            <div className="font-mono font-black text-sm text-slate-900 dark:text-zinc-100">{ev.ticketCode || "TU-TKT-8891"}</div>
+                            <div className="font-mono font-black text-sm text-slate-900 dark:text-zinc-100">{ev.ticketCode || "UMD-TKT-8891"}</div>
                           </div>
                           <QrCode className="w-8 h-8 text-amber-500" />
                         </div>
@@ -8783,7 +8797,7 @@ export default function CampusSyncApp() {
                     <h2 className="text-xl font-black text-slate-900 dark:text-zinc-100">Host an Official Campus Event</h2>
                   </div>
                   <p className="text-xs text-slate-600 dark:text-zinc-400">
-                    Towson student organizations, faculty, and departments can request room bookings across University Union ballrooms, SECU Arena, and Science Complex lecture halls with integrated A/V support.
+                    UMD College Park student organizations, faculty, and departments can request room bookings across Adele H. Stamp Student Union (GSU) ballrooms, Terrapin Stadium, and Brendan Iribe Center for Computer Science lecture halls with integrated A/V support.
                   </p>
                 </div>
 
@@ -8838,12 +8852,12 @@ export default function CampusSyncApp() {
                             onChange={(e) => setHostEventData({ ...hostEventData, location: e.target.value })}
                             className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 font-semibold"
                           >
-                            <option value="Science Complex Auditorium (SC-101)">Science Complex Auditorium</option>
-                            <option value="University Union Ballrooms (UU-300)">University Union Ballrooms</option>
+                            <option value="Brendan Iribe Center for Computer Science Auditorium (SC-101)">Brendan Iribe Center for Computer Science Auditorium</option>
+                            <option value="Adele H. Stamp Student Union (GSU) Ballrooms (UU-300)">Adele H. Stamp Student Union (GSU) Ballrooms</option>
                             <option value="Potomac Lounge (UU-200)">Potomac Lounge</option>
-                            <option value="Stephens Hall Theater">Stephens Hall Theater</option>
-                            <option value="SECU Arena Main Floor">SECU Arena Main Floor</option>
-                            <option value="Burdick Field Lawn">Burdick Field Lawn (Outdoor)</option>
+                            <option value="Robert H. Smith School of Business (Van Munching Hall) Theater">Robert H. Smith School of Business (Van Munching Hall) Theater</option>
+                            <option value="Terrapin Stadium Main Floor">Terrapin Stadium Main Floor</option>
+                            <option value="Terrapin Stadium Lawn Lawn">Terrapin Stadium Lawn Lawn (Outdoor)</option>
                           </select>
                         </div>
                       </div>
@@ -8863,7 +8877,7 @@ export default function CampusSyncApp() {
                           <label className="block font-bold text-slate-700 dark:text-zinc-300 mb-1">Host Organization / Department</label>
                           <input
                             type="text"
-                            placeholder="e.g. Towson Cybersecurity Club"
+                            placeholder="e.g. UMD College Park Cybersecurity Club"
                             value={hostEventData.organizer}
                             onChange={(e) => setHostEventData({ ...hostEventData, organizer: e.target.value })}
                             className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 font-semibold"
@@ -9022,7 +9036,7 @@ export default function CampusSyncApp() {
                             </div>
                             <div className="flex items-center gap-2">
                               <Ticket className="w-4 h-4 text-emerald-500" />
-                              <span>{selectedEventModal.ticketPrice || "Free with Student OneCard"}</span>
+                              <span>{selectedEventModal.ticketPrice || "Free with Student TerpID"}</span>
                             </div>
                             <div className="flex items-center gap-2">
                               <Building2 className="w-4 h-4 text-blue-500" />
@@ -9092,7 +9106,7 @@ export default function CampusSyncApp() {
                   <div className="flex justify-between items-center border-b border-slate-100 dark:border-zinc-800 pb-3">
                     <span className="text-xs font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
                       <Ticket className="w-4 h-4" />
-                      Towson Official Event Pass
+                      UMD College Park Official Event Pass
                     </span>
                     <button onClick={() => setSelectedTicketEvent(null)} className="text-slate-400 hover:text-slate-600">
                       <X className="w-5 h-5" />
@@ -9108,7 +9122,7 @@ export default function CampusSyncApp() {
                   {/* QR Barcode Box */}
                   <div className="p-4 rounded-2xl bg-white border-2 border-slate-900 flex flex-col items-center justify-center shadow-inner mx-auto w-48 h-48 space-y-2">
                     <QrCode className="w-32 h-32 text-slate-900" />
-                    <span className="font-mono text-[10px] font-black text-slate-500 tracking-widest">{selectedTicketEvent.ticketCode || "TU-TKT-9912"}</span>
+                    <span className="font-mono text-[10px] font-black text-slate-500 tracking-widest">{selectedTicketEvent.ticketCode || "UMD-TKT-9912"}</span>
                   </div>
 
                   <div className="p-3.5 rounded-2xl bg-slate-100 dark:bg-zinc-800 space-y-1.5 text-xs">
@@ -9143,7 +9157,7 @@ export default function CampusSyncApp() {
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs font-black uppercase tracking-widest text-amber-400 bg-amber-500/20 px-2.5 py-1 rounded-full border border-amber-500/30">
-                      Towson University Civic Engagement
+                      University of Maryland, College Park Civic Engagement
                     </span>
                     <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-2 py-0.5 rounded-full">
                       GivePulse Connected ✓
@@ -9156,7 +9170,7 @@ export default function CampusSyncApp() {
                     Volunteer & Civic Engagement Hub
                   </h1>
                   <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
-                    Connect with community partners, discover high-impact service shifts, log verified hours, and earn official Towson University service transcripts.
+                    Connect with community partners, discover high-impact service shifts, log verified hours, and earn official University of Maryland, College Park service transcripts.
                   </p>
                 </div>
 
@@ -9199,7 +9213,7 @@ export default function CampusSyncApp() {
                 {/* 2. Active Student Volunteers */}
                 <div className="p-3.5 bg-black/40 rounded-2xl border border-white/10 space-y-1.5">
                   <div className="flex items-center justify-between text-slate-400 text-[11px] font-bold">
-                    <span>ACTIVE TIGERS</span>
+                    <span>ACTIVE TERPS</span>
                     <Users className="w-3.5 h-3.5 text-emerald-400" />
                   </div>
                   <div className="text-xl font-black text-white font-mono">
@@ -9220,7 +9234,7 @@ export default function CampusSyncApp() {
                   <div className="text-xl font-black text-white font-mono">
                     38 <span className="text-xs font-sans text-slate-400">Non-Profits</span>
                   </div>
-                  <span className="text-[10px] text-slate-400 font-bold block">Baltimore & Towson Area</span>
+                  <span className="text-[10px] text-slate-400 font-bold block">Baltimore & UMD College Park Area</span>
                 </div>
 
                 {/* 4. Your Personal Record */}
@@ -9245,7 +9259,7 @@ export default function CampusSyncApp() {
                 { id: "discover", label: `🎯 Discover Opportunities (${(activities.length > 0 ? activities : initialVolunteerActivities).length})` },
                 { id: "myshifts", label: `📋 My Shifts & Hours Log (${registeredShiftIds.length})` },
                 { id: "partners", label: "🏢 Community Partners (38)" },
-                { id: "leaderboard", label: "🏆 Tiger Impact Leaderboard" },
+                { id: "leaderboard", label: "🏆 Terrapin Impact Leaderboard" },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -9512,10 +9526,10 @@ export default function CampusSyncApp() {
                 {[
                   { name: "Maryland Food Bank", category: "Food Security", location: "Halethorpe / Baltimore", activeProjects: 4, icon: "🍎", contact: "community@mdfoodbank.org" },
                   { name: "Baltimore City Public Schools", category: "STEM & Literacy", location: "Baltimore City", activeProjects: 6, icon: "💻", contact: "mentors@baltimorecityschools.org" },
-                  { name: "Glen Arboretum Board", category: "Conservation", location: "Towson Campus Woods", activeProjects: 2, icon: "🌲", contact: "arboretum@towson.edu" },
+                  { name: "Paint Branch Trail & Arboretum Board", category: "Conservation", location: "UMD College Park Campus Woods", activeProjects: 2, icon: "🌲", contact: "arboretum@umd.edu" },
                   { name: "Maryland SPCA", category: "Animal Welfare", location: "Falls Road, Baltimore", activeProjects: 3, icon: "🐾", contact: "volunteer@mdspca.org" },
                   { name: "American Red Cross Greater Chesapeake", category: "Disaster & Blood", location: "Mount Hope Dr, Baltimore", activeProjects: 5, icon: "🩸", contact: "chesapeake@redcross.org" },
-                  { name: "Towson Senior Center", category: "Elder Care & Tech", location: "Washington Ave, Towson", activeProjects: 2, icon: "👵", contact: "seniorcenter@baltimorecountymd.gov" },
+                  { name: "UMD College Park Senior Center", category: "Elder Care & Tech", location: "Washington Ave, UMD College Park", activeProjects: 2, icon: "👵", contact: "seniorcenter@baltimorecountymd.gov" },
                 ].map((partner, idx) => (
                   <div key={idx} className="bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-zinc-800 p-5 space-y-3 shadow-sm flex flex-col justify-between">
                     <div className="space-y-2">
@@ -9541,15 +9555,15 @@ export default function CampusSyncApp() {
               </div>
             )}
 
-            {/* 6. SUB-VIEW 4: TIGER IMPACT LEADERBOARD */}
+            {/* 6. SUB-VIEW 4: TERP IMPACT LEADERBOARD */}
             {volunteerSubTab === "leaderboard" && (
               <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-5">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-base font-black text-slate-900 dark:text-zinc-100">
-                      Tiger Impact Honor Roll & Top Student Service Rankings
+                      Terrapin Impact Honor Roll & Top Student Service Rankings
                     </h3>
-                    <p className="text-xs text-slate-500">Recognizing extraordinary community contributions across Towson University.</p>
+                    <p className="text-xs text-slate-500">Recognizing extraordinary community contributions across University of Maryland, College Park.</p>
                   </div>
                   <span className="text-xs font-mono font-bold text-amber-600 bg-amber-50 dark:bg-amber-950 px-3 py-1 rounded-full">
                     Spring 2026 Term
@@ -9560,7 +9574,7 @@ export default function CampusSyncApp() {
                   {[
                     { rank: 1, name: "Kwesi Asiedu", major: "IT Senior", hours: "48.0 hrs", badge: "🥇 President's Gold Cup", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" },
                     { rank: 2, name: "Maya Chen", major: "Pre-Med Junior", hours: "42.5 hrs", badge: "🥈 Silver Service Star", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80" },
-                    { rank: 3, name: "Liam Vance", major: "Environmental Sci", hours: "36.0 hrs", badge: "🥉 Bronze Eco-Tiger", avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80" },
+                    { rank: 3, name: "Liam Vance", major: "Environmental Sci", hours: "36.0 hrs", badge: "🥉 Bronze Eco-Terrapin", avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80" },
                     { rank: 4, name: "Tyler Stone", major: "Computer Science", hours: "28.5 hrs", badge: "⭐ Community Champion", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80" },
                   ].map((user) => (
                     <div
@@ -9792,7 +9806,7 @@ export default function CampusSyncApp() {
             <AxiomConnectWorkspace
               initialApp="mail"
               currentUserName={currentUser?.name || "Kwesi Asiedu"}
-              currentUserEmail={currentUser?.studentId ? `${(currentUser.name || "kwesi").toLowerCase().replace(/\s+/g, ".")}@towson.edu` : "kwesi@expediteconsults.com"}
+              currentUserEmail={currentUser?.studentId ? `${(currentUser.name || "kwesi").toLowerCase().replace(/\s+/g, ".")}@umd.edu` : "kwesi@expediteconsults.com"}
               currentUserRole={currentUser?.role || "Student & Lead Architect"}
             />
           </div>
@@ -9812,11 +9826,11 @@ export default function CampusSyncApp() {
                 {[
                   { id: "launcher", label: "📱 App Launcher", icon: "🍱" },
                   { id: "connect", label: "⚡ Mail & Teams", icon: "📧" },
-                  { id: "tv", label: "🎥 Towson TV & Reels", icon: "📺" },
+                  { id: "tv", label: "🎥 UMD College Park TV & Reels", icon: "📺" },
                   { id: "career", label: "💼 Career & Jobs", icon: "👔" },
                   { id: "market", label: "🛍️ Marketplace", icon: "🛒" },
                   { id: "games", label: "🎮 Campus Games", icon: "👾" },
-                  { id: "transcript", label: "🏆 Tiger Record", icon: "🎓" },
+                  { id: "transcript", label: "🏆 Terrapin Record", icon: "🎓" },
                   { id: "ai", label: "🤖 Campus AI", icon: "⚡" },
                 ].map((sub) => (
                   <button
@@ -9857,7 +9871,7 @@ export default function CampusSyncApp() {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-extrabold uppercase tracking-widest text-amber-400">
-                        TowsonSync Enterprise Suite
+                        TerpSync Enterprise Suite
                       </span>
                       <span className="text-[10px] font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-2 py-0.5 rounded-full font-bold">
                         18 Modules Active
@@ -9912,27 +9926,27 @@ export default function CampusSyncApp() {
                     { id: "canvas", category: "ACADEMICS", title: "Canvas & Assignment Radar", desc: "Live deadline countdowns, grade sync, and 1-click midterm study pods.", icon: "🎓", bg: "bg-amber-500/10 text-amber-500 border-amber-500/20", type: "action", target: "canvas" },
                     { id: "alumni", category: "ACADEMICS", title: "Alumni Mentorship Mesh", desc: "15-min coffee chats with verified alumni at T. Rowe Price, Northrop, AWS.", icon: "🤝", bg: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20", type: "subview", target: "career" },
                     { id: "career", category: "ACADEMICS", title: "Handshake & Campus Jobs", desc: "Direct Handshake sync, paid research fellowships, and student employment.", icon: "💼", bg: "bg-blue-500/10 text-blue-500 border-blue-500/20", type: "subview", target: "career" },
-                    { id: "study", category: "ACADEMICS", title: "Study Pods & Peer Match", desc: "Reserve study spaces in Cook Library & Science Complex with peers.", icon: "📚", bg: "bg-teal-500/10 text-teal-500 border-teal-500/20", type: "tab", target: "campus" },
+                    { id: "study", category: "ACADEMICS", title: "Study Pods & Peer Match", desc: "Reserve study spaces in McKeldin Library & Brendan Iribe Center for Computer Science with peers.", icon: "📚", bg: "bg-teal-500/10 text-teal-500 border-teal-500/20", type: "tab", target: "campus" },
                     
                     // Campus Life & Safety
-                    { id: "wallet", category: "SAFETY", title: "Digital Tiger OneCard", desc: "Meal Swipes (14), Dining Dollars ($284.50), NFC pass & Apple Wallet.", icon: "💳", bg: "bg-amber-500/10 text-amber-500 border-amber-500/20", type: "action", target: "wallet" },
-                    { id: "safewalk", category: "SAFETY", title: "Tiger SafeWalk Escort", desc: "Virtual night escort with live companion tracking, fake calls & TUPD SOS.", icon: "🛡️", bg: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20", type: "action", target: "safewalk" },
-                    { id: "density", category: "SAFETY", title: "Live Campus Density IoT", desc: "Real-time crowd heatmaps for Cook Library, Burdick Gym & Union.", icon: "📊", bg: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20", type: "action", target: "density" },
+                    { id: "wallet", category: "SAFETY", title: "Digital Terrapin TerpID", desc: "Meal Swipes (14), Dining Dollars ($284.50), NFC pass & Apple Wallet.", icon: "💳", bg: "bg-amber-500/10 text-amber-500 border-amber-500/20", type: "action", target: "wallet" },
+                    { id: "safewalk", category: "SAFETY", title: "Terrapin SafeWalk Escort", desc: "Virtual night escort with live companion tracking, fake calls & UMPD SOS.", icon: "🛡️", bg: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20", type: "action", target: "safewalk" },
+                    { id: "density", category: "SAFETY", title: "Live Campus Density IoT", desc: "Real-time crowd heatmaps for McKeldin Library, Eppley Recreation Center (ERC) Gym & Union.", icon: "📊", bg: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20", type: "action", target: "density" },
                     { id: "weather", category: "SAFETY", title: "NOAA Campus Weather", desc: "Authoritative NWS forecasts, live Doppler radar, and severe weather alerts.", icon: "🌦️", bg: "bg-sky-500/10 text-sky-500 border-sky-500/20", type: "modal", target: "weather" },
                     { id: "311", category: "SAFETY", title: "Campus 311 Maintenance", desc: "Report campus maintenance, facilities requests, and safety concerns.", icon: "🔧", bg: "bg-slate-500/10 text-slate-500 border-slate-500/20", type: "action", target: "311" },
 
                     // Media & Marketplace
-                    { id: "tv", category: "MEDIA", title: "Towson TV & Reels", desc: "Live streams, 60s reels, video channels, and student creator shows.", icon: "🎥", bg: "bg-rose-500/10 text-rose-500 border-rose-500/20", type: "subview", target: "tv" },
-                    { id: "market", category: "MEDIA", title: "Towson Marketplace", desc: "Official TowsonSync store, student peer buy/sell, textbooks, and merch.", icon: "🛍️", bg: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20", type: "subview", target: "market" },
-                    { id: "games", category: "MEDIA", title: "Campus Games & XP", desc: "Tiger trivia championship, campus scavenger hunt, and XP leaderboard.", icon: "🎮", bg: "bg-purple-500/10 text-purple-500 border-purple-500/20", type: "subview", target: "games" },
-                    { id: "transcript", category: "MEDIA", title: "Tiger Record & Passport", desc: "Verified milestone certificates, digital passport, and PDF graduation export.", icon: "🏆", bg: "bg-amber-500/10 text-amber-500 border-amber-500/20", type: "subview", target: "transcript" },
+                    { id: "tv", category: "MEDIA", title: "UMD College Park TV & Reels", desc: "Live streams, 60s reels, video channels, and student creator shows.", icon: "🎥", bg: "bg-rose-500/10 text-rose-500 border-rose-500/20", type: "subview", target: "tv" },
+                    { id: "market", category: "MEDIA", title: "UMD College Park Marketplace", desc: "Official TerpSync store, student peer buy/sell, textbooks, and merch.", icon: "🛍️", bg: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20", type: "subview", target: "market" },
+                    { id: "games", category: "MEDIA", title: "Campus Games & XP", desc: "Terrapin trivia championship, campus scavenger hunt, and XP leaderboard.", icon: "🎮", bg: "bg-purple-500/10 text-purple-500 border-purple-500/20", type: "subview", target: "games" },
+                    { id: "transcript", category: "MEDIA", title: "Terrapin Record & Passport", desc: "Verified milestone certificates, digital passport, and PDF graduation export.", icon: "🏆", bg: "bg-amber-500/10 text-amber-500 border-amber-500/20", type: "subview", target: "transcript" },
 
                     // Operations & Tools
                     { id: "connect", category: "OPERATIONS", title: "Axiom Mail, Teams & Calendar", desc: "Integrated Zoho-style webmail, Outlook scheduler, and Teams WebRTC video meeting room.", icon: "⚡", bg: "bg-amber-500/10 text-amber-500 border-amber-500/20", type: "subview", target: "connect" },
-                    { id: "ai", category: "OPERATIONS", title: "Ask TowsonSync AI", desc: "Contextual intelligence assistant across schedules, dining, and maps.", icon: "🤖", bg: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20", type: "action", target: "ai" },
+                    { id: "ai", category: "OPERATIONS", title: "Ask TerpSync AI", desc: "Contextual intelligence assistant across schedules, dining, and maps.", icon: "🤖", bg: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20", type: "action", target: "ai" },
                     { id: "admin", category: "OPERATIONS", title: "Administration Center", desc: "Identity verification queue, housing safety moderation, and security logs.", icon: "🏛️", bg: "bg-slate-900 text-amber-400 border-amber-500/30", type: "subview", target: "admin" },
-                    { id: "map", category: "OPERATIONS", title: "Live Campus Map OS", desc: "TigerOrbit 360, indoor blueprints, GPS Tiger Ride shuttles & parking.", icon: "🗺️", bg: "bg-amber-500/10 text-amber-500 border-amber-500/20", type: "tab", target: "map" },
-                    { id: "housing", category: "OPERATIONS", title: "TUHousing Platform", desc: "Verified off-campus student apartments, roommate mesh, and 3D tours.", icon: "🏠", bg: "bg-blue-500/10 text-blue-500 border-blue-500/20", type: "tab", target: "housing" },
+                    { id: "map", category: "OPERATIONS", title: "Live Campus Map OS", desc: "TerpOrbit 360, indoor blueprints, GPS Terrapin Ride shuttles & parking.", icon: "🗺️", bg: "bg-amber-500/10 text-amber-500 border-amber-500/20", type: "tab", target: "map" },
+                    { id: "housing", category: "OPERATIONS", title: "TerpHousing Platform", desc: "Verified off-campus student apartments, roommate mesh, and 3D tours.", icon: "🏠", bg: "bg-blue-500/10 text-blue-500 border-blue-500/20", type: "tab", target: "housing" },
                     { id: "settings", category: "OPERATIONS", title: "Privacy & Ghost Mode", desc: "Customize location sharing duration, notifications, and security keys.", icon: "⚙️", bg: "bg-zinc-500/10 text-zinc-500 border-zinc-500/20", type: "action", target: "orbit" },
                   ]
                     .filter((item) => launchpadFilter === "ALL" || item.category === launchpadFilter)
@@ -9945,7 +9959,7 @@ export default function CampusSyncApp() {
                             setShowWeatherModal(true);
                             setWeatherModalTab("now");
                           } else if (item.type === "action" && item.target === "wallet") {
-                            setShowTigerWalletModal(true);
+                            setShowTerpIDModal(true);
                           } else if (item.type === "action" && item.target === "safewalk") {
                             setShowSafeWalkModal(true);
                           } else if (item.type === "action" && item.target === "canvas") {
@@ -10000,12 +10014,12 @@ export default function CampusSyncApp() {
               </div>
             )}
 
-            {/* SUB-VIEW 2: 🎥 TOWSON TV & REELS */}
+            {/* SUB-VIEW 2: 🎥 UMD TV & REELS */}
             {moreSubView === "tv" && (
               <div className="space-y-6">
                 <div className="bg-gradient-to-r from-rose-900 via-slate-900 to-rose-950 p-6 rounded-3xl text-white shadow-xl flex items-center justify-between flex-wrap gap-4 border border-rose-500/30">
                   <div>
-                    <span className="text-xs font-extrabold uppercase tracking-widest text-rose-400">Towson TV & Student Creator Studio</span>
+                    <span className="text-xs font-extrabold uppercase tracking-widest text-rose-400">UMD College Park TV & Student Creator Studio</span>
                     <h2 className="text-2xl font-black mt-0.5">Campus Life, Sports, News & Housing Video Tours</h2>
                     <p className="text-xs text-slate-300 mt-1">Watch 60s vertical campus reels and official university broadcast channels.</p>
                   </div>
@@ -10059,9 +10073,9 @@ export default function CampusSyncApp() {
               <div className="space-y-6">
                 <div className="bg-gradient-to-r from-amber-950 via-slate-900 to-amber-950 p-6 rounded-3xl text-white shadow-xl flex items-center justify-between flex-wrap gap-4 border border-amber-500/30">
                   <div>
-                    <span className="text-xs font-extrabold uppercase tracking-widest text-amber-400">Towson Career, Research & Alumni Mesh</span>
+                    <span className="text-xs font-extrabold uppercase tracking-widest text-amber-400">UMD College Park Career, Research & Alumni Mesh</span>
                     <h2 className="text-2xl font-black mt-0.5">Verified Student Opportunities & Alumni Mentorship</h2>
-                    <p className="text-xs text-slate-300 mt-1">Direct synchronization with Handshake, TU Career Center, and verified corporate alumni.</p>
+                    <p className="text-xs text-slate-300 mt-1">Direct synchronization with Handshake, University Career Center @ Hornbake Library, and verified corporate alumni.</p>
                   </div>
 
                   {/* Career Filter Switcher */}
@@ -10091,9 +10105,9 @@ export default function CampusSyncApp() {
                       {
                         id: "job-1",
                         title: "Undergraduate AI Cyber Defense Research Fellow",
-                        employer: "TU Autonomous Security Lab (ASSL)",
+                        employer: "SU Autonomous Cyber Defense Lab (ASSL)",
                         jobType: "Paid Campus Research",
-                        location: "Science Complex Rm 304",
+                        location: "Brendan Iribe Center for Computer Science Rm 304",
                         wage: "$22.50 / hr + 3 Academic Credits",
                         desc: "Develop automated vulnerability scanning scripts and LLM honeypots under Dr. Catherine Hayes.",
                         deadline: "April 15, 2026",
@@ -10101,21 +10115,21 @@ export default function CampusSyncApp() {
                       {
                         id: "job-2",
                         title: "IT Support & Cloud Infrastructure Assistant",
-                        employer: "Towson University Office of Technology (OTS)",
+                        employer: "University of Maryland, College Park Office of Technology (OTS)",
                         jobType: "Student Employment",
-                        location: "Cook Library Lower Level",
+                        location: "McKeldin Library Lower Level",
                         wage: "$18.00 / hr",
-                        desc: "Assist students and faculty with TU network access, dual-factor authentication, and hardware diagnostics.",
+                        desc: "Assist students and faculty with UMD network access, dual-factor authentication, and hardware diagnostics.",
                         deadline: "May 01, 2026",
                       },
                       {
                         id: "job-3",
                         title: "Student Community Engagement Lead",
-                        employer: "Towson Student Affairs",
+                        employer: "UMD College Park Student Affairs",
                         jobType: "Part-Time",
-                        location: "University Union Rm 204",
+                        location: "Adele H. Stamp Student Union (GSU) Rm 204",
                         wage: "$17.50 / hr",
-                        desc: "Coordinate campus-wide volunteer drives, service days, and official Tiger Record certifications.",
+                        desc: "Coordinate campus-wide volunteer drives, service days, and official Terrapin Record certifications.",
                         deadline: "April 30, 2026",
                       },
                       {
@@ -10143,10 +10157,10 @@ export default function CampusSyncApp() {
 
                         <button
                           type="button"
-                          onClick={() => triggerToast(`💼 Application submitted for ${job.title} at ${job.employer} using your verified Tiger Record!`)}
+                          onClick={() => triggerToast(`💼 Application submitted for ${job.title} at ${job.employer} using your verified Terrapin Record!`)}
                           className="w-full bg-amber-500 hover:bg-amber-600 text-black font-black py-2.5 rounded-xl text-xs shadow-md transition"
                         >
-                          1-Click Apply with Tiger Record
+                          1-Click Apply with Terrapin Record
                         </button>
                       </div>
                     ))}
@@ -10193,7 +10207,7 @@ export default function CampusSyncApp() {
 
                         <button
                           type="button"
-                          onClick={() => triggerToast(`☕ Coffee Chat requested with ${mentor.name} (${mentor.company})! They will connect via Tiger Message.`)}
+                          onClick={() => triggerToast(`☕ Coffee Chat requested with ${mentor.name} (${mentor.company})! They will connect via Terrapin Message.`)}
                           className="w-full bg-slate-900 dark:bg-zinc-100 hover:bg-amber-500 dark:hover:bg-amber-400 text-white dark:text-black font-black py-2.5 rounded-2xl text-xs transition flex items-center justify-center gap-1.5 shadow-sm"
                         >
                           <Coffee className="w-3.5 h-3.5" />
@@ -10211,9 +10225,9 @@ export default function CampusSyncApp() {
               <div className="space-y-6">
                 <div className="bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-950 p-6 rounded-3xl text-white shadow-xl flex items-center justify-between flex-wrap gap-4 border border-emerald-500/30">
                   <div>
-                    <span className="text-xs font-extrabold uppercase tracking-widest text-emerald-400">Towson Student & Official Store</span>
+                    <span className="text-xs font-extrabold uppercase tracking-widest text-emerald-400">UMD College Park Student & Official Store</span>
                     <h2 className="text-2xl font-black mt-0.5">Buy, Sell & Explore Verified Campus Products</h2>
-                    <p className="text-xs text-slate-300 mt-1">Official Towson University merchandise, textbooks, electronics, and student creator gear.</p>
+                    <p className="text-xs text-slate-300 mt-1">Official University of Maryland, College Park merchandise, textbooks, electronics, and student creator gear.</p>
                   </div>
                   <button
                     type="button"
@@ -10263,8 +10277,8 @@ export default function CampusSyncApp() {
               <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-6">
                 <div className="flex items-center justify-between flex-wrap gap-4 border-b pb-4">
                   <div>
-                    <h2 className="text-xl font-black text-slate-900 dark:text-zinc-100">Tiger Trivia Championship & Campus XP</h2>
-                    <p className="text-xs text-slate-500">Test your Towson University knowledge and earn points toward your Tiger Record.</p>
+                    <h2 className="text-xl font-black text-slate-900 dark:text-zinc-100">Terrapin Trivia Championship & Campus XP</h2>
+                    <p className="text-xs text-slate-500">Test your University of Maryland, College Park knowledge and earn points toward your Terrapin Record.</p>
                   </div>
                   <div className="bg-amber-50 dark:bg-amber-950 px-4 py-2 rounded-2xl border border-amber-200 font-mono text-xs font-black text-amber-700 dark:text-amber-300">
                     ⭐ Campus XP Score: {triviaScore * 50} pts
@@ -10274,11 +10288,11 @@ export default function CampusSyncApp() {
                 <div className="p-6 bg-slate-50 dark:bg-zinc-800/50 rounded-3xl border space-y-4 max-w-xl mx-auto">
                   <div className="flex justify-between text-xs font-bold text-slate-400">
                     <span>Question {activeTriviaQuestionIdx + 1} of {(games[0]?.questions || initialCampusGames[0]?.questions || []).length}</span>
-                    <span>Category: TU Traditions</span>
+                    <span>Category: UMD Traditions</span>
                   </div>
 
                   <h3 className="text-base font-black text-slate-900 dark:text-zinc-100">
-                    {(games[0]?.questions || initialCampusGames[0]?.questions)?.[activeTriviaQuestionIdx]?.question || "In what year was Towson University originally founded as Maryland State Normal School?"}
+                    {(games[0]?.questions || initialCampusGames[0]?.questions)?.[activeTriviaQuestionIdx]?.question || "In what year was University of Maryland, College Park originally founded as Maryland State Normal School?"}
                   </h3>
 
                   <div className="space-y-2">
@@ -10332,7 +10346,7 @@ export default function CampusSyncApp() {
                         <div className="flex items-center gap-2">
                           <h2 className="text-xl font-black text-slate-900 dark:text-zinc-100">{currentUser.name}</h2>
                           <span className="text-[10px] font-bold bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full border border-emerald-200">
-                            Verified Towson Tiger ✓
+                            Verified UMD College Park Terrapin ✓
                           </span>
                         </div>
                         <p className="text-xs text-slate-500 mt-0.5">
@@ -10375,7 +10389,7 @@ export default function CampusSyncApp() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="text-xl">🎓</span>
-                        <h3 className="text-base font-black text-slate-900 dark:text-zinc-100">Official Towson Campus Passport</h3>
+                        <h3 className="text-base font-black text-slate-900 dark:text-zinc-100">Official UMD College Park Campus Passport</h3>
                       </div>
                       <span className="text-xs font-bold text-amber-600 bg-amber-50 dark:bg-amber-950 px-2.5 py-1 rounded-full border border-amber-200">
                         5 of 7 Milestones Completed (71%)
@@ -10385,7 +10399,7 @@ export default function CampusSyncApp() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 text-xs">
                       {[
                         { title: "New Student Orientation Completed", status: "VERIFIED", date: "Aug 2024", icon: "✓" },
-                        { title: "Joined Verified Student Org (ASA Towson)", status: "VERIFIED", date: "Sep 2024", icon: "✓" },
+                        { title: "Joined Verified Student Org (ASA UMD College Park)", status: "VERIFIED", date: "Sep 2024", icon: "✓" },
                         { title: "Attended Spring Career & Internship Fair", status: "VERIFIED", date: "Feb 2026", icon: "✓" },
                         { title: "Logged 40+ Community Service Hours", status: "VERIFIED", date: "Mar 2026", icon: "✓" },
                         { title: "Participated in Cyber Security Hackathon", status: "VERIFIED", date: "Apr 2026", icon: "✓" },
@@ -10425,7 +10439,7 @@ export default function CampusSyncApp() {
                     ⚡
                   </div>
                   <div>
-                    <h3 className="font-bold text-base">TowsonSync Campus AI Assistant</h3>
+                    <h3 className="font-bold text-base">TerpSync Campus AI Assistant</h3>
                     <p className="text-xs text-slate-500">Ask about dining menus, class schedules, housing, weather, and campus events.</p>
                   </div>
                 </div>
@@ -10441,7 +10455,7 @@ export default function CampusSyncApp() {
                 <form onSubmit={handleSendAiPrompt} className="flex gap-2">
                   <input
                     type="text"
-                    placeholder="Ask Towson Campus AI anything..."
+                    placeholder="Ask UMD College Park Campus AI anything..."
                     value={aiChatQuery}
                     onChange={(e) => setAiChatQuery(e.target.value)}
                     className="flex-1 bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-2xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
@@ -10453,7 +10467,7 @@ export default function CampusSyncApp() {
               </div>
             )}
 
-            {/* SUB-VIEW 8: 🛡️ TOWSONSYNC ADMINISTRATION CENTER */}
+            {/* SUB-VIEW 8: 🛡️ TERPSYNC ADMINISTRATION CENTER */}
             {moreSubView === "admin" && (
               <div className="space-y-6">
                 {/* Admin Header Banner */}
@@ -10462,7 +10476,7 @@ export default function CampusSyncApp() {
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-black uppercase tracking-widest text-amber-400 bg-amber-500/20 px-2.5 py-0.5 rounded-full border border-amber-400/30">
-                          🛡️ TowsonSync Security & Operations Center
+                          🛡️ TerpSync Security & Operations Center
                         </span>
                         <span className="text-[10px] font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-2 py-0.5 rounded-full font-bold">
                           ● ALL SYSTEMS HEALTHY
@@ -10478,7 +10492,7 @@ export default function CampusSyncApp() {
                       <button
                         type="button"
                         onClick={() => {
-                          triggerToast("🔄 Synchronized live campus records with PeopleSoft / TU OneCard & Canvas SIS.");
+                          triggerToast("🔄 Synchronized live campus records with PeopleSoft / UMD TerpID & Canvas SIS.");
                         }}
                         className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black px-4 py-2.5 rounded-2xl transition flex items-center gap-1.5 shadow-md"
                       >
@@ -10501,7 +10515,7 @@ export default function CampusSyncApp() {
                       <span className="text-[9px] text-slate-400 font-bold block mt-0.5">Avg Review: 18 mins</span>
                     </div>
                     <div className="bg-white/5 p-3.5 rounded-2xl border border-white/10">
-                      <span className="text-[10px] uppercase font-bold text-slate-400 block">TUPD Blue Lights</span>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">UMPD Blue Lights</span>
                       <span className="text-xl font-black text-emerald-400">24 / 24</span>
                       <span className="text-[9px] text-emerald-400 font-bold block mt-0.5">100% Operational</span>
                     </div>
@@ -10592,7 +10606,7 @@ export default function CampusSyncApp() {
                             </div>
 
                             <p className="text-xs text-slate-500">
-                              Submitted {req.submittedAt} with verified official TU document upload.
+                              Submitted {req.submittedAt} with verified official UMD document upload.
                             </p>
                           </div>
 
@@ -10636,18 +10650,18 @@ export default function CampusSyncApp() {
                           <span className="text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-950 px-2 py-0.5 rounded-full">
                             Pending Safety Inspection
                           </span>
-                          <h4 className="text-sm font-black text-slate-900 dark:text-zinc-100 mt-1">The York Towson Residences • 4 Bed / 4 Bath Penthouse</h4>
-                          <span className="text-xs text-slate-500">Provider: The York Towson Property Management (License #MD-9042)</span>
+                          <h4 className="text-sm font-black text-slate-900 dark:text-zinc-100 mt-1">The York UMD College Park Residences • 4 Bed / 4 Bath Penthouse</h4>
+                          <span className="text-xs text-slate-500">Provider: The York UMD College Park Property Management (License #MD-9042)</span>
                         </div>
                         <span className="text-base font-black text-emerald-600">$1,150 / mo</span>
                       </div>
                       <p className="text-xs text-slate-600 dark:text-zinc-400">
-                        Submitted safety certifications: Fire Marshal Approval 2026, Towson Shuttle Route Direct Stop, Secure RFID Fob entry.
+                        Submitted safety certifications: Fire Marshal Approval 2026, UMD College Park Shuttle Route Direct Stop, Secure RFID Fob entry.
                       </p>
                       <div className="flex gap-2">
                         <button
                           type="button"
-                          onClick={() => triggerToast("✅ Housing listing approved & verified on TUHousing live map.")}
+                          onClick={() => triggerToast("✅ Housing listing approved & verified on TerpHousing live map.")}
                           className="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-4 py-2 rounded-xl text-xs"
                         >
                           Approve Housing Listing
@@ -10695,10 +10709,10 @@ export default function CampusSyncApp() {
                     </h3>
                     <div className="p-4 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border space-y-2.5">
                       <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-black text-slate-900 dark:text-zinc-100">Towson Spring Hackathon & Cyber CTF</h4>
+                        <h4 className="text-sm font-black text-slate-900 dark:text-zinc-100">UMD College Park Spring Hackathon & Cyber CTF</h4>
                         <span className="text-xs font-bold text-amber-600 bg-amber-50 dark:bg-amber-950 px-2 py-0.5 rounded-full">Requires Union Rm 204</span>
                       </div>
-                      <p className="text-xs text-slate-500">Host: Towson Cybersecurity Club • Expected Attendance: 250 students • Budget: $1,500 SGA Grant</p>
+                      <p className="text-xs text-slate-500">Host: UMD College Park Cybersecurity Club • Expected Attendance: 250 students • Budget: $1,500 SGA Grant</p>
                       <button
                         type="button"
                         onClick={() => triggerToast("🎉 Event charter approved! Union Rm 204 booked on Campus Calendar.")}
@@ -10750,7 +10764,7 @@ export default function CampusSyncApp() {
                 {adminActiveSubTab === "health" && (
                   <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-5">
                     <h3 className="text-sm font-black text-slate-900 dark:text-zinc-100">
-                      TowsonSync Infrastructure & Geographic IoT Telemetry
+                      TerpSync Infrastructure & Geographic IoT Telemetry
                     </h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
@@ -10767,7 +10781,7 @@ export default function CampusSyncApp() {
                       <div className="p-4 bg-slate-50 dark:bg-zinc-800/60 rounded-2xl border space-y-1">
                         <span className="font-bold text-slate-400 uppercase text-[10px]">Campus Blue Light Network</span>
                         <div className="text-base font-black text-emerald-600">{adminSystemHealth?.tupdBeaconHealth || "100% Operational"}</div>
-                        <span className="text-[10px] text-emerald-500 font-bold block">TUPD Dispatch Linked</span>
+                        <span className="text-[10px] text-emerald-500 font-bold block">UMPD Dispatch Linked</span>
                       </div>
                     </div>
                   </div>
@@ -10781,7 +10795,7 @@ export default function CampusSyncApp() {
                 <AxiomConnectWorkspace
                   initialApp="mail"
                   currentUserName={currentUser?.name || "Kwesi Asiedu"}
-                  currentUserEmail={currentUser?.studentId ? `${(currentUser.name || "kwesi").toLowerCase().replace(/\s+/g, ".")}@towson.edu` : "kwesi@expediteconsults.com"}
+                  currentUserEmail={currentUser?.studentId ? `${(currentUser.name || "kwesi").toLowerCase().replace(/\s+/g, ".")}@umd.edu` : "kwesi@expediteconsults.com"}
                   currentUserRole={currentUser?.role || "Student & Lead Architect"}
                   onBackToCampus={() => setMoreSubView("launcher")}
                 />
@@ -10794,20 +10808,20 @@ export default function CampusSyncApp() {
       </main>
 
       {/* ========================================================================= */}
-      {/* FLOATING ACTION TRIGGER: ✨ ASK TOWSONSYNC AI */}
+      {/* FLOATING ACTION TRIGGER: ✨ ASK TERPSYNC AI */}
       {/* ========================================================================= */}
       <button
         type="button"
         onClick={() => setShowAskAiModal(true)}
         className="fixed bottom-6 right-6 z-40 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 hover:scale-105 text-white p-3.5 px-5 rounded-full shadow-2xl flex items-center gap-2 font-black text-xs border border-white/20 transition group"
-        title="Ask TowsonSync AI anything about your classes, housing, schedule, or campus"
+        title="Ask TerpSync AI anything about your classes, housing, schedule, or campus"
       >
         <Sparkles className="w-4 h-4 text-amber-300 group-hover:rotate-12 transition duration-300" />
-        <span>Ask TowsonSync</span>
+        <span>Ask TerpSync</span>
       </button>
 
       {/* ========================================================================= */}
-      {/* MODAL 1: ✨ ASK TOWSONSYNC AI ASSISTANT MODAL */}
+      {/* MODAL 1: ✨ ASK TERPSYNC AI ASSISTANT MODAL */}
       {/* ========================================================================= */}
       {showAskAiModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -10818,7 +10832,7 @@ export default function CampusSyncApp() {
                   <Sparkles className="w-4 h-4 text-amber-300" />
                 </div>
                 <div>
-                  <h3 className="font-black text-base text-slate-900 dark:text-zinc-100">Ask TowsonSync AI</h3>
+                  <h3 className="font-black text-base text-slate-900 dark:text-zinc-100">Ask TerpSync AI</h3>
                   <p className="text-[11px] text-slate-500">Autonomous context engine for {currentUser.name}</p>
                 </div>
               </div>
@@ -10834,8 +10848,8 @@ export default function CampusSyncApp() {
             <div className="flex flex-wrap gap-1.5">
               {[
                 "⏳ What assignments are due today?",
-                "📚 Quiet study spots at Cook Library?",
-                "🚌 When is the next Tiger Ride shuttle?",
+                "📚 Quiet study spots at McKeldin Library?",
+                "🚌 When is the next Terrapin Ride shuttle?",
                 "🌦️ What's the weather advisory?",
                 "💼 Find cybersecurity research jobs",
               ].map((chip) => (
@@ -10851,11 +10865,11 @@ export default function CampusSyncApp() {
                         role: "ai",
                         text: chip.includes("assignments")
                           ? "Here are your upcoming Canvas deadlines:\n1. Lab 3: Virtual Memory Pager (COSC 421) — Due in 6 hours (100 pts)\n2. Midterm Sprint Demo (COSC 484) — Due in 3 days\nWould you like to open the Study Pod for COSC 421?"
-                          : chip.includes("Cook Library")
-                          ? "Albert S. Cook Library is currently at 38% capacity (Quiet). 3rd floor quiet pods and collaborative tables currently have 64 open seats."
+                          : chip.includes("McKeldin Library")
+                          ? "Albert S. McKeldin Library is currently at 38% capacity (Quiet). 3rd floor quiet pods and collaborative tables currently have 64 open seats."
                           : chip.includes("shuttle")
-                          ? "Tiger Ride Shuttle #14 (Gold Route) is currently 2 minutes away from Cook Library stop, heading to West Village."
-                          : "Here is what TowsonSync recommends based on your profile and verified courses.",
+                          ? "Terrapin Ride Shuttle #14 (Gold Route) is currently 2 minutes away from McKeldin Library stop, heading to Terrapin Square."
+                          : "Here is what TerpSync recommends based on your profile and verified courses.",
                       },
                     ]);
                   }}
@@ -10894,7 +10908,7 @@ export default function CampusSyncApp() {
                   { role: "user", text: userQ },
                   {
                     role: "ai",
-                    text: `TowsonSync AI responded to "${userQ}": Everything is synchronized across your courses, housing, shuttle schedules, and campus map.`,
+                    text: `TerpSync AI responded to "${userQ}": Everything is synchronized across your courses, housing, shuttle schedules, and campus map.`,
                   },
                 ]);
               }}
@@ -10920,21 +10934,21 @@ export default function CampusSyncApp() {
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL 2: 🎓 OFFICIAL TIGER RECORD & PASSPORT GRADUATION EXPORT */}
+      {/* MODAL 2: 🎓 OFFICIAL TERP RECORD & PASSPORT GRADUATION EXPORT */}
       {/* ========================================================================= */}
-      {showTigerRecordExportModal && (
+      {showTerpRecordExportModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white dark:bg-zinc-900 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-zinc-800 space-y-4 animate-in zoom-in-95">
             <div className="flex items-center justify-between border-b pb-3">
               <div className="flex items-center gap-2">
                 <span className="text-2xl">🎓</span>
                 <div>
-                  <h3 className="font-black text-base text-slate-900 dark:text-zinc-100">Official TowsonSync Campus Record</h3>
+                  <h3 className="font-black text-base text-slate-900 dark:text-zinc-100">Official TerpSync Campus Record</h3>
                   <p className="text-xs text-slate-500">Verified Digital Portfolio & Graduation Passport</p>
                 </div>
               </div>
               <button
-                onClick={() => setShowTigerRecordExportModal(false)}
+                onClick={() => setShowTerpRecordExportModal(false)}
                 className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-400 hover:text-slate-600"
               >
                 <X className="w-4 h-4" />
@@ -10971,10 +10985,10 @@ export default function CampusSyncApp() {
             <button
               type="button"
               onClick={() => {
-                triggerToast("📄 Generating Official Towson University Verified Digital PDF Portfolio...");
+                triggerToast("📄 Generating Official University of Maryland, College Park Verified Digital PDF Portfolio...");
                 setTimeout(() => {
-                  triggerToast("✅ Download ready: TowsonSync_CampusRecord_KwesiAsiedu.pdf");
-                  setShowTigerRecordExportModal(false);
+                  triggerToast("✅ Download ready: TerpSync_CampusRecord_KwesiAsiedu.pdf");
+                  setShowTerpRecordExportModal(false);
                 }, 1500);
               }}
               className="w-full bg-amber-500 hover:bg-amber-600 text-black font-black py-3 rounded-2xl text-xs shadow-lg transition flex items-center justify-center gap-2"

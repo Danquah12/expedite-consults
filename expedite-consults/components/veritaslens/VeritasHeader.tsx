@@ -18,12 +18,18 @@ import {
   Smartphone,
   Palette,
   Check,
-  Flame
+  Flame,
+  Target,
+  Scale,
+  Sparkles,
+  Compass,
+  Crown
 } from 'lucide-react';
 
 export type VeritasTab = 
   | 'hot-topics'
   | 'lie-detector'
+  | 'chieftaincy-monitor'
   | 'blindspots' 
   | 'pipeline' 
   | 'classifier' 
@@ -54,14 +60,15 @@ export const THEME_OPTIONS: { id: VeritasTheme; label: string; bgClass: string; 
 ];
 
 interface VeritasHeaderProps {
-  activeTab: VeritasTab;
-  onTabChange: (tab: VeritasTab) => void;
+  activeTab: string;
+  onTabChange: (tab: any) => void;
   dlqCount: number;
   activeLearningCount: number;
   lastSyncedAt?: Date | null;
   onOpenMobileAlert?: () => void;
   currentTheme?: VeritasTheme;
   onThemeChange?: (theme: VeritasTheme) => void;
+  isGhanaMode?: boolean;
 }
 
 export const VeritasHeader: React.FC<VeritasHeaderProps> = ({
@@ -72,7 +79,8 @@ export const VeritasHeader: React.FC<VeritasHeaderProps> = ({
   lastSyncedAt,
   onOpenMobileAlert,
   currentTheme = 'navy',
-  onThemeChange
+  onThemeChange,
+  isGhanaMode = false
 }) => {
   const [timeString, setTimeString] = useState<string>('');
   const [formattedSyncTime, setFormattedSyncTime] = useState<string>('Live');
@@ -102,30 +110,48 @@ export const VeritasHeader: React.FC<VeritasHeaderProps> = ({
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
-            <span className="font-semibold tracking-wider uppercase">VERITAS CLOUD LIVE</span>
+            <span className="font-semibold tracking-wider uppercase">
+              {isGhanaMode ? 'GHANA TRUTH PLATFORM LIVE' : 'VERITAS CLOUD LIVE'}
+            </span>
           </div>
 
           <div className="h-3.5 w-px bg-slate-700 hidden sm:block"></div>
 
           <div className="flex items-center gap-1.5">
-            <span className="text-slate-400">US Polarization Index:</span>
-            <span className="font-mono font-bold text-amber-400">71.4 / 100</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-950/80 text-amber-400 border border-amber-800/60 font-semibold">HIGH DIVISION</span>
+            <span className="text-slate-400">
+              {isGhanaMode ? 'Ghana Polarization Index (NDC vs NPP):' : 'US Polarization Index:'}
+            </span>
+            <span className="font-mono font-bold text-amber-400">
+              {isGhanaMode ? '78.4 / 100' : '71.4 / 100'}
+            </span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-950/80 text-amber-400 border border-amber-800/60 font-semibold">
+              {isGhanaMode ? 'HIGH ELECTORAL DIVISION' : 'HIGH DIVISION'}
+            </span>
           </div>
 
           <div className="h-3.5 w-px bg-slate-700 hidden sm:block"></div>
 
           <div className="flex items-center gap-1.5">
-            <span className="text-slate-400">Stream Throughput:</span>
-            <span className="font-mono font-medium text-cyan-300">1,480 msgs/s</span>
-            <span className="text-slate-500 font-mono">(Batch: 100)</span>
+            <span className="text-slate-400">
+              {isGhanaMode ? 'Ghana Media Ingest Rate:' : 'Stream Throughput:'}
+            </span>
+            <span className="font-mono font-medium text-cyan-300">
+              {isGhanaMode ? '2,450 claims/min' : '1,480 msgs/s'}
+            </span>
+            <span className="text-slate-500 font-mono">
+              {isGhanaMode ? '(Peace FM • Joy FM • Citi TV • UTV • Graphic)' : '(Batch: 100)'}
+            </span>
           </div>
 
           <div className="h-3.5 w-px bg-slate-700 hidden md:block"></div>
 
           <div className="flex items-center gap-1.5">
-            <span className="text-slate-400">DeBERTa Classifier Drift:</span>
-            <span className="font-mono text-emerald-400 font-semibold">PSI 0.082 (Stable)</span>
+            <span className="text-slate-400">
+              {isGhanaMode ? 'Akan/English Classifier Accuracy:' : 'DeBERTa Classifier Drift:'}
+            </span>
+            <span className="font-mono text-emerald-400 font-semibold">
+              {isGhanaMode ? '94.8% (Calibrated)' : 'PSI 0.082 (Stable)'}
+            </span>
           </div>
         </div>
 
@@ -235,162 +261,328 @@ export const VeritasHeader: React.FC<VeritasHeaderProps> = ({
       <div className="px-4 py-3 flex flex-wrap items-center justify-between gap-4">
         {/* Clickable Brand Logo -> Returns to First Page */}
         <div 
-          onClick={() => onTabChange('lie-detector')}
+          onClick={() => onTabChange(isGhanaMode ? 'mahama-2024-tracker' : 'lie-detector')}
           className="flex items-center gap-3 cursor-pointer group select-none"
-          title="Click to return to Home (Video & AI Lie Detector)"
+          title={isGhanaMode ? "Click to return to 2024 Mahama Promise Tracker" : "Click to return to Home (Video & AI Lie Detector)"}
         >
-          <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-cyan-500 via-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-cyan-500/20 border border-cyan-400/30 group-hover:scale-105 group-hover:shadow-cyan-500/40 transition-all duration-200">
-            <Radio className="w-5 h-5 text-white animate-pulse" />
+          <div className={`h-10 w-10 rounded-lg flex items-center justify-center shadow-lg border group-hover:scale-105 transition-all duration-200 ${
+            isGhanaMode 
+              ? 'bg-gradient-to-br from-amber-500 via-rose-600 to-indigo-700 shadow-amber-500/20 border-amber-400/30' 
+              : 'bg-gradient-to-br from-cyan-500 via-indigo-600 to-purple-600 shadow-cyan-500/20 border-cyan-400/30 group-hover:shadow-cyan-500/40'
+          }`}>
+            {isGhanaMode ? (
+              <Scale className="w-5 h-5 text-amber-200 animate-pulse" />
+            ) : (
+              <Radio className="w-5 h-5 text-white animate-pulse" />
+            )}
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-lg font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-400 group-hover:from-cyan-300 group-hover:to-white transition-colors">
-                VERITAS<span className="text-cyan-400 font-normal group-hover:text-cyan-300">LENS</span>
+                {isGhanaMode ? (
+                  <>GHANA TRUTH <span className="text-cyan-400 font-normal group-hover:text-cyan-300">PLATFORM</span></>
+                ) : (
+                  <>VERITAS<span className="text-cyan-400 font-normal group-hover:text-cyan-300">LENS</span></>
+                )}
               </h1>
-              <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-cyan-950 border border-cyan-800 text-cyan-300 font-bold group-hover:border-cyan-500 group-hover:bg-cyan-900/60 transition-colors">
-                Enterprise AI v2.4
+              <span className={`text-[10px] uppercase font-mono px-2 py-0.5 rounded font-bold transition-colors ${
+                isGhanaMode
+                  ? 'bg-amber-950 border border-amber-800 text-amber-300 group-hover:border-amber-500'
+                  : 'bg-cyan-950 border border-cyan-800 text-cyan-300 group-hover:border-cyan-500 group-hover:bg-cyan-900/60'
+              }`}>
+                {isGhanaMode ? 'NDC & NPP AUDIT SUITE v2.6' : 'Enterprise AI v2.4'}
               </span>
             </div>
             <p className="text-xs text-slate-400 font-sans group-hover:text-slate-300 transition-colors">
-              Information Intelligence, Claim Verification & Media Credibility Platform
+              {isGhanaMode 
+                ? 'Ghanaian Political Accountability, 2024 Manifesto Promise Tracker & Broadcaster Fact-Check Suite' 
+                : 'Information Intelligence, Claim Verification & Media Credibility Platform'}
             </p>
           </div>
         </div>
 
         {/* Tab Navigation */}
-        <nav className="flex items-center gap-1 overflow-x-auto max-w-full pb-1 sm:pb-0 scrollbar-thin">
-          <button
-            onClick={() => onTabChange('lie-detector')}
-            className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
-              activeTab === 'lie-detector'
-                ? 'bg-rose-500/25 text-rose-300 border border-rose-500/50 shadow-md shadow-rose-500/20 font-bold'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-            }`}
-          >
-            <Activity className="w-3.5 h-3.5 text-rose-400" />
-            <span>🎥 Video & AI Lie Detector</span>
-          </button>
+        {isGhanaMode ? (
+          <nav className="flex items-center gap-1 overflow-x-auto max-w-full pb-1 sm:pb-0 scrollbar-thin">
+            <button
+              onClick={() => onTabChange('mahama-2024-tracker')}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+                activeTab === 'mahama-2024-tracker'
+                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white border border-indigo-400 shadow-md font-black ring-1 ring-indigo-300/50'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              }`}
+            >
+              <Target className="w-3.5 h-3.5 text-amber-300" />
+              <span>🎯 2024 Mahama Tracker</span>
+            </button>
 
-          <button
-            onClick={() => onTabChange('hot-topics')}
-            className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
-              activeTab === 'hot-topics'
-                ? 'bg-orange-500/25 text-orange-300 border border-orange-500/60 shadow-md shadow-orange-500/20 font-bold'
-                : 'text-slate-400 hover:text-orange-300 hover:bg-slate-900'
-            }`}
-          >
-            <Flame className="w-3.5 h-3.5 text-orange-400 animate-pulse" />
-            <span>🔥 Hot Topics & Unbiased Search</span>
-          </button>
+            <button
+              onClick={() => onTabChange('ghana-tracker')}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+                activeTab === 'ghana-tracker'
+                  ? 'bg-cyan-500 text-slate-950 border border-cyan-400 shadow-md font-black'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              }`}
+            >
+              <Scale className="w-3.5 h-3.5 text-slate-950" />
+              <span>⚖️ NDC Record Audit</span>
+            </button>
 
-          <button
-            onClick={() => onTabChange('blindspots')}
-            className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
-              activeTab === 'blindspots'
-                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm shadow-cyan-500/10'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-            }`}
-          >
-            <Activity className="w-3.5 h-3.5" />
-            <span>Blindspot Radar</span>
-          </button>
+            <button
+              onClick={() => onTabChange('graph')}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+                activeTab === 'graph'
+                  ? 'bg-rose-600/30 text-rose-200 border border-rose-500 shadow-md font-bold'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              }`}
+            >
+              <Network className="w-3.5 h-3.5 text-rose-400" />
+              <span>🕸️ Nkontonpo Graph</span>
+            </button>
 
-          <button
-            onClick={() => onTabChange('pipeline')}
-            className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
-              activeTab === 'pipeline'
-                ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 shadow-sm shadow-indigo-500/10'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5" />
-            <span>Kafka Event Stream</span>
-          </button>
+            <button
+              onClick={() => onTabChange('multichannel-ingest')}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+                activeTab === 'multichannel-ingest'
+                  ? 'bg-cyan-500/25 text-cyan-300 border border-cyan-500/50 shadow-md font-bold'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              }`}
+            >
+              <Radio className="w-3.5 h-3.5 text-cyan-400" />
+              <span>📻 All FM Radio & TV</span>
+            </button>
 
-          <button
-            onClick={() => onTabChange('classifier')}
-            className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
-              activeTab === 'classifier'
-                ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm shadow-purple-500/10'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-            }`}
-          >
-            <Cpu className="w-3.5 h-3.5" />
-            <span>BERT MLOps Studio</span>
-          </button>
+            <button
+              onClick={() => onTabChange('lie-detector')}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+                activeTab === 'lie-detector'
+                  ? 'bg-rose-500/25 text-rose-300 border border-rose-500/50 shadow-md font-bold'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              }`}
+            >
+              <Activity className="w-3.5 h-3.5 text-rose-400" />
+              <span>🎬 Video Polygraph</span>
+            </button>
 
-          <button
-            onClick={() => onTabChange('graph')}
-            className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
-              activeTab === 'graph'
-                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm shadow-emerald-500/10'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-            }`}
-          >
-            <Network className="w-3.5 h-3.5" />
-            <span>VeritasGraph Lineage</span>
-          </button>
+            <button
+              onClick={() => onTabChange('chieftaincy-monitor')}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+                activeTab === 'chieftaincy-monitor'
+                  ? 'bg-amber-500 text-slate-950 border border-amber-400 shadow-md font-black ring-1 ring-amber-300/50'
+                  : 'text-slate-400 hover:text-amber-300 hover:bg-slate-900'
+              }`}
+            >
+              <Crown className="w-3.5 h-3.5 text-amber-400" />
+              <span>👑 Traditional & Broadcaster Audit</span>
+            </button>
 
-          <button
-            onClick={() => onTabChange('tv-scorecard')}
-            className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
-              activeTab === 'tv-scorecard'
-                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm shadow-amber-500/10'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-            }`}
-          >
-            <Tv className="w-3.5 h-3.5" />
-            <span>7-Day TV & Spin</span>
-          </button>
+            <button
+              onClick={() => onTabChange('classifier')}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+                activeTab === 'classifier'
+                  ? 'bg-purple-500/25 text-purple-300 border border-purple-500/50 shadow-md font-bold'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              }`}
+            >
+              <Cpu className="w-3.5 h-3.5 text-purple-400" />
+              <span>🧠 BERT Classifier</span>
+            </button>
 
-          <button
-            onClick={() => onTabChange('investigations')}
-            className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
-              activeTab === 'investigations'
-                ? 'bg-blue-500/20 text-blue-300 border border-blue-500/40 shadow-sm shadow-blue-500/10'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-            }`}
-          >
-            <Search className="w-3.5 h-3.5" />
-            <span>GraphRAG Copilot</span>
-          </button>
+            <button
+              onClick={() => onTabChange('hot-topics')}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+                activeTab === 'hot-topics'
+                  ? 'bg-orange-500/25 text-orange-300 border border-orange-500/60 shadow-md font-bold'
+                  : 'text-slate-400 hover:text-orange-300 hover:bg-slate-900'
+              }`}
+            >
+              <Flame className="w-3.5 h-3.5 text-orange-400 animate-pulse" />
+              <span>🔥 Ghana Hot Topics</span>
+            </button>
 
-          <button
-            onClick={() => onTabChange('brand-safety')}
-            className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
-              activeTab === 'brand-safety'
-                ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-sm shadow-rose-500/10'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-            }`}
-          >
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>B2B Brand Safety</span>
-          </button>
+            <button
+              onClick={() => onTabChange('blindspots')}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+                activeTab === 'blindspots'
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm font-bold'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              }`}
+            >
+              <Activity className="w-3.5 h-3.5 text-cyan-400" />
+              <span>📡 Ghana Blindspots</span>
+            </button>
 
-          <button
-            onClick={() => onTabChange('public-report')}
-            className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
-              activeTab === 'public-report'
-                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm shadow-cyan-500/10 font-bold'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-            }`}
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>🥗 Echo Chamber Diet & Reports</span>
-          </button>
+            <button
+              onClick={() => onTabChange('tv-scorecard')}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+                activeTab === 'tv-scorecard'
+                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm font-bold'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              }`}
+            >
+              <Tv className="w-3.5 h-3.5 text-amber-400" />
+              <span>📺 7-Day TV & Spin</span>
+            </button>
 
-          <button
-            onClick={() => onTabChange('python-cli')}
-            className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
-              activeTab === 'python-cli'
-                ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40 shadow-sm shadow-teal-500/10'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-            }`}
-          >
-            <FileCode2 className="w-3.5 h-3.5" />
-            <span>Python Pipeline</span>
-          </button>
-        </nav>
+            <button
+              onClick={() => onTabChange('investigations')}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+                activeTab === 'investigations'
+                  ? 'bg-blue-500/20 text-blue-300 border border-blue-500/40 shadow-sm font-bold'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              }`}
+            >
+              <Search className="w-3.5 h-3.5 text-blue-400" />
+              <span>🔎 GraphRAG Copilot</span>
+            </button>
+
+            <button
+              onClick={() => onTabChange('public-report')}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+                activeTab === 'public-report'
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm font-bold'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              }`}
+            >
+              <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
+              <span>📊 Audit Reports</span>
+            </button>
+          </nav>
+        ) : (
+          <nav className="flex items-center gap-1 overflow-x-auto max-w-full pb-1 sm:pb-0 scrollbar-thin">
+            <button
+              onClick={() => onTabChange('lie-detector')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+                activeTab === 'lie-detector'
+                  ? 'bg-rose-500/25 text-rose-300 border border-rose-500/50 shadow-md shadow-rose-500/20 font-bold'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              }`}
+            >
+              <Activity className="w-3.5 h-3.5 text-rose-400" />
+              <span>🎥 Video & AI Lie Detector</span>
+            </button>
+
+            <button
+              onClick={() => onTabChange('hot-topics')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+                activeTab === 'hot-topics'
+                  ? 'bg-orange-500/25 text-orange-300 border border-orange-500/60 shadow-md shadow-orange-500/20 font-bold'
+                  : 'text-slate-400 hover:text-orange-300 hover:bg-slate-900'
+              }`}
+            >
+              <Flame className="w-3.5 h-3.5 text-orange-400 animate-pulse" />
+              <span>🔥 Hot Topics & Unbiased Search</span>
+            </button>
+
+            <button
+              onClick={() => onTabChange('blindspots')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+                activeTab === 'blindspots'
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm shadow-cyan-500/10'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              }`}
+            >
+              <Activity className="w-3.5 h-3.5" />
+              <span>Blindspot Radar</span>
+            </button>
+
+            <button
+              onClick={() => onTabChange('pipeline')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+                activeTab === 'pipeline'
+                  ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 shadow-sm shadow-indigo-500/10'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span>Kafka Event Stream</span>
+            </button>
+
+            <button
+              onClick={() => onTabChange('classifier')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+                activeTab === 'classifier'
+                  ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm shadow-purple-500/10'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              }`}
+            >
+              <Cpu className="w-3.5 h-3.5" />
+              <span>BERT MLOps Studio</span>
+            </button>
+
+            <button
+              onClick={() => onTabChange('graph')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+                activeTab === 'graph'
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm shadow-emerald-500/10'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              }`}
+            >
+              <Network className="w-3.5 h-3.5" />
+              <span>VeritasGraph Lineage</span>
+            </button>
+
+            <button
+              onClick={() => onTabChange('tv-scorecard')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+                activeTab === 'tv-scorecard'
+                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm shadow-amber-500/10'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              }`}
+            >
+              <Tv className="w-3.5 h-3.5" />
+              <span>7-Day TV & Spin</span>
+            </button>
+
+            <button
+              onClick={() => onTabChange('investigations')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+                activeTab === 'investigations'
+                  ? 'bg-blue-500/20 text-blue-300 border border-blue-500/40 shadow-sm shadow-blue-500/10'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              }`}
+            >
+              <Search className="w-3.5 h-3.5" />
+              <span>GraphRAG Copilot</span>
+            </button>
+
+            <button
+              onClick={() => onTabChange('brand-safety')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+                activeTab === 'brand-safety'
+                  ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-sm shadow-rose-500/10'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              }`}
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>B2B Brand Safety</span>
+            </button>
+
+            <button
+              onClick={() => onTabChange('public-report')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+                activeTab === 'public-report'
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm shadow-cyan-500/10 font-bold'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              }`}
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>🥗 Echo Chamber Diet & Reports</span>
+            </button>
+
+            <button
+              onClick={() => onTabChange('python-cli')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+                activeTab === 'python-cli'
+                  ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40 shadow-sm shadow-teal-500/10'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              }`}
+            >
+              <FileCode2 className="w-3.5 h-3.5" />
+              <span>Python Pipeline</span>
+            </button>
+          </nav>
+        )}
       </div>
     </header>
   );

@@ -29,30 +29,53 @@ interface TVScorecardStudioProps {
 }
 
 export const TVScorecardStudio: React.FC<TVScorecardStudioProps> = ({
-  scorecards,
-  spinCases
+  scorecards = [],
+  spinCases = []
 }) => {
-  const [selectedNetworkId, setSelectedNetworkId] = useState<string>('sc-pbs');
-  const [activeScorecard, setActiveScorecard] = useState<TVStationScorecard>(() => scorecards[0]);
+  const safeScorecards = scorecards.length > 0 ? scorecards : [];
+  const safeSpinCases = spinCases.length > 0 ? spinCases : [];
+
+  const [selectedNetworkId, setSelectedNetworkId] = useState<string>(() => safeScorecards[0]?.id || 'sc-default');
+  const [activeScorecard, setActiveScorecard] = useState<TVStationScorecard | null>(() => safeScorecards[0] || null);
 
   // Interactive deduction states
-  const [omissionsCount, setOmissionsCount] = useState<number>(0);
-  const [opinionPercentage, setOpinionPercentage] = useState<number>(14);
-  const [persistentSpin, setPersistentSpin] = useState<boolean>(false);
-  const [unretractedErrors, setUnretractedErrors] = useState<number>(0);
+  const [omissionsCount, setOmissionsCount] = useState<number>(() => safeScorecards[0]?.deductions?.storyOmissions?.count ?? 0);
+  const [opinionPercentage, setOpinionPercentage] = useState<number>(() => safeScorecards[0]?.deductions?.factToOpinionRatio?.opinionPercentage ?? 25);
+  const [persistentSpin, setPersistentSpin] = useState<boolean>(() => safeScorecards[0]?.deductions?.linguisticLoad?.persistentSpinDetected ?? false);
+  const [unretractedErrors, setUnretractedErrors] = useState<number>(() => safeScorecards[0]?.deductions?.correctionTransparency?.unretractedErrors ?? 0);
 
   // Spin Deconstruction active case
-  const [selectedSpinCase, setSelectedSpinCase] = useState<SpinComparisonCase>(spinCases[0]);
+  const [selectedSpinCase, setSelectedSpinCase] = useState<SpinComparisonCase | null>(() => safeSpinCases[0] || null);
   const [isStrippedOfSpin, setIsStrippedOfSpin] = useState<boolean>(false);
+
+  // Sync when props change
+  React.useEffect(() => {
+    if (safeScorecards.length > 0 && (!activeScorecard || !safeScorecards.some(s => s.id === activeScorecard.id))) {
+      const first = safeScorecards[0];
+      setSelectedNetworkId(first.id);
+      setActiveScorecard(first);
+      setOmissionsCount(first.deductions?.storyOmissions?.count ?? 0);
+      setOpinionPercentage(first.deductions?.factToOpinionRatio?.opinionPercentage ?? 25);
+      setPersistentSpin(first.deductions?.linguisticLoad?.persistentSpinDetected ?? false);
+      setUnretractedErrors(first.deductions?.correctionTransparency?.unretractedErrors ?? 0);
+    }
+  }, [safeScorecards]);
+
+  React.useEffect(() => {
+    if (safeSpinCases.length > 0 && (!selectedSpinCase || !safeSpinCases.some(s => s.id === selectedSpinCase.id))) {
+      setSelectedSpinCase(safeSpinCases[0]);
+    }
+  }, [safeSpinCases]);
 
   // Load a preset network into interactive calculator
   const handleLoadNetwork = (sc: TVStationScorecard) => {
-    setSelectedNetworkId(sc.id);
+    if (!sc) return;
+    setSelectedNetworkId(sc.id || '');
     setActiveScorecard(sc);
-    setOmissionsCount(sc.deductions.storyOmissions.count);
-    setOpinionPercentage(sc.deductions.factToOpinionRatio.opinionPercentage);
-    setPersistentSpin(sc.deductions.linguisticLoad.persistentSpinDetected);
-    setUnretractedErrors(sc.deductions.correctionTransparency.unretractedErrors);
+    setOmissionsCount(sc.deductions?.storyOmissions?.count ?? 0);
+    setOpinionPercentage(sc.deductions?.factToOpinionRatio?.opinionPercentage ?? 25);
+    setPersistentSpin(sc.deductions?.linguisticLoad?.persistentSpinDetected ?? false);
+    setUnretractedErrors(sc.deductions?.correctionTransparency?.unretractedErrors ?? 0);
   };
 
   // Recalculate dynamic grade
@@ -78,11 +101,11 @@ export const TVScorecardStudio: React.FC<TVScorecardStudioProps> = ({
             <div className="flex items-center gap-2">
               <Tv className="w-5 h-5 text-amber-400" />
               <h2 className="text-lg font-bold text-white">
-                Your Personal 7-Day TV Station Credibility Scorecard
+                7-Day Broadcast & TV Station Credibility Scorecard
               </h2>
             </div>
             <p className="text-xs text-slate-400">
-              Rate any television news broadcast (CNN, Fox News, MSNBC, PBS) with absolute confidence using a quantitative deduction model starting at Base 100.
+              Audit television and radio news broadcasts (JoyNews, Citi TV, Metro TV, TV3, Peace FM) using a quantitative deduction model starting at Base 100.
             </p>
           </div>
 
@@ -90,9 +113,9 @@ export const TVScorecardStudio: React.FC<TVScorecardStudioProps> = ({
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs text-slate-400 font-mono">Load Network Benchmark:</span>
             <div className="flex flex-wrap gap-1.5">
-              {scorecards.map(sc => (
+              {safeScorecards.map(sc => (
                 <button
-                  key={sc.id}
+                  key={sc.id || Math.random().toString()}
                   onClick={() => handleLoadNetwork(sc)}
                   className={`px-2.5 py-1 rounded text-xs font-mono font-semibold transition cursor-pointer ${
                     selectedNetworkId === sc.id
@@ -100,7 +123,7 @@ export const TVScorecardStudio: React.FC<TVScorecardStudioProps> = ({
                       : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
                   }`}
                 >
-                  {sc.networkName.split(' ')[0]} ({sc.grade})
+                  {(sc.networkName || 'Station').split(' ')[0]} ({sc.grade || 'A'})
                 </button>
               ))}
             </div>
@@ -281,7 +304,7 @@ export const TVScorecardStudio: React.FC<TVScorecardStudioProps> = ({
 
             <div className="bg-slate-900 p-3 rounded-lg border border-slate-800 text-[11px] text-slate-400 space-y-1">
               <strong className="text-slate-200 block font-mono">Analytical Summary:</strong>
-              <p>{activeScorecard.keyAnalyticalFindings}</p>
+              <p>{activeScorecard?.keyAnalyticalFindings || 'No analytical findings logged.'}</p>
             </div>
           </div>
         </div>
@@ -298,7 +321,7 @@ export const TVScorecardStudio: React.FC<TVScorecardStudioProps> = ({
               </h3>
             </div>
             <p className="text-xs text-slate-400">
-              Observe how Left and Right editorial desks package identical factual occurrences to emotionally prime their audiences.
+              Observe how Left/Opposition and Right/Government editorial desks package identical factual occurrences to emotionally prime their audiences.
             </p>
           </div>
 
@@ -320,12 +343,12 @@ export const TVScorecardStudio: React.FC<TVScorecardStudioProps> = ({
 
         {/* Spin Case Selector */}
         <div className="flex flex-wrap gap-2">
-          {spinCases.map(sc => (
+          {safeSpinCases.map(sc => (
             <button
               key={sc.id}
               onClick={() => setSelectedSpinCase(sc)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                selectedSpinCase.id === sc.id
+                selectedSpinCase?.id === sc.id
                   ? 'bg-purple-600 text-white'
                   : 'bg-slate-950 border border-slate-800 text-slate-400 hover:text-white'
               }`}
@@ -335,117 +358,126 @@ export const TVScorecardStudio: React.FC<TVScorecardStudioProps> = ({
           ))}
         </div>
 
-        {/* Ground Truth Bar */}
-        <div className="bg-emerald-950/40 border border-emerald-500/40 rounded-xl p-4 space-y-1.5">
-          <div className="flex items-center gap-1.5 text-xs font-mono text-emerald-300 font-bold uppercase">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            <span>The Objective Ground Truth (Unspun Predicate)</span>
-          </div>
-          <p className="text-sm text-emerald-100 font-sans leading-relaxed">
-            "{selectedSpinCase.groundTruthText}"
-          </p>
-        </div>
-
-        {/* Side-by-Side Left vs Right Comparison */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Left-Leaning Editorial */}
-          <div className="bg-slate-950 p-5 rounded-xl border border-blue-900/60 space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-              <span className="text-xs font-mono font-bold text-blue-400 uppercase">
-                Left-Leaning Editorial Framing ({selectedSpinCase.leftOutlet})
-              </span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-950 border border-blue-800 text-blue-300">
-                Center-Left Lens
-              </span>
-            </div>
-
-            <div className="space-y-2">
-              <div className="text-xs text-slate-400 font-mono">Packaged Headline:</div>
-              <h4 className="text-base font-bold text-slate-100 leading-snug">
-                {isStrippedOfSpin ? (
-                  <span className="text-emerald-300 font-mono italic">
-                    [Neutralized]: "{selectedSpinCase.groundTruthText}"
-                  </span>
-                ) : (
-                  `"${selectedSpinCase.leftHeadline}"`
-                )}
-              </h4>
-            </div>
-
-            <div className="space-y-2 text-xs">
-              <div className="text-slate-400 font-mono">Linguistic Priming Analysis:</div>
-              <p className="text-slate-300 leading-relaxed bg-slate-900 p-3 rounded-lg border border-slate-800">
-                {selectedSpinCase.leftFramingAnalysis}
+        {selectedSpinCase ? (
+          <>
+            {/* Ground Truth Bar */}
+            <div className="bg-emerald-950/40 border border-emerald-500/40 rounded-xl p-4 space-y-1.5">
+              <div className="flex items-center gap-1.5 text-xs font-mono text-emerald-300 font-bold uppercase">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span>The Objective Ground Truth (Unspun Predicate)</span>
+              </div>
+              <p className="text-sm text-emerald-100 font-sans leading-relaxed">
+                "{selectedSpinCase.groundTruthText}"
               </p>
             </div>
 
-            <div className="space-y-1 text-xs">
-              <span className="text-slate-400 font-mono text-[11px]">Loaded Emotive Adjectives / Verbs:</span>
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {selectedSpinCase.leftLoadedWords.map((w, idx) => (
-                  <span key={idx} className="px-2 py-0.5 rounded bg-blue-950 border border-blue-800 text-blue-300 font-mono text-[11px]">
-                    {w}
+            {/* Side-by-Side Left vs Right Comparison */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Left-Leaning Editorial */}
+              <div className="bg-slate-950 p-5 rounded-xl border border-blue-900/60 space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                  <span className="text-xs font-mono font-bold text-blue-400 uppercase">
+                    Left / Opposition Framing ({selectedSpinCase.leftOutlet})
                   </span>
-                ))}
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-950 border border-blue-800 text-blue-300">
+                    Opposition Lens
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="text-xs text-slate-400 font-mono">Packaged Headline:</div>
+                  <h4 className="text-base font-bold text-slate-100 leading-snug">
+                    {isStrippedOfSpin ? (
+                      <span className="text-emerald-300 font-mono italic">
+                        [Neutralized]: "{selectedSpinCase.groundTruthText}"
+                      </span>
+                    ) : (
+                      `"${selectedSpinCase.leftHeadline}"`
+                    )}
+                  </h4>
+                </div>
+
+                <div className="space-y-2 text-xs">
+                  <div className="text-slate-400 font-mono">Linguistic Priming Analysis:</div>
+                  <p className="text-slate-300 leading-relaxed bg-slate-900 p-3 rounded-lg border border-slate-800">
+                    {selectedSpinCase.leftFramingAnalysis}
+                  </p>
+                </div>
+
+                <div className="space-y-1 text-xs">
+                  <span className="text-slate-400 font-mono text-[11px]">Loaded Emotive Adjectives / Verbs:</span>
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {(selectedSpinCase.leftLoadedWords || []).map((w, idx) => (
+                      <span key={idx} className="px-2 py-0.5 rounded bg-blue-950 border border-blue-800 text-blue-300 font-mono text-[11px]">
+                        {w}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right-Leaning Editorial */}
+              <div className="bg-slate-950 p-5 rounded-xl border border-rose-900/60 space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                  <span className="text-xs font-mono font-bold text-rose-400 uppercase">
+                    Right / Government Framing ({selectedSpinCase.rightOutlet})
+                  </span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-950 border border-rose-800 text-rose-300">
+                    Accountability / Governance Lens
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="text-xs text-slate-400 font-mono">Packaged Headline:</div>
+                  <h4 className="text-base font-bold text-slate-100 leading-snug">
+                    {isStrippedOfSpin ? (
+                      <span className="text-emerald-300 font-mono italic">
+                        [Neutralized]: "{selectedSpinCase.groundTruthText}"
+                      </span>
+                    ) : (
+                      `"${selectedSpinCase.rightHeadline}"`
+                    )}
+                  </h4>
+                </div>
+
+                <div className="space-y-2 text-xs">
+                  <div className="text-slate-400 font-mono">Linguistic Priming Analysis:</div>
+                  <p className="text-slate-300 leading-relaxed bg-slate-900 p-3 rounded-lg border border-slate-800">
+                    {selectedSpinCase.rightFramingAnalysis}
+                  </p>
+                </div>
+
+                <div className="space-y-1 text-xs">
+                  <span className="text-slate-400 font-mono text-[11px]">Loaded Emotive Adjectives / Verbs:</span>
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {(selectedSpinCase.rightLoadedWords || []).map((w, idx) => (
+                      <span key={idx} className="px-2 py-0.5 rounded bg-rose-950 border border-rose-800 text-rose-300 font-mono text-[11px]">
+                        {w}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Right-Leaning Editorial */}
-          <div className="bg-slate-950 p-5 rounded-xl border border-rose-900/60 space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-              <span className="text-xs font-mono font-bold text-rose-400 uppercase">
-                Right-Leaning Editorial Framing ({selectedSpinCase.rightOutlet})
+            {/* Systemic Omission Contrast */}
+            <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-1 text-xs text-slate-300">
+              <span className="font-mono text-amber-400 font-bold uppercase flex items-center gap-1.5">
+                <Flame className="w-3.5 h-3.5 text-amber-400" />
+                Systemic Narrative Omissions Between The Outlets:
               </span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-950 border border-rose-800 text-rose-300">
-                Conservative Lens
-              </span>
-            </div>
-
-            <div className="space-y-2">
-              <div className="text-xs text-slate-400 font-mono">Packaged Headline:</div>
-              <h4 className="text-base font-bold text-slate-100 leading-snug">
-                {isStrippedOfSpin ? (
-                  <span className="text-emerald-300 font-mono italic">
-                    [Neutralized]: "{selectedSpinCase.groundTruthText}"
-                  </span>
-                ) : (
-                  `"${selectedSpinCase.rightHeadline}"`
-                )}
-              </h4>
-            </div>
-
-            <div className="space-y-2 text-xs">
-              <div className="text-slate-400 font-mono">Linguistic Priming Analysis:</div>
-              <p className="text-slate-300 leading-relaxed bg-slate-900 p-3 rounded-lg border border-slate-800">
-                {selectedSpinCase.rightFramingAnalysis}
+              <p className="text-slate-400 pt-1 leading-relaxed">
+                {selectedSpinCase.omissionsAnalysis}
               </p>
             </div>
-
-            <div className="space-y-1 text-xs">
-              <span className="text-slate-400 font-mono text-[11px]">Loaded Emotive Adjectives / Verbs:</span>
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {selectedSpinCase.rightLoadedWords.map((w, idx) => (
-                  <span key={idx} className="px-2 py-0.5 rounded bg-rose-950 border border-rose-800 text-rose-300 font-mono text-[11px]">
-                    {w}
-                  </span>
-                ))}
-              </div>
-            </div>
+          </>
+        ) : (
+          <div className="text-center py-6 text-slate-500 font-mono text-xs">
+            No spin comparison cases selected.
           </div>
-        </div>
-
-        {/* Systemic Omission Contrast */}
-        <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-1 text-xs text-slate-300">
-          <span className="font-mono text-amber-400 font-bold uppercase flex items-center gap-1.5">
-            <Flame className="w-3.5 h-3.5 text-amber-400" />
-            Systemic Narrative Omissions Between The Outlets:
-          </span>
-          <p className="text-slate-400 pt-1 leading-relaxed">
-            {selectedSpinCase.omissionsAnalysis}
-          </p>
-        </div>
+        )}
       </div>
     </div>
   );
 };
+

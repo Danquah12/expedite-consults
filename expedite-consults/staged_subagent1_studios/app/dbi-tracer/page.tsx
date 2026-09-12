@@ -1306,7 +1306,7 @@ export default function DbiTracerPage() {
                 <h4 className="text-xs font-bold text-white uppercase tracking-wider">Hell&apos;s Gate (Direct Opcode Search)</h4>
               </div>
               <p className="text-xs text-[var(--muted)] leading-relaxed">
-                Parses the in-memory PE export directory of `ntdll.dll`. If the syscall stub starts with `mov r10, rcx; mov eax, <SSN>`, the SSN is dynamically extracted and executed via assembly `syscall`.
+                Parses the in-memory PE export directory of `ntdll.dll`. If the syscall stub starts with `mov r10, rcx; mov eax, &lt;SSN&gt;`, the SSN is dynamically extracted and executed via assembly `syscall`.
               </p>
               <div className="font-mono text-[11px] p-2 bg-[var(--surface-2)] rounded text-slate-300">
                 4C 8B D1 B8 [18 00 00 00] 0F 05 C3

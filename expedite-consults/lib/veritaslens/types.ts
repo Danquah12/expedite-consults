@@ -42,8 +42,12 @@ export interface NewsArticle {
 
 export interface NewsCluster {
   id: string;
+  rawWireFact?: string;
+  groundTruthSource?: string;
+  groundTruthUrl?: string;
+  groundTruthType?: string;
   representativeTitle: string;
-  category: 'Politics' | 'Legal' | 'Economy' | 'Foreign Affairs' | 'Social';
+  category: 'Politics' | 'Legal' | 'Economy' | 'Foreign Affairs' | 'Social' | 'Energy' | 'Education' | 'Governance';
   year?: number;
   firstReportedAt: string;
   leftCoveragePct: number;
@@ -78,26 +82,36 @@ export interface ClaimRecord {
     canonicalName: string;
   }[];
   evidenceScore: number; // 0 to 100
-  evidenceStatus: 'Supported' | 'Contradicted' | 'Mixed' | 'Unverified';
+  evidenceStatus: 'Supported' | 'Contradicted' | 'Mixed' | 'Unverified' | 'VERIFIED';
   evidenceDetails: {
     source: string;
-    qualityScore: number;
-    notes: string;
-    isOfficialRecord: boolean;
-  }[];
-  reviewStatus: 'Auto_Accepted' | 'Pending_Review' | 'Reviewed' | 'Retrained';
+    qualityScore?: number;
+    notes?: string;
+    isOfficialRecord?: boolean;
+    title?: string;
+    url?: string;
+  }[] | {
+    source: string;
+    qualityScore?: number;
+    notes?: string;
+    isOfficialRecord?: boolean;
+    title?: string;
+    url?: string;
+  };
+  reviewStatus?: 'Auto_Accepted' | 'Pending_Review' | 'Reviewed' | 'Retrained' | 'Audited';
   reviewerCorrection?: ClaimLabel;
   lineage: ClaimLineage;
 }
 
 export interface ClaimLineage {
-  originArticleUrl: string;
-  originOutlet: string;
-  ingestionTimestamp: string;
-  tokenizer: string;
-  classificationModel: string;
-  extractionModel: string;
-  entityModel: string;
+  speaker?: string;
+  originArticleUrl?: string;
+  originOutlet?: string;
+  ingestionTimestamp?: string;
+  tokenizer?: string;
+  classificationModel?: string;
+  extractionModel?: string;
+  entityModel?: string;
   confidenceContributions: {
     factor: string;
     weight: number; // e.g. +25 for Congressional Record, -5 for Anonymous Source
