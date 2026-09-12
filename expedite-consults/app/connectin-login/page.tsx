@@ -119,6 +119,9 @@ export default function ConnectInLoginPage() {
       if (data.profile) {
         saveStoredUser(data.profile)
       }
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("connectin_is_signed_out")
+      }
 
       setSuccessMessage("✓ Verified! Signing you in...")
       setTimeout(() => {
@@ -207,6 +210,9 @@ export default function ConnectInLoginPage() {
         saveStoredUser(data.profile)
       }
       saveStoredSessionRoute(targetTab, targetWorkspace)
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("connectin_is_signed_out")
+      }
 
       setSuccessMessage("✓ Welcome to ConnectIn! Launching your workspace...")
       setTimeout(() => {
@@ -254,6 +260,9 @@ export default function ConnectInLoginPage() {
       if (verifyData.profile) {
         saveStoredUser(verifyData.profile)
         saveStoredSessionRoute(persona.defaultTab, persona.defaultWorkspace)
+      }
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("connectin_is_signed_out")
       }
 
       router.push("/connectin")

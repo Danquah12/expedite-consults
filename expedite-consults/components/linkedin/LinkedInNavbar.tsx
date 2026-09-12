@@ -55,6 +55,7 @@ interface LinkedInNavbarProps {
   onOpenAIAssistant?: () => void
   onOpenUniversalSearch?: () => void
   onOpenAuthModal?: () => void
+  onSignOut?: () => void
   activeWorkspace?: 'personal' | 'enterprise' | 'creator' | 'seller'
   onSelectWorkspace?: (ws: 'personal' | 'enterprise' | 'creator' | 'seller') => void
 }
@@ -70,6 +71,7 @@ export function LinkedInNavbar({
   onOpenAIAssistant,
   onOpenUniversalSearch,
   onOpenAuthModal,
+  onSignOut,
   activeWorkspace = 'personal',
   onSelectWorkspace
 }: LinkedInNavbarProps) {
@@ -512,13 +514,17 @@ export function LinkedInNavbar({
 
                     <button
                       onClick={() => {
-                        if (onOpenAuthModal) onOpenAuthModal()
                         setIsMeOpen(false)
+                        if (onSignOut) {
+                          onSignOut()
+                        } else {
+                          window.location.href = '/connectin-login'
+                        }
                       }}
-                      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 font-semibold mt-1.5"
+                      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 font-semibold mt-1.5 cursor-pointer"
                     >
                       <LogOut className="h-4 w-4" />
-                      <span>Sign Out &amp; Switch Account</span>
+                      <span>Sign Out</span>
                     </button>
                   </div>
                 </div>

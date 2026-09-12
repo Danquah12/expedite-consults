@@ -202,6 +202,9 @@ export function ConnectInAuthModal({
 
       if (data.profile) {
         saveStoredUser(data.profile)
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("connectin_is_signed_out")
+        }
         onLoginSuccess(data.profile, 'home', 'personal')
       }
 
@@ -286,6 +289,9 @@ export function ConnectInAuthModal({
       if (data.profile) {
         saveStoredUser(data.profile)
         saveStoredSessionRoute(targetTab, targetWorkspace)
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("connectin_is_signed_out")
+        }
         onLoginSuccess(data.profile, targetTab, targetWorkspace)
       }
 
@@ -328,6 +334,9 @@ export function ConnectInAuthModal({
       if (verifyData.profile) {
         saveStoredUser(verifyData.profile)
         saveStoredSessionRoute(persona.defaultTab, persona.defaultWorkspace)
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("connectin_is_signed_out")
+        }
         onLoginSuccess(verifyData.profile, persona.defaultTab, persona.defaultWorkspace)
       }
       onClose()

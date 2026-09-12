@@ -1,6 +1,8 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
 import { LinkedInNavbar } from "@/components/linkedin/LinkedInNavbar"
 import { LeftSidebarProfile } from "@/components/linkedin/LeftSidebarProfile"
 import { PostCreator } from "@/components/linkedin/PostCreator"
@@ -105,6 +107,8 @@ export default function LinkedInPage() {
     | 'profile'
   >('home')
 
+  const router = useRouter()
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
   const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false)
   const [isUniversalSearchOpen, setIsUniversalSearchOpen] = useState(false)
   const [isIDModalOpen, setIsIDModalOpen] = useState(false)
@@ -123,38 +127,65 @@ export default function LinkedInPage() {
   const [selectedTagFilter, setSelectedTagFilter] = useState<string | null>(null)
   const [hasHydrated, setHasHydrated] = useState(false)
 
-  // Persist state changes
+  // Authentication Lifecycle & Hydration Check
   useEffect(() => {
-    const savedPosts = loadStoredPosts()
-    const savedUser = loadStoredUser()
-    const savedConnections = loadStoredConnections()
-    const savedRoute = loadStoredSessionRoute()
-    if (savedPosts && savedPosts.length > 0) setPosts(savedPosts)
-    if (savedUser) setUserData(savedUser)
-    if (savedConnections && savedConnections.length > 0) setSuggestedPeople(savedConnections)
-    if (savedRoute.tab) setActiveTab(savedRoute.tab as any)
-    if (savedRoute.workspace) setActiveWorkspace(savedRoute.workspace)
-    setHasHydrated(true)
-  }, [])
+    if (typeof window !== "undefined") {
+      const isSignedOut = localStorage.getItem("connectin_is_signed_out") === "true"
+      const savedUser = loadStoredUser()
+
+      if (isSignedOut || !savedUser) {
+        setIsAuthenticated(false)
+        router.replace("/connectin-login")
+        return
+      }
+
+      setIsAuthenticated(true)
+      const savedPosts = loadStoredPosts()
+      const savedConnections = loadStoredConnections()
+      const savedRoute = loadStoredSessionRoute()
+      if (savedPosts && savedPosts.length > 0) setPosts(savedPosts)
+      if (savedUser) setUserData(savedUser)
+      if (savedConnections && savedConnections.length > 0) setSuggestedPeople(savedConnections)
+      if (savedRoute.tab) setActiveTab(savedRoute.tab as any)
+      if (savedRoute.workspace) setActiveWorkspace(savedRoute.workspace)
+      setHasHydrated(true)
+    }
+  }, [router])
+
+  // Sign out handler: Completely signs out and redirects to login without background
+  const handleSignOut = async () => {
+    try {
+      await fetch("/api/connectin/auth/logout", { method: "POST" })
+    } catch (e) {
+      // ignore
+    }
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("connectin_user_profile")
+      localStorage.removeItem("connectin_session_route")
+      localStorage.setItem("connectin_is_signed_out", "true")
+      setIsAuthenticated(false)
+      window.location.href = "/connectin-login"
+    }
+  }
 
   // Persist state changes
   useEffect(() => {
-    if (hasHydrated) {
+    if (hasHydrated && isAuthenticated) {
       saveStoredPosts(posts)
     }
-  }, [posts, hasHydrated])
+  }, [posts, hasHydrated, isAuthenticated])
 
   useEffect(() => {
-    if (hasHydrated) {
+    if (hasHydrated && isAuthenticated) {
       saveStoredUser(userData)
     }
-  }, [userData, hasHydrated])
+  }, [userData, hasHydrated, isAuthenticated])
 
   useEffect(() => {
-    if (hasHydrated) {
+    if (hasHydrated && isAuthenticated) {
       saveStoredConnections(suggestedPeople)
     }
-  }, [suggestedPeople, hasHydrated])
+  }, [suggestedPeople, hasHydrated, isAuthenticated])
 
   // Handle Post Creation
   const handleAddPost = (newPostData: Omit<Post, 'id' | 'timestamp' | 'stats' | 'comments'>) => {
@@ -404,6 +435,19 @@ export default function LinkedInPage() {
     )
   })
 
+  if (isAuthenticated === false) {
+    return null
+  }
+
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-screen bg-[#F4F2EE] dark:bg-[#000000] flex flex-col items-center justify-center gap-3">
+        <ConnectInLogo size="lg" showSubtitle={true} className="animate-pulse" />
+        <p className="text-xs text-zinc-500 font-mono mt-2">Verifying ConnectIn session...</p>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-[#F4F2EE] text-zinc-900 antialiased dark:bg-[#000000] dark:text-zinc-100 selection:bg-[#0A66C2] selection:text-white">
       {/* Top Sticky Navigation */}
@@ -420,6 +464,7 @@ export default function LinkedInPage() {
         onOpenAIAssistant={() => setIsAIAssistantOpen(true)}
         onOpenUniversalSearch={() => setIsUniversalSearchOpen(true)}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
+        onSignOut={handleSignOut}
         activeWorkspace={activeWorkspace}
         onSelectWorkspace={(ws) => {
           setActiveWorkspace(ws)
