@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { connectinDb } from "@/lib/connectin-db"
 import { sendConnectInOTPEmail } from "@/lib/connectin-email"
+import { sendConnectInSMS } from "@/lib/connectin-sms"
 import { createAndStoreOTP } from "@/lib/connectin-otp"
 import crypto from "crypto"
 
@@ -41,16 +42,20 @@ export async function POST(req: NextRequest) {
       connectinDb.setOTP(user.phone, otpCode, 15)
     }
 
-    // Send 2FA email via Resend
-    if (channel === "email" || !user.phone) {
+    // Send 2FA code via selected channel
+    if (channel === "sms" && user.phone) {
+      await sendConnectInSMS({
+        toPhone: user.phone,
+        code: otpCode,
+        fullName
+      })
+    } else {
       await sendConnectInOTPEmail({
         toEmail: cleanEmail,
         fullName,
         code: otpCode,
         action: "login_2fa"
       })
-    } else {
-      console.log(`[SMS 2FA DISPATCH] To: ${user.phone} Code: ${otpCode}`)
     }
 
     return NextResponse.json({
@@ -58,9 +63,7 @@ export async function POST(req: NextRequest) {
       requires2FA: true,
       channel,
       target: channel === "sms" && user.phone ? user.phone : cleanEmail,
-      message: `2FA code dispatched via ${channel.toUpperCase()}`,
-      backupCode: otpCode,
-      devCode: otpCode
+      message: `2FA security code dispatched via ${channel.toUpperCase()}`
     })
   } catch (error: any) {
     console.error("[/api/connectin/auth/login]", error)

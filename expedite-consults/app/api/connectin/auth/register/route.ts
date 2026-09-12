@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { connectinDb } from "@/lib/connectin-db"
 import { sendConnectInOTPEmail } from "@/lib/connectin-email"
+import { sendConnectInSMS } from "@/lib/connectin-sms"
 import { createAndStoreOTP } from "@/lib/connectin-otp"
 import crypto from "crypto"
 
@@ -22,7 +23,7 @@ export async function POST(req: NextRequest) {
       connectinDb.setOTP(phone.trim(), otpCode, 15)
     }
 
-    // 3. If user doesn't exist yet, stage or create in DB
+    // 2. If user doesn't exist yet, stage or create in DB
     const existingUser = connectinDb.findUserByEmail(cleanEmail)
     if (!existingUser) {
       connectinDb.createUser(
@@ -55,25 +56,27 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // 4. Dispatch Email via Resend
-    if (twoFactorChannel === "email") {
+    // 3. Dispatch Code via Selected 2FA Channel
+    if (twoFactorChannel === "sms" && phone) {
+      await sendConnectInSMS({
+        toPhone: phone,
+        code: otpCode,
+        fullName
+      })
+    } else {
       await sendConnectInOTPEmail({
         toEmail: cleanEmail,
         fullName,
         code: otpCode,
         action: "registration"
       })
-    } else {
-      console.log(`[SMS OTP DISPATCH] To: ${phone} Code: ${otpCode}`)
     }
 
     return NextResponse.json({
       success: true,
-      message: `Verification code dispatched to ${twoFactorChannel === "sms" ? phone : cleanEmail}`,
+      message: `Security verification code sent to ${twoFactorChannel === "sms" && phone ? phone : cleanEmail}`,
       channel: twoFactorChannel,
-      target: twoFactorChannel === "sms" ? phone : cleanEmail,
-      backupCode: otpCode,
-      devCode: otpCode
+      target: twoFactorChannel === "sms" && phone ? phone : cleanEmail
     })
   } catch (error: any) {
     console.error("[/api/connectin/auth/register]", error)

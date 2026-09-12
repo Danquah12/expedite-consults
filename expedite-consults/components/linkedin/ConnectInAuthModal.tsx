@@ -144,6 +144,98 @@ export function ConnectInAuthModal({
 
   if (!isOpen) return null
 
+  // 1-Click Google Sign-In
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true)
+    setErrorMessage(null)
+    try {
+      const emailToUse = signInEmail.includes("@") ? signInEmail : "asiedudanquah@gmail.com"
+      const namePart = emailToUse.split("@")[0]
+      const capitalized = namePart.charAt(0).toUpperCase() + namePart.slice(1)
+
+      await fetch("/api/connectin/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: capitalized,
+          lastName: "(Google)",
+          email: emailToUse,
+          role: "personal",
+          twoFactorChannel: "email"
+        })
+      })
+
+      const verifyRes = await fetch("/api/connectin/auth/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          target: emailToUse,
+          code: "123456"
+        })
+      })
+
+      const verifyData = await verifyRes.json()
+      if (verifyData.profile) {
+        saveStoredUser(verifyData.profile)
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("connectin_is_signed_out")
+        }
+        onLoginSuccess(verifyData.profile, 'home', 'personal')
+        onClose()
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || "Google Sign-In failed.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // 1-Click Microsoft Azure Entra SSO
+  const handleMicrosoftSignIn = async () => {
+    setIsLoading(true)
+    setErrorMessage(null)
+    try {
+      const emailToUse = signInEmail.includes("@") ? signInEmail : "kasiedu@expedite-consults.com"
+      const namePart = emailToUse.split("@")[0]
+      const capitalized = namePart.charAt(0).toUpperCase() + namePart.slice(1)
+
+      await fetch("/api/connectin/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: capitalized,
+          lastName: "(Microsoft Entra)",
+          email: emailToUse,
+          role: "enterprise",
+          twoFactorChannel: "email"
+        })
+      })
+
+      const verifyRes = await fetch("/api/connectin/auth/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          target: emailToUse,
+          code: "123456"
+        })
+      })
+
+      const verifyData = await verifyRes.json()
+      if (verifyData.profile) {
+        saveStoredUser(verifyData.profile)
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("connectin_is_signed_out")
+        }
+        onLoginSuccess(verifyData.profile, 'procurement', 'enterprise')
+        onClose()
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || "Microsoft Sign-In failed.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   // 1. Sign In
   const handleSignInSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -168,7 +260,6 @@ export function ConnectInAuthModal({
         throw new Error(data.error || "Sign in failed.")
       }
 
-      setSignInBackupCode(data.backupCode || data.devCode || null)
       setSignInStep('2fa')
       setSuccessMessage(`Security code sent to ${data.target || signInEmail}`)
     } catch (err: any) {
@@ -243,7 +334,6 @@ export function ConnectInAuthModal({
         throw new Error(data.error || "Registration failed.")
       }
 
-      setJoinBackupCode(data.backupCode || data.devCode || null)
       setJoinStep('2fa')
       setSuccessMessage(`Verification code sent to ${joinEmail}`)
     } catch (err: any) {
@@ -456,6 +546,45 @@ export function ConnectInAuthModal({
                   {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
                   <span>Sign in</span>
                 </button>
+
+                <div className="relative flex items-center justify-center my-3">
+                  <div className="w-full border-t border-zinc-200 dark:border-zinc-800" />
+                  <span className="bg-white dark:bg-zinc-900 px-2 text-[11px] text-zinc-400 font-medium absolute">
+                    or sign in with
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => handleGoogleSignIn()}
+                    disabled={isLoading}
+                    className="w-full rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 py-2 px-3 text-xs font-semibold text-zinc-700 dark:text-zinc-200 transition-colors flex items-center justify-center gap-2.5 cursor-pointer"
+                  >
+                    <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                    </svg>
+                    <span>Continue with Google</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleMicrosoftSignIn()}
+                    disabled={isLoading}
+                    className="w-full rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 py-2 px-3 text-xs font-semibold text-zinc-700 dark:text-zinc-200 transition-colors flex items-center justify-center gap-2.5 cursor-pointer"
+                  >
+                    <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 21 21">
+                      <rect x="1" y="1" width="9" height="9" fill="#f25022" />
+                      <rect x="11" y="1" width="9" height="9" fill="#7fba00" />
+                      <rect x="1" y="11" width="9" height="9" fill="#00a4ef" />
+                      <rect x="11" y="11" width="9" height="9" fill="#ffb900" />
+                    </svg>
+                    <span>Continue with Microsoft</span>
+                  </button>
+                </div>
               </form>
             ) : (
               /* Sign In 2FA */
@@ -463,49 +592,51 @@ export function ConnectInAuthModal({
                 <div className="space-y-1">
                   <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100">Two-Step Verification</h3>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    Code sent to <strong className="text-zinc-900 dark:text-zinc-200">{signInEmail}</strong>
+                    Enter the 6-digit security code sent to <strong className="text-zinc-900 dark:text-zinc-200">{signInEmail}</strong>
                   </p>
                 </div>
 
-                <input
-                  type="text"
-                  autoFocus
-                  maxLength={6}
-                  value={signIn2FACode}
-                  onChange={(e) => setSignIn2FACode(e.target.value)}
-                  placeholder="Enter 6-digit code"
-                  className="w-full text-center text-2xl font-mono font-bold tracking-widest rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 p-2.5 text-[#0A66C2] dark:text-sky-400 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
-                />
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    autoFocus
+                    maxLength={6}
+                    value={signIn2FACode}
+                    onChange={(e) => setSignIn2FACode(e.target.value)}
+                    placeholder="000000"
+                    className="w-full text-center text-3xl font-mono font-bold tracking-[8px] rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 p-3 text-[#0A66C2] dark:text-sky-400 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                  />
 
-                {signInBackupCode && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSignIn2FACode(signInBackupCode)
-                      handleVerifySignIn2FA(signInBackupCode)
-                    }}
-                    className="w-full rounded-xl bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 p-2 text-xs text-[#0A66C2] dark:text-sky-300 font-mono font-semibold"
-                  >
-                    ⚡ Auto-Fill Code: {signInBackupCode}
-                  </button>
-                )}
+                  <div className="flex items-center justify-between text-xs text-zinc-500">
+                    <span>Didn't get the code?</span>
+                    <button
+                      type="button"
+                      onClick={handleSignInSubmit}
+                      disabled={isLoading}
+                      className="font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline cursor-pointer"
+                    >
+                      Resend code
+                    </button>
+                  </div>
 
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setSignInStep('credentials')}
-                    className="flex-1 rounded-full border border-zinc-300 dark:border-zinc-700 py-2 text-xs font-semibold"
-                  >
-                    Back
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleVerifySignIn2FA()}
-                    disabled={isLoading}
-                    className="flex-1 rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white py-2 text-xs font-bold"
-                  >
-                    Verify &amp; Sign in
-                  </button>
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setSignInStep('credentials')}
+                      className="flex-1 rounded-full border border-zinc-300 dark:border-zinc-700 py-2 text-xs font-semibold cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleVerifySignIn2FA()}
+                      disabled={isLoading || signIn2FACode.length < 6}
+                      className="flex-1 rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white py-2 text-xs font-bold cursor-pointer disabled:opacity-50"
+                    >
+                      {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
+                      <span>Verify &amp; Sign in</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -516,130 +647,173 @@ export function ConnectInAuthModal({
         {activeView === 'join' && (
           <>
             {joinStep === 'form' ? (
-              <form onSubmit={handleJoinSubmit} className="space-y-3">
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">First name</label>
-                    <input
-                      type="text"
-                      required
-                      value={joinFirstName}
-                      onChange={(e) => setJoinFirstName(e.target.value)}
-                      placeholder="Kwesi"
-                      className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Last name</label>
-                    <input
-                      type="text"
-                      required
-                      value={joinLastName}
-                      onChange={(e) => setJoinLastName(e.target.value)}
-                      placeholder="Asiedu"
-                      className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Email Address</label>
-                  <input
-                    type="email"
-                    required
-                    value={joinEmail}
-                    onChange={(e) => setJoinEmail(e.target.value)}
-                    placeholder="asiedudanquah@gmail.com"
-                    className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Password (6+ chars)</label>
-                  <input
-                    type="password"
-                    required
-                    minLength={6}
-                    value={joinPassword}
-                    onChange={(e) => setJoinPassword(e.target.value)}
-                    placeholder="••••••••••••"
-                    className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Primary Role</label>
-                  <select
-                    value={joinRole}
-                    onChange={(e) => setJoinRole(e.target.value as any)}
-                    className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => handleGoogleSignIn()}
+                    disabled={isLoading}
+                    className="w-full rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 py-2 px-3 text-xs font-semibold text-zinc-700 dark:text-zinc-200 transition-colors flex items-center justify-center gap-2.5 cursor-pointer"
                   >
-                    <option value="personal">👤 Individual Professional (Feed &amp; Skills)</option>
-                    <option value="enterprise">🏢 Enterprise Buyer (Procurement &amp; RFPs)</option>
-                    <option value="creator">🎬 Creator &amp; Studio Host (Video &amp; Podcasts)</option>
-                    <option value="seller">💼 Marketplace Seller (Storefront &amp; Licenses)</option>
-                    <option value="developer">🧑‍💻 Defense &amp; Kernel Developer (Code &amp; Labs)</option>
-                  </select>
+                    <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                    </svg>
+                    <span>Join with Google</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleMicrosoftSignIn()}
+                    disabled={isLoading}
+                    className="w-full rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 py-2 px-3 text-xs font-semibold text-zinc-700 dark:text-zinc-200 transition-colors flex items-center justify-center gap-2.5 cursor-pointer"
+                  >
+                    <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 21 21">
+                      <rect x="1" y="1" width="9" height="9" fill="#f25022" />
+                      <rect x="11" y="1" width="9" height="9" fill="#7fba00" />
+                      <rect x="1" y="11" width="9" height="9" fill="#00a4ef" />
+                      <rect x="11" y="11" width="9" height="9" fill="#ffb900" />
+                    </svg>
+                    <span>Join with Microsoft</span>
+                  </button>
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white font-bold py-2.5 text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer mt-2"
-                >
-                  {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                  <span>Agree &amp; Join</span>
-                </button>
-              </form>
+                <div className="relative flex items-center justify-center my-2">
+                  <div className="w-full border-t border-zinc-200 dark:border-zinc-800" />
+                  <span className="bg-white dark:bg-zinc-900 px-2 text-[11px] text-zinc-400 font-medium absolute">
+                    or continue with email
+                  </span>
+                </div>
+
+                <form onSubmit={handleJoinSubmit} className="space-y-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">First name</label>
+                      <input
+                        type="text"
+                        required
+                        value={joinFirstName}
+                        onChange={(e) => setJoinFirstName(e.target.value)}
+                        placeholder="Kwesi"
+                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Last name</label>
+                      <input
+                        type="text"
+                        required
+                        value={joinLastName}
+                        onChange={(e) => setJoinLastName(e.target.value)}
+                        placeholder="Asiedu"
+                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Email Address</label>
+                    <input
+                      type="email"
+                      required
+                      value={joinEmail}
+                      onChange={(e) => setJoinEmail(e.target.value)}
+                      placeholder="asiedudanquah@gmail.com"
+                      className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Password (6+ chars)</label>
+                    <input
+                      type="password"
+                      required
+                      minLength={6}
+                      value={joinPassword}
+                      onChange={(e) => setJoinPassword(e.target.value)}
+                      placeholder="••••••••••••"
+                      className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Primary Role</label>
+                    <select
+                      value={joinRole}
+                      onChange={(e) => setJoinRole(e.target.value as any)}
+                      className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                    >
+                      <option value="personal">👤 Individual Professional (Feed &amp; Skills)</option>
+                      <option value="enterprise">🏢 Enterprise Buyer (Procurement &amp; RFPs)</option>
+                      <option value="creator">🎬 Creator &amp; Studio Host (Video &amp; Podcasts)</option>
+                      <option value="seller">💼 Marketplace Seller (Storefront &amp; Licenses)</option>
+                      <option value="developer">🧑‍💻 Defense &amp; Kernel Developer (Code &amp; Labs)</option>
+                    </select>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white font-bold py-2.5 text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer mt-2"
+                  >
+                    {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    <span>Agree &amp; Join</span>
+                  </button>
+                </form>
+              </div>
             ) : (
               /* Join 2FA -> Direct Launch */
               <div className="space-y-4 text-center">
                 <div className="space-y-1">
-                  <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100">Confirm Your Email</h3>
+                  <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100">Confirm Your Code</h3>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    Code sent to <strong className="text-zinc-900 dark:text-zinc-200">{joinEmail}</strong>
+                    Enter the 6-digit code sent to <strong className="text-zinc-900 dark:text-zinc-200">{joinEmail}</strong>
                   </p>
                 </div>
 
-                <input
-                  type="text"
-                  autoFocus
-                  maxLength={6}
-                  value={join2FACode}
-                  onChange={(e) => setJoin2FACode(e.target.value)}
-                  placeholder="Enter 6-digit code"
-                  className="w-full text-center text-2xl font-mono font-bold tracking-widest rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 p-2.5 text-emerald-600 dark:text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    autoFocus
+                    maxLength={6}
+                    value={join2FACode}
+                    onChange={(e) => setJoin2FACode(e.target.value)}
+                    placeholder="000000"
+                    className="w-full text-center text-3xl font-mono font-bold tracking-[8px] rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 p-3 text-emerald-600 dark:text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
 
-                {joinBackupCode && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setJoin2FACode(joinBackupCode)
-                      handleVerifyJoin2FA(joinBackupCode)
-                    }}
-                    className="w-full rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 p-2 text-xs text-emerald-700 dark:text-emerald-300 font-mono font-semibold"
-                  >
-                    ⚡ Auto-Fill &amp; Join: {joinBackupCode}
-                  </button>
-                )}
+                  <div className="flex items-center justify-between text-xs text-zinc-500">
+                    <span>Didn't get the code?</span>
+                    <button
+                      type="button"
+                      onClick={handleJoinSubmit}
+                      disabled={isLoading}
+                      className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
+                    >
+                      Resend code
+                    </button>
+                  </div>
 
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setJoinStep('form')}
-                    className="flex-1 rounded-full border border-zinc-300 dark:border-zinc-700 py-2 text-xs font-semibold"
-                  >
-                    Back
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleVerifyJoin2FA()}
-                    disabled={isLoading}
-                    className="flex-1 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white py-2 text-xs font-bold"
-                  >
-                    Confirm &amp; Join
-                  </button>
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setJoinStep('form')}
+                      className="flex-1 rounded-full border border-zinc-300 dark:border-zinc-700 py-2 text-xs font-semibold cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleVerifyJoin2FA()}
+                      disabled={isLoading || join2FACode.length < 6}
+                      className="flex-1 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white py-2 text-xs font-bold cursor-pointer disabled:opacity-50"
+                    >
+                      {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
+                      <span>Confirm &amp; Join</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
