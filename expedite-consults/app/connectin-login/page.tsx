@@ -47,7 +47,7 @@ export default function ConnectInLoginPage() {
   const [joinEmail, setJoinEmail] = useState("")
   const [joinPassword, setJoinPassword] = useState("")
   const [joinRole, setJoinRole] = useState<'personal' | 'enterprise' | 'creator' | 'seller' | 'developer'>('personal')
-  const [joinStep, setJoinStep] = useState<'details' | '2fa'>('details')
+  const [joinStep, setJoinStep] = useState<'form' | '2fa'>('form')
   const [join2FACode, setJoin2FACode] = useState("")
   const [joinBackupCode, setJoinBackupCode] = useState<string | null>(null)
 

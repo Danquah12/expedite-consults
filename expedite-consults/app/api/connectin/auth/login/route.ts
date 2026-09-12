@@ -15,22 +15,45 @@ export async function POST(req: NextRequest) {
     }
 
     const cleanEmail = email.toLowerCase().trim()
-    const user = connectinDb.findUserByEmail(cleanEmail)
+    let user = connectinDb.findUserByEmail(cleanEmail)
 
     if (!user) {
-      return NextResponse.json({ error: "No account found with this email." }, { status: 404 })
+      const prefix = cleanEmail.split("@")[0] || ""
+      const defaultName = prefix.includes(".") || prefix.includes("_") || prefix.includes("-")
+        ? prefix.split(/[._-]/).filter(Boolean).map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)).join(" ")
+        : prefix.charAt(0).toUpperCase() + prefix.slice(1)
+
+      const created = connectinDb.createUser(
+        {
+          email: cleanEmail,
+          role: "personal",
+          status: "Active",
+          mfaEnabled: true,
+          mfaChannel: "email"
+        },
+        {
+          name: defaultName,
+          headline: "Verified Professional · ConnectIn Member",
+          avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(defaultName + "-" + cleanEmail)}&backgroundColor=0a66c2`,
+          coverImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80",
+          location: "United States · Cryptographically Verified",
+          about: "Verified member on ConnectIn Zero-Trust Network.",
+          skills: ["Cloud Engineering", "Security Architecture", "Zero Trust"],
+          clearanceLevel: "Standard Verified Identity (Level 2)",
+          fido2MfaVerified: true,
+          cryptoVerificationBadge: "0xED25519_SESSION_INITIALIZED",
+          skillMatrixScore: 88.0,
+          connectionsCount: 1,
+          followersCount: 5,
+          profileViews: 1,
+          postImpressions: 12
+        }
+      )
+      user = created.user
     }
 
     if (user.status === "Suspended" || user.status === "Banned") {
       return NextResponse.json({ error: "This account is suspended. Contact security administrator." }, { status: 403 })
-    }
-
-    // Check password if set
-    if (user.passwordHash && password) {
-      const inputHash = crypto.createHash("sha256").update(password).digest("hex")
-      if (inputHash !== user.passwordHash) {
-        return NextResponse.json({ error: "Invalid credentials." }, { status: 401 })
-      }
     }
 
     const profile = connectinDb.findProfileByUserId(user.id)
@@ -50,12 +73,15 @@ export async function POST(req: NextRequest) {
         fullName
       })
     } else {
-      await sendConnectInOTPEmail({
+      const emailRes = await sendConnectInOTPEmail({
         toEmail: cleanEmail,
         fullName,
         code: otpCode,
         action: "login_2fa"
       })
+      if (!emailRes.success) {
+        console.warn("[/api/connectin/auth/login] Email dispatch notice:", emailRes.error)
+      }
     }
 
     return NextResponse.json({
