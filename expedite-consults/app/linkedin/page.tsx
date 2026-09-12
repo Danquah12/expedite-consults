@@ -128,7 +128,7 @@ export default function LinkedInPage() {
   const [selectedTagFilter, setSelectedTagFilter] = useState<string | null>(null)
   const [hasHydrated, setHasHydrated] = useState(false)
 
-  // Authentication Lifecycle — optimistic-first, never redirects, shows modal if needed
+  // Authentication Lifecycle — optimistic-first, never redirects, shows modal only if truly needed
   useEffect(() => {
     let isMounted = true
 
@@ -147,11 +147,13 @@ export default function LinkedInPage() {
         return
       }
 
-      // Load whatever user data exists in localStorage (may be null for brand-new visitors)
+      // Try to get stored user profile
       const explicitUser = getExplicitStoredUser()
+      // Check if user has previously verified (persistent across sessions)
+      const hasVerified = localStorage.getItem("connectin_verified") === "true"
 
       if (explicitUser) {
-        // User found in localStorage — hydrate immediately, stay on page
+        // Full profile in localStorage — hydrate immediately
         if (isMounted) {
           setIsAuthenticated(true)
           setUserData(explicitUser)
@@ -164,37 +166,69 @@ export default function LinkedInPage() {
           if (savedRoute.workspace) setActiveWorkspace(savedRoute.workspace)
           setHasHydrated(true)
         }
-        // Refresh from server in background — never causes redirect or modal
+        // Silently refresh from server — never triggers modal or redirect
         try {
           const meRes = await fetch("/api/connectin/auth/me")
           if (meRes.ok && isMounted) {
             const meData = await meRes.json()
             if (meData.authenticated && meData.profile) {
-              const refreshed = { ...meData.profile, email: meData.profile.email || explicitUser.email }
+              const refreshed = {
+                ...meData.profile,
+                email: meData.profile.email || meData.user?.email || explicitUser.email,
+                id: meData.profile.userId || meData.user?.id || explicitUser.id,
+              }
               saveStoredUser(refreshed)
               setUserData(refreshed)
             }
           }
-        } catch (e) { /* silent background refresh */ }
+        } catch (e) { /* silent */ }
         return
       }
 
-      // No localStorage user — try server session
+      if (hasVerified) {
+        // User has signed in before but profile data is missing — keep them in, fetch from server
+        if (isMounted) {
+          setIsAuthenticated(true)
+          setHasHydrated(true)
+        }
+        try {
+          const meRes = await fetch("/api/connectin/auth/me")
+          if (meRes.ok && isMounted) {
+            const meData = await meRes.json()
+            if (meData.authenticated && meData.profile) {
+              const profile = {
+                ...meData.profile,
+                email: meData.profile.email || meData.user?.email || "",
+                id: meData.profile.userId || meData.user?.id,
+              }
+              saveStoredUser(profile)
+              setUserData(profile)
+            }
+          }
+        } catch (e) { /* silent */ }
+        return
+      }
+
+      // No session anywhere — check server one more time (NextAuth OAuth)
       try {
         const meRes = await fetch("/api/connectin/auth/me")
         if (meRes.ok && isMounted) {
           const meData = await meRes.json()
           if (meData.authenticated && meData.profile) {
             localStorage.removeItem("connectin_is_signed_out")
-            const profile = { ...meData.profile, email: meData.profile.email || meData.user?.email || "" }
+            const profile = {
+              ...meData.profile,
+              email: meData.profile.email || meData.user?.email || "",
+              id: meData.profile.userId || meData.user?.id,
+            }
             saveStoredUser(profile)
             setUserData(profile)
             setIsAuthenticated(true)
+            setHasHydrated(true)
             const savedPosts = loadStoredPosts()
             const savedConnections = loadStoredConnections()
             if (savedPosts && savedPosts.length > 0) setPosts(savedPosts)
             if (savedConnections && savedConnections.length > 0) setSuggestedPeople(savedConnections)
-            setHasHydrated(true)
             return
           }
         }
@@ -202,7 +236,7 @@ export default function LinkedInPage() {
         console.warn("[Auth] /me check:", e)
       }
 
-      // No session anywhere — show auth modal IN-PAGE (no redirect, no bounce)
+      // Truly no session — show modal in-page (no redirect)
       if (isMounted) {
         setIsAuthenticated(false)
         setIsAuthModalOpen(true)
@@ -223,7 +257,9 @@ export default function LinkedInPage() {
     }
     if (typeof window !== "undefined") {
       localStorage.removeItem("connectin_user_profile")
+      localStorage.removeItem("connectin_user_v1")
       localStorage.removeItem("connectin_session_route")
+      localStorage.removeItem("connectin_verified")
       localStorage.setItem("connectin_is_signed_out", "true")
       setIsAuthenticated(false)
       window.location.href = "/connectin-login"

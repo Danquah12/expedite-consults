@@ -38,25 +38,21 @@ export function saveStoredPosts(posts: Post[]) {
 export function getExplicitStoredUser(): UserProfile | null {
   if (typeof window === 'undefined') return null
   try {
-    const saved = localStorage.getItem(STORAGE_KEYS.USER) || localStorage.getItem('connectin_user_v1')
-    if (saved) {
-      const parsed = JSON.parse(saved)
-      // Only require name — email may be missing from UserProfileRecord responses
-      if (parsed && parsed.name) {
-        const email = parsed.email || `${parsed.name.toLowerCase().replace(/\s+/g, '.')}@connectin.com`
-        return {
-          ...createUniqueUserProfile({
-            id: parsed.id || parsed.userId,
-            name: parsed.name,
-            email,
-            avatar: parsed.avatar,
-            headline: parsed.headline,
-            location: parsed.location,
-            role: parsed.role || 'personal'
-          }),
-          ...parsed,
-          email // ensure email is always present
-        }
+    const raw = localStorage.getItem(STORAGE_KEYS.USER) || localStorage.getItem('connectin_user_v1')
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    // Only require name — email may be missing from API UserProfileRecord
+    if (parsed && parsed.name) {
+      const email = parsed.email || `${parsed.name.toLowerCase().replace(/\s+/g, '.')}@connectin.com`
+      // Return the stored data directly — avoid calling createUniqueUserProfile which can throw
+      return {
+        ...parsed,
+        email,
+        id: parsed.id || parsed.userId || `USR-${Date.now()}`,
+        name: parsed.name,
+        headline: parsed.headline || 'Verified ConnectIn Member',
+        avatar: parsed.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(parsed.name)}&backgroundColor=0a66c2`,
+        role: parsed.role || 'personal',
       }
     }
     return null
@@ -83,6 +79,8 @@ export function saveStoredUser(user: UserProfile) {
     const serialized = JSON.stringify(user)
     localStorage.setItem(STORAGE_KEYS.USER, serialized)
     localStorage.setItem('connectin_user_v1', serialized)
+    // Persistent auth flag — survives page reloads and new tab opens
+    localStorage.setItem('connectin_verified', 'true')
   } catch (e) {
     console.error('Failed to save user to storage', e)
   }
