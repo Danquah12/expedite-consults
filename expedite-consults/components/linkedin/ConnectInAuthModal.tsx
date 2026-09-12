@@ -121,22 +121,23 @@ export function ConnectInAuthModal({
 
   // Sign In State
   const [signInEmail, setSignInEmail] = useState("")
+  const [signInPhone, setSignInPhone] = useState("")
   const [signInPassword, setSignInPassword] = useState("")
+  const [signInChannel, setSignInChannel] = useState<'email' | 'sms' | 'call'>('email')
   const [signInStep, setSignInStep] = useState<'credentials' | '2fa'>('credentials')
   const [signIn2FACode, setSignIn2FACode] = useState("")
-  const [signInOtpCode, setSignInOtpCode] = useState<string | null>(null)
-  const [signInBackupCode, setSignInBackupCode] = useState<string | null>(null)
+  const [activeTargetDisplay, setActiveTargetDisplay] = useState("")
 
   // Join Now State
   const [joinFirstName, setJoinFirstName] = useState("")
   const [joinLastName, setJoinLastName] = useState("")
   const [joinEmail, setJoinEmail] = useState("")
+  const [joinPhone, setJoinPhone] = useState("")
   const [joinPassword, setJoinPassword] = useState("")
   const [joinRole, setJoinRole] = useState<'personal' | 'enterprise' | 'creator' | 'seller' | 'developer'>('personal')
+  const [joinChannel, setJoinChannel] = useState<'email' | 'sms' | 'call'>('email')
   const [joinStep, setJoinStep] = useState<'form' | '2fa'>('form')
   const [join2FACode, setJoin2FACode] = useState("")
-  const [joinOtpCode, setJoinOtpCode] = useState<string | null>(null)
-  const [joinBackupCode, setJoinBackupCode] = useState<string | null>(null)
 
   // Challenge token for stateless OTP verification across serverless lambdas
   const [otpChallengeToken, setOtpChallengeToken] = useState<string | null>(null)
@@ -173,13 +174,17 @@ export function ConnectInAuthModal({
     }
   }
 
-  // 1. Sign In
-  const handleSignInSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  // 1. Sign In Dispatch
+  const handleSignInSubmit = async (e?: React.FormEvent, channelOverride?: 'email' | 'sms' | 'call') => {
+    if (e) e.preventDefault()
     if (!signInEmail) return
+
+    const effectiveChannel = channelOverride || signInChannel
+    if (channelOverride) setSignInChannel(channelOverride)
 
     setIsLoading(true)
     setErrorMessage(null)
+    setSuccessMessage(`Dispatching verification code via ${effectiveChannel.toUpperCase()}...`)
 
     try {
       const res = await fetch("/api/connectin/auth/login", {
@@ -187,8 +192,9 @@ export function ConnectInAuthModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: signInEmail,
+          phone: signInPhone,
           password: signInPassword,
-          channel: "email"
+          channel: effectiveChannel
         })
       })
 
@@ -200,17 +206,18 @@ export function ConnectInAuthModal({
       if (data.otpChallengeToken) {
         setOtpChallengeToken(data.otpChallengeToken)
       }
-      if (data.code) {
-        setSignInOtpCode(data.code)
-      }
+      setActiveTargetDisplay(data.target || (effectiveChannel === 'email' ? signInEmail : (signInPhone || signInEmail)))
       setSignInStep('2fa')
-      setSuccessMessage(
-        data.code
-          ? `Your access code is: ${data.code}`
-          : `Security code sent to ${data.target || signInEmail}`
-      )
+      
+      if (effectiveChannel === 'call') {
+        setSuccessMessage(`📞 Calling ${data.target || signInPhone || signInEmail}... Please answer to hear your verification code.`)
+      } else if (effectiveChannel === 'sms') {
+        setSuccessMessage(`💬 Text message sent to ${data.target || signInPhone || signInEmail}. Please enter the 6-digit code.`)
+      } else {
+        setSuccessMessage(`✉️ Verification code sent to ${data.target || signInEmail}. Please check your inbox or spam.`)
+      }
     } catch (err: any) {
-      setErrorMessage(err.message || "Failed to sign in")
+      setErrorMessage(err.message || "Failed to dispatch 2FA code")
     } finally {
       setIsLoading(false)
     }
@@ -501,9 +508,9 @@ export function ConnectInAuthModal({
         {activeView === 'signin' && (
           <>
             {signInStep === 'credentials' ? (
-              <form onSubmit={handleSignInSubmit} className="space-y-4">
+              <form onSubmit={(e) => handleSignInSubmit(e)} className="space-y-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Email or phone</label>
+                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Email address or username</label>
                   <input
                     type="text"
                     required
@@ -513,6 +520,62 @@ export function ConnectInAuthModal({
                     className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
                   />
                 </div>
+
+                {/* 2FA Delivery Channel Selector */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Send 2FA Security Code Via</label>
+                  <div className="grid grid-cols-3 gap-1.5 p-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-xl text-xs font-semibold">
+                    <button
+                      type="button"
+                      onClick={() => setSignInChannel('email')}
+                      className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                        signInChannel === 'email'
+                          ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
+                          : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                      }`}
+                    >
+                      <span>✉️ Email</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSignInChannel('sms')}
+                      className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                        signInChannel === 'sms'
+                          ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
+                          : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                      }`}
+                    >
+                      <span>💬 SMS</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSignInChannel('call')}
+                      className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                        signInChannel === 'call'
+                          ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
+                          : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                      }`}
+                    >
+                      <span>📞 Call</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Phone Number Input (if SMS or Call selected) */}
+                {(signInChannel === 'sms' || signInChannel === 'call') && (
+                  <div className="space-y-1 animate-in fade-in duration-150">
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                      Mobile Phone Number {signInChannel === 'call' ? 'for Voice Call' : 'for SMS'}
+                    </label>
+                    <input
+                      type="tel"
+                      value={signInPhone}
+                      onChange={(e) => setSignInPhone(e.target.value)}
+                      placeholder="+1 (240) 555-0192"
+                      className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                    />
+                  </div>
+                )}
 
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
@@ -529,7 +592,7 @@ export function ConnectInAuthModal({
                     type={showPassword ? "text" : "password"}
                     value={signInPassword}
                     onChange={(e) => setSignInPassword(e.target.value)}
-                    placeholder="•••••••••••• (optional for OTP)"
+                    placeholder="•••••••••••• (optional for passwordless OTP)"
                     className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
                   />
                 </div>
@@ -540,7 +603,7 @@ export function ConnectInAuthModal({
                   className="w-full rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white font-bold py-2.5 text-sm shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer mt-2"
                 >
                   {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-                  <span>Sign in</span>
+                  <span>Sign in with 2FA</span>
                 </button>
 
                 <div className="relative flex items-center justify-center my-3">
@@ -586,9 +649,12 @@ export function ConnectInAuthModal({
               /* Sign In 2FA */
               <form onSubmit={(e) => { e.preventDefault(); handleVerifySignIn2FA(); }} className="space-y-4 text-center">
                 <div className="space-y-1">
-                  <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100">Two-Step Verification</h3>
+                  <div className="h-10 w-10 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-[#0A66C2] dark:text-sky-400 flex items-center justify-center mx-auto text-lg font-bold">
+                    🔒
+                  </div>
+                  <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100">Enter Security Code</h3>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    Enter the 6-digit security code sent to <strong className="text-zinc-900 dark:text-zinc-200">{signInEmail}</strong>
+                    Enter the 6-digit code delivered to <strong className="text-zinc-900 dark:text-zinc-200">{activeTargetDisplay || signInEmail}</strong>
                   </p>
                 </div>
 
@@ -610,33 +676,38 @@ export function ConnectInAuthModal({
                     className="w-full text-center text-3xl font-mono font-bold tracking-[8px] rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 p-3 text-[#0A66C2] dark:text-sky-400 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
                   />
 
-                  <div className="flex items-center justify-between text-xs text-zinc-500">
-                    <span>Didn't get the code?</span>
-                    <div className="flex items-center gap-2">
+                  {/* Resend via Alternative Channels */}
+                  <div className="text-xs text-zinc-500 space-y-1.5 pt-1">
+                    <p className="text-[11px] text-zinc-400">Didn't receive the code? Resend via:</p>
+                    <div className="flex items-center justify-center gap-2 flex-wrap">
                       <button
                         type="button"
-                        onClick={() => {
-                          const targetCode = signInOtpCode || "123456"
-                          setSignIn2FACode(targetCode)
-                          handleVerifySignIn2FA(targetCode)
-                        }}
-                        className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
-                      >
-                        ⚡ {signInOtpCode ? `Use Code: ${signInOtpCode}` : "Autofill Access Code"}
-                      </button>
-                      <span>·</span>
-                      <button
-                        type="button"
-                        onClick={handleSignInSubmit}
+                        onClick={() => handleSignInSubmit(undefined, 'email')}
                         disabled={isLoading}
-                        className="font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline cursor-pointer"
+                        className="font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md"
                       >
-                        Resend
+                        ✉️ Email
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSignInSubmit(undefined, 'sms')}
+                        disabled={isLoading}
+                        className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md"
+                      >
+                        💬 SMS Text
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSignInSubmit(undefined, 'call')}
+                        disabled={isLoading}
+                        className="font-semibold text-purple-600 dark:text-purple-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md"
+                      >
+                        📞 Phone Call
                       </button>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 pt-1">
+                  <div className="flex items-center gap-2 pt-2">
                     <button
                       type="button"
                       onClick={() => setSignInStep('credentials')}
@@ -832,23 +903,11 @@ export function ConnectInAuthModal({
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => {
-                          const targetCode = joinOtpCode || "123456"
-                          setJoin2FACode(targetCode)
-                          handleVerifyJoin2FA(targetCode)
-                        }}
-                        className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
-                      >
-                        ⚡ {joinOtpCode ? `Use Code: ${joinOtpCode}` : "Autofill Access Code"}
-                      </button>
-                      <span>·</span>
-                      <button
-                        type="button"
-                        onClick={handleJoinSubmit}
+                        onClick={(e) => handleJoinSubmit(e)}
                         disabled={isLoading}
                         className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
                       >
-                        Resend
+                        Resend Code
                       </button>
                     </div>
                   </div>

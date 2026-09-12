@@ -72,15 +72,19 @@ export async function POST(req: NextRequest) {
     }
 
     // Send 2FA code via selected channel
-    const dispatchPhone = user.phone || (isPhoneInput ? cleanTarget : "")
-    if (effectiveChannel === "sms" && dispatchPhone) {
+    const isVoiceCall = channel === "call"
+    const isSms = channel === "sms" || isPhoneInput
+    const dispatchPhone = body.phone || user.phone || (isPhoneInput ? cleanTarget : "")
+
+    if ((isSms || isVoiceCall) && dispatchPhone) {
       const smsRes = await sendConnectInSMS({
         toPhone: dispatchPhone,
         code: otpCode,
-        fullName
+        fullName,
+        channel: isVoiceCall ? "call" : "sms"
       })
       if (!smsRes.success) {
-        console.warn("[/api/connectin/auth/login] SMS dispatch notice:", smsRes.error)
+        console.warn(`[/api/connectin/auth/login] ${isVoiceCall ? "Voice Call" : "SMS"} dispatch notice:`, smsRes.error)
       }
     } else {
       const emailRes = await sendConnectInOTPEmail({
@@ -97,13 +101,10 @@ export async function POST(req: NextRequest) {
     const res = NextResponse.json({
       success: true,
       requires2FA: true,
-      channel: effectiveChannel,
-      target: effectiveChannel === "sms" && dispatchPhone ? dispatchPhone : (user.email || cleanTarget),
+      channel: isVoiceCall ? "call" : (isSms ? "sms" : "email"),
+      target: (isSms || isVoiceCall) && dispatchPhone ? dispatchPhone : (user.email || cleanTarget),
       otpChallengeToken: challengeToken,
-      // Always include the code in response so users can authenticate even if email delivery fails
-      // In production with real email/SMS configured, this serves as a backup display
-      code: otpCode,
-      message: `2FA security code dispatched via ${effectiveChannel.toUpperCase()}`
+      message: `2FA security code dispatched securely via ${(isVoiceCall ? "Voice Call" : (isSms ? "SMS" : "Email")).toUpperCase()}. Please check your ${isVoiceCall ? "phone for an incoming verification call" : (isSms ? "messages" : "inbox")}.`
     })
 
     // Set secure challenge cookie

@@ -76,11 +76,10 @@ export async function POST(req: NextRequest) {
 
     const res = NextResponse.json({
       success: true,
-      message: `Security verification code sent to ${twoFactorChannel === "sms" && phone ? phone : cleanEmail}`,
+      message: `Security verification code sent securely to ${twoFactorChannel === "sms" && phone ? phone : cleanEmail}`,
       channel: twoFactorChannel,
       target: twoFactorChannel === "sms" && phone ? phone : cleanEmail,
-      otpChallengeToken: challengeToken,
-      code: otpCode
+      otpChallengeToken: challengeToken
     })
 
     // Set secure challenge cookie
