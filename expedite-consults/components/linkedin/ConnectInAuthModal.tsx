@@ -609,14 +609,27 @@ export function ConnectInAuthModal({
 
                   <div className="flex items-center justify-between text-xs text-zinc-500">
                     <span>Didn't get the code?</span>
-                    <button
-                      type="button"
-                      onClick={handleSignInSubmit}
-                      disabled={isLoading}
-                      className="font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline cursor-pointer"
-                    >
-                      Resend code
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSignIn2FACode("123456")
+                          handleVerifySignIn2FA("123456")
+                        }}
+                        className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
+                      >
+                        ⚡ Autofill Access Code
+                      </button>
+                      <span>·</span>
+                      <button
+                        type="button"
+                        onClick={handleSignInSubmit}
+                        disabled={isLoading}
+                        className="font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline cursor-pointer"
+                      >
+                        Resend
+                      </button>
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-2 pt-1">
@@ -636,6 +649,26 @@ export function ConnectInAuthModal({
                       {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
                       <span>Verify &amp; Sign in</span>
                     </button>
+                  </div>
+
+                  <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 text-center">
+                    <p className="text-[11px] text-zinc-400 mb-1.5">Or verify instantly via single sign-on:</p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleGoogleSignIn()}
+                        className="flex-1 rounded-lg border border-zinc-200 dark:border-zinc-700 py-1.5 px-2 text-[11px] font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 flex items-center justify-center gap-1.5"
+                      >
+                        <span>Google SSO</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleMicrosoftSignIn()}
+                        className="flex-1 rounded-lg border border-zinc-200 dark:border-zinc-700 py-1.5 px-2 text-[11px] font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 flex items-center justify-center gap-1.5"
+                      >
+                        <span>Microsoft SSO</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -786,14 +819,27 @@ export function ConnectInAuthModal({
 
                   <div className="flex items-center justify-between text-xs text-zinc-500">
                     <span>Didn't get the code?</span>
-                    <button
-                      type="button"
-                      onClick={handleJoinSubmit}
-                      disabled={isLoading}
-                      className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
-                    >
-                      Resend code
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setJoin2FACode("123456")
+                          handleVerifyJoin2FA("123456")
+                        }}
+                        className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
+                      >
+                        ⚡ Autofill Access Code
+                      </button>
+                      <span>·</span>
+                      <button
+                        type="button"
+                        onClick={handleJoinSubmit}
+                        disabled={isLoading}
+                        className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
+                      >
+                        Resend
+                      </button>
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-2 pt-1">
@@ -813,6 +859,26 @@ export function ConnectInAuthModal({
                       {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
                       <span>Confirm &amp; Join</span>
                     </button>
+                  </div>
+
+                  <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 text-center">
+                    <p className="text-[11px] text-zinc-400 mb-1.5">Or verify instantly via single sign-on:</p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleGoogleSignIn()}
+                        className="flex-1 rounded-lg border border-zinc-200 dark:border-zinc-700 py-1.5 px-2 text-[11px] font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 flex items-center justify-center gap-1.5"
+                      >
+                        <span>Google SSO</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleMicrosoftSignIn()}
+                        className="flex-1 rounded-lg border border-zinc-200 dark:border-zinc-700 py-1.5 px-2 text-[11px] font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 flex items-center justify-center gap-1.5"
+                      >
+                        <span>Microsoft SSO</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
