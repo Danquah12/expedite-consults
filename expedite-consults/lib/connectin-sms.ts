@@ -41,11 +41,13 @@ export async function sendConnectInSMS({
 
     console.log(`[Phone 2FA Dispatch Request] To: ${cleanPhone} via ${channel.toUpperCase()} (from: ${fromPhone || "default"})`)
 
-    if (accountSid && authToken && fromPhone) {
+    const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID || "VA41cdc0ff263947ff803f53f7eb0ab57f"
+
+    if (accountSid && authToken) {
       const authHeader = Buffer.from(`${accountSid}:${authToken}`).toString("base64")
 
-      if (channel === "call") {
-        // Direct Twilio Voice Call with TwiML speech synthesis speaking dynamic OTP
+      if (channel === "call" && fromPhone) {
+        // Direct Twilio Voice Call with custom ConnectIn Security TwiML speech synthesis
         const spokenCode = code.split("").join(", ")
         const twiml = `<Response><Pause length="1"/><Say voice="Polly.Joanna">Hello, this is ConnectIn Security by Expedite Consults. Your one-time verification code is: ${spokenCode}. I repeat: ${spokenCode}. Thank you for using ConnectIn.</Say><Pause length="1"/><Say voice="Polly.Joanna">Goodbye.</Say></Response>`
 
@@ -72,8 +74,34 @@ export async function sendConnectInSMS({
 
         console.log(`[Voice Call Initiated Successfully] To: ${cleanPhone} SID: ${data.sid}`)
         return { success: true, sid: data.sid }
-      } else {
-        // Direct Twilio SMS Message
+      }
+
+      // For SMS: Use Twilio Verify Service to bypass US carrier A2P 10DLC filtering blocks
+      if (channel === "sms" && verifyServiceSid) {
+        const verifyUrl = `https://verify.twilio.com/v2/Services/${verifyServiceSid}/Verifications`
+        const verifyParams = new URLSearchParams()
+        verifyParams.append("To", cleanPhone)
+        verifyParams.append("Channel", "sms")
+
+        const verifyResponse = await fetch(verifyUrl, {
+          method: "POST",
+          headers: {
+            Authorization: `Basic ${authHeader}`,
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          body: verifyParams.toString()
+        })
+
+        const verifyData = await verifyResponse.json()
+        if (verifyResponse.ok) {
+          console.log(`[Twilio Verify SMS Dispatched] To: ${cleanPhone} SID: ${verifyData.sid}`)
+          return { success: true, sid: verifyData.sid }
+        }
+        console.warn("[Twilio Verify SMS Notice - trying direct SMS fallback]", verifyData)
+      }
+
+      // Direct Twilio SMS fallback
+      if (fromPhone) {
         const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`
         const params = new URLSearchParams()
         params.append("To", cleanPhone)

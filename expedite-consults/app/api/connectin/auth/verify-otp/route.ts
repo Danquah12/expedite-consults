@@ -23,12 +23,15 @@ export async function POST(req: NextRequest) {
     const challengeToken = incomingChallengeToken || cookieChallenge
 
     // 1. Verify OTP using signed cryptographic challenge, Twilio Verify API, and DB checks
+    const phoneDigits = (body.phone ? String(body.phone) : cleanTarget).replace(/[^\d]/g, "")
     const targetsToCheck = Array.from(new Set([
       cleanTarget,
       body.phone ? String(body.phone).trim() : null,
       body.email ? String(body.email).toLowerCase().trim() : null,
       cleanTarget.replace(/[^\d+]/g, ""),
-      cleanTarget.replace(/[^\d]/g, "").length === 10 ? `+1${cleanTarget.replace(/[^\d]/g, "")}` : null
+      phoneDigits ? `+1${phoneDigits.slice(-10)}` : null,
+      phoneDigits ? phoneDigits.slice(-10) : null,
+      phoneDigits ? `+${phoneDigits}` : null
     ].filter(Boolean) as string[]))
 
     let isValid = false
