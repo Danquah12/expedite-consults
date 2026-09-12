@@ -59,11 +59,14 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Dispatch Code via Selected 2FA Channel
-    if (twoFactorChannel === "sms" && phone) {
+    const isCall = twoFactorChannel === "call"
+    const isSms = twoFactorChannel === "sms"
+    if ((isSms || isCall) && phone) {
       await sendConnectInSMS({
         toPhone: phone,
         code: otpCode,
-        fullName
+        fullName,
+        channel: isCall ? "call" : "sms"
       })
     } else {
       await sendConnectInOTPEmail({
@@ -76,9 +79,9 @@ export async function POST(req: NextRequest) {
 
     const res = NextResponse.json({
       success: true,
-      message: `Security verification code sent securely to ${twoFactorChannel === "sms" && phone ? phone : cleanEmail}`,
+      message: `Security verification code sent securely to ${(isSms || isCall) && phone ? phone : cleanEmail} via ${twoFactorChannel.toUpperCase()}`,
       channel: twoFactorChannel,
-      target: twoFactorChannel === "sms" && phone ? phone : cleanEmail,
+      target: (isSms || isCall) && phone ? phone : cleanEmail,
       otpChallengeToken: challengeToken
     })
 

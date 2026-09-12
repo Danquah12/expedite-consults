@@ -282,14 +282,21 @@ export function ConnectInAuthModal({
   }
 
   // 2. Join Now (Register -> 2FA -> Direct Login)
-  const handleJoinSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleJoinSubmit = async (e?: React.FormEvent, channelOverride?: 'email' | 'sms' | 'call') => {
+    if (e) e.preventDefault()
     if (!joinFirstName || !joinEmail) return
+
+    const effectiveChannel = channelOverride || joinChannel
+    if (channelOverride) setJoinChannel(channelOverride)
 
     setIsLoading(true)
     setErrorMessage(null)
+    setSuccessMessage(`Dispatching verification code via ${effectiveChannel.toUpperCase()}...`)
 
     try {
+      const fullName = `${joinFirstName} ${joinLastName}`.trim()
+      const resolvedName = resolveDisplayName(fullName, joinEmail)
+
       const res = await fetch("/api/connectin/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -297,9 +304,10 @@ export function ConnectInAuthModal({
           firstName: joinFirstName,
           lastName: joinLastName,
           email: joinEmail,
+          phone: joinPhone,
           password: joinPassword,
           role: joinRole,
-          twoFactorChannel: "email"
+          twoFactorChannel: effectiveChannel
         })
       })
 
@@ -311,15 +319,14 @@ export function ConnectInAuthModal({
       if (data.otpChallengeToken) {
         setOtpChallengeToken(data.otpChallengeToken)
       }
-      if (data.code) {
-        setJoinOtpCode(data.code)
-      }
       setJoinStep('2fa')
-      setSuccessMessage(
-        data.code
-          ? `Your verification code is: ${data.code}`
-          : `Verification code sent to ${joinEmail}`
-      )
+      if (effectiveChannel === 'call') {
+        setSuccessMessage(`📞 Calling ${joinPhone || joinEmail}... Please answer to hear your verification code.`)
+      } else if (effectiveChannel === 'sms') {
+        setSuccessMessage(`💬 Verification text message sent to ${joinPhone || joinEmail}.`)
+      } else {
+        setSuccessMessage(`✉️ Verification code sent to ${joinEmail}. Please check your inbox or spam.`)
+      }
     } catch (err: any) {
       setErrorMessage(err.message || "Registration failed.")
     } finally {
@@ -338,12 +345,15 @@ export function ConnectInAuthModal({
     try {
       const fullName = `${joinFirstName} ${joinLastName}`.trim()
       const resolvedName = resolveDisplayName(fullName, joinEmail)
+      const verifyTarget = joinChannel === 'email' ? joinEmail : (joinPhone || joinEmail)
 
       const res = await fetch("/api/connectin/auth/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          target: joinEmail,
+          target: verifyTarget,
+          email: joinEmail,
+          phone: joinPhone,
           code,
           name: resolvedName,
           role: joinRole,
@@ -834,6 +844,62 @@ export function ConnectInAuthModal({
                     />
                   </div>
 
+                  {/* 2FA Delivery Channel Selector */}
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Deliver 2FA Code Via</label>
+                    <div className="grid grid-cols-3 gap-1.5 p-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-xl text-xs font-semibold">
+                      <button
+                        type="button"
+                        onClick={() => setJoinChannel('email')}
+                        className={`py-1 px-1 rounded-lg transition-all flex items-center justify-center gap-1 ${
+                          joinChannel === 'email'
+                            ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
+                            : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                        }`}
+                      >
+                        <span>✉️ Email</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setJoinChannel('sms')}
+                        className={`py-1 px-1 rounded-lg transition-all flex items-center justify-center gap-1 ${
+                          joinChannel === 'sms'
+                            ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
+                            : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                        }`}
+                      >
+                        <span>💬 SMS</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setJoinChannel('call')}
+                        className={`py-1 px-1 rounded-lg transition-all flex items-center justify-center gap-1 ${
+                          joinChannel === 'call'
+                            ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
+                            : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                        }`}
+                      >
+                        <span>📞 Call</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Phone Number Input (if SMS or Call selected) */}
+                  {(joinChannel === 'sms' || joinChannel === 'call') && (
+                    <div className="space-y-1 animate-in fade-in duration-150">
+                      <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                        Mobile Phone Number {joinChannel === 'call' ? 'for Voice Call' : 'for SMS Text'}
+                      </label>
+                      <input
+                        type="tel"
+                        value={joinPhone}
+                        onChange={(e) => setJoinPhone(e.target.value)}
+                        placeholder="+1 (240) 555-0192"
+                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                      />
+                    </div>
+                  )}
+
                   <div>
                     <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Password (6+ chars)</label>
                     <input
@@ -900,16 +966,32 @@ export function ConnectInAuthModal({
                     className="w-full text-center text-3xl font-mono font-bold tracking-[8px] rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 p-3 text-emerald-600 dark:text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
 
-                  <div className="flex items-center justify-between text-xs text-zinc-500">
-                    <span>Didn't get the code?</span>
-                    <div className="flex items-center gap-2">
+                  <div className="text-xs text-zinc-500 space-y-1.5 pt-1">
+                    <p className="text-[11px] text-zinc-400">Didn't receive the code? Resend via:</p>
+                    <div className="flex items-center justify-center gap-2 flex-wrap">
                       <button
                         type="button"
-                        onClick={(e) => handleJoinSubmit(e)}
+                        onClick={() => handleJoinSubmit(undefined, 'email')}
                         disabled={isLoading}
-                        className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
+                        className="font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md"
                       >
-                        Resend Code
+                        ✉️ Email
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleJoinSubmit(undefined, 'sms')}
+                        disabled={isLoading}
+                        className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md"
+                      >
+                        💬 SMS Text
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleJoinSubmit(undefined, 'call')}
+                        disabled={isLoading}
+                        className="font-semibold text-purple-600 dark:text-purple-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md"
+                      >
+                        📞 Phone Call
                       </button>
                     </div>
                   </div>

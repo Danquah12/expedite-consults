@@ -206,15 +206,16 @@ export default function ConnectInLoginPage() {
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // 2. JOIN NOW FLOW (Registration -> 2FA -> Direct Instant Login)
-  // ─────────────────────────────────────────────────────────────────────────────
-  const handleJoinSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleJoinSubmit = async (e?: React.FormEvent, channelOverride?: 'email' | 'sms' | 'call') => {
+    if (e) e.preventDefault()
     if (!joinFirstName || !joinEmail) return
+
+    const effectiveChannel = channelOverride || joinChannel
+    if (channelOverride) setJoinChannel(channelOverride)
 
     setIsLoading(true)
     setErrorMessage(null)
+    setSuccessMessage(`Dispatching verification code via ${effectiveChannel.toUpperCase()}...`)
 
     try {
       const fullName = `${joinFirstName} ${joinLastName}`.trim()
@@ -230,7 +231,7 @@ export default function ConnectInLoginPage() {
           phone: joinPhone,
           password: joinPassword,
           role: joinRole,
-          twoFactorChannel: joinChannel
+          twoFactorChannel: effectiveChannel
         })
       })
 
@@ -242,15 +243,14 @@ export default function ConnectInLoginPage() {
       if (data.otpChallengeToken) {
         setOtpChallengeToken(data.otpChallengeToken)
       }
-      if (data.code) {
-        setSignInOtpCode(data.code)
-      }
       setJoinStep('2fa')
-      setSuccessMessage(
-        data.code
-          ? `Your verification code is: ${data.code}`
-          : `Verification code sent to ${joinChannel === 'sms' && joinPhone ? joinPhone : joinEmail}`
-      )
+      if (effectiveChannel === 'call') {
+        setSuccessMessage(`📞 Placing automated verification phone call to ${joinPhone || joinEmail}... Please answer to receive your code.`)
+      } else if (effectiveChannel === 'sms') {
+        setSuccessMessage(`💬 Text message sent to ${joinPhone || joinEmail}. Please enter the 6-digit code.`)
+      } else {
+        setSuccessMessage(`✉️ Verification code sent to ${joinEmail}. Please check your inbox or spam.`)
+      }
     } catch (err: any) {
       setErrorMessage(err.message || "Failed to create account.")
     } finally {
@@ -269,12 +269,15 @@ export default function ConnectInLoginPage() {
     try {
       const fullName = `${joinFirstName} ${joinLastName}`.trim()
       const resolvedName = resolveDisplayName(fullName, joinEmail)
+      const verifyTarget = joinChannel === 'email' ? joinEmail : (joinPhone || joinEmail)
 
       const res = await fetch("/api/connectin/auth/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          target: joinChannel === 'sms' && joinPhone ? joinPhone : joinEmail,
+          target: verifyTarget,
+          email: joinEmail,
+          phone: joinPhone,
           code,
           name: resolvedName,
           role: joinRole,
@@ -805,47 +808,62 @@ export default function ConnectInLoginPage() {
                       />
                     </div>
 
-                    {/* Phone (Optional for SMS 2FA) */}
+                    {/* Phone (Optional / Required for SMS & Call 2FA) */}
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Phone Number (Optional for SMS 2FA)</label>
-                        <span className="text-[10px] text-zinc-400 font-mono">SMS OTP</span>
+                        <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                          Mobile Phone Number {(joinChannel === 'sms' || joinChannel === 'call') ? '(Required for ' + (joinChannel === 'call' ? 'Call' : 'SMS') + ')' : '(Optional)'}
+                        </label>
+                        <span className="text-[10px] text-zinc-400 font-mono">SMS / VOICE</span>
                       </div>
                       <input
                         type="tel"
                         value={joinPhone}
                         onChange={(e) => setJoinPhone(e.target.value)}
-                        placeholder="+1 (555) 000-0000"
+                        placeholder="+1 (240) 555-0192"
                         className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
                       />
                     </div>
 
                     {/* 2FA Delivery Channel Selection */}
-                    {joinPhone.trim() && (
-                      <div className="flex items-center gap-4 text-xs font-medium text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/40 p-2 rounded-lg border border-zinc-200 dark:border-zinc-800">
-                        <span>Send code via:</span>
-                        <label className="flex items-center gap-1.5 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="joinChannel"
-                            checked={joinChannel === 'email'}
-                            onChange={() => setJoinChannel('email')}
-                            className="text-[#0A66C2]"
-                          />
-                          <span>Email</span>
-                        </label>
-                        <label className="flex items-center gap-1.5 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="joinChannel"
-                            checked={joinChannel === 'sms'}
-                            onChange={() => setJoinChannel('sms')}
-                            className="text-[#0A66C2]"
-                          />
-                          <span>SMS Text</span>
-                        </label>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Deliver 2FA Security Code Via</label>
+                      <div className="grid grid-cols-3 gap-1.5 p-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-xl text-xs font-semibold">
+                        <button
+                          type="button"
+                          onClick={() => setJoinChannel('email')}
+                          className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                            joinChannel === 'email'
+                              ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
+                              : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                          }`}
+                        >
+                          <span>✉️ Email</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setJoinChannel('sms')}
+                          className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                            joinChannel === 'sms'
+                              ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
+                              : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                          }`}
+                        >
+                          <span>💬 SMS</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setJoinChannel('call')}
+                          className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                            joinChannel === 'call'
+                              ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
+                              : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                          }`}
+                        >
+                          <span>📞 Call</span>
+                        </button>
                       </div>
-                    )}
+                    </div>
 
                     {/* Password */}
                     <div className="space-y-1">
