@@ -32,6 +32,7 @@ export default function ConnectInLoginPage() {
   const [loginStep, setLoginStep] = useState<'credentials' | 'mfa'>('credentials')
   const [login2faChannel, setLogin2faChannel] = useState<'email' | 'sms'>('email')
   const [login2faCode, setLogin2faCode] = useState("")
+  const [loginBackupCode, setLoginBackupCode] = useState<string | null>(null)
 
   // Registration State
   const [regFirstName, setRegFirstName] = useState("")
@@ -43,6 +44,7 @@ export default function ConnectInLoginPage() {
   const [reg2faChannel, setReg2faChannel] = useState<'email' | 'sms'>('email')
   const [regStep, setRegStep] = useState<'form' | 'verify' | 'confirmed'>('form')
   const [verificationCode, setVerificationCode] = useState("")
+  const [regBackupCode, setRegBackupCode] = useState<string | null>(null)
 
   const [isAuthenticating, setIsAuthenticating] = useState(false)
   const [statusFeedback, setStatusFeedback] = useState<string | null>(null)
@@ -68,27 +70,25 @@ export default function ConnectInLoginPage() {
       })
       const data = await res.json()
 
-      // Automatically verify OTP for demo personas
-      if (data.devCode || res.ok) {
-        const verifyRes = await fetch("/api/connectin/auth/verify-otp", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            target: persona.email,
-            code: data.devCode || "749204"
-          })
+      const targetCode = data.backupCode || data.devCode || "749204"
+      const verifyRes = await fetch("/api/connectin/auth/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          target: persona.email,
+          code: targetCode
         })
-        const verifyData = await verifyRes.json()
+      })
+      const verifyData = await verifyRes.json()
 
-        if (verifyData.profile) {
-          saveStoredUser(verifyData.profile)
-          saveStoredSessionRoute(persona.defaultTab, persona.defaultWorkspace)
-        }
+      if (verifyData.profile) {
+        saveStoredUser(verifyData.profile)
+        saveStoredSessionRoute(persona.defaultTab, persona.defaultWorkspace)
       }
 
       setTimeout(() => {
         router.push("/connectin")
-      }, 800)
+      }, 700)
     } catch (err: any) {
       router.push("/connectin")
     } finally {
@@ -125,10 +125,10 @@ export default function ConnectInLoginPage() {
         throw new Error(data.error || "Failed to register")
       }
 
+      const backup = data.backupCode || data.devCode || null
+      setRegBackupCode(backup)
+
       setStatusFeedback(`✓ Code dispatched to ${reg2faChannel === "sms" ? regPhone : regEmail}!`)
-      if (data.devCode) {
-        setVerificationCode(data.devCode)
-      }
       setRegStep('verify')
     } catch (err: any) {
       setErrorMessage(err.message || "Registration failed")
@@ -138,8 +138,9 @@ export default function ConnectInLoginPage() {
   }
 
   // 3. Confirm Real 2FA OTP Code
-  const handleConfirm2FACode = async () => {
-    if (!verificationCode) return
+  const handleConfirm2FACode = async (codeToUse?: string) => {
+    const code = codeToUse || verificationCode
+    if (!code) return
 
     setIsAuthenticating(true)
     setErrorMessage(null)
@@ -152,7 +153,7 @@ export default function ConnectInLoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           target,
-          code: verificationCode
+          code
         })
       })
 
@@ -219,9 +220,9 @@ export default function ConnectInLoginPage() {
         throw new Error(data.error || "Login challenge failed")
       }
 
-      if (data.devCode) {
-        setLogin2faCode(data.devCode)
-      }
+      const backup = data.backupCode || data.devCode || null
+      setLoginBackupCode(backup)
+
       setStatusFeedback(`✓ 2FA code sent to ${data.target}!`)
       setLoginStep('mfa')
     } catch (err: any) {
@@ -232,8 +233,9 @@ export default function ConnectInLoginPage() {
   }
 
   // 6. Verify Login 2FA (Step 2 of Login -> Mint Session)
-  const handleVerifyLoginMFA = async () => {
-    if (!login2faCode) return
+  const handleVerifyLoginMFA = async (codeToUse?: string) => {
+    const code = codeToUse || login2faCode
+    if (!code) return
 
     setIsAuthenticating(true)
     setErrorMessage(null)
@@ -245,7 +247,7 @@ export default function ConnectInLoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           target: emailInput,
-          code: login2faCode
+          code
         })
       })
 
@@ -361,7 +363,7 @@ export default function ConnectInLoginPage() {
                     <Mail className="h-4 w-4 text-zinc-400" />
                     <input
                       type="email"
-                      placeholder="e.g. kwesi@expedite-consults.com or alex.taylor@connectin.com"
+                      placeholder="e.g. asiedudanquah@gmail.com or alex.taylor@connectin.com"
                       value={emailInput}
                       onChange={(e) => setEmailInput(e.target.value)}
                       className="w-full bg-transparent text-white placeholder-zinc-500 focus:outline-none"
@@ -441,7 +443,7 @@ export default function ConnectInLoginPage() {
                   </button>
                 </div>
 
-                <div className="max-w-xs mx-auto space-y-1">
+                <div className="max-w-xs mx-auto space-y-2">
                   <span className="text-[10px] text-zinc-400 font-mono block">
                     {login2faChannel === 'email' ? `Code sent to ${emailInput}` : `Code sent via SMS to ${regPhone}`}
                   </span>
@@ -453,6 +455,25 @@ export default function ConnectInLoginPage() {
                     className="w-full text-center text-xl font-mono font-bold tracking-widest rounded-xl bg-white/10 border border-sky-400/50 p-2.5 text-sky-300 focus:outline-none"
                     maxLength={6}
                   />
+
+                  {/* Sandbox Instant Helper */}
+                  {loginBackupCode && (
+                    <div className="p-2.5 rounded-xl bg-indigo-950/80 border border-indigo-500/40 text-[11px] text-indigo-200 text-center space-y-1">
+                      <p className="text-zinc-300 text-[10px]">
+                        💡 Instant 2FA Access Token:
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLogin2faCode(loginBackupCode)
+                          handleVerifyLoginMFA(loginBackupCode)
+                        }}
+                        className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white font-mono font-bold rounded-lg shadow-sm transition-all text-xs"
+                      >
+                        ⚡ Auto-Fill &amp; Sign In: {loginBackupCode}
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-center gap-2 pt-2">
@@ -461,11 +482,11 @@ export default function ConnectInLoginPage() {
                     onClick={() => setLoginStep('credentials')}
                     className="rounded-xl bg-white/10 px-4 py-2 text-zinc-300 font-bold"
                   >
-                    Back to Password
+                    Back
                   </button>
                   <button
                     type="button"
-                    onClick={handleVerifyLoginMFA}
+                    onClick={() => handleVerifyLoginMFA()}
                     disabled={isAuthenticating}
                     className="rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-6 py-2 shadow-lg transition-all flex items-center gap-1.5"
                   >
@@ -513,7 +534,7 @@ export default function ConnectInLoginPage() {
                     <label className="block text-zinc-300 font-bold mb-1">Work / Personal Email</label>
                     <input
                       type="email"
-                      placeholder="kwesi@expedite-consults.com"
+                      placeholder="asiedudanquah@gmail.com"
                       value={regEmail}
                       onChange={(e) => setRegEmail(e.target.value)}
                       className="w-full rounded-xl bg-white/10 border border-white/15 px-3 py-2 text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 text-xs"
@@ -581,7 +602,7 @@ export default function ConnectInLoginPage() {
                   </p>
                 </div>
 
-                <div className="max-w-xs mx-auto space-y-1">
+                <div className="max-w-xs mx-auto space-y-2">
                   <input
                     type="text"
                     placeholder="Enter 6-digit code"
@@ -590,6 +611,25 @@ export default function ConnectInLoginPage() {
                     className="w-full text-center text-xl font-mono font-bold tracking-widest rounded-xl bg-white/10 border border-emerald-400/40 p-2.5 text-emerald-300 focus:outline-none"
                     maxLength={6}
                   />
+
+                  {/* Sandbox Instant Helper */}
+                  {regBackupCode && (
+                    <div className="p-3 rounded-2xl bg-indigo-950/90 border border-indigo-500/50 text-[11px] text-indigo-200 text-center space-y-1.5 shadow-lg">
+                      <p className="text-zinc-300 text-[11px]">
+                        💡 <strong>Instant 2FA Confirmation Token:</strong>
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setVerificationCode(regBackupCode)
+                          handleConfirm2FACode(regBackupCode)
+                        }}
+                        className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-mono font-black rounded-xl shadow-md transition-all text-xs flex items-center justify-center gap-1.5 mx-auto"
+                      >
+                        ⚡ Auto-Fill &amp; Confirm Identity: {regBackupCode}
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-center gap-2 pt-2">
@@ -602,7 +642,7 @@ export default function ConnectInLoginPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={handleConfirm2FACode}
+                    onClick={() => handleConfirm2FACode()}
                     disabled={isAuthenticating}
                     className="rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-6 py-2 shadow-lg flex items-center gap-1.5"
                   >

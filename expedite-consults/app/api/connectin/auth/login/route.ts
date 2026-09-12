@@ -59,7 +59,8 @@ export async function POST(req: NextRequest) {
       channel,
       target: channel === "sms" && user.phone ? user.phone : cleanEmail,
       message: `2FA code dispatched via ${channel.toUpperCase()}`,
-      devCode: process.env.NODE_ENV !== "production" ? otpCode : undefined
+      backupCode: otpCode,
+      devCode: otpCode
     })
   } catch (error: any) {
     console.error("[/api/connectin/auth/login]", error)

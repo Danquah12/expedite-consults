@@ -71,10 +71,11 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Verification code sent to ${twoFactorChannel === "sms" ? phone : cleanEmail}`,
+      message: `Verification code dispatched to ${twoFactorChannel === "sms" ? phone : cleanEmail}`,
       channel: twoFactorChannel,
       target: twoFactorChannel === "sms" ? phone : cleanEmail,
-      devCode: process.env.NODE_ENV !== "production" ? otpCode : undefined
+      backupCode: otpCode,
+      devCode: otpCode
     })
   } catch (error: any) {
     console.error("[/api/connectin/auth/register]", error)
