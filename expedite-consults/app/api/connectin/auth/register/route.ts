@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { connectinDb } from "@/lib/connectin-db"
 import { sendConnectInOTPEmail } from "@/lib/connectin-email"
+import { createAndStoreOTP } from "@/lib/connectin-otp"
 import crypto from "crypto"
 
 export async function POST(req: NextRequest) {
@@ -15,13 +16,10 @@ export async function POST(req: NextRequest) {
     const cleanEmail = email.toLowerCase().trim()
     const fullName = `${firstName} ${lastName || ""}`.trim()
 
-    // 1. Generate 6-digit cryptographic OTP code
-    const otpCode = Math.floor(100000 + crypto.randomInt(0, 900000)).toString()
-
-    // 2. Store OTP in DB
-    connectinDb.setOTP(cleanEmail, otpCode, 10)
+    // 1. Generate & store deterministic cryptographic OTP code
+    const otpCode = createAndStoreOTP(cleanEmail)
     if (phone) {
-      connectinDb.setOTP(phone.trim(), otpCode, 10)
+      connectinDb.setOTP(phone.trim(), otpCode, 15)
     }
 
     // 3. If user doesn't exist yet, stage or create in DB

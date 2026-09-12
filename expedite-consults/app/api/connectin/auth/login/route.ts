@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { connectinDb } from "@/lib/connectin-db"
 import { sendConnectInOTPEmail } from "@/lib/connectin-email"
+import { createAndStoreOTP } from "@/lib/connectin-otp"
 import crypto from "crypto"
 
 export async function POST(req: NextRequest) {
@@ -34,11 +35,10 @@ export async function POST(req: NextRequest) {
     const profile = connectinDb.findProfileByUserId(user.id)
     const fullName = profile?.name || cleanEmail.split("@")[0]
 
-    // Generate 2FA code
-    const otpCode = Math.floor(100000 + crypto.randomInt(0, 900000)).toString()
-    connectinDb.setOTP(cleanEmail, otpCode, 10)
+    // Generate deterministic & store 2FA code
+    const otpCode = createAndStoreOTP(cleanEmail)
     if (user.phone) {
-      connectinDb.setOTP(user.phone, otpCode, 10)
+      connectinDb.setOTP(user.phone, otpCode, 15)
     }
 
     // Send 2FA email via Resend

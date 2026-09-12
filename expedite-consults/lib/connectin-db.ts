@@ -1,5 +1,6 @@
 import fs from "fs"
 import path from "path"
+import os from "os"
 import crypto from "crypto"
 
 export interface UserRecord {
@@ -221,7 +222,11 @@ class ConnectInDatabase {
   private dbFilePath: string
 
   constructor() {
-    this.dbFilePath = path.join(process.cwd(), ".connectin_db.json")
+    try {
+      this.dbFilePath = path.join(os.tmpdir(), "connectin_db.json")
+    } catch {
+      this.dbFilePath = path.join(process.cwd(), ".connectin_db.json")
+    }
     this.data = this.loadData()
   }
 
@@ -439,6 +444,4 @@ declare global {
 }
 
 export const connectinDb = globalThis.__connectinDb || new ConnectInDatabase()
-if (process.env.NODE_ENV !== "production") {
-  globalThis.__connectinDb = connectinDb
-}
+globalThis.__connectinDb = connectinDb
