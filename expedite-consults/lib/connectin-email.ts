@@ -1,6 +1,5 @@
 import { Resend } from "resend"
-
-const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy_key_for_build")
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 interface SendOTPEmailParams {
   toEmail: string
@@ -23,13 +22,7 @@ export async function sendConnectInOTPEmail({
 
     const fromAddress = process.env.RESEND_FORM_EMAIL || "ConnectIn Identity <onboarding@resend.dev>"
 
-    if (!process.env.RESEND_API_KEY) {
-      console.log(`\n========================================`)
-      console.log(`[DEV OTP DISPATCH] To: ${toEmail} (${fullName})`)
-      console.log(`[DEV OTP CODE] Code: ${code} (Valid for 10 min)`)
-      console.log(`========================================\n`)
-      return { success: true }
-    }
+    console.log(`[ConnectIn Email Dispatch] Attempting send to: ${toEmail} using ${fromAddress}`)
 
     const { data, error } = await resend.emails.send({
       from: fromAddress,
