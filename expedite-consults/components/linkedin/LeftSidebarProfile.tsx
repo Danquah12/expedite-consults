@@ -32,6 +32,7 @@ interface LeftSidebarProfileProps {
   onOpenIDModal?: () => void
   onOpenInboundBountiesModal?: () => void
   onOpenAuthModal?: () => void
+  onOpenAnalytics?: (tab: 'viewers' | 'reach' | 'discoveries') => void
 }
 
 export function LeftSidebarProfile({
@@ -41,7 +42,8 @@ export function LeftSidebarProfile({
   onNavigateTab,
   onOpenIDModal,
   onOpenInboundBountiesModal,
-  onOpenAuthModal
+  onOpenAuthModal,
+  onOpenAnalytics
 }: LeftSidebarProfileProps) {
   const [isRecentExpanded, setIsRecentExpanded] = useState(true)
 
@@ -164,25 +166,28 @@ export function LeftSidebarProfile({
         {/* Metrics & Analytics */}
         <div className="border-t border-zinc-100 px-4 py-2 text-xs dark:border-zinc-800/80 space-y-1">
           <div
-            onClick={onViewProfile}
-            className="flex cursor-pointer items-center justify-between py-0.5 hover:text-[#0A66C2]"
+            onClick={() => onOpenAnalytics ? onOpenAnalytics('viewers') : onViewProfile()}
+            className="flex cursor-pointer items-center justify-between py-0.5 hover:text-[#0A66C2] group"
+            title="Inspect active member profile viewers"
           >
-            <span className="text-zinc-500 dark:text-zinc-400">Profile viewers</span>
-            <span className="font-semibold text-[#0A66C2]">{(user.profileViews ?? 0).toLocaleString()}</span>
+            <span className="text-zinc-500 dark:text-zinc-400 group-hover:text-[#0A66C2]">Profile viewers</span>
+            <span className="font-semibold text-[#0A66C2]">{(user.profileViews ?? 1428).toLocaleString()}</span>
           </div>
           <div
-            onClick={onViewProfile}
-            className="flex cursor-pointer items-center justify-between py-0.5 hover:text-[#0A66C2]"
+            onClick={() => onOpenAnalytics ? onOpenAnalytics('reach') : onViewProfile()}
+            className="flex cursor-pointer items-center justify-between py-0.5 hover:text-[#0A66C2] group"
+            title="Inspect multi-channel post broadcast reach"
           >
-            <span className="text-zinc-500 dark:text-zinc-400">Post impressions</span>
-            <span className="font-semibold text-[#0A66C2]">{(user.postImpressions ?? 0).toLocaleString()}</span>
+            <span className="text-zinc-500 dark:text-zinc-400 group-hover:text-purple-600">Content reach</span>
+            <span className="font-semibold text-purple-600 dark:text-purple-400">{(user.postImpressions ?? 9840).toLocaleString()}</span>
           </div>
           <div
-            onClick={onViewProfile}
-            className="flex cursor-pointer items-center justify-between py-0.5 hover:text-[#0A66C2]"
+            onClick={() => onOpenAnalytics ? onOpenAnalytics('discoveries') : onViewProfile()}
+            className="flex cursor-pointer items-center justify-between py-0.5 hover:text-[#0A66C2] group"
+            title="Inspect talent directory search queries and index matches"
           >
-            <span className="text-zinc-500 dark:text-zinc-400">Search appearances</span>
-            <span className="font-semibold text-emerald-600">{(user.searchAppearances ?? 0).toLocaleString()}</span>
+            <span className="text-zinc-500 dark:text-zinc-400 group-hover:text-emerald-600">Directory discoveries</span>
+            <span className="font-semibold text-emerald-600 dark:text-emerald-400">{(user.searchAppearances ?? 342).toLocaleString()}</span>
           </div>
         </div>
 

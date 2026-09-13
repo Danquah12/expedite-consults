@@ -56,24 +56,57 @@ import {
 } from "@/components/ui/dialog"
 import { createUniqueUserProfile } from "@/lib/connectin-profile"
 import { saveStoredUser } from "@/lib/connectin-storage"
+import {
+  ProfileViewerItem,
+  ContentReachData,
+  DirectoryDiscoveryData,
+  loadStoredProfileViewers,
+  saveStoredProfileViewers,
+  loadStoredContentReach,
+  loadStoredDirectoryDiscoveries,
+  recordProfileView
+} from "@/lib/connectin-analytics"
 
 interface ProfileViewProps {
   user: UserProfile
   onBackToFeed?: () => void
   onNavigateMarketplace?: () => void
   onUpdateUser?: (updated: UserProfile) => void
+  onOpenAnalytics?: (tab: 'viewers' | 'reach' | 'discoveries') => void
+  onNavigateMessaging?: (personName?: string) => void
 }
 
 export function ProfileView({
   user,
   onBackToFeed,
   onNavigateMarketplace,
-  onUpdateUser
+  onUpdateUser,
+  onOpenAnalytics,
+  onNavigateMessaging
 }: ProfileViewProps) {
-  // 8 Workspace Sub-Sections
+  // 9 Workspace Sub-Sections
   const [workspaceSection, setWorkspaceSection] = useState<
-    'profile' | 'portfolio' | 'skills' | 'certifications' | 'experience' | 'publications' | 'reviews' | 'products'
+    'profile' | 'portfolio' | 'skills' | 'certifications' | 'experience' | 'publications' | 'reviews' | 'products' | 'analytics'
   >('profile')
+
+  const [analyticsSubTab, setAnalyticsSubTab] = useState<'viewers' | 'reach' | 'discoveries'>('viewers')
+  const [viewers, setViewers] = useState<ProfileViewerItem[]>(() => loadStoredProfileViewers())
+  const [reachData, setReachData] = useState<ContentReachData>(() => loadStoredContentReach())
+  const [discoveryData, setDiscoveryData] = useState<DirectoryDiscoveryData>(() => loadStoredDirectoryDiscoveries())
+  const [viewerCategoryFilter, setViewerCategoryFilter] = useState<'all' | 'recruiter' | 'buyer' | 'peer' | 'executive'>('all')
+
+  const handleToggleViewerConnect = (viewerId: string) => {
+    setViewers(prev => {
+      const updated = prev.map(v => {
+        if (v.id !== viewerId) return v
+        if (v.isConnected) return { ...v, isConnected: false, isPending: false }
+        if (v.isPending) return { ...v, isPending: false }
+        return { ...v, isPending: true }
+      })
+      saveStoredProfileViewers(updated)
+      return updated
+    })
+  }
 
   // Edit Profile Modal State
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false)
@@ -195,10 +228,11 @@ export function ProfileView({
           </div>
         </div>
 
-        {/* 8 Workspace Sections Switcher Ribbon */}
+        {/* 9 Workspace Sections Switcher Ribbon */}
         <div className="mt-6 pt-4 border-t border-white/10 flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
           {[
             { id: 'profile', label: '👤 Profile', icon: ShieldCheck },
+            { id: 'analytics', label: '📊 Analytics & Radar', icon: BarChart3 },
             { id: 'portfolio', label: '💼 Portfolio', icon: FolderGit2 },
             { id: 'skills', label: '🛡️ Verified Skills', icon: Zap },
             { id: 'certifications', label: '📜 Certifications', icon: Award },
@@ -351,9 +385,243 @@ export function ProfileView({
                     </div>
                   </div>
                 </div>
+
+                {/* ANALYTICS & IDENTITY RADAR STRIP */}
+                <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/70 p-5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <BarChart3 className="h-4 w-4 text-[#0A66C2]" />
+                      <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
+                        Live Analytics &amp; Identity Radar
+                      </h4>
+                    </div>
+                    <button
+                      onClick={() => setWorkspaceSection('analytics')}
+                      className="text-xs font-bold text-[#0A66C2] dark:text-sky-400 hover:underline flex items-center gap-1"
+                    >
+                      <span>Full Analytics Dashboard</span>
+                      <ArrowRight className="h-3 w-3" />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div
+                      onClick={() => onOpenAnalytics ? onOpenAnalytics('viewers') : (setWorkspaceSection('analytics'), setAnalyticsSubTab('viewers'))}
+                      className="rounded-xl border border-blue-200/80 dark:border-blue-900/50 bg-white dark:bg-zinc-800/80 p-3.5 space-y-1 hover:border-[#0A66C2] hover:shadow-sm transition-all cursor-pointer group"
+                    >
+                      <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
+                        <span className="font-semibold group-hover:text-[#0A66C2]">Profile Viewers</span>
+                        <Eye className="h-3.5 w-3.5 text-[#0A66C2]" />
+                      </div>
+                      <p className="text-xl font-black text-zinc-900 dark:text-zinc-100">
+                        {(user.profileViews ?? 1428).toLocaleString()}
+                      </p>
+                      <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
+                        +14.8% · 84 Unique Enterprises
+                      </p>
+                    </div>
+
+                    <div
+                      onClick={() => onOpenAnalytics ? onOpenAnalytics('reach') : (setWorkspaceSection('analytics'), setAnalyticsSubTab('reach'))}
+                      className="rounded-xl border border-purple-200/80 dark:border-purple-900/50 bg-white dark:bg-zinc-800/80 p-3.5 space-y-1 hover:border-purple-500 hover:shadow-sm transition-all cursor-pointer group"
+                    >
+                      <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
+                        <span className="font-semibold group-hover:text-purple-600">Content Reach</span>
+                        <TrendingUp className="h-3.5 w-3.5 text-purple-600" />
+                      </div>
+                      <p className="text-xl font-black text-zinc-900 dark:text-zinc-100">
+                        {(user.postImpressions ?? 9840).toLocaleString()}
+                      </p>
+                      <p className="text-[10px] text-purple-600 dark:text-purple-400 font-bold">
+                        +24.6% · Multi-Channel Broadcasts
+                      </p>
+                    </div>
+
+                    <div
+                      onClick={() => onOpenAnalytics ? onOpenAnalytics('discoveries') : (setWorkspaceSection('analytics'), setAnalyticsSubTab('discoveries'))}
+                      className="rounded-xl border border-emerald-200/80 dark:border-emerald-900/50 bg-white dark:bg-zinc-800/80 p-3.5 space-y-1 hover:border-emerald-500 hover:shadow-sm transition-all cursor-pointer group"
+                    >
+                      <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
+                        <span className="font-semibold group-hover:text-emerald-600">Directory Discoveries</span>
+                        <Search className="h-3.5 w-3.5 text-emerald-600" />
+                      </div>
+                      <p className="text-xl font-black text-zinc-900 dark:text-zinc-100">
+                        {(user.searchAppearances ?? 342).toLocaleString()}
+                      </p>
+                      <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
+                        +18.2% · Talent Query Matches
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 📊 ANALYTICS & RADAR SUB-SECTION                                          */}
+      {/* ========================================================================= */}
+      {workspaceSection === 'analytics' && (
+        <div className="space-y-6">
+          <div className="rounded-2xl border border-indigo-500/30 bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 p-6 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <span className="rounded-full bg-sky-500/20 px-3 py-0.5 text-xs font-bold text-sky-300 border border-sky-400/30 flex items-center gap-1.5 w-fit">
+                <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+                ConnectIn Intelligence Radar
+              </span>
+              <h2 className="text-2xl font-black text-white">
+                Member Profile Views, Content Reach &amp; Discovery Analytics
+              </h2>
+              <p className="text-xs text-zinc-300 max-w-xl leading-relaxed">
+                Track exact identities of members inspecting your credentials, observe post syndication and reach across enterprise circles, and monitor search query discoveries.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 bg-black/40 p-1.5 rounded-xl border border-white/10 text-xs font-bold shrink-0">
+              <button
+                onClick={() => setAnalyticsSubTab('viewers')}
+                className={`px-3 py-2 rounded-lg transition-all flex items-center gap-1.5 ${
+                  analyticsSubTab === 'viewers' ? "bg-white text-zinc-900 shadow-xs" : "text-zinc-300 hover:text-white"
+                }`}
+              >
+                <Eye className="h-3.5 w-3.5 text-[#0A66C2]" />
+                <span>Viewers ({viewers.length})</span>
+              </button>
+              <button
+                onClick={() => setAnalyticsSubTab('reach')}
+                className={`px-3 py-2 rounded-lg transition-all flex items-center gap-1.5 ${
+                  analyticsSubTab === 'reach' ? "bg-white text-zinc-900 shadow-xs" : "text-zinc-300 hover:text-white"
+                }`}
+              >
+                <TrendingUp className="h-3.5 w-3.5 text-purple-600" />
+                <span>Reach</span>
+              </button>
+              <button
+                onClick={() => setAnalyticsSubTab('discoveries')}
+                className={`px-3 py-2 rounded-lg transition-all flex items-center gap-1.5 ${
+                  analyticsSubTab === 'discoveries' ? "bg-white text-zinc-900 shadow-xs" : "text-zinc-300 hover:text-white"
+                }`}
+              >
+                <Search className="h-3.5 w-3.5 text-emerald-600" />
+                <span>Discoveries</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Sub-Tab 1: Viewers */}
+          {analyticsSubTab === 'viewers' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                  <Eye className="h-4 w-4 text-[#0A66C2]" />
+                  <span>Recent Profile Viewers ({viewers.length})</span>
+                </h3>
+
+                <button
+                  onClick={() => onOpenAnalytics && onOpenAnalytics('viewers')}
+                  className="text-xs font-bold text-[#0A66C2] dark:text-sky-400 hover:underline flex items-center gap-1"
+                >
+                  <span>Open Full Radar Modal</span>
+                  <ExternalLink className="h-3 w-3" />
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {viewers.map((viewer) => (
+                  <div
+                    key={viewer.id}
+                    className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                  >
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <img src={viewer.avatar} alt={viewer.name} className="h-12 w-12 rounded-2xl object-cover shrink-0" />
+                      <div className="space-y-0.5 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">{viewer.name}</h4>
+                          <span className="rounded-full bg-blue-50 dark:bg-blue-950 px-2 py-0.2 text-[10px] font-bold text-[#0A66C2] dark:text-sky-300">
+                            {viewer.clearanceLevel}
+                          </span>
+                        </div>
+                        <p className="text-xs text-zinc-500 truncate">{viewer.headline}</p>
+                        <p className="text-[11px] text-zinc-400">
+                          {viewer.company} · Viewed: <strong>{viewer.viewVector}</strong> ({viewer.viewedAt})
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={() => onNavigateMessaging && onNavigateMessaging(viewer.name)}
+                        className="rounded-full border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-xs font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                      >
+                        Message
+                      </button>
+                      <button
+                        onClick={() => handleToggleViewerConnect(viewer.id)}
+                        className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-all ${
+                          viewer.isConnected
+                            ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200"
+                            : viewer.isPending
+                            ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                            : "bg-[#0A66C2] text-white hover:bg-[#004182]"
+                        }`}
+                      >
+                        {viewer.isConnected ? "Connected" : viewer.isPending ? "Pending" : "Connect"}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Sub-Tab 2: Reach */}
+          {analyticsSubTab === 'reach' && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-1">
+                  <span className="text-xs text-zinc-400">Total Content Reach</span>
+                  <p className="text-2xl font-black text-purple-600">{reachData.totalReach.toLocaleString()}</p>
+                  <span className="text-[10px] text-emerald-500 font-bold">+{reachData.weeklyChangePercent}% this week</span>
+                </div>
+                <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-1">
+                  <span className="text-xs text-zinc-400">Unique Professionals</span>
+                  <p className="text-2xl font-black text-zinc-900 dark:text-zinc-100">{reachData.uniqueViewers.toLocaleString()}</p>
+                  <span className="text-[10px] text-zinc-500">Across 6 Sectors</span>
+                </div>
+                <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-1">
+                  <span className="text-xs text-zinc-400">Engagement Velocity</span>
+                  <p className="text-2xl font-black text-emerald-500">{reachData.engagementRate}%</p>
+                  <span className="text-[10px] text-zinc-500">Likes, Comments &amp; Reposts</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Sub-Tab 3: Discoveries */}
+          {analyticsSubTab === 'discoveries' && (
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 space-y-3">
+                <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                  <Search className="h-4 w-4 text-emerald-600" />
+                  <span>Exact Keywords That Surfaced Your Credentials</span>
+                </h3>
+                <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                  {discoveryData.topSearchKeywords.map((kw, i) => (
+                    <div key={kw.keyword} className="py-2.5 flex items-center justify-between text-xs">
+                      <span className="font-mono font-bold text-zinc-800 dark:text-zinc-200">
+                        {i + 1}. "{kw.keyword}"
+                      </span>
+                      <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                        {kw.occurrences} hits ({kw.growth})
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

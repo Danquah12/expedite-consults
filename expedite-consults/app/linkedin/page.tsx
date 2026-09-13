@@ -47,6 +47,7 @@ import { InboundBountiesModal } from "@/components/linkedin/InboundBountiesModal
 import { AccountSecurityView } from "@/components/linkedin/AccountSecurityView"
 import { AdminIAMConsoleView } from "@/components/linkedin/AdminIAMConsoleView"
 import { ConnectInAuthModal } from "@/components/linkedin/ConnectInAuthModal"
+import { ConnectInAnalyticsModal } from "@/components/linkedin/ConnectInAnalyticsModal"
 import {
   currentUser as initialCurrentUser,
   initialPosts,
@@ -115,6 +116,8 @@ export default function LinkedInPage() {
   const [isIDModalOpen, setIsIDModalOpen] = useState(false)
   const [isInboundBountiesModalOpen, setIsInboundBountiesModalOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
+  const [isAnalyticsModalOpen, setIsAnalyticsModalOpen] = useState(false)
+  const [analyticsModalTab, setAnalyticsModalTab] = useState<'viewers' | 'reach' | 'discoveries'>('viewers')
   const [activeWorkspace, setActiveWorkspace] = useState<'personal' | 'enterprise' | 'creator' | 'seller'>('personal')
 
   const [userData, setUserData] = useState<UserProfile>(initialCurrentUser)
@@ -587,6 +590,10 @@ export default function LinkedInPage() {
                 onOpenIDModal={() => setIsIDModalOpen(true)}
                 onOpenInboundBountiesModal={() => setIsInboundBountiesModalOpen(true)}
                 onOpenAuthModal={() => setIsAuthModalOpen(true)}
+                onOpenAnalytics={(tab) => {
+                  setAnalyticsModalTab(tab)
+                  setIsAnalyticsModalOpen(true)
+                }}
               />
             </div>
 
@@ -728,6 +735,11 @@ export default function LinkedInPage() {
             onBackToFeed={() => setActiveTab('home')}
             onNavigateMarketplace={() => setActiveTab('marketplace')}
             onUpdateUser={(updated) => setUserData(updated)}
+            onOpenAnalytics={(tab) => {
+              setAnalyticsModalTab(tab)
+              setIsAnalyticsModalOpen(true)
+            }}
+            onNavigateMessaging={(person) => setActiveTab('messaging')}
           />
         )}
 
@@ -1021,6 +1033,18 @@ export default function LinkedInPage() {
           setIsAuthenticated(true)
           setIsAuthModalOpen(false)
         }}
+      />
+
+      {/* ConnectIn Analytics & Network Intelligence Modal (Profile Viewers, Content Reach, Directory Discoveries) */}
+      <ConnectInAnalyticsModal
+        isOpen={isAnalyticsModalOpen}
+        onClose={() => setIsAnalyticsModalOpen(false)}
+        initialTab={analyticsModalTab}
+        currentUser={userData}
+        onNavigateMessaging={(personName) => {
+          setActiveTab('messaging')
+        }}
+        onNavigateTab={(tab) => setActiveTab(tab as any)}
       />
     </div>
   )
