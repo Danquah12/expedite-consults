@@ -216,6 +216,34 @@ export interface SuggestedConnection {
   isPending?: boolean
 }
 
+export interface ConnectedMember {
+  id: string
+  name: string
+  headline: string
+  avatar: string
+  coverImage?: string
+  connectedSince: string
+  capabilities: string[]
+  verifiedBadges?: string[]
+  mutualCount: number
+  isOnline?: boolean
+  company?: string
+  location?: string
+  email?: string
+}
+
+export interface OutboundInvitation {
+  id: string
+  name: string
+  headline: string
+  avatar: string
+  sentAt: string
+  customNote?: string
+  status: 'pending' | 'accepted' | 'withdrawn'
+  type?: 'person' | 'email' | 'sms'
+  recipient?: string
+}
+
 export interface CompanyNetworkItem {
   id: string
   name: string
@@ -1031,6 +1059,131 @@ export const suggestedConnections: SuggestedConnection[] = [
     matchScore: 91,
     isConnected: false,
     isPending: false
+  }
+]
+
+export const initialConnectedMembers: ConnectedMember[] = [
+  {
+    id: 'conn_1',
+    name: 'Dr. Elena Rostova',
+    headline: 'Chief AI Research Scientist | Stanford AI Lab Fellow | Ex-Google Brain',
+    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80',
+    connectedSince: 'Connected 3 months ago',
+    capabilities: ['AI Security', 'Cloud Security', 'DevSecOps'],
+    verifiedBadges: ['✓ Ph.D. AI', '✓ Stanford Fellow'],
+    mutualCount: 48,
+    isOnline: true,
+    company: 'Stanford AI Lab / Expedite Research',
+    location: 'Palo Alto, CA',
+    email: 'e.rostova@stanford.edu'
+  },
+  {
+    id: 'conn_2',
+    name: 'Marcus Vance',
+    headline: 'VP of Cloud Infrastructure & AppSec @ CloudScale Global · Ex-AWS',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=600&auto=format&fit=crop&q=80',
+    connectedSince: 'Connected 6 months ago',
+    capabilities: ['Cloud Security', 'Zero Trust', 'DevSecOps'],
+    verifiedBadges: ['✓ Ex-AWS Staff', '✓ CISO Council'],
+    mutualCount: 39,
+    isOnline: true,
+    company: 'CloudScale Global',
+    location: 'Seattle, WA',
+    email: 'marcus.vance@cloudscaleglobal.io'
+  },
+  {
+    id: 'conn_3',
+    name: 'Samantha Wei',
+    headline: 'Lead FedRAMP & DoD 3PAO Assessor @ Federal Defense Advisors',
+    avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=600&auto=format&fit=crop&q=80',
+    connectedSince: 'Connected 1 year ago',
+    capabilities: ['RMF', 'Zero Trust', 'Cloud Security'],
+    verifiedBadges: ['✓ 3PAO Certified', '✓ CISSP-ISSAP'],
+    mutualCount: 52,
+    isOnline: false,
+    company: 'Federal Defense Advisors',
+    location: 'Washington, DC',
+    email: 'samantha.wei@feddefense.gov'
+  },
+  {
+    id: 'conn_4',
+    name: 'Devon Hughes',
+    headline: 'Senior Offensive Security Lead & Red Team Architect @ DarkMatrix',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=600&auto=format&fit=crop&q=80',
+    connectedSince: 'Connected 4 months ago',
+    capabilities: ['Penetration Testing', 'AI Security', 'DevSecOps'],
+    verifiedBadges: ['✓ OSCE3', '✓ Exploit Author'],
+    mutualCount: 31,
+    isOnline: true,
+    company: 'DarkMatrix Cyber',
+    location: 'Austin, TX',
+    email: 'devon.hughes@darkmatrix.sec'
+  },
+  {
+    id: 'conn_5',
+    name: 'Aisha Johnson',
+    headline: 'Staff Platform Security Engineer @ Kubernetes Foundation',
+    avatar: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=200&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=600&auto=format&fit=crop&q=80',
+    connectedSince: 'Connected 8 months ago',
+    capabilities: ['DevSecOps', 'Cloud Security', 'Zero Trust'],
+    verifiedBadges: ['✓ CNCF Ambassador', '✓ CKS'],
+    mutualCount: 44,
+    isOnline: false,
+    company: 'Cloud Native Computing Foundation',
+    location: 'San Francisco, CA',
+    email: 'aisha.j@cncf.io'
+  },
+  {
+    id: 'conn_6',
+    name: 'Carlos Mendez',
+    headline: 'Principal Zero Trust Architect @ SecureEnterprise Solutions',
+    avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=600&auto=format&fit=crop&q=80',
+    connectedSince: 'Connected 5 months ago',
+    capabilities: ['Zero Trust', 'Cloud Security', 'RMF'],
+    verifiedBadges: ['✓ TOGAF 10', '✓ CCSP'],
+    mutualCount: 27,
+    isOnline: true,
+    company: 'SecureEnterprise Solutions',
+    location: 'Denver, CO',
+    email: 'carlos.mendez@sec-ent.com'
+  }
+]
+
+export const initialOutboundInvitations: OutboundInvitation[] = [
+  {
+    id: 'out_init_1',
+    name: 'Victoria Vance-Montgomery',
+    headline: 'Director of Cyber Procurement @ Raytheon Intelligence & Space',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+    sentAt: '2 days ago',
+    customNote: 'Hi Victoria, saw your panel on Zero Trust procurement. Would love to stay connected!',
+    status: 'pending',
+    type: 'person'
+  },
+  {
+    id: 'out_init_2',
+    name: 'Dr. Arthur Pendelton',
+    headline: 'Principal AI Safety Fellow @ MIT Lincoln Laboratory',
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&auto=format&fit=crop&q=80',
+    sentAt: '4 days ago',
+    customNote: 'Dr. Pendelton, following your work on multi-agent sandboxing. Looking forward to connecting.',
+    status: 'pending',
+    type: 'person'
+  },
+  {
+    id: 'out_init_3',
+    name: 'Sarah Chen-O\'Reilly',
+    headline: 'Chief Information Security Officer @ Apex HealthTech',
+    avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&auto=format&fit=crop&q=80',
+    sentAt: '1 week ago',
+    status: 'pending',
+    type: 'person'
   }
 ]
 

@@ -748,6 +748,9 @@ export default function LinkedInPage() {
           <NetworkView
             suggestedPeople={suggestedPeople}
             onToggleConnect={handleToggleConnect}
+            currentUser={userData}
+            onNavigateMessaging={(person) => setActiveTab('messaging')}
+            onUpdateConnectionsCount={(newCount) => setUserData(prev => ({ ...prev, connectionsCount: newCount }))}
           />
         )}
 
