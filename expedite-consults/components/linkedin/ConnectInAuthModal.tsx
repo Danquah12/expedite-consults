@@ -156,9 +156,9 @@ export function ConnectInAuthModal({
     setErrorMessage(null)
     setSuccessMessage("Redirecting to Google Identity Services...")
     try {
-      await signIn("google", { callbackUrl: "/linkedin" })
+      await signIn("google", { callbackUrl: "/connectin" })
     } catch (err: any) {
-      window.location.href = "/api/auth/signin/google?callbackUrl=/linkedin"
+      window.location.href = "/api/auth/signin/google?callbackUrl=/connectin"
     }
   }
 
@@ -168,9 +168,9 @@ export function ConnectInAuthModal({
     setErrorMessage(null)
     setSuccessMessage("Redirecting to Microsoft Entra ID (Azure AD)...")
     try {
-      await signIn("microsoft-entra-id", { callbackUrl: "/linkedin" })
+      await signIn("microsoft-entra-id", { callbackUrl: "/connectin" })
     } catch (err: any) {
-      window.location.href = "/api/auth/signin/microsoft-entra-id?callbackUrl=/linkedin"
+      window.location.href = "/api/auth/signin/microsoft-entra-id?callbackUrl=/connectin"
     }
   }
 

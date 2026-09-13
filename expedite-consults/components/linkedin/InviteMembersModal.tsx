@@ -43,7 +43,7 @@ export function InviteMembersModal({
   // Email form state
   const [emailsText, setEmailsText] = useState("")
   const [emailMessage, setEmailMessage] = useState(
-    `Hi there,\n\nI'd like to invite you to join my trusted network on ConnectIn — the zero-trust professional network for cloud, cybersecurity & enterprise architects.\n\nConnect with me here: https://expedite-consults.vercel.app/linkedin?invite=${encodeURIComponent(currentUser.name.toLowerCase().replace(/\s+/g, '-'))}`
+    `Hi there,\n\nI'd like to invite you to join my trusted network on ConnectIn — the zero-trust professional network for cloud, cybersecurity & enterprise architects.\n\nConnect with me here: https://expedite-consults.vercel.app/connectin?invite=${encodeURIComponent(currentUser.name.toLowerCase().replace(/\s+/g, '-'))}`
   )
 
   // Phone form state
@@ -57,7 +57,7 @@ export function InviteMembersModal({
   const [isCopied, setIsCopied] = useState(false)
   const [successToast, setSuccessToast] = useState<string | null>(null)
 
-  const referralLink = `https://expedite-consults.vercel.app/linkedin?ref=${encodeURIComponent(currentUser.name.toLowerCase().replace(/\s+/g, '-'))}&cid=cin_${Date.now().toString(36)}`
+  const referralLink = `https://expedite-consults.vercel.app/connectin?ref=${encodeURIComponent(currentUser.name.toLowerCase().replace(/\s+/g, '-'))}&cid=cin_${Date.now().toString(36)}`
 
   const handleCopyLink = () => {
     if (typeof navigator !== "undefined") {
