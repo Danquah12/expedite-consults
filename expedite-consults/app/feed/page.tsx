@@ -88,18 +88,23 @@ export default function FeedPage() {
     hydrateLocalData();
   }, []);
 
-  // Fetch live feed data from API and synchronize
+  // Fetch live feed data from API and synchronize with IndexedDB vault
   const fetchFeed = async (mode: "FYP" | "FOLLOWING" | "LIVE") => {
     try {
       setIsLoading(true);
+      const localVaultPosts = await getLocalFeedPosts();
       const res = await fetch(`/api/feed?mode=${mode}`);
       if (res.ok) {
         const data = await res.json();
         if (data.posts && data.posts.length > 0) {
           setPosts((current) => {
             const serverIds = new Set(data.posts.map((p: FeedPost) => p.id));
-            const localOnly = current.filter((p) => !serverIds.has(p.id) && (p.id.startsWith("p-") || p.id.startsWith("post-")));
-            return [...localOnly, ...data.posts];
+            const combinedLocal = [...(localVaultPosts || []), ...current].filter(
+              (p) => !serverIds.has(p.id) && (p.id.startsWith("p-") || p.id.startsWith("post-"))
+            );
+            const dedupedMap = new Map();
+            combinedLocal.forEach((p) => dedupedMap.set(p.id, p));
+            return [...Array.from(dedupedMap.values()), ...data.posts];
           });
         }
         if (data.stories && data.stories.length > 0) setStories(data.stories);

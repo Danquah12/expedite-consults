@@ -120,25 +120,23 @@ export default function FeedPage() {
     }
   }, []);
 
-  // 2. Fetch live feed data from API and synchronize
+  // 2. Fetch live feed data from API and synchronize with IndexedDB vault
   const fetchFeed = async (stream: FeedStreamType) => {
     try {
       setIsLoading(true);
+      const localVaultPosts = await getLocalFeedPosts();
       const res = await fetch(`/api/feed?mode=${stream}`);
       if (res.ok) {
         const data = await res.json();
         if (data.posts && data.posts.length > 0) {
           setPosts((current) => {
-            // Keep any locally created posts that aren't yet in server list, and merge
             const serverIds = new Set(data.posts.map((p: FeedPost) => p.id));
-            const localOnly = current.filter((p) => !serverIds.has(p.id) && (p.id.startsWith("p-") || p.id.startsWith("post-")));
-            const merged = [...localOnly, ...data.posts];
-            if (typeof window !== "undefined") {
-              try {
-                localStorage.setItem(SPHERA_LOCAL_POSTS_KEY, JSON.stringify(merged));
-              } catch (e) {}
-            }
-            return merged;
+            const combinedLocal = [...(localVaultPosts || []), ...current].filter(
+              (p) => !serverIds.has(p.id) && (p.id.startsWith("p-") || p.id.startsWith("post-"))
+            );
+            const dedupedMap = new Map();
+            combinedLocal.forEach((p) => dedupedMap.set(p.id, p));
+            return [...Array.from(dedupedMap.values()), ...data.posts];
           });
         }
         if (data.stories && data.stories.length > 0) setStories(data.stories);
