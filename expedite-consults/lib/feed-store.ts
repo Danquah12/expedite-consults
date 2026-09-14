@@ -264,16 +264,73 @@ declare global {
   var __SPHERA_FOLLOWED_USERS__: Set<string> | undefined;
 }
 
+// Persistent storage on D: Drive
+function getStorageFilePaths(filename: string): string[] {
+  if (typeof window !== "undefined") return [];
+  try {
+    const p = require("path");
+    const fs = require("fs");
+    const primary = p.join(process.cwd(), "data", "db", filename);
+    const dir = p.dirname(primary);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    return [
+      primary,
+      p.join(process.cwd(), "app", "linkedin", "data", filename),
+      p.join(process.cwd(), "data", filename),
+    ];
+  } catch {
+    return [];
+  }
+}
+
+function loadPersistedData<T>(filename: string, fallback: T): T {
+  if (typeof window !== "undefined") return fallback;
+  try {
+    const fs = require("fs");
+    const filePaths = getStorageFilePaths(filename);
+    for (const filePath of filePaths) {
+      if (fs.existsSync(filePath)) {
+        const raw = fs.readFileSync(filePath, "utf-8");
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed as unknown as T;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn(`[FeedStore] Notice for ${filename}:`, err);
+  }
+  return fallback;
+}
+
+function savePersistedData(filename: string, data: any) {
+  if (typeof window !== "undefined") return;
+  try {
+    const fs = require("fs");
+    const p = require("path");
+    const filePaths = getStorageFilePaths(filename);
+    for (const filePath of filePaths) {
+      const dir = p.dirname(filePath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
+    }
+  } catch (err) {
+    console.warn(`[FeedStore] Could not save ${filename}:`, err);
+  }
+}
+
 if (!globalThis.__SPHERA_FEED_POSTS__) {
-  globalThis.__SPHERA_FEED_POSTS__ = [...initialFeedPosts];
+  globalThis.__SPHERA_FEED_POSTS__ = loadPersistedData<FeedPost[]>("feed_posts.json", [...initialFeedPosts]);
 }
 
 if (!globalThis.__SPHERA_FEED_STORIES__) {
-  globalThis.__SPHERA_FEED_STORIES__ = [...initialStories];
+  globalThis.__SPHERA_FEED_STORIES__ = loadPersistedData<StoryItem[]>("feed_stories.json", [...initialStories]);
 }
 
 if (!globalThis.__SPHERA_FEED_LIVE__) {
-  globalThis.__SPHERA_FEED_LIVE__ = [...initialLiveStreams];
+  globalThis.__SPHERA_FEED_LIVE__ = loadPersistedData<LiveStreamItem[]>("feed_livestreams.json", [...initialLiveStreams]);
 }
 
 if (!globalThis.__SPHERA_FOLLOWED_USERS__) {
@@ -282,6 +339,7 @@ if (!globalThis.__SPHERA_FOLLOWED_USERS__) {
 
 export const feedStore = {
   getPosts: (mode: "FYP" | "FOLLOWING" | "LIVE" = "FYP"): FeedPost[] => {
+    globalThis.__SPHERA_FEED_POSTS__ = loadPersistedData<FeedPost[]>("feed_posts.json", globalThis.__SPHERA_FEED_POSTS__ || [...initialFeedPosts]);
     const posts = globalThis.__SPHERA_FEED_POSTS__ || [];
     const followed = globalThis.__SPHERA_FOLLOWED_USERS__ || new Set();
 
@@ -291,20 +349,21 @@ export const feedStore = {
     return posts;
   },
 
-  addPost: (post: Omit<FeedPost, "id" | "likes" | "commentsCount" | "sharesCount" | "createdAt">): FeedPost => {
+  addPost: (post: Omit<FeedPost, "id" | "likes" | "commentsCount" | "sharesCount" | "createdAt"> & { id?: string }): FeedPost => {
     const newPost: FeedPost = {
       ...post,
-      id: `post-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      likes: 0,
+      id: post.id || `post-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      likes: 1,
       commentsCount: 0,
       sharesCount: 0,
       savesCount: 0,
-      isLiked: false,
+      isLiked: true,
       isSaved: false,
       commentsList: [],
       createdAt: new Date().toISOString(),
     };
     globalThis.__SPHERA_FEED_POSTS__ = [newPost, ...(globalThis.__SPHERA_FEED_POSTS__ || [])];
+    savePersistedData("feed_posts.json", globalThis.__SPHERA_FEED_POSTS__);
     return newPost;
   },
 

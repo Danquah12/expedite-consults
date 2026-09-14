@@ -38,6 +38,13 @@ export async function POST(req: NextRequest) {
       authorName = "Kwesi Asiedu",
       authorUsername = "kwesi",
       authorAvatar = "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
+      isThread,
+      threadIndex,
+      threadTotal,
+      threadReplies,
+      communityNote,
+      bounty,
+      article,
     } = body;
 
     if (!content && !videoUrl && !imageUrl) {
@@ -54,7 +61,7 @@ export async function POST(req: NextRequest) {
         verified: true,
         timeAgo: "Just now",
         privacy: "Public",
-        isFollowed: false,
+        isFollowed: true,
       },
       content: content || "",
       videoUrl,
@@ -62,6 +69,13 @@ export async function POST(req: NextRequest) {
       musicTitle,
       musicAuthor,
       hashtags,
+      isThread,
+      threadIndex,
+      threadTotal,
+      threadReplies,
+      communityNote,
+      bounty,
+      article,
     });
 
     return NextResponse.json({ success: true, post: newPost }, { status: 201 });

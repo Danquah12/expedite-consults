@@ -62,14 +62,43 @@ export default function FeedPage() {
   const [activeLiveStream, setActiveLiveStream] = useState<LiveStreamItem | null>(null);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
 
-  // Fetch live feed data from API
+  // Instantly load locally cached posts on mount so user never loses recorded videos on refresh
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem("sphera_feed_posts_v3");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setPosts(parsed);
+          }
+        }
+      } catch (err) {
+        console.warn("Local feed cache read notice:", err);
+      }
+    }
+  }, []);
+
+  // Fetch live feed data from API and synchronize
   const fetchFeed = async (mode: "FYP" | "FOLLOWING" | "LIVE") => {
     try {
       setIsLoading(true);
       const res = await fetch(`/api/feed?mode=${mode}`);
       if (res.ok) {
         const data = await res.json();
-        if (data.posts && data.posts.length > 0) setPosts(data.posts);
+        if (data.posts && data.posts.length > 0) {
+          setPosts((current) => {
+            const serverIds = new Set(data.posts.map((p: FeedPost) => p.id));
+            const localOnly = current.filter((p) => !serverIds.has(p.id) && (p.id.startsWith("p-") || p.id.startsWith("post-")));
+            const merged = [...localOnly, ...data.posts];
+            if (typeof window !== "undefined") {
+              try {
+                localStorage.setItem("sphera_feed_posts_v3", JSON.stringify(merged));
+              } catch (e) {}
+            }
+            return merged;
+          });
+        }
         if (data.stories && data.stories.length > 0) setStories(data.stories);
         if (data.liveStreams && data.liveStreams.length > 0) setLiveStreams(data.liveStreams);
       }
@@ -83,6 +112,19 @@ export default function FeedPage() {
   useEffect(() => {
     fetchFeed(feedMode);
   }, [feedMode]);
+
+  const handleAddNewPost = (newPost: FeedPost) => {
+    setPosts((prev) => {
+      const filtered = prev.filter((p) => p.id !== newPost.id);
+      const updated = [newPost, ...filtered];
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("sphera_feed_posts_v3", JSON.stringify(updated));
+        } catch (e) {}
+      }
+      return updated;
+    });
+  };
 
   // Double-tap or Heart Like action
   const toggleLike = async (id: string, e?: React.MouseEvent) => {
@@ -917,7 +959,7 @@ export default function FeedPage() {
       <VideoRecorderModal
         isOpen={isRecorderOpen}
         onClose={() => setIsRecorderOpen(false)}
-        onPostCreated={(newPost) => setPosts((prev) => [newPost, ...prev])}
+        onPostCreated={(newPost) => handleAddNewPost(newPost)}
       />
 
       {/* 2. Interactive 24-Hour Stories Viewer Modal */}
@@ -941,7 +983,7 @@ export default function FeedPage() {
       <PostComposerModal
         isOpen={isComposerOpen}
         onClose={() => setIsComposerOpen(false)}
-        onPostCreated={(newPost) => setPosts((prev) => [newPost, ...prev])}
+        onPostCreated={(newPost) => handleAddNewPost(newPost)}
       />
 
     </div>
