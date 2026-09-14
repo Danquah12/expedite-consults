@@ -356,7 +356,7 @@ export function LinkedInNavbar({
               </span>
             </button>
 
-            {onOpenAuthModal && (
+            {isAdminUser && onOpenAuthModal && (
               <button
                 onClick={onOpenAuthModal}
                 className="hidden md:flex items-center gap-1.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 px-3 py-1 text-xs font-bold shadow-xs hover:opacity-90 transition-all shrink-0 ml-1 cursor-pointer"
@@ -513,15 +513,15 @@ export function LinkedInNavbar({
 
                   <div className="mt-3 space-y-1 border-t border-zinc-100 pt-2 text-xs text-zinc-600 dark:border-zinc-800 dark:text-zinc-300">
                     <p className="px-2 py-1 font-bold text-zinc-900 dark:text-zinc-100 text-[11px] uppercase tracking-wider">
-                      Verified Identity Roles
+                      Verified Identity Status
                     </p>
                     <div className="px-2 text-[11px] text-zinc-500 space-y-0.5">
-                      <p>• Professional: Cloud Security Architect</p>
-                      <p>• Clearance: TS/SCI with Polygraph</p>
-                      <p>• Seller: AXIOM Suite &amp; Expedite Strike</p>
+                      <p>• Role: <span className="font-semibold text-zinc-700 dark:text-zinc-200 capitalize">{(user as any).role || "personal"}</span></p>
+                      <p>• Clearance: <span className="font-semibold text-zinc-700 dark:text-zinc-200">{(user as any).clearanceLevel || "Level 2 Verified Identity"}</span></p>
+                      <p>• Verification: <span className="text-emerald-600 font-semibold">FIDO2 / Zero-Trust Active ✓</span></p>
                     </div>
 
-                    {onOpenAuthModal && (
+                    {isAdminUser && onOpenAuthModal && (
                       <button
                         onClick={() => {
                           onOpenAuthModal()

@@ -47,10 +47,20 @@ export function LeftSidebarProfile({
 }: LeftSidebarProfileProps) {
   const [isRecentExpanded, setIsRecentExpanded] = useState(true)
 
+  const isAdminUser = Boolean(
+    (user as any).role === 'admin' ||
+    (user as any).roles?.includes('SUPER_ADMIN') ||
+    (user as any).roles?.includes('PLATFORM_ADMIN') ||
+    (user as any).email?.toLowerCase().includes('admin') ||
+    (user as any).email?.toLowerCase() === 'sec-admin@connectin.internal'
+  )
+
   const workspaceShortcuts = [
-    { id: 'auth_gate', label: '🔑 Switch Persona / Role', badge: '6 Roles' },
+    ...(isAdminUser ? [
+      { id: 'adminiam', label: '🛡️ Admin IAM Console', badge: 'Privileged' },
+      { id: 'auth_gate', label: '🔑 Switch Persona / Role', badge: '6 Roles' }
+    ] : []),
     { id: 'accountsecurity', label: '🔐 Security & Passkeys', badge: 'FIDO2' },
-    { id: 'adminiam', label: '🛡️ Admin IAM Console', badge: 'Privileged' },
     { id: 'inbound_bounty', label: '💰 Paid Inbound Bounty', badge: '+$250 Escrow' },
     { id: 'bounties', label: '🏆 Enterprise Bounties', badge: '$15K-$25K' },
     { id: 'guilds', label: '🛡️ Gated Guilds & Enclaves', badge: '3 Enclaves' },
