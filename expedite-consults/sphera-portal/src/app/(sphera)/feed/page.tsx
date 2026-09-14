@@ -191,6 +191,62 @@ export default function FeedPage() {
     }
   };
 
+    const handleSendComment = async (postId: string) => {
+    if (!newCommentText.trim()) return;
+    const textToSend = newCommentText.trim();
+    setNewCommentText("");
+
+    const optimisticComment = {
+      id: `c-${Date.now()}`,
+      user: "Kwesi Asiedu",
+      username: "kwesi",
+      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80",
+      text: textToSend,
+      time: "Just now",
+      likes: 0,
+    };
+
+    setPosts((prev) =>
+      prev.map((p) => {
+        if (p.id === postId) {
+          const updatedComments = [optimisticComment, ...(p.commentsList || [])];
+          return {
+            ...p,
+            commentsList: updatedComments,
+            commentsCount: (p.commentsCount || 0) + 1,
+          };
+        }
+        return p;
+      })
+    );
+
+    try {
+      const res = await fetch(`/api/feed/posts/${postId}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: textToSend, user: "Kwesi Asiedu", username: "kwesi" }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.comment) {
+          setPosts((prev) =>
+            prev.map((p) => {
+              if (p.id === postId) {
+                const list = (p.commentsList || []).map((c) =>
+                  c.id === optimisticComment.id ? data.comment : c
+                );
+                return { ...p, commentsList: list };
+              }
+              return p;
+            })
+          );
+        }
+      }
+    } catch (e) {
+      console.warn("Comment send notice:", e);
+    }
+  };
+
   const toggleFollow = async (username: string) => {
     setPosts((prev) =>
       prev.map((p) =>
@@ -915,6 +971,87 @@ export default function FeedPage() {
               </article>
             );
           })}
+        </div>
+      )}
+
+            {/* ── Comments Modal Drawer ───────────────────────────────── */}
+      {activeCommentPostId && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="w-full max-w-lg bg-[#18191a] border border-zinc-800 rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] h-[550px] animate-in slide-in-from-bottom duration-300">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800 bg-zinc-900/50">
+              <div className="flex items-center gap-2">
+                <MessageCircle className="w-5 h-5 text-pink-500" />
+                <h3 className="text-base font-black text-white">
+                  Comments ({posts.find((p) => p.id === activeCommentPostId)?.commentsCount || 0})
+                </h3>
+              </div>
+              <button
+                onClick={() => setActiveCommentPostId(null)}
+                className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white flex items-center justify-center transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-5 space-y-4">
+              {(() => {
+                const post = posts.find((p) => p.id === activeCommentPostId);
+                const list = post?.commentsList || [];
+                if (list.length === 0) {
+                  return (
+                    <div className="h-full flex flex-col items-center justify-center text-center p-8 text-zinc-500">
+                      <MessageCircle className="w-12 h-12 stroke-1 mb-2 opacity-40 text-pink-400" />
+                      <p className="text-sm font-semibold">No comments yet</p>
+                      <p className="text-xs text-zinc-600">Be the first to share your thoughts!</p>
+                    </div>
+                  );
+                }
+                return list.map((c) => (
+                  <div key={c.id} className="flex items-start gap-3 group">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={c.avatar || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80"}
+                      alt={c.user}
+                      className="w-8 h-8 rounded-full object-cover ring-1 ring-zinc-700 shrink-0 mt-0.5"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-xs font-bold text-white">{c.user}</span>
+                        <span className="text-[10px] text-zinc-500 font-mono">@{c.username} · {c.time}</span>
+                      </div>
+                      <p className="text-xs sm:text-sm text-zinc-300 mt-1 leading-relaxed break-words">{c.text}</p>
+                    </div>
+                  </div>
+                ));
+              })()}
+            </div>
+
+            <div className="p-4 border-t border-zinc-800 bg-zinc-900/80 flex items-center gap-3">
+              <input
+                type="text"
+                placeholder="Add a sovereign comment..."
+                value={newCommentText}
+                onChange={(e) => setNewCommentText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    if (activeCommentPostId) handleSendComment(activeCommentPostId);
+                  }
+                }}
+                className="flex-1 bg-zinc-800 border border-zinc-700 text-white rounded-xl px-4 py-2.5 text-xs sm:text-sm placeholder:text-zinc-500 focus:outline-none focus:border-pink-500"
+              />
+              <button
+                disabled={!newCommentText.trim()}
+                onClick={() => {
+                  if (activeCommentPostId) handleSendComment(activeCommentPostId);
+                }}
+                className="px-4 py-2.5 bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 disabled:opacity-40 disabled:hover:from-pink-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-lg shadow-pink-500/20 shrink-0"
+              >
+                <span>Send</span>
+                <Send className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
