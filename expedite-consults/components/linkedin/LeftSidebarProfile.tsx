@@ -23,6 +23,7 @@ import {
   Flame
 } from "lucide-react"
 import { UserProfile } from "@/lib/linkedin-data"
+import { isSuperAdminUser } from "@/lib/connectin-profile"
 
 interface LeftSidebarProfileProps {
   user: UserProfile
@@ -47,13 +48,7 @@ export function LeftSidebarProfile({
 }: LeftSidebarProfileProps) {
   const [isRecentExpanded, setIsRecentExpanded] = useState(true)
 
-  const isAdminUser = Boolean(
-    (user as any).role === 'admin' ||
-    (user as any).roles?.includes('SUPER_ADMIN') ||
-    (user as any).roles?.includes('PLATFORM_ADMIN') ||
-    (user as any).email?.toLowerCase().includes('admin') ||
-    (user as any).email?.toLowerCase() === 'sec-admin@connectin.internal'
-  )
+  const isAdminUser = isSuperAdminUser(user)
 
   const workspaceShortcuts = [
     ...(isAdminUser ? [

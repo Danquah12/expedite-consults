@@ -43,6 +43,7 @@ import {
 } from "lucide-react"
 import { UserProfile } from "@/lib/linkedin-data"
 import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
+import { isSuperAdminUser } from "@/lib/connectin-profile"
 
 interface LinkedInNavbarProps {
   user: UserProfile
@@ -113,13 +114,7 @@ export function LinkedInNavbar({
     { id: "messaging", label: "Messages 💬", icon: MessageSquare, badge: unreadMessagesCount },
   ]
 
-  const isAdminUser = Boolean(
-    (user as any).role === 'admin' ||
-    (user as any).roles?.includes('SUPER_ADMIN') ||
-    (user as any).roles?.includes('PLATFORM_ADMIN') ||
-    (user as any).email?.toLowerCase().includes('admin') ||
-    (user as any).email?.toLowerCase() === 'sec-admin@connectin.internal'
-  )
+  const isAdminUser = isSuperAdminUser(user)
 
   const categorizedMoreMenu = [
     {

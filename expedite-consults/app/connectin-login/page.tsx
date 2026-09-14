@@ -23,7 +23,7 @@ import {
 import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
 import { DEMO_AUTH_PERSONAS, AuthPersona } from "@/components/linkedin/ConnectInAuthModal"
 import { saveStoredUser, saveStoredSessionRoute } from "@/lib/connectin-storage"
-import { createUniqueUserProfile, resolveDisplayName } from "@/lib/connectin-profile"
+import { createUniqueUserProfile, resolveDisplayName, isSuperAdminUser } from "@/lib/connectin-profile"
 
 import { signIn } from "next-auth/react"
 
@@ -189,12 +189,7 @@ export default function ConnectInLoginPage() {
         id: data.profile?.userId || data.user?.id || data.profile?.id
       }
 
-      const isAdminUser = 
-        data.user?.role === 'admin' || 
-        data.profile?.role === 'admin' || 
-        profileToSave.role === 'admin' || 
-        signInEmail.toLowerCase().includes('admin') || 
-        signInEmail.toLowerCase() === 'sec-admin@connectin.internal'
+      const isAdminUser = isSuperAdminUser({ ...profileToSave, email: signInEmail })
 
       const targetTab = isAdminUser ? 'adminiam' : 'home'
       const targetUrl = isAdminUser ? '/connectin-admin' : '/connectin'
@@ -382,7 +377,7 @@ export default function ConnectInLoginPage() {
         })
       }).catch(() => {})
 
-      if (persona.id === 'persona_admin' || persona.role === 'admin' || persona.defaultTab === 'adminiam') {
+      if (persona.id === 'persona_admin' || isSuperAdminUser(persona) || persona.role === 'admin' || persona.defaultTab === 'adminiam') {
         router.push("/connectin-admin")
       } else {
         router.push("/connectin")

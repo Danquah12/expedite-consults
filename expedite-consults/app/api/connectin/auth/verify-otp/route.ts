@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { connectinDb } from "@/lib/connectin-db"
 import { validateOTP } from "@/lib/connectin-otp"
+import { isSuperAdminUser, resolveDisplayName } from "@/lib/connectin-profile"
 
 export async function POST(req: NextRequest) {
   try {
@@ -47,21 +48,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Determine displayName intelligently from user input or email structure
-    let displayName = incomingName?.trim()
-    if (!displayName) {
-      const prefix = cleanTarget.split("@")[0] || ""
-      if (prefix.includes(".") || prefix.includes("_") || prefix.includes("-")) {
-        displayName = prefix
-          .split(/[._-]/)
-          .filter(Boolean)
-          .map((s: string) => s.charAt(0).toUpperCase() + s.slice(1))
-          .join(" ")
-      } else {
-        displayName = prefix ? prefix.charAt(0).toUpperCase() + prefix.slice(1) : "ConnectIn Member"
-      }
-    }
-
-    const userRole = incomingRole || "personal"
+    const displayName = resolveDisplayName(incomingName, cleanTarget)
+    const isSuperAdmin = isSuperAdminUser({ name: displayName, email: cleanTarget, role: incomingRole })
+    const userRole = isSuperAdmin ? "admin" : (incomingRole || "personal")
 
     // 2. Find or auto-hydrate user across serverless lambdas
     let user = connectinDb.findUserByEmail(cleanTarget)
@@ -78,27 +67,37 @@ export async function POST(req: NextRequest) {
         },
         {
           name: displayName,
-          headline: incomingHeadline || `${userRole.charAt(0).toUpperCase() + userRole.slice(1)} Professional · Verified ConnectIn Member`,
-          avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayName + "-" + cleanTarget)}&backgroundColor=0a66c2,4338ca,0070f3&textColor=ffffff&fontWeight=700`,
+          headline: incomingHeadline || (isSuperAdmin ? "Platform IAM & Super Administrator · ConnectIn Master Control" : `${userRole.charAt(0).toUpperCase() + userRole.slice(1)} Professional · Verified ConnectIn Member`),
+          avatar: isSuperAdmin && cleanNameOrEmailIsHayes(displayName, cleanTarget)
+            ? "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80"
+            : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayName + "-" + cleanTarget)}&backgroundColor=0a66c2,4338ca,0070f3&textColor=ffffff&fontWeight=700`,
           coverImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80",
-          location: "United States · Cryptographically Verified",
-          about: `Verified ${userRole} member on ConnectIn Zero-Trust Network.`,
-          skills: [],
-          clearanceLevel: "Standard Verified Identity (Level 2)",
+          location: isSuperAdmin ? "Washington, DC · Top Secret Security Operations Center" : "United States · Cryptographically Verified",
+          about: isSuperAdmin ? "Lead Platform IAM Architect and Master Administrator." : `Verified ${userRole} member on ConnectIn Zero-Trust Network.`,
+          skills: isSuperAdmin ? ["Zero Trust IAM", "eBPF SIEM Telemetry", "FedRAMP High IAM"] : [],
+          clearanceLevel: isSuperAdmin ? "TS/SCI Polygraph (Level 5 Top Secret Enclave)" : "Standard Verified Identity (Level 2)",
           fido2MfaVerified: true,
-          cryptoVerificationBadge: "0xED25519_SESSION_INITIALIZED",
-          skillMatrixScore: 50.0,
-          connectionsCount: 0,
-          followersCount: 0,
-          profileViews: 0,
-          postImpressions: 0
+          cryptoVerificationBadge: isSuperAdmin ? "0xED25519_SUPER_ADMIN_ROOT_KEY" : "0xED25519_SESSION_INITIALIZED",
+          skillMatrixScore: isSuperAdmin ? 99.9 : 50.0,
+          connectionsCount: isSuperAdmin ? 42800 : 0,
+          followersCount: isSuperAdmin ? 98400 : 0,
+          profileViews: isSuperAdmin ? 19400 : 0,
+          postImpressions: isSuperAdmin ? 520000 : 0
         }
       )
       user = created.user
       profile = created.profile
-    } else if (displayName && profile.name !== displayName) {
-      profile.name = displayName
-      profile.avatar = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayName + "-" + cleanTarget)}&backgroundColor=0a66c2,4338ca,0070f3&textColor=ffffff&fontWeight=700`
+    } else {
+      if (isSuperAdmin && user.role !== "admin") {
+        user.role = "admin"
+      }
+      if (displayName && profile.name !== displayName) {
+        profile.name = displayName
+      }
+    }
+
+    function cleanNameOrEmailIsHayes(name: string, email: string) {
+      return name.toLowerCase().includes("robert hayes") || email.toLowerCase().includes("robert.hayes") || email.toLowerCase() === "sec-admin@connectin.internal"
     }
 
     // 3. Create persistent cryptographic session
@@ -121,7 +120,11 @@ export async function POST(req: NextRequest) {
         role: user.role,
         status: user.status
       },
-      profile,
+      profile: {
+        ...profile,
+        role: user.role,
+        roles: isSuperAdmin ? ["SUPER_ADMIN", "Platform IAM Architect", "Root Authority"] : ["NORMAL_USER"]
+      },
       session: {
         sessionId: session.sessionId,
         token: session.token,

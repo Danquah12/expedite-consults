@@ -5,6 +5,7 @@ import { AdminIAMConsoleView } from "@/components/linkedin/AdminIAMConsoleView"
 import { LinkedInNavbar } from "@/components/linkedin/LinkedInNavbar"
 import { currentUser as defaultUser, UserProfile } from "@/lib/linkedin-data"
 import { getExplicitStoredUser } from "@/lib/connectin-storage"
+import { isSuperAdminUser } from "@/lib/connectin-profile"
 import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
 import { useRouter } from "next/navigation"
 import { ShieldAlert, Lock, ArrowLeft, Key } from "lucide-react"
@@ -22,13 +23,7 @@ export default function ConnectInAdminPage() {
     }
   }, [])
 
-  const isAdminUser = Boolean(
-    (userData as any).role === 'admin' ||
-    (userData as any).roles?.includes('SUPER_ADMIN') ||
-    (userData as any).roles?.includes('PLATFORM_ADMIN') ||
-    (userData as any).email?.toLowerCase().includes('admin') ||
-    (userData as any).email?.toLowerCase() === 'sec-admin@connectin.internal'
-  )
+  const isAdminUser = isSuperAdminUser(userData)
 
   return (
     <div className="min-h-screen bg-[#F4F2EE] text-zinc-900 antialiased dark:bg-[#000000] dark:text-zinc-100 selection:bg-[#0A66C2] selection:text-white">

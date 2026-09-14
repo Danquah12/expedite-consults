@@ -69,6 +69,7 @@ import {
   saveStoredConnections,
   loadStoredSessionRoute
 } from "@/lib/connectin-storage"
+import { isSuperAdminUser } from "@/lib/connectin-profile"
 import { SlidersHorizontal, Sparkles, Bell, CheckCircle2, ShieldCheck, Filter, Bookmark, Vote, BookOpen } from "lucide-react"
 
 export default function LinkedInPage() {
@@ -855,11 +856,7 @@ export default function LinkedInPage() {
 
         {/* VIEW: ADMINISTRATIVE IAM & MODERATION CONSOLE (STRICT ZERO-TRUST ROLE GUARD) */}
         {activeTab === 'adminiam' && (
-          ((userData as any).role === 'admin' ||
-           (userData as any).roles?.includes('SUPER_ADMIN') ||
-           (userData as any).roles?.includes('PLATFORM_ADMIN') ||
-           (userData as any).email?.toLowerCase().includes('admin') ||
-           (userData as any).email?.toLowerCase() === 'sec-admin@connectin.internal') ? (
+          isSuperAdminUser(userData) ? (
             <AdminIAMConsoleView
               currentUser={userData}
               onNavigateTab={(tab) => setActiveTab(tab as any)}

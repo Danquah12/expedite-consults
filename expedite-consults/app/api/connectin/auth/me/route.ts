@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { connectinDb } from "@/lib/connectin-db"
 import { auth } from "@/auth"
+import { isSuperAdminUser } from "@/lib/connectin-profile"
 
 export async function GET(req: NextRequest) {
   try {
@@ -20,16 +21,22 @@ export async function GET(req: NextRequest) {
         if (user) {
           const profile = connectinDb.findProfileByUserId(user.id)
           const activeSessions = connectinDb.getUserSessions(user.id)
+          const isSuperAdmin = isSuperAdminUser(user) || isSuperAdminUser(profile)
+
           return NextResponse.json({
             authenticated: true,
             user: {
               id: user.id,
               email: user.email,
               phone: user.phone,
-              role: user.role,
+              role: isSuperAdmin ? "admin" : user.role,
               status: user.status
             },
-            profile,
+            profile: profile ? {
+              ...profile,
+              role: isSuperAdmin ? "admin" : user.role,
+              roles: isSuperAdmin ? ["SUPER_ADMIN", "Platform IAM Architect", "Root Authority"] : ["NORMAL_USER"]
+            } : profile,
             session: {
               sessionId: session.sessionId,
               deviceName: session.deviceName,

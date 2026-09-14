@@ -15,7 +15,7 @@ import {
 } from "lucide-react"
 import { UserProfile } from "@/lib/linkedin-data"
 import { saveStoredUser, saveStoredSessionRoute } from "@/lib/connectin-storage"
-import { createUniqueUserProfile, resolveDisplayName } from "@/lib/connectin-profile"
+import { createUniqueUserProfile, resolveDisplayName, isSuperAdminUser } from "@/lib/connectin-profile"
 import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
 import { signIn } from "next-auth/react"
 
@@ -276,12 +276,7 @@ export function ConnectInAuthModal({
         id: data.profile?.userId || data.user?.id || data.profile?.id
       }
 
-      const isAdminUser = 
-        data.user?.role === 'admin' || 
-        data.profile?.role === 'admin' || 
-        profileToSave.role === 'admin' || 
-        signInEmail.toLowerCase().includes('admin') || 
-        signInEmail.toLowerCase() === 'sec-admin@connectin.internal'
+      const isAdminUser = isSuperAdminUser({ ...profileToSave, email: signInEmail })
 
       const targetTab = isAdminUser ? 'adminiam' : 'home'
 
