@@ -189,16 +189,30 @@ export default function ConnectInLoginPage() {
         id: data.profile?.userId || data.user?.id || data.profile?.id
       }
 
+      const isAdminUser = 
+        data.user?.role === 'admin' || 
+        data.profile?.role === 'admin' || 
+        profileToSave.role === 'admin' || 
+        signInEmail.toLowerCase().includes('admin') || 
+        signInEmail.toLowerCase() === 'sec-admin@connectin.internal'
+
+      const targetTab = isAdminUser ? 'adminiam' : 'home'
+      const targetUrl = isAdminUser ? '/connectin-admin' : '/connectin'
+
       saveStoredUser(profileToSave)
-      saveStoredSessionRoute('home', 'personal')
+      saveStoredSessionRoute(targetTab, 'personal')
       if (typeof window !== "undefined") {
         localStorage.removeItem("connectin_is_signed_out")
         sessionStorage.setItem("connectin_authenticated", "true")
       }
 
-      setSuccessMessage(`✓ Verified as ${profileToSave.name}! Launching your workspace...`)
+      setSuccessMessage(
+        isAdminUser 
+          ? `✓ Verified as Platform Administrator (${profileToSave.name})! Launching Master Control Enclave...`
+          : `✓ Verified as ${profileToSave.name}! Launching your workspace...`
+      )
       setTimeout(() => {
-        window.location.href = "/connectin"
+        window.location.href = targetUrl
       }, 150)
     } catch (err: any) {
       setSuccessMessage(null)
@@ -368,7 +382,11 @@ export default function ConnectInLoginPage() {
         })
       }).catch(() => {})
 
-      router.push("/connectin")
+      if (persona.id === 'persona_admin' || persona.role === 'admin' || persona.defaultTab === 'adminiam') {
+        router.push("/connectin-admin")
+      } else {
+        router.push("/connectin")
+      }
     } catch (err) {
       router.push("/connectin")
     } finally {

@@ -263,15 +263,28 @@ export function ConnectInAuthModal({
         id: data.profile?.userId || data.user?.id || data.profile?.id
       }
 
+      const isAdminUser = 
+        data.user?.role === 'admin' || 
+        data.profile?.role === 'admin' || 
+        profileToSave.role === 'admin' || 
+        signInEmail.toLowerCase().includes('admin') || 
+        signInEmail.toLowerCase() === 'sec-admin@connectin.internal'
+
+      const targetTab = isAdminUser ? 'adminiam' : 'home'
+
       saveStoredUser(profileToSave)
-      saveStoredSessionRoute('home', 'personal')
+      saveStoredSessionRoute(targetTab, 'personal')
       if (typeof window !== "undefined") {
         localStorage.removeItem("connectin_is_signed_out")
       }
 
-      setSuccessMessage(`✓ Authenticated! Welcome, ${profileToSave.name}`)
+      setSuccessMessage(
+        isAdminUser
+          ? `✓ Authenticated as Administrator! Opening Control Center...`
+          : `✓ Authenticated! Welcome, ${profileToSave.name}`
+      )
       setTimeout(() => {
-        onLoginSuccess(profileToSave, 'home', 'personal')
+        onLoginSuccess(profileToSave, targetTab, 'personal')
         onClose()
       }, 150)
     } catch (err: any) {
