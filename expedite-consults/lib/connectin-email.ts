@@ -1,5 +1,11 @@
 import { Resend } from "resend"
-const resend = new Resend(process.env.RESEND_API_KEY)
+
+const DEFAULT_FROM_EMAIL = "auth@expediteconsults.com"
+
+function getResendClient() {
+  const apiKey = process.env.RESEND_API_KEY
+  return new Resend(apiKey)
+}
 
 interface SendOTPEmailParams {
   toEmail: string
@@ -13,23 +19,24 @@ export async function sendConnectInOTPEmail({
   fullName,
   code,
   action
-}: SendOTPEmailParams): Promise<{ success: boolean; error?: string }> {
+}: SendOTPEmailParams): Promise<{ success: boolean; error?: string; id?: string }> {
   try {
+    const resend = getResendClient()
     const isLogin = action === "login_2fa"
     const subject = isLogin
       ? `🔐 ConnectIn Security: Your 2FA Sign-In Code is ${code}`
       : `🚀 Welcome to ConnectIn: Verify Your Account (${code})`
 
-    const envFrom = process.env.RESEND_FORM_EMAIL
-    const fromAddress = (envFrom && !envFrom.includes("resend.dev"))
-      ? (envFrom.includes("<") ? envFrom : `ConnectIn Security <${envFrom}>`)
-      : "ConnectIn Security <auth@expediteconsults.com>"
+    const envFrom = process.env.RESEND_FORM_EMAIL || DEFAULT_FROM_EMAIL
+    const fromAddress = envFrom.includes("<")
+      ? envFrom
+      : `ConnectIn Security <${envFrom}>`
 
-    console.log(`[ConnectIn Email Dispatch] Attempting send to: ${toEmail} using ${fromAddress}`)
+    console.log(`[ConnectIn Email Dispatch] Sending to: ${toEmail} from: ${fromAddress} with code: ${code}`)
 
     const { data, error } = await resend.emails.send({
       from: fromAddress,
-      to: [toEmail],
+      to: [toEmail.toLowerCase().trim()],
       subject,
       html: `
         <!DOCTYPE html>

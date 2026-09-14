@@ -35,6 +35,19 @@ export interface AuthPersona {
 
 export const DEMO_AUTH_PERSONAS: AuthPersona[] = [
   {
+    id: 'persona_kwesi',
+    name: 'Kwesi Asiedu (Founder)',
+    email: 'kasiedu@expedite-consults.com',
+    title: 'Founder & Chief Security Officer @ Expedite Consults',
+    role: 'personal',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
+    defaultTab: 'home',
+    defaultWorkspace: 'personal',
+    badge: '👑 Founder & CSO',
+    badgeColor: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+    redirectDescription: 'Founder Workspace · Full Network Access'
+  },
+  {
     id: 'persona_individual',
     name: 'Alex Taylor (Fellow)',
     email: 'alex.taylor@connectin.com',

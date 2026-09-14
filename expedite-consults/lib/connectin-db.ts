@@ -87,6 +87,17 @@ export interface ConnectInDatabaseSchema {
 // Initial Anchor Accounts
 const INITIAL_USERS: UserRecord[] = [
   {
+    id: "USR-89400",
+    email: "kasiedu@expedite-consults.com",
+    phone: "+1 (240) 262-3543",
+    role: "personal",
+    status: "Active",
+    mfaEnabled: true,
+    mfaChannel: "email",
+    createdAt: "2026-06-01T08:00:00Z",
+    updatedAt: "2026-08-29T12:00:00Z"
+  },
+  {
     id: "USR-89410",
     email: "alex.taylor@connectin.com",
     phone: "+1 (240) 555-0192",
@@ -144,6 +155,24 @@ const INITIAL_USERS: UserRecord[] = [
 ]
 
 const INITIAL_PROFILES: UserProfileRecord[] = [
+  {
+    userId: "USR-89400",
+    name: "Kwesi Asiedu",
+    headline: "Founder & Chief Security Officer @ Expedite Consults · Lead AI & GovCloud Architect",
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80",
+    coverImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80",
+    location: "Washington DC-Baltimore Area · TS/SCI Cleared",
+    about: "Founder of Expedite Consults and ConnectIn. Leading autonomous cyber defense, zero-trust cloud infrastructure, enterprise DevSecOps, and cleared talent systems.",
+    skills: ["Zero Trust Architecture", "GovCloud Security", "Enterprise IAM", "eBPF Kernel Defense", "AI AppSec"],
+    clearanceLevel: "TS/SCI with Full Scope Polygraph",
+    fido2MfaVerified: true,
+    cryptoVerificationBadge: "0xED25519_FOUNDER_ROOT_VERIFIED",
+    skillMatrixScore: 99.4,
+    connectionsCount: 28400,
+    followersCount: 82000,
+    profileViews: 19400,
+    postImpressions: 520000
+  },
   {
     userId: "USR-89410",
     name: "Alex Taylor",
