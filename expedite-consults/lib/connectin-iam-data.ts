@@ -128,6 +128,25 @@ export interface AdminUserRecord {
 
 export const ADMIN_USERS_DIRECTORY: AdminUserRecord[] = [
   {
+    id: 'USR-89400',
+    name: 'Kwesi Asiedu (Founder)',
+    email: 'kasiedu@expedite-consults.com',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+    headline: 'Founder & Chief Security Officer @ Expedite Consults · Lead AI & GovCloud Architect',
+    roles: ['SUPER_ADMIN', 'Founder & CSO', 'Principal Architect'],
+    enforcementStatus: 'Active',
+    verificationLevel: 'Enterprise Fellow',
+    mfaStatus: 'FIDO2 Passkey ✓',
+    riskLevel: 'Low',
+    organization: 'Expedite Consults LLC',
+    location: 'Washington DC-Baltimore Area',
+    connectionsCount: 28400,
+    lastLogin: 'Active Now',
+    registeredAt: 'Jun 01, 2026',
+    reportsCount: 0,
+    notes: 'Platform Founder & Root IAM Authority'
+  },
+  {
     id: 'USR-89410',
     name: 'Alex Taylor (Fellow)',
     email: 'alex.taylor@expedite-consults.com',

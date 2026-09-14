@@ -343,6 +343,10 @@ class ConnectInDatabase {
 
   // ─── USER & AUTH OPERATIONS ───
 
+  public getUsers(): UserRecord[] {
+    return this.data.users
+  }
+
   public findUserByEmail(email: string): UserRecord | undefined {
     return this.data.users.find(u => u.email.toLowerCase() === email.toLowerCase().trim())
   }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { connectinDb } from "@/lib/connectin-db"
 import {
   EXECUTIVE_ANALYTICS_DATA,
   ADMIN_USERS_DIRECTORY,
@@ -12,16 +13,48 @@ import {
   ADMIN_AUDIT_LOG_DATA,
   SOC_SECURITY_EVENTS,
   BROADCAST_NOTIFICATIONS_DATA,
-  FOUR_EYES_APPROVALS_DATA
+  FOUR_EYES_APPROVALS_DATA,
+  AdminUserRecord
 } from "@/lib/connectin-iam-data"
 
 export async function GET(req: NextRequest) {
   try {
+    const dbUsers = connectinDb.getUsers().map(u => {
+      const p = connectinDb.findProfileByUserId(u.id)
+      const existingInAdmin = ADMIN_USERS_DIRECTORY.find(
+        a => a.email.toLowerCase() === u.email.toLowerCase()
+      )
+      if (existingInAdmin) return existingInAdmin
+
+      return {
+        id: u.id,
+        name: p?.name || u.email.split("@")[0],
+        email: u.email,
+        avatar: p?.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.email)}`,
+        headline: p?.headline || `${u.role.toUpperCase()} Professional · ConnectIn Member`,
+        roles: [u.role.toUpperCase()],
+        enforcementStatus: (u.status || "Active") as any,
+        verificationLevel: "Email Verified" as any,
+        mfaStatus: u.mfaEnabled ? `${(u.mfaChannel || "email").toUpperCase()} 2FA ✓` : "Disabled",
+        riskLevel: "Low" as any,
+        organization: "Verified Network Member",
+        location: p?.location || "United States",
+        connectionsCount: p?.connectionsCount || 0,
+        lastLogin: "Active Now",
+        registeredAt: u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "Today",
+        reportsCount: 0
+      } as AdminUserRecord
+    })
+
+    const combinedUsers = Array.from(
+      new Map([...ADMIN_USERS_DIRECTORY, ...dbUsers].map(item => [item.email.toLowerCase(), item])).values()
+    )
+
     return NextResponse.json({
       success: true,
       timestamp: new Date().toISOString(),
       analytics: EXECUTIVE_ANALYTICS_DATA,
-      users: ADMIN_USERS_DIRECTORY,
+      users: combinedUsers,
       content: ADMIN_CONTENT_DIRECTORY,
       cases: MODERATION_CASES_DATA,
       companies: ADMIN_COMPANIES_DIRECTORY,
