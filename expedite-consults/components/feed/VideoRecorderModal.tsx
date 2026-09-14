@@ -167,8 +167,8 @@ export function VideoRecorderModal({ isOpen, onClose, onPostCreated }: VideoReco
       const payload = {
         content: caption || "Check out my new Sphera Short! 🚀✨",
         type: "immersive_video",
-        videoUrl: recordedVideoUrl || "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1000&auto=format&fit=crop&q=80",
-        imageUrl: recordedVideoUrl || "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1000&auto=format&fit=crop&q=80",
+        videoUrl: recordedVideoUrl || undefined,
+        imageUrl: undefined,
         musicTitle: selectedMusic,
         musicAuthor,
         hashtags: parsedHashtags,
@@ -379,7 +379,7 @@ export function VideoRecorderModal({ isOpen, onClose, onPostCreated }: VideoReco
                 type="text"
                 value={hashtags}
                 onChange={(e) => setHashtags(e.target.value)}
-                placeholder="#SpheraViral #FYP #TechTok"
+                placeholder="#SpheraViral #FYP #TechPulse"
                 className="w-full bg-zinc-900 border border-zinc-700/80 rounded-xl p-2.5 text-xs text-pink-400 font-mono focus:outline-none focus:ring-1 focus:ring-pink-500"
               />
             </div>

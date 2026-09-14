@@ -32,6 +32,7 @@ import { VideoRecorderModal } from "@/components/feed/VideoRecorderModal";
 import { StoryViewerModal } from "@/components/feed/StoryViewerModal";
 import { LiveBroadcastModal } from "@/components/feed/LiveBroadcastModal";
 import { PostComposerModal } from "@/components/feed/PostComposerModal";
+import { FeedMediaCard } from "@/components/feed/FeedMediaCard";
 
 export default function FeedPage() {
   const [feedMode, setFeedMode] = useState<"FYP" | "FOLLOWING" | "LIVE">("FYP");
@@ -231,12 +232,10 @@ export default function FeedPage() {
       {viewStyle === "immersive_theater" ? (
         <div className="w-full max-w-[500px] flex flex-col items-center gap-4">
           <div className="relative w-full aspect-[9/16] max-h-[82vh] bg-black rounded-3xl overflow-hidden shadow-2xl border border-zinc-800 flex items-center justify-center select-none group">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={activeTheaterPost?.videoUrl || activeTheaterPost?.imageUrl}
-              alt="Immersive Reel"
-              className="w-full h-full object-cover cursor-pointer"
+            <FeedMediaCard
+              post={activeTheaterPost}
               onDoubleClick={(e) => toggleLike(activeTheaterPost.id, e)}
+              isTheater={true}
             />
 
             {/* Top FYP / Following Tabs */}
@@ -563,11 +562,8 @@ export default function FeedPage() {
 
               {/* Immersive Video Frame with Floating Interaction Rail */}
               <div className="relative w-full bg-black flex justify-center items-center overflow-hidden min-h-[380px] max-h-[580px] select-none">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={post.imageUrl || post.videoUrl}
-                  alt="Creator post"
-                  className="w-full h-full object-cover max-h-[580px] cursor-pointer"
+                <FeedMediaCard
+                  post={post}
                   onDoubleClick={(e) => toggleLike(post.id, e)}
                 />
 

@@ -160,8 +160,8 @@ export function VideoRecorderModal({ isOpen, onClose, onPostCreated }: VideoReco
       const payload = {
         content: caption || "Check out my new Sphera Short! 🚀✨",
         type: "immersive_video",
-        videoUrl: recordedVideoUrl || "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1000&auto=format&fit=crop&q=80",
-        imageUrl: recordedVideoUrl || "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1000&auto=format&fit=crop&q=80",
+        videoUrl: recordedVideoUrl || undefined,
+        imageUrl: undefined,
         musicTitle: selectedMusic,
         musicAuthor,
         hashtags: parsedHashtags,

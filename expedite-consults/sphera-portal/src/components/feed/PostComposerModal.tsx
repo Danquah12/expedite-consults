@@ -47,8 +47,8 @@ export function PostComposerModal({ isOpen, onClose, onPostCreated }: PostCompos
       const payload = {
         content: content.trim(),
         type: mediaType === "video" ? "immersive_video" : "standard",
-        videoUrl: mediaType === "video" ? mediaUrl : undefined,
-        imageUrl: mediaUrl || "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1000&auto=format&fit=crop&q=80",
+        videoUrl: mediaType === "video" ? (mediaUrl || undefined) : undefined,
+        imageUrl: mediaType === "image" ? (mediaUrl || undefined) : undefined,
         musicTitle,
         musicAuthor: "Sphera Audio Lab",
         hashtags: parsedHashtags,

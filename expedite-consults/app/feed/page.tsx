@@ -32,6 +32,7 @@ import { VideoRecorderModal } from "@/components/feed/VideoRecorderModal";
 import { StoryViewerModal } from "@/components/feed/StoryViewerModal";
 import { LiveBroadcastModal } from "@/components/feed/LiveBroadcastModal";
 import { PostComposerModal } from "@/components/feed/PostComposerModal";
+import { FeedMediaCard } from "@/components/feed/FeedMediaCard";
 
 function formatNumber(num: number): string {
   if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
@@ -285,12 +286,10 @@ export default function FeedPage() {
         <div className="max-w-4xl mx-auto px-4 py-6 flex flex-col md:flex-row gap-6 items-center justify-center min-h-[calc(100vh-80px)]">
           {/* Vertical Video Reel Card */}
           <div className="relative w-full max-w-[420px] aspect-[9/16] max-h-[82vh] bg-black rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.8)] border border-zinc-800 flex items-center justify-center select-none group">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={activeTheaterPost?.videoUrl || activeTheaterPost?.imageUrl}
-              alt="Immersive Reel"
-              className="w-full h-full object-cover cursor-pointer"
+            <FeedMediaCard
+              post={activeTheaterPost}
               onDoubleClick={(e) => toggleLike(activeTheaterPost.id, e)}
+              isTheater={true}
             />
 
             {/* Top FYP / Following Tabs */}
@@ -659,11 +658,8 @@ export default function FeedPage() {
 
                 {/* Immersive Video Frame with Floating Interaction Rail */}
                 <div className="relative w-full bg-black flex justify-center items-center overflow-hidden min-h-[380px] max-h-[580px] select-none">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={post.imageUrl || post.videoUrl}
-                    alt="Creator post"
-                    className="w-full h-full object-cover max-h-[580px] cursor-pointer"
+                  <FeedMediaCard
+                    post={post}
                     onDoubleClick={(e) => toggleLike(post.id, e)}
                   />
 
