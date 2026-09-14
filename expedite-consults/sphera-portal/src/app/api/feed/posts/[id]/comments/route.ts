@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { getOrCreateDefaultUser } from "@/lib/db-seed";
 import { feedStore, CommentItem } from "@/lib/feed-store";
+import { emitDomainEvent } from "@/lib/events";
 
 export const dynamic = "force-dynamic";
 
@@ -91,6 +92,11 @@ export async function POST(
     }
 
     if (user?.id) {
+      const post = await db.post.findUnique({
+        where: { id },
+        select: { id: true, authorId: true },
+      }).catch(() => null);
+
       const newComment = await db.comment.create({
         data: {
           postId: id,
@@ -113,6 +119,13 @@ export async function POST(
       };
 
       feedStore.addComment(id, text, userName, username);
+
+      await emitDomainEvent("COMMENT_ADDED", user.id, {
+        contentId: id,
+        contentType: "POST",
+        targetAuthorId: post?.authorId,
+        metadata: { text: text.trim() },
+      });
 
       return NextResponse.json({
         success: true,

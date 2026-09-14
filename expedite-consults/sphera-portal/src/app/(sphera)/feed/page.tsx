@@ -49,6 +49,9 @@ import { VideoRecorderModal } from "@/components/feed/VideoRecorderModal";
 import { StoryViewerModal } from "@/components/feed/StoryViewerModal";
 import { LiveBroadcastModal } from "@/components/feed/LiveBroadcastModal";
 import { PostComposerModal } from "@/components/feed/PostComposerModal";
+import { AlgorithmExplanationModal } from "@/components/feed/AlgorithmExplanationModal";
+import { AlgorithmPreferencesModal } from "@/components/feed/AlgorithmPreferencesModal";
+import { Sliders, HelpCircle } from "lucide-react";
 import { FeedMediaCard } from "@/components/feed/FeedMediaCard";
 import { SpheraPulseComposer } from "@/components/post/SpheraPulseComposer";
 import { SpheraPulseThreadCard } from "@/components/post/SpheraPulseThreadCard";
@@ -77,6 +80,11 @@ export default function FeedPage() {
   const [isLiveModalOpen, setIsLiveModalOpen] = useState(false);
   const [activeLiveStream, setActiveLiveStream] = useState<LiveStreamItem | null>(null);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
+  const [isExplainModalOpen, setIsExplainModalOpen] = useState(false);
+  const [explainContentId, setExplainContentId] = useState<string | null>(null);
+  const [explainAuthor, setExplainAuthor] = useState<string | undefined>(undefined);
+  const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
+
 
   // 1. Instantly load locally cached posts on mount so user never loses recorded videos on refresh
   useEffect(() => {
@@ -1085,6 +1093,29 @@ export default function FeedPage() {
           }}
         />
       )}
+      
+      <AlgorithmExplanationModal
+        isOpen={isExplainModalOpen}
+        contentId={explainContentId}
+        authorUsername={explainAuthor}
+        onClose={() => setIsExplainModalOpen(false)}
+        onOpenPreferences={() => {
+          setIsExplainModalOpen(false);
+          setIsPreferencesOpen(true);
+        }}
+        onTuneAlgorithm={(action, meta) => {
+          if (action === "LESS" || action === "NOT_INTERESTED") {
+            setPosts((prev) => prev.filter((p) => p.id !== explainContentId));
+          }
+        }}
+      />
+
+      <AlgorithmPreferencesModal
+        isOpen={isPreferencesOpen}
+        onClose={() => setIsPreferencesOpen(false)}
+        onSaved={() => fetchFeed(activeFeedStream)}
+      />
+
       <PostComposerModal
         isOpen={isComposerOpen}
         onClose={() => setIsComposerOpen(false)}

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { getOrCreateDefaultUser } from "@/lib/db-seed";
 import { feedStore } from "@/lib/feed-store";
+import { emitDomainEvent } from "@/lib/events";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +54,9 @@ export async function POST(req: NextRequest) {
             },
           }).catch(() => {});
           isFollowed = false;
+          await emitDomainEvent("CREATOR_UNFOLLOWED", currentUserId, {
+            targetAuthorId: targetProfile.userId,
+          });
         } else {
           await db.follow.create({
             data: {
@@ -61,6 +65,9 @@ export async function POST(req: NextRequest) {
             },
           }).catch(() => {});
           isFollowed = true;
+          await emitDomainEvent("CREATOR_FOLLOWED", currentUserId, {
+            targetAuthorId: targetProfile.userId,
+          });
         }
 
         feedStore.toggleFollow(username);

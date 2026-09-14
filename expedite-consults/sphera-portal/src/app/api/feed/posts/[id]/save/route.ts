@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { getOrCreateDefaultUser } from "@/lib/db-seed";
 import { feedStore } from "@/lib/feed-store";
+import { emitDomainEvent } from "@/lib/events";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,11 @@ export async function POST(
     }
 
     if (userId) {
+      const post = await db.post.findUnique({
+        where: { id },
+        select: { id: true, authorId: true },
+      }).catch(() => null);
+
       const existingSave = await db.save.findFirst({
         where: { userId, postId: id },
       }).catch(() => null);
@@ -38,6 +44,12 @@ export async function POST(
           data: { userId, postId: id },
         }).catch(() => {});
         isSaved = true;
+
+        await emitDomainEvent("CONTENT_SAVED", userId, {
+          contentId: id,
+          contentType: "POST",
+          targetAuthorId: post?.authorId,
+        });
       }
 
       const count = await db.save.count({
