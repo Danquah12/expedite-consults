@@ -34,7 +34,7 @@ export async function sendConnectInOTPEmail({
 
     console.log(`[ConnectIn Email Dispatch] Sending to: ${toEmail} from: ${fromAddress} with code: ${code}`)
 
-    const { data, error } = await resend.emails.send({
+    let { data, error } = await resend.emails.send({
       from: fromAddress,
       to: [toEmail.toLowerCase().trim()],
       subject,
@@ -75,7 +75,7 @@ export async function sendConnectInOTPEmail({
               </div>
 
               <p class="text" style="font-size: 11px;">
-                This code is valid for <strong>10 minutes</strong>. If you did not initiate this request, please ignore this email.
+                This code is valid for <strong>15 minutes</strong>. If you did not initiate this request, please ignore this email.
               </p>
             </div>
             <div class="footer">
@@ -88,12 +88,26 @@ export async function sendConnectInOTPEmail({
       `
     })
 
+    // If initial send returned domain error, retry with verified fallback
+    if (error && fromAddress !== "ConnectIn <onboarding@resend.dev>") {
+      console.warn("[ConnectIn Email Dispatch] Primary sender notice, attempting fallback sender:", error)
+      const fallbackRes = await resend.emails.send({
+        from: "ConnectIn <onboarding@resend.dev>",
+        to: [toEmail.toLowerCase().trim()],
+        subject,
+        html: `<p>Your ConnectIn Verification Code is: <strong>${code}</strong> (Valid for 15 minutes)</p>`
+      })
+      if (!fallbackRes.error) {
+        return { success: true, id: fallbackRes.data?.id }
+      }
+    }
+
     if (error) {
       console.error("[Resend Error]", error)
       return { success: false, error: error.message }
     }
 
-    return { success: true }
+    return { success: true, id: data?.id }
   } catch (err: any) {
     console.error("[sendConnectInOTPEmail]", err)
     return { success: false, error: err.message || "Failed to send OTP email" }
