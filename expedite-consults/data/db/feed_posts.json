@@ -13,8 +13,8 @@
       "isFollowed": false
     },
     "content": "3 years of building in the dark, and today our largest platform update is finally live across SpheraNet! 🚀✨ Full breakdown dropping on Reels tonight. Tag a friend who needs to see this! 💫",
-    "videoUrl": "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1000&auto=format&fit=crop&q=80",
-    "imageUrl": "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1000&auto=format&fit=crop&q=80",
+    "videoUrl": "/api/videos/sphera_short_1.mp4",
+    "imageUrl": "/api/videos/sphera_short_1.mp4",
     "musicTitle": "Afrobeats Synthwave Future Mix Vol. 4",
     "musicAuthor": "DJ Khaled x Sphera Sound",
     "hashtags": [
@@ -66,8 +66,8 @@
       "isFollowed": true
     },
     "content": "5 VS Code & AI shortcuts that changed my development workflow in 2026. Number 3 will save you 2 hours every single day 🤯 Try this right now and thank me later! 🦾💻",
-    "videoUrl": "https://images.unsplash.com/photo-1593062096033-9a26b09da705?w=1000&auto=format&fit=crop&q=80",
-    "imageUrl": "https://images.unsplash.com/photo-1593062096033-9a26b09da705?w=1000&auto=format&fit=crop&q=80",
+    "videoUrl": "/api/videos/sphera_short_2.mp4",
+    "imageUrl": "/api/videos/sphera_short_2.mp4",
     "musicTitle": "Lo-Fi Study Beats & Cyber Bass",
     "musicAuthor": "ChillHop Cafe Records",
     "hashtags": [
@@ -109,8 +109,8 @@
       "isFollowed": true
     },
     "content": "Collegiate hackathon kickoff at University of Maryland! Over 600 builders here hacking on autonomous AI agents, robotics, and next-gen gaming protocols 🔥 The energy in the Iribe Center is unbelievable.",
-    "videoUrl": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1000&auto=format&fit=crop&q=80",
-    "imageUrl": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1000&auto=format&fit=crop&q=80",
+    "videoUrl": "/api/videos/sphera_short_1.mp4",
+    "imageUrl": "/api/videos/sphera_short_1.mp4",
     "musicTitle": "Cyberpunk 2077 Nightcore Anthem",
     "musicAuthor": "Sphera EDM Collective",
     "hashtags": [
