@@ -41,7 +41,7 @@ import {
   Tv,
   Key
 } from "lucide-react"
-import { UserProfile } from "@/lib/linkedin-data"
+import { UserProfile, SuggestedConnection } from "@/lib/linkedin-data"
 import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
 import { isSuperAdminUser } from "@/lib/connectin-profile"
 
@@ -59,6 +59,8 @@ interface LinkedInNavbarProps {
   onSignOut?: () => void
   activeWorkspace?: 'personal' | 'enterprise' | 'creator' | 'seller'
   onSelectWorkspace?: (ws: 'personal' | 'enterprise' | 'creator' | 'seller') => void
+  suggestedPeople?: SuggestedConnection[]
+  onToggleConnect?: (personId: string) => void
 }
 
 export function LinkedInNavbar({
@@ -74,13 +76,16 @@ export function LinkedInNavbar({
   onOpenAuthModal,
   onSignOut,
   activeWorkspace = 'personal',
-  onSelectWorkspace
+  onSelectWorkspace,
+  suggestedPeople = [],
+  onToggleConnect
 }: LinkedInNavbarProps) {
   const [isMeOpen, setIsMeOpen] = useState(false)
   const [isMoreOpen, setIsMoreOpen] = useState(false)
   const [isWorkspaceMenuOpen, setIsWorkspaceMenuOpen] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [isSearchFocused, setIsSearchFocused] = useState(false)
+  const [connectedIds, setConnectedIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -158,11 +163,126 @@ export function LinkedInNavbar({
     }
   ]
 
+  // Complete directory profiles (merging suggested with verified seed accounts)
+  const defaultDirectory = [
+    {
+      id: "usr_rhoda_1",
+      name: "Rhoda Mensah",
+      headline: "Senior Cyber Compliance & Risk Analyst · ConnectIn Member",
+      avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80",
+      capabilities: ["FedRAMP Compliance", "NIST SP 800-53", "Zero Trust"],
+      role: "Compliance Lead"
+    },
+    {
+      id: "usr_rhoda_2",
+      name: "Rhoda",
+      headline: "Cybersecurity & Technology Professional · ConnectIn Member",
+      avatar: "https://api.dicebear.com/7.x/initials/svg?seed=Rhoda&backgroundColor=0a66c2",
+      capabilities: ["Cloud Security", "Enterprise IAM"],
+      role: "Member"
+    },
+    {
+      id: "usr_kwesi",
+      name: "Kwesi Asiedu",
+      headline: "Founder & Chief Security Officer @ Expedite Consults",
+      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80",
+      capabilities: ["Zero Trust Architecture", "GovCloud Security", "Enterprise IAM"],
+      role: "Founder & CSO"
+    },
+    {
+      id: "usr_hayes",
+      name: "Commander Robert Hayes",
+      headline: "Platform IAM & Super Administrator · ConnectIn Master Control",
+      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80",
+      capabilities: ["SOC 2 Type II", "RBAC / ABAC", "FedRAMP High"],
+      role: "Super Admin"
+    },
+    {
+      id: "usr_alex",
+      name: "Alex Taylor",
+      headline: "Principal Cloud Security Architect (Fellow) @ Expedite Consults",
+      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80",
+      capabilities: ["AWS GovCloud Security", "Kubernetes Zero Trust", "cATO"],
+      role: "Principal Architect"
+    },
+    {
+      id: "usr_marcus",
+      name: "Marcus Vance",
+      headline: "VP Enterprise Procurement & Spend @ Defense Systems Group",
+      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80",
+      capabilities: ["Enterprise Procurement", "FAR / DFARS", "GovCloud RFPs"],
+      role: "VP Defense"
+    },
+    {
+      id: "usr_elena",
+      name: "Dr. Elena Rostova",
+      headline: "Chief AI Research Scientist | Stanford AI Lab Fellow",
+      avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80",
+      capabilities: ["AI Security", "Deterministic Sandboxing"],
+      role: "AI Fellow"
+    }
+  ]
+
+  // Combined searchable member pool
+  const allSearchableMembers = [
+    ...suggestedPeople.map(p => ({
+      id: p.id,
+      name: p.name,
+      headline: p.headline,
+      avatar: p.avatar,
+      capabilities: p.capabilities || [],
+      role: "Member"
+    })),
+    ...defaultDirectory
+  ].filter((item, index, self) =>
+    index === self.findIndex(t => t.name.toLowerCase() === item.name.toLowerCase())
+  ).filter(p => p.name.toLowerCase() !== (user?.name || "").toLowerCase())
+
+  // Filter members by query
+  const matchingMembers = (searchQuery.trim()
+    ? allSearchableMembers.filter(p =>
+        p.name.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
+        p.headline.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
+        p.capabilities?.some(c => c.toLowerCase().includes(searchQuery.toLowerCase().trim()))
+      )
+    : allSearchableMembers
+  ).slice(0, 4)
+
+  // Module & Hub fast shortcuts
+  const ALL_MODULES = [
+    { id: "jobs", label: "Jobs Hub & Requisitions", desc: "1,283 active cleared roles", icon: "💼" },
+    { id: "marketplace", label: "Enterprise Marketplace", desc: "Software, tools & cATO packs", icon: "🛍️" },
+    { id: "procurement", label: "Procurement & RFPs", desc: "$2.4M enterprise spend & bids", icon: "🏢" },
+    { id: "bounties", label: "Enterprise Bounties", desc: "$15K–$50K hackathons in escrow", icon: "🏆" },
+    { id: "media", label: "ConnectIn TV & Media", desc: "Live streams & tech podcasts", icon: "🎥" },
+    { id: "pulserooms", label: "Pulse Rooms", desc: "Live audio roundtables & news", icon: "📰" },
+    { id: "learning", label: "Learning & Certifications", desc: "Defense labs & credentials", icon: "🎓" },
+    { id: "labs", label: "Security Labs Sandbox", desc: "Firecracker microVM sandboxes", icon: "🧪" },
+    ...(isAdminUser ? [{ id: "adminiam", label: "Admin & IAM Console", desc: "User enforcement & audit log", icon: "🛡️" }] : []),
+    { id: "accountsecurity", label: "Account Security & Passkeys", desc: "FIDO2, sessions & privacy", icon: "🔐" }
+  ]
+
+  const matchingModules = searchQuery.trim()
+    ? ALL_MODULES.filter(m =>
+        m.label.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
+        m.desc.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
+        m.id.toLowerCase().includes(searchQuery.toLowerCase().trim())
+      ).slice(0, 3)
+    : []
+
+  const handleConnectClick = (e: React.MouseEvent, personId: string) => {
+    e.stopPropagation()
+    setConnectedIds(prev => new Set(prev).add(personId))
+    if (onToggleConnect) {
+      onToggleConnect(personId)
+    }
+  }
+
   return (
     <header className="sticky top-0 z-40 w-full border-b border-zinc-200 bg-white/95 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/95 shadow-xs">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-2 sm:px-4 lg:px-6 gap-2">
-        {/* Left Side: Brand Logo & Global Search */}
-        <div className="flex items-center gap-2.5 flex-1 max-w-xs sm:max-w-sm shrink-0">
+        {/* Left Side: Brand Logo & Interactive Live Search */}
+        <div className="flex items-center gap-2 flex-1 max-w-xs sm:max-w-md shrink-0 relative">
           <button
             onClick={() => onSelectTab('home')}
             className="flex items-center focus:outline-none group shrink-0"
@@ -171,24 +291,190 @@ export function LinkedInNavbar({
             <ConnectInLogo size="sm" showSubtitle={false} />
           </button>
 
-          {/* Search Input Box (Clicks open Universal Omnisearch) */}
+          {/* Interactive Search Box */}
           <div className="relative flex-1">
             <div
-              onClick={() => onOpenUniversalSearch && onOpenUniversalSearch()}
-              className={`flex items-center gap-2 rounded-md bg-[#EDF3F8] px-2.5 py-1.5 transition-all dark:bg-zinc-800/80 cursor-pointer ${
-                isSearchFocused ? "ring-2 ring-[#0A66C2] bg-white shadow-xs dark:bg-zinc-900" : ""
+              className={`flex items-center gap-1.5 rounded-lg bg-[#EDF3F8] px-2.5 py-1.5 transition-all dark:bg-zinc-800/90 border border-transparent ${
+                isSearchFocused ? "ring-2 ring-[#0A66C2] bg-white border-[#0A66C2]/30 shadow-md dark:bg-zinc-900" : ""
               }`}
             >
               <Search className="h-3.5 w-3.5 text-zinc-500 shrink-0" />
               <input
                 type="text"
-                placeholder="Universal Search (people, jobs, tools, RFPs...)"
+                placeholder="Search people, jobs, hubs..."
                 value={searchQuery}
-                readOnly
-                className="w-full bg-transparent text-xs text-zinc-900 placeholder:text-zinc-500 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-400 cursor-pointer"
+                onChange={(e) => {
+                  onSearchChange(e.target.value)
+                  setIsSearchFocused(true)
+                }}
+                onFocus={() => setIsSearchFocused(true)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    onOpenUniversalSearch && onOpenUniversalSearch()
+                    setIsSearchFocused(false)
+                  }
+                }}
+                className="w-full bg-transparent text-xs text-zinc-900 placeholder:text-zinc-500 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-400"
               />
-              <span className="text-[9px] font-mono bg-zinc-200 dark:bg-zinc-700 px-1.5 py-0.5 rounded text-zinc-600 dark:text-zinc-300 font-bold hidden sm:inline">⌘K</span>
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => onSearchChange("")}
+                  className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-0.5"
+                  title="Clear search"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+              {/* Dedicated Search Action Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  onOpenUniversalSearch && onOpenUniversalSearch()
+                  setIsSearchFocused(false)
+                }}
+                className="rounded-md bg-[#0A66C2] text-white px-2 py-0.5 text-[10px] sm:text-[11px] font-bold hover:bg-[#004182] transition-colors flex items-center gap-1 shrink-0 cursor-pointer shadow-2xs"
+                title="Search platform"
+              >
+                <Search className="h-2.5 w-2.5" />
+                <span className="hidden sm:inline">Search</span>
+              </button>
             </div>
+
+            {/* Live Autocomplete Popover Dropdown */}
+            {isSearchFocused && (
+              <>
+                <div
+                  className="fixed inset-0 z-40 bg-black/10 backdrop-blur-2xs"
+                  onClick={() => setIsSearchFocused(false)}
+                />
+                <div className="absolute left-0 top-11 z-50 w-80 sm:w-96 rounded-2xl border border-zinc-200 bg-white p-3 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 space-y-2.5 max-h-[80vh] overflow-y-auto">
+                  {/* Header info */}
+                  <div className="flex items-center justify-between border-b border-zinc-100 pb-2 dark:border-zinc-800">
+                    <span className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1">
+                      <Sparkles className="h-3 w-3 text-[#0A66C2]" />
+                      {searchQuery.trim() ? `Results for "${searchQuery}"` : "Suggested Members & Discovery"}
+                    </span>
+                    <button
+                      onClick={() => setIsSearchFocused(false)}
+                      className="text-[10px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+                    >
+                      Close ✕
+                    </button>
+                  </div>
+
+                  {/* Matching People Section */}
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400">
+                      People &amp; Profiles
+                    </p>
+                    {matchingMembers.length > 0 ? (
+                      <div className="space-y-1">
+                        {matchingMembers.map((member) => {
+                          const isConnected = connectedIds.has(member.id)
+                          return (
+                            <div
+                              key={member.id}
+                              onClick={() => {
+                                onSelectTab('network')
+                                setIsSearchFocused(false)
+                              }}
+                              className="group flex items-center justify-between gap-2 rounded-xl p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <img
+                                  src={member.avatar}
+                                  alt=""
+                                  className="h-8 w-8 rounded-full object-cover shrink-0 border border-zinc-200 dark:border-zinc-700"
+                                />
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-1">
+                                    <p className="font-bold text-xs text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2] truncate">
+                                      {member.name}
+                                    </p>
+                                    <ShieldCheck className="h-3 w-3 text-[#0A66C2] shrink-0" />
+                                  </div>
+                                  <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
+                                    {member.headline}
+                                  </p>
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={(e) => handleConnectClick(e, member.id)}
+                                className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold shrink-0 transition-all ${
+                                  isConnected
+                                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
+                                    : "bg-[#0A66C2] text-white hover:bg-[#004182]"
+                                }`}
+                              >
+                                {isConnected ? "✓ Sent" : "Connect"}
+                              </button>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    ) : (
+                      <div className="p-3 text-center text-xs text-zinc-500 dark:text-zinc-400">
+                        No members matching &ldquo;{searchQuery}&rdquo;. Try Omnisearch below.
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Matching Modules Section */}
+                  {matchingModules.length > 0 && (
+                    <div className="space-y-1.5 border-t border-zinc-100 pt-2 dark:border-zinc-800">
+                      <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400">
+                        Platform Hubs &amp; Modules
+                      </p>
+                      <div className="space-y-1">
+                        {matchingModules.map((mod) => (
+                          <button
+                            key={mod.id}
+                            type="button"
+                            onClick={() => {
+                              onSelectTab(mod.id)
+                              setIsSearchFocused(false)
+                            }}
+                            className="w-full flex items-center justify-between rounded-xl p-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors group cursor-pointer"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="text-base">{mod.icon}</span>
+                              <div>
+                                <p className="font-bold text-xs text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2]">
+                                  {mod.label}
+                                </p>
+                                <p className="text-[10px] text-zinc-400">{mod.desc}</p>
+                              </div>
+                            </div>
+                            <span className="text-xs text-zinc-400 group-hover:text-[#0A66C2]">→</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Omnisearch Action CTA */}
+                  <div className="border-t border-zinc-100 pt-2 dark:border-zinc-800">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onOpenUniversalSearch && onOpenUniversalSearch()
+                        setIsSearchFocused(false)
+                      }}
+                      className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 p-2 text-center text-xs font-bold text-white shadow-xs hover:from-blue-700 hover:to-indigo-700 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <Search className="h-3.5 w-3.5" />
+                      <span>
+                        {searchQuery.trim()
+                          ? `Search all results for "${searchQuery}" in Omnisearch →`
+                          : "Open Universal Omnisearch Directory →"}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
 

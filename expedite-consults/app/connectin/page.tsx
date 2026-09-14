@@ -289,6 +289,54 @@ export default function LinkedInPage() {
     }
   }, [suggestedPeople, hasHydrated, isAuthenticated])
 
+  // Sync live registered users from database into suggested network
+  useEffect(() => {
+    let isMounted = true
+
+    const syncLiveUsers = async () => {
+      try {
+        const res = await fetch("/api/connectin/users")
+        if (res.ok && isMounted) {
+          const data = await res.json()
+          if (data.success && Array.isArray(data.users)) {
+            const liveSuggested: SuggestedConnection[] = data.users
+              .filter((u: any) => u.id !== userData?.id && u.email !== userData?.email && u.name?.toLowerCase() !== userData?.name?.toLowerCase())
+              .map((u: any) => ({
+                id: u.id,
+                name: u.name,
+                headline: u.headline || `${u.role ? u.role.toUpperCase() : 'Member'} · ConnectIn Verified Network`,
+                avatar: u.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.name)}&backgroundColor=0a66c2`,
+                mutualConnections: Math.floor(Math.random() * 25) + 8,
+                capabilities: ['Cloud Security', 'GovCloud', 'Zero Trust', 'Compliance'],
+                verifiedBadges: ['✓ Verified Member', '✓ 2FA Active'],
+                circle: 'ConnectIn Verified Network',
+                matchScore: 96,
+                isConnected: false,
+                isPending: false
+              }))
+
+            setSuggestedPeople(prev => {
+              const existingIds = new Set(prev.map(p => p.id))
+              const existingNames = new Set(prev.map(p => p.name.toLowerCase().trim()))
+              const fresh = liveSuggested.filter(
+                p => !existingIds.has(p.id) && !existingNames.has(p.name.toLowerCase().trim())
+              )
+              if (fresh.length === 0) return prev
+              const merged = [...fresh, ...prev]
+              saveStoredConnections(merged)
+              return merged
+            })
+          }
+        }
+      } catch (err) {
+        console.warn("[Network] Failed to sync live users:", err)
+      }
+    }
+
+    syncLiveUsers()
+    return () => { isMounted = false }
+  }, [userData?.id, userData?.email, userData?.name])
+
   // Handle Post Creation
   const handleAddPost = (newPostData: Omit<Post, 'id' | 'timestamp' | 'stats' | 'comments'>) => {
     const newPost: Post = {
@@ -559,6 +607,8 @@ export default function LinkedInPage() {
         unreadMessagesCount={1}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        suggestedPeople={suggestedPeople}
+        onToggleConnect={handleToggleConnect}
         onOpenAIAssistant={() => setIsAIAssistantOpen(true)}
         onOpenUniversalSearch={() => setIsUniversalSearchOpen(true)}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
