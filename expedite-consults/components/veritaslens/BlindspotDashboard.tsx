@@ -121,7 +121,7 @@ export const BlindspotDashboard: React.FC<BlindspotDashboardProps> = ({
                 </span>
               </div>
               <p className="text-xs text-slate-300 mt-0.5">
-                Explore unbiased forensic verdicts on <strong>AI Deepfakes</strong>, <strong>Universal Tariffs</strong>, <strong>Sanctuary Cities</strong>, <strong>TikTok Ban</strong>, and <strong>Student Loans</strong>.
+                Explore unbiased forensic verdicts on <strong>AI Deepfakes</strong>, <strong>Universal Tariffs</strong>, <strong>Sanctuary Cities</strong>, <strong>Digital Privacy & Social Apps</strong>, and <strong>Student Loans</strong>.
               </p>
             </div>
           </div>

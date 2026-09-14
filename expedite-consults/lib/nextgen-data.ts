@@ -591,7 +591,7 @@ export const spheraAppsData: SpheraMicroApp[] = [
   { id: 'sph_3', name: 'Your Channels', tagline: 'Professional, Creative, Personal & Business', icon: '📺', badge: 'NEW', category: 'Profile & Identity', url: 'https://sphera.expediteconsults.com/?tab=feed', status: 'Available' },
 
   // 🎬 CONTENT & CREATION (SPHERA STUDIO - 10 apps)
-  { id: 'sph_4', name: 'Reels', tagline: 'TikTok-style vertical video feed & upload', icon: '▶', badge: 'HOT', category: 'Content & Creation (SPHERA Studio)', url: 'https://sphera-studio.vercel.app/?tool=reels', status: 'Available' },
+  { id: 'sph_4', name: 'Reels', tagline: 'Vertical video FYP feed & short creator studio', icon: '▶', badge: 'HOT', category: 'Content & Creation (SPHERA Studio)', url: 'https://sphera-studio.vercel.app/?tool=reels', status: 'Available' },
   { id: 'sph_5', name: 'SphereVision', tagline: 'TV-style streaming content', icon: '🎥', badge: 'HOT', category: 'Content & Creation (SPHERA Studio)', url: 'https://sphera-studio.vercel.app/?tool=watch', status: 'Available' },
   { id: 'sph_6', name: 'Video Studio', tagline: 'Professional video editing in-browser', icon: '🎬', badge: 'NEW', category: 'Content & Creation (SPHERA Studio)', url: 'https://sphera-studio.vercel.app/?tool=videostudio', status: 'Available' },
   { id: 'sph_7', name: 'Video Creator', tagline: 'AI-powered video generation', icon: '🎞️', badge: 'AI', category: 'Content & Creation (SPHERA Studio)', url: 'https://sphera-studio.vercel.app/?tool=creator', status: 'Available' },

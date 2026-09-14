@@ -483,7 +483,7 @@ Live VeritasLens Intelligence: https://portal.expediteconsults.com/veritaslens`;
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search any viral hot topic (e.g. AI Deepfakes, Tariffs, Sanctuary Cities, TikTok, Student Loans, EV Mandates)..."
+              placeholder="Search any viral hot topic (e.g. AI Deepfakes, Tariffs, Sanctuary Cities, Tech Divestment, Student Loans, EV Mandates)..."
               className="w-full pl-10 pr-4 py-2.5 bg-slate-950/90 border border-slate-700 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 font-sans shadow-inner transition"
             />
             {searchQuery && (

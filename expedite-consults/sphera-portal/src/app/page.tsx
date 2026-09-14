@@ -255,7 +255,7 @@ const categories: Category[] = [
     icon: "🎬",
     color: "#ec4899",
     apps: [
-      { name: "Reels Stage", icon: "▶", description: "TikTok-style vertical video feed & upload", badge: "HOT", url: "/reels", status: "available" },
+      { name: "Reels Stage", icon: "▶", description: "Full-screen vertical video FYP & short upload", badge: "HOT", url: "/reels", status: "available" },
       { name: "SphereVision", icon: "🎥", description: "TV-style streaming content & media rooms", badge: "HOT", tab: "watch", status: "available" },
       { name: "Video Studio", icon: "🎬", description: "Professional video editing & timeline suite", badge: "NEW", tab: "videostudio", status: "available" },
       { name: "Video Creator AI", icon: "🎞️", description: "AI-powered video generation & automated script rendering", badge: "AI", tab: "creator", status: "available" },
@@ -448,7 +448,7 @@ const crossPlatformSharing = [
   { name: "LinkedIn", icon: "💼" },
   { name: "X", icon: "✕" },
   { name: "Facebook", icon: "📘" },
-  { name: "TikTok", icon: "🎵" },
+  { name: "YouTube Shorts", icon: "🎬" },
 ];
 
 /* ─── Badge component ─── */

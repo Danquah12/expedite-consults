@@ -28,7 +28,7 @@ import {
 
 interface Post {
   id: string;
-  type?: "standard" | "tiktok_video";
+  type?: "standard" | "immersive_video";
   author: {
     name: string;
     username: string;
@@ -54,10 +54,10 @@ interface Post {
   commentsList?: { id: string; user: string; avatar: string; text: string; time: string; likes: number }[];
 }
 
-const mockTikTokPosts: Post[] = [
+const mockFeedPosts: Post[] = [
   {
     id: "p1",
-    type: "tiktok_video",
+    type: "immersive_video",
     author: {
       name: "Amara Diallo",
       username: "amara_creates",
@@ -72,7 +72,7 @@ const mockTikTokPosts: Post[] = [
     imageUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1000&auto=format&fit=crop&q=80",
     musicTitle: "Afrobeats Synthwave Future Mix Vol. 4",
     musicAuthor: "DJ Khaled x Sphera Sound",
-    hashtags: ["#SpheraViral", "#FYP", "#TechTok", "#BuildInPublic", "#AI2026"],
+    hashtags: ["#SpheraViral", "#FYP", "#TechPulse", "#BuildInPublic", "#AI2026"],
     likes: 184200,
     commentsCount: 3210,
     sharesCount: 8900,
@@ -86,7 +86,7 @@ const mockTikTokPosts: Post[] = [
   },
   {
     id: "p2",
-    type: "tiktok_video",
+    type: "immersive_video",
     author: {
       name: "Marcus Johnson",
       username: "mj_tech",
@@ -113,7 +113,7 @@ const mockTikTokPosts: Post[] = [
   },
   {
     id: "p3",
-    type: "tiktok_video",
+    type: "immersive_video",
     author: {
       name: "Zara Williams",
       username: "zara.w",
@@ -179,8 +179,8 @@ function formatNumber(num: number): string {
 
 export default function FeedPage() {
   const [feedMode, setFeedMode] = useState<"FYP" | "FOLLOWING" | "LIVE">("FYP");
-  const [viewStyle, setViewStyle] = useState<"standard" | "tiktok_theater">("standard");
-  const [posts, setPosts] = useState<Post[]>(mockTikTokPosts);
+  const [viewStyle, setViewStyle] = useState<"standard" | "immersive_theater">("standard");
+  const [posts, setPosts] = useState<Post[]>(mockFeedPosts);
   const [isMuted, setIsMuted] = useState(false);
   const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
   const [newCommentText, setNewCommentText] = useState("");
@@ -275,7 +275,7 @@ export default function FeedPage() {
                 <Flame className="w-4 h-4 text-white" />
               </div>
               <span className="font-black text-lg tracking-tight bg-gradient-to-r from-pink-400 via-purple-300 to-cyan-300 bg-clip-text text-transparent">
-                SpheraNet <span className="text-xs text-rose-400 uppercase tracking-widest font-mono font-bold">TikTok FYP</span>
+                SpheraNet <span className="text-xs text-rose-400 uppercase tracking-widest font-mono font-bold">FYP</span>
               </span>
             </a>
           </div>
@@ -294,11 +294,11 @@ export default function FeedPage() {
               💼 ConnectIn
             </a>
             <button
-              onClick={() => setViewStyle(viewStyle === "standard" ? "tiktok_theater" : "standard")}
+              onClick={() => setViewStyle(viewStyle === "standard" ? "immersive_theater" : "standard")}
               className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white text-xs font-black flex items-center gap-1.5 shadow-lg shadow-pink-600/30 transition transform hover:scale-105"
             >
               <Layers className="w-3.5 h-3.5" />
-              <span>{viewStyle === "standard" ? "📱 TikTok FYP Mode" : "📰 Stream View"}</span>
+              <span>{viewStyle === "standard" ? "📱 Immersive FYP Mode" : "📰 Stream View"}</span>
             </button>
           </div>
         </div>
@@ -322,15 +322,15 @@ export default function FeedPage() {
         </div>
       )}
 
-      {/* ── FULL SCREEN TIKTOK THEATER / IMMERSIVE FYP MODE ───────── */}
-      {viewStyle === "tiktok_theater" ? (
+      {/* ── FULL SCREEN IMMERSIVE THEATER / FYP MODE ───────────────── */}
+      {viewStyle === "immersive_theater" ? (
         <div className="max-w-4xl mx-auto px-4 py-6 flex flex-col md:flex-row gap-6 items-center justify-center min-h-[calc(100vh-80px)]">
           {/* Vertical Video Reel Card */}
           <div className="relative w-full max-w-[420px] aspect-[9/16] max-h-[82vh] bg-black rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.8)] border border-zinc-800 flex items-center justify-center select-none group">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={activeTheaterPost?.videoUrl || activeTheaterPost?.imageUrl}
-              alt="TikTok Video"
+              alt="Immersive Reel"
               className="w-full h-full object-cover cursor-pointer"
               onDoubleClick={(e) => toggleLike(activeTheaterPost.id, e)}
             />
@@ -470,7 +470,7 @@ export default function FeedPage() {
             <button
               onClick={() => setTheaterIndex((prev) => (prev > 0 ? prev - 1 : filteredPosts.length - 1))}
               className="w-12 h-12 rounded-2xl bg-zinc-800 hover:bg-pink-600 text-white flex items-center justify-center shadow-xl border border-zinc-700 transition transform hover:scale-110"
-              title="Previous TikTok Short"
+              title="Previous Reel"
             >
               <ChevronUp className="w-6 h-6" />
             </button>
@@ -480,7 +480,7 @@ export default function FeedPage() {
             <button
               onClick={() => setTheaterIndex((prev) => (prev + 1) % filteredPosts.length)}
               className="w-12 h-12 rounded-2xl bg-zinc-800 hover:bg-pink-600 text-white flex items-center justify-center shadow-xl border border-zinc-700 transition transform hover:scale-110"
-              title="Next TikTok Short"
+              title="Next Reel"
             >
               <ChevronDown className="w-6 h-6" />
             </button>
@@ -493,7 +493,7 @@ export default function FeedPage() {
           {/* Main Center Feed Column */}
           <div className="w-full max-w-[620px] flex flex-col gap-4">
 
-            {/* 1. TIKTOK FYP / FOLLOWING / LIVE TOP NAVIGATION TABS */}
+            {/* 1. FYP / FOLLOWING / LIVE TOP NAVIGATION TABS */}
             <div className="bg-[#18191a] border border-zinc-800/80 rounded-2xl p-2.5 flex items-center justify-between shadow-xl backdrop-blur-md">
               <div className="flex items-center gap-1.5">
                 <button
@@ -534,17 +534,17 @@ export default function FeedPage() {
 
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setViewStyle("tiktok_theater")}
+                  onClick={() => setViewStyle("immersive_theater")}
                   className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-pink-400 text-xs font-bold flex items-center gap-1.5 border border-zinc-700 transition"
-                  title="Toggle TikTok Theater View"
+                  title="Toggle Immersive Full-Screen Mode"
                 >
                   <Layers className="w-3.5 h-3.5" />
-                  <span>📱 TikTok FYP Mode</span>
+                  <span>📱 Immersive FYP Mode</span>
                 </button>
               </div>
             </div>
 
-            {/* 2. TIKTOK STORIES & LIVE BROADCAST TRAY */}
+            {/* 2. STORIES & LIVE BROADCAST TRAY */}
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none py-1">
               {mockStories.map((story, idx) => (
                 <div
@@ -579,7 +579,7 @@ export default function FeedPage() {
               ))}
             </div>
 
-            {/* 3. TIKTOK-STYLE POST COMPOSER */}
+            {/* 3. POST COMPOSER */}
             <div className="bg-[#18191a] border border-zinc-800 rounded-2xl p-4 shadow-xl space-y-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-pink-500/50 flex-shrink-0">
@@ -590,7 +590,7 @@ export default function FeedPage() {
                   onClick={() => {}}
                   className="flex-1 text-left bg-zinc-800/80 hover:bg-zinc-800 text-zinc-400 rounded-full px-4 py-2.5 text-xs font-medium border border-zinc-700/60 transition"
                 >
-                  Post a TikTok Short, Sound, or Update to #FYP...
+                  Share a Reel, Sound, or Creator Post to #FYP...
                 </button>
               </div>
 
@@ -610,7 +610,7 @@ export default function FeedPage() {
               </div>
             </div>
 
-            {/* 4. POSTS & TIKTOK VIDEO CARDS */}
+            {/* 4. POSTS & IMMERSIVE VIDEO CARDS */}
             {filteredPosts.map((post) => (
               <article
                 key={post.id}
@@ -680,12 +680,12 @@ export default function FeedPage() {
                   )}
                 </div>
 
-                {/* TikTok Video Frame with Floating Interaction Rail */}
+                {/* Immersive Video Frame with Floating Interaction Rail */}
                 <div className="relative w-full bg-black flex justify-center items-center overflow-hidden min-h-[380px] max-h-[580px] select-none">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={post.imageUrl || post.videoUrl}
-                    alt="TikTok content"
+                    alt="Creator post"
                     className="w-full h-full object-cover max-h-[580px] cursor-pointer"
                     onDoubleClick={(e) => toggleLike(post.id, e)}
                   />
@@ -693,7 +693,7 @@ export default function FeedPage() {
                   {/* Gradient Scrims */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 pointer-events-none" />
 
-                  {/* ── TIKTOK SIDE ENGAGEMENT RAIL ── */}
+                  {/* ── SIDE ENGAGEMENT RAIL ── */}
                   <div className="absolute right-3 bottom-6 flex flex-col items-center gap-4 z-20">
                     
                     {/* 1. Heart Like Button */}
@@ -775,7 +775,7 @@ export default function FeedPage() {
 
                   </div>
 
-                  {/* ── TIKTOK AUDIO & SOUND SCROLLING MARQUEE ── */}
+                  {/* ── AUDIO & SOUND SCROLLING MARQUEE ── */}
                   {post.musicTitle && (
                     <div className="absolute left-4 bottom-4 z-20 flex items-center gap-2 max-w-[65%] bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
                       <Music className="w-3.5 h-3.5 text-pink-400 flex-shrink-0 animate-pulse" />
@@ -794,7 +794,7 @@ export default function FeedPage() {
                   </button>
                 </div>
 
-                {/* ── INTERACTIVE TIKTOK COMMENTS DRAWER ── */}
+                {/* ── INTERACTIVE COMMENTS DRAWER ── */}
                 {activeCommentPostId === post.id && (
                   <div className="px-5 py-3 border-t border-zinc-800 bg-[#141517] space-y-3 animate-in slide-in-from-top-2">
                     <div className="flex items-center justify-between">
@@ -861,7 +861,7 @@ export default function FeedPage() {
 
           </div>
 
-          {/* ── Right Sidebar: Live Broadcasts & TikTok Trends ───────── */}
+          {/* ── Right Sidebar: Live Broadcasts & Trends ───────── */}
           <aside className="hidden lg:block w-[300px] flex-shrink-0 sticky top-20 space-y-4">
             
             {/* 1. Live Broadcasts Widget */}
@@ -905,7 +905,7 @@ export default function FeedPage() {
               </div>
             </div>
 
-            {/* 2. Trending TikTok Audio & Hashtags */}
+            {/* 2. Trending Sounds & Hashtags */}
             <div className="bg-[#18191a] border border-zinc-800 rounded-3xl p-4 shadow-xl space-y-3">
               <h3 className="text-xs font-black uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
                 <TrendingUp className="w-3.5 h-3.5 text-cyan-400" />
