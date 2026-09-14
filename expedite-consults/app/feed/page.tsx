@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Heart,
   MessageCircle,
@@ -24,152 +24,14 @@ import {
   ChevronUp,
   ChevronDown,
   TrendingUp,
+  Users,
+  Camera,
 } from "lucide-react";
-
-interface Post {
-  id: string;
-  type?: "standard" | "immersive_video";
-  author: {
-    name: string;
-    username: string;
-    avatarUrl: string;
-    verified?: boolean;
-    timeAgo: string;
-    privacy?: string;
-    isFollowed?: boolean;
-  };
-  content: string;
-  imageUrl?: string;
-  videoUrl?: string;
-  musicTitle?: string;
-  musicAuthor?: string;
-  hashtags?: string[];
-  likes: number;
-  commentsCount: number;
-  sharesCount: number;
-  savesCount?: number;
-  isLiked?: boolean;
-  isSaved?: boolean;
-  likedByFriend?: string;
-  commentsList?: { id: string; user: string; avatar: string; text: string; time: string; likes: number }[];
-}
-
-const mockFeedPosts: Post[] = [
-  {
-    id: "p1",
-    type: "immersive_video",
-    author: {
-      name: "Amara Diallo",
-      username: "amara_creates",
-      avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-      verified: true,
-      timeAgo: "2h ago",
-      privacy: "Public",
-      isFollowed: false,
-    },
-    content: "3 years of building in the dark, and today our largest platform update is finally live across SpheraNet! 🚀✨ Full breakdown dropping on Reels tonight. Tag a friend who needs to see this! 💫",
-    videoUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1000&auto=format&fit=crop&q=80",
-    imageUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1000&auto=format&fit=crop&q=80",
-    musicTitle: "Afrobeats Synthwave Future Mix Vol. 4",
-    musicAuthor: "DJ Khaled x Sphera Sound",
-    hashtags: ["#SpheraViral", "#FYP", "#TechPulse", "#BuildInPublic", "#AI2026"],
-    likes: 184200,
-    commentsCount: 3210,
-    sharesCount: 8900,
-    savesCount: 12400,
-    isLiked: true,
-    likedByFriend: "Marcus Johnson",
-    commentsList: [
-      { id: "c1", user: "Marcus Johnson", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80", text: "This UI is next level! The sound synchronization is insane 🔥", time: "1h ago", likes: 242 },
-      { id: "c2", user: "Zara Williams", avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&auto=format&fit=crop&q=80", text: "Proud of you Amara! Collegiate hackathons will never be the same 👏", time: "45m ago", likes: 118 },
-    ]
-  },
-  {
-    id: "p2",
-    type: "immersive_video",
-    author: {
-      name: "Marcus Johnson",
-      username: "mj_tech",
-      avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
-      verified: true,
-      timeAgo: "4h ago",
-      privacy: "Public",
-      isFollowed: true,
-    },
-    content: "5 VS Code & AI shortcuts that changed my development workflow in 2026. Number 3 will save you 2 hours every single day 🤯 Try this right now and thank me later! 🦾💻",
-    videoUrl: "https://images.unsplash.com/photo-1593062096033-9a26b09da705?w=1000&auto=format&fit=crop&q=80",
-    imageUrl: "https://images.unsplash.com/photo-1593062096033-9a26b09da705?w=1000&auto=format&fit=crop&q=80",
-    musicTitle: "Lo-Fi Study Beats & Cyber Bass",
-    musicAuthor: "ChillHop Cafe Records",
-    hashtags: ["#CodingHacks", "#VSCode", "#DevLife", "#Productivity", "#Nextjs"],
-    likes: 94200,
-    commentsCount: 1780,
-    sharesCount: 14200,
-    savesCount: 31000,
-    likedByFriend: "Zara Williams",
-    commentsList: [
-      { id: "c3", user: "Elena Vasquez", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=80", text: "Shortcut #3 just fixed my entire terminal layout thank you!", time: "2h ago", likes: 89 },
-    ]
-  },
-  {
-    id: "p3",
-    type: "immersive_video",
-    author: {
-      name: "Zara Williams",
-      username: "zara.w",
-      avatarUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80",
-      verified: true,
-      timeAgo: "1d ago",
-      privacy: "Public",
-      isFollowed: true,
-    },
-    content: "Collegiate hackathon kickoff at University of Maryland! Over 600 builders here hacking on autonomous AI agents, robotics, and next-gen gaming protocols 🔥 The energy in the Iribe Center is unbelievable.",
-    videoUrl: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1000&auto=format&fit=crop&q=80",
-    imageUrl: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1000&auto=format&fit=crop&q=80",
-    musicTitle: "Cyberpunk 2077 Nightcore Anthem",
-    musicAuthor: "Sphera EDM Collective",
-    hashtags: ["#HackUMD", "#StudentBuilders", "#CampusLife", "#Robotics"],
-    likes: 34100,
-    commentsCount: 1420,
-    sharesCount: 5800,
-    savesCount: 3120,
-    likedByFriend: "Kwesi Asiedu",
-    commentsList: [
-      { id: "c4", user: "David Chen", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80", text: "Best hackathon project of the season!", time: "5h ago", likes: 45 }
-    ]
-  },
-];
-
-const mockLiveStreams = [
-  { id: "l1", name: "Amara Diallo", viewers: "4.2K", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80", title: "Live Coding & UI Architecture" },
-  { id: "l2", name: "Cyber Club Live", viewers: "1.8K", avatar: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=150&auto=format&fit=crop&q=80", title: "CTF Ethical Hacking Speedrun" },
-  { id: "l3", name: "DJ Chillhop", viewers: "920", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80", title: "Midnight Coding Beats & Q&A" },
-];
-
-const mockStories = [
-  {
-    username: "Your Story",
-    img: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=300&auto=format&fit=crop&q=80",
-    isUser: true,
-  },
-  {
-    username: "Amara Diallo",
-    img: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80",
-    hasLive: true,
-  },
-  {
-    username: "Marcus J.",
-    img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80",
-  },
-  {
-    username: "Zara W.",
-    img: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&auto=format&fit=crop&q=80",
-  },
-  {
-    username: "Elena V.",
-    img: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&auto=format&fit=crop&q=80",
-  },
-];
+import { FeedPost, StoryItem, LiveStreamItem, initialFeedPosts, initialStories, initialLiveStreams } from "@/lib/feed-store";
+import { VideoRecorderModal } from "@/components/feed/VideoRecorderModal";
+import { StoryViewerModal } from "@/components/feed/StoryViewerModal";
+import { LiveBroadcastModal } from "@/components/feed/LiveBroadcastModal";
+import { PostComposerModal } from "@/components/feed/PostComposerModal";
 
 function formatNumber(num: number): string {
   if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
@@ -180,7 +42,10 @@ function formatNumber(num: number): string {
 export default function FeedPage() {
   const [feedMode, setFeedMode] = useState<"FYP" | "FOLLOWING" | "LIVE">("FYP");
   const [viewStyle, setViewStyle] = useState<"standard" | "immersive_theater">("standard");
-  const [posts, setPosts] = useState<Post[]>(mockFeedPosts);
+  const [posts, setPosts] = useState<FeedPost[]>(initialFeedPosts);
+  const [stories, setStories] = useState<StoryItem[]>(initialStories);
+  const [liveStreams, setLiveStreams] = useState<LiveStreamItem[]>(initialLiveStreams);
+  const [isLoading, setIsLoading] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
   const [newCommentText, setNewCommentText] = useState("");
@@ -188,12 +53,45 @@ export default function FeedPage() {
   const [showHeartBurst, setShowHeartBurst] = useState<{ x: number; y: number; id: string } | null>(null);
   const [theaterIndex, setTheaterIndex] = useState(0);
 
-  const toggleLike = (id: string, e?: React.MouseEvent) => {
+  // Modals state
+  const [isRecorderOpen, setIsRecorderOpen] = useState(false);
+  const [isStoryViewerOpen, setIsStoryViewerOpen] = useState(false);
+  const [selectedStoryIndex, setSelectedStoryIndex] = useState(0);
+  const [isLiveModalOpen, setIsLiveModalOpen] = useState(false);
+  const [activeLiveStream, setActiveLiveStream] = useState<LiveStreamItem | null>(null);
+  const [isComposerOpen, setIsComposerOpen] = useState(false);
+
+  // Fetch live feed data from API
+  const fetchFeed = async (mode: "FYP" | "FOLLOWING" | "LIVE") => {
+    try {
+      setIsLoading(true);
+      const res = await fetch(`/api/feed?mode=${mode}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.posts && data.posts.length > 0) setPosts(data.posts);
+        if (data.stories && data.stories.length > 0) setStories(data.stories);
+        if (data.liveStreams && data.liveStreams.length > 0) setLiveStreams(data.liveStreams);
+      }
+    } catch (e) {
+      console.warn("Using local cache for feed:", e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFeed(feedMode);
+  }, [feedMode]);
+
+  // Double-tap or Heart Like action
+  const toggleLike = async (id: string, e?: React.MouseEvent) => {
     if (e) {
       const rect = e.currentTarget.getBoundingClientRect();
       setShowHeartBurst({ x: rect.left + rect.width / 2, y: rect.top, id });
       setTimeout(() => setShowHeartBurst(null), 1000);
     }
+
+    // Optimistic UI update
     setPosts((prev) =>
       prev.map((p) => {
         if (p.id === id) {
@@ -201,21 +99,43 @@ export default function FeedPage() {
           return {
             ...p,
             isLiked: nextLiked,
-            likes: nextLiked ? p.likes + 1 : p.likes - 1,
+            likes: nextLiked ? p.likes + 1 : Math.max(0, p.likes - 1),
           };
         }
         return p;
       })
     );
+
+    try {
+      await fetch(`/api/feed/posts/${id}/like`, { method: "POST" });
+    } catch (err) {
+      console.error("Like sync error:", err);
+    }
   };
 
-  const toggleSave = (id: string) => {
+  // Toggle Save Bookmark
+  const toggleSave = async (id: string) => {
     setPosts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, isSaved: !p.isSaved, savesCount: (p.savesCount || 0) + (p.isSaved ? -1 : 1) } : p))
+      prev.map((p) =>
+        p.id === id
+          ? {
+              ...p,
+              isSaved: !p.isSaved,
+              savesCount: (p.savesCount || 0) + (p.isSaved ? -1 : 1),
+            }
+          : p
+      )
     );
+
+    try {
+      await fetch(`/api/feed/posts/${id}/save`, { method: "POST" });
+    } catch (err) {
+      console.error("Save sync error:", err);
+    }
   };
 
-  const toggleFollow = (username: string) => {
+  // Toggle Follow Creator
+  const toggleFollow = async (username: string) => {
     setPosts((prev) =>
       prev.map((p) =>
         p.author.username === username
@@ -223,42 +143,77 @@ export default function FeedPage() {
           : p
       )
     );
+
+    try {
+      await fetch(`/api/feed/follow`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username }),
+      });
+    } catch (err) {
+      console.error("Follow sync error:", err);
+    }
   };
 
-  const sendGift = (giftName: string, recipient: string) => {
+  // Send Virtual Gift
+  const sendGift = async (giftName: string, recipient: string) => {
     setGiftNotification(`✨ Sent ${giftName} to @${recipient}!`);
-    setTimeout(() => setGiftNotification(null), 3000);
+    setTimeout(() => setGiftNotification(null), 3500);
+
+    try {
+      await fetch(`/api/feed/gift`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ giftName, recipient }),
+      });
+    } catch (err) {
+      console.error("Gift sync error:", err);
+    }
   };
 
-  const handleAddComment = (postId: string) => {
+  // Submit Live Comment
+  const handleAddComment = async (postId: string) => {
     if (!newCommentText.trim()) return;
+    const textToSend = newCommentText.trim();
+    setNewCommentText("");
+
+    const newComment = {
+      id: `c-${Date.now()}`,
+      user: "Kwesi Asiedu (You)",
+      username: "kwesi",
+      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80",
+      text: textToSend,
+      time: "Just now",
+      likes: 0,
+    };
+
     setPosts((prev) =>
       prev.map((p) => {
         if (p.id === postId) {
-          const newC = {
-            id: `c-${Date.now()}`,
-            user: "Kwesi Asiedu (You)",
-            avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80",
-            text: newCommentText.trim(),
-            time: "Just now",
-            likes: 0,
-          };
           return {
             ...p,
             commentsCount: p.commentsCount + 1,
-            commentsList: [newC, ...(p.commentsList || [])],
+            commentsList: [newComment, ...(p.commentsList || [])],
           };
         }
         return p;
       })
     );
-    setNewCommentText("");
+
+    try {
+      await fetch(`/api/feed/posts/${postId}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: textToSend, user: "Kwesi Asiedu", username: "kwesi" }),
+      });
+    } catch (err) {
+      console.error("Comment sync error:", err);
+    }
   };
 
-  // Filter posts based on active tab
   const filteredPosts = posts.filter((p) => {
     if (feedMode === "FOLLOWING") return p.author.isFollowed;
-    return true; // FYP and LIVE show algorithmic feed
+    return true;
   });
 
   const activeTheaterPost = filteredPosts[theaterIndex % (filteredPosts.length || 1)] || filteredPosts[0];
@@ -281,18 +236,21 @@ export default function FeedPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsRecorderOpen(true)}
+              className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-black flex items-center gap-1.5 shadow-md shadow-rose-600/20 transition transform hover:scale-105"
+            >
+              <Camera className="w-3.5 h-3.5" />
+              <span>Record Short</span>
+            </button>
+
             <a
               href="/campus"
               className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 text-xs font-bold border border-zinc-700/60 transition"
             >
               🎓 Campus Hub
             </a>
-            <a
-              href="/connectin"
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 text-xs font-bold border border-zinc-700/60 transition"
-            >
-              💼 ConnectIn
-            </a>
+
             <button
               onClick={() => setViewStyle(viewStyle === "standard" ? "immersive_theater" : "standard")}
               className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white text-xs font-black flex items-center gap-1.5 shadow-lg shadow-pink-600/30 transition transform hover:scale-105"
@@ -520,7 +478,13 @@ export default function FeedPage() {
                 </button>
 
                 <button
-                  onClick={() => setFeedMode("LIVE")}
+                  onClick={() => {
+                    setFeedMode("LIVE");
+                    if (liveStreams.length > 0) {
+                      setActiveLiveStream(liveStreams[0]);
+                      setIsLiveModalOpen(true);
+                    }
+                  }}
                   className={`px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 ${
                     feedMode === "LIVE"
                       ? "bg-rose-600 text-white animate-pulse"
@@ -546,13 +510,17 @@ export default function FeedPage() {
 
             {/* 2. STORIES & LIVE BROADCAST TRAY */}
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none py-1">
-              {mockStories.map((story, idx) => (
+              {stories.map((story, idx) => (
                 <div
-                  key={idx}
+                  key={story.id || idx}
+                  onClick={() => {
+                    setSelectedStoryIndex(idx);
+                    setIsStoryViewerOpen(true);
+                  }}
                   className="relative w-24 h-36 rounded-2xl overflow-hidden flex-shrink-0 cursor-pointer group shadow-lg border border-zinc-800/80 transition transform hover:scale-105"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={story.img} alt={story.username} className="w-full h-full object-cover" />
+                  <img src={story.mediaUrl || story.avatar} alt={story.username} className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                   
                   {story.isUser ? (
@@ -562,7 +530,7 @@ export default function FeedPage() {
                   ) : (
                     <div className={`absolute top-2 left-2 w-8 h-8 rounded-full overflow-hidden p-0.5 ${story.hasLive ? "bg-gradient-to-tr from-pink-500 via-rose-500 to-amber-400 animate-pulse" : "bg-cyan-500"}`}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={story.img} alt="avatar" className="w-full h-full rounded-full object-cover" />
+                      <img src={story.avatar} alt="avatar" className="w-full h-full rounded-full object-cover" />
                     </div>
                   )}
 
@@ -573,7 +541,7 @@ export default function FeedPage() {
                   )}
 
                   <p className="absolute bottom-2 left-2 right-2 text-[11px] font-bold text-white truncate shadow-xs">
-                    {story.username}
+                    {story.displayName || story.username}
                   </p>
                 </div>
               ))}
@@ -587,7 +555,7 @@ export default function FeedPage() {
                   <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80" alt="me" className="w-full h-full object-cover" />
                 </div>
                 <button
-                  onClick={() => {}}
+                  onClick={() => setIsComposerOpen(true)}
                   className="flex-1 text-left bg-zinc-800/80 hover:bg-zinc-800 text-zinc-400 rounded-full px-4 py-2.5 text-xs font-medium border border-zinc-700/60 transition"
                 >
                   Share a Reel, Sound, or Creator Post to #FYP...
@@ -595,17 +563,26 @@ export default function FeedPage() {
               </div>
 
               <div className="flex items-center justify-around pt-2 border-t border-zinc-800/80 text-xs font-bold text-zinc-400">
-                <button className="flex items-center gap-1.5 hover:text-pink-400 px-3 py-1.5 rounded-xl hover:bg-zinc-800 transition">
+                <button
+                  onClick={() => setIsRecorderOpen(true)}
+                  className="flex items-center gap-1.5 hover:text-pink-400 px-3 py-1.5 rounded-xl hover:bg-zinc-800 transition"
+                >
                   <Video className="w-4 h-4 text-rose-500" />
                   <span>Record Short</span>
                 </button>
-                <button className="flex items-center gap-1.5 hover:text-cyan-400 px-3 py-1.5 rounded-xl hover:bg-zinc-800 transition">
+                <button
+                  onClick={() => setIsComposerOpen(true)}
+                  className="flex items-center gap-1.5 hover:text-cyan-400 px-3 py-1.5 rounded-xl hover:bg-zinc-800 transition"
+                >
                   <Music className="w-4 h-4 text-cyan-400" />
-                  <span>Add Sound</span>
+                  <span>Add Audio</span>
                 </button>
-                <button className="flex items-center gap-1.5 hover:text-amber-400 px-3 py-1.5 rounded-xl hover:bg-zinc-800 transition">
+                <button
+                  onClick={() => setIsComposerOpen(true)}
+                  className="flex items-center gap-1.5 hover:text-amber-400 px-3 py-1.5 rounded-xl hover:bg-zinc-800 transition"
+                >
                   <Sparkles className="w-4 h-4 text-amber-400" />
-                  <span>AI Filter</span>
+                  <span>Creator Studio</span>
                 </button>
               </div>
             </div>
@@ -871,13 +848,19 @@ export default function FeedPage() {
                   <Radio className="w-3.5 h-3.5 text-rose-500 animate-pulse" />
                   <span>LIVE Now on Sphera</span>
                 </h3>
-                <span className="text-[10px] bg-rose-950 text-rose-300 px-2 py-0.5 rounded-full font-bold">12 Streams</span>
+                <span className="text-[10px] bg-rose-950 text-rose-300 px-2 py-0.5 rounded-full font-bold">
+                  {liveStreams.length} Streams
+                </span>
               </div>
 
               <div className="space-y-2.5">
-                {mockLiveStreams.map((stream) => (
+                {liveStreams.map((stream) => (
                   <div
                     key={stream.id}
+                    onClick={() => {
+                      setActiveLiveStream(stream);
+                      setIsLiveModalOpen(true);
+                    }}
                     className="flex items-center justify-between p-2 rounded-2xl bg-zinc-800/50 hover:bg-zinc-800 transition cursor-pointer border border-zinc-700/40 group"
                   >
                     <div className="flex items-center gap-2.5">
@@ -932,6 +915,38 @@ export default function FeedPage() {
 
         </div>
       )}
+
+      {/* ── MODALS ──────────────────────────────────────────────────── */}
+      {/* 1. Camera & Short Video Recorder Modal */}
+      <VideoRecorderModal
+        isOpen={isRecorderOpen}
+        onClose={() => setIsRecorderOpen(false)}
+        onPostCreated={(newPost) => setPosts((prev) => [newPost, ...prev])}
+      />
+
+      {/* 2. Interactive 24-Hour Stories Viewer Modal */}
+      <StoryViewerModal
+        isOpen={isStoryViewerOpen}
+        stories={stories}
+        initialIndex={selectedStoryIndex}
+        onClose={() => setIsStoryViewerOpen(false)}
+        onAddStory={(newStory) => setStories((prev) => [newStory, ...prev])}
+      />
+
+      {/* 3. Live Broadcast Stage Room Modal */}
+      <LiveBroadcastModal
+        isOpen={isLiveModalOpen}
+        stream={activeLiveStream}
+        onClose={() => setIsLiveModalOpen(false)}
+        onSendGift={(giftName, recipient) => sendGift(giftName, recipient)}
+      />
+
+      {/* 4. Creator Post Composer Modal */}
+      <PostComposerModal
+        isOpen={isComposerOpen}
+        onClose={() => setIsComposerOpen(false)}
+        onPostCreated={(newPost) => setPosts((prev) => [newPost, ...prev])}
+      />
 
     </div>
   );
