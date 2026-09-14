@@ -1,0 +1,54 @@
+[
+  {
+    "id": "s0",
+    "username": "Your Story",
+    "displayName": "Kwesi Asiedu",
+    "avatar": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
+    "mediaUrl": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=600&auto=format&fit=crop&q=80",
+    "mediaType": "image",
+    "caption": "Late night building across SpheraNet! ⚡",
+    "timeAgo": "Just now",
+    "isUser": true
+  },
+  {
+    "id": "s1",
+    "username": "amara_creates",
+    "displayName": "Amara Diallo",
+    "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+    "mediaUrl": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&auto=format&fit=crop&q=80",
+    "mediaType": "image",
+    "caption": "Live coding the new AI duets! Join the stream 🎙️",
+    "timeAgo": "2h ago",
+    "hasLive": true
+  },
+  {
+    "id": "s2",
+    "username": "mj_tech",
+    "displayName": "Marcus J.",
+    "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+    "mediaUrl": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&auto=format&fit=crop&q=80",
+    "mediaType": "image",
+    "caption": "New desk setup with triple curved monitors 🚀",
+    "timeAgo": "4h ago"
+  },
+  {
+    "id": "s3",
+    "username": "zara.w",
+    "displayName": "Zara W.",
+    "avatar": "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80",
+    "mediaUrl": "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=600&auto=format&fit=crop&q=80",
+    "mediaType": "image",
+    "caption": "HackUMD day 2 breakfast round ☕🥞",
+    "timeAgo": "6h ago"
+  },
+  {
+    "id": "s4",
+    "username": "elena_v",
+    "displayName": "Elena V.",
+    "avatar": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80",
+    "mediaUrl": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600&auto=format&fit=crop&q=80",
+    "mediaType": "image",
+    "caption": "Sunset over campus library 🌅📚",
+    "timeAgo": "8h ago"
+  }
+]

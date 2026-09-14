@@ -1,0 +1,140 @@
+[
+  {
+    "id": "p1",
+    "type": "immersive_video",
+    "author": {
+      "id": "u1",
+      "name": "Amara Diallo",
+      "username": "amara_creates",
+      "avatarUrl": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "verified": true,
+      "timeAgo": "2h ago",
+      "privacy": "Public",
+      "isFollowed": false
+    },
+    "content": "3 years of building in the dark, and today our largest platform update is finally live across SpheraNet! 🚀✨ Full breakdown dropping on Reels tonight. Tag a friend who needs to see this! 💫",
+    "videoUrl": "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1000&auto=format&fit=crop&q=80",
+    "imageUrl": "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1000&auto=format&fit=crop&q=80",
+    "musicTitle": "Afrobeats Synthwave Future Mix Vol. 4",
+    "musicAuthor": "DJ Khaled x Sphera Sound",
+    "hashtags": [
+      "#SpheraViral",
+      "#FYP",
+      "#TechPulse",
+      "#BuildInPublic",
+      "#AI2026"
+    ],
+    "likes": 184200,
+    "commentsCount": 3210,
+    "sharesCount": 8900,
+    "savesCount": 12400,
+    "isLiked": true,
+    "likedByFriend": "Marcus Johnson",
+    "createdAt": "2026-09-14T21:13:02.422Z",
+    "commentsList": [
+      {
+        "id": "c1",
+        "user": "Marcus Johnson",
+        "username": "mj_tech",
+        "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80",
+        "text": "This UI is next level! The sound synchronization is insane 🔥",
+        "time": "1h ago",
+        "likes": 242
+      },
+      {
+        "id": "c2",
+        "user": "Zara Williams",
+        "username": "zara.w",
+        "avatar": "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&auto=format&fit=crop&q=80",
+        "text": "Proud of you Amara! Collegiate hackathons will never be the same 👏",
+        "time": "45m ago",
+        "likes": 118
+      }
+    ]
+  },
+  {
+    "id": "p2",
+    "type": "immersive_video",
+    "author": {
+      "id": "u2",
+      "name": "Marcus Johnson",
+      "username": "mj_tech",
+      "avatarUrl": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+      "verified": true,
+      "timeAgo": "4h ago",
+      "privacy": "Public",
+      "isFollowed": true
+    },
+    "content": "5 VS Code & AI shortcuts that changed my development workflow in 2026. Number 3 will save you 2 hours every single day 🤯 Try this right now and thank me later! 🦾💻",
+    "videoUrl": "https://images.unsplash.com/photo-1593062096033-9a26b09da705?w=1000&auto=format&fit=crop&q=80",
+    "imageUrl": "https://images.unsplash.com/photo-1593062096033-9a26b09da705?w=1000&auto=format&fit=crop&q=80",
+    "musicTitle": "Lo-Fi Study Beats & Cyber Bass",
+    "musicAuthor": "ChillHop Cafe Records",
+    "hashtags": [
+      "#CodingHacks",
+      "#VSCode",
+      "#DevLife",
+      "#Productivity",
+      "#Nextjs"
+    ],
+    "likes": 94200,
+    "commentsCount": 1780,
+    "sharesCount": 14200,
+    "savesCount": 31000,
+    "likedByFriend": "Zara Williams",
+    "createdAt": "2026-09-14T19:13:02.423Z",
+    "commentsList": [
+      {
+        "id": "c3",
+        "user": "Elena Vasquez",
+        "username": "elena_v",
+        "avatar": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=80",
+        "text": "Shortcut #3 just fixed my entire terminal layout thank you!",
+        "time": "2h ago",
+        "likes": 89
+      }
+    ]
+  },
+  {
+    "id": "p3",
+    "type": "immersive_video",
+    "author": {
+      "id": "u3",
+      "name": "Zara Williams",
+      "username": "zara.w",
+      "avatarUrl": "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80",
+      "verified": true,
+      "timeAgo": "1d ago",
+      "privacy": "Public",
+      "isFollowed": true
+    },
+    "content": "Collegiate hackathon kickoff at University of Maryland! Over 600 builders here hacking on autonomous AI agents, robotics, and next-gen gaming protocols 🔥 The energy in the Iribe Center is unbelievable.",
+    "videoUrl": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1000&auto=format&fit=crop&q=80",
+    "imageUrl": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1000&auto=format&fit=crop&q=80",
+    "musicTitle": "Cyberpunk 2077 Nightcore Anthem",
+    "musicAuthor": "Sphera EDM Collective",
+    "hashtags": [
+      "#HackUMD",
+      "#StudentBuilders",
+      "#CampusLife",
+      "#Robotics"
+    ],
+    "likes": 34100,
+    "commentsCount": 1420,
+    "sharesCount": 5800,
+    "savesCount": 3120,
+    "likedByFriend": "Kwesi Asiedu",
+    "createdAt": "2026-09-13T23:13:02.423Z",
+    "commentsList": [
+      {
+        "id": "c4",
+        "user": "David Chen",
+        "username": "dchen",
+        "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80",
+        "text": "Best hackathon project of the season!",
+        "time": "5h ago",
+        "likes": 45
+      }
+    ]
+  }
+]

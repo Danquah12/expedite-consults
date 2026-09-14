@@ -18,6 +18,7 @@ import {
   AlertCircle,
   Loader2
 } from "lucide-react";
+import { saveVideoBlob, saveLocalFeedPost } from "@/lib/indexed-db-media";
 
 interface VideoRecorderModalProps {
   isOpen: boolean;
@@ -162,31 +163,45 @@ export function VideoRecorderModal({ isOpen, onClose, onPostCreated }: VideoReco
     }
   };
 
-  const blobToDataUrl = (blob: Blob): Promise<string> => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve((reader.result as string) || "");
-      reader.onerror = () => resolve("");
-      reader.readAsDataURL(blob);
-    });
-  };
-
   const handlePublish = async () => {
-    if (!caption && !recordedVideoUrl && !recordedBlobRef.current && !uploadedFileRef.current) return;
-    setIsSubmitting(true);
-    setUploadStatus("Encoding permanent video stream...");
+    const targetBlob = recordedBlobRef.current || uploadedFileRef.current;
+    if (!caption && !recordedVideoUrl && !targetBlob) return;
 
-    let persistentVideoUrl = "";
+    setIsSubmitting(true);
+    setUploadStatus("Saving to Persistent Media Vault...");
+
+    const postId = `post-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    let serverVideoUrl = "";
 
     try {
-      const targetBlob = recordedBlobRef.current || uploadedFileRef.current;
+      // 1. Immediately store binary Blob in IndexedDB (guarantees zero loss on refresh)
       if (targetBlob) {
-        setUploadStatus("Generating sovereign permanent stream...");
-        persistentVideoUrl = await blobToDataUrl(targetBlob);
+        await saveVideoBlob(postId, targetBlob);
       }
 
-      if (!persistentVideoUrl && recordedVideoUrl && !recordedVideoUrl.startsWith("blob:")) {
-        persistentVideoUrl = recordedVideoUrl;
+      // 2. Upload to D: Drive backend endpoint via multipart/form-data
+      if (targetBlob) {
+        setUploadStatus("Writing video to D: Drive Storage...");
+        try {
+          const formData = new FormData();
+          const ext = targetBlob.type.includes("mp4") ? "mp4" : "webm";
+          formData.append("file", targetBlob, `${postId}.${ext}`);
+          formData.append("id", postId);
+
+          const uploadRes = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (uploadRes.ok) {
+            const uploadData = await uploadRes.json();
+            if (uploadData.url) {
+              serverVideoUrl = uploadData.url;
+            }
+          }
+        } catch (uploadErr) {
+          console.warn("[Upload API Notice]:", uploadErr);
+        }
       }
 
       setUploadStatus("Publishing to Global Feed...");
@@ -197,10 +212,11 @@ export function VideoRecorderModal({ isOpen, onClose, onPostCreated }: VideoReco
         .map((t) => (t.startsWith("#") ? t : `#${t}`));
 
       const payload = {
+        id: postId,
         content: caption || "Check out my new Sphera Short! 🚀✨",
         type: "immersive_video",
-        videoUrl: persistentVideoUrl || undefined,
-        imageUrl: persistentVideoUrl || undefined,
+        videoUrl: serverVideoUrl || (targetBlob ? `idb://${postId}` : recordedVideoUrl || undefined),
+        imageUrl: serverVideoUrl || (targetBlob ? `idb://${postId}` : recordedVideoUrl || undefined),
         musicTitle: selectedMusic,
         musicAuthor,
         hashtags: parsedHashtags,
@@ -208,27 +224,9 @@ export function VideoRecorderModal({ isOpen, onClose, onPostCreated }: VideoReco
         authorUsername: "kwesi",
       };
 
-      try {
-        const res = await fetch("/api/feed", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          onPostCreated(data.post);
-          onClose();
-          return;
-        }
-      } catch (feedErr) {
-        console.warn("[Feed publish network notice]:", feedErr);
-      }
-
-      // Offline / immediate optimistic fallback with permanent video URL
-      onPostCreated({
+      // 3. Publish metadata to /api/feed
+      let createdPost = {
         ...payload,
-        id: `post-${Date.now()}`,
         likes: 1,
         commentsCount: 0,
         sharesCount: 0,
@@ -242,7 +240,28 @@ export function VideoRecorderModal({ isOpen, onClose, onPostCreated }: VideoReco
           verified: true,
           timeAgo: "Just now",
         },
-      });
+      };
+
+      try {
+        const res = await fetch("/api/feed", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.post) createdPost = data.post;
+        }
+      } catch (feedErr) {
+        console.warn("[Feed publish network notice]:", feedErr);
+      }
+
+      // 4. Save local post metadata to IndexedDB
+      await saveLocalFeedPost(createdPost);
+
+      // 5. Update UI
+      onPostCreated(createdPost);
       onClose();
     } catch (err) {
       console.error("Publish error:", err);
@@ -279,7 +298,6 @@ export function VideoRecorderModal({ isOpen, onClose, onPostCreated }: VideoReco
                 </div>
               )}
 
-              {/* Top Controls Overlay */}
               <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
                 <button
                   onClick={() => setFacingMode((prev) => (prev === "user" ? "environment" : "user"))}
@@ -289,7 +307,6 @@ export function VideoRecorderModal({ isOpen, onClose, onPostCreated }: VideoReco
                   <RotateCcw className="w-4 h-4" />
                 </button>
 
-                {/* Duration Picker */}
                 <div className="flex bg-black/40 backdrop-blur-md rounded-full p-1 border border-white/10">
                   {[15, 30, 60].map((d) => (
                     <button
@@ -305,21 +322,17 @@ export function VideoRecorderModal({ isOpen, onClose, onPostCreated }: VideoReco
                 </div>
               </div>
 
-              {/* Live Music Banner */}
               <div className="absolute top-16 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/15 flex items-center gap-2 text-xs text-white max-w-[85%]">
                 <Music className="w-3.5 h-3.5 text-pink-400 shrink-0" />
                 <span className="truncate font-semibold">{selectedMusic}</span>
               </div>
 
-              {/* Bottom Camera Trigger */}
               <div className="absolute bottom-6 left-0 right-0 flex items-center justify-around px-6 z-10">
-                {/* Direct File Upload Alternative */}
                 <label className="w-12 h-12 rounded-full bg-zinc-800/80 hover:bg-zinc-700/80 backdrop-blur-md text-white flex items-center justify-center cursor-pointer transition">
                   <Upload className="w-5 h-5" />
                   <input type="file" accept="video/*" className="hidden" onChange={handleFileUpload} />
                 </label>
 
-                {/* Record Button with Animated Ring */}
                 <button
                   onClick={recording ? handleStopRecording : handleStartRecording}
                   className={`relative w-20 h-20 rounded-full flex items-center justify-center transition transform ${
@@ -336,7 +349,6 @@ export function VideoRecorderModal({ isOpen, onClose, onPostCreated }: VideoReco
                   />
                 </button>
 
-                {/* Timer Display */}
                 <div className="w-12 text-center text-xs font-mono font-black text-white">
                   {recording ? `00:${recordingSeconds.toString().padStart(2, "0")}` : `${duration}s`}
                 </div>
@@ -344,7 +356,6 @@ export function VideoRecorderModal({ isOpen, onClose, onPostCreated }: VideoReco
             </>
           ) : (
             <>
-              {/* Video Playback Review */}
               <video
                 ref={playbackRef}
                 src={recordedVideoUrl}
@@ -370,7 +381,7 @@ export function VideoRecorderModal({ isOpen, onClose, onPostCreated }: VideoReco
           )}
         </div>
 
-        {/* Right Side: Post Metadata & Sound Picker */}
+        {/* Right Side: Post Metadata */}
         <div className="w-full md:w-[360px] bg-[#121318] p-6 flex flex-col justify-between border-t md:border-t-0 md:border-l border-zinc-800 space-y-6">
           <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
             <div className="flex items-center gap-2">
@@ -383,7 +394,6 @@ export function VideoRecorderModal({ isOpen, onClose, onPostCreated }: VideoReco
           </div>
 
           <div className="space-y-4 flex-1 overflow-y-auto">
-            {/* Caption Textarea */}
             <div className="space-y-1.5">
               <label className="text-xs font-black uppercase text-zinc-400 tracking-wider">Caption & Description</label>
               <textarea
@@ -394,7 +404,6 @@ export function VideoRecorderModal({ isOpen, onClose, onPostCreated }: VideoReco
               />
             </div>
 
-            {/* Sound Selector */}
             <div className="space-y-1.5">
               <label className="text-xs font-black uppercase text-zinc-400 tracking-wider">Audio / Music Track</label>
               <select
@@ -414,7 +423,6 @@ export function VideoRecorderModal({ isOpen, onClose, onPostCreated }: VideoReco
               </select>
             </div>
 
-            {/* Hashtags Input */}
             <div className="space-y-1.5">
               <label className="text-xs font-black uppercase text-zinc-400 tracking-wider">Hashtags</label>
               <input
@@ -426,7 +434,6 @@ export function VideoRecorderModal({ isOpen, onClose, onPostCreated }: VideoReco
             </div>
           </div>
 
-          {/* Bottom Actions */}
           <div className="space-y-3 pt-2">
             {uploadStatus && (
               <div className="text-center text-xs font-bold text-pink-400 animate-pulse flex items-center justify-center gap-2">
@@ -436,14 +443,14 @@ export function VideoRecorderModal({ isOpen, onClose, onPostCreated }: VideoReco
             )}
 
             <button
-              disabled={isSubmitting || (!recordedVideoUrl && !caption)}
+              disabled={isSubmitting || (!recordedVideoUrl && !caption && !recordedBlobRef.current)}
               onClick={handlePublish}
               className="w-full py-3 rounded-2xl bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 hover:from-pink-600 hover:to-indigo-700 text-white font-black text-sm shadow-xl shadow-pink-500/20 transition transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Publishing...</span>
+                  <span>Publishing to Disk...</span>
                 </>
               ) : (
                 <>

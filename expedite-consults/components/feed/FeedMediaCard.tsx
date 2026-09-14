@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Play,
   Pause,
@@ -10,6 +10,7 @@ import {
   Flame,
 } from "lucide-react";
 import { FeedPost } from "@/lib/feed-store";
+import { getVideoBlob, getVideoObjectUrl } from "@/lib/indexed-db-media";
 
 interface FeedMediaCardProps {
   post: FeedPost;
@@ -20,7 +21,7 @@ interface FeedMediaCardProps {
 function isVideoMedia(url?: string, type?: string): boolean {
   if (!url && type === "immersive_video") return true;
   if (!url) return false;
-  if (url.startsWith("blob:")) return true;
+  if (url.startsWith("blob:") || url.startsWith("idb:")) return true;
   if (url.startsWith("data:video")) return true;
   if (/\.(mp4|webm|ogg|mov|m4v)(\?.*)?$/i.test(url)) return true;
   if (type === "immersive_video" && !/\.(jpg|jpeg|png|webp|gif|svg)(\?.*)?$/i.test(url)) {
@@ -35,12 +36,54 @@ export function FeedMediaCard({ post, onDoubleClick, isTheater = false }: FeedMe
   const [hasError, setHasError] = useState(false);
   const [showFeedbackIcon, setShowFeedbackIcon] = useState<"play" | "pause" | null>(null);
   const [progress, setProgress] = useState(0);
+  const [resolvedSrc, setResolvedSrc] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const rawMediaUrl = post.videoUrl || post.imageUrl;
   const isVideo = isVideoMedia(rawMediaUrl, post.type);
+
+  // Resolve media URL from IndexedDB if using idb:// or if stored locally
+  useEffect(() => {
+    let active = true;
+    let createdUrl: string | null = null;
+
+    async function resolveMedia() {
+      if (rawMediaUrl && rawMediaUrl.startsWith("idb://")) {
+        const id = rawMediaUrl.replace("idb://", "");
+        const url = await getVideoObjectUrl(id);
+        if (active && url) {
+          createdUrl = url;
+          setResolvedSrc(url);
+          return;
+        }
+      }
+
+      // Check if post ID has a stored blob in IndexedDB
+      if (post.id) {
+        const url = await getVideoObjectUrl(post.id);
+        if (active && url) {
+          createdUrl = url;
+          setResolvedSrc(url);
+          return;
+        }
+      }
+
+      if (active) {
+        setResolvedSrc(rawMediaUrl || null);
+      }
+    }
+
+    resolveMedia();
+
+    return () => {
+      active = false;
+      if (createdUrl) {
+        URL.revokeObjectURL(createdUrl);
+      }
+    };
+  }, [rawMediaUrl, post.id]);
 
   // Play/pause control
   const togglePlay = (e: React.MouseEvent) => {
@@ -87,12 +130,10 @@ export function FeedMediaCard({ post, onDoubleClick, isTheater = false }: FeedMe
 
   const handleClick = (e: React.MouseEvent) => {
     if (clickTimeout.current) {
-      // Double click detected
       clearTimeout(clickTimeout.current);
       clickTimeout.current = null;
       if (onDoubleClick) onDoubleClick(e);
     } else {
-      // First click: queue play toggle
       clickTimeout.current = setTimeout(() => {
         clickTimeout.current = null;
         if (isVideo) {
@@ -110,12 +151,10 @@ export function FeedMediaCard({ post, onDoubleClick, isTheater = false }: FeedMe
         isTheater ? "aspect-[9/16]" : "max-h-[580px]"
       }`}
     >
-      {/* Background Decorative Neon Glows */}
       <div className="absolute -top-24 -left-24 w-64 h-64 bg-pink-600/20 rounded-full blur-3xl pointer-events-none animate-pulse" />
       <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-cyan-600/20 rounded-full blur-3xl pointer-events-none animate-pulse [animation-delay:1.5s]" />
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
 
-      {/* Top Header Card Info */}
       <div className="flex items-center justify-between z-10">
         <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
           <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-pink-500 to-rose-500 flex items-center justify-center">
@@ -131,7 +170,6 @@ export function FeedMediaCard({ post, onDoubleClick, isTheater = false }: FeedMe
         </div>
       </div>
 
-      {/* Center Hook / Quote */}
       <div className="my-auto z-10 max-w-sm space-y-3">
         <div className="w-8 h-1 bg-gradient-to-r from-pink-500 to-cyan-400 rounded-full" />
         <h4 className="text-base sm:text-lg font-black text-white leading-snug tracking-tight drop-shadow-md">
@@ -148,7 +186,6 @@ export function FeedMediaCard({ post, onDoubleClick, isTheater = false }: FeedMe
         )}
       </div>
 
-      {/* Bottom Audio Visualizer & Creator Handle */}
       <div className="z-10 flex items-center justify-between pt-4 border-t border-white/10 bg-black/30 backdrop-blur-sm -mx-6 -mb-6 sm:-mx-8 sm:-mb-8 p-4 px-6 sm:px-8">
         <div className="flex items-center gap-2">
           <Music className="w-4 h-4 text-pink-400 animate-bounce" />
@@ -170,8 +207,9 @@ export function FeedMediaCard({ post, onDoubleClick, isTheater = false }: FeedMe
     </div>
   );
 
-  // If there's an error or no media url at all
-  if (hasError || !rawMediaUrl) {
+  const activeMediaUrl = resolvedSrc || rawMediaUrl;
+
+  if (hasError || !activeMediaUrl) {
     return renderFallbackCanvas();
   }
 
@@ -182,12 +220,11 @@ export function FeedMediaCard({ post, onDoubleClick, isTheater = false }: FeedMe
         isTheater ? "aspect-[9/16] h-full" : "min-h-[380px] max-h-[580px]"
       }`}
     >
-      {/* ── 1. VIDEO RENDERER ── */}
       {isVideo ? (
         <>
           <video
             ref={videoRef}
-            src={rawMediaUrl}
+            src={activeMediaUrl}
             autoPlay
             loop
             muted={isMuted}
@@ -197,7 +234,6 @@ export function FeedMediaCard({ post, onDoubleClick, isTheater = false }: FeedMe
             className="w-full h-full object-cover max-h-[580px]"
           />
 
-          {/* Video Play/Pause Touch Indicator */}
           {showFeedbackIcon && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
               <div className="w-16 h-16 rounded-full bg-black/70 backdrop-blur-md flex items-center justify-center text-white border border-white/20 animate-in zoom-in-75 duration-200 shadow-2xl">
@@ -210,7 +246,6 @@ export function FeedMediaCard({ post, onDoubleClick, isTheater = false }: FeedMe
             </div>
           )}
 
-          {/* Top Right Floating Mute / Sound Button */}
           <div className="absolute top-4 right-4 z-30">
             <button
               onClick={toggleMute}
@@ -225,7 +260,6 @@ export function FeedMediaCard({ post, onDoubleClick, isTheater = false }: FeedMe
             </button>
           </div>
 
-          {/* Bottom Progress Bar */}
           <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20 z-30 overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-pink-500 to-cyan-400 transition-all duration-100 ease-linear"
@@ -234,11 +268,10 @@ export function FeedMediaCard({ post, onDoubleClick, isTheater = false }: FeedMe
           </div>
         </>
       ) : (
-        /* ── 2. IMAGE RENDERER ── */
         <>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={rawMediaUrl}
+            src={activeMediaUrl}
             alt={post.content.slice(0, 40) || "Creator post"}
             onError={() => setHasError(true)}
             className="w-full h-full object-cover max-h-[580px]"
@@ -246,7 +279,6 @@ export function FeedMediaCard({ post, onDoubleClick, isTheater = false }: FeedMe
         </>
       )}
 
-      {/* Ambient Gradient Scrims */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 pointer-events-none" />
     </div>
   );

@@ -52,7 +52,7 @@ import { PostComposerModal } from "@/components/feed/PostComposerModal";
 import { AlgorithmExplanationModal } from "@/components/feed/AlgorithmExplanationModal";
 import { AlgorithmPreferencesModal } from "@/components/feed/AlgorithmPreferencesModal";
 import { Sliders, HelpCircle } from "lucide-react";
-import { FeedMediaCard } from "@/components/feed/FeedMediaCard";
+import { FeedMediaCard } from "@/components/feed/FeedMediaCard";\nimport { ShareModal } from "@/components/feed/ShareModal";\nimport { getLocalFeedPosts } from "@/lib/indexed-db-media";
 import { SpheraPulseComposer } from "@/components/post/SpheraPulseComposer";
 import { SpheraPulseThreadCard } from "@/components/post/SpheraPulseThreadCard";
 import { useAppStore, FeedStreamType } from "@/store/useAppStore";
@@ -83,10 +83,27 @@ export default function FeedPage() {
   const [isExplainModalOpen, setIsExplainModalOpen] = useState(false);
   const [explainContentId, setExplainContentId] = useState<string | null>(null);
   const [explainAuthor, setExplainAuthor] = useState<string | undefined>(undefined);
-  const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
+  const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);\n  const [isShareModalOpen, setIsShareModalOpen] = useState(false);\n  const [selectedSharePost, setSelectedSharePost] = useState<FeedPost | null>(null);
 
 
-  // 1. Instantly load locally cached posts on mount so user never loses recorded videos on refresh
+  // 1. Instantly load locally cached posts from IndexedDB and localStorage on mount
+  useEffect(() => {
+    async function hydrateLocalMedia() {
+      try {
+        const localPosts = await getLocalFeedPosts();
+        if (localPosts && localPosts.length > 0) {
+          setPosts((prev) => {
+            const existingIds = new Set(prev.map((p) => p.id));
+            const freshLocal = localPosts.filter((lp) => !existingIds.has(lp.id));
+            return [...freshLocal, ...prev];
+          });
+        }
+      } catch (err) {
+        console.warn("Local IndexedDB hydration notice:", err);
+      }
+    }
+    hydrateLocalMedia();
+  }, []);
   useEffect(() => {
     if (typeof window !== "undefined") {
       try {
@@ -1108,6 +1125,13 @@ export default function FeedPage() {
             setPosts((prev) => prev.filter((p) => p.id !== explainContentId));
           }
         }}
+      />
+
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        post={selectedSharePost}
+        onShareCompleted={handleShareCompleted}
       />
 
       <AlgorithmPreferencesModal

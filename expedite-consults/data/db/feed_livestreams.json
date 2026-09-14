@@ -1,0 +1,38 @@
+[
+  {
+    "id": "l1",
+    "name": "Amara Diallo",
+    "username": "amara_creates",
+    "viewers": "4.2K",
+    "viewerCount": 4230,
+    "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+    "title": "Live Coding & UI Architecture",
+    "streamUrl": "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1000&auto=format&fit=crop&q=80",
+    "category": "Tech & Coding",
+    "startedAt": "35m ago"
+  },
+  {
+    "id": "l2",
+    "name": "Cyber Club Live",
+    "username": "cyber_club",
+    "viewers": "1.8K",
+    "viewerCount": 1810,
+    "avatar": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=150&auto=format&fit=crop&q=80",
+    "title": "CTF Ethical Hacking Speedrun",
+    "streamUrl": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1000&auto=format&fit=crop&q=80",
+    "category": "Cybersecurity",
+    "startedAt": "1h ago"
+  },
+  {
+    "id": "l3",
+    "name": "DJ Chillhop",
+    "username": "dj_chillhop",
+    "viewers": "920",
+    "viewerCount": 920,
+    "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+    "title": "Midnight Coding Beats & Q&A",
+    "streamUrl": "https://images.unsplash.com/photo-1593062096033-9a26b09da705?w=1000&auto=format&fit=crop&q=80",
+    "category": "Music & Beats",
+    "startedAt": "12m ago"
+  }
+]

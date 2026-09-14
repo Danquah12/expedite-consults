@@ -33,6 +33,8 @@ import { StoryViewerModal } from "@/components/feed/StoryViewerModal";
 import { LiveBroadcastModal } from "@/components/feed/LiveBroadcastModal";
 import { PostComposerModal } from "@/components/feed/PostComposerModal";
 import { FeedMediaCard } from "@/components/feed/FeedMediaCard";
+import { ShareModal } from "@/components/feed/ShareModal";
+import { getLocalFeedPosts, saveLocalFeedPost } from "@/lib/indexed-db-media";
 
 function formatNumber(num: number): string {
   if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
@@ -62,21 +64,28 @@ export default function FeedPage() {
   const [activeLiveStream, setActiveLiveStream] = useState<LiveStreamItem | null>(null);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
 
-  // Instantly load locally cached posts on mount so user never loses recorded videos on refresh
+  // Omnichannel Share Modal State
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [selectedSharePost, setSelectedSharePost] = useState<FeedPost | null>(null);
+
+  // Instantly hydrate locally cached posts from IndexedDB & localStorage on mount
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    async function hydrateLocalData() {
       try {
-        const cached = localStorage.getItem("sphera_feed_posts_v3");
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setPosts(parsed);
-          }
+        const localPosts = await getLocalFeedPosts();
+        if (localPosts && localPosts.length > 0) {
+          setPosts((prev) => {
+            const existingIds = new Set(prev.map((p) => p.id));
+            const freshLocal = localPosts.filter((lp) => !existingIds.has(lp.id));
+            return [...freshLocal, ...prev];
+          });
         }
       } catch (err) {
-        console.warn("Local feed cache read notice:", err);
+        console.warn("IndexedDB hydration notice:", err);
       }
     }
+
+    hydrateLocalData();
   }, []);
 
   // Fetch live feed data from API and synchronize
@@ -90,13 +99,7 @@ export default function FeedPage() {
           setPosts((current) => {
             const serverIds = new Set(data.posts.map((p: FeedPost) => p.id));
             const localOnly = current.filter((p) => !serverIds.has(p.id) && (p.id.startsWith("p-") || p.id.startsWith("post-")));
-            const merged = [...localOnly, ...data.posts];
-            if (typeof window !== "undefined") {
-              try {
-                localStorage.setItem("sphera_feed_posts_v3", JSON.stringify(merged));
-              } catch (e) {}
-            }
-            return merged;
+            return [...localOnly, ...data.posts];
           });
         }
         if (data.stories && data.stories.length > 0) setStories(data.stories);
@@ -116,14 +119,25 @@ export default function FeedPage() {
   const handleAddNewPost = (newPost: FeedPost) => {
     setPosts((prev) => {
       const filtered = prev.filter((p) => p.id !== newPost.id);
-      const updated = [newPost, ...filtered];
-      if (typeof window !== "undefined") {
-        try {
-          localStorage.setItem("sphera_feed_posts_v3", JSON.stringify(updated));
-        } catch (e) {}
-      }
-      return updated;
+      return [newPost, ...filtered];
     });
+  };
+
+  // Open Share Modal
+  const handleOpenShare = (post: FeedPost) => {
+    setSelectedSharePost(post);
+    setIsShareModalOpen(true);
+  };
+
+  const handleShareCompleted = (platform: string) => {
+    if (!selectedSharePost) return;
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === selectedSharePost.id ? { ...p, sharesCount: (p.sharesCount || 0) + 1 } : p
+      )
+    );
+    setGiftNotification(`🚀 Shared to ${platform.toUpperCase()}!`);
+    setTimeout(() => setGiftNotification(null), 3000);
   };
 
   // Double-tap or Heart Like action
@@ -134,7 +148,6 @@ export default function FeedPage() {
       setTimeout(() => setShowHeartBurst(null), 1000);
     }
 
-    // Optimistic UI update
     setPosts((prev) =>
       prev.map((p) => {
         if (p.id === id) {
@@ -299,202 +312,181 @@ export default function FeedPage() {
               className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white text-xs font-black flex items-center gap-1.5 shadow-lg shadow-pink-600/30 transition transform hover:scale-105"
             >
               <Layers className="w-3.5 h-3.5" />
-              <span>{viewStyle === "standard" ? "📱 Immersive FYP Mode" : "📰 Stream View"}</span>
+              <span>{viewStyle === "standard" ? "Immersive FYP Mode" : "Standard Feed"}</span>
             </button>
           </div>
         </div>
       </header>
 
-      {/* ── Toast Gift Alert ────────────────────────────────────────── */}
+      {/* Floating Global Toast Notification */}
       {giftNotification && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 text-white px-6 py-3 rounded-full shadow-2xl font-black text-sm animate-bounce flex items-center gap-2 border border-white/20">
-          <Sparkles className="w-4 h-4 text-amber-300" />
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 text-white px-5 py-2.5 rounded-full shadow-2xl font-bold text-xs flex items-center gap-2 animate-in slide-in-from-top-4">
+          <Sparkles className="w-4 h-4 text-amber-300 animate-spin" />
           <span>{giftNotification}</span>
         </div>
       )}
 
-      {/* ── Heart Burst Double-Tap Animation ───────────────────────── */}
+      {/* Double-tap Floating Heart Animation */}
       {showHeartBurst && (
         <div
-          className="fixed z-50 pointer-events-none transform -translate-x-1/2 -translate-y-1/2 animate-ping"
+          className="fixed pointer-events-none z-50 -translate-x-1/2 -translate-y-1/2 animate-out fade-out zoom-out duration-700"
           style={{ left: showHeartBurst.x, top: showHeartBurst.y }}
         >
-          <Heart className="w-24 h-24 fill-rose-500 text-rose-500 drop-shadow-[0_0_20px_rgba(244,63,94,0.8)]" />
+          <Heart className="w-24 h-24 text-pink-500 fill-pink-500 drop-shadow-[0_0_25px_rgba(236,72,153,0.8)] animate-bounce" />
         </div>
       )}
 
-      {/* ── FULL SCREEN IMMERSIVE THEATER / FYP MODE ───────────────── */}
+      {/* ═══════════════════════════════════════════════════════════════════
+          VIEW 1: IMMERSIVE FULL-SCREEN THEATER FYP
+      ═══════════════════════════════════════════════════════════════════ */}
       {viewStyle === "immersive_theater" ? (
-        <div className="max-w-4xl mx-auto px-4 py-6 flex flex-col md:flex-row gap-6 items-center justify-center min-h-[calc(100vh-80px)]">
-          {/* Vertical Video Reel Card */}
-          <div className="relative w-full max-w-[420px] aspect-[9/16] max-h-[82vh] bg-black rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.8)] border border-zinc-800 flex items-center justify-center select-none group">
-            <FeedMediaCard
-              post={activeTheaterPost}
-              onDoubleClick={(e) => toggleLike(activeTheaterPost.id, e)}
-              isTheater={true}
-            />
+        <div className="relative h-[calc(100vh-57px)] w-full bg-black flex items-center justify-center overflow-hidden">
+          {activeTheaterPost ? (
+            <div className="relative w-full max-w-[440px] h-full flex items-center justify-center bg-zinc-950 shadow-2xl">
+              
+              {/* Media Renderer */}
+              <FeedMediaCard
+                post={activeTheaterPost}
+                isTheater={true}
+                onDoubleClick={(e) => toggleLike(activeTheaterPost.id, e)}
+              />
 
-            {/* Top FYP / Following Tabs */}
-            <div className="absolute top-4 left-0 right-0 z-30 flex items-center justify-center gap-4 text-sm font-black drop-shadow-md">
-              <button
-                onClick={() => setFeedMode("FOLLOWING")}
-                className={`transition ${feedMode === "FOLLOWING" ? "text-white scale-110 underline underline-offset-8" : "text-white/60 hover:text-white"}`}
-              >
-                Following
-              </button>
-              <span className="text-white/40">|</span>
-              <button
-                onClick={() => setFeedMode("FYP")}
-                className={`transition ${feedMode === "FYP" ? "text-white scale-110 underline underline-offset-8" : "text-white/60 hover:text-white"}`}
-              >
-                For You
-              </button>
-            </div>
-
-            {/* Bottom Caption & Author Details */}
-            <div className="absolute bottom-6 left-4 right-20 z-20 space-y-2 pointer-events-auto">
-              <div className="flex items-center gap-2">
-                <span className="font-black text-sm text-white drop-shadow-md">@{activeTheaterPost?.author.username}</span>
-                {activeTheaterPost?.author.verified && <CheckCircle2 className="w-4 h-4 text-cyan-400 fill-cyan-400" />}
-                {!activeTheaterPost?.author.isFollowed && (
-                  <button
-                    onClick={() => toggleFollow(activeTheaterPost.author.username)}
-                    className="px-2.5 py-0.5 rounded-full bg-pink-600 hover:bg-pink-500 text-white text-[11px] font-black shadow-md"
-                  >
-                    Follow
-                  </button>
-                )}
+              {/* Theater Navigation Controls */}
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-30">
+                <button
+                  onClick={() => setTheaterIndex((prev) => (prev > 0 ? prev - 1 : filteredPosts.length - 1))}
+                  className="w-10 h-10 rounded-full bg-black/60 hover:bg-black/90 backdrop-blur-md text-white flex items-center justify-center transition border border-white/10 shadow-lg"
+                  title="Previous Short"
+                >
+                  <ChevronUp className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => setTheaterIndex((prev) => (prev + 1) % (filteredPosts.length || 1))}
+                  className="w-10 h-10 rounded-full bg-black/60 hover:bg-black/90 backdrop-blur-md text-white flex items-center justify-center transition border border-white/10 shadow-lg"
+                  title="Next Short"
+                >
+                  <ChevronDown className="w-5 h-5" />
+                </button>
               </div>
-              <p className="text-xs text-white/95 line-clamp-3 drop-shadow-md font-medium">
-                {activeTheaterPost?.content}
-              </p>
-              {activeTheaterPost?.hashtags && (
-                <div className="flex flex-wrap gap-1">
-                  {activeTheaterPost.hashtags.map((tag, i) => (
-                    <span key={i} className="text-xs font-black text-pink-400 drop-shadow-md">
-                      {tag}
-                    </span>
-                  ))}
+
+              {/* Theater Side Interaction Rail */}
+              <div className="absolute right-3 bottom-16 flex flex-col items-center gap-4 z-30">
+                {/* Creator Avatar with follow trigger */}
+                <div className="relative mb-2">
+                  <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-pink-500 shadow-xl">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={activeTheaterPost.author.avatarUrl} alt={activeTheaterPost.author.name} className="w-full h-full object-cover" />
+                  </div>
+                  {!activeTheaterPost.author.isFollowed && (
+                    <button
+                      onClick={() => toggleFollow(activeTheaterPost.author.username)}
+                      className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-pink-600 hover:bg-pink-500 text-white flex items-center justify-center shadow-lg border border-black transition hover:scale-110"
+                    >
+                      <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                    </button>
+                  )}
                 </div>
-              )}
-              {activeTheaterPost?.musicTitle && (
-                <div className="flex items-center gap-2 pt-1">
-                  <Music className="w-3.5 h-3.5 text-pink-400 animate-pulse" />
-                  <span className="text-[11px] text-white/90 font-bold truncate max-w-[200px]">
-                    {activeTheaterPost.musicTitle} • {activeTheaterPost.musicAuthor}
+
+                {/* Heart Like */}
+                <div className="flex flex-col items-center gap-1">
+                  <button
+                    onClick={(e) => toggleLike(activeTheaterPost.id, e)}
+                    className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-md transition transform hover:scale-125 active:scale-90 shadow-2xl ${
+                      activeTheaterPost.isLiked ? "bg-pink-600 text-white" : "bg-black/60 text-white hover:bg-black/80"
+                    }`}
+                  >
+                    <Heart className={`w-6 h-6 ${activeTheaterPost.isLiked ? "fill-white text-white" : ""}`} />
+                  </button>
+                  <span className="text-xs font-black text-white drop-shadow-md">
+                    {formatNumber(activeTheaterPost.likes)}
                   </span>
                 </div>
-              )}
-            </div>
 
-            {/* Right Engagement Rail */}
-            <div className="absolute right-3 bottom-6 z-30 flex flex-col items-center gap-5">
-              <div className="relative">
-                <div className="w-11 h-11 rounded-full overflow-hidden ring-2 ring-pink-500 shadow-xl">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={activeTheaterPost?.author.avatarUrl} alt="author" className="w-full h-full object-cover" />
-                </div>
-                {!activeTheaterPost?.author.isFollowed && (
+                {/* Comments */}
+                <div className="flex flex-col items-center gap-1">
                   <button
-                    onClick={() => toggleFollow(activeTheaterPost.author.username)}
-                    className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-pink-600 hover:bg-pink-500 text-white flex items-center justify-center shadow-lg border border-black"
+                    onClick={() => setActiveCommentPostId(activeCommentPostId === activeTheaterPost.id ? null : activeTheaterPost.id)}
+                    className="w-12 h-12 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-md transition transform hover:scale-110 shadow-2xl"
                   >
-                    <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                    <MessageCircle className="w-6 h-6" />
                   </button>
-                )}
+                  <span className="text-xs font-black text-white drop-shadow-md">
+                    {formatNumber(activeTheaterPost.commentsCount)}
+                  </span>
+                </div>
+
+                {/* Bookmark */}
+                <div className="flex flex-col items-center gap-1">
+                  <button
+                    onClick={() => toggleSave(activeTheaterPost.id)}
+                    className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-md transition transform hover:scale-110 shadow-2xl ${
+                      activeTheaterPost.isSaved ? "bg-amber-500 text-black" : "bg-black/60 text-white hover:bg-black/80"
+                    }`}
+                  >
+                    <Bookmark className={`w-6 h-6 ${activeTheaterPost.isSaved ? "fill-black" : ""}`} />
+                  </button>
+                  <span className="text-xs font-black text-white drop-shadow-md">
+                    {formatNumber(activeTheaterPost.savesCount || 1420)}
+                  </span>
+                </div>
+
+                {/* Omnichannel Share Button */}
+                <div className="flex flex-col items-center gap-1">
+                  <button
+                    onClick={() => handleOpenShare(activeTheaterPost)}
+                    className="w-12 h-12 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-md transition transform hover:scale-110 shadow-2xl"
+                    title="Share to WhatsApp, Facebook, LinkedIn, TikTok"
+                  >
+                    <Share2 className="w-6 h-6" />
+                  </button>
+                  <span className="text-xs font-black text-white drop-shadow-md">
+                    {formatNumber(activeTheaterPost.sharesCount)}
+                  </span>
+                </div>
+
+                {/* Send Gift */}
+                <div className="flex flex-col items-center gap-1">
+                  <button
+                    onClick={() => sendGift("💎 1,000 Diamonds Gift", activeTheaterPost.author.username)}
+                    className="w-12 h-12 rounded-full bg-gradient-to-r from-amber-500 to-pink-500 text-white flex items-center justify-center backdrop-blur-md transition transform hover:scale-125 shadow-2xl"
+                  >
+                    <Gift className="w-6 h-6" />
+                  </button>
+                  <span className="text-[10px] font-black text-amber-300 drop-shadow-md">Gift</span>
+                </div>
               </div>
 
-              <div className="flex flex-col items-center gap-1">
-                <button
-                  onClick={(e) => toggleLike(activeTheaterPost.id, e)}
-                  className={`w-11 h-11 rounded-full flex items-center justify-center backdrop-blur-md transition transform hover:scale-125 ${
-                    activeTheaterPost?.isLiked ? "bg-pink-600 text-white shadow-pink-500/50" : "bg-black/60 text-white hover:bg-black/80"
-                  }`}
-                >
-                  <Heart className={`w-5 h-5 ${activeTheaterPost?.isLiked ? "fill-white" : ""}`} />
-                </button>
-                <span className="text-[11px] font-black text-white drop-shadow-md">
-                  {formatNumber(activeTheaterPost?.likes || 0)}
-                </span>
+              {/* Theater Bottom Info Bar */}
+              <div className="absolute bottom-4 left-4 right-16 z-30 space-y-2 pointer-events-auto">
+                <div className="flex items-center gap-2">
+                  <span className="font-black text-sm text-white drop-shadow-md">@{activeTheaterPost.author.username}</span>
+                  {activeTheaterPost.author.verified && <CheckCircle2 className="w-4 h-4 text-cyan-400 fill-cyan-400" />}
+                </div>
+                <p className="text-xs text-white/90 line-clamp-2 drop-shadow-md">{activeTheaterPost.content}</p>
+                
+                {/* Audio pill */}
+                <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 w-fit text-[11px] text-zinc-300">
+                  <Music className="w-3.5 h-3.5 text-pink-400 animate-spin" />
+                  <span className="truncate max-w-[200px]">{activeTheaterPost.musicTitle || "Original Sound"}</span>
+                </div>
               </div>
 
-              <div className="flex flex-col items-center gap-1">
-                <button
-                  onClick={() => setActiveCommentPostId(activeCommentPostId === activeTheaterPost.id ? null : activeTheaterPost.id)}
-                  className="w-11 h-11 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-md transition transform hover:scale-110"
-                >
-                  <MessageCircle className="w-5 h-5" />
-                </button>
-                <span className="text-[11px] font-black text-white drop-shadow-md">
-                  {formatNumber(activeTheaterPost?.commentsCount || 0)}
-                </span>
-              </div>
-
-              <div className="flex flex-col items-center gap-1">
-                <button
-                  onClick={() => toggleSave(activeTheaterPost.id)}
-                  className={`w-11 h-11 rounded-full flex items-center justify-center backdrop-blur-md transition transform hover:scale-110 ${
-                    activeTheaterPost?.isSaved ? "bg-amber-500 text-black" : "bg-black/60 text-white"
-                  }`}
-                >
-                  <Bookmark className={`w-5 h-5 ${activeTheaterPost?.isSaved ? "fill-black" : ""}`} />
-                </button>
-                <span className="text-[11px] font-black text-white drop-shadow-md">
-                  {formatNumber(activeTheaterPost?.savesCount || 1200)}
-                </span>
-              </div>
-
-              <div className="flex flex-col items-center gap-1">
-                <button
-                  onClick={() => sendGift("💎 1,000 Diamonds", activeTheaterPost.author.username)}
-                  className="w-11 h-11 rounded-full bg-gradient-to-tr from-amber-500 to-pink-500 text-white flex items-center justify-center backdrop-blur-md transition transform hover:scale-125"
-                >
-                  <Gift className="w-5 h-5" />
-                </button>
-                <span className="text-[10px] font-black text-amber-300 drop-shadow-md">Gift</span>
-              </div>
-
-              {/* Spinning Vinyl Disc */}
-              <div className="w-10 h-10 rounded-full bg-zinc-900 border-2 border-zinc-700 flex items-center justify-center animate-spin [animation-duration:4s] shadow-2xl">
-                <div className="w-4 h-4 rounded-full bg-pink-500 border border-white" />
-              </div>
             </div>
-
-            {/* Gradient Overlays */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
-          </div>
-
-          {/* Theater Navigation Controls */}
-          <div className="flex md:flex-col items-center gap-3">
-            <button
-              onClick={() => setTheaterIndex((prev) => (prev > 0 ? prev - 1 : filteredPosts.length - 1))}
-              className="w-12 h-12 rounded-2xl bg-zinc-800 hover:bg-pink-600 text-white flex items-center justify-center shadow-xl border border-zinc-700 transition transform hover:scale-110"
-              title="Previous Reel"
-            >
-              <ChevronUp className="w-6 h-6" />
-            </button>
-            <span className="text-xs font-mono font-bold text-zinc-400">
-              {theaterIndex + 1} / {filteredPosts.length}
-            </span>
-            <button
-              onClick={() => setTheaterIndex((prev) => (prev + 1) % filteredPosts.length)}
-              className="w-12 h-12 rounded-2xl bg-zinc-800 hover:bg-pink-600 text-white flex items-center justify-center shadow-xl border border-zinc-700 transition transform hover:scale-110"
-              title="Next Reel"
-            >
-              <ChevronDown className="w-6 h-6" />
-            </button>
-          </div>
+          ) : null}
         </div>
       ) : (
-        /* ── STANDARD DUAL-COLUMN FEED LAYOUT ───────────────────────── */
-        <div className="max-w-6xl mx-auto px-4 py-6 flex justify-center gap-8">
-          
-          {/* Main Center Feed Column */}
-          <div className="w-full max-w-[620px] flex flex-col gap-4">
 
-            {/* 1. FYP / FOLLOWING / LIVE TOP NAVIGATION TABS */}
-            <div className="bg-[#18191a] border border-zinc-800/80 rounded-2xl p-2.5 flex items-center justify-between shadow-xl backdrop-blur-md">
-              <div className="flex items-center gap-1.5">
+        /* ═══════════════════════════════════════════════════════════════════
+            VIEW 2: STANDARD IMMERSIVE SOCIAL FEED
+        ═══════════════════════════════════════════════════════════════════ */
+        <div className="max-w-7xl mx-auto px-4 py-6 flex gap-6">
+          
+          {/* ── Center Main Feed ────────────────────────────────────── */}
+          <div className="flex-1 max-w-2xl mx-auto space-y-6">
+            
+            {/* 1. Feed Mode Switcher */}
+            <div className="flex items-center justify-between bg-[#18191a] p-1.5 rounded-2xl border border-zinc-800/80 shadow-lg">
+              <div className="flex items-center gap-1">
                 <button
                   onClick={() => setFeedMode("FYP")}
                   className={`px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 ${
@@ -754,12 +746,12 @@ export default function FeedPage() {
                       </span>
                     </div>
 
-                    {/* 4. Share & Duet Button */}
+                    {/* 4. Omnichannel Share & Duet Button */}
                     <div className="flex flex-col items-center gap-1">
                       <button
-                        onClick={() => sendGift("Shared Link", post.author.username)}
+                        onClick={() => handleOpenShare(post)}
                         className="w-11 h-11 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-md transition transform hover:scale-110 shadow-2xl"
-                        title="Share / Duet / Stitch"
+                        title="Share to WhatsApp, Facebook, LinkedIn, TikTok"
                       >
                         <Share2 className="w-5 h-5" />
                       </button>
@@ -780,73 +772,37 @@ export default function FeedPage() {
                       <span className="text-[10px] font-black text-amber-300 drop-shadow-md">Gift</span>
                     </div>
 
-                    {/* 6. Spinning Vinyl Sound Disc */}
-                    <div className="mt-1 relative">
-                      <div className="w-10 h-10 rounded-full bg-zinc-900 border-2 border-zinc-700 flex items-center justify-center animate-spin [animation-duration:4s] shadow-2xl">
-                        <div className="w-4 h-4 rounded-full bg-pink-500 border border-white" />
-                      </div>
-                      <Music className="w-3.5 h-3.5 text-pink-400 absolute -top-2 -left-2 animate-bounce" />
-                    </div>
-
                   </div>
-
-                  {/* ── AUDIO & SOUND SCROLLING MARQUEE ── */}
-                  {post.musicTitle && (
-                    <div className="absolute left-4 bottom-4 z-20 flex items-center gap-2 max-w-[65%] bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
-                      <Music className="w-3.5 h-3.5 text-pink-400 flex-shrink-0 animate-pulse" />
-                      <div className="overflow-hidden whitespace-nowrap text-[11px] font-black text-white">
-                        <span>{post.musicTitle} • {post.musicAuthor}</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Sound Mute Toggle */}
-                  <button
-                    onClick={() => setIsMuted(!isMuted)}
-                    className="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-black/60 backdrop-blur-md text-white flex items-center justify-center hover:bg-black/80"
-                  >
-                    {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                  </button>
                 </div>
 
-                {/* ── INTERACTIVE COMMENTS DRAWER ── */}
+                {/* Inline Expandable Comments Tray */}
                 {activeCommentPostId === post.id && (
-                  <div className="px-5 py-3 border-t border-zinc-800 bg-[#141517] space-y-3 animate-in slide-in-from-top-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-black text-zinc-300">
-                        💬 Live Comments ({post.commentsCount.toLocaleString()})
-                      </span>
-                      <button onClick={() => setActiveCommentPostId(null)} className="text-zinc-400 hover:text-white">
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    {/* Comment Input */}
-                    <div className="flex gap-2 items-center">
+                  <div className="px-5 py-3 border-t border-zinc-800 space-y-3 bg-black/20 rounded-b-3xl">
+                    <div className="flex items-center gap-2">
                       <input
                         type="text"
-                        placeholder="Add a comment or tag @friend..."
                         value={newCommentText}
                         onChange={(e) => setNewCommentText(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleAddComment(post.id)}
-                        className="flex-1 bg-zinc-800/80 border border-zinc-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-pink-500"
+                        placeholder="Add a comment or reaction..."
+                        className="flex-1 bg-zinc-900 border border-zinc-800 text-white rounded-full px-4 py-2 text-xs focus:outline-none focus:border-pink-500 transition"
                       />
                       <button
                         onClick={() => handleAddComment(post.id)}
-                        className="bg-pink-600 hover:bg-pink-500 text-white px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-1 shadow-md"
+                        className="p-2 rounded-full bg-pink-600 hover:bg-pink-500 text-white transition"
                       >
-                        <Send className="w-3 h-3" />
+                        <Send className="w-3.5 h-3.5" />
                       </button>
                     </div>
 
                     {/* Comments List */}
-                    <div className="space-y-2.5 max-h-48 overflow-y-auto pr-1">
-                      {post.commentsList?.map((c) => (
-                        <div key={c.id} className="flex gap-2.5 items-start text-xs">
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {(post.commentsList || []).map((c) => (
+                        <div key={c.id} className="flex items-start gap-2.5 text-xs">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={c.avatar} alt={c.user} className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
-                          <div className="flex-1 bg-zinc-800/50 p-2 rounded-xl">
-                            <div className="flex items-center justify-between font-bold text-zinc-300 text-[11px]">
+                          <img src={c.avatar} alt={c.user} className="w-7 h-7 rounded-full object-cover shrink-0 mt-0.5" />
+                          <div className="bg-zinc-900/80 border border-zinc-800/60 rounded-2xl p-2.5 flex-1">
+                            <div className="flex items-center justify-between font-bold text-white">
                               <span>{c.user}</span>
                               <span className="text-[10px] text-zinc-500">{c.time}</span>
                             </div>
@@ -984,6 +940,14 @@ export default function FeedPage() {
         isOpen={isComposerOpen}
         onClose={() => setIsComposerOpen(false)}
         onPostCreated={(newPost) => handleAddNewPost(newPost)}
+      />
+
+      {/* 5. Omnichannel Share Modal (WhatsApp, Facebook, LinkedIn, TikTok, X, Telegram, Reddit, Email) */}
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        post={selectedSharePost}
+        onShareCompleted={handleShareCompleted}
       />
 
     </div>

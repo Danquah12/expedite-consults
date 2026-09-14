@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { feedStore } from "@/lib/feed-store";
+import { feedStore } from "@/lib/server-feed-store";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +28,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const {
+      id,
       content,
       type = "immersive_video",
       videoUrl,
@@ -52,6 +53,7 @@ export async function POST(req: NextRequest) {
     }
 
     const newPost = feedStore.addPost({
+      id,
       type,
       author: {
         id: `user-${authorUsername}`,

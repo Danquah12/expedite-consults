@@ -14,6 +14,7 @@ import {
   Users,
   Loader2
 } from "lucide-react";
+import { saveVideoBlob, saveLocalFeedPost } from "@/lib/indexed-db-media";
 
 interface PostComposerModalProps {
   isOpen: boolean;
@@ -41,25 +42,39 @@ export function PostComposerModal({ isOpen, onClose, onPostCreated }: PostCompos
     }
   };
 
-  const blobToDataUrl = (blob: Blob): Promise<string> => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve((reader.result as string) || "");
-      reader.onerror = () => resolve("");
-      reader.readAsDataURL(blob);
-    });
-  };
-
   const handlePublish = async () => {
     if (!content.trim() && !mediaUrl && !selectedFileRef.current) return;
     setIsSubmitting(true);
 
+    const postId = `post-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    let serverMediaUrl = "";
+
     try {
-      let persistentMediaUrl = "";
-      if (selectedFileRef.current) {
-        persistentMediaUrl = await blobToDataUrl(selectedFileRef.current);
-      } else if (mediaUrl && !mediaUrl.startsWith("blob:")) {
-        persistentMediaUrl = mediaUrl;
+      const file = selectedFileRef.current;
+      if (file) {
+        // 1. Save binary Blob to IndexedDB
+        await saveVideoBlob(postId, file);
+
+        // 2. Upload to D: drive backend via multipart
+        try {
+          const formData = new FormData();
+          formData.append("file", file, file.name);
+          formData.append("id", postId);
+
+          const uploadRes = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (uploadRes.ok) {
+            const uploadData = await uploadRes.json();
+            if (uploadData.url) {
+              serverMediaUrl = uploadData.url;
+            }
+          }
+        } catch (uploadErr) {
+          console.warn("[Upload notice]:", uploadErr);
+        }
       }
 
       const parsedHashtags = hashtags
@@ -68,10 +83,11 @@ export function PostComposerModal({ isOpen, onClose, onPostCreated }: PostCompos
         .map((t) => (t.startsWith("#") ? t : `#${t}`));
 
       const payload = {
+        id: postId,
         content: content.trim(),
         type: mediaType === "video" ? "immersive_video" : "standard",
-        videoUrl: mediaType === "video" ? (persistentMediaUrl || undefined) : undefined,
-        imageUrl: mediaType === "image" ? (persistentMediaUrl || undefined) : (persistentMediaUrl || undefined),
+        videoUrl: mediaType === "video" ? (serverMediaUrl || (file ? `idb://${postId}` : mediaUrl || undefined)) : undefined,
+        imageUrl: mediaType === "image" ? (serverMediaUrl || (file ? `idb://${postId}` : mediaUrl || undefined)) : (serverMediaUrl || (file ? `idb://${postId}` : mediaUrl || undefined)),
         musicTitle,
         musicAuthor: "Sphera Audio Lab",
         hashtags: parsedHashtags,
@@ -79,26 +95,8 @@ export function PostComposerModal({ isOpen, onClose, onPostCreated }: PostCompos
         authorUsername: "kwesi",
       };
 
-      try {
-        const res = await fetch("/api/feed", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          onPostCreated(data.post);
-          onClose();
-          return;
-        }
-      } catch (feedErr) {
-        console.warn("[Feed publish notice]:", feedErr);
-      }
-
-      onPostCreated({
+      let createdPost = {
         ...payload,
-        id: `post-${Date.now()}`,
         likes: 1,
         commentsCount: 0,
         sharesCount: 0,
@@ -112,7 +110,27 @@ export function PostComposerModal({ isOpen, onClose, onPostCreated }: PostCompos
           verified: true,
           timeAgo: "Just now",
         },
-      });
+      };
+
+      try {
+        const res = await fetch("/api/feed", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.post) createdPost = data.post;
+        }
+      } catch (feedErr) {
+        console.warn("[Feed publish notice]:", feedErr);
+      }
+
+      // Save local post metadata to IndexedDB
+      await saveLocalFeedPost(createdPost);
+
+      onPostCreated(createdPost);
       onClose();
     } catch (err) {
       console.error("Composer error:", err);
@@ -141,7 +159,6 @@ export function PostComposerModal({ isOpen, onClose, onPostCreated }: PostCompos
 
         {/* Modal Body */}
         <div className="p-6 space-y-4">
-          {/* User Info Bar */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -156,14 +173,12 @@ export function PostComposerModal({ isOpen, onClose, onPostCreated }: PostCompos
               </div>
             </div>
 
-            {/* Privacy Dropdown */}
             <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-full text-xs text-zinc-300 font-semibold cursor-pointer">
               <Globe className="w-3.5 h-3.5 text-cyan-400" />
               <span>{visibility}</span>
             </div>
           </div>
 
-          {/* Main Text Area */}
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
@@ -171,7 +186,6 @@ export function PostComposerModal({ isOpen, onClose, onPostCreated }: PostCompos
             className="w-full h-32 bg-transparent text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none resize-none"
           />
 
-          {/* Media Preview Box */}
           {mediaUrl && (
             <div className="relative rounded-2xl overflow-hidden bg-black/60 border border-zinc-800 max-h-48 flex items-center justify-center">
               {mediaType === "video" ? (
@@ -192,7 +206,6 @@ export function PostComposerModal({ isOpen, onClose, onPostCreated }: PostCompos
             </div>
           )}
 
-          {/* Hashtags Input */}
           <div className="space-y-1">
             <label className="text-[11px] font-black uppercase text-zinc-400">Hashtags</label>
             <input
@@ -203,7 +216,6 @@ export function PostComposerModal({ isOpen, onClose, onPostCreated }: PostCompos
             />
           </div>
 
-          {/* Bottom Toolbar */}
           <div className="flex items-center justify-between border-t border-zinc-800 pt-4">
             <div className="flex items-center gap-2">
               <label className="p-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white cursor-pointer transition">
@@ -225,7 +237,7 @@ export function PostComposerModal({ isOpen, onClose, onPostCreated }: PostCompos
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span>Publishing...</span>
+                  <span>Posting...</span>
                 </>
               ) : (
                 <>
