@@ -236,7 +236,7 @@ export function RightWidgetSidebar() {
         </div>
       </div>
 
-      {/* ── Trending Tags ─────────────────────────────────────────── */}
+      {/* ── Sphera Pulse Trending & News ────────────────────────── */}
       <div
         style={{
           backgroundColor: "var(--bg-card)",
@@ -249,22 +249,50 @@ export function RightWidgetSidebar() {
           boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <TrendingUp size={16} color="var(--accent-cyan)" />
-          <h3 style={{ fontSize: "13px", fontWeight: "800", color: "var(--text-pure)", margin: 0 }}>Trending on SpheraNet</h3>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <TrendingUp size={16} color="var(--accent-cyan)" />
+            <h3 style={{ fontSize: "13px", fontWeight: "800", color: "var(--text-pure)", margin: 0 }}>Trending on Sphera Pulse</h3>
+          </div>
+          <span style={{ fontSize: "9px", fontWeight: "800", color: "var(--accent-cyan)", backgroundColor: "rgba(0,212,255,0.12)", padding: "1px 5px", borderRadius: "4px" }}>
+            LIVE
+          </span>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
           {trendingTopics.map((t) => (
             <div key={t.tag} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
-                <p style={{ fontSize: "10px", color: "var(--text-muted)", margin: 0, fontWeight: "700" }}>{t.category}</p>
-                <p style={{ fontSize: "13px", fontWeight: "800", color: "var(--accent-cyan)", margin: "1px 0 0 0" }}>{t.tag}</p>
+                <p style={{ fontSize: "10px", color: "var(--text-muted)", margin: 0, fontWeight: "700" }}>{t.category} · Trending</p>
+                <p style={{ fontSize: "13px", fontWeight: "800", color: "var(--accent-cyan)", margin: "1px 0 0 0", cursor: "pointer" }}>{t.tag}</p>
               </div>
               <span style={{ fontSize: "11px", color: "var(--text-secondary)", fontWeight: "700" }}>{t.posts}</span>
             </div>
           ))}
         </div>
+      </div>
+
+      {/* ── Community Context Notes Spotlight ──────────────────────── */}
+      <div
+        style={{
+          backgroundColor: "rgba(245, 158, 11, 0.05)",
+          border: "1px solid rgba(245, 158, 11, 0.25)",
+          borderRadius: "20px",
+          padding: "16px 18px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "10px",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <ShieldCheck size={16} color="#f59e0b" />
+          <h3 style={{ fontSize: "12px", fontWeight: "900", color: "#f59e0b", margin: 0, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+            Community Notes
+          </h3>
+        </div>
+        <p style={{ fontSize: "11px", color: "var(--text-pure)", margin: 0, lineHeight: "1.4" }}>
+          Readers added context to <strong>#CyberDefense2026</strong>: Verified by NSA CAE-CD certified campus research enclaves.
+        </p>
       </div>
 
       {/* ── Footer ────────────────────────────────────────────────── */}

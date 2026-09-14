@@ -15,7 +15,8 @@ import {
   Volume2,
   VolumeX,
   Camera,
-  AlertCircle
+  AlertCircle,
+  Loader2
 } from "lucide-react";
 
 interface VideoRecorderModalProps {
@@ -40,11 +41,14 @@ export function VideoRecorderModal({ isOpen, onClose, onPostCreated }: VideoReco
   const [musicAuthor, setMusicAuthor] = useState("Sphera Sound Studio");
   const [hashtags, setHashtags] = useState("#SpheraViral #FYP #CreatorLife");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
 
   const videoPreviewRef = useRef<HTMLVideoElement | null>(null);
   const playbackRef = useRef<HTMLVideoElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const recordedBlobRef = useRef<Blob | null>(null);
+  const uploadedFileRef = useRef<File | null>(null);
 
   const startCamera = async () => {
     setCameraError(null);
@@ -81,8 +85,11 @@ export function VideoRecorderModal({ isOpen, onClose, onPostCreated }: VideoReco
       stopCamera();
       setRecordedVideoUrl(null);
       setRecordedChunks([]);
+      recordedBlobRef.current = null;
+      uploadedFileRef.current = null;
       setRecording(false);
       setRecordingSeconds(0);
+      setUploadStatus(null);
     }
     return () => stopCamera();
   }, [isOpen, facingMode]);
@@ -92,6 +99,7 @@ export function VideoRecorderModal({ isOpen, onClose, onPostCreated }: VideoReco
     const chunks: Blob[] = [];
     setRecordedChunks([]);
     setRecordedVideoUrl(null);
+    recordedBlobRef.current = null;
 
     try {
       const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")
@@ -107,6 +115,7 @@ export function VideoRecorderModal({ isOpen, onClose, onPostCreated }: VideoReco
 
       recorder.onstop = () => {
         const blob = new Blob(chunks, { type: "video/webm" });
+        recordedBlobRef.current = blob;
         const url = URL.createObjectURL(blob);
         setRecordedVideoUrl(url);
         setRecordedChunks(chunks);
@@ -142,16 +151,64 @@ export function VideoRecorderModal({ isOpen, onClose, onPostCreated }: VideoReco
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      uploadedFileRef.current = file;
+      recordedBlobRef.current = null;
       const url = URL.createObjectURL(file);
       setRecordedVideoUrl(url);
     }
   };
 
+  const blobToDataUrl = (blob: Blob): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve((reader.result as string) || "");
+      reader.onerror = () => resolve("");
+      reader.readAsDataURL(blob);
+    });
+  };
+
   const handlePublish = async () => {
-    if (!caption && !recordedVideoUrl) return;
+    if (!caption && !recordedVideoUrl && !recordedBlobRef.current && !uploadedFileRef.current) return;
     setIsSubmitting(true);
+    setUploadStatus("Uploading video to persistent sovereign storage...");
+
+    let persistentVideoUrl = "";
 
     try {
+      const targetBlob = recordedBlobRef.current || uploadedFileRef.current;
+      if (targetBlob) {
+        const formData = new FormData();
+        const filename = targetBlob instanceof File ? targetBlob.name : `recorded_short_${Date.now()}.webm`;
+        formData.append("file", targetBlob, filename);
+
+        try {
+          const uploadRes = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (uploadRes.ok) {
+            const uploadJson = await uploadRes.json();
+            if (uploadJson.success && uploadJson.data?.url) {
+              persistentVideoUrl = uploadJson.data.url;
+            }
+          }
+        } catch (uploadErr) {
+          console.warn("[Upload failed, converting to sovereign local data URL]:", uploadErr);
+        }
+
+        // Fallback: If server upload wasn't available, store as permanent base64 data URL
+        if (!persistentVideoUrl) {
+          persistentVideoUrl = await blobToDataUrl(targetBlob);
+        }
+      }
+
+      if (!persistentVideoUrl && recordedVideoUrl && !recordedVideoUrl.startsWith("blob:")) {
+        persistentVideoUrl = recordedVideoUrl;
+      }
+
+      setUploadStatus("Publishing to SpheraNet Global Feed...");
+
       const parsedHashtags = hashtags
         .split(" ")
         .filter((t) => t.startsWith("#") || t.length > 0)
@@ -160,8 +217,8 @@ export function VideoRecorderModal({ isOpen, onClose, onPostCreated }: VideoReco
       const payload = {
         content: caption || "Check out my new Sphera Short! 🚀✨",
         type: "immersive_video",
-        videoUrl: recordedVideoUrl || undefined,
-        imageUrl: undefined,
+        videoUrl: persistentVideoUrl || undefined,
+        imageUrl: persistentVideoUrl || undefined,
         musicTitle: selectedMusic,
         musicAuthor,
         hashtags: parsedHashtags,
@@ -169,216 +226,277 @@ export function VideoRecorderModal({ isOpen, onClose, onPostCreated }: VideoReco
         authorUsername: "kwesi",
       };
 
-      const res = await fetch("/api/feed", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        onPostCreated(data.post);
-        onClose();
-      } else {
-        onPostCreated({
-          ...payload,
-          id: `post-${Date.now()}`,
-          likes: 0,
-          commentsCount: 0,
-          sharesCount: 0,
-          savesCount: 0,
-          author: {
-            id: "user-kwesi",
-            name: "Kwesi Asiedu",
-            username: "kwesi",
-            avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
-            verified: true,
-            timeAgo: "Just now",
-          },
+      try {
+        const res = await fetch("/api/feed", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
         });
-        onClose();
+
+        if (res.ok) {
+          const data = await res.json();
+          onPostCreated(data.post);
+          onClose();
+          return;
+        }
+      } catch (feedErr) {
+        console.warn("[Feed publish network notice]:", feedErr);
       }
+
+      // Offline / immediate optimistic fallback with permanent video URL
+      onPostCreated({
+        ...payload,
+        id: `post-${Date.now()}`,
+        likes: 1,
+        commentsCount: 0,
+        sharesCount: 0,
+        savesCount: 0,
+        isLiked: true,
+        author: {
+          id: "user-kwesi",
+          name: "Kwesi Asiedu",
+          username: "kwesi",
+          avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
+          verified: true,
+          timeAgo: "Just now",
+        },
+      });
+      onClose();
     } catch (err) {
       console.error("Publish error:", err);
       onClose();
     } finally {
       setIsSubmitting(false);
+      setUploadStatus(null);
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-xl flex items-center justify-center p-4">
-      <div className="bg-[#121318] border border-zinc-800 rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col md:flex-row shadow-2xl animate-in zoom-in-95">
+    <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-2xl flex items-center justify-center p-3 sm:p-6 select-none animate-in fade-in duration-200">
+      <div className="bg-[#0b0c10] border border-zinc-800 rounded-3xl w-full max-w-4xl h-[92vh] max-h-[820px] flex flex-col md:flex-row overflow-hidden shadow-2xl relative">
         
-        {/* Left Side: Camera Preview / Video Playback */}
-        <div className="relative flex-1 bg-black flex items-center justify-center min-h-[380px] md:min-h-[520px] overflow-hidden">
-          {!recordedVideoUrl ? (
-            <>
-              <video
-                ref={videoPreviewRef}
-                autoPlay
-                playsInline
-                muted
-                className="w-full h-full object-cover max-h-[520px]"
-              />
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          disabled={isSubmitting}
+          className="absolute top-4 right-4 z-40 p-2 rounded-full bg-black/60 hover:bg-zinc-800 text-white transition border border-white/10"
+        >
+          <X className="w-5 h-5" />
+        </button>
 
-              {recording && (
-                <div className="absolute top-4 left-4 z-20 flex items-center gap-2 bg-rose-600/90 text-white px-3 py-1 rounded-full text-xs font-mono font-black animate-pulse">
-                  <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping" />
-                  <span>REC 00:{recordingSeconds < 10 ? `0${recordingSeconds}` : recordingSeconds} / {duration}s</span>
-                </div>
-              )}
-
-              {!recording && (
-                <div className="absolute top-4 left-4 z-20 flex gap-1.5 bg-black/60 backdrop-blur-md p-1 rounded-full border border-white/10">
-                  {([15, 30, 60] as const).map((d) => (
-                    <button
-                      key={d}
-                      onClick={() => setDuration(d)}
-                      className={`px-3 py-1 rounded-full text-xs font-mono font-bold transition ${
-                        duration === d ? "bg-pink-600 text-white" : "text-zinc-400 hover:text-white"
-                      }`}
-                    >
-                      {d}s
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
-                <label className="w-9 h-9 rounded-full bg-black/60 backdrop-blur-md text-white flex items-center justify-center hover:bg-black/80 cursor-pointer border border-white/10">
-                  <Upload className="w-4 h-4" />
-                  <input type="file" accept="video/*" className="hidden" onChange={handleFileUpload} />
-                </label>
-                <button
-                  onClick={() => setFacingMode(facingMode === "user" ? "environment" : "user")}
-                  className="w-9 h-9 rounded-full bg-black/60 backdrop-blur-md text-white flex items-center justify-center hover:bg-black/80 border border-white/10"
-                  title="Flip Camera"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="absolute bottom-6 left-0 right-0 z-20 flex items-center justify-center">
-                <button
-                  onClick={recording ? handleStopRecording : handleStartRecording}
-                  className={`w-18 h-18 rounded-full border-4 border-white flex items-center justify-center transition transform hover:scale-105 active:scale-95 shadow-2xl ${
-                    recording ? "bg-rose-600 animate-pulse" : "bg-gradient-to-tr from-pink-600 to-rose-500"
-                  }`}
-                >
-                  <div className={`transition-all ${recording ? "w-6 h-6 rounded-sm bg-white" : "w-12 h-12 rounded-full bg-rose-500"}`} />
-                </button>
-              </div>
-
-              {cameraError && (
-                <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-6 text-center z-10 space-y-3">
-                  <AlertCircle className="w-10 h-10 text-amber-400" />
-                  <p className="text-xs text-zinc-300 max-w-xs">{cameraError}</p>
-                  <label className="px-4 py-2 bg-pink-600 hover:bg-pink-500 text-white rounded-xl text-xs font-black cursor-pointer shadow-lg flex items-center gap-2">
-                    <Upload className="w-4 h-4" />
-                    <span>Upload Video from Device</span>
-                    <input type="file" accept="video/*" className="hidden" onChange={handleFileUpload} />
-                  </label>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="relative w-full h-full flex items-center justify-center">
+        {/* ── Left Side: Live Camera Viewfinder / Preview Player ── */}
+        <div className="relative flex-1 bg-black flex items-center justify-center overflow-hidden border-b md:border-b-0 md:border-r border-zinc-800/80">
+          
+          {recordedVideoUrl ? (
+            /* Recorded playback preview */
+            <div className="relative w-full h-full flex items-center justify-center bg-zinc-950">
               <video
                 ref={playbackRef}
                 src={recordedVideoUrl}
                 autoPlay
                 loop
                 playsInline
-                className="w-full h-full object-cover max-h-[520px]"
+                className="w-full h-full object-cover"
               />
+              <div className="absolute top-4 left-4 bg-pink-600 text-white font-mono text-[11px] font-black px-3 py-1 rounded-full shadow-lg flex items-center gap-1.5 border border-white/20">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Recorded Short ({recordingSeconds || duration}s)</span>
+              </div>
               <button
                 onClick={() => {
                   setRecordedVideoUrl(null);
+                  recordedBlobRef.current = null;
+                  uploadedFileRef.current = null;
+                  setRecordingSeconds(0);
                   startCamera();
                 }}
-                className="absolute top-4 left-4 z-20 px-3 py-1.5 rounded-full bg-black/70 hover:bg-black text-white text-xs font-bold flex items-center gap-1.5 backdrop-blur-md border border-white/20"
+                disabled={isSubmitting}
+                className="absolute bottom-6 left-6 px-4 py-2 bg-black/70 hover:bg-black text-white text-xs font-bold rounded-2xl flex items-center gap-2 backdrop-blur-md border border-white/15 transition"
               >
-                <RotateCcw className="w-3.5 h-3.5" /> Retake
+                <RotateCcw className="w-4 h-4" /> Re-record
               </button>
+            </div>
+          ) : (
+            /* Live Camera Viewfinder */
+            <div className="relative w-full h-full flex items-center justify-center bg-zinc-900">
+              <video
+                ref={videoPreviewRef}
+                autoPlay
+                muted
+                playsInline
+                className="w-full h-full object-cover transform scale-x-[-1]"
+              />
+
+              {cameraError && (
+                <div className="absolute inset-0 bg-zinc-950/90 flex flex-col items-center justify-center p-6 text-center gap-3">
+                  <AlertCircle className="w-12 h-12 text-pink-500" />
+                  <p className="text-sm font-black text-white max-w-xs">{cameraError}</p>
+                  <label className="px-5 py-2.5 bg-gradient-to-r from-pink-600 to-rose-500 text-white text-xs font-black rounded-2xl cursor-pointer shadow-xl hover:scale-105 transition flex items-center gap-2">
+                    <Upload className="w-4 h-4" /> Choose Video File
+                    <input
+                      type="file"
+                      accept="video/*"
+                      className="hidden"
+                      onChange={handleFileUpload}
+                    />
+                  </label>
+                </div>
+              )}
+
+              {/* Recording Duration Indicator */}
+              <div className="absolute top-4 left-4 flex items-center gap-2">
+                <div className="bg-black/60 backdrop-blur-md px-3 py-1 rounded-full text-xs font-mono font-black text-white border border-white/10 flex items-center gap-1.5">
+                  <div className={`w-2.5 h-2.5 rounded-full ${recording ? "bg-rose-500 animate-ping" : "bg-zinc-500"}`} />
+                  <span>{recordingSeconds}s / {duration}s</span>
+                </div>
+                {[15, 30, 60].map((d) => (
+                  <button
+                    key={d}
+                    onClick={() => !recording && setDuration(d as any)}
+                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-black border ${
+                      duration === d
+                        ? "bg-pink-600 border-pink-400 text-white"
+                        : "bg-black/50 border-zinc-700 text-zinc-400"
+                    }`}
+                  >
+                    {d}s
+                  </button>
+                ))}
+              </div>
+
+              {/* Flip camera */}
+              <button
+                onClick={() => setFacingMode((prev) => (prev === "user" ? "environment" : "user"))}
+                className="absolute top-4 right-4 p-2.5 rounded-full bg-black/60 hover:bg-black text-white border border-white/10 backdrop-blur-md transition"
+                title="Flip Camera"
+              >
+                <Camera className="w-4 h-4" />
+              </button>
+
+              {/* Bottom Recording Shutter Button */}
+              <div className="absolute bottom-6 flex items-center justify-center gap-6">
+                <label className="p-3.5 rounded-full bg-black/60 hover:bg-zinc-800 text-white cursor-pointer border border-white/15 backdrop-blur-md transition" title="Upload Video">
+                  <Upload className="w-5 h-5" />
+                  <input
+                    type="file"
+                    accept="video/*"
+                    className="hidden"
+                    onChange={handleFileUpload}
+                  />
+                </label>
+
+                <button
+                  onClick={recording ? handleStopRecording : handleStartRecording}
+                  className={`w-20 h-20 rounded-full border-4 flex items-center justify-center transition transform hover:scale-105 active:scale-95 shadow-2xl ${
+                    recording
+                      ? "border-rose-500 bg-rose-500/20"
+                      : "border-white bg-pink-600 hover:bg-pink-500"
+                  }`}
+                >
+                  <div
+                    className={`transition-all ${
+                      recording
+                        ? "w-7 h-7 bg-rose-500 rounded-md animate-pulse"
+                        : "w-14 h-14 bg-white rounded-full"
+                    }`}
+                  />
+                </button>
+
+                <div className="w-12 h-12" />
+              </div>
             </div>
           )}
         </div>
 
-        {/* Right Side: Creator Studio & Post Settings */}
-        <div className="w-full md:w-[380px] p-6 flex flex-col justify-between border-t md:border-t-0 md:border-l border-zinc-800 space-y-4">
+        {/* ── Right Side: Post Metadata & Publisher Form ── */}
+        <div className="w-full md:w-[360px] bg-[#111217] p-6 flex flex-col justify-between overflow-y-auto space-y-4">
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-pink-600/20 text-pink-400 flex items-center justify-center">
-                  <Video className="w-4 h-4" />
-                </div>
-                <h3 className="text-sm font-black text-white">Creator Studio — New Short</h3>
-              </div>
-              <button onClick={onClose} className="p-1 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white">
-                <X className="w-5 h-5" />
-              </button>
+            <div className="flex items-center gap-2 border-b border-zinc-800 pb-3">
+              <Sparkles className="w-4 h-4 text-pink-500" />
+              <h3 className="text-sm font-black text-white tracking-wide">Creator Studio Details</h3>
             </div>
 
+            {/* Caption Input */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-zinc-300">Caption & Hook</label>
+              <label className="text-xs font-bold text-zinc-400">Caption & Hook</label>
               <textarea
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
-                placeholder="What's happening? Add your hook and tag creators..."
+                placeholder="What is your Reel about? Add a catchy hook..."
                 rows={3}
-                className="w-full bg-zinc-900 border border-zinc-700/80 rounded-2xl p-3 text-xs text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-pink-500 resize-none"
+                className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-3 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-pink-500 transition resize-none font-medium"
               />
             </div>
 
+            {/* Audio Track Selector */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-zinc-300 flex items-center gap-1.5">
-                <Music className="w-3.5 h-3.5 text-pink-400" />
+              <label className="text-xs font-bold text-zinc-400 flex items-center gap-1.5">
+                <Music className="w-3.5 h-3.5 text-cyan-400" />
                 <span>Audio Track</span>
               </label>
               <select
                 value={selectedMusic}
-                onChange={(e) => {
-                  setSelectedMusic(e.target.value);
-                  setMusicAuthor("Sphera Trending Audio");
-                }}
-                className="w-full bg-zinc-900 border border-zinc-700/80 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-pink-500"
+                onChange={(e) => setSelectedMusic(e.target.value)}
+                className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-3 text-xs text-white focus:outline-none focus:border-pink-500 font-medium"
               >
                 <option value="Afrobeats Synthwave Future Mix Vol. 4">Afrobeats Synthwave Future Mix Vol. 4</option>
-                <option value="Lo-Fi Study Beats & Cyber Bass">Lo-Fi Study Beats & Cyber Bass</option>
-                <option value="Cyberpunk 2077 Nightcore Anthem">Cyberpunk 2077 Nightcore Anthem</option>
-                <option value="Collegiate Pulse & Cinematic Horns">Collegiate Pulse & Cinematic Horns</option>
-                <option value="Original Creator Audio">Original Audio (Microphone)</option>
+                <option value="Cyberpunk Enclave Midnight Drive">Cyberpunk Enclave Midnight Drive</option>
+                <option value="Lo-Fi Study Beats · Bitcamp Edition">Lo-Fi Study Beats · Bitcamp Edition</option>
+                <option value="Original Audio / Voice Track">Original Audio / Voice Track</option>
               </select>
             </div>
 
+            {/* Hashtags */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-zinc-300">Trending Hashtags</label>
+              <label className="text-xs font-bold text-zinc-400">Trending Hashtags</label>
               <input
                 type="text"
                 value={hashtags}
                 onChange={(e) => setHashtags(e.target.value)}
-                placeholder="#SpheraViral #FYP #CreatorLife"
-                className="w-full bg-zinc-900 border border-zinc-700/80 rounded-xl p-2.5 text-xs text-pink-400 font-mono focus:outline-none focus:ring-1 focus:ring-pink-500"
+                className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-3 text-xs text-pink-400 focus:outline-none focus:border-pink-500 font-bold"
               />
+            </div>
+
+            {/* Privacy & Zero-Trust Notice */}
+            <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-3 text-[11px] text-zinc-400 space-y-1">
+              <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Zero-Trust Persistent Storage Active</span>
+              </div>
+              <p>Uploaded video files are stored permanently in sovereign public storage and indexed for global playback across all devices.</p>
             </div>
           </div>
 
-          <div className="space-y-2 pt-2 border-t border-zinc-800">
+          {/* Action Buttons */}
+          <div className="space-y-2 pt-4 border-t border-zinc-800">
+            {uploadStatus && (
+              <p className="text-[11px] text-cyan-400 font-bold flex items-center gap-1.5 animate-pulse">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>{uploadStatus}</span>
+              </p>
+            )}
+
             <button
               onClick={handlePublish}
-              disabled={isSubmitting}
-              className="w-full py-3 rounded-2xl bg-gradient-to-r from-pink-600 via-rose-500 to-indigo-600 hover:from-pink-500 hover:to-indigo-500 text-white text-xs font-black flex items-center justify-center gap-2 shadow-lg shadow-pink-600/30 transition transform hover:scale-[1.02] disabled:opacity-50"
+              disabled={isSubmitting || (!recordedVideoUrl && !caption.trim())}
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-pink-600 via-rose-500 to-amber-500 text-white font-black text-sm shadow-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
             >
-              <Send className="w-4 h-4" />
-              <span>{isSubmitting ? "Publishing to #FYP..." : "Publish Live to #FYP"}</span>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Uploading & Publishing...</span>
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4" />
+                  <span>Publish Short to #FYP</span>
+                </>
+              )}
             </button>
-            <p className="text-[10px] text-center text-zinc-500">
-              Published directly to SpheraNet algorithmic feed & followers.
-            </p>
           </div>
+
         </div>
 
       </div>

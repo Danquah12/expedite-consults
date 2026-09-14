@@ -16,6 +16,7 @@ import {
   ItemCondition,
   ListingStatus,
   OrderStatus,
+  CommunityNoteStatus,
 } from "@/generated/client";
 
 // ─── Re-export Prisma enums ────────────────────────────────────────────────────
@@ -37,6 +38,7 @@ export {
   ItemCondition,
   ListingStatus,
   OrderStatus,
+  CommunityNoteStatus,
 };
 
 // ─── User types ───────────────────────────────────────────────────────────────
@@ -62,7 +64,52 @@ export type PublicUser = {
   isFollowing?: boolean;
 };
 
-// ─── Post types ───────────────────────────────────────────────────────────────
+// ─── Post & Sphera Pulse types ────────────────────────────────────────────────
+
+export type CommunityNoteItem = {
+  id: string;
+  postId: string;
+  authorId: string;
+  authorName?: string;
+  content: string;
+  sources: string[];
+  status: CommunityNoteStatus;
+  helpfulCount: number;
+  createdAt: Date;
+};
+
+export type PollOptionItem = {
+  id: string;
+  text: string;
+  votes: number;
+  percentage?: number;
+};
+
+export type PollData = {
+  question: string;
+  options: PollOptionItem[];
+  totalVotes: number;
+  userVotedOptionId?: string;
+  expiresAt?: string;
+};
+
+export type BountyData = {
+  title: string;
+  reward: string;
+  sponsor: string;
+  clearanceRequired?: string;
+  tags: string[];
+  submissionDeadline?: string;
+  difficulty?: "Beginner" | "Intermediate" | "Advanced" | "Zero-Day";
+};
+
+export type ArticleData = {
+  title: string;
+  subtitle?: string;
+  coverImage?: string;
+  readTimeMinutes: number;
+  slug?: string;
+};
 
 export type PostWithDetails = {
   id: string;
@@ -78,9 +125,28 @@ export type PostWithDetails = {
     reactions: number;
     comments: number;
     saves: number;
+    shares?: number;
   };
   isLiked?: boolean;
   isSaved?: boolean;
+  isReposted?: boolean;
+  likedByFriend?: string;
+  topReactions?: { emoji: string; count: number }[];
+
+  // Sphera Pulse & 1/N Threading
+  isThread?: boolean;
+  threadIndex?: number;
+  threadTotal?: number;
+  threadReplies?: PostWithDetails[];
+  repostOf?: PostWithDetails;
+  quoteText?: string;
+  communityNote?: CommunityNoteItem;
+  poll?: PollData;
+  bounty?: BountyData;
+  article?: ArticleData;
+  viewsCount?: number;
+  sharesCount?: number;
+  repostsCount?: number;
 };
 
 // ─── Reel / Video types ───────────────────────────────────────────────────────

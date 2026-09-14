@@ -79,6 +79,11 @@ export type Mute = $Result.DefaultSelection<Prisma.$MutePayload>
  */
 export type Post = $Result.DefaultSelection<Prisma.$PostPayload>
 /**
+ * Model CommunityNote
+ * 
+ */
+export type CommunityNote = $Result.DefaultSelection<Prisma.$CommunityNotePayload>
+/**
  * Model Comment
  * 
  */
@@ -288,10 +293,25 @@ export const PostType: {
   EVENT: 'EVENT',
   LINK: 'LINK',
   PRODUCT: 'PRODUCT',
-  JOB: 'JOB'
+  JOB: 'JOB',
+  THREAD: 'THREAD',
+  ARTICLE: 'ARTICLE',
+  BOUNTY: 'BOUNTY',
+  CAROUSEL: 'CAROUSEL',
+  LIVE_STAGE: 'LIVE_STAGE'
 };
 
 export type PostType = (typeof PostType)[keyof typeof PostType]
+
+
+export const CommunityNoteStatus: {
+  PROPOSED: 'PROPOSED',
+  CURRENTLY_RATED_HELPFUL: 'CURRENTLY_RATED_HELPFUL',
+  NEEDS_MORE_RATINGS: 'NEEDS_MORE_RATINGS',
+  NOT_HELPFUL: 'NOT_HELPFUL'
+};
+
+export type CommunityNoteStatus = (typeof CommunityNoteStatus)[keyof typeof CommunityNoteStatus]
 
 
 export const ReactionType: {
@@ -537,6 +557,10 @@ export const FriendshipStatus: typeof $Enums.FriendshipStatus
 export type PostType = $Enums.PostType
 
 export const PostType: typeof $Enums.PostType
+
+export type CommunityNoteStatus = $Enums.CommunityNoteStatus
+
+export const CommunityNoteStatus: typeof $Enums.CommunityNoteStatus
 
 export type ReactionType = $Enums.ReactionType
 
@@ -862,6 +886,16 @@ export class PrismaClient<
     * ```
     */
   get post(): Prisma.PostDelegate<ExtArgs>;
+
+  /**
+   * `prisma.communityNote`: Exposes CRUD operations for the **CommunityNote** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more CommunityNotes
+    * const communityNotes = await prisma.communityNote.findMany()
+    * ```
+    */
+  get communityNote(): Prisma.CommunityNoteDelegate<ExtArgs>;
 
   /**
    * `prisma.comment`: Exposes CRUD operations for the **Comment** model.
@@ -1606,6 +1640,7 @@ export namespace Prisma {
     Block: 'Block',
     Mute: 'Mute',
     Post: 'Post',
+    CommunityNote: 'CommunityNote',
     Comment: 'Comment',
     Reaction: 'Reaction',
     Save: 'Save',
@@ -1650,7 +1685,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "user" | "profile" | "persona" | "workExperience" | "education" | "account" | "session" | "verificationToken" | "friendship" | "follow" | "block" | "mute" | "post" | "comment" | "reaction" | "save" | "share" | "hashtag" | "postHashtag" | "media" | "video" | "story" | "storyView" | "conversation" | "conversationParticipant" | "message" | "messageReaction" | "space" | "spaceMember" | "spaceChannel" | "listing" | "order" | "sellerReview" | "event" | "eventRsvp" | "page" | "pageFollow" | "notification" | "alertSubscription" | "reputation" | "badge" | "report"
+      modelProps: "user" | "profile" | "persona" | "workExperience" | "education" | "account" | "session" | "verificationToken" | "friendship" | "follow" | "block" | "mute" | "post" | "communityNote" | "comment" | "reaction" | "save" | "share" | "hashtag" | "postHashtag" | "media" | "video" | "story" | "storyView" | "conversation" | "conversationParticipant" | "message" | "messageReaction" | "space" | "spaceMember" | "spaceChannel" | "listing" | "order" | "sellerReview" | "event" | "eventRsvp" | "page" | "pageFollow" | "notification" | "alertSubscription" | "reputation" | "badge" | "report"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2561,6 +2596,76 @@ export namespace Prisma {
           count: {
             args: Prisma.PostCountArgs<ExtArgs>
             result: $Utils.Optional<PostCountAggregateOutputType> | number
+          }
+        }
+      }
+      CommunityNote: {
+        payload: Prisma.$CommunityNotePayload<ExtArgs>
+        fields: Prisma.CommunityNoteFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.CommunityNoteFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommunityNotePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.CommunityNoteFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommunityNotePayload>
+          }
+          findFirst: {
+            args: Prisma.CommunityNoteFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommunityNotePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.CommunityNoteFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommunityNotePayload>
+          }
+          findMany: {
+            args: Prisma.CommunityNoteFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommunityNotePayload>[]
+          }
+          create: {
+            args: Prisma.CommunityNoteCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommunityNotePayload>
+          }
+          createMany: {
+            args: Prisma.CommunityNoteCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.CommunityNoteCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommunityNotePayload>[]
+          }
+          delete: {
+            args: Prisma.CommunityNoteDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommunityNotePayload>
+          }
+          update: {
+            args: Prisma.CommunityNoteUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommunityNotePayload>
+          }
+          deleteMany: {
+            args: Prisma.CommunityNoteDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.CommunityNoteUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.CommunityNoteUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommunityNotePayload>
+          }
+          aggregate: {
+            args: Prisma.CommunityNoteAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateCommunityNote>
+          }
+          groupBy: {
+            args: Prisma.CommunityNoteGroupByArgs<ExtArgs>
+            result: $Utils.Optional<CommunityNoteGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.CommunityNoteCountArgs<ExtArgs>
+            result: $Utils.Optional<CommunityNoteCountAggregateOutputType> | number
           }
         }
       }
@@ -4763,6 +4868,7 @@ export namespace Prisma {
     reactions: number
     saves: number
     shares: number
+    communityNotes: number
     sentFriendRequests: number
     receivedFriendRequests: number
     following: number
@@ -4802,6 +4908,7 @@ export namespace Prisma {
     reactions?: boolean | UserCountOutputTypeCountReactionsArgs
     saves?: boolean | UserCountOutputTypeCountSavesArgs
     shares?: boolean | UserCountOutputTypeCountSharesArgs
+    communityNotes?: boolean | UserCountOutputTypeCountCommunityNotesArgs
     sentFriendRequests?: boolean | UserCountOutputTypeCountSentFriendRequestsArgs
     receivedFriendRequests?: boolean | UserCountOutputTypeCountReceivedFriendRequestsArgs
     following?: boolean | UserCountOutputTypeCountFollowingArgs
@@ -4897,6 +5004,13 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountSharesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ShareWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountCommunityNotesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CommunityNoteWhereInput
   }
 
   /**
@@ -5141,19 +5255,25 @@ export namespace Prisma {
    */
 
   export type PostCountOutputType = {
+    threadReplies: number
+    reposts: number
     comments: number
     reactions: number
     saves: number
     shares: number
     hashtags: number
+    communityNotes: number
   }
 
   export type PostCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    threadReplies?: boolean | PostCountOutputTypeCountThreadRepliesArgs
+    reposts?: boolean | PostCountOutputTypeCountRepostsArgs
     comments?: boolean | PostCountOutputTypeCountCommentsArgs
     reactions?: boolean | PostCountOutputTypeCountReactionsArgs
     saves?: boolean | PostCountOutputTypeCountSavesArgs
     shares?: boolean | PostCountOutputTypeCountSharesArgs
     hashtags?: boolean | PostCountOutputTypeCountHashtagsArgs
+    communityNotes?: boolean | PostCountOutputTypeCountCommunityNotesArgs
   }
 
   // Custom InputTypes
@@ -5165,6 +5285,20 @@ export namespace Prisma {
      * Select specific fields to fetch from the PostCountOutputType
      */
     select?: PostCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * PostCountOutputType without action
+   */
+  export type PostCountOutputTypeCountThreadRepliesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PostWhereInput
+  }
+
+  /**
+   * PostCountOutputType without action
+   */
+  export type PostCountOutputTypeCountRepostsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PostWhereInput
   }
 
   /**
@@ -5200,6 +5334,13 @@ export namespace Prisma {
    */
   export type PostCountOutputTypeCountHashtagsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: PostHashtagWhereInput
+  }
+
+  /**
+   * PostCountOutputType without action
+   */
+  export type PostCountOutputTypeCountCommunityNotesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CommunityNoteWhereInput
   }
 
 
@@ -5787,6 +5928,7 @@ export namespace Prisma {
     reactions?: boolean | User$reactionsArgs<ExtArgs>
     saves?: boolean | User$savesArgs<ExtArgs>
     shares?: boolean | User$sharesArgs<ExtArgs>
+    communityNotes?: boolean | User$communityNotesArgs<ExtArgs>
     sentFriendRequests?: boolean | User$sentFriendRequestsArgs<ExtArgs>
     receivedFriendRequests?: boolean | User$receivedFriendRequestsArgs<ExtArgs>
     following?: boolean | User$followingArgs<ExtArgs>
@@ -5859,6 +6001,7 @@ export namespace Prisma {
     reactions?: boolean | User$reactionsArgs<ExtArgs>
     saves?: boolean | User$savesArgs<ExtArgs>
     shares?: boolean | User$sharesArgs<ExtArgs>
+    communityNotes?: boolean | User$communityNotesArgs<ExtArgs>
     sentFriendRequests?: boolean | User$sentFriendRequestsArgs<ExtArgs>
     receivedFriendRequests?: boolean | User$receivedFriendRequestsArgs<ExtArgs>
     following?: boolean | User$followingArgs<ExtArgs>
@@ -5904,6 +6047,7 @@ export namespace Prisma {
       reactions: Prisma.$ReactionPayload<ExtArgs>[]
       saves: Prisma.$SavePayload<ExtArgs>[]
       shares: Prisma.$SharePayload<ExtArgs>[]
+      communityNotes: Prisma.$CommunityNotePayload<ExtArgs>[]
       sentFriendRequests: Prisma.$FriendshipPayload<ExtArgs>[]
       receivedFriendRequests: Prisma.$FriendshipPayload<ExtArgs>[]
       following: Prisma.$FollowPayload<ExtArgs>[]
@@ -6320,6 +6464,7 @@ export namespace Prisma {
     reactions<T extends User$reactionsArgs<ExtArgs> = {}>(args?: Subset<T, User$reactionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReactionPayload<ExtArgs>, T, "findMany"> | Null>
     saves<T extends User$savesArgs<ExtArgs> = {}>(args?: Subset<T, User$savesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SavePayload<ExtArgs>, T, "findMany"> | Null>
     shares<T extends User$sharesArgs<ExtArgs> = {}>(args?: Subset<T, User$sharesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SharePayload<ExtArgs>, T, "findMany"> | Null>
+    communityNotes<T extends User$communityNotesArgs<ExtArgs> = {}>(args?: Subset<T, User$communityNotesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CommunityNotePayload<ExtArgs>, T, "findMany"> | Null>
     sentFriendRequests<T extends User$sentFriendRequestsArgs<ExtArgs> = {}>(args?: Subset<T, User$sentFriendRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$FriendshipPayload<ExtArgs>, T, "findMany"> | Null>
     receivedFriendRequests<T extends User$receivedFriendRequestsArgs<ExtArgs> = {}>(args?: Subset<T, User$receivedFriendRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$FriendshipPayload<ExtArgs>, T, "findMany"> | Null>
     following<T extends User$followingArgs<ExtArgs> = {}>(args?: Subset<T, User$followingArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$FollowPayload<ExtArgs>, T, "findMany"> | Null>
@@ -6876,6 +7021,26 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: ShareScalarFieldEnum | ShareScalarFieldEnum[]
+  }
+
+  /**
+   * User.communityNotes
+   */
+  export type User$communityNotesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommunityNote
+     */
+    select?: CommunityNoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommunityNoteInclude<ExtArgs> | null
+    where?: CommunityNoteWhereInput
+    orderBy?: CommunityNoteOrderByWithRelationInput | CommunityNoteOrderByWithRelationInput[]
+    cursor?: CommunityNoteWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CommunityNoteScalarFieldEnum | CommunityNoteScalarFieldEnum[]
   }
 
   /**
@@ -18158,8 +18323,20 @@ export namespace Prisma {
 
   export type AggregatePost = {
     _count: PostCountAggregateOutputType | null
+    _avg: PostAvgAggregateOutputType | null
+    _sum: PostSumAggregateOutputType | null
     _min: PostMinAggregateOutputType | null
     _max: PostMaxAggregateOutputType | null
+  }
+
+  export type PostAvgAggregateOutputType = {
+    threadIndex: number | null
+    threadTotal: number | null
+  }
+
+  export type PostSumAggregateOutputType = {
+    threadIndex: number | null
+    threadTotal: number | null
   }
 
   export type PostMinAggregateOutputType = {
@@ -18173,6 +18350,12 @@ export namespace Prisma {
     pageId: string | null
     isPinned: boolean | null
     isSponsored: boolean | null
+    isThread: boolean | null
+    threadIndex: number | null
+    threadTotal: number | null
+    threadParentId: string | null
+    repostOfId: string | null
+    quoteText: string | null
     createdAt: Date | null
     updatedAt: Date | null
     deletedAt: Date | null
@@ -18189,6 +18372,12 @@ export namespace Prisma {
     pageId: string | null
     isPinned: boolean | null
     isSponsored: boolean | null
+    isThread: boolean | null
+    threadIndex: number | null
+    threadTotal: number | null
+    threadParentId: string | null
+    repostOfId: string | null
+    quoteText: string | null
     createdAt: Date | null
     updatedAt: Date | null
     deletedAt: Date | null
@@ -18207,12 +18396,28 @@ export namespace Prisma {
     pageId: number
     isPinned: number
     isSponsored: number
+    isThread: number
+    threadIndex: number
+    threadTotal: number
+    threadParentId: number
+    repostOfId: number
+    quoteText: number
     createdAt: number
     updatedAt: number
     deletedAt: number
     _all: number
   }
 
+
+  export type PostAvgAggregateInputType = {
+    threadIndex?: true
+    threadTotal?: true
+  }
+
+  export type PostSumAggregateInputType = {
+    threadIndex?: true
+    threadTotal?: true
+  }
 
   export type PostMinAggregateInputType = {
     id?: true
@@ -18225,6 +18430,12 @@ export namespace Prisma {
     pageId?: true
     isPinned?: true
     isSponsored?: true
+    isThread?: true
+    threadIndex?: true
+    threadTotal?: true
+    threadParentId?: true
+    repostOfId?: true
+    quoteText?: true
     createdAt?: true
     updatedAt?: true
     deletedAt?: true
@@ -18241,6 +18452,12 @@ export namespace Prisma {
     pageId?: true
     isPinned?: true
     isSponsored?: true
+    isThread?: true
+    threadIndex?: true
+    threadTotal?: true
+    threadParentId?: true
+    repostOfId?: true
+    quoteText?: true
     createdAt?: true
     updatedAt?: true
     deletedAt?: true
@@ -18259,6 +18476,12 @@ export namespace Prisma {
     pageId?: true
     isPinned?: true
     isSponsored?: true
+    isThread?: true
+    threadIndex?: true
+    threadTotal?: true
+    threadParentId?: true
+    repostOfId?: true
+    quoteText?: true
     createdAt?: true
     updatedAt?: true
     deletedAt?: true
@@ -18303,6 +18526,18 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
+     * Select which fields to average
+    **/
+    _avg?: PostAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: PostSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
      * Select which fields to find the minimum value
     **/
     _min?: PostMinAggregateInputType
@@ -18333,6 +18568,8 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: PostCountAggregateInputType | true
+    _avg?: PostAvgAggregateInputType
+    _sum?: PostSumAggregateInputType
     _min?: PostMinAggregateInputType
     _max?: PostMaxAggregateInputType
   }
@@ -18350,10 +18587,18 @@ export namespace Prisma {
     pageId: string | null
     isPinned: boolean
     isSponsored: boolean
+    isThread: boolean
+    threadIndex: number | null
+    threadTotal: number | null
+    threadParentId: string | null
+    repostOfId: string | null
+    quoteText: string | null
     createdAt: Date
     updatedAt: Date
     deletedAt: Date | null
     _count: PostCountAggregateOutputType | null
+    _avg: PostAvgAggregateOutputType | null
+    _sum: PostSumAggregateOutputType | null
     _min: PostMinAggregateOutputType | null
     _max: PostMaxAggregateOutputType | null
   }
@@ -18385,17 +18630,28 @@ export namespace Prisma {
     pageId?: boolean
     isPinned?: boolean
     isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: boolean
+    threadTotal?: boolean
+    threadParentId?: boolean
+    repostOfId?: boolean
+    quoteText?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     deletedAt?: boolean
     author?: boolean | UserDefaultArgs<ExtArgs>
     space?: boolean | Post$spaceArgs<ExtArgs>
     page?: boolean | Post$pageArgs<ExtArgs>
+    threadParent?: boolean | Post$threadParentArgs<ExtArgs>
+    threadReplies?: boolean | Post$threadRepliesArgs<ExtArgs>
+    repostOf?: boolean | Post$repostOfArgs<ExtArgs>
+    reposts?: boolean | Post$repostsArgs<ExtArgs>
     comments?: boolean | Post$commentsArgs<ExtArgs>
     reactions?: boolean | Post$reactionsArgs<ExtArgs>
     saves?: boolean | Post$savesArgs<ExtArgs>
     shares?: boolean | Post$sharesArgs<ExtArgs>
     hashtags?: boolean | Post$hashtagsArgs<ExtArgs>
+    communityNotes?: boolean | Post$communityNotesArgs<ExtArgs>
     _count?: boolean | PostCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["post"]>
 
@@ -18412,12 +18668,20 @@ export namespace Prisma {
     pageId?: boolean
     isPinned?: boolean
     isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: boolean
+    threadTotal?: boolean
+    threadParentId?: boolean
+    repostOfId?: boolean
+    quoteText?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     deletedAt?: boolean
     author?: boolean | UserDefaultArgs<ExtArgs>
     space?: boolean | Post$spaceArgs<ExtArgs>
     page?: boolean | Post$pageArgs<ExtArgs>
+    threadParent?: boolean | Post$threadParentArgs<ExtArgs>
+    repostOf?: boolean | Post$repostOfArgs<ExtArgs>
   }, ExtArgs["result"]["post"]>
 
   export type PostSelectScalar = {
@@ -18433,6 +18697,12 @@ export namespace Prisma {
     pageId?: boolean
     isPinned?: boolean
     isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: boolean
+    threadTotal?: boolean
+    threadParentId?: boolean
+    repostOfId?: boolean
+    quoteText?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     deletedAt?: boolean
@@ -18442,17 +18712,24 @@ export namespace Prisma {
     author?: boolean | UserDefaultArgs<ExtArgs>
     space?: boolean | Post$spaceArgs<ExtArgs>
     page?: boolean | Post$pageArgs<ExtArgs>
+    threadParent?: boolean | Post$threadParentArgs<ExtArgs>
+    threadReplies?: boolean | Post$threadRepliesArgs<ExtArgs>
+    repostOf?: boolean | Post$repostOfArgs<ExtArgs>
+    reposts?: boolean | Post$repostsArgs<ExtArgs>
     comments?: boolean | Post$commentsArgs<ExtArgs>
     reactions?: boolean | Post$reactionsArgs<ExtArgs>
     saves?: boolean | Post$savesArgs<ExtArgs>
     shares?: boolean | Post$sharesArgs<ExtArgs>
     hashtags?: boolean | Post$hashtagsArgs<ExtArgs>
+    communityNotes?: boolean | Post$communityNotesArgs<ExtArgs>
     _count?: boolean | PostCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type PostIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     author?: boolean | UserDefaultArgs<ExtArgs>
     space?: boolean | Post$spaceArgs<ExtArgs>
     page?: boolean | Post$pageArgs<ExtArgs>
+    threadParent?: boolean | Post$threadParentArgs<ExtArgs>
+    repostOf?: boolean | Post$repostOfArgs<ExtArgs>
   }
 
   export type $PostPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -18461,11 +18738,16 @@ export namespace Prisma {
       author: Prisma.$UserPayload<ExtArgs>
       space: Prisma.$SpacePayload<ExtArgs> | null
       page: Prisma.$PagePayload<ExtArgs> | null
+      threadParent: Prisma.$PostPayload<ExtArgs> | null
+      threadReplies: Prisma.$PostPayload<ExtArgs>[]
+      repostOf: Prisma.$PostPayload<ExtArgs> | null
+      reposts: Prisma.$PostPayload<ExtArgs>[]
       comments: Prisma.$CommentPayload<ExtArgs>[]
       reactions: Prisma.$ReactionPayload<ExtArgs>[]
       saves: Prisma.$SavePayload<ExtArgs>[]
       shares: Prisma.$SharePayload<ExtArgs>[]
       hashtags: Prisma.$PostHashtagPayload<ExtArgs>[]
+      communityNotes: Prisma.$CommunityNotePayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -18480,6 +18762,12 @@ export namespace Prisma {
       pageId: string | null
       isPinned: boolean
       isSponsored: boolean
+      isThread: boolean
+      threadIndex: number | null
+      threadTotal: number | null
+      threadParentId: string | null
+      repostOfId: string | null
+      quoteText: string | null
       createdAt: Date
       updatedAt: Date
       deletedAt: Date | null
@@ -18850,11 +19138,16 @@ export namespace Prisma {
     author<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
     space<T extends Post$spaceArgs<ExtArgs> = {}>(args?: Subset<T, Post$spaceArgs<ExtArgs>>): Prisma__SpaceClient<$Result.GetResult<Prisma.$SpacePayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     page<T extends Post$pageArgs<ExtArgs> = {}>(args?: Subset<T, Post$pageArgs<ExtArgs>>): Prisma__PageClient<$Result.GetResult<Prisma.$PagePayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    threadParent<T extends Post$threadParentArgs<ExtArgs> = {}>(args?: Subset<T, Post$threadParentArgs<ExtArgs>>): Prisma__PostClient<$Result.GetResult<Prisma.$PostPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    threadReplies<T extends Post$threadRepliesArgs<ExtArgs> = {}>(args?: Subset<T, Post$threadRepliesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PostPayload<ExtArgs>, T, "findMany"> | Null>
+    repostOf<T extends Post$repostOfArgs<ExtArgs> = {}>(args?: Subset<T, Post$repostOfArgs<ExtArgs>>): Prisma__PostClient<$Result.GetResult<Prisma.$PostPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    reposts<T extends Post$repostsArgs<ExtArgs> = {}>(args?: Subset<T, Post$repostsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PostPayload<ExtArgs>, T, "findMany"> | Null>
     comments<T extends Post$commentsArgs<ExtArgs> = {}>(args?: Subset<T, Post$commentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CommentPayload<ExtArgs>, T, "findMany"> | Null>
     reactions<T extends Post$reactionsArgs<ExtArgs> = {}>(args?: Subset<T, Post$reactionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReactionPayload<ExtArgs>, T, "findMany"> | Null>
     saves<T extends Post$savesArgs<ExtArgs> = {}>(args?: Subset<T, Post$savesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SavePayload<ExtArgs>, T, "findMany"> | Null>
     shares<T extends Post$sharesArgs<ExtArgs> = {}>(args?: Subset<T, Post$sharesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SharePayload<ExtArgs>, T, "findMany"> | Null>
     hashtags<T extends Post$hashtagsArgs<ExtArgs> = {}>(args?: Subset<T, Post$hashtagsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PostHashtagPayload<ExtArgs>, T, "findMany"> | Null>
+    communityNotes<T extends Post$communityNotesArgs<ExtArgs> = {}>(args?: Subset<T, Post$communityNotesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CommunityNotePayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -18896,6 +19189,12 @@ export namespace Prisma {
     readonly pageId: FieldRef<"Post", 'String'>
     readonly isPinned: FieldRef<"Post", 'Boolean'>
     readonly isSponsored: FieldRef<"Post", 'Boolean'>
+    readonly isThread: FieldRef<"Post", 'Boolean'>
+    readonly threadIndex: FieldRef<"Post", 'Int'>
+    readonly threadTotal: FieldRef<"Post", 'Int'>
+    readonly threadParentId: FieldRef<"Post", 'String'>
+    readonly repostOfId: FieldRef<"Post", 'String'>
+    readonly quoteText: FieldRef<"Post", 'String'>
     readonly createdAt: FieldRef<"Post", 'DateTime'>
     readonly updatedAt: FieldRef<"Post", 'DateTime'>
     readonly deletedAt: FieldRef<"Post", 'DateTime'>
@@ -19247,6 +19546,76 @@ export namespace Prisma {
   }
 
   /**
+   * Post.threadParent
+   */
+  export type Post$threadParentArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Post
+     */
+    select?: PostSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PostInclude<ExtArgs> | null
+    where?: PostWhereInput
+  }
+
+  /**
+   * Post.threadReplies
+   */
+  export type Post$threadRepliesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Post
+     */
+    select?: PostSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PostInclude<ExtArgs> | null
+    where?: PostWhereInput
+    orderBy?: PostOrderByWithRelationInput | PostOrderByWithRelationInput[]
+    cursor?: PostWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: PostScalarFieldEnum | PostScalarFieldEnum[]
+  }
+
+  /**
+   * Post.repostOf
+   */
+  export type Post$repostOfArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Post
+     */
+    select?: PostSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PostInclude<ExtArgs> | null
+    where?: PostWhereInput
+  }
+
+  /**
+   * Post.reposts
+   */
+  export type Post$repostsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Post
+     */
+    select?: PostSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PostInclude<ExtArgs> | null
+    where?: PostWhereInput
+    orderBy?: PostOrderByWithRelationInput | PostOrderByWithRelationInput[]
+    cursor?: PostWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: PostScalarFieldEnum | PostScalarFieldEnum[]
+  }
+
+  /**
    * Post.comments
    */
   export type Post$commentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -19347,6 +19716,26 @@ export namespace Prisma {
   }
 
   /**
+   * Post.communityNotes
+   */
+  export type Post$communityNotesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommunityNote
+     */
+    select?: CommunityNoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommunityNoteInclude<ExtArgs> | null
+    where?: CommunityNoteWhereInput
+    orderBy?: CommunityNoteOrderByWithRelationInput | CommunityNoteOrderByWithRelationInput[]
+    cursor?: CommunityNoteWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CommunityNoteScalarFieldEnum | CommunityNoteScalarFieldEnum[]
+  }
+
+  /**
    * Post without action
    */
   export type PostDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -19358,6 +19747,1023 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: PostInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model CommunityNote
+   */
+
+  export type AggregateCommunityNote = {
+    _count: CommunityNoteCountAggregateOutputType | null
+    _avg: CommunityNoteAvgAggregateOutputType | null
+    _sum: CommunityNoteSumAggregateOutputType | null
+    _min: CommunityNoteMinAggregateOutputType | null
+    _max: CommunityNoteMaxAggregateOutputType | null
+  }
+
+  export type CommunityNoteAvgAggregateOutputType = {
+    helpfulCount: number | null
+  }
+
+  export type CommunityNoteSumAggregateOutputType = {
+    helpfulCount: number | null
+  }
+
+  export type CommunityNoteMinAggregateOutputType = {
+    id: string | null
+    postId: string | null
+    authorId: string | null
+    content: string | null
+    status: $Enums.CommunityNoteStatus | null
+    helpfulCount: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type CommunityNoteMaxAggregateOutputType = {
+    id: string | null
+    postId: string | null
+    authorId: string | null
+    content: string | null
+    status: $Enums.CommunityNoteStatus | null
+    helpfulCount: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type CommunityNoteCountAggregateOutputType = {
+    id: number
+    postId: number
+    authorId: number
+    content: number
+    sources: number
+    status: number
+    helpfulCount: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type CommunityNoteAvgAggregateInputType = {
+    helpfulCount?: true
+  }
+
+  export type CommunityNoteSumAggregateInputType = {
+    helpfulCount?: true
+  }
+
+  export type CommunityNoteMinAggregateInputType = {
+    id?: true
+    postId?: true
+    authorId?: true
+    content?: true
+    status?: true
+    helpfulCount?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type CommunityNoteMaxAggregateInputType = {
+    id?: true
+    postId?: true
+    authorId?: true
+    content?: true
+    status?: true
+    helpfulCount?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type CommunityNoteCountAggregateInputType = {
+    id?: true
+    postId?: true
+    authorId?: true
+    content?: true
+    sources?: true
+    status?: true
+    helpfulCount?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type CommunityNoteAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CommunityNote to aggregate.
+     */
+    where?: CommunityNoteWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CommunityNotes to fetch.
+     */
+    orderBy?: CommunityNoteOrderByWithRelationInput | CommunityNoteOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: CommunityNoteWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CommunityNotes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CommunityNotes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned CommunityNotes
+    **/
+    _count?: true | CommunityNoteCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: CommunityNoteAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: CommunityNoteSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: CommunityNoteMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: CommunityNoteMaxAggregateInputType
+  }
+
+  export type GetCommunityNoteAggregateType<T extends CommunityNoteAggregateArgs> = {
+        [P in keyof T & keyof AggregateCommunityNote]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateCommunityNote[P]>
+      : GetScalarType<T[P], AggregateCommunityNote[P]>
+  }
+
+
+
+
+  export type CommunityNoteGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CommunityNoteWhereInput
+    orderBy?: CommunityNoteOrderByWithAggregationInput | CommunityNoteOrderByWithAggregationInput[]
+    by: CommunityNoteScalarFieldEnum[] | CommunityNoteScalarFieldEnum
+    having?: CommunityNoteScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: CommunityNoteCountAggregateInputType | true
+    _avg?: CommunityNoteAvgAggregateInputType
+    _sum?: CommunityNoteSumAggregateInputType
+    _min?: CommunityNoteMinAggregateInputType
+    _max?: CommunityNoteMaxAggregateInputType
+  }
+
+  export type CommunityNoteGroupByOutputType = {
+    id: string
+    postId: string
+    authorId: string
+    content: string
+    sources: string[]
+    status: $Enums.CommunityNoteStatus
+    helpfulCount: number
+    createdAt: Date
+    updatedAt: Date
+    _count: CommunityNoteCountAggregateOutputType | null
+    _avg: CommunityNoteAvgAggregateOutputType | null
+    _sum: CommunityNoteSumAggregateOutputType | null
+    _min: CommunityNoteMinAggregateOutputType | null
+    _max: CommunityNoteMaxAggregateOutputType | null
+  }
+
+  type GetCommunityNoteGroupByPayload<T extends CommunityNoteGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<CommunityNoteGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof CommunityNoteGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], CommunityNoteGroupByOutputType[P]>
+            : GetScalarType<T[P], CommunityNoteGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type CommunityNoteSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    postId?: boolean
+    authorId?: boolean
+    content?: boolean
+    sources?: boolean
+    status?: boolean
+    helpfulCount?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    post?: boolean | PostDefaultArgs<ExtArgs>
+    author?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["communityNote"]>
+
+  export type CommunityNoteSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    postId?: boolean
+    authorId?: boolean
+    content?: boolean
+    sources?: boolean
+    status?: boolean
+    helpfulCount?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    post?: boolean | PostDefaultArgs<ExtArgs>
+    author?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["communityNote"]>
+
+  export type CommunityNoteSelectScalar = {
+    id?: boolean
+    postId?: boolean
+    authorId?: boolean
+    content?: boolean
+    sources?: boolean
+    status?: boolean
+    helpfulCount?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type CommunityNoteInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    post?: boolean | PostDefaultArgs<ExtArgs>
+    author?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type CommunityNoteIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    post?: boolean | PostDefaultArgs<ExtArgs>
+    author?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $CommunityNotePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "CommunityNote"
+    objects: {
+      post: Prisma.$PostPayload<ExtArgs>
+      author: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      postId: string
+      authorId: string
+      content: string
+      sources: string[]
+      status: $Enums.CommunityNoteStatus
+      helpfulCount: number
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["communityNote"]>
+    composites: {}
+  }
+
+  type CommunityNoteGetPayload<S extends boolean | null | undefined | CommunityNoteDefaultArgs> = $Result.GetResult<Prisma.$CommunityNotePayload, S>
+
+  type CommunityNoteCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<CommunityNoteFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: CommunityNoteCountAggregateInputType | true
+    }
+
+  export interface CommunityNoteDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['CommunityNote'], meta: { name: 'CommunityNote' } }
+    /**
+     * Find zero or one CommunityNote that matches the filter.
+     * @param {CommunityNoteFindUniqueArgs} args - Arguments to find a CommunityNote
+     * @example
+     * // Get one CommunityNote
+     * const communityNote = await prisma.communityNote.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends CommunityNoteFindUniqueArgs>(args: SelectSubset<T, CommunityNoteFindUniqueArgs<ExtArgs>>): Prisma__CommunityNoteClient<$Result.GetResult<Prisma.$CommunityNotePayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one CommunityNote that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {CommunityNoteFindUniqueOrThrowArgs} args - Arguments to find a CommunityNote
+     * @example
+     * // Get one CommunityNote
+     * const communityNote = await prisma.communityNote.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends CommunityNoteFindUniqueOrThrowArgs>(args: SelectSubset<T, CommunityNoteFindUniqueOrThrowArgs<ExtArgs>>): Prisma__CommunityNoteClient<$Result.GetResult<Prisma.$CommunityNotePayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first CommunityNote that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CommunityNoteFindFirstArgs} args - Arguments to find a CommunityNote
+     * @example
+     * // Get one CommunityNote
+     * const communityNote = await prisma.communityNote.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends CommunityNoteFindFirstArgs>(args?: SelectSubset<T, CommunityNoteFindFirstArgs<ExtArgs>>): Prisma__CommunityNoteClient<$Result.GetResult<Prisma.$CommunityNotePayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first CommunityNote that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CommunityNoteFindFirstOrThrowArgs} args - Arguments to find a CommunityNote
+     * @example
+     * // Get one CommunityNote
+     * const communityNote = await prisma.communityNote.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends CommunityNoteFindFirstOrThrowArgs>(args?: SelectSubset<T, CommunityNoteFindFirstOrThrowArgs<ExtArgs>>): Prisma__CommunityNoteClient<$Result.GetResult<Prisma.$CommunityNotePayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more CommunityNotes that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CommunityNoteFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all CommunityNotes
+     * const communityNotes = await prisma.communityNote.findMany()
+     * 
+     * // Get first 10 CommunityNotes
+     * const communityNotes = await prisma.communityNote.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const communityNoteWithIdOnly = await prisma.communityNote.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends CommunityNoteFindManyArgs>(args?: SelectSubset<T, CommunityNoteFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CommunityNotePayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a CommunityNote.
+     * @param {CommunityNoteCreateArgs} args - Arguments to create a CommunityNote.
+     * @example
+     * // Create one CommunityNote
+     * const CommunityNote = await prisma.communityNote.create({
+     *   data: {
+     *     // ... data to create a CommunityNote
+     *   }
+     * })
+     * 
+     */
+    create<T extends CommunityNoteCreateArgs>(args: SelectSubset<T, CommunityNoteCreateArgs<ExtArgs>>): Prisma__CommunityNoteClient<$Result.GetResult<Prisma.$CommunityNotePayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many CommunityNotes.
+     * @param {CommunityNoteCreateManyArgs} args - Arguments to create many CommunityNotes.
+     * @example
+     * // Create many CommunityNotes
+     * const communityNote = await prisma.communityNote.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends CommunityNoteCreateManyArgs>(args?: SelectSubset<T, CommunityNoteCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many CommunityNotes and returns the data saved in the database.
+     * @param {CommunityNoteCreateManyAndReturnArgs} args - Arguments to create many CommunityNotes.
+     * @example
+     * // Create many CommunityNotes
+     * const communityNote = await prisma.communityNote.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many CommunityNotes and only return the `id`
+     * const communityNoteWithIdOnly = await prisma.communityNote.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends CommunityNoteCreateManyAndReturnArgs>(args?: SelectSubset<T, CommunityNoteCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CommunityNotePayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a CommunityNote.
+     * @param {CommunityNoteDeleteArgs} args - Arguments to delete one CommunityNote.
+     * @example
+     * // Delete one CommunityNote
+     * const CommunityNote = await prisma.communityNote.delete({
+     *   where: {
+     *     // ... filter to delete one CommunityNote
+     *   }
+     * })
+     * 
+     */
+    delete<T extends CommunityNoteDeleteArgs>(args: SelectSubset<T, CommunityNoteDeleteArgs<ExtArgs>>): Prisma__CommunityNoteClient<$Result.GetResult<Prisma.$CommunityNotePayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one CommunityNote.
+     * @param {CommunityNoteUpdateArgs} args - Arguments to update one CommunityNote.
+     * @example
+     * // Update one CommunityNote
+     * const communityNote = await prisma.communityNote.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends CommunityNoteUpdateArgs>(args: SelectSubset<T, CommunityNoteUpdateArgs<ExtArgs>>): Prisma__CommunityNoteClient<$Result.GetResult<Prisma.$CommunityNotePayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more CommunityNotes.
+     * @param {CommunityNoteDeleteManyArgs} args - Arguments to filter CommunityNotes to delete.
+     * @example
+     * // Delete a few CommunityNotes
+     * const { count } = await prisma.communityNote.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends CommunityNoteDeleteManyArgs>(args?: SelectSubset<T, CommunityNoteDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CommunityNotes.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CommunityNoteUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many CommunityNotes
+     * const communityNote = await prisma.communityNote.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends CommunityNoteUpdateManyArgs>(args: SelectSubset<T, CommunityNoteUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one CommunityNote.
+     * @param {CommunityNoteUpsertArgs} args - Arguments to update or create a CommunityNote.
+     * @example
+     * // Update or create a CommunityNote
+     * const communityNote = await prisma.communityNote.upsert({
+     *   create: {
+     *     // ... data to create a CommunityNote
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the CommunityNote we want to update
+     *   }
+     * })
+     */
+    upsert<T extends CommunityNoteUpsertArgs>(args: SelectSubset<T, CommunityNoteUpsertArgs<ExtArgs>>): Prisma__CommunityNoteClient<$Result.GetResult<Prisma.$CommunityNotePayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of CommunityNotes.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CommunityNoteCountArgs} args - Arguments to filter CommunityNotes to count.
+     * @example
+     * // Count the number of CommunityNotes
+     * const count = await prisma.communityNote.count({
+     *   where: {
+     *     // ... the filter for the CommunityNotes we want to count
+     *   }
+     * })
+    **/
+    count<T extends CommunityNoteCountArgs>(
+      args?: Subset<T, CommunityNoteCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], CommunityNoteCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a CommunityNote.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CommunityNoteAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends CommunityNoteAggregateArgs>(args: Subset<T, CommunityNoteAggregateArgs>): Prisma.PrismaPromise<GetCommunityNoteAggregateType<T>>
+
+    /**
+     * Group by CommunityNote.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CommunityNoteGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends CommunityNoteGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: CommunityNoteGroupByArgs['orderBy'] }
+        : { orderBy?: CommunityNoteGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, CommunityNoteGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCommunityNoteGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the CommunityNote model
+   */
+  readonly fields: CommunityNoteFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for CommunityNote.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__CommunityNoteClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    post<T extends PostDefaultArgs<ExtArgs> = {}>(args?: Subset<T, PostDefaultArgs<ExtArgs>>): Prisma__PostClient<$Result.GetResult<Prisma.$PostPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    author<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the CommunityNote model
+   */ 
+  interface CommunityNoteFieldRefs {
+    readonly id: FieldRef<"CommunityNote", 'String'>
+    readonly postId: FieldRef<"CommunityNote", 'String'>
+    readonly authorId: FieldRef<"CommunityNote", 'String'>
+    readonly content: FieldRef<"CommunityNote", 'String'>
+    readonly sources: FieldRef<"CommunityNote", 'String[]'>
+    readonly status: FieldRef<"CommunityNote", 'CommunityNoteStatus'>
+    readonly helpfulCount: FieldRef<"CommunityNote", 'Int'>
+    readonly createdAt: FieldRef<"CommunityNote", 'DateTime'>
+    readonly updatedAt: FieldRef<"CommunityNote", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * CommunityNote findUnique
+   */
+  export type CommunityNoteFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommunityNote
+     */
+    select?: CommunityNoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommunityNoteInclude<ExtArgs> | null
+    /**
+     * Filter, which CommunityNote to fetch.
+     */
+    where: CommunityNoteWhereUniqueInput
+  }
+
+  /**
+   * CommunityNote findUniqueOrThrow
+   */
+  export type CommunityNoteFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommunityNote
+     */
+    select?: CommunityNoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommunityNoteInclude<ExtArgs> | null
+    /**
+     * Filter, which CommunityNote to fetch.
+     */
+    where: CommunityNoteWhereUniqueInput
+  }
+
+  /**
+   * CommunityNote findFirst
+   */
+  export type CommunityNoteFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommunityNote
+     */
+    select?: CommunityNoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommunityNoteInclude<ExtArgs> | null
+    /**
+     * Filter, which CommunityNote to fetch.
+     */
+    where?: CommunityNoteWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CommunityNotes to fetch.
+     */
+    orderBy?: CommunityNoteOrderByWithRelationInput | CommunityNoteOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CommunityNotes.
+     */
+    cursor?: CommunityNoteWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CommunityNotes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CommunityNotes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CommunityNotes.
+     */
+    distinct?: CommunityNoteScalarFieldEnum | CommunityNoteScalarFieldEnum[]
+  }
+
+  /**
+   * CommunityNote findFirstOrThrow
+   */
+  export type CommunityNoteFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommunityNote
+     */
+    select?: CommunityNoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommunityNoteInclude<ExtArgs> | null
+    /**
+     * Filter, which CommunityNote to fetch.
+     */
+    where?: CommunityNoteWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CommunityNotes to fetch.
+     */
+    orderBy?: CommunityNoteOrderByWithRelationInput | CommunityNoteOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CommunityNotes.
+     */
+    cursor?: CommunityNoteWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CommunityNotes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CommunityNotes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CommunityNotes.
+     */
+    distinct?: CommunityNoteScalarFieldEnum | CommunityNoteScalarFieldEnum[]
+  }
+
+  /**
+   * CommunityNote findMany
+   */
+  export type CommunityNoteFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommunityNote
+     */
+    select?: CommunityNoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommunityNoteInclude<ExtArgs> | null
+    /**
+     * Filter, which CommunityNotes to fetch.
+     */
+    where?: CommunityNoteWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CommunityNotes to fetch.
+     */
+    orderBy?: CommunityNoteOrderByWithRelationInput | CommunityNoteOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing CommunityNotes.
+     */
+    cursor?: CommunityNoteWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CommunityNotes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CommunityNotes.
+     */
+    skip?: number
+    distinct?: CommunityNoteScalarFieldEnum | CommunityNoteScalarFieldEnum[]
+  }
+
+  /**
+   * CommunityNote create
+   */
+  export type CommunityNoteCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommunityNote
+     */
+    select?: CommunityNoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommunityNoteInclude<ExtArgs> | null
+    /**
+     * The data needed to create a CommunityNote.
+     */
+    data: XOR<CommunityNoteCreateInput, CommunityNoteUncheckedCreateInput>
+  }
+
+  /**
+   * CommunityNote createMany
+   */
+  export type CommunityNoteCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many CommunityNotes.
+     */
+    data: CommunityNoteCreateManyInput | CommunityNoteCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * CommunityNote createManyAndReturn
+   */
+  export type CommunityNoteCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommunityNote
+     */
+    select?: CommunityNoteSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many CommunityNotes.
+     */
+    data: CommunityNoteCreateManyInput | CommunityNoteCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommunityNoteIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * CommunityNote update
+   */
+  export type CommunityNoteUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommunityNote
+     */
+    select?: CommunityNoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommunityNoteInclude<ExtArgs> | null
+    /**
+     * The data needed to update a CommunityNote.
+     */
+    data: XOR<CommunityNoteUpdateInput, CommunityNoteUncheckedUpdateInput>
+    /**
+     * Choose, which CommunityNote to update.
+     */
+    where: CommunityNoteWhereUniqueInput
+  }
+
+  /**
+   * CommunityNote updateMany
+   */
+  export type CommunityNoteUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update CommunityNotes.
+     */
+    data: XOR<CommunityNoteUpdateManyMutationInput, CommunityNoteUncheckedUpdateManyInput>
+    /**
+     * Filter which CommunityNotes to update
+     */
+    where?: CommunityNoteWhereInput
+  }
+
+  /**
+   * CommunityNote upsert
+   */
+  export type CommunityNoteUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommunityNote
+     */
+    select?: CommunityNoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommunityNoteInclude<ExtArgs> | null
+    /**
+     * The filter to search for the CommunityNote to update in case it exists.
+     */
+    where: CommunityNoteWhereUniqueInput
+    /**
+     * In case the CommunityNote found by the `where` argument doesn't exist, create a new CommunityNote with this data.
+     */
+    create: XOR<CommunityNoteCreateInput, CommunityNoteUncheckedCreateInput>
+    /**
+     * In case the CommunityNote was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<CommunityNoteUpdateInput, CommunityNoteUncheckedUpdateInput>
+  }
+
+  /**
+   * CommunityNote delete
+   */
+  export type CommunityNoteDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommunityNote
+     */
+    select?: CommunityNoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommunityNoteInclude<ExtArgs> | null
+    /**
+     * Filter which CommunityNote to delete.
+     */
+    where: CommunityNoteWhereUniqueInput
+  }
+
+  /**
+   * CommunityNote deleteMany
+   */
+  export type CommunityNoteDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CommunityNotes to delete
+     */
+    where?: CommunityNoteWhereInput
+  }
+
+  /**
+   * CommunityNote without action
+   */
+  export type CommunityNoteDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CommunityNote
+     */
+    select?: CommunityNoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CommunityNoteInclude<ExtArgs> | null
   }
 
 
@@ -48485,12 +49891,33 @@ export namespace Prisma {
     pageId: 'pageId',
     isPinned: 'isPinned',
     isSponsored: 'isSponsored',
+    isThread: 'isThread',
+    threadIndex: 'threadIndex',
+    threadTotal: 'threadTotal',
+    threadParentId: 'threadParentId',
+    repostOfId: 'repostOfId',
+    quoteText: 'quoteText',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
     deletedAt: 'deletedAt'
   };
 
   export type PostScalarFieldEnum = (typeof PostScalarFieldEnum)[keyof typeof PostScalarFieldEnum]
+
+
+  export const CommunityNoteScalarFieldEnum: {
+    id: 'id',
+    postId: 'postId',
+    authorId: 'authorId',
+    content: 'content',
+    sources: 'sources',
+    status: 'status',
+    helpfulCount: 'helpfulCount',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type CommunityNoteScalarFieldEnum = (typeof CommunityNoteScalarFieldEnum)[keyof typeof CommunityNoteScalarFieldEnum]
 
 
   export const CommentScalarFieldEnum: {
@@ -49085,6 +50512,20 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'CommunityNoteStatus'
+   */
+  export type EnumCommunityNoteStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CommunityNoteStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'CommunityNoteStatus[]'
+   */
+  export type ListEnumCommunityNoteStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CommunityNoteStatus[]'>
+    
+
+
+  /**
    * Reference to a field of type 'ReactionType'
    */
   export type EnumReactionTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ReactionType'>
@@ -49392,6 +50833,7 @@ export namespace Prisma {
     reactions?: ReactionListRelationFilter
     saves?: SaveListRelationFilter
     shares?: ShareListRelationFilter
+    communityNotes?: CommunityNoteListRelationFilter
     sentFriendRequests?: FriendshipListRelationFilter
     receivedFriendRequests?: FriendshipListRelationFilter
     following?: FollowListRelationFilter
@@ -49445,6 +50887,7 @@ export namespace Prisma {
     reactions?: ReactionOrderByRelationAggregateInput
     saves?: SaveOrderByRelationAggregateInput
     shares?: ShareOrderByRelationAggregateInput
+    communityNotes?: CommunityNoteOrderByRelationAggregateInput
     sentFriendRequests?: FriendshipOrderByRelationAggregateInput
     receivedFriendRequests?: FriendshipOrderByRelationAggregateInput
     following?: FollowOrderByRelationAggregateInput
@@ -49501,6 +50944,7 @@ export namespace Prisma {
     reactions?: ReactionListRelationFilter
     saves?: SaveListRelationFilter
     shares?: ShareListRelationFilter
+    communityNotes?: CommunityNoteListRelationFilter
     sentFriendRequests?: FriendshipListRelationFilter
     receivedFriendRequests?: FriendshipListRelationFilter
     following?: FollowListRelationFilter
@@ -50356,17 +51800,28 @@ export namespace Prisma {
     pageId?: StringNullableFilter<"Post"> | string | null
     isPinned?: BoolFilter<"Post"> | boolean
     isSponsored?: BoolFilter<"Post"> | boolean
+    isThread?: BoolFilter<"Post"> | boolean
+    threadIndex?: IntNullableFilter<"Post"> | number | null
+    threadTotal?: IntNullableFilter<"Post"> | number | null
+    threadParentId?: StringNullableFilter<"Post"> | string | null
+    repostOfId?: StringNullableFilter<"Post"> | string | null
+    quoteText?: StringNullableFilter<"Post"> | string | null
     createdAt?: DateTimeFilter<"Post"> | Date | string
     updatedAt?: DateTimeFilter<"Post"> | Date | string
     deletedAt?: DateTimeNullableFilter<"Post"> | Date | string | null
     author?: XOR<UserRelationFilter, UserWhereInput>
     space?: XOR<SpaceNullableRelationFilter, SpaceWhereInput> | null
     page?: XOR<PageNullableRelationFilter, PageWhereInput> | null
+    threadParent?: XOR<PostNullableRelationFilter, PostWhereInput> | null
+    threadReplies?: PostListRelationFilter
+    repostOf?: XOR<PostNullableRelationFilter, PostWhereInput> | null
+    reposts?: PostListRelationFilter
     comments?: CommentListRelationFilter
     reactions?: ReactionListRelationFilter
     saves?: SaveListRelationFilter
     shares?: ShareListRelationFilter
     hashtags?: PostHashtagListRelationFilter
+    communityNotes?: CommunityNoteListRelationFilter
   }
 
   export type PostOrderByWithRelationInput = {
@@ -50382,17 +51837,28 @@ export namespace Prisma {
     pageId?: SortOrderInput | SortOrder
     isPinned?: SortOrder
     isSponsored?: SortOrder
+    isThread?: SortOrder
+    threadIndex?: SortOrderInput | SortOrder
+    threadTotal?: SortOrderInput | SortOrder
+    threadParentId?: SortOrderInput | SortOrder
+    repostOfId?: SortOrderInput | SortOrder
+    quoteText?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     deletedAt?: SortOrderInput | SortOrder
     author?: UserOrderByWithRelationInput
     space?: SpaceOrderByWithRelationInput
     page?: PageOrderByWithRelationInput
+    threadParent?: PostOrderByWithRelationInput
+    threadReplies?: PostOrderByRelationAggregateInput
+    repostOf?: PostOrderByWithRelationInput
+    reposts?: PostOrderByRelationAggregateInput
     comments?: CommentOrderByRelationAggregateInput
     reactions?: ReactionOrderByRelationAggregateInput
     saves?: SaveOrderByRelationAggregateInput
     shares?: ShareOrderByRelationAggregateInput
     hashtags?: PostHashtagOrderByRelationAggregateInput
+    communityNotes?: CommunityNoteOrderByRelationAggregateInput
   }
 
   export type PostWhereUniqueInput = Prisma.AtLeast<{
@@ -50411,17 +51877,28 @@ export namespace Prisma {
     pageId?: StringNullableFilter<"Post"> | string | null
     isPinned?: BoolFilter<"Post"> | boolean
     isSponsored?: BoolFilter<"Post"> | boolean
+    isThread?: BoolFilter<"Post"> | boolean
+    threadIndex?: IntNullableFilter<"Post"> | number | null
+    threadTotal?: IntNullableFilter<"Post"> | number | null
+    threadParentId?: StringNullableFilter<"Post"> | string | null
+    repostOfId?: StringNullableFilter<"Post"> | string | null
+    quoteText?: StringNullableFilter<"Post"> | string | null
     createdAt?: DateTimeFilter<"Post"> | Date | string
     updatedAt?: DateTimeFilter<"Post"> | Date | string
     deletedAt?: DateTimeNullableFilter<"Post"> | Date | string | null
     author?: XOR<UserRelationFilter, UserWhereInput>
     space?: XOR<SpaceNullableRelationFilter, SpaceWhereInput> | null
     page?: XOR<PageNullableRelationFilter, PageWhereInput> | null
+    threadParent?: XOR<PostNullableRelationFilter, PostWhereInput> | null
+    threadReplies?: PostListRelationFilter
+    repostOf?: XOR<PostNullableRelationFilter, PostWhereInput> | null
+    reposts?: PostListRelationFilter
     comments?: CommentListRelationFilter
     reactions?: ReactionListRelationFilter
     saves?: SaveListRelationFilter
     shares?: ShareListRelationFilter
     hashtags?: PostHashtagListRelationFilter
+    communityNotes?: CommunityNoteListRelationFilter
   }, "id">
 
   export type PostOrderByWithAggregationInput = {
@@ -50437,12 +51914,20 @@ export namespace Prisma {
     pageId?: SortOrderInput | SortOrder
     isPinned?: SortOrder
     isSponsored?: SortOrder
+    isThread?: SortOrder
+    threadIndex?: SortOrderInput | SortOrder
+    threadTotal?: SortOrderInput | SortOrder
+    threadParentId?: SortOrderInput | SortOrder
+    repostOfId?: SortOrderInput | SortOrder
+    quoteText?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     deletedAt?: SortOrderInput | SortOrder
     _count?: PostCountOrderByAggregateInput
+    _avg?: PostAvgOrderByAggregateInput
     _max?: PostMaxOrderByAggregateInput
     _min?: PostMinOrderByAggregateInput
+    _sum?: PostSumOrderByAggregateInput
   }
 
   export type PostScalarWhereWithAggregatesInput = {
@@ -50461,9 +51946,95 @@ export namespace Prisma {
     pageId?: StringNullableWithAggregatesFilter<"Post"> | string | null
     isPinned?: BoolWithAggregatesFilter<"Post"> | boolean
     isSponsored?: BoolWithAggregatesFilter<"Post"> | boolean
+    isThread?: BoolWithAggregatesFilter<"Post"> | boolean
+    threadIndex?: IntNullableWithAggregatesFilter<"Post"> | number | null
+    threadTotal?: IntNullableWithAggregatesFilter<"Post"> | number | null
+    threadParentId?: StringNullableWithAggregatesFilter<"Post"> | string | null
+    repostOfId?: StringNullableWithAggregatesFilter<"Post"> | string | null
+    quoteText?: StringNullableWithAggregatesFilter<"Post"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Post"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Post"> | Date | string
     deletedAt?: DateTimeNullableWithAggregatesFilter<"Post"> | Date | string | null
+  }
+
+  export type CommunityNoteWhereInput = {
+    AND?: CommunityNoteWhereInput | CommunityNoteWhereInput[]
+    OR?: CommunityNoteWhereInput[]
+    NOT?: CommunityNoteWhereInput | CommunityNoteWhereInput[]
+    id?: StringFilter<"CommunityNote"> | string
+    postId?: StringFilter<"CommunityNote"> | string
+    authorId?: StringFilter<"CommunityNote"> | string
+    content?: StringFilter<"CommunityNote"> | string
+    sources?: StringNullableListFilter<"CommunityNote">
+    status?: EnumCommunityNoteStatusFilter<"CommunityNote"> | $Enums.CommunityNoteStatus
+    helpfulCount?: IntFilter<"CommunityNote"> | number
+    createdAt?: DateTimeFilter<"CommunityNote"> | Date | string
+    updatedAt?: DateTimeFilter<"CommunityNote"> | Date | string
+    post?: XOR<PostRelationFilter, PostWhereInput>
+    author?: XOR<UserRelationFilter, UserWhereInput>
+  }
+
+  export type CommunityNoteOrderByWithRelationInput = {
+    id?: SortOrder
+    postId?: SortOrder
+    authorId?: SortOrder
+    content?: SortOrder
+    sources?: SortOrder
+    status?: SortOrder
+    helpfulCount?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    post?: PostOrderByWithRelationInput
+    author?: UserOrderByWithRelationInput
+  }
+
+  export type CommunityNoteWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: CommunityNoteWhereInput | CommunityNoteWhereInput[]
+    OR?: CommunityNoteWhereInput[]
+    NOT?: CommunityNoteWhereInput | CommunityNoteWhereInput[]
+    postId?: StringFilter<"CommunityNote"> | string
+    authorId?: StringFilter<"CommunityNote"> | string
+    content?: StringFilter<"CommunityNote"> | string
+    sources?: StringNullableListFilter<"CommunityNote">
+    status?: EnumCommunityNoteStatusFilter<"CommunityNote"> | $Enums.CommunityNoteStatus
+    helpfulCount?: IntFilter<"CommunityNote"> | number
+    createdAt?: DateTimeFilter<"CommunityNote"> | Date | string
+    updatedAt?: DateTimeFilter<"CommunityNote"> | Date | string
+    post?: XOR<PostRelationFilter, PostWhereInput>
+    author?: XOR<UserRelationFilter, UserWhereInput>
+  }, "id">
+
+  export type CommunityNoteOrderByWithAggregationInput = {
+    id?: SortOrder
+    postId?: SortOrder
+    authorId?: SortOrder
+    content?: SortOrder
+    sources?: SortOrder
+    status?: SortOrder
+    helpfulCount?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: CommunityNoteCountOrderByAggregateInput
+    _avg?: CommunityNoteAvgOrderByAggregateInput
+    _max?: CommunityNoteMaxOrderByAggregateInput
+    _min?: CommunityNoteMinOrderByAggregateInput
+    _sum?: CommunityNoteSumOrderByAggregateInput
+  }
+
+  export type CommunityNoteScalarWhereWithAggregatesInput = {
+    AND?: CommunityNoteScalarWhereWithAggregatesInput | CommunityNoteScalarWhereWithAggregatesInput[]
+    OR?: CommunityNoteScalarWhereWithAggregatesInput[]
+    NOT?: CommunityNoteScalarWhereWithAggregatesInput | CommunityNoteScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"CommunityNote"> | string
+    postId?: StringWithAggregatesFilter<"CommunityNote"> | string
+    authorId?: StringWithAggregatesFilter<"CommunityNote"> | string
+    content?: StringWithAggregatesFilter<"CommunityNote"> | string
+    sources?: StringNullableListFilter<"CommunityNote">
+    status?: EnumCommunityNoteStatusWithAggregatesFilter<"CommunityNote"> | $Enums.CommunityNoteStatus
+    helpfulCount?: IntWithAggregatesFilter<"CommunityNote"> | number
+    createdAt?: DateTimeWithAggregatesFilter<"CommunityNote"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"CommunityNote"> | Date | string
   }
 
   export type CommentWhereInput = {
@@ -52610,6 +54181,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -52663,6 +54235,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -52716,6 +54289,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -52769,6 +54343,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -53669,17 +55244,26 @@ export namespace Prisma {
     visibility?: $Enums.Visibility
     isPinned?: boolean
     isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    quoteText?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
     author: UserCreateNestedOneWithoutPostsInput
     space?: SpaceCreateNestedOneWithoutPostsInput
     page?: PageCreateNestedOneWithoutPostsInput
+    threadParent?: PostCreateNestedOneWithoutThreadRepliesInput
+    threadReplies?: PostCreateNestedManyWithoutThreadParentInput
+    repostOf?: PostCreateNestedOneWithoutRepostsInput
+    reposts?: PostCreateNestedManyWithoutRepostOfInput
     comments?: CommentCreateNestedManyWithoutPostInput
     reactions?: ReactionCreateNestedManyWithoutPostInput
     saves?: SaveCreateNestedManyWithoutPostInput
     shares?: ShareCreateNestedManyWithoutPostInput
     hashtags?: PostHashtagCreateNestedManyWithoutPostInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutPostInput
   }
 
   export type PostUncheckedCreateInput = {
@@ -53695,14 +55279,23 @@ export namespace Prisma {
     pageId?: string | null
     isPinned?: boolean
     isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    threadParentId?: string | null
+    repostOfId?: string | null
+    quoteText?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
+    threadReplies?: PostUncheckedCreateNestedManyWithoutThreadParentInput
+    reposts?: PostUncheckedCreateNestedManyWithoutRepostOfInput
     comments?: CommentUncheckedCreateNestedManyWithoutPostInput
     reactions?: ReactionUncheckedCreateNestedManyWithoutPostInput
     saves?: SaveUncheckedCreateNestedManyWithoutPostInput
     shares?: ShareUncheckedCreateNestedManyWithoutPostInput
     hashtags?: PostHashtagUncheckedCreateNestedManyWithoutPostInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutPostInput
   }
 
   export type PostUpdateInput = {
@@ -53715,17 +55308,26 @@ export namespace Prisma {
     visibility?: EnumVisibilityFieldUpdateOperationsInput | $Enums.Visibility
     isPinned?: BoolFieldUpdateOperationsInput | boolean
     isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     author?: UserUpdateOneRequiredWithoutPostsNestedInput
     space?: SpaceUpdateOneWithoutPostsNestedInput
     page?: PageUpdateOneWithoutPostsNestedInput
+    threadParent?: PostUpdateOneWithoutThreadRepliesNestedInput
+    threadReplies?: PostUpdateManyWithoutThreadParentNestedInput
+    repostOf?: PostUpdateOneWithoutRepostsNestedInput
+    reposts?: PostUpdateManyWithoutRepostOfNestedInput
     comments?: CommentUpdateManyWithoutPostNestedInput
     reactions?: ReactionUpdateManyWithoutPostNestedInput
     saves?: SaveUpdateManyWithoutPostNestedInput
     shares?: ShareUpdateManyWithoutPostNestedInput
     hashtags?: PostHashtagUpdateManyWithoutPostNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutPostNestedInput
   }
 
   export type PostUncheckedUpdateInput = {
@@ -53741,14 +55343,23 @@ export namespace Prisma {
     pageId?: NullableStringFieldUpdateOperationsInput | string | null
     isPinned?: BoolFieldUpdateOperationsInput | boolean
     isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    threadParentId?: NullableStringFieldUpdateOperationsInput | string | null
+    repostOfId?: NullableStringFieldUpdateOperationsInput | string | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    threadReplies?: PostUncheckedUpdateManyWithoutThreadParentNestedInput
+    reposts?: PostUncheckedUpdateManyWithoutRepostOfNestedInput
     comments?: CommentUncheckedUpdateManyWithoutPostNestedInput
     reactions?: ReactionUncheckedUpdateManyWithoutPostNestedInput
     saves?: SaveUncheckedUpdateManyWithoutPostNestedInput
     shares?: ShareUncheckedUpdateManyWithoutPostNestedInput
     hashtags?: PostHashtagUncheckedUpdateManyWithoutPostNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutPostNestedInput
   }
 
   export type PostCreateManyInput = {
@@ -53764,6 +55375,12 @@ export namespace Prisma {
     pageId?: string | null
     isPinned?: boolean
     isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    threadParentId?: string | null
+    repostOfId?: string | null
+    quoteText?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
@@ -53779,6 +55396,10 @@ export namespace Prisma {
     visibility?: EnumVisibilityFieldUpdateOperationsInput | $Enums.Visibility
     isPinned?: BoolFieldUpdateOperationsInput | boolean
     isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -53797,9 +55418,97 @@ export namespace Prisma {
     pageId?: NullableStringFieldUpdateOperationsInput | string | null
     isPinned?: BoolFieldUpdateOperationsInput | boolean
     isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    threadParentId?: NullableStringFieldUpdateOperationsInput | string | null
+    repostOfId?: NullableStringFieldUpdateOperationsInput | string | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type CommunityNoteCreateInput = {
+    id?: string
+    content: string
+    sources?: CommunityNoteCreatesourcesInput | string[]
+    status?: $Enums.CommunityNoteStatus
+    helpfulCount?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    post: PostCreateNestedOneWithoutCommunityNotesInput
+    author: UserCreateNestedOneWithoutCommunityNotesInput
+  }
+
+  export type CommunityNoteUncheckedCreateInput = {
+    id?: string
+    postId: string
+    authorId: string
+    content: string
+    sources?: CommunityNoteCreatesourcesInput | string[]
+    status?: $Enums.CommunityNoteStatus
+    helpfulCount?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CommunityNoteUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    sources?: CommunityNoteUpdatesourcesInput | string[]
+    status?: EnumCommunityNoteStatusFieldUpdateOperationsInput | $Enums.CommunityNoteStatus
+    helpfulCount?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    post?: PostUpdateOneRequiredWithoutCommunityNotesNestedInput
+    author?: UserUpdateOneRequiredWithoutCommunityNotesNestedInput
+  }
+
+  export type CommunityNoteUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    postId?: StringFieldUpdateOperationsInput | string
+    authorId?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    sources?: CommunityNoteUpdatesourcesInput | string[]
+    status?: EnumCommunityNoteStatusFieldUpdateOperationsInput | $Enums.CommunityNoteStatus
+    helpfulCount?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CommunityNoteCreateManyInput = {
+    id?: string
+    postId: string
+    authorId: string
+    content: string
+    sources?: CommunityNoteCreatesourcesInput | string[]
+    status?: $Enums.CommunityNoteStatus
+    helpfulCount?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CommunityNoteUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    sources?: CommunityNoteUpdatesourcesInput | string[]
+    status?: EnumCommunityNoteStatusFieldUpdateOperationsInput | $Enums.CommunityNoteStatus
+    helpfulCount?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CommunityNoteUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    postId?: StringFieldUpdateOperationsInput | string
+    authorId?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    sources?: CommunityNoteUpdatesourcesInput | string[]
+    status?: EnumCommunityNoteStatusFieldUpdateOperationsInput | $Enums.CommunityNoteStatus
+    helpfulCount?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type CommentCreateInput = {
@@ -56126,6 +57835,12 @@ export namespace Prisma {
     none?: ShareWhereInput
   }
 
+  export type CommunityNoteListRelationFilter = {
+    every?: CommunityNoteWhereInput
+    some?: CommunityNoteWhereInput
+    none?: CommunityNoteWhereInput
+  }
+
   export type FriendshipListRelationFilter = {
     every?: FriendshipWhereInput
     some?: FriendshipWhereInput
@@ -56303,6 +58018,10 @@ export namespace Prisma {
   }
 
   export type ShareOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type CommunityNoteOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -57135,6 +58854,11 @@ export namespace Prisma {
     isNot?: PageWhereInput | null
   }
 
+  export type PostNullableRelationFilter = {
+    is?: PostWhereInput | null
+    isNot?: PostWhereInput | null
+  }
+
   export type PostHashtagListRelationFilter = {
     every?: PostHashtagWhereInput
     some?: PostHashtagWhereInput
@@ -57158,9 +58882,20 @@ export namespace Prisma {
     pageId?: SortOrder
     isPinned?: SortOrder
     isSponsored?: SortOrder
+    isThread?: SortOrder
+    threadIndex?: SortOrder
+    threadTotal?: SortOrder
+    threadParentId?: SortOrder
+    repostOfId?: SortOrder
+    quoteText?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     deletedAt?: SortOrder
+  }
+
+  export type PostAvgOrderByAggregateInput = {
+    threadIndex?: SortOrder
+    threadTotal?: SortOrder
   }
 
   export type PostMaxOrderByAggregateInput = {
@@ -57174,6 +58909,12 @@ export namespace Prisma {
     pageId?: SortOrder
     isPinned?: SortOrder
     isSponsored?: SortOrder
+    isThread?: SortOrder
+    threadIndex?: SortOrder
+    threadTotal?: SortOrder
+    threadParentId?: SortOrder
+    repostOfId?: SortOrder
+    quoteText?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     deletedAt?: SortOrder
@@ -57190,9 +58931,20 @@ export namespace Prisma {
     pageId?: SortOrder
     isPinned?: SortOrder
     isSponsored?: SortOrder
+    isThread?: SortOrder
+    threadIndex?: SortOrder
+    threadTotal?: SortOrder
+    threadParentId?: SortOrder
+    repostOfId?: SortOrder
+    quoteText?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     deletedAt?: SortOrder
+  }
+
+  export type PostSumOrderByAggregateInput = {
+    threadIndex?: SortOrder
+    threadTotal?: SortOrder
   }
 
   export type EnumPostTypeWithAggregatesFilter<$PrismaModel = never> = {
@@ -57205,9 +58957,68 @@ export namespace Prisma {
     _max?: NestedEnumPostTypeFilter<$PrismaModel>
   }
 
+  export type EnumCommunityNoteStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.CommunityNoteStatus | EnumCommunityNoteStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.CommunityNoteStatus[] | ListEnumCommunityNoteStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CommunityNoteStatus[] | ListEnumCommunityNoteStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumCommunityNoteStatusFilter<$PrismaModel> | $Enums.CommunityNoteStatus
+  }
+
   export type PostRelationFilter = {
     is?: PostWhereInput
     isNot?: PostWhereInput
+  }
+
+  export type CommunityNoteCountOrderByAggregateInput = {
+    id?: SortOrder
+    postId?: SortOrder
+    authorId?: SortOrder
+    content?: SortOrder
+    sources?: SortOrder
+    status?: SortOrder
+    helpfulCount?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CommunityNoteAvgOrderByAggregateInput = {
+    helpfulCount?: SortOrder
+  }
+
+  export type CommunityNoteMaxOrderByAggregateInput = {
+    id?: SortOrder
+    postId?: SortOrder
+    authorId?: SortOrder
+    content?: SortOrder
+    status?: SortOrder
+    helpfulCount?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CommunityNoteMinOrderByAggregateInput = {
+    id?: SortOrder
+    postId?: SortOrder
+    authorId?: SortOrder
+    content?: SortOrder
+    status?: SortOrder
+    helpfulCount?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CommunityNoteSumOrderByAggregateInput = {
+    helpfulCount?: SortOrder
+  }
+
+  export type EnumCommunityNoteStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.CommunityNoteStatus | EnumCommunityNoteStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.CommunityNoteStatus[] | ListEnumCommunityNoteStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CommunityNoteStatus[] | ListEnumCommunityNoteStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumCommunityNoteStatusWithAggregatesFilter<$PrismaModel> | $Enums.CommunityNoteStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumCommunityNoteStatusFilter<$PrismaModel>
+    _max?: NestedEnumCommunityNoteStatusFilter<$PrismaModel>
   }
 
   export type CommentNullableRelationFilter = {
@@ -57256,11 +59067,6 @@ export namespace Prisma {
     in?: $Enums.ReactionType[] | ListEnumReactionTypeFieldRefInput<$PrismaModel>
     notIn?: $Enums.ReactionType[] | ListEnumReactionTypeFieldRefInput<$PrismaModel>
     not?: NestedEnumReactionTypeFilter<$PrismaModel> | $Enums.ReactionType
-  }
-
-  export type PostNullableRelationFilter = {
-    is?: PostWhereInput | null
-    isNot?: PostWhereInput | null
   }
 
   export type ReactionUserIdPostIdCompoundUniqueInput = {
@@ -58828,6 +60634,13 @@ export namespace Prisma {
     connect?: ShareWhereUniqueInput | ShareWhereUniqueInput[]
   }
 
+  export type CommunityNoteCreateNestedManyWithoutAuthorInput = {
+    create?: XOR<CommunityNoteCreateWithoutAuthorInput, CommunityNoteUncheckedCreateWithoutAuthorInput> | CommunityNoteCreateWithoutAuthorInput[] | CommunityNoteUncheckedCreateWithoutAuthorInput[]
+    connectOrCreate?: CommunityNoteCreateOrConnectWithoutAuthorInput | CommunityNoteCreateOrConnectWithoutAuthorInput[]
+    createMany?: CommunityNoteCreateManyAuthorInputEnvelope
+    connect?: CommunityNoteWhereUniqueInput | CommunityNoteWhereUniqueInput[]
+  }
+
   export type FriendshipCreateNestedManyWithoutSenderInput = {
     create?: XOR<FriendshipCreateWithoutSenderInput, FriendshipUncheckedCreateWithoutSenderInput> | FriendshipCreateWithoutSenderInput[] | FriendshipUncheckedCreateWithoutSenderInput[]
     connectOrCreate?: FriendshipCreateOrConnectWithoutSenderInput | FriendshipCreateOrConnectWithoutSenderInput[]
@@ -59090,6 +60903,13 @@ export namespace Prisma {
     connectOrCreate?: ShareCreateOrConnectWithoutUserInput | ShareCreateOrConnectWithoutUserInput[]
     createMany?: ShareCreateManyUserInputEnvelope
     connect?: ShareWhereUniqueInput | ShareWhereUniqueInput[]
+  }
+
+  export type CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput = {
+    create?: XOR<CommunityNoteCreateWithoutAuthorInput, CommunityNoteUncheckedCreateWithoutAuthorInput> | CommunityNoteCreateWithoutAuthorInput[] | CommunityNoteUncheckedCreateWithoutAuthorInput[]
+    connectOrCreate?: CommunityNoteCreateOrConnectWithoutAuthorInput | CommunityNoteCreateOrConnectWithoutAuthorInput[]
+    createMany?: CommunityNoteCreateManyAuthorInputEnvelope
+    connect?: CommunityNoteWhereUniqueInput | CommunityNoteWhereUniqueInput[]
   }
 
   export type FriendshipUncheckedCreateNestedManyWithoutSenderInput = {
@@ -59442,6 +61262,20 @@ export namespace Prisma {
     update?: ShareUpdateWithWhereUniqueWithoutUserInput | ShareUpdateWithWhereUniqueWithoutUserInput[]
     updateMany?: ShareUpdateManyWithWhereWithoutUserInput | ShareUpdateManyWithWhereWithoutUserInput[]
     deleteMany?: ShareScalarWhereInput | ShareScalarWhereInput[]
+  }
+
+  export type CommunityNoteUpdateManyWithoutAuthorNestedInput = {
+    create?: XOR<CommunityNoteCreateWithoutAuthorInput, CommunityNoteUncheckedCreateWithoutAuthorInput> | CommunityNoteCreateWithoutAuthorInput[] | CommunityNoteUncheckedCreateWithoutAuthorInput[]
+    connectOrCreate?: CommunityNoteCreateOrConnectWithoutAuthorInput | CommunityNoteCreateOrConnectWithoutAuthorInput[]
+    upsert?: CommunityNoteUpsertWithWhereUniqueWithoutAuthorInput | CommunityNoteUpsertWithWhereUniqueWithoutAuthorInput[]
+    createMany?: CommunityNoteCreateManyAuthorInputEnvelope
+    set?: CommunityNoteWhereUniqueInput | CommunityNoteWhereUniqueInput[]
+    disconnect?: CommunityNoteWhereUniqueInput | CommunityNoteWhereUniqueInput[]
+    delete?: CommunityNoteWhereUniqueInput | CommunityNoteWhereUniqueInput[]
+    connect?: CommunityNoteWhereUniqueInput | CommunityNoteWhereUniqueInput[]
+    update?: CommunityNoteUpdateWithWhereUniqueWithoutAuthorInput | CommunityNoteUpdateWithWhereUniqueWithoutAuthorInput[]
+    updateMany?: CommunityNoteUpdateManyWithWhereWithoutAuthorInput | CommunityNoteUpdateManyWithWhereWithoutAuthorInput[]
+    deleteMany?: CommunityNoteScalarWhereInput | CommunityNoteScalarWhereInput[]
   }
 
   export type FriendshipUpdateManyWithoutSenderNestedInput = {
@@ -59966,6 +61800,20 @@ export namespace Prisma {
     update?: ShareUpdateWithWhereUniqueWithoutUserInput | ShareUpdateWithWhereUniqueWithoutUserInput[]
     updateMany?: ShareUpdateManyWithWhereWithoutUserInput | ShareUpdateManyWithWhereWithoutUserInput[]
     deleteMany?: ShareScalarWhereInput | ShareScalarWhereInput[]
+  }
+
+  export type CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput = {
+    create?: XOR<CommunityNoteCreateWithoutAuthorInput, CommunityNoteUncheckedCreateWithoutAuthorInput> | CommunityNoteCreateWithoutAuthorInput[] | CommunityNoteUncheckedCreateWithoutAuthorInput[]
+    connectOrCreate?: CommunityNoteCreateOrConnectWithoutAuthorInput | CommunityNoteCreateOrConnectWithoutAuthorInput[]
+    upsert?: CommunityNoteUpsertWithWhereUniqueWithoutAuthorInput | CommunityNoteUpsertWithWhereUniqueWithoutAuthorInput[]
+    createMany?: CommunityNoteCreateManyAuthorInputEnvelope
+    set?: CommunityNoteWhereUniqueInput | CommunityNoteWhereUniqueInput[]
+    disconnect?: CommunityNoteWhereUniqueInput | CommunityNoteWhereUniqueInput[]
+    delete?: CommunityNoteWhereUniqueInput | CommunityNoteWhereUniqueInput[]
+    connect?: CommunityNoteWhereUniqueInput | CommunityNoteWhereUniqueInput[]
+    update?: CommunityNoteUpdateWithWhereUniqueWithoutAuthorInput | CommunityNoteUpdateWithWhereUniqueWithoutAuthorInput[]
+    updateMany?: CommunityNoteUpdateManyWithWhereWithoutAuthorInput | CommunityNoteUpdateManyWithWhereWithoutAuthorInput[]
+    deleteMany?: CommunityNoteScalarWhereInput | CommunityNoteScalarWhereInput[]
   }
 
   export type FriendshipUncheckedUpdateManyWithoutSenderNestedInput = {
@@ -60704,6 +62552,32 @@ export namespace Prisma {
     connect?: PageWhereUniqueInput
   }
 
+  export type PostCreateNestedOneWithoutThreadRepliesInput = {
+    create?: XOR<PostCreateWithoutThreadRepliesInput, PostUncheckedCreateWithoutThreadRepliesInput>
+    connectOrCreate?: PostCreateOrConnectWithoutThreadRepliesInput
+    connect?: PostWhereUniqueInput
+  }
+
+  export type PostCreateNestedManyWithoutThreadParentInput = {
+    create?: XOR<PostCreateWithoutThreadParentInput, PostUncheckedCreateWithoutThreadParentInput> | PostCreateWithoutThreadParentInput[] | PostUncheckedCreateWithoutThreadParentInput[]
+    connectOrCreate?: PostCreateOrConnectWithoutThreadParentInput | PostCreateOrConnectWithoutThreadParentInput[]
+    createMany?: PostCreateManyThreadParentInputEnvelope
+    connect?: PostWhereUniqueInput | PostWhereUniqueInput[]
+  }
+
+  export type PostCreateNestedOneWithoutRepostsInput = {
+    create?: XOR<PostCreateWithoutRepostsInput, PostUncheckedCreateWithoutRepostsInput>
+    connectOrCreate?: PostCreateOrConnectWithoutRepostsInput
+    connect?: PostWhereUniqueInput
+  }
+
+  export type PostCreateNestedManyWithoutRepostOfInput = {
+    create?: XOR<PostCreateWithoutRepostOfInput, PostUncheckedCreateWithoutRepostOfInput> | PostCreateWithoutRepostOfInput[] | PostUncheckedCreateWithoutRepostOfInput[]
+    connectOrCreate?: PostCreateOrConnectWithoutRepostOfInput | PostCreateOrConnectWithoutRepostOfInput[]
+    createMany?: PostCreateManyRepostOfInputEnvelope
+    connect?: PostWhereUniqueInput | PostWhereUniqueInput[]
+  }
+
   export type CommentCreateNestedManyWithoutPostInput = {
     create?: XOR<CommentCreateWithoutPostInput, CommentUncheckedCreateWithoutPostInput> | CommentCreateWithoutPostInput[] | CommentUncheckedCreateWithoutPostInput[]
     connectOrCreate?: CommentCreateOrConnectWithoutPostInput | CommentCreateOrConnectWithoutPostInput[]
@@ -60737,6 +62611,27 @@ export namespace Prisma {
     connectOrCreate?: PostHashtagCreateOrConnectWithoutPostInput | PostHashtagCreateOrConnectWithoutPostInput[]
     createMany?: PostHashtagCreateManyPostInputEnvelope
     connect?: PostHashtagWhereUniqueInput | PostHashtagWhereUniqueInput[]
+  }
+
+  export type CommunityNoteCreateNestedManyWithoutPostInput = {
+    create?: XOR<CommunityNoteCreateWithoutPostInput, CommunityNoteUncheckedCreateWithoutPostInput> | CommunityNoteCreateWithoutPostInput[] | CommunityNoteUncheckedCreateWithoutPostInput[]
+    connectOrCreate?: CommunityNoteCreateOrConnectWithoutPostInput | CommunityNoteCreateOrConnectWithoutPostInput[]
+    createMany?: CommunityNoteCreateManyPostInputEnvelope
+    connect?: CommunityNoteWhereUniqueInput | CommunityNoteWhereUniqueInput[]
+  }
+
+  export type PostUncheckedCreateNestedManyWithoutThreadParentInput = {
+    create?: XOR<PostCreateWithoutThreadParentInput, PostUncheckedCreateWithoutThreadParentInput> | PostCreateWithoutThreadParentInput[] | PostUncheckedCreateWithoutThreadParentInput[]
+    connectOrCreate?: PostCreateOrConnectWithoutThreadParentInput | PostCreateOrConnectWithoutThreadParentInput[]
+    createMany?: PostCreateManyThreadParentInputEnvelope
+    connect?: PostWhereUniqueInput | PostWhereUniqueInput[]
+  }
+
+  export type PostUncheckedCreateNestedManyWithoutRepostOfInput = {
+    create?: XOR<PostCreateWithoutRepostOfInput, PostUncheckedCreateWithoutRepostOfInput> | PostCreateWithoutRepostOfInput[] | PostUncheckedCreateWithoutRepostOfInput[]
+    connectOrCreate?: PostCreateOrConnectWithoutRepostOfInput | PostCreateOrConnectWithoutRepostOfInput[]
+    createMany?: PostCreateManyRepostOfInputEnvelope
+    connect?: PostWhereUniqueInput | PostWhereUniqueInput[]
   }
 
   export type CommentUncheckedCreateNestedManyWithoutPostInput = {
@@ -60774,6 +62669,13 @@ export namespace Prisma {
     connect?: PostHashtagWhereUniqueInput | PostHashtagWhereUniqueInput[]
   }
 
+  export type CommunityNoteUncheckedCreateNestedManyWithoutPostInput = {
+    create?: XOR<CommunityNoteCreateWithoutPostInput, CommunityNoteUncheckedCreateWithoutPostInput> | CommunityNoteCreateWithoutPostInput[] | CommunityNoteUncheckedCreateWithoutPostInput[]
+    connectOrCreate?: CommunityNoteCreateOrConnectWithoutPostInput | CommunityNoteCreateOrConnectWithoutPostInput[]
+    createMany?: CommunityNoteCreateManyPostInputEnvelope
+    connect?: CommunityNoteWhereUniqueInput | CommunityNoteWhereUniqueInput[]
+  }
+
   export type EnumPostTypeFieldUpdateOperationsInput = {
     set?: $Enums.PostType
   }
@@ -60809,6 +62711,54 @@ export namespace Prisma {
     delete?: PageWhereInput | boolean
     connect?: PageWhereUniqueInput
     update?: XOR<XOR<PageUpdateToOneWithWhereWithoutPostsInput, PageUpdateWithoutPostsInput>, PageUncheckedUpdateWithoutPostsInput>
+  }
+
+  export type PostUpdateOneWithoutThreadRepliesNestedInput = {
+    create?: XOR<PostCreateWithoutThreadRepliesInput, PostUncheckedCreateWithoutThreadRepliesInput>
+    connectOrCreate?: PostCreateOrConnectWithoutThreadRepliesInput
+    upsert?: PostUpsertWithoutThreadRepliesInput
+    disconnect?: PostWhereInput | boolean
+    delete?: PostWhereInput | boolean
+    connect?: PostWhereUniqueInput
+    update?: XOR<XOR<PostUpdateToOneWithWhereWithoutThreadRepliesInput, PostUpdateWithoutThreadRepliesInput>, PostUncheckedUpdateWithoutThreadRepliesInput>
+  }
+
+  export type PostUpdateManyWithoutThreadParentNestedInput = {
+    create?: XOR<PostCreateWithoutThreadParentInput, PostUncheckedCreateWithoutThreadParentInput> | PostCreateWithoutThreadParentInput[] | PostUncheckedCreateWithoutThreadParentInput[]
+    connectOrCreate?: PostCreateOrConnectWithoutThreadParentInput | PostCreateOrConnectWithoutThreadParentInput[]
+    upsert?: PostUpsertWithWhereUniqueWithoutThreadParentInput | PostUpsertWithWhereUniqueWithoutThreadParentInput[]
+    createMany?: PostCreateManyThreadParentInputEnvelope
+    set?: PostWhereUniqueInput | PostWhereUniqueInput[]
+    disconnect?: PostWhereUniqueInput | PostWhereUniqueInput[]
+    delete?: PostWhereUniqueInput | PostWhereUniqueInput[]
+    connect?: PostWhereUniqueInput | PostWhereUniqueInput[]
+    update?: PostUpdateWithWhereUniqueWithoutThreadParentInput | PostUpdateWithWhereUniqueWithoutThreadParentInput[]
+    updateMany?: PostUpdateManyWithWhereWithoutThreadParentInput | PostUpdateManyWithWhereWithoutThreadParentInput[]
+    deleteMany?: PostScalarWhereInput | PostScalarWhereInput[]
+  }
+
+  export type PostUpdateOneWithoutRepostsNestedInput = {
+    create?: XOR<PostCreateWithoutRepostsInput, PostUncheckedCreateWithoutRepostsInput>
+    connectOrCreate?: PostCreateOrConnectWithoutRepostsInput
+    upsert?: PostUpsertWithoutRepostsInput
+    disconnect?: PostWhereInput | boolean
+    delete?: PostWhereInput | boolean
+    connect?: PostWhereUniqueInput
+    update?: XOR<XOR<PostUpdateToOneWithWhereWithoutRepostsInput, PostUpdateWithoutRepostsInput>, PostUncheckedUpdateWithoutRepostsInput>
+  }
+
+  export type PostUpdateManyWithoutRepostOfNestedInput = {
+    create?: XOR<PostCreateWithoutRepostOfInput, PostUncheckedCreateWithoutRepostOfInput> | PostCreateWithoutRepostOfInput[] | PostUncheckedCreateWithoutRepostOfInput[]
+    connectOrCreate?: PostCreateOrConnectWithoutRepostOfInput | PostCreateOrConnectWithoutRepostOfInput[]
+    upsert?: PostUpsertWithWhereUniqueWithoutRepostOfInput | PostUpsertWithWhereUniqueWithoutRepostOfInput[]
+    createMany?: PostCreateManyRepostOfInputEnvelope
+    set?: PostWhereUniqueInput | PostWhereUniqueInput[]
+    disconnect?: PostWhereUniqueInput | PostWhereUniqueInput[]
+    delete?: PostWhereUniqueInput | PostWhereUniqueInput[]
+    connect?: PostWhereUniqueInput | PostWhereUniqueInput[]
+    update?: PostUpdateWithWhereUniqueWithoutRepostOfInput | PostUpdateWithWhereUniqueWithoutRepostOfInput[]
+    updateMany?: PostUpdateManyWithWhereWithoutRepostOfInput | PostUpdateManyWithWhereWithoutRepostOfInput[]
+    deleteMany?: PostScalarWhereInput | PostScalarWhereInput[]
   }
 
   export type CommentUpdateManyWithoutPostNestedInput = {
@@ -60881,6 +62831,48 @@ export namespace Prisma {
     deleteMany?: PostHashtagScalarWhereInput | PostHashtagScalarWhereInput[]
   }
 
+  export type CommunityNoteUpdateManyWithoutPostNestedInput = {
+    create?: XOR<CommunityNoteCreateWithoutPostInput, CommunityNoteUncheckedCreateWithoutPostInput> | CommunityNoteCreateWithoutPostInput[] | CommunityNoteUncheckedCreateWithoutPostInput[]
+    connectOrCreate?: CommunityNoteCreateOrConnectWithoutPostInput | CommunityNoteCreateOrConnectWithoutPostInput[]
+    upsert?: CommunityNoteUpsertWithWhereUniqueWithoutPostInput | CommunityNoteUpsertWithWhereUniqueWithoutPostInput[]
+    createMany?: CommunityNoteCreateManyPostInputEnvelope
+    set?: CommunityNoteWhereUniqueInput | CommunityNoteWhereUniqueInput[]
+    disconnect?: CommunityNoteWhereUniqueInput | CommunityNoteWhereUniqueInput[]
+    delete?: CommunityNoteWhereUniqueInput | CommunityNoteWhereUniqueInput[]
+    connect?: CommunityNoteWhereUniqueInput | CommunityNoteWhereUniqueInput[]
+    update?: CommunityNoteUpdateWithWhereUniqueWithoutPostInput | CommunityNoteUpdateWithWhereUniqueWithoutPostInput[]
+    updateMany?: CommunityNoteUpdateManyWithWhereWithoutPostInput | CommunityNoteUpdateManyWithWhereWithoutPostInput[]
+    deleteMany?: CommunityNoteScalarWhereInput | CommunityNoteScalarWhereInput[]
+  }
+
+  export type PostUncheckedUpdateManyWithoutThreadParentNestedInput = {
+    create?: XOR<PostCreateWithoutThreadParentInput, PostUncheckedCreateWithoutThreadParentInput> | PostCreateWithoutThreadParentInput[] | PostUncheckedCreateWithoutThreadParentInput[]
+    connectOrCreate?: PostCreateOrConnectWithoutThreadParentInput | PostCreateOrConnectWithoutThreadParentInput[]
+    upsert?: PostUpsertWithWhereUniqueWithoutThreadParentInput | PostUpsertWithWhereUniqueWithoutThreadParentInput[]
+    createMany?: PostCreateManyThreadParentInputEnvelope
+    set?: PostWhereUniqueInput | PostWhereUniqueInput[]
+    disconnect?: PostWhereUniqueInput | PostWhereUniqueInput[]
+    delete?: PostWhereUniqueInput | PostWhereUniqueInput[]
+    connect?: PostWhereUniqueInput | PostWhereUniqueInput[]
+    update?: PostUpdateWithWhereUniqueWithoutThreadParentInput | PostUpdateWithWhereUniqueWithoutThreadParentInput[]
+    updateMany?: PostUpdateManyWithWhereWithoutThreadParentInput | PostUpdateManyWithWhereWithoutThreadParentInput[]
+    deleteMany?: PostScalarWhereInput | PostScalarWhereInput[]
+  }
+
+  export type PostUncheckedUpdateManyWithoutRepostOfNestedInput = {
+    create?: XOR<PostCreateWithoutRepostOfInput, PostUncheckedCreateWithoutRepostOfInput> | PostCreateWithoutRepostOfInput[] | PostUncheckedCreateWithoutRepostOfInput[]
+    connectOrCreate?: PostCreateOrConnectWithoutRepostOfInput | PostCreateOrConnectWithoutRepostOfInput[]
+    upsert?: PostUpsertWithWhereUniqueWithoutRepostOfInput | PostUpsertWithWhereUniqueWithoutRepostOfInput[]
+    createMany?: PostCreateManyRepostOfInputEnvelope
+    set?: PostWhereUniqueInput | PostWhereUniqueInput[]
+    disconnect?: PostWhereUniqueInput | PostWhereUniqueInput[]
+    delete?: PostWhereUniqueInput | PostWhereUniqueInput[]
+    connect?: PostWhereUniqueInput | PostWhereUniqueInput[]
+    update?: PostUpdateWithWhereUniqueWithoutRepostOfInput | PostUpdateWithWhereUniqueWithoutRepostOfInput[]
+    updateMany?: PostUpdateManyWithWhereWithoutRepostOfInput | PostUpdateManyWithWhereWithoutRepostOfInput[]
+    deleteMany?: PostScalarWhereInput | PostScalarWhereInput[]
+  }
+
   export type CommentUncheckedUpdateManyWithoutPostNestedInput = {
     create?: XOR<CommentCreateWithoutPostInput, CommentUncheckedCreateWithoutPostInput> | CommentCreateWithoutPostInput[] | CommentUncheckedCreateWithoutPostInput[]
     connectOrCreate?: CommentCreateOrConnectWithoutPostInput | CommentCreateOrConnectWithoutPostInput[]
@@ -60949,6 +62941,61 @@ export namespace Prisma {
     update?: PostHashtagUpdateWithWhereUniqueWithoutPostInput | PostHashtagUpdateWithWhereUniqueWithoutPostInput[]
     updateMany?: PostHashtagUpdateManyWithWhereWithoutPostInput | PostHashtagUpdateManyWithWhereWithoutPostInput[]
     deleteMany?: PostHashtagScalarWhereInput | PostHashtagScalarWhereInput[]
+  }
+
+  export type CommunityNoteUncheckedUpdateManyWithoutPostNestedInput = {
+    create?: XOR<CommunityNoteCreateWithoutPostInput, CommunityNoteUncheckedCreateWithoutPostInput> | CommunityNoteCreateWithoutPostInput[] | CommunityNoteUncheckedCreateWithoutPostInput[]
+    connectOrCreate?: CommunityNoteCreateOrConnectWithoutPostInput | CommunityNoteCreateOrConnectWithoutPostInput[]
+    upsert?: CommunityNoteUpsertWithWhereUniqueWithoutPostInput | CommunityNoteUpsertWithWhereUniqueWithoutPostInput[]
+    createMany?: CommunityNoteCreateManyPostInputEnvelope
+    set?: CommunityNoteWhereUniqueInput | CommunityNoteWhereUniqueInput[]
+    disconnect?: CommunityNoteWhereUniqueInput | CommunityNoteWhereUniqueInput[]
+    delete?: CommunityNoteWhereUniqueInput | CommunityNoteWhereUniqueInput[]
+    connect?: CommunityNoteWhereUniqueInput | CommunityNoteWhereUniqueInput[]
+    update?: CommunityNoteUpdateWithWhereUniqueWithoutPostInput | CommunityNoteUpdateWithWhereUniqueWithoutPostInput[]
+    updateMany?: CommunityNoteUpdateManyWithWhereWithoutPostInput | CommunityNoteUpdateManyWithWhereWithoutPostInput[]
+    deleteMany?: CommunityNoteScalarWhereInput | CommunityNoteScalarWhereInput[]
+  }
+
+  export type CommunityNoteCreatesourcesInput = {
+    set: string[]
+  }
+
+  export type PostCreateNestedOneWithoutCommunityNotesInput = {
+    create?: XOR<PostCreateWithoutCommunityNotesInput, PostUncheckedCreateWithoutCommunityNotesInput>
+    connectOrCreate?: PostCreateOrConnectWithoutCommunityNotesInput
+    connect?: PostWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutCommunityNotesInput = {
+    create?: XOR<UserCreateWithoutCommunityNotesInput, UserUncheckedCreateWithoutCommunityNotesInput>
+    connectOrCreate?: UserCreateOrConnectWithoutCommunityNotesInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type CommunityNoteUpdatesourcesInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type EnumCommunityNoteStatusFieldUpdateOperationsInput = {
+    set?: $Enums.CommunityNoteStatus
+  }
+
+  export type PostUpdateOneRequiredWithoutCommunityNotesNestedInput = {
+    create?: XOR<PostCreateWithoutCommunityNotesInput, PostUncheckedCreateWithoutCommunityNotesInput>
+    connectOrCreate?: PostCreateOrConnectWithoutCommunityNotesInput
+    upsert?: PostUpsertWithoutCommunityNotesInput
+    connect?: PostWhereUniqueInput
+    update?: XOR<XOR<PostUpdateToOneWithWhereWithoutCommunityNotesInput, PostUpdateWithoutCommunityNotesInput>, PostUncheckedUpdateWithoutCommunityNotesInput>
+  }
+
+  export type UserUpdateOneRequiredWithoutCommunityNotesNestedInput = {
+    create?: XOR<UserCreateWithoutCommunityNotesInput, UserUncheckedCreateWithoutCommunityNotesInput>
+    connectOrCreate?: UserCreateOrConnectWithoutCommunityNotesInput
+    upsert?: UserUpsertWithoutCommunityNotesInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutCommunityNotesInput, UserUpdateWithoutCommunityNotesInput>, UserUncheckedUpdateWithoutCommunityNotesInput>
   }
 
   export type PostCreateNestedOneWithoutCommentsInput = {
@@ -62759,6 +64806,23 @@ export namespace Prisma {
     _max?: NestedEnumPostTypeFilter<$PrismaModel>
   }
 
+  export type NestedEnumCommunityNoteStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.CommunityNoteStatus | EnumCommunityNoteStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.CommunityNoteStatus[] | ListEnumCommunityNoteStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CommunityNoteStatus[] | ListEnumCommunityNoteStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumCommunityNoteStatusFilter<$PrismaModel> | $Enums.CommunityNoteStatus
+  }
+
+  export type NestedEnumCommunityNoteStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.CommunityNoteStatus | EnumCommunityNoteStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.CommunityNoteStatus[] | ListEnumCommunityNoteStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CommunityNoteStatus[] | ListEnumCommunityNoteStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumCommunityNoteStatusWithAggregatesFilter<$PrismaModel> | $Enums.CommunityNoteStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumCommunityNoteStatusFilter<$PrismaModel>
+    _max?: NestedEnumCommunityNoteStatusFilter<$PrismaModel>
+  }
+
   export type NestedEnumReactionTypeFilter<$PrismaModel = never> = {
     equals?: $Enums.ReactionType | EnumReactionTypeFieldRefInput<$PrismaModel>
     in?: $Enums.ReactionType[] | ListEnumReactionTypeFieldRefInput<$PrismaModel>
@@ -63289,16 +65353,25 @@ export namespace Prisma {
     visibility?: $Enums.Visibility
     isPinned?: boolean
     isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    quoteText?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
     space?: SpaceCreateNestedOneWithoutPostsInput
     page?: PageCreateNestedOneWithoutPostsInput
+    threadParent?: PostCreateNestedOneWithoutThreadRepliesInput
+    threadReplies?: PostCreateNestedManyWithoutThreadParentInput
+    repostOf?: PostCreateNestedOneWithoutRepostsInput
+    reposts?: PostCreateNestedManyWithoutRepostOfInput
     comments?: CommentCreateNestedManyWithoutPostInput
     reactions?: ReactionCreateNestedManyWithoutPostInput
     saves?: SaveCreateNestedManyWithoutPostInput
     shares?: ShareCreateNestedManyWithoutPostInput
     hashtags?: PostHashtagCreateNestedManyWithoutPostInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutPostInput
   }
 
   export type PostUncheckedCreateWithoutAuthorInput = {
@@ -63313,14 +65386,23 @@ export namespace Prisma {
     pageId?: string | null
     isPinned?: boolean
     isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    threadParentId?: string | null
+    repostOfId?: string | null
+    quoteText?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
+    threadReplies?: PostUncheckedCreateNestedManyWithoutThreadParentInput
+    reposts?: PostUncheckedCreateNestedManyWithoutRepostOfInput
     comments?: CommentUncheckedCreateNestedManyWithoutPostInput
     reactions?: ReactionUncheckedCreateNestedManyWithoutPostInput
     saves?: SaveUncheckedCreateNestedManyWithoutPostInput
     shares?: ShareUncheckedCreateNestedManyWithoutPostInput
     hashtags?: PostHashtagUncheckedCreateNestedManyWithoutPostInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutPostInput
   }
 
   export type PostCreateOrConnectWithoutAuthorInput = {
@@ -63438,6 +65520,38 @@ export namespace Prisma {
 
   export type ShareCreateManyUserInputEnvelope = {
     data: ShareCreateManyUserInput | ShareCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type CommunityNoteCreateWithoutAuthorInput = {
+    id?: string
+    content: string
+    sources?: CommunityNoteCreatesourcesInput | string[]
+    status?: $Enums.CommunityNoteStatus
+    helpfulCount?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    post: PostCreateNestedOneWithoutCommunityNotesInput
+  }
+
+  export type CommunityNoteUncheckedCreateWithoutAuthorInput = {
+    id?: string
+    postId: string
+    content: string
+    sources?: CommunityNoteCreatesourcesInput | string[]
+    status?: $Enums.CommunityNoteStatus
+    helpfulCount?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CommunityNoteCreateOrConnectWithoutAuthorInput = {
+    where: CommunityNoteWhereUniqueInput
+    create: XOR<CommunityNoteCreateWithoutAuthorInput, CommunityNoteUncheckedCreateWithoutAuthorInput>
+  }
+
+  export type CommunityNoteCreateManyAuthorInputEnvelope = {
+    data: CommunityNoteCreateManyAuthorInput | CommunityNoteCreateManyAuthorInput[]
     skipDuplicates?: boolean
   }
 
@@ -64498,6 +66612,12 @@ export namespace Prisma {
     pageId?: StringNullableFilter<"Post"> | string | null
     isPinned?: BoolFilter<"Post"> | boolean
     isSponsored?: BoolFilter<"Post"> | boolean
+    isThread?: BoolFilter<"Post"> | boolean
+    threadIndex?: IntNullableFilter<"Post"> | number | null
+    threadTotal?: IntNullableFilter<"Post"> | number | null
+    threadParentId?: StringNullableFilter<"Post"> | string | null
+    repostOfId?: StringNullableFilter<"Post"> | string | null
+    quoteText?: StringNullableFilter<"Post"> | string | null
     createdAt?: DateTimeFilter<"Post"> | Date | string
     updatedAt?: DateTimeFilter<"Post"> | Date | string
     deletedAt?: DateTimeNullableFilter<"Post"> | Date | string | null
@@ -64613,6 +66733,37 @@ export namespace Prisma {
     postId?: StringFilter<"Share"> | string
     message?: StringNullableFilter<"Share"> | string | null
     createdAt?: DateTimeFilter<"Share"> | Date | string
+  }
+
+  export type CommunityNoteUpsertWithWhereUniqueWithoutAuthorInput = {
+    where: CommunityNoteWhereUniqueInput
+    update: XOR<CommunityNoteUpdateWithoutAuthorInput, CommunityNoteUncheckedUpdateWithoutAuthorInput>
+    create: XOR<CommunityNoteCreateWithoutAuthorInput, CommunityNoteUncheckedCreateWithoutAuthorInput>
+  }
+
+  export type CommunityNoteUpdateWithWhereUniqueWithoutAuthorInput = {
+    where: CommunityNoteWhereUniqueInput
+    data: XOR<CommunityNoteUpdateWithoutAuthorInput, CommunityNoteUncheckedUpdateWithoutAuthorInput>
+  }
+
+  export type CommunityNoteUpdateManyWithWhereWithoutAuthorInput = {
+    where: CommunityNoteScalarWhereInput
+    data: XOR<CommunityNoteUpdateManyMutationInput, CommunityNoteUncheckedUpdateManyWithoutAuthorInput>
+  }
+
+  export type CommunityNoteScalarWhereInput = {
+    AND?: CommunityNoteScalarWhereInput | CommunityNoteScalarWhereInput[]
+    OR?: CommunityNoteScalarWhereInput[]
+    NOT?: CommunityNoteScalarWhereInput | CommunityNoteScalarWhereInput[]
+    id?: StringFilter<"CommunityNote"> | string
+    postId?: StringFilter<"CommunityNote"> | string
+    authorId?: StringFilter<"CommunityNote"> | string
+    content?: StringFilter<"CommunityNote"> | string
+    sources?: StringNullableListFilter<"CommunityNote">
+    status?: EnumCommunityNoteStatusFilter<"CommunityNote"> | $Enums.CommunityNoteStatus
+    helpfulCount?: IntFilter<"CommunityNote"> | number
+    createdAt?: DateTimeFilter<"CommunityNote"> | Date | string
+    updatedAt?: DateTimeFilter<"CommunityNote"> | Date | string
   }
 
   export type FriendshipUpsertWithWhereUniqueWithoutSenderInput = {
@@ -65438,6 +67589,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -65490,6 +67642,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -65618,6 +67771,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -65670,6 +67824,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -65782,6 +67937,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -65834,6 +67990,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -65902,6 +68059,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -65954,6 +68112,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -66246,6 +68405,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -66298,6 +68458,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -66366,6 +68527,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -66418,6 +68580,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -66470,6 +68633,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -66522,6 +68686,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -66590,6 +68755,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -66642,6 +68808,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -66695,6 +68862,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
     followers?: FollowCreateNestedManyWithoutFollowingInput
@@ -66747,6 +68915,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
     followers?: FollowUncheckedCreateNestedManyWithoutFollowingInput
@@ -66804,6 +68973,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     following?: FollowCreateNestedManyWithoutFollowerInput
     followers?: FollowCreateNestedManyWithoutFollowingInput
@@ -66856,6 +69026,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
     followers?: FollowUncheckedCreateNestedManyWithoutFollowingInput
@@ -66924,6 +69095,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
     followers?: FollowUpdateManyWithoutFollowingNestedInput
@@ -66976,6 +69148,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
     followers?: FollowUncheckedUpdateManyWithoutFollowingNestedInput
@@ -67039,6 +69212,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
     followers?: FollowUpdateManyWithoutFollowingNestedInput
@@ -67091,6 +69265,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
     followers?: FollowUncheckedUpdateManyWithoutFollowingNestedInput
@@ -67143,6 +69318,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     followers?: FollowCreateNestedManyWithoutFollowingInput
@@ -67195,6 +69371,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     followers?: FollowUncheckedCreateNestedManyWithoutFollowingInput
@@ -67252,6 +69429,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -67304,6 +69482,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -67372,6 +69551,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     followers?: FollowUpdateManyWithoutFollowingNestedInput
@@ -67424,6 +69604,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     followers?: FollowUncheckedUpdateManyWithoutFollowingNestedInput
@@ -67487,6 +69668,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -67539,6 +69721,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -67591,6 +69774,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -67643,6 +69827,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -67700,6 +69885,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -67752,6 +69938,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -67820,6 +70007,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -67872,6 +70060,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -67935,6 +70124,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -67987,6 +70177,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -68039,6 +70230,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -68091,6 +70283,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -68159,6 +70352,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -68211,6 +70405,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -68262,6 +70457,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -68314,6 +70510,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -68432,6 +70629,284 @@ export namespace Prisma {
   export type PageCreateOrConnectWithoutPostsInput = {
     where: PageWhereUniqueInput
     create: XOR<PageCreateWithoutPostsInput, PageUncheckedCreateWithoutPostsInput>
+  }
+
+  export type PostCreateWithoutThreadRepliesInput = {
+    id?: string
+    type?: $Enums.PostType
+    content?: string | null
+    mediaUrls?: PostCreatemediaUrlsInput | string[]
+    linkUrl?: string | null
+    linkMeta?: NullableJsonNullValueInput | InputJsonValue
+    visibility?: $Enums.Visibility
+    isPinned?: boolean
+    isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    quoteText?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    author: UserCreateNestedOneWithoutPostsInput
+    space?: SpaceCreateNestedOneWithoutPostsInput
+    page?: PageCreateNestedOneWithoutPostsInput
+    threadParent?: PostCreateNestedOneWithoutThreadRepliesInput
+    repostOf?: PostCreateNestedOneWithoutRepostsInput
+    reposts?: PostCreateNestedManyWithoutRepostOfInput
+    comments?: CommentCreateNestedManyWithoutPostInput
+    reactions?: ReactionCreateNestedManyWithoutPostInput
+    saves?: SaveCreateNestedManyWithoutPostInput
+    shares?: ShareCreateNestedManyWithoutPostInput
+    hashtags?: PostHashtagCreateNestedManyWithoutPostInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutPostInput
+  }
+
+  export type PostUncheckedCreateWithoutThreadRepliesInput = {
+    id?: string
+    authorId: string
+    type?: $Enums.PostType
+    content?: string | null
+    mediaUrls?: PostCreatemediaUrlsInput | string[]
+    linkUrl?: string | null
+    linkMeta?: NullableJsonNullValueInput | InputJsonValue
+    visibility?: $Enums.Visibility
+    spaceId?: string | null
+    pageId?: string | null
+    isPinned?: boolean
+    isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    threadParentId?: string | null
+    repostOfId?: string | null
+    quoteText?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    reposts?: PostUncheckedCreateNestedManyWithoutRepostOfInput
+    comments?: CommentUncheckedCreateNestedManyWithoutPostInput
+    reactions?: ReactionUncheckedCreateNestedManyWithoutPostInput
+    saves?: SaveUncheckedCreateNestedManyWithoutPostInput
+    shares?: ShareUncheckedCreateNestedManyWithoutPostInput
+    hashtags?: PostHashtagUncheckedCreateNestedManyWithoutPostInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutPostInput
+  }
+
+  export type PostCreateOrConnectWithoutThreadRepliesInput = {
+    where: PostWhereUniqueInput
+    create: XOR<PostCreateWithoutThreadRepliesInput, PostUncheckedCreateWithoutThreadRepliesInput>
+  }
+
+  export type PostCreateWithoutThreadParentInput = {
+    id?: string
+    type?: $Enums.PostType
+    content?: string | null
+    mediaUrls?: PostCreatemediaUrlsInput | string[]
+    linkUrl?: string | null
+    linkMeta?: NullableJsonNullValueInput | InputJsonValue
+    visibility?: $Enums.Visibility
+    isPinned?: boolean
+    isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    quoteText?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    author: UserCreateNestedOneWithoutPostsInput
+    space?: SpaceCreateNestedOneWithoutPostsInput
+    page?: PageCreateNestedOneWithoutPostsInput
+    threadReplies?: PostCreateNestedManyWithoutThreadParentInput
+    repostOf?: PostCreateNestedOneWithoutRepostsInput
+    reposts?: PostCreateNestedManyWithoutRepostOfInput
+    comments?: CommentCreateNestedManyWithoutPostInput
+    reactions?: ReactionCreateNestedManyWithoutPostInput
+    saves?: SaveCreateNestedManyWithoutPostInput
+    shares?: ShareCreateNestedManyWithoutPostInput
+    hashtags?: PostHashtagCreateNestedManyWithoutPostInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutPostInput
+  }
+
+  export type PostUncheckedCreateWithoutThreadParentInput = {
+    id?: string
+    authorId: string
+    type?: $Enums.PostType
+    content?: string | null
+    mediaUrls?: PostCreatemediaUrlsInput | string[]
+    linkUrl?: string | null
+    linkMeta?: NullableJsonNullValueInput | InputJsonValue
+    visibility?: $Enums.Visibility
+    spaceId?: string | null
+    pageId?: string | null
+    isPinned?: boolean
+    isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    repostOfId?: string | null
+    quoteText?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    threadReplies?: PostUncheckedCreateNestedManyWithoutThreadParentInput
+    reposts?: PostUncheckedCreateNestedManyWithoutRepostOfInput
+    comments?: CommentUncheckedCreateNestedManyWithoutPostInput
+    reactions?: ReactionUncheckedCreateNestedManyWithoutPostInput
+    saves?: SaveUncheckedCreateNestedManyWithoutPostInput
+    shares?: ShareUncheckedCreateNestedManyWithoutPostInput
+    hashtags?: PostHashtagUncheckedCreateNestedManyWithoutPostInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutPostInput
+  }
+
+  export type PostCreateOrConnectWithoutThreadParentInput = {
+    where: PostWhereUniqueInput
+    create: XOR<PostCreateWithoutThreadParentInput, PostUncheckedCreateWithoutThreadParentInput>
+  }
+
+  export type PostCreateManyThreadParentInputEnvelope = {
+    data: PostCreateManyThreadParentInput | PostCreateManyThreadParentInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type PostCreateWithoutRepostsInput = {
+    id?: string
+    type?: $Enums.PostType
+    content?: string | null
+    mediaUrls?: PostCreatemediaUrlsInput | string[]
+    linkUrl?: string | null
+    linkMeta?: NullableJsonNullValueInput | InputJsonValue
+    visibility?: $Enums.Visibility
+    isPinned?: boolean
+    isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    quoteText?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    author: UserCreateNestedOneWithoutPostsInput
+    space?: SpaceCreateNestedOneWithoutPostsInput
+    page?: PageCreateNestedOneWithoutPostsInput
+    threadParent?: PostCreateNestedOneWithoutThreadRepliesInput
+    threadReplies?: PostCreateNestedManyWithoutThreadParentInput
+    repostOf?: PostCreateNestedOneWithoutRepostsInput
+    comments?: CommentCreateNestedManyWithoutPostInput
+    reactions?: ReactionCreateNestedManyWithoutPostInput
+    saves?: SaveCreateNestedManyWithoutPostInput
+    shares?: ShareCreateNestedManyWithoutPostInput
+    hashtags?: PostHashtagCreateNestedManyWithoutPostInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutPostInput
+  }
+
+  export type PostUncheckedCreateWithoutRepostsInput = {
+    id?: string
+    authorId: string
+    type?: $Enums.PostType
+    content?: string | null
+    mediaUrls?: PostCreatemediaUrlsInput | string[]
+    linkUrl?: string | null
+    linkMeta?: NullableJsonNullValueInput | InputJsonValue
+    visibility?: $Enums.Visibility
+    spaceId?: string | null
+    pageId?: string | null
+    isPinned?: boolean
+    isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    threadParentId?: string | null
+    repostOfId?: string | null
+    quoteText?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    threadReplies?: PostUncheckedCreateNestedManyWithoutThreadParentInput
+    comments?: CommentUncheckedCreateNestedManyWithoutPostInput
+    reactions?: ReactionUncheckedCreateNestedManyWithoutPostInput
+    saves?: SaveUncheckedCreateNestedManyWithoutPostInput
+    shares?: ShareUncheckedCreateNestedManyWithoutPostInput
+    hashtags?: PostHashtagUncheckedCreateNestedManyWithoutPostInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutPostInput
+  }
+
+  export type PostCreateOrConnectWithoutRepostsInput = {
+    where: PostWhereUniqueInput
+    create: XOR<PostCreateWithoutRepostsInput, PostUncheckedCreateWithoutRepostsInput>
+  }
+
+  export type PostCreateWithoutRepostOfInput = {
+    id?: string
+    type?: $Enums.PostType
+    content?: string | null
+    mediaUrls?: PostCreatemediaUrlsInput | string[]
+    linkUrl?: string | null
+    linkMeta?: NullableJsonNullValueInput | InputJsonValue
+    visibility?: $Enums.Visibility
+    isPinned?: boolean
+    isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    quoteText?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    author: UserCreateNestedOneWithoutPostsInput
+    space?: SpaceCreateNestedOneWithoutPostsInput
+    page?: PageCreateNestedOneWithoutPostsInput
+    threadParent?: PostCreateNestedOneWithoutThreadRepliesInput
+    threadReplies?: PostCreateNestedManyWithoutThreadParentInput
+    reposts?: PostCreateNestedManyWithoutRepostOfInput
+    comments?: CommentCreateNestedManyWithoutPostInput
+    reactions?: ReactionCreateNestedManyWithoutPostInput
+    saves?: SaveCreateNestedManyWithoutPostInput
+    shares?: ShareCreateNestedManyWithoutPostInput
+    hashtags?: PostHashtagCreateNestedManyWithoutPostInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutPostInput
+  }
+
+  export type PostUncheckedCreateWithoutRepostOfInput = {
+    id?: string
+    authorId: string
+    type?: $Enums.PostType
+    content?: string | null
+    mediaUrls?: PostCreatemediaUrlsInput | string[]
+    linkUrl?: string | null
+    linkMeta?: NullableJsonNullValueInput | InputJsonValue
+    visibility?: $Enums.Visibility
+    spaceId?: string | null
+    pageId?: string | null
+    isPinned?: boolean
+    isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    threadParentId?: string | null
+    quoteText?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    threadReplies?: PostUncheckedCreateNestedManyWithoutThreadParentInput
+    reposts?: PostUncheckedCreateNestedManyWithoutRepostOfInput
+    comments?: CommentUncheckedCreateNestedManyWithoutPostInput
+    reactions?: ReactionUncheckedCreateNestedManyWithoutPostInput
+    saves?: SaveUncheckedCreateNestedManyWithoutPostInput
+    shares?: ShareUncheckedCreateNestedManyWithoutPostInput
+    hashtags?: PostHashtagUncheckedCreateNestedManyWithoutPostInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutPostInput
+  }
+
+  export type PostCreateOrConnectWithoutRepostOfInput = {
+    where: PostWhereUniqueInput
+    create: XOR<PostCreateWithoutRepostOfInput, PostUncheckedCreateWithoutRepostOfInput>
+  }
+
+  export type PostCreateManyRepostOfInputEnvelope = {
+    data: PostCreateManyRepostOfInput | PostCreateManyRepostOfInput[]
+    skipDuplicates?: boolean
   }
 
   export type CommentCreateWithoutPostInput = {
@@ -68560,6 +71035,38 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type CommunityNoteCreateWithoutPostInput = {
+    id?: string
+    content: string
+    sources?: CommunityNoteCreatesourcesInput | string[]
+    status?: $Enums.CommunityNoteStatus
+    helpfulCount?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    author: UserCreateNestedOneWithoutCommunityNotesInput
+  }
+
+  export type CommunityNoteUncheckedCreateWithoutPostInput = {
+    id?: string
+    authorId: string
+    content: string
+    sources?: CommunityNoteCreatesourcesInput | string[]
+    status?: $Enums.CommunityNoteStatus
+    helpfulCount?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CommunityNoteCreateOrConnectWithoutPostInput = {
+    where: CommunityNoteWhereUniqueInput
+    create: XOR<CommunityNoteCreateWithoutPostInput, CommunityNoteUncheckedCreateWithoutPostInput>
+  }
+
+  export type CommunityNoteCreateManyPostInputEnvelope = {
+    data: CommunityNoteCreateManyPostInput | CommunityNoteCreateManyPostInput[]
+    skipDuplicates?: boolean
+  }
+
   export type UserUpsertWithoutPostsInput = {
     update: XOR<UserUpdateWithoutPostsInput, UserUncheckedUpdateWithoutPostsInput>
     create: XOR<UserCreateWithoutPostsInput, UserUncheckedCreateWithoutPostsInput>
@@ -68592,6 +71099,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -68644,6 +71152,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -68771,6 +71280,184 @@ export namespace Prisma {
     follows?: PageFollowUncheckedUpdateManyWithoutPageNestedInput
   }
 
+  export type PostUpsertWithoutThreadRepliesInput = {
+    update: XOR<PostUpdateWithoutThreadRepliesInput, PostUncheckedUpdateWithoutThreadRepliesInput>
+    create: XOR<PostCreateWithoutThreadRepliesInput, PostUncheckedCreateWithoutThreadRepliesInput>
+    where?: PostWhereInput
+  }
+
+  export type PostUpdateToOneWithWhereWithoutThreadRepliesInput = {
+    where?: PostWhereInput
+    data: XOR<PostUpdateWithoutThreadRepliesInput, PostUncheckedUpdateWithoutThreadRepliesInput>
+  }
+
+  export type PostUpdateWithoutThreadRepliesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: EnumPostTypeFieldUpdateOperationsInput | $Enums.PostType
+    content?: NullableStringFieldUpdateOperationsInput | string | null
+    mediaUrls?: PostUpdatemediaUrlsInput | string[]
+    linkUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    linkMeta?: NullableJsonNullValueInput | InputJsonValue
+    visibility?: EnumVisibilityFieldUpdateOperationsInput | $Enums.Visibility
+    isPinned?: BoolFieldUpdateOperationsInput | boolean
+    isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    author?: UserUpdateOneRequiredWithoutPostsNestedInput
+    space?: SpaceUpdateOneWithoutPostsNestedInput
+    page?: PageUpdateOneWithoutPostsNestedInput
+    threadParent?: PostUpdateOneWithoutThreadRepliesNestedInput
+    repostOf?: PostUpdateOneWithoutRepostsNestedInput
+    reposts?: PostUpdateManyWithoutRepostOfNestedInput
+    comments?: CommentUpdateManyWithoutPostNestedInput
+    reactions?: ReactionUpdateManyWithoutPostNestedInput
+    saves?: SaveUpdateManyWithoutPostNestedInput
+    shares?: ShareUpdateManyWithoutPostNestedInput
+    hashtags?: PostHashtagUpdateManyWithoutPostNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutPostNestedInput
+  }
+
+  export type PostUncheckedUpdateWithoutThreadRepliesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    authorId?: StringFieldUpdateOperationsInput | string
+    type?: EnumPostTypeFieldUpdateOperationsInput | $Enums.PostType
+    content?: NullableStringFieldUpdateOperationsInput | string | null
+    mediaUrls?: PostUpdatemediaUrlsInput | string[]
+    linkUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    linkMeta?: NullableJsonNullValueInput | InputJsonValue
+    visibility?: EnumVisibilityFieldUpdateOperationsInput | $Enums.Visibility
+    spaceId?: NullableStringFieldUpdateOperationsInput | string | null
+    pageId?: NullableStringFieldUpdateOperationsInput | string | null
+    isPinned?: BoolFieldUpdateOperationsInput | boolean
+    isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    threadParentId?: NullableStringFieldUpdateOperationsInput | string | null
+    repostOfId?: NullableStringFieldUpdateOperationsInput | string | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reposts?: PostUncheckedUpdateManyWithoutRepostOfNestedInput
+    comments?: CommentUncheckedUpdateManyWithoutPostNestedInput
+    reactions?: ReactionUncheckedUpdateManyWithoutPostNestedInput
+    saves?: SaveUncheckedUpdateManyWithoutPostNestedInput
+    shares?: ShareUncheckedUpdateManyWithoutPostNestedInput
+    hashtags?: PostHashtagUncheckedUpdateManyWithoutPostNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutPostNestedInput
+  }
+
+  export type PostUpsertWithWhereUniqueWithoutThreadParentInput = {
+    where: PostWhereUniqueInput
+    update: XOR<PostUpdateWithoutThreadParentInput, PostUncheckedUpdateWithoutThreadParentInput>
+    create: XOR<PostCreateWithoutThreadParentInput, PostUncheckedCreateWithoutThreadParentInput>
+  }
+
+  export type PostUpdateWithWhereUniqueWithoutThreadParentInput = {
+    where: PostWhereUniqueInput
+    data: XOR<PostUpdateWithoutThreadParentInput, PostUncheckedUpdateWithoutThreadParentInput>
+  }
+
+  export type PostUpdateManyWithWhereWithoutThreadParentInput = {
+    where: PostScalarWhereInput
+    data: XOR<PostUpdateManyMutationInput, PostUncheckedUpdateManyWithoutThreadParentInput>
+  }
+
+  export type PostUpsertWithoutRepostsInput = {
+    update: XOR<PostUpdateWithoutRepostsInput, PostUncheckedUpdateWithoutRepostsInput>
+    create: XOR<PostCreateWithoutRepostsInput, PostUncheckedCreateWithoutRepostsInput>
+    where?: PostWhereInput
+  }
+
+  export type PostUpdateToOneWithWhereWithoutRepostsInput = {
+    where?: PostWhereInput
+    data: XOR<PostUpdateWithoutRepostsInput, PostUncheckedUpdateWithoutRepostsInput>
+  }
+
+  export type PostUpdateWithoutRepostsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: EnumPostTypeFieldUpdateOperationsInput | $Enums.PostType
+    content?: NullableStringFieldUpdateOperationsInput | string | null
+    mediaUrls?: PostUpdatemediaUrlsInput | string[]
+    linkUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    linkMeta?: NullableJsonNullValueInput | InputJsonValue
+    visibility?: EnumVisibilityFieldUpdateOperationsInput | $Enums.Visibility
+    isPinned?: BoolFieldUpdateOperationsInput | boolean
+    isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    author?: UserUpdateOneRequiredWithoutPostsNestedInput
+    space?: SpaceUpdateOneWithoutPostsNestedInput
+    page?: PageUpdateOneWithoutPostsNestedInput
+    threadParent?: PostUpdateOneWithoutThreadRepliesNestedInput
+    threadReplies?: PostUpdateManyWithoutThreadParentNestedInput
+    repostOf?: PostUpdateOneWithoutRepostsNestedInput
+    comments?: CommentUpdateManyWithoutPostNestedInput
+    reactions?: ReactionUpdateManyWithoutPostNestedInput
+    saves?: SaveUpdateManyWithoutPostNestedInput
+    shares?: ShareUpdateManyWithoutPostNestedInput
+    hashtags?: PostHashtagUpdateManyWithoutPostNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutPostNestedInput
+  }
+
+  export type PostUncheckedUpdateWithoutRepostsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    authorId?: StringFieldUpdateOperationsInput | string
+    type?: EnumPostTypeFieldUpdateOperationsInput | $Enums.PostType
+    content?: NullableStringFieldUpdateOperationsInput | string | null
+    mediaUrls?: PostUpdatemediaUrlsInput | string[]
+    linkUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    linkMeta?: NullableJsonNullValueInput | InputJsonValue
+    visibility?: EnumVisibilityFieldUpdateOperationsInput | $Enums.Visibility
+    spaceId?: NullableStringFieldUpdateOperationsInput | string | null
+    pageId?: NullableStringFieldUpdateOperationsInput | string | null
+    isPinned?: BoolFieldUpdateOperationsInput | boolean
+    isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    threadParentId?: NullableStringFieldUpdateOperationsInput | string | null
+    repostOfId?: NullableStringFieldUpdateOperationsInput | string | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    threadReplies?: PostUncheckedUpdateManyWithoutThreadParentNestedInput
+    comments?: CommentUncheckedUpdateManyWithoutPostNestedInput
+    reactions?: ReactionUncheckedUpdateManyWithoutPostNestedInput
+    saves?: SaveUncheckedUpdateManyWithoutPostNestedInput
+    shares?: ShareUncheckedUpdateManyWithoutPostNestedInput
+    hashtags?: PostHashtagUncheckedUpdateManyWithoutPostNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutPostNestedInput
+  }
+
+  export type PostUpsertWithWhereUniqueWithoutRepostOfInput = {
+    where: PostWhereUniqueInput
+    update: XOR<PostUpdateWithoutRepostOfInput, PostUncheckedUpdateWithoutRepostOfInput>
+    create: XOR<PostCreateWithoutRepostOfInput, PostUncheckedCreateWithoutRepostOfInput>
+  }
+
+  export type PostUpdateWithWhereUniqueWithoutRepostOfInput = {
+    where: PostWhereUniqueInput
+    data: XOR<PostUpdateWithoutRepostOfInput, PostUncheckedUpdateWithoutRepostOfInput>
+  }
+
+  export type PostUpdateManyWithWhereWithoutRepostOfInput = {
+    where: PostScalarWhereInput
+    data: XOR<PostUpdateManyMutationInput, PostUncheckedUpdateManyWithoutRepostOfInput>
+  }
+
   export type CommentUpsertWithWhereUniqueWithoutPostInput = {
     where: CommentWhereUniqueInput
     update: XOR<CommentUpdateWithoutPostInput, CommentUncheckedUpdateWithoutPostInput>
@@ -68859,6 +71546,390 @@ export namespace Prisma {
     hashtagId?: StringFilter<"PostHashtag"> | string
   }
 
+  export type CommunityNoteUpsertWithWhereUniqueWithoutPostInput = {
+    where: CommunityNoteWhereUniqueInput
+    update: XOR<CommunityNoteUpdateWithoutPostInput, CommunityNoteUncheckedUpdateWithoutPostInput>
+    create: XOR<CommunityNoteCreateWithoutPostInput, CommunityNoteUncheckedCreateWithoutPostInput>
+  }
+
+  export type CommunityNoteUpdateWithWhereUniqueWithoutPostInput = {
+    where: CommunityNoteWhereUniqueInput
+    data: XOR<CommunityNoteUpdateWithoutPostInput, CommunityNoteUncheckedUpdateWithoutPostInput>
+  }
+
+  export type CommunityNoteUpdateManyWithWhereWithoutPostInput = {
+    where: CommunityNoteScalarWhereInput
+    data: XOR<CommunityNoteUpdateManyMutationInput, CommunityNoteUncheckedUpdateManyWithoutPostInput>
+  }
+
+  export type PostCreateWithoutCommunityNotesInput = {
+    id?: string
+    type?: $Enums.PostType
+    content?: string | null
+    mediaUrls?: PostCreatemediaUrlsInput | string[]
+    linkUrl?: string | null
+    linkMeta?: NullableJsonNullValueInput | InputJsonValue
+    visibility?: $Enums.Visibility
+    isPinned?: boolean
+    isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    quoteText?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    author: UserCreateNestedOneWithoutPostsInput
+    space?: SpaceCreateNestedOneWithoutPostsInput
+    page?: PageCreateNestedOneWithoutPostsInput
+    threadParent?: PostCreateNestedOneWithoutThreadRepliesInput
+    threadReplies?: PostCreateNestedManyWithoutThreadParentInput
+    repostOf?: PostCreateNestedOneWithoutRepostsInput
+    reposts?: PostCreateNestedManyWithoutRepostOfInput
+    comments?: CommentCreateNestedManyWithoutPostInput
+    reactions?: ReactionCreateNestedManyWithoutPostInput
+    saves?: SaveCreateNestedManyWithoutPostInput
+    shares?: ShareCreateNestedManyWithoutPostInput
+    hashtags?: PostHashtagCreateNestedManyWithoutPostInput
+  }
+
+  export type PostUncheckedCreateWithoutCommunityNotesInput = {
+    id?: string
+    authorId: string
+    type?: $Enums.PostType
+    content?: string | null
+    mediaUrls?: PostCreatemediaUrlsInput | string[]
+    linkUrl?: string | null
+    linkMeta?: NullableJsonNullValueInput | InputJsonValue
+    visibility?: $Enums.Visibility
+    spaceId?: string | null
+    pageId?: string | null
+    isPinned?: boolean
+    isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    threadParentId?: string | null
+    repostOfId?: string | null
+    quoteText?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    threadReplies?: PostUncheckedCreateNestedManyWithoutThreadParentInput
+    reposts?: PostUncheckedCreateNestedManyWithoutRepostOfInput
+    comments?: CommentUncheckedCreateNestedManyWithoutPostInput
+    reactions?: ReactionUncheckedCreateNestedManyWithoutPostInput
+    saves?: SaveUncheckedCreateNestedManyWithoutPostInput
+    shares?: ShareUncheckedCreateNestedManyWithoutPostInput
+    hashtags?: PostHashtagUncheckedCreateNestedManyWithoutPostInput
+  }
+
+  export type PostCreateOrConnectWithoutCommunityNotesInput = {
+    where: PostWhereUniqueInput
+    create: XOR<PostCreateWithoutCommunityNotesInput, PostUncheckedCreateWithoutCommunityNotesInput>
+  }
+
+  export type UserCreateWithoutCommunityNotesInput = {
+    id?: string
+    email: string
+    emailVerified?: Date | string | null
+    phone?: string | null
+    phoneVerified?: boolean
+    passwordHash?: string | null
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    role?: $Enums.UserRole
+    status?: $Enums.UserStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    profile?: ProfileCreateNestedOneWithoutUserInput
+    personas?: PersonaCreateNestedManyWithoutUserInput
+    sessions?: SessionCreateNestedManyWithoutUserInput
+    accounts?: AccountCreateNestedManyWithoutUserInput
+    posts?: PostCreateNestedManyWithoutAuthorInput
+    comments?: CommentCreateNestedManyWithoutAuthorInput
+    reactions?: ReactionCreateNestedManyWithoutUserInput
+    saves?: SaveCreateNestedManyWithoutUserInput
+    shares?: ShareCreateNestedManyWithoutUserInput
+    sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
+    receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
+    following?: FollowCreateNestedManyWithoutFollowerInput
+    followers?: FollowCreateNestedManyWithoutFollowingInput
+    blocking?: BlockCreateNestedManyWithoutBlockerInput
+    blockedBy?: BlockCreateNestedManyWithoutBlockedInput
+    muting?: MuteCreateNestedManyWithoutMuterInput
+    conversationParticipants?: ConversationParticipantCreateNestedManyWithoutUserInput
+    sentMessages?: MessageCreateNestedManyWithoutSenderInput
+    messageReactions?: MessageReactionCreateNestedManyWithoutUserInput
+    media?: MediaCreateNestedManyWithoutOwnerInput
+    videos?: VideoCreateNestedManyWithoutAuthorInput
+    spaceMemberships?: SpaceMemberCreateNestedManyWithoutUserInput
+    ownedSpaces?: SpaceCreateNestedManyWithoutOwnerInput
+    listings?: ListingCreateNestedManyWithoutSellerInput
+    buyerOrders?: OrderCreateNestedManyWithoutBuyerInput
+    sellerOrders?: OrderCreateNestedManyWithoutSellerInput
+    sellerReviews?: SellerReviewCreateNestedManyWithoutSellerInput
+    buyerReviews?: SellerReviewCreateNestedManyWithoutBuyerInput
+    createdEvents?: EventCreateNestedManyWithoutCreatorInput
+    eventRsvps?: EventRsvpCreateNestedManyWithoutUserInput
+    notifications?: NotificationCreateNestedManyWithoutUserInput
+    alertSubscriptions?: AlertSubscriptionCreateNestedManyWithoutUserInput
+    reputation?: ReputationCreateNestedOneWithoutUserInput
+    badges?: BadgeCreateNestedManyWithoutUserInput
+    ownedPages?: PageCreateNestedManyWithoutOwnerInput
+    pageFollows?: PageFollowCreateNestedManyWithoutUserInput
+    stories?: StoryCreateNestedManyWithoutAuthorInput
+    storyViews?: StoryViewCreateNestedManyWithoutViewerInput
+  }
+
+  export type UserUncheckedCreateWithoutCommunityNotesInput = {
+    id?: string
+    email: string
+    emailVerified?: Date | string | null
+    phone?: string | null
+    phoneVerified?: boolean
+    passwordHash?: string | null
+    mfaEnabled?: boolean
+    mfaSecret?: string | null
+    role?: $Enums.UserRole
+    status?: $Enums.UserStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    profile?: ProfileUncheckedCreateNestedOneWithoutUserInput
+    personas?: PersonaUncheckedCreateNestedManyWithoutUserInput
+    sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
+    posts?: PostUncheckedCreateNestedManyWithoutAuthorInput
+    comments?: CommentUncheckedCreateNestedManyWithoutAuthorInput
+    reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
+    saves?: SaveUncheckedCreateNestedManyWithoutUserInput
+    shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
+    receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
+    following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
+    followers?: FollowUncheckedCreateNestedManyWithoutFollowingInput
+    blocking?: BlockUncheckedCreateNestedManyWithoutBlockerInput
+    blockedBy?: BlockUncheckedCreateNestedManyWithoutBlockedInput
+    muting?: MuteUncheckedCreateNestedManyWithoutMuterInput
+    conversationParticipants?: ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
+    sentMessages?: MessageUncheckedCreateNestedManyWithoutSenderInput
+    messageReactions?: MessageReactionUncheckedCreateNestedManyWithoutUserInput
+    media?: MediaUncheckedCreateNestedManyWithoutOwnerInput
+    videos?: VideoUncheckedCreateNestedManyWithoutAuthorInput
+    spaceMemberships?: SpaceMemberUncheckedCreateNestedManyWithoutUserInput
+    ownedSpaces?: SpaceUncheckedCreateNestedManyWithoutOwnerInput
+    listings?: ListingUncheckedCreateNestedManyWithoutSellerInput
+    buyerOrders?: OrderUncheckedCreateNestedManyWithoutBuyerInput
+    sellerOrders?: OrderUncheckedCreateNestedManyWithoutSellerInput
+    sellerReviews?: SellerReviewUncheckedCreateNestedManyWithoutSellerInput
+    buyerReviews?: SellerReviewUncheckedCreateNestedManyWithoutBuyerInput
+    createdEvents?: EventUncheckedCreateNestedManyWithoutCreatorInput
+    eventRsvps?: EventRsvpUncheckedCreateNestedManyWithoutUserInput
+    notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
+    alertSubscriptions?: AlertSubscriptionUncheckedCreateNestedManyWithoutUserInput
+    reputation?: ReputationUncheckedCreateNestedOneWithoutUserInput
+    badges?: BadgeUncheckedCreateNestedManyWithoutUserInput
+    ownedPages?: PageUncheckedCreateNestedManyWithoutOwnerInput
+    pageFollows?: PageFollowUncheckedCreateNestedManyWithoutUserInput
+    stories?: StoryUncheckedCreateNestedManyWithoutAuthorInput
+    storyViews?: StoryViewUncheckedCreateNestedManyWithoutViewerInput
+  }
+
+  export type UserCreateOrConnectWithoutCommunityNotesInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutCommunityNotesInput, UserUncheckedCreateWithoutCommunityNotesInput>
+  }
+
+  export type PostUpsertWithoutCommunityNotesInput = {
+    update: XOR<PostUpdateWithoutCommunityNotesInput, PostUncheckedUpdateWithoutCommunityNotesInput>
+    create: XOR<PostCreateWithoutCommunityNotesInput, PostUncheckedCreateWithoutCommunityNotesInput>
+    where?: PostWhereInput
+  }
+
+  export type PostUpdateToOneWithWhereWithoutCommunityNotesInput = {
+    where?: PostWhereInput
+    data: XOR<PostUpdateWithoutCommunityNotesInput, PostUncheckedUpdateWithoutCommunityNotesInput>
+  }
+
+  export type PostUpdateWithoutCommunityNotesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: EnumPostTypeFieldUpdateOperationsInput | $Enums.PostType
+    content?: NullableStringFieldUpdateOperationsInput | string | null
+    mediaUrls?: PostUpdatemediaUrlsInput | string[]
+    linkUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    linkMeta?: NullableJsonNullValueInput | InputJsonValue
+    visibility?: EnumVisibilityFieldUpdateOperationsInput | $Enums.Visibility
+    isPinned?: BoolFieldUpdateOperationsInput | boolean
+    isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    author?: UserUpdateOneRequiredWithoutPostsNestedInput
+    space?: SpaceUpdateOneWithoutPostsNestedInput
+    page?: PageUpdateOneWithoutPostsNestedInput
+    threadParent?: PostUpdateOneWithoutThreadRepliesNestedInput
+    threadReplies?: PostUpdateManyWithoutThreadParentNestedInput
+    repostOf?: PostUpdateOneWithoutRepostsNestedInput
+    reposts?: PostUpdateManyWithoutRepostOfNestedInput
+    comments?: CommentUpdateManyWithoutPostNestedInput
+    reactions?: ReactionUpdateManyWithoutPostNestedInput
+    saves?: SaveUpdateManyWithoutPostNestedInput
+    shares?: ShareUpdateManyWithoutPostNestedInput
+    hashtags?: PostHashtagUpdateManyWithoutPostNestedInput
+  }
+
+  export type PostUncheckedUpdateWithoutCommunityNotesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    authorId?: StringFieldUpdateOperationsInput | string
+    type?: EnumPostTypeFieldUpdateOperationsInput | $Enums.PostType
+    content?: NullableStringFieldUpdateOperationsInput | string | null
+    mediaUrls?: PostUpdatemediaUrlsInput | string[]
+    linkUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    linkMeta?: NullableJsonNullValueInput | InputJsonValue
+    visibility?: EnumVisibilityFieldUpdateOperationsInput | $Enums.Visibility
+    spaceId?: NullableStringFieldUpdateOperationsInput | string | null
+    pageId?: NullableStringFieldUpdateOperationsInput | string | null
+    isPinned?: BoolFieldUpdateOperationsInput | boolean
+    isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    threadParentId?: NullableStringFieldUpdateOperationsInput | string | null
+    repostOfId?: NullableStringFieldUpdateOperationsInput | string | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    threadReplies?: PostUncheckedUpdateManyWithoutThreadParentNestedInput
+    reposts?: PostUncheckedUpdateManyWithoutRepostOfNestedInput
+    comments?: CommentUncheckedUpdateManyWithoutPostNestedInput
+    reactions?: ReactionUncheckedUpdateManyWithoutPostNestedInput
+    saves?: SaveUncheckedUpdateManyWithoutPostNestedInput
+    shares?: ShareUncheckedUpdateManyWithoutPostNestedInput
+    hashtags?: PostHashtagUncheckedUpdateManyWithoutPostNestedInput
+  }
+
+  export type UserUpsertWithoutCommunityNotesInput = {
+    update: XOR<UserUpdateWithoutCommunityNotesInput, UserUncheckedUpdateWithoutCommunityNotesInput>
+    create: XOR<UserCreateWithoutCommunityNotesInput, UserUncheckedCreateWithoutCommunityNotesInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutCommunityNotesInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutCommunityNotesInput, UserUncheckedUpdateWithoutCommunityNotesInput>
+  }
+
+  export type UserUpdateWithoutCommunityNotesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneVerified?: BoolFieldUpdateOperationsInput | boolean
+    passwordHash?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    profile?: ProfileUpdateOneWithoutUserNestedInput
+    personas?: PersonaUpdateManyWithoutUserNestedInput
+    sessions?: SessionUpdateManyWithoutUserNestedInput
+    accounts?: AccountUpdateManyWithoutUserNestedInput
+    posts?: PostUpdateManyWithoutAuthorNestedInput
+    comments?: CommentUpdateManyWithoutAuthorNestedInput
+    reactions?: ReactionUpdateManyWithoutUserNestedInput
+    saves?: SaveUpdateManyWithoutUserNestedInput
+    shares?: ShareUpdateManyWithoutUserNestedInput
+    sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
+    receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
+    following?: FollowUpdateManyWithoutFollowerNestedInput
+    followers?: FollowUpdateManyWithoutFollowingNestedInput
+    blocking?: BlockUpdateManyWithoutBlockerNestedInput
+    blockedBy?: BlockUpdateManyWithoutBlockedNestedInput
+    muting?: MuteUpdateManyWithoutMuterNestedInput
+    conversationParticipants?: ConversationParticipantUpdateManyWithoutUserNestedInput
+    sentMessages?: MessageUpdateManyWithoutSenderNestedInput
+    messageReactions?: MessageReactionUpdateManyWithoutUserNestedInput
+    media?: MediaUpdateManyWithoutOwnerNestedInput
+    videos?: VideoUpdateManyWithoutAuthorNestedInput
+    spaceMemberships?: SpaceMemberUpdateManyWithoutUserNestedInput
+    ownedSpaces?: SpaceUpdateManyWithoutOwnerNestedInput
+    listings?: ListingUpdateManyWithoutSellerNestedInput
+    buyerOrders?: OrderUpdateManyWithoutBuyerNestedInput
+    sellerOrders?: OrderUpdateManyWithoutSellerNestedInput
+    sellerReviews?: SellerReviewUpdateManyWithoutSellerNestedInput
+    buyerReviews?: SellerReviewUpdateManyWithoutBuyerNestedInput
+    createdEvents?: EventUpdateManyWithoutCreatorNestedInput
+    eventRsvps?: EventRsvpUpdateManyWithoutUserNestedInput
+    notifications?: NotificationUpdateManyWithoutUserNestedInput
+    alertSubscriptions?: AlertSubscriptionUpdateManyWithoutUserNestedInput
+    reputation?: ReputationUpdateOneWithoutUserNestedInput
+    badges?: BadgeUpdateManyWithoutUserNestedInput
+    ownedPages?: PageUpdateManyWithoutOwnerNestedInput
+    pageFollows?: PageFollowUpdateManyWithoutUserNestedInput
+    stories?: StoryUpdateManyWithoutAuthorNestedInput
+    storyViews?: StoryViewUpdateManyWithoutViewerNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutCommunityNotesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneVerified?: BoolFieldUpdateOperationsInput | boolean
+    passwordHash?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaEnabled?: BoolFieldUpdateOperationsInput | boolean
+    mfaSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    profile?: ProfileUncheckedUpdateOneWithoutUserNestedInput
+    personas?: PersonaUncheckedUpdateManyWithoutUserNestedInput
+    sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
+    posts?: PostUncheckedUpdateManyWithoutAuthorNestedInput
+    comments?: CommentUncheckedUpdateManyWithoutAuthorNestedInput
+    reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
+    saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
+    shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
+    receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
+    following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
+    followers?: FollowUncheckedUpdateManyWithoutFollowingNestedInput
+    blocking?: BlockUncheckedUpdateManyWithoutBlockerNestedInput
+    blockedBy?: BlockUncheckedUpdateManyWithoutBlockedNestedInput
+    muting?: MuteUncheckedUpdateManyWithoutMuterNestedInput
+    conversationParticipants?: ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
+    sentMessages?: MessageUncheckedUpdateManyWithoutSenderNestedInput
+    messageReactions?: MessageReactionUncheckedUpdateManyWithoutUserNestedInput
+    media?: MediaUncheckedUpdateManyWithoutOwnerNestedInput
+    videos?: VideoUncheckedUpdateManyWithoutAuthorNestedInput
+    spaceMemberships?: SpaceMemberUncheckedUpdateManyWithoutUserNestedInput
+    ownedSpaces?: SpaceUncheckedUpdateManyWithoutOwnerNestedInput
+    listings?: ListingUncheckedUpdateManyWithoutSellerNestedInput
+    buyerOrders?: OrderUncheckedUpdateManyWithoutBuyerNestedInput
+    sellerOrders?: OrderUncheckedUpdateManyWithoutSellerNestedInput
+    sellerReviews?: SellerReviewUncheckedUpdateManyWithoutSellerNestedInput
+    buyerReviews?: SellerReviewUncheckedUpdateManyWithoutBuyerNestedInput
+    createdEvents?: EventUncheckedUpdateManyWithoutCreatorNestedInput
+    eventRsvps?: EventRsvpUncheckedUpdateManyWithoutUserNestedInput
+    notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
+    alertSubscriptions?: AlertSubscriptionUncheckedUpdateManyWithoutUserNestedInput
+    reputation?: ReputationUncheckedUpdateOneWithoutUserNestedInput
+    badges?: BadgeUncheckedUpdateManyWithoutUserNestedInput
+    ownedPages?: PageUncheckedUpdateManyWithoutOwnerNestedInput
+    pageFollows?: PageFollowUncheckedUpdateManyWithoutUserNestedInput
+    stories?: StoryUncheckedUpdateManyWithoutAuthorNestedInput
+    storyViews?: StoryViewUncheckedUpdateManyWithoutViewerNestedInput
+  }
+
   export type PostCreateWithoutCommentsInput = {
     id?: string
     type?: $Enums.PostType
@@ -68869,16 +71940,25 @@ export namespace Prisma {
     visibility?: $Enums.Visibility
     isPinned?: boolean
     isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    quoteText?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
     author: UserCreateNestedOneWithoutPostsInput
     space?: SpaceCreateNestedOneWithoutPostsInput
     page?: PageCreateNestedOneWithoutPostsInput
+    threadParent?: PostCreateNestedOneWithoutThreadRepliesInput
+    threadReplies?: PostCreateNestedManyWithoutThreadParentInput
+    repostOf?: PostCreateNestedOneWithoutRepostsInput
+    reposts?: PostCreateNestedManyWithoutRepostOfInput
     reactions?: ReactionCreateNestedManyWithoutPostInput
     saves?: SaveCreateNestedManyWithoutPostInput
     shares?: ShareCreateNestedManyWithoutPostInput
     hashtags?: PostHashtagCreateNestedManyWithoutPostInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutPostInput
   }
 
   export type PostUncheckedCreateWithoutCommentsInput = {
@@ -68894,13 +71974,22 @@ export namespace Prisma {
     pageId?: string | null
     isPinned?: boolean
     isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    threadParentId?: string | null
+    repostOfId?: string | null
+    quoteText?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
+    threadReplies?: PostUncheckedCreateNestedManyWithoutThreadParentInput
+    reposts?: PostUncheckedCreateNestedManyWithoutRepostOfInput
     reactions?: ReactionUncheckedCreateNestedManyWithoutPostInput
     saves?: SaveUncheckedCreateNestedManyWithoutPostInput
     shares?: ShareUncheckedCreateNestedManyWithoutPostInput
     hashtags?: PostHashtagUncheckedCreateNestedManyWithoutPostInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutPostInput
   }
 
   export type PostCreateOrConnectWithoutCommentsInput = {
@@ -68929,6 +72018,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -68981,6 +72071,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -69131,16 +72222,25 @@ export namespace Prisma {
     visibility?: EnumVisibilityFieldUpdateOperationsInput | $Enums.Visibility
     isPinned?: BoolFieldUpdateOperationsInput | boolean
     isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     author?: UserUpdateOneRequiredWithoutPostsNestedInput
     space?: SpaceUpdateOneWithoutPostsNestedInput
     page?: PageUpdateOneWithoutPostsNestedInput
+    threadParent?: PostUpdateOneWithoutThreadRepliesNestedInput
+    threadReplies?: PostUpdateManyWithoutThreadParentNestedInput
+    repostOf?: PostUpdateOneWithoutRepostsNestedInput
+    reposts?: PostUpdateManyWithoutRepostOfNestedInput
     reactions?: ReactionUpdateManyWithoutPostNestedInput
     saves?: SaveUpdateManyWithoutPostNestedInput
     shares?: ShareUpdateManyWithoutPostNestedInput
     hashtags?: PostHashtagUpdateManyWithoutPostNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutPostNestedInput
   }
 
   export type PostUncheckedUpdateWithoutCommentsInput = {
@@ -69156,13 +72256,22 @@ export namespace Prisma {
     pageId?: NullableStringFieldUpdateOperationsInput | string | null
     isPinned?: BoolFieldUpdateOperationsInput | boolean
     isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    threadParentId?: NullableStringFieldUpdateOperationsInput | string | null
+    repostOfId?: NullableStringFieldUpdateOperationsInput | string | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    threadReplies?: PostUncheckedUpdateManyWithoutThreadParentNestedInput
+    reposts?: PostUncheckedUpdateManyWithoutRepostOfNestedInput
     reactions?: ReactionUncheckedUpdateManyWithoutPostNestedInput
     saves?: SaveUncheckedUpdateManyWithoutPostNestedInput
     shares?: ShareUncheckedUpdateManyWithoutPostNestedInput
     hashtags?: PostHashtagUncheckedUpdateManyWithoutPostNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutPostNestedInput
   }
 
   export type UserUpsertWithoutCommentsInput = {
@@ -69197,6 +72306,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -69249,6 +72359,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -69370,6 +72481,7 @@ export namespace Prisma {
     comments?: CommentCreateNestedManyWithoutAuthorInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -69422,6 +72534,7 @@ export namespace Prisma {
     comments?: CommentUncheckedCreateNestedManyWithoutAuthorInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -69468,16 +72581,25 @@ export namespace Prisma {
     visibility?: $Enums.Visibility
     isPinned?: boolean
     isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    quoteText?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
     author: UserCreateNestedOneWithoutPostsInput
     space?: SpaceCreateNestedOneWithoutPostsInput
     page?: PageCreateNestedOneWithoutPostsInput
+    threadParent?: PostCreateNestedOneWithoutThreadRepliesInput
+    threadReplies?: PostCreateNestedManyWithoutThreadParentInput
+    repostOf?: PostCreateNestedOneWithoutRepostsInput
+    reposts?: PostCreateNestedManyWithoutRepostOfInput
     comments?: CommentCreateNestedManyWithoutPostInput
     saves?: SaveCreateNestedManyWithoutPostInput
     shares?: ShareCreateNestedManyWithoutPostInput
     hashtags?: PostHashtagCreateNestedManyWithoutPostInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutPostInput
   }
 
   export type PostUncheckedCreateWithoutReactionsInput = {
@@ -69493,13 +72615,22 @@ export namespace Prisma {
     pageId?: string | null
     isPinned?: boolean
     isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    threadParentId?: string | null
+    repostOfId?: string | null
+    quoteText?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
+    threadReplies?: PostUncheckedCreateNestedManyWithoutThreadParentInput
+    reposts?: PostUncheckedCreateNestedManyWithoutRepostOfInput
     comments?: CommentUncheckedCreateNestedManyWithoutPostInput
     saves?: SaveUncheckedCreateNestedManyWithoutPostInput
     shares?: ShareUncheckedCreateNestedManyWithoutPostInput
     hashtags?: PostHashtagUncheckedCreateNestedManyWithoutPostInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutPostInput
   }
 
   export type PostCreateOrConnectWithoutReactionsInput = {
@@ -69570,6 +72701,7 @@ export namespace Prisma {
     comments?: CommentUpdateManyWithoutAuthorNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -69622,6 +72754,7 @@ export namespace Prisma {
     comments?: CommentUncheckedUpdateManyWithoutAuthorNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -69674,16 +72807,25 @@ export namespace Prisma {
     visibility?: EnumVisibilityFieldUpdateOperationsInput | $Enums.Visibility
     isPinned?: BoolFieldUpdateOperationsInput | boolean
     isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     author?: UserUpdateOneRequiredWithoutPostsNestedInput
     space?: SpaceUpdateOneWithoutPostsNestedInput
     page?: PageUpdateOneWithoutPostsNestedInput
+    threadParent?: PostUpdateOneWithoutThreadRepliesNestedInput
+    threadReplies?: PostUpdateManyWithoutThreadParentNestedInput
+    repostOf?: PostUpdateOneWithoutRepostsNestedInput
+    reposts?: PostUpdateManyWithoutRepostOfNestedInput
     comments?: CommentUpdateManyWithoutPostNestedInput
     saves?: SaveUpdateManyWithoutPostNestedInput
     shares?: ShareUpdateManyWithoutPostNestedInput
     hashtags?: PostHashtagUpdateManyWithoutPostNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutPostNestedInput
   }
 
   export type PostUncheckedUpdateWithoutReactionsInput = {
@@ -69699,13 +72841,22 @@ export namespace Prisma {
     pageId?: NullableStringFieldUpdateOperationsInput | string | null
     isPinned?: BoolFieldUpdateOperationsInput | boolean
     isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    threadParentId?: NullableStringFieldUpdateOperationsInput | string | null
+    repostOfId?: NullableStringFieldUpdateOperationsInput | string | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    threadReplies?: PostUncheckedUpdateManyWithoutThreadParentNestedInput
+    reposts?: PostUncheckedUpdateManyWithoutRepostOfNestedInput
     comments?: CommentUncheckedUpdateManyWithoutPostNestedInput
     saves?: SaveUncheckedUpdateManyWithoutPostNestedInput
     shares?: ShareUncheckedUpdateManyWithoutPostNestedInput
     hashtags?: PostHashtagUncheckedUpdateManyWithoutPostNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutPostNestedInput
   }
 
   export type CommentUpsertWithoutReactionsInput = {
@@ -69766,6 +72917,7 @@ export namespace Prisma {
     comments?: CommentCreateNestedManyWithoutAuthorInput
     reactions?: ReactionCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -69818,6 +72970,7 @@ export namespace Prisma {
     comments?: CommentUncheckedCreateNestedManyWithoutAuthorInput
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -69864,16 +73017,25 @@ export namespace Prisma {
     visibility?: $Enums.Visibility
     isPinned?: boolean
     isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    quoteText?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
     author: UserCreateNestedOneWithoutPostsInput
     space?: SpaceCreateNestedOneWithoutPostsInput
     page?: PageCreateNestedOneWithoutPostsInput
+    threadParent?: PostCreateNestedOneWithoutThreadRepliesInput
+    threadReplies?: PostCreateNestedManyWithoutThreadParentInput
+    repostOf?: PostCreateNestedOneWithoutRepostsInput
+    reposts?: PostCreateNestedManyWithoutRepostOfInput
     comments?: CommentCreateNestedManyWithoutPostInput
     reactions?: ReactionCreateNestedManyWithoutPostInput
     shares?: ShareCreateNestedManyWithoutPostInput
     hashtags?: PostHashtagCreateNestedManyWithoutPostInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutPostInput
   }
 
   export type PostUncheckedCreateWithoutSavesInput = {
@@ -69889,13 +73051,22 @@ export namespace Prisma {
     pageId?: string | null
     isPinned?: boolean
     isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    threadParentId?: string | null
+    repostOfId?: string | null
+    quoteText?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
+    threadReplies?: PostUncheckedCreateNestedManyWithoutThreadParentInput
+    reposts?: PostUncheckedCreateNestedManyWithoutRepostOfInput
     comments?: CommentUncheckedCreateNestedManyWithoutPostInput
     reactions?: ReactionUncheckedCreateNestedManyWithoutPostInput
     shares?: ShareUncheckedCreateNestedManyWithoutPostInput
     hashtags?: PostHashtagUncheckedCreateNestedManyWithoutPostInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutPostInput
   }
 
   export type PostCreateOrConnectWithoutSavesInput = {
@@ -69935,6 +73106,7 @@ export namespace Prisma {
     comments?: CommentUpdateManyWithoutAuthorNestedInput
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -69987,6 +73159,7 @@ export namespace Prisma {
     comments?: CommentUncheckedUpdateManyWithoutAuthorNestedInput
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -70039,16 +73212,25 @@ export namespace Prisma {
     visibility?: EnumVisibilityFieldUpdateOperationsInput | $Enums.Visibility
     isPinned?: BoolFieldUpdateOperationsInput | boolean
     isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     author?: UserUpdateOneRequiredWithoutPostsNestedInput
     space?: SpaceUpdateOneWithoutPostsNestedInput
     page?: PageUpdateOneWithoutPostsNestedInput
+    threadParent?: PostUpdateOneWithoutThreadRepliesNestedInput
+    threadReplies?: PostUpdateManyWithoutThreadParentNestedInput
+    repostOf?: PostUpdateOneWithoutRepostsNestedInput
+    reposts?: PostUpdateManyWithoutRepostOfNestedInput
     comments?: CommentUpdateManyWithoutPostNestedInput
     reactions?: ReactionUpdateManyWithoutPostNestedInput
     shares?: ShareUpdateManyWithoutPostNestedInput
     hashtags?: PostHashtagUpdateManyWithoutPostNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutPostNestedInput
   }
 
   export type PostUncheckedUpdateWithoutSavesInput = {
@@ -70064,13 +73246,22 @@ export namespace Prisma {
     pageId?: NullableStringFieldUpdateOperationsInput | string | null
     isPinned?: BoolFieldUpdateOperationsInput | boolean
     isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    threadParentId?: NullableStringFieldUpdateOperationsInput | string | null
+    repostOfId?: NullableStringFieldUpdateOperationsInput | string | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    threadReplies?: PostUncheckedUpdateManyWithoutThreadParentNestedInput
+    reposts?: PostUncheckedUpdateManyWithoutRepostOfNestedInput
     comments?: CommentUncheckedUpdateManyWithoutPostNestedInput
     reactions?: ReactionUncheckedUpdateManyWithoutPostNestedInput
     shares?: ShareUncheckedUpdateManyWithoutPostNestedInput
     hashtags?: PostHashtagUncheckedUpdateManyWithoutPostNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutPostNestedInput
   }
 
   export type UserCreateWithoutSharesInput = {
@@ -70094,6 +73285,7 @@ export namespace Prisma {
     comments?: CommentCreateNestedManyWithoutAuthorInput
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -70146,6 +73338,7 @@ export namespace Prisma {
     comments?: CommentUncheckedCreateNestedManyWithoutAuthorInput
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -70192,16 +73385,25 @@ export namespace Prisma {
     visibility?: $Enums.Visibility
     isPinned?: boolean
     isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    quoteText?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
     author: UserCreateNestedOneWithoutPostsInput
     space?: SpaceCreateNestedOneWithoutPostsInput
     page?: PageCreateNestedOneWithoutPostsInput
+    threadParent?: PostCreateNestedOneWithoutThreadRepliesInput
+    threadReplies?: PostCreateNestedManyWithoutThreadParentInput
+    repostOf?: PostCreateNestedOneWithoutRepostsInput
+    reposts?: PostCreateNestedManyWithoutRepostOfInput
     comments?: CommentCreateNestedManyWithoutPostInput
     reactions?: ReactionCreateNestedManyWithoutPostInput
     saves?: SaveCreateNestedManyWithoutPostInput
     hashtags?: PostHashtagCreateNestedManyWithoutPostInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutPostInput
   }
 
   export type PostUncheckedCreateWithoutSharesInput = {
@@ -70217,13 +73419,22 @@ export namespace Prisma {
     pageId?: string | null
     isPinned?: boolean
     isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    threadParentId?: string | null
+    repostOfId?: string | null
+    quoteText?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
+    threadReplies?: PostUncheckedCreateNestedManyWithoutThreadParentInput
+    reposts?: PostUncheckedCreateNestedManyWithoutRepostOfInput
     comments?: CommentUncheckedCreateNestedManyWithoutPostInput
     reactions?: ReactionUncheckedCreateNestedManyWithoutPostInput
     saves?: SaveUncheckedCreateNestedManyWithoutPostInput
     hashtags?: PostHashtagUncheckedCreateNestedManyWithoutPostInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutPostInput
   }
 
   export type PostCreateOrConnectWithoutSharesInput = {
@@ -70263,6 +73474,7 @@ export namespace Prisma {
     comments?: CommentUpdateManyWithoutAuthorNestedInput
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -70315,6 +73527,7 @@ export namespace Prisma {
     comments?: CommentUncheckedUpdateManyWithoutAuthorNestedInput
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -70367,16 +73580,25 @@ export namespace Prisma {
     visibility?: EnumVisibilityFieldUpdateOperationsInput | $Enums.Visibility
     isPinned?: BoolFieldUpdateOperationsInput | boolean
     isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     author?: UserUpdateOneRequiredWithoutPostsNestedInput
     space?: SpaceUpdateOneWithoutPostsNestedInput
     page?: PageUpdateOneWithoutPostsNestedInput
+    threadParent?: PostUpdateOneWithoutThreadRepliesNestedInput
+    threadReplies?: PostUpdateManyWithoutThreadParentNestedInput
+    repostOf?: PostUpdateOneWithoutRepostsNestedInput
+    reposts?: PostUpdateManyWithoutRepostOfNestedInput
     comments?: CommentUpdateManyWithoutPostNestedInput
     reactions?: ReactionUpdateManyWithoutPostNestedInput
     saves?: SaveUpdateManyWithoutPostNestedInput
     hashtags?: PostHashtagUpdateManyWithoutPostNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutPostNestedInput
   }
 
   export type PostUncheckedUpdateWithoutSharesInput = {
@@ -70392,13 +73614,22 @@ export namespace Prisma {
     pageId?: NullableStringFieldUpdateOperationsInput | string | null
     isPinned?: BoolFieldUpdateOperationsInput | boolean
     isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    threadParentId?: NullableStringFieldUpdateOperationsInput | string | null
+    repostOfId?: NullableStringFieldUpdateOperationsInput | string | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    threadReplies?: PostUncheckedUpdateManyWithoutThreadParentNestedInput
+    reposts?: PostUncheckedUpdateManyWithoutRepostOfNestedInput
     comments?: CommentUncheckedUpdateManyWithoutPostNestedInput
     reactions?: ReactionUncheckedUpdateManyWithoutPostNestedInput
     saves?: SaveUncheckedUpdateManyWithoutPostNestedInput
     hashtags?: PostHashtagUncheckedUpdateManyWithoutPostNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutPostNestedInput
   }
 
   export type PostHashtagCreateWithoutHashtagInput = {
@@ -70445,16 +73676,25 @@ export namespace Prisma {
     visibility?: $Enums.Visibility
     isPinned?: boolean
     isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    quoteText?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
     author: UserCreateNestedOneWithoutPostsInput
     space?: SpaceCreateNestedOneWithoutPostsInput
     page?: PageCreateNestedOneWithoutPostsInput
+    threadParent?: PostCreateNestedOneWithoutThreadRepliesInput
+    threadReplies?: PostCreateNestedManyWithoutThreadParentInput
+    repostOf?: PostCreateNestedOneWithoutRepostsInput
+    reposts?: PostCreateNestedManyWithoutRepostOfInput
     comments?: CommentCreateNestedManyWithoutPostInput
     reactions?: ReactionCreateNestedManyWithoutPostInput
     saves?: SaveCreateNestedManyWithoutPostInput
     shares?: ShareCreateNestedManyWithoutPostInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutPostInput
   }
 
   export type PostUncheckedCreateWithoutHashtagsInput = {
@@ -70470,13 +73710,22 @@ export namespace Prisma {
     pageId?: string | null
     isPinned?: boolean
     isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    threadParentId?: string | null
+    repostOfId?: string | null
+    quoteText?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
+    threadReplies?: PostUncheckedCreateNestedManyWithoutThreadParentInput
+    reposts?: PostUncheckedCreateNestedManyWithoutRepostOfInput
     comments?: CommentUncheckedCreateNestedManyWithoutPostInput
     reactions?: ReactionUncheckedCreateNestedManyWithoutPostInput
     saves?: SaveUncheckedCreateNestedManyWithoutPostInput
     shares?: ShareUncheckedCreateNestedManyWithoutPostInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutPostInput
   }
 
   export type PostCreateOrConnectWithoutHashtagsInput = {
@@ -70522,16 +73771,25 @@ export namespace Prisma {
     visibility?: EnumVisibilityFieldUpdateOperationsInput | $Enums.Visibility
     isPinned?: BoolFieldUpdateOperationsInput | boolean
     isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     author?: UserUpdateOneRequiredWithoutPostsNestedInput
     space?: SpaceUpdateOneWithoutPostsNestedInput
     page?: PageUpdateOneWithoutPostsNestedInput
+    threadParent?: PostUpdateOneWithoutThreadRepliesNestedInput
+    threadReplies?: PostUpdateManyWithoutThreadParentNestedInput
+    repostOf?: PostUpdateOneWithoutRepostsNestedInput
+    reposts?: PostUpdateManyWithoutRepostOfNestedInput
     comments?: CommentUpdateManyWithoutPostNestedInput
     reactions?: ReactionUpdateManyWithoutPostNestedInput
     saves?: SaveUpdateManyWithoutPostNestedInput
     shares?: ShareUpdateManyWithoutPostNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutPostNestedInput
   }
 
   export type PostUncheckedUpdateWithoutHashtagsInput = {
@@ -70547,13 +73805,22 @@ export namespace Prisma {
     pageId?: NullableStringFieldUpdateOperationsInput | string | null
     isPinned?: BoolFieldUpdateOperationsInput | boolean
     isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    threadParentId?: NullableStringFieldUpdateOperationsInput | string | null
+    repostOfId?: NullableStringFieldUpdateOperationsInput | string | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    threadReplies?: PostUncheckedUpdateManyWithoutThreadParentNestedInput
+    reposts?: PostUncheckedUpdateManyWithoutRepostOfNestedInput
     comments?: CommentUncheckedUpdateManyWithoutPostNestedInput
     reactions?: ReactionUncheckedUpdateManyWithoutPostNestedInput
     saves?: SaveUncheckedUpdateManyWithoutPostNestedInput
     shares?: ShareUncheckedUpdateManyWithoutPostNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutPostNestedInput
   }
 
   export type HashtagUpsertWithoutPostsInput = {
@@ -70601,6 +73868,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -70653,6 +73921,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -70721,6 +73990,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -70773,6 +74043,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -70825,6 +74096,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -70877,6 +74149,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -70945,6 +74218,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -70997,6 +74271,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -71049,6 +74324,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -71101,6 +74377,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -71191,6 +74468,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -71243,6 +74521,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -71336,6 +74615,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -71388,6 +74668,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -71487,6 +74768,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -71539,6 +74821,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -71716,6 +74999,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -71768,6 +75052,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -71869,6 +75154,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -71921,6 +75207,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -72000,6 +75287,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -72052,6 +75340,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -72252,6 +75541,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -72304,6 +75594,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -72464,6 +75755,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -72516,6 +75808,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -72625,6 +75918,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -72677,6 +75971,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -72729,6 +76024,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -72781,6 +76077,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -72874,16 +76171,25 @@ export namespace Prisma {
     visibility?: $Enums.Visibility
     isPinned?: boolean
     isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    quoteText?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
     author: UserCreateNestedOneWithoutPostsInput
     page?: PageCreateNestedOneWithoutPostsInput
+    threadParent?: PostCreateNestedOneWithoutThreadRepliesInput
+    threadReplies?: PostCreateNestedManyWithoutThreadParentInput
+    repostOf?: PostCreateNestedOneWithoutRepostsInput
+    reposts?: PostCreateNestedManyWithoutRepostOfInput
     comments?: CommentCreateNestedManyWithoutPostInput
     reactions?: ReactionCreateNestedManyWithoutPostInput
     saves?: SaveCreateNestedManyWithoutPostInput
     shares?: ShareCreateNestedManyWithoutPostInput
     hashtags?: PostHashtagCreateNestedManyWithoutPostInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutPostInput
   }
 
   export type PostUncheckedCreateWithoutSpaceInput = {
@@ -72898,14 +76204,23 @@ export namespace Prisma {
     pageId?: string | null
     isPinned?: boolean
     isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    threadParentId?: string | null
+    repostOfId?: string | null
+    quoteText?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
+    threadReplies?: PostUncheckedCreateNestedManyWithoutThreadParentInput
+    reposts?: PostUncheckedCreateNestedManyWithoutRepostOfInput
     comments?: CommentUncheckedCreateNestedManyWithoutPostInput
     reactions?: ReactionUncheckedCreateNestedManyWithoutPostInput
     saves?: SaveUncheckedCreateNestedManyWithoutPostInput
     shares?: ShareUncheckedCreateNestedManyWithoutPostInput
     hashtags?: PostHashtagUncheckedCreateNestedManyWithoutPostInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutPostInput
   }
 
   export type PostCreateOrConnectWithoutSpaceInput = {
@@ -72995,6 +76310,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -73047,6 +76363,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -73217,6 +76534,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -73269,6 +76587,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -73386,6 +76705,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -73438,6 +76758,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -73582,6 +76903,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -73634,6 +76956,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -73762,6 +77085,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -73814,6 +77138,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -73941,6 +77266,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -73993,6 +77319,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -74050,6 +77377,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -74102,6 +77430,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -74219,6 +77548,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -74271,6 +77601,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -74334,6 +77665,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -74386,6 +77718,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -74438,6 +77771,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -74490,6 +77824,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -74547,6 +77882,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -74599,6 +77935,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -74710,6 +78047,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -74762,6 +78100,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -74825,6 +78164,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -74877,6 +78217,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -74978,6 +78319,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -75030,6 +78372,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -75165,6 +78508,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -75217,6 +78561,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -75373,6 +78718,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -75425,6 +78771,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -75538,6 +78885,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -75590,6 +78938,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -75642,6 +78991,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -75694,6 +79044,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -75739,16 +79090,25 @@ export namespace Prisma {
     visibility?: $Enums.Visibility
     isPinned?: boolean
     isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    quoteText?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
     author: UserCreateNestedOneWithoutPostsInput
     space?: SpaceCreateNestedOneWithoutPostsInput
+    threadParent?: PostCreateNestedOneWithoutThreadRepliesInput
+    threadReplies?: PostCreateNestedManyWithoutThreadParentInput
+    repostOf?: PostCreateNestedOneWithoutRepostsInput
+    reposts?: PostCreateNestedManyWithoutRepostOfInput
     comments?: CommentCreateNestedManyWithoutPostInput
     reactions?: ReactionCreateNestedManyWithoutPostInput
     saves?: SaveCreateNestedManyWithoutPostInput
     shares?: ShareCreateNestedManyWithoutPostInput
     hashtags?: PostHashtagCreateNestedManyWithoutPostInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutPostInput
   }
 
   export type PostUncheckedCreateWithoutPageInput = {
@@ -75763,14 +79123,23 @@ export namespace Prisma {
     spaceId?: string | null
     isPinned?: boolean
     isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    threadParentId?: string | null
+    repostOfId?: string | null
+    quoteText?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
+    threadReplies?: PostUncheckedCreateNestedManyWithoutThreadParentInput
+    reposts?: PostUncheckedCreateNestedManyWithoutRepostOfInput
     comments?: CommentUncheckedCreateNestedManyWithoutPostInput
     reactions?: ReactionUncheckedCreateNestedManyWithoutPostInput
     saves?: SaveUncheckedCreateNestedManyWithoutPostInput
     shares?: ShareUncheckedCreateNestedManyWithoutPostInput
     hashtags?: PostHashtagUncheckedCreateNestedManyWithoutPostInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutPostInput
   }
 
   export type PostCreateOrConnectWithoutPageInput = {
@@ -75838,6 +79207,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -75890,6 +79260,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -76015,6 +79386,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -76067,6 +79439,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -76182,6 +79555,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -76234,6 +79608,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -76286,6 +79661,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -76338,6 +79714,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -76406,6 +79783,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -76458,6 +79836,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -76510,6 +79889,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -76562,6 +79942,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -76630,6 +80011,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -76682,6 +80064,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -76734,6 +80117,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -76786,6 +80170,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -76854,6 +80239,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -76906,6 +80292,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -76958,6 +80345,7 @@ export namespace Prisma {
     reactions?: ReactionCreateNestedManyWithoutUserInput
     saves?: SaveCreateNestedManyWithoutUserInput
     shares?: ShareCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipCreateNestedManyWithoutReceiverInput
     following?: FollowCreateNestedManyWithoutFollowerInput
@@ -77010,6 +80398,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedCreateNestedManyWithoutUserInput
     saves?: SaveUncheckedCreateNestedManyWithoutUserInput
     shares?: ShareUncheckedCreateNestedManyWithoutUserInput
+    communityNotes?: CommunityNoteUncheckedCreateNestedManyWithoutAuthorInput
     sentFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutSenderInput
     receivedFriendRequests?: FriendshipUncheckedCreateNestedManyWithoutReceiverInput
     following?: FollowUncheckedCreateNestedManyWithoutFollowerInput
@@ -77078,6 +80467,7 @@ export namespace Prisma {
     reactions?: ReactionUpdateManyWithoutUserNestedInput
     saves?: SaveUpdateManyWithoutUserNestedInput
     shares?: ShareUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUpdateManyWithoutReceiverNestedInput
     following?: FollowUpdateManyWithoutFollowerNestedInput
@@ -77130,6 +80520,7 @@ export namespace Prisma {
     reactions?: ReactionUncheckedUpdateManyWithoutUserNestedInput
     saves?: SaveUncheckedUpdateManyWithoutUserNestedInput
     shares?: ShareUncheckedUpdateManyWithoutUserNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutAuthorNestedInput
     sentFriendRequests?: FriendshipUncheckedUpdateManyWithoutSenderNestedInput
     receivedFriendRequests?: FriendshipUncheckedUpdateManyWithoutReceiverNestedInput
     following?: FollowUncheckedUpdateManyWithoutFollowerNestedInput
@@ -77203,6 +80594,12 @@ export namespace Prisma {
     pageId?: string | null
     isPinned?: boolean
     isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    threadParentId?: string | null
+    repostOfId?: string | null
+    quoteText?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
@@ -77238,6 +80635,17 @@ export namespace Prisma {
     postId: string
     message?: string | null
     createdAt?: Date | string
+  }
+
+  export type CommunityNoteCreateManyAuthorInput = {
+    id?: string
+    postId: string
+    content: string
+    sources?: CommunityNoteCreatesourcesInput | string[]
+    status?: $Enums.CommunityNoteStatus
+    helpfulCount?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type FriendshipCreateManySenderInput = {
@@ -77614,16 +81022,25 @@ export namespace Prisma {
     visibility?: EnumVisibilityFieldUpdateOperationsInput | $Enums.Visibility
     isPinned?: BoolFieldUpdateOperationsInput | boolean
     isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     space?: SpaceUpdateOneWithoutPostsNestedInput
     page?: PageUpdateOneWithoutPostsNestedInput
+    threadParent?: PostUpdateOneWithoutThreadRepliesNestedInput
+    threadReplies?: PostUpdateManyWithoutThreadParentNestedInput
+    repostOf?: PostUpdateOneWithoutRepostsNestedInput
+    reposts?: PostUpdateManyWithoutRepostOfNestedInput
     comments?: CommentUpdateManyWithoutPostNestedInput
     reactions?: ReactionUpdateManyWithoutPostNestedInput
     saves?: SaveUpdateManyWithoutPostNestedInput
     shares?: ShareUpdateManyWithoutPostNestedInput
     hashtags?: PostHashtagUpdateManyWithoutPostNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutPostNestedInput
   }
 
   export type PostUncheckedUpdateWithoutAuthorInput = {
@@ -77638,14 +81055,23 @@ export namespace Prisma {
     pageId?: NullableStringFieldUpdateOperationsInput | string | null
     isPinned?: BoolFieldUpdateOperationsInput | boolean
     isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    threadParentId?: NullableStringFieldUpdateOperationsInput | string | null
+    repostOfId?: NullableStringFieldUpdateOperationsInput | string | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    threadReplies?: PostUncheckedUpdateManyWithoutThreadParentNestedInput
+    reposts?: PostUncheckedUpdateManyWithoutRepostOfNestedInput
     comments?: CommentUncheckedUpdateManyWithoutPostNestedInput
     reactions?: ReactionUncheckedUpdateManyWithoutPostNestedInput
     saves?: SaveUncheckedUpdateManyWithoutPostNestedInput
     shares?: ShareUncheckedUpdateManyWithoutPostNestedInput
     hashtags?: PostHashtagUncheckedUpdateManyWithoutPostNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutPostNestedInput
   }
 
   export type PostUncheckedUpdateManyWithoutAuthorInput = {
@@ -77660,6 +81086,12 @@ export namespace Prisma {
     pageId?: NullableStringFieldUpdateOperationsInput | string | null
     isPinned?: BoolFieldUpdateOperationsInput | boolean
     isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    threadParentId?: NullableStringFieldUpdateOperationsInput | string | null
+    repostOfId?: NullableStringFieldUpdateOperationsInput | string | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -77763,6 +81195,39 @@ export namespace Prisma {
     postId?: StringFieldUpdateOperationsInput | string
     message?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CommunityNoteUpdateWithoutAuthorInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    sources?: CommunityNoteUpdatesourcesInput | string[]
+    status?: EnumCommunityNoteStatusFieldUpdateOperationsInput | $Enums.CommunityNoteStatus
+    helpfulCount?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    post?: PostUpdateOneRequiredWithoutCommunityNotesNestedInput
+  }
+
+  export type CommunityNoteUncheckedUpdateWithoutAuthorInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    postId?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    sources?: CommunityNoteUpdatesourcesInput | string[]
+    status?: EnumCommunityNoteStatusFieldUpdateOperationsInput | $Enums.CommunityNoteStatus
+    helpfulCount?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CommunityNoteUncheckedUpdateManyWithoutAuthorInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    postId?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    sources?: CommunityNoteUpdatesourcesInput | string[]
+    status?: EnumCommunityNoteStatusFieldUpdateOperationsInput | $Enums.CommunityNoteStatus
+    helpfulCount?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type FriendshipUpdateWithoutSenderInput = {
@@ -78682,6 +82147,52 @@ export namespace Prisma {
     current?: BoolFieldUpdateOperationsInput | boolean
   }
 
+  export type PostCreateManyThreadParentInput = {
+    id?: string
+    authorId: string
+    type?: $Enums.PostType
+    content?: string | null
+    mediaUrls?: PostCreatemediaUrlsInput | string[]
+    linkUrl?: string | null
+    linkMeta?: NullableJsonNullValueInput | InputJsonValue
+    visibility?: $Enums.Visibility
+    spaceId?: string | null
+    pageId?: string | null
+    isPinned?: boolean
+    isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    repostOfId?: string | null
+    quoteText?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type PostCreateManyRepostOfInput = {
+    id?: string
+    authorId: string
+    type?: $Enums.PostType
+    content?: string | null
+    mediaUrls?: PostCreatemediaUrlsInput | string[]
+    linkUrl?: string | null
+    linkMeta?: NullableJsonNullValueInput | InputJsonValue
+    visibility?: $Enums.Visibility
+    spaceId?: string | null
+    pageId?: string | null
+    isPinned?: boolean
+    isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    threadParentId?: string | null
+    quoteText?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
   export type CommentCreateManyPostInput = {
     id?: string
     authorId: string
@@ -78716,6 +82227,187 @@ export namespace Prisma {
 
   export type PostHashtagCreateManyPostInput = {
     hashtagId: string
+  }
+
+  export type CommunityNoteCreateManyPostInput = {
+    id?: string
+    authorId: string
+    content: string
+    sources?: CommunityNoteCreatesourcesInput | string[]
+    status?: $Enums.CommunityNoteStatus
+    helpfulCount?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PostUpdateWithoutThreadParentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: EnumPostTypeFieldUpdateOperationsInput | $Enums.PostType
+    content?: NullableStringFieldUpdateOperationsInput | string | null
+    mediaUrls?: PostUpdatemediaUrlsInput | string[]
+    linkUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    linkMeta?: NullableJsonNullValueInput | InputJsonValue
+    visibility?: EnumVisibilityFieldUpdateOperationsInput | $Enums.Visibility
+    isPinned?: BoolFieldUpdateOperationsInput | boolean
+    isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    author?: UserUpdateOneRequiredWithoutPostsNestedInput
+    space?: SpaceUpdateOneWithoutPostsNestedInput
+    page?: PageUpdateOneWithoutPostsNestedInput
+    threadReplies?: PostUpdateManyWithoutThreadParentNestedInput
+    repostOf?: PostUpdateOneWithoutRepostsNestedInput
+    reposts?: PostUpdateManyWithoutRepostOfNestedInput
+    comments?: CommentUpdateManyWithoutPostNestedInput
+    reactions?: ReactionUpdateManyWithoutPostNestedInput
+    saves?: SaveUpdateManyWithoutPostNestedInput
+    shares?: ShareUpdateManyWithoutPostNestedInput
+    hashtags?: PostHashtagUpdateManyWithoutPostNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutPostNestedInput
+  }
+
+  export type PostUncheckedUpdateWithoutThreadParentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    authorId?: StringFieldUpdateOperationsInput | string
+    type?: EnumPostTypeFieldUpdateOperationsInput | $Enums.PostType
+    content?: NullableStringFieldUpdateOperationsInput | string | null
+    mediaUrls?: PostUpdatemediaUrlsInput | string[]
+    linkUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    linkMeta?: NullableJsonNullValueInput | InputJsonValue
+    visibility?: EnumVisibilityFieldUpdateOperationsInput | $Enums.Visibility
+    spaceId?: NullableStringFieldUpdateOperationsInput | string | null
+    pageId?: NullableStringFieldUpdateOperationsInput | string | null
+    isPinned?: BoolFieldUpdateOperationsInput | boolean
+    isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    repostOfId?: NullableStringFieldUpdateOperationsInput | string | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    threadReplies?: PostUncheckedUpdateManyWithoutThreadParentNestedInput
+    reposts?: PostUncheckedUpdateManyWithoutRepostOfNestedInput
+    comments?: CommentUncheckedUpdateManyWithoutPostNestedInput
+    reactions?: ReactionUncheckedUpdateManyWithoutPostNestedInput
+    saves?: SaveUncheckedUpdateManyWithoutPostNestedInput
+    shares?: ShareUncheckedUpdateManyWithoutPostNestedInput
+    hashtags?: PostHashtagUncheckedUpdateManyWithoutPostNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutPostNestedInput
+  }
+
+  export type PostUncheckedUpdateManyWithoutThreadParentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    authorId?: StringFieldUpdateOperationsInput | string
+    type?: EnumPostTypeFieldUpdateOperationsInput | $Enums.PostType
+    content?: NullableStringFieldUpdateOperationsInput | string | null
+    mediaUrls?: PostUpdatemediaUrlsInput | string[]
+    linkUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    linkMeta?: NullableJsonNullValueInput | InputJsonValue
+    visibility?: EnumVisibilityFieldUpdateOperationsInput | $Enums.Visibility
+    spaceId?: NullableStringFieldUpdateOperationsInput | string | null
+    pageId?: NullableStringFieldUpdateOperationsInput | string | null
+    isPinned?: BoolFieldUpdateOperationsInput | boolean
+    isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    repostOfId?: NullableStringFieldUpdateOperationsInput | string | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type PostUpdateWithoutRepostOfInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: EnumPostTypeFieldUpdateOperationsInput | $Enums.PostType
+    content?: NullableStringFieldUpdateOperationsInput | string | null
+    mediaUrls?: PostUpdatemediaUrlsInput | string[]
+    linkUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    linkMeta?: NullableJsonNullValueInput | InputJsonValue
+    visibility?: EnumVisibilityFieldUpdateOperationsInput | $Enums.Visibility
+    isPinned?: BoolFieldUpdateOperationsInput | boolean
+    isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    author?: UserUpdateOneRequiredWithoutPostsNestedInput
+    space?: SpaceUpdateOneWithoutPostsNestedInput
+    page?: PageUpdateOneWithoutPostsNestedInput
+    threadParent?: PostUpdateOneWithoutThreadRepliesNestedInput
+    threadReplies?: PostUpdateManyWithoutThreadParentNestedInput
+    reposts?: PostUpdateManyWithoutRepostOfNestedInput
+    comments?: CommentUpdateManyWithoutPostNestedInput
+    reactions?: ReactionUpdateManyWithoutPostNestedInput
+    saves?: SaveUpdateManyWithoutPostNestedInput
+    shares?: ShareUpdateManyWithoutPostNestedInput
+    hashtags?: PostHashtagUpdateManyWithoutPostNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutPostNestedInput
+  }
+
+  export type PostUncheckedUpdateWithoutRepostOfInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    authorId?: StringFieldUpdateOperationsInput | string
+    type?: EnumPostTypeFieldUpdateOperationsInput | $Enums.PostType
+    content?: NullableStringFieldUpdateOperationsInput | string | null
+    mediaUrls?: PostUpdatemediaUrlsInput | string[]
+    linkUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    linkMeta?: NullableJsonNullValueInput | InputJsonValue
+    visibility?: EnumVisibilityFieldUpdateOperationsInput | $Enums.Visibility
+    spaceId?: NullableStringFieldUpdateOperationsInput | string | null
+    pageId?: NullableStringFieldUpdateOperationsInput | string | null
+    isPinned?: BoolFieldUpdateOperationsInput | boolean
+    isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    threadParentId?: NullableStringFieldUpdateOperationsInput | string | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    threadReplies?: PostUncheckedUpdateManyWithoutThreadParentNestedInput
+    reposts?: PostUncheckedUpdateManyWithoutRepostOfNestedInput
+    comments?: CommentUncheckedUpdateManyWithoutPostNestedInput
+    reactions?: ReactionUncheckedUpdateManyWithoutPostNestedInput
+    saves?: SaveUncheckedUpdateManyWithoutPostNestedInput
+    shares?: ShareUncheckedUpdateManyWithoutPostNestedInput
+    hashtags?: PostHashtagUncheckedUpdateManyWithoutPostNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutPostNestedInput
+  }
+
+  export type PostUncheckedUpdateManyWithoutRepostOfInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    authorId?: StringFieldUpdateOperationsInput | string
+    type?: EnumPostTypeFieldUpdateOperationsInput | $Enums.PostType
+    content?: NullableStringFieldUpdateOperationsInput | string | null
+    mediaUrls?: PostUpdatemediaUrlsInput | string[]
+    linkUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    linkMeta?: NullableJsonNullValueInput | InputJsonValue
+    visibility?: EnumVisibilityFieldUpdateOperationsInput | $Enums.Visibility
+    spaceId?: NullableStringFieldUpdateOperationsInput | string | null
+    pageId?: NullableStringFieldUpdateOperationsInput | string | null
+    isPinned?: BoolFieldUpdateOperationsInput | boolean
+    isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    threadParentId?: NullableStringFieldUpdateOperationsInput | string | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type CommentUpdateWithoutPostInput = {
@@ -78828,6 +82520,39 @@ export namespace Prisma {
 
   export type PostHashtagUncheckedUpdateManyWithoutPostInput = {
     hashtagId?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type CommunityNoteUpdateWithoutPostInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    sources?: CommunityNoteUpdatesourcesInput | string[]
+    status?: EnumCommunityNoteStatusFieldUpdateOperationsInput | $Enums.CommunityNoteStatus
+    helpfulCount?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    author?: UserUpdateOneRequiredWithoutCommunityNotesNestedInput
+  }
+
+  export type CommunityNoteUncheckedUpdateWithoutPostInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    authorId?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    sources?: CommunityNoteUpdatesourcesInput | string[]
+    status?: EnumCommunityNoteStatusFieldUpdateOperationsInput | $Enums.CommunityNoteStatus
+    helpfulCount?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CommunityNoteUncheckedUpdateManyWithoutPostInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    authorId?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    sources?: CommunityNoteUpdatesourcesInput | string[]
+    status?: EnumCommunityNoteStatusFieldUpdateOperationsInput | $Enums.CommunityNoteStatus
+    helpfulCount?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type CommentCreateManyParentInput = {
@@ -79148,6 +82873,12 @@ export namespace Prisma {
     pageId?: string | null
     isPinned?: boolean
     isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    threadParentId?: string | null
+    repostOfId?: string | null
+    quoteText?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
@@ -79221,16 +82952,25 @@ export namespace Prisma {
     visibility?: EnumVisibilityFieldUpdateOperationsInput | $Enums.Visibility
     isPinned?: BoolFieldUpdateOperationsInput | boolean
     isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     author?: UserUpdateOneRequiredWithoutPostsNestedInput
     page?: PageUpdateOneWithoutPostsNestedInput
+    threadParent?: PostUpdateOneWithoutThreadRepliesNestedInput
+    threadReplies?: PostUpdateManyWithoutThreadParentNestedInput
+    repostOf?: PostUpdateOneWithoutRepostsNestedInput
+    reposts?: PostUpdateManyWithoutRepostOfNestedInput
     comments?: CommentUpdateManyWithoutPostNestedInput
     reactions?: ReactionUpdateManyWithoutPostNestedInput
     saves?: SaveUpdateManyWithoutPostNestedInput
     shares?: ShareUpdateManyWithoutPostNestedInput
     hashtags?: PostHashtagUpdateManyWithoutPostNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutPostNestedInput
   }
 
   export type PostUncheckedUpdateWithoutSpaceInput = {
@@ -79245,14 +82985,23 @@ export namespace Prisma {
     pageId?: NullableStringFieldUpdateOperationsInput | string | null
     isPinned?: BoolFieldUpdateOperationsInput | boolean
     isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    threadParentId?: NullableStringFieldUpdateOperationsInput | string | null
+    repostOfId?: NullableStringFieldUpdateOperationsInput | string | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    threadReplies?: PostUncheckedUpdateManyWithoutThreadParentNestedInput
+    reposts?: PostUncheckedUpdateManyWithoutRepostOfNestedInput
     comments?: CommentUncheckedUpdateManyWithoutPostNestedInput
     reactions?: ReactionUncheckedUpdateManyWithoutPostNestedInput
     saves?: SaveUncheckedUpdateManyWithoutPostNestedInput
     shares?: ShareUncheckedUpdateManyWithoutPostNestedInput
     hashtags?: PostHashtagUncheckedUpdateManyWithoutPostNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutPostNestedInput
   }
 
   export type PostUncheckedUpdateManyWithoutSpaceInput = {
@@ -79267,6 +83016,12 @@ export namespace Prisma {
     pageId?: NullableStringFieldUpdateOperationsInput | string | null
     isPinned?: BoolFieldUpdateOperationsInput | boolean
     isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    threadParentId?: NullableStringFieldUpdateOperationsInput | string | null
+    repostOfId?: NullableStringFieldUpdateOperationsInput | string | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -79442,6 +83197,12 @@ export namespace Prisma {
     spaceId?: string | null
     isPinned?: boolean
     isSponsored?: boolean
+    isThread?: boolean
+    threadIndex?: number | null
+    threadTotal?: number | null
+    threadParentId?: string | null
+    repostOfId?: string | null
+    quoteText?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
@@ -79463,16 +83224,25 @@ export namespace Prisma {
     visibility?: EnumVisibilityFieldUpdateOperationsInput | $Enums.Visibility
     isPinned?: BoolFieldUpdateOperationsInput | boolean
     isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     author?: UserUpdateOneRequiredWithoutPostsNestedInput
     space?: SpaceUpdateOneWithoutPostsNestedInput
+    threadParent?: PostUpdateOneWithoutThreadRepliesNestedInput
+    threadReplies?: PostUpdateManyWithoutThreadParentNestedInput
+    repostOf?: PostUpdateOneWithoutRepostsNestedInput
+    reposts?: PostUpdateManyWithoutRepostOfNestedInput
     comments?: CommentUpdateManyWithoutPostNestedInput
     reactions?: ReactionUpdateManyWithoutPostNestedInput
     saves?: SaveUpdateManyWithoutPostNestedInput
     shares?: ShareUpdateManyWithoutPostNestedInput
     hashtags?: PostHashtagUpdateManyWithoutPostNestedInput
+    communityNotes?: CommunityNoteUpdateManyWithoutPostNestedInput
   }
 
   export type PostUncheckedUpdateWithoutPageInput = {
@@ -79487,14 +83257,23 @@ export namespace Prisma {
     spaceId?: NullableStringFieldUpdateOperationsInput | string | null
     isPinned?: BoolFieldUpdateOperationsInput | boolean
     isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    threadParentId?: NullableStringFieldUpdateOperationsInput | string | null
+    repostOfId?: NullableStringFieldUpdateOperationsInput | string | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    threadReplies?: PostUncheckedUpdateManyWithoutThreadParentNestedInput
+    reposts?: PostUncheckedUpdateManyWithoutRepostOfNestedInput
     comments?: CommentUncheckedUpdateManyWithoutPostNestedInput
     reactions?: ReactionUncheckedUpdateManyWithoutPostNestedInput
     saves?: SaveUncheckedUpdateManyWithoutPostNestedInput
     shares?: ShareUncheckedUpdateManyWithoutPostNestedInput
     hashtags?: PostHashtagUncheckedUpdateManyWithoutPostNestedInput
+    communityNotes?: CommunityNoteUncheckedUpdateManyWithoutPostNestedInput
   }
 
   export type PostUncheckedUpdateManyWithoutPageInput = {
@@ -79509,6 +83288,12 @@ export namespace Prisma {
     spaceId?: NullableStringFieldUpdateOperationsInput | string | null
     isPinned?: BoolFieldUpdateOperationsInput | boolean
     isSponsored?: BoolFieldUpdateOperationsInput | boolean
+    isThread?: BoolFieldUpdateOperationsInput | boolean
+    threadIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    threadTotal?: NullableIntFieldUpdateOperationsInput | number | null
+    threadParentId?: NullableStringFieldUpdateOperationsInput | string | null
+    repostOfId?: NullableStringFieldUpdateOperationsInput | string | null
+    quoteText?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -79637,6 +83422,10 @@ export namespace Prisma {
      * @deprecated Use PostDefaultArgs instead
      */
     export type PostArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = PostDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use CommunityNoteDefaultArgs instead
+     */
+    export type CommunityNoteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = CommunityNoteDefaultArgs<ExtArgs>
     /**
      * @deprecated Use CommentDefaultArgs instead
      */

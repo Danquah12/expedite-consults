@@ -4,6 +4,7 @@ import { SidebarNav } from "@/components/layout/SidebarNav";
 import { RightWidgetSidebar } from "@/components/layout/RightWidgetSidebar";
 import { CommandPalette } from "@/components/ui/CommandPalette";
 import { LiveStageDock } from "@/components/ui/LiveStageDock";
+import { UniversalCreateModal } from "@/components/post/UniversalCreateModal";
 
 const mockUser = {
   name: "Kwesi Asiedu",
@@ -51,6 +52,9 @@ export default function SpheraLayout({ children }: { children: React.ReactNode }
 
       {/* 🎙️ Global Live Stage / Study Lounge Floating Dock */}
       <LiveStageDock />
+
+      {/* ＋ Universal 7-Pillar Creator Matrix Modal */}
+      <UniversalCreateModal />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   X,
   Image as ImageIcon,
@@ -8,7 +8,8 @@ import {
   Music,
   Sparkles,
   Send,
-  Globe
+  Globe,
+  Loader2
 } from "lucide-react";
 
 interface PostComposerModalProps {
@@ -24,21 +25,63 @@ export function PostComposerModal({ isOpen, onClose, onPostCreated }: PostCompos
   const [musicTitle, setMusicTitle] = useState("Afrobeats Synthwave Future Mix Vol. 4");
   const [hashtags, setHashtags] = useState("#SpheraViral #FYP #TechPulse");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const selectedFileRef = useRef<File | null>(null);
 
   const handleMediaUpload = (e: React.ChangeEvent<HTMLInputElement>, type: "image" | "video") => {
     const file = e.target.files?.[0];
     if (file) {
+      selectedFileRef.current = file;
       const url = URL.createObjectURL(file);
       setMediaUrl(url);
       setMediaType(type);
     }
   };
 
+  const blobToDataUrl = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve((reader.result as string) || "");
+      reader.onerror = () => resolve("");
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handlePublish = async () => {
     if (!content.trim() && !mediaUrl) return;
     setIsSubmitting(true);
 
+    let persistentMediaUrl = "";
+
     try {
+      if (selectedFileRef.current) {
+        const formData = new FormData();
+        formData.append("file", selectedFileRef.current);
+
+        try {
+          const uploadRes = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (uploadRes.ok) {
+            const uploadJson = await uploadRes.json();
+            if (uploadJson.success && uploadJson.data?.url) {
+              persistentMediaUrl = uploadJson.data.url;
+            }
+          }
+        } catch (uploadErr) {
+          console.warn("[Upload failed, converting to sovereign data URL]:", uploadErr);
+        }
+
+        if (!persistentMediaUrl) {
+          persistentMediaUrl = await blobToDataUrl(selectedFileRef.current);
+        }
+      }
+
+      if (!persistentMediaUrl && mediaUrl && !mediaUrl.startsWith("blob:")) {
+        persistentMediaUrl = mediaUrl;
+      }
+
       const parsedHashtags = hashtags
         .split(" ")
         .filter((t) => t.startsWith("#") || t.length > 0)
@@ -47,8 +90,8 @@ export function PostComposerModal({ isOpen, onClose, onPostCreated }: PostCompos
       const payload = {
         content: content.trim(),
         type: mediaType === "video" ? "immersive_video" : "standard",
-        videoUrl: mediaType === "video" ? (mediaUrl || undefined) : undefined,
-        imageUrl: mediaType === "image" ? (mediaUrl || undefined) : undefined,
+        videoUrl: mediaType === "video" ? (persistentMediaUrl || undefined) : undefined,
+        imageUrl: mediaType === "image" ? (persistentMediaUrl || undefined) : (persistentMediaUrl || undefined),
         musicTitle,
         musicAuthor: "Sphera Audio Lab",
         hashtags: parsedHashtags,
@@ -56,33 +99,40 @@ export function PostComposerModal({ isOpen, onClose, onPostCreated }: PostCompos
         authorUsername: "kwesi",
       };
 
-      const res = await fetch("/api/feed", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        onPostCreated(data.post);
-      } else {
-        onPostCreated({
-          ...payload,
-          id: `post-${Date.now()}`,
-          likes: 0,
-          commentsCount: 0,
-          sharesCount: 0,
-          savesCount: 0,
-          author: {
-            id: "user-kwesi",
-            name: "Kwesi Asiedu",
-            username: "kwesi",
-            avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
-            verified: true,
-            timeAgo: "Just now",
-          },
+      try {
+        const res = await fetch("/api/feed", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
         });
+
+        if (res.ok) {
+          const data = await res.json();
+          onPostCreated(data.post);
+          onClose();
+          return;
+        }
+      } catch (feedErr) {
+        console.warn("[Feed publish network notice]:", feedErr);
       }
+
+      onPostCreated({
+        ...payload,
+        id: `post-${Date.now()}`,
+        likes: 1,
+        commentsCount: 0,
+        sharesCount: 0,
+        savesCount: 0,
+        isLiked: true,
+        author: {
+          id: "user-kwesi",
+          name: "Kwesi Asiedu",
+          username: "kwesi",
+          avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
+          verified: true,
+          timeAgo: "Just now",
+        },
+      });
       onClose();
     } catch (err) {
       console.error("Composer error:", err);
@@ -98,97 +148,80 @@ export function PostComposerModal({ isOpen, onClose, onPostCreated }: PostCompos
     <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xl flex items-center justify-center p-4">
       <div className="bg-[#121318] border border-zinc-800 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl p-5 space-y-4 animate-in zoom-in-95">
         <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-pink-500">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80"
-                alt="Kwesi"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div>
-              <h3 className="text-sm font-black text-white">Create Creator Post</h3>
-              <div className="flex items-center gap-1.5 text-[11px] text-zinc-400">
-                <Globe className="w-3 h-3 text-cyan-400" />
-                <span>Sharing to Sphera #FYP</span>
-              </div>
-            </div>
+          <div className="flex items-center gap-2 text-white font-black text-sm">
+            <Sparkles className="w-4 h-4 text-pink-500" />
+            <span>Create SpheraNet Post</span>
           </div>
-
-          <button onClick={onClose} className="p-1 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white">
+          <button onClick={onClose} className="p-1.5 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white">
             <X className="w-5 h-5" />
           </button>
         </div>
 
+        {/* Text Body */}
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="Share your update, insight, code snippet, or short to the global feed..."
+          placeholder="Share an update, collegiate hackathon project, or creator clip..."
           rows={4}
-          className="w-full bg-zinc-900/60 border border-zinc-700/60 rounded-2xl p-3.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-pink-500 resize-none"
+          className="w-full bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-3.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-pink-500 transition resize-none font-medium"
         />
 
+        {/* Media Preview Box */}
         {mediaUrl && (
-          <div className="relative rounded-2xl overflow-hidden max-h-48 bg-black border border-zinc-800">
+          <div className="relative rounded-2xl overflow-hidden bg-black border border-zinc-800 max-h-48 flex items-center justify-center">
             {mediaType === "video" ? (
-              <video src={mediaUrl} autoPlay loop playsInline className="w-full h-full object-cover max-h-48" />
+              <video src={mediaUrl} autoPlay loop muted className="w-full h-full object-cover" />
             ) : (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={mediaUrl} alt="Upload" className="w-full h-full object-cover max-h-48" />
+              <img src={mediaUrl} alt="Upload preview" className="w-full h-full object-cover" />
             )}
             <button
-              onClick={() => setMediaUrl(null)}
-              className="absolute top-2 right-2 p-1 rounded-full bg-black/70 text-white hover:bg-black"
+              onClick={() => {
+                setMediaUrl(null);
+                selectedFileRef.current = null;
+              }}
+              className="absolute top-2 right-2 p-1.5 rounded-full bg-black/70 hover:bg-black text-white"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
         )}
 
-        <div className="grid grid-cols-3 gap-2">
-          <label className="flex items-center justify-center gap-1.5 p-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold cursor-pointer border border-zinc-700/60 transition">
-            <ImageIcon className="w-4 h-4 text-cyan-400" />
-            <span>Image</span>
-            <input type="file" accept="image/*" className="hidden" onChange={(e) => handleMediaUpload(e, "image")} />
-          </label>
-
-          <label className="flex items-center justify-center gap-1.5 p-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold cursor-pointer border border-zinc-700/60 transition">
-            <Video className="w-4 h-4 text-rose-500" />
-            <span>Video Reel</span>
-            <input type="file" accept="video/*" className="hidden" onChange={(e) => handleMediaUpload(e, "video")} />
-          </label>
-
-          <button
-            onClick={() => setHashtags("#SpheraViral #FYP #TechPulse #AI2026")}
-            className="flex items-center justify-center gap-1.5 p-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-pink-400 text-xs font-bold border border-zinc-700/60 transition"
-          >
-            <Sparkles className="w-4 h-4" />
-            <span>AI Tags</span>
-          </button>
+        {/* Media Attachment Bar */}
+        <div className="flex items-center justify-between bg-zinc-900/40 border border-zinc-800 rounded-2xl p-2 px-3 text-xs font-bold text-zinc-400">
+          <span className="text-[11px] text-zinc-500">Attach to post:</span>
+          <div className="flex items-center gap-2">
+            <label className="p-2 hover:bg-zinc-800 rounded-xl cursor-pointer hover:text-pink-400 transition flex items-center gap-1">
+              <ImageIcon className="w-4 h-4 text-emerald-400" />
+              <span className="text-[11px]">Photo</span>
+              <input type="file" accept="image/*" className="hidden" onChange={(e) => handleMediaUpload(e, "image")} />
+            </label>
+            <label className="p-2 hover:bg-zinc-800 rounded-xl cursor-pointer hover:text-cyan-400 transition flex items-center gap-1">
+              <Video className="w-4 h-4 text-rose-500" />
+              <span className="text-[11px]">Video Reel</span>
+              <input type="file" accept="video/*" className="hidden" onChange={(e) => handleMediaUpload(e, "video")} />
+            </label>
+          </div>
         </div>
 
-        <div className="space-y-1">
-          <label className="text-[11px] font-bold text-zinc-400 flex items-center gap-1">
-            <Music className="w-3 h-3 text-pink-400" />
-            <span>Audio Track</span>
-          </label>
-          <input
-            type="text"
-            value={musicTitle}
-            onChange={(e) => setMusicTitle(e.target.value)}
-            className="w-full bg-zinc-900 border border-zinc-700/60 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-pink-500"
-          />
-        </div>
-
-        <div className="pt-2 border-t border-zinc-800">
+        {/* Submit */}
+        <div className="pt-2 flex justify-end">
           <button
             onClick={handlePublish}
             disabled={isSubmitting || (!content.trim() && !mediaUrl)}
-            className="w-full py-3 rounded-2xl bg-gradient-to-r from-pink-600 via-rose-500 to-indigo-600 hover:from-pink-500 hover:to-indigo-500 text-white text-xs font-black flex items-center justify-center gap-2 shadow-lg shadow-pink-600/30 transition transform hover:scale-[1.02] disabled:opacity-40"
+            className="px-6 py-2.5 rounded-2xl bg-gradient-to-r from-pink-600 to-rose-500 hover:from-pink-500 hover:to-rose-400 text-white font-black text-xs shadow-lg disabled:opacity-50 transition flex items-center gap-2"
           >
-            <Send className="w-4 h-4" />
-            <span>{isSubmitting ? "Publishing to #FYP..." : "Post to SpheraNet"}</span>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Uploading to Persistent Storage...</span>
+              </>
+            ) : (
+              <>
+                <Send className="w-3.5 h-3.5" />
+                <span>Publish Post</span>
+              </>
+            )}
           </button>
         </div>
       </div>

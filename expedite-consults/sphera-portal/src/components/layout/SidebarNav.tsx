@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -21,40 +22,49 @@ import {
   Heart,
   ShieldCheck,
   Flame,
-  CalendarDays
+  CalendarDays,
+  Compass,
+  Plus,
+  ChevronDown,
+  ChevronRight,
+  Radio,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { useAppStore } from "@/store/useAppStore";
 
-interface NavItem {
+interface DiscoverItem {
   label: string;
   href: string;
   icon: React.ReactNode;
-  activeIcon: React.ReactNode;
-  badge?: number | string;
+  badge?: string;
   badgeColor?: string;
   isHot?: boolean;
 }
 
-const navItems: NavItem[] = [
-  { label: "Home Feed", href: "/feed", icon: <Home size={20} />, activeIcon: <Home size={20} className="stroke-[2.5]" /> },
-  { label: "Search", href: "/search", icon: <Search size={20} />, activeIcon: <Search size={20} className="stroke-[2.5]" /> },
-  { label: "Reels & Shorts", href: "/reels", icon: <Video size={20} />, activeIcon: <Video size={20} className="stroke-[2.5]" />, isHot: true },
-  { label: "SpheraChat", href: "/messages", icon: <MessageCircle size={20} />, activeIcon: <MessageCircle size={20} className="stroke-[2.5]" />, badge: 3, badgeColor: "#00d4ff" },
-  { label: "Notifications", href: "/notifications", icon: <Heart size={20} />, activeIcon: <Heart size={20} className="stroke-[2.5] fill-current" />, badge: 12, badgeColor: "#ef4444" },
-  { label: "Friends & Graph", href: "/friends", icon: <Users size={20} />, activeIcon: <Users size={20} className="stroke-[2.5]" /> },
-  { label: "Spaces & Guilds", href: "/spaces", icon: <Globe size={20} />, activeIcon: <Globe size={20} className="stroke-[2.5]" /> },
-  { label: "Bazaar Marketplace", href: "/bazaar", icon: <ShoppingBag size={20} />, activeIcon: <ShoppingBag size={20} className="stroke-[2.5]" /> },
-  { label: "Esports & Gaming", href: "/gaming", icon: <Gamepad2 size={20} />, activeIcon: <Gamepad2 size={20} className="stroke-[2.5]" />, isHot: true },
-  { label: "Career & Bounties", href: "/career", icon: <Briefcase size={20} />, activeIcon: <Briefcase size={20} className="stroke-[2.5]" /> },
-  { label: "Campus Operating OS", href: "/campus", icon: <GraduationCap size={20} />, activeIcon: <GraduationCap size={20} className="stroke-[2.5]" /> },
-  { label: "Events & Meetups", href: "/events", icon: <CalendarDays size={20} />, activeIcon: <CalendarDays size={20} className="stroke-[2.5]" /> },
-  { label: "Verified Pages", href: "/pages", icon: <Store size={20} />, activeIcon: <Store size={20} className="stroke-[2.5]" /> },
-  { label: "Sphera Vault & Pay", href: "/vault", icon: <Briefcase size={20} className="text-[#10b981]" />, activeIcon: <Briefcase size={20} className="text-[#10b981] fill-current" />, badge: "$4.8K", badgeColor: "#10b981" },
-  { label: "Sphera AI Agent", href: "/ai", icon: <Sparkles size={20} className="text-[#00d4ff]" />, activeIcon: <Sparkles size={20} className="text-[#00d4ff] fill-current" /> },
+const discoverItems: DiscoverItem[] = [
+  { label: "Reels & Shorts", href: "/reels", icon: <Video size={17} />, isHot: true },
+  { label: "Spaces & Guilds", href: "/spaces", icon: <Globe size={17} /> },
+  { label: "Bazaar Marketplace", href: "/bazaar", icon: <ShoppingBag size={17} /> },
+  { label: "Esports & Gaming", href: "/gaming", icon: <Gamepad2 size={17} />, isHot: true },
+  { label: "Career & Bounties", href: "/career", icon: <Briefcase size={17} />, badge: "$2.5K", badgeColor: "#10b981" },
+  { label: "Campus Operating OS", href: "/campus", icon: <GraduationCap size={17} /> },
+  { label: "Events & Meetups", href: "/events", icon: <CalendarDays size={17} /> },
+  { label: "Verified Pages", href: "/pages", icon: <Store size={17} /> },
+  { label: "Sphera Vault & Pay", href: "/vault", icon: <Briefcase size={17} className="text-[#10b981]" />, badge: "$4.8K", badgeColor: "#10b981" },
 ];
 
 export function SidebarNav({ user }: { user?: { name: string; username: string } }) {
   const pathname = usePathname();
+  const { openUniversalCreate, unreadCount } = useAppStore();
+  const [isDiscoverOpen, setIsDiscoverOpen] = useState(
+    discoverItems.some((item) => pathname.startsWith(item.href))
+  );
+
+  const isHomeActive = pathname === "/feed" || pathname === "/";
+  const isMessagesActive = pathname.startsWith("/messages");
+  const isProfileActive = pathname.startsWith("/profile");
+  const isAiActive = pathname.startsWith("/ai");
+  const isDiscoverChildActive = discoverItems.some((item) => pathname.startsWith(item.href));
 
   return (
     <aside
@@ -70,19 +80,19 @@ export function SidebarNav({ user }: { user?: { name: string; username: string }
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
-        padding: "20px 14px",
+        padding: "18px 12px",
         overflowY: "auto",
         boxSizing: "border-box",
         transition: "background-color 0.25s ease, border-color 0.25s ease",
       }}
     >
       {/* ── Brand Logo Header ─────────────────────────────────────── */}
-      <div style={{ padding: "0 6px 18px 6px" }}>
+      <div style={{ padding: "0 6px 14px 6px" }}>
         <Link href="/feed" style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none" }}>
           <div
             style={{
-              height: "38px",
-              width: "38px",
+              height: "36px",
+              width: "36px",
               borderRadius: "12px",
               background: "linear-gradient(135deg, #00d4ff, #6366f1, #ec4899)",
               padding: "2px",
@@ -103,91 +113,305 @@ export function SidebarNav({ user }: { user?: { name: string; username: string }
                 justifyContent: "center",
               }}
             >
-              <Zap size={20} color="#00d4ff" fill="#00d4ff" />
+              <Zap size={18} color="#00d4ff" fill="#00d4ff" />
             </div>
           </div>
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <span style={{ fontSize: "19px", fontWeight: "900", color: "var(--text-pure)", letterSpacing: "0.5px", lineHeight: "1.1" }}>SpheraNet</span>
-            <span style={{ fontSize: "9px", fontWeight: "700", color: "var(--accent-cyan)", letterSpacing: "1.5px", textTransform: "uppercase" }}>Sovereign Social</span>
+            <span style={{ fontSize: "18px", fontWeight: "900", color: "var(--text-pure)", letterSpacing: "0.5px", lineHeight: "1.1" }}>
+              SpheraNet
+            </span>
+            <span style={{ fontSize: "9px", fontWeight: "700", color: "var(--accent-cyan)", letterSpacing: "1.5px", textTransform: "uppercase" }}>
+              Sovereign Social
+            </span>
           </div>
         </Link>
       </div>
 
-      {/* ── Navigation Tree ────────────────────────────────────────── */}
-      <nav style={{ display: "flex", flexDirection: "column", gap: "3px", flex: 1 }}>
-        {navItems.map((item) => {
-          const isActive = pathname === item.href || (item.href !== "/feed" && pathname.startsWith(item.href));
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
+      {/* ── 5-Point Core Navigation ────────────────────────────────── */}
+      <nav style={{ display: "flex", flexDirection: "column", gap: "4px", flex: 1 }}>
+        {/* 1. 🏠 Home Feed */}
+        <Link
+          href="/feed"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            padding: "9px 12px",
+            borderRadius: "12px",
+            fontSize: "13px",
+            fontWeight: isHomeActive ? "800" : "500",
+            color: isHomeActive ? "var(--text-pure)" : "var(--text-secondary)",
+            backgroundColor: isHomeActive ? "var(--bg-card-hover)" : "transparent",
+            border: isHomeActive ? "1px solid var(--border-active)" : "1px solid transparent",
+            textDecoration: "none",
+            transition: "all 0.15s ease",
+          }}
+        >
+          <Home size={20} color={isHomeActive ? "var(--accent-cyan)" : "currentColor"} />
+          <span style={{ flex: 1 }}>Home Feed</span>
+          <span
+            style={{
+              fontSize: "9px",
+              fontWeight: "900",
+              color: "var(--accent-cyan)",
+              backgroundColor: "rgba(0,212,255,0.12)",
+              padding: "1px 5px",
+              borderRadius: "4px",
+            }}
+          >
+            5 STREAMS
+          </span>
+        </Link>
+
+        {/* 2. 🧭 Discover Hub (Collapsible Sub-hubs) */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+          <button
+            onClick={() => setIsDiscoverOpen(!isDiscoverOpen)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              padding: "9px 12px",
+              borderRadius: "12px",
+              fontSize: "13px",
+              fontWeight: isDiscoverChildActive ? "800" : "500",
+              color: isDiscoverChildActive ? "var(--text-pure)" : "var(--text-secondary)",
+              backgroundColor: isDiscoverChildActive ? "var(--bg-card-hover)" : "transparent",
+              border: isDiscoverChildActive ? "1px solid var(--border-active)" : "1px solid transparent",
+              background: "none",
+              cursor: "pointer",
+              textAlign: "left",
+              width: "100%",
+              boxSizing: "border-box",
+              transition: "all 0.15s ease",
+            }}
+          >
+            <Compass size={20} color={isDiscoverChildActive ? "var(--accent-cyan)" : "currentColor"} />
+            <span style={{ flex: 1 }}>Discover Hub</span>
+            {isDiscoverOpen ? (
+              <ChevronDown size={14} color="var(--text-muted)" />
+            ) : (
+              <ChevronRight size={14} color="var(--text-muted)" />
+            )}
+          </button>
+
+          {/* Sub-Hub list */}
+          {isDiscoverOpen && (
+            <div
               style={{
+                marginLeft: "18px",
+                paddingLeft: "10px",
+                borderLeft: "2px solid var(--border-subtle)",
                 display: "flex",
-                alignItems: "center",
-                gap: "12px",
-                padding: "9px 12px",
-                borderRadius: "12px",
-                fontSize: "13px",
-                fontWeight: isActive ? "800" : "500",
-                color: isActive ? "var(--text-pure)" : "var(--text-secondary)",
-                backgroundColor: isActive ? "var(--bg-card-hover)" : "transparent",
-                border: isActive ? "1px solid var(--border-active)" : "1px solid transparent",
-                textDecoration: "none",
-                transition: "all 0.15s ease",
+                flexDirection: "column",
+                gap: "2px",
+                marginTop: "2px",
+                marginBottom: "4px",
               }}
             >
-              <span style={{ color: isActive ? "var(--accent-cyan)" : "inherit" }}>
-                {isActive ? item.activeIcon : item.icon}
-              </span>
-              <span style={{ flex: 1 }}>{item.label}</span>
+              {discoverItems.map((item) => {
+                const isActive = pathname.startsWith(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      padding: "6px 8px",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                      fontWeight: isActive ? "800" : "500",
+                      color: isActive ? "var(--accent-cyan)" : "var(--text-secondary)",
+                      backgroundColor: isActive ? "rgba(0, 212, 255, 0.1)" : "transparent",
+                      textDecoration: "none",
+                    }}
+                  >
+                    <span>{item.icon}</span>
+                    <span style={{ flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {item.label}
+                    </span>
 
-              {item.isHot && (
-                <span
-                  style={{
-                    backgroundColor: "rgba(236, 72, 153, 0.15)",
-                    color: "#ec4899",
-                    border: "1px solid rgba(236, 72, 153, 0.3)",
-                    fontSize: "9px",
-                    fontWeight: "900",
-                    padding: "1px 5px",
-                    borderRadius: "6px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "2px",
-                  }}
-                >
-                  <Flame size={10} /> HOT
-                </span>
-              )}
+                    {item.isHot && (
+                      <span
+                        style={{
+                          backgroundColor: "rgba(236, 72, 153, 0.15)",
+                          color: "#ec4899",
+                          border: "1px solid rgba(236, 72, 153, 0.3)",
+                          fontSize: "8px",
+                          fontWeight: "900",
+                          padding: "1px 4px",
+                          borderRadius: "4px",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "2px",
+                        }}
+                      >
+                        <Flame size={9} /> HOT
+                      </span>
+                    )}
 
-              {item.badge && (
-                <span
-                  style={{
-                    backgroundColor: item.badgeColor ?? "#ef4444",
-                    color: item.badgeColor === "#00d4ff" ? "#08090d" : "#ffffff",
-                    fontSize: "10px",
-                    fontWeight: "900",
-                    height: "18px",
-                    minWidth: "18px",
-                    padding: "0 5px",
-                    borderRadius: "9999px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    boxShadow: `0 0 8px ${item.badgeColor ?? "#ef4444"}`,
-                  }}
-                >
-                  {item.badge}
-                </span>
-              )}
-            </Link>
-          );
-        })}
+                    {item.badge && (
+                      <span
+                        style={{
+                          backgroundColor: item.badgeColor ?? "#ef4444",
+                          color: "#08090d",
+                          fontSize: "9px",
+                          fontWeight: "900",
+                          padding: "1px 5px",
+                          borderRadius: "9999px",
+                        }}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* 3. ➕ Primary Create Button (Universal Matrix) */}
+        <button
+          onClick={() => openUniversalCreate("pulse")}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
+            padding: "11px 16px",
+            margin: "6px 0",
+            borderRadius: "14px",
+            fontSize: "13px",
+            fontWeight: "900",
+            color: "#08090d",
+            background: "linear-gradient(135deg, #00d4ff, #6366f1, #ec4899)",
+            border: "none",
+            cursor: "pointer",
+            boxShadow: "0 0 16px rgba(0, 212, 255, 0.35)",
+            transition: "all 0.15s ease",
+            letterSpacing: "0.4px",
+          }}
+        >
+          <Plus size={18} strokeWidth={3} />
+          <span>Create Matrix</span>
+        </button>
+
+        {/* 4. 💬 SpheraChat */}
+        <Link
+          href="/messages"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            padding: "9px 12px",
+            borderRadius: "12px",
+            fontSize: "13px",
+            fontWeight: isMessagesActive ? "800" : "500",
+            color: isMessagesActive ? "var(--text-pure)" : "var(--text-secondary)",
+            backgroundColor: isMessagesActive ? "var(--bg-card-hover)" : "transparent",
+            border: isMessagesActive ? "1px solid var(--border-active)" : "1px solid transparent",
+            textDecoration: "none",
+            transition: "all 0.15s ease",
+          }}
+        >
+          <MessageCircle size={20} color={isMessagesActive ? "var(--accent-cyan)" : "currentColor"} />
+          <span style={{ flex: 1 }}>SpheraChat</span>
+          <span
+            style={{
+              backgroundColor: "#00d4ff",
+              color: "#08090d",
+              fontSize: "10px",
+              fontWeight: "900",
+              height: "18px",
+              minWidth: "18px",
+              padding: "0 5px",
+              borderRadius: "9999px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 0 8px #00d4ff",
+            }}
+          >
+            {unreadCount || 3}
+          </span>
+        </Link>
+
+        {/* 5. 🤖 Sphera AI Agent */}
+        <Link
+          href="/ai"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            padding: "9px 12px",
+            borderRadius: "12px",
+            fontSize: "13px",
+            fontWeight: isAiActive ? "800" : "500",
+            color: isAiActive ? "var(--accent-cyan)" : "var(--text-secondary)",
+            backgroundColor: isAiActive ? "var(--bg-card-hover)" : "transparent",
+            border: isAiActive ? "1px solid var(--border-active)" : "1px solid transparent",
+            textDecoration: "none",
+            transition: "all 0.15s ease",
+          }}
+        >
+          <Sparkles size={20} color="var(--accent-cyan)" />
+          <span style={{ flex: 1 }}>Sphera AI Agent</span>
+        </Link>
+
+        {/* Search & Notifications shortcuts */}
+        <div style={{ display: "flex", gap: "4px", marginTop: "4px" }}>
+          <Link
+            href="/search"
+            style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
+              padding: "7px 10px",
+              borderRadius: "10px",
+              fontSize: "11px",
+              color: pathname === "/search" ? "var(--text-pure)" : "var(--text-muted)",
+              backgroundColor: pathname === "/search" ? "var(--bg-card-hover)" : "var(--bg-card)",
+              border: "1px solid var(--border-subtle)",
+              textDecoration: "none",
+              fontWeight: "700",
+            }}
+          >
+            <Search size={14} />
+            <span>Search</span>
+          </Link>
+
+          <Link
+            href="/notifications"
+            style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
+              padding: "7px 10px",
+              borderRadius: "10px",
+              fontSize: "11px",
+              color: pathname === "/notifications" ? "var(--text-pure)" : "var(--text-muted)",
+              backgroundColor: pathname === "/notifications" ? "var(--bg-card-hover)" : "var(--bg-card)",
+              border: "1px solid var(--border-subtle)",
+              textDecoration: "none",
+              fontWeight: "700",
+            }}
+          >
+            <Heart size={14} color="#ef4444" />
+            <span>Alerts</span>
+          </Link>
+        </div>
       </nav>
 
       {/* ── Profile & Theme Switcher Dock ─────────────────────────── */}
       <div style={{ paddingTop: "12px", borderTop: "1px solid var(--border-subtle)", display: "flex", flexDirection: "column", gap: "6px" }}>
-        {/* User Card */}
+        {/* User Profile Card */}
         <Link
           href="/profile"
           style={{
@@ -197,7 +421,7 @@ export function SidebarNav({ user }: { user?: { name: string; username: string }
             padding: "8px 10px",
             borderRadius: "12px",
             textDecoration: "none",
-            backgroundColor: pathname === "/profile" ? "var(--bg-card-hover)" : "var(--bg-card)",
+            backgroundColor: isProfileActive ? "var(--bg-card-hover)" : "var(--bg-card)",
             border: "1px solid var(--border-subtle)",
           }}
         >
@@ -231,7 +455,9 @@ export function SidebarNav({ user }: { user?: { name: string; username: string }
             <p style={{ fontSize: "12px", fontWeight: "800", color: "var(--text-pure)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {user?.name ?? "Kwesi Asiedu"}
             </p>
-            <p style={{ fontSize: "10px", color: "var(--accent-cyan)", margin: 0, fontWeight: "600" }}>@kwesi · Founder</p>
+            <p style={{ fontSize: "10px", color: "var(--accent-cyan)", margin: 0, fontWeight: "600" }}>
+              @kwesi · Sovereign Founder
+            </p>
           </div>
           <ShieldCheck size={14} color="#00d4ff" />
         </Link>
@@ -259,7 +485,7 @@ export function SidebarNav({ user }: { user?: { name: string; username: string }
             <span>Settings</span>
           </Link>
 
-          {/* 3-Theme Switcher (Black / White / Blue) */}
+          {/* 3-Theme Switcher (Dark / Pure Black / Blue) */}
           <ThemeToggle />
         </div>
       </div>

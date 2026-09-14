@@ -192,8 +192,12 @@ export function FeedMediaCard({ post, onDoubleClick, isTheater = false }: FeedMe
             loop
             muted={isMuted}
             playsInline
+            preload="auto"
             onTimeUpdate={handleTimeUpdate}
-            onError={() => setHasError(true)}
+            onError={(e) => {
+              console.warn("[FeedMediaCard] Video error:", rawMediaUrl);
+              setHasError(true);
+            }}
             className="w-full h-full object-cover max-h-[580px]"
           />
 

@@ -267,9 +267,27 @@ exports.Prisma.PostScalarFieldEnum = {
   pageId: 'pageId',
   isPinned: 'isPinned',
   isSponsored: 'isSponsored',
+  isThread: 'isThread',
+  threadIndex: 'threadIndex',
+  threadTotal: 'threadTotal',
+  threadParentId: 'threadParentId',
+  repostOfId: 'repostOfId',
+  quoteText: 'quoteText',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   deletedAt: 'deletedAt'
+};
+
+exports.Prisma.CommunityNoteScalarFieldEnum = {
+  id: 'id',
+  postId: 'postId',
+  authorId: 'authorId',
+  content: 'content',
+  sources: 'sources',
+  status: 'status',
+  helpfulCount: 'helpfulCount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.CommentScalarFieldEnum = {
@@ -657,7 +675,19 @@ exports.PostType = exports.$Enums.PostType = {
   EVENT: 'EVENT',
   LINK: 'LINK',
   PRODUCT: 'PRODUCT',
-  JOB: 'JOB'
+  JOB: 'JOB',
+  THREAD: 'THREAD',
+  ARTICLE: 'ARTICLE',
+  BOUNTY: 'BOUNTY',
+  CAROUSEL: 'CAROUSEL',
+  LIVE_STAGE: 'LIVE_STAGE'
+};
+
+exports.CommunityNoteStatus = exports.$Enums.CommunityNoteStatus = {
+  PROPOSED: 'PROPOSED',
+  CURRENTLY_RATED_HELPFUL: 'CURRENTLY_RATED_HELPFUL',
+  NEEDS_MORE_RATINGS: 'NEEDS_MORE_RATINGS',
+  NOT_HELPFUL: 'NOT_HELPFUL'
 };
 
 exports.ReactionType = exports.$Enums.ReactionType = {
@@ -839,6 +869,7 @@ exports.Prisma.ModelName = {
   Block: 'Block',
   Mute: 'Mute',
   Post: 'Post',
+  CommunityNote: 'CommunityNote',
   Comment: 'Comment',
   Reaction: 'Reaction',
   Save: 'Save',
