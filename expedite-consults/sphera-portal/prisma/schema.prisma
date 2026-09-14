@@ -34,6 +34,7 @@ model User {
   reactions Reaction[]
   saves     Save[]
   shares    Share[]
+  communityNotes CommunityNote[]
 
   // Social graph
   sentFriendRequests     Friendship[] @relation("FriendshipSender")
@@ -307,15 +308,29 @@ model Post {
   page        Page?      @relation(fields: [pageId], references: [id])
   isPinned    Boolean    @default(false)
   isSponsored Boolean    @default(false)
+
+  // Sphera Pulse & Threading
+  isThread       Boolean    @default(false)
+  threadIndex    Int?
+  threadTotal    Int?
+  threadParentId String?
+  threadParent   Post?      @relation("ThreadChains", fields: [threadParentId], references: [id], onDelete: SetNull)
+  threadReplies  Post[]     @relation("ThreadChains")
+  repostOfId     String?
+  repostOf       Post?      @relation("PostReposts", fields: [repostOfId], references: [id], onDelete: SetNull)
+  reposts        Post[]     @relation("PostReposts")
+  quoteText      String?    @db.Text
+
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
   deletedAt   DateTime?
 
-  comments  Comment[]
-  reactions Reaction[]
-  saves     Save[]
-  shares    Share[]
-  hashtags  PostHashtag[]
+  comments       Comment[]
+  reactions      Reaction[]
+  saves          Save[]
+  shares         Share[]
+  hashtags       PostHashtag[]
+  communityNotes CommunityNote[]
 
   @@map("posts")
 }
@@ -330,6 +345,34 @@ enum PostType {
   LINK
   PRODUCT
   JOB
+  THREAD
+  ARTICLE
+  BOUNTY
+  CAROUSEL
+  LIVE_STAGE
+}
+
+model CommunityNote {
+  id           String              @id @default(cuid())
+  postId       String
+  post         Post                @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId     String
+  author       User                @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  content      String              @db.Text
+  sources      String[]
+  status       CommunityNoteStatus @default(PROPOSED)
+  helpfulCount Int                 @default(0)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  @@map("community_notes")
+}
+
+enum CommunityNoteStatus {
+  PROPOSED
+  CURRENTLY_RATED_HELPFUL
+  NEEDS_MORE_RATINGS
+  NOT_HELPFUL
 }
 
 model Comment {
