@@ -173,6 +173,28 @@ const INITIAL_USERS: UserRecord[] = [
     mfaChannel: "email",
     createdAt: "2026-07-01T08:00:00Z",
     updatedAt: "2026-08-29T12:00:00Z"
+  },
+  {
+    id: "USR-89420",
+    email: "rhoda.mensah@expedite-consults.com",
+    phone: "+1 (240) 555-0318",
+    role: "personal",
+    status: "Active",
+    mfaEnabled: true,
+    mfaChannel: "email",
+    createdAt: "2026-09-13T20:45:00Z",
+    updatedAt: "2026-09-13T20:45:00Z"
+  },
+  {
+    id: "USR-89421",
+    email: "rhoda@connectin.com",
+    phone: "+1 (240) 555-0318",
+    role: "personal",
+    status: "Active",
+    mfaEnabled: true,
+    mfaChannel: "email",
+    createdAt: "2026-09-13T20:45:00Z",
+    updatedAt: "2026-09-13T20:45:00Z"
   }
 ]
 
@@ -320,6 +342,42 @@ const INITIAL_PROFILES: UserProfileRecord[] = [
     followersCount: 95000,
     profileViews: 14200,
     postImpressions: 485000
+  },
+  {
+    userId: "USR-89420",
+    name: "Rhoda Mensah",
+    headline: "Senior Cyber Compliance & Risk Analyst · ConnectIn Member",
+    avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80",
+    coverImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80",
+    location: "Washington DC-Baltimore Area · Verified Identity",
+    about: "Verified Member on ConnectIn Zero-Trust Network. Specialized in Governance, Risk & Compliance (GRC), FedRAMP audits, and Zero Trust security controls.",
+    skills: ["FedRAMP Compliance", "NIST SP 800-53", "Risk Management", "SOC 2 Type II"],
+    clearanceLevel: "Standard Verified Identity (Level 2)",
+    fido2MfaVerified: true,
+    cryptoVerificationBadge: "0xED25519_MEMBER_VERIFIED",
+    skillMatrixScore: 88.5,
+    connectionsCount: 140,
+    followersCount: 320,
+    profileViews: 95,
+    postImpressions: 1200
+  },
+  {
+    userId: "USR-89421",
+    name: "Rhoda",
+    headline: "Cybersecurity & Technology Professional · ConnectIn Member",
+    avatar: "https://api.dicebear.com/7.x/initials/svg?seed=Rhoda&backgroundColor=0a66c2",
+    coverImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80",
+    location: "United States · Cryptographically Verified",
+    about: "Verified member on ConnectIn Zero-Trust Network.",
+    skills: ["Cloud Security", "Enterprise IAM"],
+    clearanceLevel: "Standard Verified Identity (Level 2)",
+    fido2MfaVerified: true,
+    cryptoVerificationBadge: "0xED25519_SESSION_INITIALIZED",
+    skillMatrixScore: 75.0,
+    connectionsCount: 12,
+    followersCount: 45,
+    profileViews: 28,
+    postImpressions: 450
   }
 ]
 
@@ -376,7 +434,24 @@ class ConnectInDatabase {
     try {
       if (fs.existsSync(this.dbFilePath)) {
         const raw = fs.readFileSync(this.dbFilePath, "utf8")
-        return JSON.parse(raw)
+        const parsed = JSON.parse(raw)
+        if (parsed && Array.isArray(parsed.users)) {
+          const userMap = new Map<string, UserRecord>()
+          for (const u of INITIAL_USERS) userMap.set(u.email.toLowerCase(), u)
+          for (const u of (parsed.users || [])) userMap.set(u.email.toLowerCase(), u)
+
+          const profileMap = new Map<string, UserProfileRecord>()
+          for (const p of INITIAL_PROFILES) profileMap.set(p.userId, p)
+          for (const p of (parsed.profiles || [])) profileMap.set(p.userId, p)
+
+          return {
+            users: Array.from(userMap.values()),
+            profiles: Array.from(profileMap.values()),
+            sessions: parsed.sessions || [],
+            otps: parsed.otps || [],
+            posts: parsed.posts && parsed.posts.length > 0 ? parsed.posts : INITIAL_POSTS
+          }
+        }
       }
     } catch (e) {
       console.warn("Could not read persistent DB file, initializing fresh store:", e)
@@ -391,6 +466,34 @@ class ConnectInDatabase {
     }
   }
 
+  public refreshFromDisk() {
+    try {
+      if (fs.existsSync(this.dbFilePath)) {
+        const raw = fs.readFileSync(this.dbFilePath, "utf8")
+        const parsed = JSON.parse(raw)
+        if (parsed && Array.isArray(parsed.users)) {
+          const userMap = new Map<string, UserRecord>()
+          for (const u of INITIAL_USERS) userMap.set(u.email.toLowerCase(), u)
+          for (const u of (parsed.users || [])) userMap.set(u.email.toLowerCase(), u)
+          for (const u of this.data.users) userMap.set(u.email.toLowerCase(), u)
+
+          const profileMap = new Map<string, UserProfileRecord>()
+          for (const p of INITIAL_PROFILES) profileMap.set(p.userId, p)
+          for (const p of (parsed.profiles || [])) profileMap.set(p.userId, p)
+          for (const p of this.data.profiles) profileMap.set(p.userId, p)
+
+          this.data.users = Array.from(userMap.values())
+          this.data.profiles = Array.from(profileMap.values())
+          if (Array.isArray(parsed.otps)) this.data.otps = parsed.otps
+          if (Array.isArray(parsed.sessions)) this.data.sessions = parsed.sessions
+          if (Array.isArray(parsed.posts) && parsed.posts.length > 0) this.data.posts = parsed.posts
+        }
+      }
+    } catch (e) {
+      // in serverless read-only mode, keep in-memory
+    }
+  }
+
   private saveData() {
     try {
       fs.writeFileSync(this.dbFilePath, JSON.stringify(this.data, null, 2), "utf8")
@@ -402,28 +505,34 @@ class ConnectInDatabase {
   // ─── USER & AUTH OPERATIONS ───
 
   public getUsers(): UserRecord[] {
+    this.refreshFromDisk()
     return this.data.users
   }
 
   public findUserByEmail(email: string): UserRecord | undefined {
+    this.refreshFromDisk()
     return this.data.users.find(u => u.email.toLowerCase() === email.toLowerCase().trim())
   }
 
   public findUserByPhone(phone: string): UserRecord | undefined {
+    this.refreshFromDisk()
     const clean = phone.replace(/[^\d]/g, "")
     if (!clean) return undefined
     return this.data.users.find(u => u.phone && u.phone.replace(/[^\d]/g, "") === clean)
   }
 
   public findUserById(id: string): UserRecord | undefined {
+    this.refreshFromDisk()
     return this.data.users.find(u => u.id === id)
   }
 
   public findProfileByUserId(userId: string): UserProfileRecord | undefined {
+    this.refreshFromDisk()
     return this.data.profiles.find(p => p.userId === userId)
   }
 
   public createUser(user: Omit<UserRecord, "id" | "createdAt" | "updatedAt">, profile: Omit<UserProfileRecord, "userId">): { user: UserRecord; profile: UserProfileRecord } {
+    this.refreshFromDisk()
     const userId = `USR-${Math.floor(10000 + Math.random() * 90000)}`
     const now = new Date().toISOString()
 
@@ -651,6 +760,7 @@ class ConnectInDatabase {
   // ─── ADMIN DIRECTORY ───
 
   public getAllUsersWithProfiles() {
+    this.refreshFromDisk()
     return this.data.users.map(user => {
       const profile = this.data.profiles.find(p => p.userId === user.id)
       return {

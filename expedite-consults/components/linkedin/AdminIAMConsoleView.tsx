@@ -48,7 +48,11 @@ import {
   Flame,
   FileCode,
   Check,
-  Globe
+  Globe,
+  UserPlus,
+  Mail,
+  Building,
+  Sparkle
 } from "lucide-react"
 import {
   ADMIN_USERS_DIRECTORY,
@@ -79,6 +83,7 @@ import {
   UserEnforcementStatus
 } from "@/lib/connectin-iam-data"
 import { UserProfile } from "@/lib/linkedin-data"
+import { loadStoredAdminUsers, saveStoredAdminUsers, registerNewUserInDirectory } from "@/lib/connectin-storage"
 
 interface AdminIAMConsoleViewProps {
   currentUser: UserProfile
@@ -108,6 +113,7 @@ export function AdminIAMConsoleView({
 
   // Live state
   const [users, setUsers] = useState<AdminUserRecord[]>(ADMIN_USERS_DIRECTORY)
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false)
   const [contentItems, setContentItems] = useState<AdminContentRecord[]>(ADMIN_CONTENT_DIRECTORY)
   const [cases, setCases] = useState<ModerationCase[]>(MODERATION_CASES_DATA)
   const [companies, setCompanies] = useState<AdminCompanyRecord[]>(ADMIN_COMPANIES_DIRECTORY)
@@ -131,6 +137,16 @@ export function AdminIAMConsoleView({
   const [isImpersonateModalOpen, setIsImpersonateModalOpen] = useState(false)
   const [impersonateReason, setImpersonateReason] = useState("")
 
+  // Quick Add / Invite User Modal State
+  const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false)
+  const [newUserName, setNewUserName] = useState("")
+  const [newUserEmail, setNewUserEmail] = useState("")
+  const [newUserPhone, setNewUserPhone] = useState("")
+  const [newUserRole, setNewUserRole] = useState<'personal' | 'enterprise' | 'creator' | 'seller' | 'admin'>('personal')
+  const [newUserOrg, setNewUserOrg] = useState("")
+  const [newUserHeadline, setNewUserHeadline] = useState("")
+  const [isCreatingUser, setIsCreatingUser] = useState(false)
+
   // Broadcast Composer State
   const [newBroadcastTitle, setNewBroadcastTitle] = useState("")
   const [newBroadcastBody, setNewBroadcastBody] = useState("")
@@ -141,6 +157,32 @@ export function AdminIAMConsoleView({
     setActionNotice(msg)
     setTimeout(() => setActionNotice(null), 4000)
   }
+
+  // Live Server Data Fetcher
+  const fetchLiveAdminData = async () => {
+    setIsLoadingUsers(true)
+    try {
+      const res = await fetch("/api/connectin/admin")
+      if (res.ok) {
+        const data = await res.json()
+        if (data.users && Array.isArray(data.users)) {
+          const localUsers = loadStoredAdminUsers()
+          const combined = Array.from(
+            new Map([...ADMIN_USERS_DIRECTORY, ...localUsers, ...data.users].map(u => [u.email.toLowerCase(), u])).values()
+          )
+          setUsers(combined)
+        }
+      }
+    } catch (err) {
+      console.warn("Could not fetch live admin users:", err)
+    } finally {
+      setIsLoadingUsers(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchLiveAdminData()
+  }, [activeAdminTab])
 
   // Audit Log Appender
   const appendAudit = (action: AdminAuditLogEntry['action'], target: string, reason: string) => {
@@ -154,7 +196,63 @@ export function AdminIAMConsoleView({
       timestamp: 'Just Now',
       status: 'Success'
     }
-    setAuditLogs(prev => [newEntry, ...prev])
+  }
+
+  // Quick Add Member Action
+  const handleCreateUserSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newUserEmail.trim() || !newUserName.trim()) return
+
+    setIsCreatingUser(true)
+    const cleanEmail = newUserEmail.toLowerCase().trim()
+    const cleanName = newUserName.trim()
+    const roleUpper = newUserRole.toUpperCase()
+
+    const newRecord: AdminUserRecord = {
+      id: `USR-${Math.floor(10000 + Math.random() * 90000)}`,
+      name: cleanName,
+      email: cleanEmail,
+      avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(cleanName + "-" + cleanEmail)}&backgroundColor=0a66c2`,
+      headline: newUserHeadline || `${newUserRole.charAt(0).toUpperCase() + newUserRole.slice(1)} Professional · ConnectIn Member`,
+      roles: [roleUpper],
+      enforcementStatus: 'Active',
+      verificationLevel: 'Email Verified',
+      mfaStatus: 'Email 2FA ✓',
+      riskLevel: 'Low',
+      organization: newUserOrg || 'ConnectIn Member',
+      location: 'United States · Verified',
+      connectionsCount: 0,
+      lastLogin: 'Active Now',
+      registeredAt: 'Today',
+      reportsCount: 0
+    }
+
+    try {
+      await fetch('/api/connectin/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: cleanName.split(' ')[0],
+          lastName: cleanName.split(' ').slice(1).join(' '),
+          email: cleanEmail,
+          phone: newUserPhone,
+          role: newUserRole,
+          twoFactorChannel: 'email'
+        })
+      })
+    } catch (e) { /* ignore */ }
+
+    registerNewUserInDirectory(newRecord)
+    setUsers(prev => [newRecord, ...prev.filter(u => u.email.toLowerCase() !== cleanEmail)])
+    setIsAddUserModalOpen(false)
+    setNewUserName("")
+    setNewUserEmail("")
+    setNewUserPhone("")
+    setNewUserOrg("")
+    setNewUserHeadline("")
+    setIsCreatingUser(false)
+    appendAudit('USER_UNBANNED', `New User Provisioned: ${cleanName} (${cleanEmail})`, `Directly provisioned by administrator ${currentUser.name}`)
+    showNotice(`✓ User ${cleanName} (${cleanEmail}) provisioned and added to active user directory!`)
   }
 
   // 1. User Management Actions
@@ -579,9 +677,27 @@ export function AdminIAMConsoleView({
                     className="w-full rounded-xl bg-zinc-50 pl-10 pr-4 py-2 text-xs sm:text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
                   />
                 </div>
-                <span className="text-xs text-zinc-400 font-mono self-center">
-                  Showing {users.length} registered accounts
-                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={fetchLiveAdminData}
+                    disabled={isLoadingUsers}
+                    className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                    title="Refresh live user registrations from database"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 ${isLoadingUsers ? "animate-spin text-[#0A66C2]" : ""}`} />
+                    <span>{isLoadingUsers ? "Syncing..." : "Refresh Live Users"}</span>
+                  </button>
+                  <button
+                    onClick={() => setIsAddUserModalOpen(true)}
+                    className="rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white px-4 py-2 text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
+                  >
+                    <UserPlus className="h-3.5 w-3.5" />
+                    <span>+ Add Member</span>
+                  </button>
+                  <span className="text-xs text-zinc-400 font-mono self-center pl-1 hidden sm:inline">
+                    {users.length} accounts
+                  </span>
+                </div>
               </div>
 
               <div className="rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 overflow-hidden">
@@ -1515,6 +1631,125 @@ export function AdminIAMConsoleView({
                 Begin Audited Session
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add / Invite User Modal */}
+      {isAddUserModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="max-w-lg w-full rounded-3xl bg-white p-6 sm:p-8 shadow-2xl dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-5">
+            <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-2xl bg-[#0A66C2]/10 text-[#0A66C2] flex items-center justify-center">
+                  <UserPlus className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100">Provision / Invite New Member</h3>
+                  <p className="text-xs text-zinc-500">Register new identity directly into ConnectIn Zero-Trust directory</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsAddUserModalOpen(false)}
+                className="rounded-full p-1.5 text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateUserSubmit} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">Full Name *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Rhoda Mensah"
+                  value={newUserName}
+                  onChange={(e) => setNewUserName(e.target.value)}
+                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">Email Address *</label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="e.g. rhoda.mensah@expedite-consults.com"
+                    value={newUserEmail}
+                    onChange={(e) => setNewUserEmail(e.target.value)}
+                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">Phone (Optional)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. +1 (240) 555-0318"
+                    value={newUserPhone}
+                    onChange={(e) => setNewUserPhone(e.target.value)}
+                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">Platform Role</label>
+                  <select
+                    value={newUserRole}
+                    onChange={(e: any) => setNewUserRole(e.target.value)}
+                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                  >
+                    <option value="personal">Personal (Standard Member)</option>
+                    <option value="enterprise">Enterprise (Buyer / Procurement)</option>
+                    <option value="creator">Creator (Studio / Media)</option>
+                    <option value="seller">Seller (Commercial Marketplace)</option>
+                    <option value="admin">Super Admin (IAM Enclave)</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">Organization / Company</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Expedite Consults / Cyber Risk"
+                    value={newUserOrg}
+                    onChange={(e) => setNewUserOrg(e.target.value)}
+                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">Professional Headline</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Senior Cyber Compliance & Risk Analyst"
+                  value={newUserHeadline}
+                  onChange={(e) => setNewUserHeadline(e.target.value)}
+                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => setIsAddUserModalOpen(false)}
+                  className="rounded-full border border-zinc-300 dark:border-zinc-700 px-5 py-2.5 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isCreatingUser || !newUserName.trim() || !newUserEmail.trim()}
+                  className="rounded-full bg-[#0A66C2] hover:bg-[#004182] px-6 py-2.5 text-xs font-bold text-white shadow-sm disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  <span>{isCreatingUser ? "Provisioning..." : "Provision Member"}</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
