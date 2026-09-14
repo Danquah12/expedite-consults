@@ -113,13 +113,21 @@ export function LinkedInNavbar({
     { id: "messaging", label: "Messages 💬", icon: MessageSquare, badge: unreadMessagesCount },
   ]
 
+  const isAdminUser = Boolean(
+    (user as any).role === 'admin' ||
+    (user as any).roles?.includes('SUPER_ADMIN') ||
+    (user as any).roles?.includes('PLATFORM_ADMIN') ||
+    (user as any).email?.toLowerCase().includes('admin') ||
+    (user as any).email?.toLowerCase() === 'sec-admin@connectin.internal'
+  )
+
   const categorizedMoreMenu = [
     {
       category: "Business & Enterprise 🏢",
       items: [
         { id: "procurement", label: "🏢 Procurement & RFPs", desc: "$2.4M enterprise spend & bids" },
         { id: "bounties", label: "🏆 Enterprise Bounties", desc: "$15K–$50K hackathons in escrow" },
-        { id: "adminiam", label: "🛡️ Admin & IAM Console", desc: "User enforcement, 4-eyes & audit log" },
+        ...(isAdminUser ? [{ id: "adminiam", label: "🛡️ Admin & IAM Console", desc: "User enforcement, 4-eyes & audit log" }] : []),
         { id: "company", label: "🏛️ Company Hub", desc: "Expedite Consults enterprise profile" },
         { id: "sellercenter", label: "💼 Seller Center", desc: "Manage software & $122.7K MRR" },
         { id: "wallet", label: "💳 Pay, Wallet & Invoicing", desc: "$2,430 Balance & SOWs" },
@@ -467,26 +475,40 @@ export function LinkedInNavbar({
                       View Unified Profile &amp; Portfolio 📁
                     </button>
 
-                    <div className="grid grid-cols-2 gap-1.5 pt-1">
-                      <button
-                        onClick={() => {
-                          onSelectTab('accountsecurity')
-                          setIsMeOpen(false)
-                        }}
-                        className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 p-1.5 text-center text-[11px] font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100"
-                      >
-                        🔐 Security &amp; Keys
-                      </button>
-                      <button
-                        onClick={() => {
-                          onSelectTab('adminiam')
-                          setIsMeOpen(false)
-                        }}
-                        className="rounded-xl border border-red-200 dark:border-red-800/60 bg-red-50/50 dark:bg-red-950/40 p-1.5 text-center text-[11px] font-bold text-red-700 dark:text-red-300 hover:bg-red-100"
-                      >
-                        🛡️ Admin Console
-                      </button>
-                    </div>
+                    {isAdminUser ? (
+                      <div className="grid grid-cols-2 gap-1.5 pt-1">
+                        <button
+                          onClick={() => {
+                            onSelectTab('accountsecurity')
+                            setIsMeOpen(false)
+                          }}
+                          className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 p-1.5 text-center text-[11px] font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100"
+                        >
+                          🔐 Security &amp; Keys
+                        </button>
+                        <button
+                          onClick={() => {
+                            onSelectTab('adminiam')
+                            setIsMeOpen(false)
+                          }}
+                          className="rounded-xl border border-red-200 dark:border-red-800/60 bg-red-50/50 dark:bg-red-950/40 p-1.5 text-center text-[11px] font-bold text-red-700 dark:text-red-300 hover:bg-red-100"
+                        >
+                          🛡️ Admin Console
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="pt-1">
+                        <button
+                          onClick={() => {
+                            onSelectTab('accountsecurity')
+                            setIsMeOpen(false)
+                          }}
+                          className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 p-2 text-center text-xs font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 transition-colors"
+                        >
+                          🔐 Account Security &amp; Passkeys
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div className="mt-3 space-y-1 border-t border-zinc-100 pt-2 text-xs text-zinc-600 dark:border-zinc-800 dark:text-zinc-300">

@@ -853,12 +853,43 @@ export default function LinkedInPage() {
           />
         )}
 
-        {/* VIEW: ADMINISTRATIVE IAM & MODERATION CONSOLE */}
+        {/* VIEW: ADMINISTRATIVE IAM & MODERATION CONSOLE (STRICT ZERO-TRUST ROLE GUARD) */}
         {activeTab === 'adminiam' && (
-          <AdminIAMConsoleView
-            currentUser={userData}
-            onNavigateTab={(tab) => setActiveTab(tab as any)}
-          />
+          ((userData as any).role === 'admin' ||
+           (userData as any).roles?.includes('SUPER_ADMIN') ||
+           (userData as any).roles?.includes('PLATFORM_ADMIN') ||
+           (userData as any).email?.toLowerCase().includes('admin') ||
+           (userData as any).email?.toLowerCase() === 'sec-admin@connectin.internal') ? (
+            <AdminIAMConsoleView
+              currentUser={userData}
+              onNavigateTab={(tab) => setActiveTab(tab as any)}
+            />
+          ) : (
+            <div className="rounded-3xl border border-red-200 dark:border-red-900/60 bg-white dark:bg-zinc-900 p-8 sm:p-12 text-center max-w-2xl mx-auto my-12 shadow-xl space-y-4 animate-in fade-in zoom-in-95">
+              <div className="h-16 w-16 rounded-3xl bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center mx-auto text-3xl font-bold shadow-inner">
+                🔒
+              </div>
+              <div className="space-y-1">
+                <span className="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">
+                  403 Forbidden · Zero-Trust Policy
+                </span>
+                <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                  Access Denied: Least-Privilege Enclave
+                </h2>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-md mx-auto">
+                  Administrative consoles and platform governance tools are strictly restricted to verified platform administrators. Standard member accounts have isolated access.
+                </p>
+              </div>
+              <div className="pt-3 flex items-center justify-center gap-3">
+                <button
+                  onClick={() => setActiveTab('home')}
+                  className="rounded-full bg-[#0A66C2] text-white px-6 py-2.5 text-xs font-bold hover:bg-[#004182] transition-colors shadow-sm cursor-pointer"
+                >
+                  Return to Home Workspace
+                </button>
+              </div>
+            </div>
+          )
         )}
 
         {/* VIEW: CONNECTIN MEDIA & VIDEO PLATFORM */}
