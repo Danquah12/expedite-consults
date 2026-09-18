@@ -52,7 +52,9 @@ import { PostComposerModal } from "@/components/feed/PostComposerModal";
 import { AlgorithmExplanationModal } from "@/components/feed/AlgorithmExplanationModal";
 import { AlgorithmPreferencesModal } from "@/components/feed/AlgorithmPreferencesModal";
 import { Sliders, HelpCircle } from "lucide-react";
-import { FeedMediaCard } from "@/components/feed/FeedMediaCard";\nimport { ShareModal } from "@/components/feed/ShareModal";\nimport { getLocalFeedPosts } from "@/lib/indexed-db-media";
+import { FeedMediaCard } from "@/components/feed/FeedMediaCard";
+import { ShareModal } from "@/components/feed/ShareModal";
+import { getLocalFeedPosts } from "@/lib/indexed-db-media";
 import { SpheraPulseComposer } from "@/components/post/SpheraPulseComposer";
 import { SpheraPulseThreadCard } from "@/components/post/SpheraPulseThreadCard";
 import { useAppStore, FeedStreamType } from "@/store/useAppStore";
@@ -83,7 +85,9 @@ export default function FeedPage() {
   const [isExplainModalOpen, setIsExplainModalOpen] = useState(false);
   const [explainContentId, setExplainContentId] = useState<string | null>(null);
   const [explainAuthor, setExplainAuthor] = useState<string | undefined>(undefined);
-  const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);\n  const [isShareModalOpen, setIsShareModalOpen] = useState(false);\n  const [selectedSharePost, setSelectedSharePost] = useState<FeedPost | null>(null);
+  const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [selectedSharePost, setSelectedSharePost] = useState<FeedPost | null>(null);
 
 
   // 1. Instantly load locally cached posts from IndexedDB and localStorage on mount
@@ -152,6 +156,22 @@ export default function FeedPage() {
   useEffect(() => {
     fetchFeed(activeFeedStream);
   }, [activeFeedStream]);
+
+  const handleOpenShare = (post: FeedPost) => {
+    setSelectedSharePost(post);
+    setIsShareModalOpen(true);
+  };
+
+  const handleShareCompleted = (platform: string) => {
+    if (!selectedSharePost) return;
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === selectedSharePost.id ? { ...p, sharesCount: (p.sharesCount || 0) + 1 } : p
+      )
+    );
+    setGiftNotification(`🚀 Shared to ${platform.toUpperCase()}!`);
+    setTimeout(() => setGiftNotification(null), 3000);
+  };
 
   const handleAddNewPost = (newPost: FeedPost) => {
     setPosts((prev) => {

@@ -1,69 +1,59 @@
-import * as React from "react";
-import { cn } from "@/lib/utils";
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "ghost" | "danger" | "outline" | "link";
-  size?: "sm" | "md" | "lg" | "xl" | "icon" | "icon-sm" | "icon-lg";
-  loading?: boolean;
-}
+import { cn } from "@/lib/utils"
 
-const variantStyles: Record<string, string> = {
-  primary:
-    "bg-[#00d4ff] text-[#0a0f1e] hover:bg-[#00bce0] hover:shadow-[0_0_20px_rgba(0,212,255,0.3)]",
-  secondary:
-    "bg-[#1f2937] text-[#f9fafb] border border-[#1e2a3a] hover:bg-[#374151] hover:border-[#374151]",
-  ghost: "text-[#9ca3af] hover:bg-[#1f2937] hover:text-[#f9fafb]",
-  danger: "bg-[#ef4444] text-white hover:bg-[#dc2626]",
-  outline:
-    "border border-[#00d4ff] text-[#00d4ff] hover:bg-[rgba(0,212,255,0.1)]",
-  link: "text-[#00d4ff] hover:underline p-0 h-auto",
-};
-
-const sizeStyles: Record<string, string> = {
-  sm: "h-8 px-3 text-xs",
-  md: "h-10 px-4 text-sm",
-  lg: "h-12 px-6 text-base",
-  xl: "h-14 px-8 text-lg",
-  icon: "h-9 w-9",
-  "icon-sm": "h-7 w-7",
-  "icon-lg": "h-11 w-11",
-};
-
-export function buttonVariants({
-  variant = "secondary",
-  size = "md",
-  className,
-}: {
-  variant?: "primary" | "secondary" | "ghost" | "danger" | "outline" | "link";
-  size?: "sm" | "md" | "lg" | "xl" | "icon" | "icon-sm" | "icon-lg";
-  className?: string;
-} = {}) {
-  return cn(
-    "inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00d4ff] disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]",
-    variantStyles[variant] || variantStyles.secondary,
-    sizeStyles[size] || sizeStyles.md,
-    className
-  );
-}
-
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "secondary", size = "md", loading, children, disabled, ...props }, ref) => {
-    return (
-      <button
-        className={buttonVariants({ variant, size, className })}
-        ref={ref}
-        disabled={disabled || loading}
-        {...props}
-      >
-        {loading ? (
-          <span className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
-        ) : null}
-        {children}
-      </button>
-    );
+const buttonVariants = cva(
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  {
+    variants: {
+      variant: {
+        default:
+          "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+        outline:
+          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
+        secondary:
+          "bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80",
+        ghost:
+          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-9 px-4 py-2 has-[>svg]:px-3",
+        sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
+        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
+        icon: "size-9",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
   }
-);
-Button.displayName = "Button";
+)
 
-export { Button };
+function Button({
+  className,
+  variant,
+  size,
+  asChild = false,
+  ...props
+}: React.ComponentProps<"button"> &
+  VariantProps<typeof buttonVariants> & {
+    asChild?: boolean
+  }) {
+  const Comp = asChild ? Slot : "button"
+
+  return (
+    <Comp
+      data-slot="button"
+      className={cn(buttonVariants({ variant, size, className }))}
+      {...props}
+    />
+  )
+}
+
+export { Button, buttonVariants }

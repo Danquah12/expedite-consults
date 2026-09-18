@@ -6,14 +6,17 @@ export const dynamic = "force-dynamic";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { filename: string } }
+  context: { params: Promise<{ filename: string }> | { filename: string } }
 ) {
   try {
-    const filename = params.filename;
+    const resolvedParams = await context.params;
+    const filename = resolvedParams.filename;
+
     const candidatePaths = [
       path.join(process.cwd(), "data", "videos", filename),
       path.join(process.cwd(), "app", "linkedin", "data", "videos", filename),
       path.join(process.cwd(), "public", "uploads", "videos", filename),
+      path.join(process.cwd(), "..", "data", "videos", filename),
     ];
 
     let foundPath: string | null = null;

@@ -93,6 +93,8 @@ import {
   initialAdminAuditLogs,
   AdminSystemHealth,
   initialAdminSystemHealth,
+  initialCampusCourses,
+  initialCampusReels,
 } from "@/lib/campus-data";
 
 import AxiomConnectWorkspace from "@/components/connect-suite/AxiomConnectWorkspace";
