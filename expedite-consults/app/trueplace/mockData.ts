@@ -124,6 +124,14 @@ export interface Property {
     defects: InspectionDefectItem[];
   };
   propertyDNA?: PropertyDNARadar;
+  sdatDeedUrl?: string;
+  countyPermitUrl?: string;
+  sslCadastralId?: string;
+  deedLiberFolio?: string;
+  governmentSource?: string;
+  ledgerId?: string;
+  lastSyncedAt?: string;
+  syncBlockHeight?: number;
 }
 
 export interface TrueCostBreakdown {

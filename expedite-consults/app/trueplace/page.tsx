@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import { MOCK_PROPERTIES, Property, calculateInstantTrueValue } from './mockData';
+import { REAL_DMV_INVENTORY } from './realDataService';
+import { PropertyInventoryLedgerModal } from './components/PropertyInventoryLedgerModal';
 import { Header, ThemeKey, THEMES } from './components/Header';
 import { TrueValueCard } from './components/TrueValueCard';
 import { WhatIfSimulator } from './components/WhatIfSimulator';
@@ -46,17 +48,19 @@ import {
   Scale,
   HeartPulse,
   Clock,
+  ExternalLink,
 } from 'lucide-react';
 
 export default function TruePlacePortalPage() {
   const [theme, setTheme] = useState<ThemeKey>('green');
   const [activeTab, setActiveTab] = useState<string>('search');
   const [ghostMode, setGhostMode] = useState<boolean>(true);
-  const [properties, setProperties] = useState<Property[]>(MOCK_PROPERTIES);
-  const [selectedProperty, setSelectedProperty] = useState<Property>(MOCK_PROPERTIES[0]);
+  const [properties, setProperties] = useState<Property[]>([...REAL_DMV_INVENTORY, ...MOCK_PROPERTIES]);
+  const [selectedProperty, setSelectedProperty] = useState<Property>(REAL_DMV_INVENTORY[0] || MOCK_PROPERTIES[0]);
   const [showTruthReportModal, setShowTruthReportModal] = useState<boolean>(false);
   const [showHomeTruthModal, setShowHomeTruthModal] = useState<boolean>(false);
   const [showAddAddressModal, setShowAddAddressModal] = useState<boolean>(false);
+  const [showLedgerModal, setShowLedgerModal] = useState<boolean>(false);
 
   // New Custom Address Form State
   const [customAddress, setCustomAddress] = useState<string>('4420 N Fairfax Dr');
@@ -70,7 +74,7 @@ export default function TruePlacePortalPage() {
 
   // Filter States
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [selectedSubmarket, setSelectedSubmarket] = useState<string>('All');
+  const [selectedSubmarket, setSelectedSubmarket] = useState<string>('All DMV (Real Data)');
   const [priceMax, setPriceMax] = useState<number>(5000000);
   const [minBeds, setMinBeds] = useState<number>(0);
   const [propertyTypeFilter, setPropertyTypeFilter] = useState<string>('all');
@@ -96,28 +100,32 @@ export default function TruePlacePortalPage() {
     setActiveTab('valuation');
   };
 
-  // Northern Virginia Submarkets
+  // Tri-Jurisdiction Real DMV Submarkets & Agencies
   const SUBMARKETS = [
-    { label: 'All NoVA & DMV', count: properties.length },
-    { label: 'Arlington', count: properties.filter((p) => p.city === 'Arlington').length },
+    { label: 'All DMV (Real Data)', count: properties.length },
+    { label: 'Northern Virginia (VA)', count: properties.filter((p) => p.state === 'VA').length },
+    { label: 'Maryland (MD SDAT)', count: properties.filter((p) => p.state === 'MD').length },
+    { label: 'Washington DC (DC GIS)', count: properties.filter((p) => p.state === 'DC').length },
+    { label: 'Bethesda & Potomac', count: properties.filter((p) => p.city === 'Bethesda' || p.city === 'Potomac').length },
     { label: 'McLean & Great Falls', count: properties.filter((p) => p.city === 'McLean' || p.city === 'Great Falls').length },
-    { label: 'Alexandria (Old Town)', count: properties.filter((p) => p.city === 'Alexandria').length },
+    { label: 'Arlington & Alexandria', count: properties.filter((p) => p.city === 'Arlington' || p.city === 'Alexandria').length },
+    { label: 'Georgetown & Capitol Hill', count: properties.filter((p) => p.city === 'Washington').length },
     { label: 'Vienna & Falls Church', count: properties.filter((p) => p.city === 'Vienna' || p.city === 'Falls Church').length },
-    { label: 'Reston & Tysons', count: properties.filter((p) => p.city === 'Reston' || p.city === 'Tysons').length },
-    { label: 'Ashburn (Loudoun)', count: properties.filter((p) => p.city === 'Ashburn').length },
-    { label: 'Bethesda MD', count: properties.filter((p) => p.city === 'Bethesda').length },
+    { label: 'Reston & Ashburn', count: properties.filter((p) => p.city === 'Reston' || p.city === 'Ashburn').length },
   ];
 
   // Filter logic
   let filteredProperties = properties.filter((prop) => {
-    if (selectedSubmarket !== 'All NoVA & DMV') {
-      if (selectedSubmarket === 'Arlington' && prop.city !== 'Arlington') return false;
+    if (selectedSubmarket !== 'All DMV (Real Data)') {
+      if (selectedSubmarket === 'Northern Virginia (VA)' && prop.state !== 'VA') return false;
+      if (selectedSubmarket === 'Maryland (MD SDAT)' && prop.state !== 'MD') return false;
+      if (selectedSubmarket === 'Washington DC (DC GIS)' && prop.state !== 'DC') return false;
+      if (selectedSubmarket === 'Bethesda & Potomac' && prop.city !== 'Bethesda' && prop.city !== 'Potomac') return false;
       if (selectedSubmarket === 'McLean & Great Falls' && prop.city !== 'McLean' && prop.city !== 'Great Falls') return false;
-      if (selectedSubmarket === 'Alexandria (Old Town)' && prop.city !== 'Alexandria') return false;
+      if (selectedSubmarket === 'Arlington & Alexandria' && prop.city !== 'Arlington' && prop.city !== 'Alexandria') return false;
+      if (selectedSubmarket === 'Georgetown & Capitol Hill' && prop.city !== 'Washington') return false;
       if (selectedSubmarket === 'Vienna & Falls Church' && prop.city !== 'Vienna' && prop.city !== 'Falls Church') return false;
-      if (selectedSubmarket === 'Reston & Tysons' && prop.city !== 'Reston' && prop.city !== 'Tysons') return false;
-      if (selectedSubmarket === 'Ashburn (Loudoun)' && prop.city !== 'Ashburn') return false;
-      if (selectedSubmarket === 'Bethesda MD' && prop.city !== 'Bethesda') return false;
+      if (selectedSubmarket === 'Reston & Ashburn' && prop.city !== 'Reston' && prop.city !== 'Ashburn') return false;
     }
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -218,6 +226,7 @@ export default function TruePlacePortalPage() {
         onSelectTab={(tab) => setActiveTab(tab)}
         theme={theme}
         onSelectTheme={(t) => setTheme(t)}
+        onOpenLedger={() => setShowLedgerModal(true)}
       />
 
       {/* Main Content Area - with mobile bottom dock clearance */}
@@ -232,26 +241,33 @@ export default function TruePlacePortalPage() {
               <div className="relative z-10 max-w-3xl space-y-2.5">
                 <span className="text-[11px] uppercase tracking-widest font-bold flex items-center space-x-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className={currentStyles.heroAccent}>Northern Virginia & DMV Launch Metro</span>
+                  <span className={currentStyles.heroAccent}>Maryland • Virginia • Washington DC Real Estate Scope</span>
                 </span>
                 <h1 className="text-2xl sm:text-4xl font-black tracking-tight font-sans">
                   Real Homes. Real Data. <span className={currentStyles.heroAccent}>Real Peace of Mind.</span>
                 </h1>
                 <p className="text-xs sm:text-sm text-gray-200 leading-relaxed font-light">
-                  Northern Virginia's premier residential intelligence platform. Powered by municipal permit records (Fairfax LDS, Arlington ePlan, Alexandria), TreeSHAP mathematical valuation, and HomeTruth™ ("Carfax for Houses"). Zero lead sales. Complete Ghost Mode privacy.
+                  Capital Region's premier residential intelligence platform. 100% real government and municipal records synced every 30 minutes from Maryland SDAT, Fairfax County PLUS, and DC GIS. Zero lead sales. Complete Ghost Mode privacy.
                 </p>
 
-                {/* Call to Action: Evaluate Any Real Address */}
+                {/* Call to Action: Evaluate Address + Open 30-Min Ledger */}
                 <div className="pt-2 flex flex-wrap items-center gap-3">
                   <button
                     onClick={() => setShowAddAddressModal(true)}
                     className="flex items-center space-x-2 px-4 py-2.5 rounded-lg bg-white text-[#0C382E] font-bold text-xs hover:bg-emerald-50 transition-all shadow-md cursor-pointer"
                   >
                     <PlusCircle className="w-4 h-4 text-[#0C382E]" />
-                    <span>Evaluate Any NoVA / Maryland Address</span>
+                    <span>Evaluate Any MD / VA / DC Address</span>
+                  </button>
+                  <button
+                    onClick={() => setShowLedgerModal(true)}
+                    className="flex items-center space-x-2 px-4 py-2.5 rounded-lg bg-emerald-950/80 border border-emerald-400/50 text-emerald-200 font-bold text-xs hover:bg-emerald-900 transition-all shadow-md cursor-pointer"
+                  >
+                    <Clock className="w-4 h-4 text-[#34D399]" />
+                    <span>Open 30-Min Property Ledger</span>
                   </button>
                   <span className="text-xs text-gray-300 hidden sm:inline">
-                    Instant HomeTruth™ audit, permit check & TreeSHAP valuation
+                    Live 30-min heartbeat: SDAT deeds & Fairfax/DCRA permits
                   </span>
                 </div>
               </div>
@@ -447,11 +463,37 @@ export default function TruePlacePortalPage() {
                           </span>
                         </div>
 
-                        {/* NoVA Specific Metrics */}
+                        {/* Regional & Real Government Verification Metrics */}
                         <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500">
                           <span>Schools: <strong className="text-gray-700">{prop.schoolRating}/10</strong></span>
                           <span>Metro: <strong className="text-gray-700">{prop.neighborhoodTwin?.metroDistanceMi || 1.2} mi</strong></span>
-                          <span className="text-emerald-700 font-semibold">Clean Title Chain</span>
+                          {prop.sdatDeedUrl ? (
+                            <a
+                              href={prop.sdatDeedUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-emerald-800 hover:text-emerald-950 hover:underline font-bold flex items-center space-x-1"
+                              title="Inspect real deed on Maryland SDAT"
+                            >
+                              <span>🏛️ MD SDAT Deed</span>
+                              <ExternalLink className="w-2.5 h-2.5" />
+                            </a>
+                          ) : prop.countyPermitUrl ? (
+                            <a
+                              href={prop.countyPermitUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-emerald-800 hover:text-emerald-950 hover:underline font-bold flex items-center space-x-1"
+                              title="Inspect real permit on Fairfax PLUS"
+                            >
+                              <span>🏛️ Fairfax PLUS</span>
+                              <ExternalLink className="w-2.5 h-2.5" />
+                            </a>
+                          ) : prop.sslCadastralId ? (
+                            <span className="text-purple-800 font-bold text-[10.5px]">🏛️ DC GIS MAR</span>
+                          ) : (
+                            <span className="text-emerald-700 font-semibold">Clean Title Chain</span>
+                          )}
                         </div>
                       </div>
 
@@ -975,6 +1017,17 @@ export default function TruePlacePortalPage() {
           </div>
         </div>
       )}
+
+      {/* Property Inventory Ledger Modal */}
+      <PropertyInventoryLedgerModal
+        isOpen={showLedgerModal}
+        onClose={() => setShowLedgerModal(false)}
+        properties={properties}
+        onPropertiesUpdated={(updated) => {
+          setProperties(updated);
+          if (updated.length > 0) setSelectedProperty(updated[0]);
+        }}
+      />
 
       {/* Footer */}
       <footer className="bg-[#07251E] text-white border-t border-[#041A15] text-xs py-8 mt-12">

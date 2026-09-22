@@ -27,6 +27,7 @@ export interface HeaderProps {
   onSelectTab: (tab: string) => void;
   theme?: ThemeKey;
   onSelectTheme?: (theme: ThemeKey) => void;
+  onOpenLedger?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -36,6 +37,7 @@ export const Header: React.FC<HeaderProps> = ({
   onSelectTab,
   theme = 'green',
   onSelectTheme = () => {},
+  onOpenLedger = () => {},
 }) => {
   const currentTheme = THEMES.find((t) => t.id === theme) || THEMES[3];
 
@@ -86,6 +88,15 @@ export const Header: React.FC<HeaderProps> = ({
               <Lock className="w-3 h-3 text-[#E07A5F]" />
               <span>Zero Lead-Auctioning</span>
             </span>
+            <span className="hidden sm:inline text-gray-500">|</span>
+            <button
+              onClick={onOpenLedger}
+              className="flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-emerald-950/90 border border-emerald-400/40 text-emerald-200 hover:bg-emerald-900 hover:border-emerald-300 transition-all cursor-pointer text-[11px] font-semibold shadow-2xs"
+              title="Inspect 30-Minute Real Property Ledger across Maryland, Virginia, and DC"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-[#2DD4BF] animate-pulse"></span>
+              <span>🔄 30m Real Ledger (MD • VA • DC)</span>
+            </button>
           </div>
 
           {/* Theme Selector matching the user's screenshot */}
