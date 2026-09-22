@@ -559,7 +559,7 @@ export function MarketplaceView({
                     {app.name}
                   </h4>
                   <p className="text-[11px] text-zinc-500 line-clamp-2 leading-relaxed">
-                    {app.description}
+                    {app.tagline}
                   </p>
                 </div>
 

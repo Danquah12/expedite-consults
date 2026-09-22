@@ -19,7 +19,6 @@ import {
   ShoppingBag,
   Briefcase,
   Download,
-  Github,
   BookOpen,
   CheckCircle2,
   Users,

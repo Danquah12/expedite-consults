@@ -2,7 +2,6 @@
 
 import React from "react"
 import {
-  Github,
   Flame,
   Cpu,
   Layers,
@@ -114,7 +113,7 @@ export function BentoPortfolioView({ user }: BentoPortfolioViewProps) {
       <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
-            <Github className="h-4 w-4" /> 1,482 Contributions in the last year
+            <Code2 className="h-4 w-4 text-emerald-600" /> 1,482 Contributions in the last year
           </span>
           <span className="text-[11px] text-emerald-600 font-bold">github.com/alex-taylor-sec</span>
         </div>
