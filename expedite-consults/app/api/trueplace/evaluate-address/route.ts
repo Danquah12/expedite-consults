@@ -6,7 +6,8 @@ import { propertyLedger } from '@/app/trueplace/ledgerEngine';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { magicKey, singleLine, beds, baths, sqft, listPrice } = body || {};
+    const { magicKey, beds, baths, sqft, listPrice } = body || {};
+    const singleLine = body?.singleLine || body?.query || body?.address;
 
     if (!magicKey && !singleLine) {
       return NextResponse.json(
