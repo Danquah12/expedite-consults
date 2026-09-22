@@ -163,18 +163,33 @@ export async function fetchActualPropertyPhotos(
     }
   }
 
-  // Strategy 3: Always append the exact ArcGIS Cadastral High-Res Satellite Aerial Photo
+  // Strategy 3: Always add high-resolution cadastral satellite aerials of the exact parcel and roof structure
   if (coordinates && coordinates.lat && coordinates.lng) {
-    const delta = 0.00075;
-    const aerialUrl = `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=${(
-      coordinates.lng - delta
-    ).toFixed(6)},${(coordinates.lat - delta).toFixed(6)},${(
-      coordinates.lng + delta
+    const closeDelta = 0.00055;
+    const parcelAerialUrl = `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=${(
+      coordinates.lng - closeDelta
+    ).toFixed(6)},${(coordinates.lat - closeDelta).toFixed(6)},${(
+      coordinates.lng + closeDelta
     ).toFixed(6)},${(
-      coordinates.lat + delta
-    ).toFixed(6)}&bboxSR=4326&imageSR=4326&size=800,600&format=jpg&f=image`;
+      coordinates.lat + closeDelta
+    ).toFixed(6)}&bboxSR=4326&imageSR=4326&size=900,600&format=jpg&f=image`;
 
-    collectedPhotos.push(aerialUrl);
+    const wideDelta = 0.0016;
+    const neighborhoodAerialUrl = `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=${(
+      coordinates.lng - wideDelta
+    ).toFixed(6)},${(coordinates.lat - wideDelta).toFixed(6)},${(
+      coordinates.lng + wideDelta
+    ).toFixed(6)},${(
+      coordinates.lat + wideDelta
+    ).toFixed(6)}&bboxSR=4326&imageSR=4326&size=900,600&format=jpg&f=image`;
+
+    // Insert the parcel close-up high in the gallery
+    if (collectedPhotos.length > 0) {
+      collectedPhotos.splice(1, 0, parcelAerialUrl);
+      collectedPhotos.push(neighborhoodAerialUrl);
+    } else {
+      collectedPhotos.push(parcelAerialUrl, neighborhoodAerialUrl);
+    }
   }
 
   // Strategy 4: If still empty, supply premium high-res architectural photos matching the region
@@ -186,7 +201,9 @@ export async function fetchActualPropertyPhotos(
     );
   }
 
-  // Cache final photo array
-  photoCache.set(cacheKey, collectedPhotos);
+  // Only cache if we actually have photos
+  if (collectedPhotos.length > 0) {
+    photoCache.set(cacheKey, collectedPhotos);
+  }
   return collectedPhotos;
 }
