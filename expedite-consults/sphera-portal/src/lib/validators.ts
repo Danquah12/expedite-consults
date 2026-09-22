@@ -22,9 +22,7 @@ export const ContactFormValidator = z.object({
 		})
 		.email({ message: "Invalid email address" }),
 	subject: z
-		.string({
-			required_error: "This field is required",
-		})
+		.string()
 		.min(2, { message: "Must be 5 or more characters long" })
 		.optional()
 		.or(z.literal("")),

@@ -132,7 +132,7 @@ export function PostCreator({ user, onAddPost }: PostCreatorProps) {
       visibility: selectedVisibility,
       content: content.trim(),
       hashtags: selectedTags,
-      postType: activeMode,
+      postType: activeMode === 'celebrate' ? 'celebration' : activeMode,
       poll: pollData,
       celebration: celebrationData,
       document: documentData,

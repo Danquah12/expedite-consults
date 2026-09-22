@@ -299,7 +299,7 @@ export const startupJobsData: StartupJobItem[] = [
     roleTitle: 'Founding Cloud Security Architect',
     salaryRange: '$210k - $255k',
     equityRange: '1.2% - 2.5% Equity',
-    workplace: 'NYC / Hybrid',
+    workplace: 'Hybrid',
     founderName: 'David Sterling',
     founderAvatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&auto=format&fit=crop&q=80',
     founderPitch: 'We are building the first deterministic containment engine for enterprise AI tools.'
