@@ -174,7 +174,7 @@ export const umbcConfig: UniversityConfig = {
     { id: "um3", name: "The Commons Student Center", code: "COMM", type: "Student Center", floors: 3, hours: "7:30 AM - Midnight", status: "Open Now", popularFor: "Gamers lounge, food court, student life & bookstore" },
     { id: "um4", name: "Interdisciplinary Life Sciences (ILSB)", code: "ILSB", type: "Academic", floors: 4, hours: "7:00 AM - 9:30 PM", status: "Open Now", popularFor: "Bio-discovery labs, atrium study & team meeting pods" },
     { id: "um5", name: "Chesapeake Employers Insurance Arena", code: "ARENA", type: "Athletics", floors: 3, hours: "6:00 AM - 10:30 PM", status: "Open Now", popularFor: "NCAA Division I basketball, fitness & intramurals" },
-    { id: "um6", name: "True Grit's Dining Hall", code: "TG", type: "Dining", floors: 2, hours: "7:30 AM - 9:00 PM", mealPeriod: "Lunch", status: "Open Now", popularFor: "Rotisserie grill, salad bar, vegan kitchen & bakery" },
+    { id: "um6", name: "True Grit's Dining Hall", code: "TG", type: "Dining", floors: 2, hours: "7:30 AM - 9:00 PM", status: "Open Now", popularFor: "Rotisserie grill, salad bar, vegan kitchen & bakery" },
   ],
   shuttleRoutes: [
     { id: "rt-arbutus", name: "Arbutus & MARC Station Route", routeColor: "#f59e0b", nextArrival: "4 mins", stopsCount: 6, frequency: "Every 10 mins", status: "On Time", driverStatus: "Active • Unit 108" },
