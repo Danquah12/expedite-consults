@@ -163,6 +163,70 @@ export const NegotiationAssistantModal: React.FC<NegotiationAssistantModalProps>
               ))}
             </div>
           </div>
+
+          {/* SellScore™ Seller Intelligence Platform (Feature 35) */}
+          <div className="p-4 sm:p-5 rounded-xl border border-emerald-300 bg-emerald-50/40 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-emerald-200/60 pb-3">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 flex items-center space-x-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>SellScore™ Pre-Listing Optimization</span>
+                </span>
+                <h4 className="text-sm font-bold text-gray-900">
+                  Market Readiness & Value Uplift Engine
+                </h4>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs text-gray-600 font-medium">Market Readiness:</span>
+                <span className="px-2.5 py-1 rounded-lg bg-[#0C382E] text-white text-xs font-black">
+                  78 / 100
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <span className="text-[11px] font-bold text-gray-800 uppercase tracking-wider block">
+                Recommended Actions Before Listing
+              </span>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div className="bg-white p-2.5 rounded-lg border border-gray-200 text-xs space-y-1">
+                  <div className="flex items-center space-x-1 text-emerald-700 font-bold">
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Exterior Trim Paint</span>
+                  </div>
+                  <div className="text-[11px] text-gray-500">Cost: $1,800 • Uplift: +$5,500</div>
+                </div>
+
+                <div className="bg-white p-2.5 rounded-lg border border-gray-200 text-xs space-y-1">
+                  <div className="flex items-center space-x-1 text-emerald-700 font-bold">
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Stage Primary Suite</span>
+                  </div>
+                  <div className="text-[11px] text-gray-500">Cost: $2,200 • Uplift: +$7,200</div>
+                </div>
+
+                <div className="bg-white p-2.5 rounded-lg border border-gray-200 text-xs space-y-1">
+                  <div className="flex items-center space-x-1 text-emerald-700 font-bold">
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Carpet Steam & Polish</span>
+                  </div>
+                  <div className="text-[11px] text-gray-500">Cost: $850 • Uplift: +$2,800</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3 bg-white rounded-lg border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+              <div>
+                <span className="text-gray-500">Total Recommended Preparation: </span>
+                <strong className="text-gray-900">$4,850</strong>
+              </div>
+              <div className="text-emerald-800 font-bold flex items-center space-x-1">
+                <TrendingUp className="w-4 h-4 text-emerald-600" />
+                <span>Expected Value Increase: +$15,500 (+$10,650 Net Seller Profit)</span>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -120,6 +120,50 @@ export const CommunitySentiment: React.FC<CommunitySentimentProps> = ({ property
         </div>
       </div>
 
+      {/* Neighborhood Match Score™ (Feature 43: Lifestyle Community Fit) */}
+      <div className="p-4 sm:p-5 rounded-xl border border-emerald-300 bg-emerald-50/40 space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-emerald-200/60 pb-3">
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 flex items-center space-x-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Neighborhood Match Score™</span>
+            </span>
+            <h4 className="text-sm font-bold text-gray-900">
+              Community Fit Calibration by Lifestyle Stage
+            </h4>
+          </div>
+          <span className="text-[10px] bg-[#0C382E] text-white px-2.5 py-1 rounded-lg font-mono font-black self-start sm:self-auto">
+            94% COMMUNITY FIT
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <div className="p-3 bg-white rounded-lg border border-emerald-200 text-xs space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-emerald-950">Growing Family</span>
+              <span className="font-mono font-bold text-emerald-700">94%</span>
+            </div>
+            <p className="text-[11px] text-gray-500">FCPS Pyramid top 5%, quiet cul-de-sacs, active PTA association.</p>
+          </div>
+
+          <div className="p-3 bg-white rounded-lg border border-gray-200 text-xs space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-gray-900">Tech Commuter</span>
+              <span className="font-mono font-bold text-[#0C382E]">91%</span>
+            </div>
+            <p className="text-[11px] text-gray-500">Metro Silver/Orange walkshed, gigabit fiber, 18 min to Tysons/HQ2.</p>
+          </div>
+
+          <div className="p-3 bg-white rounded-lg border border-gray-200 text-xs space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-gray-900">Serenity Seeker</span>
+              <span className="font-mono font-bold text-gray-700">88%</span>
+            </div>
+            <p className="text-[11px] text-gray-500">Direct W&OD trail ingress, low cut-through traffic, buffered air corridor.</p>
+          </div>
+        </div>
+      </div>
+
       {/* Resident Q&A Marketplace */}
       <div className="space-y-4 pt-2 border-t border-gray-100">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">

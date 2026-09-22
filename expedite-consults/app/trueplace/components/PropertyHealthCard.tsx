@@ -133,6 +133,67 @@ export const PropertyHealthCard: React.FC<PropertyHealthCardProps> = ({ property
           </div>
         ))}
       </div>
+
+      {/* Buyer Risk Radar™ (Feature 36) */}
+      <div className="pt-4 border-t border-gray-150 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-800 flex items-center space-x-1.5">
+              <ShieldAlert className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Buyer Risk Radar™</span>
+            </span>
+            <h3 className="text-base font-bold text-gray-900">
+              Downside & Environmental Risk Exposure
+            </h3>
+          </div>
+
+          <div className="bg-emerald-50 border border-emerald-300 px-3 py-1.5 rounded-xl flex items-center space-x-2 self-start sm:self-auto">
+            <span className="text-[10px] uppercase font-bold text-emerald-800">Overall Risk Index:</span>
+            <span className="text-sm font-black text-[#0C382E]">22 / 100</span>
+            <span className="text-[10px] bg-emerald-200 text-emerald-900 px-1.5 py-0.2 rounded font-mono font-bold">
+              LOW RISK
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 text-xs">
+          <div className="bg-gray-50 p-2.5 rounded-lg border border-gray-200 space-y-1">
+            <span className="text-[10px] text-gray-500 font-bold block uppercase">Flood Risk</span>
+            <span className="font-black text-gray-900 text-sm">12 / 100</span>
+            <span className="text-[10px] text-emerald-700 block font-medium">Zone X Minimal</span>
+          </div>
+
+          <div className="bg-gray-50 p-2.5 rounded-lg border border-gray-200 space-y-1">
+            <span className="text-[10px] text-gray-500 font-bold block uppercase">Foundation Risk</span>
+            <span className="font-black text-gray-900 text-sm">18 / 100</span>
+            <span className="text-[10px] text-emerald-700 block font-medium">Stable Sub-Slab</span>
+          </div>
+
+          <div className="bg-gray-50 p-2.5 rounded-lg border border-gray-200 space-y-1">
+            <span className="text-[10px] text-gray-500 font-bold block uppercase">Insurance Risk</span>
+            <span className="font-black text-gray-900 text-sm">24 / 100</span>
+            <span className="text-[10px] text-emerald-700 block font-medium">Standard Hazard</span>
+          </div>
+
+          <div className="bg-gray-50 p-2.5 rounded-lg border border-gray-200 space-y-1">
+            <span className="text-[10px] text-gray-500 font-bold block uppercase">Traffic Risk</span>
+            <span className="font-black text-gray-900 text-sm">19 / 100</span>
+            <span className="text-[10px] text-emerald-700 block font-medium">Low Cut-Through</span>
+          </div>
+
+          <div className="bg-gray-50 p-2.5 rounded-lg border border-gray-200 space-y-1">
+            <span className="text-[10px] text-gray-500 font-bold block uppercase">School Stability</span>
+            <span className="font-black text-gray-900 text-sm">14 / 100</span>
+            <span className="text-[10px] text-emerald-700 block font-medium">FCPS Boundary Safe</span>
+          </div>
+
+          <div className="bg-gray-50 p-2.5 rounded-lg border border-gray-200 space-y-1">
+            <span className="text-[10px] text-gray-500 font-bold block uppercase">Market Downside</span>
+            <span className="font-black text-gray-900 text-sm">20 / 100</span>
+            <span className="text-[10px] text-emerald-700 block font-medium">Tech & Gov Buffer</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
