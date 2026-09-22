@@ -82,8 +82,6 @@ export function PropertyPhotoHeroMosaic({
     : property.status === 'sold'
     ? 'RECENTLY RECORDED CONSIDERATION TRANSFER'
     : 'VERIFIED ACTIVE LISTING';
-    ? 'RECENTLY RECORDED CONSIDERATION TRANSFER'
-    : 'VERIFIED ACTIVE LISTING';
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">

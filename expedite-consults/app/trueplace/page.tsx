@@ -916,7 +916,7 @@ export default function TruePlacePortalPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {selectedProperty.permits.map((p) => (
+                      {(selectedProperty?.permits || []).map((p) => (
                         <tr key={p.id} className="hover:bg-gray-50">
                           <td className="p-2.5 font-mono font-bold text-gray-900">{p.id}</td>
                           <td className="p-2.5 text-gray-700">{p.type}</td>

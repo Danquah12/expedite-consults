@@ -102,6 +102,9 @@ export interface CampusWeatherReport {
   // Arrays
   hourly: HourlyForecastPoint[];
   daily: DailyForecastDay[];
+  hourlyForecast?: HourlyForecastPoint[];
+  dailyForecast?: DailyForecastDay[];
+  radarImageUrl?: string;
   activeAlerts: NWSWeatherAlert[];
   operatingStatus: CampusOperatingStatus;
 }

@@ -243,7 +243,7 @@ export const ExplainabilityDashboard: React.FC<ExplainabilityDashboardProps> = (
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white">
-              {property.comparables.map((comp) => (
+              {(property.comparables || []).map((comp) => (
                 <tr key={comp.id} className="hover:bg-gray-50 transition-colors">
                   <td className="py-2.5 px-4 font-semibold text-gray-900">{comp.address}</td>
                   <td className="py-2.5 px-4 font-bold text-[#004D40]">

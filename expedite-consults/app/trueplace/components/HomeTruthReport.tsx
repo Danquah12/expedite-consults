@@ -138,7 +138,7 @@ export const HomeTruthReport: React.FC<HomeTruthReportProps> = ({ property, onCl
             </div>
 
             <div className="divide-y divide-gray-100">
-              {property.permits.map((p) => (
+              {(property.permits || []).map((p) => (
                 <div key={p.id} className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
                     <div className="font-bold text-gray-900 flex items-center space-x-2">
