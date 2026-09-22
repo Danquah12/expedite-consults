@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { resolveNationalAddress, evaluateNationalAddress } from '@/app/trueplace/nationalAVMService';
+import { fetchActualPropertyPhotos } from '@/app/trueplace/photoService';
 import { propertyLedger } from '@/app/trueplace/ledgerEngine';
 
 export async function POST(request: Request) {
@@ -23,6 +24,20 @@ export async function POST(request: Request) {
     }
 
     const property = evaluateNationalAddress(resolved, { beds, baths, sqft, listPrice });
+
+    // Fetch actual real estate listing & satellite photos for this specific address
+    try {
+      const actualPhotos = await fetchActualPropertyPhotos(
+        resolved.formattedAddress || `${property.address}, ${property.city}, ${property.state}`,
+        resolved.coordinates
+      );
+      if (actualPhotos && actualPhotos.length > 0) {
+        property.photoUrl = actualPhotos[0];
+        property.gallery = actualPhotos;
+      }
+    } catch (photoErr) {
+      console.warn('Could not fetch external actual photos, using curated defaults:', photoErr);
+    }
 
     // Append to live ledger memory
     const existing = propertyLedger.getProperties();

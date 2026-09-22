@@ -212,16 +212,30 @@ export default function TruePlacePortalPage() {
     setSelectedProperty(newProp);
     setShowAddAddressModal(false);
     setActiveTab('valuation');
+
+    // Asynchronously fetch actual photos for this custom address
+    const fullQueryAddr = `${customAddress}, ${customCity}, ${customState} ${customZip}`;
+    fetch(`/api/trueplace/property-photos?address=${encodeURIComponent(fullQueryAddr)}&lat=${newProp.coordinates.lat}&lng=${newProp.coordinates.lng}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.photos && data.photos.length > 0) {
+          setProperties(prev => prev.map(p => p.id === newProp.id ? { ...p, photoUrl: data.photos[0], gallery: data.photos } : p));
+          setSelectedProperty(prev => prev.id === newProp.id ? { ...prev, photoUrl: data.photos[0], gallery: data.photos } : prev);
+        }
+      })
+      .catch(() => {});
   };
 
   // Tri-Jurisdiction Real DMV Submarkets & Agencies
   const SUBMARKETS = [
     { label: 'All DMV (Real Data)', count: properties.length },
+    { label: 'Prestigious Estates ($2.5M+)', count: properties.filter((p) => p.listPrice >= 2500000).length },
     { label: 'Northern Virginia (VA)', count: properties.filter((p) => p.state === 'VA').length },
     { label: 'Maryland (MD SDAT)', count: properties.filter((p) => p.state === 'MD').length },
     { label: 'Washington DC (DC GIS)', count: properties.filter((p) => p.state === 'DC').length },
     { label: 'Bethesda & Potomac', count: properties.filter((p) => p.city === 'Bethesda' || p.city === 'Potomac').length },
     { label: 'McLean & Great Falls', count: properties.filter((p) => p.city === 'McLean' || p.city === 'Great Falls').length },
+    { label: 'Chevy Chase & Gibson Island', count: properties.filter((p) => p.city === 'Chevy Chase' || p.city === 'Gibson Island').length },
     { label: 'Arlington & Alexandria', count: properties.filter((p) => p.city === 'Arlington' || p.city === 'Alexandria').length },
     { label: 'Georgetown & Capitol Hill', count: properties.filter((p) => p.city === 'Washington').length },
     { label: 'Vienna & Falls Church', count: properties.filter((p) => p.city === 'Vienna' || p.city === 'Falls Church').length },
@@ -231,11 +245,13 @@ export default function TruePlacePortalPage() {
   // Filter logic
   let filteredProperties = properties.filter((prop) => {
     if (selectedSubmarket !== 'All DMV (Real Data)') {
+      if (selectedSubmarket === 'Prestigious Estates ($2.5M+)' && prop.listPrice < 2500000) return false;
       if (selectedSubmarket === 'Northern Virginia (VA)' && prop.state !== 'VA') return false;
       if (selectedSubmarket === 'Maryland (MD SDAT)' && prop.state !== 'MD') return false;
       if (selectedSubmarket === 'Washington DC (DC GIS)' && prop.state !== 'DC') return false;
       if (selectedSubmarket === 'Bethesda & Potomac' && prop.city !== 'Bethesda' && prop.city !== 'Potomac') return false;
       if (selectedSubmarket === 'McLean & Great Falls' && prop.city !== 'McLean' && prop.city !== 'Great Falls') return false;
+      if (selectedSubmarket === 'Chevy Chase & Gibson Island' && prop.city !== 'Chevy Chase' && prop.city !== 'Gibson Island') return false;
       if (selectedSubmarket === 'Arlington & Alexandria' && prop.city !== 'Arlington' && prop.city !== 'Alexandria') return false;
       if (selectedSubmarket === 'Georgetown & Capitol Hill' && prop.city !== 'Washington') return false;
       if (selectedSubmarket === 'Vienna & Falls Church' && prop.city !== 'Vienna' && prop.city !== 'Falls Church') return false;

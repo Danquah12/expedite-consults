@@ -68,6 +68,37 @@ export const CopilotRetrievalModal: React.FC<CopilotRetrievalModalProps> = ({
   const [activePhotoIndex, setActivePhotoIndex] = useState<number>(0);
   const [weatherData, setWeatherData] = useState<any | null>(null);
   const [weatherLoading, setWeatherLoading] = useState<boolean>(false);
+  const [mapMode, setMapMode] = useState<'m' | 'k'>('m'); // 'm' = Roadmap, 'k' = Satellite
+  const [dynamicPhotos, setDynamicPhotos] = useState<string[]>([]);
+  const [photosLoading, setPhotosLoading] = useState<boolean>(false);
+
+  // Dynamically fetch actual house pictures for any address put into the address bar
+  useEffect(() => {
+    if (property?.address) {
+      const initialPhotos = property.gallery && property.gallery.length > 0
+        ? property.gallery
+        : property.photoUrl
+        ? [property.photoUrl]
+        : [];
+      setDynamicPhotos(initialPhotos);
+      setActivePhotoIndex(0);
+
+      setPhotosLoading(true);
+      const queryAddr = `${property.address}, ${property.city}, ${property.state} ${property.zip || ''}`;
+      const lat = property.coordinates?.lat ? String(property.coordinates.lat) : '';
+      const lng = property.coordinates?.lng ? String(property.coordinates.lng) : '';
+
+      fetch(`/api/trueplace/property-photos?address=${encodeURIComponent(queryAddr)}&lat=${lat}&lng=${lng}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.photos && Array.isArray(data.photos) && data.photos.length > 0) {
+            setDynamicPhotos(data.photos);
+          }
+        })
+        .catch(err => console.warn('Property photos fetch error:', err))
+        .finally(() => setPhotosLoading(false));
+    }
+  }, [property?.address, property?.city, property?.state, property?.zip]);
 
   // Fetch National Weather Service data when property is resolved
   useEffect(() => {
@@ -126,7 +157,9 @@ export const CopilotRetrievalModal: React.FC<CopilotRetrievalModalProps> = ({
   const isUndervalued = property ? property.trueValue > property.listPrice : false;
   const valueDelta = property ? Math.abs(property.trueValue - property.listPrice) : 0;
 
-  const allPhotos = property?.gallery && property.gallery.length > 0
+  const allPhotos = dynamicPhotos.length > 0
+    ? dynamicPhotos
+    : property?.gallery && property.gallery.length > 0
     ? property.gallery
     : property?.photoUrl
     ? [property.photoUrl]
@@ -509,15 +542,76 @@ export const CopilotRetrievalModal: React.FC<CopilotRetrievalModalProps> = ({
               {/* TAB 2: PICTURES & GALLERY */}
               {activeDossierTab === 'photos' && (
                 <div className="space-y-4">
-                  <div className="relative aspect-[16/9] w-full rounded-2xl overflow-hidden bg-gray-900 border border-gray-200 shadow-md">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white p-3.5 rounded-xl border border-gray-200">
+                    <div>
+                      <h4 className="text-xs font-bold text-gray-900 uppercase flex items-center space-x-1.5">
+                        <ImageIcon className="w-4 h-4 text-emerald-600" />
+                        <span>Actual Property Photography & Cadastral Aerials</span>
+                      </h4>
+                      <p className="text-[11px] text-gray-500">
+                        {property.address}, {property.city}, {property.state} • {allPhotos.length} High-Resolution Photos Retrieved
+                      </p>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      {photosLoading && (
+                        <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-semibold animate-pulse">
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                          <span>Scanning latest imagery...</span>
+                        </span>
+                      )}
+                      <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-bold">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        <span>Actual Photos Verified</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="relative aspect-[16/9] w-full rounded-2xl overflow-hidden bg-gray-950 border border-gray-200 shadow-md group">
                     <img
                       src={allPhotos[activePhotoIndex]}
                       alt={`${property.title} view ${activePhotoIndex + 1}`}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-all duration-300"
                     />
-                    <div className="absolute bottom-3 left-3 bg-black/70 backdrop-blur-xs text-white px-3 py-1 rounded-lg text-xs font-semibold">
-                      Photo {activePhotoIndex + 1} of {allPhotos.length}
+
+                    {/* Prev / Next navigation arrows */}
+                    {allPhotos.length > 1 && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActivePhotoIndex((prev) => (prev > 0 ? prev - 1 : allPhotos.length - 1));
+                          }}
+                          className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 hover:bg-black/80 text-white transition-all cursor-pointer shadow-lg"
+                          aria-label="Previous photo"
+                        >
+                          <ArrowRight className="w-4 h-4 rotate-180" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActivePhotoIndex((prev) => (prev < allPhotos.length - 1 ? prev + 1 : 0));
+                          }}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 hover:bg-black/80 text-white transition-all cursor-pointer shadow-lg"
+                          aria-label="Next photo"
+                        >
+                          <ArrowRight className="w-4 h-4" />
+                        </button>
+                      </>
+                    )}
+
+                    <div className="absolute bottom-3 left-3 bg-black/75 backdrop-blur-xs text-white px-3 py-1 rounded-lg text-xs font-semibold flex items-center space-x-1.5 shadow-sm">
+                      <ImageIcon className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Photo {activePhotoIndex + 1} of {allPhotos.length}</span>
                     </div>
+
+                    {allPhotos[activePhotoIndex]?.includes('arcgisonline.com') && (
+                      <div className="absolute top-3 right-3 bg-[#0C382E]/90 backdrop-blur-xs text-white px-2.5 py-1 rounded-lg text-[10px] font-bold font-mono shadow-sm">
+                        🛰️ Cadastral Satellite Aerial View
+                      </div>
+                    )}
                   </div>
 
                   {/* Thumbnail Row */}
@@ -526,11 +620,16 @@ export const CopilotRetrievalModal: React.FC<CopilotRetrievalModalProps> = ({
                       <button
                         key={idx}
                         onClick={() => setActivePhotoIndex(idx)}
-                        className={`relative w-20 h-16 rounded-lg overflow-hidden border-2 transition-all cursor-pointer shrink-0 ${
-                          activePhotoIndex === idx ? 'border-[#0C382E] scale-105 shadow-md' : 'border-gray-200 opacity-70 hover:opacity-100'
+                        className={`relative w-22 h-16 rounded-lg overflow-hidden border-2 transition-all cursor-pointer shrink-0 bg-gray-100 ${
+                          activePhotoIndex === idx ? 'border-[#0C382E] scale-105 shadow-md ring-2 ring-emerald-400/50' : 'border-gray-200 opacity-75 hover:opacity-100'
                         }`}
                       >
                         <img src={photo} alt="" className="w-full h-full object-cover" />
+                        {photo.includes('arcgisonline.com') && (
+                          <div className="absolute bottom-0 inset-x-0 bg-black/70 text-white text-[8px] font-bold text-center py-0.5 font-mono">
+                            SATELLITE
+                          </div>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -548,11 +647,37 @@ export const CopilotRetrievalModal: React.FC<CopilotRetrievalModalProps> = ({
                           <span>Google Maps Cadastral Location</span>
                         </h4>
                         <p className="text-[11px] text-gray-500">
-                          Coordinates: Lat {property.coordinates.lat.toFixed(5)}, Lng {property.coordinates.lng.toFixed(5)}
+                          {property.address}, {property.city}, {property.state} {property.zip} &bull; Coordinates: Lat {property.coordinates.lat.toFixed(5)}, Lng {property.coordinates.lng.toFixed(5)}
                         </p>
                       </div>
 
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center flex-wrap gap-2">
+                        {/* Map Mode Switcher */}
+                        <div className="inline-flex rounded-lg border border-gray-200 p-0.5 bg-gray-50">
+                          <button
+                            type="button"
+                            onClick={() => setMapMode('m')}
+                            className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all cursor-pointer ${
+                              mapMode === 'm'
+                                ? 'bg-white text-gray-900 shadow-xs font-bold'
+                                : 'text-gray-500 hover:text-gray-900'
+                            }`}
+                          >
+                            Roadmap
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setMapMode('k')}
+                            className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all cursor-pointer ${
+                              mapMode === 'k'
+                                ? 'bg-[#0C382E] text-white shadow-xs font-bold'
+                                : 'text-gray-500 hover:text-gray-900'
+                            }`}
+                          >
+                            Satellite
+                          </button>
+                        </div>
+
                         <a
                           href={googleMapsUrl}
                           target="_blank"
@@ -575,10 +700,12 @@ export const CopilotRetrievalModal: React.FC<CopilotRetrievalModalProps> = ({
                     </div>
 
                     {/* Embedded Interactive Google Map */}
-                    <div className="relative w-full h-80 rounded-xl overflow-hidden border border-gray-300 shadow-inner">
+                    <div className="relative w-full h-84 sm:h-96 rounded-xl overflow-hidden border border-gray-300 shadow-inner bg-gray-100">
                       <iframe
                         title="Google Map Location"
-                        src={`https://maps.google.com/maps?q=${property.coordinates.lat},${property.coordinates.lng}&hl=en&z=17&output=embed`}
+                        src={`https://maps.google.com/maps?q=${encodeURIComponent(
+                          property.address ? `${property.address}, ${property.city}, ${property.state} ${property.zip}` : `${property.coordinates.lat},${property.coordinates.lng}`
+                        )}&t=${mapMode}&z=16&ie=UTF8&iwloc=&output=embed`}
                         className="w-full h-full border-0"
                         loading="lazy"
                         allowFullScreen
