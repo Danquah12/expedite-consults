@@ -140,11 +140,17 @@ export function registerNewUserInDirectory(newUser: {
       id: newUser.id,
       name: newUser.name,
       email: newUser.email,
+      avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(newUser.name)}&backgroundColor=0a66c2`,
+      headline: 'Verified Member',
       roles: newUser.roles,
       enforcementStatus: 'Active',
+      verificationLevel: 'Email Verified',
       mfaStatus: 'FIDO2 Passkey ✓',
       riskLevel: 'Low',
       organization: newUser.organization,
+      location: 'Washington DC / Metro',
+      connectionsCount: 0,
+      registeredAt: new Date().toISOString(),
       lastLogin: 'Active Now',
       reportsCount: 0
     }
