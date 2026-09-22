@@ -15,19 +15,20 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-	title: "Expedite Consults & VeritasLens Media Intelligence",
-	description: "Enterprise Information Intelligence, Media Bias Clustering & AI Fact-Checking Platform",
+	title: "Expedite Consults — Enterprise Intelligence & Next-Gen Platforms",
+	description: "Enterprise Systems Consulting, Real Estate Intelligence (TruePlace), and Advanced Decision Analytics.",
+	metadataBase: new URL("https://expedite-consults.vercel.app"),
 	openGraph: {
-		title: "VeritasLens: AI Media Bias & Claim Verification Platform",
-		description: "Real-time clustering across 14 newsrooms, blindspot detection, and statutory fact verification.",
-		url: "https://expedite-consults.vercel.app/veritaslens",
-		siteName: "VeritasLens by Expedite Consults",
+		title: "Expedite Consults — Enterprise Intelligence & Next-Gen Platforms",
+		description: "Enterprise Systems Consulting, Real Estate Intelligence (TruePlace), and Advanced Decision Analytics.",
+		url: "https://expedite-consults.vercel.app",
+		siteName: "Expedite Consults",
 		type: "website",
 	},
 	twitter: {
 		card: "summary_large_image",
-		title: "VeritasLens: AI Media Bias & Claim Verification Platform",
-		description: "Real-time clustering across 14 newsrooms, blindspot detection, and statutory fact verification.",
+		title: "Expedite Consults — Enterprise Intelligence & Next-Gen Platforms",
+		description: "Enterprise Systems Consulting, Real Estate Intelligence (TruePlace), and Advanced Decision Analytics.",
 	}
 };
 
