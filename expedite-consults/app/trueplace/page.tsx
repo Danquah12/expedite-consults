@@ -607,7 +607,13 @@ export default function TruePlacePortalPage() {
                   return (
                     <div
                       key={prop.id}
-                      className="bg-white rounded-xl border border-gray-200 shadow-xs hover:shadow-md transition-all overflow-hidden flex flex-col justify-between group"
+                      onClick={() => {
+                        setSelectedProperty(prop);
+                        setCopilotDossierProperty(prop);
+                        setIsCopilotRetrieving(false);
+                        setShowCopilotModal(true);
+                      }}
+                      className="bg-white rounded-xl border border-gray-200 shadow-xs hover:shadow-lg hover:border-emerald-500 transition-all overflow-hidden flex flex-col justify-between group cursor-pointer"
                     >
                       {/* Photo & Badges */}
                       <div className="relative aspect-[16/10] overflow-hidden bg-gray-100">
@@ -621,6 +627,12 @@ export default function TruePlacePortalPage() {
                             <CheckCircle2 className="w-3 h-3" />
                             <span>Verified Active ({prop.lastVerifiedHoursAgo}h ago)</span>
                           </span>
+                          {prop.id.startsWith('us-eval-') && (
+                            <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded bg-purple-900/90 backdrop-blur-xs text-white text-[10px] font-bold shadow-xs">
+                              <Bot className="w-3 h-3 text-[#34D399]" />
+                              <span>⭐ Copilot Retrieved</span>
+                            </span>
+                          )}
                         </div>
                         <div className="absolute top-2.5 right-2.5 flex items-center space-x-1">
                           <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded bg-[#0C382E]/90 backdrop-blur-xs text-white text-[10px] font-bold shadow-xs">
@@ -721,7 +733,8 @@ export default function TruePlacePortalPage() {
                         {/* Primary Quick Actions */}
                         <div className="flex items-center justify-between gap-1.5">
                           <button
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setSelectedProperty(prop);
                               setShowHomeTruthModal(true);
                             }}
@@ -733,7 +746,8 @@ export default function TruePlacePortalPage() {
                           </button>
 
                           <button
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setSelectedProperty(prop);
                               setActiveTab('truecost');
                             }}
@@ -744,7 +758,8 @@ export default function TruePlacePortalPage() {
                           </button>
 
                           <button
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setSelectedProperty(prop);
                               setActiveTab('valuation');
                             }}
@@ -757,7 +772,8 @@ export default function TruePlacePortalPage() {
 
                         {/* Copilot Nationwide Dossier Direct Button */}
                         <button
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setSelectedProperty(prop);
                             setCopilotDossierProperty(prop);
                             setIsCopilotRetrieving(false);
@@ -766,14 +782,15 @@ export default function TruePlacePortalPage() {
                           className="w-full py-1.5 px-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-950 text-[11px] font-bold flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
                         >
                           <Bot className="w-3.5 h-3.5 text-emerald-700" />
-                          <span>Copilot Full Property Dossier</span>
+                          <span>Copilot Full Property Dossier (Map • Weather • Data)</span>
                           <Sparkles className="w-3 h-3 text-amber-500" />
                         </button>
 
                         {/* Secondary Quick Action Bar */}
                         <div className="grid grid-cols-4 gap-1 text-[10.5px]">
                           <button
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setSelectedProperty(prop);
                               setActiveTab('homeos');
                             }}
@@ -782,7 +799,8 @@ export default function TruePlacePortalPage() {
                             🏡 HomeOS
                           </button>
                           <button
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setSelectedProperty(prop);
                               setActiveTab('copilot');
                             }}
@@ -791,7 +809,8 @@ export default function TruePlacePortalPage() {
                             🤖 Copilot
                           </button>
                           <button
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setSelectedProperty(prop);
                               setActiveTab('inspector');
                             }}
@@ -800,7 +819,8 @@ export default function TruePlacePortalPage() {
                             🔬 Inspect
                           </button>
                           <button
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setSelectedProperty(prop);
                               setActiveTab('community');
                             }}

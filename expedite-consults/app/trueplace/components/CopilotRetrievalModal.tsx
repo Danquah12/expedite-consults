@@ -29,6 +29,12 @@ import {
   MessageSquareText,
   Clock,
   Zap,
+  CloudSun,
+  Thermometer,
+  Wind,
+  Droplets,
+  Image as ImageIcon,
+  Compass,
 } from 'lucide-react';
 import { Property, getEnrichedTrueCost, getEnrichedHomeOS, getEnrichedPropertyDNA } from '../mockData';
 
@@ -57,8 +63,23 @@ export const CopilotRetrievalModal: React.FC<CopilotRetrievalModalProps> = ({
   onOpenHomeTruth,
   onOpenLedger,
 }) => {
-  const [activeDossierTab, setActiveDossierTab] = useState<'summary' | 'valuation' | 'legal' | 'truecost' | 'health' | 'neighborhood'>('summary');
+  const [activeDossierTab, setActiveDossierTab] = useState<'summary' | 'photos' | 'map' | 'weather' | 'valuation' | 'legal' | 'truecost' | 'health' | 'neighborhood'>('summary');
   const [telemetryLogs, setTelemetryLogs] = useState<string[]>([]);
+  const [activePhotoIndex, setActivePhotoIndex] = useState<number>(0);
+  const [weatherData, setWeatherData] = useState<any | null>(null);
+  const [weatherLoading, setWeatherLoading] = useState<boolean>(false);
+
+  // Fetch National Weather Service data when property is resolved
+  useEffect(() => {
+    if (property?.coordinates) {
+      setWeatherLoading(true);
+      fetch(`/api/trueplace/weather?lat=${property.coordinates.lat}&lng=${property.coordinates.lng}&city=${encodeURIComponent(property.city)}&state=${encodeURIComponent(property.state)}`)
+        .then(res => res.json())
+        .then(data => setWeatherData(data))
+        .catch(err => console.warn('NWS Weather fetch error:', err))
+        .finally(() => setWeatherLoading(false));
+    }
+  }, [property?.coordinates?.lat, property?.coordinates?.lng]);
 
   useEffect(() => {
     if (isRetrieving) {
@@ -76,7 +97,7 @@ export const CopilotRetrievalModal: React.FC<CopilotRetrievalModalProps> = ({
         setTelemetryLogs(prev => [
           ...prev,
           'Ingesting municipal building permits & deed registers...',
-          'Calibrating regional price-per-square-foot baseline...',
+          'Contacting National Weather Service (NOAA) for local station observations...',
         ]);
       }, 800);
       const t3 = setTimeout(() => {
@@ -104,6 +125,26 @@ export const CopilotRetrievalModal: React.FC<CopilotRetrievalModalProps> = ({
 
   const isUndervalued = property ? property.trueValue > property.listPrice : false;
   const valueDelta = property ? Math.abs(property.trueValue - property.listPrice) : 0;
+
+  const allPhotos = property?.gallery && property.gallery.length > 0
+    ? property.gallery
+    : property?.photoUrl
+    ? [property.photoUrl]
+    : [];
+
+  const googleMapsUrl = property
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+        `${property.address}, ${property.city}, ${property.state} ${property.zip}`
+      )}`
+    : '#';
+
+  const googleStreetViewUrl = property?.coordinates
+    ? `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${property.coordinates.lat},${property.coordinates.lng}`
+    : '#';
+
+  const nwsForecastUrl = property?.coordinates
+    ? `https://forecast.weather.gov/MapClick.php?lat=${property.coordinates.lat}&lon=${property.coordinates.lng}`
+    : 'https://weather.gov';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 backdrop-blur-xs p-2 sm:p-4 overflow-y-auto">
@@ -155,10 +196,10 @@ export const CopilotRetrievalModal: React.FC<CopilotRetrievalModalProps> = ({
 
             <div className="space-y-1.5 max-w-md">
               <h3 className="text-lg font-black text-gray-900 font-sans">
-                Copilot Querying Nationwide Cadastral Network
+                Copilot Querying Nationwide Cadastral & Climate Network
               </h3>
               <p className="text-xs text-gray-600">
-                Retrieving full assessment, deed registers, permits, and TrueValue metrics for:{' '}
+                Retrieving property photography, Google Maps coordinates, NOAA weather observations, deed registers, and TrueValue metrics for:{' '}
                 <strong className="text-emerald-900 block mt-0.5 font-mono">{searchQuery}</strong>
               </p>
             </div>
@@ -180,9 +221,9 @@ export const CopilotRetrievalModal: React.FC<CopilotRetrievalModalProps> = ({
               }`}>
                 <div className="flex items-center space-x-1.5 mb-1">
                   <span className="w-4 h-4 rounded-full bg-[#0C382E] text-white flex items-center justify-center text-[10px] font-mono">2</span>
-                  <span className="text-[11px]">Deeds & Taxes</span>
+                  <span className="text-[11px]">Deeds & Climate</span>
                 </div>
-                <p className="text-[10px] text-gray-600 font-normal">State Assessment Rolls</p>
+                <p className="text-[10px] text-gray-600 font-normal">State Assessment & NWS</p>
               </div>
 
               <div className={`p-3 rounded-lg border transition-all ${
@@ -237,11 +278,22 @@ export const CopilotRetrievalModal: React.FC<CopilotRetrievalModalProps> = ({
             <div className="bg-[#F4F9F6] p-4 sm:p-5 border-b border-gray-200 shrink-0">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-start space-x-3.5">
-                  <img
-                    src={property.photoUrl}
-                    alt={property.title}
-                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl object-cover border border-gray-300 shadow-xs shrink-0"
-                  />
+                  <div
+                    onClick={() => setActiveDossierTab('photos')}
+                    className="relative group cursor-pointer shrink-0"
+                    title="Click to view full photo gallery"
+                  >
+                    <img
+                      src={allPhotos[activePhotoIndex] || property.photoUrl}
+                      alt={property.title}
+                      className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl object-cover border border-gray-300 shadow-xs group-hover:scale-105 transition-transform"
+                    />
+                    <div className="absolute inset-0 bg-black/30 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold">
+                      <ImageIcon className="w-4 h-4 mr-1" />
+                      <span>{allPhotos.length} Photos</span>
+                    </div>
+                  </div>
+
                   <div>
                     <div className="flex flex-wrap items-center gap-1.5">
                       <span className="px-2 py-0.5 rounded bg-[#0C382E] text-white text-[10px] font-mono font-bold">
@@ -251,6 +303,19 @@ export const CopilotRetrievalModal: React.FC<CopilotRetrievalModalProps> = ({
                         <CheckCircle2 className="w-3 h-3 text-emerald-700" />
                         <span>Copilot Verified Active</span>
                       </span>
+
+                      {/* Live National Weather Service Observation Badge */}
+                      {weatherData && (
+                        <div
+                          onClick={() => setActiveDossierTab('weather')}
+                          className="px-2 py-0.5 rounded bg-sky-50 text-sky-900 border border-sky-300 text-[10px] font-bold flex items-center space-x-1 cursor-pointer hover:bg-sky-100 transition-colors"
+                          title="Live observations from official National Weather Service (NOAA)"
+                        >
+                          <CloudSun className="w-3 h-3 text-sky-600" />
+                          <span><strong>{weatherData.temperature}{weatherData.unit}</strong> {weatherData.condition}</span>
+                        </div>
+                      )}
+
                       <span className="text-xs font-mono text-gray-500">MLS #{property.mlsId}</span>
                     </div>
 
@@ -308,11 +373,14 @@ export const CopilotRetrievalModal: React.FC<CopilotRetrievalModalProps> = ({
             <div className="border-b border-gray-200 px-4 sm:px-6 py-2 flex items-center space-x-2 overflow-x-auto bg-white shrink-0 no-scrollbar">
               {[
                 { id: 'summary', label: 'Copilot Briefing', icon: Bot },
+                { id: 'photos', label: `Pictures (${allPhotos.length})`, icon: ImageIcon },
+                { id: 'map', label: 'Google Map & Sat', icon: Compass },
+                { id: 'weather', label: 'National Weather (NOAA)', icon: CloudSun },
                 { id: 'valuation', label: 'TrueValue & SHAP', icon: Sparkles },
                 { id: 'legal', label: 'Deeds & Permits', icon: ShieldCheck },
                 { id: 'truecost', label: 'TrueCost Cash Flow', icon: DollarSign },
                 { id: 'health', label: 'Property Health', icon: HeartPulse },
-                { id: 'neighborhood', label: 'Neighborhood & Schools', icon: GraduationCap },
+                { id: 'neighborhood', label: 'Schools & Vibe', icon: GraduationCap },
               ].map(tab => {
                 const Icon = tab.icon;
                 const isActive = activeDossierTab === tab.id;
@@ -395,15 +463,17 @@ export const CopilotRetrievalModal: React.FC<CopilotRetrievalModalProps> = ({
                     </div>
 
                     <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-200">
-                      <span className="text-[10px] uppercase font-bold text-gray-500 block">School Feeder</span>
+                      <span className="text-[10px] uppercase font-bold text-gray-500 block">Area Weather (NOAA)</span>
                       <div className="flex items-baseline space-x-1 mt-1">
-                        <span className="text-xl font-black text-purple-900 font-sans">
-                          {property.schoolRating}
+                        <span className="text-xl font-black text-sky-900 font-sans">
+                          {weatherData?.temperature || 72}°F
                         </span>
-                        <span className="text-xs text-gray-500 font-bold">/10</span>
+                        <span className="text-xs text-gray-500 font-bold truncate">
+                          {weatherData?.condition || 'Clear'}
+                        </span>
                       </div>
-                      <span className="text-[10px] text-purple-700 font-semibold block mt-0.5 truncate">
-                        {property.neighborhoodTwin?.fcpsCluster || 'Top Public District'}
+                      <span className="text-[10px] text-sky-700 font-semibold block mt-0.5 truncate">
+                        {weatherData?.station || 'National Weather Service'}
                       </span>
                     </div>
                   </div>
@@ -436,7 +506,162 @@ export const CopilotRetrievalModal: React.FC<CopilotRetrievalModalProps> = ({
                 </div>
               )}
 
-              {/* TAB 2: TRUEVALUE & SHAP ATTRIBUTION */}
+              {/* TAB 2: PICTURES & GALLERY */}
+              {activeDossierTab === 'photos' && (
+                <div className="space-y-4">
+                  <div className="relative aspect-[16/9] w-full rounded-2xl overflow-hidden bg-gray-900 border border-gray-200 shadow-md">
+                    <img
+                      src={allPhotos[activePhotoIndex]}
+                      alt={`${property.title} view ${activePhotoIndex + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute bottom-3 left-3 bg-black/70 backdrop-blur-xs text-white px-3 py-1 rounded-lg text-xs font-semibold">
+                      Photo {activePhotoIndex + 1} of {allPhotos.length}
+                    </div>
+                  </div>
+
+                  {/* Thumbnail Row */}
+                  <div className="flex items-center space-x-2.5 overflow-x-auto pb-1 no-scrollbar">
+                    {allPhotos.map((photo, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setActivePhotoIndex(idx)}
+                        className={`relative w-20 h-16 rounded-lg overflow-hidden border-2 transition-all cursor-pointer shrink-0 ${
+                          activePhotoIndex === idx ? 'border-[#0C382E] scale-105 shadow-md' : 'border-gray-200 opacity-70 hover:opacity-100'
+                        }`}
+                      >
+                        <img src={photo} alt="" className="w-full h-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 3: GOOGLE MAPS & SATELLITE VIEW */}
+              {activeDossierTab === 'map' && (
+                <div className="space-y-4">
+                  <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-xs space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div>
+                        <h4 className="text-xs font-bold text-gray-900 uppercase flex items-center space-x-1.5">
+                          <MapPin className="w-4 h-4 text-rose-500" />
+                          <span>Google Maps Cadastral Location</span>
+                        </h4>
+                        <p className="text-[11px] text-gray-500">
+                          Coordinates: Lat {property.coordinates.lat.toFixed(5)}, Lng {property.coordinates.lng.toFixed(5)}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <a
+                          href={googleMapsUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-1.5 rounded-lg bg-[#0C382E] text-white text-xs font-bold hover:bg-[#07251E] transition-all flex items-center space-x-1"
+                        >
+                          <span>Open in Google Maps</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                        <a
+                          href={googleStreetViewUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-800 text-xs font-bold hover:bg-gray-200 transition-all flex items-center space-x-1"
+                        >
+                          <span>Street View</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
+                    </div>
+
+                    {/* Embedded Interactive Google Map */}
+                    <div className="relative w-full h-80 rounded-xl overflow-hidden border border-gray-300 shadow-inner">
+                      <iframe
+                        title="Google Map Location"
+                        src={`https://maps.google.com/maps?q=${property.coordinates.lat},${property.coordinates.lng}&hl=en&z=17&output=embed`}
+                        className="w-full h-full border-0"
+                        loading="lazy"
+                        allowFullScreen
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 4: NATIONAL WEATHER SERVICE (NOAA) */}
+              {activeDossierTab === 'weather' && (
+                <div className="space-y-4">
+                  <div className="bg-gradient-to-br from-sky-900 via-blue-900 to-indigo-950 text-white p-5 rounded-xl shadow-md space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <span className="text-[10px] uppercase font-mono font-bold tracking-widest text-sky-300 block">
+                          Official Government Weather Station
+                        </span>
+                        <h3 className="text-xl font-black font-sans mt-0.5">
+                          National Weather Service (NOAA)
+                        </h3>
+                        <p className="text-xs text-sky-200">
+                          {weatherData?.station || 'Official Station Observation Feed'}
+                        </p>
+                      </div>
+
+                      <div className="bg-white/10 border border-white/20 px-4 py-2 rounded-xl text-right shrink-0">
+                        <span className="text-2xl sm:text-3xl font-black font-sans text-sky-300">
+                          {weatherData?.temperature || 72}°F
+                        </span>
+                        <span className="text-xs text-white block font-medium">
+                          {weatherData?.condition || 'Current Observation'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-sky-800/80 text-xs">
+                      <div className="bg-white/5 p-2.5 rounded-lg border border-white/10">
+                        <span className="text-sky-300 text-[10.5px] block flex items-center space-x-1">
+                          <Thermometer className="w-3.5 h-3.5 text-sky-400" />
+                          <span>Temperature</span>
+                        </span>
+                        <span className="font-bold text-white text-sm">{weatherData?.temperature || 72}°F</span>
+                      </div>
+                      <div className="bg-white/5 p-2.5 rounded-lg border border-white/10">
+                        <span className="text-sky-300 text-[10.5px] block flex items-center space-x-1">
+                          <Droplets className="w-3.5 h-3.5 text-sky-400" />
+                          <span>Relative Humidity</span>
+                        </span>
+                        <span className="font-bold text-white text-sm">{weatherData?.humidity || 52}%</span>
+                      </div>
+                      <div className="bg-white/5 p-2.5 rounded-lg border border-white/10">
+                        <span className="text-sky-300 text-[10.5px] block flex items-center space-x-1">
+                          <Wind className="w-3.5 h-3.5 text-sky-400" />
+                          <span>Wind Speed</span>
+                        </span>
+                        <span className="font-bold text-white text-sm">{weatherData?.wind || '7 mph'}</span>
+                      </div>
+                      <div className="bg-white/5 p-2.5 rounded-lg border border-white/10">
+                        <span className="text-sky-300 text-[10.5px] block flex items-center space-x-1">
+                          <ShieldCheck className="w-3.5 h-3.5 text-sky-400" />
+                          <span>Flood / Storm Cert</span>
+                        </span>
+                        <span className="font-bold text-white text-sm truncate">{property.floodRiskLevel || 'Minimal'}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[11px] text-sky-300 pt-1">
+                      <span>Source: National Oceanic and Atmospheric Administration (NOAA / weather.gov)</span>
+                      <a
+                        href={nwsForecastUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline hover:text-white flex items-center space-x-1"
+                      >
+                        <span>Inspect Live NWS Radar ↗</span>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 5: TRUEVALUE & SHAP ATTRIBUTION */}
               {activeDossierTab === 'valuation' && (
                 <div className="space-y-4">
                   <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-2">
@@ -472,7 +697,7 @@ export const CopilotRetrievalModal: React.FC<CopilotRetrievalModalProps> = ({
                 </div>
               )}
 
-              {/* TAB 3: DEEDS & PERMITS (LEGAL) */}
+              {/* TAB 6: DEEDS & PERMITS (LEGAL) */}
               {activeDossierTab === 'legal' && (
                 <div className="space-y-4">
                   <div className="bg-white p-4 rounded-xl border border-gray-200 space-y-3">
@@ -548,7 +773,7 @@ export const CopilotRetrievalModal: React.FC<CopilotRetrievalModalProps> = ({
                 </div>
               )}
 
-              {/* TAB 4: TRUECOST CASH FLOW */}
+              {/* TAB 7: TRUECOST CASH FLOW */}
               {activeDossierTab === 'truecost' && trueCost && (
                 <div className="space-y-4">
                   <div className="bg-emerald-900 text-white p-4 rounded-xl flex items-center justify-between">
@@ -595,7 +820,7 @@ export const CopilotRetrievalModal: React.FC<CopilotRetrievalModalProps> = ({
                 </div>
               )}
 
-              {/* TAB 5: PROPERTY HEALTH */}
+              {/* TAB 8: PROPERTY HEALTH */}
               {activeDossierTab === 'health' && (
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
@@ -640,7 +865,7 @@ export const CopilotRetrievalModal: React.FC<CopilotRetrievalModalProps> = ({
                 </div>
               )}
 
-              {/* TAB 6: NEIGHBORHOOD & SCHOOLS */}
+              {/* TAB 9: NEIGHBORHOOD & SCHOOLS */}
               {activeDossierTab === 'neighborhood' && (
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
