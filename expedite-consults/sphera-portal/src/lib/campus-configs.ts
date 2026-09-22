@@ -30,11 +30,7 @@ export const towsonConfig: UniversityConfig = {
     { id: "b6", name: "West Village Dining Commons", code: "WV", type: "Dining", floors: 2, hours: "7:30 AM - 10:00 PM", status: "Open Now", popularFor: "All-you-care-to-eat dining & allergen station" },
   ],
   shuttleRoutes: [
-    [
-      { id: "t-gold", name: "Gold Route (Main Campus Loop)", routeColor: "#f59e0b", nextArrival: "3 mins", stopsCount: 8, frequency: "Every 7 mins", status: "On Time", driverStatus: "Active • Unit 204" },
-      { id: "t-black", name: "Black Route (West Village Express)", routeColor: "#18181b", nextArrival: "6 mins", stopsCount: 5, frequency: "Every 10 mins", status: "On Time", driverStatus: "Active • Unit 209" },
-      { id: "t-off", name: "Off-Campus / Towson Town Center", routeColor: "#3b82f6", nextArrival: "11 mins", stopsCount: 12, frequency: "Every 15 mins", status: "On Time", driverStatus: "Active • Unit 118" },
-    ][0],
+    { id: "t-gold", name: "Gold Route (Main Campus Loop)", routeColor: "#f59e0b", nextArrival: "3 mins", stopsCount: 8, frequency: "Every 7 mins", status: "On Time", driverStatus: "Active • Unit 204" },
     { id: "t-black", name: "Black Route (West Village Express)", routeColor: "#18181b", nextArrival: "6 mins", stopsCount: 5, frequency: "Every 10 mins", status: "On Time", driverStatus: "Active • Unit 209" },
     { id: "t-off", name: "Off-Campus / Towson Town Center", routeColor: "#3b82f6", nextArrival: "11 mins", stopsCount: 12, frequency: "Every 15 mins", status: "On Time", driverStatus: "Active • Unit 118" },
   ],
