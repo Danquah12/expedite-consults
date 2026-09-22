@@ -274,7 +274,9 @@ export function MessagingView({
                         {activeThread.title}
                       </h3>
                       {activeThread.isVerified && (
-                        <ShieldCheck className="h-4 w-4 text-[#0A66C2] shrink-0" title="Verified B2B Entity" />
+                        <span title="Verified B2B Entity">
+                          <ShieldCheck className="h-4 w-4 text-[#0A66C2] shrink-0" />
+                        </span>
                       )}
                       <span className="rounded-full bg-zinc-100 px-2 py-0.2 text-[10px] font-bold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
                         {activeThread.subType}
