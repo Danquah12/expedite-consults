@@ -49,6 +49,7 @@ import {
   HeartPulse,
   Clock,
   ExternalLink,
+  Loader2,
 } from 'lucide-react';
 
 export default function TruePlacePortalPage() {
@@ -61,6 +62,13 @@ export default function TruePlacePortalPage() {
   const [showHomeTruthModal, setShowHomeTruthModal] = useState<boolean>(false);
   const [showAddAddressModal, setShowAddAddressModal] = useState<boolean>(false);
   const [showLedgerModal, setShowLedgerModal] = useState<boolean>(false);
+
+  // Nationwide Address Autocomplete & Evaluation States
+  const [autocompleteSuggestions, setAutocompleteSuggestions] = useState<any[]>([]);
+  const [isSearchingNational, setIsSearchingNational] = useState<boolean>(false);
+  const [isEvaluating, setIsEvaluating] = useState<boolean>(false);
+  const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
+  const [nationalEvaluationToast, setNationalEvaluationToast] = useState<string | null>(null);
 
   // New Custom Address Form State
   const [customAddress, setCustomAddress] = useState<string>('4420 N Fairfax Dr');
@@ -80,6 +88,66 @@ export default function TruePlacePortalPage() {
   const [propertyTypeFilter, setPropertyTypeFilter] = useState<string>('all');
   const [verifiedOnly, setVerifiedOnly] = useState<boolean>(false);
   const [sortBy, setSortBy] = useState<string>('truthScore');
+
+  // Handle Nationwide Address Autocomplete Search
+  const handleSearchChange = async (val: string) => {
+    setSearchQuery(val);
+    if (val.trim().length >= 2) {
+      setIsSearchingNational(true);
+      try {
+        const res = await fetch(`/api/trueplace/search-address?q=${encodeURIComponent(val)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setAutocompleteSuggestions(data.suggestions || []);
+          setShowSuggestions(true);
+        }
+      } catch (err) {
+        console.error('National search error:', err);
+      } finally {
+        setIsSearchingNational(false);
+      }
+    } else {
+      setAutocompleteSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  // Handle selecting and evaluating a nationwide address
+  const handleSelectNationalAddress = async (suggestion: any) => {
+    setIsEvaluating(true);
+    setShowSuggestions(false);
+    setNationalEvaluationToast(`Resolving & Evaluating ${suggestion.streetAddress}, ${suggestion.cityState}...`);
+    try {
+      const res = await fetch('/api/trueplace/evaluate-address', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          magicKey: suggestion.magicKey,
+          singleLine: suggestion.label,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const evaluatedProp: Property = data.property;
+        setProperties([evaluatedProp, ...properties]);
+        setSelectedProperty(evaluatedProp);
+        setSearchQuery('');
+        setNationalEvaluationToast(`Evaluation Complete! Loaded ${evaluatedProp.title} with TrueValue $${evaluatedProp.trueValue.toLocaleString()}`);
+        setTimeout(() => setNationalEvaluationToast(null), 5000);
+        setActiveTab('valuation');
+      } else {
+        setNationalEvaluationToast('Unable to complete evaluation. Please try another address.');
+        setTimeout(() => setNationalEvaluationToast(null), 4000);
+      }
+    } catch (err) {
+      console.error('Failed to evaluate national address:', err);
+      setNationalEvaluationToast('Evaluation error. Please try again.');
+      setTimeout(() => setNationalEvaluationToast(null), 4000);
+    } finally {
+      setIsEvaluating(false);
+    }
+  };
 
   // Handle Adding / Evaluating Any Real Address
   const handleAnalyzeNewAddress = (e: React.FormEvent) => {
@@ -301,11 +369,52 @@ export default function TruePlacePortalPage() {
                   <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
-                    placeholder="Search by address, county (Fairfax, Arlington, Loudoun), neighborhood, or MLS ID..."
+                    placeholder="Search any address across all United States (e.g., 1204 N Hartford St, 3500 Beverly Dr, 9612 Eagle Ridge)..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#0C382E] focus:border-transparent"
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    onFocus={() => { if (autocompleteSuggestions.length > 0) setShowSuggestions(true); }}
+                    className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-gray-300 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#0C382E] focus:border-transparent font-medium"
                   />
+                  {isSearchingNational && (
+                    <Loader2 className="w-4 h-4 text-emerald-600 animate-spin absolute right-3.5 top-1/2 -translate-y-1/2" />
+                  )}
+
+                  {/* Floating Nationwide Autocomplete Dropdown */}
+                  {showSuggestions && autocompleteSuggestions.length > 0 && (
+                    <div className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 overflow-hidden divide-y divide-gray-100 max-h-80 overflow-y-auto">
+                      <div className="px-3.5 py-1.5 bg-[#0C382E] text-white text-[10.5px] font-bold flex items-center justify-between">
+                        <span className="flex items-center space-x-1.5">
+                          <Sparkles className="w-3 h-3 text-[#34D399]" />
+                          <span>National Address Geocoder (All 50 US States)</span>
+                        </span>
+                        <span className="text-gray-300 text-[9.5px]">Select to Run Live TrueValue</span>
+                      </div>
+                      {autocompleteSuggestions.map((item, idx) => (
+                        <div
+                          key={idx}
+                          onClick={() => handleSelectNationalAddress(item)}
+                          className="p-3 hover:bg-emerald-50/80 cursor-pointer transition-colors flex items-center justify-between gap-3 text-left"
+                        >
+                          <div className="flex items-center space-x-2.5 min-w-0">
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-[#0C382E] text-white shrink-0">
+                              {item.state || 'US'}
+                            </span>
+                            <div className="min-w-0">
+                              <div className="text-xs font-bold text-gray-900 truncate">
+                                {item.streetAddress}
+                              </div>
+                              <div className="text-[11px] text-gray-500 truncate">
+                                {item.cityState}
+                              </div>
+                            </div>
+                          </div>
+                          <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full shrink-0">
+                            Run Valuation &rarr;
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
@@ -364,6 +473,18 @@ export default function TruePlacePortalPage() {
                   </button>
                 </div>
               </div>
+
+              {/* National Evaluation Progress / Feedback Toast */}
+              {nationalEvaluationToast && (
+                <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-lg text-xs font-semibold text-emerald-950 flex items-center space-x-2 animate-in fade-in">
+                  {isEvaluating ? (
+                    <Loader2 className="w-4 h-4 text-emerald-700 animate-spin shrink-0" />
+                  ) : (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
+                  )}
+                  <span>{nationalEvaluationToast}</span>
+                </div>
+              )}
             </div>
 
             {/* Results Grid Header */}
