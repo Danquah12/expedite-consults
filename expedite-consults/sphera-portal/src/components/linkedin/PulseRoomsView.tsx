@@ -60,7 +60,7 @@ interface PulseRoomsViewProps {
   onNavigateTab?: (tab: string) => void
 }
 
-export function PulseRoomsView({ currentUser }: PulseRoomsViewProps) {
+export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewProps) {
   // Master View Mode
   const [pulseMode, setPulseMode] = useState<'news' | 'ai_brief' | 'cyber_threats' | 'audio_rooms'>('news')
 
