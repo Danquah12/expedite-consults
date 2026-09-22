@@ -241,11 +241,11 @@ export const MOCK_PROPERTIES: Property[] = [
     "status": "active",
     "isVerifiedActive": true,
     "lastVerifiedHoursAgo": 1,
-    "photoUrl": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&auto=format&fit=crop&q=80",
+    "photoUrl": "https://ssl.cdn-redfin.com/photo/235/bigphoto/588/VAAR2058588_5.jpg",
     "gallery": [
-      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&auto=format&fit=crop&q=80",
-      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&auto=format&fit=crop&q=80",
-      "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=1200&auto=format&fit=crop&q=80"
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/588/VAAR2058588_5.jpg",
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/588/VAAR2058588_1.jpg",
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/588/VAAR2058588_2.jpg"
     ],
     "schoolRating": 9.4,
     "walkScore": 92,
@@ -464,10 +464,11 @@ export const MOCK_PROPERTIES: Property[] = [
     "status": "active",
     "isVerifiedActive": true,
     "lastVerifiedHoursAgo": 2,
-    "photoUrl": "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1200&auto=format&fit=crop&q=80",
+    "photoUrl": "https://ssl.cdn-redfin.com/photo/235/bigphoto/588/VAAR2058588_1.jpg",
     "gallery": [
-      "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1200&auto=format&fit=crop&q=80",
-      "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=1200&auto=format&fit=crop&q=80"
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/588/VAAR2058588_1.jpg",
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/588/VAAR2058588_5.jpg",
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/588/VAAR2058588_2.jpg"
     ],
     "schoolRating": 9.9,
     "walkScore": 34,
@@ -628,10 +629,10 @@ export const MOCK_PROPERTIES: Property[] = [
     "status": "active",
     "isVerifiedActive": true,
     "lastVerifiedHoursAgo": 1,
-    "photoUrl": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&auto=format&fit=crop&q=80",
+    "photoUrl": "https://photos.zillowstatic.com/fp/70faa542af47d0775cde9d18a855efde-cc_ft_1536.jpg",
     "gallery": [
-      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&auto=format&fit=crop&q=80",
-      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&auto=format&fit=crop&q=80"
+      "https://photos.zillowstatic.com/fp/70faa542af47d0775cde9d18a855efde-cc_ft_1536.jpg",
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/192/VAFX2323192_3.jpg"
     ],
     "schoolRating": 8.8,
     "walkScore": 96,
@@ -806,9 +807,11 @@ export const MOCK_PROPERTIES: Property[] = [
     "status": "active",
     "isVerifiedActive": true,
     "lastVerifiedHoursAgo": 3,
-    "photoUrl": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&auto=format&fit=crop&q=80",
+    "photoUrl": "https://ssl.cdn-redfin.com/photo/235/bigphoto/464/VAAX2062464_2.jpg",
     "gallery": [
-      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&auto=format&fit=crop&q=80"
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/464/VAAX2062464_2.jpg",
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/464/VAAX2062464_1.jpg",
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/464/VAAX2062464_3.jpg"
     ],
     "schoolRating": 9.8,
     "walkScore": 22,
@@ -969,9 +972,10 @@ export const MOCK_PROPERTIES: Property[] = [
     "status": "active",
     "isVerifiedActive": true,
     "lastVerifiedHoursAgo": 2,
-    "photoUrl": "https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=1200&auto=format&fit=crop&q=80",
+    "photoUrl": "https://ssl.cdn-redfin.com/photo/235/bigphoto/192/VAFX2323192_3.jpg",
     "gallery": [
-      "https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=1200&auto=format&fit=crop&q=80"
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/192/VAFX2323192_3.jpg",
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/192/VAFX2323192_1.jpg"
     ],
     "schoolRating": 9.3,
     "walkScore": 79,
@@ -1132,9 +1136,10 @@ export const MOCK_PROPERTIES: Property[] = [
     "status": "active",
     "isVerifiedActive": true,
     "lastVerifiedHoursAgo": 4,
-    "photoUrl": "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1200&auto=format&fit=crop&q=80",
+    "photoUrl": "https://ssl.cdn-redfin.com/photo/235/bigphoto/663/1001783663_21_2.jpg",
     "gallery": [
-      "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1200&auto=format&fit=crop&q=80"
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/663/1001783663_21_2.jpg",
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/663/1001783663_21_1.jpg"
     ],
     "schoolRating": 8.9,
     "walkScore": 88,
@@ -1295,9 +1300,10 @@ export const MOCK_PROPERTIES: Property[] = [
     "status": "active",
     "isVerifiedActive": true,
     "lastVerifiedHoursAgo": 1,
-    "photoUrl": "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=1200&auto=format&fit=crop&q=80",
+    "photoUrl": "https://ssl.cdn-redfin.com/photo/235/bigphoto/912/MDMC2086912_3.jpg",
     "gallery": [
-      "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=1200&auto=format&fit=crop&q=80"
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/912/MDMC2086912_3.jpg",
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/912/MDMC2086912_1.jpg"
     ],
     "schoolRating": 9.7,
     "walkScore": 91,
@@ -1451,9 +1457,10 @@ export const MOCK_PROPERTIES: Property[] = [
     "status": "active",
     "isVerifiedActive": true,
     "lastVerifiedHoursAgo": 2,
-    "photoUrl": "https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=1200&auto=format&fit=crop&q=80",
+    "photoUrl": "https://ssl.cdn-redfin.com/photo/235/bigphoto/464/1002955464_1.jpg",
     "gallery": [
-      "https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=1200&auto=format&fit=crop&q=80"
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/464/1002955464_1.jpg",
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/464/1002955464_2.jpg"
     ],
     "schoolRating": 9.2,
     "walkScore": 62,
@@ -1607,9 +1614,10 @@ export const MOCK_PROPERTIES: Property[] = [
     "status": "active",
     "isVerifiedActive": true,
     "lastVerifiedHoursAgo": 1,
-    "photoUrl": "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=1200&auto=format&fit=crop&q=80",
+    "photoUrl": "https://ssl.cdn-redfin.com/photo/235/bigphoto/232/MDMC2153232_6.jpg",
     "gallery": [
-      "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=1200&auto=format&fit=crop&q=80"
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/232/MDMC2153232_6.jpg",
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/232/MDMC2153232_1.jpg"
     ],
     "schoolRating": 9.6,
     "walkScore": 86,
@@ -1763,9 +1771,10 @@ export const MOCK_PROPERTIES: Property[] = [
     "status": "active",
     "isVerifiedActive": true,
     "lastVerifiedHoursAgo": 1,
-    "photoUrl": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&auto=format&fit=crop&q=80",
+    "photoUrl": "https://ssl.cdn-redfin.com/photo/235/bigphoto/886/MDMC2230886_1.jpg",
     "gallery": [
-      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&auto=format&fit=crop&q=80"
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/886/MDMC2230886_1.jpg",
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/886/MDMC2230886_2.jpg"
     ],
     "schoolRating": 9.0,
     "walkScore": 72,
@@ -1945,10 +1954,11 @@ export function calculateInstantTrueValue(
     status: 'active',
     isVerifiedActive: true,
     lastVerifiedHoursAgo: 1,
-    photoUrl: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&auto=format&fit=crop&q=80',
+    photoUrl: 'https://ssl.cdn-redfin.com/photo/235/bigphoto/588/VAAR2058588_5.jpg',
     gallery: [
-      'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&auto=format&fit=crop&q=80'
+      'https://ssl.cdn-redfin.com/photo/235/bigphoto/588/VAAR2058588_5.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/bigphoto/588/VAAR2058588_1.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/bigphoto/663/1001783663_21_2.jpg'
     ],
     schoolRating: 9.3,
     walkScore: 82,
@@ -2318,7 +2328,7 @@ export function getEnrichedInspectionRisk(p: Property): { riskScore: 'Low' | 'Mo
       target: 'Roof Shingles & Valley Metal',
       severity: p.homeTruthData.roofRemainingYears <= 3 ? 'high' : 'medium',
       detectedIssue: 'Granule erosion and slight cupping detected on southern roof exposure slope.',
-      imageUrl: 'https://images.unsplash.com/photo-1632759145351-1d592919f522?w=600&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ssl.cdn-redfin.com/photo/235/bigphoto/588/VAAR2058588_2.jpg',
       estimatedRepairCost: '$2,800 - $4,200',
       trueValueImpact: -3800,
       inspectorRecommendation: 'Request seller credit or replacement contingency prior to financing contingency expiration.'
@@ -2330,7 +2340,7 @@ export function getEnrichedInspectionRisk(p: Property): { riskScore: 'Low' | 'Mo
     target: 'Foundation Perimeter Grading',
     severity: 'low',
     detectedIssue: 'Mulch bed depth on east elevation rests within 4 inches of siding threshold.',
-    imageUrl: 'https://images.unsplash.com/photo-1590381105924-c72589b9ef3f?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://ssl.cdn-redfin.com/photo/235/bigphoto/464/1002955464_3.jpg',
     estimatedRepairCost: '$450 - $750',
     trueValueImpact: 0,
     inspectorRecommendation: 'Regrade soil to ensure 1 inch per foot positive fall away from foundation slab.'
@@ -2342,7 +2352,7 @@ export function getEnrichedInspectionRisk(p: Property): { riskScore: 'Low' | 'Mo
       target: 'Heat Pump Exterior Condenser',
       severity: 'medium',
       detectedIssue: 'Condenser cooling fins exhibit surface oxidation; R-410A refrigerant cycle nearing phaseout standard.',
-      imageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600&auto=format&fit=crop&q=80',
+      imageUrl: 'https://ssl.cdn-redfin.com/photo/235/bigphoto/684/MDMC2082684_3.jpg',
       estimatedRepairCost: '$7,500 - $9,200',
       trueValueImpact: -4200,
       inspectorRecommendation: 'Recommend dedicated HVAC trade evaluation and home warranty rider.'

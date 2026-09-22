@@ -47,7 +47,7 @@ export const REAL_DMV_INVENTORY: Property[] = [
     status: 'active',
     isVerifiedActive: true,
     lastVerifiedHoursAgo: 0.5,
-    photoUrl: 'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/464/genMid.1002955464_1.jpg',
+    photoUrl: 'https://ssl.cdn-redfin.com/photo/235/bigphoto/464/1002955464_1.jpg',
     gallery: [
       'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/464/genMid.1002955464_1.jpg',
       'https://ssl.cdn-redfin.com/photo/235/mbphotov3/464/genMid.1002955464_6_1.jpg',
@@ -189,10 +189,13 @@ export const REAL_DMV_INVENTORY: Property[] = [
     status: 'active',
     isVerifiedActive: true,
     lastVerifiedHoursAgo: 0.5,
-    photoUrl: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1200&auto=format&fit=crop&q=80',
+    photoUrl: 'https://ssl.cdn-redfin.com/photo/235/bigphoto/684/MDMC2082684_4.jpg',
     gallery: [
-      'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1200&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&auto=format&fit=crop&q=80'
+      'https://ssl.cdn-redfin.com/photo/235/bigphoto/684/MDMC2082684_4.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/684/genMid.MDMC2082684_1_4.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/684/genMid.MDMC2082684_2_4.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/684/genMid.MDMC2082684_3_4.jpg',
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-77.2048,38.9850,-77.2032,38.9864&bboxSR=4326&imageSR=4326&size=800,600&format=jpg&f=image'
     ],
     schoolRating: 9.7,
     walkScore: 64,
@@ -292,10 +295,12 @@ export const REAL_DMV_INVENTORY: Property[] = [
     status: 'active',
     isVerifiedActive: true,
     lastVerifiedHoursAgo: 0.5,
-    photoUrl: 'https://i.pinimg.com/originals/2b/e3/56/2be356a97cc8b77fb6a08d8bb3c3c901.jpg',
+    photoUrl: 'https://photos.zillowstatic.com/fp/70faa542af47d0775cde9d18a855efde-cc_ft_1536.jpg',
     gallery: [
-      'https://i.pinimg.com/originals/2b/e3/56/2be356a97cc8b77fb6a08d8bb3c3c901.jpg',
-      'https://i.pinimg.com/736x/da/b1/55/dab155051569e5583f5b7aadafa98024.jpg',
+      'https://photos.zillowstatic.com/fp/70faa542af47d0775cde9d18a855efde-cc_ft_1536.jpg',
+      'https://photos.zillowstatic.com/fp/be7e6a844994ed91bc6769b4e67b8d72-cc_ft_1536.jpg',
+      'https://photos.zillowstatic.com/fp/9fb8a4c5ef628c701eda2250d12c3458-cc_ft_1536.jpg',
+      'https://photos.zillowstatic.com/fp/13740acdd7c4ce46773f0db01f365fd7-cc_ft_1536.jpg',
       'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-77.1780,38.9330,-77.1764,38.9346&bboxSR=4326&imageSR=4326&size=800,600&format=jpg&f=image'
     ],
     schoolRating: 9.9,
@@ -401,6 +406,8 @@ export const REAL_DMV_INVENTORY: Property[] = [
     photoUrl: 'https://ssl.cdn-redfin.com/photo/235/bigphoto/663/1001783663_21_2.jpg',
     gallery: [
       'https://ssl.cdn-redfin.com/photo/235/bigphoto/663/1001783663_21_2.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/663/genMid.1001783663_21_2.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/663/genMid.1001783663_1_2.jpg',
       'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-77.1962,38.8774,-77.1946,38.8790&bboxSR=4326&imageSR=4326&size=800,600&format=jpg&f=image'
     ],
     schoolRating: 9.1,
@@ -477,8 +484,8 @@ export const REAL_DMV_INVENTORY: Property[] = [
   {
     id: 'dc-gis-georgetown-01',
     mlsId: 'DC-OCTO-SSL-1244-0852',
-    title: 'Historic Federal Townhome in Georgetown',
-    address: '1420 Wisconsin Ave NW',
+    title: 'Historic Federal Residence in Georgetown',
+    address: '3246 N St NW',
     city: 'Washington',
     state: 'DC',
     zip: '20007',
@@ -500,10 +507,13 @@ export const REAL_DMV_INVENTORY: Property[] = [
     status: 'active',
     isVerifiedActive: true,
     lastVerifiedHoursAgo: 0.5,
-    photoUrl: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=1200&auto=format&fit=crop&q=80',
+    photoUrl: 'https://ssl.cdn-redfin.com/photo/235/bigphoto/080/DCDC2257080_2.jpg',
     gallery: [
-      'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=1200&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=1200&auto=format&fit=crop&q=80',
+      'https://ssl.cdn-redfin.com/photo/235/bigphoto/080/DCDC2257080_2.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/080/genMid.DCDC2257080_1_2.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/080/genMid.DCDC2257080_2_2.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/080/genMid.DCDC2257080_3_2.jpg',
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-77.0655,38.9060,-77.0639,38.9074&bboxSR=4326&imageSR=4326&size=800,600&format=jpg&f=image'
     ],
     schoolRating: 9.3,
     walkScore: 98,
@@ -613,10 +623,13 @@ export const REAL_DMV_INVENTORY: Property[] = [
     status: 'active',
     isVerifiedActive: true,
     lastVerifiedHoursAgo: 0.5,
-    photoUrl: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&auto=format&fit=crop&q=80',
+    photoUrl: 'https://ssl.cdn-redfin.com/photo/235/bigphoto/572/DCDC2134572_2.jpg',
     gallery: [
-      'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&auto=format&fit=crop&q=80',
+      'https://ssl.cdn-redfin.com/photo/235/bigphoto/572/DCDC2134572_2.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/572/genMid.DCDC2134572_1_2.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/572/genMid.DCDC2134572_2_2.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/572/genMid.DCDC2134572_3_2.jpg',
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-76.9984,38.8880,-76.9968,38.8894&bboxSR=4326&imageSR=4326&size=800,600&format=jpg&f=image'
     ],
     schoolRating: 9.1,
     walkScore: 96,
@@ -691,8 +704,8 @@ export const REAL_DMV_INVENTORY: Property[] = [
   {
     id: 'md-sdat-potomac-01',
     mlsId: 'MD-SDAT-ACCT-02591104',
-    title: 'French Country Manor in Potomac River Corridor',
-    address: '10500 River Rd',
+    title: 'Adirondack Country Estate on River Road',
+    address: '12815 River Rd',
     city: 'Potomac',
     state: 'MD',
     zip: '20854',
@@ -714,11 +727,13 @@ export const REAL_DMV_INVENTORY: Property[] = [
     status: 'active',
     isVerifiedActive: true,
     lastVerifiedHoursAgo: 0.2,
-    photoUrl: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&auto=format&fit=crop&q=80',
+    photoUrl: 'https://ssl.cdn-redfin.com/photo/235/bigphoto/232/MDMC2153232_6.jpg',
     gallery: [
-      'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&auto=format&fit=crop&q=80'
+      'https://ssl.cdn-redfin.com/photo/235/bigphoto/232/MDMC2153232_6.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/232/genMid.MDMC2153232_1_6.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/232/genMid.MDMC2153232_2_5.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/232/genMid.MDMC2153232_3_5.jpg',
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-77.2657,39.0494,-77.2641,39.0508&bboxSR=4326&imageSR=4326&size=800,600&format=jpg&f=image'
     ],
     schoolRating: 9.9,
     walkScore: 32,
@@ -794,8 +809,8 @@ export const REAL_DMV_INVENTORY: Property[] = [
   {
     id: 'md-sdat-potomac-02',
     mlsId: 'MD-SDAT-ACCT-02604882',
-    title: 'Modernist Glass Pavilion in Bradley Farms',
-    address: '9210 Bradley Blvd',
+    title: 'Stately Center-Hall Estate on Bradley Blvd',
+    address: '8421 Bradley Blvd',
     city: 'Potomac',
     state: 'MD',
     zip: '20854',
@@ -817,10 +832,13 @@ export const REAL_DMV_INVENTORY: Property[] = [
     status: 'active',
     isVerifiedActive: true,
     lastVerifiedHoursAgo: 0.3,
-    photoUrl: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1200&auto=format&fit=crop&q=80',
+    photoUrl: 'https://ssl.cdn-redfin.com/photo/235/bigphoto/531/1000057531_1.jpg',
     gallery: [
-      'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1200&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&auto=format&fit=crop&q=80'
+      'https://ssl.cdn-redfin.com/photo/235/bigphoto/531/1000057531_1.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/531/genMid.1000057531_1_1.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/531/genMid.1000057531_2_1.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/531/genMid.1000057531_3_1.jpg',
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-77.1747,39.0068,-77.1731,39.0082&bboxSR=4326&imageSR=4326&size=800,600&format=jpg&f=image'
     ],
     schoolRating: 9.8,
     walkScore: 38,
@@ -894,8 +912,8 @@ export const REAL_DMV_INVENTORY: Property[] = [
   {
     id: 'md-sdat-chevychase-03',
     mlsId: 'MD-SDAT-ACCT-02711090',
-    title: 'Stately Colonial Revival in Chevy Chase Village',
-    address: '4305 Rosemary St',
+    title: 'Stately Colonial Revival in Town of Chevy Chase',
+    address: '4110 Rosemary St',
     city: 'Chevy Chase',
     state: 'MD',
     zip: '20815',
@@ -917,10 +935,13 @@ export const REAL_DMV_INVENTORY: Property[] = [
     status: 'active',
     isVerifiedActive: true,
     lastVerifiedHoursAgo: 0.2,
-    photoUrl: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=1200&auto=format&fit=crop&q=80',
+    photoUrl: 'https://ssl.cdn-redfin.com/photo/235/bigphoto/912/MDMC2086912_3.jpg',
     gallery: [
-      'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=1200&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&auto=format&fit=crop&q=80'
+      'https://ssl.cdn-redfin.com/photo/235/bigphoto/912/MDMC2086912_3.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/912/genMid.MDMC2086912_1_3.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/912/genMid.MDMC2086912_2_3.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/912/genMid.MDMC2086912_3_3.jpg',
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-77.0830,38.9770,-77.0814,38.9784&bboxSR=4326&imageSR=4326&size=800,600&format=jpg&f=image'
     ],
     schoolRating: 9.7,
     walkScore: 82,
@@ -994,8 +1015,8 @@ export const REAL_DMV_INVENTORY: Property[] = [
   {
     id: 'md-sdat-gibsonisland-04',
     mlsId: 'MD-SDAT-ACCT-03194002',
-    title: 'Chesapeake Bay Waterfront Estate on Gibson Island',
-    address: '624 Broadwater Way',
+    title: 'Gibson Island Point Chesapeake Bay Coastal Estate',
+    address: '817 Broadwater Way',
     city: 'Gibson Island',
     state: 'MD',
     zip: '21056',
@@ -1017,10 +1038,13 @@ export const REAL_DMV_INVENTORY: Property[] = [
     status: 'active',
     isVerifiedActive: true,
     lastVerifiedHoursAgo: 0.1,
-    photoUrl: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&auto=format&fit=crop&q=80',
+    photoUrl: 'https://ssl.cdn-redfin.com/photo/235/bigphoto/364/MDAA2143364_3.jpg',
     gallery: [
-      'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&auto=format&fit=crop&q=80'
+      'https://ssl.cdn-redfin.com/photo/235/bigphoto/364/MDAA2143364_3.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/364/genMid.MDAA2143364_1_3.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/364/genMid.MDAA2143364_2_3.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/364/genMid.MDAA2143364_3_3.jpg',
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-76.4310,39.0626,-76.4294,39.0640&bboxSR=4326&imageSR=4326&size=800,600&format=jpg&f=image'
     ],
     schoolRating: 9.4,
     walkScore: 40,
@@ -1094,8 +1118,8 @@ export const REAL_DMV_INVENTORY: Property[] = [
   {
     id: 'md-sdat-bethesda-05',
     mlsId: 'MD-SDAT-ACCT-02844199',
-    title: 'Architectural Stone Masterpiece in Edgemoor',
-    address: '5104 Moorland Ln',
+    title: 'Architectural Stone Manor in Edgemoor',
+    address: '5420 Moorland Ln',
     city: 'Bethesda',
     state: 'MD',
     zip: '20814',
@@ -1117,10 +1141,13 @@ export const REAL_DMV_INVENTORY: Property[] = [
     status: 'active',
     isVerifiedActive: true,
     lastVerifiedHoursAgo: 0.1,
-    photoUrl: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&auto=format&fit=crop&q=80',
+    photoUrl: 'https://ssl.cdn-redfin.com/photo/235/bigphoto/886/MDMC2230886_1.jpg',
     gallery: [
-      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&auto=format&fit=crop&q=80'
+      'https://ssl.cdn-redfin.com/photo/235/bigphoto/886/MDMC2230886_1.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/886/genMid.MDMC2230886_1_1.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/886/genMid.MDMC2230886_2_2.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/886/genMid.MDMC2230886_3_2.jpg',
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-77.1101,38.9854,-77.1085,38.9868&bboxSR=4326&imageSR=4326&size=800,600&format=jpg&f=image'
     ],
     schoolRating: 9.8,
     walkScore: 89,
@@ -1193,8 +1220,8 @@ export const REAL_DMV_INVENTORY: Property[] = [
   {
     id: 'va-fairfax-greatfalls-03',
     mlsId: 'VA-FFX-PLUS-BLDR-23190014',
-    title: 'Equestrian Riverfront Estate in Great Falls',
-    address: '10100 Georgetown Pike',
+    title: 'Great Falls Equestrian Cul-de-Sac Stone Estate',
+    address: '10120 Walker Lake Dr',
     city: 'Great Falls',
     state: 'VA',
     zip: '22066',
@@ -1216,10 +1243,13 @@ export const REAL_DMV_INVENTORY: Property[] = [
     status: 'active',
     isVerifiedActive: true,
     lastVerifiedHoursAgo: 0.2,
-    photoUrl: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&auto=format&fit=crop&q=80',
+    photoUrl: 'https://ssl.cdn-redfin.com/photo/235/bigphoto/192/VAFX2323192_3.jpg',
     gallery: [
-      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&auto=format&fit=crop&q=80'
+      'https://ssl.cdn-redfin.com/photo/235/bigphoto/192/VAFX2323192_3.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/192/genMid.VAFX2323192_1_3.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/192/genMid.VAFX2323192_2_3.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/192/genMid.VAFX2323192_3_3.jpg',
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-77.3026,39.0260,-77.3010,39.0274&bboxSR=4326&imageSR=4326&size=800,600&format=jpg&f=image'
     ],
     schoolRating: 9.9,
     walkScore: 28,
@@ -1292,8 +1322,8 @@ export const REAL_DMV_INVENTORY: Property[] = [
   {
     id: 'va-alexandria-oldtown-04',
     mlsId: 'VA-ALX-HIST-1790-0415',
-    title: '1790 Georgian Double Townhome with Secret Garden',
-    address: '415 Prince St',
+    title: 'Historic Old Town All-Brick Townhome',
+    address: '519 S St Asaph St',
     city: 'Alexandria',
     state: 'VA',
     zip: '22314',
@@ -1315,10 +1345,13 @@ export const REAL_DMV_INVENTORY: Property[] = [
     status: 'active',
     isVerifiedActive: true,
     lastVerifiedHoursAgo: 0.1,
-    photoUrl: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=1200&auto=format&fit=crop&q=80',
+    photoUrl: 'https://ssl.cdn-redfin.com/photo/235/bigphoto/464/VAAX2062464_2.jpg',
     gallery: [
-      'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=1200&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&auto=format&fit=crop&q=80'
+      'https://ssl.cdn-redfin.com/photo/235/bigphoto/464/VAAX2062464_2.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/464/genMid.VAAX2062464_1_1.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/464/genMid.VAAX2062464_2_1.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/464/genMid.VAAX2062464_3_1.jpg',
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-77.0479,38.7993,-77.0463,38.8007&bboxSR=4326&imageSR=4326&size=800,600&format=jpg&f=image'
     ],
     schoolRating: 9.2,
     walkScore: 98,
@@ -1393,8 +1426,8 @@ export const REAL_DMV_INVENTORY: Property[] = [
   {
     id: 'va-arlington-countryclub-05',
     mlsId: 'VA-ARL-PERMIT-B2301982',
-    title: 'Custom Craftsman Manor in Country Club Hills',
-    address: '3615 N Albemarle St',
+    title: 'Stately Residence in Country Club Hills',
+    address: '2311 N Albemarle St',
     city: 'Arlington',
     state: 'VA',
     zip: '22207',
@@ -1416,10 +1449,13 @@ export const REAL_DMV_INVENTORY: Property[] = [
     status: 'active',
     isVerifiedActive: true,
     lastVerifiedHoursAgo: 0.2,
-    photoUrl: 'https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=1200&auto=format&fit=crop&q=80',
+    photoUrl: 'https://ssl.cdn-redfin.com/photo/235/bigphoto/588/VAAR2058588_5.jpg',
     gallery: [
-      'https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=1200&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&auto=format&fit=crop&q=80'
+      'https://ssl.cdn-redfin.com/photo/235/bigphoto/588/VAAR2058588_5.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/588/genMid.VAAR2058588_1_5.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/588/genMid.VAAR2058588_2_5.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/588/genMid.VAAR2058588_3_6.jpg',
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-77.1248,38.8990,-77.1232,38.9004&bboxSR=4326&imageSR=4326&size=800,600&format=jpg&f=image'
     ],
     schoolRating: 9.7,
     walkScore: 68,
@@ -1491,8 +1527,8 @@ export const REAL_DMV_INVENTORY: Property[] = [
   {
     id: 'dc-gis-kalorama-03',
     mlsId: 'DC-OCTO-SSL-2501-0019',
-    title: 'Beaux-Arts Diplomatic Manor on Embassy Row',
-    address: '2408 S St NW',
+    title: 'Embassy Row Beaux-Arts Diplomatic Manor',
+    address: '2446 Kalorama Rd NW',
     city: 'Washington',
     state: 'DC',
     zip: '20008',
@@ -1514,10 +1550,13 @@ export const REAL_DMV_INVENTORY: Property[] = [
     status: 'active',
     isVerifiedActive: true,
     lastVerifiedHoursAgo: 0.1,
-    photoUrl: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&auto=format&fit=crop&q=80',
+    photoUrl: 'https://ssl.cdn-redfin.com/photo/235/bigphoto/584/DCDC2135584_2.jpg',
     gallery: [
-      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&auto=format&fit=crop&q=80'
+      'https://ssl.cdn-redfin.com/photo/235/bigphoto/584/DCDC2135584_2.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/584/genMid.DCDC2135584_1_2.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/584/genMid.DCDC2135584_2_2.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/584/genMid.DCDC2135584_3_2.jpg',
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-77.0549,38.9168,-77.0533,38.9182&bboxSR=4326&imageSR=4326&size=800,600&format=jpg&f=image'
     ],
     schoolRating: 9.4,
     walkScore: 92,
@@ -1592,8 +1631,8 @@ export const REAL_DMV_INVENTORY: Property[] = [
   {
     id: 'dc-gis-dupont-04',
     mlsId: 'DC-OCTO-SSL-0155-0812',
-    title: 'Grand Victorian Brownstone with Skyline Deck',
-    address: '1735 New Hampshire Ave NW',
+    title: 'Grand Victorian Rowhome in Dupont / Logan Circle',
+    address: '1520 Corcoran St NW',
     city: 'Washington',
     state: 'DC',
     zip: '20009',
@@ -1615,10 +1654,13 @@ export const REAL_DMV_INVENTORY: Property[] = [
     status: 'active',
     isVerifiedActive: true,
     lastVerifiedHoursAgo: 0.1,
-    photoUrl: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=1200&auto=format&fit=crop&q=80',
+    photoUrl: 'https://ssl.cdn-redfin.com/photo/235/bigphoto/976/DCDC2247976_2.jpg',
     gallery: [
-      'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=1200&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&auto=format&fit=crop&q=80'
+      'https://ssl.cdn-redfin.com/photo/235/bigphoto/976/DCDC2247976_2.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/976/genMid.DCDC2247976_1_1.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/976/genMid.DCDC2247976_2_1.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/mbpaddedwide/976/genMid.DCDC2247976_3_1.jpg',
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-77.0363,38.9110,-77.0347,38.9124&bboxSR=4326&imageSR=4326&size=800,600&format=jpg&f=image'
     ],
     schoolRating: 9.3,
     walkScore: 99,

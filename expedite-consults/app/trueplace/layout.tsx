@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&auto=format&fit=crop&q=80',
+        url: 'https://ssl.cdn-redfin.com/photo/235/bigphoto/464/1002955464_1.jpg',
         width: 1200,
         height: 630,
         alt: 'TruePlace Real Estate Intelligence & HomeOS',
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     description:
       'The Next-Generation Real Estate Platform. HomeTruth™ Carfax for Homes, TreeSHAP mathematical valuations, HomeOS™ appliance lifecycles, and TrueCost™ affordability.',
     images: [
-      'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&auto=format&fit=crop&q=80',
+      'https://ssl.cdn-redfin.com/photo/235/bigphoto/464/1002955464_1.jpg',
     ],
   },
 };

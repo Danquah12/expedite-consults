@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { MOCK_PROPERTIES, Property, calculateInstantTrueValue } from './mockData';
+import { Property, calculateInstantTrueValue } from './mockData';
 import { REAL_DMV_INVENTORY } from './realDataService';
 import { PropertyInventoryLedgerModal } from './components/PropertyInventoryLedgerModal';
 import { Header, ThemeKey, THEMES } from './components/Header';
@@ -58,8 +58,8 @@ export default function TruePlacePortalPage() {
   const [theme, setTheme] = useState<ThemeKey>('green');
   const [activeTab, setActiveTab] = useState<string>('search');
   const [ghostMode, setGhostMode] = useState<boolean>(true);
-  const [properties, setProperties] = useState<Property[]>([...REAL_DMV_INVENTORY, ...MOCK_PROPERTIES]);
-  const [selectedProperty, setSelectedProperty] = useState<Property>(REAL_DMV_INVENTORY[0] || MOCK_PROPERTIES[0]);
+  const [properties, setProperties] = useState<Property[]>(REAL_DMV_INVENTORY);
+  const [selectedProperty, setSelectedProperty] = useState<Property>(REAL_DMV_INVENTORY[0]);
   const [showTruthReportModal, setShowTruthReportModal] = useState<boolean>(false);
   const [showHomeTruthModal, setShowHomeTruthModal] = useState<boolean>(false);
   const [showAddAddressModal, setShowAddAddressModal] = useState<boolean>(false);

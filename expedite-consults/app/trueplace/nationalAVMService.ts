@@ -6,6 +6,7 @@
 // ============================================================================
 
 import { Property, TrueCostBreakdown } from './mockData';
+import { VERIFIED_MLS_PHOTO_MAP } from './photoService';
 
 // 50-State Property Tax Rates (National Averages per state)
 export const STATE_TAX_RATES: Record<string, number> = {
@@ -180,6 +181,52 @@ export function evaluateNationalAddress(
 
   const id = `us-eval-${state.toLowerCase()}-${Date.now().toString().slice(-6)}`;
 
+  // Check verified MLS photo registry for exact or partial address match
+  const searchKey = (resolved.streetName || resolved.formattedAddress || '').toLowerCase();
+  let verifiedPhotos: string[] | null = null;
+  for (const [key, val] of Object.entries(VERIFIED_MLS_PHOTO_MAP)) {
+    if (searchKey.includes(key) || key.includes(searchKey) || val.keywords.some((k) => searchKey.includes(k))) {
+      verifiedPhotos = val.gallery.length > 0 ? val.gallery : [val.primaryPhoto];
+      break;
+    }
+  }
+
+  // Construct high-res ArcGIS cadastral parcel satellite imagery
+  const closeDelta = 0.00055;
+  const cadastralParcelAerial =
+    resolved.coordinates?.lat && resolved.coordinates?.lng
+      ? `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=${(
+          resolved.coordinates.lng - closeDelta
+        ).toFixed(6)},${(resolved.coordinates.lat - closeDelta).toFixed(6)},${(
+          resolved.coordinates.lng + closeDelta
+        ).toFixed(6)},${(
+          resolved.coordinates.lat + closeDelta
+        ).toFixed(6)}&bboxSR=4326&imageSR=4326&size=900,600&format=jpg&f=image`
+      : null;
+
+  const defaultElevationPhoto =
+    state === 'DC'
+      ? 'https://ssl.cdn-redfin.com/photo/235/bigphoto/080/DCDC2257080_2.jpg'
+      : state === 'MD'
+      ? 'https://ssl.cdn-redfin.com/photo/235/bigphoto/464/1002955464_1.jpg'
+      : state === 'VA'
+      ? 'https://ssl.cdn-redfin.com/photo/235/bigphoto/588/VAAR2058588_5.jpg'
+      : 'https://photos.zillowstatic.com/fp/70faa542af47d0775cde9d18a855efde-cc_ft_1536.jpg';
+
+  const finalPhotoUrl = verifiedPhotos?.[0] || defaultElevationPhoto;
+  const finalGallery = verifiedPhotos
+    ? [...verifiedPhotos]
+    : cadastralParcelAerial
+    ? [
+        defaultElevationPhoto,
+        cadastralParcelAerial,
+        'https://ssl.cdn-redfin.com/photo/235/bigphoto/663/1001783663_21_2.jpg',
+      ]
+    : [
+        defaultElevationPhoto,
+        'https://ssl.cdn-redfin.com/photo/235/bigphoto/663/1001783663_21_2.jpg',
+      ];
+
   return {
     id,
     mlsId: `US-RESO-${state}-${Math.floor(100000 + Math.random() * 900000)}`,
@@ -206,38 +253,8 @@ export function evaluateNationalAddress(
     status: 'active',
     isVerifiedActive: true,
     lastVerifiedHoursAgo: 0.1,
-    photoUrl: state === 'CA'
-      ? 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1200&auto=format&fit=crop&q=80'
-      : state === 'FL'
-      ? 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&auto=format&fit=crop&q=80'
-      : state === 'TX'
-      ? 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&auto=format&fit=crop&q=80'
-      : state === 'NY'
-      ? 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=1200&auto=format&fit=crop&q=80'
-      : 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&auto=format&fit=crop&q=80',
-    gallery: state === 'CA'
-      ? [
-          'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1200&auto=format&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&auto=format&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&auto=format&fit=crop&q=80',
-        ]
-      : state === 'FL'
-      ? [
-          'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&auto=format&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&auto=format&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1200&auto=format&fit=crop&q=80',
-        ]
-      : state === 'TX'
-      ? [
-          'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&auto=format&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=1200&auto=format&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&auto=format&fit=crop&q=80',
-        ]
-      : [
-          'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&auto=format&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&auto=format&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&auto=format&fit=crop&q=80',
-        ],
+    photoUrl: finalPhotoUrl,
+    gallery: finalGallery,
     schoolRating: 9.2,
     walkScore: 74,
     transitScore: 68,

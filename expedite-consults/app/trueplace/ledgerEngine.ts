@@ -132,7 +132,7 @@ class PropertyLedgerEngine {
   private blocks: LedgerBlock[] = [...INITIAL_BLOCKS];
   private lastSyncTime: number = now - 4 * 60 * 1000; // 4 minutes ago
   private cadenceMs: number = 30 * 60 * 1000; // 30 minutes
-  private properties: Property[] = [...REAL_DMV_INVENTORY, ...MOCK_PROPERTIES.slice(0, 10)];
+  private properties: Property[] = [...REAL_DMV_INVENTORY];
 
   public getBlocks(): LedgerBlock[] {
     return [...this.blocks].reverse(); // newest first
