@@ -97,6 +97,11 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="w-1.5 h-1.5 rounded-full bg-[#2DD4BF] animate-pulse"></span>
               <span>🔄 30m Real Ledger (MD • VA • DC)</span>
             </button>
+            <span className="hidden sm:inline text-gray-500">|</span>
+            <div className="hidden sm:flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-emerald-900/60 border border-emerald-400/30 text-emerald-200 text-[11px] font-semibold">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#34D399] animate-pulse"></span>
+              <span>🤖 Copilot DB: 50-State Network</span>
+            </div>
           </div>
 
           {/* Theme Selector matching the user's screenshot */}

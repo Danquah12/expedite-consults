@@ -50,7 +50,9 @@ import {
   Clock,
   ExternalLink,
   Loader2,
+  Bot,
 } from 'lucide-react';
+import { CopilotRetrievalModal } from './components/CopilotRetrievalModal';
 
 export default function TruePlacePortalPage() {
   const [theme, setTheme] = useState<ThemeKey>('green');
@@ -62,6 +64,12 @@ export default function TruePlacePortalPage() {
   const [showHomeTruthModal, setShowHomeTruthModal] = useState<boolean>(false);
   const [showAddAddressModal, setShowAddAddressModal] = useState<boolean>(false);
   const [showLedgerModal, setShowLedgerModal] = useState<boolean>(false);
+
+  // Copilot Nationwide Database Retrieval States
+  const [showCopilotModal, setShowCopilotModal] = useState<boolean>(false);
+  const [isCopilotRetrieving, setIsCopilotRetrieving] = useState<boolean>(false);
+  const [copilotRetrievalStage, setCopilotRetrievalStage] = useState<number>(1);
+  const [copilotDossierProperty, setCopilotDossierProperty] = useState<Property | null>(null);
 
   // Nationwide Address Autocomplete & Evaluation States
   const [autocompleteSuggestions, setAutocompleteSuggestions] = useState<any[]>([]);
@@ -112,41 +120,79 @@ export default function TruePlacePortalPage() {
     }
   };
 
-  // Handle selecting and evaluating a nationwide address
-  const handleSelectNationalAddress = async (suggestion: any) => {
-    setIsEvaluating(true);
+  // Copilot Nationwide Database Retrieval Engine
+  const handleCopilotRetrieve = async (queryOverride?: string, suggestionItem?: any) => {
+    const rawTarget = (queryOverride || searchQuery).trim();
+    const target = rawTarget || '1100 Congress Ave, Austin, TX 78701';
+
     setShowSuggestions(false);
-    setNationalEvaluationToast(`Resolving & Evaluating ${suggestion.streetAddress}, ${suggestion.cityState}...`);
+    setShowCopilotModal(true);
+    setIsCopilotRetrieving(true);
+    setCopilotRetrievalStage(1);
+
+    const timer1 = setTimeout(() => setCopilotRetrievalStage(2), 350);
+    const timer2 = setTimeout(() => setCopilotRetrievalStage(3), 750);
+    const timer3 = setTimeout(() => setCopilotRetrievalStage(4), 1150);
+
     try {
+      const payload: any = {};
+      if (suggestionItem?.magicKey) {
+        payload.magicKey = suggestionItem.magicKey;
+        payload.singleLine = suggestionItem.label;
+      } else {
+        payload.singleLine = target;
+      }
+
       const res = await fetch('/api/trueplace/evaluate-address', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          magicKey: suggestion.magicKey,
-          singleLine: suggestion.label,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
         const data = await res.json();
         const evaluatedProp: Property = data.property;
-        setProperties([evaluatedProp, ...properties]);
+
+        setProperties(prev => [
+          evaluatedProp,
+          ...prev.filter(p => p.address.toLowerCase() !== evaluatedProp.address.toLowerCase())
+        ]);
         setSelectedProperty(evaluatedProp);
-        setSearchQuery('');
-        setNationalEvaluationToast(`Evaluation Complete! Loaded ${evaluatedProp.title} with TrueValue $${evaluatedProp.trueValue.toLocaleString()}`);
+        setCopilotDossierProperty(evaluatedProp);
+        setNationalEvaluationToast(`Copilot retrieved ${evaluatedProp.address}, ${evaluatedProp.city}, ${evaluatedProp.state} from national database!`);
         setTimeout(() => setNationalEvaluationToast(null), 5000);
-        setActiveTab('valuation');
       } else {
-        setNationalEvaluationToast('Unable to complete evaluation. Please try another address.');
-        setTimeout(() => setNationalEvaluationToast(null), 4000);
+        // Check local match as fallback
+        const existing = properties.find(p =>
+          p.address.toLowerCase().includes(target.toLowerCase()) ||
+          p.city.toLowerCase().includes(target.toLowerCase()) ||
+          p.zip.includes(target)
+        );
+        if (existing) {
+          setSelectedProperty(existing);
+          setCopilotDossierProperty(existing);
+        } else {
+          setCopilotDossierProperty(properties[0]);
+        }
       }
     } catch (err) {
-      console.error('Failed to evaluate national address:', err);
-      setNationalEvaluationToast('Evaluation error. Please try again.');
-      setTimeout(() => setNationalEvaluationToast(null), 4000);
+      console.error('Copilot national retrieval failed:', err);
+      const fallback = properties.find(p => p.address.toLowerCase().includes(target.toLowerCase())) || properties[0];
+      setSelectedProperty(fallback);
+      setCopilotDossierProperty(fallback);
     } finally {
-      setIsEvaluating(false);
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
+      setTimeout(() => {
+        setIsCopilotRetrieving(false);
+      }, 1300);
     }
+  };
+
+  // Handle selecting and evaluating a nationwide address from autocomplete
+  const handleSelectNationalAddress = async (suggestion: any) => {
+    await handleCopilotRetrieve(suggestion.label, suggestion);
   };
 
   // Handle Adding / Evaluating Any Real Address
@@ -363,31 +409,52 @@ export default function TruePlacePortalPage() {
             </div>
 
             {/* Search, Filter & Sort Bar */}
-            <div className="bg-white p-4 sm:p-5 rounded-xl border border-gray-200 shadow-xs space-y-4">
+            <div className="bg-white p-4 sm:p-5 rounded-xl border border-gray-200 shadow-xs space-y-3">
               <div className="flex flex-col md:flex-row items-center gap-3">
-                <div className="relative flex-1 w-full">
-                  <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    placeholder="Search any address across all United States (e.g., 1204 N Hartford St, 3500 Beverly Dr, 9612 Eagle Ridge)..."
-                    value={searchQuery}
-                    onChange={(e) => handleSearchChange(e.target.value)}
-                    onFocus={() => { if (autocompleteSuggestions.length > 0) setShowSuggestions(true); }}
-                    className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-gray-300 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#0C382E] focus:border-transparent font-medium"
-                  />
-                  {isSearchingNational && (
-                    <Loader2 className="w-4 h-4 text-emerald-600 animate-spin absolute right-3.5 top-1/2 -translate-y-1/2" />
-                  )}
+                <div className="relative flex-1 w-full flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      placeholder="Search any address nationwide (e.g., 1100 Congress Ave Austin, 9641 Sunset Blvd Beverly Hills, 7200 Wisconsin Ave Bethesda)..."
+                      value={searchQuery}
+                      onChange={(e) => handleSearchChange(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleCopilotRetrieve();
+                        }
+                      }}
+                      onFocus={() => { if (autocompleteSuggestions.length > 0) setShowSuggestions(true); }}
+                      className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-gray-300 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#0C382E] focus:border-transparent font-medium"
+                    />
+                    {isSearchingNational && (
+                      <Loader2 className="w-4 h-4 text-emerald-600 animate-spin absolute right-3.5 top-1/2 -translate-y-1/2" />
+                    )}
+                  </div>
+
+                  {/* Dedicated Copilot Nationwide Database Retrieve Button */}
+                  <button
+                    type="button"
+                    onClick={() => handleCopilotRetrieve()}
+                    disabled={isCopilotRetrieving}
+                    className="px-4 py-2.5 rounded-lg bg-gradient-to-r from-[#0C382E] via-[#0D4437] to-[#164E41] text-white hover:brightness-110 font-bold text-xs sm:text-sm flex items-center space-x-1.5 transition-all shadow-sm cursor-pointer shrink-0 border border-emerald-400/50 active:scale-95 disabled:opacity-50"
+                    title="Command Copilot to retrieve all information from national databases"
+                  >
+                    <Bot className="w-4 h-4 text-[#34D399] animate-pulse" />
+                    <span className="whitespace-nowrap font-sans font-bold hidden xs:inline sm:inline">Copilot Retrieve</span>
+                    <Sparkles className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+                  </button>
 
                   {/* Floating Nationwide Autocomplete Dropdown */}
                   {showSuggestions && autocompleteSuggestions.length > 0 && (
                     <div className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 overflow-hidden divide-y divide-gray-100 max-h-80 overflow-y-auto">
                       <div className="px-3.5 py-1.5 bg-[#0C382E] text-white text-[10.5px] font-bold flex items-center justify-between">
                         <span className="flex items-center space-x-1.5">
-                          <Sparkles className="w-3 h-3 text-[#34D399]" />
-                          <span>National Address Geocoder (All 50 US States)</span>
+                          <Bot className="w-3.5 h-3.5 text-[#34D399]" />
+                          <span>Copilot National Address Geocoder (All 50 US States)</span>
                         </span>
-                        <span className="text-gray-300 text-[9.5px]">Select to Run Live TrueValue</span>
+                        <span className="text-gray-300 text-[9.5px]">Select to Run Full Retrieval</span>
                       </div>
                       {autocompleteSuggestions.map((item, idx) => (
                         <div
@@ -408,8 +475,9 @@ export default function TruePlacePortalPage() {
                               </div>
                             </div>
                           </div>
-                          <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full shrink-0">
-                            Run Valuation &rarr;
+                          <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full shrink-0 flex items-center space-x-1">
+                            <Bot className="w-3 h-3 text-emerald-700" />
+                            <span>Retrieve Dossier &rarr;</span>
                           </span>
                         </div>
                       ))}
@@ -417,7 +485,7 @@ export default function TruePlacePortalPage() {
                   )}
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                <div className="flex flex-wrap items-center gap-2 w-full md:w-auto shrink-0">
                   {/* Property Type Dropdown */}
                   <select
                     value={propertyTypeFilter}
@@ -472,6 +540,36 @@ export default function TruePlacePortalPage() {
                     <span>48h Verified Only</span>
                   </button>
                 </div>
+              </div>
+
+              {/* Copilot Quick Retrieval Prompts */}
+              <div className="flex items-center space-x-1.5 overflow-x-auto text-xs pt-1 border-t border-gray-100 no-scrollbar">
+                <span className="text-[10px] font-bold text-[#0C382E] uppercase flex items-center space-x-1 shrink-0">
+                  <Bot className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Copilot Retrieval Shortcuts:</span>
+                </span>
+                {[
+                  { label: 'Beverly Hills, CA', query: '9641 Sunset Blvd, Beverly Hills, CA 90210' },
+                  { label: 'Austin, TX', query: '1100 Congress Ave, Austin, TX 78701' },
+                  { label: 'Miami, FL', query: '1100 Biscayne Blvd, Miami, FL 33132' },
+                  { label: 'Bethesda, MD (SDAT)', query: '7200 Wisconsin Ave, Bethesda, MD 20814' },
+                  { label: 'McLean, VA (PLUS)', query: '1137 Basil Rd, McLean, VA 22101' },
+                  { label: 'Georgetown, DC (GIS)', query: '1420 Wisconsin Ave NW, Washington, DC 20007' },
+                  { label: 'Dallas, TX', query: '1600 Pennsylvania Ave, Dallas, TX 75215' },
+                ].map((prompt, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery(prompt.query);
+                      handleCopilotRetrieve(prompt.query);
+                    }}
+                    className="px-2.5 py-1 rounded-md bg-emerald-50 hover:bg-emerald-100 text-emerald-950 border border-emerald-200 text-[11px] font-semibold whitespace-nowrap transition-colors cursor-pointer shrink-0 flex items-center space-x-1"
+                  >
+                    <span>⚡</span>
+                    <span>{prompt.label}</span>
+                  </button>
+                ))}
               </div>
 
               {/* National Evaluation Progress / Feedback Toast */}
@@ -656,6 +754,21 @@ export default function TruePlacePortalPage() {
                             <span>TrueValue</span>
                           </button>
                         </div>
+
+                        {/* Copilot Nationwide Dossier Direct Button */}
+                        <button
+                          onClick={() => {
+                            setSelectedProperty(prop);
+                            setCopilotDossierProperty(prop);
+                            setIsCopilotRetrieving(false);
+                            setShowCopilotModal(true);
+                          }}
+                          className="w-full py-1.5 px-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-950 text-[11px] font-bold flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
+                        >
+                          <Bot className="w-3.5 h-3.5 text-emerald-700" />
+                          <span>Copilot Full Property Dossier</span>
+                          <Sparkles className="w-3 h-3 text-amber-500" />
+                        </button>
 
                         {/* Secondary Quick Action Bar */}
                         <div className="grid grid-cols-4 gap-1 text-[10.5px]">
@@ -1148,6 +1261,29 @@ export default function TruePlacePortalPage() {
           setProperties(updated);
           if (updated.length > 0) setSelectedProperty(updated[0]);
         }}
+      />
+
+      {/* Copilot Nationwide Database Retrieval Modal */}
+      <CopilotRetrievalModal
+        isOpen={showCopilotModal}
+        onClose={() => setShowCopilotModal(false)}
+        property={copilotDossierProperty || selectedProperty}
+        searchQuery={searchQuery}
+        isRetrieving={isCopilotRetrieving}
+        retrievalStage={copilotRetrievalStage}
+        onSelectProperty={(p) => {
+          setSelectedProperty(p);
+          setShowCopilotModal(false);
+        }}
+        onOpenChatWithCopilot={(p) => {
+          setSelectedProperty(p);
+          setActiveTab('copilot');
+        }}
+        onOpenHomeTruth={(p) => {
+          setSelectedProperty(p);
+          setShowHomeTruthModal(true);
+        }}
+        onOpenLedger={() => setShowLedgerModal(true)}
       />
 
       {/* Footer */}
