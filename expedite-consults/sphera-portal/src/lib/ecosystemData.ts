@@ -5,7 +5,7 @@ export interface EcosystemApp {
   pillar: "cyber-defense" | "studios-command" | "enterprise-portals" | "sphera-ecosystem" | "connectin-os" | "campus-ecosystem" | "talent-commerce" | "social-impact";
   categoryLabel: string;
   description: string;
-  badge: "Platform" | "Portal" | "SuperApp" | "AI Engine" | "Vercel Live" | "Enterprise" | "Impact";
+  badge: "Platform" | "Portal" | "SuperApp" | "AI Engine" | "Vercel Live" | "Enterprise" | "Impact" | "Integrated";
   status: "ONLINE" | "STANDALONE" | "PROD_ACTIVE" | "INTEGRATED";
   vercelUrl: string; // Guaranteed global Vercel production URL
   mirrorVercelUrl?: string;

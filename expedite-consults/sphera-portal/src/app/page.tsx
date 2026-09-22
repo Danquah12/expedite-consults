@@ -48,6 +48,16 @@ const products = [
     status: "live",
   },
   {
+    name: "Expedite Strike Console",
+    tagline: "Autonomous 5-Stage Attack Pipeline & Multi-Scanner Engine",
+    description:
+      "Autonomous security testing workstation chaining Assessment → Enumeration → Exploitation → Post-Ex → Reporting, with concurrent multi-scanner execution (Nmap, Nuclei, ZAP, AegisProbe, Burp, SCAP).",
+    url: "http://localhost:9020",
+    color: "#ef4444",
+    icon: "⚡",
+    status: "live",
+  },
+  {
     name: "BAZAAR Marketplace",
     tagline: "Standalone AI-Powered Marketplace & Restaurant Delivery",
     description:
@@ -389,6 +399,7 @@ const categories: Category[] = [
     apps: [
       { name: "Expedite Strike & Fusion", icon: "⚡", description: "Autonomous Pentest & ASPM Platform — Expedite Fusion™ Hybrid Scanning, AI-BOM, MCP Server, Choke Point Graph & Auto-PR.", badge: "PORT 9012", url: "http://localhost:9012", status: "available" },
       { name: "ÆGIS · SOC Autonomous PenTest", icon: "🎯", description: "Autonomous AI PenTest console, multi-target asset discovery, PoC terminal & Neo4j attack graphs.", badge: "PORT 9011", url: "http://localhost:9011/app/?standalone=1", status: "available" },
+      { name: "Expedite Strike Console", icon: "⚡", description: "Autonomous 5-Stage Attack Pipeline & Multi-Scanner Engine (Nmap, Nuclei, ZAP, AegisProbe, Burp, SCAP) with automated stage chaining.", badge: "PORT 9020", url: "http://localhost:9020", status: "available" },
       { name: "Expedite Fusion™ Engine", icon: "✨", description: "Deterministic Rules + Frontier AI Reasoning. 70% fewer false positives across SAST, DAST & Secrets.", badge: "FUSION", url: "http://localhost:9012", status: "available" },
       { name: "Checkmarx / Strike MCP Server", icon: "🔌", description: "Single Model Context Protocol connection providing IDE AI assistants (Cursor, Claude) with enterprise context.", badge: "MCP 2026", url: "http://localhost:9012", status: "available" },
       { name: "AI-BOM & LLM Scanner", icon: "🧠", description: "AI Supply Chain Security — Tracks AI models, fine-tuning datasets, agent swarms & MCP tools against EU AI Act & ISO 42001.", badge: "AI-BOM", url: "http://localhost:9012", status: "available" },

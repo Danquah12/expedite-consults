@@ -5,7 +5,7 @@ export interface EcosystemApp {
   pillar: "cyber-defense" | "studios-command" | "enterprise-portals" | "sphera-ecosystem" | "connectin-os" | "campus-ecosystem" | "talent-commerce" | "social-impact";
   categoryLabel: string;
   description: string;
-  badge: "Platform" | "Portal" | "SuperApp" | "AI Engine" | "Vercel Live" | "Enterprise" | "Impact";
+  badge: "Platform" | "Portal" | "SuperApp" | "AI Engine" | "Vercel Live" | "Enterprise" | "Impact" | "Integrated";
   status: "ONLINE" | "STANDALONE" | "PROD_ACTIVE" | "INTEGRATED";
   vercelUrl: string; // Guaranteed global Vercel production URL
   mirrorVercelUrl?: string;
@@ -374,6 +374,27 @@ export const ECOSYSTEM_APPS: EcosystemApp[] = [
     icon: "Cpu",
     accentColor: "#38bdf8",
     stats: { label: "Mode", value: "?standalone=1" },
+  },
+  {
+    id: "expedite-strike-pentest-console-9020",
+    name: "Expedite Strike — Autonomous PenTest Console (5-Stage Pipeline)",
+    codeName: "Strike Console :9020",
+    pillar: "cyber-defense",
+    categoryLabel: "5-Stage Autonomous Attack Pipeline & Multi-Scanner Engine",
+    description: "Autonomous security testing workstation chaining Assessment → Enumeration → Exploitation → Post-Ex → Reporting, with concurrent multi-scanner execution (Nmap, Nuclei, ZAP, AegisProbe, Burp, SCAP) and synchronized completion barriers.",
+    badge: "AI Engine",
+    status: "PROD_ACTIVE",
+    vercelUrl: "https://14-exploitability-platform.vercel.app/exploit",
+    mirrorVercelUrl: "https://sphera-portal.vercel.app",
+    localPort: 9020,
+    localPath: "http://localhost:9020/",
+    githubRepo: "Danquah12/expedite-strike",
+    githubUrl: "https://github.com/Danquah12/expedite-strike",
+    techStack: ["Python 3.14", "Concurrent Scanners", "Dash / Plotly", "Neo4j Graph", "Metasploit"],
+    features: ["5-Stage Autonomous Attack Pipeline", "Concurrent Multi-Scanner Engine", "Auto-Advance Orchestrator", "Live Log Multiplexer", "PoC Evidence Verification"],
+    icon: "Crosshair",
+    accentColor: "#ef4444",
+    stats: { label: "Local Service", value: "Port 9020 Active" },
   },
   {
     id: "aegis-mission-control-9000",
