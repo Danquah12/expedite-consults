@@ -1,21 +1,9 @@
-import { crReadClient } from "@/sanity/lib/write-client";
-
 /**
- * Generate the next CHG number by querying Sanity for the highest existing one.
+ * Generate the next CHG number.
  * Returns a padded string like "CHG0000042".
  */
 export async function generateChgNumber(): Promise<string> {
-	const existing = await crReadClient.fetch<string[]>(
-		`*[_type == "changeRequest"] | order(chgNumber desc)[0].chgNumber`
-	);
-
-	const last = existing?.[0] ?? null;
-	let nextNum = 1;
-
-	if (last && /^CHG\d+$/.test(last)) {
-		nextNum = parseInt(last.replace("CHG", ""), 10) + 1;
-	}
-
+	const nextNum = Math.floor(Date.now() % 10000000);
 	return `CHG${String(nextNum).padStart(7, "0")}`;
 }
 
