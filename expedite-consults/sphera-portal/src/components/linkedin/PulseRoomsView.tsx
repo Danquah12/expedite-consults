@@ -34,7 +34,8 @@ import {
   FileText,
   Search,
   Globe,
-  SlidersHorizontal
+  SlidersHorizontal,
+  ChevronRight
 } from "lucide-react"
 import {
   PulseArticle,
