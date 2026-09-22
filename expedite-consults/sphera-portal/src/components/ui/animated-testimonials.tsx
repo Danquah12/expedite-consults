@@ -1,174 +1,86 @@
 "use client";
 
-import {
-	GetTestimonialQueryResult,
-	internalGroqTypeReferenceTo,
-	SanityImageCrop,
-	SanityImageHotspot,
-} from "@/sanity.types";
-import { urlFor } from "@/sanity/lib/image";
-import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 
+export interface TestimonialItem {
+	name?: string;
+	designation?: string;
+	quote?: string;
+	src?: string;
+	image?: any;
+}
+
 export const AnimatedTestimonials = ({
-	testimonials,
+	testimonials = [],
 	autoplay = false,
 }: {
-	testimonials: GetTestimonialQueryResult;
+	testimonials: TestimonialItem[];
 	autoplay?: boolean;
 }) => {
 	const [active, setActive] = useState(0);
-	const [randomRotations, setRandomRotations] = useState<number[]>([]);
-
-	useEffect(() => {
-		// Generate random rotations ONCE when testimonials load
-		const rotations = testimonials.map(
-			() => Math.floor(Math.random() * 21) - 10
-		);
-		setRandomRotations(rotations);
-	}, [testimonials]);
 
 	const handleNext = () => {
+		if (!testimonials.length) return;
 		setActive((prev) => (prev + 1) % testimonials.length);
 	};
 
 	const handlePrev = () => {
+		if (!testimonials.length) return;
 		setActive((prev) => (prev - 1 + testimonials.length) % testimonials.length);
 	};
 
-	const isActive = (index: number) => {
-		return index === active;
-	};
-
 	useEffect(() => {
-		if (autoplay) {
+		if (autoplay && testimonials.length > 1) {
 			const interval = setInterval(handleNext, 5000);
 			return () => clearInterval(interval);
 		}
-	}, [autoplay]);
+	}, [autoplay, testimonials.length]);
+
+	if (!testimonials.length) return null;
+	const current = testimonials[active] || {};
 
 	return (
-		<div className="mx-auto max-w-sm px-4 lg:py-16  font-sans antialiased md:max-w-4xl md:px-8 lg:px-12 bg-gradient-to-b from-transparent to-primary/70 lg:from-primary/20 lg:bg-gradient-to-br shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
+		<div className="mx-auto max-w-sm px-4 lg:py-16 font-sans antialiased md:max-w-4xl md:px-8 lg:px-12 bg-gradient-to-b from-transparent to-primary/70 lg:from-primary/20 lg:bg-gradient-to-br shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-2xl">
 			<div className="relative grid grid-cols-1 gap-14 md:grid-cols-2">
 				<div>
-					<div className="relative h-80 w-full">
-						<AnimatePresence>
-							{testimonials.map((testimonial, index) => (
-								<motion.div
-									key={testimonial.name}
-									initial={{
-										opacity: 0,
-										scale: 0.9,
-										z: -100,
-										rotate: randomRotations[index] || 0,
-									}}
-									animate={{
-										opacity: isActive(index) ? 1 : 0.7,
-										scale: isActive(index) ? 1 : 0.95,
-										z: isActive(index) ? 0 : -100,
-										rotate: isActive(index) ? 0 : randomRotations[index] || 0,
-										zIndex: isActive(index)
-											? 40
-											: testimonials.length + 2 - index,
-										y: isActive(index) ? [0, -80, 0] : 0,
-									}}
-									exit={{
-										opacity: 0,
-										scale: 0.9,
-										z: 100,
-										rotate: randomRotations[index] || 0,
-									}}
-									transition={{
-										duration: 0.4,
-										ease: "easeInOut",
-									}}
-									className="absolute inset-0 origin-bottom"
-								>
-									<img
-										src={
-											testimonials[active]?.image
-												? urlFor(testimonials[active]?.image).url()
-												: ""
-										}
-										alt={testimonial.name ?? ""}
-										width={500}
-										height={500}
-										draggable={false}
-										className="h-full w-full object-cover object-center"
-									/>
-								</motion.div>
-							))}
-						</AnimatePresence>
+					<div className="relative h-80 w-full rounded-2xl overflow-hidden bg-zinc-900 shadow-lg">
+						<img
+							src={current.src || (typeof current.image === "string" ? current.image : "") || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&auto=format&fit=crop&q=80"}
+							alt={current.name ?? "Testimonial"}
+							className="h-full w-full object-cover object-center transition-all duration-500"
+						/>
 					</div>
 				</div>
 
 				<div className="flex flex-col justify-between py-4">
-					<motion.div
-						key={active}
-						initial={{
-							y: 20,
-							opacity: 0,
-						}}
-						animate={{
-							y: 0,
-							opacity: 1,
-						}}
-						exit={{
-							y: -20,
-							opacity: 0,
-						}}
-						transition={{
-							duration: 0.2,
-							ease: "easeInOut",
-						}}
-					>
-						<h3 className="text-xl lg:text-2xl font-bold text-black dark:text-white">
-							{testimonials[active].name}
+					<div className="transition-opacity duration-300">
+						<h3 className="text-xl lg:text-2xl font-bold text-zinc-900 dark:text-white">
+							{current.name}
 						</h3>
-						<p className="text-sm text-gray-500 dark:text-neutral-500">
-							{testimonials[active].role} at {testimonials[active].company}
+						<p className="text-sm text-zinc-500 dark:text-zinc-400">
+							{current.designation}
 						</p>
 
-						<motion.p className="mt-8 text-sm lg:text-lg text-gray-700">
-							{testimonials[active].quote?.split(" ").map((word, index) => (
-								<motion.span
-									key={index}
-									initial={{
-										filter: "blur(10px)",
-										opacity: 0,
-										y: 5,
-									}}
-									animate={{
-										filter: "blur(0px)",
-										opacity: 1,
-										y: 0,
-									}}
-									transition={{
-										duration: 0.2,
-										ease: "easeInOut",
-										delay: 0.02 * index,
-									}}
-									className="inline-block text-primaary"
-								>
-									{word}&nbsp;
-								</motion.span>
-							))}
-						</motion.p>
-					</motion.div>
+						<p className="mt-6 text-sm lg:text-base text-zinc-700 dark:text-zinc-300 leading-relaxed italic">
+							&ldquo;{current.quote}&rdquo;
+						</p>
+					</div>
 
 					<div className="flex gap-4 pt-8 md:pt-0">
 						<button
 							onClick={handlePrev}
-							className="group/button flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800 cursor-pointer"
+							aria-label="Previous testimonial"
+							className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
 						>
-							<ArrowLeft className="h-5 w-5 text-black transition-transform duration-300 group-hover/button:rotate-12 dark:text-neutral-400" />
+							<ArrowLeft className="h-5 w-5 text-zinc-900 dark:text-zinc-100" />
 						</button>
 						<button
 							onClick={handleNext}
-							className="group/button flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800 cursor-pointer"
+							aria-label="Next testimonial"
+							className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
 						>
-							<ArrowRight className="h-5 w-5 text-black transition-transform duration-300 group-hover/button:-rotate-12 dark:text-neutral-400" />
+							<ArrowRight className="h-5 w-5 text-zinc-900 dark:text-zinc-100" />
 						</button>
 					</div>
 				</div>
