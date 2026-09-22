@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Property, calculateInstantTrueValue } from './mockData';
 import { REAL_DMV_INVENTORY } from './realDataService';
 import { PropertyInventoryLedgerModal } from './components/PropertyInventoryLedgerModal';
+import { PropertyPhotoHeroMosaic } from './components/PropertyPhotoHeroMosaic';
 import { Header, ThemeKey, THEMES } from './components/Header';
 import { TrueValueCard } from './components/TrueValueCard';
 import { WhatIfSimulator } from './components/WhatIfSimulator';
@@ -367,7 +368,17 @@ export default function TruePlacePortalPage() {
         {activeTab === 'search' && (
           <div className="space-y-6">
             {/* Hero / Mission Banner */}
-            <div className={`${currentStyles.heroBg} text-white p-6 sm:p-8 rounded-2xl shadow-sm relative overflow-hidden transition-all duration-300`}>
+            <div className="relative text-white p-6 sm:p-9 rounded-2xl shadow-xl overflow-hidden transition-all duration-300 border border-emerald-500/20">
+              {/* User-Selected Architectural Dusk Hero Background */}
+              <img
+                src="/images/hero-building-dusk.jpg"
+                alt="Architectural engineering and modern design backdrop"
+                className="absolute inset-0 w-full h-full object-cover object-center scale-105 filter brightness-90 contrast-105"
+              />
+              {/* Atmospheric Multi-Layer Dark Gradient for readability & branding */}
+              <div className={`absolute inset-0 ${currentStyles.heroBg} opacity-85 mix-blend-multiply`} />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/75 to-black/40 backdrop-blur-[0.5px]" />
+
               <div className="relative z-10 max-w-3xl space-y-2.5">
                 <span className="text-[11px] uppercase tracking-widest font-bold flex items-center space-x-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
@@ -963,15 +974,31 @@ export default function TruePlacePortalPage() {
            ========================================================================= */}
         {activeTab === 'valuation' && (
           <div className="space-y-6">
-            <div className="bg-[#0C382E] text-white p-6 rounded-xl shadow-xs">
-              <span className="text-[10px] uppercase font-bold tracking-widest text-[#34D399] block">
-                7-Layer Hybrid Valuation Architecture
-              </span>
-              <h2 className="text-2xl font-black tracking-tight">TrueValue™ Machine Learning Engine</h2>
-              <p className="text-xs text-gray-200 mt-1 max-w-2xl">
-                Unlike opaque black-box models, TrueValue combines MLS characteristics, county tax assessments, municipal building permits, and computer-vision finish scoring with strict mathematical additivity.
-              </p>
+            <div className="relative text-white p-6 rounded-xl shadow-md overflow-hidden border border-emerald-500/20">
+              <img
+                src="/images/hero-building-dusk.jpg"
+                alt="Architectural Backdrop"
+                className="absolute inset-0 w-full h-full object-cover object-center filter brightness-60"
+              />
+              <div className="absolute inset-0 bg-[#0C382E]/85 mix-blend-multiply" />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-transparent" />
+              <div className="relative z-10">
+                <span className="text-[10px] uppercase font-bold tracking-widest text-[#34D399] block">
+                  7-Layer Hybrid Valuation Architecture
+                </span>
+                <h2 className="text-2xl font-black tracking-tight">TrueValue™ Machine Learning Engine</h2>
+                <p className="text-xs text-gray-200 mt-1 max-w-2xl">
+                  Unlike opaque black-box models, TrueValue combines MLS characteristics, county tax assessments, municipal building permits, and computer-vision finish scoring with strict mathematical additivity.
+                </p>
+              </div>
             </div>
+
+            {/* Redfin-Style Multi-Photo Collage Hero */}
+            <PropertyPhotoHeroMosaic
+              property={selectedProperty}
+              onOpenTruthReport={() => setShowHomeTruthModal(true)}
+              onOpenCadastral={() => setActiveTab('map')}
+            />
 
             {/* Render TrueValue Card */}
             <TrueValueCard

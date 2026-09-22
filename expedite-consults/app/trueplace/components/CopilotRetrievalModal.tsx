@@ -52,6 +52,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { Property, getEnrichedTrueCost, getEnrichedHomeOS, getEnrichedPropertyDNA } from '../mockData';
+import { PropertyPhotoHeroMosaic } from './PropertyPhotoHeroMosaic';
 import {
   generatePropertyIntelligenceReport,
   PropertyIntelligenceReport,
@@ -581,6 +582,14 @@ export const CopilotRetrievalModal: React.FC<CopilotRetrievalModalProps> = ({
                  ========================================================================= */}
               {activeDossierTab === 'summary' && (
                 <div className="space-y-5">
+                  {/* Redfin-Style Hero Photo Mosaic & Property Header */}
+                  <PropertyPhotoHeroMosaic
+                    property={property}
+                    onOpenStreetView={() => setActiveDossierTab('map')}
+                    onOpenCadastral={() => setActiveDossierTab('map')}
+                    onOpenTruthReport={() => onOpenHomeTruth && onOpenHomeTruth(property)}
+                  />
+
                   {/* Executive AI Callout */}
                   <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-50 via-teal-50 to-white border border-emerald-200 text-xs sm:text-sm space-y-2 text-gray-800 shadow-xs">
                     <div className="flex items-center justify-between">
@@ -1615,99 +1624,12 @@ export const CopilotRetrievalModal: React.FC<CopilotRetrievalModalProps> = ({
                  ========================================================================= */}
               {activeDossierTab === 'photos' && (
                 <div className="space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white p-3.5 rounded-xl border border-gray-200">
-                    <div>
-                      <h4 className="text-xs font-bold text-gray-900 uppercase flex items-center space-x-1.5">
-                        <ImageIcon className="w-4 h-4 text-emerald-600" />
-                        <span>Actual Property Photography & Cadastral Aerials</span>
-                      </h4>
-                      <p className="text-[11px] text-gray-500">
-                        {property.address}, {property.city}, {property.state} • {allPhotos.length} High-Resolution Photos Retrieved
-                      </p>
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      {photosLoading && (
-                        <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-semibold animate-pulse">
-                          <Loader2 className="w-3 h-3 animate-spin" />
-                          <span>Scanning latest imagery...</span>
-                        </span>
-                      )}
-                      <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-bold">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                        <span>Actual Photos Verified</span>
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="relative aspect-[16/9] w-full rounded-2xl overflow-hidden bg-gray-950 border border-gray-200 shadow-md group">
-                    <img
-                      src={allPhotos[activePhotoIndex]}
-                      alt={`${property.title} view ${activePhotoIndex + 1}`}
-                      className="w-full h-full object-cover transition-all duration-300"
-                    />
-
-                    {/* Prev / Next navigation arrows */}
-                    {allPhotos.length > 1 && (
-                      <>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActivePhotoIndex((prev) => (prev > 0 ? prev - 1 : allPhotos.length - 1));
-                          }}
-                          className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 hover:bg-black/80 text-white transition-all cursor-pointer shadow-lg"
-                          aria-label="Previous photo"
-                        >
-                          <ArrowRight className="w-4 h-4 rotate-180" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActivePhotoIndex((prev) => (prev < allPhotos.length - 1 ? prev + 1 : 0));
-                          }}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/60 hover:bg-black/80 text-white transition-all cursor-pointer shadow-lg"
-                          aria-label="Next photo"
-                        >
-                          <ArrowRight className="w-4 h-4" />
-                        </button>
-                      </>
-                    )}
-
-                    <div className="absolute bottom-3 left-3 bg-black/75 backdrop-blur-xs text-white px-3 py-1 rounded-lg text-xs font-semibold flex items-center space-x-1.5 shadow-sm">
-                      <ImageIcon className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Photo {activePhotoIndex + 1} of {allPhotos.length}</span>
-                    </div>
-
-                    {allPhotos[activePhotoIndex]?.includes('arcgisonline.com') && (
-                      <div className="absolute top-3 right-3 bg-[#0C382E]/90 backdrop-blur-xs text-white px-2.5 py-1 rounded-lg text-[10px] font-bold font-mono shadow-sm">
-                        🛰️ Cadastral Satellite Aerial View
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Thumbnail Row */}
-                  <div className="flex items-center space-x-2.5 overflow-x-auto pb-1 no-scrollbar">
-                    {allPhotos.map((photo, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => setActivePhotoIndex(idx)}
-                        className={`relative w-22 h-16 rounded-lg overflow-hidden border-2 transition-all cursor-pointer shrink-0 bg-gray-100 ${
-                          activePhotoIndex === idx
-                            ? 'border-[#0C382E] scale-105 shadow-md ring-2 ring-emerald-400/50'
-                            : 'border-gray-200 opacity-75 hover:opacity-100'
-                        }`}
-                      >
-                        <img src={photo} alt="" className="w-full h-full object-cover" />
-                        {photo.includes('arcgisonline.com') && (
-                          <div className="absolute bottom-0 inset-x-0 bg-black/70 text-white text-[8px] font-bold text-center py-0.5 font-mono">
-                            SATELLITE
-                          </div>
-                        )}
-                      </button>
-                    ))}
-                  </div>
+                  <PropertyPhotoHeroMosaic
+                    property={property}
+                    onOpenStreetView={() => setActiveDossierTab('map')}
+                    onOpenCadastral={() => setActiveDossierTab('map')}
+                    onOpenTruthReport={() => onOpenHomeTruth && onOpenHomeTruth(property)}
+                  />
                 </div>
               )}
 

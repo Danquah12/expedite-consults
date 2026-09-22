@@ -302,9 +302,9 @@ export function generatePropertyIntelligenceReport(property: Property): Property
   const baths = property.baths || 3.5;
 
   // 1. Property History
-  const previousOwnersCount = Math.max(2, Math.min(6, Math.floor((2026 - yearBuilt) / 14)));
-  const lastSalePrice = Math.round(price * 0.81);
-  const lastSaleYear = Math.max(yearBuilt + 2, 2021);
+  const recordedSale = property.timeline?.find((t) => t.type === 'sale');
+  const lastSalePrice = recordedSale?.cost || Math.round(price * 0.81);
+  const lastSaleYear = recordedSale?.year || Math.max(yearBuilt + 2, 2021);
   const history: PropertyHistoryData = {
     yearBuilt,
     originalConstruction: yearBuilt < 1940 ? 'Load-bearing solid masonry with timber structural joists' : yearBuilt < 1980 ? 'Dimensional lumber framing on poured concrete foundation' : 'Engineered lumber framing with continuous thermal envelope and high-performance foundation',
