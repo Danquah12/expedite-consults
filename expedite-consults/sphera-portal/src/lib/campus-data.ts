@@ -441,7 +441,7 @@ export interface CampusClub {
   discordUrl?: string;
   dues?: string;
   sgaBudget?: number;
-  council?: "SGA" | "IFC" | "NPHC" | "PHA" | "MGC" | "Academic Senate" | "Club Sports";
+  council?: "SGA" | "IFC" | "NPHC" | "PHA" | "MGC" | "Academic Senate" | "Club Sports" | "Professional" | "Academic" | "Honor Society" | "Special Interest" | "Service" | "Cultural" | string;
   status?: "Active" | "Recruiting" | "Featured";
   leadership: { role: string; name: string; avatar: string }[];
   projects: { id: string; title: string; description: string; status: "In Progress" | "Recruiting" | "Completed"; lead: string }[];
