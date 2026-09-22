@@ -1386,7 +1386,7 @@ export function NetworkView({
         <WarmIntroModal
           isOpen={isWarmIntroOpen}
           onClose={() => setIsWarmIntroOpen(false)}
-          targetUser={warmIntroTarget}
+          targetPerson={warmIntroTarget}
           currentUser={currentUser}
         />
       )}
