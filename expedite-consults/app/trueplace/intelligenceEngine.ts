@@ -199,6 +199,7 @@ export interface EnvironmentalRiskData {
   radonPotential: 'Low (Zone 3)' | 'Moderate (Zone 2)' | 'Elevated (Zone 1)';
   nearestSuperfundSiteDistMi: number;
   flightPathNoiseExposure: 'Minimal' | 'Moderate' | 'Noticeable';
+  airportNoiseExposure?: 'Minimal' | 'Moderate' | 'Noticeable';
   conversationalSummary: string;
 }
 
@@ -305,6 +306,7 @@ export function generatePropertyIntelligenceReport(property: Property): Property
   const recordedSale = property.timeline?.find((t) => t.type === 'sale');
   const lastSalePrice = recordedSale?.cost || Math.round(price * 0.81);
   const lastSaleYear = recordedSale?.year || Math.max(yearBuilt + 2, 2021);
+  const previousOwnersCount = (property.timeline ? property.timeline.filter((t) => t.type === 'sale').length : 2) || 2;
   const history: PropertyHistoryData = {
     yearBuilt,
     originalConstruction: yearBuilt < 1940 ? 'Load-bearing solid masonry with timber structural joists' : yearBuilt < 1980 ? 'Dimensional lumber framing on poured concrete foundation' : 'Engineered lumber framing with continuous thermal envelope and high-performance foundation',
@@ -533,6 +535,7 @@ export function generatePropertyIntelligenceReport(property: Property): Property
     airQualityIndexAvg: 38, // Good
     radonPotential: 'Moderate (Zone 2)',
     nearestSuperfundSiteDistMi: 8.5,
+    flightPathNoiseExposure: 'Minimal',
     airportNoiseExposure: 'Minimal',
     conversationalSummary: `FEMA flood map panels designate this parcel as ${property.femaFloodZone || 'Zone X'}, indicating minimal flood probability outside the 500-year recurrence interval. Historical state hazard records show zero recorded flood damage claims. Wildfire risk is rated minimal (1/10), and ambient Air Quality Index averages 38 (Good). Standard radon testing is advised in accordance with EPA regional guidelines.`
   };

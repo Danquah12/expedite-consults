@@ -113,22 +113,21 @@ export async function resolveNationalAddress(magicKey: string, singleLine?: stri
  * Guarantees 100% historical accuracy for Year Built, square footage,
  * and recorded deed consideration transfers.
  */
-export const VERIFIED_ASSESSOR_DATA_REGISTRY: Record<
-  string,
-  {
-    yearBuilt: number;
-    effectiveYearBuilt: number;
-    beds?: number;
-    baths?: number;
-    sqft?: number;
-    propertyType?: 'single_family' | 'townhouse' | 'condo';
-    status?: 'active' | 'sold' | 'pending';
-    countyAssessor: string;
-    deedRef?: string;
-    lastSoldPrice?: number;
-    lastSoldDate?: string;
-  }
-> = {
+export interface AssessorRecord {
+  yearBuilt: number;
+  effectiveYearBuilt: number;
+  beds?: number;
+  baths?: number;
+  sqft?: number;
+  propertyType?: 'single_family' | 'townhouse' | 'condo';
+  status?: 'active' | 'sold' | 'pending';
+  countyAssessor: string;
+  deedRef?: string;
+  lastSoldPrice?: number;
+  lastSoldDate?: string;
+}
+
+export const VERIFIED_ASSESSOR_DATA_REGISTRY: Record<string, AssessorRecord> = {
   '3514 rippling way': {
     yearBuilt: 1992, // Exact Maryland SDAT / Anne Arundel County Record
     effectiveYearBuilt: 2024,
@@ -392,8 +391,8 @@ export function evaluateNationalAddress(
   const beds = options?.beds || matchedAssessorRecord?.beds || (sqft > 4000 ? 5 : sqft > 2400 ? 4 : 3);
   const baths = options?.baths || matchedAssessorRecord?.baths || (beds >= 5 ? 4.5 : beds >= 4 ? 3.5 : 2.5);
 
-  let exactYearBuilt = matchedAssessorRecord?.yearBuilt;
-  let effectiveYear = matchedAssessorRecord?.effectiveYearBuilt;
+  let exactYearBuilt: number = matchedAssessorRecord?.yearBuilt || 0;
+  let effectiveYear: number = matchedAssessorRecord?.effectiveYearBuilt || 0;
   let verifiedAssessorSource = matchedAssessorRecord?.countyAssessor || governmentSource;
   let verifiedDeedRef = matchedAssessorRecord?.deedRef || sslCadastralId;
 
@@ -419,6 +418,10 @@ export function evaluateNationalAddress(
       effectiveYear = Math.min(2024, exactYearBuilt + 12);
       verifiedAssessorSource = `${resolved.county || state} Department of Assessments & Taxation (County Cadastre)`;
     }
+  }
+
+  if (!effectiveYear) {
+    effectiveYear = Math.min(2024, exactYearBuilt + 12);
   }
 
   // Rate determination

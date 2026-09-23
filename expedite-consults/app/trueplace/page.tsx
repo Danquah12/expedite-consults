@@ -713,7 +713,7 @@ export default function TruePlacePortalPage() {
                           </span>
                           <span className="flex items-center space-x-1">
                             <Maximize2 className="w-3.5 h-3.5 text-gray-400" />
-                            <span><strong>{prop.sqft.toLocaleString()}</strong> sqft</span>
+                            <span><strong>{prop.sqft ? prop.sqft.toLocaleString() : '—'}</strong> sqft</span>
                           </span>
                           <span className="flex items-center space-x-1">
                             <Calendar className="w-3.5 h-3.5 text-gray-400" />
@@ -920,7 +920,7 @@ export default function TruePlacePortalPage() {
                         <tr key={p.id} className="hover:bg-gray-50">
                           <td className="p-2.5 font-mono font-bold text-gray-900">{p.id}</td>
                           <td className="p-2.5 text-gray-700">{p.type}</td>
-                          <td className="p-2.5 font-bold text-gray-900">${p.cost.toLocaleString()}</td>
+                          <td className="p-2.5 font-bold text-gray-900">${(p.cost || 0).toLocaleString()}</td>
                           <td className="p-2.5 text-gray-600">{p.year}</td>
                           <td className="p-2.5 text-emerald-700 font-bold">{p.status}</td>
                         </tr>
