@@ -349,6 +349,43 @@ export const VERIFIED_MLS_PHOTO_MAP: Record<
     ],
     keywords: ['exfair', 'bethesda green'],
   },
+  '7114 holly ave': {
+    address: '7114 Holly Ave',
+    city: 'Takoma Park',
+    state: 'MD',
+    primaryPhoto: 'https://ssl.cdn-redfin.com/photo/235/bigphoto/684/MDMC2082684_4.jpg',
+    gallery: [
+      'https://ssl.cdn-redfin.com/photo/235/bigphoto/684/MDMC2082684_4.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/bigphoto/684/MDMC2082684_1.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/bigphoto/684/MDMC2082684_2.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/bigphoto/684/MDMC2082684_3.jpg',
+    ],
+    keywords: ['holly ave', 'takoma park', '7114 holly'],
+  },
+  '125 duke of gloucester st': {
+    address: '125 Duke of Gloucester St',
+    city: 'Annapolis',
+    state: 'MD',
+    primaryPhoto: 'https://ssl.cdn-redfin.com/photo/235/bigphoto/364/MDAA2143364_3.jpg',
+    gallery: [
+      'https://ssl.cdn-redfin.com/photo/235/bigphoto/364/MDAA2143364_3.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/bigphoto/364/MDAA2143364_1.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/bigphoto/364/MDAA2143364_2.jpg',
+    ],
+    keywords: ['duke of gloucester', 'annapolis', 'historic annapolis'],
+  },
+  '2118 massachusetts ave nw': {
+    address: '2118 Massachusetts Ave NW',
+    city: 'Washington',
+    state: 'DC',
+    primaryPhoto: 'https://ssl.cdn-redfin.com/photo/235/bigphoto/584/DCDC2135584_2.jpg',
+    gallery: [
+      'https://ssl.cdn-redfin.com/photo/235/bigphoto/584/DCDC2135584_2.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/bigphoto/584/DCDC2135584_1.jpg',
+      'https://ssl.cdn-redfin.com/photo/235/bigphoto/080/DCDC2257080_1.jpg',
+    ],
+    keywords: ['massachusetts ave', 'embassy row', '2118 massachusetts'],
+  },
 };
 
 /**

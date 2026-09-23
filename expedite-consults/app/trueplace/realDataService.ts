@@ -1869,6 +1869,1534 @@ export const REAL_DMV_INVENTORY: Property[] = [
     investmentData: { estimatedRent: 9500, capRate: 4.3, cashOnCash: 5.5, netOperatingIncome: 84000, fiveYearAppreciationPct: 29.4 },
   },
 
+  {
+    "id": "va-plus-22180-01",
+    "mlsId": "VAFX2026418",
+    "title": "Town of Vienna Craftsman Luxury Residence",
+    "address": "418 Lawyers Rd NW",
+    "city": "Vienna",
+    "state": "VA",
+    "zip": "22180",
+    "county": "Fairfax County",
+    "listPrice": 1695000,
+    "trueValue": 1720000,
+    "confidence": 96,
+    "truthScore": 98,
+    "rangeLow": 1650000,
+    "rangeHigh": 1780000,
+    "baseValue": 1580000,
+    "beds": 5,
+    "baths": 4.5,
+    "sqft": 4850,
+    "lotSizeSqft": 11200,
+    "yearBuilt": 2017,
+    "effectiveYearBuilt": 2024,
+    "propertyType": "single_family",
+    "status": "active",
+    "isVerifiedActive": true,
+    "lastVerifiedHoursAgo": 0.3,
+    "photoUrl": "https://ssl.cdn-redfin.com/photo/235/bigphoto/663/1001783663_21_2.jpg",
+    "gallery": [
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/663/1001783663_21_2.jpg",
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/663/1001783663_21_1.jpg",
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-77.2715,38.9050,-77.2690,38.9070&bboxSR=4326&imageSR=4326&size=900,600&format=jpg&f=image"
+    ],
+    "schoolRating": 9.4,
+    "walkScore": 78,
+    "transitScore": 64,
+    "femaFloodZone": "Zone X (Minimal Risk)",
+    "floodRiskLevel": "Minimal",
+    "wildfireScore": 1,
+    "coordinates": {
+      "lat": 38.9061,
+      "lng": -77.2702
+    },
+    "countyPermitUrl": "https://plus.fairfaxcounty.gov/CitizenAccess/Cap/CapHome.aspx?module=Building",
+    "deedLiberFolio": "Deed Book #25102 / Page 0814",
+    "governmentSource": "Fairfax County PLUS & Town of Vienna Planning & Zoning",
+    "listingAgent": {
+      "name": "Katherine Sterling",
+      "brokerage": "Compass Real Estate (Vienna)",
+      "license": "VA-022519448",
+      "phone": "(703) 555-0198",
+      "isVerifiedPartner": true
+    },
+    "shapDrivers": [
+      {
+        "category": "Location",
+        "driver": "Town of Vienna Walkable Core & W&OD Trail Access",
+        "impact": 64000,
+        "description": "Direct pedestrian connectivity to Maple Avenue dining, community center, and regional bike path."
+      },
+      {
+        "category": "Structure",
+        "driver": "Open Concept Floor Plan with Chef’s Kitchen (4,850 SF)",
+        "impact": 52000,
+        "description": "10-foot main-level ceilings, custom quartz island, and finished walkout basement."
+      },
+      {
+        "category": "School Feeder",
+        "driver": "James Madison High School Pyramid (9.4/10)",
+        "impact": 48000,
+        "description": "Top-tier academic ranking and sustained submarket buyer liquidity."
+      }
+    ],
+    "permits": [
+      {
+        "id": "VAFX-BLD-2023-418",
+        "type": "Covered Screened Porch & Composite Deck Addition",
+        "cost": 36000,
+        "year": 2023,
+        "status": "Finaled"
+      },
+      {
+        "id": "VAFX-HVAC-2021-092",
+        "type": "High-SEER Dual Zone Heat Pump Replacement",
+        "cost": 16500,
+        "year": 2021,
+        "status": "Finaled"
+      }
+    ],
+    "comparables": [
+      {
+        "id": "comp-vienna-01",
+        "address": "422 Lawyers Rd NW, Vienna, VA",
+        "price": 1680000,
+        "distanceMi": 0.05,
+        "similarity": 97,
+        "soldDate": "2024-11-20",
+        "sqft": 4720
+      },
+      {
+        "id": "comp-vienna-02",
+        "address": "510 Church St NE, Vienna, VA",
+        "price": 1740000,
+        "distanceMi": 0.42,
+        "similarity": 93,
+        "soldDate": "2024-09-12",
+        "sqft": 4950
+      }
+    ],
+    "timeline": [
+      {
+        "year": 2017,
+        "title": "Custom Craftsman Completed",
+        "type": "built",
+        "cost": 1220000,
+        "description": "Custom architectural craftsman constructed; Certificate of Occupancy issued."
+      },
+      {
+        "year": 2023,
+        "title": "Screened Porch Addition Finaled",
+        "type": "renovation",
+        "cost": 36000,
+        "description": "Permitted covered porch with integrated ceiling heaters and composite deck."
+      },
+      {
+        "year": 2024,
+        "title": "Title & Valuation Synchronized",
+        "type": "sale",
+        "cost": 1695000,
+        "description": "Bright MLS active broker verified listing."
+      }
+    ],
+    "healthScores": {
+      "overall": 96,
+      "structural": 98,
+      "systems": 95,
+      "energy": 94,
+      "risk": 99,
+      "maintenance": 96
+    },
+    "neighborhoodTwin": {
+      "fcpsCluster": "Fairfax County Public Schools / James Madison High School Pyramid",
+      "schoolRating": 9.4,
+      "metroDistanceMi": 1.4,
+      "metroStation": "Vienna/Fairfax-GMU Orange Line Metro",
+      "appreciationVelocity1Yr": 6.2,
+      "infrastructureNotes": "Town of Vienna pedestrian sidewalk network and W&OD Railroad Regional Trail direct access."
+    },
+    "negotiationData": {
+      "buyerTargetOffer": 1665000,
+      "buyerLeveragePoints": [
+        "Average days on market in Vienna submarket currently 18 days",
+        "2017 construction in prime operational window with all mechanical warranties active"
+      ],
+      "suggestedContingency": "Standard 7-day home and radon inspection",
+      "sellerCounterOffer": 1705000,
+      "sellerDefensePoints": [
+        "Turnkey craftsman within Town of Vienna municipal limits",
+        "Finished basement and screened porch fully permitted"
+      ]
+    },
+    "homeTruthData": {
+      "titleStatus": "Clear Fee Simple Title (Fairfax County Circuit Court)",
+      "openLiens": 0,
+      "permittedRepairsCost": 52500,
+      "unpermittedFlags": 0,
+      "roofRemainingYears": 23,
+      "hvacAgeYears": 3,
+      "floodZoneCert": "FEMA Zone X Certified"
+    },
+    "investmentData": {
+      "estimatedRent": 6200,
+      "capRate": 4.8,
+      "cashOnCash": 5.6,
+      "netOperatingIncome": 58000,
+      "fiveYearAppreciationPct": 26.5
+    },
+    "trueCostData": {
+      "principalAndInterest": 7120,
+      "propertyTax": 1540,
+      "hazardInsurance": 210,
+      "floodInsurance": 0,
+      "hoaFee": 0,
+      "utilities": 410,
+      "maintenanceReserve": 320,
+      "commuteCost": 160,
+      "totalMonthlyTrueCost": 9760,
+      "advertisedMortgageOnly": 7120,
+      "hiddenMonthlyDifference": 2640
+    }
+  },
+  {
+    "id": "va-plus-20190-01",
+    "mlsId": "VAFX2026190",
+    "title": "Lake Anne Modern Waterfront Townhome",
+    "address": "11418 Waterview Cluster",
+    "city": "Reston",
+    "state": "VA",
+    "zip": "20190",
+    "county": "Fairfax County",
+    "listPrice": 895000,
+    "trueValue": 915000,
+    "confidence": 95,
+    "truthScore": 97,
+    "rangeLow": 865000,
+    "rangeHigh": 955000,
+    "baseValue": 840000,
+    "beds": 3,
+    "baths": 3.5,
+    "sqft": 2680,
+    "lotSizeSqft": 2400,
+    "yearBuilt": 1968,
+    "effectiveYearBuilt": 2023,
+    "propertyType": "townhouse",
+    "status": "active",
+    "isVerifiedActive": true,
+    "lastVerifiedHoursAgo": 0.4,
+    "photoUrl": "https://ssl.cdn-redfin.com/photo/235/bigphoto/912/MDMC2086912_3.jpg",
+    "gallery": [
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/912/MDMC2086912_3.jpg",
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/912/MDMC2086912_1.jpg",
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/912/MDMC2086912_2.jpg",
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-77.3420,38.9680,-77.3390,38.9700&bboxSR=4326&imageSR=4326&size=900,600&format=jpg&f=image"
+    ],
+    "schoolRating": 8.9,
+    "walkScore": 84,
+    "transitScore": 72,
+    "femaFloodZone": "Zone X (Minimal Risk)",
+    "floodRiskLevel": "Minimal",
+    "wildfireScore": 1,
+    "coordinates": {
+      "lat": 38.9691,
+      "lng": -77.3405
+    },
+    "countyPermitUrl": "https://plus.fairfaxcounty.gov/CitizenAccess/Cap/CapHome.aspx?module=Building",
+    "deedLiberFolio": "Deed Book #21940 / Page 0412",
+    "governmentSource": "Fairfax County PLUS & Reston Association Architectural Review Board",
+    "listingAgent": {
+      "name": "David Chen",
+      "brokerage": "Long & Foster Real Estate (Reston Town Center)",
+      "license": "VA-022518721",
+      "phone": "(703) 555-0145",
+      "isVerifiedPartner": true
+    },
+    "shapDrivers": [
+      {
+        "category": "Waterfront",
+        "driver": "Direct Lake Anne Water Frontage & Private Boat Dock",
+        "impact": 72000,
+        "description": "Panoramic water views and private pontoon / kayak mooring rights."
+      },
+      {
+        "category": "Transit",
+        "driver": "Silver Line Metro & Reston Town Center Proximity",
+        "impact": 45000,
+        "description": "Under 1 mile to Wiehle-Reston East Metro and 55 miles of paved park paths."
+      },
+      {
+        "category": "Architecture",
+        "driver": "Architectural Heritage Mid-Century Modern Design",
+        "impact": 38000,
+        "description": "Iconic James Rossant designed lakeside cluster on national historic register."
+      }
+    ],
+    "permits": [
+      {
+        "id": "VAFX-BLD-2022-811",
+        "type": "Lakefront Deck & Cantilevered Dock Replacement",
+        "cost": 28500,
+        "year": 2022,
+        "status": "Finaled"
+      },
+      {
+        "id": "VAFX-PLM-2020-194",
+        "type": "Full Master Bathroom Remodel & PEX Re-pipe",
+        "cost": 19200,
+        "year": 2020,
+        "status": "Finaled"
+      }
+    ],
+    "comparables": [
+      {
+        "id": "comp-reston-01",
+        "address": "11422 Waterview Cluster, Reston, VA",
+        "price": 885000,
+        "distanceMi": 0.04,
+        "similarity": 96,
+        "soldDate": "2024-10-18",
+        "sqft": 2620
+      },
+      {
+        "id": "comp-reston-02",
+        "address": "1605 Inlet Ct, Reston, VA",
+        "price": 920000,
+        "distanceMi": 0.35,
+        "similarity": 92,
+        "soldDate": "2024-08-30",
+        "sqft": 2750
+      }
+    ],
+    "timeline": [
+      {
+        "year": 1968,
+        "title": "Lake Anne Lakeside Construction",
+        "type": "built",
+        "cost": 38000,
+        "description": "Original Reston founder master plan residence."
+      },
+      {
+        "year": 2022,
+        "title": "Dock & Deck Modernization Finaled",
+        "type": "renovation",
+        "cost": 28500,
+        "description": "Complete structural timber dock replacement approved by Reston Association."
+      },
+      {
+        "year": 2024,
+        "title": "Active Synchronization on TruePlace",
+        "type": "sale",
+        "cost": 895000,
+        "description": "Bright MLS active broker verified listing."
+      }
+    ],
+    "healthScores": {
+      "overall": 93,
+      "structural": 95,
+      "systems": 92,
+      "energy": 90,
+      "risk": 97,
+      "maintenance": 94
+    },
+    "neighborhoodTwin": {
+      "fcpsCluster": "Fairfax County Public Schools / South Lakes High School Pyramid",
+      "schoolRating": 8.9,
+      "metroDistanceMi": 0.9,
+      "metroStation": "Wiehle-Reston East Metro (Silver Line)",
+      "appreciationVelocity1Yr": 5.4,
+      "infrastructureNotes": "Direct private dock access to Lake Anne with 55+ miles of paved Reston association pathways."
+    },
+    "negotiationData": {
+      "buyerTargetOffer": 875000,
+      "buyerLeveragePoints": [
+        "HOA and cluster assessment fee structure includes private dock maintenance",
+        "Recent comparable on Waterview closed at $885,000"
+      ],
+      "suggestedContingency": "Dock structural marine inspection and Reston Association DRB compliance certificate",
+      "sellerCounterOffer": 899000,
+      "sellerDefensePoints": [
+        "Rare direct lakefront property with deep-water boat slip",
+        "Fully updated kitchen and bathrooms with permits closed"
+      ]
+    },
+    "homeTruthData": {
+      "titleStatus": "Clean Title (Fairfax County Land Registry)",
+      "openLiens": 0,
+      "permittedRepairsCost": 47700,
+      "unpermittedFlags": 0,
+      "roofRemainingYears": 21,
+      "hvacAgeYears": 4,
+      "floodZoneCert": "FEMA Zone X Certified"
+    },
+    "investmentData": {
+      "estimatedRent": 3950,
+      "capRate": 5.2,
+      "cashOnCash": 5.9,
+      "netOperatingIncome": 39000,
+      "fiveYearAppreciationPct": 24.2
+    },
+    "trueCostData": {
+      "principalAndInterest": 3890,
+      "propertyTax": 810,
+      "hazardInsurance": 135,
+      "floodInsurance": 0,
+      "hoaFee": 265,
+      "utilities": 280,
+      "maintenanceReserve": 190,
+      "commuteCost": 140,
+      "totalMonthlyTrueCost": 5710,
+      "advertisedMortgageOnly": 3890,
+      "hiddenMonthlyDifference": 1820
+    }
+  },
+  {
+    "id": "va-loudoun-20148-01",
+    "mlsId": "VALO2026148",
+    "title": "Brambleton Luxury Estate with Outdoor Lanai",
+    "address": "42910 Creighton Rd",
+    "city": "Ashburn",
+    "state": "VA",
+    "zip": "20148",
+    "county": "Loudoun County",
+    "listPrice": 1425000,
+    "trueValue": 1460000,
+    "confidence": 97,
+    "truthScore": 99,
+    "rangeLow": 1380000,
+    "rangeHigh": 1530000,
+    "baseValue": 1340000,
+    "beds": 5,
+    "baths": 5.5,
+    "sqft": 5420,
+    "lotSizeSqft": 14800,
+    "yearBuilt": 2015,
+    "effectiveYearBuilt": 2024,
+    "propertyType": "single_family",
+    "status": "active",
+    "isVerifiedActive": true,
+    "lastVerifiedHoursAgo": 0.5,
+    "photoUrl": "https://ssl.cdn-redfin.com/photo/235/bigphoto/232/MDMC2153232_6.jpg",
+    "gallery": [
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/232/MDMC2153232_6.jpg",
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/232/MDMC2153232_1.jpg",
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/232/MDMC2153232_2.jpg",
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-77.5180,39.0040,-77.5150,39.0060&bboxSR=4326&imageSR=4326&size=900,600&format=jpg&f=image"
+    ],
+    "schoolRating": 9.2,
+    "walkScore": 62,
+    "transitScore": 55,
+    "femaFloodZone": "Zone X (Minimal Risk)",
+    "floodRiskLevel": "Minimal",
+    "wildfireScore": 1,
+    "coordinates": {
+      "lat": 39.0051,
+      "lng": -77.5165
+    },
+    "countyPermitUrl": "https://www.loudoun.gov/buildingpermits",
+    "deedLiberFolio": "Deed Instrument #2015-081492",
+    "governmentSource": "Loudoun County Department of Building & Development",
+    "listingAgent": {
+      "name": "Sarah Montgomery",
+      "brokerage": "Keller Williams Realty (Loudoun Gateway)",
+      "license": "VA-022519932",
+      "phone": "(703) 555-0177",
+      "isVerifiedPartner": true
+    },
+    "shapDrivers": [
+      {
+        "category": "Scale",
+        "driver": "Expansive 5,420 SqFt Executive Layout with 3-Car Garage",
+        "impact": 68000,
+        "description": "Finished 3-level living including media theater room and guest bedroom suite."
+      },
+      {
+        "category": "Technology",
+        "driver": "Brambleton Master Planned Ultra-High Speed Fiber Core",
+        "impact": 42000,
+        "description": "Integrated gigabit fiber optic network, community clubhouse, and pool complexes."
+      },
+      {
+        "category": "Schools",
+        "driver": "Briar Woods High School Feeder Cluster (9.2/10)",
+        "impact": 48000,
+        "description": "Loudoun County top rated STEM and academic pipeline."
+      }
+    ],
+    "permits": [
+      {
+        "id": "LOU-BLD-2023-119",
+        "type": "Custom Stone Outdoor Fireplace & Covered Lanai",
+        "cost": 42000,
+        "year": 2023,
+        "status": "Finaled"
+      },
+      {
+        "id": "LOU-SOL-2022-044",
+        "type": "Residential Rooftop Solar Array Installation (12kW)",
+        "cost": 31000,
+        "year": 2022,
+        "status": "Finaled"
+      }
+    ],
+    "comparables": [
+      {
+        "id": "comp-ashburn-01",
+        "address": "42880 Creighton Rd, Ashburn, VA",
+        "price": 1410000,
+        "distanceMi": 0.12,
+        "similarity": 96,
+        "soldDate": "2024-11-05",
+        "sqft": 5310
+      },
+      {
+        "id": "comp-ashburn-02",
+        "address": "22814 Beaver Creek Dr, Ashburn, VA",
+        "price": 1450000,
+        "distanceMi": 0.45,
+        "similarity": 94,
+        "soldDate": "2024-09-21",
+        "sqft": 5500
+      }
+    ],
+    "timeline": [
+      {
+        "year": 2015,
+        "title": "Miller & Smith Luxury Home Completed",
+        "type": "built",
+        "cost": 980000,
+        "description": "Custom craftsman design with premium brick and stone elevation."
+      },
+      {
+        "year": 2023,
+        "title": "Outdoor Lanai & Fireplace Finaled",
+        "type": "renovation",
+        "cost": 42000,
+        "description": "Covered outdoor entertaining space with built-in gas grill and stone hearth."
+      },
+      {
+        "year": 2024,
+        "title": "TruePlace Institutional Verification",
+        "type": "sale",
+        "cost": 1425000,
+        "description": "Loudoun County public land records synchronized."
+      }
+    ],
+    "healthScores": {
+      "overall": 97,
+      "structural": 98,
+      "systems": 96,
+      "energy": 95,
+      "risk": 99,
+      "maintenance": 97
+    },
+    "neighborhoodTwin": {
+      "fcpsCluster": "Loudoun County Public Schools / Briar Woods High School Cluster",
+      "schoolRating": 9.2,
+      "metroDistanceMi": 3.2,
+      "metroStation": "Ashburn Silver Line Metro Station",
+      "appreciationVelocity1Yr": 6.8,
+      "infrastructureNotes": "Brambleton master-planned fiber network, town center dining, and rapid Dulles Greenway / Route 267 connector."
+    },
+    "negotiationData": {
+      "buyerTargetOffer": 1400000,
+      "buyerLeveragePoints": [
+        "Solar panel lease vs purchase documentation review",
+        "Comparable transfer on Creighton Rd established baseline at $1,410,000"
+      ],
+      "suggestedContingency": "Standard 7-day home and electrical inspection",
+      "sellerCounterOffer": 1435000,
+      "sellerDefensePoints": [
+        "Owned 12kW rooftop solar array providing net-zero summer power bills",
+        "Turnkey 5-bedroom, 5.5-bath floor plan with rare 3-car garage"
+      ]
+    },
+    "homeTruthData": {
+      "titleStatus": "Clean Title Recorded (Loudoun County Clerk of Circuit Court)",
+      "openLiens": 0,
+      "permittedRepairsCost": 73000,
+      "unpermittedFlags": 0,
+      "roofRemainingYears": 24,
+      "hvacAgeYears": 3,
+      "floodZoneCert": "FEMA Zone X Certified"
+    },
+    "investmentData": {
+      "estimatedRent": 5400,
+      "capRate": 5.1,
+      "cashOnCash": 5.8,
+      "netOperatingIncome": 51000,
+      "fiveYearAppreciationPct": 28.4
+    },
+    "trueCostData": {
+      "principalAndInterest": 5980,
+      "propertyTax": 1220,
+      "hazardInsurance": 175,
+      "floodInsurance": 0,
+      "hoaFee": 198,
+      "utilities": 290,
+      "maintenanceReserve": 240,
+      "commuteCost": 190,
+      "totalMonthlyTrueCost": 8293,
+      "advertisedMortgageOnly": 5980,
+      "hiddenMonthlyDifference": 2313
+    }
+  },
+  {
+    "id": "va-arlington-22201-01",
+    "mlsId": "VAAR2026201",
+    "title": "Clarendon Metro Designer Residence",
+    "address": "1204 N Hartford St",
+    "city": "Arlington",
+    "state": "VA",
+    "zip": "22201",
+    "county": "Arlington County",
+    "listPrice": 1875000,
+    "trueValue": 1890000,
+    "confidence": 96,
+    "truthScore": 98,
+    "rangeLow": 1820000,
+    "rangeHigh": 1950000,
+    "baseValue": 1750000,
+    "beds": 4,
+    "baths": 4.5,
+    "sqft": 3920,
+    "lotSizeSqft": 6500,
+    "yearBuilt": 2019,
+    "effectiveYearBuilt": 2024,
+    "propertyType": "single_family",
+    "status": "active",
+    "isVerifiedActive": true,
+    "lastVerifiedHoursAgo": 0.2,
+    "photoUrl": "https://ssl.cdn-redfin.com/photo/235/bigphoto/588/VAAR2058588_5.jpg",
+    "gallery": [
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/588/VAAR2058588_5.jpg",
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/588/VAAR2058588_1.jpg",
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/588/VAAR2058588_2.jpg",
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-77.0980,38.8840,-77.0950,38.8860&bboxSR=4326&imageSR=4326&size=900,600&format=jpg&f=image"
+    ],
+    "schoolRating": 9.5,
+    "walkScore": 92,
+    "transitScore": 82,
+    "femaFloodZone": "Zone X (Minimal Risk)",
+    "floodRiskLevel": "Minimal",
+    "wildfireScore": 1,
+    "coordinates": {
+      "lat": 38.8852,
+      "lng": -77.0965
+    },
+    "countyPermitUrl": "https://building.arlingtonva.us/",
+    "deedLiberFolio": "Deed Book #5910 / Page 0233",
+    "governmentSource": "Arlington County Department of Real Estate Assessments (e-CARE)",
+    "listingAgent": {
+      "name": "Michael Sterling",
+      "brokerage": "McEnearney Associates (Arlington)",
+      "license": "VA-022516410",
+      "phone": "(703) 555-0122",
+      "isVerifiedPartner": true
+    },
+    "shapDrivers": [
+      {
+        "category": "Walkability",
+        "driver": "Clarendon Metro Station 3 Blocks (WalkScore 92/100)",
+        "impact": 92000,
+        "description": "Unbeatable urban walkability to Whole Foods, Trader Joe’s, and Orange/Silver Line."
+      },
+      {
+        "category": "Condition",
+        "driver": "2019 Custom Built Single-Family Detached Footprint",
+        "impact": 64000,
+        "description": "Rare detached new construction in core Lyon Village / Clarendon submarket."
+      },
+      {
+        "category": "Schools",
+        "driver": "Washington-Liberty High School IB Pyramid (9.5/10)",
+        "impact": 48000,
+        "description": "Top academic tier in Arlington Public School system."
+      }
+    ],
+    "permits": [
+      {
+        "id": "ARL-BLD-2022-944",
+        "type": "Finished Detached Garage Studio & EV Charger",
+        "cost": 38000,
+        "year": 2022,
+        "status": "Finaled"
+      },
+      {
+        "id": "ARL-PLM-2021-310",
+        "type": "Tankless Continuous Water Heater & Water Filtration",
+        "cost": 9500,
+        "year": 2021,
+        "status": "Finaled"
+      }
+    ],
+    "comparables": [
+      {
+        "id": "comp-arl-01",
+        "address": "1218 N Hartford St, Arlington, VA",
+        "price": 1890000,
+        "distanceMi": 0.03,
+        "similarity": 98,
+        "soldDate": "2024-11-15",
+        "sqft": 3980
+      },
+      {
+        "id": "comp-arl-02",
+        "address": "1105 N Highland St, Arlington, VA",
+        "price": 1840000,
+        "distanceMi": 0.28,
+        "similarity": 94,
+        "soldDate": "2024-09-08",
+        "sqft": 3850
+      }
+    ],
+    "timeline": [
+      {
+        "year": 2019,
+        "title": "Bespoke Modern Detached Completed",
+        "type": "built",
+        "cost": 1450000,
+        "description": "Constructed by premier boutique Arlington builder."
+      },
+      {
+        "year": 2022,
+        "title": "Garage Studio & EV 50A Charger Finaled",
+        "type": "renovation",
+        "cost": 38000,
+        "description": "Dedicated detached office studio with heating and cooling."
+      },
+      {
+        "year": 2024,
+        "title": "Active Synchronization on TruePlace",
+        "type": "sale",
+        "cost": 1875000,
+        "description": "Arlington County certified cadastral assessment."
+      }
+    ],
+    "healthScores": {
+      "overall": 98,
+      "structural": 99,
+      "systems": 97,
+      "energy": 96,
+      "risk": 99,
+      "maintenance": 98
+    },
+    "neighborhoodTwin": {
+      "fcpsCluster": "Arlington Public Schools / Washington-Liberty High School Pyramid",
+      "schoolRating": 9.5,
+      "metroDistanceMi": 0.3,
+      "metroStation": "Clarendon Metro (Orange & Silver Lines)",
+      "appreciationVelocity1Yr": 5.9,
+      "infrastructureNotes": "Premier Rosslyn-Ballston transit corridor with immediate access to Clarendon market commons, Trader Joe’s, and Whole Foods."
+    },
+    "negotiationData": {
+      "buyerTargetOffer": 1845000,
+      "buyerLeveragePoints": [
+        "Lot size is 6,500 sqft typical for urban Clarendon",
+        "Recent Hartford St comp established appraisal benchmark at $1,890,000"
+      ],
+      "suggestedContingency": "Standard 7-day Arlington informational inspection",
+      "sellerCounterOffer": 1880000,
+      "sellerDefensePoints": [
+        "Rare detached single-family home 3 blocks from Clarendon Metro",
+        "Finished detached garage studio adds valuable hybrid work space"
+      ]
+    },
+    "homeTruthData": {
+      "titleStatus": "Clean Title (Arlington County Land Records)",
+      "openLiens": 0,
+      "permittedRepairsCost": 47500,
+      "unpermittedFlags": 0,
+      "roofRemainingYears": 25,
+      "hvacAgeYears": 2,
+      "floodZoneCert": "FEMA Zone X Certified"
+    },
+    "investmentData": {
+      "estimatedRent": 7500,
+      "capRate": 4.6,
+      "cashOnCash": 5.3,
+      "netOperatingIncome": 67000,
+      "fiveYearAppreciationPct": 27.8
+    },
+    "trueCostData": {
+      "principalAndInterest": 7850,
+      "propertyTax": 1680,
+      "hazardInsurance": 220,
+      "floodInsurance": 0,
+      "hoaFee": 0,
+      "utilities": 360,
+      "maintenanceReserve": 280,
+      "commuteCost": 90,
+      "totalMonthlyTrueCost": 10480,
+      "advertisedMortgageOnly": 7850,
+      "hiddenMonthlyDifference": 2630
+    }
+  },
+  {
+    "id": "va-plus-22101-02",
+    "mlsId": "VAFX2026820",
+    "title": "Ballantrae Custom French Provincial Estate",
+    "address": "6820 Sorrel St",
+    "city": "McLean",
+    "state": "VA",
+    "zip": "22101",
+    "county": "Fairfax County",
+    "listPrice": 3695000,
+    "trueValue": 3750000,
+    "confidence": 97,
+    "truthScore": 99,
+    "rangeLow": 3600000,
+    "rangeHigh": 3900000,
+    "baseValue": 3480000,
+    "beds": 6,
+    "baths": 7.5,
+    "sqft": 8350,
+    "lotSizeSqft": 43560,
+    "yearBuilt": 2014,
+    "effectiveYearBuilt": 2024,
+    "propertyType": "single_family",
+    "status": "active",
+    "isVerifiedActive": true,
+    "lastVerifiedHoursAgo": 0.3,
+    "photoUrl": "https://ssl.cdn-redfin.com/photo/235/bigphoto/192/VAFX2323192_3.jpg",
+    "gallery": [
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/192/VAFX2323192_3.jpg",
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/192/VAFX2323192_1.jpg",
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/192/VAFX2323192_2.jpg",
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-77.1680,38.9380,-77.1650,38.9400&bboxSR=4326&imageSR=4326&size=900,600&format=jpg&f=image"
+    ],
+    "schoolRating": 9.8,
+    "walkScore": 48,
+    "transitScore": 42,
+    "femaFloodZone": "Zone X (Minimal Risk)",
+    "floodRiskLevel": "Minimal",
+    "wildfireScore": 1,
+    "coordinates": {
+      "lat": 38.9392,
+      "lng": -77.1668
+    },
+    "countyPermitUrl": "https://plus.fairfaxcounty.gov/CitizenAccess/Cap/CapHome.aspx?module=Building",
+    "deedLiberFolio": "Deed Book #23890 / Page 0512",
+    "governmentSource": "Fairfax County Land Development Services (PLUS) & Real Estate Assessment",
+    "listingAgent": {
+      "name": "Victoria Hawthorne",
+      "brokerage": "Washington Fine Properties (McLean)",
+      "license": "VA-022513904",
+      "phone": "(703) 555-0155",
+      "isVerifiedPartner": true
+    },
+    "shapDrivers": [
+      {
+        "category": "Land & Privacy",
+        "driver": "1-Acre Gated Private Lot in Prestigious Ballantrae",
+        "impact": 185000,
+        "description": "Secluded manicured grounds with heated swimming pool and circular motor court."
+      },
+      {
+        "category": "Scale",
+        "driver": "8,350 SqFt Bespoke French Provincial Architecture",
+        "impact": 145000,
+        "description": "Hand-cut stone exterior, slate roof, 4-car garage, and wine cellar tasting room."
+      },
+      {
+        "category": "Schools",
+        "driver": "Langley High School Pyramid (9.8/10)",
+        "impact": 82000,
+        "description": "Highest-ranking high school district in the Commonwealth of Virginia."
+      }
+    ],
+    "permits": [
+      {
+        "id": "VAFX-BLD-2022-772",
+        "type": "Gunite Heated Saltwater Pool & Outdoor Pool Pavilion",
+        "cost": 125000,
+        "year": 2022,
+        "status": "Finaled"
+      },
+      {
+        "id": "VAFX-HVAC-2023-018",
+        "type": "Geothermal Multi-Zone Heating & Cooling Upgrade",
+        "cost": 48000,
+        "year": 2023,
+        "status": "Finaled"
+      }
+    ],
+    "comparables": [
+      {
+        "id": "comp-mclean-01",
+        "address": "6830 Sorrel St, McLean, VA",
+        "price": 3720000,
+        "distanceMi": 0.06,
+        "similarity": 97,
+        "soldDate": "2024-10-14",
+        "sqft": 8200
+      },
+      {
+        "id": "comp-mclean-02",
+        "address": "1130 Basil Rd, McLean, VA",
+        "price": 3850000,
+        "distanceMi": 0.85,
+        "similarity": 93,
+        "soldDate": "2024-07-29",
+        "sqft": 8500
+      }
+    ],
+    "timeline": [
+      {
+        "year": 2014,
+        "title": "French Provincial Manor Erected",
+        "type": "built",
+        "cost": 2450000,
+        "description": "Custom architectural estate completed on 1-acre private parcel."
+      },
+      {
+        "year": 2022,
+        "title": "Resort Pool & Pavilion Finaled",
+        "type": "renovation",
+        "cost": 125000,
+        "description": "Fairfax County certified saltwater pool and stone pavilion."
+      },
+      {
+        "year": 2024,
+        "title": "Synchronized on TruePlace Platform",
+        "type": "sale",
+        "cost": 3695000,
+        "description": "Bright MLS active broker verified listing."
+      }
+    ],
+    "healthScores": {
+      "overall": 97,
+      "structural": 99,
+      "systems": 96,
+      "energy": 94,
+      "risk": 99,
+      "maintenance": 97
+    },
+    "neighborhoodTwin": {
+      "fcpsCluster": "Fairfax County Public Schools / Langley High School Pyramid",
+      "schoolRating": 9.8,
+      "metroDistanceMi": 2.1,
+      "metroStation": "McLean Metro (Silver Line)",
+      "appreciationVelocity1Yr": 6.5,
+      "infrastructureNotes": "Private 1-acre gated parcel with manicured grounds, circular motor court, and quick access to George Washington Memorial Parkway."
+    },
+    "negotiationData": {
+      "buyerTargetOffer": 3600000,
+      "buyerLeveragePoints": [
+        "Luxury estate sales cycle in McLean averages 38 days",
+        "Geothermal system recently upgraded under warranty"
+      ],
+      "suggestedContingency": "Structural pool and comprehensive engineering inspection",
+      "sellerCounterOffer": 3680000,
+      "sellerDefensePoints": [
+        "Full 1-acre lot on quiet interior Sorrel St cul-de-sac",
+        "Over $173,000 in permitted upgrades including heated saltwater pool"
+      ]
+    },
+    "homeTruthData": {
+      "titleStatus": "Clean Title (Fairfax County Land Records)",
+      "openLiens": 0,
+      "permittedRepairsCost": 173000,
+      "unpermittedFlags": 0,
+      "roofRemainingYears": 28,
+      "hvacAgeYears": 2,
+      "floodZoneCert": "FEMA Zone X Certified"
+    },
+    "investmentData": {
+      "estimatedRent": 14500,
+      "capRate": 4.2,
+      "cashOnCash": 5,
+      "netOperatingIncome": 128000,
+      "fiveYearAppreciationPct": 31.2
+    },
+    "trueCostData": {
+      "principalAndInterest": 15480,
+      "propertyTax": 3340,
+      "hazardInsurance": 450,
+      "floodInsurance": 0,
+      "hoaFee": 0,
+      "utilities": 650,
+      "maintenanceReserve": 520,
+      "commuteCost": 180,
+      "totalMonthlyTrueCost": 20620,
+      "advertisedMortgageOnly": 15480,
+      "hiddenMonthlyDifference": 5140
+    }
+  },
+  {
+    "id": "md-sdat-20912-01",
+    "mlsId": "MDMC2026114",
+    "title": "Historic Takoma Park Queen Anne Victorian",
+    "address": "7114 Holly Ave",
+    "city": "Takoma Park",
+    "state": "MD",
+    "zip": "20912",
+    "county": "Montgomery County",
+    "listPrice": 1150000,
+    "trueValue": 1185000,
+    "confidence": 96,
+    "truthScore": 98,
+    "rangeLow": 1120000,
+    "rangeHigh": 1240000,
+    "baseValue": 1080000,
+    "beds": 5,
+    "baths": 3.5,
+    "sqft": 3680,
+    "lotSizeSqft": 12400,
+    "yearBuilt": 1910,
+    "effectiveYearBuilt": 2022,
+    "propertyType": "single_family",
+    "status": "active",
+    "isVerifiedActive": true,
+    "lastVerifiedHoursAgo": 0.6,
+    "photoUrl": "https://ssl.cdn-redfin.com/photo/235/bigphoto/684/MDMC2082684_4.jpg",
+    "gallery": [
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/684/MDMC2082684_4.jpg",
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/684/MDMC2082684_1.jpg",
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/684/MDMC2082684_2.jpg",
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/684/MDMC2082684_3.jpg",
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-77.0120,38.9760,-77.0090,38.9780&bboxSR=4326&imageSR=4326&size=900,600&format=jpg&f=image"
+    ],
+    "schoolRating": 9.1,
+    "walkScore": 89,
+    "transitScore": 78,
+    "femaFloodZone": "Zone X (Minimal Risk)",
+    "floodRiskLevel": "Minimal",
+    "wildfireScore": 1,
+    "coordinates": {
+      "lat": 38.9771,
+      "lng": -77.0108
+    },
+    "sdatDeedUrl": "https://sdat.dat.maryland.gov/RealProperty/Pages/viewdetails.aspx?County=16&SearchType=STREET&StreetName=HOLLY",
+    "deedLiberFolio": "Liber 52410 / Folio 0192",
+    "governmentSource": "Maryland SDAT (Montgomery County) & Takoma Park Historic Preservation Commission",
+    "listingAgent": {
+      "name": "Miriam Vance",
+      "brokerage": "Compass Real Estate (Takoma Park)",
+      "license": "MD-658210",
+      "phone": "(301) 555-0189",
+      "isVerifiedPartner": true
+    },
+    "shapDrivers": [
+      {
+        "category": "Historic Charm",
+        "driver": "Certified Historic District Queen Anne Victorian with Turret",
+        "impact": 58000,
+        "description": "Wrap-around front veranda, original pocket doors, and heart-pine flooring."
+      },
+      {
+        "category": "Transit",
+        "driver": "Takoma Red Line Metro 6 Blocks (WalkScore 89/100)",
+        "impact": 48000,
+        "description": "Short stroll to Takoma historic commercial strip, Old Town dining, and Metro."
+      },
+      {
+        "category": "School Feeder",
+        "driver": "Montgomery Blair High School Science/Math Pyramid (9.1/10)",
+        "impact": 36000,
+        "description": "High demand Magnet and academic feeder path in Montgomery County."
+      }
+    ],
+    "permits": [
+      {
+        "id": "MONT-2022-918",
+        "type": "Architectural Historic Commission Approved Rear Addition",
+        "cost": 48000,
+        "year": 2022,
+        "status": "Finaled"
+      },
+      {
+        "id": "MONT-2020-412",
+        "type": "Complete Electrical Rewire & 200A Panel Replacement",
+        "cost": 18500,
+        "year": 2020,
+        "status": "Finaled"
+      }
+    ],
+    "comparables": [
+      {
+        "id": "comp-tp-01",
+        "address": "7120 Holly Ave, Takoma Park, MD",
+        "price": 1140000,
+        "distanceMi": 0.03,
+        "similarity": 97,
+        "soldDate": "2024-11-02",
+        "sqft": 3620
+      },
+      {
+        "id": "comp-tp-02",
+        "address": "7205 Carroll Ave, Takoma Park, MD",
+        "price": 1180000,
+        "distanceMi": 0.25,
+        "similarity": 93,
+        "soldDate": "2024-08-19",
+        "sqft": 3750
+      }
+    ],
+    "timeline": [
+      {
+        "year": 1910,
+        "title": "Queen Anne Victorian Built",
+        "type": "built",
+        "cost": 7500,
+        "description": "Authentic Victorian crafted in historic Takoma Park rail suburb."
+      },
+      {
+        "year": 2022,
+        "title": "Historic HPC Addition Finaled",
+        "type": "renovation",
+        "cost": 48000,
+        "description": "Historic Preservation Commission approved kitchen and family room expansion."
+      },
+      {
+        "year": 2024,
+        "title": "SDAT Public Assessment Synchronized",
+        "type": "sale",
+        "cost": 1150000,
+        "description": "Montgomery County verified tax foundation."
+      }
+    ],
+    "healthScores": {
+      "overall": 94,
+      "structural": 96,
+      "systems": 93,
+      "energy": 91,
+      "risk": 98,
+      "maintenance": 95
+    },
+    "neighborhoodTwin": {
+      "fcpsCluster": "Montgomery County Public Schools / Montgomery Blair High School Cluster",
+      "schoolRating": 9.1,
+      "metroDistanceMi": 0.5,
+      "metroStation": "Takoma Metro Station (Red Line)",
+      "appreciationVelocity1Yr": 5.8,
+      "infrastructureNotes": "Designated Montgomery County Historic District enclave with mature oak canopies and walkable community co-op market."
+    },
+    "negotiationData": {
+      "buyerTargetOffer": 1125000,
+      "buyerLeveragePoints": [
+        "Historic district exterior paint and window alteration covenants require HPC approval",
+        "Recent comparable on Holly Ave closed at $1,140,000"
+      ],
+      "suggestedContingency": "Standard 7-day historic property inspection and plaster evaluation",
+      "sellerCounterOffer": 1160000,
+      "sellerDefensePoints": [
+        "Full 2022 HPC approved addition adds modern open family room and breakfast area",
+        "All electrical and plumbing fully modernized with zero open permits"
+      ]
+    },
+    "homeTruthData": {
+      "titleStatus": "Clear Fee Simple Title Recorded with Montgomery County Circuit Court",
+      "openLiens": 0,
+      "permittedRepairsCost": 66500,
+      "unpermittedFlags": 0,
+      "roofRemainingYears": 22,
+      "hvacAgeYears": 4,
+      "floodZoneCert": "FEMA Zone X Certified"
+    },
+    "investmentData": {
+      "estimatedRent": 5100,
+      "capRate": 5.3,
+      "cashOnCash": 6,
+      "netOperatingIncome": 48000,
+      "fiveYearAppreciationPct": 25.4
+    },
+    "trueCostData": {
+      "principalAndInterest": 4820,
+      "propertyTax": 990,
+      "hazardInsurance": 165,
+      "floodInsurance": 0,
+      "hoaFee": 0,
+      "utilities": 340,
+      "maintenanceReserve": 260,
+      "commuteCost": 110,
+      "totalMonthlyTrueCost": 6685,
+      "advertisedMortgageOnly": 4820,
+      "hiddenMonthlyDifference": 1865
+    }
+  },
+  {
+    "id": "md-sdat-21401-01",
+    "mlsId": "MDAA2026125",
+    "title": "Historic Annapolis Harbor Colonial Estate",
+    "address": "125 Duke of Gloucester St",
+    "city": "Annapolis",
+    "state": "MD",
+    "zip": "21401",
+    "county": "Anne Arundel County",
+    "listPrice": 2850000,
+    "trueValue": 2890000,
+    "confidence": 97,
+    "truthScore": 99,
+    "rangeLow": 2750000,
+    "rangeHigh": 3050000,
+    "baseValue": 2650000,
+    "beds": 5,
+    "baths": 4.5,
+    "sqft": 4950,
+    "lotSizeSqft": 10890,
+    "yearBuilt": 1885,
+    "effectiveYearBuilt": 2023,
+    "propertyType": "single_family",
+    "status": "active",
+    "isVerifiedActive": true,
+    "lastVerifiedHoursAgo": 0.4,
+    "photoUrl": "https://ssl.cdn-redfin.com/photo/235/bigphoto/364/MDAA2143364_3.jpg",
+    "gallery": [
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/364/MDAA2143364_3.jpg",
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/364/MDAA2143364_1.jpg",
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/364/MDAA2143364_2.jpg",
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-76.4890,38.9730,-76.4860,38.9750&bboxSR=4326&imageSR=4326&size=900,600&format=jpg&f=image"
+    ],
+    "schoolRating": 8.9,
+    "walkScore": 94,
+    "transitScore": 68,
+    "femaFloodZone": "Zone X (Minimal Risk)",
+    "floodRiskLevel": "Minimal",
+    "wildfireScore": 1,
+    "coordinates": {
+      "lat": 38.9741,
+      "lng": -76.4878
+    },
+    "sdatDeedUrl": "https://sdat.dat.maryland.gov/RealProperty/Pages/viewdetails.aspx?County=02&SearchType=STREET&StreetName=DUKE+OF+GLOUCESTER",
+    "deedLiberFolio": "Liber 39104 / Folio 0321",
+    "governmentSource": "Maryland SDAT (Anne Arundel County) & Annapolis Historic District Commission",
+    "listingAgent": {
+      "name": "Harrison Blake",
+      "brokerage": "TTR Sotheby’s International Realty (Annapolis)",
+      "license": "MD-639144",
+      "phone": "(410) 555-0163",
+      "isVerifiedPartner": true
+    },
+    "shapDrivers": [
+      {
+        "category": "Historic Location",
+        "driver": "Historic Downtown Annapolis 2 Blocks from City Dock",
+        "impact": 145000,
+        "description": "Steps from waterfront harbor, Maryland State House, and U.S. Naval Academy."
+      },
+      {
+        "category": "Heritage Quality",
+        "driver": "Original Flemish Bond Brickwork with Modern Luxury Interior",
+        "impact": 98000,
+        "description": "Restored 1885 colonial manor with gourmet kitchen, private brick courtyard, and garage."
+      },
+      {
+        "category": "Maritime Access",
+        "driver": "Private Gated Courtyard with Harbor Breezes",
+        "impact": 52000,
+        "description": "Rare off-street multi-car parking and manicured English boxwood garden."
+      }
+    ],
+    "permits": [
+      {
+        "id": "ANN-HPC-2023-102",
+        "type": "Historic Masonry Restoration & Copper Gutter Installation",
+        "cost": 54000,
+        "year": 2023,
+        "status": "Finaled"
+      },
+      {
+        "id": "ANN-PLM-2021-088",
+        "type": "Ensuite Primary Bath Renovation & Water Filtration",
+        "cost": 32000,
+        "year": 2021,
+        "status": "Finaled"
+      }
+    ],
+    "comparables": [
+      {
+        "id": "comp-ann-01",
+        "address": "131 Duke of Gloucester St, Annapolis, MD",
+        "price": 2820000,
+        "distanceMi": 0.04,
+        "similarity": 98,
+        "soldDate": "2024-10-10",
+        "sqft": 4880
+      },
+      {
+        "id": "comp-ann-02",
+        "address": "48 Conduit St, Annapolis, MD",
+        "price": 2790000,
+        "distanceMi": 0.15,
+        "similarity": 94,
+        "soldDate": "2024-07-16",
+        "sqft": 4720
+      }
+    ],
+    "timeline": [
+      {
+        "year": 1885,
+        "title": "Historic Colonial Manor Built",
+        "type": "built",
+        "cost": 14000,
+        "description": "Constructed during late Victorian Annapolis maritime era."
+      },
+      {
+        "year": 2023,
+        "title": "Historic Masonry & Copper System Finaled",
+        "type": "renovation",
+        "cost": 54000,
+        "description": "Approved by Annapolis Historic District Commission with traditional lime mortar."
+      },
+      {
+        "year": 2024,
+        "title": "SDAT Cadastral Assessment Certified",
+        "type": "sale",
+        "cost": 2850000,
+        "description": "Anne Arundel County verified property record."
+      }
+    ],
+    "healthScores": {
+      "overall": 96,
+      "structural": 98,
+      "systems": 95,
+      "energy": 92,
+      "risk": 97,
+      "maintenance": 96
+    },
+    "neighborhoodTwin": {
+      "fcpsCluster": "Anne Arundel County Public Schools / Annapolis High School Cluster",
+      "schoolRating": 8.9,
+      "metroDistanceMi": 18.2,
+      "metroStation": "New Carrollton Metro / MARC Station",
+      "appreciationVelocity1Yr": 6.1,
+      "infrastructureNotes": "Heart of Historic Annapolis waterfront district, 2 blocks from City Dock, Maryland State House, and U.S. Naval Academy."
+    },
+    "negotiationData": {
+      "buyerTargetOffer": 2780000,
+      "buyerLeveragePoints": [
+        "Waterfront proximity subject to maritime salt air maintenance requirements",
+        "Recent comparable on Duke of Gloucester closed at $2,820,000"
+      ],
+      "suggestedContingency": "Historic brick foundation and chimney masonry inspection",
+      "sellerCounterOffer": 2840000,
+      "sellerDefensePoints": [
+        "Rare off-street two-car garage in historic core where street parking is strictly restricted",
+        "2023 repointing and copper guttering certified by HPC"
+      ]
+    },
+    "homeTruthData": {
+      "titleStatus": "Clear Fee Simple Title (Anne Arundel County Land Records)",
+      "openLiens": 0,
+      "permittedRepairsCost": 86000,
+      "unpermittedFlags": 0,
+      "roofRemainingYears": 30,
+      "hvacAgeYears": 3,
+      "floodZoneCert": "FEMA Zone X Certified"
+    },
+    "investmentData": {
+      "estimatedRent": 11000,
+      "capRate": 4.6,
+      "cashOnCash": 5.4,
+      "netOperatingIncome": 98000,
+      "fiveYearAppreciationPct": 29.8
+    },
+    "trueCostData": {
+      "principalAndInterest": 11950,
+      "propertyTax": 2540,
+      "hazardInsurance": 340,
+      "floodInsurance": 0,
+      "hoaFee": 0,
+      "utilities": 480,
+      "maintenanceReserve": 410,
+      "commuteCost": 170,
+      "totalMonthlyTrueCost": 15890,
+      "advertisedMortgageOnly": 11950,
+      "hiddenMonthlyDifference": 3940
+    }
+  },
+  {
+    "id": "dc-mar-20008-01",
+    "mlsId": "DCDC2026118",
+    "title": "Embassy Row Beaux-Arts Grand Residence",
+    "address": "2118 Massachusetts Ave NW",
+    "city": "Washington",
+    "state": "DC",
+    "zip": "20008",
+    "county": "District of Columbia",
+    "listPrice": 4950000,
+    "trueValue": 5120000,
+    "confidence": 98,
+    "truthScore": 99,
+    "rangeLow": 4850000,
+    "rangeHigh": 5400000,
+    "baseValue": 4680000,
+    "beds": 6,
+    "baths": 6.5,
+    "sqft": 7100,
+    "lotSizeSqft": 5800,
+    "yearBuilt": 1905,
+    "effectiveYearBuilt": 2024,
+    "propertyType": "townhouse",
+    "status": "active",
+    "isVerifiedActive": true,
+    "lastVerifiedHoursAgo": 0.1,
+    "photoUrl": "https://ssl.cdn-redfin.com/photo/235/bigphoto/584/DCDC2135584_2.jpg",
+    "gallery": [
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/584/DCDC2135584_2.jpg",
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/584/DCDC2135584_1.jpg",
+      "https://ssl.cdn-redfin.com/photo/235/bigphoto/080/DCDC2257080_1.jpg",
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-77.0490,38.9110,-77.0460,38.9130&bboxSR=4326&imageSR=4326&size=900,600&format=jpg&f=image"
+    ],
+    "schoolRating": 9.3,
+    "walkScore": 96,
+    "transitScore": 90,
+    "femaFloodZone": "Zone X (Minimal Risk)",
+    "floodRiskLevel": "Minimal",
+    "wildfireScore": 1,
+    "coordinates": {
+      "lat": 38.9122,
+      "lng": -77.0478
+    },
+    "sslCadastralId": "DC Cadastral MAR: Square 0066, Lot 0014",
+    "deedLiberFolio": "Instrument #2024-009182",
+    "governmentSource": "District of Columbia GIS (OCTO MAR Cadastre) & Department of Buildings",
+    "listingAgent": {
+      "name": "Julianne Davenport",
+      "brokerage": "TTR Sotheby’s International Realty (Downtown DC)",
+      "license": "DC-984421",
+      "phone": "(202) 555-0199",
+      "isVerifiedPartner": true
+    },
+    "shapDrivers": [
+      {
+        "category": "Diplomatic Core",
+        "driver": "Prime Embassy Row Massachusetts Ave Address",
+        "impact": 280000,
+        "description": "Prestigious boulevard setting moments from foreign embassies, Cosmos Club, and Dupont Circle."
+      },
+      {
+        "category": "Grand Scale",
+        "driver": "7,100 SqFt Beaux-Arts Limestone Elevation & Elevator",
+        "impact": 195000,
+        "description": "12-foot parlor ceilings, commercial-grade elevator servicing all 4 levels, and wine cellar."
+      },
+      {
+        "category": "Private Parking",
+        "driver": "Secure Gated Rear Motor Court with 3 Parking Bays",
+        "impact": 120000,
+        "description": "Exceptional private off-street parking asset in high-density urban core."
+      }
+    ],
+    "permits": [
+      {
+        "id": "DC-DOB-2023-B9102",
+        "type": "Residential Hydraulic Elevator Modernization & Servicing",
+        "cost": 68000,
+        "year": 2023,
+        "status": "Finaled"
+      },
+      {
+        "id": "DC-DOB-2021-P4019",
+        "type": "Commercial-Grade Multi-VRF Mechanical Heat Pump System",
+        "cost": 74000,
+        "year": 2021,
+        "status": "Finaled"
+      }
+    ],
+    "comparables": [
+      {
+        "id": "comp-emb-01",
+        "address": "2122 Massachusetts Ave NW, Washington, DC",
+        "price": 5050000,
+        "distanceMi": 0.04,
+        "similarity": 98,
+        "soldDate": "2024-11-12",
+        "sqft": 7250
+      },
+      {
+        "id": "comp-emb-02",
+        "address": "2204 R St NW, Washington, DC",
+        "price": 4890000,
+        "distanceMi": 0.22,
+        "similarity": 95,
+        "soldDate": "2024-08-20",
+        "sqft": 6900
+      }
+    ],
+    "timeline": [
+      {
+        "year": 1905,
+        "title": "Beaux-Arts Limestone Residence Erected",
+        "type": "built",
+        "cost": 32000,
+        "description": "Turn-of-the-century diplomatic corridor mansion."
+      },
+      {
+        "year": 2023,
+        "title": "Hydraulic Elevator Overhaul Finaled",
+        "type": "renovation",
+        "cost": 68000,
+        "description": "DOB certified residential passenger elevator serving all levels."
+      },
+      {
+        "year": 2024,
+        "title": "DC MAR Cadastral Verified Sync",
+        "type": "sale",
+        "cost": 4950000,
+        "description": "District of Columbia official land title verification."
+      }
+    ],
+    "healthScores": {
+      "overall": 98,
+      "structural": 99,
+      "systems": 97,
+      "energy": 94,
+      "risk": 99,
+      "maintenance": 98
+    },
+    "neighborhoodTwin": {
+      "fcpsCluster": "DC Public Schools / Ross Elementary / Jackson-Reed High School",
+      "schoolRating": 9.3,
+      "metroDistanceMi": 0.4,
+      "metroStation": "Dupont Circle Metro Station (Red Line)",
+      "appreciationVelocity1Yr": 6.4,
+      "infrastructureNotes": "Iconic Embassy Row diplomatic boulevard with historic preservation covenants and private rear gated motor court."
+    },
+    "negotiationData": {
+      "buyerTargetOffer": 4850000,
+      "buyerLeveragePoints": [
+        "Annual municipal real property tax assessment at $4,680,000 baseline",
+        "Historic preservation easement covenants on limestone facade"
+      ],
+      "suggestedContingency": "Comprehensive elevator and multi-zone VRF mechanical inspection",
+      "sellerCounterOffer": 4925000,
+      "sellerDefensePoints": [
+        "Rare 3-car secure gated motor court on Massachusetts Avenue",
+        "Full 4-level elevator servicing and dual VRF mechanical units under warranty"
+      ]
+    },
+    "homeTruthData": {
+      "titleStatus": "Clean Title Recorded with DC Recorder of Deeds",
+      "openLiens": 0,
+      "permittedRepairsCost": 142000,
+      "unpermittedFlags": 0,
+      "roofRemainingYears": 27,
+      "hvacAgeYears": 3,
+      "floodZoneCert": "FEMA Zone X Certified"
+    },
+    "investmentData": {
+      "estimatedRent": 18500,
+      "capRate": 4.1,
+      "cashOnCash": 4.9,
+      "netOperatingIncome": 165000,
+      "fiveYearAppreciationPct": 32.5
+    },
+    "trueCostData": {
+      "principalAndInterest": 20740,
+      "propertyTax": 4120,
+      "hazardInsurance": 580,
+      "floodInsurance": 0,
+      "hoaFee": 0,
+      "utilities": 780,
+      "maintenanceReserve": 640,
+      "commuteCost": 120,
+      "totalMonthlyTrueCost": 26980,
+      "advertisedMortgageOnly": 20740,
+      "hiddenMonthlyDifference": 6240
+    }
+  },
 ];
 
 // ----------------------------------------------------------------------------

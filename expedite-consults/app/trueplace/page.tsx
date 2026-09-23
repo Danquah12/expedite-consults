@@ -236,11 +236,12 @@ export default function TruePlacePortalPage() {
     { label: 'Washington DC (DC GIS)', count: properties.filter((p) => p.state === 'DC').length },
     { label: 'Bethesda & Potomac', count: properties.filter((p) => p.city === 'Bethesda' || p.city === 'Potomac').length },
     { label: 'McLean & Great Falls', count: properties.filter((p) => p.city === 'McLean' || p.city === 'Great Falls').length },
-    { label: 'Chevy Chase & Gibson Island', count: properties.filter((p) => p.city === 'Chevy Chase' || p.city === 'Gibson Island').length },
-    { label: 'Arlington & Alexandria', count: properties.filter((p) => p.city === 'Arlington' || p.city === 'Alexandria').length },
-    { label: 'Georgetown & Capitol Hill', count: properties.filter((p) => p.city === 'Washington').length },
     { label: 'Vienna & Falls Church', count: properties.filter((p) => p.city === 'Vienna' || p.city === 'Falls Church').length },
     { label: 'Reston & Ashburn', count: properties.filter((p) => p.city === 'Reston' || p.city === 'Ashburn').length },
+    { label: 'Arlington & Alexandria', count: properties.filter((p) => p.city === 'Arlington' || p.city === 'Alexandria').length },
+    { label: 'Georgetown & Embassy Row', count: properties.filter((p) => p.city === 'Washington').length },
+    { label: 'Annapolis & Chesapeake', count: properties.filter((p) => p.city === 'Annapolis' || p.city === 'Gibson Island' || p.city === 'Laurel').length },
+    { label: 'Takoma Park & Chevy Chase', count: properties.filter((p) => p.city === 'Takoma Park' || p.city === 'Chevy Chase' || p.city === 'Silver Spring').length },
   ];
 
   // Filter logic
@@ -252,11 +253,12 @@ export default function TruePlacePortalPage() {
       if (selectedSubmarket === 'Washington DC (DC GIS)' && prop.state !== 'DC') return false;
       if (selectedSubmarket === 'Bethesda & Potomac' && prop.city !== 'Bethesda' && prop.city !== 'Potomac') return false;
       if (selectedSubmarket === 'McLean & Great Falls' && prop.city !== 'McLean' && prop.city !== 'Great Falls') return false;
-      if (selectedSubmarket === 'Chevy Chase & Gibson Island' && prop.city !== 'Chevy Chase' && prop.city !== 'Gibson Island') return false;
-      if (selectedSubmarket === 'Arlington & Alexandria' && prop.city !== 'Arlington' && prop.city !== 'Alexandria') return false;
-      if (selectedSubmarket === 'Georgetown & Capitol Hill' && prop.city !== 'Washington') return false;
       if (selectedSubmarket === 'Vienna & Falls Church' && prop.city !== 'Vienna' && prop.city !== 'Falls Church') return false;
       if (selectedSubmarket === 'Reston & Ashburn' && prop.city !== 'Reston' && prop.city !== 'Ashburn') return false;
+      if (selectedSubmarket === 'Arlington & Alexandria' && prop.city !== 'Arlington' && prop.city !== 'Alexandria') return false;
+      if (selectedSubmarket === 'Georgetown & Embassy Row' && prop.city !== 'Washington') return false;
+      if (selectedSubmarket === 'Annapolis & Chesapeake' && prop.city !== 'Annapolis' && prop.city !== 'Gibson Island' && prop.city !== 'Laurel') return false;
+      if (selectedSubmarket === 'Takoma Park & Chevy Chase' && prop.city !== 'Takoma Park' && prop.city !== 'Chevy Chase' && prop.city !== 'Silver Spring') return false;
     }
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
