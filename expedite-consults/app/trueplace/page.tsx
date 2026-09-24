@@ -428,10 +428,10 @@ export default function TruePlacePortalPage() {
                 <div>
                   <div className="flex items-center space-x-2">
                     <span className="text-xs font-bold text-emerald-300 uppercase tracking-wider">Housing Passport™ Active</span>
-                    <span className="text-[10px] bg-emerald-400 text-black font-black px-1.5 py-0.2 rounded uppercase">Prime Tier</span>
+                    <span className="text-[10px] bg-emerald-400 text-black font-black px-1.5 py-0.2 rounded uppercase">Elite Tier</span>
                   </div>
                   <div className="text-xs text-gray-200 mt-0.5">
-                    Applicant: <strong className="text-white">Jordan S. Miller</strong> • Housing Credit Score: <strong className="text-emerald-300">758</strong> • Max Monthly Housing: <strong className="text-white">$3,960/mo</strong> • Reserves: <strong className="text-white">5.1 mos</strong>
+                    Applicant: <strong className="text-white">Jordan S. Miller</strong> • Housing Credit Score: <strong className="text-emerald-300">832</strong> • Max Monthly Housing: <strong className="text-white">$3,960/mo</strong> • Reserves: <strong className="text-white">26.1 mos</strong>
                   </div>
                 </div>
               </div>
