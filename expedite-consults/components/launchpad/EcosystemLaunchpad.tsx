@@ -329,7 +329,7 @@ export default function EcosystemLaunchpad() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             {/* Card 1: Local Mission Control Launchpad */}
             <div className="p-4 rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950/90 border border-emerald-500/40 hover:border-emerald-400 transition-all duration-300 shadow-[0_0_25px_rgba(16,185,129,0.12)] flex flex-col justify-between group">
               <div>
@@ -525,7 +525,140 @@ export default function EcosystemLaunchpad() {
                 </a>
               </div>
             </div>
+
+            {/* Card 5: TruePlace™ Housing Credit & Real Estate Platform */}
+            <div className="p-4 rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950/90 border border-emerald-500/40 hover:border-emerald-400 transition-all duration-300 shadow-[0_0_25px_rgba(16,185,129,0.15)] flex flex-col justify-between group">
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="size-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
+                    <ShieldCheck className="size-4" />
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">
+                      <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      200 OK
+                    </span>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-950 text-emerald-300 border border-emerald-700">
+                      FCRA § 604
+                    </span>
+                  </div>
+                </div>
+                <h3 className="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors">
+                  TruePlace™ Housing Credit & Real Estate
+                </h3>
+                <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                  7-Pillar deterministic Housing Passport™, custom underwriting intake, 25-home DMV affordability & HomeTruth™ Carfax for Houses.
+                </p>
+              </div>
+
+              <div className="pt-3 border-t border-slate-800/80 mt-4 flex items-center gap-2">
+                <Link
+                  href="/trueplace?tab=passport"
+                  className="flex-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(16,185,129,0.3)]"
+                  title="Launch Housing Passport™ Module"
+                >
+                  <ShieldCheck className="size-3" />
+                  <span>Passport™</span>
+                </Link>
+                <Link
+                  href="/trueplace"
+                  className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all flex items-center gap-1"
+                  title="Explore TruePlace Real Estate"
+                >
+                  <Home className="size-3 text-emerald-400" />
+                  <span>Homes</span>
+                </Link>
+              </div>
+            </div>
           </div>
+        </div>
+
+        {/* Breakthrough Featured Platform: TruePlace™ Housing Credit Intelligence & Real Estate */}
+        <div className="mb-10 p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-[#0C382E] via-[#114E40] to-[#0A2F27] border border-emerald-500/40 shadow-[0_0_50px_rgba(16,185,129,0.2)] relative overflow-hidden">
+          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div className="space-y-3 max-w-3xl">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="px-3 py-1 rounded-full bg-emerald-400/20 text-emerald-300 border border-emerald-400/40 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <ShieldCheck className="size-4 text-emerald-400" />
+                  <span>FCRA § 604 Housing Credit Intelligence & Real Estate Platform</span>
+                </span>
+                <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-slate-200 text-xs font-medium">
+                  30-Min Real DMV Ledger
+                </span>
+                <span className="px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-200 border border-blue-400/30 text-xs font-medium">
+                  Ghost Mode Zero-Tracking
+                </span>
+              </div>
+
+              <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight font-sans">
+                TruePlace™ Residential & Housing Credit Intelligence
+              </h2>
+
+              <p className="text-sm sm:text-base text-gray-200 font-light leading-relaxed">
+                Breakthrough deterministic consumer-reporting engine combining 3-bureau tradelines, verified 12-month rental ledgers, DTI ratios, and post-close liquid reserves. Fully compliant with FCRA § 604, § 611, § 615 and HUD Fair Housing mandates. Includes 25-home DMV affordability matching, What-If simulation, bank-grade HomeTruth™ property audits, and TrueValue™ ML valuation.
+              </p>
+
+              {/* Quick Feature Badges */}
+              <div className="pt-2 flex flex-wrap items-center gap-2 text-xs text-emerald-200 font-medium">
+                <span className="flex items-center gap-1.5 bg-black/40 px-3 py-1.5 rounded-xl border border-white/10">
+                  <span className="size-2 rounded-full bg-emerald-400" />
+                  Housing Credit Score (300-850)
+                </span>
+                <span className="flex items-center gap-1.5 bg-black/40 px-3 py-1.5 rounded-xl border border-white/10">
+                  <span className="size-2 rounded-full bg-emerald-400" />
+                  Interactive Custom Financial Intake Modal
+                </span>
+                <span className="flex items-center gap-1.5 bg-black/40 px-3 py-1.5 rounded-xl border border-white/10">
+                  <span className="size-2 rounded-full bg-emerald-400" />
+                  25 Real DMV Property Matcher
+                </span>
+                <span className="flex items-center gap-1.5 bg-black/40 px-3 py-1.5 rounded-xl border border-white/10">
+                  <span className="size-2 rounded-full bg-emerald-400" />
+                  HomeTruth™ "Carfax for Houses"
+                </span>
+              </div>
+            </div>
+
+            {/* Direct Launch Buttons Cluster */}
+            <div className="flex flex-col sm:flex-row lg:flex-col gap-2.5 shrink-0 w-full sm:w-auto">
+              <Link
+                href="/trueplace?tab=passport"
+                className="px-5 py-3 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-extrabold text-sm transition-all shadow-[0_0_20px_rgba(52,211,153,0.4)] flex items-center justify-center gap-2 text-center cursor-pointer"
+              >
+                <ShieldCheck className="size-4 text-emerald-950" />
+                <span>Launch Housing Passport™</span>
+                <ArrowUpRight className="size-4" />
+              </Link>
+
+              <Link
+                href="/trueplace?tab=passport&intake=1"
+                className="px-5 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-black font-extrabold text-sm transition-all shadow-md flex items-center justify-center gap-2 text-center cursor-pointer"
+              >
+                <span>✏️</span>
+                <span>Enter Custom Financials (Intake)</span>
+              </Link>
+
+              <div className="grid grid-cols-2 gap-2">
+                <Link
+                  href="/trueplace"
+                  className="px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition-all border border-white/20 flex items-center justify-center gap-1.5 text-center cursor-pointer"
+                >
+                  <Home className="size-3.5 text-emerald-300" />
+                  <span>Explore Homes</span>
+                </Link>
+                <Link
+                  href="/trueplace?tab=hometruth"
+                  className="px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition-all border border-white/20 flex items-center justify-center gap-1.5 text-center cursor-pointer"
+                >
+                  <FileCheck2 className="size-3.5 text-emerald-300" />
+                  <span>HomeTruth™ Audit</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Ambient background glow */}
+          <div className="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-emerald-400/10 pointer-events-none blur-3xl" />
         </div>
 
           {/* Global Control Bar: Search + Environment Switcher + View Mode */}

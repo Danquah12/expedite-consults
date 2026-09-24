@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Property, calculateInstantTrueValue } from './mockData';
 import { REAL_DMV_INVENTORY } from './realDataService';
 import { PropertyInventoryLedgerModal } from './components/PropertyInventoryLedgerModal';
@@ -57,9 +58,13 @@ import {
 } from 'lucide-react';
 import { CopilotRetrievalModal } from './components/CopilotRetrievalModal';
 
-export default function TruePlacePortalPage() {
+function TruePlacePortalContent() {
+  const searchParams = useSearchParams();
+  const urlTab = searchParams.get('tab');
+  const urlIntake = searchParams.get('intake');
+
   const [theme, setTheme] = useState<ThemeKey>('green');
-  const [activeTab, setActiveTab] = useState<string>('search');
+  const [activeTab, setActiveTab] = useState<string>(urlTab || 'search');
   const [ghostMode, setGhostMode] = useState<boolean>(true);
   const [properties, setProperties] = useState<Property[]>(REAL_DMV_INVENTORY);
   const [selectedProperty, setSelectedProperty] = useState<Property>(REAL_DMV_INVENTORY[0]);
@@ -80,7 +85,18 @@ export default function TruePlacePortalPage() {
   const [isEvaluating, setIsEvaluating] = useState<boolean>(false);
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
   const [nationalEvaluationToast, setNationalEvaluationToast] = useState<string | null>(null);
-  const [openCustomFinancialsModal, setOpenCustomFinancialsModal] = useState<boolean>(false);
+  const [openCustomFinancialsModal, setOpenCustomFinancialsModal] = useState<boolean>(
+    urlIntake === '1' || urlIntake === 'true'
+  );
+
+  useEffect(() => {
+    if (urlTab) {
+      setActiveTab(urlTab);
+    }
+    if (urlIntake === '1' || urlIntake === 'true') {
+      setOpenCustomFinancialsModal(true);
+    }
+  }, [urlTab, urlIntake]);
 
   // New Custom Address Form State
   const [customAddress, setCustomAddress] = useState<string>('4420 N Fairfax Dr');
@@ -1468,5 +1484,13 @@ export default function TruePlacePortalPage() {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function TruePlacePortalPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#0C382E] text-white flex items-center justify-center font-bold">Loading TruePlace™...</div>}>
+      <TruePlacePortalContent />
+    </Suspense>
   );
 }
