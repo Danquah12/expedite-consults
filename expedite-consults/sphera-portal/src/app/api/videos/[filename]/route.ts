@@ -14,7 +14,6 @@ export async function GET(
 
     const candidatePaths = [
       path.join(process.cwd(), "data", "videos", filename),
-      path.join(process.cwd(), "app", "linkedin", "data", "videos", filename),
       path.join(process.cwd(), "public", "uploads", "videos", filename),
       path.join(process.cwd(), "..", "data", "videos", filename),
     ];

@@ -423,10 +423,8 @@ class ConnectInDatabase {
 
   constructor() {
     const primaryDir = path.join(process.cwd(), "data", "db")
-    const linkedinDir = path.join(process.cwd(), "app", "linkedin", "data")
     try {
       if (!fs.existsSync(primaryDir)) fs.mkdirSync(primaryDir, { recursive: true })
-      if (!fs.existsSync(linkedinDir)) fs.mkdirSync(linkedinDir, { recursive: true })
     } catch {}
     this.dbFilePath = path.join(primaryDir, "connectin_db.json")
     this.data = this.loadData()

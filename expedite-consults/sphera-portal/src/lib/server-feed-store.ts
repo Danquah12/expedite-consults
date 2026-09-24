@@ -28,7 +28,6 @@ function getStorageFilePaths(filename: string): string[] {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     return [
       primary,
-      path.join(process.cwd(), "app", "linkedin", "data", filename),
       path.join(process.cwd(), "data", filename),
     ];
   } catch {

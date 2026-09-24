@@ -18,10 +18,9 @@ export async function POST(req: NextRequest) {
     const ext = path.extname(file.name) || (file.type.includes("mp4") ? ".mp4" : ".webm");
     const safeFileName = `${customId}${ext}`;
 
-    // Target storage directories across D: drive
+    // Target storage directories
     const storageDirs = [
       path.join(process.cwd(), "data", "videos"),
-      path.join(process.cwd(), "app", "linkedin", "data", "videos"),
       path.join(process.cwd(), "public", "uploads", "videos"),
     ];
 
