@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Property } from '../mockData';
 import { REAL_DMV_INVENTORY } from '../realDataService';
 import {
@@ -44,21 +44,59 @@ import {
   Calendar,
   AlertTriangle,
   FileCheck2,
-  Printer
+  Printer,
+  X,
+  Edit3,
+  Check
 } from 'lucide-react';
 
 interface HousingCreditPassportProps {
   onSelectProperty?: (prop: Property) => void;
   onNavigateTab?: (tab: string) => void;
+  initialOpenCustomModal?: boolean;
+  onCloseCustomModal?: () => void;
 }
 
 export const HousingCreditPassport: React.FC<HousingCreditPassportProps> = ({
   onSelectProperty,
-  onNavigateTab
+  onNavigateTab,
+  initialOpenCustomModal = false,
+  onCloseCustomModal
 }) => {
   const [selectedPersonaKey, setSelectedPersonaKey] = useState<string>('dualIncome');
   const [profile, setProfile] = useState<HousingProfile>(SEED_HOUSING_PROFILE);
   const [activeSubTab, setActiveSubTab] = useState<'dashboard' | 'matcher' | 'simulator' | 'consent' | 'compliance'>('dashboard');
+
+  // Custom Intake State
+  const [showCustomProfileModal, setShowCustomProfileModal] = useState<boolean>(false);
+  const [isCustomProfileActive, setIsCustomProfileActive] = useState<boolean>(false);
+
+  const [customForm, setCustomForm] = useState({
+    fullName: 'Alex Morgan',
+    jobTitle: 'Senior Cloud Solutions Architect',
+    householdType: 'Dual-Income Household',
+    grossAnnualIncome: 240000,
+    monthlyDebtObligations: 850,
+    liquidCashReserves: 140000,
+    downPaymentAvailable: 100000,
+    traditionalCreditScore: 760,
+    revolvingUtilizationPct: 8,
+    totalRevolvingBalance: 2400,
+    totalRevolvingLimit: 30000,
+    currentRentPayment: 3100,
+    rentalPaymentTrack: 'all_on_time' as 'all_on_time' | 'one_late' | 'two_late',
+    evictionRecordsCount: 0,
+    collectionsCount: 0,
+    bankruptcyRecorded: false,
+  });
+
+  // Watch for external trigger to open modal (e.g. from Search tab banner)
+  useEffect(() => {
+    if (initialOpenCustomModal) {
+      setShowCustomProfileModal(true);
+      if (onCloseCustomModal) onCloseCustomModal();
+    }
+  }, [initialOpenCustomModal, onCloseCustomModal]);
 
   const handleSelectPersona = (key: string) => {
     setSelectedPersonaKey(key);
@@ -68,6 +106,117 @@ export const HousingCreditPassport: React.FC<HousingCreditPassportProps> = ({
       setDownPaymentBoost(0);
       setMonthlySavingsBoost(0);
     }
+  };
+
+  // Handle saving user's custom financial intake
+  const handleSaveCustomProfile = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+
+    const grossMonthly = Math.round(customForm.grossAnnualIncome / 12);
+    const netMonthly = Math.round(grossMonthly * 0.74);
+    const checking = Math.round(customForm.liquidCashReserves * 0.25);
+    const savings = customForm.liquidCashReserves - checking;
+
+    // Generate 12 months rental ledger based on customForm.rentalPaymentTrack
+    const months = ['2026-03', '2026-02', '2026-01', '2025-12', '2025-11', '2025-10', '2025-09', '2025-08', '2025-07', '2025-06', '2025-05', '2025-04'];
+    const rentalLedger = months.map((m, idx) => {
+      let paidOnTime = true;
+      let daysLate = 0;
+      if (customForm.rentalPaymentTrack === 'one_late' && idx === 4) {
+        paidOnTime = false;
+        daysLate = 32;
+      } else if (customForm.rentalPaymentTrack === 'two_late' && (idx === 4 || idx === 8)) {
+        paidOnTime = false;
+        daysLate = 35;
+      }
+      return {
+        monthYear: m,
+        amountDue: customForm.currentRentPayment,
+        amountPaid: customForm.currentRentPayment,
+        paidOnTime,
+        daysLate,
+        propertyAddress: '1200 Crystal Drive, Arlington, VA',
+        landlordOrManagement: 'Verified Regional Residential Management',
+        verifiedVia: 'Plaid Bank Cash Flow' as const
+      };
+    });
+
+    // Generate synthetic tradelines matching the entered debt and utilization
+    const tradelines = [
+      {
+        id: 'TL-C1',
+        creditor: 'Primary Visa/Mastercard',
+        type: 'revolving' as const,
+        balance: customForm.totalRevolvingBalance,
+        creditLimit: customForm.totalRevolvingLimit,
+        monthlyPayment: Math.max(35, Math.round(customForm.totalRevolvingBalance * 0.03)),
+        status: 'current' as const,
+        openedDate: '2019-03-15',
+        verifiedSource: 'Experian' as const
+      },
+      {
+        id: 'TL-C2',
+        creditor: 'Installment Loan / Auto / Student',
+        type: 'installment' as const,
+        balance: Math.max(0, customForm.monthlyDebtObligations * 24),
+        monthlyPayment: Math.max(0, customForm.monthlyDebtObligations - Math.round(customForm.totalRevolvingBalance * 0.03)),
+        status: (customForm.collectionsCount > 0 ? 'collection' : 'current') as any,
+        openedDate: '2021-08-10',
+        verifiedSource: 'TransUnion' as const
+      }
+    ];
+
+    const newProfile: HousingProfile = {
+      id: `usr-custom-${Date.now()}`,
+      fullName: customForm.fullName.trim() || 'Custom Verified Applicant',
+      email: 'applicant@fairhousing-verified.org',
+      phone: '(703) 555-0199',
+      identityVerified: true,
+      identityVerificationDate: new Date().toISOString().split('T')[0],
+      identityProvider: 'ID.me Level 2 (IAL2)',
+      grossAnnualIncome: customForm.grossAnnualIncome,
+      grossMonthlyIncome: grossMonthly,
+      netMonthlyIncome: netMonthly,
+      employmentStatus: 'W2_FullTime',
+      employerName: 'Verified Employer Records',
+      jobTitle: customForm.jobTitle.trim() || 'Professional / Specialist',
+      yearsAtCurrentJob: 4,
+      incomeVerificationStatus: 'Verified_TheWorkNumber',
+      checkingBalance: checking,
+      savingsBalance: savings,
+      liquidCashReserves: customForm.liquidCashReserves,
+      downPaymentAvailable: customForm.downPaymentAvailable,
+      averageMonthlyDeposits: Math.round(grossMonthly * 0.95),
+      overdraftCount12Mo: 0,
+      bankingDataSource: 'Plaid Connected',
+      traditionalCreditScore: customForm.traditionalCreditScore,
+      totalRevolvingBalance: customForm.totalRevolvingBalance,
+      totalRevolvingLimit: customForm.totalRevolvingLimit,
+      revolvingUtilizationPct: customForm.revolvingUtilizationPct,
+      monthlyDebtObligations: customForm.monthlyDebtObligations,
+      tradelines,
+      creditInquiriesLast12Mo: 1,
+      oldestTradelineYears: 7.2,
+      collectionsCount: customForm.collectionsCount,
+      bankruptcyRecorded: customForm.bankruptcyRecorded,
+      creditBureauSource: 'TransUnion Core',
+      rentalLedger,
+      currentRentPayment: customForm.currentRentPayment,
+      evictionRecordsCount: customForm.evictionRecordsCount,
+      landlordReferenceStatus: customForm.rentalPaymentTrack === 'all_on_time' ? 'Exemplary' : 'Good',
+      consentRecords: [
+        { purpose: 'PersonalPlanning', grantedDate: new Date().toISOString(), expiresDate: new Date(Date.now() + 365*24*3600*1000).toISOString(), isActive: true, ipAddressRecorded: '127.0.0.1 (Client-Side Ghost Mode)' },
+        { purpose: 'PropertyMatching', grantedDate: new Date().toISOString(), expiresDate: new Date(Date.now() + 365*24*3600*1000).toISOString(), isActive: true, ipAddressRecorded: '127.0.0.1 (Client-Side Ghost Mode)' }
+      ]
+    };
+
+    setProfile(newProfile);
+    setSelectedPersonaKey('custom');
+    setIsCustomProfileActive(true);
+    setShowCustomProfileModal(false);
+    setPayoffAmount(0);
+    setDownPaymentBoost(0);
+    setMonthlySavingsBoost(0);
   };
 
   // Matcher filters
@@ -261,7 +410,49 @@ export const HousingCreditPassport: React.FC<HousingCreditPassportProps> = ({
                   {item.label}
                 </button>
               ))}
+
+              {isCustomProfileActive && (
+                <button
+                  onClick={() => setSelectedPersonaKey('custom')}
+                  className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                    selectedPersonaKey === 'custom'
+                      ? 'bg-amber-400 text-black font-bold shadow-xs'
+                      : 'bg-white/10 hover:bg-white/20 text-gray-200'
+                  }`}
+                  title="Your custom entered financial profile"
+                >
+                  ⭐ Custom: {profile.fullName} (${(profile.grossAnnualIncome / 1000).toFixed(0)}k/yr)
+                </button>
+              )}
+
+              <button
+                onClick={() => setShowCustomProfileModal(true)}
+                className="px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-black shadow-sm flex items-center space-x-1.5"
+                title="Enter your real salary, debts, liquid cash, and credit score to calculate your custom Housing Passport"
+              >
+                <span>✏️</span>
+                <span>Enter Custom Financials</span>
+              </button>
             </div>
+
+            {/* Custom Active Profile Banner */}
+            {selectedPersonaKey === 'custom' && (
+              <div className="mt-3 bg-amber-400/20 border border-amber-400/40 rounded-xl p-2.5 flex items-center justify-between text-xs text-amber-200">
+                <div className="flex items-center space-x-2">
+                  <span className="font-bold text-amber-300 flex items-center space-x-1">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                    <span>Active Custom Profile:</span>
+                  </span>
+                  <span><strong>{profile.fullName}</strong> • ${profile.grossAnnualIncome.toLocaleString()}/yr • ${profile.liquidCashReserves.toLocaleString()} Liquid • FICO {profile.traditionalCreditScore}</span>
+                </div>
+                <button
+                  onClick={() => setShowCustomProfileModal(true)}
+                  className="text-xs font-bold text-black bg-amber-400 hover:bg-amber-300 px-2.5 py-1 rounded cursor-pointer transition-colors"
+                >
+                  ✏️ Edit Numbers
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Quick Score Badge & Key Pillar Indicator */}
@@ -330,6 +521,38 @@ export const HousingCreditPassport: React.FC<HousingCreditPassportProps> = ({
       {/* ========================================================================= */}
       {activeSubTab === 'dashboard' && (
         <div className="space-y-6">
+          {/* Custom Financial Profile Intake Prompt Card */}
+          <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 border border-emerald-200 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xs">
+            <div className="flex items-center space-x-3.5">
+              <div className="w-11 h-11 rounded-xl bg-[#0C382E] text-white flex items-center justify-center shrink-0 shadow-md">
+                <SlidersHorizontal className="w-5 h-5 text-[#34D399]" />
+              </div>
+              <div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-900">Personalize Your Housing Evaluation</span>
+                  <span className="text-[10px] bg-emerald-200 text-emerald-950 font-bold px-1.5 py-0.2 rounded">Instant Deterministic Engine</span>
+                </div>
+                <h4 className="text-sm sm:text-base font-black text-gray-900">
+                  {selectedPersonaKey === 'custom'
+                    ? `Evaluating Custom Profile for ${profile.fullName} ($${profile.grossAnnualIncome.toLocaleString()}/yr)`
+                    : 'Want to see what you qualify for with your own income, debts, and savings?'}
+                </h4>
+                <p className="text-xs text-gray-600 mt-0.5">
+                  {selectedPersonaKey === 'custom'
+                    ? 'All 25 DMV property affordability matches, DTI ratios, and credit pillars below are calculated from your real inputs.'
+                    : 'Input your real salary, debts, liquid reserves, down payment, and FICO score to get your personalized Housing Credit Score and 25-home affordability match.'}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowCustomProfileModal(true)}
+              className="px-4 py-2.5 rounded-lg bg-[#0C382E] hover:bg-[#07251E] text-white text-xs font-bold shadow-md hover:shadow-lg transition-all flex items-center space-x-2 shrink-0 cursor-pointer"
+            >
+              <Edit3 className="w-3.5 h-3.5 text-[#34D399]" />
+              <span>{selectedPersonaKey === 'custom' ? 'Edit Your Financials' : 'Enter Custom Financials'}</span>
+              <ArrowRight className="w-3.5 h-3.5 text-[#34D399]" />
+            </button>
+          </div>
           {/* Top Score Matrix Grid */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Housing Credit Score Tile */}
@@ -1577,6 +1800,449 @@ export const HousingCreditPassport: React.FC<HousingCreditPassportProps> = ({
                 Close Disclosure
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: CUSTOM FINANCIAL PROFILE INTAKE */}
+      {/* ========================================================================= */}
+      {showCustomProfileModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-gray-300 space-y-5 p-5 sm:p-7 animate-in fade-in zoom-in duration-200">
+            {/* Header */}
+            <div className="flex items-start justify-between border-b border-gray-200 pb-4">
+              <div>
+                <div className="flex items-center space-x-2">
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold uppercase tracking-wider">
+                    Interactive Underwriting Intake
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[10px] font-bold flex items-center space-x-1">
+                    <Lock className="w-3 h-3 text-blue-600" />
+                    <span>Ghost Mode Client-Side Only</span>
+                  </span>
+                </div>
+                <h3 className="text-xl font-black text-gray-950 mt-1">
+                  Enter Your Custom Financial Profile
+                </h3>
+                <p className="text-xs text-gray-600 mt-0.5">
+                  Input your exact salary, monthly obligations, savings, and credit history to calculate your personal Housing Credit Score and test affordability across all 25 real DMV homes.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowCustomProfileModal(false)}
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center font-bold text-sm cursor-pointer shrink-0"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Quick Regional Presets */}
+            <div className="space-y-2 bg-gray-50 p-3.5 rounded-xl border border-gray-200">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-gray-800 flex items-center space-x-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Or Pick a Quick Regional Starting Preset:</span>
+                </span>
+                <span className="text-[11px] text-gray-500">Click to auto-fill & modify</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {[
+                  {
+                    title: 'Solo Professional',
+                    income: 165000,
+                    debt: 450,
+                    liquid: 95000,
+                    down: 65000,
+                    fico: 745,
+                    util: 8,
+                    rent: 2600,
+                    name: 'Alex Morgan (Solo Professional)',
+                    job: 'Lead Software Architect',
+                  },
+                  {
+                    title: 'Dual-Income DMV',
+                    income: 285000,
+                    debt: 1150,
+                    liquid: 230000,
+                    down: 175000,
+                    fico: 785,
+                    util: 5,
+                    rent: 3400,
+                    name: 'Jordan & Taylor Miller',
+                    job: 'Cybersecurity Lead & Fed Program Dir',
+                  },
+                  {
+                    title: 'First-Time Buyer',
+                    income: 110000,
+                    debt: 420,
+                    liquid: 58000,
+                    down: 40000,
+                    fico: 720,
+                    util: 14,
+                    rent: 2100,
+                    name: 'Maya Patel (First-Time Buyer)',
+                    job: 'Healthcare Data Analyst',
+                  },
+                  {
+                    title: 'Executive / Wealth',
+                    income: 520000,
+                    debt: 2100,
+                    liquid: 680000,
+                    down: 500000,
+                    fico: 810,
+                    util: 3,
+                    rent: 5200,
+                    name: 'Dr. Evelyn & Marcus Vance',
+                    job: 'Partner & Chief Medical Officer',
+                  },
+                ].map((p, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setCustomForm({
+                        fullName: p.name,
+                        jobTitle: p.job,
+                        householdType: 'Household',
+                        grossAnnualIncome: p.income,
+                        monthlyDebtObligations: p.debt,
+                        liquidCashReserves: p.liquid,
+                        downPaymentAvailable: p.down,
+                        traditionalCreditScore: p.fico,
+                        revolvingUtilizationPct: p.util,
+                        totalRevolvingBalance: Math.round(p.income * 0.015),
+                        totalRevolvingLimit: Math.round((p.income * 0.015) / (p.util / 100)),
+                        currentRentPayment: p.rent,
+                        rentalPaymentTrack: 'all_on_time',
+                        evictionRecordsCount: 0,
+                        collectionsCount: 0,
+                        bankruptcyRecorded: false,
+                      });
+                    }}
+                    className="p-2.5 rounded-lg border border-gray-200 bg-white hover:border-emerald-500 hover:bg-emerald-50/50 text-left transition-all cursor-pointer group"
+                  >
+                    <div className="text-xs font-bold text-gray-900 group-hover:text-emerald-950 truncate">{p.title}</div>
+                    <div className="text-[11px] text-emerald-700 font-semibold">${(p.income / 1000).toFixed(0)}k/yr • {p.fico} FICO</div>
+                    <div className="text-[10px] text-gray-500">${(p.down / 1000).toFixed(0)}k Down • ${(p.liquid / 1000).toFixed(0)}k Cash</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Custom Inputs Form */}
+            <form onSubmit={handleSaveCustomProfile} className="space-y-6">
+              {/* 1. Identity & Employment */}
+              <div className="space-y-3">
+                <div className="text-xs font-bold uppercase tracking-wider text-emerald-900 border-b border-gray-100 pb-1 flex items-center space-x-1.5">
+                  <UserCheck className="w-3.5 h-3.5 text-emerald-700" />
+                  <span>1. Applicant Profile & Career</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Applicant / Household Name
+                    </label>
+                    <input
+                      type="text"
+                      value={customForm.fullName}
+                      onChange={(e) => setCustomForm({ ...customForm, fullName: e.target.value })}
+                      required
+                      placeholder="e.g. Alex & Sam Smith"
+                      className="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0C382E]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Job Title / Profession
+                    </label>
+                    <input
+                      type="text"
+                      value={customForm.jobTitle}
+                      onChange={(e) => setCustomForm({ ...customForm, jobTitle: e.target.value })}
+                      placeholder="e.g. Senior Software Engineer"
+                      className="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0C382E]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. Income & Cash Flow */}
+              <div className="space-y-3">
+                <div className="text-xs font-bold uppercase tracking-wider text-emerald-900 border-b border-gray-100 pb-1 flex items-center space-x-1.5">
+                  <DollarSign className="w-3.5 h-3.5 text-emerald-700" />
+                  <span>2. Income & Monthly Cash Flow</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-bold text-gray-700">
+                        Gross Annual Income ($)
+                      </label>
+                      <span className="text-xs font-bold text-emerald-700">
+                        ${customForm.grossAnnualIncome.toLocaleString()}/yr
+                      </span>
+                    </div>
+                    <input
+                      type="number"
+                      step={5000}
+                      min={30000}
+                      max={2000000}
+                      value={customForm.grossAnnualIncome}
+                      onChange={(e) => setCustomForm({ ...customForm, grossAnnualIncome: Math.max(0, Number(e.target.value)) })}
+                      className="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0C382E]"
+                    />
+                    <div className="text-[11px] text-gray-500 mt-1 flex justify-between">
+                      <span>Monthly Gross: <strong>${Math.round(customForm.grossAnnualIncome / 12).toLocaleString()}</strong></span>
+                      <span>Est. Net Take-Home: <strong>~${Math.round((customForm.grossAnnualIncome / 12) * 0.74).toLocaleString()}</strong></span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-bold text-gray-700">
+                        Monthly Non-Housing Debts ($/mo)
+                      </label>
+                      <span className="text-xs font-bold text-gray-900">
+                        ${customForm.monthlyDebtObligations.toLocaleString()}/mo
+                      </span>
+                    </div>
+                    <input
+                      type="number"
+                      step={50}
+                      min={0}
+                      max={25000}
+                      value={customForm.monthlyDebtObligations}
+                      onChange={(e) => setCustomForm({ ...customForm, monthlyDebtObligations: Math.max(0, Number(e.target.value)) })}
+                      className="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0C382E]"
+                    />
+                    <div className="text-[11px] text-gray-500 mt-1">
+                      Car loans, student loans, credit card min payments. (Baseline DTI: {customForm.grossAnnualIncome > 0 ? ((customForm.monthlyDebtObligations / (customForm.grossAnnualIncome / 12)) * 100).toFixed(1) : 0}%)
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Liquid Assets & Down Payment */}
+              <div className="space-y-3">
+                <div className="text-xs font-bold uppercase tracking-wider text-emerald-900 border-b border-gray-100 pb-1 flex items-center space-x-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
+                  <span>3. Liquid Cash Reserves & Down Payment</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-bold text-gray-700">
+                        Total Liquid Cash Reserves ($)
+                      </label>
+                      <span className="text-xs font-bold text-emerald-700">
+                        ${customForm.liquidCashReserves.toLocaleString()}
+                      </span>
+                    </div>
+                    <input
+                      type="number"
+                      step={5000}
+                      min={1000}
+                      max={5000000}
+                      value={customForm.liquidCashReserves}
+                      onChange={(e) => setCustomForm({ ...customForm, liquidCashReserves: Math.max(0, Number(e.target.value)) })}
+                      className="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0C382E]"
+                    />
+                    <p className="text-[11px] text-gray-500 mt-1">
+                      Checking, savings, CDs, and non-retirement liquid cash accounts.
+                    </p>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-bold text-gray-700">
+                        Down Payment Allocation ($)
+                      </label>
+                      <span className="text-xs font-bold text-emerald-700">
+                        ${customForm.downPaymentAvailable.toLocaleString()}
+                      </span>
+                    </div>
+                    <input
+                      type="number"
+                      step={5000}
+                      min={0}
+                      max={customForm.liquidCashReserves}
+                      value={customForm.downPaymentAvailable}
+                      onChange={(e) => setCustomForm({ ...customForm, downPaymentAvailable: Math.min(customForm.liquidCashReserves, Math.max(0, Number(e.target.value))) })}
+                      className="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0C382E]"
+                    />
+                    <div className="text-[11px] text-gray-500 mt-1 flex justify-between">
+                      <span>Post-Closing Buffer:</span>
+                      <strong className={customForm.liquidCashReserves - customForm.downPaymentAvailable >= 15000 ? 'text-emerald-700' : 'text-amber-700'}>
+                        ${(customForm.liquidCashReserves - customForm.downPaymentAvailable).toLocaleString()} emergency cushion
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 4. Bureau Tradelines & FICO Score */}
+              <div className="space-y-3">
+                <div className="text-xs font-bold uppercase tracking-wider text-emerald-900 border-b border-gray-100 pb-1 flex items-center space-x-1.5">
+                  <CreditCard className="w-3.5 h-3.5 text-emerald-700" />
+                  <span>4. Traditional Bureau Credit Profile</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-bold text-gray-700">
+                        Traditional FICO / Credit Score
+                      </label>
+                      <span className="text-xs font-black text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                        {customForm.traditionalCreditScore} ({customForm.traditionalCreditScore >= 740 ? 'Excellent' : customForm.traditionalCreditScore >= 670 ? 'Good' : 'Fair'})
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={500}
+                      max={850}
+                      step={5}
+                      value={customForm.traditionalCreditScore}
+                      onChange={(e) => setCustomForm({ ...customForm, traditionalCreditScore: Number(e.target.value) })}
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#0C382E]"
+                    />
+                    <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+                      <span>500 (Subprime)</span>
+                      <span>670 (Prime)</span>
+                      <span>740 (Tier 1)</span>
+                      <span>850 (Max)</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-bold text-gray-700">
+                        Revolving Credit Utilization
+                      </label>
+                      <span className="text-xs font-black text-gray-900">
+                        {customForm.revolvingUtilizationPct}%
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={1}
+                      max={95}
+                      value={customForm.revolvingUtilizationPct}
+                      onChange={(e) => {
+                        const pct = Number(e.target.value);
+                        setCustomForm({
+                          ...customForm,
+                          revolvingUtilizationPct: pct,
+                          totalRevolvingBalance: Math.round(customForm.totalRevolvingLimit * (pct / 100))
+                        });
+                      }}
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#0C382E]"
+                    />
+                    <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+                      <span className="text-emerald-600 font-semibold">&lt; 10% (Optimal)</span>
+                      <span>30% (Standard)</span>
+                      <span className="text-rose-500 font-semibold">&gt; 50% (High)</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 pt-2">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Public Record Bankruptcies
+                    </label>
+                    <select
+                      value={customForm.bankruptcyRecorded ? 'yes' : 'no'}
+                      onChange={(e) => setCustomForm({ ...customForm, bankruptcyRecorded: e.target.value === 'yes' })}
+                      className="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none"
+                    >
+                      <option value="no">None (Clean Public Record)</option>
+                      <option value="yes">Chapter 7/13 Discharged</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Collections Accounts Count
+                    </label>
+                    <select
+                      value={customForm.collectionsCount}
+                      onChange={(e) => setCustomForm({ ...customForm, collectionsCount: Number(e.target.value) })}
+                      className="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none"
+                    >
+                      <option value={0}>0 Collections (Pristine)</option>
+                      <option value={1}>1 Collection Account</option>
+                      <option value={2}>2+ Collection Accounts</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* 5. Rental History & Eviction Records */}
+              <div className="space-y-3">
+                <div className="text-xs font-bold uppercase tracking-wider text-emerald-900 border-b border-gray-100 pb-1 flex items-center space-x-1.5">
+                  <Home className="w-3.5 h-3.5 text-emerald-700" />
+                  <span>5. Verified Rental Ledger & Housing Record</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Current Monthly Rent ($/mo)
+                    </label>
+                    <input
+                      type="number"
+                      step={50}
+                      min={500}
+                      max={20000}
+                      value={customForm.currentRentPayment}
+                      onChange={(e) => setCustomForm({ ...customForm, currentRentPayment: Math.max(0, Number(e.target.value)) })}
+                      className="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0C382E]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      12-Month Rent Payment History
+                    </label>
+                    <select
+                      value={customForm.rentalPaymentTrack}
+                      onChange={(e) => setCustomForm({ ...customForm, rentalPaymentTrack: e.target.value as any })}
+                      className="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none"
+                    >
+                      <option value="all_on_time">100% On-Time (12 of 12 on time - Tier 1)</option>
+                      <option value="one_late">1 Late Payment (30+ days delinquent)</option>
+                      <option value="two_late">2+ Late Payments (Multiple delinquencies)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Privacy Callout */}
+              <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-[11px] text-emerald-900 flex items-start space-x-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+                <div>
+                  <strong>Ghost Mode Privacy Guarantee:</strong> These figures are processed 100% locally in your browser session. TruePlace does not transmit, store, or sell this financial information. No credit pull is recorded on your bureau report.
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => setShowCustomProfileModal(false)}
+                  className="px-4 py-2.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 text-xs font-semibold cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 rounded-lg bg-[#0C382E] hover:bg-[#07251E] text-white text-xs font-bold shadow-md hover:shadow-lg transition-all flex items-center space-x-2 cursor-pointer"
+                >
+                  <Sparkles className="w-4 h-4 text-[#34D399]" />
+                  <span>Calculate Housing Passport & Match 25 Homes</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

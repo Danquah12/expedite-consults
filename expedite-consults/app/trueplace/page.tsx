@@ -80,6 +80,7 @@ export default function TruePlacePortalPage() {
   const [isEvaluating, setIsEvaluating] = useState<boolean>(false);
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
   const [nationalEvaluationToast, setNationalEvaluationToast] = useState<string | null>(null);
+  const [openCustomFinancialsModal, setOpenCustomFinancialsModal] = useState<boolean>(false);
 
   // New Custom Address Form State
   const [customAddress, setCustomAddress] = useState<string>('4420 N Fairfax Dr');
@@ -435,13 +436,26 @@ export default function TruePlacePortalPage() {
                   </div>
                 </div>
               </div>
-              <button
-                onClick={() => setActiveTab('passport')}
-                className="px-3.5 py-2 rounded-lg bg-white text-[#0C382E] hover:bg-emerald-50 text-xs font-bold transition-all shadow-sm cursor-pointer whitespace-nowrap flex items-center justify-center space-x-1.5 shrink-0"
-              >
-                <span>Inspect Housing Passport</span>
-                <ArrowRight className="w-3.5 h-3.5 text-[#0C382E]" />
-              </button>
+              <div className="flex items-center space-x-2 shrink-0">
+                <button
+                  onClick={() => {
+                    setActiveTab('passport');
+                    setOpenCustomFinancialsModal(true);
+                  }}
+                  className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-black text-xs font-bold transition-all shadow-sm cursor-pointer whitespace-nowrap flex items-center justify-center space-x-1.5"
+                  title="Input your real salary, debts, and savings to calculate your score"
+                >
+                  <span>✏️</span>
+                  <span>Enter Your Financials</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab('passport')}
+                  className="px-3.5 py-2 rounded-lg bg-white text-[#0C382E] hover:bg-emerald-50 text-xs font-bold transition-all shadow-sm cursor-pointer whitespace-nowrap flex items-center justify-center space-x-1.5"
+                >
+                  <span>Inspect Passport</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-[#0C382E]" />
+                </button>
+              </div>
             </div>
 
             {/* Northern Virginia Submarket Filter Pills */}
@@ -1117,6 +1131,8 @@ export default function TruePlacePortalPage() {
                 setActiveTab('search');
               }}
               onNavigateTab={(tab) => setActiveTab(tab)}
+              initialOpenCustomModal={openCustomFinancialsModal}
+              onCloseCustomModal={() => setOpenCustomFinancialsModal(false)}
             />
           </div>
         )}
