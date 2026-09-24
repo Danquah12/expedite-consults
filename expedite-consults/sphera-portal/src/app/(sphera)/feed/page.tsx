@@ -1,42 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import {
-  Heart,
-  MessageCircle,
-  Share2,
-  Bookmark,
-  MoreHorizontal,
-  Plus,
-  CheckCircle2,
-  Video,
-  Globe,
-  Music,
-  Flame,
-  Volume2,
-  VolumeX,
-  Gift,
-  Radio,
-  Send,
-  X,
-  Sparkles,
-  Layers,
-  ChevronUp,
-  ChevronDown,
-  TrendingUp,
-  Camera,
-  Repeat2,
-  Zap,
-  Users,
-  Compass,
-  FileText,
-  Briefcase,
-  ShieldCheck,
-  ExternalLink,
-  Eye,
-} from "lucide-react";
-import { formatNumber } from "@/lib/utils";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   FeedPost,
   StoryItem,
@@ -45,35 +10,28 @@ import {
   initialStories,
   initialLiveStreams,
 } from "@/lib/feed-store";
+import { XComposer } from "@/components/feed/XComposer";
+import { XPostCard } from "@/components/feed/XPostCard";
+import { GospelHub } from "@/components/feed/GospelHub";
 import { VideoRecorderModal } from "@/components/feed/VideoRecorderModal";
 import { StoryViewerModal } from "@/components/feed/StoryViewerModal";
 import { LiveBroadcastModal } from "@/components/feed/LiveBroadcastModal";
-import { PostComposerModal } from "@/components/feed/PostComposerModal";
-import { AlgorithmExplanationModal } from "@/components/feed/AlgorithmExplanationModal";
-import { AlgorithmPreferencesModal } from "@/components/feed/AlgorithmPreferencesModal";
-import { Sliders, HelpCircle } from "lucide-react";
-import { FeedMediaCard } from "@/components/feed/FeedMediaCard";
 import { ShareModal } from "@/components/feed/ShareModal";
-import { getLocalFeedPosts } from "@/lib/indexed-db-media";
-import { SpheraPulseComposer } from "@/components/post/SpheraPulseComposer";
-import { SpheraPulseThreadCard } from "@/components/post/SpheraPulseThreadCard";
-import { useAppStore, FeedStreamType } from "@/store/useAppStore";
-import type { PostWithDetails } from "@/types";
+import { getLocalFeedPosts, saveLocalFeedPost } from "@/lib/indexed-db-media";
+import { BookOpen, Sparkles, Plus, Loader2 } from "lucide-react";
 
-const SPHERA_LOCAL_POSTS_KEY = "sphera_feed_posts_v3";
+function SpheraFeedContent() {
+  const searchParams = useSearchParams();
+  const tabParam = searchParams?.get("tab");
 
-export default function FeedPage() {
-  const { activeFeedStream, setFeedStream, openUniversalCreate } = useAppStore();
-  const [viewStyle, setViewStyle] = useState<"standard" | "immersive_theater">("standard");
+  const [activeTab, setActiveTab] = useState<"FYP" | "FOLLOWING" | "GOSPEL" | "CAMPUS">(
+    tabParam === "GOSPEL" ? "GOSPEL" : "FYP"
+  );
+
   const [posts, setPosts] = useState<FeedPost[]>(initialFeedPosts);
   const [stories, setStories] = useState<StoryItem[]>(initialStories);
   const [liveStreams, setLiveStreams] = useState<LiveStreamItem[]>(initialLiveStreams);
-  const [isLoading, setIsLoading] = useState(false);
-  const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
-  const [newCommentText, setNewCommentText] = useState("");
-  const [giftNotification, setGiftNotification] = useState<string | null>(null);
-  const [showHeartBurst, setShowHeartBurst] = useState<{ x: number; y: number; id: string } | null>(null);
-  const [theaterIndex, setTheaterIndex] = useState(0);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Modals state
   const [isRecorderOpen, setIsRecorderOpen] = useState(false);
@@ -81,18 +39,17 @@ export default function FeedPage() {
   const [selectedStoryIndex, setSelectedStoryIndex] = useState(0);
   const [isLiveModalOpen, setIsLiveModalOpen] = useState(false);
   const [activeLiveStream, setActiveLiveStream] = useState<LiveStreamItem | null>(null);
-  const [isComposerOpen, setIsComposerOpen] = useState(false);
-  const [isExplainModalOpen, setIsExplainModalOpen] = useState(false);
-  const [explainContentId, setExplainContentId] = useState<string | null>(null);
-  const [explainAuthor, setExplainAuthor] = useState<string | undefined>(undefined);
-  const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [selectedSharePost, setSelectedSharePost] = useState<FeedPost | null>(null);
 
-
-  // 1. Instantly load locally cached posts from IndexedDB and localStorage on mount
   useEffect(() => {
-    async function hydrateLocalMedia() {
+    if (tabParam === "GOSPEL") {
+      setActiveTab("GOSPEL");
+    }
+  }, [tabParam]);
+
+  useEffect(() => {
+    async function hydrateLocalData() {
       try {
         const localPosts = await getLocalFeedPosts();
         if (localPosts && localPosts.length > 0) {
@@ -103,59 +60,132 @@ export default function FeedPage() {
           });
         }
       } catch (err) {
-        console.warn("Local IndexedDB hydration notice:", err);
+        console.warn("IndexedDB hydration notice:", err);
       }
     }
-    hydrateLocalMedia();
-  }, []);
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const cached = localStorage.getItem(SPHERA_LOCAL_POSTS_KEY);
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setPosts(parsed);
-          }
-        }
-      } catch (err) {
-        console.warn("Local feed cache read notice:", err);
-      }
-    }
+    hydrateLocalData();
   }, []);
 
-  // 2. Fetch live feed data from API and synchronize with IndexedDB vault
-  const fetchFeed = async (stream: FeedStreamType) => {
-    try {
-      setIsLoading(true);
-      const localVaultPosts = await getLocalFeedPosts();
-      const res = await fetch(`/api/feed?mode=${stream}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.posts && data.posts.length > 0) {
-          setPosts((current) => {
-            const serverIds = new Set(data.posts.map((p: FeedPost) => p.id));
-            const combinedLocal = [...(localVaultPosts || []), ...current].filter(
-              (p) => !serverIds.has(p.id) && (p.id.startsWith("p-") || p.id.startsWith("post-"))
-            );
-            const dedupedMap = new Map();
-            combinedLocal.forEach((p) => dedupedMap.set(p.id, p));
-            return [...Array.from(dedupedMap.values()), ...data.posts];
-          });
-        }
-        if (data.stories && data.stories.length > 0) setStories(data.stories);
-        if (data.liveStreams && data.liveStreams.length > 0) setLiveStreams(data.liveStreams);
-      }
-    } catch (e) {
-      // Local fallback in store
-    } finally {
-      setIsLoading(false);
-    }
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
   };
 
-  useEffect(() => {
-    fetchFeed(activeFeedStream);
-  }, [activeFeedStream]);
+  const handleAddNewPost = (newPost: FeedPost) => {
+    setPosts((prev) => [newPost, ...prev.filter((p) => p.id !== newPost.id)]);
+    showToast("✨ Your post was published to SpheraNet!");
+    try {
+      saveLocalFeedPost(newPost);
+    } catch (e) {}
+  };
+
+  const handleLike = (postId: string) => {
+    setPosts((prev) =>
+      prev.map((p) => {
+        if (p.id === postId) {
+          const nextLiked = !p.isLiked;
+          return {
+            ...p,
+            isLiked: nextLiked,
+            likes: nextLiked ? p.likes + 1 : Math.max(0, p.likes - 1),
+          };
+        }
+        return p;
+      })
+    );
+  };
+
+  const handleRepost = (postId: string) => {
+    setPosts((prev) =>
+      prev.map((p) => {
+        if (p.id === postId) {
+          const nextReposted = !p.isReposted;
+          return {
+            ...p,
+            isReposted: nextReposted,
+            repostsCount: nextReposted ? (p.repostsCount || 0) + 1 : Math.max(0, (p.repostsCount || 0) - 1),
+          };
+        }
+        return p;
+      })
+    );
+    showToast("🔁 Reposted to your timeline!");
+  };
+
+  const handleBookmark = (postId: string) => {
+    setPosts((prev) =>
+      prev.map((p) => {
+        if (p.id === postId) {
+          const nextSaved = !p.isSaved;
+          return {
+            ...p,
+            isSaved: nextSaved,
+            savesCount: nextSaved ? (p.savesCount || 0) + 1 : Math.max(0, (p.savesCount || 0) - 1),
+          };
+        }
+        return p;
+      })
+    );
+    showToast("🔖 Post saved to bookmarks");
+  };
+
+  const handleVotePoll = (postId: string, optionIndex: number) => {
+    setPosts((prev) =>
+      prev.map((p) => {
+        if (p.id === postId && p.poll && p.poll.userVotedIndex === undefined) {
+          const updatedOptions = p.poll.options.map((opt, idx) => {
+            if (idx === optionIndex) {
+              return { ...opt, votes: opt.votes + 1 };
+            }
+            return opt;
+          });
+          const newTotal = p.poll.totalVotes + 1;
+          const recalculated = updatedOptions.map((opt) => ({
+            ...opt,
+            percentage: Math.round((opt.votes / newTotal) * 100),
+          }));
+
+          return {
+            ...p,
+            poll: {
+              ...p.poll,
+              options: recalculated,
+              totalVotes: newTotal,
+              userVotedIndex: optionIndex,
+            },
+          };
+        }
+        return p;
+      })
+    );
+    showToast("🗳️ Vote recorded!");
+  };
+
+  const handleAddComment = (postId: string, text: string) => {
+    const newComment = {
+      id: "c-" + Date.now(),
+      user: "Kwesi Asiedu",
+      username: "kwesi",
+      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80",
+      text,
+      time: "Just now",
+      likes: 0,
+    };
+
+    setPosts((prev) =>
+      prev.map((p) => {
+        if (p.id === postId) {
+          return {
+            ...p,
+            commentsCount: p.commentsCount + 1,
+            commentsList: [newComment, ...(p.commentsList || [])],
+          };
+        }
+        return p;
+      })
+    );
+    showToast("💬 Reply posted!");
+  };
 
   const handleOpenShare = (post: FeedPost) => {
     setSelectedSharePost(post);
@@ -169,128 +199,10 @@ export default function FeedPage() {
         p.id === selectedSharePost.id ? { ...p, sharesCount: (p.sharesCount || 0) + 1 } : p
       )
     );
-    setGiftNotification(`🚀 Shared to ${platform.toUpperCase()}!`);
-    setTimeout(() => setGiftNotification(null), 3000);
+    showToast("🚀 Shared to " + platform.toUpperCase() + "!");
   };
 
-  const handleAddNewPost = (newPost: FeedPost) => {
-    setPosts((prev) => {
-      const filtered = prev.filter((p) => p.id !== newPost.id);
-      const updated = [newPost, ...filtered];
-      if (typeof window !== "undefined") {
-        try {
-          localStorage.setItem(SPHERA_LOCAL_POSTS_KEY, JSON.stringify(updated));
-        } catch (e) {}
-      }
-      return updated;
-    });
-  };
-
-  const toggleLike = async (id: string, e?: React.MouseEvent) => {
-    if (e) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      setShowHeartBurst({ x: rect.left + rect.width / 2, y: rect.top, id });
-      setTimeout(() => setShowHeartBurst(null), 1000);
-    }
-
-    setPosts((prev) =>
-      prev.map((p) => {
-        if (p.id === id) {
-          const nextLiked = !p.isLiked;
-          return {
-            ...p,
-            isLiked: nextLiked,
-            likes: nextLiked ? p.likes + 1 : Math.max(0, p.likes - 1),
-          };
-        }
-        return p;
-      })
-    );
-
-    try {
-      await fetch(`/api/feed/posts/${id}/like`, { method: "POST" });
-    } catch (err) {
-      // Offline fallback
-    }
-  };
-
-  const toggleSave = async (id: string) => {
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.id === id
-          ? {
-              ...p,
-              isSaved: !p.isSaved,
-              savesCount: (p.savesCount || 0) + (p.isSaved ? -1 : 1),
-            }
-          : p
-      )
-    );
-
-    try {
-      await fetch(`/api/feed/posts/${id}/save`, { method: "POST" });
-    } catch (err) {
-      // Offline fallback
-    }
-  };
-
-    const handleSendComment = async (postId: string) => {
-    if (!newCommentText.trim()) return;
-    const textToSend = newCommentText.trim();
-    setNewCommentText("");
-
-    const optimisticComment = {
-      id: `c-${Date.now()}`,
-      user: "Kwesi Asiedu",
-      username: "kwesi",
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80",
-      text: textToSend,
-      time: "Just now",
-      likes: 0,
-    };
-
-    setPosts((prev) =>
-      prev.map((p) => {
-        if (p.id === postId) {
-          const updatedComments = [optimisticComment, ...(p.commentsList || [])];
-          return {
-            ...p,
-            commentsList: updatedComments,
-            commentsCount: (p.commentsCount || 0) + 1,
-          };
-        }
-        return p;
-      })
-    );
-
-    try {
-      const res = await fetch(`/api/feed/posts/${postId}/comments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: textToSend, user: "Kwesi Asiedu", username: "kwesi" }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.comment) {
-          setPosts((prev) =>
-            prev.map((p) => {
-              if (p.id === postId) {
-                const list = (p.commentsList || []).map((c) =>
-                  c.id === optimisticComment.id ? data.comment : c
-                );
-                return { ...p, commentsList: list };
-              }
-              return p;
-            })
-          );
-        }
-      }
-    } catch (e) {
-      console.warn("Comment send notice:", e);
-    }
-  };
-
-  const toggleFollow = async (username: string) => {
+  const handleToggleFollow = (username: string) => {
     setPosts((prev) =>
       prev.map((p) =>
         p.author.username === username
@@ -298,851 +210,201 @@ export default function FeedPage() {
           : p
       )
     );
-
-    try {
-      await fetch(`/api/feed/follow`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username }),
-      });
-    } catch (err) {
-      // Offline fallback
-    }
   };
 
-  const handleAddNewPulsePost = (newPost: Partial<PostWithDetails>) => {
-    const converted: FeedPost = {
-      id: newPost.id || `pulse-${Date.now()}`,
-      type: "pulse_thread",
-      streamCategory: "pulse",
-      author: {
-        id: newPost.author?.id || "u_me",
-        name: newPost.author?.profile?.displayName || "Kwesi Asiedu",
-        username: newPost.author?.profile?.username || "kwesi",
-        avatarUrl: newPost.author?.profile?.avatar || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
-        verified: true,
-        timeAgo: "Just now",
-        isFollowed: true,
-        isFriend: true,
-      },
-      content: newPost.content || "",
-      imageUrl: newPost.mediaUrls?.[0],
-      likes: 1,
-      commentsCount: 0,
-      sharesCount: 0,
-      repostsCount: 0,
-      viewsCount: 1,
-      isLiked: true,
-      isThread: newPost.isThread,
-      threadIndex: newPost.threadIndex,
-      threadTotal: newPost.threadTotal,
-      threadReplies: newPost.threadReplies?.map((r, idx) => ({
-        id: r.id || `reply-${idx}`,
-        content: r.content || "",
-        mediaUrl: r.mediaUrls?.[0],
-        author: {
-          id: r.author?.id || "u_me",
-          name: r.author?.profile?.displayName || "Kwesi Asiedu",
-          username: r.author?.profile?.username || "kwesi",
-          avatarUrl: r.author?.profile?.avatar || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
-          verified: true,
-          timeAgo: "Just now",
-        },
-      })),
-      communityNote: newPost.communityNote
-        ? {
-            content: newPost.communityNote.content,
-            sources: newPost.communityNote.sources,
-            helpfulCount: newPost.communityNote.helpfulCount,
-          }
-        : undefined,
-      bounty: newPost.bounty
-        ? {
-            title: newPost.bounty.title,
-            reward: newPost.bounty.reward,
-            sponsor: newPost.bounty.sponsor,
-            clearanceRequired: newPost.bounty.clearanceRequired,
-            difficulty: newPost.bounty.difficulty,
-            tags: newPost.bounty.tags,
-          }
-        : undefined,
-      article: newPost.article
-        ? {
-            title: newPost.article.title,
-            subtitle: newPost.article.subtitle,
-            coverImage: newPost.article.coverImage,
-            readTimeMinutes: newPost.article.readTimeMinutes,
-            slug: newPost.article.slug,
-          }
-        : undefined,
-      createdAt: new Date().toISOString(),
-    };
-
-    handleAddNewPost(converted);
-
-    // Broadcast to server
-    try {
-      fetch("/api/feed", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: converted.content,
-          type: converted.type,
-          imageUrl: converted.imageUrl,
-          authorName: converted.author.name,
-          authorUsername: converted.author.username,
-        }),
-      }).catch(() => {});
-    } catch (e) {}
-  };
-
-  // 5-Stream Filter Logic
   const filteredPosts = posts.filter((p) => {
-    if (activeFeedStream === "following") {
+    if (activeTab === "GOSPEL") {
+      return (
+        p.isGospel ||
+        p.scriptureRef ||
+        p.hashtags?.some((h) =>
+          ["#Gospel", "#Faith", "#DailyGrace", "#WordOfGod", "#CampusMinistry"].includes(h)
+        )
+      );
+    }
+    if (activeTab === "FOLLOWING") {
       return p.author.isFollowed;
     }
-    if (activeFeedStream === "friends") {
-      return p.author.isFriend || p.streamCategory === "friends";
-    }
-    if (activeFeedStream === "pulse") {
-      return p.type === "pulse_thread" || p.streamCategory === "pulse" || p.isThread;
-    }
-    if (activeFeedStream === "live") {
-      return p.type === "immersive_video" || p.videoUrl;
+    if (activeTab === "CAMPUS") {
+      return (
+        p.streamCategory === "campus" ||
+        p.hashtags?.some((h) =>
+          ["#CampusHacks2026", "#SalisburyUniversity", "#UMD", "#UMBC", "#JohnsHopkins"].includes(h)
+        )
+      );
     }
     return true;
   });
 
-  const activeTheaterPost = filteredPosts[theaterIndex % (filteredPosts.length || 1)] || filteredPosts[0];
-
-  const streamTabs: { id: FeedStreamType; label: string; icon: React.ReactNode; badge?: string }[] = [
-    { id: "for_you", label: "For You", icon: <Flame className="w-3.5 h-3.5 text-amber-300" /> },
-    { id: "following", label: "Following", icon: <Users className="w-3.5 h-3.5 text-cyan-400" /> },
-    { id: "friends", label: "Friends", icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> },
-    { id: "pulse", label: "Pulse (X)", icon: <Zap className="w-3.5 h-3.5 text-cyan-300" />, badge: "HOT" },
-    { id: "live", label: "Live Stage", icon: <Radio className="w-3.5 h-3.5 text-rose-400" /> },
-  ];
-
   return (
-    <div className="w-full flex justify-center gap-6 text-slate-100 font-sans pb-16">
-      
-      {/* ── Toast Gift Alert ────────────────────────────────────────── */}
-      {giftNotification && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 text-white px-6 py-3 rounded-full shadow-2xl font-black text-sm animate-bounce flex items-center gap-2 border border-white/20">
-          <Sparkles className="w-4 h-4 text-amber-300" />
-          <span>{giftNotification}</span>
+    <div className="w-full flex flex-col min-h-screen bg-black/40 text-neutral-100 rounded-3xl border border-neutral-800/80 overflow-hidden font-sans">
+      {toastMessage && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-neutral-900/95 border border-amber-500/40 text-white px-5 py-2.5 rounded-full shadow-2xl font-bold text-xs flex items-center gap-2 backdrop-blur-md animate-in slide-in-from-top-4">
+          <Sparkles className="w-4 h-4 text-amber-400 animate-spin" />
+          <span>{toastMessage}</span>
         </div>
       )}
 
-      {/* ── Heart Burst Double-Tap Animation ───────────────────────── */}
-      {showHeartBurst && (
-        <div
-          className="fixed z-50 pointer-events-none transform -translate-x-1/2 -translate-y-1/2 animate-ping"
-          style={{ left: showHeartBurst.x, top: showHeartBurst.y }}
-        >
-          <Heart className="w-24 h-24 fill-rose-500 text-rose-500 drop-shadow-[0_0_20px_rgba(244,63,94,0.8)]" />
+      {/* Sticky Header with Navigation Tabs */}
+      <header className="sticky top-0 z-20 bg-neutral-950/90 backdrop-blur-md border-b border-neutral-800/80">
+        <div className="grid grid-cols-4 text-center">
+          <button
+            onClick={() => setActiveTab("FYP")}
+            className="relative py-3.5 text-sm font-bold transition hover:bg-white/5"
+          >
+            <span className={activeTab === "FYP" ? "text-white font-extrabold" : "text-neutral-400 font-medium"}>
+              For you
+            </span>
+            {activeTab === "FYP" && (
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-14 h-1 bg-sky-500 rounded-full" />
+            )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab("FOLLOWING")}
+            className="relative py-3.5 text-sm font-bold transition hover:bg-white/5"
+          >
+            <span className={activeTab === "FOLLOWING" ? "text-white font-extrabold" : "text-neutral-400 font-medium"}>
+              Following
+            </span>
+            {activeTab === "FOLLOWING" && (
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-14 h-1 bg-sky-500 rounded-full" />
+            )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab("GOSPEL")}
+            className="relative py-3.5 text-sm font-bold transition hover:bg-amber-500/10 group"
+          >
+            <span
+              className={
+                "flex items-center justify-center gap-1.5 " +
+                (activeTab === "GOSPEL" ? "text-amber-400 font-extrabold" : "text-amber-500/80 font-semibold")
+              }
+            >
+              <span>✝️ Gospel</span>
+              <span className="text-[9px] bg-amber-500 text-black px-1 rounded font-black">NEW</span>
+            </span>
+            {activeTab === "GOSPEL" && (
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-1 bg-amber-500 rounded-full shadow-lg shadow-amber-500/50" />
+            )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab("CAMPUS")}
+            className="relative py-3.5 text-sm font-bold transition hover:bg-white/5"
+          >
+            <span className={activeTab === "CAMPUS" ? "text-white font-extrabold" : "text-neutral-400 font-medium"}>
+              🎓 Campus
+            </span>
+            {activeTab === "CAMPUS" && (
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-14 h-1 bg-emerald-500 rounded-full" />
+            )}
+          </button>
         </div>
-      )}
+      </header>
 
-      {/* ── IMMERSIVE THEATER VIEW ──────────────────────────────────── */}
-      {viewStyle === "immersive_theater" ? (
-        <div className="w-full max-w-[500px] flex flex-col items-center gap-4">
-          <div className="relative w-full aspect-[9/16] max-h-[82vh] bg-black rounded-3xl overflow-hidden shadow-2xl border border-zinc-800 flex items-center justify-center select-none group">
-            <FeedMediaCard
-              post={activeTheaterPost}
-              onDoubleClick={(e) => toggleLike(activeTheaterPost.id, e)}
-              isTheater={true}
-            />
-
-            {/* Top 5-Stream Switcher in Theater */}
-            <div className="absolute top-4 left-0 right-0 z-30 flex items-center justify-center gap-3 text-xs font-black drop-shadow-md">
-              <button
-                onClick={() => setFeedStream("for_you")}
-                className={`transition ${activeFeedStream === "for_you" ? "text-white scale-110 underline underline-offset-8" : "text-white/60 hover:text-white"}`}
-              >
-                For You
-              </button>
-              <span className="text-white/40">|</span>
-              <button
-                onClick={() => setFeedStream("pulse")}
-                className={`transition ${activeFeedStream === "pulse" ? "text-cyan-300 scale-110 underline underline-offset-8" : "text-white/60 hover:text-white"}`}
-              >
-                ⚡ Pulse
-              </button>
-              <span className="text-white/40">|</span>
-              <button
-                onClick={() => setFeedStream("following")}
-                className={`transition ${activeFeedStream === "following" ? "text-white scale-110 underline underline-offset-8" : "text-white/60 hover:text-white"}`}
-              >
-                Following
-              </button>
-            </div>
-
-            {/* Bottom Caption & Author Details */}
-            <div className="absolute bottom-6 left-4 right-20 z-20 space-y-2 pointer-events-auto">
-              <div className="flex items-center gap-2">
-                <span className="font-black text-sm text-white drop-shadow-md">@{activeTheaterPost?.author.username}</span>
-                {activeTheaterPost?.author.verified && <CheckCircle2 className="w-4 h-4 text-cyan-400 fill-cyan-400" />}
-                {!activeTheaterPost?.author.isFollowed && (
-                  <button
-                    onClick={() => toggleFollow(activeTheaterPost.author.username)}
-                    className="px-2.5 py-0.5 rounded-full bg-pink-600 hover:bg-pink-500 text-white text-[11px] font-black shadow-md"
-                  >
-                    Follow
-                  </button>
-                )}
-              </div>
-              <p className="text-xs text-white/95 line-clamp-3 drop-shadow-md font-medium">
-                {activeTheaterPost?.content}
-              </p>
-            </div>
-
-            {/* Right Engagement Rail */}
-            <div className="absolute right-3 bottom-6 z-30 flex flex-col items-center gap-5">
-              <div className="flex flex-col items-center gap-1">
-                <button
-                  onClick={(e) => toggleLike(activeTheaterPost.id, e)}
-                  className={`w-11 h-11 rounded-full flex items-center justify-center backdrop-blur-md transition transform hover:scale-125 ${
-                    activeTheaterPost?.isLiked ? "bg-pink-600 text-white shadow-pink-500/50" : "bg-black/60 text-white hover:bg-black/80"
-                  }`}
-                >
-                  <Heart className={`w-5 h-5 ${activeTheaterPost?.isLiked ? "fill-white" : ""}`} />
-                </button>
-                <span className="text-[11px] font-black text-white drop-shadow-md">
-                  {formatNumber(activeTheaterPost?.likes || 0)}
-                </span>
-              </div>
-
-              <div className="flex flex-col items-center gap-1">
-                <button
-                  onClick={() => setActiveCommentPostId(activeCommentPostId === activeTheaterPost.id ? null : activeTheaterPost.id)}
-                  className="w-11 h-11 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-md transition transform hover:scale-110"
-                >
-                  <MessageCircle className="w-5 h-5" />
-                </button>
-                <span className="text-[11px] font-black text-white drop-shadow-md">
-                  {formatNumber(activeTheaterPost?.commentsCount || 0)}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setTheaterIndex((prev) => (prev > 0 ? prev - 1 : filteredPosts.length - 1))}
-              className="px-4 py-2 rounded-2xl bg-zinc-800 hover:bg-pink-600 text-white text-xs font-bold flex items-center gap-1 shadow-xl border border-zinc-700 transition"
-            >
-              <ChevronUp className="w-4 h-4" /> Prev Reel
-            </button>
-            <button
-              onClick={() => setViewStyle("standard")}
-              className="px-4 py-2 rounded-2xl bg-zinc-700 hover:bg-zinc-600 text-white text-xs font-bold transition"
-            >
-              Exit Full Screen
-            </button>
-            <button
-              onClick={() => setTheaterIndex((prev) => (prev + 1) % filteredPosts.length)}
-              className="px-4 py-2 rounded-2xl bg-zinc-800 hover:bg-pink-600 text-white text-xs font-bold flex items-center gap-1 shadow-xl border border-zinc-700 transition"
-            >
-              Next Reel <ChevronDown className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      ) : (
-        /* ── Main Center Feed Column ─────────────────────────────────── */
-        <div className="w-full max-w-[620px] flex flex-col gap-4">
-
-          {/* 1. UNIVERSAL 5-STREAM MULTI-FEED SELECTOR */}
-          <div className="bg-[#18191a] border border-zinc-800/80 rounded-2xl p-2 flex items-center justify-between shadow-xl backdrop-blur-md">
-            <div className="flex items-center gap-1 overflow-x-auto scrollbar-none py-0.5">
-              {streamTabs.map((tab) => {
-                const isActive = activeFeedStream === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => {
-                      setFeedStream(tab.id);
-                      if (tab.id === "live" && liveStreams.length > 0) {
-                        setActiveLiveStream(liveStreams[0]);
-                        setIsLiveModalOpen(true);
-                      }
-                    }}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition flex items-center gap-1.5 whitespace-nowrap ${
-                      isActive
-                        ? "bg-gradient-to-r from-cyan-500 via-indigo-500 to-pink-500 text-white shadow-lg shadow-cyan-500/20"
-                        : "text-zinc-400 hover:text-white hover:bg-zinc-800/80"
-                    }`}
-                  >
-                    {tab.icon}
-                    <span>{tab.label}</span>
-                    {tab.badge && (
-                      <span className="bg-pink-600 text-white text-[9px] px-1.5 py-0.2 rounded-full font-black">
-                        {tab.badge}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="flex items-center gap-1 pl-2">
-              <button
-                onClick={() => setViewStyle("immersive_theater")}
-                className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold flex items-center border border-zinc-700 transition"
-                title="Toggle Immersive Full-Screen TikTok View"
-              >
-                <Layers className="w-3.5 h-3.5 text-pink-400" />
-              </button>
-            </div>
-          </div>
-
-          {/* QUICK STUDIO ACTION ROW */}
-          <div className="grid grid-cols-3 gap-2 bg-[#121318] border border-zinc-800/80 rounded-2xl p-2.5 shadow-lg">
-            <button
-              onClick={() => setIsRecorderOpen(true)}
-              className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white text-xs font-black shadow-md transition transform hover:scale-[1.02]"
-            >
-              <Camera className="w-4 h-4" />
-              <span>Record Short</span>
-            </button>
-            <button
-              onClick={() => setIsComposerOpen(true)}
-              className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-cyan-300 text-xs font-bold border border-zinc-700 transition transform hover:scale-[1.02]"
-            >
-              <Video className="w-4 h-4 text-cyan-400" />
-              <span>Post Media</span>
-            </button>
-            <button
-              onClick={() => {
-                setActiveLiveStream(liveStreams[0] || null);
-                setIsLiveModalOpen(true);
-              }}
-              className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-rose-300 text-xs font-bold border border-zinc-700 transition transform hover:scale-[1.02]"
-            >
-              <Radio className="w-4 h-4 text-rose-500 animate-pulse" />
-              <span>Go Live</span>
-            </button>
-          </div>
-
-          {/* 2. STORIES & LIVE BROADCAST TRAY */}
-          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none py-1">
-            {stories.map((story, idx) => (
-              <div
-                key={story.id || idx}
-                onClick={() => {
-                  setSelectedStoryIndex(idx);
-                  setIsStoryViewerOpen(true);
-                }}
-                className="relative w-24 h-36 rounded-2xl overflow-hidden flex-shrink-0 cursor-pointer group shadow-lg border border-zinc-800/80 transition transform hover:scale-105"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={story.mediaUrl || story.avatar} alt={story.username} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                
-                {story.isUser ? (
-                  <div className="absolute top-2 left-2 w-8 h-8 rounded-full bg-pink-600 flex items-center justify-center border-2 border-zinc-900 shadow-md">
-                    <Plus className="w-4 h-4 text-white font-bold" />
-                  </div>
-                ) : (
-                  <div className={`absolute top-2 left-2 w-8 h-8 rounded-full overflow-hidden p-0.5 ${story.hasLive ? "bg-gradient-to-tr from-pink-500 via-rose-500 to-amber-400 animate-pulse" : "bg-cyan-500"}`}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={story.avatar} alt="avatar" className="w-full h-full rounded-full object-cover" />
-                  </div>
-                )}
-
-                {story.hasLive && (
-                  <span className="absolute top-2 right-2 px-1.5 py-0.5 bg-rose-600 text-white font-mono text-[9px] font-black rounded-md animate-pulse">
-                    LIVE
-                  </span>
-                )}
-
-                <p className="absolute bottom-2 left-2 right-2 text-[11px] font-bold text-white truncate shadow-xs">
-                  {story.displayName || story.username}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          {/* 3. INLINE SPHERA PULSE 1/N THREAD & UNIVERSAL COMPOSER */}
-          <SpheraPulseComposer
-            inline={true}
-            onPublish={handleAddNewPulsePost}
-            onConvertToArticle={() => {
-              openUniversalCreate("article");
+      {/* Stories Tray */}
+      <div className="flex gap-3 overflow-x-auto px-4 py-3 border-b border-neutral-800/80 scrollbar-none bg-neutral-950/40">
+        {stories.map((story, idx) => (
+          <div
+            key={story.id || idx}
+            onClick={() => {
+              setSelectedStoryIndex(idx);
+              setIsStoryViewerOpen(true);
             }}
-          />
-
-          {/* 4. MULTI-FORMAT FEED STREAM CARDS */}
-          {filteredPosts.map((post) => {
-            // Render Sphera Pulse Thread Card
-            if (post.type === "pulse_thread" || post.isThread) {
-              const convertedPulsePost: PostWithDetails = {
-                id: post.id,
-                type: "THREAD",
-                content: post.content,
-                visibility: "PUBLIC",
-                mediaUrls: post.imageUrl ? [post.imageUrl] : [],
-                createdAt: new Date(post.createdAt),
-                updatedAt: new Date(post.createdAt),
-                deletedAt: null,
-                author: {
-                  id: post.author.id,
-                  role: "USER",
-                  profile: {
-                    username: post.author.username,
-                    displayName: post.author.name,
-                    avatar: post.author.avatarUrl,
-                    bio: null,
-                    isVerified: !!post.author.verified,
-                    profileVisibility: "PUBLIC",
-                  },
-                },
-                _count: {
-                  reactions: post.likes,
-                  comments: post.commentsCount,
-                  saves: post.savesCount || 0,
-                  shares: post.sharesCount,
-                },
-                isLiked: post.isLiked,
-                isSaved: post.isSaved,
-                viewsCount: post.viewsCount,
-                repostsCount: post.repostsCount,
-                isThread: post.isThread,
-                threadIndex: post.threadIndex,
-                threadTotal: post.threadTotal,
-                threadReplies: post.threadReplies?.map((r) => ({
-                  id: r.id,
-                  type: "THREAD",
-                  content: r.content,
-                  visibility: "PUBLIC",
-                  mediaUrls: r.mediaUrl ? [r.mediaUrl] : [],
-                  createdAt: new Date(),
-                  updatedAt: new Date(),
-                  deletedAt: null,
-                  author: {
-                    id: r.author.id,
-                    role: "USER",
-                    profile: {
-                      username: r.author.username,
-                      displayName: r.author.name,
-                      avatar: r.author.avatarUrl,
-                      bio: null,
-                      isVerified: !!r.author.verified,
-                      profileVisibility: "PUBLIC",
-                    },
-                  },
-                  _count: { reactions: 0, comments: 0, saves: 0 },
-                })),
-                communityNote: post.communityNote
-                  ? {
-                      id: "cn-1",
-                      postId: post.id,
-                      authorId: "verifier",
-                      content: post.communityNote.content,
-                      sources: post.communityNote.sources,
-                      status: "CURRENTLY_RATED_HELPFUL",
-                      helpfulCount: post.communityNote.helpfulCount,
-                      createdAt: new Date(),
-                    }
-                  : undefined,
-              };
-
-              return (
-                <SpheraPulseThreadCard
-                  key={post.id}
-                  post={convertedPulsePost}
-                  onLike={(id) => toggleLike(id)}
-                  onRepost={() => {}}
-                  onSave={(id) => toggleSave(id)}
-                />
-              );
-            }
-
-            // Render Proof-of-Work Bounty Card
-            if (post.type === "bounty" && post.bounty) {
-              return (
-                <article
-                  key={post.id}
-                  className="bg-[#18191a] border border-zinc-800/80 rounded-2xl p-5 shadow-xl space-y-4"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-emerald-500">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={post.author.avatarUrl} alt={post.author.name} className="w-full h-full object-cover" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-sm font-black text-white">{post.author.name}</span>
-                          <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400 fill-cyan-400" />
-                        </div>
-                        <span className="text-xs text-zinc-500">@{post.author.username} · {post.author.timeAgo}</span>
-                      </div>
-                    </div>
-
-                    <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-xs font-black rounded-full">
-                      {post.bounty.reward}
-                    </span>
-                  </div>
-
-                  <p className="text-sm text-zinc-200">{post.content}</p>
-
-                  {/* Bounty Box */}
-                  <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-4 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Briefcase className="w-4 h-4 text-emerald-400" />
-                        <h4 className="text-sm font-black text-white">{post.bounty.title}</h4>
-                      </div>
-                      <span className="text-[10px] font-black uppercase text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">
-                        {post.bounty.difficulty}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-3 text-xs text-zinc-400 pt-1">
-                      <span>Sponsor: <strong className="text-zinc-200">{post.bounty.sponsor}</strong></span>
-                      <span>•</span>
-                      <span className="text-cyan-400 font-semibold">{post.bounty.clearanceRequired}</span>
-                    </div>
-
-                    <div className="flex flex-wrap gap-1.5 pt-2">
-                      {post.bounty.tags.map((tag) => (
-                        <span key={tag} className="text-[11px] bg-zinc-800 text-zinc-300 px-2.5 py-0.5 rounded-md font-semibold">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Bottom Action */}
-                  <div className="flex items-center justify-between pt-2 border-t border-zinc-800 text-xs font-bold text-zinc-400">
-                    <button
-                      onClick={() => toggleLike(post.id)}
-                      className={`flex items-center gap-1.5 ${post.isLiked ? "text-pink-500" : "hover:text-white"}`}
-                    >
-                      <Heart className={`w-4 h-4 ${post.isLiked ? "fill-pink-500" : ""}`} />
-                      <span>{formatNumber(post.likes)}</span>
-                    </button>
-                    <Link
-                      href="/career"
-                      className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 font-black text-xs shadow-md"
-                    >
-                      Apply for Bounty →
-                    </Link>
-                  </div>
-                </article>
-              );
-            }
-
-            // Render Longform Article Card
-            if (post.type === "article" && post.article) {
-              return (
-                <article
-                  key={post.id}
-                  className="bg-[#18191a] border border-zinc-800/80 rounded-2xl overflow-hidden shadow-xl space-y-3"
-                >
-                  <div className="flex items-center justify-between px-5 pt-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-indigo-500">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={post.author.avatarUrl} alt={post.author.name} className="w-full h-full object-cover" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-sm font-black text-white">{post.author.name}</span>
-                          <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400 fill-cyan-400" />
-                        </div>
-                        <span className="text-xs text-zinc-500">@{post.author.username} · {post.author.timeAgo}</span>
-                      </div>
-                    </div>
-
-                    <span className="flex items-center gap-1 text-xs text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-full font-bold">
-                      <FileText className="w-3.5 h-3.5" />
-                      <span>{post.article.readTimeMinutes} min read</span>
-                    </span>
-                  </div>
-
-                  {post.article.coverImage && (
-                    <div className="w-full h-48 overflow-hidden bg-zinc-900">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={post.article.coverImage} alt={post.article.title} className="w-full h-full object-cover" />
-                    </div>
-                  )}
-
-                  <div className="px-5 space-y-1.5 pb-2">
-                    <h3 className="text-base font-black text-white hover:text-cyan-400 cursor-pointer transition">
-                      {post.article.title}
-                    </h3>
-                    <p className="text-xs text-zinc-400 leading-relaxed">{post.article.subtitle}</p>
-                  </div>
-
-                  <div className="px-5 pb-4 flex items-center justify-between border-t border-zinc-800 pt-3 text-xs font-bold text-zinc-400">
-                    <button
-                      onClick={() => toggleLike(post.id)}
-                      className={`flex items-center gap-1.5 ${post.isLiked ? "text-pink-500" : "hover:text-white"}`}
-                    >
-                      <Heart className={`w-4 h-4 ${post.isLiked ? "fill-pink-500" : ""}`} />
-                      <span>{formatNumber(post.likes)}</span>
-                    </button>
-                    <span className="text-cyan-400 font-bold hover:underline cursor-pointer">
-                      Read Full Article →
-                    </span>
-                  </div>
-                </article>
-              );
-            }
-
-            // Standard Reel / Media Card (TikTok / IG Style)
-            return (
-              <article
-                key={post.id}
-                className="bg-[#18191a] border border-zinc-800/80 rounded-3xl overflow-hidden shadow-2xl space-y-3 relative group"
-              >
-                {/* Author Header */}
-                <div className="flex items-center justify-between px-5 pt-4">
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <div className="w-11 h-11 rounded-full overflow-hidden ring-2 ring-pink-500">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={post.author.avatarUrl} alt={post.author.name} className="w-full h-full object-cover" />
-                      </div>
-                      {!post.author.isFollowed && (
-                        <button
-                          onClick={() => toggleFollow(post.author.username)}
-                          className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-pink-600 hover:bg-pink-500 text-white flex items-center justify-center shadow-lg border border-zinc-900 transition hover:scale-110"
-                          title="Follow Creator"
-                        >
-                          <Plus className="w-3.5 h-3.5 stroke-[3]" />
-                        </button>
-                      )}
-                    </div>
-
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-sm font-black text-white hover:underline cursor-pointer">{post.author.name}</span>
-                        {post.author.verified && <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400 fill-cyan-400" />}
-                        <span className="text-xs text-zinc-500">@{post.author.username}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-[11px] text-zinc-400">
-                        <span>{post.author.timeAgo}</span>
-                        <span>•</span>
-                        <Globe className="w-3 h-3 text-zinc-500" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => toggleFollow(post.author.username)}
-                      className={`px-3 py-1 rounded-full text-xs font-black transition ${
-                        post.author.isFollowed
-                          ? "bg-zinc-800 text-zinc-300 border border-zinc-700"
-                          : "bg-pink-600 hover:bg-pink-500 text-white shadow-md shadow-pink-600/30"
-                      }`}
-                    >
-                      {post.author.isFollowed ? "Following" : "+ Follow"}
-                    </button>
-                    <button className="p-1.5 text-zinc-400 hover:text-white rounded-full hover:bg-zinc-800">
-                      <MoreHorizontal className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Post Caption & Hashtags */}
-                <div className="px-5 space-y-1.5">
-                  <p className="text-xs sm:text-sm text-zinc-200 leading-relaxed">{post.content}</p>
-                  {post.hashtags && (
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                      {post.hashtags.map((tag, i) => (
-                        <span key={i} className="text-xs font-bold text-pink-400 hover:underline cursor-pointer">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Immersive Video Frame with Floating Engagement Rail */}
-                <div className="relative w-full bg-black flex justify-center items-center overflow-hidden min-h-[380px] max-h-[580px] select-none">
-                  <FeedMediaCard
-                    post={post}
-                    onDoubleClick={(e) => toggleLike(post.id, e)}
-                  />
-
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 pointer-events-none" />
-
-                  {/* SIDE ENGAGEMENT RAIL */}
-                  <div className="absolute right-3 bottom-6 flex flex-col items-center gap-4 z-20">
-                    <div className="flex flex-col items-center gap-1">
-                      <button
-                        onClick={(e) => toggleLike(post.id, e)}
-                        className={`w-11 h-11 rounded-full flex items-center justify-center backdrop-blur-md transition transform hover:scale-125 active:scale-90 shadow-2xl ${
-                          post.isLiked ? "bg-pink-600 text-white" : "bg-black/60 text-white hover:bg-black/80"
-                        }`}
-                      >
-                        <Heart className={`w-5 h-5 ${post.isLiked ? "fill-white text-white" : ""}`} />
-                      </button>
-                      <span className="text-[11px] font-black text-white drop-shadow-md">
-                        {formatNumber(post.likes)}
-                      </span>
-                    </div>
-
-                    <div className="flex flex-col items-center gap-1">
-                      <button
-                        onClick={() => setActiveCommentPostId(activeCommentPostId === post.id ? null : post.id)}
-                        className="w-11 h-11 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-md transition transform hover:scale-110 shadow-2xl"
-                      >
-                        <MessageCircle className="w-5 h-5" />
-                      </button>
-                      <span className="text-[11px] font-black text-white drop-shadow-md">
-                        {formatNumber(post.commentsCount)}
-                      </span>
-                    </div>
-
-                    <div className="flex flex-col items-center gap-1">
-                      <button
-                        onClick={() => toggleSave(post.id)}
-                        className={`w-11 h-11 rounded-full flex items-center justify-center backdrop-blur-md transition transform hover:scale-125 shadow-2xl ${
-                          post.isSaved ? "bg-cyan-500 text-zinc-950" : "bg-black/60 text-white hover:bg-black/80"
-                        }`}
-                      >
-                        <Bookmark className={`w-5 h-5 ${post.isSaved ? "fill-current" : ""}`} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      )}
-
-            {/* ── Comments Modal Drawer ───────────────────────────────── */}
-      {activeCommentPostId && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="w-full max-w-lg bg-[#18191a] border border-zinc-800 rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] h-[550px] animate-in slide-in-from-bottom duration-300">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800 bg-zinc-900/50">
-              <div className="flex items-center gap-2">
-                <MessageCircle className="w-5 h-5 text-pink-500" />
-                <h3 className="text-base font-black text-white">
-                  Comments ({posts.find((p) => p.id === activeCommentPostId)?.commentsCount || 0})
-                </h3>
-              </div>
-              <button
-                onClick={() => setActiveCommentPostId(null)}
-                className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white flex items-center justify-center transition"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-5 space-y-4">
-              {(() => {
-                const post = posts.find((p) => p.id === activeCommentPostId);
-                const list = post?.commentsList || [];
-                if (list.length === 0) {
-                  return (
-                    <div className="h-full flex flex-col items-center justify-center text-center p-8 text-zinc-500">
-                      <MessageCircle className="w-12 h-12 stroke-1 mb-2 opacity-40 text-pink-400" />
-                      <p className="text-sm font-semibold">No comments yet</p>
-                      <p className="text-xs text-zinc-600">Be the first to share your thoughts!</p>
-                    </div>
-                  );
-                }
-                return list.map((c) => (
-                  <div key={c.id} className="flex items-start gap-3 group">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={c.avatar || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80"}
-                      alt={c.user}
-                      className="w-8 h-8 rounded-full object-cover ring-1 ring-zinc-700 shrink-0 mt-0.5"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-xs font-bold text-white">{c.user}</span>
-                        <span className="text-[10px] text-zinc-500 font-mono">@{c.username} · {c.time}</span>
-                      </div>
-                      <p className="text-xs sm:text-sm text-zinc-300 mt-1 leading-relaxed break-words">{c.text}</p>
-                    </div>
-                  </div>
-                ));
-              })()}
-            </div>
-
-            <div className="p-4 border-t border-zinc-800 bg-zinc-900/80 flex items-center gap-3">
-              <input
-                type="text"
-                placeholder="Add a sovereign comment..."
-                value={newCommentText}
-                onChange={(e) => setNewCommentText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    if (activeCommentPostId) handleSendComment(activeCommentPostId);
-                  }
-                }}
-                className="flex-1 bg-zinc-800 border border-zinc-700 text-white rounded-xl px-4 py-2.5 text-xs sm:text-sm placeholder:text-zinc-500 focus:outline-none focus:border-pink-500"
+            className="flex flex-col items-center gap-1.5 flex-shrink-0 cursor-pointer group"
+          >
+            <div
+              className={
+                "relative w-14 h-14 rounded-full p-0.5 transition transform group-hover:scale-105 " +
+                (story.hasLive
+                  ? "bg-gradient-to-tr from-rose-500 via-pink-500 to-amber-400 animate-pulse"
+                  : story.isUser
+                  ? "bg-neutral-700"
+                  : "bg-gradient-to-tr from-sky-400 to-indigo-600")
+              }
+            >
+              <img
+                src={story.avatar}
+                alt={story.username}
+                className="w-full h-full rounded-full object-cover border-2 border-black"
               />
-              <button
-                disabled={!newCommentText.trim()}
-                onClick={() => {
-                  if (activeCommentPostId) handleSendComment(activeCommentPostId);
-                }}
-                className="px-4 py-2.5 bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 disabled:opacity-40 disabled:hover:from-pink-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-lg shadow-pink-500/20 shrink-0"
-              >
-                <span>Send</span>
-                <Send className="w-3.5 h-3.5" />
-              </button>
+              {story.isUser && (
+                <div className="absolute bottom-0 right-0 w-4 h-4 bg-sky-500 rounded-full flex items-center justify-center border border-black text-white">
+                  <Plus className="w-3 h-3 stroke-[3]" />
+                </div>
+              )}
+              {story.hasLive && (
+                <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-rose-600 text-white text-[8px] font-black px-1 rounded-sm uppercase tracking-tighter">
+                  LIVE
+                </span>
+              )}
             </div>
+            <span className="text-[11px] text-neutral-400 group-hover:text-white max-w-[60px] truncate">
+              {story.isUser ? "Your story" : story.displayName || story.username}
+            </span>
           </div>
+        ))}
+      </div>
+
+      {/* In-Line Twitter / X Post Composer */}
+      <XComposer
+        onPostCreated={handleAddNewPost}
+        isGospelMode={activeTab === "GOSPEL"}
+      />
+
+      {/* Dedicated Gospel Hub View */}
+      {activeTab === "GOSPEL" && (
+        <div className="p-4 border-b border-neutral-800/80 bg-gradient-to-b from-amber-950/20 via-black to-black">
+          <GospelHub />
         </div>
       )}
 
-      {/* ── Global Modals ────────────────────────────────────────── */}
+      {/* Feed Post Timeline */}
+      <div className="divide-y divide-neutral-800/80">
+        {filteredPosts.length > 0 ? (
+          filteredPosts.map((post) => (
+            <XPostCard
+              key={post.id}
+              post={post}
+              onLike={handleLike}
+              onRepost={handleRepost}
+              onBookmark={handleBookmark}
+              onVotePoll={handleVotePoll}
+              onAddComment={handleAddComment}
+              onShare={handleOpenShare}
+              onFollow={handleToggleFollow}
+            />
+          ))
+        ) : (
+          <div className="py-16 text-center text-neutral-500 space-y-2">
+            <p className="text-base font-bold text-neutral-300">No posts yet in this tab</p>
+            <p className="text-xs">Be the first to share an update or testimony!</p>
+          </div>
+        )}
+      </div>
+
+      {/* MODALS */}
       <VideoRecorderModal
         isOpen={isRecorderOpen}
         onClose={() => setIsRecorderOpen(false)}
-        onPostCreated={(newPost) => {
-          handleAddNewPost(newPost);
-          setIsRecorderOpen(false);
-        }}
+        onPostCreated={handleAddNewPost}
       />
+
       <StoryViewerModal
         isOpen={isStoryViewerOpen}
         stories={stories}
         initialIndex={selectedStoryIndex}
         onClose={() => setIsStoryViewerOpen(false)}
-        onAddStory={(newStory) => {
-          setStories((prev) => [newStory, ...prev]);
-          setIsStoryViewerOpen(false);
-        }}
+        onAddStory={(newStory) => setStories((prev) => [newStory, ...prev])}
       />
-      {activeLiveStream && (
-        <LiveBroadcastModal
-          isOpen={isLiveModalOpen}
-          stream={activeLiveStream}
-          onClose={() => setIsLiveModalOpen(false)}
-          onSendGift={(giftName, recipient) => {
-            setGiftNotification(`✨ Sent ${giftName} to @${recipient}!`);
-            setTimeout(() => setGiftNotification(null), 3500);
-          }}
-        />
-      )}
-      
-      <AlgorithmExplanationModal
-        isOpen={isExplainModalOpen}
-        contentId={explainContentId}
-        authorUsername={explainAuthor}
-        onClose={() => setIsExplainModalOpen(false)}
-        onOpenPreferences={() => {
-          setIsExplainModalOpen(false);
-          setIsPreferencesOpen(true);
-        }}
-        onTuneAlgorithm={(action, meta) => {
-          if (action === "LESS" || action === "NOT_INTERESTED") {
-            setPosts((prev) => prev.filter((p) => p.id !== explainContentId));
-          }
-        }}
+
+      <LiveBroadcastModal
+        isOpen={isLiveModalOpen}
+        stream={activeLiveStream}
+        onClose={() => setIsLiveModalOpen(false)}
+        onSendGift={(giftName, recipient) => showToast("✨ Sent " + giftName + " to @" + recipient + "!")}
       />
 
       <ShareModal
@@ -1151,21 +413,21 @@ export default function FeedPage() {
         post={selectedSharePost}
         onShareCompleted={handleShareCompleted}
       />
-
-      <AlgorithmPreferencesModal
-        isOpen={isPreferencesOpen}
-        onClose={() => setIsPreferencesOpen(false)}
-        onSaved={() => fetchFeed(activeFeedStream)}
-      />
-
-      <PostComposerModal
-        isOpen={isComposerOpen}
-        onClose={() => setIsComposerOpen(false)}
-        onPostCreated={(newPost) => {
-          handleAddNewPost(newPost);
-          setIsComposerOpen(false);
-        }}
-      />
     </div>
+  );
+}
+
+export default function FeedPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[400px] flex items-center justify-center text-neutral-400 gap-2">
+          <Loader2 className="w-6 h-6 animate-spin text-sky-400" />
+          <span>Loading SpheraNet Feed...</span>
+        </div>
+      }
+    >
+      <SpheraFeedContent />
+    </Suspense>
   );
 }

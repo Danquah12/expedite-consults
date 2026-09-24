@@ -28,6 +28,7 @@ import {
   ChevronDown,
   ChevronRight,
   Radio,
+  BookOpen,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useAppStore } from "@/store/useAppStore";
@@ -159,7 +160,41 @@ export function SidebarNav({ user }: { user?: { name: string; username: string }
               borderRadius: "4px",
             }}
           >
-            5 STREAMS
+            𝕏 FEED
+          </span>
+        </Link>
+
+        {/* ✝️ Gospel Menu */}
+        <Link
+          href="/feed?tab=GOSPEL"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            padding: "9px 12px",
+            borderRadius: "12px",
+            fontSize: "13px",
+            fontWeight: pathname.includes("GOSPEL") ? "800" : "700",
+            color: "#f59e0b",
+            backgroundColor: "rgba(245, 158, 11, 0.1)",
+            border: "1px solid rgba(245, 158, 11, 0.3)",
+            textDecoration: "none",
+            transition: "all 0.15s ease",
+          }}
+        >
+          <BookOpen size={20} color="#f59e0b" />
+          <span style={{ flex: 1, fontWeight: "800" }}>Gospel Menu</span>
+          <span
+            style={{
+              fontSize: "9px",
+              fontWeight: "900",
+              color: "#000",
+              backgroundColor: "#f59e0b",
+              padding: "1px 5px",
+              borderRadius: "4px",
+            }}
+          >
+            NEW
           </span>
         </Link>
 

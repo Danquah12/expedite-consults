@@ -4,10 +4,10 @@ export interface Author {
   username: string;
   avatarUrl: string;
   verified?: boolean;
+  badgeType?: "blue" | "gold" | "gospel" | "campus" | "none";
   timeAgo: string;
   privacy?: string;
   isFollowed?: boolean;
-  isFriend?: boolean;
 }
 
 export interface CommentItem {
@@ -20,40 +20,39 @@ export interface CommentItem {
   likes: number;
 }
 
-export interface CommunityNoteData {
-  content: string;
-  sources: string[];
-  helpfulCount: number;
+export interface PollOption {
+  id: string;
+  text: string;
+  votes: number;
+  percentage?: number;
+  voted?: boolean;
 }
 
-export interface BountyData {
-  title: string;
-  reward: string;
-  sponsor: string;
-  clearanceRequired?: string;
-  difficulty?: string;
-  tags: string[];
-}
-
-export interface ArticleData {
-  title: string;
-  subtitle?: string;
-  coverImage?: string;
-  readTimeMinutes: number;
-  slug?: string;
-}
-
-export interface PollData {
+export interface FeedPoll {
+  id: string;
   question: string;
-  options: { id: string; text: string; votes: number }[];
+  options: PollOption[];
   totalVotes: number;
-  userVotedOptionId?: string;
+  expiresIn?: string;
+  hasVoted?: boolean;
+  userVotedIndex?: number;
+}
+
+export interface ScriptureReference {
+  book: string;
+  reference: string;
+  text: string;
+  translation?: string;
+  theme?: string;
 }
 
 export interface FeedPost {
   id: string;
-  type: "standard" | "immersive_video" | "pulse_thread" | "article" | "bounty" | "poll";
-  streamCategory?: "for_you" | "following" | "friends" | "pulse" | "live";
+  type: "standard" | "immersive_video" | "gospel_scripture" | "poll" | "pulse_thread" | "bounty" | "article";
+  category?: "general" | "gospel" | "campus" | "tech" | "faith" | "pulse";
+  streamCategory?: string;
+  isGospel?: boolean;
+  scriptureRef?: string;
   author: Author;
   content: string;
   imageUrl?: string;
@@ -72,22 +71,22 @@ export interface FeedPost {
   isReposted?: boolean;
   likedByFriend?: string;
   commentsList?: CommentItem[];
-  createdAt: string;
-
-  // Sphera Pulse & Threading
+  poll?: FeedPoll;
+  scripture?: ScriptureReference;
   isThread?: boolean;
   threadIndex?: number;
   threadTotal?: number;
-  threadReplies?: {
-    id: string;
+  threadReplies?: any[];
+  communityNote?: any;
+  bounty?: any;
+  article?: any;
+  repostOf?: {
+    authorName: string;
+    authorUsername: string;
     content: string;
-    mediaUrl?: string;
-    author: Author;
-  }[];
-  communityNote?: CommunityNoteData;
-  bounty?: BountyData;
-  article?: ArticleData;
-  poll?: PollData;
+    timeAgo: string;
+  };
+  createdAt: string;
 }
 
 export interface StoryItem {
@@ -101,6 +100,7 @@ export interface StoryItem {
   timeAgo: string;
   hasLive?: boolean;
   isUser?: boolean;
+  isGospel?: boolean;
 }
 
 export interface LiveStreamItem {
@@ -114,293 +114,478 @@ export interface LiveStreamItem {
   streamUrl?: string;
   category: string;
   startedAt: string;
+  isFaith?: boolean;
 }
 
-export const initialFeedPosts: FeedPost[] = [
-  // 1. Sphera Pulse 1/N Thread with Community Context Note
+export interface GospelVerse {
+  id: string;
+  book: string;
+  reference: string;
+  text: string;
+  theme: string;
+  commentary: string;
+  reflectionQuestion: string;
+  translation: string;
+  audioDuration: string;
+  tags: string[];
+}
+
+export interface PrayerRequestItem {
+  id: string;
+  authorName: string;
+  authorUsername: string;
+  authorAvatar: string;
+  title: string;
+  details: string;
+  category: "Healing" | "Academics" | "Family" | "Guidance" | "Peace" | "General";
+  prayedCount: number;
+  hasPrayed?: boolean;
+  timeAgo: string;
+  answersCount: number;
+}
+
+export interface GospelMediaItem {
+  id: string;
+  title: string;
+  artistOrSpeaker: string;
+  category: "Worship" | "Sermon" | "Podcast" | "Scripture Meditation";
+  duration: string;
+  thumbnail: string;
+  audioSnippet?: string;
+  videoUrl?: string;
+  verseRef?: string;
+}
+
+export const dailyVerses: GospelVerse[] = [
   {
-    id: "pulse-t1",
-    type: "pulse_thread",
-    streamCategory: "pulse",
+    id: "v1",
+    book: "Philippians",
+    reference: "Philippians 4:6-7",
+    text: "Do not be anxious about anything, but in every situation, by prayer and petition, with thanksgiving, present your requests to God. And the peace of God, which transcends all understanding, will guard your hearts and your minds in Christ Jesus.",
+    theme: "Peace & Freedom from Anxiety",
+    commentary: "When exam pressures, career uncertainties, or life transitions feel heavy, surrender the outcome. Gratitude recalibrates the soul while divine peace becomes your anchor.",
+    reflectionQuestion: "What is one burden you can place into God's hands in prayer today instead of carrying alone?",
+    translation: "NIV",
+    audioDuration: "1:15",
+    tags: ["Peace", "Anxiety", "Trust", "Prayer"],
+  },
+  {
+    id: "v2",
+    book: "Isaiah",
+    reference: "Isaiah 40:31",
+    text: "But those who hope in the Lord will renew their strength. They will soar on wings like eagles; they will run and not grow weary, they will walk and not be faint.",
+    theme: "Renewed Strength & Endurance",
+    commentary: "Human effort has limits, but divine grace is inexhaustible. Waiting on God is not passive; it is an active alignment that restores your energy and vision.",
+    reflectionQuestion: "Where do you feel weary right now, and how can resting in God's promises refresh your spirit?",
+    translation: "NIV",
+    audioDuration: "1:05",
+    tags: ["Strength", "Hope", "Endurance", "Exams"],
+  },
+  {
+    id: "v3",
+    book: "Romans",
+    reference: "Romans 8:28",
+    text: "And we know that in all things God works for the good of those who love him, who have been called according to his purpose.",
+    theme: "Divine Purpose & Sovereignty",
+    commentary: "Every unexpected delay, closed door, or challenge is woven into a greater tapestry of redemption and growth.",
+    reflectionQuestion: "Can you trust that current obstacles are working together for your character and destiny?",
+    translation: "NIV",
+    audioDuration: "1:20",
+    tags: ["Purpose", "Hope", "Faith", "Growth"],
+  },
+  {
+    id: "v4",
+    book: "Proverbs",
+    reference: "Proverbs 3:5-6",
+    text: "Trust in the Lord with all your heart and lean not on your own understanding; in all your ways submit to him, and he will make your paths straight.",
+    theme: "Direction & Wisdom",
+    commentary: "Our limited vantage point often misses the curves ahead. Total reliance on God brings clarity to your next career and life steps.",
+    reflectionQuestion: "In what decision are you trying to rely solely on human calculation rather than asking for divine direction?",
+    translation: "NIV",
+    audioDuration: "1:10",
+    tags: ["Wisdom", "Guidance", "Decisions", "College"],
+  },
+  {
+    id: "v5",
+    book: "Psalms",
+    reference: "Psalm 23:1-3",
+    text: "The Lord is my shepherd, I lack nothing. He makes me lie down in green pastures, he leads me beside quiet waters, he refreshes my soul.",
+    theme: "Restoration & Comfort",
+    commentary: "In a hyper-connected, high-speed campus and corporate world, your soul needs sacred stillness with the Good Shepherd.",
+    reflectionQuestion: "How can you take 10 minutes of uninterrupted stillness in God's presence today?",
+    translation: "NIV",
+    audioDuration: "1:25",
+    tags: ["Rest", "Soul Care", "Comfort", "Peace"],
+  },
+];
+
+export const initialPrayerRequests: PrayerRequestItem[] = [
+  {
+    id: "pr1",
+    authorName: "Sarah Mensah",
+    authorUsername: "sarah_m",
+    authorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+    title: "Midterm Exams & Mental Clarity",
+    details: "Praying for peace and clarity for all students preparing for engineering and biochemistry midterms this week at UMD and Towson. May God grant sharp focus and calm anxiety! 🙏",
+    category: "Academics",
+    prayedCount: 148,
+    hasPrayed: true,
+    timeAgo: "1h ago",
+    answersCount: 12,
+  },
+  {
+    id: "pr2",
+    authorName: "Pastor David Osei",
+    authorUsername: "pastor_david",
+    authorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+    title: "Campus Fellowship Outreach & Revival",
+    details: "Joining hands in prayer for our inter-collegiate worship night this Friday at Stamp Union. Praying for hearts to be touched with God's unconditional love and hope.",
+    category: "Guidance",
+    prayedCount: 312,
+    hasPrayed: false,
+    timeAgo: "3h ago",
+    answersCount: 28,
+  },
+  {
+    id: "pr3",
+    authorName: "Emmanuel Boateng",
+    authorUsername: "emmanuel_b",
+    authorAvatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+    title: "Family Health & Healing for My Mother",
+    details: "My mom is undergoing surgery this Thursday. Standing on Jeremiah 17:14 for complete restoration and speedy recovery. Thank you family for your intercession!",
+    category: "Healing",
+    prayedCount: 520,
+    hasPrayed: true,
+    timeAgo: "5h ago",
+    answersCount: 45,
+  },
+];
+
+export const initialGospelMedia: GospelMediaItem[] = [
+  {
+    id: "gm1",
+    title: "Goodness of God (Collegiate Acoustic Session)",
+    artistOrSpeaker: "Sphera Worship Collective ft. Grace Choir",
+    category: "Worship",
+    duration: "4:32",
+    thumbnail: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80",
+    audioSnippet: "acoustic_goodness.mp3",
+    verseRef: "Psalm 145:9",
+  },
+  {
+    id: "gm2",
+    title: "Navigating Career Ambition with Kingdom Purpose",
+    artistOrSpeaker: "Pastor David Osei (Sunday Keynote)",
+    category: "Sermon",
+    duration: "24:15",
+    thumbnail: "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=600&auto=format&fit=crop&q=80",
+    audioSnippet: "purpose_keynote.mp3",
+    verseRef: "Colossians 3:23",
+  },
+  {
+    id: "gm3",
+    title: "Scripture Meditation for Overcoming Fear & Pressure",
+    artistOrSpeaker: "Daily Grace Audio Devotional",
+    category: "Scripture Meditation",
+    duration: "8:40",
+    thumbnail: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=600&auto=format&fit=crop&q=80",
+    audioSnippet: "peace_meditation.mp3",
+    verseRef: "2 Timothy 1:7",
+  },
+];
+
+export const initialFeedPosts: FeedPost[] = [
+  {
+    id: "p-gospel-1",
+    type: "gospel_scripture",
+    category: "gospel",
     author: {
-      id: "u_kwesi",
-      name: "Kwesi Asiedu",
-      username: "kwesi",
-      avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
+      id: "u-pastordavid",
+      name: "Pastor David Osei",
+      username: "pastordavid",
+      avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
       verified: true,
-      timeAgo: "15m ago",
+      badgeType: "gospel",
+      timeAgo: "25m",
       privacy: "Public",
       isFollowed: true,
-      isFriend: true,
     },
-    content: "1/4 SpheraNet 2.0 is officially deploying sovereign zero-trust architecture across all connected campus graphs. Here is why decentralizing social graph ownership changes student IP forever 🧵👇 #SpheraLaunch #ZeroTrust",
-    hashtags: ["#SpheraLaunch", "#ZeroTrust", "#CampusGraph", "#Web3OS"],
-    likes: 4210,
-    commentsCount: 382,
-    sharesCount: 910,
-    repostsCount: 540,
-    viewsCount: 28400,
+    content: "When you feel like you are at the end of your strength, remember that God's grace is perfected in weakness. You do not walk into this new week alone — He goes before you! 🕊️✨\n\n'My grace is sufficient for you, for my power is made perfect in weakness.' — 2 Corinthians 12:9",
+    scripture: {
+      book: "2 Corinthians",
+      reference: "2 Corinthians 12:9",
+      text: "My grace is sufficient for you, for my power is made perfect in weakness.",
+      translation: "NIV",
+      theme: "Grace & Power",
+    },
+    hashtags: ["#GospelHope", "#DailyBread", "#Grace", "#FaithOverFear"],
+    likes: 3420,
+    repostsCount: 890,
+    commentsCount: 184,
+    viewsCount: 42100,
+    sharesCount: 512,
+    savesCount: 680,
     isLiked: true,
-    isThread: true,
-    threadIndex: 1,
-    threadTotal: 3,
-    threadReplies: [
-      {
-        id: "pulse-t1-r1",
-        content: "2/4 Every coursework repo, hackathon submission, and bazaar escrow transaction is cryptographically signed with local enclave keys. No central ad networks sniffing your private career passport.",
-        author: {
-          id: "u_kwesi",
-          name: "Kwesi Asiedu",
-          username: "kwesi",
-          avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
-          verified: true,
-          timeAgo: "14m ago",
-        },
-      },
-      {
-        id: "pulse-t1-r2",
-        content: "3/4 Try converting this entire discussion into a longform verified article with 1 click using the new AI Synthesizer at the top of your feed! 🚀",
-        author: {
-          id: "u_kwesi",
-          name: "Kwesi Asiedu",
-          username: "kwesi",
-          avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
-          verified: true,
-          timeAgo: "12m ago",
-        },
-      },
+    isBookmarked: true,
+    createdAt: new Date(Date.now() - 25 * 60000).toISOString(),
+    commentsList: [
+      { id: "cg1", user: "Sarah Mensah", username: "sarah_m", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80", text: "Amen! Needed this exact reminder before my chemistry exam today 🙏", time: "15m", likes: 42 },
+      { id: "cg2", user: "Michael Adjei", username: "madjei", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80", text: "Glory to God! Have a blessed week Pastor.", time: "10m", likes: 18 },
     ],
-    communityNote: {
-      content: "Verified by UMD Cybersecurity Enclave benchmarks: SHA-256 local signature hashes prevent unauthorized scraping of collegiate builder profiles.",
-      sources: ["https://cyber.umd.edu/research/sovereign-graph", "https://expediteconsults.com/security"],
-      helpfulCount: 342,
-    },
-    createdAt: new Date(Date.now() - 15 * 60000).toISOString(),
   },
-
-  // 2. TikTok Style Immersive Reel
   {
     id: "p1",
     type: "immersive_video",
-    streamCategory: "for_you",
+    category: "tech",
     author: {
       id: "u1",
       name: "Amara Diallo",
       username: "amara_creates",
       avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
       verified: true,
-      timeAgo: "2h ago",
+      badgeType: "blue",
+      timeAgo: "2h",
       privacy: "Public",
       isFollowed: false,
-      isFriend: false,
     },
-    content: "3 years of building in the dark, and today our largest platform update is finally live across SpheraNet! 🚀✨ Full breakdown dropping on Reels tonight. Tag a friend who needs to see this! 💫",
+    content: "3 years of building in the dark, and today our largest platform update is finally live across SpheraNet! 🚀✨ Complete Twitter/X style collegiate social graph with dedicated Gospel Hub and instant campus pulse. Tag a friend who needs to see this! 💫",
     videoUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1000&auto=format&fit=crop&q=80",
     imageUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1000&auto=format&fit=crop&q=80",
     musicTitle: "Afrobeats Synthwave Future Mix Vol. 4",
     musicAuthor: "DJ Khaled x Sphera Sound",
-    hashtags: ["#SpheraViral", "#FYP", "#TechPulse", "#BuildInPublic", "#AI2026"],
+    hashtags: ["#SpheraViral", "#GospelMenu", "#TechPulse", "#BuildInPublic", "#AI2026"],
     likes: 184200,
+    repostsCount: 14200,
     commentsCount: 3210,
+    viewsCount: 680000,
     sharesCount: 8900,
-    repostsCount: 1420,
-    viewsCount: 654000,
     savesCount: 12400,
     isLiked: true,
     likedByFriend: "Marcus Johnson",
     createdAt: new Date(Date.now() - 2 * 3600000).toISOString(),
     commentsList: [
-      { id: "c1", user: "Marcus Johnson", username: "mj_tech", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80", text: "This UI is next level! The sound synchronization is insane 🔥", time: "1h ago", likes: 242 },
-      { id: "c2", user: "Zara Williams", username: "zara.w", avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&auto=format&fit=crop&q=80", text: "Proud of you Amara! Collegiate hackathons will never be the same 👏", time: "45m ago", likes: 118 },
-    ]
+      { id: "c1", user: "Marcus Johnson", username: "mj_tech", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80", text: "This UI is next level! The sound synchronization and Gospel integration is insane 🔥", time: "1h", likes: 242 },
+      { id: "c2", user: "Zara Williams", username: "zara.w", avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&auto=format&fit=crop&q=80", text: "Proud of you Amara! Collegiate feeds will never be the same 👏", time: "45m", likes: 118 },
+    ],
   },
-
-  // 3. LinkedIn Proof-of-Work Career Bounty Card
   {
-    id: "bounty-1",
-    type: "bounty",
-    streamCategory: "for_you",
+    id: "p-gospel-2",
+    type: "poll",
+    category: "gospel",
     author: {
-      id: "u_marcus",
+      id: "u-fellowship",
+      name: "Collegiate Christian Fellowship",
+      username: "campus_fellowship",
+      avatarUrl: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=150&auto=format&fit=crop&q=80",
+      verified: true,
+      badgeType: "gospel",
+      timeAgo: "3h",
+      privacy: "Public",
+      isFollowed: true,
+    },
+    content: "Quick poll for our Friday Inter-Campus Fellowship Night at Stamp Grand Ballroom (UMD & Towson combined)! Which study series should we kick off for the second half of the semester? 📖🕊️",
+    poll: {
+      id: "poll-1",
+      question: "Which bible study series should we launch this Friday?",
+      options: [
+        { id: "opt-1", text: "Finding Peace in High-Stress Seasons", votes: 482, voted: true },
+        { id: "opt-2", text: "Kingdom Purpose in Technology & AI", votes: 395 },
+        { id: "opt-3", text: "The Book of Romans: Deep Dive", votes: 260 },
+        { id: "opt-4", text: "Faith & Leadership on Campus", votes: 198 },
+      ],
+      totalVotes: 1335,
+      expiresIn: "18 hours left",
+      hasVoted: true,
+    },
+    hashtags: ["#BibleStudy", "#CampusRevival", "#Fellowship", "#GospelMenu"],
+    likes: 890,
+    repostsCount: 240,
+    commentsCount: 94,
+    viewsCount: 18900,
+    sharesCount: 140,
+    savesCount: 210,
+    isLiked: false,
+    createdAt: new Date(Date.now() - 3 * 3600000).toISOString(),
+    commentsList: [
+      { id: "c-poll-1", user: "Daniel Kwak", username: "dkwak", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80", text: "Voted for Peace in High-Stress! Midterms are testing us all haha", time: "2h", likes: 35 },
+    ],
+  },
+  {
+    id: "p2",
+    type: "immersive_video",
+    category: "tech",
+    author: {
+      id: "u2",
       name: "Marcus Johnson",
       username: "mj_tech",
       avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
       verified: true,
-      timeAgo: "4h ago",
+      badgeType: "blue",
+      timeAgo: "4h",
       privacy: "Public",
       isFollowed: true,
-      isFriend: true,
     },
-    content: "New Defense Bounty Challenge posted for student & alumni developers: Zero-Trust Enclave Rust Driver Audit. Earn USDC & Skill Passport Credentials.",
-    bounty: {
-      title: "Rust SGX Enclave Memory Isolation Audit",
-      reward: "$3,500 USDC",
-      sponsor: "Defense Innovation & Cyber Guild",
-      clearanceRequired: "TS/SCI Eligible",
-      difficulty: "Zero-Day",
-      tags: ["Rust", "SGX", "Zero-Trust", "Penetration Testing"],
-    },
-    hashtags: ["#CyberDefense2026", "#CareerBounty", "#RustLang", "#DefenseTech"],
-    likes: 1240,
-    commentsCount: 94,
-    sharesCount: 310,
-    viewsCount: 14200,
-    isLiked: false,
+    content: "5 VS Code & AI shortcuts that changed my development workflow in 2026. Number 3 will save you 2 hours every single day 🤯 Try this right now and thank me later! 🦾💻",
+    videoUrl: "https://images.unsplash.com/photo-1593062096033-9a26b09da705?w=1000&auto=format&fit=crop&q=80",
+    imageUrl: "https://images.unsplash.com/photo-1593062096033-9a26b09da705?w=1000&auto=format&fit=crop&q=80",
+    musicTitle: "Lo-Fi Study Beats & Cyber Bass",
+    musicAuthor: "ChillHop Cafe Records",
+    hashtags: ["#CodingHacks", "#VSCode", "#DevLife", "#Productivity", "#Nextjs"],
+    likes: 94200,
+    repostsCount: 8400,
+    commentsCount: 1780,
+    viewsCount: 380000,
+    sharesCount: 14200,
+    savesCount: 31000,
+    likedByFriend: "Zara Williams",
     createdAt: new Date(Date.now() - 4 * 3600000).toISOString(),
+    commentsList: [
+      { id: "c3", user: "Elena Vasquez", username: "elena_v", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=80", text: "Shortcut #3 just fixed my entire terminal layout thank you!", time: "2h", likes: 89 },
+    ],
   },
-
-  // 4. Friends Mutual Graph Post
   {
     id: "p3",
     type: "standard",
-    streamCategory: "friends",
+    category: "campus",
     author: {
-      id: "u_zara",
+      id: "u3",
       name: "Zara Williams",
       username: "zara.w",
       avatarUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80",
       verified: true,
-      timeAgo: "1d ago",
-      privacy: "Friends",
-      isFollowed: true,
-      isFriend: true,
-    },
-    content: "Bitcamp 2026 kickoff team photo at the Brendan Iribe Center! Over 600 builders here hacking on autonomous AI agents, robotics, and next-gen social protocols 🔥",
-    imageUrl: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1000&auto=format&fit=crop&q=80",
-    hashtags: ["#BitcampHackathon", "#UMDTerps", "#CampusGraph", "#Builders"],
-    likes: 3410,
-    commentsCount: 142,
-    sharesCount: 58,
-    repostsCount: 44,
-    viewsCount: 22100,
-    likedByFriend: "Kwesi Asiedu",
-    createdAt: new Date(Date.now() - 24 * 3600000).toISOString(),
-  },
-
-  // 5. Longform Article Post
-  {
-    id: "art-1",
-    type: "article",
-    streamCategory: "for_you",
-    author: {
-      id: "u_amara",
-      name: "Amara Diallo",
-      username: "amara_creates",
-      avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-      verified: true,
-      timeAgo: "1d ago",
+      badgeType: "campus",
+      timeAgo: "1d",
       privacy: "Public",
       isFollowed: true,
-      isFriend: false,
     },
-    content: "Why the Sovereign Social Web wins the decade: A technical deep-dive on combining TikTok algorithmic discovery with X public discourse and private escrow markets.",
-    article: {
-      title: "The Architecture of Sovereign Social Networks",
-      subtitle: "Synthesizing TikTok, Instagram, X, and Campus Career Graphs into a Unified Experience",
-      coverImage: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1000&auto=format&fit=crop&q=80",
-      readTimeMinutes: 6,
-      slug: "architecture-of-sovereign-social-networks",
-    },
-    hashtags: ["#SpheraNet", "#Architecture", "#FutureOfSocial"],
-    likes: 8920,
-    commentsCount: 420,
-    sharesCount: 1800,
-    viewsCount: 94000,
-    createdAt: new Date(Date.now() - 36 * 3600000).toISOString(),
+    content: "Collegiate hackathon kickoff at University of Maryland! Over 600 builders here hacking on autonomous AI agents, robotics, and next-gen gaming protocols 🔥 The energy in the Iribe Center is unbelievable.",
+    imageUrl: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1000&auto=format&fit=crop&q=80",
+    hashtags: ["#HackUMD", "#StudentBuilders", "#CampusLife", "#Robotics"],
+    likes: 34100,
+    repostsCount: 3200,
+    commentsCount: 1420,
+    viewsCount: 125000,
+    sharesCount: 5800,
+    savesCount: 3120,
+    likedByFriend: "Kwesi Asiedu",
+    createdAt: new Date(Date.now() - 24 * 3600000).toISOString(),
+    commentsList: [
+      { id: "c4", user: "David Chen", username: "dchen", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80", text: "Best hackathon project of the season!", time: "5h", likes: 45 },
+    ],
   },
 ];
 
 export const initialStories: StoryItem[] = [
   {
     id: "s0",
-    username: "kwesi",
-    displayName: "Your Story",
+    username: "Your Story",
+    displayName: "Kwesi Asiedu",
     avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
-    mediaUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=500&auto=format&fit=crop&q=80",
+    mediaUrl: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=600&auto=format&fit=crop&q=80",
     mediaType: "image",
+    caption: "Late night building across SpheraNet! ⚡",
     timeAgo: "Just now",
     isUser: true,
+  },
+  {
+    id: "s-gospel",
+    username: "pastordavid",
+    displayName: "Pastor David",
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+    mediaUrl: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80",
+    mediaType: "image",
+    caption: "Morning Devotional & Prayer: 'His mercies are new every morning!' 📖🕊️",
+    timeAgo: "35m",
+    isGospel: true,
   },
   {
     id: "s1",
     username: "amara_creates",
     displayName: "Amara Diallo",
     avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-    mediaUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=500&auto=format&fit=crop&q=80",
+    mediaUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&auto=format&fit=crop&q=80",
     mediaType: "image",
-    caption: "Live keynote at Sphera HQ 🚀",
-    timeAgo: "2h ago",
+    caption: "Live coding the new AI duets! Join the stream 🎙️",
+    timeAgo: "2h",
     hasLive: true,
   },
   {
     id: "s2",
     username: "mj_tech",
-    displayName: "Marcus Johnson",
+    displayName: "Marcus J.",
     avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
-    mediaUrl: "https://images.unsplash.com/photo-1593062096033-9a26b09da705?w=500&auto=format&fit=crop&q=80",
+    mediaUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&auto=format&fit=crop&q=80",
     mediaType: "image",
-    caption: "Zero-trust enclave testing 🦾",
-    timeAgo: "4h ago",
+    caption: "New desk setup with triple curved monitors 🚀",
+    timeAgo: "4h",
   },
   {
     id: "s3",
     username: "zara.w",
-    displayName: "Zara Williams",
+    displayName: "Zara W.",
     avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80",
-    mediaUrl: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=500&auto=format&fit=crop&q=80",
+    mediaUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=600&auto=format&fit=crop&q=80",
     mediaType: "image",
-    caption: "Bitcamp registration is live 🔥",
-    timeAgo: "6h ago",
-    hasLive: true,
-  },
-  {
-    id: "s4",
-    username: "elena_v",
-    displayName: "Elena Vasquez",
-    avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80",
-    mediaUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
-    mediaType: "image",
-    caption: "New UI glassmorphism preview ✨",
-    timeAgo: "8h ago",
+    caption: "HackUMD day 2 breakfast round ☕🥞",
+    timeAgo: "6h",
   },
 ];
 
 export const initialLiveStreams: LiveStreamItem[] = [
   {
-    id: "ls1",
-    name: "Amara Diallo",
-    username: "amara_creates",
-    viewers: "12.4K",
-    viewerCount: 12400,
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-    title: "🎙️ SpheraNet 2.0 Launch Keynote & AMA",
-    category: "Tech & Sovereign OS",
-    startedAt: "15m ago",
+    id: "l-faith",
+    name: "Grace Collegiate Live",
+    username: "grace_campus",
+    viewers: "3.4K",
+    viewerCount: 3410,
+    avatar: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=150&auto=format&fit=crop&q=80",
+    title: "Live Worship & Midweek Prayer Lounge",
+    streamUrl: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=1000&auto=format&fit=crop&q=80",
+    category: "Gospel & Faith",
+    startedAt: "20m ago",
+    isFaith: true,
   },
   {
-    id: "ls2",
-    name: "UMD Terps Esports",
-    username: "terps_esports",
-    viewers: "8.2K",
-    viewerCount: 8200,
-    avatar: "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=150&auto=format&fit=crop&q=80",
-    title: "🎮 Collegiate Valorant Finals vs CyberGuild",
-    category: "Esports Arena",
-    startedAt: "30m ago",
+    id: "l1",
+    name: "Amara Diallo",
+    username: "amara_creates",
+    viewers: "4.2K",
+    viewerCount: 4230,
+    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+    title: "Live Coding & UI Architecture",
+    streamUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1000&auto=format&fit=crop&q=80",
+    category: "Tech & Coding",
+    startedAt: "35m ago",
   },
 ];
 
-// Helper for persistent JSON on server
+// Global persistent in-memory store instance
+declare global {
+  // eslint-disable-next-line no-var
+  var __SPHERA_FEED_POSTS__: FeedPost[] | undefined;
+  // eslint-disable-next-line no-var
+  var __SPHERA_FEED_STORIES__: StoryItem[] | undefined;
+  // eslint-disable-next-line no-var
+  var __SPHERA_FEED_LIVE__: LiveStreamItem[] | undefined;
+  // eslint-disable-next-line no-var
+  var __SPHERA_PRAYERS__: PrayerRequestItem[] | undefined;
+  // eslint-disable-next-line no-var
+  var __SPHERA_FOLLOWED_USERS__: Set<string> | undefined;
+}
+
+// Persistent storage on local storage & json fallback
 function getStorageFilePaths(filename: string): string[] {
   if (typeof window !== "undefined") return [];
   try {
     const p = require("path");
     const fs = require("fs");
-    const paths = [
+    const primary = p.join(process.cwd(), "data", "db", filename);
+    const dir = p.dirname(primary);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    return [
+      primary,
       p.join(process.cwd(), "data", filename),
-      p.join(process.cwd(), "sphera-portal", "data", filename),
     ];
-    return paths;
   } catch {
     return [];
   }
@@ -421,7 +606,7 @@ function loadPersistedData<T>(filename: string, fallback: T): T {
       }
     }
   } catch (err) {
-    console.warn(`[FeedStore] Could not load ${filename}:`, err);
+    console.warn(`[FeedStore] Notice for ${filename}:`, err);
   }
   return fallback;
 }
@@ -444,195 +629,277 @@ function savePersistedData(filename: string, data: any) {
   }
 }
 
-class FeedStore {
-  private posts: FeedPost[];
-  private stories: StoryItem[];
-  private liveStreams: LiveStreamItem[];
+if (!globalThis.__SPHERA_FEED_POSTS__) {
+  globalThis.__SPHERA_FEED_POSTS__ = loadPersistedData<FeedPost[]>("feed_posts.json", [...initialFeedPosts]);
+}
 
-  constructor() {
-    this.posts = loadPersistedData<FeedPost[]>("feed-posts.json", [...initialFeedPosts]);
-    this.stories = loadPersistedData<StoryItem[]>("feed-stories.json", [...initialStories]);
-    this.liveStreams = loadPersistedData<LiveStreamItem[]>("feed-livestreams.json", [...initialLiveStreams]);
-  }
+if (!globalThis.__SPHERA_FEED_STORIES__) {
+  globalThis.__SPHERA_FEED_STORIES__ = loadPersistedData<StoryItem[]>("feed_stories.json", [...initialStories]);
+}
 
-  private refreshFromDisk() {
-    this.posts = loadPersistedData<FeedPost[]>("feed-posts.json", this.posts);
-    this.stories = loadPersistedData<StoryItem[]>("feed-stories.json", this.stories);
-    this.liveStreams = loadPersistedData<LiveStreamItem[]>("feed-livestreams.json", this.liveStreams);
-  }
+if (!globalThis.__SPHERA_FEED_LIVE__) {
+  globalThis.__SPHERA_FEED_LIVE__ = loadPersistedData<LiveStreamItem[]>("feed_livestreams.json", [...initialLiveStreams]);
+}
 
-  getPosts(mode: string = "for_you"): FeedPost[] {
-    this.refreshFromDisk();
-    if (mode === "following" || mode === "FOLLOWING") {
-      return this.posts.filter((p) => p.author.isFollowed);
+if (!globalThis.__SPHERA_PRAYERS__) {
+  globalThis.__SPHERA_PRAYERS__ = loadPersistedData<PrayerRequestItem[]>("prayers.json", [...initialPrayerRequests]);
+}
+
+if (!globalThis.__SPHERA_FOLLOWED_USERS__) {
+  globalThis.__SPHERA_FOLLOWED_USERS__ = new Set(["mj_tech", "zara.w", "pastordavid", "campus_fellowship"]);
+}
+
+export const feedStore = {
+  getPosts: (mode: "FYP" | "FOLLOWING" | "GOSPEL" | "CAMPUS" | string = "FYP"): FeedPost[] => {
+    globalThis.__SPHERA_FEED_POSTS__ = loadPersistedData<FeedPost[]>("feed_posts.json", globalThis.__SPHERA_FEED_POSTS__ || [...initialFeedPosts]);
+    const posts = globalThis.__SPHERA_FEED_POSTS__ || [];
+    const followed = globalThis.__SPHERA_FOLLOWED_USERS__ || new Set();
+    const upperMode = (mode || "FYP").toUpperCase();
+
+    if (upperMode === "FOLLOWING") {
+      return posts.filter((p) => followed.has(p.author.username) || p.author.isFollowed);
     }
-    if (mode === "friends") {
-      return this.posts.filter((p) => p.author.isFriend || p.streamCategory === "friends");
+    if (upperMode === "GOSPEL" || upperMode === "FAITH") {
+      return posts.filter((p) => p.category === "gospel" || p.category === "faith" || p.type === "gospel_scripture" || p.isGospel);
     }
-    if (mode === "pulse") {
-      return this.posts.filter((p) => p.type === "pulse_thread" || p.streamCategory === "pulse" || p.isThread);
+    if (upperMode === "CAMPUS") {
+      return posts.filter((p) => p.category === "campus" || p.hashtags?.some((h) => h.includes("Campus") || h.includes("UMD") || h.includes("Towson") || h.includes("Salisbury")));
     }
-    if (mode === "live" || mode === "LIVE") {
-      return this.posts.filter((p) => p.type === "immersive_video" || p.videoUrl);
-    }
-    return this.posts;
-  }
+    return posts;
+  },
 
-  getStories(): StoryItem[] {
-    this.refreshFromDisk();
-    return this.stories;
-  }
-
-  getLiveStreams(): LiveStreamItem[] {
-    this.refreshFromDisk();
-    return this.liveStreams;
-  }
-
-  addPost(post: Partial<FeedPost>): FeedPost {
+  addPost: (post: Omit<FeedPost, "id" | "likes" | "commentsCount" | "sharesCount" | "createdAt"> & { id?: string }): FeedPost => {
     const newPost: FeedPost = {
-      id: post.id || `p-${Date.now()}`,
-      type: post.type || "immersive_video",
-      streamCategory: post.streamCategory || "for_you",
-      author: post.author || {
-        id: "u_me",
-        name: "Kwesi Asiedu",
-        username: "kwesi",
-        avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
-        verified: true,
-        timeAgo: "Just now",
-        isFollowed: true,
-        isFriend: true,
-      },
-      content: post.content || "",
-      imageUrl: post.imageUrl,
-      videoUrl: post.videoUrl,
-      musicTitle: post.musicTitle,
-      musicAuthor: post.musicAuthor,
-      hashtags: post.hashtags || [],
+      ...post,
+      id: post.id || `post-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       likes: 1,
       commentsCount: 0,
       sharesCount: 0,
       repostsCount: 0,
       viewsCount: 1,
+      savesCount: 0,
       isLiked: true,
-      isThread: post.isThread,
-      threadIndex: post.threadIndex,
-      threadTotal: post.threadTotal,
-      threadReplies: post.threadReplies,
-      communityNote: post.communityNote,
-      bounty: post.bounty,
-      article: post.article,
-      createdAt: new Date().toISOString(),
+      isSaved: false,
+      isReposted: false,
       commentsList: [],
+      createdAt: new Date().toISOString(),
     };
-    this.posts.unshift(newPost);
-    savePersistedData("feed-posts.json", this.posts);
+    globalThis.__SPHERA_FEED_POSTS__ = [newPost, ...(globalThis.__SPHERA_FEED_POSTS__ || [])];
+    savePersistedData("feed_posts.json", globalThis.__SPHERA_FEED_POSTS__);
     return newPost;
-  }
+  },
 
-  addStory(story: Partial<StoryItem>): StoryItem {
-    const newStory: StoryItem = {
-      id: `s-${Date.now()}`,
-      username: story.username || "kwesi",
-      displayName: story.displayName || "Kwesi Asiedu",
-      avatar: story.avatar || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
-      mediaUrl: story.mediaUrl || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=500&auto=format&fit=crop&q=80",
-      mediaType: story.mediaType || "image",
-      timeAgo: "Just now",
-      isUser: true,
-    };
-    this.stories.unshift(newStory);
-    savePersistedData("feed-stories.json", this.stories);
-    return newStory;
-  }
+  toggleLike: (postId: string): { isLiked: boolean; likes: number } => {
+    const posts = globalThis.__SPHERA_FEED_POSTS__ || [];
+    let updated = { isLiked: false, likes: 0 };
 
-  toggleLike(id: string): { isLiked: boolean; likes: number; liked: boolean; count: number } {
-    const post = this.posts.find((p) => p.id === id);
-    if (!post) return { isLiked: false, likes: 0, liked: false, count: 0 };
-    post.isLiked = !post.isLiked;
-    post.likes = post.isLiked ? post.likes + 1 : Math.max(0, post.likes - 1);
-    savePersistedData("feed-posts.json", this.posts);
-    return { isLiked: post.isLiked, likes: post.likes, liked: post.isLiked, count: post.likes };
-  }
-
-  toggleSave(id: string): { isSaved: boolean; savesCount: number; saved: boolean } {
-    const post = this.posts.find((p) => p.id === id);
-    if (!post) return { isSaved: false, savesCount: 0, saved: false };
-    post.isSaved = !post.isSaved;
-    post.savesCount = (post.savesCount || 0) + (post.isSaved ? 1 : -1);
-    savePersistedData("feed-posts.json", this.posts);
-    return { isSaved: post.isSaved, savesCount: post.savesCount, saved: post.isSaved };
-  }
-
-  toggleFollow(username: string): { isFollowed: boolean } {
-    let result = false;
-    this.posts.forEach((p) => {
-      if (p.author.username === username) {
-        p.author.isFollowed = !p.author.isFollowed;
-        result = !!p.author.isFollowed;
+    globalThis.__SPHERA_FEED_POSTS__ = posts.map((p) => {
+      if (p.id === postId) {
+        const nextLiked = !p.isLiked;
+        const nextLikes = nextLiked ? p.likes + 1 : Math.max(0, p.likes - 1);
+        updated = { isLiked: nextLiked, likes: nextLikes };
+        return {
+          ...p,
+          isLiked: nextLiked,
+          likes: nextLikes,
+        };
       }
+      return p;
     });
-    savePersistedData("feed-posts.json", this.posts);
-    return { isFollowed: result };
-  }
 
-  addComment(
-    postId: string,
-    textOrObj: string | { text: string; user?: string; username?: string },
-    user?: string,
-    username?: string
-  ): CommentItem | null {
-    const post = this.posts.find((p) => p.id === postId);
-    if (!post) return null;
+    return updated;
+  },
 
-    let commentText = "";
-    let commentUser = user || "Kwesi Asiedu";
-    let commentUsername = username || "kwesi";
+  toggleRepost: (postId: string): { isReposted: boolean; repostsCount: number } => {
+    const posts = globalThis.__SPHERA_FEED_POSTS__ || [];
+    let updated = { isReposted: false, repostsCount: 0 };
 
-    if (typeof textOrObj === "string") {
-      commentText = textOrObj;
-    } else if (textOrObj && typeof textOrObj === "object") {
-      commentText = textOrObj.text;
-      if (textOrObj.user) commentUser = textOrObj.user;
-      if (textOrObj.username) commentUsername = textOrObj.username;
+    globalThis.__SPHERA_FEED_POSTS__ = posts.map((p) => {
+      if (p.id === postId) {
+        const nextReposted = !p.isReposted;
+        const nextCount = nextReposted ? (p.repostsCount || 0) + 1 : Math.max(0, (p.repostsCount || 0) - 1);
+        updated = { isReposted: nextReposted, repostsCount: nextCount };
+        return {
+          ...p,
+          isReposted: nextReposted,
+          repostsCount: nextCount,
+        };
+      }
+      return p;
+    });
+
+    return updated;
+  },
+
+  votePoll: (postId: string, optionId: string): FeedPoll | null => {
+    const posts = globalThis.__SPHERA_FEED_POSTS__ || [];
+    let updatedPoll: FeedPoll | null = null;
+
+    globalThis.__SPHERA_FEED_POSTS__ = posts.map((p) => {
+      if (p.id === postId && p.poll && !p.poll.hasVoted) {
+        const nextOptions = p.poll.options.map((opt) => {
+          if (opt.id === optionId) {
+            return { ...opt, votes: opt.votes + 1, voted: true };
+          }
+          return opt;
+        });
+        const totalVotes = p.poll.totalVotes + 1;
+        updatedPoll = {
+          ...p.poll,
+          options: nextOptions,
+          totalVotes,
+          hasVoted: true,
+        };
+        return {
+          ...p,
+          poll: updatedPoll,
+        };
+      }
+      return p;
+    });
+
+    return updatedPoll;
+  },
+
+  toggleSave: (postId: string): { isSaved: boolean; savesCount: number } => {
+    const posts = globalThis.__SPHERA_FEED_POSTS__ || [];
+    let updated = { isSaved: false, savesCount: 0 };
+
+    globalThis.__SPHERA_FEED_POSTS__ = posts.map((p) => {
+      if (p.id === postId) {
+        const nextSaved = !p.isSaved;
+        const nextSaves = nextSaved ? (p.savesCount || 0) + 1 : Math.max(0, (p.savesCount || 0) - 1);
+        updated = { isSaved: nextSaved, savesCount: nextSaves };
+        return {
+          ...p,
+          isSaved: nextSaved,
+          savesCount: nextSaves,
+        };
+      }
+      return p;
+    });
+
+    return updated;
+  },
+
+  toggleFollow: (username: string): boolean => {
+    const followed = globalThis.__SPHERA_FOLLOWED_USERS__ || new Set();
+    const isCurrentlyFollowed = followed.has(username);
+
+    if (isCurrentlyFollowed) {
+      followed.delete(username);
+    } else {
+      followed.add(username);
     }
 
+    const posts = globalThis.__SPHERA_FEED_POSTS__ || [];
+    globalThis.__SPHERA_FEED_POSTS__ = posts.map((p) => {
+      if (p.author.username === username) {
+        return {
+          ...p,
+          author: { ...p.author, isFollowed: !isCurrentlyFollowed },
+        };
+      }
+      return p;
+    });
+
+    return !isCurrentlyFollowed;
+  },
+
+  addComment: (postId: string, text: string, user = "Kwesi Asiedu", username = "kwesi"): CommentItem | null => {
+    const posts = globalThis.__SPHERA_FEED_POSTS__ || [];
     const newComment: CommentItem = {
-      id: `c-${Date.now()}`,
-      user: commentUser,
-      username: commentUsername,
+      id: `c-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      user,
+      username,
       avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80",
-      text: commentText,
+      text: text.trim(),
       time: "Just now",
       likes: 0,
     };
-    if (!post.commentsList) post.commentsList = [];
-    post.commentsList.unshift(newComment);
-    post.commentsCount += 1;
-    savePersistedData("feed-posts.json", this.posts);
-    return newComment;
-  }
 
-  startLiveStream(stream: Partial<LiveStreamItem>): LiveStreamItem {
-    return this.addLiveStream(stream);
-  }
+    let added = false;
+    globalThis.__SPHERA_FEED_POSTS__ = posts.map((p) => {
+      if (p.id === postId) {
+        added = true;
+        return {
+          ...p,
+          commentsCount: p.commentsCount + 1,
+          commentsList: [newComment, ...(p.commentsList || [])],
+        };
+      }
+      return p;
+    });
 
-  addLiveStream(stream: Partial<LiveStreamItem>): LiveStreamItem {
-    const newStream: LiveStreamItem = {
-      id: `ls-${Date.now()}`,
-      name: stream.name || "Kwesi Asiedu",
-      username: stream.username || "kwesi",
+    return added ? newComment : null;
+  },
+
+  // Prayer Wall Actions
+  getPrayers: (): PrayerRequestItem[] => {
+    return globalThis.__SPHERA_PRAYERS__ || initialPrayerRequests;
+  },
+
+  togglePray: (prayerId: string): { prayedCount: number; hasPrayed: boolean } => {
+    const prayers = globalThis.__SPHERA_PRAYERS__ || initialPrayerRequests;
+    let res = { prayedCount: 0, hasPrayed: false };
+    globalThis.__SPHERA_PRAYERS__ = prayers.map((pr) => {
+      if (pr.id === prayerId) {
+        const nextPrayed = !pr.hasPrayed;
+        const count = nextPrayed ? pr.prayedCount + 1 : Math.max(0, pr.prayedCount - 1);
+        res = { prayedCount: count, hasPrayed: nextPrayed };
+        return { ...pr, hasPrayed: nextPrayed, prayedCount: count };
+      }
+      return pr;
+    });
+    return res;
+  },
+
+  addPrayerRequest: (title: string, details: string, category: PrayerRequestItem["category"] = "General"): PrayerRequestItem => {
+    const newPrayer: PrayerRequestItem = {
+      id: `pr-${Date.now()}`,
+      authorName: "Kwesi Asiedu",
+      authorUsername: "kwesi",
+      authorAvatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
+      title,
+      details,
+      category,
+      prayedCount: 1,
+      hasPrayed: true,
+      timeAgo: "Just now",
+      answersCount: 0,
+    };
+    globalThis.__SPHERA_PRAYERS__ = [newPrayer, ...(globalThis.__SPHERA_PRAYERS__ || initialPrayerRequests)];
+    savePersistedData("prayers.json", globalThis.__SPHERA_PRAYERS__);
+    return newPrayer;
+  },
+
+  getStories: (): StoryItem[] => {
+    return globalThis.__SPHERA_FEED_STORIES__ || [];
+  },
+
+  addStory: (story: Omit<StoryItem, "id" | "timeAgo">): StoryItem => {
+    const newStory: StoryItem = {
+      ...story,
+      id: `story-${Date.now()}`,
+      timeAgo: "Just now",
+    };
+    globalThis.__SPHERA_FEED_STORIES__ = [newStory, ...(globalThis.__SPHERA_FEED_STORIES__ || [])];
+    return newStory;
+  },
+
+  getLiveStreams: (): LiveStreamItem[] => {
+    return globalThis.__SPHERA_FEED_LIVE__ || [];
+  },
+
+  startLiveStream: (stream: Omit<LiveStreamItem, "id" | "viewers" | "viewerCount" | "startedAt">): LiveStreamItem => {
+    const newLive: LiveStreamItem = {
+      ...stream,
+      id: `live-${Date.now()}`,
       viewers: "1",
       viewerCount: 1,
-      avatar: stream.avatar || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
-      title: stream.title || "Live Stream",
-      category: stream.category || "General",
       startedAt: "Just now",
     };
-    this.liveStreams.unshift(newStream);
-    savePersistedData("feed-livestreams.json", this.liveStreams);
-    return newStream;
-  }
-}
-
-export const feedStore = new FeedStore();
+    globalThis.__SPHERA_FEED_LIVE__ = [newLive, ...(globalThis.__SPHERA_FEED_LIVE__ || [])];
+    return newLive;
+  },
+};

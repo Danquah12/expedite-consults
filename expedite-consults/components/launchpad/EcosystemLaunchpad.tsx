@@ -310,7 +310,52 @@ export default function EcosystemLaunchpad() {
           </div>
         </div>
 
-        {/* Global Control Bar: Search + Environment Switcher + View Mode */}
+        {/* Featured Spotlight: ÆGIS · SOC Command Portal */}
+          <div className="mt-6 mb-8 p-5 sm:p-6 rounded-2xl bg-gradient-to-r from-rose-950/60 via-slate-900/90 to-cyan-950/60 border border-rose-500/40 shadow-[0_0_35px_rgba(225,29,72,0.18)] flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div className="flex items-start sm:items-center gap-4">
+              <div className="size-12 rounded-xl bg-gradient-to-br from-rose-600 to-rose-800 border border-rose-400/50 flex items-center justify-center text-white shrink-0 shadow-[0_0_20px_rgba(225,29,72,0.4)]">
+                <ShieldAlert className="size-6 text-white" />
+              </div>
+              <div>
+                <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <span className="text-base sm:text-lg font-black text-white">ÆGIS · SOC Command Portal (Platform 11)</span>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-500/20 text-rose-300 border border-rose-500/40 uppercase tracking-wide">
+                    Redesigned & Live
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-mono bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                    Port 9011
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+                  Next-gen Cybersecurity Command Center featuring 4-Stage Attack Pipeline, Traffic Interceptor Forge, Autonomous AI Threat Copilot, and Real-Time DEFCON Radar.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 shrink-0">
+              <a
+                href="https://11-dast-security-platform.vercel.app/app/?standalone=1"
+                target="_blank"
+                rel="noreferrer"
+                className="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white shadow-[0_0_20px_rgba(225,29,72,0.5)] transition-all flex items-center gap-2"
+              >
+                <span>Launch ÆGIS · SOC Portal</span>
+                <ExternalLink className="size-3.5" />
+              </a>
+
+              <a
+                href="https://github.com/Danquah12/expedite-consults/tree/main/platforms/11-dast-security-platform"
+                target="_blank"
+                rel="noreferrer"
+                className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-200 transition-all flex items-center gap-1.5"
+              >
+                <Github className="size-3.5" />
+                <span>Source</span>
+              </a>
+            </div>
+          </div>
+
+          {/* Global Control Bar: Search + Environment Switcher + View Mode */}
         <div className="sticky top-4 z-40 p-4 rounded-2xl bg-slate-900/95 border border-slate-800 shadow-2xl backdrop-blur-xl mb-8">
           <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
             {/* Search Input */}

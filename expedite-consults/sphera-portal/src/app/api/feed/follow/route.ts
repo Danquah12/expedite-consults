@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       username,
-      isFollowed: fallbackResult.isFollowed,
+      isFollowed: fallbackResult,
     });
   } catch (error) {
     console.error("[POST /api/feed/follow]", error);
