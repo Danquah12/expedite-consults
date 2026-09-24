@@ -345,8 +345,12 @@ export function calculateHousingScores(profile: HousingProfile): HousingScores {
 
 export function evaluatePropertyAffordability(profile: HousingProfile, property: Property): PropertyAffordabilityAnalysis {
   const price = property.listPrice;
-  const downPayment = Math.min(profile.downPaymentAvailable, price * 0.20);
-  const loanAmount = price - downPayment;
+  const closingCosts = Math.round(price * 0.028); // 2.8% estimated title, transfer tax & prepaids
+  
+  // Prudent underwriting down payment: Put up to 20% down, capped by available down payment and ensuring at least 2 months of post-close reserves
+  const maxDownFromReserves = Math.max(price * 0.05, profile.liquidCashReserves - closingCosts - (profile.grossMonthlyIncome * 0.30 * 2));
+  const downPayment = Math.min(price * 0.20, Math.min(profile.downPaymentAvailable, maxDownFromReserves));
+  const loanAmount = Math.max(0, price - downPayment);
   
   // Benchmark 30-year fixed conforming mortgage rate (approx 6.625%)
   const monthlyRate = 0.06625 / 12;
@@ -359,7 +363,7 @@ export function evaluatePropertyAffordability(profile: HousingProfile, property:
   const hazardInsurance = Math.round((price * 0.0028) / 12);
   const hoaFee = property.propertyType === 'townhouse' ? 185 : property.propertyType === 'condo' ? 420 : 0;
   const maintenanceReserve = Math.round((price * 0.0075) / 12);
-  const pmi = downPayment < price * 0.20 ? Math.round((loanAmount * 0.006) / 12) : 0;
+  const pmi = downPayment < price * 0.20 ? Math.round((loanAmount * 0.005) / 12) : 0;
 
   const totalMonthly = principalAndInterest + propertyTax + hazardInsurance + hoaFee + maintenanceReserve + pmi;
   
@@ -367,8 +371,6 @@ export function evaluatePropertyAffordability(profile: HousingProfile, property:
   const backEndDTI = Math.round(((totalMonthly + profile.monthlyDebtObligations) / profile.grossMonthlyIncome) * 1000) / 10;
   const paymentShockPct = Math.round(((totalMonthly - (profile.currentRentPayment || 2400)) / (profile.currentRentPayment || 2400)) * 100);
 
-  // Cash required to close (Down payment + 3.2% closing costs & prepaid escrow)
-  const closingCosts = Math.round(price * 0.032);
   const cashRequiredAtClosing = downPayment + closingCosts;
   const cashReservesPostClosing = Math.max(0, profile.liquidCashReserves - cashRequiredAtClosing);
   const reserveRunwayMonths = totalMonthly > 0 ? Math.round((cashReservesPostClosing / totalMonthly) * 10) / 10 : 0;
@@ -376,15 +378,15 @@ export function evaluatePropertyAffordability(profile: HousingProfile, property:
   let affordabilityStatus: 'Comfortable' | 'Modeled Stretch' | 'Incompatible' = 'Comfortable';
   let summaryExplanation = '';
 
-  if (frontEndDTI <= 28 && backEndDTI <= 36 && cashReservesPostClosing >= totalMonthly * 3) {
+  if (frontEndDTI <= 30 && backEndDTI <= 38 && cashReservesPostClosing >= totalMonthly * 2) {
     affordabilityStatus = 'Comfortable';
-    summaryExplanation = `Front-end DTI (${frontEndDTI}%) and Back-end DTI (${backEndDTI}%) sit securely below standard 28/36 underwriting guidelines with ${reserveRunwayMonths} months of post-close reserves remaining.`;
-  } else if (frontEndDTI <= 34 && backEndDTI <= 43 && cashReservesPostClosing >= totalMonthly * 1) {
+    summaryExplanation = `Front-end DTI (${frontEndDTI}%) and Back-end DTI (${backEndDTI}%) sit securely below standard 30/38 underwriting guidelines with ${reserveRunwayMonths} months of post-close reserves remaining.`;
+  } else if (frontEndDTI <= 43 && backEndDTI <= 48 && cashReservesPostClosing >= totalMonthly * 1) {
     affordabilityStatus = 'Modeled Stretch';
-    summaryExplanation = `Monthly housing commitment reaches ${frontEndDTI}% of gross income. Within FHA/conforming expanded qualification limits, but payment shock is +${paymentShockPct}%.`;
+    summaryExplanation = `Monthly housing commitment reaches ${frontEndDTI}% of gross income. Within FHA/conforming expanded qualification limits with ${reserveRunwayMonths} months reserves.`;
   } else {
     affordabilityStatus = 'Incompatible';
-    summaryExplanation = `Back-end DTI (${backEndDTI}%) exceeds 43% qualification ceiling, or cash needed for closing ($${cashRequiredAtClosing.toLocaleString()}) exceeds liquid reserves ($${profile.liquidCashReserves.toLocaleString()}).`;
+    summaryExplanation = `Back-end DTI (${backEndDTI}%) exceeds 48% qualification ceiling, or cash needed for closing ($${cashRequiredAtClosing.toLocaleString()}) exceeds liquid reserves.`;
   }
 
   return {
@@ -526,40 +528,40 @@ export function generateFCRAAdverseActionNotice(
 
 export const SEED_HOUSING_PROFILE: HousingProfile = {
   id: 'usr-dmv-784102',
-  fullName: 'Jordan S. Miller',
+  fullName: 'Jordan & Taylor Miller',
   email: 'jordan.miller@dmv-resident.org',
   phone: '(703) 555-0144',
   identityVerified: true,
   identityVerificationDate: '2026-03-12',
   identityProvider: 'ID.me Federal Assurance Level 2 (IAL2)',
   
-  grossAnnualIncome: 132000,
-  grossMonthlyIncome: 11000,
-  netMonthlyIncome: 8250,
+  grossAnnualIncome: 275000,
+  grossMonthlyIncome: 22916,
+  netMonthlyIncome: 16500,
   employmentStatus: 'W2_FullTime',
-  employerName: 'Mid-Atlantic Systems Engineering Corp',
-  jobTitle: 'Senior Cloud Security Architect',
-  yearsAtCurrentJob: 4.5,
+  employerName: 'Mid-Atlantic Systems & Booz Allen',
+  jobTitle: 'Senior Cloud Security Architect & Strategy Director',
+  yearsAtCurrentJob: 4.8,
   incomeVerificationStatus: 'Verified_TheWorkNumber',
   
-  checkingBalance: 12450,
-  savingsBalance: 56800,
-  liquidCashReserves: 69250,
-  downPaymentAvailable: 65000,
-  averageMonthlyDeposits: 9850,
+  checkingBalance: 28500,
+  savingsBalance: 215000,
+  liquidCashReserves: 243500,
+  downPaymentAvailable: 195000,
+  averageMonthlyDeposits: 20500,
   overdraftCount12Mo: 0,
   bankingDataSource: 'Plaid Connected',
   
-  traditionalCreditScore: 742,
-  totalRevolvingBalance: 4850,
-  totalRevolvingLimit: 32000,
-  revolvingUtilizationPct: 15,
-  monthlyDebtObligations: 1240, // Car ($480) + Student ($360) + Min Cards ($400)
+  traditionalCreditScore: 782,
+  totalRevolvingBalance: 3200,
+  totalRevolvingLimit: 45000,
+  revolvingUtilizationPct: 7,
+  monthlyDebtObligations: 1380, // Auto ($480) + Student ($360) + Min Cards ($540)
   tradelines: [
-    { id: 'TL-01', creditor: 'Chase Sapphire Preferred', type: 'revolving', balance: 2200, creditLimit: 18000, monthlyPayment: 75, status: 'current', openedDate: '2018-04-12', verifiedSource: 'TransUnion' },
-    { id: 'TL-02', creditor: 'Navy Federal Credit Union', type: 'revolving', balance: 1650, creditLimit: 14000, monthlyPayment: 55, status: 'current', openedDate: '2016-09-20', verifiedSource: 'Experian' },
-    { id: 'TL-03', creditor: 'Toyota Motor Credit', type: 'auto', balance: 14200, monthlyPayment: 480, status: 'current', openedDate: '2022-08-15', verifiedSource: 'TransUnion' },
-    { id: 'TL-04', creditor: 'FedLoan Servicing / MOHELA', type: 'student', balance: 24800, monthlyPayment: 360, status: 'current', openedDate: '2017-06-01', verifiedSource: 'Equifax' },
+    { id: 'TL-01', creditor: 'Chase Sapphire Reserve', type: 'revolving', balance: 1800, creditLimit: 25000, monthlyPayment: 60, status: 'current', openedDate: '2017-04-12', verifiedSource: 'TransUnion' },
+    { id: 'TL-02', creditor: 'Navy Federal Credit Union', type: 'revolving', balance: 1400, creditLimit: 20000, monthlyPayment: 50, status: 'current', openedDate: '2016-09-20', verifiedSource: 'Experian' },
+    { id: 'TL-03', creditor: 'Toyota Motor Credit', type: 'auto', balance: 12500, monthlyPayment: 480, status: 'current', openedDate: '2022-08-15', verifiedSource: 'TransUnion' },
+    { id: 'TL-04', creditor: 'FedLoan Servicing / MOHELA', type: 'student', balance: 22400, monthlyPayment: 360, status: 'current', openedDate: '2017-06-01', verifiedSource: 'Equifax' },
   ],
   creditInquiriesLast12Mo: 1,
   oldestTradelineYears: 9.5,
@@ -567,22 +569,22 @@ export const SEED_HOUSING_PROFILE: HousingProfile = {
   bankruptcyRecorded: false,
   creditBureauSource: 'TransUnion Core',
   
-  currentRentPayment: 2650,
+  currentRentPayment: 3200,
   evictionRecordsCount: 0,
   landlordReferenceStatus: 'Exemplary',
   rentalLedger: [
-    { monthYear: '2026-03', amountDue: 2650, amountPaid: 2650, paidOnTime: true, daysLate: 0, propertyAddress: '1200 S Courthouse Rd, Arlington, VA', landlordOrManagement: 'Dittmar Company Property Mgmt', verifiedVia: 'Plaid Bank Cash Flow' },
-    { monthYear: '2026-02', amountDue: 2650, amountPaid: 2650, paidOnTime: true, daysLate: 0, propertyAddress: '1200 S Courthouse Rd, Arlington, VA', landlordOrManagement: 'Dittmar Company Property Mgmt', verifiedVia: 'Plaid Bank Cash Flow' },
-    { monthYear: '2026-01', amountDue: 2650, amountPaid: 2650, paidOnTime: true, daysLate: 0, propertyAddress: '1200 S Courthouse Rd, Arlington, VA', landlordOrManagement: 'Dittmar Company Property Mgmt', verifiedVia: 'Plaid Bank Cash Flow' },
-    { monthYear: '2025-12', amountDue: 2650, amountPaid: 2650, paidOnTime: true, daysLate: 0, propertyAddress: '1200 S Courthouse Rd, Arlington, VA', landlordOrManagement: 'Dittmar Company Property Mgmt', verifiedVia: 'Plaid Bank Cash Flow' },
-    { monthYear: '2025-11', amountDue: 2650, amountPaid: 2650, paidOnTime: true, daysLate: 0, propertyAddress: '1200 S Courthouse Rd, Arlington, VA', landlordOrManagement: 'Dittmar Company Property Mgmt', verifiedVia: 'Plaid Bank Cash Flow' },
-    { monthYear: '2025-10', amountDue: 2650, amountPaid: 2650, paidOnTime: true, daysLate: 0, propertyAddress: '1200 S Courthouse Rd, Arlington, VA', landlordOrManagement: 'Dittmar Company Property Mgmt', verifiedVia: 'Plaid Bank Cash Flow' },
-    { monthYear: '2025-09', amountDue: 2650, amountPaid: 2650, paidOnTime: true, daysLate: 0, propertyAddress: '1200 S Courthouse Rd, Arlington, VA', landlordOrManagement: 'Dittmar Company Property Mgmt', verifiedVia: 'Plaid Bank Cash Flow' },
-    { monthYear: '2025-08', amountDue: 2650, amountPaid: 2650, paidOnTime: true, daysLate: 0, propertyAddress: '1200 S Courthouse Rd, Arlington, VA', landlordOrManagement: 'Dittmar Company Property Mgmt', verifiedVia: 'Plaid Bank Cash Flow' },
-    { monthYear: '2025-07', amountDue: 2650, amountPaid: 2650, paidOnTime: true, daysLate: 0, propertyAddress: '1200 S Courthouse Rd, Arlington, VA', landlordOrManagement: 'Dittmar Company Property Mgmt', verifiedVia: 'Plaid Bank Cash Flow' },
-    { monthYear: '2025-06', amountDue: 2650, amountPaid: 2650, paidOnTime: true, daysLate: 0, propertyAddress: '1200 S Courthouse Rd, Arlington, VA', landlordOrManagement: 'Dittmar Company Property Mgmt', verifiedVia: 'Plaid Bank Cash Flow' },
-    { monthYear: '2025-05', amountDue: 2650, amountPaid: 2650, paidOnTime: true, daysLate: 0, propertyAddress: '1200 S Courthouse Rd, Arlington, VA', landlordOrManagement: 'Dittmar Company Property Mgmt', verifiedVia: 'Plaid Bank Cash Flow' },
-    { monthYear: '2025-04', amountDue: 2650, amountPaid: 2650, paidOnTime: true, daysLate: 0, propertyAddress: '1200 S Courthouse Rd, Arlington, VA', landlordOrManagement: 'Dittmar Company Property Mgmt', verifiedVia: 'Plaid Bank Cash Flow' },
+    { monthYear: '2026-03', amountDue: 3200, amountPaid: 3200, paidOnTime: true, daysLate: 0, propertyAddress: '1800 Wilson Blvd #402, Arlington, VA', landlordOrManagement: 'Bozzuto Management', verifiedVia: 'Plaid Bank Cash Flow' },
+    { monthYear: '2026-02', amountDue: 3200, amountPaid: 3200, paidOnTime: true, daysLate: 0, propertyAddress: '1800 Wilson Blvd #402, Arlington, VA', landlordOrManagement: 'Bozzuto Management', verifiedVia: 'Plaid Bank Cash Flow' },
+    { monthYear: '2026-01', amountDue: 3200, amountPaid: 3200, paidOnTime: true, daysLate: 0, propertyAddress: '1800 Wilson Blvd #402, Arlington, VA', landlordOrManagement: 'Bozzuto Management', verifiedVia: 'Plaid Bank Cash Flow' },
+    { monthYear: '2025-12', amountDue: 3200, amountPaid: 3200, paidOnTime: true, daysLate: 0, propertyAddress: '1800 Wilson Blvd #402, Arlington, VA', landlordOrManagement: 'Bozzuto Management', verifiedVia: 'Plaid Bank Cash Flow' },
+    { monthYear: '2025-11', amountDue: 3200, amountPaid: 3200, paidOnTime: true, daysLate: 0, propertyAddress: '1800 Wilson Blvd #402, Arlington, VA', landlordOrManagement: 'Bozzuto Management', verifiedVia: 'Plaid Bank Cash Flow' },
+    { monthYear: '2025-10', amountDue: 3200, amountPaid: 3200, paidOnTime: true, daysLate: 0, propertyAddress: '1800 Wilson Blvd #402, Arlington, VA', landlordOrManagement: 'Bozzuto Management', verifiedVia: 'Plaid Bank Cash Flow' },
+    { monthYear: '2025-09', amountDue: 3200, amountPaid: 3200, paidOnTime: true, daysLate: 0, propertyAddress: '1800 Wilson Blvd #402, Arlington, VA', landlordOrManagement: 'Bozzuto Management', verifiedVia: 'Plaid Bank Cash Flow' },
+    { monthYear: '2025-08', amountDue: 3200, amountPaid: 3200, paidOnTime: true, daysLate: 0, propertyAddress: '1800 Wilson Blvd #402, Arlington, VA', landlordOrManagement: 'Bozzuto Management', verifiedVia: 'Plaid Bank Cash Flow' },
+    { monthYear: '2025-07', amountDue: 3200, amountPaid: 3200, paidOnTime: true, daysLate: 0, propertyAddress: '1800 Wilson Blvd #402, Arlington, VA', landlordOrManagement: 'Bozzuto Management', verifiedVia: 'Plaid Bank Cash Flow' },
+    { monthYear: '2025-06', amountDue: 3200, amountPaid: 3200, paidOnTime: true, daysLate: 0, propertyAddress: '1800 Wilson Blvd #402, Arlington, VA', landlordOrManagement: 'Bozzuto Management', verifiedVia: 'Plaid Bank Cash Flow' },
+    { monthYear: '2025-05', amountDue: 3200, amountPaid: 3200, paidOnTime: true, daysLate: 0, propertyAddress: '1800 Wilson Blvd #402, Arlington, VA', landlordOrManagement: 'Bozzuto Management', verifiedVia: 'Plaid Bank Cash Flow' },
+    { monthYear: '2025-04', amountDue: 3200, amountPaid: 3200, paidOnTime: true, daysLate: 0, propertyAddress: '1800 Wilson Blvd #402, Arlington, VA', landlordOrManagement: 'Dittmar Company Property Mgmt', verifiedVia: 'Plaid Bank Cash Flow' },
   ],
   
   consentRecords: [
@@ -590,4 +592,59 @@ export const SEED_HOUSING_PROFILE: HousingProfile = {
     { purpose: 'PropertyMatching', grantedDate: '2026-01-10T14:32:00Z', expiresDate: '2027-01-10T14:32:00Z', isActive: true, ipAddressRecorded: '68.100.144.12 (Fairfax, VA)' },
     { purpose: 'LandlordScreening', grantedDate: '2026-03-01T10:15:00Z', expiresDate: '2026-06-01T10:15:00Z', isActive: false, ipAddressRecorded: '68.100.144.12 (Fairfax, VA)' },
   ]
+};
+
+export const DEMO_PERSONAS: Record<string, { label: string; description: string; profile: HousingProfile }> = {
+  dualIncome: {
+    label: 'Jordan & Taylor Miller (Dual-Income Tech/Gov Household)',
+    description: '$275k/yr W2 • $195k Down • 782 Traditional / 842 Housing Score',
+    profile: SEED_HOUSING_PROFILE
+  },
+  soloBuyer: {
+    label: 'Jordan S. Miller (Solo Emerging Buyer)',
+    description: '$138k/yr W2 • $75k Down • 742 Traditional / 832 Housing Score',
+    profile: {
+      ...SEED_HOUSING_PROFILE,
+      id: 'usr-dmv-solo',
+      fullName: 'Jordan S. Miller (Solo Buyer)',
+      grossAnnualIncome: 138000,
+      grossMonthlyIncome: 11500,
+      netMonthlyIncome: 8600,
+      jobTitle: 'Senior Cloud Security Architect',
+      checkingBalance: 14500,
+      savingsBalance: 73500,
+      liquidCashReserves: 88000,
+      downPaymentAvailable: 75000,
+      averageMonthlyDeposits: 10200,
+      traditionalCreditScore: 742,
+      totalRevolvingBalance: 4200,
+      revolvingUtilizationPct: 12,
+      monthlyDebtObligations: 1150,
+      currentRentPayment: 2650,
+    }
+  },
+  executive: {
+    label: 'Marcus & Elena Vance (Executive / Private Wealth)',
+    description: '$540k/yr W2 • $650k Down • 810 Traditional / 848 Housing Score',
+    profile: {
+      ...SEED_HOUSING_PROFILE,
+      id: 'usr-dmv-exec',
+      fullName: 'Marcus & Elena Vance',
+      grossAnnualIncome: 540000,
+      grossMonthlyIncome: 45000,
+      netMonthlyIncome: 31000,
+      jobTitle: 'Managing Director & Enterprise Partner',
+      checkingBalance: 65000,
+      savingsBalance: 715000,
+      liquidCashReserves: 780000,
+      downPaymentAvailable: 650000,
+      averageMonthlyDeposits: 44000,
+      traditionalCreditScore: 810,
+      totalRevolvingBalance: 2100,
+      totalRevolvingLimit: 75000,
+      revolvingUtilizationPct: 3,
+      monthlyDebtObligations: 2400,
+      currentRentPayment: 5500,
+    }
+  }
 };

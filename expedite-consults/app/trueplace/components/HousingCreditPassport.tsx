@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Property, MOCK_PROPERTIES } from '../mockData';
+import { Property } from '../mockData';
+import { REAL_DMV_INVENTORY } from '../realDataService';
 import {
   HousingProfile,
   HousingScores,
@@ -12,7 +13,8 @@ import {
   evaluatePropertyAffordability,
   simulateHousingWhatIf,
   generateFCRAAdverseActionNotice,
-  SEED_HOUSING_PROFILE
+  SEED_HOUSING_PROFILE,
+  DEMO_PERSONAS
 } from '../housingCreditEngine';
 import {
   ShieldCheck,
@@ -54,8 +56,19 @@ export const HousingCreditPassport: React.FC<HousingCreditPassportProps> = ({
   onSelectProperty,
   onNavigateTab
 }) => {
+  const [selectedPersonaKey, setSelectedPersonaKey] = useState<string>('dualIncome');
   const [profile, setProfile] = useState<HousingProfile>(SEED_HOUSING_PROFILE);
   const [activeSubTab, setActiveSubTab] = useState<'dashboard' | 'matcher' | 'simulator' | 'consent' | 'compliance'>('dashboard');
+
+  const handleSelectPersona = (key: string) => {
+    setSelectedPersonaKey(key);
+    if (DEMO_PERSONAS[key]) {
+      setProfile(DEMO_PERSONAS[key].profile);
+      setPayoffAmount(0);
+      setDownPaymentBoost(0);
+      setMonthlySavingsBoost(0);
+    }
+  };
 
   // Matcher filters
   const [compatibilityFilter, setCompatibilityFilter] = useState<'all' | 'Comfortable' | 'Modeled Stretch' | 'Incompatible'>('all');
@@ -106,13 +119,22 @@ export const HousingCreditPassport: React.FC<HousingCreditPassportProps> = ({
     return calculateHousingScores(profile);
   }, [profile]);
 
-  // Evaluated properties
+  // Evaluated properties across all 25 real DMV homes
   const evaluatedProperties: Array<{ property: Property; analysis: PropertyAffordabilityAnalysis }> = useMemo(() => {
-    return MOCK_PROPERTIES.map((prop) => ({
+    return REAL_DMV_INVENTORY.map((prop) => ({
       property: prop,
       analysis: evaluatePropertyAffordability(profile, prop)
     }));
   }, [profile]);
+
+  // Dynamic compatibility counts
+  const compatCounts = useMemo(() => {
+    const counts = { all: evaluatedProperties.length, Comfortable: 0, 'Modeled Stretch': 0, Incompatible: 0 };
+    evaluatedProperties.forEach(({ analysis }) => {
+      counts[analysis.affordabilityStatus]++;
+    });
+    return counts;
+  }, [evaluatedProperties]);
 
   // Filtered properties
   const filteredProperties = useMemo(() => {
@@ -132,7 +154,7 @@ export const HousingCreditPassport: React.FC<HousingCreditPassportProps> = ({
         downPaymentIncrease: downPaymentBoost,
         monthlySavingsBoost: monthlySavingsBoost
       },
-      MOCK_PROPERTIES
+      REAL_DMV_INVENTORY
     );
   }, [profile, payoffAmount, downPaymentBoost, monthlySavingsBoost]);
 
@@ -144,7 +166,7 @@ export const HousingCreditPassport: React.FC<HousingCreditPassportProps> = ({
     simulatedProfile.downPaymentAvailable += downPaymentBoost;
     simulatedProfile.monthlyDebtObligations = Math.max(200, simulatedProfile.monthlyDebtObligations - Math.round(payoffAmount * 0.025));
 
-    return MOCK_PROPERTIES.filter((prop) => {
+    return REAL_DMV_INVENTORY.filter((prop) => {
       const orig = evaluatePropertyAffordability(profile, prop);
       const sim = evaluatePropertyAffordability(simulatedProfile, prop);
       return orig.affordabilityStatus !== 'Comfortable' && sim.affordabilityStatus === 'Comfortable';
@@ -220,6 +242,25 @@ export const HousingCreditPassport: React.FC<HousingCreditPassportProps> = ({
               <div>Gross Income: <strong className="text-white">${profile.grossAnnualIncome.toLocaleString()}/yr</strong> (Verified W2)</div>
               <div className="hidden sm:inline text-gray-500">•</div>
               <div>Traditional Bureau: <strong className="text-white">{profile.traditionalCreditScore}</strong> (TU / EX)</div>
+            </div>
+
+            {/* Persona Selector Toggle Pills */}
+            <div className="pt-2 flex flex-wrap items-center gap-2">
+              <span className="text-[11px] uppercase tracking-wider text-emerald-300 font-bold">Applicant Persona:</span>
+              {Object.entries(DEMO_PERSONAS).map(([key, item]) => (
+                <button
+                  key={key}
+                  onClick={() => handleSelectPersona(key)}
+                  className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                    selectedPersonaKey === key
+                      ? 'bg-emerald-400 text-black font-bold shadow-xs'
+                      : 'bg-white/10 hover:bg-white/20 text-gray-200'
+                  }`}
+                  title={item.description}
+                >
+                  {item.label}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -619,10 +660,10 @@ export const HousingCreditPassport: React.FC<HousingCreditPassportProps> = ({
             {/* Filter Pills */}
             <div className="flex flex-wrap items-center gap-2">
               {[
-                { id: 'all', label: 'All (25)' },
-                { id: 'Comfortable', label: '🟢 Comfortable' },
-                { id: 'Modeled Stretch', label: '🟡 Modeled Stretch' },
-                { id: 'Incompatible', label: '🔴 Incompatible' }
+                { id: 'all', label: `All (${compatCounts.all})` },
+                { id: 'Comfortable', label: `🟢 Comfortable (${compatCounts.Comfortable})` },
+                { id: 'Modeled Stretch', label: `🟡 Modeled Stretch (${compatCounts['Modeled Stretch']})` },
+                { id: 'Incompatible', label: `🔴 Incompatible (${compatCounts.Incompatible})` }
               ].map((f) => (
                 <button
                   key={f.id}
@@ -1312,7 +1353,7 @@ export const HousingCreditPassport: React.FC<HousingCreditPassportProps> = ({
                 </p>
               </div>
               <button
-                onClick={() => handleGenerateAdverseNotice(MOCK_PROPERTIES[7] || MOCK_PROPERTIES[0])}
+                onClick={() => handleGenerateAdverseNotice(REAL_DMV_INVENTORY[7] || REAL_DMV_INVENTORY[0])}
                 className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-colors cursor-pointer flex items-center space-x-1 shrink-0"
               >
                 <span>Demo Sample Adverse Notice</span>
