@@ -178,6 +178,7 @@ export const Header: React.FC<HeaderProps> = ({
             {[
               { id: 'search', label: 'Explore Homes' },
               { id: 'valuation', label: 'TrueValue™' },
+              { id: 'passport', label: 'Housing Passport™' },
               { id: 'homeos', label: 'HomeOS™' },
               { id: 'truecost', label: 'TrueCost™' },
               { id: 'copilot', label: 'AI Copilot' },

@@ -22,6 +22,8 @@ import { HomeOSDashboard } from './components/HomeOSDashboard';
 import { CommunitySentiment } from './components/CommunitySentiment';
 import { AIPropertyInspector } from './components/AIPropertyInspector';
 import { HomeownershipCopilot } from './components/HomeownershipCopilot';
+import { HousingCreditPassport } from './components/HousingCreditPassport';
+import { evaluatePropertyAffordability, SEED_HOUSING_PROFILE } from './housingCreditEngine';
 import {
   Search,
   SlidersHorizontal,
@@ -417,6 +419,31 @@ export default function TruePlacePortalPage() {
               <div className="absolute -right-12 -bottom-12 w-64 h-64 rounded-full bg-white/5 pointer-events-none" />
             </div>
 
+            {/* Housing Passport™ Quick Applicant Match Banner */}
+            <div className="bg-gradient-to-r from-emerald-950 via-[#0C382E] to-emerald-900 border border-emerald-500/30 rounded-xl p-3 sm:p-4 text-white shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-lg bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-5 h-5 text-[#34D399]" />
+                </div>
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs font-bold text-emerald-300 uppercase tracking-wider">Housing Passport™ Active</span>
+                    <span className="text-[10px] bg-emerald-400 text-black font-black px-1.5 py-0.2 rounded uppercase">Prime Tier</span>
+                  </div>
+                  <div className="text-xs text-gray-200 mt-0.5">
+                    Applicant: <strong className="text-white">Jordan S. Miller</strong> • Housing Credit Score: <strong className="text-emerald-300">758</strong> • Max Monthly Housing: <strong className="text-white">$3,960/mo</strong> • Reserves: <strong className="text-white">5.1 mos</strong>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setActiveTab('passport')}
+                className="px-3.5 py-2 rounded-lg bg-white text-[#0C382E] hover:bg-emerald-50 text-xs font-bold transition-all shadow-sm cursor-pointer whitespace-nowrap flex items-center justify-center space-x-1.5 shrink-0"
+              >
+                <span>Inspect Housing Passport</span>
+                <ArrowRight className="w-3.5 h-3.5 text-[#0C382E]" />
+              </button>
+            </div>
+
             {/* Northern Virginia Submarket Filter Pills */}
             <div className="flex items-center space-x-2 overflow-x-auto pb-1 pt-1 no-scrollbar">
               {SUBMARKETS.map((sub) => (
@@ -755,6 +782,38 @@ export default function TruePlacePortalPage() {
                             <span className="text-emerald-700 font-semibold">Clean Title Chain</span>
                           )}
                         </div>
+
+                        {/* Housing Passport™ Compatibility Pill */}
+                        {(() => {
+                          const afford = evaluatePropertyAffordability(SEED_HOUSING_PROFILE, prop);
+                          const isComfortable = afford.affordabilityStatus === 'Comfortable';
+                          const isStretch = afford.affordabilityStatus === 'Modeled Stretch';
+                          return (
+                            <div
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedProperty(prop);
+                                setActiveTab('passport');
+                              }}
+                              className={`p-2 rounded-lg text-[11px] font-semibold flex items-center justify-between cursor-pointer transition-all border ${
+                                isComfortable
+                                  ? 'bg-emerald-50 text-emerald-900 border-emerald-200 hover:bg-emerald-100'
+                                  : isStretch
+                                  ? 'bg-amber-50 text-amber-900 border-amber-200 hover:bg-amber-100'
+                                  : 'bg-rose-50 text-rose-900 border-rose-200 hover:bg-rose-100'
+                              }`}
+                              title="Click to inspect this property within Jordan's Housing Credit Passport"
+                            >
+                              <div className="flex items-center space-x-1.5">
+                                <ShieldCheck className={`w-3.5 h-3.5 ${isComfortable ? 'text-emerald-700' : isStretch ? 'text-amber-700' : 'text-rose-700'}`} />
+                                <span>Passport: <strong>{afford.affordabilityStatus}</strong></span>
+                              </div>
+                              <span className="font-bold">
+                                ${afford.estimatedMonthlyHousingCost.totalMonthly.toLocaleString()}/mo ({afford.frontEndDTI}% DTI)
+                              </span>
+                            </div>
+                          );
+                        })()}
                       </div>
 
                       {/* Action Footer with Top Features */}

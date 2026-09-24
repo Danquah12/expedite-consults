@@ -8,6 +8,8 @@ export interface Author {
   timeAgo: string;
   privacy?: string;
   isFollowed?: boolean;
+  isFriend?: boolean;
+  campusAffiliation?: string;
 }
 
 export interface CommentItem {
@@ -68,6 +70,7 @@ export interface FeedPost {
   savesCount?: number;
   isLiked?: boolean;
   isSaved?: boolean;
+  isBookmarked?: boolean;
   isReposted?: boolean;
   likedByFriend?: string;
   commentsList?: CommentItem[];

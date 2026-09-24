@@ -55,7 +55,7 @@ export function XPostCard({
   const [likesCount, setLikesCount] = useState(post.likes);
   const [isReposted, setIsReposted] = useState(!!post.isReposted);
   const [repostsCount, setRepostsCount] = useState(post.repostsCount || 0);
-  const [isBookmarked, setIsBookmarked] = useState(!!post.isSaved || !!post.isBookmarked);
+  const [isBookmarked, setIsBookmarked] = useState(!!post.isSaved);
   const [poll, setPoll] = useState(post.poll);
   const [showComments, setShowComments] = useState(false);
   const [commentsList, setCommentsList] = useState(post.commentsList || []);
@@ -274,13 +274,13 @@ export function XPostCard({
               <div className="text-xs font-bold text-neutral-300 mb-2">
                 📊 {poll.question}
               </div>
-              {poll.options.map((opt) => {
+              {poll.options.map((opt, idx) => {
                 const percentage = poll.totalVotes > 0 ? Math.round((opt.votes / poll.totalVotes) * 100) : 0;
                 return (
                   <button
                     key={opt.id}
-                    onClick={(e) => handleVote(opt.id, e)}
-                    disabled={poll.hasVoted}
+                    onClick={(e) => handleVote(opt.id, idx, e)}
+                    disabled={poll.hasVoted || poll.userVotedIndex !== undefined}
                     className={`w-full relative overflow-hidden rounded-xl border p-3 text-left text-xs font-semibold transition-all ${
                       opt.voted
                         ? "border-amber-400/60 bg-amber-500/10 text-white"
