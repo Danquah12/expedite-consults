@@ -1107,6 +1107,21 @@ export default function TruePlacePortalPage() {
         )}
 
         {/* =========================================================================
+            TAB: HOUSING CREDIT & FINANCIAL READINESS PASSPORT
+           ========================================================================= */}
+        {activeTab === 'passport' && (
+          <div className="space-y-6">
+            <HousingCreditPassport
+              onSelectProperty={(prop) => {
+                setSelectedProperty(prop);
+                setActiveTab('search');
+              }}
+              onNavigateTab={(tab) => setActiveTab(tab)}
+            />
+          </div>
+        )}
+
+        {/* =========================================================================
             TAB 8: WHAT-IF COUNTERFACTUAL SIMULATOR
            ========================================================================= */}
         {activeTab === 'whatif' && (

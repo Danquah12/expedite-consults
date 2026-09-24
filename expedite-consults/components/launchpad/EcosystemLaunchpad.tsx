@@ -300,7 +300,7 @@ export default function EcosystemLaunchpad() {
             <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md">
               <div className="text-xs text-slate-400 font-medium">Configured Local Ports</div>
               <div className="text-2xl sm:text-3xl font-extrabold text-white mt-1">18+</div>
-              <div className="text-[11px] text-indigo-400 mt-0.5">Ports 3000–3019, 9000, 9011, 9012</div>
+              <div className="text-[11px] text-indigo-400 mt-0.5">Ports 3000–3019, 9000, 9011, 9012, 9020</div>
             </div>
             <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md">
               <div className="text-xs text-slate-400 font-medium">GitHub Repositories</div>
@@ -310,50 +310,223 @@ export default function EcosystemLaunchpad() {
           </div>
         </div>
 
-        {/* Featured Spotlight: ÆGIS · SOC Command Portal */}
-          <div className="mt-6 mb-8 p-5 sm:p-6 rounded-2xl bg-gradient-to-r from-rose-950/60 via-slate-900/90 to-cyan-950/60 border border-rose-500/40 shadow-[0_0_35px_rgba(225,29,72,0.18)] flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-            <div className="flex items-start sm:items-center gap-4">
-              <div className="size-12 rounded-xl bg-gradient-to-br from-rose-600 to-rose-800 border border-rose-400/50 flex items-center justify-center text-white shrink-0 shadow-[0_0_20px_rgba(225,29,72,0.4)]">
-                <ShieldAlert className="size-6 text-white" />
+        {/* Mission Control & Flagship Operations Suite */}
+        <div className="mt-8 mb-10">
+          <div className="flex items-center justify-between gap-4 mb-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="inline-block size-2 rounded-full bg-emerald-400 animate-ping" />
+                <h2 className="text-lg sm:text-xl font-black text-white tracking-tight flex items-center gap-2">
+                  <span>⚡ Mission Control & Flagship Operations Suite</span>
+                </h2>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 uppercase tracking-wide">
+                  Live & Verified
+                </span>
               </div>
-              <div>
-                <div className="flex flex-wrap items-center gap-2 mb-1">
-                  <span className="text-base sm:text-lg font-black text-white">ÆGIS · SOC Command Portal (Platform 11)</span>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-500/20 text-rose-300 border border-rose-500/40 uppercase tracking-wide">
-                    Redesigned & Live
-                  </span>
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-mono bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                    Port 9011
-                  </span>
-                </div>
-                <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
-                  Next-gen Cybersecurity Command Center featuring 4-Stage Attack Pipeline, Traffic Interceptor Forge, Autonomous AI Threat Copilot, and Real-Time DEFCON Radar.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3 shrink-0">
-              <a
-                href="https://11-dast-security-platform.vercel.app/app/?standalone=1"
-                target="_blank"
-                rel="noreferrer"
-                className="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white shadow-[0_0_20px_rgba(225,29,72,0.5)] transition-all flex items-center gap-2"
-              >
-                <span>Launch ÆGIS · SOC Portal</span>
-                <ExternalLink className="size-3.5" />
-              </a>
-
-              <a
-                href="https://github.com/Danquah12/expedite-consults/tree/main/platforms/11-dast-security-platform"
-                target="_blank"
-                rel="noreferrer"
-                className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-200 transition-all flex items-center gap-1.5"
-              >
-                <Github className="size-3.5" />
-                <span>Source</span>
-              </a>
+              <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
+                Instant access to core mission control gateways, autonomous strike consoles, and enterprise client portals.
+              </p>
             </div>
           </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Card 1: Local Mission Control Launchpad */}
+            <div className="p-4 rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950/90 border border-emerald-500/40 hover:border-emerald-400 transition-all duration-300 shadow-[0_0_25px_rgba(16,185,129,0.12)] flex flex-col justify-between group">
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="size-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
+                    <Radio className="size-4" />
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">
+                      <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      200 OK
+                    </span>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                      :9000
+                    </span>
+                  </div>
+                </div>
+                <h3 className="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors">
+                  Local Mission Control Launchpad
+                </h3>
+                <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                  Unified Fleet Gateway, CVE Threat Ticker, Neo4j graph poller & centralized multi-tool switcher.
+                </p>
+              </div>
+
+              <div className="pt-3 border-t border-slate-800/80 mt-4 flex items-center gap-2">
+                <a
+                  href="http://localhost:9000/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-slate-950 transition-all flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(16,185,129,0.3)]"
+                  title="Launch Local Mission Control (Port 9000)"
+                >
+                  <Terminal className="size-3" />
+                  <span>Local :9000</span>
+                </a>
+                <a
+                  href="https://ecosystem-launchpad.vercel.app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all flex items-center gap-1"
+                  title="Open Vercel Cloud Launchpad"
+                >
+                  <Globe className="size-3 text-cyan-400" />
+                  <span>Cloud</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Card 2: Autonomous PenTest Console */}
+            <div className="p-4 rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950/90 border border-sky-500/40 hover:border-sky-400 transition-all duration-300 shadow-[0_0_25px_rgba(56,189,248,0.12)] flex flex-col justify-between group">
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="size-9 rounded-xl bg-sky-500/20 border border-sky-500/40 flex items-center justify-center text-sky-400 shrink-0">
+                    <Cpu className="size-4" />
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">
+                      <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      200 OK
+                    </span>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                      :9011
+                    </span>
+                  </div>
+                </div>
+                <h3 className="text-sm font-bold text-white group-hover:text-sky-300 transition-colors">
+                  Autonomous PenTest Console
+                </h3>
+                <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                  Standalone exploit queue, live terminal proof logs, automated PoC verification & Neo4j sync.
+                </p>
+              </div>
+
+              <div className="pt-3 border-t border-slate-800/80 mt-4 flex items-center gap-2">
+                <a
+                  href="http://localhost:9011/app/?standalone=1"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-sky-500 hover:bg-sky-400 text-slate-950 transition-all flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(56,189,248,0.3)]"
+                  title="Launch PenTest Console (Port 9011)"
+                >
+                  <Terminal className="size-3" />
+                  <span>Local :9011</span>
+                </a>
+                <a
+                  href="https://11-dast-security-platform.vercel.app/app/?standalone=1"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all flex items-center gap-1"
+                  title="Open Vercel DAST Platform"
+                >
+                  <Globe className="size-3 text-cyan-400" />
+                  <span>Cloud</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Card 3: Expedite Strike Console */}
+            <div className="p-4 rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950/90 border border-rose-500/40 hover:border-rose-400 transition-all duration-300 shadow-[0_0_25px_rgba(244,63,94,0.12)] flex flex-col justify-between group">
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="size-9 rounded-xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400 shrink-0">
+                    <Crosshair className="size-4" />
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">
+                      <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      200 OK
+                    </span>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                      :9020
+                    </span>
+                  </div>
+                </div>
+                <h3 className="text-sm font-bold text-white group-hover:text-rose-300 transition-colors">
+                  Expedite Strike Console
+                </h3>
+                <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                  5-Stage Autonomous Attack Pipeline & concurrent multi-scanners (Nmap, Nuclei, ZAP, AegisProbe).
+                </p>
+              </div>
+
+              <div className="pt-3 border-t border-slate-800/80 mt-4 flex items-center gap-2">
+                <a
+                  href="http://localhost:9020/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white transition-all flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(244,63,94,0.3)]"
+                  title="Launch Expedite Strike Console (Port 9020)"
+                >
+                  <Terminal className="size-3" />
+                  <span>Local :9020</span>
+                </a>
+                <a
+                  href="https://14-exploitability-platform.vercel.app/exploit"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all flex items-center gap-1"
+                  title="Open Vercel Exploitability Platform"
+                >
+                  <Globe className="size-3 text-cyan-400" />
+                  <span>Cloud</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Card 4: Sphera Enterprise Client Portal */}
+            <div className="p-4 rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950/90 border border-purple-500/40 hover:border-purple-400 transition-all duration-300 shadow-[0_0_25px_rgba(168,85,247,0.12)] flex flex-col justify-between group">
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="size-9 rounded-xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-400 shrink-0">
+                    <Globe2 className="size-4" />
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">
+                      <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      200 OK
+                    </span>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-purple-950 text-purple-300 border border-purple-800">
+                      Live
+                    </span>
+                  </div>
+                </div>
+                <h3 className="text-sm font-bold text-white group-hover:text-purple-300 transition-colors">
+                  Sphera Enterprise Client Portal
+                </h3>
+                <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                  High-touch enterprise client portal, Prisma ORM, live Pusher alerts, SLA tracking & file vault.
+                </p>
+              </div>
+
+              <div className="pt-3 border-t border-slate-800/80 mt-4 flex items-center gap-2">
+                <a
+                  href="https://portal.expediteconsults.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white transition-all flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(168,85,247,0.3)]"
+                  title="Open Live Enterprise Domain"
+                >
+                  <Globe className="size-3" />
+                  <span className="truncate">portal.expediteconsults.com</span>
+                </a>
+                <a
+                  href="https://sphera-portal-kwesi-asiedus-projects.vercel.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all flex items-center gap-1"
+                  title="Open Vercel Direct Project URL"
+                >
+                  <ExternalLink className="size-3 text-cyan-400" />
+                  <span>Vercel</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
 
           {/* Global Control Bar: Search + Environment Switcher + View Mode */}
         <div className="sticky top-4 z-40 p-4 rounded-2xl bg-slate-900/95 border border-slate-800 shadow-2xl backdrop-blur-xl mb-8">
