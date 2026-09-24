@@ -29,6 +29,7 @@ import {
   ChevronRight,
   Radio,
   BookOpen,
+  Music,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useAppStore } from "@/store/useAppStore";
@@ -165,38 +166,72 @@ export function SidebarNav({ user }: { user?: { name: string; username: string }
         </Link>
 
         {/* ✝️ Gospel Menu */}
-        <Link
-          href="/feed?tab=GOSPEL"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            padding: "9px 12px",
-            borderRadius: "12px",
-            fontSize: "13px",
-            fontWeight: pathname.includes("GOSPEL") ? "800" : "700",
-            color: "#f59e0b",
-            backgroundColor: "rgba(245, 158, 11, 0.1)",
-            border: "1px solid rgba(245, 158, 11, 0.3)",
-            textDecoration: "none",
-            transition: "all 0.15s ease",
-          }}
-        >
-          <BookOpen size={20} color="#f59e0b" />
-          <span style={{ flex: 1, fontWeight: "800" }}>Gospel Menu</span>
-          <span
+        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+          <Link
+            href="/feed?tab=GOSPEL"
             style={{
-              fontSize: "9px",
-              fontWeight: "900",
-              color: "#000",
-              backgroundColor: "#f59e0b",
-              padding: "1px 5px",
-              borderRadius: "4px",
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              padding: "9px 12px",
+              borderRadius: "12px",
+              fontSize: "13px",
+              fontWeight: pathname.includes("GOSPEL") ? "800" : "700",
+              color: "#f59e0b",
+              backgroundColor: "rgba(245, 158, 11, 0.1)",
+              border: "1px solid rgba(245, 158, 11, 0.3)",
+              textDecoration: "none",
+              transition: "all 0.15s ease",
             }}
           >
-            NEW
-          </span>
-        </Link>
+            <BookOpen size={20} color="#f59e0b" />
+            <span style={{ flex: 1, fontWeight: "800" }}>Gospel Menu</span>
+            <span
+              style={{
+                fontSize: "9px",
+                fontWeight: "900",
+                color: "#000",
+                backgroundColor: "#f59e0b",
+                padding: "1px 5px",
+                borderRadius: "4px",
+              }}
+            >
+              NEW
+            </span>
+          </Link>
+
+          {/* 🎵 Gospel Music Sub-Item */}
+          <Link
+            href="/feed?tab=GOSPEL&sub=music"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              padding: "6px 12px 6px 28px",
+              borderRadius: "10px",
+              fontSize: "12px",
+              fontWeight: "600",
+              color: "#fbbf24",
+              textDecoration: "none",
+              transition: "all 0.15s ease",
+            }}
+          >
+            <Music size={14} color="#f59e0b" />
+            <span style={{ flex: 1 }}>Gospel Music</span>
+            <span
+              style={{
+                fontSize: "8px",
+                fontWeight: "900",
+                color: "#000",
+                backgroundColor: "#f59e0b",
+                padding: "0.5px 4px",
+                borderRadius: "3px",
+              }}
+            >
+              🎵 LIVE
+            </span>
+          </Link>
+        </div>
 
         {/* 2. 🧭 Discover Hub (Collapsible Sub-hubs) */}
         <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>

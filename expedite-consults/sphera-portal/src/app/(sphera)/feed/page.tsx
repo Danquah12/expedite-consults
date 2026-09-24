@@ -23,9 +23,13 @@ import { BookOpen, Sparkles, Plus, Loader2 } from "lucide-react";
 function SpheraFeedContent() {
   const searchParams = useSearchParams();
   const tabParam = searchParams?.get("tab");
+  const subParam = searchParams?.get("sub");
 
   const [activeTab, setActiveTab] = useState<"FYP" | "FOLLOWING" | "GOSPEL" | "CAMPUS">(
     tabParam === "GOSPEL" ? "GOSPEL" : "FYP"
+  );
+  const [gospelSubTab, setGospelSubTab] = useState<"devotional" | "music" | "prayers" | "promises" | "media">(
+    subParam === "music" ? "music" : "devotional"
   );
 
   const [posts, setPosts] = useState<FeedPost[]>(initialFeedPosts);
@@ -46,7 +50,11 @@ function SpheraFeedContent() {
     if (tabParam === "GOSPEL") {
       setActiveTab("GOSPEL");
     }
-  }, [tabParam]);
+    if (subParam === "music") {
+      setActiveTab("GOSPEL");
+      setGospelSubTab("music");
+    }
+  }, [tabParam, subParam]);
 
   useEffect(() => {
     async function hydrateLocalData() {
@@ -357,7 +365,45 @@ function SpheraFeedContent() {
       {/* Dedicated Gospel Hub View */}
       {activeTab === "GOSPEL" && (
         <div className="p-4 border-b border-neutral-800/80 bg-gradient-to-b from-amber-950/20 via-black to-black">
-          <GospelHub />
+          <GospelHub
+            initialSubTab={gospelSubTab}
+            onShareToFeed={(verseText, verseRef) => {
+              const newPost: FeedPost = {
+                id: `p-faith-${Date.now()}`,
+                type: "gospel_scripture",
+                category: "gospel",
+                author: {
+                  id: "u-current",
+                  name: "Kwesi Asiedu",
+                  username: "kwesi",
+                  avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
+                  verified: true,
+                  badgeType: "gospel",
+                  timeAgo: "Just now",
+                  privacy: "Public",
+                },
+                content: `🕊️ ${verseText}\n\n— ${verseRef} (#GospelMenu #SpheraNet)`,
+                scripture: {
+                  book: verseRef.split(' ')[0] || "Scripture",
+                  reference: verseRef,
+                  text: verseText,
+                  translation: "NIV",
+                  theme: "Faith & Worship",
+                },
+                hashtags: ["#GospelMenu", "#Worship", "#DailyGrace", "#Faith"],
+                likes: 1,
+                repostsCount: 0,
+                commentsCount: 0,
+                viewsCount: 1,
+                sharesCount: 0,
+                savesCount: 0,
+                isLiked: false,
+                isBookmarked: false,
+                createdAt: new Date().toISOString(),
+              };
+              handleAddNewPost(newPost);
+            }}
+          />
         </div>
       )}
 

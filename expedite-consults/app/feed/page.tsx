@@ -35,6 +35,8 @@ function FeedContent() {
   const [liveStreams, setLiveStreams] = useState<LiveStreamItem[]>(initialLiveStreams);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  const [gospelSubTab, setGospelSubTab] = useState<"devotional" | "music" | "prayers" | "promises" | "media">("devotional");
+
   // Modals state
   const [isRecorderOpen, setIsRecorderOpen] = useState(false);
   const [isStoryViewerOpen, setIsStoryViewerOpen] = useState(false);
@@ -252,8 +254,14 @@ function FeedContent() {
         <aside className="w-16 sm:w-20 xl:w-[275px] h-screen sticky top-0 flex-shrink-0 border-r border-neutral-800/80 z-30">
           <XLeftNav
             activeTab={activeTab}
+            activeGospelSubTab={gospelSubTab}
             onSelectTab={(tab) => {
               setActiveTab(tab);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            onSelectGospelSubTab={(sub) => {
+              setActiveTab("GOSPEL");
+              setGospelSubTab(sub);
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
             onOpenCompose={() => {
@@ -392,7 +400,45 @@ function FeedContent() {
           {/* Dedicated Gospel Hub View */}
           {activeTab === "GOSPEL" && (
             <div className="p-4 border-b border-neutral-800/80 bg-gradient-to-b from-amber-950/20 via-black to-black">
-              <GospelHub />
+              <GospelHub
+                initialSubTab={gospelSubTab}
+                onShareToFeed={(verseText, verseRef) => {
+                  const newPost: FeedPost = {
+                    id: `p-faith-${Date.now()}`,
+                    type: "gospel_scripture",
+                    category: "gospel",
+                    author: {
+                      id: "u-current",
+                      name: "Kwesi Asiedu",
+                      username: "kwesi",
+                      avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
+                      verified: true,
+                      badgeType: "gospel",
+                      timeAgo: "Just now",
+                      privacy: "Public",
+                    },
+                    content: `🕊️ ${verseText}\n\n— ${verseRef} (#GospelMenu #SpheraNet)`,
+                    scripture: {
+                      book: verseRef.split(' ')[0] || "Scripture",
+                      reference: verseRef,
+                      text: verseText,
+                      translation: "NIV",
+                      theme: "Faith & Worship",
+                    },
+                    hashtags: ["#GospelMenu", "#Worship", "#DailyGrace", "#Faith"],
+                    likes: 1,
+                    repostsCount: 0,
+                    commentsCount: 0,
+                    viewsCount: 1,
+                    sharesCount: 0,
+                    savesCount: 0,
+                    isLiked: false,
+                    isBookmarked: false,
+                    createdAt: new Date().toISOString(),
+                  };
+                  handleAddNewPost(newPost);
+                }}
+              />
             </div>
           )}
 

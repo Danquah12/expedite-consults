@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -16,11 +17,19 @@ import {
   Feather,
   CheckCircle2,
   Sparkles,
+  Music,
+  Heart,
+  Bookmark,
+  ChevronDown,
+  ChevronRight,
+  Flame,
 } from "lucide-react";
 
 interface XLeftNavProps {
   activeTab: string;
   onSelectTab: (tab: "FYP" | "FOLLOWING" | "GOSPEL" | "CAMPUS") => void;
+  onSelectGospelSubTab?: (subTab: "devotional" | "music" | "prayers" | "promises" | "media") => void;
+  activeGospelSubTab?: string;
   onOpenCompose?: () => void;
   currentUser?: {
     name: string;
@@ -32,6 +41,8 @@ interface XLeftNavProps {
 export function XLeftNav({
   activeTab,
   onSelectTab,
+  onSelectGospelSubTab,
+  activeGospelSubTab = "devotional",
   onOpenCompose,
   currentUser = {
     name: "Kwesi Asiedu",
@@ -40,6 +51,7 @@ export function XLeftNav({
   },
 }: XLeftNavProps) {
   const pathname = usePathname();
+  const [isGospelMenuOpen, setIsGospelMenuOpen] = useState(true);
 
   const navItems = [
     {
@@ -153,6 +165,91 @@ export function XLeftNav({
                 </span>
               </div>
             );
+
+            if (item.id === "gospel") {
+              const isGospelActive = activeTab === "GOSPEL";
+              return (
+                <div key={item.id} className="space-y-1">
+                  <div className="flex items-center">
+                    <button
+                      onClick={() => {
+                        onSelectTab("GOSPEL");
+                        setIsGospelMenuOpen(true);
+                      }}
+                      className="flex-1 text-left"
+                    >
+                      {content}
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsGospelMenuOpen(!isGospelMenuOpen);
+                      }}
+                      className="hidden xl:flex items-center justify-center p-2 rounded-full hover:bg-white/10 text-amber-400/80 hover:text-amber-300"
+                    >
+                      {isGospelMenuOpen ? (
+                        <ChevronDown className="w-4 h-4" />
+                      ) : (
+                        <ChevronRight className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Gospel Sub-Menu */}
+                  {isGospelMenuOpen && (
+                    <div className="hidden xl:flex flex-col ml-7 pl-3 border-l-2 border-amber-500/30 space-y-1 py-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                      {[
+                        { id: "devotional", label: "Daily Devotional", icon: BookOpen },
+                        {
+                          id: "music",
+                          label: "Gospel Music",
+                          icon: Music,
+                          isHot: true,
+                          badge: "🎵 LIVE",
+                        },
+                        { id: "prayers", label: "Prayer Wall", icon: Heart },
+                        { id: "promises", label: "Scripture Promises", icon: Bookmark },
+                        { id: "media", label: "24/7 Praise Radio", icon: Radio },
+                      ].map((sub) => {
+                        const SubIcon = sub.icon;
+                        const isSubActive = isGospelActive && activeGospelSubTab === sub.id;
+
+                        return (
+                          <button
+                            key={sub.id}
+                            onClick={() => {
+                              onSelectTab("GOSPEL");
+                              if (onSelectGospelSubTab) {
+                                onSelectGospelSubTab(sub.id as any);
+                              }
+                            }}
+                            className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all text-left group/sub ${
+                              isSubActive
+                                ? "bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40 shadow-sm shadow-amber-500/10"
+                                : "text-neutral-400 hover:text-amber-200 hover:bg-amber-500/10"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <SubIcon
+                                className={`w-3.5 h-3.5 transition-transform group-hover/sub:scale-110 ${
+                                  sub.isHot || isSubActive ? "text-amber-400" : "text-neutral-400"
+                                }`}
+                              />
+                              <span>{sub.label}</span>
+                            </div>
+                            {sub.badge && (
+                              <span className="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-amber-500/90 text-black tracking-wider animate-pulse">
+                                {sub.badge}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
 
             if (item.onClick) {
               return (

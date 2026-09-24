@@ -159,6 +159,31 @@ export interface GospelMediaItem {
   verseRef?: string;
 }
 
+export interface GospelMusicTrack {
+  id: string;
+  title: string;
+  artist: string;
+  album: string;
+  albumArt: string;
+  genre: "Praise & Worship" | "Contemporary Gospel" | "Afro-Gospel" | "Hymns & Choral" | "Prayer & Soaking";
+  duration: string;
+  plays: string;
+  scriptureAnchor?: string;
+  lyricsPreview: string;
+  audioUrl?: string;
+  isFavorite?: boolean;
+}
+
+export interface GospelRadioStation {
+  id: string;
+  name: string;
+  tagline: string;
+  listeners: number;
+  currentProgram: string;
+  currentHost: string;
+  coverArt: string;
+}
+
 export const dailyVerses: GospelVerse[] = [
   {
     id: "v1",
@@ -294,6 +319,151 @@ export const initialGospelMedia: GospelMediaItem[] = [
     thumbnail: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=600&auto=format&fit=crop&q=80",
     audioSnippet: "peace_meditation.mp3",
     verseRef: "2 Timothy 1:7",
+  },
+];
+
+export const initialGospelMusic: GospelMusicTrack[] = [
+  {
+    id: "gm-track-1",
+    title: "Goodness of God",
+    artist: "CeCe Winans",
+    album: "Believe For It",
+    albumArt: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80",
+    genre: "Praise & Worship",
+    duration: "4:56",
+    plays: "1.4M",
+    scriptureAnchor: "Psalm 23:6 & Psalm 145:9",
+    lyricsPreview: "All my life You have been faithful / All my life You have been so, so good / With every breath that I am able / I will sing of the goodness of God",
+    audioUrl: "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=ambient-piano-amp-strings-10711.mp3",
+    isFavorite: true,
+  },
+  {
+    id: "gm-track-2",
+    title: "Jireh (You Are Enough)",
+    artist: "Elevation Worship & Maverick City Music ft. Chandler Moore, Naomi Raine",
+    album: "Old Church Basement",
+    albumArt: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&auto=format&fit=crop&q=80",
+    genre: "Contemporary Gospel",
+    duration: "5:48",
+    plays: "2.8M",
+    scriptureAnchor: "Genesis 22:14 & Matthew 6:26",
+    lyricsPreview: "I'll never be more loved than I am right now / Wasn't holding You up, so there's nothing I can do to let You down / Jireh, You are enough",
+    audioUrl: "https://cdn.pixabay.com/download/audio/2022/10/14/audio_9939f792cb.mp3?filename=worship-piano-123793.mp3",
+    isFavorite: true,
+  },
+  {
+    id: "gm-track-3",
+    title: "Way Maker",
+    artist: "Sinach",
+    album: "Way Maker (Live)",
+    albumArt: "https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=600&auto=format&fit=crop&q=80",
+    genre: "Praise & Worship",
+    duration: "5:04",
+    plays: "3.5M",
+    scriptureAnchor: "Isaiah 43:19 & Exodus 14:21",
+    lyricsPreview: "Way Maker, Miracle Worker, Promise Keeper / Light in the darkness, my God, that is who You are",
+    audioUrl: "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3?filename=inspirational-piano-110597.mp3",
+    isFavorite: false,
+  },
+  {
+    id: "gm-track-4",
+    title: "Breathe",
+    artist: "Dunsin Oyekan",
+    album: "Kingdom Now",
+    albumArt: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&auto=format&fit=crop&q=80",
+    genre: "Prayer & Soaking",
+    duration: "6:20",
+    plays: "890K",
+    scriptureAnchor: "Ezekiel 37:9 & Genesis 2:7",
+    lyricsPreview: "Breathe on me / Lord breathe on me / What I need is Your spirit / Breathe on me",
+    audioUrl: "https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8bbf7b9e0.mp3?filename=deep-meditation-19282.mp3",
+    isFavorite: true,
+  },
+  {
+    id: "gm-track-5",
+    title: "Gratitude",
+    artist: "Brandon Lake",
+    album: "House of Miracles",
+    albumArt: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600&auto=format&fit=crop&q=80",
+    genre: "Praise & Worship",
+    duration: "4:38",
+    plays: "1.9M",
+    scriptureAnchor: "Psalm 103:1 & Hebrews 13:15",
+    lyricsPreview: "So I throw up my hands and praise You again and again / 'Cause all that I have is a hallelujah, hallelujah",
+    audioUrl: "https://cdn.pixabay.com/download/audio/2021/08/04/audio_bb630cc098.mp3?filename=acoustic-guitars-ambient-uplifting-11219.mp3",
+    isFavorite: false,
+  },
+  {
+    id: "gm-track-6",
+    title: "Olorun Agbaye (You Are Mighty)",
+    artist: "Nathaniel Bassey ft. Chandler Moore & Oba",
+    album: "The King Is Coming",
+    albumArt: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600&auto=format&fit=crop&q=80",
+    genre: "Afro-Gospel",
+    duration: "7:12",
+    plays: "1.2M",
+    scriptureAnchor: "Jeremiah 32:17 & Psalm 89:8",
+    lyricsPreview: "Olorun Agbaye o, You are mighty / Nothing is impossible for You / There is no mountain You cannot move",
+    audioUrl: "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3?filename=inspirational-piano-110597.mp3",
+    isFavorite: true,
+  },
+  {
+    id: "gm-track-7",
+    title: "Fill Me Up / Overflow",
+    artist: "Tasha Cobbs Leonard",
+    album: "Grace",
+    albumArt: "https://images.unsplash.com/photo-1520523839898-507127053999?w=600&auto=format&fit=crop&q=80",
+    genre: "Contemporary Gospel",
+    duration: "5:52",
+    plays: "2.1M",
+    scriptureAnchor: "Ephesians 5:18 & Psalm 23:5",
+    lyricsPreview: "You provide the fire, I'll provide the sacrifice / You provide the spirit, and I will open up inside / Fill me up God",
+    audioUrl: "https://cdn.pixabay.com/download/audio/2022/10/14/audio_9939f792cb.mp3?filename=worship-piano-123793.mp3",
+    isFavorite: false,
+  },
+  {
+    id: "gm-track-8",
+    title: "Great Is Thy Faithfulness (Campus Choral)",
+    artist: "Sphera University Gospel Choir",
+    album: "Campus Hymns & Heritage",
+    albumArt: "https://images.unsplash.com/photo-1445743432342-eac500ce72b7?w=600&auto=format&fit=crop&q=80",
+    genre: "Hymns & Choral",
+    duration: "4:15",
+    plays: "450K",
+    scriptureAnchor: "Lamentations 3:22-23",
+    lyricsPreview: "Great is Thy faithfulness, O God my Father / There is no shadow of turning with Thee / Thou changest not, Thy compassions, they fail not",
+    audioUrl: "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=ambient-piano-amp-strings-10711.mp3",
+    isFavorite: false,
+  },
+];
+
+export const initialGospelRadios: GospelRadioStation[] = [
+  {
+    id: "gr-1",
+    name: "Sphera 24/7 Praise & Worship Radio",
+    tagline: "Non-stop uplifting praise, deep worship & scripture affirmations",
+    listeners: 1420,
+    currentProgram: "Midday Glory & Collegiate Worship Hour",
+    currentHost: "Campus Faith Network",
+    coverArt: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "gr-2",
+    name: "Afro-Gospel & Highlife Vibes Live",
+    tagline: "Joyful rhythms, vibrant praise & contemporary African gospel",
+    listeners: 980,
+    currentProgram: "African Gospel Heritage & Beats",
+    currentHost: "DJ Grace & Joy",
+    coverArt: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "gr-3",
+    name: "Midnight Soaking & Prayer Sanctuary",
+    tagline: "Peaceful acoustic melodies and scriptures for deep study and sleep",
+    listeners: 2150,
+    currentProgram: "Quiet Waters Prayer Soaking",
+    currentHost: "Daily Grace Collective",
+    coverArt: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=600&auto=format&fit=crop&q=80",
   },
 ];
 
