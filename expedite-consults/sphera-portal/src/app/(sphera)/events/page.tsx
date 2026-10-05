@@ -157,40 +157,40 @@ export default function EventsPage() {
   const categories = ["All Events", "CAMPUS", "PROFESSIONAL", "PUBLIC"];
 
   return (
-    <div className="w-full flex flex-col gap-7 pb-12">
+    <div className="w-full flex flex-col gap-6 pb-12">
       {/* ── Top Header ────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between border-b border-[#1c202e] pb-5">
+      <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
         <div>
-          <h1 className="text-2xl font-black text-white tracking-tight">
+          <h1 className="text-2xl font-bold text-white tracking-tight">
             Events & Meetups
           </h1>
-          <p className="text-xs text-[#94a3b8] mt-1">
-            Discover tech hackathons, campus fests, founder mixers, and live virtual stages.
+          <p className="text-xs text-zinc-400 mt-1">
+            Discover student hackathons, campus fests, community mixers, and live discussions.
           </p>
         </div>
 
         <button
           onClick={() => setIsCreateOpen(true)}
-          className="h-9 px-4 rounded-xl bg-gradient-to-tr from-[#00d4ff] to-[#0284c7] text-[#08090d] text-xs font-bold shadow-[0_0_15px_rgba(0,212,255,0.3)] hover:scale-105 transition-transform flex items-center gap-1.5"
+          className="h-9 px-4 rounded-xl bg-white text-zinc-950 hover:bg-zinc-200 text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
         >
-          <Plus size={15} strokeWidth={2.5} />
+          <Plus size={15} />
           <span>Host Event</span>
         </button>
       </div>
 
       {/* ── Category Filters ──────────────────────────────────────── */}
-      <div className="flex gap-2 overflow-x-auto no-scrollbar">
+      <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
         {categories.map((cat) => (
           <button
             key={cat}
             onClick={() => setActiveTab(cat)}
-            className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
               activeTab === cat
-                ? "bg-[#00d4ff] text-[#08090d] font-bold shadow-[0_0_12px_rgba(0,212,255,0.25)]"
-                : "bg-[#10121a] text-[#94a3b8] border border-[#1c202e] hover:text-white"
+                ? "bg-white text-zinc-950 font-semibold shadow-xs"
+                : "bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white hover:bg-zinc-800"
             }`}
           >
-            {cat === "All Events" ? "All Events" : `${cat} Events`}
+            {cat === "All Events" ? "All Events" : `${cat.charAt(0) + cat.slice(1).toLowerCase()} Events`}
           </button>
         ))}
       </div>
@@ -198,12 +198,12 @@ export default function EventsPage() {
       {/* ── Loading State ─────────────────────────────────────────── */}
       {isLoading && (
         <div className="flex justify-center py-16">
-          <Loader2 className="w-8 h-8 text-[#00d4ff] animate-spin" />
+          <Loader2 className="w-8 h-8 text-zinc-400 animate-spin" />
         </div>
       )}
 
       {/* ── Events Grid ───────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {events.map((ev) => {
           const dateObj = new Date(ev.startAt);
           const monthStr = dateObj.toLocaleString("en-US", { month: "short" }).toUpperCase();
@@ -218,58 +218,58 @@ export default function EventsPage() {
           return (
             <div
               key={ev.id}
-              className="bg-[#10121a] border border-[#1c202e] rounded-3xl overflow-hidden flex flex-col justify-between shadow-[0_10px_30px_rgba(0,0,0,0.4)] hover:border-[#00d4ff]/30 transition-all group"
+              className="bg-zinc-900/40 border border-zinc-800 hover:border-zinc-700 rounded-2xl overflow-hidden flex flex-col justify-between transition-all group shadow-xs"
             >
               {/* Photo Canvas */}
-              <div className="h-44 w-full relative overflow-hidden bg-zinc-900">
+              <div className="h-44 w-full relative overflow-hidden bg-zinc-950">
                 {ev.coverUrl && (
                   <img
                     src={ev.coverUrl}
                     alt={ev.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
                   />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#10121a] via-transparent to-black/40" />
+                <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-transparent to-black/30" />
 
                 {/* Date Badge */}
-                <div className="absolute top-3.5 left-3.5 bg-black/85 backdrop-blur-md border border-white/15 rounded-xl px-3 py-1.5 text-center flex flex-col">
-                  <span className="text-[10px] font-black text-[#00d4ff]">{monthStr}</span>
-                  <span className="text-lg font-black text-white leading-none">{dayStr}</span>
+                <div className="absolute top-3.5 left-3.5 bg-black/80 backdrop-blur-md border border-white/10 rounded-xl px-2.5 py-1 text-center flex flex-col">
+                  <span className="text-[10px] font-bold text-zinc-300">{monthStr}</span>
+                  <span className="text-base font-bold text-white leading-none">{dayStr}</span>
                 </div>
 
                 <div className="absolute top-3.5 right-3.5">
-                  <span className="bg-black/70 backdrop-blur-md text-[#00d4ff] border border-[#00d4ff]/30 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
-                    {ev.isOnline ? <Globe size={12} /> : <MapPin size={12} />}
-                    {ev.isOnline ? "Virtual Stage" : "In-Person"}
+                  <span className="bg-black/70 backdrop-blur-md text-zinc-300 border border-white/10 px-2.5 py-1 rounded-full text-[11px] font-medium flex items-center gap-1">
+                    {ev.isOnline ? <Globe size={11} /> : <MapPin size={11} />}
+                    {ev.isOnline ? "Online" : "In-Person"}
                   </span>
                 </div>
               </div>
 
               {/* Event Body */}
-              <div className="p-5 flex-1 flex flex-col justify-between gap-3">
+              <div className="p-4 flex-1 flex flex-col justify-between gap-3">
                 <div>
-                  <span className="text-[10px] font-bold text-[#ec4899] uppercase tracking-wider">
+                  <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
                     {ev.type}
                   </span>
 
-                  <h3 className="text-sm font-black text-white leading-snug mt-1">
+                  <h3 className="text-sm font-semibold text-white leading-snug mt-1">
                     {ev.title}
                   </h3>
 
                   {ev.description && (
-                    <p className="text-xs text-[#94a3b8] leading-relaxed mt-2 line-clamp-2">
+                    <p className="text-xs text-zinc-400 leading-relaxed mt-1.5 line-clamp-2">
                       {ev.description}
                     </p>
                   )}
 
-                  <div className="flex flex-col gap-1 text-xs text-[#cbd5e1] mt-3">
-                    <span className="flex items-center gap-1.5 text-[#94a3b8]">
-                      <Clock size={13} className="text-[#00d4ff]" />
+                  <div className="flex flex-col gap-1 text-xs text-zinc-400 mt-2.5">
+                    <span className="flex items-center gap-1.5 text-zinc-400">
+                      <Clock size={13} className="text-zinc-500" />
                       {dateObj.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
                     </span>
                     {ev.location && (
-                      <span className="flex items-center gap-1.5 text-[#94a3b8]">
-                        <MapPin size={13} className="text-[#f87171]" />
+                      <span className="flex items-center gap-1.5 text-zinc-400">
+                        <MapPin size={13} className="text-zinc-500" />
                         {ev.location}
                       </span>
                     )}
@@ -277,9 +277,9 @@ export default function EventsPage() {
                 </div>
 
                 {/* Organizer & RSVP Action */}
-                <div className="flex items-center justify-between pt-3.5 border-t border-[#1c202e] mt-1">
-                  <div className="flex items-center gap-2.5">
-                    <div className="h-8 w-8 rounded-full overflow-hidden bg-[#161924] border border-[#1c202e] flex items-center justify-center text-xs font-bold text-white">
+                <div className="flex items-center justify-between pt-3 border-t border-zinc-800/80 mt-1">
+                  <div className="flex items-center gap-2">
+                    <div className="h-7 w-7 rounded-full overflow-hidden bg-zinc-800 border border-zinc-700 flex items-center justify-center text-xs font-semibold text-white">
                       {organizerAvatar ? (
                         <img src={organizerAvatar} alt={organizerName} className="w-full h-full object-cover" />
                       ) : (
@@ -287,8 +287,8 @@ export default function EventsPage() {
                       )}
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-white leading-tight">{organizerName}</p>
-                      <p className="text-[10px] text-[#64748b]">{formatCount(attendeeCount)} attending</p>
+                      <p className="text-xs font-semibold text-zinc-200 leading-tight">{organizerName}</p>
+                      <p className="text-[10px] text-zinc-500">{formatCount(attendeeCount)} attending</p>
                     </div>
                   </div>
 
@@ -300,20 +300,13 @@ export default function EventsPage() {
                       })
                     }
                     disabled={rsvpMutation.isPending}
-                    className={`h-8 px-4 rounded-xl text-xs font-bold transition-all flex items-center gap-1 ${
+                    className={`h-7 px-3.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                       isRsvpd
-                        ? "bg-[#10b981]/15 text-[#10b981] border border-[#10b981]/30"
-                        : "bg-[#00d4ff] text-[#08090d] shadow-[0_0_12px_rgba(0,212,255,0.25)] hover:bg-[#00bce0]"
+                        ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                        : "bg-white text-zinc-950 hover:bg-zinc-200 shadow-xs"
                     }`}
                   >
-                    {isRsvpd ? (
-                      <>
-                        <Check size={12} strokeWidth={3} />
-                        Attending
-                      </>
-                    ) : (
-                      "RSVP (Going)"
-                    )}
+                    {isRsvpd ? "Going ✓" : "RSVP"}
                   </button>
                 </div>
               </div>

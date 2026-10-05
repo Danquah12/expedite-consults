@@ -59,160 +59,108 @@ export default function VaultPage() {
   };
 
   return (
-    <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "28px", paddingBottom: "48px" }}>
+    <div className="w-full flex flex-col gap-6 pb-12">
       {/* ── Vault Hero Header ─────────────────────────────────────── */}
-      <div
-        style={{
-          borderRadius: "24px",
-          padding: "32px",
-          background: "linear-gradient(135deg, rgba(0,212,255,0.15) 0%, rgba(16,18,26,0.9) 60%, var(--bg-core) 100%)",
-          border: "1px solid rgba(0,212,255,0.25)",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: "24px",
-          flexWrap: "wrap",
-        }}
-      >
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-            <span style={{ backgroundColor: "rgba(0,212,255,0.15)", color: "var(--accent-cyan)", border: "1px solid rgba(0,212,255,0.3)", borderRadius: "9999px", padding: "3px 10px", fontSize: "10px", fontWeight: "900" }}>
-              SPHERANET PAY & ESCROW ENCLAVE
+      <div className="rounded-2xl p-6 sm:p-8 bg-zinc-900/60 border border-zinc-800 flex justify-between items-center gap-6 flex-wrap">
+        <div className="flex flex-col gap-2 max-w-xl">
+          <div className="flex gap-2 items-center">
+            <span className="bg-zinc-800 text-zinc-300 border border-zinc-700 rounded-full px-2.5 py-0.5 text-[11px] font-semibold">
+              Wallet & Escrow
             </span>
-            <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>· Zero-Trust Hardware Vault</span>
+            <span className="text-xs text-zinc-400 font-medium">· Secure Payment & Balance Protection</span>
           </div>
 
-          <h1 style={{ fontSize: "28px", fontWeight: "900", color: "var(--text-pure)", margin: 0, lineHeight: "1.2" }}>
-            Decentralized Financial Vault & <span style={{ color: "var(--accent-cyan)" }}>Escrow Protection</span>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+            Account Balance & <span className="text-zinc-100 underline decoration-zinc-600 underline-offset-4">Protected Transactions</span>
           </h1>
 
-          <p style={{ fontSize: "13px", color: "var(--text-secondary)", lineHeight: "1.6", margin: 0 }}>
-            Automated marketplace escrow protection, instant TS/SCI bounty disbursement, and 1-click creator tipping.
+          <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+            Marketplace escrow protection, earnings payouts, and simple creator appreciation tips.
           </p>
         </div>
 
-        <div style={{ display: "flex", gap: "12px" }}>
-          <button
-            style={{
-              background: "linear-gradient(135deg, #00d4ff, #0284c7)",
-              color: "#08090d",
-              border: "none",
-              borderRadius: "14px",
-              padding: "12px 24px",
-              fontSize: "13px",
-              fontWeight: "900",
-              cursor: "pointer",
-              boxShadow: "0 0 20px rgba(0, 212, 255, 0.3)",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-            }}
-          >
-            <ArrowDownLeft size={16} /> Deposit Funds
+        <div className="flex gap-3">
+          <button className="bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-semibold rounded-xl px-4 py-2 flex items-center gap-2 transition-colors cursor-pointer shadow-xs">
+            <ArrowDownLeft size={16} />
+            <span>Deposit Funds</span>
           </button>
         </div>
       </div>
 
-      {/* ── Liquidity & Escrow Summary Cards ──────────────────────── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: "16px" }}>
+      {/* ── Balance & Escrow Summary Cards ────────────────────────── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {[
-          { label: "Available Vault Balance", val: "$4,850.00", sub: "Ready for withdrawal or tipping", icon: <Wallet size={20} color="var(--accent-cyan)" /> },
-          { label: "Escrow in Safe Holding", val: "$1,200.00", sub: "Protected until buyer verification", icon: <Lock size={20} color="#f59e0b" /> },
-          { label: "Cleared Bounties Earned", val: "$3,200.00", sub: "100% Verified TS/SCI payouts", icon: <ShieldCheck size={20} color="#10b981" /> },
-          { label: "Creator Tips Sent", val: "$450.00", sub: "Supported 18 SpheraNet creators", icon: <Heart size={20} color="#ec4899" /> },
+          { label: "Available Balance", val: "$4,850.00", sub: "Ready for withdrawal or use", icon: <Wallet size={18} className="text-zinc-400" /> },
+          { label: "Escrow in Holding", val: "$1,200.00", sub: "Pending buyer inspection", icon: <Lock size={18} className="text-amber-400" /> },
+          { label: "Bounties & Earnings", val: "$3,200.00", sub: "Total completed payouts", icon: <ShieldCheck size={18} className="text-emerald-400" /> },
+          { label: "Creator Tips", val: "$450.00", sub: "18 creators supported", icon: <Heart size={18} className="text-rose-400" /> },
         ].map((stat) => (
           <div
             key={stat.label}
-            style={{
-              backgroundColor: "var(--bg-card)",
-              border: "1px solid var(--border-subtle)",
-              borderRadius: "18px",
-              padding: "20px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "6px",
-            }}
+            className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-5 flex flex-col gap-2"
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: "11px", fontWeight: "800", color: "var(--text-muted)", textTransform: "uppercase" }}>{stat.label}</span>
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">{stat.label}</span>
               {stat.icon}
             </div>
-            <p style={{ fontSize: "24px", fontWeight: "900", color: "var(--text-pure)", margin: 0 }}>{stat.val}</p>
-            <p style={{ fontSize: "11px", color: "var(--text-secondary)", margin: 0 }}>{stat.sub}</p>
+            <p className="text-2xl font-bold text-white tracking-tight">{stat.val}</p>
+            <p className="text-[11px] text-zinc-500">{stat.sub}</p>
           </div>
         ))}
       </div>
 
       {/* ── Active Escrow Contracts ───────────────────────────────── */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <Lock size={18} color="#f59e0b" />
-          <h2 style={{ fontSize: "18px", fontWeight: "900", color: "var(--text-pure)", margin: 0 }}>Active Escrow Transactions</h2>
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center gap-2">
+          <Lock size={16} className="text-zinc-400" />
+          <h2 className="text-base font-bold text-white">Active Escrow Transactions</h2>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+        <div className="flex flex-col gap-3">
           {deals.map((deal) => {
             const isDone = deal.status === "Completed";
             return (
               <div
                 key={deal.id}
-                style={{
-                  backgroundColor: "var(--bg-card)",
-                  border: isDone ? "1px solid var(--border-subtle)" : "1px solid rgba(245, 158, 11, 0.35)",
-                  borderRadius: "20px",
-                  padding: "24px",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: "24px",
-                  flexWrap: "wrap",
-                  boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
-                }}
+                className={`bg-zinc-900/40 rounded-2xl p-5 flex justify-between items-center gap-4 flex-wrap border transition-all ${
+                  isDone ? "border-zinc-800" : "border-zinc-700"
+                }`}
               >
-                <div style={{ display: "flex", gap: "16px", flex: 1, minWidth: "280px" }}>
-                  <div style={{ height: "48px", width: "48px", borderRadius: "9999px", overflow: "hidden", border: "1px solid var(--border-subtle)", flexShrink: 0 }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={deal.partner.img} alt={deal.partner.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                <div className="flex gap-3.5 flex-1 min-w-[260px]">
+                  <div className="h-11 w-11 rounded-full overflow-hidden border border-zinc-800 shrink-0">
+                    <img src={deal.partner.img} alt={deal.partner.name} className="w-full h-full object-cover" />
                   </div>
 
-                  <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <span style={{ fontSize: "10px", fontWeight: "900", color: isDone ? "#10b981" : "#f59e0b", backgroundColor: isDone ? "rgba(16,185,129,0.15)" : "rgba(245,158,11,0.15)", padding: "2px 8px", borderRadius: "6px" }}>
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${
+                        isDone ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30" : "bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                      }`}>
                         {deal.status}
                       </span>
-                      <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>{deal.date}</span>
+                      <span className="text-xs text-zinc-500">{deal.date}</span>
                     </div>
 
-                    <h3 style={{ fontSize: "15px", fontWeight: "900", color: "var(--text-pure)", margin: "2px 0 0 0" }}>
+                    <h3 className="text-sm font-semibold text-white">
                       {deal.itemTitle}
                     </h3>
 
-                    <p style={{ fontSize: "12px", color: "var(--text-secondary)", margin: 0 }}>
-                      Counterparty: <strong style={{ color: "var(--text-pure)" }}>{deal.partner.name}</strong> ({deal.partner.role})
+                    <p className="text-xs text-zinc-400">
+                      Counterparty: <strong className="text-zinc-200">{deal.partner.name}</strong> ({deal.partner.role})
                     </p>
                   </div>
                 </div>
 
-                <div style={{ display: "flex", alignItems: "center", gap: "20px", flexShrink: 0 }}>
-                  <div style={{ textAlign: "right" }}>
-                    <p style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: "800", textTransform: "uppercase", margin: 0 }}>Escrow Amount</p>
-                    <p style={{ fontSize: "22px", fontWeight: "900", color: isDone ? "#10b981" : "var(--accent-cyan)", margin: 0 }}>${deal.amount.toLocaleString()}</p>
+                <div className="flex items-center gap-4 shrink-0">
+                  <div className="text-right">
+                    <p className="text-[10px] text-zinc-500 font-medium uppercase">Amount</p>
+                    <p className={`text-lg font-bold ${isDone ? "text-emerald-400" : "text-white"}`}>${deal.amount.toLocaleString()}</p>
                   </div>
 
                   {!isDone && (
                     <button
                       onClick={() => releaseEscrow(deal.id)}
-                      style={{
-                        background: "linear-gradient(135deg, #10b981, #059669)",
-                        color: "#ffffff",
-                        border: "none",
-                        borderRadius: "12px",
-                        padding: "12px 20px",
-                        fontSize: "12px",
-                        fontWeight: "900",
-                        cursor: "pointer",
-                        boxShadow: "0 0 15px rgba(16, 185, 129, 0.3)",
-                      }}
+                      className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-colors cursor-pointer"
                     >
                       Release to Seller ✓
                     </button>
@@ -224,45 +172,28 @@ export default function VaultPage() {
         </div>
       </div>
 
-      {/* ── 1-Click Creator Micro-Tipping Simulator ───────────────── */}
-      <div
-        style={{
-          backgroundColor: "var(--bg-card)",
-          border: "1px solid var(--border-subtle)",
-          borderRadius: "20px",
-          padding: "24px",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: "24px",
-          flexWrap: "wrap",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-          <div style={{ height: "46px", width: "46px", borderRadius: "14px", background: "linear-gradient(135deg, #ec4899, #6366f1)", display: "flex", alignItems: "center", justifyContent: "center", color: "#ffffff" }}>
-            <Heart size={22} fill="#ffffff" />
+      {/* ── Creator Micro-Tipping ─────────────────────────────────── */}
+      <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-5 flex justify-between items-center gap-4 flex-wrap">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400">
+            <Heart size={18} />
           </div>
           <div>
-            <h3 style={{ fontSize: "15px", fontWeight: "900", color: "var(--text-pure)", margin: 0 }}>1-Click Creator Micro-Tipping</h3>
-            <p style={{ fontSize: "12px", color: "var(--text-secondary)", margin: "2px 0 0 0" }}>Support independent creators with instant zero-fee tips.</p>
+            <h3 className="text-sm font-semibold text-white">Creator Appreciation Tipping</h3>
+            <p className="text-xs text-zinc-400">Support independent community creators with direct tips.</p>
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <div className="flex items-center gap-2">
           {[1, 5, 25, 100].map((amt) => (
             <button
               key={amt}
               onClick={() => setSelectedTip(amt)}
-              style={{
-                padding: "8px 16px",
-                borderRadius: "10px",
-                fontSize: "12px",
-                fontWeight: selectedTip === amt ? "900" : "700",
-                backgroundColor: selectedTip === amt ? "#ec4899" : "var(--bg-input)",
-                color: selectedTip === amt ? "#ffffff" : "var(--text-pure)",
-                border: "1px solid var(--border-subtle)",
-                cursor: "pointer",
-              }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer border ${
+                selectedTip === amt
+                  ? "bg-white text-zinc-950 font-semibold border-white"
+                  : "bg-zinc-800 text-zinc-300 border-zinc-700 hover:bg-zinc-700"
+              }`}
             >
               ${amt}
             </button>
@@ -270,19 +201,9 @@ export default function VaultPage() {
 
           <button
             onClick={sendTip}
-            style={{
-              background: "linear-gradient(135deg, #ec4899, #db2777)",
-              color: "#ffffff",
-              border: "none",
-              borderRadius: "10px",
-              padding: "10px 20px",
-              fontSize: "12px",
-              fontWeight: "900",
-              cursor: "pointer",
-              boxShadow: "0 0 15px rgba(236, 72, 153, 0.35)",
-            }}
+            className="px-4 py-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-950 text-xs font-semibold transition-colors cursor-pointer ml-1 shadow-xs"
           >
-            {tipSuccess ? "Tip Sent! 💖✨" : `Send $${selectedTip} Tip`}
+            {tipSuccess ? "Tip Sent! ✓" : `Send $${selectedTip}`}
           </button>
         </div>
       </div>

@@ -129,63 +129,63 @@ export default function MissionControlPage() {
   const filteredApps = APPS.filter(a => filter === "all" || a.cat === filter);
 
   return (
-    <div style={{ minHeight: "100vh", background: "#05080c", color: "#e2e8f0", fontFamily: "monospace", padding: "24px" }}>
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 p-6 md:p-10 flex flex-col">
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #1e293b", paddingBottom: "16px", marginBottom: "24px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <span style={{ fontSize: "24px" }}>🚀</span>
+      <div className="flex justify-between items-center border-b border-zinc-800 pb-5 mb-6 flex-wrap gap-4">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-lg">
+            🚀
+          </div>
           <div>
-            <h1 style={{ fontSize: "20px", fontWeight: "900", color: "#00ff88", margin: 0, letterSpacing: "2px" }}>ÆGIS · MISSION CONTROL</h1>
-            <div style={{ fontSize: "11px", color: "#64748b" }}>Unified Security Operations & Autonomous Pentest Fleet</div>
+            <h1 className="text-xl font-bold text-white tracking-tight">Mission Control Launchpad</h1>
+            <div className="text-xs text-zinc-400">Expedite Consults Platform Gateway & Service Registry</div>
           </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <Link href="/" style={{ color: "#38bdf8", textDecoration: "none", fontSize: "12px", border: "1px solid #0284c7", padding: "6px 12px", borderRadius: "6px" }}>
-            ← Back to Portal
+        <div className="flex items-center gap-3">
+          <Link
+            href="/feed"
+            className="text-xs font-semibold text-zinc-300 hover:text-white bg-zinc-900 border border-zinc-800 px-3.5 py-1.5 rounded-xl transition"
+          >
+            ← Back to Feed
           </Link>
-          <span style={{ color: "#10b981", fontSize: "11px", background: "rgba(16,185,129,0.15)", padding: "4px 10px", borderRadius: "20px", border: "1px solid rgba(16,185,129,0.3)" }}>
-            ● FLEET ONLINE
+          <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 rounded-full flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            All Services Online
           </span>
         </div>
       </div>
 
       {/* Hero Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "12px", marginBottom: "24px" }}>
-        <div style={{ background: "rgba(15,23,42,0.8)", border: "1px solid #1e293b", borderRadius: "8px", padding: "12px 16px" }}>
-          <div style={{ fontSize: "10px", color: "#64748b", fontWeight: "bold" }}>TOTAL FLEET SERVICES</div>
-          <div style={{ fontSize: "22px", fontWeight: "900", color: "#ffffff", marginTop: "4px" }}>12</div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+        <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4">
+          <div className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider">Total Services</div>
+          <div className="text-2xl font-bold text-white mt-1">12</div>
         </div>
-        <div style={{ background: "rgba(15,23,42,0.8)", border: "1px solid #1e293b", borderRadius: "8px", padding: "12px 16px" }}>
-          <div style={{ fontSize: "10px", color: "#64748b", fontWeight: "bold" }}>ONLINE SERVICES</div>
-          <div style={{ fontSize: "22px", fontWeight: "900", color: "#00ff88", marginTop: "4px" }}>12</div>
+        <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4">
+          <div className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider">Active Services</div>
+          <div className="text-2xl font-bold text-emerald-400 mt-1">12</div>
         </div>
-        <div style={{ background: "rgba(15,23,42,0.8)", border: "1px solid #1e293b", borderRadius: "8px", padding: "12px 16px" }}>
-          <div style={{ fontSize: "10px", color: "#64748b", fontWeight: "bold" }}>OFFLINE</div>
-          <div style={{ fontSize: "22px", fontWeight: "900", color: "#64748b", marginTop: "4px" }}>0</div>
+        <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4">
+          <div className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider">Maintenance</div>
+          <div className="text-2xl font-bold text-zinc-500 mt-1">0</div>
         </div>
-        <div style={{ background: "rgba(15,23,42,0.8)", border: "1px solid #1e293b", borderRadius: "8px", padding: "12px 16px" }}>
-          <div style={{ fontSize: "10px", color: "#64748b", fontWeight: "bold" }}>ENTERPRISE MODULES</div>
-          <div style={{ fontSize: "22px", fontWeight: "900", color: "#38bdf8", marginTop: "4px" }}>68+</div>
+        <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4">
+          <div className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider">Security Modules</div>
+          <div className="text-2xl font-bold text-zinc-200 mt-1">68+</div>
         </div>
       </div>
 
       {/* Filter Tabs */}
-      <div style={{ display: "flex", gap: "8px", marginBottom: "20px", flexWrap: "wrap" }}>
+      <div className="flex gap-2 mb-6 flex-wrap">
         {["all", "gateway", "offence", "defence", "governance", "admin"].map(cat => (
           <button
             key={cat}
             onClick={() => setFilter(cat)}
-            style={{
-              background: filter === cat ? "#00ff88" : "rgba(30,41,59,0.5)",
-              color: filter === cat ? "#05080c" : "#94a3b8",
-              border: "1px solid #334155",
-              borderRadius: "6px",
-              padding: "6px 14px",
-              fontSize: "11px",
-              fontWeight: "bold",
-              cursor: "pointer",
-              textTransform: "uppercase"
-            }}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition capitalize ${
+              filter === cat
+                ? "bg-white text-zinc-950 shadow-sm"
+                : "bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200"
+            }`}
           >
             {cat}
           </button>
@@ -193,49 +193,38 @@ export default function MissionControlPage() {
       </div>
 
       {/* Grid of Cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "16px" }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 flex-1">
         {filteredApps.map(app => (
           <a
             key={app.id}
             href={app.targetUrl}
             target="_blank"
             rel="noopener noreferrer"
-            style={{
-              textDecoration: "none",
-              color: "inherit",
-              background: "rgba(11, 18, 32, 0.9)",
-              border: `1px solid ${app.color}44`,
-              borderTop: `3px solid ${app.color}`,
-              borderRadius: "10px",
-              padding: "16px",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-              transition: "transform 0.2s, box-shadow 0.2s",
-            }}
+            className="bg-zinc-900/60 border border-zinc-800 hover:border-zinc-700 rounded-2xl p-5 flex flex-col justify-between transition group"
           >
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-                <span style={{ fontSize: "20px" }}>{app.icon}</span>
-                <span style={{ fontSize: "9px", color: "#10b981", background: "rgba(16,185,129,0.15)", padding: "2px 8px", borderRadius: "10px", fontWeight: "bold" }}>
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-2xl">{app.icon}</span>
+                <span className="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full font-semibold">
                   ONLINE
                 </span>
               </div>
-              <div style={{ fontSize: "14px", fontWeight: "bold", color: "#ffffff", marginBottom: "4px" }}>{app.label}</div>
-              <div style={{ fontSize: "10px", color: app.color, marginBottom: "8px" }}>:{app.port}</div>
-              <div style={{ fontSize: "11px", color: "#94a3b8", lineHeight: "1.5", marginBottom: "12px" }}>{app.desc}</div>
+              <div className="text-sm font-bold text-white group-hover:text-zinc-200 transition-colors mb-1">{app.label}</div>
+              <div className="text-[11px] text-zinc-500 font-mono mb-2">Port :{app.port}</div>
+              <div className="text-xs text-zinc-400 leading-relaxed mb-4">{app.desc}</div>
             </div>
 
             <div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "12px" }}>
+              <div className="flex flex-wrap gap-1.5 mb-3">
                 {app.chips.map(chip => (
-                  <span key={chip} style={{ fontSize: "9px", color: "#cbd5e1", background: "#1e293b", padding: "2px 6px", borderRadius: "4px" }}>
+                  <span key={chip} className="text-[10px] text-zinc-400 bg-zinc-800 border border-zinc-700/60 px-2 py-0.5 rounded-md font-medium">
                     {chip}
                   </span>
                 ))}
               </div>
-              <div style={{ color: "#00ff88", fontSize: "11px", fontWeight: "bold", textAlign: "right" }}>
-                LAUNCH ↗
+              <div className="text-xs font-semibold text-zinc-300 group-hover:text-white flex items-center justify-end gap-1 transition">
+                <span>Launch</span>
+                <span>↗</span>
               </div>
             </div>
           </a>
@@ -243,9 +232,9 @@ export default function MissionControlPage() {
       </div>
 
       {/* Footer */}
-      <div style={{ marginTop: "40px", borderTop: "1px solid #1e293b", paddingTop: "16px", display: "flex", justifyContent: "space-between", fontSize: "10px", color: "#64748b" }}>
-        <div>ÆGIS MISSION CONTROL · SECURITY OPERATIONS CENTER</div>
-        <div>{time || "UTC"}</div>
+      <div className="mt-10 border-t border-zinc-800 pt-4 flex justify-between items-center text-xs text-zinc-500 flex-wrap gap-2">
+        <div>Expedite Consults · Mission Control & Operations Gateway</div>
+        <div className="font-mono">{time || "UTC"}</div>
       </div>
     </div>
   );

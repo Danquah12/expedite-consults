@@ -73,29 +73,29 @@ export default function VeritasLensStudioPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#08090d] text-white p-6 md:p-10 flex flex-col items-center">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 p-6 md:p-10 flex flex-col items-center">
       {/* ── Top Header ────────────────────────────────────────────── */}
-      <div className="w-full max-w-5xl flex items-center justify-between border-b border-[#1c202e] pb-6 mb-8">
+      <div className="w-full max-w-5xl flex items-center justify-between border-b border-zinc-800 pb-6 mb-8">
         <div className="flex items-center gap-3">
-          <div className="h-11 w-11 rounded-2xl bg-[#00d4ff] flex items-center justify-center text-[#08090d] shadow-[0_0_20px_rgba(0,212,255,0.4)]">
-            <ShieldCheck size={26} strokeWidth={2.5} />
+          <div className="h-11 w-11 rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white">
+            <ShieldCheck size={22} className="text-zinc-200" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-black text-white tracking-tight">VeritasLens Intelligence Studio</h1>
-              <span className="text-[10px] font-black text-[#00d4ff] bg-[#00d4ff]/15 px-2 py-0.5 rounded-full border border-[#00d4ff]/30">
-                PROVENANCE CORE
+              <h1 className="text-xl font-bold text-white tracking-tight">VeritasLens Content Verification</h1>
+              <span className="text-[11px] font-semibold text-zinc-300 bg-zinc-800 px-2.5 py-0.5 rounded-full border border-zinc-700">
+                Fact Check & Media Analysis
               </span>
             </div>
-            <p className="text-xs text-[#94a3b8]">Real-time deepfake detection, synthetic artifact scanning & fact-checking</p>
+            <p className="text-xs text-zinc-400 mt-0.5">Detect synthetic media, inspect image provenance, and verify claims</p>
           </div>
         </div>
 
         <Link
           href="/feed"
-          className="text-xs font-bold text-[#00d4ff] hover:underline flex items-center gap-1"
+          className="text-xs font-semibold text-zinc-300 hover:text-white flex items-center gap-1 bg-zinc-900 border border-zinc-800 px-3.5 py-1.5 rounded-xl transition"
         >
-          Return to Sphera →
+          ← Back to Feed
         </Link>
       </div>
 
@@ -103,36 +103,36 @@ export default function VeritasLensStudioPage() {
       <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Column: Input Form & Sample Targets (5 cols) */}
         <div className="lg:col-span-5 space-y-6">
-          <div className="bg-[#10121a] border border-[#1c202e] rounded-3xl p-6 space-y-4 shadow-xl">
-            <h2 className="text-sm font-black text-white flex items-center gap-2">
-              <Search size={16} className="text-[#00d4ff]" />
-              Target Inspection Workbench
+          <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-6 space-y-4">
+            <h2 className="text-sm font-bold text-white flex items-center gap-2">
+              <Search size={16} className="text-zinc-400" />
+              Content Inspector
             </h2>
 
             {/* Media URL Input */}
             <div>
-              <label className="block text-xs font-bold text-[#9ca3af] mb-1.5">
+              <label className="block text-xs font-semibold text-zinc-400 mb-1.5">
                 Image or Media URL
               </label>
               <input
                 value={inputUrl}
                 onChange={(e) => setInputUrl(e.target.value)}
                 placeholder="https://.../photo.jpg"
-                className="w-full h-10 px-3.5 rounded-xl border border-[#1c202e] bg-[#161924] text-xs text-white placeholder:text-[#64748b] focus:outline-none focus:border-[#00d4ff]"
+                className="w-full h-10 px-3.5 rounded-xl border border-zinc-800 bg-zinc-900 text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-zinc-500"
               />
             </div>
 
             {/* Claim Text Input */}
             <div>
-              <label className="block text-xs font-bold text-[#9ca3af] mb-1.5">
+              <label className="block text-xs font-semibold text-zinc-400 mb-1.5">
                 Claim Text or Statement
               </label>
               <textarea
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                placeholder="Paste any factual claim or caption to cross-examine..."
+                placeholder="Paste any factual claim or caption to verify..."
                 rows={3}
-                className="w-full p-3 rounded-xl border border-[#1c202e] bg-[#161924] text-xs text-white placeholder:text-[#64748b] focus:outline-none focus:border-[#00d4ff] resize-none"
+                className="w-full p-3 rounded-xl border border-zinc-800 bg-zinc-900 text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-zinc-500 resize-none"
               />
             </div>
 
@@ -140,23 +140,23 @@ export default function VeritasLensStudioPage() {
             <button
               onClick={() => handleScan()}
               disabled={(!inputUrl.trim() && !inputText.trim()) || scanMutation.isPending}
-              className="w-full h-11 rounded-2xl bg-gradient-to-tr from-[#00d4ff] to-[#0284c7] text-[#08090d] text-xs font-black flex items-center justify-center gap-2 disabled:opacity-40 hover:scale-[1.01] transition-transform shadow-[0_0_20px_rgba(0,212,255,0.3)]"
+              className="w-full h-11 rounded-xl bg-white text-zinc-950 text-xs font-semibold flex items-center justify-center gap-2 disabled:opacity-40 hover:bg-zinc-200 transition cursor-pointer"
             >
               {scanMutation.isPending ? (
-                <Loader2 size={16} className="animate-spin text-[#08090d]" />
+                <Loader2 size={16} className="animate-spin text-zinc-900" />
               ) : (
                 <>
                   <ShieldCheck size={16} />
-                  <span>Execute Neural & Cryptographic Scan</span>
+                  <span>Verify Content Authenticity</span>
                 </>
               )}
             </button>
           </div>
 
           {/* Sample Presets */}
-          <div className="bg-[#10121a] border border-[#1c202e] rounded-3xl p-6 space-y-3">
-            <h3 className="text-xs font-black text-[#9ca3af] uppercase tracking-wider">
-              Quick Test Verification Targets
+          <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-6 space-y-3">
+            <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+              Sample Verification Checks
             </h3>
             <div className="space-y-2">
               {sampleTargets.map((st, i) => (
@@ -167,13 +167,13 @@ export default function VeritasLensStudioPage() {
                     setInputText(st.claim);
                     handleScan(st.url, st.claim);
                   }}
-                  className="p-3 rounded-2xl bg-[#161924] border border-[#1c202e] hover:border-[#00d4ff] cursor-pointer transition-all flex items-center justify-between group"
+                  className="p-3 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 cursor-pointer transition flex items-center justify-between group"
                 >
                   <div>
-                    <p className="text-xs font-bold text-white group-hover:text-[#00d4ff]">{st.label}</p>
-                    <p className="text-[11px] text-[#64748b] line-clamp-1">{st.claim}</p>
+                    <p className="text-xs font-semibold text-zinc-200 group-hover:text-white">{st.label}</p>
+                    <p className="text-[11px] text-zinc-500 line-clamp-1">{st.claim}</p>
                   </div>
-                  <ArrowRight size={14} className="text-[#64748b] group-hover:text-[#00d4ff] transition-colors" />
+                  <ArrowRight size={14} className="text-zinc-500 group-hover:text-zinc-300 transition-colors shrink-0 ml-2" />
                 </div>
               ))}
             </div>
@@ -183,99 +183,99 @@ export default function VeritasLensStudioPage() {
         {/* Right Column: Telemetry & Results Display (7 cols) */}
         <div className="lg:col-span-7">
           {scanMutation.isPending && (
-            <div className="h-full min-h-[420px] bg-[#10121a] border border-[#1c202e] rounded-3xl p-8 flex flex-col items-center justify-center gap-4 text-center">
+            <div className="h-full min-h-[420px] bg-zinc-900/60 border border-zinc-800 rounded-2xl p-8 flex flex-col items-center justify-center gap-4 text-center">
               <div className="relative">
-                <div className="h-20 w-20 rounded-full border-4 border-[#00d4ff]/20 border-t-[#00d4ff] animate-spin" />
-                <Activity size={28} className="text-[#00d4ff] absolute inset-0 m-auto" />
+                <div className="h-16 w-16 rounded-full border-2 border-zinc-700 border-t-white animate-spin" />
+                <Activity size={22} className="text-zinc-400 absolute inset-0 m-auto" />
               </div>
               <div>
-                <h3 className="text-sm font-black text-white">Analyzing Neural Boundary Frequencies</h3>
-                <p className="text-xs text-[#94a3b8] mt-1">Cross-referencing C2PA hardware provenance enclave...</p>
+                <h3 className="text-sm font-semibold text-white">Analyzing Media & Claims</h3>
+                <p className="text-xs text-zinc-400 mt-1">Checking metadata signatures and factual references...</p>
               </div>
             </div>
           )}
 
           {!scanResult && !scanMutation.isPending && (
-            <div className="h-full min-h-[420px] bg-[#10121a] border border-[#1c202e] rounded-3xl p-8 flex flex-col items-center justify-center gap-3 text-center">
-              <ShieldCheck size={48} className="text-[#64748b]" />
-              <h3 className="text-sm font-bold text-white">No Target Inspected Yet</h3>
-              <p className="text-xs text-[#64748b] max-w-sm">
-                Select a preset or enter a media URL to view synthetic artifact telemetry and provenance verification certificates.
+            <div className="h-full min-h-[420px] bg-zinc-900/60 border border-zinc-800 rounded-2xl p-8 flex flex-col items-center justify-center gap-3 text-center">
+              <ShieldCheck size={44} className="text-zinc-600" />
+              <h3 className="text-sm font-semibold text-white">Ready to Inspect</h3>
+              <p className="text-xs text-zinc-400 max-w-sm">
+                Select a sample check or enter an image URL to inspect provenance, authenticity signals, and fact-checking status.
               </p>
             </div>
           )}
 
           {scanResult && !scanMutation.isPending && (
-            <div className="bg-[#10121a] border border-[#1c202e] rounded-3xl p-7 space-y-6 shadow-2xl animate-in fade-in duration-300">
+            <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-6 space-y-6">
               {/* Top Score Dashboard */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-[#161924] border border-[#1c202e] rounded-2xl p-5 text-center">
-                  <p className="text-[10px] text-[#64748b] font-black uppercase tracking-wider">Deepfake Risk Probability</p>
+                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
+                  <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider">Deepfake Probability</p>
                   <p
-                    className={`text-3xl font-black mt-1 ${
-                      scanResult.deepfakeProbability < 20 ? "text-[#10b981]" : "text-[#ef4444]"
+                    className={`text-2xl font-bold mt-1 ${
+                      scanResult.deepfakeProbability < 20 ? "text-emerald-400" : "text-rose-400"
                     }`}
                   >
                     {scanResult.deepfakeProbability.toFixed(1)}%
                   </p>
-                  <p className="text-[11px] text-[#9ca3af] mt-1">
-                    {scanResult.deepfakeProbability < 20 ? "Natural Optical Sensor" : "High GAN Synthesis Probability"}
+                  <p className="text-[11px] text-zinc-400 mt-1">
+                    {scanResult.deepfakeProbability < 20 ? "Likely Natural Media" : "Possible Synthetic Content"}
                   </p>
                 </div>
 
-                <div className="bg-[#161924] border border-[#1c202e] rounded-2xl p-5 text-center">
-                  <p className="text-[10px] text-[#64748b] font-black uppercase tracking-wider">Cryptographic Provenance</p>
-                  <p className="text-3xl font-black mt-1 text-[#00d4ff]">
+                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
+                  <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider">Provenance Match</p>
+                  <p className="text-2xl font-bold mt-1 text-white">
                     {scanResult.metadataIntegrity.toFixed(1)}%
                   </p>
-                  <p className="text-[11px] text-[#9ca3af] mt-1">C2PA Hardware Verified</p>
+                  <p className="text-[11px] text-zinc-400 mt-1">Integrity Score</p>
                 </div>
               </div>
 
               {/* Verdict Summary */}
               <div
-                className={`p-5 rounded-2xl border flex items-start gap-4 ${
+                className={`p-4 rounded-xl border flex items-start gap-3.5 ${
                   scanResult.isAuthentic
-                    ? "bg-[#10b981]/10 border-[#10b981]/30 text-[#10b981]"
-                    : "bg-[#ef4444]/10 border-[#ef4444]/30 text-[#ef4444]"
+                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                    : "bg-rose-500/10 border-rose-500/30 text-rose-300"
                 }`}
               >
-                {scanResult.isAuthentic ? <CheckCircle2 size={24} /> : <AlertTriangle size={24} />}
+                {scanResult.isAuthentic ? <CheckCircle2 size={20} className="shrink-0 mt-0.5" /> : <AlertTriangle size={20} className="shrink-0 mt-0.5" />}
                 <div>
-                  <h4 className="text-sm font-black">
+                  <h4 className="text-xs font-bold uppercase tracking-wide">
                     Verdict: {scanResult.factCheckStatus}
                   </h4>
-                  <p className="text-xs text-white/90 mt-1.5 leading-relaxed">
+                  <p className="text-xs text-zinc-200 mt-1 leading-relaxed">
                     {scanResult.claims[0]?.explanation}
                   </p>
-                  <p className="text-[11px] text-[#9ca3af] mt-2 font-mono">
+                  <p className="text-[11px] text-zinc-400 mt-2 font-mono">
                     Source: {scanResult.claims[0]?.source}
                   </p>
                 </div>
               </div>
 
               {/* Face-Mesh & Frequency Telemetry */}
-              <div className="bg-[#161924] border border-[#1c202e] rounded-2xl p-5 space-y-3">
-                <h4 className="text-xs font-bold text-white flex items-center gap-2">
-                  <Activity size={14} className="text-[#00d4ff]" />
-                  Neural & Optical Telemetry Breakdown
+              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
+                <h4 className="text-xs font-semibold text-white flex items-center gap-2">
+                  <Activity size={14} className="text-zinc-400" />
+                  Media Analysis Signals
                 </h4>
-                <div className="grid grid-cols-2 gap-2.5 text-xs text-[#cbd5e1]">
-                  <div className="p-2.5 rounded-xl bg-[#10121a] flex justify-between">
-                    <span className="text-[#9ca3af]">Frequency Purity:</span>
-                    <span className="font-mono font-bold text-white">{scanResult.faceMesh.frequencySpectrumPurity}%</span>
+                <div className="grid grid-cols-2 gap-2.5 text-xs text-zinc-300">
+                  <div className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 flex justify-between items-center">
+                    <span className="text-zinc-400">Spectrum Score:</span>
+                    <span className="font-mono font-semibold text-white">{scanResult.faceMesh.frequencySpectrumPurity}%</span>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-[#10121a] flex justify-between">
-                    <span className="text-[#9ca3af]">Lighting Consistency:</span>
-                    <span className="font-bold text-[#10b981]">{scanResult.faceMesh.lightingConsistent ? "Passed ✓" : "Failed ✗"}</span>
+                  <div className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 flex justify-between items-center">
+                    <span className="text-zinc-400">Lighting Consistency:</span>
+                    <span className="font-semibold text-emerald-400">{scanResult.faceMesh.lightingConsistent ? "Normal ✓" : "Inconsistent ✗"}</span>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-[#10121a] flex justify-between">
-                    <span className="text-[#9ca3af]">Micro-Blink Normalcy:</span>
-                    <span className="font-bold text-[#10b981]">{scanResult.faceMesh.blinkRateNormal ? "Passed ✓" : "Failed ✗"}</span>
+                  <div className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 flex justify-between items-center">
+                    <span className="text-zinc-400">Micro-Dynamics:</span>
+                    <span className="font-semibold text-emerald-400">{scanResult.faceMesh.blinkRateNormal ? "Natural ✓" : "Abnormal ✗"}</span>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-[#10121a] flex justify-between">
-                    <span className="text-[#9ca3af]">Boundary Artifacts:</span>
-                    <span className={`font-bold ${scanResult.faceMesh.anomalyDetected ? "text-[#ef4444]" : "text-[#10b981]"}`}>
+                  <div className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 flex justify-between items-center">
+                    <span className="text-zinc-400">Boundary Artifacts:</span>
+                    <span className={`font-semibold ${scanResult.faceMesh.anomalyDetected ? "text-rose-400" : "text-emerald-400"}`}>
                       {scanResult.faceMesh.anomalyDetected ? "Detected" : "None"}
                     </span>
                   </div>
@@ -283,15 +283,15 @@ export default function VeritasLensStudioPage() {
               </div>
 
               {/* Digital Certificate Seal */}
-              <div className="p-4 bg-[#0d0f17] border border-[#00d4ff]/30 rounded-2xl flex items-center justify-between flex-wrap gap-2">
+              <div className="p-3.5 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-2">
-                  <Lock size={15} className="text-[#00d4ff]" />
-                  <span className="text-xs font-mono text-[#00d4ff]">
-                    Certificate Hash: {scanResult.signatureHash}
+                  <Lock size={14} className="text-zinc-400" />
+                  <span className="text-[11px] font-mono text-zinc-300">
+                    Hash: {scanResult.signatureHash}
                   </span>
                 </div>
-                <span className="text-[10px] text-[#64748b] font-mono">
-                  Timestamp: {new Date(scanResult.scannedAt).toLocaleTimeString()}
+                <span className="text-[10px] text-zinc-500 font-mono">
+                  Scanned: {new Date(scanResult.scannedAt).toLocaleTimeString()}
                 </span>
               </div>
             </div>
