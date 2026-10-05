@@ -115,12 +115,12 @@ export function AlgorithmPreferencesModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-800 bg-zinc-900/60 shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-100">
-              <Sliders className="w-4 h-4 text-zinc-300" />
+            <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+              <Sliders className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white">Feed Preferences</h3>
-              <p className="text-[11px] text-zinc-400">Control what topics appear most in your feed</p>
+              <h3 className="text-sm font-black text-white">Sovereign Algorithm Preferences</h3>
+              <p className="text-[11px] text-zinc-400">Directly weight what SpheraNet ranks on your feed</p>
             </div>
           </div>
           <button
@@ -134,25 +134,25 @@ export function AlgorithmPreferencesModal({
         {/* Content */}
         <div className="p-6 space-y-6 overflow-y-auto flex-1">
           {savedSuccess && (
-            <div className="p-3 bg-zinc-800 border border-zinc-700 rounded-2xl text-zinc-200 font-medium text-xs flex items-center gap-2">
-              <Check className="w-4 h-4 text-emerald-400" />
-              <span>Preferences saved successfully!</span>
+            <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl text-emerald-400 font-bold text-xs flex items-center gap-2 animate-bounce">
+              <Check className="w-4 h-4" />
+              <span>Algorithm weights saved to PostgreSQL sovereign profile!</span>
             </div>
           )}
 
           {/* Topic Sliders */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase text-zinc-300 tracking-wider">Topic Interest</span>
-              <span className="text-[11px] text-zinc-400 font-medium">0% (Hidden) to 100% (High Priority)</span>
+              <span className="text-xs font-black uppercase text-zinc-300 tracking-wider">Topic Interest Weights</span>
+              <span className="text-[11px] text-cyan-400 font-semibold">0% (Hidden) to 100% (High Priority)</span>
             </div>
 
             <div className="space-y-4 bg-zinc-900/50 p-4 rounded-2xl border border-zinc-800">
               {Object.entries(controls.topicSliders).map(([topic, value]) => (
                 <div key={topic} className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-zinc-200">{topic}</span>
-                    <span className="font-mono font-bold text-zinc-300">{value}%</span>
+                    <span className="font-bold text-zinc-200">{topic}</span>
+                    <span className="font-mono font-black text-cyan-400">{value}%</span>
                   </div>
                   <input
                     type="range"
@@ -160,7 +160,7 @@ export function AlgorithmPreferencesModal({
                     max="100"
                     value={value}
                     onChange={(e) => handleSliderChange(topic, parseInt(e.target.value))}
-                    className="w-full accent-zinc-200 bg-zinc-800 h-2 rounded-lg cursor-pointer"
+                    className="w-full accent-cyan-500 bg-zinc-800 h-2 rounded-lg cursor-pointer"
                   />
                 </div>
               ))}
@@ -169,24 +169,24 @@ export function AlgorithmPreferencesModal({
 
           {/* Engagement Threshold */}
           <div className="space-y-2">
-            <span className="text-xs font-semibold uppercase text-zinc-300 tracking-wider">Feed Discovery Mode</span>
+            <span className="text-xs font-black uppercase text-zinc-300 tracking-wider">Feed Discovery Mode</span>
             <div className="grid grid-cols-3 gap-2">
               {[
-                { key: "balanced", label: "Balanced", desc: "Equal mix of friends & campus discovery" },
-                { key: "viral_only", label: "Trending", desc: "Top campus posts and highlights" },
-                { key: "niche_specialized", label: "Focused", desc: "Specialized student discussions & projects" },
+                { key: "balanced", label: "⚖️ Balanced", desc: "Equal mix of friends & discovery" },
+                { key: "viral_only", label: "🔥 Top Trending", desc: "Collegiate high-velocity posts" },
+                { key: "niche_specialized", label: "🎯 Deep Niche", desc: "Specialized research & hackathons" },
               ].map((mode) => (
                 <button
                   key={mode.key}
                   onClick={() => setControls((p) => ({ ...p, engagementThreshold: mode.key as any }))}
                   className={`p-3 rounded-2xl border text-left transition flex flex-col gap-1 ${
                     controls.engagementThreshold === mode.key
-                      ? "bg-zinc-800 border-zinc-500 text-white font-semibold"
+                      ? "bg-cyan-500/10 border-cyan-500 text-white"
                       : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200"
                   }`}
                 >
-                  <span className="text-xs font-bold">{mode.label}</span>
-                  <span className="text-[10px] text-zinc-400 leading-tight">{mode.desc}</span>
+                  <span className="text-xs font-black">{mode.label}</span>
+                  <span className="text-[10px] text-zinc-500 leading-tight">{mode.desc}</span>
                 </button>
               ))}
             </div>
@@ -197,25 +197,25 @@ export function AlgorithmPreferencesModal({
         <div className="px-6 py-4 border-t border-zinc-800 bg-zinc-900/60 flex items-center justify-between shrink-0">
           <button
             onClick={handleReset}
-            className="flex items-center gap-1.5 text-xs font-medium text-zinc-400 hover:text-white transition"
+            className="flex items-center gap-1.5 text-xs font-bold text-zinc-400 hover:text-white transition"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            <span>Reset to default</span>
+            <span>Reset to Default</span>
           </button>
 
           <div className="flex items-center gap-3">
             <button
               onClick={onClose}
-              className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl text-xs font-semibold transition"
+              className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl text-xs font-bold transition"
             >
               Cancel
             </button>
             <button
               disabled={isSaving}
               onClick={handleSave}
-              className="px-5 py-2 bg-white text-zinc-950 font-semibold hover:bg-zinc-200 rounded-xl text-xs transition flex items-center gap-2"
+              className="px-5 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-cyan-500/20 flex items-center gap-2"
             >
-              {isSaving ? "Saving..." : "Save Preferences"}
+              {isSaving ? "Saving..." : "Apply Preferences"}
             </button>
           </div>
         </div>

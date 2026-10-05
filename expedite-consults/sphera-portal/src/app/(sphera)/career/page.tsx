@@ -105,63 +105,168 @@ export default function CareerPage() {
   };
 
   return (
-    <div className="w-full flex flex-col gap-6 pb-12">
+    <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "28px", paddingBottom: "48px" }}>
       {/* ── Career Header ─────────────────────────────────────────── */}
-      <div className="rounded-2xl p-6 sm:p-8 bg-zinc-900/60 border border-zinc-800 flex justify-between items-center gap-6 flex-wrap">
-        <div className="flex flex-col gap-2 max-w-xl">
-          <div className="flex gap-2 items-center">
-            <span className="bg-zinc-800 text-zinc-300 border border-zinc-700 rounded-full px-2.5 py-0.5 text-[11px] font-semibold">
-              Opportunities & Careers
+      <div
+        style={{
+          borderRadius: "24px",
+          padding: "32px",
+          background: "linear-gradient(135deg, rgba(0, 212, 255, 0.12) 0%, rgba(16, 18, 26, 0.9) 60%, var(--bg-core) 100%)",
+          border: "1px solid rgba(0, 212, 255, 0.25)",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: "24px",
+          flexWrap: "wrap",
+        }}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxWidth: "680px" }}>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            <span style={{ backgroundColor: "rgba(0,212,255,0.15)", color: "var(--accent-cyan)", border: "1px solid rgba(0,212,255,0.3)", borderRadius: "9999px", padding: "3px 10px", fontSize: "10px", fontWeight: "900" }}>
+              CONNECTIN CAREER MATRIX
             </span>
-            <span className="text-xs text-zinc-400 font-medium">· Verified Student & Professional Network</span>
+            <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>· Skill Passport Cryptographically Verified</span>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-            Discover Roles, Internships & <span className="text-zinc-100 underline decoration-zinc-600 underline-offset-4">Bounties</span>
+          <h1 style={{ fontSize: "26px", fontWeight: "900", color: "var(--text-pure)", margin: 0, lineHeight: "1.2" }}>
+            High-Impact Tech, Defense Bounties & <span style={{ color: "var(--accent-cyan)" }}>Cleared Careers</span>
           </h1>
 
-          <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-            Connect directly with verified teams, apply with your portfolio, and discover high-impact roles matching your expertise.
+          <p style={{ fontSize: "13px", color: "var(--text-secondary)", lineHeight: "1.6", margin: 0 }}>
+            Instant AI algorithmic matching with 90%+ clearance compatibility and 1-click encrypted talent escrow applications.
           </p>
         </div>
 
-        <button className="bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 text-xs font-semibold rounded-xl px-4 py-2 flex items-center gap-2 transition-colors cursor-pointer">
-          <ShieldCheck size={16} className="text-emerald-400" />
-          <span>View Verified Profile</span>
+        <button
+          style={{
+            backgroundColor: "var(--bg-input)",
+            border: "1px solid var(--border-subtle)",
+            color: "var(--text-pure)",
+            borderRadius: "12px",
+            padding: "10px 18px",
+            fontSize: "12px",
+            fontWeight: "800",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          }}
+        >
+          <ShieldCheck size={16} color="var(--accent-cyan)" /> View Verified Skill Passport
+        </button>
+      </div>
+
+      {/* ── Skill Passport Match Score Meter ──────────────────────── */}
+      <div
+        style={{
+          backgroundColor: "var(--bg-card)",
+          border: "1px solid var(--border-subtle)",
+          borderRadius: "20px",
+          padding: "20px 24px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: "20px",
+          flexWrap: "wrap",
+          boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <div
+            style={{
+              height: "48px",
+              width: "48px",
+              borderRadius: "14px",
+              background: "linear-gradient(135deg, #00d4ff, #6366f1)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#08090d",
+            }}
+          >
+            <Sparkles size={22} />
+          </div>
+
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ fontSize: "15px", fontWeight: "900", color: "var(--text-pure)" }}>Your Skill Passport Match Score: 98%</span>
+              <span style={{ fontSize: "9px", fontWeight: "900", color: "#10b981", backgroundColor: "rgba(16,185,129,0.15)", padding: "2px 6px", borderRadius: "6px" }}>
+                TOP 1% CANDIDATE
+              </span>
+            </div>
+            <p style={{ fontSize: "12px", color: "var(--text-secondary)", margin: "2px 0 0 0" }}>
+              Your verified background in Zero-Trust, Next.js, and AppSec automatically unlocks Tier-1 enterprise bounties.
+            </p>
+          </div>
+        </div>
+
+        <button
+          style={{
+            background: "linear-gradient(135deg, #00d4ff, #0284c7)",
+            color: "#08090d",
+            border: "none",
+            borderRadius: "10px",
+            padding: "8px 18px",
+            fontSize: "12px",
+            fontWeight: "900",
+            cursor: "pointer",
+          }}
+        >
+          Export Passport
         </button>
       </div>
 
       {/* ── Search & Filter Controls ──────────────────────────────── */}
-      <div className="flex gap-3 flex-wrap items-center justify-between">
-        <div className="flex-1 min-w-[260px] relative">
-          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
-          <input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by role, company, skills, or location..."
-            className="w-full h-10 pl-10 pr-4 rounded-xl border border-zinc-800 bg-zinc-900/80 text-white text-xs placeholder:text-zinc-500 focus:outline-none focus:border-zinc-600 transition-all"
-          />
-        </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+        <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+          {/* Search Input */}
+          <div style={{ position: "relative", flex: 1, minWidth: "280px" }}>
+            <Search size={16} color="var(--accent-cyan)" style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)" }} />
+            <input
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Search by role, company, clearance, or specific skills..."
+              style={{
+                width: "100%",
+                backgroundColor: "var(--bg-card)",
+                border: "1px solid var(--border-subtle)",
+                borderRadius: "14px",
+                padding: "12px 16px 12px 42px",
+                color: "var(--text-pure)",
+                fontSize: "13px",
+                outline: "none",
+                boxSizing: "border-box",
+              }}
+            />
+          </div>
 
-        <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
-          {["All Roles", "Full-Time", "Contract", "Defense Bounty", "Remote"].map((f) => (
-            <button
-              key={f}
-              onClick={() => setSelectedFilter(f)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
-                selectedFilter === f
-                  ? "bg-white text-zinc-950 font-semibold shadow-xs"
-                  : "bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white hover:bg-zinc-800"
-              }`}
-            >
-              {f}
-            </button>
-          ))}
+          {/* Filter Pills */}
+          <div style={{ display: "flex", gap: "8px", overflowX: "auto" }}>
+            {["All Roles", "Full-Time", "Contract", "Defense Bounty", "Remote"].map((f) => (
+              <button
+                key={f}
+                onClick={() => setSelectedFilter(f)}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: "12px",
+                  fontSize: "12px",
+                  fontWeight: selectedFilter === f ? "900" : "600",
+                  backgroundColor: selectedFilter === f ? "var(--accent-cyan)" : "var(--bg-card)",
+                  color: selectedFilter === f ? "#08090d" : "var(--text-secondary)",
+                  border: "1px solid var(--border-subtle)",
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* ── Job & Bounty Cards List ───────────────────────────────── */}
-      <div className="flex flex-col gap-4">
+      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
         {mockJobs.map((job) => {
           const isApplied = !!appliedJobs[job.id];
           const isSaved = !!savedJobs[job.id];
@@ -169,53 +274,72 @@ export default function CareerPage() {
           return (
             <div
               key={job.id}
-              className="bg-zinc-900/40 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-5 flex flex-col gap-4 transition-all shadow-xs"
+              style={{
+                backgroundColor: "var(--bg-card)",
+                border: job.featured ? "1px solid rgba(0, 212, 255, 0.3)" : "1px solid var(--border-subtle)",
+                borderRadius: "20px",
+                padding: "24px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "16px",
+                boxShadow: "0 10px 30px rgba(0,0,0,0.25)",
+                transition: "all 0.15s ease",
+              }}
             >
               {/* Header Row */}
-              <div className="flex justify-between items-start gap-4 flex-wrap">
-                <div className="flex gap-3.5 flex-1 min-w-[280px]">
-                  <div className="h-12 w-12 rounded-xl overflow-hidden border border-zinc-800 bg-zinc-900 shrink-0">
-                    <img src={job.company.logo} alt={job.company.name} className="w-full h-full object-cover" />
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px", flexWrap: "wrap" }}>
+                <div style={{ display: "flex", gap: "14px", flex: 1, minWidth: "280px" }}>
+                  <div style={{ height: "48px", width: "48px", borderRadius: "14px", overflow: "hidden", border: "1px solid var(--border-subtle)", flexShrink: 0 }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={job.company.logo} alt={job.company.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   </div>
 
                   <div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-sm sm:text-base font-semibold text-white">
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                      <h3 style={{ fontSize: "15px", fontWeight: "900", color: "var(--text-pure)", margin: 0 }}>
                         {job.title}
                       </h3>
                       {job.featured && (
-                        <span className="text-[10px] font-semibold text-sky-400 bg-sky-500/10 border border-sky-500/20 px-2 py-0.5 rounded-md">
-                          Featured
+                        <span style={{ fontSize: "9px", fontWeight: "900", color: "#00d4ff", backgroundColor: "rgba(0,212,255,0.15)", padding: "2px 6px", borderRadius: "6px" }}>
+                          FEATURED
                         </span>
                       )}
                       {job.clearance && job.clearance !== "Unclassified" && (
-                        <span className="text-[10px] font-semibold text-purple-300 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded-md flex items-center gap-1">
+                        <span style={{ fontSize: "10px", fontWeight: "900", color: "#a855f7", backgroundColor: "rgba(168,85,247,0.15)", padding: "2px 8px", borderRadius: "6px", display: "flex", alignItems: "center", gap: "4px" }}>
                           <ShieldCheck size={11} /> {job.clearance}
                         </span>
                       )}
-                      <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md">
+                      <span style={{ fontSize: "10px", fontWeight: "900", color: "#10b981", backgroundColor: "rgba(16,185,129,0.15)", padding: "2px 6px", borderRadius: "6px" }}>
                         {job.matchScore}% Match
                       </span>
                     </div>
 
-                    <p className="text-xs text-zinc-400 mt-1">
-                      <strong className="text-zinc-200">{job.company.name}</strong> · {job.company.location} · <span className="text-zinc-500">{job.postedTime}</span>
+                    <p style={{ fontSize: "12px", color: "var(--text-secondary)", margin: "4px 0 0 0" }}>
+                      <strong style={{ color: "var(--text-pure)" }}>{job.company.name}</strong> · 📍 {job.company.location} · <span style={{ color: "var(--text-muted)" }}>{job.postedTime}</span>
                     </p>
                   </div>
                 </div>
 
-                <div className="text-right shrink-0">
-                  <p className="text-sm sm:text-base font-bold text-emerald-400">{job.salary}</p>
-                  <p className="text-[11px] text-zinc-500 mt-0.5">{job.type}</p>
+                <div style={{ textAlign: "right", flexShrink: 0 }}>
+                  <p style={{ fontSize: "16px", fontWeight: "900", color: "#10b981", margin: 0 }}>{job.salary}</p>
+                  <p style={{ fontSize: "11px", color: "var(--text-muted)", margin: "2px 0 0 0" }}>{job.type}</p>
                 </div>
               </div>
 
               {/* Skill Tags */}
-              <div className="flex gap-1.5 flex-wrap">
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                 {job.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="bg-zinc-800/80 text-zinc-300 border border-zinc-700/60 text-[11px] font-medium px-2.5 py-0.5 rounded-lg"
+                    style={{
+                      backgroundColor: "var(--bg-input)",
+                      color: "var(--text-secondary)",
+                      border: "1px solid var(--border-subtle)",
+                      fontSize: "11px",
+                      fontWeight: "700",
+                      padding: "4px 10px",
+                      borderRadius: "8px",
+                    }}
                   >
                     {tag}
                   </span>
@@ -223,32 +347,48 @@ export default function CareerPage() {
               </div>
 
               {/* Action Toolbar */}
-              <div className="flex justify-between items-center pt-3 border-t border-zinc-800/80">
-                <span className="text-xs text-zinc-500 font-medium">
-                  Direct Verified Application
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "12px", borderTop: "1px solid var(--border-subtle)" }}>
+                <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                  Verified Direct Talent Escrow
                 </span>
 
-                <div className="flex items-center gap-2.5">
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                   <button
                     onClick={() => toggleSave(job.id)}
-                    className={`h-8 w-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer border ${
-                      isSaved
-                        ? "bg-zinc-800 text-white border-zinc-700"
-                        : "bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-white hover:bg-zinc-800"
-                    }`}
+                    style={{
+                      height: "36px",
+                      width: "36px",
+                      borderRadius: "10px",
+                      backgroundColor: isSaved ? "rgba(0, 212, 255, 0.2)" : "var(--bg-input)",
+                      color: isSaved ? "var(--accent-cyan)" : "var(--text-muted)",
+                      border: "1px solid var(--border-subtle)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: "pointer",
+                    }}
                   >
-                    <Bookmark size={14} fill={isSaved ? "currentColor" : "none"} />
+                    <Bookmark size={15} fill={isSaved ? "currentColor" : "none"} />
                   </button>
 
                   <button
                     onClick={() => handleApply(job.id)}
-                    className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-                      isApplied
-                        ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
-                        : "bg-white text-zinc-950 hover:bg-zinc-200 shadow-xs"
-                    }`}
+                    style={{
+                      background: isApplied ? "rgba(16,185,129,0.2)" : "linear-gradient(135deg, #00d4ff, #0284c7)",
+                      color: isApplied ? "#10b981" : "#08090d",
+                      border: isApplied ? "1px solid rgba(16,185,129,0.3)" : "none",
+                      borderRadius: "10px",
+                      padding: "8px 20px",
+                      fontSize: "12px",
+                      fontWeight: "900",
+                      cursor: "pointer",
+                      boxShadow: isApplied ? "none" : "0 0 15px rgba(0, 212, 255, 0.3)",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                    }}
                   >
-                    {isApplied ? "Application Sent ✓" : "Apply Now"}
+                    {isApplied ? "Application Dispatched ✓" : "1-Click Easy Apply ↗"}
                   </button>
                 </div>
               </div>

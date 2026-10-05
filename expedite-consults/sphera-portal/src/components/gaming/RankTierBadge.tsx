@@ -13,44 +13,58 @@ export function RankTierBadge({ tier, mmr }: RankTierBadgeProps) {
     switch (tier) {
       case "RADIANT":
         return {
-          bg: "bg-amber-500/15 text-amber-300 border-amber-500/30",
+          gradient: "from-amber-400 via-rose-500 to-cyan-400",
+          border: "border-cyan-400/50",
+          text: "text-cyan-300",
           icon: Crown,
-          label: "Radiant",
+          label: "Radiant Master",
         };
       case "MASTER":
         return {
-          bg: "bg-purple-500/15 text-purple-300 border-purple-500/30",
+          gradient: "from-purple-500 to-indigo-600",
+          border: "border-purple-500/50",
+          text: "text-purple-300",
           icon: Flame,
           label: "Grandmaster",
         };
       case "DIAMOND":
         return {
-          bg: "bg-sky-500/15 text-sky-300 border-sky-500/30",
+          gradient: "from-cyan-400 to-blue-600",
+          border: "border-cyan-400/40",
+          text: "text-cyan-300",
           icon: Sparkles,
           label: "Diamond",
         };
       case "PLATINUM":
         return {
-          bg: "bg-teal-500/15 text-teal-300 border-teal-500/30",
+          gradient: "from-teal-400 to-emerald-500",
+          border: "border-teal-400/40",
+          text: "text-teal-300",
           icon: Award,
           label: "Platinum",
         };
       case "GOLD":
         return {
-          bg: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+          gradient: "from-amber-400 to-yellow-500",
+          border: "border-amber-400/40",
+          text: "text-amber-300",
           icon: Award,
           label: "Gold",
         };
       case "SILVER":
         return {
-          bg: "bg-zinc-800 text-zinc-300 border-zinc-700",
+          gradient: "from-slate-300 to-slate-400",
+          border: "border-slate-300/40",
+          text: "text-slate-200",
           icon: Shield,
           label: "Silver",
         };
       case "BRONZE":
       default:
         return {
-          bg: "bg-zinc-800/70 text-zinc-400 border-zinc-700/60",
+          gradient: "from-amber-700 to-amber-900",
+          border: "border-amber-700/40",
+          text: "text-amber-500",
           icon: Shield,
           label: "Bronze",
         };
@@ -62,12 +76,12 @@ export function RankTierBadge({ tier, mmr }: RankTierBadgeProps) {
 
   return (
     <div
-      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border ${style.bg} font-semibold text-[11px]`}
+      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gradient-to-r ${style.gradient} border ${style.border} text-black font-black text-[10px] shadow-sm`}
     >
-      <Icon size={12} />
+      <Icon size={11} className="fill-current" />
       <span>{style.label}</span>
       {mmr !== undefined && (
-        <span className="opacity-75 font-mono ml-0.5">{mmr} MMR</span>
+        <span className="opacity-80 font-mono ml-0.5">{mmr} MMR</span>
       )}
     </div>
   );

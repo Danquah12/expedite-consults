@@ -116,137 +116,201 @@ export default function GamingPage() {
   const [selectedCategory, setSelectedCategory] = useState("All Games");
 
   return (
-    <div className="w-full flex flex-col gap-6 pb-12">
+    <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "32px", paddingBottom: "48px" }}>
       {/* ── Match Score Ticker Bar ───────────────────────────────── */}
-      <div className="bg-zinc-900/40 border border-zinc-800 rounded-xl p-3 flex items-center justify-between gap-4 overflow-x-auto text-xs">
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />
-          <span className="font-semibold text-rose-400 uppercase text-[11px]">Live Matches</span>
+      <div
+        style={{
+          backgroundColor: "var(--bg-card)",
+          border: "1px solid var(--border-subtle)",
+          borderRadius: "16px",
+          padding: "10px 20px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "16px",
+          overflowX: "auto",
+          fontSize: "12px",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+          <span style={{ height: "8px", width: "8px", borderRadius: "9999px", backgroundColor: "#ef4444", animation: "pulse 1.5s infinite" }} />
+          <span style={{ fontWeight: "900", color: "#ef4444", textTransform: "uppercase", letterSpacing: "1px", fontSize: "11px" }}>LIVE MATCHES</span>
         </div>
 
-        <div className="flex items-center gap-5 flex-1 overflow-x-auto">
-          <div className="flex items-center gap-2.5 whitespace-nowrap">
-            <span className="font-semibold text-white">UMD Terrapins</span>
-            <span className="bg-zinc-800 text-zinc-200 px-2 py-0.5 rounded font-bold">13</span>
-            <span className="text-zinc-500">vs</span>
-            <span className="bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded font-bold">9</span>
-            <span className="font-semibold text-white">Towson Tigers</span>
-            <span className="text-[11px] text-zinc-500">(Valorant Finals)</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "24px", flex: 1, overflowX: "auto" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", whiteSpace: "nowrap" }}>
+            <span style={{ fontWeight: "800", color: "var(--text-pure)" }}>UMD Terrapins</span>
+            <span style={{ backgroundColor: "var(--bg-input)", color: "var(--accent-cyan)", padding: "2px 8px", borderRadius: "6px", fontWeight: "900" }}>13</span>
+            <span style={{ color: "var(--text-muted)" }}>vs</span>
+            <span style={{ backgroundColor: "var(--bg-input)", color: "#ef4444", padding: "2px 8px", borderRadius: "6px", fontWeight: "900" }}>9</span>
+            <span style={{ fontWeight: "800", color: "var(--text-pure)" }}>CyberMatrix</span>
+            <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>(Valorant Finals)</span>
           </div>
 
-          <div className="w-px h-4 bg-zinc-800" />
+          <div style={{ width: "1px", height: "16px", backgroundColor: "var(--border-subtle)" }} />
 
-          <div className="flex items-center gap-2.5 whitespace-nowrap">
-            <span className="font-semibold text-white">Johns Hopkins</span>
-            <span className="bg-zinc-800 text-zinc-200 px-2 py-0.5 rounded font-bold">2</span>
-            <span className="text-zinc-500">vs</span>
-            <span className="bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded font-bold">1</span>
-            <span className="font-semibold text-white">UMBC Dawgs</span>
-            <span className="text-[11px] text-zinc-500">(Smash Finals)</span>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", whiteSpace: "nowrap" }}>
+            <span style={{ fontWeight: "800", color: "var(--text-pure)" }}>Orbit DC</span>
+            <span style={{ backgroundColor: "var(--bg-input)", color: "var(--accent-cyan)", padding: "2px 8px", borderRadius: "6px", fontWeight: "900" }}>2</span>
+            <span style={{ color: "var(--text-muted)" }}>vs</span>
+            <span style={{ backgroundColor: "var(--bg-input)", color: "#ef4444", padding: "2px 8px", borderRadius: "6px", fontWeight: "900" }}>1</span>
+            <span style={{ fontWeight: "800", color: "var(--text-pure)" }}>Sentinels Acad</span>
+            <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>(Smash Finals)</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 shrink-0">
-          <span className="bg-amber-500/15 text-amber-300 border border-amber-500/30 px-2.5 py-0.5 rounded-full text-[11px] font-semibold">
-            Radiant Tier 2450 MMR
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+          <span style={{ backgroundColor: "rgba(245, 158, 11, 0.15)", color: "#f59e0b", padding: "3px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: "800" }}>
+            🏆 Radiant Master 2450 MMR
           </span>
         </div>
       </div>
 
       {/* ── Grand Finals Hero Stage ───────────────────────────────── */}
-      <div className="relative rounded-2xl overflow-hidden border border-zinc-800 shadow-sm">
-        {/* Background Image */}
-        <div className="h-64 sm:h-72 w-full relative">
+      <div
+        style={{
+          position: "relative",
+          borderRadius: "28px",
+          overflow: "hidden",
+          border: "1px solid rgba(0, 212, 255, 0.3)",
+          boxShadow: "0 20px 50px rgba(0,0,0,0.5), 0 0 30px rgba(0, 212, 255, 0.15)",
+        }}
+      >
+        {/* Background Image with Cinematic Gradient */}
+        <div style={{ height: "300px", width: "100%", position: "relative" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1200&auto=format&fit=crop&q=80"
             alt="Esports Arena"
-            className="w-full h-full object-cover"
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/80 to-zinc-950/40" />
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "linear-gradient(90deg, rgba(8,9,13,0.95) 0%, rgba(8,9,13,0.75) 50%, rgba(8,9,13,0.4) 100%)",
+            }}
+          />
         </div>
 
         {/* Hero Overlay Content */}
-        <div className="absolute inset-0 p-6 sm:p-8 flex flex-col justify-between">
-          <div className="flex items-center gap-2">
-            <span className="bg-rose-600 text-white px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5">
-              <Radio size={12} className="animate-pulse" /> Live Grand Finals
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            padding: "36px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <span style={{ backgroundColor: "#ef4444", color: "#ffffff", padding: "4px 10px", borderRadius: "6px", fontSize: "11px", fontWeight: "900", display: "flex", alignItems: "center", gap: "6px" }}>
+              <Radio size={12} className="animate-pulse" /> GRAND FINALS LIVE
             </span>
-            <span className="bg-black/60 backdrop-blur-md text-zinc-300 border border-white/15 px-2.5 py-0.5 rounded-md text-[11px] font-medium">
-              Collegiate Valorant Season 4
+            <span style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", color: "#00d4ff", border: "1px solid rgba(0,212,255,0.3)", padding: "4px 10px", borderRadius: "6px", fontSize: "11px", fontWeight: "800" }}>
+              SEASON 4 VALORANT
             </span>
           </div>
 
-          <div className="max-w-xl">
-            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-              Collegiate Champions Cup — <span className="text-zinc-200">Grand Finals</span>
+          <div style={{ maxWidth: "620px" }}>
+            <h1 style={{ fontSize: "32px", fontWeight: "900", color: "#ffffff", margin: 0, lineHeight: "1.2", textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>
+              Sphera Collegiate Champions Cup — <span style={{ color: "#00d4ff" }}>Finals</span>
             </h1>
-            <p className="text-xs sm:text-sm text-zinc-300 mt-2 leading-relaxed">
-              32 university squads battling for the campus championship trophy and community prize pool.
+            <p style={{ fontSize: "14px", color: "#cbd5e1", margin: "8px 0 0 0", lineHeight: "1.5" }}>
+              Top 32 university squads battling for the verified $5,000 cash bounty and the official Sphera Esports trophy.
             </p>
           </div>
 
-          <div className="flex items-center justify-between flex-wrap gap-4 pt-2">
-            <div className="flex gap-5 items-center">
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "16px" }}>
+            <div style={{ display: "flex", gap: "24px", alignItems: "center" }}>
               <div>
-                <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider">Prize Pool</p>
-                <p className="text-lg font-bold text-emerald-400">$5,000 USD</p>
+                <p style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "800", textTransform: "uppercase", margin: 0 }}>VERIFIED BOUNTY</p>
+                <p style={{ fontSize: "22px", fontWeight: "900", color: "#10b981", margin: "2px 0 0 0" }}>$5,000 USD</p>
               </div>
-              <div className="w-px h-6 bg-white/20" />
+              <div style={{ width: "1px", height: "30px", backgroundColor: "rgba(255,255,255,0.2)" }} />
               <div>
-                <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider">Live Viewers</p>
-                <p className="text-lg font-bold text-white">14.8K Watching</p>
+                <p style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "800", textTransform: "uppercase", margin: 0 }}>LIVE VIEWERS</p>
+                <p style={{ fontSize: "22px", fontWeight: "900", color: "#ffffff", margin: "2px 0 0 0" }}>14.8K Watching</p>
               </div>
             </div>
 
-            <button className="px-5 py-2.5 rounded-xl bg-white text-zinc-950 hover:bg-zinc-200 text-xs font-semibold transition-colors flex items-center gap-2 cursor-pointer shadow-sm">
-              <Play size={14} fill="currentColor" /> Watch Broadcast
+            <button
+              style={{
+                background: "linear-gradient(135deg, #00d4ff, #0284c7)",
+                color: "#08090d",
+                border: "none",
+                borderRadius: "14px",
+                padding: "14px 28px",
+                fontSize: "14px",
+                fontWeight: "900",
+                cursor: "pointer",
+                boxShadow: "0 0 25px rgba(0, 212, 255, 0.4)",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              <Play size={16} fill="#08090d" /> Watch 4K Broadcast
             </button>
           </div>
         </div>
       </div>
 
       {/* ── Live Creator Streams ─────────────────────────────────── */}
-      <div className="flex flex-col gap-4">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Radio size={16} className="text-rose-500" />
-            <h2 className="text-base font-bold text-white">Live Creator Streams</h2>
+      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <Radio size={18} color="#ef4444" />
+            <h2 style={{ fontSize: "18px", fontWeight: "900", color: "var(--text-pure)", margin: 0 }}>Live Creator Streams</h2>
           </div>
-          <span className="text-xs text-zinc-400 hover:text-white transition-colors cursor-pointer">Browse All Channels →</span>
+          <span style={{ fontSize: "12px", color: "var(--accent-cyan)", fontWeight: "700", cursor: "pointer" }}>Browse All Channels →</span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "20px" }}>
           {mockStreams.map((st) => (
             <div
               key={st.id}
-              className="bg-zinc-900/40 border border-zinc-800 hover:border-zinc-700 rounded-2xl overflow-hidden shadow-xs flex flex-col cursor-pointer transition-all group"
+              style={{
+                backgroundColor: "var(--bg-card)",
+                border: "1px solid var(--border-subtle)",
+                borderRadius: "20px",
+                overflow: "hidden",
+                boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+                display: "flex",
+                flexDirection: "column",
+                cursor: "pointer",
+                transition: "transform 0.2s ease",
+              }}
             >
-              {/* Thumbnail */}
-              <div className="relative w-full h-44 bg-zinc-950 overflow-hidden">
-                <img src={st.thumbnail} alt={st.title} className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300" />
-                <div className="absolute top-2.5 left-2.5 bg-rose-600 text-white px-2 py-0.5 rounded text-[10px] font-semibold">
+              {/* Thumbnail 16:9 */}
+              <div style={{ position: "relative", width: "100%", height: "170px" }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={st.thumbnail} alt={st.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                <div style={{ position: "absolute", top: "10px", left: "10px", backgroundColor: "#ef4444", color: "#ffffff", padding: "2px 8px", borderRadius: "6px", fontSize: "10px", fontWeight: "900" }}>
                   LIVE
                 </div>
-                <div className="absolute top-2.5 right-2.5 bg-black/70 backdrop-blur-md text-white px-2 py-0.5 rounded text-[11px] font-medium">
+                <div style={{ position: "absolute", top: "10px", right: "10px", backgroundColor: "rgba(0,0,0,0.7)", backdropFilter: "blur(6px)", color: "#ffffff", padding: "2px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: "800" }}>
                   {formatNumber(st.viewers)} viewers
                 </div>
-                <div className="absolute bottom-2.5 left-2.5 bg-zinc-950/80 backdrop-blur-md text-zinc-300 border border-zinc-700 px-2 py-0.5 rounded text-[10px] font-medium">
+                <div style={{ position: "absolute", bottom: "10px", left: "10px", backgroundColor: "rgba(0,212,255,0.2)", border: "1px solid rgba(0,212,255,0.4)", color: "#00d4ff", padding: "2px 8px", borderRadius: "6px", fontSize: "10px", fontWeight: "800" }}>
                   {st.game}
                 </div>
               </div>
 
               {/* Creator Info */}
-              <div className="p-3.5 flex gap-3 items-start">
-                <div className="h-9 w-9 rounded-full overflow-hidden border border-zinc-800 shrink-0">
-                  <img src={st.creator.avatar} alt={st.creator.name} className="w-full h-full object-cover" />
+              <div style={{ padding: "16px", display: "flex", gap: "12px", alignItems: "flex-start" }}>
+                <div style={{ height: "40px", width: "40px", borderRadius: "9999px", overflow: "hidden", border: "1px solid var(--border-subtle)", flexShrink: 0 }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={st.creator.avatar} alt={st.creator.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-xs font-semibold text-white truncate">
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h3 style={{ fontSize: "13px", fontWeight: "800", color: "var(--text-pure)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {st.title}
                   </h3>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-[11px] text-zinc-400">{st.creator.name}</span>
-                    {st.creator.verified && <CheckCircle2 size={12} className="text-sky-400 fill-sky-400/20" />}
+                  <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "4px" }}>
+                    <span style={{ fontSize: "11px", color: "var(--text-secondary)", fontWeight: "600" }}>{st.creator.name}</span>
+                    {st.creator.verified && <CheckCircle2 size={12} color="var(--accent-cyan)" fill="var(--accent-cyan)" />}
                   </div>
                 </div>
               </div>
@@ -256,24 +320,29 @@ export default function GamingPage() {
       </div>
 
       {/* ── Active Tournaments & Brackets Grid ────────────────────── */}
-      <div className="flex flex-col gap-4">
-        <div className="flex justify-between items-center flex-wrap gap-3">
-          <div className="flex items-center gap-2">
-            <Swords size={16} className="text-zinc-400" />
-            <h2 className="text-base font-bold text-white">Active Tournaments & Brackets</h2>
+      <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <Swords size={18} color="#f59e0b" />
+            <h2 style={{ fontSize: "18px", fontWeight: "900", color: "var(--text-pure)", margin: 0 }}>Active Tournaments & Brackets</h2>
           </div>
 
           {/* Filter Pills */}
-          <div className="flex gap-1.5 overflow-x-auto">
+          <div style={{ display: "flex", gap: "8px" }}>
             {["All Games", "Valorant", "Smash", "Rocket League", "Apex"].map((cat) => (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer border ${
-                  selectedCategory === cat
-                    ? "bg-white text-zinc-950 font-semibold border-white shadow-xs"
-                    : "bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-white hover:bg-zinc-800"
-                }`}
+                style={{
+                  padding: "6px 14px",
+                  borderRadius: "9999px",
+                  fontSize: "11px",
+                  fontWeight: selectedCategory === cat ? "800" : "600",
+                  backgroundColor: selectedCategory === cat ? "var(--accent-cyan)" : "var(--bg-card)",
+                  color: selectedCategory === cat ? "#08090d" : "var(--text-secondary)",
+                  border: "1px solid var(--border-subtle)",
+                  cursor: "pointer",
+                }}
               >
                 {cat}
               </button>
@@ -281,7 +350,7 @@ export default function GamingPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(460px, 1fr))", gap: "20px" }}>
           {mockTournaments.map((t) => {
             const isLive = t.status === "LIVE NOW";
             const progress = (t.registeredSquads / t.maxSquads) * 100;
@@ -289,52 +358,65 @@ export default function GamingPage() {
             return (
               <div
                 key={t.id}
-                className="bg-zinc-900/40 border border-zinc-800 hover:border-zinc-700 rounded-2xl overflow-hidden shadow-xs flex flex-col justify-between transition-all"
+                style={{
+                  backgroundColor: "var(--bg-card)",
+                  border: isLive ? "1px solid rgba(0, 212, 255, 0.4)" : "1px solid var(--border-subtle)",
+                  borderRadius: "20px",
+                  overflow: "hidden",
+                  boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                }}
               >
-                <div className="p-5 flex flex-col gap-3.5">
-                  <div className="flex justify-between items-start gap-3">
+                <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "14px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px" }}>
                     <div>
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${
-                          isLive ? "bg-rose-500/15 text-rose-400 border border-rose-500/30" : "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
-                        }`}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                        <span style={{ fontSize: "10px", fontWeight: "900", color: isLive ? "#ef4444" : "#10b981", backgroundColor: isLive ? "rgba(239,68,68,0.15)" : "rgba(16,185,129,0.15)", padding: "2px 8px", borderRadius: "6px" }}>
                           {t.status}
                         </span>
-                        <span className="text-xs text-zinc-400 font-medium">{t.game}</span>
+                        <span style={{ fontSize: "11px", color: "var(--accent-cyan)", fontWeight: "700" }}>{t.game}</span>
                       </div>
-                      <h3 className="text-sm font-semibold text-white">{t.title}</h3>
-                      <p className="text-xs text-zinc-400 mt-1">Hosted by {t.organizer} · {t.date}</p>
+                      <h3 style={{ fontSize: "15px", fontWeight: "900", color: "var(--text-pure)", margin: 0 }}>{t.title}</h3>
+                      <p style={{ fontSize: "11px", color: "var(--text-secondary)", margin: "4px 0 0 0" }}>Hosted by {t.organizer} · {t.date}</p>
                     </div>
 
-                    <div className="text-right shrink-0">
-                      <p className="text-[10px] text-zinc-500 font-medium uppercase">Prize Pool</p>
-                      <p className="text-base font-bold text-emerald-400">{t.prizePool}</p>
+                    <div style={{ textAlign: "right", flexShrink: 0 }}>
+                      <p style={{ fontSize: "9px", color: "var(--text-muted)", fontWeight: "800", textTransform: "uppercase", margin: 0 }}>PRIZE BOUNTY</p>
+                      <p style={{ fontSize: "18px", fontWeight: "900", color: "#10b981", margin: 0 }}>{t.prizePool}</p>
                     </div>
                   </div>
 
                   {/* Registered Squads Progress Bar */}
                   <div>
-                    <div className="flex justify-between text-xs text-zinc-400 mb-1">
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", color: "var(--text-muted)", marginBottom: "4px" }}>
                       <span>Squads Registered</span>
-                      <span className="font-semibold text-white">{t.registeredSquads} / {t.maxSquads}</span>
+                      <span style={{ fontWeight: "800", color: "var(--text-pure)" }}>{t.registeredSquads} / {t.maxSquads}</span>
                     </div>
-                    <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
-                      <div className="h-full bg-zinc-400 rounded-full" style={{ width: `${progress}%` }} />
+                    <div style={{ height: "6px", width: "100%", backgroundColor: "var(--bg-input)", borderRadius: "9999px", overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: `${progress}%`, backgroundColor: isLive ? "#00d4ff" : "#10b981", borderRadius: "9999px" }} />
                     </div>
                   </div>
                 </div>
 
-                <div className="px-5 py-3 border-t border-zinc-800/80 bg-zinc-900/30 flex justify-between items-center">
-                  <span className="text-xs text-zinc-500">
-                    Bracket: <strong className="text-zinc-300">Double Elimination</strong>
+                <div style={{ padding: "14px 20px", borderTop: "1px solid var(--border-subtle)", backgroundColor: "var(--bg-surface)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                    Bracket Type: <strong style={{ color: "var(--text-pure)" }}>Double Elimination</strong>
                   </span>
 
                   <button
-                    className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-                      isLive
-                        ? "bg-white text-zinc-950 hover:bg-zinc-200 shadow-xs"
-                        : "bg-zinc-800 text-zinc-200 hover:bg-zinc-700 hover:text-white border border-zinc-700"
-                    }`}
+                    style={{
+                      background: isLive ? "linear-gradient(135deg, #00d4ff, #0284c7)" : "var(--bg-card)",
+                      color: isLive ? "#08090d" : "var(--text-pure)",
+                      border: isLive ? "none" : "1px solid var(--border-subtle)",
+                      borderRadius: "10px",
+                      padding: "8px 18px",
+                      fontSize: "12px",
+                      fontWeight: "800",
+                      cursor: "pointer",
+                      boxShadow: isLive ? "0 0 15px rgba(0, 212, 255, 0.3)" : "none",
+                    }}
                   >
                     {isLive ? "Watch Finals ▶" : "Register Squad"}
                   </button>

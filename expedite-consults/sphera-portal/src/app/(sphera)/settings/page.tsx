@@ -73,46 +73,63 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="w-full flex flex-col gap-6 pb-12">
+    <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "28px", paddingBottom: "48px" }}>
       {/* ── Settings Header ───────────────────────────────────────── */}
-      <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid var(--border-subtle)", paddingBottom: "20px" }}>
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">
-            Security & Account Settings
+          <h1 style={{ fontSize: "24px", fontWeight: "900", color: "var(--text-pure)", margin: 0 }}>
+            Security Enclave & System Settings
           </h1>
-          <p className="text-xs text-zinc-400 mt-1">
-            Manage passkeys, active sessions, appearance, and account preferences.
+          <p style={{ fontSize: "13px", color: "var(--text-secondary)", margin: "4px 0 0 0" }}>
+            FIDO2 WebAuthn passkeys, hardware keys, active sessions, and privacy preferences.
           </p>
         </div>
 
-        <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-3 py-1 rounded-full flex items-center gap-1.5">
-          <ShieldCheck size={14} /> Security Active
+        <span style={{ fontSize: "11px", fontWeight: "900", color: "#10b981", backgroundColor: "rgba(16,185,129,0.15)", padding: "4px 12px", borderRadius: "9999px", display: "flex", alignItems: "center", gap: "6px" }}>
+          <ShieldCheck size={14} /> Zero-Trust Compliant
         </span>
       </div>
 
       {/* ── Theme & Appearance Quick Switcher ─────────────────────── */}
-      <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-5 flex justify-between items-center gap-4 flex-wrap">
+      <div
+        style={{
+          backgroundColor: "var(--bg-card)",
+          border: "1px solid var(--border-subtle)",
+          borderRadius: "20px",
+          padding: "24px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: "20px",
+          flexWrap: "wrap",
+        }}
+      >
         <div>
-          <h3 className="text-sm font-semibold text-white">Theme & Appearance</h3>
-          <p className="text-xs text-zinc-400 mt-0.5">
-            Active mode: <strong className="text-zinc-200">{themeLabel}</strong>
+          <h3 style={{ fontSize: "15px", fontWeight: "900", color: "var(--text-pure)", margin: 0 }}>Visual Theme & Canvas Mode</h3>
+          <p style={{ fontSize: "12px", color: "var(--text-secondary)", margin: "2px 0 0 0" }}>
+            Currently active: <strong style={{ color: "var(--accent-cyan)" }}>{themeLabel}</strong>
           </p>
         </div>
 
-        <div className="flex gap-2">
+        <div style={{ display: "flex", gap: "8px" }}>
           {[
-            { id: "dark", label: "Dark" },
-            { id: "light", label: "Light" },
-            { id: "blue", label: "Midnight Blue" },
+            { id: "dark", label: "🌑 Obsidian Black" },
+            { id: "light", label: "☀️ Solar White" },
+            { id: "blue", label: "🌌 Sapphire Blue" },
           ].map((t) => (
             <button
               key={t.id}
               onClick={() => setTheme(t.id as any)}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer border ${
-                theme === t.id
-                  ? "bg-white text-zinc-950 font-semibold border-white shadow-xs"
-                  : "bg-zinc-800 text-zinc-300 border-zinc-700 hover:bg-zinc-700 hover:text-white"
-              }`}
+              style={{
+                padding: "8px 16px",
+                borderRadius: "10px",
+                fontSize: "12px",
+                fontWeight: theme === t.id ? "900" : "600",
+                backgroundColor: theme === t.id ? "var(--accent-cyan)" : "var(--bg-input)",
+                color: theme === t.id ? "#08090d" : "var(--text-pure)",
+                border: "1px solid var(--border-subtle)",
+                cursor: "pointer",
+              }}
             >
               {t.label}
             </button>
@@ -120,57 +137,89 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* ── Passkeys / Biometrics ─────────────────────────────────── */}
-      <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-5 flex flex-col gap-4">
-        <div className="flex justify-between items-center flex-wrap gap-3">
-          <div className="flex items-center gap-2.5">
-            <Fingerprint size={20} className="text-zinc-400" />
+      {/* ── FIDO2 / WebAuthn Biometric Passkeys ────────────────────── */}
+      <div
+        style={{
+          backgroundColor: "var(--bg-card)",
+          border: "1px solid var(--border-subtle)",
+          borderRadius: "20px",
+          padding: "24px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "18px",
+          boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <Fingerprint size={22} color="var(--accent-cyan)" />
             <div>
-              <h3 className="text-sm font-semibold text-white">Biometric Passkeys & Security Keys</h3>
-              <p className="text-xs text-zinc-400">Sign in securely using Touch ID, Face ID, Windows Hello, or hardware key.</p>
+              <h3 style={{ fontSize: "15px", fontWeight: "900", color: "var(--text-pure)", margin: 0 }}>FIDO2 / WebAuthn Hardware Passkeys</h3>
+              <p style={{ fontSize: "12px", color: "var(--text-secondary)", margin: "2px 0 0 0" }}>Sign in instantly with Touch ID, Face ID, Windows Hello, or YubiKey without passwords.</p>
             </div>
           </div>
 
           <button
             onClick={handleRegisterPasskey}
             disabled={isRegistering}
-            className="px-4 py-1.5 rounded-xl bg-white text-zinc-950 hover:bg-zinc-200 text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+            style={{
+              background: "linear-gradient(135deg, #00d4ff, #0284c7)",
+              color: "#08090d",
+              border: "none",
+              borderRadius: "12px",
+              padding: "10px 20px",
+              fontSize: "12px",
+              fontWeight: "900",
+              cursor: "pointer",
+              boxShadow: "0 0 15px rgba(0, 212, 255, 0.3)",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+            }}
           >
-            <Fingerprint size={14} />
-            <span>{isRegistering ? "Verifying..." : "+ Add Passkey"}</span>
+            <Fingerprint size={16} />
+            <span>{isRegistering ? "Verifying Sensor..." : "+ Add Passkey"}</span>
           </button>
         </div>
 
         {registerSuccess && (
-          <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs font-medium flex items-center gap-2">
+          <div style={{ padding: "10px 16px", backgroundColor: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "10px", color: "#10b981", fontSize: "12px", fontWeight: "800", display: "flex", alignItems: "center", gap: "8px" }}>
             <CheckCircle2 size={16} />
-            <span>New passkey successfully registered to your account!</span>
+            <span>New WebAuthn Passkey successfully linked to your Sphera Enclave!</span>
           </div>
         )}
 
-        <div className="flex flex-col gap-2.5">
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
           {passkeys.map((pk) => (
             <div
               key={pk.id}
-              className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-3.5 flex justify-between items-center"
+              style={{
+                backgroundColor: "var(--bg-input)",
+                border: "1px solid var(--border-subtle)",
+                borderRadius: "14px",
+                padding: "14px 18px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
             >
-              <div className="flex items-center gap-3">
-                <KeyRound size={16} className="text-zinc-400" />
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <KeyRound size={18} color="var(--accent-cyan)" />
                 <div>
-                  <h4 className="text-xs font-semibold text-white">{pk.name}</h4>
-                  <p className="text-[11px] text-zinc-400">Added: {pk.addedDate} · Last used: {pk.lastUsed}</p>
+                  <h4 style={{ fontSize: "13px", fontWeight: "800", color: "var(--text-pure)", margin: 0 }}>{pk.name}</h4>
+                  <p style={{ fontSize: "11px", color: "var(--text-secondary)", margin: "2px 0 0 0" }}>Added: {pk.addedDate} · Last used: {pk.lastUsed}</p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2.5">
-                <span className="text-[10px] font-medium text-zinc-300 bg-zinc-800 border border-zinc-700 px-2 py-0.5 rounded-md">
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <span style={{ fontSize: "10px", fontWeight: "800", color: "#10b981", backgroundColor: "rgba(16,185,129,0.15)", padding: "2px 8px", borderRadius: "6px" }}>
                   {pk.type}
                 </span>
                 <button
                   onClick={() => deletePasskey(pk.id)}
-                  className="text-zinc-500 hover:text-rose-400 transition-colors p-1 cursor-pointer"
+                  style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer" }}
                 >
-                  <Trash2 size={14} />
+                  <Trash2 size={15} />
                 </button>
               </div>
             </div>
@@ -178,51 +227,78 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* ── Active Login Sessions ─────────────────────────────────── */}
-      <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-5 flex flex-col gap-4">
-        <div className="flex justify-between items-center flex-wrap gap-3">
-          <div className="flex items-center gap-2.5">
-            <Laptop size={20} className="text-zinc-400" />
+      {/* ── Active Session Manager & Kill Switch ───────────────────── */}
+      <div
+        style={{
+          backgroundColor: "var(--bg-card)",
+          border: "1px solid var(--border-subtle)",
+          borderRadius: "20px",
+          padding: "24px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "18px",
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <Laptop size={22} color="#f59e0b" />
             <div>
-              <h3 className="text-sm font-semibold text-white">Active Login Sessions</h3>
-              <p className="text-xs text-zinc-400">Devices currently signed into your account.</p>
+              <h3 style={{ fontSize: "15px", fontWeight: "900", color: "var(--text-pure)", margin: 0 }}>Active Login Sessions</h3>
+              <p style={{ fontSize: "12px", color: "var(--text-secondary)", margin: "2px 0 0 0" }}>Manage devices currently authenticated into your account.</p>
             </div>
           </div>
 
           <button
             onClick={revokeAllSessions}
-            className="px-3.5 py-1.5 rounded-xl bg-rose-500/15 text-rose-400 border border-rose-500/30 hover:bg-rose-500/25 text-xs font-semibold transition-colors cursor-pointer"
+            style={{
+              backgroundColor: "rgba(239, 68, 68, 0.15)",
+              color: "#ef4444",
+              border: "1px solid rgba(239, 68, 68, 0.3)",
+              borderRadius: "12px",
+              padding: "10px 18px",
+              fontSize: "12px",
+              fontWeight: "900",
+              cursor: "pointer",
+            }}
           >
-            Revoke Other Sessions
+            Revoke All Other Sessions
           </button>
         </div>
 
         {sessionsRevoked && (
-          <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-400 text-xs font-medium flex items-center gap-2">
+          <div style={{ padding: "10px 16px", backgroundColor: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: "10px", color: "#ef4444", fontSize: "12px", fontWeight: "800", display: "flex", alignItems: "center", gap: "8px" }}>
             <AlertOctagon size={16} />
-            <span>Terminated other active sessions across secondary browsers.</span>
+            <span>Terminated all other active sessions across mobile and secondary browsers.</span>
           </div>
         )}
 
-        <div className="flex flex-col gap-2.5">
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
           {sessions.map((s) => (
             <div
               key={s.id}
-              className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-3.5 flex justify-between items-center"
+              style={{
+                backgroundColor: "var(--bg-input)",
+                border: "1px solid var(--border-subtle)",
+                borderRadius: "14px",
+                padding: "14px 18px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
             >
               <div>
-                <div className="flex items-center gap-2">
-                  <h4 className="text-xs font-semibold text-white">{s.device}</h4>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <h4 style={{ fontSize: "13px", fontWeight: "800", color: "var(--text-pure)", margin: 0 }}>{s.device}</h4>
                   {s.isCurrent && (
-                    <span className="text-[9px] font-semibold text-emerald-400 bg-emerald-500/15 px-1.5 py-0.2 rounded">
+                    <span style={{ fontSize: "9px", fontWeight: "900", color: "#10b981", backgroundColor: "rgba(16,185,129,0.15)", padding: "2px 6px", borderRadius: "6px" }}>
                       CURRENT DEVICE
                     </span>
                   )}
                 </div>
-                <p className="text-[11px] text-zinc-400 mt-0.5">📍 {s.location} · IP: {s.ip}</p>
+                <p style={{ fontSize: "11px", color: "var(--text-secondary)", margin: "2px 0 0 0" }}>📍 {s.location} · IP: {s.ip}</p>
               </div>
 
-              <span className={`text-xs font-medium ${s.isCurrent ? "text-emerald-400" : "text-zinc-500"}`}>
+              <span style={{ fontSize: "11px", fontWeight: "700", color: s.isCurrent ? "#10b981" : "var(--text-muted)" }}>
                 {s.lastActive}
               </span>
             </div>
@@ -230,18 +306,41 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* ── Data Export ───────────────────────────────────────────── */}
-      <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-5 flex justify-between items-center gap-4 flex-wrap">
-        <div className="flex items-center gap-3">
-          <Download size={18} className="text-zinc-400" />
+      {/* ── Decentralized Data Export ─────────────────────────────── */}
+      <div
+        style={{
+          backgroundColor: "var(--bg-card)",
+          border: "1px solid var(--border-subtle)",
+          borderRadius: "20px",
+          padding: "24px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: "16px",
+          flexWrap: "wrap",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <Download size={20} color="var(--accent-cyan)" />
           <div>
-            <h3 className="text-sm font-semibold text-white">Export Account Data</h3>
-            <p className="text-xs text-zinc-400">Download your profile data, posts, and contacts in JSON format.</p>
+            <h3 style={{ fontSize: "14px", fontWeight: "900", color: "var(--text-pure)", margin: 0 }}>Export Social Graph & Identity Data</h3>
+            <p style={{ fontSize: "11px", color: "var(--text-secondary)", margin: "2px 0 0 0" }}>Download your verified credentials, followers, and message archives in zero-trust encrypted JSON.</p>
           </div>
         </div>
 
-        <button className="px-4 py-1.5 rounded-xl bg-zinc-800 text-zinc-200 hover:bg-zinc-700 hover:text-white border border-zinc-700 text-xs font-medium transition-colors cursor-pointer">
-          Download Archive ↓
+        <button
+          style={{
+            backgroundColor: "var(--bg-input)",
+            border: "1px solid var(--border-subtle)",
+            color: "var(--text-pure)",
+            borderRadius: "10px",
+            padding: "8px 18px",
+            fontSize: "12px",
+            fontWeight: "800",
+            cursor: "pointer",
+          }}
+        >
+          Download JSON Archive ↓
         </button>
       </div>
     </div>

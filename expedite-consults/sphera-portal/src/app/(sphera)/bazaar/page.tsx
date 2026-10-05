@@ -206,58 +206,58 @@ export default function BazaarPage() {
 
   return (
     <div className="w-full flex flex-col gap-7 pb-12">
-      {/* ── Humanized Marketplace Banner ──────────────────────────── */}
-      <div className="rounded-2xl p-6 sm:p-8 bg-zinc-900/60 border border-zinc-800 flex justify-between items-center gap-6 flex-wrap">
+      {/* ── Bronze & Gold Luxury Marketplace Banner ───────────────── */}
+      <div className="rounded-3xl p-8 bg-gradient-to-br from-amber-500/20 via-[#10121a] to-[#08090d] border border-amber-500/30 flex justify-between items-center gap-6 flex-wrap shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
         <div className="flex flex-col gap-2 max-w-xl">
           <div className="flex gap-2 items-center">
-            <span className="bg-zinc-800 text-zinc-300 border border-zinc-700 px-2.5 py-0.5 rounded-full text-[11px] font-semibold">
-              Marketplace
+            <span className="bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-black px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wider shadow-[0_0_12px_rgba(251,191,36,0.4)]">
+              SPHERA BAZAAR · 0% FEES
             </span>
-            <span className="text-xs text-zinc-400 font-medium flex items-center gap-1">
-              <ShieldCheck size={14} className="text-emerald-400" />
-              Verified Community Sellers & Local Meetups
+            <span className="text-xs text-amber-300 font-semibold flex items-center gap-1">
+              <Crown size={13} className="text-amber-400 fill-amber-400" />
+              Verified Bronze & Gold Merchant Guild
             </span>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-            Buy, Sell & Discover with <span className="text-zinc-100 underline decoration-zinc-600 underline-offset-4">Community Trust</span>
+          <h1 className="text-2xl font-black text-white leading-tight">
+            Peer-to-Peer Commerce with <span className="text-amber-400">Escrow Security</span>
           </h1>
 
-          <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-            Local distance matching, verified campus exchange points, direct buyer-seller messaging, and zero hidden platform fees.
+          <p className="text-xs text-[#94a3b8] leading-relaxed">
+            Instant distance radius matching, campus safe meetup zones, direct seller messaging, and certified merchant tiers.
           </p>
         </div>
 
         <button
           onClick={() => setIsCreateOpen(true)}
-          className="h-10 px-5 rounded-xl bg-white text-zinc-950 hover:bg-zinc-200 font-semibold text-xs transition-colors flex items-center gap-2 cursor-pointer shadow-sm"
+          className="h-11 px-6 rounded-2xl bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-black font-black text-xs shadow-[0_0_20px_rgba(251,191,36,0.35)] hover:scale-105 transition-transform flex items-center gap-2"
         >
-          <Plus size={16} />
-          <span>List an Item</span>
+          <Plus size={16} strokeWidth={3} />
+          <span>List an Item Free</span>
         </button>
       </div>
 
       {/* ── Search & Filter Tabs ──────────────────────────────────── */}
       <div className="flex gap-3 flex-wrap items-center justify-between">
-        <div className="flex-1 min-w-[260px] relative">
-          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
+        <div className="flex-1 min-w-[280px] relative">
+          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-amber-400" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search electronics, furniture, books, gear..."
-            className="w-full h-10 pl-10 pr-4 rounded-xl border border-zinc-800 bg-zinc-900/80 text-white text-xs placeholder:text-zinc-500 focus:outline-none focus:border-zinc-600 transition-all"
+            placeholder="Search MacBook, PS5, Tesla, textbooks, furniture..."
+            className="w-full h-10 pl-10 pr-4 rounded-xl border border-[#1c202e] bg-[#10121a] text-white text-xs placeholder:text-[#64748b] focus:outline-none focus:border-amber-400 transition-all"
           />
         </div>
 
-        <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
+        <div className="flex gap-2 overflow-x-auto no-scrollbar">
           {categories.map((c) => (
             <button
               key={c.id}
               onClick={() => setCategory(c.id)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
+              className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
                 category === c.id
-                  ? "bg-white text-zinc-950 font-semibold shadow-xs"
-                  : "bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white hover:bg-zinc-800"
+                  ? "bg-amber-400 text-black font-black shadow-[0_0_12px_rgba(251,191,36,0.3)]"
+                  : "bg-[#10121a] text-[#94a3b8] border border-[#1c202e] hover:text-white"
               }`}
             >
               {c.label}
@@ -287,23 +287,27 @@ export default function BazaarPage() {
           return (
             <div
               key={item.id}
-              className="bg-zinc-900/50 rounded-2xl overflow-hidden flex flex-col justify-between border border-zinc-800 hover:border-zinc-700 transition-all group shadow-sm"
+              className={`bg-[#10121a] rounded-3xl overflow-hidden flex flex-col justify-between shadow-[0_10px_30px_rgba(0,0,0,0.3)] transition-all group ${
+                isGold
+                  ? "border border-amber-500/40 hover:border-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.08)]"
+                  : "border border-[#1c202e] hover:border-[#00d4ff]/30"
+              }`}
             >
               {/* Product Photo Canvas */}
-              <div className="h-52 w-full relative overflow-hidden bg-zinc-950">
+              <div className="h-56 w-full relative overflow-hidden bg-zinc-900">
                 {item.images && item.images.length > 0 && (
                   <img
                     src={item.images[0]}
                     alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-transparent to-black/20" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#10121a] via-transparent to-black/30" />
 
                 {/* Top Tags */}
                 <div className="absolute top-3 left-3 flex gap-1.5">
                   {item.tag && (
-                    <span className="bg-black/75 backdrop-blur-md text-zinc-200 border border-zinc-700 px-2 py-0.5 rounded-md text-[10px] font-semibold">
+                    <span className="bg-black/75 backdrop-blur-md text-amber-400 border border-amber-400/40 px-2.5 py-1 rounded-md text-[10px] font-black">
                       {item.tag}
                     </span>
                   )}
@@ -312,50 +316,50 @@ export default function BazaarPage() {
                 {/* Wishlist Heart */}
                 <button
                   onClick={() => toggleSave(item.id)}
-                  className="absolute top-3 right-3 h-8 w-8 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center border border-white/10 hover:scale-105 transition-transform"
+                  className="absolute top-3 right-3 h-9 w-9 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center border border-white/10 hover:scale-110 transition-transform"
                 >
                   <Heart
-                    size={14}
-                    className={isSaved ? "text-rose-500 fill-rose-500" : "text-white"}
+                    size={16}
+                    className={isSaved ? "text-red-500 fill-red-500" : "text-white"}
                   />
                 </button>
 
                 {/* Price & Condition Badge */}
                 <div className="absolute bottom-3 left-3.5 flex items-center gap-2">
-                  <span className="bg-zinc-950/90 backdrop-blur-md text-emerald-400 text-sm font-bold px-2.5 py-0.5 rounded-lg border border-emerald-500/30">
+                  <span className="bg-black/85 backdrop-blur-md text-[#10b981] text-base font-black px-3 py-1 rounded-xl border border-[#10b981]/30">
                     ${item.price.toLocaleString()}
                   </span>
-                  <span className="bg-zinc-950/80 backdrop-blur-md text-zinc-400 text-[11px] font-medium px-2 py-0.5 rounded-md">
+                  <span className="bg-black/70 backdrop-blur-md text-[#9ca3af] text-[11px] font-semibold px-2.5 py-1 rounded-lg">
                     {item.condition.replace(/_/g, " ")}
                   </span>
                 </div>
               </div>
 
               {/* Product Info Body */}
-              <div className="p-4 flex-1 flex flex-col justify-between gap-3">
+              <div className="p-5 flex-1 flex flex-col justify-between gap-3">
                 <div>
-                  <h3 className="text-sm font-semibold text-white leading-snug line-clamp-1">
+                  <h3 className="text-sm font-bold text-white leading-snug line-clamp-1">
                     {item.title}
                   </h3>
 
                   {item.specs ? (
-                    <p className="text-xs text-zinc-400 mt-1 line-clamp-1">{item.specs}</p>
+                    <p className="text-xs text-[#94a3b8] mt-1 line-clamp-1">{item.specs}</p>
                   ) : item.description ? (
-                    <p className="text-xs text-zinc-400 mt-1 line-clamp-1">{item.description}</p>
+                    <p className="text-xs text-[#94a3b8] mt-1 line-clamp-1">{item.description}</p>
                   ) : null}
 
                   {item.location && (
-                    <div className="flex items-center gap-1.5 text-xs text-zinc-400 mt-2">
-                      <MapPin size={13} className="text-zinc-500" />
+                    <div className="flex items-center gap-1.5 text-xs text-[#9ca3af] mt-2.5">
+                      <MapPin size={13} className="text-[#f87171]" />
                       <span>{item.location}</span>
                     </div>
                   )}
                 </div>
 
                 {/* Seller Dock & Chat Action */}
-                <div className="pt-3 border-t border-zinc-800/80 flex items-center justify-between">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="h-7 w-7 rounded-full overflow-hidden bg-zinc-800 border border-zinc-700 flex items-center justify-center text-xs font-semibold text-white shrink-0">
+                <div className="pt-3.5 border-t border-[#1c202e] flex items-center justify-between">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="h-8 w-8 rounded-full overflow-hidden bg-[#161924] border border-[#1c202e] flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
                       {sellerAvatar ? (
                         <img src={sellerAvatar} alt={sellerName} className="w-full h-full object-cover" />
                       ) : (
@@ -363,14 +367,14 @@ export default function BazaarPage() {
                       )}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs font-semibold text-zinc-200 truncate">{sellerName}</p>
+                      <p className="text-xs font-bold text-white truncate">{sellerName}</p>
                       <SellerTierBadge tier={sellerTier} salesCount={sales} rating={rating} />
                     </div>
                   </div>
 
                   <Link
                     href="/messages"
-                    className="h-7 px-3 rounded-lg bg-zinc-800 text-zinc-200 border border-zinc-700 text-xs font-medium flex items-center gap-1.5 hover:bg-zinc-700 hover:text-white transition-colors shrink-0"
+                    className="h-8 px-3.5 rounded-xl bg-[#00d4ff]/15 text-[#00d4ff] border border-[#00d4ff]/30 text-xs font-bold flex items-center gap-1.5 hover:bg-[#00d4ff] hover:text-[#08090d] transition-all flex-shrink-0"
                   >
                     <MessageCircle size={13} />
                     <span>Chat</span>
