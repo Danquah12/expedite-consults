@@ -77,7 +77,7 @@ function FeedContent() {
 
   const handleAddNewPost = (newPost: FeedPost) => {
     setPosts((prev) => [newPost, ...prev.filter((p) => p.id !== newPost.id)]);
-    showToast("✨ Your post was published to SpheraNet!");
+    showToast("Post shared to community!");
     try {
       saveLocalFeedPost(newPost);
     } catch (e) {}
@@ -107,13 +107,15 @@ function FeedContent() {
           return {
             ...p,
             isReposted: nextReposted,
-            repostsCount: nextReposted ? (p.repostsCount || 0) + 1 : Math.max(0, (p.repostsCount || 0) - 1),
+            repostsCount: nextReposted
+              ? (p.repostsCount || 0) + 1
+              : Math.max(0, (p.repostsCount || 1) - 1),
           };
         }
         return p;
       })
     );
-    showToast("🔁 Reposted to your timeline!");
+    showToast("Reposted to your profile!");
   };
 
   const handleBookmark = (postId: string) => {
@@ -121,32 +123,23 @@ function FeedContent() {
       prev.map((p) => {
         if (p.id === postId) {
           const nextSaved = !p.isSaved;
-          return {
-            ...p,
-            isSaved: nextSaved,
-            savesCount: nextSaved ? (p.savesCount || 0) + 1 : Math.max(0, (p.savesCount || 0) - 1),
-          };
+          return { ...p, isSaved: nextSaved };
         }
         return p;
       })
     );
-    showToast("🔖 Post saved to bookmarks");
+    showToast("Saved to your bookmarks!");
   };
 
   const handleVotePoll = (postId: string, optionIndex: number) => {
     setPosts((prev) =>
       prev.map((p) => {
-        if (p.id === postId && p.poll && p.poll.userVotedIndex === undefined) {
-          const updatedOptions = p.poll.options.map((opt, idx) => {
-            if (idx === optionIndex) {
-              return { ...opt, votes: opt.votes + 1 };
-            }
-            return opt;
-          });
-          const newTotal = p.poll.totalVotes + 1;
-          const recalculated = updatedOptions.map((opt) => ({
+        if (p.id === postId && p.poll) {
+          const newTotal = (p.poll.totalVotes || 0) + 1;
+          const recalculated = p.poll.options.map((opt, idx) => ({
             ...opt,
-            percentage: Math.round((opt.votes / newTotal) * 100),
+            votes: idx === optionIndex ? opt.votes + 1 : opt.votes,
+            voted: idx === optionIndex,
           }));
 
           return {
@@ -162,7 +155,7 @@ function FeedContent() {
         return p;
       })
     );
-    showToast("🗳️ Vote recorded!");
+    showToast("Vote recorded!");
   };
 
   const handleAddComment = (postId: string, text: string) => {
@@ -188,7 +181,7 @@ function FeedContent() {
         return p;
       })
     );
-    showToast("💬 Reply posted!");
+    showToast("Comment posted!");
   };
 
   const handleOpenShare = (post: FeedPost) => {
@@ -203,7 +196,7 @@ function FeedContent() {
         p.id === selectedSharePost.id ? { ...p, sharesCount: (p.sharesCount || 0) + 1 } : p
       )
     );
-    showToast("🚀 Shared to " + platform.toUpperCase() + "!");
+    showToast("Shared to " + platform);
   };
 
   const handleToggleFollow = (username: string) => {
@@ -241,17 +234,16 @@ function FeedContent() {
   });
 
   return (
-    <div className="min-h-screen bg-black text-neutral-100 font-sans">
+    <div className="min-h-screen bg-neutral-950 text-neutral-100 font-sans">
       {toastMessage && (
-        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-neutral-900/95 border border-amber-500/40 text-white px-5 py-2.5 rounded-full shadow-2xl font-bold text-xs flex items-center gap-2 backdrop-blur-md animate-in slide-in-from-top-4">
-          <Sparkles className="w-4 h-4 text-amber-400 animate-spin" />
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-neutral-900 border border-neutral-700 text-white px-4 py-2 rounded-full shadow-xl font-medium text-xs flex items-center gap-2 backdrop-blur-md">
           <span>{toastMessage}</span>
         </div>
       )}
 
-      <div className="max-w-[1300px] mx-auto flex justify-center min-h-screen">
+      <div className="max-w-[1240px] mx-auto flex justify-center min-h-screen">
         {/* LEFT NAVIGATION RAIL */}
-        <aside className="w-16 sm:w-20 xl:w-[275px] h-screen sticky top-0 flex-shrink-0 border-r border-neutral-800/80 z-30">
+        <aside className="w-16 sm:w-20 xl:w-[250px] h-screen sticky top-0 flex-shrink-0 border-r border-neutral-800/80 z-30">
           <XLeftNav
             activeTab={activeTab}
             activeGospelSubTab={gospelSubTab}
@@ -274,76 +266,35 @@ function FeedContent() {
 
         {/* CENTER TIMELINE */}
         <main className="flex-1 max-w-[620px] min-h-screen border-r border-neutral-800/80">
-          {/* Header with Navigation Tabs */}
-          <header className="sticky top-0 z-20 bg-black/80 backdrop-blur-md border-b border-neutral-800/80">
+          {/* Header with Clean Unified Navigation Tabs */}
+          <header className="sticky top-0 z-20 bg-neutral-950/90 backdrop-blur-md border-b border-neutral-800/80">
             <div className="flex items-center justify-between px-4 py-3 sm:hidden border-b border-neutral-800">
-              <div className="flex items-center gap-2">
-                <span className="font-black text-xl text-white font-mono">𝕏</span>
-                <span className="font-bold text-sm text-neutral-300">SpheraNet</span>
-              </div>
-              <button
-                onClick={() => setActiveTab("GOSPEL")}
-                className="px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold flex items-center gap-1"
-              >
-                <BookOpen className="w-3.5 h-3.5" />
-                <span>Gospel</span>
-              </button>
+              <span className="font-bold text-sm text-neutral-200">Community Feed</span>
             </div>
 
             <div className="grid grid-cols-4 text-center">
-              <button
-                onClick={() => setActiveTab("FYP")}
-                className="relative py-3.5 text-sm font-bold transition hover:bg-white/5"
-              >
-                <span className={activeTab === "FYP" ? "text-white" : "text-neutral-500 font-medium"}>
-                  For you
-                </span>
-                {activeTab === "FYP" && (
-                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-14 h-1 bg-sky-500 rounded-full" />
-                )}
-              </button>
-
-              <button
-                onClick={() => setActiveTab("FOLLOWING")}
-                className="relative py-3.5 text-sm font-bold transition hover:bg-white/5"
-              >
-                <span className={activeTab === "FOLLOWING" ? "text-white" : "text-neutral-500 font-medium"}>
-                  Following
-                </span>
-                {activeTab === "FOLLOWING" && (
-                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-14 h-1 bg-sky-500 rounded-full" />
-                )}
-              </button>
-
-              <button
-                onClick={() => setActiveTab("GOSPEL")}
-                className="relative py-3.5 text-sm font-bold transition hover:bg-amber-500/10 group"
-              >
-                <span
-                  className={
-                    "flex items-center justify-center gap-1 " +
-                    (activeTab === "GOSPEL" ? "text-amber-400 font-extrabold" : "text-amber-500/80 font-semibold")
-                  }
-                >
-                  <span>✝️ Gospel</span>
-                  <span className="text-[9px] bg-amber-500 text-black px-1 rounded font-black">NEW</span>
-                </span>
-                {activeTab === "GOSPEL" && (
-                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-1 bg-amber-500 rounded-full shadow-lg shadow-amber-500/50" />
-                )}
-              </button>
-
-              <button
-                onClick={() => setActiveTab("CAMPUS")}
-                className="relative py-3.5 text-sm font-bold transition hover:bg-white/5"
-              >
-                <span className={activeTab === "CAMPUS" ? "text-white" : "text-neutral-500 font-medium"}>
-                  🎓 Campus
-                </span>
-                {activeTab === "CAMPUS" && (
-                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-14 h-1 bg-emerald-500 rounded-full" />
-                )}
-              </button>
+              {[
+                { id: "FYP", label: "For you" },
+                { id: "FOLLOWING", label: "Following" },
+                { id: "GOSPEL", label: "Daily Grace" },
+                { id: "CAMPUS", label: "Campus" },
+              ].map((tab) => {
+                const isSelected = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as any)}
+                    className="relative py-3.5 text-xs sm:text-sm font-semibold transition hover:bg-white/5"
+                  >
+                    <span className={isSelected ? "text-white font-bold" : "text-neutral-400 font-medium"}>
+                      {tab.label}
+                    </span>
+                    {isSelected && (
+                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-white rounded-full" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </header>
 
@@ -360,91 +311,83 @@ function FeedContent() {
               >
                 <div
                   className={
-                    "relative w-14 h-14 rounded-full p-0.5 transition transform group-hover:scale-105 " +
+                    "relative w-13 h-13 rounded-full p-0.5 transition transform group-hover:scale-105 " +
                     (story.hasLive
-                      ? "bg-gradient-to-tr from-rose-500 via-pink-500 to-amber-400 animate-pulse"
+                      ? "bg-gradient-to-tr from-rose-500 to-amber-500"
                       : story.isUser
                       ? "bg-neutral-700"
-                      : "bg-gradient-to-tr from-sky-400 to-indigo-600")
+                      : "bg-gradient-to-tr from-neutral-600 to-neutral-400")
                   }
                 >
                   <img
                     src={story.avatar}
                     alt={story.username}
-                    className="w-full h-full rounded-full object-cover border-2 border-black"
+                    className="w-full h-full rounded-full object-cover border-2 border-neutral-950"
                   />
                   {story.isUser && (
-                    <div className="absolute bottom-0 right-0 w-4 h-4 bg-sky-500 rounded-full flex items-center justify-center border border-black text-white">
+                    <div className="absolute bottom-0 right-0 w-4 h-4 bg-white rounded-full flex items-center justify-center text-neutral-950">
                       <Plus className="w-3 h-3 stroke-[3]" />
                     </div>
                   )}
-                  {story.hasLive && (
-                    <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-rose-600 text-white text-[8px] font-black px-1 rounded-sm uppercase tracking-tighter">
-                      LIVE
-                    </span>
-                  )}
                 </div>
-                <span className="text-[11px] text-neutral-400 group-hover:text-white max-w-[60px] truncate">
-                  {story.isUser ? "Your story" : story.displayName || story.username}
+                <span className="text-[11px] text-neutral-400 max-w-[64px] truncate text-center font-medium">
+                  {story.name.split(" ")[0]}
                 </span>
               </div>
             ))}
           </div>
 
-          {/* In-Line Twitter / X Post Composer */}
+          {/* Post Composer */}
           <XComposer
             onPostCreated={handleAddNewPost}
             isGospelMode={activeTab === "GOSPEL"}
           />
 
-          {/* Dedicated Gospel Hub View */}
+          {/* Gospel Hub Banner (If on Gospel Tab) */}
           {activeTab === "GOSPEL" && (
-            <div className="p-4 border-b border-neutral-800/80 bg-gradient-to-b from-amber-950/20 via-black to-black">
+            <div className="p-4 border-b border-neutral-800/80 bg-neutral-900/30">
               <GospelHub
                 initialSubTab={gospelSubTab}
                 onShareToFeed={(verseText, verseRef) => {
-                  const newPost: FeedPost = {
-                    id: `p-faith-${Date.now()}`,
-                    type: "gospel_scripture",
-                    category: "gospel",
-                    author: {
-                      id: "u-current",
-                      name: "Kwesi Asiedu",
-                      username: "kwesi",
-                      avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
-                      verified: true,
-                      badgeType: "gospel",
-                      timeAgo: "Just now",
-                      privacy: "Public",
-                    },
-                    content: `🕊️ ${verseText}\n\n— ${verseRef} (#GospelMenu #SpheraNet)`,
-                    scripture: {
-                      book: verseRef.split(' ')[0] || "Scripture",
-                      reference: verseRef,
-                      text: verseText,
-                      translation: "NIV",
-                      theme: "Faith & Worship",
-                    },
-                    hashtags: ["#GospelMenu", "#Worship", "#DailyGrace", "#Faith"],
-                    likes: 1,
-                    repostsCount: 0,
-                    commentsCount: 0,
-                    viewsCount: 1,
-                    sharesCount: 0,
-                    savesCount: 0,
-                    isLiked: false,
-                    isBookmarked: false,
-                    createdAt: new Date().toISOString(),
-                  };
-                  handleAddNewPost(newPost);
+                  handleAddNewPost(
+                    feedStore.createPost({
+                      author: {
+                        name: "Kwesi Asiedu",
+                        username: "kwesi",
+                        avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
+                        verified: true,
+                      },
+                      content: `“${verseText}”\n\n— ${verseRef}`,
+                      category: "gospel",
+                      isGospel: true,
+                      scripture: {
+                        reference: verseRef,
+                        text: verseText,
+                        theme: "Daily Reflection",
+                        translation: "NIV",
+                      },
+                    })
+                  );
+                  showToast("Scripture shared to feed!");
                 }}
               />
             </div>
           )}
 
-          {/* Feed Post Timeline */}
-          <div className="divide-y divide-neutral-800/80">
-            {filteredPosts.length > 0 ? (
+          {/* Feed Posts List */}
+          <div className="divide-y divide-neutral-800/80 pb-20">
+            {filteredPosts.length === 0 ? (
+              <div className="py-20 text-center space-y-3 text-neutral-400">
+                <BookOpen className="w-10 h-10 mx-auto text-neutral-600" />
+                <p className="text-sm font-medium">No posts in this feed yet.</p>
+                <button
+                  onClick={() => setActiveTab("FYP")}
+                  className="px-4 py-1.5 rounded-full bg-neutral-800 text-white text-xs font-semibold hover:bg-neutral-700"
+                >
+                  Back to Home Feed
+                </button>
+              </div>
+            ) : (
               filteredPosts.map((post) => (
                 <XPostCard
                   key={post.id}
@@ -458,56 +401,55 @@ function FeedContent() {
                   onFollow={handleToggleFollow}
                 />
               ))
-            ) : (
-              <div className="py-16 text-center text-neutral-500 space-y-2">
-                <p className="text-base font-bold text-neutral-300">No posts yet in this tab</p>
-                <p className="text-xs">Be the first to share an update or testimony!</p>
-              </div>
             )}
           </div>
         </main>
 
         {/* RIGHT TRENDING SIDEBAR */}
-        <aside className="hidden lg:block w-[350px] xl:w-[390px] sticky top-0 h-screen p-4 flex-shrink-0">
+        <aside className="hidden lg:block w-[300px] xl:w-[320px] h-screen sticky top-0 flex-shrink-0 overflow-y-auto">
           <XTrendingSidebar
-            liveStreams={liveStreams}
-            onWatchLive={(stream) => {
-              setActiveLiveStream(stream);
-              setIsLiveModalOpen(true);
+            onTagClick={(tag) => {
+              const input = document.querySelector("input");
+              if (input) {
+                input.value = tag;
+                input.focus();
+              }
+            }}
+            onOpenGospel={() => {
+              setActiveTab("GOSPEL");
+              window.scrollTo({ top: 0, behavior: "smooth" });
             }}
             onFollowUser={handleToggleFollow}
           />
         </aside>
       </div>
 
-      {/* MODALS */}
-      <VideoRecorderModal
-        isOpen={isRecorderOpen}
-        onClose={() => setIsRecorderOpen(false)}
-        onPostCreated={handleAddNewPost}
-      />
+      {/* Modals */}
+      {isStoryViewerOpen && (
+        <StoryViewerModal
+          stories={stories}
+          initialStoryIndex={selectedStoryIndex}
+          onClose={() => setIsStoryViewerOpen(false)}
+        />
+      )}
 
-      <StoryViewerModal
-        isOpen={isStoryViewerOpen}
-        stories={stories}
-        initialIndex={selectedStoryIndex}
-        onClose={() => setIsStoryViewerOpen(false)}
-        onAddStory={(newStory) => setStories((prev) => [newStory, ...prev])}
-      />
+      {isShareModalOpen && selectedSharePost && (
+        <ShareModal
+          post={selectedSharePost}
+          onClose={() => setIsShareModalOpen(false)}
+          onShared={handleShareCompleted}
+        />
+      )}
 
-      <LiveBroadcastModal
-        isOpen={isLiveModalOpen}
-        stream={activeLiveStream}
-        onClose={() => setIsLiveModalOpen(false)}
-        onSendGift={(giftName, recipient) => showToast("✨ Sent " + giftName + " to @" + recipient + "!")}
-      />
-
-      <ShareModal
-        isOpen={isShareModalOpen}
-        onClose={() => setIsShareModalOpen(false)}
-        post={selectedSharePost}
-        onShareCompleted={handleShareCompleted}
-      />
+      {isLiveModalOpen && (
+        <LiveBroadcastModal
+          onClose={() => setIsLiveModalOpen(false)}
+          onLiveStarted={(stream) => {
+            setLiveStreams((prev) => [stream, ...prev]);
+            showToast("Live broadcast is now streaming!");
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -516,9 +458,9 @@ export default function FeedPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-black flex items-center justify-center text-neutral-400 gap-2">
-          <Loader2 className="w-6 h-6 animate-spin text-sky-400" />
-          <span>Loading SpheraNet Feed...</span>
+        <div className="flex items-center justify-center min-h-[60vh] text-neutral-500 gap-2">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          <span className="text-sm">Loading feed...</span>
         </div>
       }
     >
