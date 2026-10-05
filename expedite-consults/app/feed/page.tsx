@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, Component, ErrorInfo, ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   FeedPost,
@@ -21,6 +21,42 @@ import { LiveBroadcastModal } from "@/components/feed/LiveBroadcastModal";
 import { ShareModal } from "@/components/feed/ShareModal";
 import { getLocalFeedPosts, saveLocalFeedPost } from "@/lib/indexed-db-media";
 import { BookOpen, Sparkles, Plus, Loader2 } from "lucide-react";
+
+// Safe Error Boundary to prevent full page crashes
+class FeedErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error("Feed error caught:", error, info);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-8 text-center space-y-3">
+          <p className="text-neutral-400 text-sm">Something went wrong loading parts of the feed.</p>
+          <button
+            onClick={() => {
+              if (typeof window !== "undefined") {
+                try { indexedDB.deleteDatabase("SpheraMediaVault_v1"); } catch (e) {}
+              }
+              this.setState({ hasError: false });
+              window.location.reload();
+            }}
+            className="px-4 py-2 rounded-xl bg-white text-neutral-900 font-semibold text-xs"
+          >
+            Reset & Reload Feed
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 function FeedContent() {
   const searchParams = useSearchParams();
@@ -56,10 +92,23 @@ function FeedContent() {
     async function hydrateLocalData() {
       try {
         const localPosts = await getLocalFeedPosts();
-        if (localPosts && localPosts.length > 0) {
+        if (localPosts && Array.isArray(localPosts) && localPosts.length > 0) {
+          const sanitized = localPosts
+            .filter((lp) => lp && typeof lp === "object" && lp.id)
+            .map((lp) => ({
+              ...lp,
+              author: {
+                name: lp.author?.name || "Community Member",
+                username: lp.author?.username || "user",
+                avatarUrl: lp.author?.avatarUrl || (lp.author as any)?.avatar || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
+                verified: !!lp.author?.verified,
+                timeAgo: lp.author?.timeAgo || "Just now",
+              },
+            }));
+
           setPosts((prev) => {
             const existingIds = new Set(prev.map((p) => p.id));
-            const freshLocal = localPosts.filter((lp) => !existingIds.has(lp.id));
+            const freshLocal = sanitized.filter((lp) => !existingIds.has(lp.id));
             return [...freshLocal, ...prev];
           });
         }
@@ -202,7 +251,7 @@ function FeedContent() {
   const handleToggleFollow = (username: string) => {
     setPosts((prev) =>
       prev.map((p) =>
-        p.author.username === username
+        p.author?.username === username
           ? { ...p, author: { ...p.author, isFollowed: !p.author.isFollowed } }
           : p
       )
@@ -210,6 +259,7 @@ function FeedContent() {
   };
 
   const filteredPosts = posts.filter((p) => {
+    if (!p) return false;
     if (activeTab === "GOSPEL") {
       return (
         p.isGospel ||
@@ -220,7 +270,7 @@ function FeedContent() {
       );
     }
     if (activeTab === "FOLLOWING") {
-      return p.author.isFollowed;
+      return p.author?.isFollowed;
     }
     if (activeTab === "CAMPUS") {
       return (
@@ -456,15 +506,17 @@ function FeedContent() {
 
 export default function FeedPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex items-center justify-center min-h-[60vh] text-neutral-500 gap-2">
-          <Loader2 className="w-5 h-5 animate-spin" />
-          <span className="text-sm">Loading feed...</span>
-        </div>
-      }
-    >
-      <FeedContent />
-    </Suspense>
+    <FeedErrorBoundary>
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center min-h-[60vh] text-neutral-500 gap-2">
+            <Loader2 className="w-5 h-5 animate-spin" />
+            <span className="text-sm">Loading feed...</span>
+          </div>
+        }
+      >
+        <FeedContent />
+      </Suspense>
+    </FeedErrorBoundary>
   );
 }
