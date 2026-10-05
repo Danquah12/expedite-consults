@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { X, ChevronLeft, ChevronRight, Send } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { X, ChevronLeft, ChevronRight, Heart, Send, Sparkles, Plus, CheckCircle2 } from "lucide-react";
 import { StoryItem } from "@/lib/feed-store";
 
 interface StoryViewerModalProps {
@@ -32,6 +32,7 @@ export function StoryViewerModal({
     setProgress(0);
   }, [initialIndex, isOpen]);
 
+  // Story Auto-Advance Timer (5 seconds)
   useEffect(() => {
     if (!isOpen || isPaused) return;
 
@@ -46,7 +47,7 @@ export function StoryViewerModal({
             return 100;
           }
         }
-        return prev + 2;
+        return prev + 2; // 50 ticks * 100ms = 5000ms
       });
     }, 100);
 
@@ -81,16 +82,35 @@ export function StoryViewerModal({
     setTimeout(() => setReactionBurst(null), 2000);
   };
 
+  const handleCreateUserStory = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      onAddStory({
+        username: "kwesi",
+        displayName: "Kwesi Asiedu",
+        avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
+        mediaUrl: url,
+        mediaType: "image",
+        caption: "Added a new 24h story! ✨",
+      });
+      onClose();
+    }
+  };
+
   if (!isOpen || !activeStory) return null;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-2xl flex items-center justify-center p-4">
+      
+      {/* Reaction Burst */}
       {reactionBurst && (
         <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 text-4xl font-black text-white bg-black/80 px-6 py-3 rounded-full border border-pink-500/50 shadow-2xl animate-bounce">
           {reactionBurst}
         </div>
       )}
 
+      {/* Main Story Card */}
       <div
         className="relative w-full max-w-[420px] aspect-[9/16] max-h-[90vh] bg-zinc-950 rounded-3xl overflow-hidden shadow-2xl border border-zinc-800 flex flex-col justify-between select-none"
         onMouseDown={() => setIsPaused(true)}
@@ -98,6 +118,7 @@ export function StoryViewerModal({
         onTouchStart={() => setIsPaused(true)}
         onTouchEnd={() => setIsPaused(false)}
       >
+        {/* Background Image / Video */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={activeStory.mediaUrl}
@@ -105,9 +126,12 @@ export function StoryViewerModal({
           className="absolute inset-0 w-full h-full object-cover"
         />
 
+        {/* Gradient Scrims */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/70 pointer-events-none" />
 
+        {/* Top Header: Progress Bars & Author Details */}
         <div className="relative z-20 p-4 space-y-3">
+          {/* Segmented Progress Bars */}
           <div className="flex gap-1.5 w-full">
             {stories.map((_, idx) => (
               <div key={idx} className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden">
@@ -121,6 +145,7 @@ export function StoryViewerModal({
             ))}
           </div>
 
+          {/* Author info */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-full overflow-hidden ring-2 ring-pink-500 shadow-md">
@@ -142,6 +167,7 @@ export function StoryViewerModal({
           </div>
         </div>
 
+        {/* Story Caption */}
         {activeStory.caption && (
           <div className="relative z-20 px-4 py-2">
             <p className="text-xs font-semibold text-white bg-black/60 backdrop-blur-md p-2.5 rounded-xl inline-block border border-white/10 max-w-[90%]">
@@ -150,12 +176,15 @@ export function StoryViewerModal({
           </div>
         )}
 
+        {/* Navigation Touch Areas */}
         <div className="absolute inset-0 z-10 flex">
           <div className="w-1/2 h-full cursor-pointer" onClick={handlePrev} />
           <div className="w-1/2 h-full cursor-pointer" onClick={handleNext} />
         </div>
 
+        {/* Bottom Bar: Quick Reactions & Message Input */}
         <div className="relative z-20 p-4 space-y-2">
+          {/* Reaction Buttons */}
           <div className="flex justify-around py-1 bg-black/40 backdrop-blur-md rounded-2xl border border-white/10">
             {["🔥", "❤️", "👏", "😮", "💎", "🚀"].map((emoji) => (
               <button
@@ -168,6 +197,7 @@ export function StoryViewerModal({
             ))}
           </div>
 
+          {/* Reply input */}
           <div className="flex items-center gap-2">
             <input
               type="text"
@@ -185,8 +215,10 @@ export function StoryViewerModal({
             </button>
           </div>
         </div>
+
       </div>
 
+      {/* Prev / Next Arrows for Desktop */}
       <button
         onClick={handlePrev}
         disabled={currentIndex === 0}
@@ -202,6 +234,7 @@ export function StoryViewerModal({
       >
         <ChevronRight className="w-6 h-6" />
       </button>
+
     </div>
   );
 }

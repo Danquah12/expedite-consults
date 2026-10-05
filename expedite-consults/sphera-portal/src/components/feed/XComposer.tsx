@@ -39,7 +39,7 @@ export function XComposer({
   defaultCategory = "general",
   isGospelMode = false,
 }: XComposerProps) {
-  const effectivePlaceholder = placeholder || (isGospelMode ? "Share a scripture, prayer, or word of faith..." : "What is happening?!");
+  const effectivePlaceholder = placeholder || (isGospelMode ? "Share a reflection, encouragement, or scripture..." : "What's on your mind today?");
   const [content, setContent] = useState("");
   const [category, setCategory] = useState<"general" | "gospel" | "campus" | "tech">(isGospelMode ? "gospel" : defaultCategory);
   const [imageUrl, setImageUrl] = useState("");
@@ -98,33 +98,18 @@ export function XComposer({
     try {
       const postCategory = selectedScripture ? "gospel" : category;
       const matchedTags = content.match(/#[a-z0-9_]+/gi);
-      const hashtags: string[] = matchedTags ? [...matchedTags] : [];
-      if (postCategory === "gospel" && !hashtags.some(h => h.toLowerCase().includes("gospel"))) {
-        hashtags.push("#GospelMenu");
-      }
+      const hashtags = matchedTags ? matchedTags.map((t) => t.toLowerCase()) : [];
 
-      const postType = showPollBuilder
-        ? "poll"
-        : selectedScripture
-        ? "gospel_scripture"
-        : videoUrl
-        ? "immersive_video"
-        : "standard";
-
-      const newPost = feedStore.addPost({
-        type: postType,
-        category: postCategory,
+      const newPost = feedStore.createPost({
         author: {
-          id: `u-${currentUser.username}`,
           name: currentUser.name,
           username: currentUser.username,
-          avatarUrl: currentUser.avatarUrl,
+          avatar: currentUser.avatarUrl,
           verified: true,
-          badgeType: postCategory === "gospel" ? "gospel" : "blue",
-          timeAgo: "Just now",
-          privacy: "Public",
         },
         content: content.trim(),
+        category: postCategory,
+        isGospel: postCategory === "gospel" || !!selectedScripture,
         imageUrl: imageUrl || undefined,
         videoUrl: videoUrl || undefined,
         scripture: selectedScripture || undefined,
@@ -161,34 +146,34 @@ export function XComposer({
   };
 
   return (
-    <div className="border-b border-neutral-800 p-4 sm:p-5 bg-black">
+    <div className="border-b border-neutral-800 p-4 sm:p-5 bg-neutral-950/40">
       <div className="flex items-start gap-3">
         {/* User Avatar */}
         <img
           src={currentUser.avatarUrl}
           alt={currentUser.name}
-          className="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover border border-white/10 flex-shrink-0"
+          className="w-10 h-10 rounded-full object-cover border border-neutral-700 flex-shrink-0"
         />
 
         {/* Form Body */}
         <div className="flex-1 min-w-0">
           <form onSubmit={handleSubmit}>
-            {/* Category Pill Bar */}
+            {/* Category Pill Bar (Clean, Minimalist & Cohesive) */}
             <div className="flex items-center gap-1.5 mb-2 overflow-x-auto no-scrollbar">
               {[
-                { id: "general", label: "Everyone", icon: Globe },
-                { id: "gospel", label: "✝️ Gospel & Faith", icon: BookOpen },
-                { id: "campus", label: "🎓 Campus Pulse", icon: Sparkles },
-                { id: "tech", label: "💻 Tech & Dev", icon: Sparkles },
+                { id: "general", label: "General" },
+                { id: "gospel", label: "Faith & Reflection" },
+                { id: "campus", label: "Campus" },
+                { id: "tech", label: "Technology" },
               ].map((cat) => (
                 <button
                   key={cat.id}
                   type="button"
                   onClick={() => setCategory(cat.id as any)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
                     category === cat.id
-                      ? "bg-amber-400/20 text-amber-300 border border-amber-400/30"
-                      : "bg-white/5 text-neutral-400 hover:text-white"
+                      ? "bg-neutral-800 text-white font-semibold"
+                      : "bg-neutral-900 text-neutral-400 hover:text-white"
                   }`}
                 >
                   {cat.label}
@@ -196,19 +181,19 @@ export function XComposer({
               ))}
             </div>
 
-            {/* Expanding Textarea */}
+            {/* Input Text Area */}
             <textarea
               rows={isFocused || content.length > 0 ? 3 : 2}
               placeholder={effectivePlaceholder}
               value={content}
               onFocus={() => setIsFocused(true)}
               onChange={(e) => setContent(e.target.value)}
-              className="w-full bg-transparent text-white text-base sm:text-lg placeholder-neutral-500 resize-none focus:outline-none leading-relaxed"
+              className="w-full bg-transparent text-white text-sm sm:text-base placeholder-neutral-500 resize-none focus:outline-none leading-relaxed"
             />
 
             {/* Selected Scripture Attachment Preview */}
             {selectedScripture && (
-              <div className="mt-2 p-3.5 rounded-2xl bg-amber-950/40 border border-amber-500/30 relative">
+              <div className="mt-2 p-3.5 rounded-xl bg-neutral-900 border border-neutral-800 relative">
                 <button
                   type="button"
                   onClick={() => setSelectedScripture(null)}
@@ -216,7 +201,7 @@ export function XComposer({
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
-                <div className="flex items-center gap-2 text-amber-300 text-xs font-bold mb-1">
+                <div className="flex items-center gap-2 text-neutral-300 text-xs font-semibold mb-1">
                   <BookOpen className="w-3.5 h-3.5" />
                   <span>{selectedScripture.reference} ({selectedScripture.translation || "NIV"})</span>
                 </div>
@@ -228,7 +213,7 @@ export function XComposer({
 
             {/* Image Preview */}
             {imageUrl && (
-              <div className="mt-2 relative rounded-2xl overflow-hidden border border-white/10 max-h-60">
+              <div className="mt-2 relative rounded-xl overflow-hidden border border-neutral-800 max-h-60">
                 <button
                   type="button"
                   onClick={() => setImageUrl("")}
@@ -242,7 +227,7 @@ export function XComposer({
 
             {/* Video Preview */}
             {videoUrl && (
-              <div className="mt-2 relative rounded-2xl overflow-hidden border border-white/10 max-h-60">
+              <div className="mt-2 relative rounded-xl overflow-hidden border border-neutral-800 max-h-60">
                 <button
                   type="button"
                   onClick={() => setVideoUrl("")}
@@ -256,15 +241,15 @@ export function XComposer({
 
             {/* Poll Builder Drawer */}
             {showPollBuilder && (
-              <div className="mt-3 p-4 rounded-2xl bg-neutral-900 border border-white/10 space-y-3">
+              <div className="mt-3 p-4 rounded-xl bg-neutral-900 border border-neutral-800 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-neutral-300">Create a Poll</span>
+                  <span className="text-xs font-semibold text-neutral-300">Create a Poll</span>
                   <button
                     type="button"
                     onClick={() => setShowPollBuilder(false)}
                     className="text-neutral-400 hover:text-white text-xs"
                   >
-                    Cancel Poll
+                    Cancel
                   </button>
                 </div>
                 <input
@@ -272,23 +257,23 @@ export function XComposer({
                   placeholder="Ask a question..."
                   value={pollQuestion}
                   onChange={(e) => setPollQuestion(e.target.value)}
-                  className="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-amber-400"
+                  className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-700"
                 />
                 {pollOptions.map((opt, i) => (
                   <input
                     key={i}
                     type="text"
-                    placeholder={`Choice ${i + 1}`}
+                    placeholder={`Option ${i + 1}`}
                     value={opt}
                     onChange={(e) => handlePollOptionChange(i, e.target.value)}
-                    className="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-amber-400"
+                    className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-700"
                   />
                 ))}
                 {pollOptions.length < 4 && (
                   <button
                     type="button"
                     onClick={handleAddPollOption}
-                    className="text-xs font-semibold text-amber-400 hover:text-amber-300 flex items-center gap-1"
+                    className="text-xs font-medium text-neutral-400 hover:text-white flex items-center gap-1"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Add option</span>
@@ -314,134 +299,96 @@ export function XComposer({
             />
 
             {/* Bottom Actions Bar */}
-            <div className="flex items-center justify-between border-t border-white/10 pt-3 mt-3">
+            <div className="flex items-center justify-between border-t border-neutral-800 pt-3 mt-3">
               {/* Media Icon Buttons */}
-              <div className="flex items-center gap-1 sm:gap-2 text-amber-400">
+              <div className="flex items-center gap-1 sm:gap-2 text-neutral-400">
                 <button
                   type="button"
-                  title="Upload Image"
                   onClick={() => fileInputRef.current?.click()}
-                  className="p-2 rounded-full hover:bg-amber-400/10 transition-colors"
+                  className="p-2 rounded-lg hover:bg-neutral-800 hover:text-white transition-colors"
+                  title="Upload Image"
                 >
                   <ImageIcon className="w-4 h-4" />
                 </button>
 
                 <button
                   type="button"
-                  title="Upload Video"
                   onClick={() => videoInputRef.current?.click()}
-                  className="p-2 rounded-full hover:bg-amber-400/10 transition-colors"
+                  className="p-2 rounded-lg hover:bg-neutral-800 hover:text-white transition-colors"
+                  title="Upload Video"
                 >
                   <Video className="w-4 h-4" />
                 </button>
 
                 <button
                   type="button"
-                  title="Create Poll"
                   onClick={() => setShowPollBuilder(!showPollBuilder)}
-                  className={`p-2 rounded-full transition-colors ${
-                    showPollBuilder ? "bg-amber-400/20 text-amber-300" : "hover:bg-amber-400/10"
-                  }`}
+                  className="p-2 rounded-lg hover:bg-neutral-800 hover:text-white transition-colors"
+                  title="Create Poll"
                 >
                   <BarChart2 className="w-4 h-4" />
                 </button>
 
                 <button
                   type="button"
-                  title="Attach Scripture (Gospel Menu)"
                   onClick={() => setShowScripturePicker(!showScripturePicker)}
-                  className={`p-2 rounded-full transition-colors ${
-                    showScripturePicker || selectedScripture ? "bg-amber-400/20 text-amber-300" : "hover:bg-amber-400/10"
-                  }`}
+                  className="p-2 rounded-lg hover:bg-neutral-800 hover:text-white transition-colors"
+                  title="Attach Scripture"
                 >
                   <BookOpen className="w-4 h-4" />
                 </button>
-
-                <button
-                  type="button"
-                  title="Emoji"
-                  onClick={() => setContent((prev) => prev + " 🕊️✨")}
-                  className="p-2 rounded-full hover:bg-amber-400/10 transition-colors"
-                >
-                  <Smile className="w-4 h-4" />
-                </button>
               </div>
 
-              {/* Right Submit & Progress */}
+              {/* Submit & Character Count */}
               <div className="flex items-center gap-3">
                 {content.length > 0 && (
-                  <div className="flex items-center gap-1.5">
-                    <span className={`text-[11px] font-bold ${remainingChars < 20 ? "text-rose-500" : "text-neutral-500"}`}>
-                      {remainingChars}
-                    </span>
-                    <div className="w-5 h-5 rounded-full border border-neutral-700 relative flex items-center justify-center">
-                      <div
-                        className={`w-3.5 h-3.5 rounded-full transition-all ${
-                          remainingChars < 0 ? "bg-rose-500" : "bg-amber-400"
-                        }`}
-                        style={{ opacity: charPercent / 100 }}
-                      />
-                    </div>
-                  </div>
+                  <span className={`text-xs ${remainingChars < 20 ? "text-red-400" : "text-neutral-500"}`}>
+                    {remainingChars}
+                  </span>
                 )}
 
                 <button
                   type="submit"
-                  disabled={(!content.trim() && !imageUrl && !videoUrl && !selectedScripture) || isSubmitting || remainingChars < 0}
-                  className="px-5 py-2 rounded-full bg-white hover:bg-neutral-200 disabled:opacity-40 disabled:hover:bg-white text-black font-bold text-sm transition-all shadow-md active:scale-95"
+                  disabled={isSubmitting || (!content.trim() && !imageUrl && !videoUrl && !selectedScripture)}
+                  className="px-4 py-1.5 rounded-full bg-white text-neutral-950 font-semibold text-xs transition-all hover:bg-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? "Posting..." : "Post"}
                 </button>
               </div>
             </div>
-          </form>
 
-          {/* Quick Scripture Picker Popover */}
-          {showScripturePicker && (
-            <div className="mt-3 p-4 rounded-2xl bg-neutral-900 border border-amber-500/30 space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
-                  <BookOpen className="w-3.5 h-3.5" />
-                  Select Scripture to Attach
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setShowScripturePicker(false)}
-                  className="text-neutral-400 hover:text-white text-xs"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {dailyVerses.map((v) => (
+            {/* Scripture Picker Drawer */}
+            {showScripturePicker && (
+              <div className="mt-3 p-3 rounded-xl bg-neutral-900 border border-neutral-800 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-neutral-300">Quick Scripture Attacher</span>
                   <button
-                    key={v.id}
                     type="button"
-                    onClick={() => {
-                      setSelectedScripture({
-                        book: v.book,
-                        reference: v.reference,
-                        text: v.text,
-                        translation: v.translation,
-                        theme: v.theme,
-                      });
-                      setCategory("gospel");
-                      setShowScripturePicker(false);
-                    }}
-                    className="p-2.5 rounded-xl bg-black border border-white/10 hover:border-amber-400/40 text-left transition-all group"
+                    onClick={() => setShowScripturePicker(false)}
+                    className="text-neutral-400 hover:text-white text-xs"
                   >
-                    <div className="text-xs font-bold text-amber-400 group-hover:text-amber-300">
-                      {v.reference}
-                    </div>
-                    <div className="text-[11px] text-neutral-300 line-clamp-1 italic mt-0.5">
-                      "{v.text}"
-                    </div>
+                    Close
                   </button>
-                ))}
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
+                  {dailyVerses.slice(0, 4).map((v) => (
+                    <button
+                      key={v.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedScripture(v);
+                        setShowScripturePicker(false);
+                      }}
+                      className="p-2 rounded-lg bg-neutral-950 border border-neutral-800 hover:border-neutral-700 text-left transition-colors"
+                    >
+                      <p className="text-xs font-semibold text-neutral-200">{v.reference}</p>
+                      <p className="text-[11px] text-neutral-400 font-serif line-clamp-1 italic">"{v.text}"</p>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </form>
         </div>
       </div>
     </div>

@@ -14,15 +14,14 @@ import {
   Radio,
   User,
   MoreHorizontal,
-  Feather,
+  PenSquare,
   CheckCircle2,
-  Sparkles,
   Music,
   Heart,
   Bookmark,
   ChevronDown,
   ChevronRight,
-  Flame,
+  Globe
 } from "lucide-react";
 
 interface XLeftNavProps {
@@ -51,7 +50,7 @@ export function XLeftNav({
   },
 }: XLeftNavProps) {
   const pathname = usePathname();
-  const [isGospelMenuOpen, setIsGospelMenuOpen] = useState(true);
+  const [isGospelMenuOpen, setIsGospelMenuOpen] = useState(false);
 
   const navItems = [
     {
@@ -64,13 +63,11 @@ export function XLeftNav({
     },
     {
       id: "gospel",
-      label: "Gospel Menu",
+      label: "Daily Inspiration",
       icon: BookOpen,
       href: "/feed",
       onClick: () => onSelectTab("GOSPEL"),
       isActive: activeTab === "GOSPEL",
-      isSpecial: true,
-      badge: "NEW",
     },
     {
       id: "explore",
@@ -91,20 +88,14 @@ export function XLeftNav({
       href: "/messages",
     },
     {
-      id: "veritaslens",
-      label: "Grok & VeritasLens",
-      icon: Shield,
-      href: "/veritaslens",
-    },
-    {
       id: "campus",
-      label: "Campus OS",
+      label: "Campus Hub",
       icon: GraduationCap,
       href: "/campus",
     },
     {
       id: "spaces",
-      label: "Spaces & Audio",
+      label: "Audio Spaces",
       icon: Radio,
       href: "/spaces",
     },
@@ -117,19 +108,17 @@ export function XLeftNav({
   ];
 
   return (
-    <nav className="flex flex-col justify-between h-full p-2 sm:p-4 text-white">
+    <nav className="flex flex-col justify-between h-full p-2 sm:p-4 text-neutral-200">
       {/* Top Section */}
-      <div className="space-y-1 sm:space-y-2">
-        {/* Twitter / X & SpheraNet Logo */}
+      <div className="space-y-2">
+        {/* Clean Logo Header */}
         <Link
           href="/feed"
-          className="w-12 h-12 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors mb-2 group"
-          title="SpheraNet"
+          className="w-11 h-11 rounded-xl hover:bg-neutral-800/60 flex items-center justify-center transition-colors mb-2 group"
+          title="Community Feed"
         >
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 via-white to-sky-400 p-0.5 group-hover:scale-105 transition-transform">
-            <div className="w-full h-full bg-black rounded-[10px] flex items-center justify-center">
-              <span className="font-black text-lg text-white font-mono">𝕏</span>
-            </div>
+          <div className="w-8 h-8 rounded-lg bg-neutral-100 text-neutral-900 flex items-center justify-center font-black text-sm">
+            E
           </div>
         </Link>
 
@@ -138,29 +127,17 @@ export function XLeftNav({
           {navItems.map((item) => {
             const Icon = item.icon;
             const isSelected = item.isActive;
-            const isSpecial = item.isSpecial;
 
             const content = (
               <div
-                className={`flex items-center gap-4 px-3.5 py-3 rounded-full transition-all duration-200 group ${
+                className={`flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl transition-all duration-150 group ${
                   isSelected
-                    ? isSpecial
-                      ? "bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30"
-                      : "bg-white/15 text-white font-bold"
-                    : isSpecial
-                    ? "text-amber-400 hover:bg-amber-500/10 font-bold"
-                    : "text-neutral-300 hover:bg-white/10 hover:text-white"
+                    ? "bg-neutral-800 text-white font-semibold"
+                    : "text-neutral-400 hover:bg-neutral-800/50 hover:text-white"
                 }`}
               >
-                <div className="relative">
-                  <Icon className={`w-6 h-6 group-hover:scale-110 transition-transform ${isSpecial ? "text-amber-400" : ""}`} />
-                  {item.badge && (
-                    <span className="absolute -top-1 -right-2 px-1.5 py-0.2 rounded-full text-[9px] font-black bg-amber-500 text-black">
-                      {item.badge}
-                    </span>
-                  )}
-                </div>
-                <span className="hidden xl:inline text-base tracking-wide">
+                <Icon className={`w-5 h-5 transition-transform ${isSelected ? "text-white" : "text-neutral-400"}`} />
+                <span className="hidden xl:inline text-sm">
                   {item.label}
                 </span>
               </div>
@@ -174,7 +151,7 @@ export function XLeftNav({
                     <button
                       onClick={() => {
                         onSelectTab("GOSPEL");
-                        setIsGospelMenuOpen(true);
+                        setIsGospelMenuOpen(!isGospelMenuOpen);
                       }}
                       className="flex-1 text-left"
                     >
@@ -185,31 +162,24 @@ export function XLeftNav({
                         e.stopPropagation();
                         setIsGospelMenuOpen(!isGospelMenuOpen);
                       }}
-                      className="hidden xl:flex items-center justify-center p-2 rounded-full hover:bg-white/10 text-amber-400/80 hover:text-amber-300"
+                      className="hidden xl:flex items-center justify-center p-1.5 rounded-lg hover:bg-neutral-800 text-neutral-400 hover:text-white"
                     >
                       {isGospelMenuOpen ? (
-                        <ChevronDown className="w-4 h-4" />
+                        <ChevronDown className="w-3.5 h-3.5" />
                       ) : (
-                        <ChevronRight className="w-4 h-4" />
+                        <ChevronRight className="w-3.5 h-3.5" />
                       )}
                     </button>
                   </div>
 
                   {/* Gospel Sub-Menu */}
                   {isGospelMenuOpen && (
-                    <div className="hidden xl:flex flex-col ml-7 pl-3 border-l-2 border-amber-500/30 space-y-1 py-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div className="hidden xl:flex flex-col ml-6 pl-3 border-l border-neutral-800 space-y-1 py-1">
                       {[
                         { id: "devotional", label: "Daily Devotional", icon: BookOpen },
-                        {
-                          id: "music",
-                          label: "Gospel Music",
-                          icon: Music,
-                          isHot: true,
-                          badge: "🎵 LIVE",
-                        },
-                        { id: "prayers", label: "Prayer Wall", icon: Heart },
-                        { id: "promises", label: "Scripture Promises", icon: Bookmark },
-                        { id: "media", label: "24/7 Praise Radio", icon: Radio },
+                        { id: "music", label: "Inspirational Music", icon: Music },
+                        { id: "prayers", label: "Prayer Community", icon: Heart },
+                        { id: "promises", label: "Scripture Library", icon: Bookmark },
                       ].map((sub) => {
                         const SubIcon = sub.icon;
                         const isSubActive = isGospelActive && activeGospelSubTab === sub.id;
@@ -223,25 +193,16 @@ export function XLeftNav({
                                 onSelectGospelSubTab(sub.id as any);
                               }
                             }}
-                            className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all text-left group/sub ${
+                            className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all text-left ${
                               isSubActive
-                                ? "bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40 shadow-sm shadow-amber-500/10"
-                                : "text-neutral-400 hover:text-amber-200 hover:bg-amber-500/10"
+                                ? "bg-neutral-800 text-white font-semibold"
+                                : "text-neutral-400 hover:text-white hover:bg-neutral-800/40"
                             }`}
                           >
-                            <div className="flex items-center gap-2.5">
-                              <SubIcon
-                                className={`w-3.5 h-3.5 transition-transform group-hover/sub:scale-110 ${
-                                  sub.isHot || isSubActive ? "text-amber-400" : "text-neutral-400"
-                                }`}
-                              />
+                            <div className="flex items-center gap-2">
+                              <SubIcon className="w-3.5 h-3.5" />
                               <span>{sub.label}</span>
                             </div>
-                            {sub.badge && (
-                              <span className="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-amber-500/90 text-black tracking-wider animate-pulse">
-                                {sub.badge}
-                              </span>
-                            )}
                           </button>
                         );
                       })}
@@ -271,38 +232,35 @@ export function XLeftNav({
           })}
         </div>
 
-        {/* Prominent Post Button */}
-        <div className="pt-4">
+        {/* Human, Refined "New Post" Button */}
+        <div className="pt-3">
           <button
             onClick={onOpenCompose}
-            className="w-full h-12 rounded-full bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-base shadow-lg shadow-amber-500/25 transition-all duration-200 flex items-center justify-center gap-2 active:scale-95"
+            className="w-full h-10 rounded-xl bg-white text-neutral-900 hover:bg-neutral-200 font-semibold text-sm transition-all duration-150 flex items-center justify-center gap-2 active:scale-98"
           >
-            <Feather className="w-5 h-5 xl:hidden" />
-            <span className="hidden xl:inline">Post</span>
+            <PenSquare className="w-4 h-4" />
+            <span className="hidden xl:inline">New Post</span>
           </button>
         </div>
       </div>
 
       {/* Bottom Profile Pill */}
-      <div className="pt-4">
+      <div className="pt-4 border-t border-neutral-800/80">
         <Link
           href="/profile"
-          className="flex items-center justify-between p-2.5 rounded-full hover:bg-white/10 transition-colors group cursor-pointer"
+          className="flex items-center justify-between p-2 rounded-xl hover:bg-neutral-800/60 transition-colors group cursor-pointer"
         >
-          <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-center gap-2.5 min-w-0">
             <img
               src={currentUser.avatarUrl}
               alt={currentUser.name}
-              className="w-10 h-10 rounded-full object-cover border border-white/10 flex-shrink-0"
+              className="w-9 h-9 rounded-full object-cover border border-neutral-700 flex-shrink-0"
             />
             <div className="hidden xl:block min-w-0">
-              <div className="flex items-center gap-1">
-                <span className="text-sm font-bold text-white truncate block">
-                  {currentUser.name}
-                </span>
-                <CheckCircle2 className="w-3.5 h-3.5 text-sky-400 fill-sky-400/20 flex-shrink-0" />
-              </div>
-              <span className="text-xs text-neutral-500 truncate block">
+              <span className="text-xs font-semibold text-white truncate block">
+                {currentUser.name}
+              </span>
+              <span className="text-[11px] text-neutral-400 truncate block">
                 @{currentUser.username}
               </span>
             </div>

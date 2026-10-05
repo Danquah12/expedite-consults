@@ -5,11 +5,16 @@ import {
   X,
   Radio,
   Heart,
+  MessageCircle,
+  Gift,
+  Share2,
   Users,
   Send,
-  Gift,
+  Sparkles,
   Volume2,
-  VolumeX
+  VolumeX,
+  Video,
+  VideoOff
 } from "lucide-react";
 import { LiveStreamItem } from "@/lib/feed-store";
 
@@ -46,12 +51,14 @@ export function LiveBroadcastModal({
 
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
 
+  // Auto-scroll chat
   useEffect(() => {
     if (chatScrollRef.current) {
       chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
     }
   }, [messages]);
 
+  // Real-time viewer count fluctuation & simulated active chat
   useEffect(() => {
     if (!isOpen) return;
 
@@ -117,6 +124,8 @@ export function LiveBroadcastModal({
   return (
     <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-2xl flex items-center justify-center p-4">
       <div className="bg-[#121318] border border-zinc-800 rounded-3xl w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col md:flex-row shadow-2xl animate-in zoom-in-95 relative">
+        
+        {/* Floating Heart Reactions Animation */}
         <div className="absolute inset-0 pointer-events-none z-40 overflow-hidden">
           {floatingHearts.map((h) => (
             <div
@@ -129,7 +138,9 @@ export function LiveBroadcastModal({
           ))}
         </div>
 
+        {/* Left Side: Live Broadcast Stream Video */}
         <div className="relative flex-1 bg-black flex items-center justify-center min-h-[380px] md:min-h-[520px] overflow-hidden">
+          {/* Stream Graphic / Video */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={stream.streamUrl || stream.avatar}
@@ -137,8 +148,10 @@ export function LiveBroadcastModal({
             className="w-full h-full object-cover max-h-[520px]"
           />
 
+          {/* Gradient Scrims */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40 pointer-events-none" />
 
+          {/* Top Broadcaster Status Bar */}
           <div className="absolute top-4 left-4 right-4 z-20 flex items-center justify-between">
             <div className="flex items-center gap-2.5 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
               <div className="w-8 h-8 rounded-full overflow-hidden ring-2 ring-rose-500">
@@ -171,6 +184,7 @@ export function LiveBroadcastModal({
             </div>
           </div>
 
+          {/* Stream Title Bar */}
           <div className="absolute bottom-4 left-4 right-4 z-20">
             <div className="bg-black/60 backdrop-blur-md p-3 rounded-2xl border border-white/10 max-w-[85%]">
               <h4 className="text-xs font-black text-white">{stream.title}</h4>
@@ -179,7 +193,9 @@ export function LiveBroadcastModal({
           </div>
         </div>
 
+        {/* Right Side: Real-Time Live Chat & Creator Sparks Drawer */}
         <div className="w-full md:w-[360px] p-4 flex flex-col justify-between border-t md:border-t-0 md:border-l border-zinc-800 bg-[#141517]">
+          
           <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
             <div className="flex items-center gap-2">
               <Radio className="w-4 h-4 text-rose-500 animate-pulse" />
@@ -190,6 +206,7 @@ export function LiveBroadcastModal({
             </button>
           </div>
 
+          {/* Live Rolling Chat Stream */}
           <div ref={chatScrollRef} className="flex-1 overflow-y-auto space-y-2.5 py-3 pr-1 max-h-[360px]">
             {messages.map((m) => (
               <div key={m.id} className="flex gap-2 items-start text-xs">
@@ -203,6 +220,7 @@ export function LiveBroadcastModal({
             ))}
           </div>
 
+          {/* Gift & Spark Quick Bar */}
           <div className="pt-2 pb-2 flex items-center justify-between border-t border-zinc-800 gap-1.5">
             <button
               onClick={() => onSendGift("💎 1,000 Diamonds", stream.username)}
@@ -220,6 +238,7 @@ export function LiveBroadcastModal({
             </button>
           </div>
 
+          {/* Chat Input Bar */}
           <div className="flex items-center gap-2 pt-2 border-t border-zinc-800">
             <input
               type="text"
@@ -236,7 +255,9 @@ export function LiveBroadcastModal({
               <Send className="w-4 h-4" />
             </button>
           </div>
+
         </div>
+
       </div>
     </div>
   );
