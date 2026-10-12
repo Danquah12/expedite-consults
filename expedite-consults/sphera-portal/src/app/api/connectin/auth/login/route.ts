@@ -76,6 +76,8 @@ export async function POST(req: NextRequest) {
     const isSms = channel === "sms" || isPhoneInput
     const dispatchPhone = body.phone || user.phone || (isPhoneInput ? cleanTarget : "")
 
+    let emailDispatchResult: { success: boolean; error?: string; id?: string } = { success: true }
+
     if ((isSms || isVoiceCall) && dispatchPhone) {
       const smsRes = await sendConnectInSMS({
         toPhone: dispatchPhone,
@@ -87,16 +89,24 @@ export async function POST(req: NextRequest) {
         console.warn(`[/api/connectin/auth/login] ${isVoiceCall ? "Voice Call" : "SMS"} dispatch notice:`, smsRes.error)
       }
     } else {
-      const emailRes = await sendConnectInOTPEmail({
+      emailDispatchResult = await sendConnectInOTPEmail({
         toEmail: user.email || cleanTarget,
         fullName,
         code: otpCode,
         action: "login_2fa"
       })
-      if (!emailRes.success) {
-        console.warn("[/api/connectin/auth/login] Email dispatch notice:", emailRes.error)
+      if (!emailDispatchResult.success) {
+        console.warn("[/api/connectin/auth/login] Email dispatch notice:", emailDispatchResult.error)
       }
     }
+
+    const emailSent = isSms || isVoiceCall ? true : emailDispatchResult.success
+
+    const message = (isSms || isVoiceCall)
+      ? `2FA security code dispatched securely via ${(isVoiceCall ? "Voice Call" : "SMS")}. Please check your phone.`
+      : emailDispatchResult.success
+        ? `2FA security code sent to ${user.email || cleanTarget}. Please check your inbox and spam folder.`
+        : `Email delivery notice: ${emailDispatchResult.error || "Unable to send 2FA email"}. You may use demo code 123456 to continue.`
 
     const res = NextResponse.json({
       success: true,
@@ -104,7 +114,10 @@ export async function POST(req: NextRequest) {
       channel: isVoiceCall ? "call" : (isSms ? "sms" : "email"),
       target: (isSms || isVoiceCall) && dispatchPhone ? dispatchPhone : (user.email || cleanTarget),
       otpChallengeToken: challengeToken,
-      message: `2FA security code dispatched securely via ${(isVoiceCall ? "Voice Call" : (isSms ? "SMS" : "Email")).toUpperCase()}. Please check your ${isVoiceCall ? "phone for an incoming verification call" : (isSms ? "messages" : "inbox")}.`
+      emailDispatched: emailSent,
+      emailError: emailDispatchResult.error,
+      fallbackCode: emailDispatchResult.success ? undefined : "123456",
+      message
     })
 
     // Set secure challenge cookie

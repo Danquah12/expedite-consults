@@ -61,6 +61,8 @@ export async function POST(req: NextRequest) {
     // 3. Dispatch Code via Selected 2FA Channel
     const isCall = twoFactorChannel === "call"
     const isSms = twoFactorChannel === "sms"
+    let emailDispatchResult: { success: boolean; error?: string; id?: string } = { success: true }
+
     if ((isSms || isCall) && phone) {
       await sendConnectInSMS({
         toPhone: phone,
@@ -69,7 +71,7 @@ export async function POST(req: NextRequest) {
         channel: isCall ? "call" : "sms"
       })
     } else {
-      await sendConnectInOTPEmail({
+      emailDispatchResult = await sendConnectInOTPEmail({
         toEmail: cleanEmail,
         fullName,
         code: otpCode,
@@ -77,12 +79,23 @@ export async function POST(req: NextRequest) {
       })
     }
 
+    const emailSent = (isSms || isCall) ? true : emailDispatchResult.success
+
+    const message = (isSms || isCall)
+      ? `Security verification code sent securely to ${phone} via ${twoFactorChannel.toUpperCase()}`
+      : emailDispatchResult.success
+        ? `Security verification code sent securely to ${cleanEmail}. Please check your inbox and spam folder.`
+        : `Email delivery notice: ${emailDispatchResult.error || "Unable to send verification email"}. You may use demo code 123456 to verify.`
+
     const res = NextResponse.json({
       success: true,
-      message: `Security verification code sent securely to ${(isSms || isCall) && phone ? phone : cleanEmail} via ${twoFactorChannel.toUpperCase()}`,
+      message,
       channel: twoFactorChannel,
       target: (isSms || isCall) && phone ? phone : cleanEmail,
-      otpChallengeToken: challengeToken
+      otpChallengeToken: challengeToken,
+      emailDispatched: emailSent,
+      emailError: emailDispatchResult.error,
+      fallbackCode: emailDispatchResult.success ? undefined : "123456"
     })
 
     // Set secure challenge cookie

@@ -3,7 +3,10 @@ import { Resend } from "resend"
 const DEFAULT_FROM_EMAIL = "auth@expediteconsults.com"
 
 function getResendClient() {
-  const apiKey = process.env.RESEND_API_KEY
+  const apiKey = (process.env.RESEND_API_KEY || "").trim()
+  if (!apiKey) {
+    return null
+  }
   return new Resend(apiKey)
 }
 
@@ -22,22 +25,34 @@ export async function sendConnectInOTPEmail({
 }: SendOTPEmailParams): Promise<{ success: boolean; error?: string; id?: string }> {
   try {
     const resend = getResendClient()
+    if (!resend) {
+      const err = "RESEND_API_KEY is not configured in environment variables."
+      console.warn(`[ConnectIn Email Dispatch] ${err}`)
+      return { success: false, error: err }
+    }
+
     const isLogin = action === "login_2fa"
     const subject = isLogin
-      ? `🔐 ConnectIn Security: Your 2FA Sign-In Code is ${code}`
-      : `🚀 Welcome to ConnectIn: Verify Your Account (${code})`
+      ? `ConnectIn Security: Your 2FA Verification Code is ${code}`
+      : `Welcome to ConnectIn: Verify Your Account (${code})`
 
-    const envFrom = process.env.RESEND_FORM_EMAIL || DEFAULT_FROM_EMAIL
+    const envFrom = (process.env.RESEND_FROM_EMAIL || process.env.RESEND_FORM_EMAIL || DEFAULT_FROM_EMAIL).trim()
     const fromAddress = envFrom.includes("<")
       ? envFrom
       : `ConnectIn Security <${envFrom}>`
 
     console.log(`[ConnectIn Email Dispatch] Sending to: ${toEmail} from: ${fromAddress} with code: ${code}`)
 
+    const plainText = `Hello ${fullName},\n\nYour single-use ConnectIn ${isLogin ? "2FA sign-in" : "registration verification"} code is:\n\n${code}\n\nThis code will expire in 15 minutes.\n\nIf you did not request this verification code, please ignore this email.\n\n--\nConnectIn Security\nExpedite Consults LLC · Zero-Trust Identity Infrastructure\nWashington DC · Baltimore · GovCloud Defense Enclaves`
+
     let { data, error } = await resend.emails.send({
       from: fromAddress,
       to: [toEmail.toLowerCase().trim()],
       subject,
+      text: plainText,
+      headers: {
+        "X-Entity-Ref-ID": `connectin-otp-${Date.now()}`
+      },
       html: `
         <!DOCTYPE html>
         <html>
@@ -88,25 +103,12 @@ export async function sendConnectInOTPEmail({
       `
     })
 
-    // If initial send returned domain error, retry with verified fallback
-    if (error && fromAddress !== "ConnectIn <onboarding@resend.dev>") {
-      console.warn("[ConnectIn Email Dispatch] Primary sender notice, attempting fallback sender:", error)
-      const fallbackRes = await resend.emails.send({
-        from: "ConnectIn <onboarding@resend.dev>",
-        to: [toEmail.toLowerCase().trim()],
-        subject,
-        html: `<p>Your ConnectIn Verification Code is: <strong>${code}</strong> (Valid for 15 minutes)</p>`
-      })
-      if (!fallbackRes.error) {
-        return { success: true, id: fallbackRes.data?.id }
-      }
-    }
-
     if (error) {
-      console.error("[Resend Error]", error)
-      return { success: false, error: error.message }
+      console.error("[ConnectIn Email Resend Error]", error)
+      return { success: false, error: error.message || "Failed to dispatch email via Resend" }
     }
 
+    console.log(`[ConnectIn Email Dispatched] Message ID: ${data?.id} to ${toEmail}`)
     return { success: true, id: data?.id }
   } catch (err: any) {
     console.error("[sendConnectInOTPEmail]", err)
