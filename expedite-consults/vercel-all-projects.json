@@ -1,0 +1,392 @@
+[
+  {
+    "name": "backend",
+    "url": "https://backend-theta-pink-81.vercel.app",
+    "updated": "4h",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "20-salisbury-campus",
+    "url": "https://20-salisbury-campus-kwesi-asiedus-projects.vercel.app",
+    "updated": "4h",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "vibetok-learning-hub",
+    "url": "https://vibetok-learning-hub.vercel.app",
+    "updated": "4h",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "vibe-tok-lw5c",
+    "url": "https://vibe-tok-lw5c-kwesi-asiedus-projects.vercel.app",
+    "updated": "2d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "vibe-tok-x92e",
+    "url": "https://vibe-tok-x92e-kwesi-asiedus-projects.vercel.app",
+    "updated": "2d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "vibe-tok-9ajl",
+    "url": "https://vibe-tok-9ajl-kwesi-asiedus-projects.vercel.app",
+    "updated": "2d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "vibe-tok-1won",
+    "url": "https://vibe-tok-1won-kwesi-asiedus-projects.vercel.app",
+    "updated": "2d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "aegis-rmf-42q6",
+    "url": "https://aegis-rmf-42q6-kwesi-asiedus-projects.vercel.app",
+    "updated": "2d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "vibe-tok-gsr5",
+    "url": "https://vibe-tok-gsr5-kwesi-asiedus-projects.vercel.app",
+    "updated": "2d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "vibe-tok-riw2",
+    "url": "https://vibe-tok-riw2-kwesi-asiedus-projects.vercel.app",
+    "updated": "2d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "vibe-tok-5gln",
+    "url": "https://vibe-tok-5gln-kwesi-asiedus-projects.vercel.app",
+    "updated": "2d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "vibe-tok-lbf3",
+    "url": "https://vibe-tok-lbf3-kwesi-asiedus-projects.vercel.app",
+    "updated": "2d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "vibe-tok-hn5m",
+    "url": "https://vibe-tok-hn5m-kwesi-asiedus-projects.vercel.app",
+    "updated": "2d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "vibe-tok-4myo",
+    "url": "https://vibe-tok-4myo-kwesi-asiedus-projects.vercel.app",
+    "updated": "2d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "vibe-tok-8zgs",
+    "url": "https://vibe-tok-8zgs-kwesi-asiedus-projects.vercel.app",
+    "updated": "2d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "vibe-tok",
+    "url": "https://vibe-tok-kwesi-asiedus-projects.vercel.app",
+    "updated": "2d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "vibe-tok-6ln6",
+    "url": "https://vibe-tok-6ln6-kwesi-asiedus-projects.vercel.app",
+    "updated": "2d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "desk-note-lwqq",
+    "url": "https://desk-note-lwqq.vercel.app",
+    "updated": "4d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "desk-note-24d8",
+    "url": "https://desk-note-24d8.vercel.app",
+    "updated": "4d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "desk-note-tscf",
+    "url": "https://desk-note-tscf-kwesi-asiedus-projects.vercel.app",
+    "updated": "4d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "desk-note-tqp2",
+    "url": "https://desk-note-tqp2-kwesi-asiedus-projects.vercel.app",
+    "updated": "4d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "desk-note-sl4n",
+    "url": "https://desk-note-sl4n-kwesi-asiedus-projects.vercel.app",
+    "updated": "4d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "desk-note",
+    "url": "https://desk-note-kwesi-asiedus-projects.vercel.app",
+    "updated": "4d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "desk-note-q1a7",
+    "url": "https://desk-note-q1a7-kwesi-asiedus-projects.vercel.app",
+    "updated": "4d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "desk-note-3lvc",
+    "url": "https://desk-note-3lvc-kwesi-asiedus-projects.vercel.app",
+    "updated": "4d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "desk-note-yq7s",
+    "url": "https://desk-note-yq7s-kwesi-asiedus-projects.vercel.app",
+    "updated": "4d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "expedite-consults",
+    "url": "https://expedite-consults.vercel.app",
+    "updated": "8d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "sphera-portal",
+    "url": "https://sphera-portal.vercel.app",
+    "updated": "8d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "aegis-rmf-1ovi",
+    "url": "https://aegis-rmf-1ovi.vercel.app",
+    "updated": "9d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "aegis-rmf",
+    "url": "https://aegis-rmf.vercel.app",
+    "updated": "9d",
+    "nodeVer": "22.x"
+  },
+  {
+    "name": "connectln",
+    "url": "https://connectln.vercel.app",
+    "updated": "9d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "sphera-frontend-irgf",
+    "url": "https://sphera-frontend-irgf.vercel.app",
+    "updated": "19d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "accra-helsinki-org",
+    "url": "https://accra-helsinki.org",
+    "updated": "23d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "e-waste-survey",
+    "url": "https://csrtainitiative.org",
+    "updated": "23d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "11-dast-security-platform",
+    "url": "https://11-dast-security-platform.vercel.app",
+    "updated": "23d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "sphera",
+    "url": "https://sphera-phi.vercel.app",
+    "updated": "33d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "sphera-frontend",
+    "url": "https://sphera-frontend.vercel.app",
+    "updated": "33d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "sphera-platform",
+    "url": "https://sphera-platform.vercel.app",
+    "updated": "33d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "ecosystem-launchpad",
+    "url": "https://ecosystem-launchpad.vercel.app",
+    "updated": "33d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "accra-helsinki",
+    "url": "https://accra-helsinki.vercel.app",
+    "updated": "37d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "13-mobile-security-platform",
+    "url": "https://13-mobile-security-platform.vercel.app",
+    "updated": "45d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "12-api-security-platform",
+    "url": "https://12-api-security-platform.vercel.app",
+    "updated": "45d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "10-iac-security-platform",
+    "url": "https://10-iac-security-platform.vercel.app",
+    "updated": "45d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "09-k8s-security-platform",
+    "url": "https://09-k8s-security-platform.vercel.app",
+    "updated": "45d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "08-container-security-platform",
+    "url": "https://08-container-security-platform.vercel.app",
+    "updated": "45d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "07-secrets-platform",
+    "url": "https://07-secrets-platform.vercel.app",
+    "updated": "45d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "06-sca-platform",
+    "url": "https://06-sca-platform.vercel.app",
+    "updated": "45d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "05-sast-platform",
+    "url": "https://05-sast-platform.vercel.app",
+    "updated": "45d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "19-cloud-security-platform",
+    "url": "https://19-cloud-security-platform.vercel.app",
+    "updated": "45d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "18-unified-integration-layer",
+    "url": "https://18-unified-integration-layer.vercel.app",
+    "updated": "45d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "17-ransomware-recovery-platform",
+    "url": "https://17-ransomware-recovery-platform.vercel.app",
+    "updated": "45d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "16-malware-analysis-platform",
+    "url": "https://16-malware-analysis-platform.vercel.app",
+    "updated": "45d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "15-threat-modeling-platform",
+    "url": "https://15-threat-modeling-platform.vercel.app",
+    "updated": "45d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "14-exploitability-platform",
+    "url": "https://14-exploitability-platform.vercel.app",
+    "updated": "45d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "bazaar-standalone",
+    "url": "https://bazaar-standalone.vercel.app",
+    "updated": "46d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "careerorbit-standalone",
+    "url": "https://careerorbit-standalone.vercel.app",
+    "updated": "46d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "sphera-social",
+    "url": "https://sphera-social.vercel.app",
+    "updated": "46d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "sphera-studio",
+    "url": "https://sphera-studio.vercel.app",
+    "updated": "46d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "sphera-backend",
+    "url": "https://sphera-backend-alpha.vercel.app",
+    "updated": "46d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "sphera-frontend-q8dx",
+    "url": "https://sphera-frontend-q8dx.vercel.app",
+    "updated": "47d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "e-waste-csrta",
+    "url": "https://e-waste-csrta.vercel.app",
+    "updated": "62d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "tuhousing",
+    "url": "https://tuhousing.vercel.app",
+    "updated": "88d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "skillhands-client",
+    "url": "https://skillhands-client.vercel.app",
+    "updated": "91d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "skillhands-server",
+    "url": "https://skillhands-server.vercel.app",
+    "updated": "91d",
+    "nodeVer": "24.x"
+  },
+  {
+    "name": "careerorbit",
+    "url": "https://careerorbit-mu.vercel.app",
+    "updated": "142d",
+    "nodeVer": "24.x"
+  }
+]

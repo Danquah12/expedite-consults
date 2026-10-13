@@ -147,7 +147,9 @@ export default function EcosystemLaunchpad() {
         const matchFeature = app.features.some((f) => f.toLowerCase().includes(q));
         const matchCategory = app.categoryLabel.toLowerCase().includes(q);
         const matchGithub = app.githubRepo ? app.githubRepo.toLowerCase().includes(q) : false;
-        return matchName || matchCode || matchDesc || matchVercel || matchPort || matchPath || matchTech || matchFeature || matchCategory || matchGithub;
+        const matchMirror = app.mirrorVercelUrl ? app.mirrorVercelUrl.toLowerCase().includes(q) : false;
+        const matchMirrors = app.mirrors ? app.mirrors.some((m) => m.toLowerCase().includes(q)) : false;
+        return matchName || matchCode || matchDesc || matchVercel || matchMirror || matchMirrors || matchPort || matchPath || matchTech || matchFeature || matchCategory || matchGithub;
       }
       return true;
     });
