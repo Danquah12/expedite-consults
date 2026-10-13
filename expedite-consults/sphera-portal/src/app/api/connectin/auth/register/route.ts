@@ -3,12 +3,25 @@ import { connectinDb } from "@/lib/connectin-db"
 import { sendConnectInOTPEmail } from "@/lib/connectin-email"
 import { sendConnectInSMS } from "@/lib/connectin-sms"
 import { createDynamicOTP } from "@/lib/connectin-otp"
+import { findProfessionById, findEnclaveById } from "@/lib/connectin-professions"
 import crypto from "crypto"
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { firstName, lastName, email, phone, password, role, twoFactorChannel = "email" } = body
+    const {
+      firstName,
+      lastName,
+      email,
+      phone,
+      password,
+      role,
+      professionId,
+      profession: incomingProfession,
+      professionCategory: incomingCategory,
+      professionEnclave: incomingEnclave,
+      twoFactorChannel = "email"
+    } = body
 
     if (!email || !firstName) {
       return NextResponse.json({ error: "First name and email are required." }, { status: 400 })
@@ -17,7 +30,19 @@ export async function POST(req: NextRequest) {
     const cleanEmail = email.toLowerCase().trim()
     const fullName = `${firstName} ${lastName || ""}`.trim()
 
-    // 1. Generate brand new, dynamic random OTP & HMAC signed challenge
+    // 1. Resolve profession definition and enclave
+    const profDef = professionId ? findProfessionById(professionId) : undefined
+    const enclaveDef = profDef ? findEnclaveById(profDef.enclaveId) : (incomingEnclave ? findEnclaveById(incomingEnclave) : undefined)
+
+    const finalProfessionTitle = profDef ? profDef.title : (incomingProfession || (role === 'developer' ? 'Full-Stack / Systems Software Engineer' : 'Master Carpenter (Framing & Finish Joinery)'))
+    const finalProfessionId = profDef ? profDef.id : (professionId || (role === 'developer' ? 'software_engineer' : 'carpenter'))
+    const finalEnclaveId = profDef ? profDef.enclaveId : (incomingEnclave || (role === 'developer' ? 'tech_software' : 'trades_construction'))
+    const finalCategory = profDef ? profDef.categoryName : (incomingCategory || (role === 'developer' ? 'Software Engineering & Cloud' : 'Skilled Trades & Construction'))
+    const finalClearance = enclaveDef ? enclaveDef.securityClearanceTier : "Standard Verified Identity (Level 2)"
+    const finalHeadline = profDef?.defaultHeadline || `${finalProfessionTitle} · Verified ConnectIn Member`
+    const finalSkills = profDef?.typicalSkills || []
+
+    // 2. Generate brand new, dynamic random OTP & HMAC signed challenge
     const otpTarget = twoFactorChannel === "sms" && phone ? phone.trim() : cleanEmail
     const { code: otpCode, challengeToken } = createDynamicOTP(otpTarget, 15)
 
@@ -25,7 +50,7 @@ export async function POST(req: NextRequest) {
       connectinDb.setOTP(phone.trim(), otpCode, 15)
     }
 
-    // 2. If user doesn't exist yet, stage or create in DB
+    // 3. If user doesn't exist yet, stage or create in DB
     const existingUser = connectinDb.findUserByEmail(cleanEmail)
     if (!existingUser) {
       connectinDb.createUser(
@@ -33,32 +58,51 @@ export async function POST(req: NextRequest) {
           email: cleanEmail,
           phone: phone || "",
           passwordHash: password ? crypto.createHash("sha256").update(password).digest("hex") : undefined,
-          role: role || "personal",
+          role: role || (finalEnclaveId === 'tech_software' ? 'developer' : 'personal'),
           status: "Active",
           mfaEnabled: true,
           mfaChannel: twoFactorChannel === "sms" ? "sms" : "email"
         },
         {
           name: fullName,
-          headline: `${(role || "personal").charAt(0).toUpperCase() + (role || "personal").slice(1)} Professional · Verified ConnectIn Member`,
+          headline: finalHeadline,
           avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(fullName)}&backgroundColor=0a66c2`,
-          coverImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80",
+          coverImage: finalEnclaveId === 'trades_construction'
+            ? "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1200&auto=format&fit=crop&q=80"
+            : finalEnclaveId === 'healthcare_medicine'
+            ? "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=1200&auto=format&fit=crop&q=80"
+            : "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80",
           location: "United States · Cryptographically Verified",
-          about: `Verified ${(role || "personal")} member on ConnectIn Zero-Trust Network.`,
-          skills: [],
-          clearanceLevel: "Standard Verified Identity (Level 2)",
+          about: `Verified ${finalProfessionTitle} operating within the ${enclaveDef?.name || 'ConnectIn'} Enclave.`,
+          skills: finalSkills,
+          clearanceLevel: finalClearance,
           fido2MfaVerified: true,
           cryptoVerificationBadge: "0xED25519_SESSION_INITIALIZED",
-          skillMatrixScore: 50.0,
+          skillMatrixScore: 65.0,
           connectionsCount: 0,
           followersCount: 0,
           profileViews: 0,
-          postImpressions: 0
+          postImpressions: 0,
+          profession: finalProfessionTitle,
+          professionId: finalProfessionId,
+          professionCategory: finalCategory,
+          professionEnclave: finalEnclaveId
         }
       )
+    } else {
+      const existingProfile = connectinDb.findProfileByUserId(existingUser.id)
+      if (existingProfile) {
+        existingProfile.profession = finalProfessionTitle
+        existingProfile.professionId = finalProfessionId
+        existingProfile.professionCategory = finalCategory
+        existingProfile.professionEnclave = finalEnclaveId
+        existingProfile.headline = finalHeadline
+        if (finalSkills.length > 0) existingProfile.skills = finalSkills
+        existingProfile.clearanceLevel = finalClearance
+      }
     }
 
-    // 3. Dispatch Code via Selected 2FA Channel
+    // 4. Dispatch Code via Selected 2FA Channel
     const isCall = twoFactorChannel === "call"
     const isSms = twoFactorChannel === "sms"
     let emailDispatchResult: { success: boolean; error?: string; id?: string } = { success: true }
@@ -95,7 +139,10 @@ export async function POST(req: NextRequest) {
       otpChallengeToken: challengeToken,
       emailDispatched: emailSent,
       emailError: emailDispatchResult.error,
-      fallbackCode: emailDispatchResult.success ? undefined : "123456"
+      fallbackCode: emailDispatchResult.success ? undefined : "123456",
+      profession: finalProfessionTitle,
+      professionId: finalProfessionId,
+      professionEnclave: finalEnclaveId
     })
 
     // Set secure challenge cookie

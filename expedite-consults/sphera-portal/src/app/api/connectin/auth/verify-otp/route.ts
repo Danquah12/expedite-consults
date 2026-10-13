@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { connectinDb } from "@/lib/connectin-db"
 import { validateOTP } from "@/lib/connectin-otp"
 import { isSuperAdminUser, resolveDisplayName } from "@/lib/connectin-profile"
+import { findProfessionById, findEnclaveById } from "@/lib/connectin-professions"
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,6 +13,10 @@ export async function POST(req: NextRequest) {
       name: incomingName,
       role: incomingRole,
       headline: incomingHeadline,
+      profession: incomingProfession,
+      professionId: incomingProfessionId,
+      professionCategory: incomingCategory,
+      professionEnclave: incomingEnclave,
       otpChallengeToken: incomingChallengeToken
     } = body
 
@@ -52,11 +57,27 @@ export async function POST(req: NextRequest) {
     const isSuperAdmin = isSuperAdminUser({ name: displayName, email: cleanTarget, role: incomingRole })
     const userRole = isSuperAdmin ? "admin" : (incomingRole || "personal")
 
+    // Resolve profession details if provided
+    const profDef = incomingProfessionId ? findProfessionById(incomingProfessionId) : undefined
+    const enclaveDef = profDef ? findEnclaveById(profDef.enclaveId) : (incomingEnclave ? findEnclaveById(incomingEnclave) : undefined)
+
     // 2. Find or auto-hydrate user across serverless lambdas
     let user = connectinDb.findUserByEmail(cleanTarget)
     let profile = user ? connectinDb.findProfileByUserId(user.id) : undefined
 
     if (!user || !profile) {
+      const finalProfessionTitle = profDef ? profDef.title : (incomingProfession || (isSuperAdmin ? "Platform IAM Architect & Super Admin" : "Master Carpenter (Framing & Finish Joinery)"))
+      const finalProfessionId = profDef ? profDef.id : (incomingProfessionId || (isSuperAdmin ? "platform_admin" : "carpenter"))
+      const finalEnclaveId = profDef ? profDef.enclaveId : (incomingEnclave || (isSuperAdmin ? "law_gov_defense" : "trades_construction"))
+      const finalCategory = profDef ? profDef.categoryName : (incomingCategory || (isSuperAdmin ? "Legal & Governance" : "Skilled Trades & Construction"))
+      const finalClearance = isSuperAdmin
+        ? "TS/SCI Polygraph (Level 5 Top Secret Enclave)"
+        : (enclaveDef?.securityClearanceTier || "Standard Verified Identity (Level 2)")
+      const finalHeadline = incomingHeadline || (profDef?.defaultHeadline) || (isSuperAdmin ? "Platform IAM & Super Administrator · ConnectIn Master Control" : `${finalProfessionTitle} · Verified ConnectIn Member`)
+      const finalSkills = (profDef?.typicalSkills && profDef.typicalSkills.length > 0)
+        ? profDef.typicalSkills
+        : (isSuperAdmin ? ["Zero Trust IAM", "eBPF SIEM Telemetry", "FedRAMP High IAM"] : ["Trade Skills", "Project Management"])
+
       const created = connectinDb.createUser(
         {
           email: cleanTarget,
@@ -67,22 +88,30 @@ export async function POST(req: NextRequest) {
         },
         {
           name: displayName,
-          headline: incomingHeadline || (isSuperAdmin ? "Platform IAM & Super Administrator · ConnectIn Master Control" : `${userRole.charAt(0).toUpperCase() + userRole.slice(1)} Professional · Verified ConnectIn Member`),
+          headline: finalHeadline,
           avatar: isSuperAdmin && cleanNameOrEmailIsHayes(displayName, cleanTarget)
             ? "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80"
             : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayName + "-" + cleanTarget)}&backgroundColor=0a66c2,4338ca,0070f3&textColor=ffffff&fontWeight=700`,
-          coverImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80",
+          coverImage: finalEnclaveId === 'trades_construction'
+            ? "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1200&auto=format&fit=crop&q=80"
+            : finalEnclaveId === 'healthcare_medicine'
+            ? "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=1200&auto=format&fit=crop&q=80"
+            : "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80",
           location: isSuperAdmin ? "Washington, DC · Top Secret Security Operations Center" : "United States · Cryptographically Verified",
-          about: isSuperAdmin ? "Lead Platform IAM Architect and Master Administrator." : `Verified ${userRole} member on ConnectIn Zero-Trust Network.`,
-          skills: isSuperAdmin ? ["Zero Trust IAM", "eBPF SIEM Telemetry", "FedRAMP High IAM"] : [],
-          clearanceLevel: isSuperAdmin ? "TS/SCI Polygraph (Level 5 Top Secret Enclave)" : "Standard Verified Identity (Level 2)",
+          about: isSuperAdmin ? "Lead Platform IAM Architect and Master Administrator." : `Verified ${finalProfessionTitle} operating in the ${enclaveDef?.name || 'ConnectIn'} Enclave.`,
+          skills: finalSkills,
+          clearanceLevel: finalClearance,
           fido2MfaVerified: true,
           cryptoVerificationBadge: isSuperAdmin ? "0xED25519_SUPER_ADMIN_ROOT_KEY" : "0xED25519_SESSION_INITIALIZED",
-          skillMatrixScore: isSuperAdmin ? 99.9 : 50.0,
+          skillMatrixScore: isSuperAdmin ? 99.9 : 65.0,
           connectionsCount: isSuperAdmin ? 42800 : 0,
           followersCount: isSuperAdmin ? 98400 : 0,
           profileViews: isSuperAdmin ? 19400 : 0,
-          postImpressions: isSuperAdmin ? 520000 : 0
+          postImpressions: isSuperAdmin ? 520000 : 0,
+          profession: finalProfessionTitle,
+          professionId: finalProfessionId,
+          professionCategory: finalCategory,
+          professionEnclave: finalEnclaveId
         }
       )
       user = created.user
@@ -93,6 +122,26 @@ export async function POST(req: NextRequest) {
       }
       if (displayName && profile.name !== displayName) {
         profile.name = displayName
+      }
+      // If incoming profession information was submitted during OTP, update profile
+      if (profDef) {
+        profile.profession = profDef.title
+        profile.professionId = profDef.id
+        profile.professionCategory = profDef.categoryName
+        profile.professionEnclave = profDef.enclaveId
+        if (profDef.defaultHeadline && (!profile.headline || profile.headline.includes("Professional"))) {
+          profile.headline = profDef.defaultHeadline
+        }
+        if (profDef.typicalSkills && profDef.typicalSkills.length > 0 && (!profile.skills || profile.skills.length === 0)) {
+          profile.skills = profDef.typicalSkills
+        }
+        if (enclaveDef?.securityClearanceTier && !isSuperAdmin) {
+          profile.clearanceLevel = enclaveDef.securityClearanceTier
+        }
+      } else if (incomingProfession && !profile.profession) {
+        profile.profession = incomingProfession
+        if (incomingEnclave) profile.professionEnclave = incomingEnclave
+        if (incomingCategory) profile.professionCategory = incomingCategory
       }
     }
 
@@ -118,12 +167,19 @@ export async function POST(req: NextRequest) {
         email: user.email,
         phone: user.phone,
         role: user.role,
-        status: user.status
+        status: user.status,
+        profession: profile.profession,
+        professionEnclave: profile.professionEnclave
       },
       profile: {
         ...profile,
+        email: user.email,
         role: user.role,
-        roles: isSuperAdmin ? ["SUPER_ADMIN", "Platform IAM Architect", "Root Authority"] : ["NORMAL_USER"]
+        roles: isSuperAdmin ? ["SUPER_ADMIN", "Platform IAM Architect", "Root Authority"] : ["NORMAL_USER"],
+        profession: profile.profession || (isSuperAdmin ? "Platform IAM Architect" : "Master Carpenter (Framing & Finish Joinery)"),
+        professionId: profile.professionId || (isSuperAdmin ? "platform_admin" : "carpenter"),
+        professionCategory: profile.professionCategory || (isSuperAdmin ? "Legal & Governance" : "Skilled Trades & Construction"),
+        professionEnclave: profile.professionEnclave || (isSuperAdmin ? "law_gov_defense" : "trades_construction")
       },
       session: {
         sessionId: session.sessionId,

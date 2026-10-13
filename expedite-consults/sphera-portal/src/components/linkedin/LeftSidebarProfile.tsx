@@ -24,6 +24,7 @@ import {
 } from "lucide-react"
 import { UserProfile } from "@/lib/linkedin-data"
 import { isSuperAdminUser } from "@/lib/connectin-profile"
+import { findEnclaveById } from "@/lib/connectin-professions"
 
 interface LeftSidebarProfileProps {
   user: UserProfile
@@ -49,38 +50,154 @@ export function LeftSidebarProfile({
   const [isRecentExpanded, setIsRecentExpanded] = useState(true)
 
   const isAdminUser = isSuperAdminUser(user)
+  const effectiveEnclaveId = user.professionEnclave || (isAdminUser ? 'law_gov_defense' : 'trades_construction')
+  const enclaveInfo = findEnclaveById(effectiveEnclaveId)
 
-  const workspaceShortcuts = [
-    ...(isAdminUser ? [
+  // Enclave-Segregated Command Center Workspace Tools (Strict Need-to-Know)
+  const getShortcutsForEnclave = () => {
+    const adminShortcuts = isAdminUser ? [
       { id: 'adminiam', label: '🛡️ Admin IAM Console', badge: 'Privileged' },
-      { id: 'auth_gate', label: '🔑 Switch Persona / Role', badge: '6 Roles' }
-    ] : []),
-    { id: 'accountsecurity', label: '🔐 Security & Passkeys', badge: 'FIDO2' },
-    { id: 'inbound_bounty', label: '💰 Paid Inbound Bounty', badge: '+$250 Escrow' },
-    { id: 'bounties', label: '🏆 Enterprise Bounties', badge: '$15K-$25K' },
-    { id: 'guilds', label: '🛡️ Gated Guilds & Enclaves', badge: '3 Enclaves' },
-    { id: 'aiagents', label: '🤖 AI Agents Store', badge: '8 Agents' },
-    { id: 'code', label: '🧑‍💻 ConnectIn Code', badge: '3 Repos' },
-    { id: 'wallet', label: '💳 Pay & Invoicing', badge: '$2,430' },
-    { id: 'missions', label: '🔥 Career Mission (72%)', badge: '+1,850 XP' },
-    { id: 'labs', label: '🧪 Security Labs Sandbox', badge: 'Active' },
-    { id: 'procurement', label: '🏢 Corporate Procurement', badge: '$2.4M Spend' },
-    { id: 'collaboration', label: '🤝 Co-Founders & Ideas', badge: 'Trending' },
-    { id: 'mentorship', label: '👨‍🏫 Mentorship & Creator', badge: '1:1 Open' },
-    { id: 'profile', label: '📁 Portfolio & Evidence', badge: '6 Projects' },
-    { id: 'sellercenter', label: '🛍️ My Products & Sales', badge: '$122.7K MRR' },
-    { id: 'jobs', label: '💼 Active Applications', badge: '4 Status' },
-    { id: 'peerreview', label: '⭐ Peer Reviews', badge: '4.98 ★' },
-    { id: 'compensation', label: '💰 Compensation Benchmarks', badge: 'Top 5%' },
-  ]
+      { id: 'auth_gate', label: '🔑 Switch Persona / Role', badge: 'Enclaves' }
+    ] : []
 
-  const recentItems = [
-    { type: 'group', name: 'AI & Zero Trust Cybersecurity Architects', icon: Users },
-    { type: 'group', name: 'Next.js & React Core Engineering', icon: Users },
-    { type: 'hashtag', name: 'CloudSecurity', icon: Hash },
-    { type: 'hashtag', name: 'AgenticAI', icon: Hash },
-    { type: 'event', name: 'Global Enterprise Cloud Summit 2026', icon: Calendar }
-  ]
+    if (effectiveEnclaveId === 'trades_construction') {
+      return [
+        ...adminShortcuts,
+        { id: 'blueprints', label: '📐 Blueprint & CAD Specs', badge: 'Active' },
+        { id: 'lumber_index', label: '🌲 Lumber Market Futures', badge: 'Live Data' },
+        { id: 'subcontractor_rfp', label: '📋 Subcontractor Job Board', badge: '8 Bids' },
+        { id: 'tool_vault', label: '🧰 Tool & Rigging Vault', badge: 'Verified' },
+        { id: 'osha_locker', label: '🦺 OSHA Safety & Toolbox Talks', badge: 'OSHA 30' },
+        { id: 'permits', label: '🏗️ Job-Site Manifest & Permits', badge: 'Active' },
+        { id: 'wallet', label: '💳 Trade Escrow & Draws', badge: '$18,400' },
+        { id: 'guilds', label: '🔨 Master Craftsman Guild', badge: 'Active' },
+        { id: 'jobs', label: '💼 Subcontractor Bids', badge: '4 Status' },
+        { id: 'profile', label: '📁 Job-Site Proof & Portfolio', badge: '6 Builds' },
+        { id: 'peerreview', label: '⭐ Trade Peer Reviews', badge: '4.98 ★' },
+        { id: 'compensation', label: '💰 Regional Prevailing Wages', badge: 'Top 10%' },
+        { id: 'accountsecurity', label: '🔐 Safety & FIDO2 Identity', badge: 'FIDO2' }
+      ]
+    }
+
+    if (effectiveEnclaveId === 'healthcare_medicine') {
+      return [
+        ...adminShortcuts,
+        { id: 'hipaa_consults', label: '🏥 HIPAA Case Consults', badge: 'BAA Verified' },
+        { id: 'clinical_trials', label: '📑 Clinical Trials & PubMed', badge: 'PubMed' },
+        { id: 'ceu_locker', label: '🎖️ CEU Credential Locker', badge: 'Active CME' },
+        { id: 'shifts', label: '🕒 Peer Shift Exchange', badge: 'Hospital' },
+        { id: 'protocols', label: '📋 ICU Protocol Reference', badge: 'Evidence' },
+        { id: 'guilds', label: '🩺 Medical Staff Guild', badge: 'Active' },
+        { id: 'wallet', label: '💳 Locum Tenens Disbursements', badge: '$8,920' },
+        { id: 'jobs', label: '💼 Clinical & Hospital Roles', badge: '3 Matches' },
+        { id: 'profile', label: '📁 Board Certs & Credentials', badge: 'Verified' },
+        { id: 'peerreview', label: '⭐ Clinical Peer Reviews', badge: '4.99 ★' },
+        { id: 'accountsecurity', label: '🔐 HIPAA FIDO2 Passkeys', badge: 'Compliant' }
+      ]
+    }
+
+    if (effectiveEnclaveId === 'law_gov_defense') {
+      return [
+        ...adminShortcuts,
+        { id: 'legal_vault', label: '📚 Legal Brief & Precedent Vault', badge: 'Fast Search' },
+        { id: 'contract_redline', label: '🖋️ Contract Redline Engine', badge: 'Automated' },
+        { id: 'sam_gov', label: '🏛️ Federal SAM.gov RFP Feed', badge: 'SAM.gov' },
+        { id: 'cmmc_audit', label: '🛡️ CMMC 2.0 Audit Workspace', badge: 'Level 3' },
+        { id: 'procurement', label: '🏢 Defense Procurement', badge: '$2.4M Spend' },
+        { id: 'guilds', label: '⚖️ Cleared Counsel Enclave', badge: 'TS/SCI' },
+        { id: 'wallet', label: '💳 Retainers & Escrow', badge: '$45,000' },
+        { id: 'jobs', label: '💼 Cleared Defense Openings', badge: '4 Bids' },
+        { id: 'accountsecurity', label: '🔐 Top Secret CAC / Passkeys', badge: 'FIDO2' }
+      ]
+    }
+
+    if (effectiveEnclaveId === 'finance_accounting') {
+      return [
+        ...adminShortcuts,
+        { id: 'gaap_ledger', label: '📑 GAAP Ledger Reconciler', badge: 'GAAP Ready' },
+        { id: 'dcf_engine', label: '📈 Valuation DCF Engine', badge: 'Realtime' },
+        { id: 'edgar_feed', label: '🏛️ SEC EDGAR 10-K Stream', badge: 'EDGAR Live' },
+        { id: 'lbo_matrix', label: '💼 LBO & Sensitivity Matrix', badge: 'Financial' },
+        { id: 'guilds', label: '📊 Fiduciary CPA Guild', badge: 'AICPA' },
+        { id: 'wallet', label: '💳 Treasury & Disbursements', badge: '$124,500' },
+        { id: 'jobs', label: '💼 Controller & PE Roles', badge: 'Active' },
+        { id: 'accountsecurity', label: '🔐 SEC Compliant FIDO2 Auth', badge: 'FIDO2' }
+      ]
+    }
+
+    // Default: Software Engineering & Cyber Defense
+    return [
+      ...adminShortcuts,
+      { id: 'labs', label: '🧪 Proof of Work Sandbox', badge: 'Sub-4ms' },
+      { id: 'code', label: '🧑‍💻 ConnectIn Code Repos', badge: '3 Repos' },
+      { id: 'aiagents', label: '🐙 GitHub Auto-PR & AI Agents', badge: 'Connected' },
+      { id: 'cve_radar', label: '🛡️ Bug Bounty & CVE Radar', badge: 'CVE-2026' },
+      { id: 'bounties', label: '🏆 Enterprise Bounties', badge: '$15K-$25K' },
+      { id: 'guilds', label: '🛡️ Zero-Trust Security Guild', badge: '3 Enclaves' },
+      { id: 'wallet', label: '💳 Pay & Invoicing', badge: '$2,430' },
+      { id: 'missions', label: '🔥 Career Mission (72%)', badge: '+1,850 XP' },
+      { id: 'jobs', label: '💼 Active Engineering Roles', badge: '4 Status' },
+      { id: 'profile', label: '📁 Repos & Cryptographic Proof', badge: '6 Projects' },
+      { id: 'peerreview', label: '⭐ Peer Code Reviews', badge: '4.98 ★' },
+      { id: 'compensation', label: '💰 Tech Compensation Benchmarks', badge: 'Top 5%' },
+      { id: 'accountsecurity', label: '🔐 Security & Passkeys', badge: 'FIDO2' }
+    ]
+  }
+
+  const workspaceShortcuts = getShortcutsForEnclave()
+
+  // Enclave-Segregated Recent & Followed Groups
+  const getRecentItemsForEnclave = () => {
+    if (effectiveEnclaveId === 'trades_construction') {
+      return [
+        { type: 'group', name: 'Custom Joinery & Heavy Timber Framing Guild', icon: Users },
+        { type: 'group', name: 'Commercial General Contractors & Superintendents', icon: Users },
+        { type: 'hashtag', name: 'TimberFraming', icon: Hash },
+        { type: 'hashtag', name: 'LumberMarket', icon: Hash },
+        { type: 'event', name: 'National Builders & Craftsmen Expo 2026', icon: Calendar }
+      ]
+    }
+
+    if (effectiveEnclaveId === 'healthcare_medicine') {
+      return [
+        { type: 'group', name: 'American College of Physicians Network', icon: Users },
+        { type: 'group', name: 'Critical Care Medicine & ICU Protocols', icon: Users },
+        { type: 'hashtag', name: 'ClinicalTrials', icon: Hash },
+        { type: 'hashtag', name: 'HIPAACompliance', icon: Hash },
+        { type: 'event', name: 'Annual Clinical Cardiology Symposium 2026', icon: Calendar }
+      ]
+    }
+
+    if (effectiveEnclaveId === 'law_gov_defense') {
+      return [
+        { type: 'group', name: 'Cleared Defense Contractors & CMMC Leaders', icon: Users },
+        { type: 'group', name: 'Corporate Counsel & Federal Bar Association', icon: Users },
+        { type: 'hashtag', name: 'DefenseIntelligence', icon: Hash },
+        { type: 'hashtag', name: 'CMMC', icon: Hash },
+        { type: 'event', name: 'DoD SAM.gov Defense Contracting Summit', icon: Calendar }
+      ]
+    }
+
+    if (effectiveEnclaveId === 'finance_accounting') {
+      return [
+        { type: 'group', name: 'AICPA Corporate Controllers & CPAs', icon: Users },
+        { type: 'group', name: 'Private Equity & Valuation Modeling Circle', icon: Users },
+        { type: 'hashtag', name: 'GAAPAudits', icon: Hash },
+        { type: 'hashtag', name: 'PrivateEquity', icon: Hash },
+        { type: 'event', name: 'Global CFO & Treasury Conference 2026', icon: Calendar }
+      ]
+    }
+
+    return [
+      { type: 'group', name: 'AI & Zero Trust Cybersecurity Architects', icon: Users },
+      { type: 'group', name: 'Next.js & React Core Engineering', icon: Users },
+      { type: 'hashtag', name: 'CloudSecurity', icon: Hash },
+      { type: 'hashtag', name: 'AgenticAI', icon: Hash },
+      { type: 'event', name: 'Global Enterprise Cloud Summit 2026', icon: Calendar }
+    ]
+  }
+
+  const recentItems = getRecentItemsForEnclave()
 
   return (
     <aside className="space-y-3">
@@ -138,6 +255,27 @@ export function LeftSidebarProfile({
               </button>
             </div>
           )}
+
+          {/* Verified Need-to-Know Enclave Badge */}
+          <div className="pt-2 text-left">
+            <div className={`rounded-xl border p-2.5 space-y-1 ${enclaveInfo?.badgeBg || 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800'}`}>
+              <div className="flex items-center justify-between">
+                <span className="font-bold flex items-center gap-1.5 text-xs text-zinc-900 dark:text-zinc-100">
+                  <span>{enclaveInfo?.icon || '🔨'}</span>
+                  <span className="truncate">{enclaveInfo?.shortName || 'Trades'} Enclave</span>
+                </span>
+                <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-white/80 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200/50 dark:border-zinc-700/50">
+                  🔒 Segregated
+                </span>
+              </div>
+              <p className="text-[11px] font-semibold text-zinc-800 dark:text-zinc-200 truncate">
+                {user.profession || 'Master Carpenter (Framing & Finish Joinery)'}
+              </p>
+              <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-mono truncate">
+                {enclaveInfo?.securityClearanceTier || 'Level 2 Clearance'}
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Profile Strength & Career Mission Gauge */}

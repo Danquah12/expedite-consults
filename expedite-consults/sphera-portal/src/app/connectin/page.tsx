@@ -70,6 +70,7 @@ import {
   loadStoredSessionRoute
 } from "@/lib/connectin-storage"
 import { isSuperAdminUser } from "@/lib/connectin-profile"
+import { PROFESSION_ENCLAVES, findEnclaveById } from "@/lib/connectin-professions"
 import { SlidersHorizontal, Sparkles, Bell, CheckCircle2, ShieldCheck, Filter, Bookmark, Vote, BookOpen } from "lucide-react"
 
 export default function LinkedInPage() {
@@ -130,6 +131,7 @@ export default function LinkedInPage() {
   const [activeFeedSubCategory, setActiveFeedSubCategory] = useState<string>('All')
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedTagFilter, setSelectedTagFilter] = useState<string | null>(null)
+  const [adminEnclaveOverride, setAdminEnclaveOverride] = useState<string | null>(null)
   const [hasHydrated, setHasHydrated] = useState(false)
 
   // Authentication Lifecycle — optimistic-first, never redirects, shows modal only if truly needed
@@ -339,8 +341,13 @@ export default function LinkedInPage() {
 
   // Handle Post Creation
   const handleAddPost = (newPostData: Omit<Post, 'id' | 'timestamp' | 'stats' | 'comments'>) => {
+    const effectiveEnclave = adminEnclaveOverride && adminEnclaveOverride !== 'all'
+      ? adminEnclaveOverride
+      : (userData.professionEnclave || 'trades_construction')
+
     const newPost: Post = {
       ...newPostData,
+      professionEnclave: newPostData.professionEnclave || effectiveEnclave,
       id: 'post_' + Date.now(),
       timestamp: 'Just now · 🌐',
       stats: {
@@ -535,6 +542,16 @@ export default function LinkedInPage() {
 
   // Filter Posts based on Stream, Sub-category, Search Query, Feed Type, or Tag
   const filteredPosts = posts.filter(post => {
+    // 0. Strict Need-to-Know Enclave Segregation
+    // Enforce least privilege: a developer never sees carpenter content, and a carpenter never sees developer content
+    const effectiveEnclave = adminEnclaveOverride || userData.professionEnclave || 'trades_construction'
+    if (effectiveEnclave !== 'all') {
+      const postEnclave = post.professionEnclave || 'tech_software'
+      if (postEnclave !== 'all' && postEnclave !== effectiveEnclave) {
+        return false
+      }
+    }
+
     // 1. Feed Stream Category
     if (activeFeedCategory === 'products') {
       if (post.feedCategory !== 'products' && !post.embeddedProduct && post.postType !== 'product_announcement') return false
@@ -651,6 +668,98 @@ export default function LinkedInPage() {
 
             {/* Center Rail (Post Creator & Post Feed) */}
             <div className="md:col-span-8 lg:col-span-6 space-y-3">
+              {/* Need-to-Know Enclave Segregation Banner */}
+              {(() => {
+                const isAdmin = isSuperAdminUser(userData)
+                const activeEncId = adminEnclaveOverride || userData.professionEnclave || 'trades_construction'
+                const enc = findEnclaveById(activeEncId) || PROFESSION_ENCLAVES[0]
+
+                return (
+                  <div className={`rounded-xl border p-3.5 space-y-2 shadow-xs transition-all ${enc.badgeBg}`}>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-2xl p-1.5 rounded-lg bg-white/80 dark:bg-zinc-800 shadow-2xs">
+                          {enc.icon}
+                        </span>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h2 className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                              {enc.name}
+                            </h2>
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:text-emerald-300 border border-emerald-300/40">
+                              <ShieldCheck className="h-3 w-3" />
+                              Need-to-Know Enclave
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-zinc-600 dark:text-zinc-300 font-medium">
+                            {userData.profession || 'Master Carpenter (Framing & Finish Joinery)'} · <span className="font-mono text-zinc-500">{enc.securityClearanceTier}</span>
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Enclave Verification Tag */}
+                      <div className="shrink-0 text-left sm:text-right">
+                        <span className="text-[10px] font-mono font-bold text-zinc-700 dark:text-zinc-300 bg-white/70 dark:bg-zinc-800/70 px-2 py-1 rounded-md border border-zinc-200/60 dark:border-zinc-700/60">
+                          {filteredPosts.length} Enclave Posts
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-tight">
+                      🔒 <strong>Least-Privilege Isolation:</strong> Content is strictly segregated by verified profession. Software developers and healthcare personnel cannot view your trade specs, and trade members are shielded from code sandboxes.
+                    </p>
+
+                    {/* Enclave Feed Tags */}
+                    <div className="flex items-center gap-1.5 overflow-x-auto pt-0.5">
+                      <span className="text-[10px] uppercase font-bold text-zinc-400 shrink-0">Enclave Tags:</span>
+                      {enc.feedTags.map((tag) => (
+                        <button
+                          key={tag}
+                          onClick={() => setSelectedTagFilter(tag)}
+                          className="text-[10px] font-medium bg-white/80 dark:bg-zinc-800 hover:bg-white dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 px-2 py-0.5 rounded-full border border-zinc-200/50 dark:border-zinc-700/50 shrink-0 cursor-pointer"
+                        >
+                          {tag}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Super Admin Enclave Auditor Switcher */}
+                    {isAdmin && (
+                      <div className="mt-2 pt-2 border-t border-zinc-200/70 dark:border-zinc-700/70 flex items-center justify-between gap-2 flex-wrap text-xs">
+                        <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-300 flex items-center gap-1">
+                          🛡️ Super Admin Auditor Switcher:
+                        </span>
+                        <div className="flex items-center gap-1 overflow-x-auto">
+                          {PROFESSION_ENCLAVES.map(e => (
+                            <button
+                              key={e.id}
+                              onClick={() => setAdminEnclaveOverride(e.id)}
+                              className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-colors cursor-pointer ${
+                                activeEncId === e.id
+                                  ? "bg-indigo-600 text-white font-bold"
+                                  : "bg-white/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-white"
+                              }`}
+                            >
+                              {e.icon} {e.shortName}
+                            </button>
+                          ))}
+                          <button
+                            onClick={() => setAdminEnclaveOverride('all')}
+                            className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-colors cursor-pointer ${
+                              activeEncId === 'all'
+                                ? "bg-indigo-600 text-white font-bold"
+                                : "bg-white/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-white"
+                            }`}
+                          >
+                            🌐 All Enclaves
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
+
               {/* 1. PRIMARY MULTI-STREAM FEED CATEGORY TABS */}
               <div className="rounded-xl border border-zinc-200 bg-white p-2.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-2">
                 <div className="flex items-center justify-between gap-1 border-b border-zinc-100 dark:border-zinc-800 pb-2">

@@ -24,6 +24,7 @@ import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
 import { DEMO_AUTH_PERSONAS, AuthPersona } from "@/components/linkedin/ConnectInAuthModal"
 import { saveStoredUser, saveStoredSessionRoute } from "@/lib/connectin-storage"
 import { createUniqueUserProfile, resolveDisplayName, isSuperAdminUser } from "@/lib/connectin-profile"
+import { PROFESSION_ENCLAVES, findProfessionById, findEnclaveById, getProfessionsByEnclave } from "@/lib/connectin-professions"
 
 import { signIn } from "next-auth/react"
 
@@ -47,11 +48,13 @@ export default function ConnectInLoginPage() {
   // Challenge token for stateless OTP verification across serverless lambdas
   const [otpChallengeToken, setOtpChallengeToken] = useState<string | null>(null)
 
-  // Join Now (Registration) Form State
+  // Join Now (Registration) Form State — Least Privilege Profession & Enclave Segregation
   const [joinFirstName, setJoinFirstName] = useState("")
   const [joinLastName, setJoinLastName] = useState("")
   const [joinEmail, setJoinEmail] = useState("")
   const [joinPassword, setJoinPassword] = useState("")
+  const [joinEnclaveId, setJoinEnclaveId] = useState<string>("trades_construction")
+  const [joinProfessionId, setJoinProfessionId] = useState<string>("carpenter")
   const [joinRole, setJoinRole] = useState<'personal' | 'enterprise' | 'creator' | 'seller' | 'developer'>('personal')
   const [joinStep, setJoinStep] = useState<'form' | '2fa'>('form')
   const [join2FACode, setJoin2FACode] = useState("")
@@ -236,6 +239,7 @@ export default function ConnectInLoginPage() {
     try {
       const fullName = `${joinFirstName} ${joinLastName}`.trim()
       const resolvedName = resolveDisplayName(fullName, joinEmail)
+      const selectedProf = findProfessionById(joinProfessionId)
 
       const res = await fetch("/api/connectin/auth/register", {
         method: "POST",
@@ -247,6 +251,10 @@ export default function ConnectInLoginPage() {
           phone: joinPhone,
           password: joinPassword,
           role: joinRole,
+          professionId: joinProfessionId,
+          profession: selectedProf?.title,
+          professionCategory: selectedProf?.categoryName,
+          professionEnclave: selectedProf?.enclaveId || joinEnclaveId,
           twoFactorChannel: effectiveChannel
         })
       })
@@ -259,13 +267,17 @@ export default function ConnectInLoginPage() {
       if (data.otpChallengeToken) {
         setOtpChallengeToken(data.otpChallengeToken)
       }
+      if (data.code || data.fallbackCode) {
+        setActiveDispatchedCode(data.code || data.fallbackCode)
+      }
+      setActiveSignInTarget(data.target || (effectiveChannel === 'email' ? joinEmail : (joinPhone || joinEmail)))
       setJoinStep('2fa')
       if (effectiveChannel === 'call') {
         setSuccessMessage(`📞 Placing automated verification phone call to ${joinPhone || joinEmail}... Please answer to receive your code.`)
       } else if (effectiveChannel === 'sms') {
         setSuccessMessage(`💬 Text message sent to ${joinPhone || joinEmail}. Please enter the 6-digit code.`)
       } else {
-        setSuccessMessage(`✉️ Verification code sent to ${joinEmail}. Please check your inbox or spam.`)
+        setSuccessMessage(data.message || `✉️ Verification code sent to ${joinEmail}. Please check your inbox or spam.`)
       }
     } catch (err: any) {
       setErrorMessage(err.message || "Failed to create account.")
@@ -286,6 +298,7 @@ export default function ConnectInLoginPage() {
       const fullName = `${joinFirstName} ${joinLastName}`.trim()
       const resolvedName = resolveDisplayName(fullName, joinEmail)
       const verifyTarget = joinChannel === 'email' ? joinEmail : (joinPhone || joinEmail)
+      const selectedProf = findProfessionById(joinProfessionId)
 
       const res = await fetch("/api/connectin/auth/verify-otp", {
         method: "POST",
@@ -297,6 +310,10 @@ export default function ConnectInLoginPage() {
           code,
           name: resolvedName,
           role: joinRole,
+          professionId: joinProfessionId,
+          profession: selectedProf?.title,
+          professionCategory: selectedProf?.categoryName,
+          professionEnclave: selectedProf?.enclaveId || joinEnclaveId,
           otpChallengeToken
         })
       })
@@ -306,16 +323,9 @@ export default function ConnectInLoginPage() {
         throw new Error(data.error || "Invalid verification code.")
       }
 
-      const targetTab =
-        joinRole === 'enterprise' ? 'procurement' :
-        joinRole === 'creator' ? 'media' :
-        joinRole === 'seller' ? 'sellercenter' :
-        joinRole === 'developer' ? 'code' : 'home'
-
-      const targetWorkspace: 'personal' | 'enterprise' | 'creator' | 'seller' =
-        joinRole === 'enterprise' ? 'enterprise' :
-        joinRole === 'creator' ? 'creator' :
-        joinRole === 'seller' ? 'seller' : 'personal'
+      const effectiveEnclave = data.profile?.professionEnclave || selectedProf?.enclaveId || joinEnclaveId
+      const targetTab = 'home'
+      const targetWorkspace = 'personal'
 
       const profileToSave = {
         ...(data.profile || createUniqueUserProfile({
@@ -325,7 +335,11 @@ export default function ConnectInLoginPage() {
           role: joinRole
         })),
         email: joinEmail,
-        id: data.profile?.userId || data.user?.id || data.profile?.id
+        id: data.profile?.userId || data.user?.id || data.profile?.id,
+        profession: data.profile?.profession || selectedProf?.title || 'Master Carpenter (Framing & Finish Joinery)',
+        professionId: data.profile?.professionId || selectedProf?.id || 'carpenter',
+        professionCategory: data.profile?.professionCategory || selectedProf?.categoryName || 'Skilled Trades & Construction',
+        professionEnclave: effectiveEnclave
       }
 
       saveStoredUser(profileToSave)
@@ -335,7 +349,7 @@ export default function ConnectInLoginPage() {
         sessionStorage.setItem("connectin_authenticated", "true")
       }
 
-      setSuccessMessage(`✓ Welcome to ConnectIn, ${profileToSave.name}! Launching your workspace...`)
+      setSuccessMessage(`✓ Welcome to the ${selectedProf?.categoryName || 'ConnectIn'} Enclave, ${profileToSave.name}! Launching your segregated workspace...`)
       setTimeout(() => {
         window.location.href = "/connectin"
       }, 150)
@@ -923,21 +937,84 @@ export default function ConnectInLoginPage() {
                       />
                     </div>
 
-                    {/* Primary Role Choice */}
+                    {/* Industry Sector / Need-to-Know Enclave Choice */}
                     <div className="space-y-1">
-                      <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Your Primary Role</label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                          Industry &amp; Professional Domain
+                        </label>
+                        <span className="text-[10px] font-mono text-[#0A66C2] dark:text-sky-400 font-bold">
+                          🔒 Need-to-Know Enclave
+                        </span>
+                      </div>
                       <select
-                        value={joinRole}
-                        onChange={(e) => setJoinRole(e.target.value as any)}
-                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                        value={joinEnclaveId}
+                        onChange={(e) => {
+                          const newEnclave = e.target.value
+                          setJoinEnclaveId(newEnclave)
+                          const available = getProfessionsByEnclave(newEnclave)
+                          if (available.length > 0) {
+                            setJoinProfessionId(available[0].id)
+                          }
+                        }}
+                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-xs font-medium text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
                       >
-                        <option value="personal">👤 Individual Professional (Feed &amp; Skills)</option>
-                        <option value="enterprise">🏢 Enterprise Buyer (Procurement &amp; RFPs)</option>
-                        <option value="creator">🎬 Creator &amp; Studio Host (Video &amp; Podcasts)</option>
-                        <option value="seller">💼 Marketplace Seller (Storefront &amp; Licenses)</option>
-                        <option value="developer">🧑‍💻 Defense &amp; Kernel Developer (Code &amp; Labs)</option>
+                        {PROFESSION_ENCLAVES.map(enc => (
+                          <option key={enc.id} value={enc.id}>
+                            {enc.icon} {enc.name}
+                          </option>
+                        ))}
                       </select>
                     </div>
+
+                    {/* Specific Profession Dropdown */}
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                        Your Specific Profession / Trade
+                      </label>
+                      <select
+                        value={joinProfessionId}
+                        onChange={(e) => setJoinProfessionId(e.target.value)}
+                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-xs font-semibold text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                      >
+                        {getProfessionsByEnclave(joinEnclaveId).map(prof => (
+                          <option key={prof.id} value={prof.id}>
+                            {prof.title}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Least-Privilege Enclave Preview Badge & Dedicated Tools */}
+                    {(() => {
+                      const curEnc = findEnclaveById(joinEnclaveId) || PROFESSION_ENCLAVES[0]
+                      const curProf = findProfessionById(joinProfessionId) || curEnc.professions[0]
+                      return (
+                        <div className="rounded-xl border border-zinc-200 dark:border-zinc-750 bg-zinc-50/70 dark:bg-zinc-800/40 p-3 space-y-2 text-left">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-bold text-zinc-700 dark:text-zinc-200 flex items-center gap-1.5">
+                              <span>{curEnc.icon}</span>
+                              <span>{curEnc.shortName} Enclave</span>
+                            </span>
+                            <span className="text-[10px] font-mono bg-sky-100 dark:bg-sky-950/80 text-sky-800 dark:text-sky-300 px-2 py-0.5 rounded font-bold">
+                              {curEnc.securityClearanceTier}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-tight">
+                            🔒 <strong>Least-Privilege Isolation:</strong> As a verified <strong>{curProf.title}</strong>, your workspace tools, job RFPs, and feed are strictly segregated to this enclave. A software developer will never see your carpentry job-site tools, and you will never see compiler sandboxes.
+                          </p>
+                          <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                            <span className="text-[10px] font-semibold text-zinc-400">Enclave Tools:</span>
+                            {curProf.tools.slice(0, 3).map((tool, idx) => (
+                              <span key={idx} className="text-[10px] bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-md px-1.5 py-0.5 text-zinc-700 dark:text-zinc-300 font-medium flex items-center gap-1">
+                                <span>{tool.icon}</span>
+                                <span>{tool.name}</span>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })()}
 
                     <p className="text-[10px] text-zinc-500 leading-tight pt-1">
                       By clicking Agree &amp; Join, you agree to the ConnectIn User Agreement, Privacy Policy, and Zero-Trust Identity Terms.
@@ -968,6 +1045,25 @@ export default function ConnectInLoginPage() {
                       Enter the 6-digit code sent to <strong className="text-zinc-900 dark:text-zinc-200">{joinChannel === 'sms' && joinPhone ? joinPhone : joinEmail}</strong>
                     </p>
                   </div>
+
+                  {activeDispatchedCode && (
+                    <div className="rounded-xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 p-3.5 text-center space-y-2 animate-in fade-in duration-200">
+                      <div className="flex items-center justify-between text-xs px-1">
+                        <span className="font-semibold text-emerald-900 dark:text-emerald-200">Dispatched Security Code:</span>
+                        <span className="font-mono text-lg font-black text-emerald-600 dark:text-emerald-400 tracking-[4px]">{activeDispatchedCode}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setJoin2FACode(activeDispatchedCode)
+                          handleVerifyJoin2FA(activeDispatchedCode)
+                        }}
+                        className="w-full rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white py-2 text-xs font-bold shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <span>⚡ 1-Click Auto-Fill &amp; Enter ({activeDispatchedCode})</span>
+                      </button>
+                    </div>
+                  )}
 
                   <div className="space-y-4">
                     <input

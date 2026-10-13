@@ -34,6 +34,10 @@ export interface UserProfileRecord {
   followersCount: number
   profileViews: number
   postImpressions: number
+  profession?: string
+  professionId?: string
+  professionCategory?: string
+  professionEnclave?: string
 }
 
 export interface SessionRecord {

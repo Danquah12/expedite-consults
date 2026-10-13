@@ -3,6 +3,10 @@ export interface UserProfile {
   userId?: string
   role?: string
   roles?: string[]
+  profession?: string
+  professionId?: string
+  professionCategory?: string
+  professionEnclave?: string
   id: string
   name: string
   headline: string
@@ -135,6 +139,8 @@ export interface EmbeddedProductData {
 
 export interface Post {
   id: string
+  professionEnclave?: string
+  targetProfessions?: string[]
   author: {
     id: string
     name: string
@@ -519,8 +525,254 @@ Proven track record of scaling high-availability Next.js, Kubernetes, and AWS/GC
 }
 
 export const initialPosts: Post[] = [
+  // ─── 1. SKILLED TRADES & CRAFTSMANSHIP ENCLAVE (CARPENTER, CONTRACTOR, TRADES) ───
+  {
+    id: 'post_carpenter_timber_frame',
+    professionEnclave: 'trades_construction',
+    targetProfessions: ['carpenter', 'general_contractor'],
+    author: {
+      id: 'author_miller_timber',
+      name: 'David Miller',
+      headline: 'Master Carpenter · Timber Framing & Architectural Finish Joinery',
+      avatar: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=400&auto=format&fit=crop&q=80',
+      connectionDegree: '1st',
+      isFollowing: true
+    },
+    timestamp: '15m ago · 🔨 Timber Craftsmanship · 🌐',
+    visibility: 'Public',
+    postType: 'standard',
+    feedCategory: 'for_you',
+    feedSubCategory: 'Craftsmanship',
+    content: `🌲 Completed the heavy timber mortise-and-tenon bents for this 6,400 sq.ft. Douglas Fir vaulted pavilion.
+
+Key craftsmanship notes for the framing crew:
+• All 10x10 posts and 8x12 principal rafters milled from #1 FOHC (Free of Heart Center) coastal fir, seasoned to sub-14% moisture before cutting.
+• Traditional draw-bored mortise & tenon joints secured with 1" white oak octagonal trunnels.
+• Tolerances held to sub-1mm using the Festool Domino XL DF 700 mortiser on the compound bracing.
+• Structural engineer PE stamped load calculations: 45 PSF snow load and 115 MPH wind uplift envelope.
+
+Blueprints and timber takeoff sheets are now available in the Trades Blueprint Spec Viewer for our subcontractor team. 👇`,
+    hashtags: ['#Carpentry', '#TimberFraming', '#Woodworking', '#FinishJoinery', '#Festool', '#Construction'],
+    media: {
+      type: 'image',
+      url: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1200&auto=format&fit=crop&q=80',
+      title: 'Vaulted Heavy Timber Douglas Fir Frame',
+      description: 'Precision mortise & tenon joinery with draw-bored white oak pegs.'
+    },
+    stats: {
+      likesCount: 384,
+      commentsCount: 42,
+      repostsCount: 29,
+      reactionsBreakdown: { like: 210, celebrate: 95, support: 30, love: 45, insightful: 4, funny: 0 }
+    },
+    userReaction: null,
+    isSaved: false,
+    comments: [
+      {
+        id: 'c_carp_1',
+        author: {
+          name: 'Frank Gallagher',
+          headline: 'General Contractor & Construction Superintendent · OSHA 30',
+          avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80',
+          connectionDegree: '1st'
+        },
+        content: 'Clean mortise work David. The structural deflection looks rock solid under the live load test. We just scheduled the city framing inspection for Thursday 9 AM.',
+        timestamp: '8m ago',
+        likesCount: 16
+      }
+    ]
+  },
+  {
+    id: 'post_general_contractor_rfp',
+    professionEnclave: 'trades_construction',
+    targetProfessions: ['general_contractor', 'carpenter', 'electrician', 'plumber'],
+    author: {
+      id: 'author_frank_gc',
+      name: 'Frank Gallagher',
+      headline: 'Licensed General Contractor · Commercial Buildouts & Subcontractor PM',
+      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80',
+      connectionDegree: '1st'
+    },
+    timestamp: '40m ago · 📋 Subcontractor RFP Open · 🌐',
+    visibility: 'Public',
+    postType: 'standard',
+    feedCategory: 'for_you',
+    feedSubCategory: 'Subcontractor Bids',
+    content: `📋 [Subcontractor RFP Open] Phase 2 Framing, Mechanical & Electrical Buildout — Baltimore Commercial Tech Center ($285,000 Escrow).
+
+We are accepting sealed subcontractor bids for:
+1. Rough-in framing & structural fire-blocking (24,000 board feet 2x6 SPF).
+2. 480V 3-phase industrial power distribution & conduit rough-ins.
+3. Commercial hydronic supply & backflow certification.
+
+Requirements:
+✓ Active Maryland trade license & verified ConnectIn Trade ID
+✓ OSHA 30 supervisor on site + 100% fall protection compliance
+✓ Escrow funded milestone progress draws with unconditional lien releases.
+
+Submit bids directly through the ConnectIn Subcontractor Board.`,
+    hashtags: ['#Construction', '#SubcontractorBids', '#GeneralContractor', '#Framing', '#OSHAGuidelines'],
+    stats: {
+      likesCount: 198,
+      commentsCount: 31,
+      repostsCount: 18,
+      reactionsBreakdown: { like: 110, celebrate: 40, support: 28, love: 12, insightful: 8, funny: 0 }
+    },
+    userReaction: null,
+    isSaved: true,
+    comments: []
+  },
+  {
+    id: 'post_electrician_nec',
+    professionEnclave: 'trades_construction',
+    targetProfessions: ['electrician'],
+    author: {
+      id: 'author_sarah_spark',
+      name: 'Sarah Jenkins',
+      headline: 'Licensed Master Electrician · High-Voltage Distribution & Industrial Automation',
+      avatar: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=200&auto=format&fit=crop&q=80',
+      connectionDegree: '2nd'
+    },
+    timestamp: '2h ago · ⚡ NEC Code Compliance · 🌐',
+    visibility: 'Public',
+    postType: 'standard',
+    feedCategory: 'for_you',
+    feedSubCategory: 'Code Compliance',
+    content: `⚡ NEC 2026 update on commercial arc-flash boundary calculations (NFPA 70E):
+
+When commissioning 480V/277V switchgear with available fault currents exceeding 65kA, remember that instantaneous trip settings on upstream electronic trip units directly govern the incident energy (cal/cm²).
+
+Calibrated the single-line protection coordinates today — lowered incident energy from 18.2 cal/cm² to 3.4 cal/cm² (Category 2 PPE), saving both lives and downtime. Always verify with calibrated secondary injection test sets!`,
+    hashtags: ['#Electrician', '#NEC2026', '#ArcFlash', '#HighVoltage', '#TradeTools'],
+    stats: {
+      likesCount: 154,
+      commentsCount: 22,
+      repostsCount: 14,
+      reactionsBreakdown: { like: 92, celebrate: 24, support: 18, love: 8, insightful: 12, funny: 0 }
+    },
+    userReaction: null,
+    isSaved: false,
+    comments: []
+  },
+
+  // ─── 2. CLINICAL HEALTHCARE & MEDICINE ENCLAVE ───
+  {
+    id: 'post_physician_clinical_trial',
+    professionEnclave: 'healthcare_medicine',
+    targetProfessions: ['physician', 'registered_nurse', 'pharmacist'],
+    author: {
+      id: 'author_dr_thorne',
+      name: 'Dr. Aris Thorne, MD',
+      headline: 'Attending Interventional Cardiologist · Clinical Research & Evidence Therapeutics',
+      avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=400&auto=format&fit=crop&q=80',
+      connectionDegree: '1st'
+    },
+    timestamp: '30m ago · 🩺 Clinical Case Review · 🌐',
+    visibility: 'Public',
+    postType: 'standard',
+    feedCategory: 'for_you',
+    feedSubCategory: 'Clinical Research',
+    content: `🩺 [Clinical Trial Findings] Phase III Transcatheter Hemodynamic Evaluation in Calcified Aortic Stenosis.
+
+Our cardiology service evaluated 30-day post-TAVR telemetry in 140 high-risk patients. Key findings:
+• Mean transvalvular gradient reduced from 48 mmHg to 8.2 mmHg (p < 0.001).
+• Zero 30-day paravalvular leaks > mild with self-expanding nitinol frames.
+• Continuous remote rhythm monitoring identified sub-clinical atrial fibrillation in 6.4% of asymptomatic patients, prompting immediate anticoagulation.
+
+Full HIPAA-deidentified hemodynamic datasets and peer review discussion are available in our clinical case rounds.`,
+    hashtags: ['#Healthcare', '#Medicine', '#Cardiology', '#ClinicalTrials', '#HIPAACompliance'],
+    stats: {
+      likesCount: 290,
+      commentsCount: 38,
+      repostsCount: 45,
+      reactionsBreakdown: { like: 140, celebrate: 60, support: 35, love: 30, insightful: 25, funny: 0 }
+    },
+    userReaction: null,
+    isSaved: false,
+    comments: []
+  },
+
+  // ─── 3. LEGAL & DEFENSE ENCLAVE ───
+  {
+    id: 'post_defense_cmmc',
+    professionEnclave: 'law_gov_defense',
+    targetProfessions: ['corporate_attorney', 'defense_analyst'],
+    author: {
+      id: 'author_victoria_defense',
+      name: 'Victoria Sterling, JD',
+      headline: 'Partner / Senior Defense Counsel · CMMC 2.0 Level 3 & FedRAMP High Regulatory Lead',
+      avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&auto=format&fit=crop&q=80',
+      connectionDegree: '1st'
+    },
+    timestamp: '55m ago · ⚖️ Regulatory Defense Brief · 🌐',
+    visibility: 'Public',
+    postType: 'standard',
+    feedCategory: 'for_you',
+    feedSubCategory: 'CMMC Compliance',
+    content: `⚖️ [Defense Industrial Base Advisory] The Final CMMC 2.0 Rule (32 CFR Part 170) is now live across DoD acquisitions.
+
+Every defense prime and subcontractor handling Controlled Unclassified Information (CUI) must now have DIBCAC third-party assessments (C3PAO) certified for Level 2 and Level 3 contracts.
+
+Crucial counsel points:
+1. DFARS 252.204-7012 mandates rapid 72-hour cyber incident reporting to DIBNet.
+2. Cloud service providers must meet FedRAMP Moderate or High equivalency with continuous OSCAL telemetry.
+3. Liability indemnification clauses across supplier subcontracts must be renegotiated before Q4 SAM.gov RFP awards.`,
+    hashtags: ['#GovCloud', '#DefenseIntelligence', '#CMMC', '#LegalCompliance', '#NationalSecurity'],
+    stats: {
+      likesCount: 312,
+      commentsCount: 49,
+      repostsCount: 62,
+      reactionsBreakdown: { like: 170, celebrate: 40, support: 22, love: 20, insightful: 60, funny: 0 }
+    },
+    userReaction: null,
+    isSaved: true,
+    comments: []
+  },
+
+  // ─── 4. FINANCE & ACCOUNTING ENCLAVE ───
+  {
+    id: 'post_cpa_gaap_asc606',
+    professionEnclave: 'finance_accounting',
+    targetProfessions: ['cpa_accountant', 'investment_banker'],
+    author: {
+      id: 'author_julian_cpa',
+      name: 'Julian Hayes, CPA',
+      headline: 'Corporate Financial Controller · GAAP Audits, Valuation & Tax Strategy',
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80',
+      connectionDegree: '1st'
+    },
+    timestamp: '1h ago · 📊 GAAP Technical Memo · 🌐',
+    visibility: 'Public',
+    postType: 'standard',
+    feedCategory: 'for_you',
+    feedSubCategory: 'GAAP Audits',
+    content: `📊 [Accounting Advisory] ASC 606 Revenue Recognition on Bundled Multi-Element SaaS & Professional Service Contracts.
+
+When software licenses are bundled with implementation services and ongoing SLA maintenance, determine whether the implementation represents a distinct performance obligation under Step 2 of the 5-step model.
+
+Key audit checklist for the upcoming quarterly close:
+• Standalone Selling Price (SSP) allocation using the adjusted market assessment approach.
+• Deferred revenue balance rollforwards reconciled against automated ERP billing streams.
+• Capitalization of contract acquisition costs (ASC 340-40) with amortized matching.
+
+The automated GAAP Ledger Reconciler spreadsheet model is now shared in the Finance Enclave.`,
+    hashtags: ['#Finance', '#Accounting', '#CPA', '#GAAP', '#Valuation', '#RevenueRecognition'],
+    stats: {
+      likesCount: 224,
+      commentsCount: 33,
+      repostsCount: 28,
+      reactionsBreakdown: { like: 120, celebrate: 34, support: 20, love: 18, insightful: 32, funny: 0 }
+    },
+    userReaction: null,
+    isSaved: false,
+    comments: []
+  },
+
+  // ─── 5. SOFTWARE ENGINEERING & CYBER DEFENSE ENCLAVE (ORIGINAL SUITE) ───
   {
     id: 'post_product_strike',
+    professionEnclave: 'tech_software',
+    targetProfessions: ['software_engineer', 'cloud_architect', 'cybersecurity_analyst'],
     author: {
       id: 'author_expedite',
       name: 'Expedite Consults Product Lab',
