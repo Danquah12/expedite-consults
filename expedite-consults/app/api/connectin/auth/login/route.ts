@@ -64,7 +64,9 @@ export async function POST(req: NextRequest) {
     const dispatchPhone = rawPhone ? formatE164Phone(rawPhone) : ""
     if (dispatchPhone && user.id) {
       user.phone = dispatchPhone
-      connectinDb.updateUser(user.id, { phone: dispatchPhone })
+      if (typeof connectinDb.updateUser === "function") {
+        connectinDb.updateUser(user.id, { phone: dispatchPhone })
+      }
     }
 
     const profile = connectinDb.findProfileByUserId(user.id)

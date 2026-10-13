@@ -561,6 +561,14 @@ class ConnectInDatabase {
     return { user: newUser, profile: newProfile }
   }
 
+  public updateUser(userId: string, updates: Partial<UserRecord>): boolean {
+    const user = this.data.users.find(u => u.id === userId)
+    if (!user) return false
+    Object.assign(user, updates, { updatedAt: new Date().toISOString() })
+    this.saveData()
+    return true
+  }
+
   public updateUserStatus(userId: string, status: UserRecord["status"]): boolean {
     const user = this.data.users.find(u => u.id === userId)
     if (!user) return false
