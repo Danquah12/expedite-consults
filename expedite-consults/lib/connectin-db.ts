@@ -777,9 +777,15 @@ class ConnectInDatabase {
         role: user.role,
         status: user.status,
         headline: profile?.headline || "ConnectIn Member",
-        avatar: profile?.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.email)}`,
+        avatar: profile?.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.email)}&backgroundColor=0a66c2`,
         clearanceLevel: profile?.clearanceLevel || "Standard Identity",
-        createdAt: user.createdAt
+        createdAt: user.createdAt,
+        skills: profile?.skills || [],
+        profession: profile?.profession,
+        professionId: profile?.professionId,
+        professionCategory: profile?.professionCategory,
+        professionEnclave: profile?.professionEnclave,
+        cryptoVerificationBadge: profile?.cryptoVerificationBadge
       }
     })
   }

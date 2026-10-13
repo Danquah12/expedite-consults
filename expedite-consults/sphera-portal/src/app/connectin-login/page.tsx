@@ -99,6 +99,22 @@ export default function ConnectInLoginPage() {
     }
   }
 
+  // Web Speech API Voice Call Engine (Speaks 6-digit code for automated voice call simulation & verification)
+  const playVoiceCallAudio = (codeToSpeak?: string) => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return
+    try {
+      window.speechSynthesis.cancel() // Stop any previous playback
+      const codeDigits = (codeToSpeak || activeDispatchedCode || "123456").split("").join(", ")
+      const text = `Hello! This is ConnectIn Security by Expedite Consults. Your one-time verification code is: ${codeDigits}. I repeat: ${codeDigits}. Thank you for using ConnectIn.`
+      const utterance = new SpeechSynthesisUtterance(text)
+      utterance.rate = 0.92
+      utterance.pitch = 1.05
+      window.speechSynthesis.speak(utterance)
+    } catch (e) {
+      console.warn("[Voice Call SpeechSynthesis notice]", e)
+    }
+  }
+
   // Core sign-in logic — can be called from form onSubmit or programmatically (Resend button)
   const doSignIn = async (channelOverride?: 'email' | 'sms' | 'call') => {
     if (!signInEmail) return
@@ -140,6 +156,7 @@ export default function ConnectInLoginPage() {
         setErrorMessage(data.message || `⚠️ Email delivery notice: ${data.emailError || "Could not deliver 2FA email"}. You can enter demo access code 123456 to continue.`)
       } else if (effectiveChannel === 'call') {
         setSuccessMessage(`📞 Placing automated verification phone call to ${data.target || signInPhone || signInEmail}... Please answer to receive your code.`)
+        setTimeout(() => playVoiceCallAudio(data.code || "123456"), 350)
       } else if (effectiveChannel === 'sms') {
         setSuccessMessage(`💬 Text message sent to ${data.target || signInPhone || signInEmail}. Please enter the 6-digit code.`)
       } else {
@@ -273,7 +290,9 @@ export default function ConnectInLoginPage() {
       setActiveSignInTarget(data.target || (effectiveChannel === 'email' ? joinEmail : (joinPhone || joinEmail)))
       setJoinStep('2fa')
       if (effectiveChannel === 'call') {
+        const spoken = data.code || data.fallbackCode || activeDispatchedCode || "123456"
         setSuccessMessage(`📞 Placing automated verification phone call to ${joinPhone || joinEmail}... Please answer to receive your code.`)
+        setTimeout(() => playVoiceCallAudio(spoken), 350)
       } else if (effectiveChannel === 'sms') {
         setSuccessMessage(`💬 Text message sent to ${joinPhone || joinEmail}. Please enter the 6-digit code.`)
       } else {
@@ -655,21 +674,69 @@ export default function ConnectInLoginPage() {
                   </div>
 
                   {activeDispatchedCode && (
-                    <div className="rounded-xl border border-sky-300 dark:border-sky-800 bg-sky-50 dark:bg-sky-950/40 p-3.5 text-center space-y-2 animate-in fade-in duration-200">
+                    <div className={`rounded-xl border p-3.5 text-center space-y-2 animate-in fade-in duration-200 ${
+                      signInChannel === 'call'
+                        ? "border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/40"
+                        : signInChannel === 'sms'
+                        ? "border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40"
+                        : "border-sky-300 dark:border-sky-800 bg-sky-50 dark:bg-sky-950/40"
+                    }`}>
                       <div className="flex items-center justify-between text-xs px-1">
-                        <span className="font-semibold text-sky-900 dark:text-sky-200">Dispatched Code:</span>
-                        <span className="font-mono text-lg font-black text-[#0A66C2] dark:text-sky-300 tracking-[4px]">{activeDispatchedCode}</span>
+                        <span className={`font-semibold flex items-center gap-1.5 ${
+                          signInChannel === 'call'
+                            ? "text-purple-900 dark:text-purple-200"
+                            : signInChannel === 'sms'
+                            ? "text-emerald-900 dark:text-emerald-200"
+                            : "text-sky-900 dark:text-sky-200"
+                        }`}>
+                          <span>{signInChannel === 'call' ? '📞' : signInChannel === 'sms' ? '💬' : '✉️'}</span>
+                          <span>{signInChannel === 'call' ? 'Voice Call Dispatched Code:' : signInChannel === 'sms' ? 'SMS Text Dispatched Code:' : 'Email Dispatched Code:'}</span>
+                        </span>
+                        <span className={`font-mono text-lg font-black tracking-[4px] ${
+                          signInChannel === 'call'
+                            ? "text-purple-700 dark:text-purple-300"
+                            : signInChannel === 'sms'
+                            ? "text-emerald-700 dark:text-emerald-300"
+                            : "text-[#0A66C2] dark:text-sky-300"
+                        }`}>{activeDispatchedCode}</span>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSignIn2FACode(activeDispatchedCode)
-                          handleVerifySignIn2FA(activeDispatchedCode)
-                        }}
-                        className="w-full rounded-lg bg-[#0A66C2] hover:bg-[#004182] text-white py-2 text-xs font-bold shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-                      >
-                        <span>⚡ 1-Click Auto-Fill &amp; Enter ({activeDispatchedCode})</span>
-                      </button>
+
+                      {signInChannel === 'call' ? (
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => playVoiceCallAudio(activeDispatchedCode)}
+                            className="rounded-lg bg-purple-600 hover:bg-purple-700 text-white py-2 px-3 text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                          >
+                            <span>🔊 Hear Call Again</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSignIn2FACode(activeDispatchedCode)
+                              handleVerifySignIn2FA(activeDispatchedCode)
+                            }}
+                            className="rounded-lg bg-[#0A66C2] hover:bg-[#004182] text-white py-2 px-3 text-xs font-bold shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                          >
+                            <span>⚡ Auto-Fill &amp; Enter</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSignIn2FACode(activeDispatchedCode)
+                            handleVerifySignIn2FA(activeDispatchedCode)
+                          }}
+                          className={`w-full rounded-lg text-white py-2 text-xs font-bold shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
+                            signInChannel === 'sms'
+                              ? "bg-emerald-600 hover:bg-emerald-700"
+                              : "bg-[#0A66C2] hover:bg-[#004182]"
+                          }`}
+                        >
+                          <span>⚡ 1-Click Auto-Fill &amp; Enter ({activeDispatchedCode})</span>
+                        </button>
+                      )}
                     </div>
                   )}
 
@@ -1035,33 +1102,87 @@ export default function ConnectInLoginPage() {
                 /* Step 2: Confirm Email / SMS -> Pure Authentic Code Entry */
                 <form onSubmit={(e) => { e.preventDefault(); handleVerifyJoin2FA(); }} className="space-y-5 text-center">
                   <div className="space-y-1">
-                    <div className="h-12 w-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto text-xl font-bold">
-                      {joinChannel === 'sms' && joinPhone ? '📱' : '✉️'}
+                    <div className={`h-12 w-12 rounded-2xl flex items-center justify-center mx-auto text-xl font-bold ${
+                      joinChannel === 'call'
+                        ? "bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400"
+                        : joinChannel === 'sms'
+                        ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400"
+                        : "bg-blue-50 dark:bg-blue-950/40 text-[#0A66C2] dark:text-sky-400"
+                    }`}>
+                      {joinChannel === 'call' ? '📞' : joinChannel === 'sms' && joinPhone ? '💬' : '✉️'}
                     </div>
                     <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
                       Confirm Verification Code
                     </h2>
                     <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                      Enter the 6-digit code sent to <strong className="text-zinc-900 dark:text-zinc-200">{joinChannel === 'sms' && joinPhone ? joinPhone : joinEmail}</strong>
+                      Enter the 6-digit code sent to <strong className="text-zinc-900 dark:text-zinc-200">{(joinChannel === 'sms' || joinChannel === 'call') && joinPhone ? joinPhone : joinEmail}</strong>
                     </p>
                   </div>
 
                   {activeDispatchedCode && (
-                    <div className="rounded-xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 p-3.5 text-center space-y-2 animate-in fade-in duration-200">
+                    <div className={`rounded-xl border p-3.5 text-center space-y-2 animate-in fade-in duration-200 ${
+                      joinChannel === 'call'
+                        ? "border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/40"
+                        : joinChannel === 'sms'
+                        ? "border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40"
+                        : "border-sky-300 dark:border-sky-800 bg-sky-50 dark:bg-sky-950/40"
+                    }`}>
                       <div className="flex items-center justify-between text-xs px-1">
-                        <span className="font-semibold text-emerald-900 dark:text-emerald-200">Dispatched Security Code:</span>
-                        <span className="font-mono text-lg font-black text-emerald-600 dark:text-emerald-400 tracking-[4px]">{activeDispatchedCode}</span>
+                        <span className={`font-semibold flex items-center gap-1.5 ${
+                          joinChannel === 'call'
+                            ? "text-purple-900 dark:text-purple-200"
+                            : joinChannel === 'sms'
+                            ? "text-emerald-900 dark:text-emerald-200"
+                            : "text-sky-900 dark:text-sky-200"
+                        }`}>
+                          <span>{joinChannel === 'call' ? '📞' : joinChannel === 'sms' ? '💬' : '✉️'}</span>
+                          <span>{joinChannel === 'call' ? 'Voice Call Security Code:' : joinChannel === 'sms' ? 'SMS Text Security Code:' : 'Email Security Code:'}</span>
+                        </span>
+                        <span className={`font-mono text-lg font-black tracking-[4px] ${
+                          joinChannel === 'call'
+                            ? "text-purple-700 dark:text-purple-300"
+                            : joinChannel === 'sms'
+                            ? "text-emerald-700 dark:text-emerald-300"
+                            : "text-[#0A66C2] dark:text-sky-300"
+                        }`}>{activeDispatchedCode}</span>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setJoin2FACode(activeDispatchedCode)
-                          handleVerifyJoin2FA(activeDispatchedCode)
-                        }}
-                        className="w-full rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white py-2 text-xs font-bold shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-                      >
-                        <span>⚡ 1-Click Auto-Fill &amp; Enter ({activeDispatchedCode})</span>
-                      </button>
+
+                      {joinChannel === 'call' ? (
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => playVoiceCallAudio(activeDispatchedCode)}
+                            className="rounded-lg bg-purple-600 hover:bg-purple-700 text-white py-2 px-3 text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                          >
+                            <span>🔊 Hear Call Again</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setJoin2FACode(activeDispatchedCode)
+                              handleVerifyJoin2FA(activeDispatchedCode)
+                            }}
+                            className="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white py-2 px-3 text-xs font-bold shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                          >
+                            <span>⚡ Auto-Fill &amp; Enter</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setJoin2FACode(activeDispatchedCode)
+                            handleVerifyJoin2FA(activeDispatchedCode)
+                          }}
+                          className={`w-full rounded-lg text-white py-2 text-xs font-bold shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
+                            joinChannel === 'sms'
+                              ? "bg-emerald-600 hover:bg-emerald-500"
+                              : "bg-[#0A66C2] hover:bg-[#004182]"
+                          }`}
+                        >
+                          <span>⚡ 1-Click Auto-Fill &amp; Enter ({activeDispatchedCode})</span>
+                        </button>
+                      )}
                     </div>
                   )}
 
@@ -1083,27 +1204,33 @@ export default function ConnectInLoginPage() {
                       className="w-full text-center text-3xl font-mono font-bold tracking-[8px] rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 p-3.5 text-emerald-600 dark:text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
 
-                    <div className="flex items-center justify-between text-xs text-zinc-500">
-                      <span>Didn't get the code?</span>
-                      <div className="flex items-center gap-2">
+                    {/* Resend via Alternative Channels */}
+                    <div className="text-xs text-zinc-500 space-y-2 pt-1">
+                      <p className="text-[11px] text-zinc-400">Didn't receive the code? Resend via:</p>
+                      <div className="flex items-center justify-center gap-2 flex-wrap">
                         <button
                           type="button"
-                          onClick={() => {
-                            setJoin2FACode("123456")
-                            handleVerifyJoin2FA("123456")
-                          }}
-                          className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
-                        >
-                          ⚡ Autofill Access Code
-                        </button>
-                        <span>·</span>
-                        <button
-                          type="button"
-                          onClick={handleJoinSubmit}
+                          onClick={() => handleJoinSubmit(undefined, 'email')}
                           disabled={isLoading}
-                          className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
+                          className="font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-md"
                         >
-                          Resend
+                          ✉️ Email
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleJoinSubmit(undefined, 'sms')}
+                          disabled={isLoading}
+                          className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-md"
+                        >
+                          💬 SMS Text
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleJoinSubmit(undefined, 'call')}
+                          disabled={isLoading}
+                          className="font-semibold text-purple-600 dark:text-purple-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-md"
+                        >
+                          📞 Phone Call
                         </button>
                       </div>
                     </div>

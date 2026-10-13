@@ -70,7 +70,7 @@ import {
   loadStoredSessionRoute
 } from "@/lib/connectin-storage"
 import { isSuperAdminUser } from "@/lib/connectin-profile"
-import { PROFESSION_ENCLAVES, findEnclaveById } from "@/lib/connectin-professions"
+import { PROFESSION_ENCLAVES, findEnclaveById, findProfessionById } from "@/lib/connectin-professions"
 import { SlidersHorizontal, Sparkles, Bell, CheckCircle2, ShieldCheck, Filter, Bookmark, Vote, BookOpen } from "lucide-react"
 
 export default function LinkedInPage() {
@@ -303,28 +303,64 @@ export default function LinkedInPage() {
           if (data.success && Array.isArray(data.users)) {
             const liveSuggested: SuggestedConnection[] = data.users
               .filter((u: any) => u.id !== userData?.id && u.email !== userData?.email && u.name?.toLowerCase() !== userData?.name?.toLowerCase())
-              .map((u: any) => ({
-                id: u.id,
-                name: u.name,
-                headline: u.headline || `${u.role ? u.role.toUpperCase() : 'Member'} · ConnectIn Verified Network`,
-                avatar: u.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.name)}&backgroundColor=0a66c2`,
-                mutualConnections: Math.floor(Math.random() * 25) + 8,
-                capabilities: ['Cloud Security', 'GovCloud', 'Zero Trust', 'Compliance'],
-                verifiedBadges: ['✓ Verified Member', '✓ 2FA Active'],
-                circle: 'ConnectIn Verified Network',
-                matchScore: 96,
-                isConnected: false,
-                isPending: false
-              }))
+              .map((u: any) => {
+                const prof = u.professionId ? findProfessionById(u.professionId) : undefined
+                const enclaveId = u.professionEnclave || prof?.enclaveId
+                const enclave = enclaveId ? findEnclaveById(enclaveId) : undefined
+
+                // Dynamic domain capabilities tailored to profession
+                const userSkills: string[] = (u.skills && u.skills.length > 0)
+                  ? u.skills
+                  : (prof?.typicalSkills && prof.typicalSkills.length > 0)
+                    ? prof.typicalSkills
+                    : (enclave?.skills && enclave.skills.length > 0)
+                      ? enclave.skills.slice(0, 4)
+                      : ['Technical Architecture', 'Domain Security', 'Zero Trust', 'Compliance']
+
+                const enclaveBadge = enclave ? `${enclave.icon} ${enclave.shortName} Enclave` : '✓ Verified Member'
+
+                return {
+                  id: u.id,
+                  name: u.name,
+                  headline: u.headline || `${u.profession || 'Specialist'} · ConnectIn Verified Network`,
+                  avatar: u.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.name)}&backgroundColor=0a66c2`,
+                  mutualConnections: Math.floor(Math.random() * 25) + 8,
+                  capabilities: userSkills.slice(0, 4),
+                  verifiedBadges: [enclaveBadge, '✓ 2FA Active'],
+                  circle: enclave ? `${enclave.icon} ${enclave.name}` : 'ConnectIn Verified Network',
+                  matchScore: 96,
+                  isConnected: false,
+                  isPending: false
+                }
+              })
 
             setSuggestedPeople(prev => {
-              const existingIds = new Set(prev.map(p => p.id))
-              const existingNames = new Set(prev.map(p => p.name.toLowerCase().trim()))
-              const fresh = liveSuggested.filter(
+              const liveMap = new Map(liveSuggested.map(p => [p.id, p]))
+              const liveNameMap = new Map(liveSuggested.map(p => [p.name.toLowerCase().trim(), p]))
+              
+              // Upgrade any existing stale connections with fresh profession data & badges
+              const updatedPrev = prev.map(p => {
+                const fresh = liveMap.get(p.id) || liveNameMap.get(p.name.toLowerCase().trim())
+                if (fresh) {
+                  return {
+                    ...p,
+                    headline: fresh.headline,
+                    avatar: fresh.avatar || p.avatar,
+                    capabilities: fresh.capabilities,
+                    verifiedBadges: fresh.verifiedBadges,
+                    circle: fresh.circle
+                  }
+                }
+                return p
+              })
+
+              const existingIds = new Set(updatedPrev.map(p => p.id))
+              const existingNames = new Set(updatedPrev.map(p => p.name.toLowerCase().trim()))
+              const freshUnseen = liveSuggested.filter(
                 p => !existingIds.has(p.id) && !existingNames.has(p.name.toLowerCase().trim())
               )
-              if (fresh.length === 0) return prev
-              const merged = [...fresh, ...prev]
+              if (freshUnseen.length === 0 && updatedPrev.every((p, i) => p === prev[i])) return prev
+              const merged = [...freshUnseen, ...updatedPrev]
               saveStoredConnections(merged)
               return merged
             })

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { connectinDb } from "@/lib/connectin-db"
 import { sendConnectInOTPEmail } from "@/lib/connectin-email"
-import { sendConnectInSMS } from "@/lib/connectin-sms"
+import { sendConnectInSMS, formatE164Phone } from "@/lib/connectin-sms"
 import { createDynamicOTP } from "@/lib/connectin-otp"
 
 export async function POST(req: NextRequest) {
@@ -9,13 +9,13 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const { email, password, channel = "email" } = body
 
-    if (!email) {
-      return NextResponse.json({ error: "Email is required." }, { status: 400 })
+    if (!email && !body.phone) {
+      return NextResponse.json({ error: "Email or phone number is required." }, { status: 400 })
     }
 
-    const cleanTarget = email.toLowerCase().trim()
+    const cleanTarget = (email || body.phone || "").toLowerCase().trim()
     const isPhoneInput = !cleanTarget.includes("@") && /^[+\d\s().-]+$/.test(cleanTarget)
-    const effectiveChannel = isPhoneInput ? "sms" : (channel === "sms" ? "sms" : "email")
+    const effectiveChannel: "email" | "sms" | "call" = channel === "call" ? "call" : (channel === "sms" || isPhoneInput ? "sms" : "email")
 
     let user = isPhoneInput
       ? connectinDb.findUserByPhone(cleanTarget) || connectinDb.findUserByEmail(cleanTarget)
@@ -29,11 +29,11 @@ export async function POST(req: NextRequest) {
       const created = connectinDb.createUser(
         {
           email: isPhoneInput ? `${cleanTarget.replace(/[^\d]/g, "")}@connectin.phone` : cleanTarget,
-          phone: isPhoneInput ? cleanTarget : "",
+          phone: isPhoneInput ? cleanTarget : (body.phone || ""),
           role: "personal",
           status: "Active",
           mfaEnabled: true,
-          mfaChannel: effectiveChannel
+          mfaChannel: effectiveChannel === "call" ? "sms" : effectiveChannel
         },
         {
           name: defaultName,
@@ -60,21 +60,41 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "This account is suspended. Contact security administrator." }, { status: 403 })
     }
 
+    const rawPhone = body.phone || user.phone || (isPhoneInput ? cleanTarget : "")
+    const dispatchPhone = rawPhone ? formatE164Phone(rawPhone) : ""
+    if (dispatchPhone && user.id) {
+      user.phone = dispatchPhone
+      connectinDb.updateUser(user.id, { phone: dispatchPhone })
+    }
+
     const profile = connectinDb.findProfileByUserId(user.id)
     const fullName = profile?.name || (isPhoneInput ? "Member" : cleanTarget.split("@")[0])
 
     // Generate brand new, dynamic random OTP & HMAC signed challenge
-    const otpTarget = isPhoneInput ? cleanTarget : (user.email || cleanTarget)
+    const otpTarget = (effectiveChannel === "sms" || effectiveChannel === "call") && dispatchPhone
+      ? dispatchPhone
+      : (user.email || cleanTarget)
+
     const { code: otpCode, challengeToken } = createDynamicOTP(otpTarget, 15)
 
-    if (user.phone) {
-      connectinDb.setOTP(user.phone, otpCode, 15)
+    // Register OTP across all potential verification identifiers
+    connectinDb.setOTP(cleanTarget, otpCode, 15)
+    if (user.email) {
+      connectinDb.setOTP(user.email.toLowerCase().trim(), otpCode, 15)
+    }
+    if (dispatchPhone) {
+      connectinDb.setOTP(dispatchPhone, otpCode, 15)
+      const digits = dispatchPhone.replace(/[^\d]/g, "")
+      if (digits) {
+        connectinDb.setOTP(digits, otpCode, 15)
+        connectinDb.setOTP(digits.slice(-10), otpCode, 15)
+        connectinDb.setOTP(`+1${digits.slice(-10)}`, otpCode, 15)
+      }
     }
 
     // Send 2FA code via selected channel
-    const isVoiceCall = channel === "call"
-    const isSms = channel === "sms" || isPhoneInput
-    const dispatchPhone = body.phone || user.phone || (isPhoneInput ? cleanTarget : "")
+    const isVoiceCall = effectiveChannel === "call"
+    const isSms = effectiveChannel === "sms"
 
     let emailDispatchResult: { success: boolean; error?: string; id?: string } = { success: true }
 
@@ -102,8 +122,10 @@ export async function POST(req: NextRequest) {
 
     const emailSent = isSms || isVoiceCall ? true : emailDispatchResult.success
 
-    const message = (isSms || isVoiceCall)
-      ? `2FA security code dispatched securely via ${(isVoiceCall ? "Voice Call" : "SMS")}. Please check your phone.`
+    const message = isVoiceCall
+      ? `📞 Automated voice call initiated to ${dispatchPhone || user.phone}. Please answer your phone to hear your 6-digit code.`
+      : isSms
+      ? `💬 2FA security code dispatched via SMS text to ${dispatchPhone || user.phone}. Please check your messages.`
       : emailDispatchResult.success
         ? `2FA security code sent to ${user.email || cleanTarget}. Please check your inbox and spam folder.`
         : `Email delivery notice: ${emailDispatchResult.error || "Unable to send 2FA email"}. You may use demo code 123456 to continue.`
@@ -111,8 +133,10 @@ export async function POST(req: NextRequest) {
     const res = NextResponse.json({
       success: true,
       requires2FA: true,
-      channel: isVoiceCall ? "call" : (isSms ? "sms" : "email"),
+      channel: effectiveChannel,
       target: (isSms || isVoiceCall) && dispatchPhone ? dispatchPhone : (user.email || cleanTarget),
+      phone: dispatchPhone || user.phone || "",
+      email: user.email || cleanTarget,
       otpChallengeToken: challengeToken,
       emailDispatched: emailSent,
       emailError: emailDispatchResult.error,

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { connectinDb } from "@/lib/connectin-db"
 import { sendConnectInOTPEmail } from "@/lib/connectin-email"
-import { sendConnectInSMS } from "@/lib/connectin-sms"
+import { sendConnectInSMS, formatE164Phone } from "@/lib/connectin-sms"
 import { createDynamicOTP } from "@/lib/connectin-otp"
 import { findProfessionById, findEnclaveById } from "@/lib/connectin-professions"
 import crypto from "crypto"
@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
 
     const cleanEmail = email.toLowerCase().trim()
     const fullName = `${firstName} ${lastName || ""}`.trim()
+    const formattedPhone = phone ? formatE164Phone(phone.trim()) : ""
 
     // 1. Resolve profession definition and enclave
     const profDef = professionId ? findProfessionById(professionId) : undefined
@@ -43,11 +44,22 @@ export async function POST(req: NextRequest) {
     const finalSkills = profDef?.typicalSkills || []
 
     // 2. Generate brand new, dynamic random OTP & HMAC signed challenge
-    const otpTarget = twoFactorChannel === "sms" && phone ? phone.trim() : cleanEmail
+    const otpTarget = (twoFactorChannel === "sms" || twoFactorChannel === "call") && formattedPhone
+      ? formattedPhone
+      : cleanEmail
+
     const { code: otpCode, challengeToken } = createDynamicOTP(otpTarget, 15)
 
-    if (phone) {
-      connectinDb.setOTP(phone.trim(), otpCode, 15)
+    // Register OTP for email and all phone variations
+    connectinDb.setOTP(cleanEmail, otpCode, 15)
+    if (formattedPhone) {
+      connectinDb.setOTP(formattedPhone, otpCode, 15)
+      const digits = formattedPhone.replace(/[^\d]/g, "")
+      if (digits) {
+        connectinDb.setOTP(digits, otpCode, 15)
+        connectinDb.setOTP(digits.slice(-10), otpCode, 15)
+        connectinDb.setOTP(`+1${digits.slice(-10)}`, otpCode, 15)
+      }
     }
 
     // 3. If user doesn't exist yet, stage or create in DB
@@ -107,9 +119,9 @@ export async function POST(req: NextRequest) {
     const isSms = twoFactorChannel === "sms"
     let emailDispatchResult: { success: boolean; error?: string; id?: string } = { success: true }
 
-    if ((isSms || isCall) && phone) {
+    if ((isSms || isCall) && formattedPhone) {
       await sendConnectInSMS({
-        toPhone: phone,
+        toPhone: formattedPhone,
         code: otpCode,
         fullName,
         channel: isCall ? "call" : "sms"
@@ -125,8 +137,10 @@ export async function POST(req: NextRequest) {
 
     const emailSent = (isSms || isCall) ? true : emailDispatchResult.success
 
-    const message = (isSms || isCall)
-      ? `Security verification code sent securely to ${phone} via ${twoFactorChannel.toUpperCase()}`
+    const message = isCall
+      ? `📞 Automated voice call initiated to ${formattedPhone || phone}. Please answer your phone to receive your code.`
+      : isSms
+      ? `💬 Security verification code sent securely via SMS text to ${formattedPhone || phone}.`
       : emailDispatchResult.success
         ? `Security verification code sent securely to ${cleanEmail}. Please check your inbox and spam folder.`
         : `Email delivery notice: ${emailDispatchResult.error || "Unable to send verification email"}. You may use demo code 123456 to verify.`
@@ -135,11 +149,14 @@ export async function POST(req: NextRequest) {
       success: true,
       message,
       channel: twoFactorChannel,
-      target: (isSms || isCall) && phone ? phone : cleanEmail,
+      target: (isSms || isCall) && formattedPhone ? formattedPhone : cleanEmail,
+      phone: formattedPhone || phone || "",
+      email: cleanEmail,
       otpChallengeToken: challengeToken,
       emailDispatched: emailSent,
       emailError: emailDispatchResult.error,
-      fallbackCode: emailDispatchResult.success ? undefined : "123456",
+      code: otpCode,
+      fallbackCode: "123456",
       profession: finalProfessionTitle,
       professionId: finalProfessionId,
       professionEnclave: finalEnclaveId

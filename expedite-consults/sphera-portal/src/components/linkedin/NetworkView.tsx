@@ -649,6 +649,10 @@ export function NetworkView({
                               src={conn.avatar}
                               alt={conn.name}
                               className="h-14 w-14 rounded-full object-cover border border-zinc-200 dark:border-zinc-800"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement
+                                target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(conn.name)}&backgroundColor=0a66c2`
+                              }}
                             />
                             {conn.isOnline && (
                               <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-zinc-900" title="Online now" />
@@ -752,6 +756,10 @@ export function NetworkView({
                           src={inv.avatar}
                           alt={inv.name}
                           className="h-14 w-14 rounded-full object-cover border border-zinc-200 dark:border-zinc-800 shrink-0"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement
+                            target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(inv.name)}&backgroundColor=0a66c2`
+                          }}
                         />
                         <div className="min-w-0 space-y-0.5">
                           <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
@@ -834,6 +842,10 @@ export function NetworkView({
                           src={inv.avatar}
                           alt={inv.name}
                           className="h-12 w-12 rounded-full object-cover border border-zinc-200 dark:border-zinc-800 shrink-0"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement
+                            target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(inv.name)}&backgroundColor=0a66c2`
+                          }}
                         />
                         <div className="min-w-0 space-y-0.5">
                           <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
@@ -904,6 +916,10 @@ export function NetworkView({
                             src={inv.avatar}
                             alt={inv.name}
                             className="h-10 w-10 rounded-full object-cover border border-zinc-200 dark:border-zinc-800 shrink-0"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement
+                              target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(inv.name)}&backgroundColor=0a66c2`
+                            }}
                           />
                           <div className="min-w-0">
                             <h4 className="font-bold text-xs text-zinc-900 dark:text-zinc-100">
@@ -958,7 +974,7 @@ export function NetworkView({
                   >
                     <div>
                       {/* Cover & Avatar */}
-                      <div className="relative h-14 w-full bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800">
+                      <div className="relative h-20 w-full overflow-hidden bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800">
                         {person.coverImage && (
                           <img
                             src={person.coverImage}
@@ -968,15 +984,21 @@ export function NetworkView({
                         )}
                       </div>
 
-                      <div className="px-4 pb-3 pt-0">
-                        <div className="-mt-8 mb-2 flex justify-between items-end">
-                          <img
-                            src={person.avatar}
-                            alt={person.name}
-                            className="h-14 w-14 rounded-full object-cover border-2 border-white shadow-sm dark:border-zinc-900"
-                          />
+                      <div className="relative z-10 px-4 pb-3 pt-0">
+                        <div className="-mt-10 mb-2 flex justify-between items-end">
+                          <div className="relative h-16 w-16 rounded-full border-2 border-white bg-white shadow-md dark:border-zinc-900 dark:bg-zinc-800 overflow-hidden shrink-0 ring-2 ring-black/5 dark:ring-white/10">
+                            <img
+                              src={person.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(person.name)}&backgroundColor=0a66c2`}
+                              alt={person.name}
+                              className="h-full w-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement
+                                target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(person.name)}&backgroundColor=0a66c2`
+                              }}
+                            />
+                          </div>
                           {person.matchScore && (
-                            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300">
+                            <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 shadow-2xs">
                               🎯 {person.matchScore}% Match
                             </span>
                           )}
@@ -995,7 +1017,19 @@ export function NetworkView({
                             {person.verifiedBadges.map((b, i) => (
                               <span
                                 key={i}
-                                className="rounded bg-sky-50 px-1.5 py-0.5 text-[9px] font-bold text-[#0A66C2] dark:bg-sky-950 dark:text-sky-300 font-mono"
+                                className={`rounded px-1.5 py-0.5 text-[9px] font-bold font-mono ${
+                                  b.includes('Trades')
+                                    ? "bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950 dark:text-amber-300"
+                                    : b.includes('Tech') || b.includes('DevSecOps')
+                                    ? "bg-sky-50 text-[#0A66C2] border border-sky-200 dark:bg-sky-950 dark:text-sky-300"
+                                    : b.includes('Healthcare') || b.includes('Medical')
+                                    ? "bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950 dark:text-rose-300"
+                                    : b.includes('Gov') || b.includes('Legal')
+                                    ? "bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-950 dark:text-purple-300"
+                                    : b.includes('Finance')
+                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300"
+                                    : "bg-sky-50 text-[#0A66C2] dark:bg-sky-950 dark:text-sky-300"
+                                }`}
                               >
                                 {b}
                               </span>
@@ -1350,6 +1384,10 @@ export function NetworkView({
                         src={evt.person.avatar}
                         alt={evt.person.name}
                         className="h-10 w-10 rounded-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement
+                          target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(evt.person.name)}&backgroundColor=0a66c2`
+                        }}
                       />
                       <div className="space-y-1">
                         <p className="text-xs text-zinc-800 dark:text-zinc-200">
