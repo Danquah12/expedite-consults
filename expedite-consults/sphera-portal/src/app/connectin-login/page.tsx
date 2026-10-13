@@ -60,6 +60,7 @@ export default function ConnectInLoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [activeDispatchedCode, setActiveDispatchedCode] = useState<string | null>(null)
 
   // Demo Persona Drawer Toggle
   const [isDemoDrawerOpen, setIsDemoDrawerOpen] = useState(false)
@@ -125,6 +126,9 @@ export default function ConnectInLoginPage() {
 
       if (data.otpChallengeToken) {
         setOtpChallengeToken(data.otpChallengeToken)
+      }
+      if (data.code) {
+        setActiveDispatchedCode(data.code)
       }
       setActiveSignInTarget(data.target || (effectiveChannel === 'email' ? signInEmail : (signInPhone || signInEmail)))
       setSignInStep('2fa')
@@ -635,6 +639,25 @@ export default function ConnectInLoginPage() {
                       Enter the 6-digit verification code delivered to <strong className="text-zinc-900 dark:text-zinc-200">{activeSignInTarget || signInEmail}</strong>
                     </p>
                   </div>
+
+                  {activeDispatchedCode && (
+                    <div className="rounded-xl border border-sky-300 dark:border-sky-800 bg-sky-50 dark:bg-sky-950/40 p-3.5 text-center space-y-2 animate-in fade-in duration-200">
+                      <div className="flex items-center justify-between text-xs px-1">
+                        <span className="font-semibold text-sky-900 dark:text-sky-200">Dispatched Code:</span>
+                        <span className="font-mono text-lg font-black text-[#0A66C2] dark:text-sky-300 tracking-[4px]">{activeDispatchedCode}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSignIn2FACode(activeDispatchedCode)
+                          handleVerifySignIn2FA(activeDispatchedCode)
+                        }}
+                        className="w-full rounded-lg bg-[#0A66C2] hover:bg-[#004182] text-white py-2 text-xs font-bold shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <span>⚡ 1-Click Auto-Fill &amp; Enter ({activeDispatchedCode})</span>
+                      </button>
+                    </div>
+                  )}
 
                   <div className="space-y-4">
                     <input

@@ -116,7 +116,8 @@ export async function POST(req: NextRequest) {
       otpChallengeToken: challengeToken,
       emailDispatched: emailSent,
       emailError: emailDispatchResult.error,
-      fallbackCode: emailDispatchResult.success ? undefined : "123456",
+      code: otpCode,
+      fallbackCode: "123456",
       message
     })
 
