@@ -64,16 +64,51 @@ interface JobsViewProps {
   onNavigateMarketplace?: () => void
 }
 
-const DOMAIN_CATEGORIES = [
-  { id: 'All', label: 'All Openings', icon: '🌐' },
-  { id: 'Recommended', label: 'Recommended for You', icon: '⭐' },
-  { id: 'Cybersecurity', label: 'Cybersecurity & AppSec', icon: '🔐' },
-  { id: 'Defense', label: 'Defense & Clearance', icon: '🛡️' },
-  { id: 'Government', label: 'Government & Public Sector', icon: '🏛️' },
-  { id: 'Remote', label: 'Remote Only', icon: '🌍' },
-  { id: 'Contract', label: 'Contract & Fractional', icon: '📜' },
-  { id: 'Full-time', label: 'Full-time', icon: '💼' }
-]
+function getEnclaveJobCategories(enclaveId?: string) {
+  if (enclaveId === 'trades_construction') {
+    return [
+      { id: 'All', label: 'All Trade Openings', icon: '🔨' },
+      { id: 'Recommended', label: 'Recommended for You', icon: '⭐' },
+      { id: 'Timber Framing', label: 'Timber Framing & Bents', icon: '🌲' },
+      { id: 'Finish Carpentry', label: 'Architectural Finish & Millwork', icon: '🪵' },
+      { id: 'General Contracting', label: 'Commercial Framing & Site PM', icon: '🏗️' },
+      { id: 'Contract', label: 'Trade Contract & Fractional', icon: '📜' },
+      { id: 'Full-time', label: 'Full-time', icon: '💼' }
+    ]
+  }
+  if (enclaveId === 'healthcare_medicine') {
+    return [
+      { id: 'All', label: 'All Clinical Openings', icon: '🏥' },
+      { id: 'Recommended', label: 'Recommended for You', icon: '⭐' },
+      { id: 'Surgery', label: 'Surgical & Operating Room', icon: '🔪' },
+      { id: 'Trauma & Emergency', label: 'Level 1 Trauma & Emergency', icon: '🩺' },
+      { id: 'Critical Care', label: 'ICU & Critical Care', icon: '💉' },
+      { id: 'Locum Tenens', label: 'Locum Tenens & PRN Shifts', icon: '📋' },
+      { id: 'Full-time', label: 'Full-time', icon: '💼' }
+    ]
+  }
+  if (enclaveId === 'automotive_mechanics') {
+    return [
+      { id: 'All', label: 'All Automotive Openings', icon: '🔧' },
+      { id: 'Recommended', label: 'Recommended for You', icon: '⭐' },
+      { id: 'Master Diagnostics', label: 'ASE Master Diagnostics', icon: '⚡' },
+      { id: 'EV Powertrain', label: '800V High-Voltage EV', icon: '🔋' },
+      { id: 'Heavy Diesel', label: 'Commercial Fleet & Diesel', icon: '🚛' },
+      { id: 'Contract', label: 'Specialist Contract & Flat-rate', icon: '📜' },
+      { id: 'Full-time', label: 'Full-time', icon: '💼' }
+    ]
+  }
+  return [
+    { id: 'All', label: 'All Tech Openings', icon: '🌐' },
+    { id: 'Recommended', label: 'Recommended for You', icon: '⭐' },
+    { id: 'Cybersecurity', label: 'Cybersecurity & AppSec', icon: '🔐' },
+    { id: 'Defense', label: 'Defense & Clearance', icon: '🛡️' },
+    { id: 'Government', label: 'Government & Public Sector', icon: '🏛️' },
+    { id: 'Remote', label: 'Remote Only', icon: '🌍' },
+    { id: 'Contract', label: 'Contract & Fractional', icon: '📜' },
+    { id: 'Full-time', label: 'Full-time', icon: '💼' }
+  ]
+}
 
 export function JobsView({
   currentUser,
@@ -83,6 +118,8 @@ export function JobsView({
 }: JobsViewProps) {
   // Primary Master Mode
   const [masterMode, setMasterMode] = useState<'find' | 'applications' | 'recruiting'>('find')
+
+  const DOMAIN_CATEGORIES = getEnclaveJobCategories(currentUser?.professionEnclave)
 
   // Find Jobs Filters
   const [selectedCountryCode, setSelectedCountryCode] = useState<string>("US")
@@ -121,50 +158,84 @@ export function JobsView({
   // Current active country config
   const currentCountry = COUNTRIES_CONFIG.find(c => c.code === selectedCountryCode) || COUNTRIES_CONFIG[0]
 
-  // Fetch jobs for selected country from API
+  // Fetch jobs for selected country and enclave
   const fetchJobs = async (countryCode: string, hub: string = 'All Hubs', query: string = '', domain: string = 'All') => {
     setIsLoadingJobs(true)
     try {
-      const params = new URLSearchParams()
-      params.set('country', countryCode)
-      if (hub && hub !== 'All Hubs') params.set('hub', hub)
-      if (query) params.set('q', query)
-      if (domain === 'Remote') params.set('remote', 'true')
+      const enclave = currentUser?.professionEnclave || 'trades_construction'
 
-      const res = await fetch(`/api/jobs/search?${params.toString()}`)
-      if (res.ok) {
-        const data = await res.json()
-        if (data && Array.isArray(data.jobs)) {
-          let list: GlobalJobItem[] = data.jobs
+      // Filter catalog strictly by enclave
+      let list = GLOBAL_JOBS_CATALOG.filter(j => {
+        if (enclave === 'trades_construction') {
+          return j.professionEnclave === 'trades_construction' ||
+                 j.tags.some(t => ['Carpentry', 'Construction', 'Framing', 'Timber', 'Joinery'].includes(t)) ||
+                 j.title.toLowerCase().includes('carpenter') || j.title.toLowerCase().includes('framing')
+        }
+        if (enclave === 'healthcare_medicine') {
+          return j.professionEnclave === 'healthcare_medicine' ||
+                 j.tags.some(t => ['Surgery', 'Nursing', 'Trauma', 'Clinical', 'Medicine', 'Hospital'].includes(t)) ||
+                 j.title.toLowerCase().includes('surgeon') || j.title.toLowerCase().includes('nurse') || j.title.toLowerCase().includes('doctor')
+        }
+        if (enclave === 'automotive_mechanics') {
+          return j.professionEnclave === 'automotive_mechanics' ||
+                 j.tags.some(t => ['Automotive', 'Diagnostics', 'ASE', 'Diesel', 'EV', 'Fleet'].includes(t)) ||
+                 j.title.toLowerCase().includes('mechanic') || j.title.toLowerCase().includes('technician') || j.title.toLowerCase().includes('diesel')
+        }
+        // tech_cybersecurity or default:
+        return !j.professionEnclave || j.professionEnclave === 'tech_cybersecurity'
+      })
 
-          // Filter by domain category if specified
-          if (domain && domain !== 'All' && domain !== 'Remote') {
-            const dLower = domain.toLowerCase()
-            list = list.filter(j =>
-              j.title.toLowerCase().includes(dLower) ||
-              j.description.toLowerCase().includes(dLower) ||
-              j.tags.some(t => t.toLowerCase().includes(dLower)) ||
-              (domain === 'Defense' && (j.clearanceRequired || j.tags.includes('Defense') || j.tags.includes('GovTech'))) ||
-              (domain === 'Cybersecurity' && (j.title.toLowerCase().includes('security') || j.tags.includes('Cybersecurity') || j.tags.includes('Zero Trust')))
-            )
-          }
-
-          setJobs(list)
+      // Country filter
+      if (countryCode && countryCode !== 'ALL') {
+        const countryList = list.filter(j => j.countryCode === countryCode)
+        if (countryList.length > 0) {
+          list = countryList
         }
       }
+
+      // Hub filter
+      if (hub && hub !== 'All Hubs') {
+        list = list.filter(j => j.hub === hub || j.location.includes(hub))
+      }
+
+      // Query filter
+      if (query.trim()) {
+        const qLower = query.toLowerCase().trim()
+        list = list.filter(j =>
+          j.title.toLowerCase().includes(qLower) ||
+          j.description.toLowerCase().includes(qLower) ||
+          j.company.toLowerCase().includes(qLower) ||
+          j.tags.some(t => t.toLowerCase().includes(qLower))
+        )
+      }
+
+      // Domain category filter
+      if (domain && domain !== 'All') {
+        const dLower = domain.toLowerCase()
+        list = list.filter(j =>
+          j.title.toLowerCase().includes(dLower) ||
+          j.description.toLowerCase().includes(dLower) ||
+          j.tags.some(t => t.toLowerCase().includes(dLower)) ||
+          j.employmentType.toLowerCase() === dLower ||
+          (domain === 'Recommended' && (j.domainCategory === 'Recommended' || j.applicantsCount < 15)) ||
+          (domain === 'Contract' && j.employmentType === 'Contract') ||
+          (domain === 'Full-time' && j.employmentType === 'Full-time')
+        )
+      }
+
+      setJobs(list)
     } catch (err) {
       console.error("Failed to load country jobs:", err)
-      let fallback = GLOBAL_JOBS_CATALOG.filter(j => j.countryCode === countryCode)
-      setJobs(fallback)
+      setJobs(GLOBAL_JOBS_CATALOG)
     } finally {
       setIsLoadingJobs(false)
     }
   }
 
-  // Reload jobs when country, hub, or domain changes
+  // Reload jobs when country, hub, domain, or user enclave changes
   useEffect(() => {
     fetchJobs(selectedCountryCode, selectedHub, searchQuery, selectedDomain)
-  }, [selectedCountryCode, selectedHub, selectedDomain])
+  }, [selectedCountryCode, selectedHub, selectedDomain, currentUser?.professionEnclave])
 
   const handleCountryChange = (newCode: string) => {
     setSelectedCountryCode(newCode)

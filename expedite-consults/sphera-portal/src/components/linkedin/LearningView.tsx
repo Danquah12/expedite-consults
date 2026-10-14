@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import {
   GraduationCap,
   PlayCircle,
@@ -45,7 +45,11 @@ import {
   LEARNING_COURSES_DATA,
   INTERACTIVE_LABS_DATA,
   CERTIFICATION_TRACKS_DATA,
-  CLOUD_SECURITY_LEARNING_PATH
+  CLOUD_SECURITY_LEARNING_PATH,
+  getEnclaveLearningPath,
+  getEnclaveLearningCourses,
+  getEnclaveInteractiveLabs,
+  getEnclaveCertificationTracks
 } from "@/lib/learning-platform-data"
 import { UserProfile } from "@/lib/linkedin-data"
 import {
@@ -69,11 +73,19 @@ export function LearningView({
   // Master Mode: Courses vs Labs vs Certifications vs Learning Paths
   const [learningMode, setLearningMode] = useState<'courses' | 'labs' | 'certifications' | 'paths'>('paths')
 
+  const learningPath = getEnclaveLearningPath(user.professionEnclave)
+  const enclaveLabs = getEnclaveInteractiveLabs(user.professionEnclave)
+  const enclaveCertTracks = getEnclaveCertificationTracks(user.professionEnclave)
+
   // Course & Labs State
-  const [courses, setCourses] = useState<LearningCourse[]>(LEARNING_COURSES_DATA)
+  const [courses, setCourses] = useState<LearningCourse[]>(getEnclaveLearningCourses(user.professionEnclave))
   const [selectedCourseCat, setSelectedCourseCat] = useState<string>('All')
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [selectedCourse, setSelectedCourse] = useState<LearningCourse | null>(null)
+
+  useEffect(() => {
+    setCourses(getEnclaveLearningCourses(user.professionEnclave))
+  }, [user.professionEnclave])
 
   // Interactive Lab Modal State
   const [activeLab, setActiveLab] = useState<InteractiveLab | null>(null)
@@ -234,22 +246,22 @@ export function LearningView({
                   Featured Career Path
                 </span>
                 <h2 className="text-xl sm:text-2xl font-black text-white mt-1">
-                  {CLOUD_SECURITY_LEARNING_PATH.title}
+                  {learningPath.title}
                 </h2>
                 <p className="text-xs sm:text-sm text-indigo-200">
-                  Target Outcome: <strong>{CLOUD_SECURITY_LEARNING_PATH.targetRole}</strong> · Est. Time: <strong>{CLOUD_SECURITY_LEARNING_PATH.estimatedCompletion}</strong> · Pay Target: <strong>{CLOUD_SECURITY_LEARNING_PATH.salaryTarget}</strong>
+                  Target Outcome: <strong>{learningPath.targetRole}</strong> · Est. Time: <strong>{learningPath.estimatedCompletion}</strong> · Pay Target: <strong>{learningPath.salaryTarget}</strong>
                 </p>
               </div>
 
               <div className="text-right shrink-0">
                 <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-bold text-emerald-300 border border-emerald-500/40">
-                  Step 3 of 9 In Progress
+                  Step 3 of {learningPath.steps.length} In Progress
                 </span>
               </div>
             </div>
 
             <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed max-w-3xl pt-1">
-              {CLOUD_SECURITY_LEARNING_PATH.description}
+              {learningPath.description}
             </p>
           </div>
 
@@ -257,11 +269,11 @@ export function LearningView({
           <div className="space-y-4">
             <h3 className="font-black text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
               <Compass className="h-5 w-5 text-indigo-600" />
-              <span>Multi-Stage Curriculum Roadmap (9 Milestone Steps)</span>
+              <span>Multi-Stage Curriculum Roadmap ({learningPath.steps.length} Milestone Steps)</span>
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {CLOUD_SECURITY_LEARNING_PATH.steps.map((step) => (
+              {learningPath.steps.map((step) => (
                 <div
                   key={step.stepNumber}
                   className={`rounded-2xl border p-5 flex flex-col justify-between space-y-3 transition-all ${
@@ -330,15 +342,15 @@ export function LearningView({
             <div className="flex items-center gap-2">
               <ShoppingBag className="h-5 w-5 text-amber-300" />
               <h3 className="text-base sm:text-lg font-black text-white">
-                Recommended Enterprise Tools Used in this Learning Path
+                Recommended Professional Tools Used in this Learning Path
               </h3>
             </div>
             <p className="text-xs text-purple-200">
-              Accelerate your practical mastery with the exact offensive and zero-trust software suites utilized in the curriculum.
+              Accelerate your practical mastery with the specialized tools, hardware and software utilized in the curriculum.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-              {CLOUD_SECURITY_LEARNING_PATH.recommendedMarketplaceTools.map((tool) => (
+              {learningPath.recommendedMarketplaceTools.map((tool) => (
                 <div
                   key={tool.id}
                   className="rounded-xl bg-black/40 border border-white/15 p-4 flex items-center justify-between gap-3"
@@ -375,7 +387,15 @@ export function LearningView({
               <Search className="h-4 w-4 text-zinc-400 mr-2 shrink-0" />
               <input
                 type="text"
-                placeholder="Search zero trust, prompt injection, Rust microVMs, CISO governance..."
+                placeholder={
+                  user.professionEnclave === 'trades_construction'
+                    ? "Search timber framing, mortise and tenon, OSHA 30, CAD takeoffs..."
+                    : user.professionEnclave === 'healthcare_medicine'
+                    ? "Search trauma resuscitation, MTP protocols, ATLS, pelvic ORIF..."
+                    : user.professionEnclave === 'automotive_mechanics'
+                    ? "Search PicoScope CAN-FD waveforms, 800V EV, Cummins SCR..."
+                    : "Search zero trust, prompt injection, Rust microVMs, CISO governance..."
+                }
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-transparent text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-500 focus:outline-none dark:text-zinc-100"
@@ -456,18 +476,30 @@ export function LearningView({
         <div className="space-y-5">
           <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-slate-900 via-emerald-950 to-indigo-950 p-6 text-white shadow-xl space-y-2">
             <span className="rounded-full bg-emerald-500/30 px-3 py-0.5 text-xs font-bold text-emerald-200 border border-emerald-400/40">
-              Ephemeral Sandboxes & Attack Enclaves
+              Interactive Domain Sandboxes &amp; Simulators
             </span>
             <h2 className="text-xl sm:text-2xl font-black text-white">
-              Hands-On Technical Labs (Cloud, Pentesting, Malware, Secure Coding)
+              {user.professionEnclave === 'trades_construction'
+                ? "Hands-On Craftsmanship & Joinery Simulators"
+                : user.professionEnclave === 'healthcare_medicine'
+                ? "Clinical Resuscitation & Surgical Navigation Simulators"
+                : user.professionEnclave === 'automotive_mechanics'
+                ? "PicoScope Oscilloscope & High-Voltage EV Diagnostic Bays"
+                : "Hands-On Technical Labs (Cloud, Pentesting, Malware, Secure Coding)"}
             </h2>
             <p className="text-xs sm:text-sm text-emerald-100 max-w-2xl leading-relaxed">
-              Launch pre-configured AWS MicroVMs, Kali Linux offensive clusters, and live IDE terminals to execute realistic breach attacks and defense mitigations.
+              {user.professionEnclave === 'trades_construction'
+                ? "Launch interactive cut-list calculators, 3D compound miter solvers, and OSHA rigging load simulators."
+                : user.professionEnclave === 'healthcare_medicine'
+                ? "Execute simulated rapid blood infusions on the Belmont RI-2 and navigate interactive FAST bedside ultrasound cases."
+                : user.professionEnclave === 'automotive_mechanics'
+                ? "Analyze live 4-channel PicoScope CAN-FD waveforms and practice 800V EV battery pack lockout/tagout protocols."
+                : "Launch pre-configured AWS MicroVMs, Kali Linux offensive clusters, and live IDE terminals to execute realistic breach attacks and defense mitigations."}
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {INTERACTIVE_LABS_DATA.map((lab) => (
+            {enclaveLabs.map((lab) => (
               <div
                 key={lab.id}
                 className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs hover:border-emerald-500 hover:shadow-lg transition-all dark:border-zinc-800 dark:bg-zinc-900 flex flex-col justify-between space-y-4"
@@ -527,18 +559,30 @@ export function LearningView({
         <div className="space-y-5">
           <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-r from-slate-900 via-amber-950 to-indigo-950 p-6 text-white shadow-xl space-y-2">
             <span className="rounded-full bg-amber-500/30 px-3 py-0.5 text-xs font-bold text-amber-200 border border-amber-400/40">
-              Industry Credentials & Practice Exams
+              Verified Industry Credentials &amp; Practice Exams
             </span>
             <h2 className="text-xl sm:text-2xl font-black text-white">
-              Certification Preparation & Interactive Practice Exam Hub
+              {user.professionEnclave === 'trades_construction'
+                ? "Master Carpenter Guild & OSHA 30 Exam Hub"
+                : user.professionEnclave === 'healthcare_medicine'
+                ? "Board Specialty & Critical Care Nursing Credential Hub"
+                : user.professionEnclave === 'automotive_mechanics'
+                ? "ASE World Class Master Technician Exam Hub"
+                : "Certification Preparation & Interactive Practice Exam Hub"}
             </h2>
             <p className="text-xs sm:text-sm text-amber-100 max-w-2xl leading-relaxed">
-              Prepare for CISSP, AWS Certified Security, and OSCP with timed practice simulations, domain weighting breakdowns, and official certification add-ons to your ConnectIn profile.
+              {user.professionEnclave === 'trades_construction'
+                ? "Prepare for Master Carpenter Guild and OSHA 30-Hour Construction Safety credentials with official practice exams and domain weightings."
+                : user.professionEnclave === 'healthcare_medicine'
+                ? "Prepare for ABOS Orthopedic Surgery, AACN CCRN, and ENA TNCC credentials with timed clinical practice simulations."
+                : user.professionEnclave === 'automotive_mechanics'
+                ? "Prepare for ASE Master Automobile Technician (A1–A8), L1 Advanced Engine, and L3 EV credentials with domain practice questions."
+                : "Prepare for CISSP, AWS Certified Security, and OSCP with timed practice simulations, domain weighting breakdowns, and official certification add-ons to your ConnectIn profile."}
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {CERTIFICATION_TRACKS_DATA.map((cert) => (
+            {enclaveCertTracks.map((cert) => (
               <div
                 key={cert.id}
                 className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs hover:border-amber-500 hover:shadow-lg transition-all dark:border-zinc-800 dark:bg-zinc-900 flex flex-col justify-between space-y-4"

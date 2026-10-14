@@ -59,7 +59,13 @@ import {
   CompanyNetworkItem,
   OrganizationNetworkItem,
   ProfessionalCircleItem,
-  FollowedTopicItem
+  FollowedTopicItem,
+  getEnclaveConnectedMembers,
+  getEnclaveCompanies,
+  getEnclaveOrganizations,
+  getEnclaveCircles,
+  getEnclaveTopics,
+  getEnclaveInvitations
 } from "@/lib/linkedin-data"
 import { WarmIntroModal } from "./WarmIntroModal"
 import { InviteMembersModal } from "./InviteMembersModal"
@@ -73,15 +79,49 @@ interface NetworkViewProps {
   onUpdateConnectionsCount?: (newCount: number) => void
 }
 
-const CAPABILITY_FILTERS = [
-  { id: 'All', label: 'All Capabilities', icon: '🌐' },
-  { id: 'Cloud Security', label: 'Cloud Security', icon: '🛡️' },
-  { id: 'Penetration Testing', label: 'Penetration Testing', icon: '🎯' },
-  { id: 'AI Security', label: 'AI Security', icon: '🤖' },
-  { id: 'DevSecOps', label: 'DevSecOps', icon: '⚡' },
-  { id: 'RMF', label: 'RMF (Risk Management Framework)', icon: '🏛️' },
-  { id: 'Zero Trust', label: 'Zero Trust Architecture', icon: '🔒' }
-]
+export function getEnclaveCapabilityFilters(enclaveId?: string) {
+  if (enclaveId === 'trades_construction') {
+    return [
+      { id: 'All', label: 'All Trade Disciplines', icon: '🌐' },
+      { id: 'Timber Framing', label: 'Timber Framing', icon: '🌲' },
+      { id: 'Architectural Joinery', label: 'Architectural Joinery', icon: '🪚' },
+      { id: 'OSHA 30', label: 'OSHA 30 Safety Lead', icon: '🦺' },
+      { id: 'Heavy Equipment', label: 'Heavy Equipment & Rigging', icon: '🏗️' },
+      { id: 'Commercial Buildouts', label: 'Commercial Buildouts', icon: '🏢' },
+      { id: 'Building Enclosures', label: 'Building Enclosures & Envelope', icon: '📐' }
+    ]
+  }
+  if (enclaveId === 'healthcare_medicine') {
+    return [
+      { id: 'All', label: 'All Clinical Specialties', icon: '🌐' },
+      { id: 'Trauma Surgery', label: 'Trauma Surgery', icon: '🔪' },
+      { id: 'Critical Care & Trauma Nursing', label: 'Critical Care Nursing', icon: '🩺' },
+      { id: 'Joint Reconstruction', label: 'Joint Reconstruction', icon: '🦴' },
+      { id: 'Level 1 Trauma Triage', label: 'Level 1 Trauma Triage', icon: '🚨' },
+      { id: 'MTP Rapid Infusion', label: 'MTP Rapid Infusion', icon: '🩸' },
+      { id: 'Arterial Lines', label: 'Arterial Lines & Resuscitation', icon: '💉' }
+    ]
+  }
+  if (enclaveId === 'automotive_mechanics') {
+    return [
+      { id: 'All', label: 'All Master Diagnostics', icon: '🌐' },
+      { id: 'CAN-Bus Oscilloscope', label: 'CAN-Bus Oscilloscope', icon: '⚡' },
+      { id: '800V EV Lockout', label: '800V EV Safety & Inverters', icon: '🔋' },
+      { id: 'Cummins Fleet', label: 'Cummins & Fleet Diesel', icon: '🚚' },
+      { id: 'Automotive Diagnostics & EV', label: 'Automotive Diagnostics', icon: '🔧' },
+      { id: 'Transmission Rebuild', label: 'Transmission Rebuild & Dyno', icon: '⚙️' }
+    ]
+  }
+  return [
+    { id: 'All', label: 'All Capabilities', icon: '🌐' },
+    { id: 'Cloud Security', label: 'Cloud Security', icon: '🛡️' },
+    { id: 'Penetration Testing', label: 'Penetration Testing', icon: '🎯' },
+    { id: 'AI Security', label: 'AI Security', icon: '🤖' },
+    { id: 'DevSecOps', label: 'DevSecOps', icon: '⚡' },
+    { id: 'RMF', label: 'RMF (Risk Management Framework)', icon: '🏛️' },
+    { id: 'Zero Trust', label: 'Zero Trust Architecture', icon: '🔒' }
+  ]
+}
 
 export function NetworkView({
   suggestedPeople,
@@ -90,6 +130,9 @@ export function NetworkView({
   onNavigateMessaging,
   onUpdateConnectionsCount
 }: NetworkViewProps) {
+  const enclaveId = currentUser?.professionEnclave
+  const capabilityFilters = getEnclaveCapabilityFilters(enclaveId)
+
   const [activeTab, setActiveTab] = useState<
     'people' | 'connections' | 'received_invites' | 'sent_invites' | 'companies' | 'organizations' | 'circles' | 'topics' | 'catchup'
   >('people')
@@ -109,36 +152,24 @@ export function NetworkView({
   const [toastMessage, setToastMessage] = useState<string | null>(null)
 
   // Live collections
-  const [connections, setConnections] = useState<ConnectedMember[]>(initialConnectedMembers)
+  const [connections, setConnections] = useState<ConnectedMember[]>(() => getEnclaveConnectedMembers(enclaveId))
   const [outboundInvites, setOutboundInvites] = useState<OutboundInvitation[]>(initialOutboundInvitations)
   const [catchUpEvents, setCatchUpEvents] = useState<CatchUpEvent[]>(initialCatchUpEvents)
-  const [companies, setCompanies] = useState<CompanyNetworkItem[]>(companiesNetworkData)
-  const [organizations, setOrganizations] = useState<OrganizationNetworkItem[]>(organizationsNetworkData)
-  const [circles, setCircles] = useState<ProfessionalCircleItem[]>(professionalCirclesData)
-  const [topics, setTopics] = useState<FollowedTopicItem[]>(followedTopicsData)
+  const [companies, setCompanies] = useState<CompanyNetworkItem[]>(() => getEnclaveCompanies(enclaveId))
+  const [organizations, setOrganizations] = useState<OrganizationNetworkItem[]>(() => getEnclaveOrganizations(enclaveId))
+  const [circles, setCircles] = useState<ProfessionalCircleItem[]>(() => getEnclaveCircles(enclaveId))
+  const [topics, setTopics] = useState<FollowedTopicItem[]>(() => getEnclaveTopics(enclaveId))
+  const [invitations, setInvitations] = useState<any[]>(() => getEnclaveInvitations(enclaveId))
 
-  const [invitations, setInvitations] = useState([
-    {
-      id: 'inv_1',
-      name: 'Victoria Hastings',
-      headline: 'Chief Technology Officer @ Horizon FinTech Systems',
-      avatar: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=200&auto=format&fit=crop&q=80',
-      capabilities: ['Zero Trust', 'Cloud Security'],
-      mutualCount: 31,
-      timeAgo: '1 day ago',
-      email: 'victoria.hastings@horizonfintech.io'
-    },
-    {
-      id: 'inv_2',
-      name: 'Dr. Liam O’Connor',
-      headline: 'Head of Quantum Cryptography & RMF @ DARPA Partner Group',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80',
-      capabilities: ['RMF', 'AI Security'],
-      mutualCount: 14,
-      timeAgo: '3 days ago',
-      email: 'l.oconnor@darpa-partner.sec'
-    }
-  ])
+  useEffect(() => {
+    setConnections(getEnclaveConnectedMembers(enclaveId))
+    setCompanies(getEnclaveCompanies(enclaveId))
+    setOrganizations(getEnclaveOrganizations(enclaveId))
+    setCircles(getEnclaveCircles(enclaveId))
+    setTopics(getEnclaveTopics(enclaveId))
+    setInvitations(getEnclaveInvitations(enclaveId))
+    setSelectedCapability('All')
+  }, [enclaveId])
 
   const showToast = (msg: string) => {
     setToastMessage(msg)
@@ -267,16 +298,26 @@ export function NetworkView({
     return 0 // default recent
   })
 
-  // Filter People based on Capability and Search
-  const filteredPeople = suggestedPeople.filter(p => {
-    const matchCapability = selectedCapability === 'All' || p.capabilities?.includes(selectedCapability)
-    const matchSearch = !searchFilter || (
-      p.name.toLowerCase().includes(searchFilter.toLowerCase()) ||
-      p.headline.toLowerCase().includes(searchFilter.toLowerCase()) ||
-      p.capabilities?.some(c => c.toLowerCase().includes(searchFilter.toLowerCase()))
-    )
-    return matchCapability && matchSearch
-  })
+  // Filter People based on Capability, Search, and Enclave Prioritization
+  const filteredPeople = suggestedPeople
+    .filter(p => {
+      const matchCapability = selectedCapability === 'All' || p.capabilities?.includes(selectedCapability)
+      const matchSearch = !searchFilter || (
+        p.name.toLowerCase().includes(searchFilter.toLowerCase()) ||
+        p.headline.toLowerCase().includes(searchFilter.toLowerCase()) ||
+        p.capabilities?.some(c => c.toLowerCase().includes(searchFilter.toLowerCase()))
+      )
+      return matchCapability && matchSearch
+    })
+    .sort((a, b) => {
+      if (enclaveId) {
+        const aMatches = capabilityFilters.some(cf => cf.id !== 'All' && a.capabilities?.includes(cf.id))
+        const bMatches = capabilityFilters.some(cf => cf.id !== 'All' && b.capabilities?.includes(cf.id))
+        if (aMatches && !bMatches) return -1
+        if (!aMatches && bMatches) return 1
+      }
+      return 0
+    })
 
   // Filter Companies based on Capability
   const filteredCompanies = companies.filter(c => {
@@ -312,16 +353,38 @@ export function NetworkView({
       )}
 
       {/* 1. TOP CAPABILITY-DRIVEN GRAPH BANNER */}
-      <div className="rounded-2xl border border-blue-500/30 bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 p-6 text-white shadow-xl">
+      <div className={`rounded-2xl border p-6 text-white shadow-xl ${
+        enclaveId === 'trades_construction'
+          ? "border-amber-500/30 bg-gradient-to-r from-stone-900 via-amber-950 to-neutral-900"
+          : enclaveId === 'healthcare_medicine'
+          ? "border-rose-500/30 bg-gradient-to-r from-slate-900 via-rose-950 to-slate-950"
+          : enclaveId === 'automotive_mechanics'
+          ? "border-blue-500/30 bg-gradient-to-r from-zinc-900 via-blue-950 to-slate-900"
+          : "border-blue-500/30 bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950"
+      }`}>
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="rounded-full bg-blue-500/20 px-3 py-0.5 text-xs font-bold text-sky-300 border border-blue-400/40 flex items-center gap-1.5">
+              <span className={`rounded-full px-3 py-0.5 text-xs font-bold border flex items-center gap-1.5 ${
+                enclaveId === 'trades_construction'
+                  ? "bg-amber-500/20 text-amber-300 border-amber-400/40"
+                  : enclaveId === 'healthcare_medicine'
+                  ? "bg-rose-500/20 text-rose-300 border-rose-400/40"
+                  : enclaveId === 'automotive_mechanics'
+                  ? "bg-blue-500/20 text-blue-300 border-blue-400/40"
+                  : "bg-blue-500/20 text-sky-300 border-blue-400/40"
+              }`}>
                 <Users className="h-3.5 w-3.5" />
-                Network Intelligence Mesh
+                {enclaveId === 'trades_construction'
+                  ? "Skilled Trades Network Mesh"
+                  : enclaveId === 'healthcare_medicine'
+                  ? "Clinical & Surgical Mesh"
+                  : enclaveId === 'automotive_mechanics'
+                  ? "Master Tech & Fleet Network"
+                  : "Network Intelligence Mesh"}
               </span>
               <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-xs font-bold text-emerald-300 border border-emerald-500/40">
-                Capability & Skill-Driven Graph
+                Capability & Trade-Driven Graph
               </span>
               <span className="rounded-full bg-purple-500/20 px-2.5 py-0.5 text-xs font-bold text-purple-300 border border-purple-500/40">
                 {totalConnectionsDisplay.toLocaleString()}+ 1st Degree Peers
@@ -329,10 +392,22 @@ export function NetworkView({
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-              Manage & Expand Your Trusted Network
+              {enclaveId === 'trades_construction'
+                ? "Manage & Expand Your Trade Network"
+                : enclaveId === 'healthcare_medicine'
+                ? "Manage & Expand Your Clinical Network"
+                : enclaveId === 'automotive_mechanics'
+                ? "Manage & Expand Your Automotive Diagnostics Network"
+                : "Manage & Expand Your Trusted Network"}
             </h1>
             <p className="text-xs sm:text-sm text-zinc-300 max-w-2xl leading-relaxed">
-              Invite colleagues, discover verified specialists across Cloud Security, Zero Trust, FedRAMP, AI Defense, and exchange direct encrypted messages.
+              {enclaveId === 'trades_construction'
+                ? "Invite colleagues, discover verified master craftsmen across Heavy Timber, Architectural Joinery, OSHA 30, Commercial Buildouts, and exchange direct job-site messages."
+                : enclaveId === 'healthcare_medicine'
+                ? "Invite colleagues, discover verified clinicians across Trauma Surgery, Emergency Nursing, Joint Reconstruction, Critical Care, and coordinate clinical care."
+                : enclaveId === 'automotive_mechanics'
+                ? "Invite colleagues, discover verified master technicians across 800V EV Powertrains, PicoScope Diagnostics, Fleet Diesel, Engine Rebuilds, and collaborate on complex DTCs."
+                : "Invite colleagues, discover verified specialists across Cloud Security, Zero Trust, FedRAMP, AI Defense, and exchange direct encrypted messages."}
             </p>
           </div>
 
@@ -364,7 +439,7 @@ export function NetworkView({
           <span className="text-[11px] font-bold uppercase tracking-wider text-sky-300 shrink-0 mr-1 flex items-center gap-1">
             <Target className="h-3.5 w-3.5" /> Capabilities:
           </span>
-          {CAPABILITY_FILTERS.map((cap) => {
+          {capabilityFilters.map((cap) => {
             const isSelected = selectedCapability === cap.id
             return (
               <button

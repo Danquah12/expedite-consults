@@ -484,3 +484,836 @@ export const CLOUD_SECURITY_LEARNING_PATH: CareerLearningPath = {
     }
   ]
 }
+
+// ================= ENCLAVE-SEGREGATED LEARNING PROVIDERS =================
+
+export const TRADES_CARPENTRY_LEARNING_PATH: CareerLearningPath = {
+  id: 'path-trades-carpentry',
+  title: 'Master Craftsman & Timber Framing Journey',
+  targetRole: 'Master Timber Joiner & Construction Superintendent',
+  estimatedCompletion: '12 Weeks (Hands-On Guild Mentorship)',
+  salaryTarget: '$125,000 - $160,000 / yr',
+  heroBanner: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1200&auto=format&fit=crop&q=80',
+  description: 'Comprehensive heavy timber and architectural joinery path: Master coastal Douglas Fir timber layout, Festool Domino mortising, compound rafter mathematics, OSHA 30 job-site safety, and PE-stamped load coordination.',
+  steps: [
+    {
+      stepNumber: 1,
+      title: 'Wood Science, Species & Moisture Diagnostics',
+      skills: ['FOHC Douglas Fir', 'Moisture Meters (<14%)', 'Grain Deflection Diagnostics'],
+      duration: 'Week 1',
+      status: 'Completed'
+    },
+    {
+      stepNumber: 2,
+      title: 'Traditional Mortise & Tenon Joinery with Draw-Boring',
+      skills: ['White Oak Octagonal Trunnels', 'Mortise Chisel Work', 'Sub-1mm Tolerances'],
+      duration: 'Week 2-3',
+      status: 'Completed'
+    },
+    {
+      stepNumber: 3,
+      title: 'Compound Roof Geometry & Hip-Valley Pitch Calculations',
+      skills: ['Compound Miter Angles', 'Backing Bevels', 'Timber CAD Takeoffs'],
+      duration: 'Week 4-5',
+      status: 'In Progress',
+      recommendedTool: {
+        name: 'Festool Domino XL DF 700 Joiner',
+        icon: '🧰',
+        actionText: 'View Tool in Store'
+      }
+    },
+    {
+      stepNumber: 4,
+      title: 'Structural Rigging, Crane Signaling & Crane Picks',
+      skills: ['OSHA Rigging', 'Spreader Bars', 'Bent Erection Sequencing'],
+      duration: 'Week 6-7',
+      status: 'Up Next'
+    },
+    {
+      stepNumber: 5,
+      title: 'Structural PE Stamped Calculations & Wind Uplift',
+      skills: ['45 PSF Snow Load', '115 MPH Wind Envelope', 'Seismic Anchor Ties'],
+      duration: 'Week 8',
+      status: 'Up Next'
+    },
+    {
+      stepNumber: 6,
+      title: 'Architectural Finish Joinery & Coffered Ceilings',
+      skills: ['Coped Crown Molding', 'Curved Handrails', 'Bookmatched Walnut Paneling'],
+      duration: 'Week 9-10',
+      status: 'Up Next'
+    },
+    {
+      stepNumber: 7,
+      title: 'Subcontractor Bidding, Estimating & Lien Waivers',
+      skills: ['Board-Foot Takeoffs', 'Milestone Escrow Draws', 'Procore Coordination'],
+      duration: 'Week 11',
+      status: 'Up Next'
+    },
+    {
+      stepNumber: 8,
+      title: 'OSHA 30 Job-Site Safety & Fall Protection Lead',
+      skills: ['100% Tie-Off Protocols', 'Scaffolding Inspection', 'Job Hazard Analysis'],
+      duration: 'Week 12',
+      status: 'Up Next'
+    },
+    {
+      stepNumber: 9,
+      title: 'Guild Capstone: Clear-Span Timber Pavilion Bent Erection',
+      skills: ['Full Bent Assembly', 'PE Stamped Inspection', 'Master Craftsman Defense'],
+      duration: 'Capstone',
+      status: 'Up Next',
+      recommendedTool: {
+        name: 'Master Carpenter Guild Peer Review',
+        icon: '🔨',
+        actionText: 'View Guild Rubric'
+      }
+    }
+  ],
+  recommendedMarketplaceTools: [
+    {
+      id: 'tool_festool_domino',
+      name: 'Festool Domino XL DF 700 Joiner',
+      icon: '🧰',
+      tagline: 'Heavy-duty mortise and tenon joinery up to 140mm depth.',
+      price: '$1,650',
+      actionText: 'View in Tool Hub'
+    },
+    {
+      id: 'tool_leica_disto',
+      name: 'Leica 3D Disto Total Station',
+      icon: '📐',
+      tagline: 'Millimeter-accurate 3D room measurement & CAD coordinate export.',
+      price: '$7,800',
+      actionText: 'View Specs'
+    }
+  ]
+}
+
+export const HEALTHCARE_LEARNING_PATH: CareerLearningPath = {
+  id: 'path-healthcare-trauma',
+  title: 'Level 1 Trauma & Complex Surgical Resuscitation Mastery',
+  targetRole: 'Attending Orthopedic Trauma Surgeon / Lead Emergency Resuscitation Nurse',
+  estimatedCompletion: '16 Weeks (CME / Board Specialty Track)',
+  salaryTarget: '$145,000 - $650,000 / yr',
+  heroBanner: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=1200&auto=format&fit=crop&q=80',
+  description: 'Elite clinical resuscitation and surgical trauma pathway: Master Massive Transfusion Protocols, arterial line placement, pelvic ring disrupture reduction, open fracture debridement, and damage control resuscitation.',
+  steps: [
+    {
+      stepNumber: 1,
+      title: 'Emergency Severity Index (ESI Level 1) & Triage Directives',
+      skills: ['Rapid Triage Bay Scoring', 'Airway Priority Assessment', 'Trauma Activation'],
+      duration: 'Week 1-2',
+      status: 'Completed'
+    },
+    {
+      stepNumber: 2,
+      title: 'Massive Transfusion Protocol (MTP) & Rapid Infusion',
+      skills: ['Belmont RI-2 Operation', '1:1:1 Blood Component Ratios', 'Calcium Gluconate Monitoring'],
+      duration: 'Week 3-4',
+      status: 'Completed'
+    },
+    {
+      stepNumber: 3,
+      title: 'Hemodynamic Monitoring & Arterial Line Placement',
+      skills: ['Radial & Femoral A-Lines', 'Waveform Damping Diagnostics', 'Central Venous Catheterization'],
+      duration: 'Week 5-6',
+      status: 'In Progress',
+      recommendedTool: {
+        name: 'Belmont Rapid Infuser RI-2',
+        icon: '🩸',
+        actionText: 'View Device Manual'
+      }
+    },
+    {
+      stepNumber: 4,
+      title: 'FAST Bedside Sonography & Diagnostic Ultrasound',
+      skills: ['Pericardial Window', 'Morison Pouch Sonography', 'Pneumothorax Sliding Sign'],
+      duration: 'Week 7-8',
+      status: 'Up Next'
+    },
+    {
+      stepNumber: 5,
+      title: 'Damage Control Resuscitation & TEG-Guided Hemostasis',
+      skills: ['Thromboelastography (TEG)', 'TXA Administration', 'Coagulopathy Reversal'],
+      duration: 'Week 9-10',
+      status: 'Up Next'
+    },
+    {
+      stepNumber: 6,
+      title: 'Pelvic Ring Disruption Fixation & External C-Clamp',
+      skills: ['Young-Burgess Classification', 'Anterior Pelvic Binder', 'Percutaneous SI Screws'],
+      duration: 'Week 11-12',
+      status: 'Up Next'
+    },
+    {
+      stepNumber: 7,
+      title: 'Complex Articular ORIF & Periprosthetic Fixation',
+      skills: ['Anatomic Contoured Plating', 'Sub-Millimeter Articular Reduction', 'Intramedullary Nailing'],
+      duration: 'Week 13-14',
+      status: 'Up Next'
+    },
+    {
+      stepNumber: 8,
+      title: 'ICU Critical Care Ventilator Optimization & ARDS Protocols',
+      skills: ['Protective Lung Ventilation (6 mL/kg)', 'Prone Positioning', 'Extracorporeal Support (ECMO)'],
+      duration: 'Week 15',
+      status: 'Up Next'
+    },
+    {
+      stepNumber: 9,
+      title: 'Board Specialty Capstone: Complex Trauma Resuscitation & M&M Defense',
+      skills: ['Double-Blind M&M Presentation', 'Interdisciplinary Team Leadership', 'CME Defense'],
+      duration: 'Capstone',
+      status: 'Up Next',
+      recommendedTool: {
+        name: 'ABOS / AACN Specialty Board Credential',
+        icon: '🩺',
+        actionText: 'View Clinical Rubric'
+      }
+    }
+  ],
+  recommendedMarketplaceTools: [
+    {
+      id: 'tool_butterfly_iq',
+      name: 'Butterfly iQ3 Bedside Ultrasound',
+      icon: '🩺',
+      tagline: 'Whole-body single-probe handheld clinical ultrasound for FAST scans.',
+      price: '$2,890',
+      actionText: 'View Clinical Specs'
+    },
+    {
+      id: 'tool_belmont_infuser',
+      name: 'Belmont Rapid Infuser RI-2',
+      icon: '🩸',
+      tagline: 'Up to 500 mL/min warmed blood component infusion with ultrasonic air elimination.',
+      price: '$24,500',
+      actionText: 'View Hospital RFP'
+    }
+  ]
+}
+
+export const AUTOMOTIVE_LEARNING_PATH: CareerLearningPath = {
+  id: 'path-automotive-diagnostic',
+  title: 'ASE World Class Master Diagnostic Technician Track',
+  targetRole: 'Shop Foreman & Master Diagnostic Specialist',
+  estimatedCompletion: '12 Weeks (Scope Labs & High-Voltage EV Bays)',
+  salaryTarget: '$110,000 - $155,000 / yr ($65 - $80 / flag hr)',
+  heroBanner: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=1200&auto=format&fit=crop&q=80',
+  description: 'Master advanced vehicle diagnostics: 4-channel PicoScope CAN-FD packet waveforms, 800V EV high-voltage safety de-energization, Cummins X15 commercial diesel SCR emissions, and intermittent electrical tracing.',
+  steps: [
+    {
+      stepNumber: 1,
+      title: 'Electrical Diagnostics & Voltage Drop Fundamentals',
+      skills: ['Fluke 87V Mastery', 'Parasitic Current Draw Isolation', 'Ground Circuit Resistance'],
+      duration: 'Week 1-2',
+      status: 'Completed'
+    },
+    {
+      stepNumber: 2,
+      title: 'PicoScope 4-Channel CAN-Bus & CAN-FD Waveforms',
+      skills: ['CAN-H / CAN-L Differential Signal', '120-Ohm Termination Resistors', 'Bus Glitch Isolation'],
+      duration: 'Week 3-4',
+      status: 'Completed'
+    },
+    {
+      stepNumber: 3,
+      title: 'Gasoline Direct Injection (GDI) & Dual-Pulse Analysis',
+      skills: ['Current Clamps (60A)', 'High-Pressure Fuel Rail Dynamics', 'Injector Pintle Flyback Voltages'],
+      duration: 'Week 5-6',
+      status: 'In Progress',
+      recommendedTool: {
+        name: 'PicoScope 4425A Master Kit',
+        icon: '⚡',
+        actionText: 'View Scope Specs'
+      }
+    },
+    {
+      stepNumber: 4,
+      title: 'Secondary Ignition & Coil-on-Plug (COP) Diagnostics',
+      skills: ['COP Paddles', 'Spark Burn Time (>1.2ms)', 'Turbulence & Rich Mis-fire Signatures'],
+      duration: 'Week 7',
+      status: 'Up Next'
+    },
+    {
+      stepNumber: 5,
+      title: '800V High-Voltage EV Lockout/Tagout (NFPA 70E)',
+      skills: ['CAT IV 1000V Lineman Gloves', 'Manual Service Disconnect (MSD)', 'Capacitor Discharge Verification'],
+      duration: 'Week 8-9',
+      status: 'Up Next'
+    },
+    {
+      stepNumber: 6,
+      title: 'EV Inverter Silicon-Carbide Drivers & Resolver Alignment',
+      skills: ['3-Phase Motor Megohmmeter Testing', 'Sin/Cos Resolver Waveforms', 'Pre-Charge Resistor Diagnostics'],
+      duration: 'Week 10',
+      status: 'Up Next'
+    },
+    {
+      stepNumber: 7,
+      title: 'Commercial Fleet Cummins X15 Aftertreatment & DPF',
+      skills: ['Cummins INSITE Telemetry', 'DEF Dosing Verification', 'SCR Catalyst NOx Conversion Ratio'],
+      duration: 'Week 11',
+      status: 'Up Next'
+    },
+    {
+      stepNumber: 8,
+      title: 'Transmission Electronic Hydraulics & Solenoid PWM',
+      skills: ['Duty Cycle Modulation', 'Clutch Pressure Waveforms', 'Valve Body Rebuild'],
+      duration: 'Week 12',
+      status: 'Up Next'
+    },
+    {
+      stepNumber: 9,
+      title: 'World Class Capstone: Intermittent No-Start & CAN-FD Fault Teardown',
+      skills: ['Real-World Customer Complaint Verification', 'Flag-Hour Diagnostic Efficiency', 'Foreman Endorsement'],
+      duration: 'Capstone',
+      status: 'Up Next',
+      recommendedTool: {
+        name: 'ASE World Class Master Defense',
+        icon: '🔧',
+        actionText: 'View Exam Rubric'
+      }
+    }
+  ],
+  recommendedMarketplaceTools: [
+    {
+      id: 'tool_picoscope_4425a',
+      name: 'PicoScope 4425A 4-Channel Master Diagnostic Kit',
+      icon: '⚡',
+      tagline: 'High-speed 400MS/s floating inputs with connect-detect smart probes.',
+      price: '$3,850',
+      actionText: 'View in Tool Hub'
+    },
+    {
+      id: 'tool_snapon_zeus',
+      name: 'Snap-on ZEUS+ Diagnostic Workstation',
+      icon: '🧰',
+      tagline: 'Intelligent diagnostics, Fast-Track guided component tests & OEM flashing.',
+      price: '$11,995',
+      actionText: 'View Tool Profile'
+    }
+  ]
+}
+
+export function getEnclaveLearningPath(enclaveId?: string): CareerLearningPath {
+  switch (enclaveId) {
+    case 'trades_construction':
+      return TRADES_CARPENTRY_LEARNING_PATH
+    case 'healthcare_medicine':
+      return HEALTHCARE_LEARNING_PATH
+    case 'automotive_mechanics':
+      return AUTOMOTIVE_LEARNING_PATH
+    default:
+      return CLOUD_SECURITY_LEARNING_PATH
+  }
+}
+
+export function getEnclaveLearningCourses(enclaveId?: string): LearningCourse[] {
+  if (enclaveId === 'trades_construction') {
+    return [
+      {
+        id: 'crs_timber_1',
+        title: 'Heavy Timber Mortise & Tenon Joinery & Bent Fabrication',
+        category: 'Business',
+        provider: 'ConnectIn Masterclass',
+        instructor: {
+          name: 'David Miller',
+          role: 'Master Timber Carpenter & Joinery Superintendent',
+          avatar: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=100&auto=format&fit=crop&q=80'
+        },
+        rating: 4.99,
+        reviewsCount: 680,
+        duration: '12 hours (Hands-On Guild Course)',
+        level: 'Advanced',
+        coverImage: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&auto=format&fit=crop&q=80',
+        summary: 'Step-by-step master class on mortise and tenon timber framing: layout geometry, draw-bored white oak trunnel engineering, and crane pick rigging.',
+        curriculumModules: [
+          '1. Selecting Coastal Douglas Fir #1 FOHC Timbers',
+          '2. Mortise & Tenon Layout with Centerline Method',
+          '3. Draw-Bored Trunnel Peg Physics & Tension Holding',
+          '4. Compound Rafter Bevels & Hip Pitch Calculations',
+          '5. Crane Pick Sequencing & Job-Site Bent Erection'
+        ],
+        hasCertificate: true,
+        isEnrolled: true,
+        progressPercent: 45,
+        recommendedMarketplaceTools: [
+          {
+            id: 'tool_festool_domino',
+            name: 'Festool Domino XL DF 700 Joiner',
+            icon: '🧰',
+            tagline: 'Precision mortising system for heavy timber joinery.',
+            category: 'Tools',
+            price: '$1,650',
+            actionText: 'View Specs'
+          }
+        ]
+      },
+      {
+        id: 'crs_trade_finish',
+        title: 'Architectural Finish Carpentry & Custom Coffered Ceilings',
+        category: 'Business',
+        provider: 'ConnectIn Masterclass',
+        instructor: {
+          name: 'Frank Gallagher',
+          role: 'General Contractor & Construction Superintendent',
+          avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80'
+        },
+        rating: 4.95,
+        reviewsCount: 520,
+        duration: '10 hours',
+        level: 'Intermediate',
+        coverImage: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=800&auto=format&fit=crop&q=80',
+        summary: 'Precision architectural trim techniques: coped inside corners, compound miter coffered ceiling beams, curved handrails, and zero-gap joints.',
+        curriculumModules: [
+          '1. Crown Molding Compound Miter Math & Table Settings',
+          '2. Coped Joints vs Mitered Corners on Uneven Walls',
+          '3. Grid Layout for Coffered Beam Ceilings',
+          '4. Wall Paneling & Wainscoting Proportion Systems'
+        ],
+        hasCertificate: true,
+        recommendedMarketplaceTools: []
+      },
+      {
+        id: 'crs_trade_osha',
+        title: 'OSHA 30 Construction Job-Site Safety & Rigging Standards',
+        category: 'Business',
+        provider: "O'Reilly",
+        instructor: {
+          name: 'Sarah Jenkins',
+          role: 'Master Electrician & OSHA 30 Lead',
+          avatar: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=100&auto=format&fit=crop&q=80'
+        },
+        rating: 4.92,
+        reviewsCount: 1100,
+        duration: '30 hours (Official Certification Track)',
+        level: 'Beginner',
+        coverImage: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&auto=format&fit=crop&q=80',
+        summary: 'Mandatory OSHA 30 job-site safety: fall protection systems, crane signaling, scaffolding inspections, electrical hazard lockouts, and OSHA inspection readiness.',
+        curriculumModules: [
+          '1. Introduction to OSHA & Job Hazard Analysis (JHA)',
+          '2. Subpart M: Fall Protection Systems & Calculation of Fall Clearances',
+          '3. Scaffolding Load Ratings & Competent Person Requirements',
+          '4. Crane Rigging, Taglines & Certified Hand Signals'
+        ],
+        hasCertificate: true,
+        recommendedMarketplaceTools: []
+      }
+    ]
+  }
+
+  if (enclaveId === 'healthcare_medicine') {
+    return [
+      {
+        id: 'crs_health_atls',
+        title: 'Advanced Trauma Life Support (ATLS 10th Ed) & Damage Control',
+        category: 'Business',
+        provider: 'ConnectIn Masterclass',
+        instructor: {
+          name: 'Dr. Angela Vance, MD, FACS',
+          role: 'Attending Orthopedic Trauma Surgeon',
+          avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=100&auto=format&fit=crop&q=80'
+        },
+        rating: 5.0,
+        reviewsCount: 940,
+        duration: '16 hours (CME Accredited)',
+        level: 'Advanced',
+        coverImage: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=800&auto=format&fit=crop&q=80',
+        summary: 'Standardized resuscitation protocols for life-threatening trauma: primary survey ABCDE, massive hemothorax chest tubes, and damage control laparotomy.',
+        curriculumModules: [
+          '1. Primary Survey & Resuscitative Endovascular Balloon Occlusion (REBOA)',
+          '2. Airway Management in Cervical Spine Instability',
+          '3. Massive Transfusion Protocol: Balancing Coagulopathy',
+          '4. Musculoskeletal Trauma & Compartment Syndrome Decompression'
+        ],
+        hasCertificate: true,
+        isEnrolled: true,
+        progressPercent: 70,
+        recommendedMarketplaceTools: [
+          {
+            id: 'tool_butterfly_iq',
+            name: 'Butterfly iQ3 Ultrasound',
+            icon: '🩺',
+            tagline: 'Ultrasound probe for FAST trauma exams.',
+            category: 'Devices',
+            price: '$2,890',
+            actionText: 'View Specs'
+          }
+        ]
+      },
+      {
+        id: 'crs_health_mtp',
+        title: 'Massive Transfusion Protocol (MTP) & Belmont RI-2 Infusion',
+        category: 'Business',
+        provider: 'ConnectIn Masterclass',
+        instructor: {
+          name: 'Elena Rostova, RN, CCRN, TNCC',
+          role: 'Emergency Trauma Resuscitation Nurse Lead',
+          avatar: 'https://images.unsplash.com/photo-1594824813571-638f02614d3f?w=100&auto=format&fit=crop&q=80'
+        },
+        rating: 4.98,
+        reviewsCount: 820,
+        duration: '8 hours',
+        level: 'Advanced',
+        coverImage: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=800&auto=format&fit=crop&q=80',
+        summary: 'Rapid blood product warming and delivery during exsanguinating hemorrhage: 1:1:1 pRBC to FFP to Platelet ratios, TEG analysis, and Belmont RI-2 management.',
+        curriculumModules: [
+          '1. MTP Trigger Criteria & Trauma Bay Activation',
+          '2. Belmont RI-2 Setup, Priming & Ultrasonic Air Elimination',
+          '3. Thromboelastography (TEG) Directed Component Therapy',
+          '4. Monitoring Hypocalcemia, Acidosis & Hypothermia Triad'
+        ],
+        hasCertificate: true,
+        recommendedMarketplaceTools: []
+      }
+    ]
+  }
+
+  if (enclaveId === 'automotive_mechanics') {
+    return [
+      {
+        id: 'crs_auto_scope',
+        title: 'PicoScope 4-Channel CAN-FD & Oscilloscope Waveforms',
+        category: 'Programming',
+        provider: 'ConnectIn Masterclass',
+        instructor: {
+          name: 'Marcus Miller, ASE Master Tech',
+          role: 'Lead Master Diagnostic Specialist',
+          avatar: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=100&auto=format&fit=crop&q=80'
+        },
+        rating: 4.98,
+        reviewsCount: 780,
+        duration: '14 hours',
+        level: 'Advanced',
+        coverImage: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=800&auto=format&fit=crop&q=80',
+        summary: 'Capture, filter, and decode high-speed CAN-FD bus signals, secondary ignition flyback spikes, direct injection current ramps, and intermittent sensor dropouts.',
+        curriculumModules: [
+          '1. Voltage Division, Timebase Setup & Triggering on Glitches',
+          '2. CAN-FD Physical Layer Analysis & Termination Resistors',
+          '3. High-Pressure GDI Injector Current Ramps with Low-Amp Clamps',
+          '4. In-Cylinder Pressure Transducer Waveforms (WPS500X)'
+        ],
+        hasCertificate: true,
+        isEnrolled: true,
+        progressPercent: 55,
+        recommendedMarketplaceTools: [
+          {
+            id: 'tool_picoscope_4425a',
+            name: 'PicoScope 4425A Kit',
+            icon: '⚡',
+            tagline: 'High-speed 4-channel automotive scope.',
+            category: 'Tools',
+            price: '$3,850',
+            actionText: 'View Specs'
+          }
+        ]
+      },
+      {
+        id: 'crs_auto_ev',
+        title: '800V High-Voltage EV Powertrain & Battery Safety (NFPA 70E)',
+        category: 'Cloud',
+        provider: 'ConnectIn Masterclass',
+        instructor: {
+          name: 'Marcus Miller, ASE Master Tech',
+          role: 'EV Powertrain & High-Voltage Specialist',
+          avatar: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=100&auto=format&fit=crop&q=80'
+        },
+        rating: 4.96,
+        reviewsCount: 650,
+        duration: '12 hours',
+        level: 'Advanced',
+        coverImage: 'https://images.unsplash.com/photo-1558441719-8b449c6ff673?w=800&auto=format&fit=crop&q=80',
+        summary: 'Safe de-energization of high-voltage battery enclosures, silicon-carbide inverters, resolver offset calibration, and insulation resistance megohmmeter testing.',
+        curriculumModules: [
+          '1. NFPA 70E Category 4 Arc Flash & 1000V Gloves Testing',
+          '2. Manual Service Disconnect (MSD) Lockout/Tagout Protocols',
+          '3. Checking Zero Energy State with Calibrated Proving Units',
+          '4. Inverter Pre-Charge Contactor Diagnostics'
+        ],
+        hasCertificate: true,
+        recommendedMarketplaceTools: []
+      }
+    ]
+  }
+
+  // tech_cybersecurity or default
+  return LEARNING_COURSES_DATA
+}
+
+export function getEnclaveInteractiveLabs(enclaveId?: string): InteractiveLab[] {
+  if (enclaveId === 'trades_construction') {
+    return [
+      {
+        id: 'lab_cutlist',
+        title: 'Cut-List & Board-Foot Timber Optimization Sandbox',
+        category: 'Cloud labs',
+        difficulty: 'Intermediate',
+        estimatedDuration: '30 mins',
+        environment: 'Live IDE Terminal',
+        summary: 'Calculate structural board-foot volumes for 40ft Douglas Fir bents and generate zero-waste cutting patterns with saw kerf adjustments.',
+        learningObjectives: [
+          'Calculate board-foot volumes from lumber dimensions',
+          'Optimize nesting to achieve sub-4% scrap rate',
+          'Export PE-ready timber takeoff spreadsheet'
+        ],
+        recommendedMarketplaceTools: [
+          {
+            name: 'Festool Domino Joiner',
+            icon: '🧰',
+            tagline: 'Heavy mortising joinery.',
+            actionText: 'View Tool'
+          }
+        ],
+        isLiveSandboxReady: true
+      },
+      {
+        id: 'lab_miter_cad',
+        title: 'Compound Miter Angle & Mortise Tolerances 3D Sandbox',
+        category: 'Pentesting labs',
+        difficulty: 'Advanced',
+        estimatedDuration: '45 mins',
+        environment: 'AWS MicroVM Sandbox',
+        summary: 'Solve complex compound roof hip rafter angles in 3D and verify draw-bore pin alignment under simulated 45 PSF snow loads.',
+        learningObjectives: [
+          'Compute backing bevels for non-orthogonal roof pitches',
+          'Simulate draw-bore tension on 1" oak trunnels',
+          'Inspect deflection envelope under live load'
+        ],
+        recommendedMarketplaceTools: [],
+        isLiveSandboxReady: true
+      }
+    ]
+  }
+
+  if (enclaveId === 'healthcare_medicine') {
+    return [
+      {
+        id: 'lab_belmont',
+        title: 'Belmont RI-2 Rapid Blood Infusion & MTP Simulator',
+        category: 'Cloud labs',
+        difficulty: 'Intermediate',
+        estimatedDuration: '25 mins',
+        environment: 'Live IDE Terminal',
+        summary: 'Prime the disposables, calibrate ultrasonic bubble sensors, and manage a 500 mL/min warmed resuscitation for an unstable hemorrhagic shock case.',
+        learningObjectives: [
+          'Perform sterile disposable cassette installation',
+          'Manage rapid heating to 37.5°C at flow rates exceeding 300 mL/min',
+          'Troubleshoot air detector alarms and automated fluid clamp engagement'
+        ],
+        recommendedMarketplaceTools: [
+          {
+            name: 'Belmont Rapid Infuser',
+            icon: '🩸',
+            tagline: '500 mL/min warmed delivery.',
+            actionText: 'View Specs'
+          }
+        ],
+        isLiveSandboxReady: true
+      },
+      {
+        id: 'lab_fast_ultra',
+        title: 'FAST Bedside Trauma Ultrasound Interactive Case Simulator',
+        category: 'Secure coding',
+        difficulty: 'Advanced',
+        estimatedDuration: '40 mins',
+        environment: 'AWS MicroVM Sandbox',
+        summary: 'Navigate probe positions across Morison pouch, spleno-renal recess, and subxiphoid view to identify free intraperitoneal fluid in a blunt trauma patient.',
+        learningObjectives: [
+          'Differentiate normal peritoneal reflections from hemoperitoneum',
+          'Evaluate pericardial effusion versus cardiac tamponade',
+          'Execute thoracic lung sliding sweep for pneumothorax'
+        ],
+        recommendedMarketplaceTools: [],
+        isLiveSandboxReady: true
+      }
+    ]
+  }
+
+  if (enclaveId === 'automotive_mechanics') {
+    return [
+      {
+        id: 'lab_pico_canfd',
+        title: 'Live PicoScope 4425A CAN-FD Waveform Signal Generator',
+        category: 'Pentesting labs',
+        difficulty: 'Advanced',
+        estimatedDuration: '45 mins',
+        environment: 'Live IDE Terminal',
+        summary: 'Decode differential CAN-H and CAN-L waveforms running at 2 Mbit/s CAN-FD. Isolate ringing reflections caused by a missing 120-ohm termination resistor.',
+        learningObjectives: [
+          'Configure 4-channel analog inputs with DC coupling and 50V range',
+          'Decode CAN-FD packet arbitration and payload data phases',
+          'Diagnose stub line impedance mismatches and ground offsets'
+        ],
+        recommendedMarketplaceTools: [
+          {
+            name: 'PicoScope 4425A Master Kit',
+            icon: '⚡',
+            tagline: 'High-speed CAN-FD diagnostics.',
+            actionText: 'View Specs'
+          }
+        ],
+        isLiveSandboxReady: true
+      },
+      {
+        id: 'lab_ev_lockout',
+        title: '800V High-Voltage Battery Pack Lockout/Tagout Sandbox',
+        category: 'Cloud labs',
+        difficulty: 'Intermediate',
+        estimatedDuration: '30 mins',
+        environment: 'AWS MicroVM Sandbox',
+        summary: 'Perform live-dead-live testing with a CAT IV 1000V multi-meter on an 800V silicon-carbide inverter DC bus following manual service disconnect removal.',
+        learningObjectives: [
+          'Inspect class 0 1000V lineman rubber gloves with pneumatic air test',
+          'Verify zero voltage across B+ and B- terminals using a calibrated proving unit',
+          'Apply OSHA lock and Danger tag to the high-voltage interlock loop'
+        ],
+        recommendedMarketplaceTools: [],
+        isLiveSandboxReady: true
+      }
+    ]
+  }
+
+  // tech_cybersecurity or default
+  return INTERACTIVE_LABS_DATA
+}
+
+export function getEnclaveCertificationTracks(enclaveId?: string): CertificationTrack[] {
+  if (enclaveId === 'trades_construction') {
+    return [
+      {
+        id: 'cert_master_carpenter',
+        name: 'Master Carpenter Guild Certification (Timber Framing & Joinery)',
+        issuingBody: 'CompTIA',
+        badgeIcon: '🔨',
+        examCode: 'TFG-MC-2026',
+        questionsCount: 100,
+        passingScore: '80%',
+        medianSalaryUnlock: '$135,000 / yr',
+        overview: 'The highest professional credential in heavy timber joinery, roof framing mathematics, and heritage structural craftsmanship.',
+        domains: [
+          { name: 'Heavy Timber Mortise & Tenon Geometry', weight: '25%' },
+          { name: 'Compound Roof Rafters & Pitch Math', weight: '20%' },
+          { name: 'Structural Load & PE Blueprint Interpretation', weight: '20%' },
+          { name: 'Job-Site Crane Rigging & Erection Sequencing', weight: '20%' },
+          { name: 'Architectural Finish & Coped Joinery', weight: '15%' }
+        ],
+        practiceExamReady: true,
+        recommendedMarketplaceTools: []
+      },
+      {
+        id: 'cert_osha_30',
+        name: 'OSHA 30-Hour Construction Safety & Health Card',
+        issuingBody: 'CompTIA',
+        badgeIcon: '🦺',
+        examCode: 'OSHA-CONST-30',
+        questionsCount: 80,
+        passingScore: '75%',
+        medianSalaryUnlock: '$118,000 / yr',
+        overview: 'Official US Department of Labor construction safety certification authorizing job-site safety supervision and fall protection enforcement.',
+        domains: [
+          { name: 'Fall Protection Systems (Subpart M)', weight: '30%' },
+          { name: 'Electrical & Arc Flash Safety', weight: '20%' },
+          { name: 'Scaffolding & Stairway Requirements', weight: '20%' },
+          { name: 'Crane Rigging & Material Handling', weight: '15%' },
+          { name: 'Hazard Communication & Silica Standards', weight: '15%' }
+        ],
+        practiceExamReady: true,
+        recommendedMarketplaceTools: []
+      }
+    ]
+  }
+
+  if (enclaveId === 'healthcare_medicine') {
+    return [
+      {
+        id: 'cert_abos_ortho',
+        name: 'ABOS Board Certification (Orthopaedic Surgery & Trauma)',
+        issuingBody: 'ISC2',
+        badgeIcon: '🔪',
+        examCode: 'ABOS-PART-II',
+        questionsCount: 120,
+        passingScore: 'Passing Score (Peer Oral & Written)',
+        medianSalaryUnlock: '$620,000 / yr',
+        overview: 'American Board of Orthopaedic Surgery credential verifying full surgical mastery of complex trauma, articular reduction, and pelvic reconstructive procedures.',
+        domains: [
+          { name: 'Pelvic & Acetabular Fracture Reconstruction', weight: '25%' },
+          { name: 'Open Fractures & Damage Control Orthopedics', weight: '25%' },
+          { name: 'Periprosthetic Fracture & Revision Fixation', weight: '20%' },
+          { name: 'Articular Nonunion & Osteotomy Fixation', weight: '15%' },
+          { name: 'Surgical Morbidity, Ethics & Quality Assurance', weight: '15%' }
+        ],
+        practiceExamReady: true,
+        recommendedMarketplaceTools: []
+      },
+      {
+        id: 'cert_aacn_ccrn',
+        name: 'AACN CCRN: Critical Care Registered Nurse (Adult)',
+        issuingBody: 'ISC2',
+        badgeIcon: '🩺',
+        examCode: 'AACN-CCRN-ADULT',
+        questionsCount: 150,
+        passingScore: '70%',
+        medianSalaryUnlock: '$142,000 / yr',
+        overview: 'Validates advanced clinical acumen for direct bedside care of acutely ill and injured patients in Level 1 Trauma, Surgical, and Cardiac ICUs.',
+        domains: [
+          { name: 'Cardiovascular & Hemodynamic Instability', weight: '33%' },
+          { name: 'Pulmonary & Mechanical Ventilation Management', weight: '24%' },
+          { name: 'Neurology, Renal & Multi-Organ Failure', weight: '23%' },
+          { name: 'Professional Caring & Ethical Practice', weight: '20%' }
+        ],
+        practiceExamReady: true,
+        recommendedMarketplaceTools: []
+      }
+    ]
+  }
+
+  if (enclaveId === 'automotive_mechanics') {
+    return [
+      {
+        id: 'cert_ase_master',
+        name: 'ASE Certified Master Automobile Technician (A1–A8)',
+        issuingBody: 'OffSec',
+        badgeIcon: '🔧',
+        examCode: 'ASE-A1-A8-MASTER',
+        questionsCount: 200,
+        passingScore: '72%',
+        medianSalaryUnlock: '$130,000 / yr',
+        overview: 'The pinnacle automotive service credential covering all 8 automotive mechanical and electrical vehicle domains.',
+        domains: [
+          { name: 'A8: Engine Performance & Driveability', weight: '20%' },
+          { name: 'A6: Electrical / Electronic Systems', weight: '20%' },
+          { name: 'A1: Engine Repair & Teardown', weight: '12%' },
+          { name: 'A2: Automatic Transmission / Transaxle', weight: '12%' },
+          { name: 'A3: Manual Drive Train & Axles', weight: '12%' },
+          { name: 'A4: Suspension & Steering', weight: '12%' },
+          { name: 'A5: Brakes & ABS / Stability Control', weight: '12%' }
+        ],
+        practiceExamReady: true,
+        recommendedMarketplaceTools: []
+      },
+      {
+        id: 'cert_ase_l1',
+        name: 'ASE L1: Advanced Engine Performance Specialist',
+        issuingBody: 'OffSec',
+        badgeIcon: '⚡',
+        examCode: 'ASE-L1-COMPOSITE',
+        questionsCount: 50,
+        passingScore: '70%',
+        medianSalaryUnlock: '$145,000 / yr',
+        overview: 'Advanced diagnostic specialist credential evaluating complex composite vehicle oscilloscope and scanner diagnostic strategies.',
+        domains: [
+          { name: 'General Powertrain Diagnosis & Scope Analysis', weight: '28%' },
+          { name: 'Computerized Powertrain Controls', weight: '26%' },
+          { name: 'Fuel Systems & Direct Injection Analysis', weight: '24%' },
+          { name: 'Ignition Systems & Secondary Waveforms', weight: '22%' }
+        ],
+        practiceExamReady: true,
+        recommendedMarketplaceTools: []
+      }
+    ]
+  }
+
+  // tech_cybersecurity or default
+  return CERTIFICATION_TRACKS_DATA
+}

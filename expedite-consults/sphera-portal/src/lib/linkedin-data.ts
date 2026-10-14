@@ -654,8 +654,217 @@ Calibrated the single-line protection coordinates today — lowered incident ene
     isSaved: false,
     comments: []
   },
+  {
+    id: 'post_finish_carpenter_crown',
+    professionEnclave: 'trades_construction',
+    targetProfessions: ['finish_carpenter', 'cabinetmaker', 'carpenter'],
+    author: {
+      id: 'author_lindqvist_trim',
+      name: 'Erik Lindqvist',
+      headline: 'Master Finish Carpenter · Custom Curved Handrails & Coffered Ceilings',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
+      connectionDegree: '1st',
+      isFollowing: true
+    },
+    timestamp: '1h ago · 📐 Compound Miter & Joinery · 🌐',
+    visibility: 'Public',
+    postType: 'standard',
+    feedCategory: 'for_you',
+    feedSubCategory: 'Finish Trim',
+    content: `📐 7-inch solid black walnut crown molding installed across an out-of-square 88.5° vaulted ceiling.
 
-  // ─── 2. CLINICAL HEALTHCARE & MEDICINE ENCLAVE ───
+A reminder for the trim crew: when ceiling angles stray from 90°, cutting crown flat on the compound miter requires calculating both spring angle and the true wall corner bisector:
+• True corner angle: 88.5° (miter angle = 34.2°, bevel = 30.6° on the Festool Kapex KS 120).
+• All inside corners coped by hand using a coping saw with #15 teeth blade for zero gap expansion under seasonal humidity shifts.
+• Back-cut relieved at 5° to guarantee hairline surface touch.
+
+Zero caulking, 100% mechanical coped precision. Timber and millwork specifications logged in the Trades Blueprint Locker. 👇`,
+    hashtags: ['#FinishCarpentry', '#CustomMillwork', '#CrownMolding', '#CopedJoints', '#Festool', '#Woodworking'],
+    media: {
+      type: 'image',
+      url: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=1200&auto=format&fit=crop&q=80',
+      title: 'Solid Black Walnut Coped Crown Joinery',
+      description: 'Hand-coped interior joints cut with zero caulking tolerance.'
+    },
+    stats: {
+      likesCount: 278,
+      commentsCount: 39,
+      repostsCount: 22,
+      reactionsBreakdown: { like: 160, celebrate: 68, support: 24, love: 22, insightful: 4, funny: 0 }
+    },
+    userReaction: null,
+    isSaved: true,
+    comments: []
+  },
+
+  // ─── 2. AUTOMOTIVE & HEAVY FLEET DIAGNOSTICS ENCLAVE ───
+  {
+    id: 'post_auto_can_waveform',
+    professionEnclave: 'automotive_mechanics',
+    targetProfessions: ['ase_master_auto_tech', 'heavy_diesel_mechanic', 'ev_powertrain_technician'],
+    author: {
+      id: 'author_marcus_auto',
+      name: 'Marcus Miller, ASE Master Tech',
+      headline: 'World Class Master Diagnostic Tech (L1/L2/L3) · 800V EV & CAN-FD Scope Lead',
+      avatar: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=400&auto=format&fit=crop&q=80',
+      connectionDegree: '1st',
+      isFollowing: true
+    },
+    timestamp: '25m ago · 📟 Oscilloscope Waveform Analysis · 🌐',
+    visibility: 'Public',
+    postType: 'standard',
+    feedCategory: 'for_you',
+    feedSubCategory: 'CAN-Bus Diagnostics',
+    content: `⚡ Case Study: Phantom U0100 (Lost Comms with ECM) & Limp Mode on a 2024 Duramax 6.6L Diesel.
+
+Two previous shops had replaced the accelerator pedal assembly and ECM. The vehicle would die only after 45 minutes of road operation at operating temperature.
+
+Diagnostic breakdown with PicoScope 4425A:
+1. Hooked Channel A to CAN-High (Pin 6) and Channel B to CAN-Low (Pin 14) at the DLC gateway.
+2. Under cold idle: perfect differential square wave (2.5V recessive baseline, 3.5V CAN-H, 1.5V CAN-L).
+3. At 195°F trans temp, thermal expansion opened a hairline crack across the 120-ohm terminating resistor inside the rear chassis control module.
+4. Total bus resistance jumped from 60 ohms to 120 ohms, causing reflection ringing that corrupted high-priority torque arbitration packets.
+
+Replaced terminating module and verified clean 60.1-ohm total circuit resistance. Scope capture and diagnostic pinout shared in the Snap-on Hub! 👇`,
+    hashtags: ['#AutoMechanic', '#CANBus', '#PicoScope', '#ASEMaster', '#DieselDiagnostics', '#SnapOn'],
+    media: {
+      type: 'image',
+      url: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=1200&auto=format&fit=crop&q=80',
+      title: 'PicoScope 4-Channel CAN-FD Differential Signal',
+      description: 'Waveform showing transmission bus arbitration reflection.'
+    },
+    stats: {
+      likesCount: 395,
+      commentsCount: 54,
+      repostsCount: 48,
+      reactionsBreakdown: { like: 215, celebrate: 110, support: 35, love: 20, insightful: 15, funny: 0 }
+    },
+    userReaction: null,
+    isSaved: true,
+    comments: []
+  },
+  {
+    id: 'post_auto_ev_inverter',
+    professionEnclave: 'automotive_mechanics',
+    targetProfessions: ['ev_powertrain_technician', 'ase_master_auto_tech'],
+    author: {
+      id: 'author_tyler_ev',
+      name: 'Tyler Davis',
+      headline: 'High-Voltage 800V EV Powertrain Lead · NFPA 70E Safety Certified',
+      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80',
+      connectionDegree: '2nd'
+    },
+    timestamp: '1h ago · 🔋 800V EV High-Voltage Bay · 🌐',
+    visibility: 'Public',
+    postType: 'standard',
+    feedCategory: 'for_you',
+    feedSubCategory: 'EV Powertrain',
+    content: `🔋 Teardown of an 800V Silicon Carbide (SiC) dual-motor traction inverter throwing isolation fault DTC P0AA6.
+
+Safety protocol first:
+• Class 0 (1000V rated) rubber insulating gloves inspected and air-tested before touching the high-voltage disconnect.
+• Manual service disconnect pulled and locked with personal LOTO hasp.
+• Fluke 1587 FC insulation tester verified sub-50V zero energy state across the DC busbar capacitor banks.
+
+Root cause: Coolant seal erosion permitted ethylene glycol mist to cross the gate driver printed circuit board, dropping isolation resistance to 180 kOhms (OEM minimum is 500 kOhms). 
+
+Cleaned, ultrasonic dried, resealed with fluorosilicone gasket, and retested at 1,000V DC — isolation restored to >2.4 GOhms. Always respect high voltage!`,
+    hashtags: ['#ElectricVehicles', '#800V', '#NFPA70E', '#EVMiniMechanic', '#HighVoltage', '#ASEL3'],
+    stats: {
+      likesCount: 312,
+      commentsCount: 41,
+      repostsCount: 36,
+      reactionsBreakdown: { like: 180, celebrate: 72, support: 30, love: 18, insightful: 12, funny: 0 }
+    },
+    userReaction: null,
+    isSaved: false,
+    comments: []
+  },
+
+  // ─── 3. CLINICAL HEALTHCARE, TRAUMA SURGERY & NURSING ENCLAVE ───
+  {
+    id: 'post_nurse_trauma_mtp',
+    professionEnclave: 'healthcare_medicine',
+    targetProfessions: ['er_trauma_nurse', 'registered_nurse', 'physician', 'orthopedic_trauma_surgeon'],
+    author: {
+      id: 'author_elena_nurse',
+      name: 'Elena Rostova, RN, CCRN, TNCC',
+      headline: 'Emergency Trauma Resuscitation Nurse Lead · Level 1 Trauma Center',
+      avatar: 'https://images.unsplash.com/photo-1594824813571-638f02614d3f?w=400&auto=format&fit=crop&q=80',
+      connectionDegree: '1st',
+      isFollowing: true
+    },
+    timestamp: '18m ago · 🩺 Level 1 Trauma Resuscitation · 🌐',
+    visibility: 'Public',
+    postType: 'standard',
+    feedCategory: 'for_you',
+    feedSubCategory: 'Trauma Nursing',
+    content: `🩺 Massive Transfusion Protocol (MTP) execution review from last night’s multi-vehicle roll-over trauma activation (ESI Level 1).
+
+Patient arrived in severe hemorrhagic shock: GCS 7, SBP 62, HR 148, cold extremities, and severe pelvic instability.
+
+Resuscitation Milestones:
+1. Bedside ultrasound-guided dual 14G peripheral IV access secured in under 90 seconds.
+2. Blood bank dispatched Cooler 1: balanced 1:1:1 ratio (4 Units PRBC, 4 Units FFP, 1 Pack Platelets).
+3. Infused via dual Belmont rapid blood warmers at 400 mL/min with inline temperature maintained at 38.5°C to combat the lethal triad of hypothermia, acidosis, and coagulopathy.
+4. Calcium gluconate administered concurrently (1g per 4 units PRBC) to counter citrate toxicity.
+5. Patient stabilized (MAP > 65, Lactate cleared from 8.4 to 3.1) and transferred to trauma OR within 22 minutes for pelvic embolization.
+
+Huge praise to our trauma nursing and surgical team. Rapid vascular access and balanced ratios save lives.`,
+    hashtags: ['#TraumaNursing', '#CCRN', '#TNCC', '#EmergencyMedicine', '#MTP', '#CriticalCare'],
+    media: {
+      type: 'image',
+      url: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=1200&auto=format&fit=crop&q=80',
+      title: 'Level 1 Trauma Resuscitation Bay',
+      description: 'Rapid Belmont infusers and continuous hemodynamic telemetry.'
+    },
+    stats: {
+      likesCount: 512,
+      commentsCount: 68,
+      repostsCount: 74,
+      reactionsBreakdown: { like: 280, celebrate: 130, support: 54, love: 38, insightful: 10, funny: 0 }
+    },
+    userReaction: null,
+    isSaved: true,
+    comments: []
+  },
+  {
+    id: 'post_surgeon_ortho_orif',
+    professionEnclave: 'healthcare_medicine',
+    targetProfessions: ['orthopedic_trauma_surgeon', 'physician', 'er_trauma_nurse'],
+    author: {
+      id: 'author_angela_vance',
+      name: 'Dr. Angela Vance, MD, FACS',
+      headline: 'Attending Orthopedic Trauma Surgeon · Chief of Pelvic & Articular Reconstruction',
+      avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&auto=format&fit=crop&q=80',
+      connectionDegree: '1st',
+      isFollowing: true
+    },
+    timestamp: '45m ago · 🔪 Orthopedic Trauma Surgery · 🌐',
+    visibility: 'Public',
+    postType: 'standard',
+    feedCategory: 'for_you',
+    feedSubCategory: 'Surgical Rounds',
+    content: `🔪 Intraoperative Case Review: Open Reduction & Internal Fixation (ORIF) of a High-Energy Schatzker VI Tibial Plateau Fracture with Metaphyseal Dissociation.
+
+Surgical Approach:
+• Dual incisions: Anterolateral approach with submeniscal arthrotomy to inspect lateral plateau depression, combined with a posteromedial incision to reduce the coronal split fragment.
+• Articular surface elevated under direct visualization and supported with subchondral allograft calcium phosphate bone substitute.
+• Fixed with dual low-profile anatomical 3.5mm titanium locking plates to neutralize both varus/valgus collapse and axial shear.
+• Intraoperative 3D fluoroscopic scan confirmed articular step-off reduced to <1mm and perfect joint alignment restored.
+
+Patient begins immediate continuous passive motion (CPM) with touchdown weight-bearing. Complete surgical operative report and deidentified DICOM series logged in the Clinical Rounds Enclave.`,
+    hashtags: ['#OrthopedicSurgery', '#TraumaSurgeon', '#ORIF', '#SchatzkerVI', '#FACS', '#SurgicalRounds'],
+    stats: {
+      likesCount: 428,
+      commentsCount: 52,
+      repostsCount: 61,
+      reactionsBreakdown: { like: 230, celebrate: 110, support: 42, love: 34, insightful: 12, funny: 0 }
+    },
+    userReaction: null,
+    isSaved: true,
+    comments: []
+  },
   {
     id: 'post_physician_clinical_trial',
     professionEnclave: 'healthcare_medicine',
@@ -667,7 +876,7 @@ Calibrated the single-line protection coordinates today — lowered incident ene
       avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=400&auto=format&fit=crop&q=80',
       connectionDegree: '1st'
     },
-    timestamp: '30m ago · 🩺 Clinical Case Review · 🌐',
+    timestamp: '1h ago · 🩺 Clinical Case Review · 🌐',
     visibility: 'Public',
     postType: 'standard',
     feedCategory: 'for_you',
@@ -689,6 +898,92 @@ Full HIPAA-deidentified hemodynamic datasets and peer review discussion are avai
     },
     userReaction: null,
     isSaved: false,
+    comments: []
+  },
+
+  // ─── 4. DEEP OFFENSIVE & OPERATIONAL CYBERSECURITY ENCLAVE ───
+  {
+    id: 'post_redteam_indirect_syscalls',
+    professionEnclave: 'tech_cybersecurity',
+    targetProfessions: ['red_team_lead', 'malware_reverse_engineer', 'soc_threat_hunter'],
+    author: {
+      id: 'author_tariq_redteam',
+      name: 'Tariq Al-Mansoor, OSCP/CRTO',
+      headline: 'Principal Red Team Operator · Adversary Emulation & Exploit Development',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
+      connectionDegree: '1st',
+      isFollowing: true
+    },
+    timestamp: '12m ago · 🎯 Offensive Cyber TTPs · 🌐',
+    visibility: 'Public',
+    postType: 'standard',
+    feedCategory: 'for_you',
+    feedSubCategory: 'Red Teaming',
+    content: `🎯 [Adversary Emulation Technical Brief] Evading Userland EDR API Call-Stack Heuristics via Fresh Indirect Syscalls & HalosGate.
+
+Modern EDR agents (CrowdStrike, Defender for Endpoint) monitor synthetic call stacks looking for syscall instructions executing from unbacked heap or RWX memory segments outside ntdll.dll.
+
+Our offensive engineering team developed an evasion stub that:
+1. Locates clean Syscall Service Numbers (SSNs) dynamically from disk-mapped \\KnownDlls\\ntdll.dll (bypassing in-memory byte hooks).
+2. Sets up RCX, RDX, R8, R9 registers in our payload.
+3. Jumps to a legitimate 'syscall; ret' opcode gadget located *inside* the clean export address space of ntdll.
+4. Generates an authentic, unwound stack frame that validates perfectly against kernel ETW-TI telemetry.
+
+Result: NtAllocateVirtualMemory and NtCreateThreadEx executed with zero detections across top-tier enterprise sensors.
+
+Deobfuscated C assembly stubs and defensive sigma detection rules are logged in the OSCP/CRTO Guild Vault. 👇`,
+    hashtags: ['#RedTeaming', '#EDREvasion', '#IndirectSyscalls', '#OSCP', '#CRTO', '#MalwareAnalysis'],
+    media: {
+      type: 'image',
+      url: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1200&auto=format&fit=crop&q=80',
+      title: 'Disassembled ntdll.dll Indirect Syscall Gadget',
+      description: 'Stack unwinding verification showing legitimate ntdll return pointers.'
+    },
+    stats: {
+      likesCount: 684,
+      commentsCount: 92,
+      repostsCount: 114,
+      reactionsBreakdown: { like: 360, celebrate: 180, support: 44, love: 40, insightful: 60, funny: 0 }
+    },
+    userReaction: null,
+    isSaved: true,
+    comments: []
+  },
+  {
+    id: 'post_scada_ics_defense',
+    professionEnclave: 'tech_cybersecurity',
+    targetProfessions: ['scada_ics_engineer', 'soc_threat_hunter'],
+    author: {
+      id: 'author_james_scada',
+      name: 'James Kowalski, CISSP, GICSP',
+      headline: 'SCADA / ICS OT Critical Infrastructure Security Lead · Purdue Model Architect',
+      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80',
+      connectionDegree: '1st'
+    },
+    timestamp: '50m ago · 🏭 SCADA / OT Defense · 🌐',
+    visibility: 'Public',
+    postType: 'standard',
+    feedCategory: 'for_you',
+    feedSubCategory: 'SCADA / ICS Defense',
+    content: `🏭 [Critical Infrastructure Advisory] Hardening Substation Modbus TCP & DNP3 Protocols against Unauthorized PLC Ladder Logic Overwrites.
+
+In Purdue Model Level 2 and Level 3 supervisory networks, standard Modbus TCP lacks native authentication. Function Code 0x05 (Write Single Coil) and Function Code 0x10 (Write Multiple Registers) can directly alter turbine generator speed thresholds or trip circuit breakers.
+
+Mitigations implemented across 12 electrical distribution substations:
+1. Deployed inline OT DPI (Deep Packet Inspection) hardware firewalls enforcing strict whitelisting of Function Code 0x03 (Read Holding Registers) from HMI servers only.
+2. Programmed physical hardware key switches on Siemens S7-1500 and Allen-Bradley ControlLogix PLCs to 'RUN' mode, mechanically disallowing remote logic uploads.
+3. Configured Zeek OT parsers to alert on any non-standard unit IDs or unexpected TCP port 502 connection attempts.
+
+Zero downtime recorded over 180 days with full CIP-005/007 compliance. OT packet capture rules posted in the SCADA Enclave.`,
+    hashtags: ['#SCADA', '#ICSOpTech', '#CriticalInfrastructure', '#GICSP', '#Modbus', '#PurdueModel'],
+    stats: {
+      likesCount: 442,
+      commentsCount: 61,
+      repostsCount: 52,
+      reactionsBreakdown: { like: 260, celebrate: 84, support: 38, love: 22, insightful: 38, funny: 0 }
+    },
+    userReaction: null,
+    isSaved: true,
     comments: []
   },
 
@@ -1227,6 +1522,96 @@ export const trendingNews: NewsItem[] = [
 
 export const suggestedConnections: SuggestedConnection[] = [
   {
+    id: 'sug_carpenter_david',
+    name: 'David Miller',
+    headline: 'Master Heavy Timber Carpenter & Joinery Superintendent · Heritage Guild',
+    avatar: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=400&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600&auto=format&fit=crop&q=80',
+    mutualConnections: 38,
+    mutualName: 'Frank Gallagher',
+    capabilities: ['Carpentry & Timber Framing', 'Heavy Timber', 'Architectural Joinery', 'OSHA 30'],
+    verifiedBadges: ['✓ Master Carpenter Guild', '✓ OSHA 30 Lead'],
+    circle: 'Master Craftsman & Timber Framing Guild',
+    matchScore: 98,
+    isConnected: false,
+    isPending: false
+  },
+  {
+    id: 'sug_auto_marcus',
+    name: 'Marcus Miller, ASE Master Tech',
+    headline: 'World Class Master Diagnostic Specialist · L1 Advanced Engine & CAN-FD Scope',
+    avatar: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=400&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=600&auto=format&fit=crop&q=80',
+    mutualConnections: 29,
+    mutualName: 'Carlos Santana',
+    capabilities: ['Automotive Diagnostics & EV', 'CAN-Bus Oscilloscope', '800V EV Lockout', 'Cummins Fleet'],
+    verifiedBadges: ['✓ ASE Master Tech', '✓ ASE L1 & L3 EV'],
+    circle: 'ASE Master Diagnostics & Fleet Guild',
+    matchScore: 97,
+    isConnected: false,
+    isPending: false
+  },
+  {
+    id: 'sug_nurse_elena',
+    name: 'Elena Rostova, RN, CCRN, TNCC',
+    headline: 'Emergency Trauma Resuscitation Nurse Lead · Level 1 Trauma Center',
+    avatar: 'https://images.unsplash.com/photo-1594824813571-638f02614d3f?w=400&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=600&auto=format&fit=crop&q=80',
+    mutualConnections: 45,
+    mutualName: 'Dr. Angela Vance',
+    capabilities: ['Critical Care & Trauma Nursing', 'Level 1 Trauma Triage', 'MTP Rapid Infusion', 'Arterial Lines'],
+    verifiedBadges: ['✓ AACN CCRN', '✓ ENA TNCC Lead'],
+    circle: 'Critical Care & Emergency Trauma Guild',
+    matchScore: 99,
+    isConnected: false,
+    isPending: false
+  },
+  {
+    id: 'sug_doctor_angela',
+    name: 'Dr. Angela Vance, MD, FACS',
+    headline: 'Attending Orthopedic Trauma Surgeon · Chief of Pelvic & Articular Reconstruction',
+    avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=600&auto=format&fit=crop&q=80',
+    mutualConnections: 52,
+    mutualName: 'Dr. Aris Thorne',
+    capabilities: ['Orthopedic & Clinical Surgery', 'Pelvic Ring ORIF', 'Joint Reconstruction', 'Trauma Surgery'],
+    verifiedBadges: ['✓ ABOS Board Certified', '✓ FACS Fellow'],
+    circle: 'American College of Surgeons Enclave',
+    matchScore: 96,
+    isConnected: false,
+    isPending: false
+  },
+  {
+    id: 'sug_cyber_tariq',
+    name: 'Tariq Al-Mansoor, OSCP/CRTO',
+    headline: 'Principal Red Team Operator · Adversary Emulation & Exploit Development',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=600&auto=format&fit=crop&q=80',
+    mutualConnections: 34,
+    mutualName: 'Alex Taylor',
+    capabilities: ['Red Teaming & Exploitation', 'Indirect Syscalls', 'C2 Frameworks', 'EDR Evasion'],
+    verifiedBadges: ['✓ OffSec OSCP', '✓ CRTO Lead'],
+    circle: 'Autonomous AI & Red Teaming Guild',
+    matchScore: 99,
+    isConnected: false,
+    isPending: false
+  },
+  {
+    id: 'sug_scada_james',
+    name: 'James Kowalski, CISSP, GICSP',
+    headline: 'SCADA / ICS OT Critical Infrastructure Security Lead · Purdue Model Architect',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=600&auto=format&fit=crop&q=80',
+    mutualConnections: 21,
+    mutualName: 'Victoria Sterling',
+    capabilities: ['SCADA / OT Security', 'Modbus DPI', 'Purdue Model', 'PLC Firmware'],
+    verifiedBadges: ['✓ SANS GICSP', '✓ CISSP'],
+    circle: 'Critical Infrastructure SCADA Defense',
+    matchScore: 95,
+    isConnected: false,
+    isPending: false
+  },
+  {
     id: 'sug_1',
     name: 'Kavita Patel',
     headline: 'Director of Cloud Governance & Zero Trust @ CyberNova',
@@ -1283,36 +1668,6 @@ export const suggestedConnections: SuggestedConnection[] = [
     verifiedBadges: ['✓ RMF Level III', '✓ FedRAMP 3PAO'],
     circle: 'FedRAMP & DoD RMF Practitioners',
     matchScore: 94,
-    isConnected: false,
-    isPending: false
-  },
-  {
-    id: 'sug_5',
-    name: 'Dr. Tariq Al-Mansoor',
-    headline: 'Senior Penetration Tester & Exploit Developer @ ÆGIS Labs',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
-    coverImage: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=600&auto=format&fit=crop&q=80',
-    mutualConnections: 29,
-    mutualName: 'Alex Taylor',
-    capabilities: ['Penetration Testing', 'AI Security', 'Zero Trust'],
-    verifiedBadges: ['✓ OSCE', '✓ Exploit Dev'],
-    circle: 'Autonomous AI Red Teaming Guild',
-    matchScore: 98,
-    isConnected: false,
-    isPending: false
-  },
-  {
-    id: 'sug_6',
-    name: 'Grace Hopper-Bellingham',
-    headline: 'Lead DevSecOps & eBPF Telemetry Engineer @ KernelGuard',
-    avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&auto=format&fit=crop&q=80',
-    coverImage: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=600&auto=format&fit=crop&q=80',
-    mutualConnections: 16,
-    mutualName: 'Kavita Patel',
-    capabilities: ['DevSecOps', 'Cloud Security', 'RMF'],
-    verifiedBadges: ['✓ CKS (Kubernetes Security)', '✓ eBPF Fellow'],
-    circle: 'AppSec & DevSecOps Platform Guild',
-    matchScore: 91,
     isConnected: false,
     isPending: false
   }
@@ -1906,4 +2261,657 @@ export const analyticsData: AnalyticsData = {
     { keyword: 'Autonomous AI Defense', count: 38 }
   ],
   searchOccurrencesCount: 342
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ENCLAVE-SEGREGATED NETWORK COLLECTIONS (LEAST-PRIVILEGE ISOLATION)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function getEnclaveConnectedMembers(enclaveId?: string): ConnectedMember[] {
+  if (enclaveId === 'trades_construction') {
+    return [
+      {
+        id: 'conn_tc_1',
+        name: 'Frank Gallagher',
+        headline: 'Licensed General Contractor & Superintendent · OSHA 30 Lead',
+        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80',
+        coverImage: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&auto=format&fit=crop&q=80',
+        connectedSince: 'Connected 5 months ago',
+        capabilities: ['Commercial Buildouts', 'OSHA 30', 'Timber Framing'],
+        verifiedBadges: ['✓ OSHA 30 Certified', '✓ Licensed GC'],
+        mutualCount: 42,
+        isOnline: true,
+        company: 'Gallagher Commercial Builders',
+        location: 'Denver, CO',
+        email: 'frank.gallagher@gallagherbuilds.com'
+      },
+      {
+        id: 'conn_tc_2',
+        name: 'Lars Lindqvist',
+        headline: 'Master Architectural Joiner & Passivhaus Specialist · Guild Member',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+        coverImage: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600&auto=format&fit=crop&q=80',
+        connectedSince: 'Connected 8 months ago',
+        capabilities: ['Architectural Joinery', 'Building Enclosures', 'Timber Framing'],
+        verifiedBadges: ['✓ Master Guild Joiner', '✓ Passivhaus Tradesperson'],
+        mutualCount: 31,
+        isOnline: true,
+        company: 'Heritage Architectural Joinery',
+        location: 'Seattle, WA',
+        email: 'lars@heritagewoodwork.com'
+      },
+      {
+        id: 'conn_tc_3',
+        name: 'Gus Vandermeer, PE',
+        headline: 'Principal Structural Wood Engineer · Mass Timber Bent Specialist',
+        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&auto=format&fit=crop&q=80',
+        coverImage: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600&auto=format&fit=crop&q=80',
+        connectedSince: 'Connected 1 year ago',
+        capabilities: ['Heavy Equipment', 'Timber Framing', 'Commercial Buildouts'],
+        verifiedBadges: ['✓ Licensed PE (OR/WA/CO)', '✓ Timber Guild Director'],
+        mutualCount: 48,
+        isOnline: false,
+        company: 'Cascade Structural Engineering',
+        location: 'Portland, OR',
+        email: 'gus.vandermeer@cascadepes.com'
+      }
+    ]
+  }
+
+  if (enclaveId === 'healthcare_medicine') {
+    return [
+      {
+        id: 'conn_hm_1',
+        name: 'Dr. Julian Sterling, MD, FACS',
+        headline: 'Chief of Trauma & Acute Care Surgery · ACS Committee on Trauma',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+        coverImage: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=600&auto=format&fit=crop&q=80',
+        connectedSince: 'Connected 4 months ago',
+        capabilities: ['Trauma Surgery', 'MTP Rapid Infusion', 'Level 1 Trauma Triage'],
+        verifiedBadges: ['✓ FACS Fellow', '✓ Board Certified General Surgery'],
+        mutualCount: 56,
+        isOnline: true,
+        company: 'Metro Health Academic Trauma Center',
+        location: 'Boston, MA',
+        email: 'j.sterling@metrohealth-trauma.org'
+      },
+      {
+        id: 'conn_hm_2',
+        name: 'Elena Rostova, RN, CCRN, TNCC',
+        headline: 'Trauma Resuscitation Nurse Lead · Emergency Resuscitation Suite',
+        avatar: 'https://images.unsplash.com/photo-1594824813571-638f02614d3f?w=200&auto=format&fit=crop&q=80',
+        coverImage: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=600&auto=format&fit=crop&q=80',
+        connectedSince: 'Connected 6 months ago',
+        capabilities: ['Critical Care & Trauma Nursing', 'Level 1 Trauma Triage', 'MTP Rapid Infusion', 'Arterial Lines'],
+        verifiedBadges: ['✓ AACN CCRN', '✓ ENA TNCC Lead'],
+        mutualCount: 45,
+        isOnline: true,
+        company: 'St. Jude Level 1 Trauma Center',
+        location: 'Chicago, IL',
+        email: 'elena.rostova@stjude-trauma.org'
+      },
+      {
+        id: 'conn_hm_3',
+        name: 'Dr. Aris Thorne, MD',
+        headline: 'Associate Professor of Orthopedic Surgery · Joint Reconstruction Lead',
+        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+        coverImage: 'https://images.unsplash.com/photo-1551076805-e1869033e561?w=600&auto=format&fit=crop&q=80',
+        connectedSince: 'Connected 1 year ago',
+        capabilities: ['Joint Reconstruction', 'Trauma Surgery', 'Level 1 Trauma Triage'],
+        verifiedBadges: ['✓ ABOS Board Certified', '✓ AAHKS Fellow'],
+        mutualCount: 52,
+        isOnline: false,
+        company: 'University Medical Center',
+        location: 'Philadelphia, PA',
+        email: 'aris.thorne@umc-ortho.org'
+      }
+    ]
+  }
+
+  if (enclaveId === 'automotive_mechanics') {
+    return [
+      {
+        id: 'conn_am_1',
+        name: 'Kenji Sato',
+        headline: 'Master Automotive Scope Diagnostic Lead · PicoScope Automotive Instructor',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+        coverImage: 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=600&auto=format&fit=crop&q=80',
+        connectedSince: 'Connected 3 months ago',
+        capabilities: ['CAN-Bus Oscilloscope', 'Automotive Diagnostics & EV', '800V EV Lockout'],
+        verifiedBadges: ['✓ PicoScope Master Instructor', '✓ ASE Master L1'],
+        mutualCount: 38,
+        isOnline: true,
+        company: 'Precision Scope Diagnostics',
+        location: 'Detroit, MI',
+        email: 'kenji.sato@precisionscope.com'
+      },
+      {
+        id: 'conn_am_2',
+        name: 'Carlos Santana',
+        headline: 'Heavy Fleet Diesel & Hydraulic Specialist · Cummins Certified Master',
+        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80',
+        coverImage: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=600&auto=format&fit=crop&q=80',
+        connectedSince: 'Connected 7 months ago',
+        capabilities: ['Cummins Fleet', 'Automotive Diagnostics & EV', 'Transmission Rebuild'],
+        verifiedBadges: ['✓ Cummins Master Tech', '✓ ASE T-Series Lead'],
+        mutualCount: 29,
+        isOnline: true,
+        company: 'Interstate Fleet Logistics',
+        location: 'Chicago, IL',
+        email: 'carlos.santana@interstatefleet.com'
+      }
+    ]
+  }
+
+  return initialConnectedMembers
+}
+
+export function getEnclaveCompanies(enclaveId?: string): CompanyNetworkItem[] {
+  if (enclaveId === 'trades_construction') {
+    return [
+      {
+        id: 'comp_tc_1',
+        name: 'Festool USA',
+        tagline: 'Precision Woodworking, Domino Joiners & Dust Extraction Systems',
+        logo: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=100&auto=format&fit=crop&q=80',
+        industry: 'Tooling & Machinery',
+        followersCount: '185k followers',
+        capabilities: ['Architectural Joinery', 'Timber Framing'],
+        jobOpeningsCount: 12,
+        isFollowing: true
+      },
+      {
+        id: 'comp_tc_2',
+        name: 'Simpson Strong-Tie',
+        tagline: 'Structural Building Connectors, Fasteners & Lateral Force Engineering',
+        logo: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=100&auto=format&fit=crop&q=80',
+        industry: 'Building Materials & Engineering',
+        followersCount: '95k followers',
+        capabilities: ['Timber Framing', 'Commercial Buildouts', 'OSHA 30'],
+        jobOpeningsCount: 8,
+        isFollowing: false
+      }
+    ]
+  }
+
+  if (enclaveId === 'healthcare_medicine') {
+    return [
+      {
+        id: 'comp_hm_1',
+        name: 'American College of Surgeons (ACS)',
+        tagline: 'Advancing Surgical Standards, Trauma Verification & Clinical Practice',
+        logo: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=100&auto=format&fit=crop&q=80',
+        industry: 'Medical Associations',
+        followersCount: '140k followers',
+        capabilities: ['Trauma Surgery', 'MTP Rapid Infusion', 'Level 1 Trauma Triage'],
+        jobOpeningsCount: 18,
+        isFollowing: true
+      },
+      {
+        id: 'comp_hm_2',
+        name: 'Butterfly Network Inc.',
+        tagline: 'Transforming Care with Handheld Point-of-Care Ultrasound & AI Telemetry',
+        logo: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=100&auto=format&fit=crop&q=80',
+        industry: 'Medical Devices & HealthTech',
+        followersCount: '88k followers',
+        capabilities: ['Level 1 Trauma Triage', 'Critical Care & Trauma Nursing'],
+        jobOpeningsCount: 6,
+        isFollowing: false
+      }
+    ]
+  }
+
+  if (enclaveId === 'automotive_mechanics') {
+    return [
+      {
+        id: 'comp_am_1',
+        name: 'Snap-on Tools & Diagnostics',
+        tagline: 'Professional Automotive Diagnostic Scopes, Hand Tools & Shop Equipment',
+        logo: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=100&auto=format&fit=crop&q=80',
+        industry: 'Automotive Equipment',
+        followersCount: '520k followers',
+        capabilities: ['Automotive Diagnostics & EV', 'CAN-Bus Oscilloscope', '800V EV Lockout'],
+        jobOpeningsCount: 22,
+        isFollowing: true
+      },
+      {
+        id: 'comp_am_2',
+        name: 'Pico Technology Auto',
+        tagline: 'The Global Standard in PC-Based Oscilloscopes & Vehicle Diagnostics',
+        logo: 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=100&auto=format&fit=crop&q=80',
+        industry: 'Diagnostic Electronics',
+        followersCount: '135k followers',
+        capabilities: ['CAN-Bus Oscilloscope', 'Automotive Diagnostics & EV'],
+        jobOpeningsCount: 9,
+        isFollowing: false
+      }
+    ]
+  }
+
+  return companiesNetworkData
+}
+
+export function getEnclaveOrganizations(enclaveId?: string): OrganizationNetworkItem[] {
+  if (enclaveId === 'trades_construction') {
+    return [
+      {
+        id: 'org_tc_1',
+        name: 'OSHA (Occupational Safety & Health Administration)',
+        tagline: 'Enforcing Job-Site Safety Standards, 1926 Subpart M & Worker Health',
+        logo: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=100&auto=format&fit=crop&q=80',
+        type: 'Federal Agency',
+        capabilities: ['OSHA 30', 'Commercial Buildouts', 'Timber Framing'],
+        membersCount: '210k members',
+        isFollowing: true
+      },
+      {
+        id: 'org_tc_2',
+        name: 'Timber Framers Guild (TFG)',
+        tagline: 'Dedicated to the Art, Science & Practice of Traditional Heavy Timber Craft',
+        logo: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=100&auto=format&fit=crop&q=80',
+        type: 'Trade Guild & Standards Body',
+        capabilities: ['Timber Framing', 'Architectural Joinery'],
+        membersCount: '48k members',
+        isFollowing: true
+      }
+    ]
+  }
+
+  if (enclaveId === 'healthcare_medicine') {
+    return [
+      {
+        id: 'org_hm_1',
+        name: 'Emergency Nurses Association (ENA)',
+        tagline: 'Advancing Emergency Nursing Practice, TNCC & Pediatric Emergency Standards',
+        logo: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=100&auto=format&fit=crop&q=80',
+        type: 'Clinical Nursing Association',
+        capabilities: ['Critical Care & Trauma Nursing', 'Level 1 Trauma Triage', 'Arterial Lines'],
+        membersCount: '95k members',
+        isFollowing: true
+      },
+      {
+        id: 'org_hm_2',
+        name: 'American Academy of Orthopaedic Surgeons (AAOS)',
+        tagline: 'World Leader in Musculoskeletal Health Standards & Surgical Education',
+        logo: 'https://images.unsplash.com/photo-1551076805-e1869033e561?w=100&auto=format&fit=crop&q=80',
+        type: 'Surgical Specialty Academy',
+        capabilities: ['Trauma Surgery', 'Joint Reconstruction'],
+        membersCount: '130k members',
+        isFollowing: true
+      }
+    ]
+  }
+
+  if (enclaveId === 'automotive_mechanics') {
+    return [
+      {
+        id: 'org_am_1',
+        name: 'National Institute for Automotive Service Excellence (ASE)',
+        tagline: 'Certifying Master Automotive, Heavy Duty Truck & Advanced EV Technicians',
+        logo: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=100&auto=format&fit=crop&q=80',
+        type: 'Credentialing & Standards Body',
+        capabilities: ['Automotive Diagnostics & EV', '800V EV Lockout', 'Cummins Fleet'],
+        membersCount: '310k members',
+        isFollowing: true
+      },
+      {
+        id: 'org_am_2',
+        name: 'SAE International',
+        tagline: 'Engineering Ground Vehicle Standards, CAN-FD Protocols & High Voltage EV Specs',
+        logo: 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=100&auto=format&fit=crop&q=80',
+        type: 'Engineering Standards Organization',
+        capabilities: ['CAN-Bus Oscilloscope', '800V EV Lockout'],
+        membersCount: '180k members',
+        isFollowing: true
+      }
+    ]
+  }
+
+  return organizationsNetworkData
+}
+
+export function getEnclaveCircles(enclaveId?: string): ProfessionalCircleItem[] {
+  if (enclaveId === 'trades_construction') {
+    return [
+      {
+        id: 'circle_tc_1',
+        name: 'Heavy Timber & Traditional Joinery Guild',
+        icon: '🌲',
+        description: 'Master craftsmen sharing mortise and tenon layouts, 5-axis CNC timber specs, and clear-span truss calculations.',
+        primaryCapability: 'Timber Framing',
+        membersCount: '3,200 members',
+        recentActivity: 'Active today · 18 new joinery details shared',
+        isJoined: true
+      },
+      {
+        id: 'circle_tc_2',
+        name: 'Commercial Framing Superintendents & OSHA 30',
+        icon: '🦺',
+        description: 'Commercial superintendents managing Subpart M tie-off protocols, crane pick plans, and subcontractor safety.',
+        primaryCapability: 'OSHA 30',
+        membersCount: '4,800 members',
+        recentActivity: 'Active 1h ago · 24 discussions',
+        isJoined: true
+      }
+    ]
+  }
+
+  if (enclaveId === 'healthcare_medicine') {
+    return [
+      {
+        id: 'circle_hm_1',
+        name: 'Level 1 Trauma Resuscitation & MTP Enclave',
+        icon: '🩸',
+        description: 'Surgeons and emergency trauma nurses discussing low-titer whole blood protocols, TXA timing, and damage control resuscitation.',
+        primaryCapability: 'MTP Rapid Infusion',
+        membersCount: '2,400 members',
+        recentActivity: 'Active today · 14 case discussions',
+        isJoined: true
+      },
+      {
+        id: 'circle_hm_2',
+        name: 'Emergency Critical Care Nursing (TNCC / CCRN)',
+        icon: '🩺',
+        description: 'Trauma and ICU nurse leaders sharing point-of-care ultrasound techniques, arterial line monitoring, and sepsis bundles.',
+        primaryCapability: 'Critical Care & Trauma Nursing',
+        membersCount: '4,100 members',
+        recentActivity: 'Active 20m ago · 38 clinical cases',
+        isJoined: true
+      }
+    ]
+  }
+
+  if (enclaveId === 'automotive_mechanics') {
+    return [
+      {
+        id: 'circle_am_1',
+        name: 'ASE Master Techs & L3 Hybrid Diagnostics Guild',
+        icon: '⚡',
+        description: 'World-class automotive technicians diagnosing 800-volt high-voltage inverters, DC contactors, and battery thermal circuits.',
+        primaryCapability: '800V EV Lockout',
+        membersCount: '3,800 members',
+        recentActivity: 'Active today · 21 waveform traces shared',
+        isJoined: true
+      },
+      {
+        id: 'circle_am_2',
+        name: 'PicoScope & CAN-Bus Oscilloscope Specialists',
+        icon: '🔧',
+        description: 'Master scope instructors analyzing differential CAN-FD signal ring-down, LIN bus shorts, and inductive current ramps.',
+        primaryCapability: 'CAN-Bus Oscilloscope',
+        membersCount: '2,600 members',
+        recentActivity: 'Active 35m ago · 16 diagnostic cases',
+        isJoined: true
+      }
+    ]
+  }
+
+  return professionalCirclesData
+}
+
+export function getEnclaveTopics(enclaveId?: string): FollowedTopicItem[] {
+  if (enclaveId === 'trades_construction') {
+    return [
+      { id: 'top_tc_1', name: 'Timber Framing & Heavy Timber', hashtag: '#TimberFraming', followersCount: '380k followers', category: 'Craftsmanship', isFollowing: true },
+      { id: 'top_tc_2', name: 'OSHA 1926 Job-Site Safety', hashtag: '#OSHA30', followersCount: '450k followers', category: 'Safety Standards', isFollowing: true },
+      { id: 'top_tc_3', name: 'Architectural Finish Joinery', hashtag: '#FinishCarpentry', followersCount: '290k followers', category: 'Fine Woodworking', isFollowing: true }
+    ]
+  }
+
+  if (enclaveId === 'healthcare_medicine') {
+    return [
+      { id: 'top_hm_1', name: 'Trauma Surgery & Resuscitation', hashtag: '#TraumaSurgery', followersCount: '520k followers', category: 'Surgical Care', isFollowing: true },
+      { id: 'top_hm_2', name: 'Critical Care & Emergency Nursing', hashtag: '#EmergencyNursing', followersCount: '480k followers', category: 'Clinical Practice', isFollowing: true },
+      { id: 'top_hm_3', name: 'Point-of-Care Ultrasound (POCUS)', hashtag: '#POCUS', followersCount: '310k followers', category: 'Clinical Devices', isFollowing: true }
+    ]
+  }
+
+  if (enclaveId === 'automotive_mechanics') {
+    return [
+      { id: 'top_am_1', name: 'ASE Master Diagnostics', hashtag: '#ASEMasterTech', followersCount: '410k followers', category: 'Master Diagnostics', isFollowing: true },
+      { id: 'top_am_2', name: '800-Volt EV Powertrains', hashtag: '#800VArchitecture', followersCount: '360k followers', category: 'Electric Vehicles', isFollowing: true },
+      { id: 'top_am_3', name: 'PicoScope Waveform Analysis', hashtag: '#PicoScope', followersCount: '280k followers', category: 'Oscilloscope Diagnostics', isFollowing: true }
+    ]
+  }
+
+  return followedTopicsData
+}
+
+export function getEnclaveInvitations(enclaveId?: string) {
+  if (enclaveId === 'trades_construction') {
+    return [
+      {
+        id: 'inv_tc_1',
+        name: 'Markus Thorne',
+        headline: 'Vice President of Commercial Construction @ Skanska Timberworks',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+        capabilities: ['Commercial Buildouts', 'Timber Framing'],
+        mutualCount: 28,
+        timeAgo: '1 day ago',
+        email: 'm.thorne@skanska-timber.com'
+      },
+      {
+        id: 'inv_tc_2',
+        name: 'Sarah Jenkins',
+        headline: 'Senior Architectural Estimator @ Pacific Northwest Joinery',
+        avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=80',
+        capabilities: ['Architectural Joinery', 'Building Enclosures'],
+        mutualCount: 16,
+        timeAgo: '2 days ago',
+        email: 's.jenkins@pnw-joinery.com'
+      }
+    ]
+  }
+
+  if (enclaveId === 'healthcare_medicine') {
+    return [
+      {
+        id: 'inv_hm_1',
+        name: 'Dr. Michael Bennett, MD',
+        headline: 'Director of Surgical ICU & Trauma Research @ Johns Hopkins Medicine',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+        capabilities: ['Trauma Surgery', 'MTP Rapid Infusion'],
+        mutualCount: 36,
+        timeAgo: '1 day ago',
+        email: 'mbennett@jhmi.edu'
+      },
+      {
+        id: 'inv_hm_2',
+        name: 'Patricia Morales, RN, MSN',
+        headline: 'Clinical Nurse Specialist · Emergency Medicine @ Mayo Clinic',
+        avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&auto=format&fit=crop&q=80',
+        capabilities: ['Critical Care & Trauma Nursing', 'Level 1 Trauma Triage'],
+        mutualCount: 22,
+        timeAgo: '3 days ago',
+        email: 'morales.patricia@mayo.edu'
+      }
+    ]
+  }
+
+  if (enclaveId === 'automotive_mechanics') {
+    return [
+      {
+        id: 'inv_am_1',
+        name: 'Tony DeLuca',
+        headline: 'Director of Technical Diagnostic Training @ Snap-on Tools',
+        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80',
+        capabilities: ['Automotive Diagnostics & EV', 'CAN-Bus Oscilloscope'],
+        mutualCount: 34,
+        timeAgo: '1 day ago',
+        email: 'tony.deluca@snapon.com'
+      },
+      {
+        id: 'inv_am_2',
+        name: 'Rachel Green, ASE Master L3',
+        headline: 'Lead EV Powertrain Diagnostics Specialist @ Rivian Commercial Fleet',
+        avatar: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=200&auto=format&fit=crop&q=80',
+        capabilities: ['800V EV Lockout', 'Automotive Diagnostics & EV'],
+        mutualCount: 19,
+        timeAgo: '2 days ago',
+        email: 'rgreen@rivianfleet.com'
+      }
+    ]
+  }
+
+  return [
+    {
+      id: 'inv_1',
+      name: 'Victoria Hastings',
+      headline: 'Chief Technology Officer @ Horizon FinTech Systems',
+      avatar: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=200&auto=format&fit=crop&q=80',
+      capabilities: ['Zero Trust', 'Cloud Security'],
+      mutualCount: 31,
+      timeAgo: '1 day ago',
+      email: 'victoria.hastings@horizonfintech.io'
+    },
+    {
+      id: 'inv_2',
+      name: 'Dr. Liam O’Connor',
+      headline: 'Head of Quantum Cryptography & RMF @ DARPA Partner Group',
+      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80',
+      capabilities: ['RMF', 'AI Security'],
+      mutualCount: 14,
+      timeAgo: '3 days ago',
+      email: 'l.oconnor@darpa-partner.sec'
+    }
+  ]
+}
+
+export function getEnclaveFloatingMessages(enclaveId?: string): MessageThread[] {
+  if (enclaveId === 'trades_construction') {
+    return [
+      {
+        id: 'msg_tc_1',
+        user: {
+          name: 'Frank Gallagher',
+          headline: 'General Contractor · Superintendent',
+          avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80',
+          status: 'online'
+        },
+        lastMessage: 'The crane company confirmed 8 AM arrival for the Douglas Fir bents.',
+        lastMessageTime: '11:20 AM',
+        unreadCount: 1,
+        messages: [
+          {
+            id: 'm_tc_1',
+            senderId: 'other',
+            text: 'David, the crane company confirmed 8 AM arrival tomorrow for lifting the Douglas Fir principal bents.',
+            timestamp: '11:20 AM'
+          }
+        ]
+      },
+      {
+        id: 'msg_tc_2',
+        user: {
+          name: 'Lars Lindqvist',
+          headline: 'Master Architectural Joiner',
+          avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+          status: 'online'
+        },
+        lastMessage: 'Do you want 14mm tenons or 12mm tenons for the exterior knee braces?',
+        lastMessageTime: 'Yesterday',
+        unreadCount: 0,
+        messages: [
+          {
+            id: 'm_tc_2',
+            senderId: 'other',
+            text: 'Do you want 14mm tenons or 12mm tenons for the exterior knee braces on the pavilion?',
+            timestamp: 'Yesterday'
+          }
+        ]
+      }
+    ]
+  }
+
+  if (enclaveId === 'healthcare_medicine') {
+    return [
+      {
+        id: 'msg_hm_1',
+        user: {
+          name: 'Dr. Julian Sterling, MD',
+          headline: 'Chief of Trauma Surgery',
+          avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+          status: 'online'
+        },
+        lastMessage: 'OR 4 is ready for the incoming polytrauma laparotomy.',
+        lastMessageTime: '10:45 AM',
+        unreadCount: 1,
+        messages: [
+          {
+            id: 'm_hm_1',
+            senderId: 'other',
+            text: 'Dr. Vance, OR 4 is scrubbed and ready for the incoming polytrauma pelvic laparotomy.',
+            timestamp: '10:45 AM'
+          }
+        ]
+      },
+      {
+        id: 'msg_hm_2',
+        user: {
+          name: 'Elena Rostova, RN',
+          headline: 'Trauma Resuscitation Nurse Lead',
+          avatar: 'https://images.unsplash.com/photo-1594824813571-638f02614d3f?w=200&auto=format&fit=crop&q=80',
+          status: 'online'
+        },
+        lastMessage: '4 units whole blood ready in the trauma bay infuser.',
+        lastMessageTime: '9:15 AM',
+        unreadCount: 0,
+        messages: [
+          {
+            id: 'm_hm_2',
+            senderId: 'other',
+            text: 'Blood bank confirmed: 4 units low-titer whole blood and 1g IV TXA prepped in Trauma 1.',
+            timestamp: '9:15 AM'
+          }
+        ]
+      }
+    ]
+  }
+
+  if (enclaveId === 'automotive_mechanics') {
+    return [
+      {
+        id: 'msg_am_1',
+        user: {
+          name: 'Kenji Sato',
+          headline: 'Master Scope Diagnostic Lead',
+          avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+          status: 'online'
+        },
+        lastMessage: 'CAN-FD waveform traces saved. Looks like harness fretting on pin 14.',
+        lastMessageTime: '1:15 PM',
+        unreadCount: 1,
+        messages: [
+          {
+            id: 'm_am_1',
+            senderId: 'other',
+            text: 'Marcus, PicoScope traces on the 2026 delivery van show packet distortion. Terminal pin fretting on harness C2.',
+            timestamp: '1:15 PM'
+          }
+        ]
+      },
+      {
+        id: 'msg_am_2',
+        user: {
+          name: 'Carlos Santana',
+          headline: 'Heavy Fleet Diesel Specialist',
+          avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80',
+          status: 'online'
+        },
+        lastMessage: 'The Cummins turbo actuator calibration passed all functional tests.',
+        lastMessageTime: 'Yesterday',
+        unreadCount: 0,
+        messages: [
+          {
+            id: 'm_am_2',
+            senderId: 'other',
+            text: 'The Cummins VGT turbo actuator calibration passed all functional tests. Ready for road testing.',
+            timestamp: 'Yesterday'
+          }
+        ]
+      }
+    ]
+  }
+
+  return initialMessages
 }

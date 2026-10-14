@@ -1204,6 +1204,7 @@ export default function LinkedInPage() {
         {/* VIEW 15: B2B MESSAGING PLATFORM */}
         {activeTab === 'messaging' && (
           <MessagingView
+            currentUser={userData}
             onNavigateMarketplace={() => setActiveTab('marketplace')}
             onNavigateJobs={() => setActiveTab('jobs')}
           />
@@ -1231,6 +1232,7 @@ export default function LinkedInPage() {
         isOpen={isUniversalSearchOpen}
         onClose={() => setIsUniversalSearchOpen(false)}
         initialQuery={searchQuery}
+        currentUser={userData}
         onNavigateTab={(tab) => setActiveTab(tab as any)}
       />
 

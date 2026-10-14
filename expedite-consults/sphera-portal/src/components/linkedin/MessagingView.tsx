@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import {
   Search,
   MoreHorizontal,
@@ -30,24 +30,38 @@ import {
 import {
   B2BConversationThread,
   B2BMessageItem,
-  B2B_MESSAGING_THREADS_DATA
+  getEnclaveB2BThreads
 } from "@/lib/b2b-messaging-data"
+import { UserProfile } from "@/lib/linkedin-data"
 
 interface MessagingViewProps {
   onNavigateMarketplace?: () => void
   onNavigateJobs?: () => void
+  currentUser?: UserProfile
 }
 
 export function MessagingView({
   onNavigateMarketplace,
-  onNavigateJobs
+  onNavigateJobs,
+  currentUser
 }: MessagingViewProps) {
   // Active Channel Filter: All vs People vs Companies vs Products vs Communities
   const [activeChannel, setActiveChannel] = useState<'All' | 'People' | 'Companies' | 'Products' | 'Communities'>('Products')
-  const [threads, setThreads] = useState<B2BConversationThread[]>(B2B_MESSAGING_THREADS_DATA)
-  const [activeThreadId, setActiveThreadId] = useState<string>(B2B_MESSAGING_THREADS_DATA[0].id)
+  const [threads, setThreads] = useState<B2BConversationThread[]>(() => getEnclaveB2BThreads(currentUser?.professionEnclave))
+  const [activeThreadId, setActiveThreadId] = useState<string>(() => {
+    const initial = getEnclaveB2BThreads(currentUser?.professionEnclave)
+    return initial[0]?.id || ''
+  })
   const [messageInput, setMessageInput] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
+
+  useEffect(() => {
+    const newThreads = getEnclaveB2BThreads(currentUser?.professionEnclave)
+    setThreads(newThreads)
+    if (newThreads.length > 0) {
+      setActiveThreadId(newThreads[0].id)
+    }
+  }, [currentUser?.professionEnclave])
 
   // Filtered threads by active channel and search
   const filteredThreads = threads.filter(t => {
@@ -70,9 +84,9 @@ export function MessagingView({
       id: 'msg_' + Date.now(),
       sender: {
         id: 'me',
-        name: 'Alex Taylor',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
-        role: 'Principal Cloud & Security Architect'
+        name: currentUser?.name || 'Alex Taylor',
+        avatar: currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+        role: currentUser?.headline || 'Professional'
       },
       text: messageInput.trim(),
       timestamp: 'Just now'
@@ -107,7 +121,7 @@ export function MessagingView({
             isProduct: true,
             isVerified: true
           },
-          text: `Thank you for your message! Our engineering team has provisioned your staging access. You can activate your cluster credentials in the Marketplace tab.`,
+          text: `Thank you for your message regarding ${activeThread.title}! Our team has received your inquiry and will follow up shortly with specifications and availability.`,
           timestamp: 'Just now'
         }
         setThreads(prev =>

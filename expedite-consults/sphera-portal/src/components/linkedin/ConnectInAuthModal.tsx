@@ -31,9 +31,86 @@ export interface AuthPersona {
   badge: string
   badgeColor: string
   redirectDescription: string
+  professionId?: string
+  professionEnclave?: string
 }
 
 export const DEMO_AUTH_PERSONAS: AuthPersona[] = [
+  {
+    id: 'persona_carpenter',
+    name: 'David Miller (Master Carpenter)',
+    email: 'david.carpenter@timbercraft.io',
+    title: 'Master Carpenter & Heavy Timber Framing Specialist',
+    role: 'personal',
+    avatar: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=400&auto=format&fit=crop&q=80',
+    defaultTab: 'home',
+    defaultWorkspace: 'personal',
+    badge: '🔨 Master Carpenter',
+    badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+    redirectDescription: 'Trades & Construction Enclave · Zero Bleed-Through',
+    professionId: 'carpenter',
+    professionEnclave: 'trades_construction'
+  },
+  {
+    id: 'persona_nurse',
+    name: 'Elena Rostova, RN (Trauma Nurse Lead)',
+    email: 'elena.nurse@hopkinsmedicine.org',
+    title: 'Lead Trauma Clinical Nurse Specialist (BSN, CCRN, TCRN)',
+    role: 'personal',
+    avatar: 'https://images.unsplash.com/photo-1594824813571-638f02614d3f?w=400&auto=format&fit=crop&q=80',
+    defaultTab: 'home',
+    defaultWorkspace: 'personal',
+    badge: '🩺 Trauma Nurse Lead',
+    badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
+    redirectDescription: 'Healthcare & Medicine Enclave · Clinical & Patient Care',
+    professionId: 'er_trauma_nurse',
+    professionEnclave: 'healthcare_medicine'
+  },
+  {
+    id: 'persona_doctor',
+    name: 'Dr. Angela Vance, MD (Orthopedic Surgeon)',
+    email: 'angela.vance@clevelandclinic.org',
+    title: 'Chief of Orthopedic Trauma Surgery · Board Certified FAAOS',
+    role: 'personal',
+    avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&auto=format&fit=crop&q=80',
+    defaultTab: 'home',
+    defaultWorkspace: 'personal',
+    badge: '🩺 Orthopedic Surgeon',
+    badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+    redirectDescription: 'Healthcare & Medicine Enclave · Surgical Specialties',
+    professionId: 'orthopedic_trauma_surgeon',
+    professionEnclave: 'healthcare_medicine'
+  },
+  {
+    id: 'persona_mechanic',
+    name: 'Marcus Miller (ASE Master Auto Tech)',
+    email: 'marcus.mechanic@precisionauto.com',
+    title: 'ASE Master Certified & High-Voltage EV Diagnostic Technician (L1/L3)',
+    role: 'personal',
+    avatar: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=400&auto=format&fit=crop&q=80',
+    defaultTab: 'home',
+    defaultWorkspace: 'personal',
+    badge: '⚡ Master Auto Tech',
+    badgeColor: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
+    redirectDescription: 'Automotive & Mechanics Enclave · EV Diagnostic Rig',
+    professionId: 'ase_master_auto_tech',
+    professionEnclave: 'automotive_mechanics'
+  },
+  {
+    id: 'persona_cyber',
+    name: 'Tariq Al-Mansoor (Red Team Lead)',
+    email: 'tariq.cyber@mandiant-cyber.io',
+    title: 'Principal Offensive Security & Red Team Lead (OSCP, OSCE3, GXPN)',
+    role: 'personal',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
+    defaultTab: 'home',
+    defaultWorkspace: 'personal',
+    badge: '🛡️ Red Team Lead',
+    badgeColor: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
+    redirectDescription: 'Cybersecurity Enclave · Zero Trust & Offensive Ops',
+    professionId: 'red_team_lead',
+    professionEnclave: 'tech_cybersecurity'
+  },
   {
     id: 'persona_kwesi',
     name: 'Kwesi Asiedu (Founder)',
@@ -45,7 +122,9 @@ export const DEMO_AUTH_PERSONAS: AuthPersona[] = [
     defaultWorkspace: 'personal',
     badge: '👑 Founder & CSO',
     badgeColor: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-    redirectDescription: 'Founder Workspace · Full Network Access'
+    redirectDescription: 'Founder Workspace · Full Network Access',
+    professionId: 'corporate_attorney',
+    professionEnclave: 'law_gov_defense'
   },
   {
     id: 'persona_individual',
@@ -58,7 +137,9 @@ export const DEMO_AUTH_PERSONAS: AuthPersona[] = [
     defaultWorkspace: 'personal',
     badge: '👤 Individual Fellow',
     badgeColor: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-    redirectDescription: 'Personal Workspace · Home Feed & Skills'
+    redirectDescription: 'Personal Workspace · Home Feed & Skills',
+    professionId: 'software_engineer',
+    professionEnclave: 'tech_cybersecurity'
   },
   {
     id: 'persona_enterprise',
@@ -440,7 +521,9 @@ export function ConnectInAuthModal({
         email: persona.email,
         role: persona.role,
         avatar: persona.avatar,
-        headline: persona.title
+        headline: persona.title,
+        professionId: persona.professionId,
+        professionEnclave: persona.professionEnclave
       })
 
       saveStoredUser(richProfile)

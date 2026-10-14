@@ -3,6 +3,7 @@ export interface MarketplaceProduct {
   name: string
   tagline: string
   category: 'Software' | 'Services' | 'Training' | 'Enterprise Solutions'
+  professionEnclave?: string
   subCategory: string
   icon: string
   badge?: string
@@ -98,8 +99,444 @@ export const MARKETPLACE_CATEGORIES_CONFIG = [
 ]
 
 export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
+  // ================= SKILLED TRADES & CARPENTRY =================
   {
-    id: 'axiom_ai',
+    id: 'prod_festool_domino',
+    professionEnclave: 'trades_construction',
+    name: 'Festool Domino XL DF 700 Joiner System',
+    tagline: 'Precision mortise and tenon joinery system for heavy timber and architectural finish wood',
+    category: 'Software',
+    subCategory: 'Tools & Joinery',
+    icon: '🧰',
+    badge: '🔨 Guild Verified Spec',
+    rating: 4.99,
+    reviewsCount: 384,
+    activeUsersCount: '4,200+ Master Craftsmen',
+    pricing: {
+      displayPrice: '$1,650',
+      billingPeriod: 'per unit',
+      hasFreeTrial: false
+    },
+    vendor: {
+      name: 'Festool USA Pro Center',
+      logo: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=100&auto=format&fit=crop&q=80',
+      isVerified: true
+    },
+    overview: 'The Festool Domino XL DF 700 produces rock-solid mortise and tenon joints up to 140mm depth. Mortising without templates in solid oak, Douglas fir, and exotic hardwoods with sub-millimeter tolerances.',
+    features: [
+      { title: 'Patented Pendulum Routing', desc: 'Continuous oscillating mortise bit produces flawless slot walls without tearout.' },
+      { title: 'Variable Depth Stops', desc: 'Instant adjustment from 15mm to 70mm mortise depth per plunge.' },
+      { title: 'Dust Extraction Port', desc: '99.9% dust capture when coupled with Festool CT extractors.' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&auto=format&fit=crop&q=80'],
+    architecture: {
+      title: 'Precision Mechanical Routing',
+      summary: 'High-torque direct-drive motor with rack-and-pinion height adjustment.',
+      layers: ['720W High-Torque Motor', 'Precision Fence Pivot 0-90°', 'Cross Stop Index Pins'],
+      latency: 'Instant Setup',
+      dataPrivacy: 'Industrial Tooling'
+    },
+    integrations: ['Festool CT Series Extractors', 'Festool MFS Routing Templates'],
+    security: {
+      compliance: ['UL / CSA Certified', 'OSHA Dust Standards'],
+      encryption: 'N/A',
+      isolation: 'Tooling Hardware'
+    },
+    pricingTiers: [
+      {
+        name: 'Domino XL DF 700 Set',
+        price: '$1,650',
+        period: 'one-time',
+        description: 'Complete joiner with 12mm cutter, support bracket, and trim stop in Systainer SYS 5.',
+        features: ['12mm mortise bit included', 'Trim stop for narrow timber', 'Systainer SYS 5 case', '3-year Festool Service All-Inclusive'],
+        ctaText: 'Buy Verified Unit'
+      }
+    ],
+    reviews: [
+      {
+        author: 'David Miller',
+        role: 'Master Timber Carpenter',
+        company: 'Heritage Guild',
+        avatar: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=100&auto=format&fit=crop&q=80',
+        rating: 5,
+        text: 'The Domino XL cut our compound bent fabrication time in half while keeping our joinery tolerances well under 1mm.',
+        date: 'October 2, 2026'
+      }
+    ],
+    documentation: {
+      quickstart: 'Calibrate fence height against board centerline and set mortise depth stops.',
+      apiEndpoints: [],
+      sdkSupport: []
+    },
+    caseStudies: [],
+    support: {
+      sla: '3-Year All-Inclusive Warranty',
+      channel: 'Festool Pro Dealer Network',
+      responseHours: '24 Business Hours'
+    }
+  },
+  {
+    id: 'prod_leica_disto',
+    professionEnclave: 'trades_construction',
+    name: 'Leica 3D Disto Total Station Laser Scanner',
+    tagline: 'Capture 3D room geometries, uneven walls, and roof rafters directly to CAD DXF',
+    category: 'Software',
+    subCategory: 'CAD & Measurement',
+    icon: '📐',
+    badge: '📐 Millimeter Precision',
+    rating: 4.95,
+    reviewsCount: 160,
+    activeUsersCount: '1,800+ Commercial Builders',
+    pricing: {
+      displayPrice: '$7,800',
+      billingPeriod: 'per scanner',
+      hasFreeTrial: true,
+      trialDays: 7
+    },
+    vendor: {
+      name: 'Leica Geosystems Commercial',
+      logo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+      isVerified: true
+    },
+    overview: 'The Leica 3D Disto measures coordinates, angles, and distances in 3D. Projects layout points onto walls and ceilings for timber posts, steel columns, and coffered ceilings.',
+    features: [
+      { title: 'Real-time DXF/DWG Export', desc: 'Direct wireless export to AutoCAD, Revit, and Chief Architect.' },
+      { title: 'Projector Function', desc: 'Projects layout grid lines directly onto concrete slabs and ceiling joists.' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&auto=format&fit=crop&q=80'],
+    architecture: {
+      title: 'Laser Distance & Angular Encoding',
+      summary: 'Dual-axis electronic tilt compensation with high-precision optical laser.',
+      layers: ['High-Accuracy Laser Distancer', 'Optical Viewfinder Camera', 'Tablet Control Software'],
+      latency: 'Real-time telemetry',
+      dataPrivacy: 'Local encrypted CAD storage'
+    },
+    integrations: ['AutoCAD', 'Revit', 'PlanGrid', 'Procore'],
+    security: {
+      compliance: ['ISO 17123-4 Calibration', 'Class 2 Laser Safety'],
+      encryption: 'WPA3 Wireless',
+      isolation: 'Local Hardware Enclave'
+    },
+    pricingTiers: [
+      {
+        name: 'Commercial Builder Kit',
+        price: '$7,800',
+        period: 'one-time',
+        description: 'Complete 3D Disto unit with tablet, tripod, target marks, and carry case.',
+        features: ['Full 3D scan capability', 'Ruggedized Windows tablet', 'Leica calibration certificate'],
+        ctaText: 'Request Demo Unit'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'Level tripod and calibrate base reference marks using digital optical camera.',
+      apiEndpoints: [],
+      sdkSupport: []
+    },
+    caseStudies: [],
+    support: {
+      sla: '24/7 Field Technical Support',
+      channel: 'Leica Geosystems Direct',
+      responseHours: '4 Hours'
+    }
+  },
+
+  // ================= HEALTHCARE & MEDICINE =================
+  {
+    id: 'prod_butterfly_iq',
+    professionEnclave: 'healthcare_medicine',
+    name: 'Butterfly iQ3 Whole-Body Handheld Ultrasound',
+    tagline: 'Single-probe bedside ultrasound for FAST trauma exams, vascular access, and cardiac sweeps',
+    category: 'Software',
+    subCategory: 'Diagnostic Devices',
+    icon: '🩺',
+    badge: '🩺 FDA 510(k) Cleared',
+    rating: 4.98,
+    reviewsCount: 512,
+    activeUsersCount: '28,000+ Physicians & Nurses',
+    pricing: {
+      displayPrice: '$2,890',
+      billingPeriod: 'per probe',
+      hasFreeTrial: true,
+      trialDays: 30
+    },
+    vendor: {
+      name: 'Butterfly Network Inc.',
+      logo: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=100&auto=format&fit=crop&q=80',
+      isVerified: true
+    },
+    overview: 'Powered by Ultrasound-on-Chip technology, the Butterfly iQ3 replaces curved, linear, and phased array probes with a single semiconductor transducer. Ideal for trauma bay FAST exams and bedside vascular cannulation.',
+    features: [
+      { title: 'Ultrasound-on-Chip™', desc: 'Single silicon probe scans from deep abdominal aorta to superficial radial artery.' },
+      { title: 'iQ Slice Automated Biplane', desc: 'Steer scan planes in real-time without moving the physical probe.' },
+      { title: 'HIPAA Compliant Cloud Vault', desc: 'Zero-knowledge PHI storage with direct PACS / Epic EHR integration.' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=800&auto=format&fit=crop&q=80'],
+    architecture: {
+      title: 'Semiconductor Ultrasound Array',
+      summary: 'CMOS micro-machined capacitive ultrasound transducers with on-die beamforming.',
+      layers: ['9,000 Micromachined Transducers', 'Hardware Beamformer ASIC', 'iOS/Android Secure App Engine'],
+      latency: '<30ms display latency',
+      dataPrivacy: 'HIPAA BAA Compliant & SOC 2 Type II'
+    },
+    integrations: ['Epic Systems EHR', 'Cerner', 'GE Centricity PACS', 'Philips Vue PACS'],
+    security: {
+      compliance: ['FDA Cleared', 'CE Mark', 'HIPAA BAA', 'SOC 2 Type II'],
+      encryption: 'AES-256 in transit & at rest',
+      isolation: 'Zero-Knowledge PHI Enclave'
+    },
+    pricingTiers: [
+      {
+        name: 'Clinical Practitioner Edition',
+        price: '$2,890',
+        period: 'one-time probe + $420/yr cloud',
+        description: 'Includes Butterfly iQ3 probe, charging dock, unlimited PACS cloud storage, and biplane imaging.',
+        features: ['Full ultrasound presets', 'Needle Viz biplane tracking', 'Unlimited secure DICOM uploads'],
+        ctaText: 'Deploy Clinical Probe'
+      }
+    ],
+    reviews: [
+      {
+        author: 'Dr. Angela Vance, MD',
+        role: 'Orthopedic Trauma Surgeon',
+        company: 'Johns Hopkins Shock Trauma',
+        avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=100&auto=format&fit=crop&q=80',
+        rating: 5,
+        text: 'The iQ3 needle tracking makes guided articular injections and bedside hematoma blocks effortless in our Level 1 bay.',
+        date: 'October 11, 2026'
+      }
+    ],
+    documentation: {
+      quickstart: 'Plug probe into USB-C mobile device and select FAST Abdomen preset.',
+      apiEndpoints: ['/api/dicom/upload', '/api/pacs/sync'],
+      sdkSupport: ['Butterfly Mobile SDK']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.99% Cloud Uptime SLA',
+      channel: 'Clinical Hotline 24/7',
+      responseHours: '1 Hour'
+    }
+  },
+  {
+    id: 'prod_belmont_infuser',
+    professionEnclave: 'healthcare_medicine',
+    name: 'Belmont Rapid Infuser RI-2',
+    tagline: 'High-speed warmed blood and fluid delivery up to 500 mL/min for trauma resuscitations',
+    category: 'Enterprise Solutions',
+    subCategory: 'Trauma & Resuscitation',
+    icon: '🩸',
+    badge: '🏥 Trauma Center RFP',
+    rating: 4.99,
+    reviewsCount: 198,
+    activeUsersCount: '850+ Level 1 Trauma Bays',
+    pricing: {
+      displayPrice: '$24,500',
+      billingPeriod: 'per workstation',
+      hasFreeTrial: false
+    },
+    vendor: {
+      name: 'Belmont Medical Technologies',
+      logo: 'https://images.unsplash.com/photo-1594824813571-638f02614d3f?w=100&auto=format&fit=crop&q=80',
+      isVerified: true
+    },
+    overview: 'The gold standard in rapid fluid resuscitation. Infuses warmed blood products from 2.5 to 500 mL/min at precise 37.5°C temperature while automatically detecting and venting micro-air bubbles.',
+    features: [
+      { title: 'Patented Electromagnetic Induction Heating', desc: 'Instantaneous fluid warming without hot spots or hemolysis risk.' },
+      { title: 'Two Ultrasonic Air Detectors', desc: 'Failsafe automated line clamping eliminates air embolism risks at high flow rates.' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=800&auto=format&fit=crop&q=80'],
+    architecture: {
+      title: 'Electromagnetic Induction Fluid Warming',
+      summary: 'Dual microprocessor closed-loop control monitoring temperature, pressure, and air bubble formation.',
+      layers: ['High-Frequency Induction Coils', 'Dual Ultrasonic Air Sensors', 'Positive Displacement Roller Pump'],
+      latency: 'Sub-second response',
+      dataPrivacy: 'Medical Device Hardware'
+    },
+    integrations: ['Hospital Central Supply', 'Blood Bank Barcode Scanners'],
+    security: {
+      compliance: ['FDA PMA Approved', 'IEC 60601-1 Medical Electrical Safety'],
+      encryption: 'N/A',
+      isolation: 'Isolated Bedside System'
+    },
+    pricingTiers: [
+      {
+        name: 'Hospital Trauma Bay Package',
+        price: '$24,500',
+        period: 'system price',
+        description: 'Complete Belmont RI-2 console with IV pole mount, pressure transducer, and starter consumable cassettes.',
+        features: ['500 mL/min flow rate', 'Battery backup for patient transport', 'Full biomedical certification'],
+        ctaText: 'Submit Hospital RFP'
+      }
+    ],
+    reviews: [
+      {
+        author: 'Elena Rostova, RN',
+        role: 'Trauma Bay Resuscitation Lead',
+        company: 'Shock Trauma',
+        avatar: 'https://images.unsplash.com/photo-1594824813571-638f02614d3f?w=100&auto=format&fit=crop&q=80',
+        rating: 5,
+        text: 'The Belmont RI-2 is essential for our Massive Transfusion Protocols. It delivers 4 units of whole blood in under 3 minutes.',
+        date: 'October 8, 2026'
+      }
+    ],
+    documentation: {
+      quickstart: 'Install disposable cassette and perform 45-second automated saline prime.',
+      apiEndpoints: [],
+      sdkSupport: []
+    },
+    caseStudies: [],
+    support: {
+      sla: 'Biomedical Emergency Response',
+      channel: 'Clinical Engineering Support',
+      responseHours: '2 Hours'
+    }
+  },
+
+  // ================= AUTOMOTIVE & FLEET MECHANICS =================
+  {
+    id: 'prod_snapon_zeus',
+    professionEnclave: 'automotive_mechanics',
+    name: 'Snap-on ZEUS+ Diagnostic Workstation',
+    tagline: 'Flagship scan tool with Fast-Track intelligent diagnostics, OEM cloud flashing, and 4-channel scope',
+    category: 'Software',
+    subCategory: 'Scan Tools',
+    icon: '🧰',
+    badge: '🔧 Master Tech Choice',
+    rating: 4.97,
+    reviewsCount: 420,
+    activeUsersCount: '9,200+ Master Technicians',
+    pricing: {
+      displayPrice: '$11,995',
+      billingPeriod: 'per console',
+      hasFreeTrial: true,
+      trialDays: 14
+    },
+    vendor: {
+      name: 'Snap-on Diagnostics Division',
+      logo: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=100&auto=format&fit=crop&q=80',
+      isVerified: true
+    },
+    overview: 'ZEUS+ combines comprehensive multi-brand OEM scan tool diagnostics with Fast-Track Intelligent Diagnostics that filters millions of repair records down to the exact verified component test for the vehicle code.',
+    features: [
+      { title: 'Fast-Track Intelligent Diagnostics', desc: 'Automatically displays known fixes, TSBs, and guided component tests for active DTC.' },
+      { title: 'Integrated 4-Channel Lab Scope', desc: 'High-speed waveform capture with automated signal presets for sensors and actuators.' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=800&auto=format&fit=crop&q=80'],
+    architecture: {
+      title: 'Automotive Embedded Diagnostic OS',
+      summary: 'Dual core quad-threaded processing unit with CAN-FD and DoIP (Diagnostics over Internet Protocol) transceivers.',
+      layers: ['CAN-FD / DoIP Multiplexer', 'High-Speed Lab Scope A/D', 'Snap-on Cloud Database Engine'],
+      latency: '<5ms OBD PID query',
+      dataPrivacy: 'Enterprise repair cloud'
+    },
+    integrations: ['Mitchell 1 ProDemand', 'Snap-on Cloud Portal', 'SureTrack Real Fixes'],
+    security: {
+      compliance: ['SAE J2534 Pass-thru', 'ISO 13400 DoIP', 'FCA Secure Gateway Authorized'],
+      encryption: 'TLS 1.3 OEM Gateway Authentication',
+      isolation: 'Hardware Enclave'
+    },
+    pricingTiers: [
+      {
+        name: 'Master Tech Complete Kit',
+        price: '$11,995',
+        period: 'one-time console + software update',
+        description: 'Includes ZEUS+ workstation, wireless scan module, 4-channel lead set, capacitive probe, and docking cradle.',
+        features: ['Full European, Asian, and Domestic coverage', 'FCA & Ford Security Gateway access', '2-year software warranty'],
+        ctaText: 'Order Diagnostic Station'
+      }
+    ],
+    reviews: [
+      {
+        author: 'Marcus Miller, ASE Master Tech',
+        role: 'Shop Foreman',
+        company: 'Penske Auto Group',
+        avatar: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=100&auto=format&fit=crop&q=80',
+        rating: 5,
+        text: 'The Fast-Track diagnostics on ZEUS+ pinpoints bad grounds and intermittently sticking solenoids faster than any tool on the market.',
+        date: 'October 10, 2026'
+      }
+    ],
+    documentation: {
+      quickstart: 'Plug wireless VCI into OBD-II port, select vehicle VIN decode, and view intelligent code results.',
+      apiEndpoints: [],
+      sdkSupport: []
+    },
+    caseStudies: [],
+    support: {
+      sla: 'Snap-on Tech Rep On-Site Visits',
+      channel: 'Snap-on Diagnostic Hotline',
+      responseHours: 'Instant Call-In'
+    }
+  },
+  {
+    id: 'prod_pico_4425a',
+    professionEnclave: 'automotive_mechanics',
+    name: 'PicoScope 4425A 4-Channel Master Diagnostic Kit',
+    tagline: 'High-speed oscilloscope with Connect-Detect smart probes for CAN-FD, sensors, and secondary ignition',
+    category: 'Software',
+    subCategory: 'Oscilloscopes',
+    icon: '⚡',
+    badge: '⚡ Waveform Master Kit',
+    rating: 4.99,
+    reviewsCount: 310,
+    activeUsersCount: '6,400+ Diagnostic Specialists',
+    pricing: {
+      displayPrice: '$3,850',
+      billingPeriod: 'per master kit',
+      hasFreeTrial: false
+    },
+    vendor: {
+      name: 'Pico Technology Automotive',
+      logo: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=100&auto=format&fit=crop&q=80',
+      isVerified: true
+    },
+    overview: 'The PicoScope 4425A is the global benchmark for oscilloscope diagnostics. Features 400 MS/s sample rates, 12-bit resolution, and PicoBNC+ intelligent probes that automatically configure voltage ranges and scales in PicoScope 7.',
+    features: [
+      { title: 'PicoBNC+ Smart Probe Recognition', desc: 'The software instantly sets up scales and probes when clicked into the BNC connector.' },
+      { title: 'CAN-FD Serial Bus Decoding', desc: 'Hardware decoding of packet arbitration, payload bytes, and CRC error flags in real-time.' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1617788138017-80ad40651399?w=800&auto=format&fit=crop&q=80'],
+    architecture: {
+      title: 'High-Speed Analog Waveform Digitizer',
+      summary: '4 floating input channels with 250M buffer memory and 12-bit vertical resolution.',
+      layers: ['High-Bandwidth 20MHz Analog Front-End', 'Deep Memory Buffer', 'PicoScope 7 Cloud Waveform Library'],
+      latency: 'Real-time oscilloscope capture',
+      dataPrivacy: 'Local scope data'
+    },
+    integrations: ['PicoScope 7 Automotive', 'WPS500X Pressure Transducer', 'NVH Optical Balance Sensor'],
+    security: {
+      compliance: ['CE / UKCA Certified', 'CAT I 100V Floating Inputs'],
+      encryption: 'N/A',
+      isolation: 'Galvanically Isolated BNC Probes'
+    },
+    pricingTiers: [
+      {
+        name: '4-Channel Master Diagnostic Kit',
+        price: '$3,850',
+        period: 'complete kit',
+        description: 'Includes PicoScope 4425A, 4 smart leads, 2000A/200A AC/DC current clamp, 60A current clamp, secondary ignition pickup, and heavy-duty case.',
+        features: ['4x PicoBNC+ test leads', 'Current clamps included', 'Lifetime software updates'],
+        ctaText: 'Acquire Master Kit'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'Install PicoScope 7 software, connect USB cable, and attach PicoBNC+ smart probe to Channel A.',
+      apiEndpoints: [],
+      sdkSupport: []
+    },
+    caseStudies: [],
+    support: {
+      sla: 'Lifetime Free Software Updates',
+      channel: 'Pico Auto Support Team',
+      responseHours: '24 Hours'
+    }
+  },
+
+  // ================= CYBERSECURITY & TECH =================
+  {
+    id: 'prod_axiom',
     name: 'AXIOM AI-Powered Cyber Suite',
     tagline: 'Autonomous AI Threat Detection, Posture Correlation & Exploit Neutralization',
     category: 'Software',
@@ -683,3 +1120,26 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
     }
   }
 ]
+
+export function getEnclaveMarketplaceProducts(enclaveId?: string): MarketplaceProduct[] {
+  const userEnclave = enclaveId || 'tech_cybersecurity'
+  return MASTER_MARKETPLACE_PRODUCTS.filter(p => {
+    if (userEnclave === 'trades_construction') {
+      if (p.professionEnclave && p.professionEnclave !== 'trades_construction') return false
+      if (!p.professionEnclave && !['Tools & Joinery', 'CAD & Measurement', 'Lumber & Materials', 'Hardware'].includes(p.subCategory)) return false
+      return true
+    }
+    if (userEnclave === 'healthcare_medicine') {
+      if (p.professionEnclave && p.professionEnclave !== 'healthcare_medicine') return false
+      if (!p.professionEnclave && !['Diagnostic Devices', 'Trauma & Resuscitation', 'Surgical Implants', 'Clinical Gear'].includes(p.subCategory)) return false
+      return true
+    }
+    if (userEnclave === 'automotive_mechanics') {
+      if (p.professionEnclave && p.professionEnclave !== 'automotive_mechanics') return false
+      if (!p.professionEnclave && !['Scan Tools', 'Oscilloscopes', 'EV Safety Gear', 'OEM Repair Data'].includes(p.subCategory)) return false
+      return true
+    }
+    // tech_cybersecurity or default
+    return p.professionEnclave === userEnclave || (!p.professionEnclave && !['Tools & Joinery', 'Diagnostic Devices', 'Scan Tools'].includes(p.subCategory))
+  })
+}

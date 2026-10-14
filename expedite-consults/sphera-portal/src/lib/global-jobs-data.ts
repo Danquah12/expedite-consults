@@ -20,6 +20,7 @@ export interface GlobalJobItem {
   hub: string
   workplaceType: 'Remote' | 'Hybrid' | 'On-site'
   employmentType: 'Full-time' | 'Contract'
+  professionEnclave?: string
   domainCategory?: 'Recommended' | 'Government' | 'Defense' | 'Cybersecurity' | 'Remote' | 'Contract' | 'Full-time'
   requiredProductExperience?: string[]
   recommendedLearningCourse?: {
@@ -226,7 +227,301 @@ export const COUNTRIES_CONFIG: CountryConfig[] = [
 ]
 
 export const GLOBAL_JOBS_CATALOG: GlobalJobItem[] = [
-  // ================= UNITED STATES =================
+  // ================= SKILLED TRADES & CARPENTRY ENCLAVE =================
+  {
+    id: 'trade_1',
+    countryCode: 'US',
+    countryName: 'United States',
+    professionEnclave: 'trades_construction',
+    domainCategory: 'Recommended',
+    title: 'Master Heavy Timber Carpenter & Bents Lead',
+    company: 'Heritage Timber Framing Guild',
+    companyLogo: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=100&auto=format&fit=crop&q=80',
+    location: 'Austin, TX (On-site)',
+    hub: 'Austin, TX',
+    workplaceType: 'On-site',
+    employmentType: 'Full-time',
+    postedTime: '2 hours ago',
+    applicantsCount: 6,
+    salaryRange: '$95,000 - $130,000 / yr',
+    easyApply: true,
+    description: 'Lead fabrication and site erection of 40-foot clear-span Douglas Fir timber frame bents. Master mortise-and-tenon joinery with draw-bored white oak pegs. Read structural timber plans and coordinate crane picks.',
+    requirements: ['8+ years heavy timber framing experience', 'Proficiency with Festool Domino XL DF 700 & beam saws', 'OSHA 30 Job-Site Safety certification', 'Ability to interpret PE-stamped load diagrams'],
+    languageRequirement: 'Fluent English',
+    applyUrl: 'https://www.heritagetimber.com/careers',
+    source: 'Heritage Guild Direct',
+    tags: ['Timber Framing', 'Carpentry', 'Joinery', 'OSHA 30', 'Recommended']
+  },
+  {
+    id: 'trade_2',
+    countryCode: 'US',
+    countryName: 'United States',
+    professionEnclave: 'trades_construction',
+    domainCategory: 'Recommended',
+    title: 'Architectural Finish Joiner & Custom Millwork Lead',
+    company: 'Craftsman Architectural Woodworking',
+    companyLogo: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=100&auto=format&fit=crop&q=80',
+    location: 'Seattle, WA (On-site)',
+    hub: 'Seattle, WA',
+    workplaceType: 'On-site',
+    employmentType: 'Full-time',
+    postedTime: '5 hours ago',
+    applicantsCount: 11,
+    salaryRange: '$88,000 - $118,000 / yr',
+    easyApply: true,
+    description: 'Precision interior architectural finish carpentry, custom walnut wall paneling, curved staircases, and compound coffered ceilings for luxury commercial and residential estates.',
+    requirements: ['6+ years finish carpentry / custom cabinetry', 'Precision compound miter and coped joinery skills', 'Mastery of Festool track saws and Domino system', 'Blueprint cut-list calculation'],
+    languageRequirement: 'English',
+    applyUrl: 'https://www.craftsmanwood.com/careers',
+    source: 'Craftsman Direct',
+    tags: ['Finish Carpentry', 'Carpentry', 'Millwork', 'Joinery']
+  },
+  {
+    id: 'trade_3',
+    countryCode: 'US',
+    countryName: 'United States',
+    professionEnclave: 'trades_construction',
+    domainCategory: 'Full-time',
+    title: 'Commercial Framing & Site Superintendent',
+    company: 'Turner & DPR Construction Alliance',
+    companyLogo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+    location: 'Boston, MA (On-site)',
+    hub: 'Boston, MA',
+    workplaceType: 'On-site',
+    employmentType: 'Full-time',
+    postedTime: '1 day ago',
+    applicantsCount: 14,
+    salaryRange: '$120,000 - $155,000 / yr',
+    easyApply: false,
+    description: 'Oversee structural wood framing, steel stud installation, and trade subcontractor coordination on a $42M multi-use commercial center. Direct responsibility for OSHA 30 job-site safety, inspections, and milestone progress draws.',
+    requirements: ['10+ years commercial framing and superintendent experience', 'OSHA 30 Certified + CPR/First Aid', 'Procore / PlanGrid BIM coordination', 'Subcontractor trade management'],
+    languageRequirement: 'English',
+    applyUrl: 'https://www.turnerconstruction.com/careers',
+    source: 'Turner Direct ATS',
+    tags: ['General Contracting', 'Framing', 'Construction', 'Prevailing Wage']
+  },
+  {
+    id: 'trade_4',
+    countryCode: 'US',
+    countryName: 'United States',
+    professionEnclave: 'trades_construction',
+    domainCategory: 'Contract',
+    title: 'Journeyman Timber Framer & Post-and-Beam Rigger',
+    company: 'High Country Timberworks',
+    companyLogo: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=100&auto=format&fit=crop&q=80',
+    location: 'US Remote / Travel',
+    hub: 'US Remote',
+    workplaceType: 'On-site',
+    employmentType: 'Contract',
+    postedTime: '2 days ago',
+    applicantsCount: 8,
+    salaryRange: '$45 - $65 / hr ($90,000 - $130,000 eq.)',
+    easyApply: true,
+    description: 'Travel erection crew framing large-scale glulam and heavy timber municipal pavilions across the Pacific Northwest and Rocky Mountain region. Per-diem provided.',
+    requirements: ['Valid Journeyman trade card', 'OSHA 10 or 30', 'Rigging and crane signaling certification'],
+    languageRequirement: 'English',
+    applyUrl: 'https://www.highcountrytimber.com/careers',
+    source: 'Timber Guild Board',
+    tags: ['Apprentice', 'Timber Framing', 'Carpentry', 'Contract']
+  },
+
+  // ================= HEALTHCARE & MEDICINE ENCLAVE =================
+  {
+    id: 'health_1',
+    countryCode: 'US',
+    countryName: 'United States',
+    professionEnclave: 'healthcare_medicine',
+    domainCategory: 'Recommended',
+    title: 'Attending Orthopedic Trauma Surgeon & Clinical Chair',
+    company: 'Johns Hopkins Medicine / Shock Trauma',
+    companyLogo: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=100&auto=format&fit=crop&q=80',
+    location: 'Washington, DC / MD / VA (On-site)',
+    hub: 'Washington, DC / MD / VA',
+    workplaceType: 'On-site',
+    employmentType: 'Full-time',
+    postedTime: '3 hours ago',
+    applicantsCount: 4,
+    salaryRange: '$480,000 - $690,000 / yr',
+    easyApply: false,
+    description: 'Direct the Pelvic & Acetabular Fracture Reconstruction service at our Level 1 Trauma Center. Perform complex articular reconstruction, periprosthetic fractures, and participate in clinical orthobiologic trials.',
+    requirements: ['MD/DO with ABOS Board Certification in Orthopedic Surgery', 'OTA-accredited Orthopedic Trauma Fellowship', 'Active Maryland / DC medical license', 'Demonstrated clinical research record'],
+    languageRequirement: 'English',
+    applyUrl: 'https://www.hopkinsmedicine.org/careers',
+    source: 'Johns Hopkins Direct',
+    tags: ['Surgery', 'Orthopedic Surgery', 'Trauma & Emergency', 'Hospitalist', 'Recommended']
+  },
+  {
+    id: 'health_2',
+    countryCode: 'US',
+    countryName: 'United States',
+    professionEnclave: 'healthcare_medicine',
+    domainCategory: 'Recommended',
+    title: 'Emergency Trauma Resuscitation Nurse Lead (RN, CCRN, TNCC)',
+    company: 'Massachusetts General Hospital - Level 1 Trauma',
+    companyLogo: 'https://images.unsplash.com/photo-1594824813571-638f02614d3f?w=100&auto=format&fit=crop&q=80',
+    location: 'Boston, MA (On-site)',
+    hub: 'Boston, MA',
+    workplaceType: 'On-site',
+    employmentType: 'Full-time',
+    postedTime: '4 hours ago',
+    applicantsCount: 9,
+    salaryRange: '$120,000 - $152,000 / yr',
+    easyApply: true,
+    description: 'Lead Emergency Severity Index Level 1 and trauma bay resuscitations. Direct Rapid Infusion Catheter (Belmont RI-2) protocols, arterial line access, and Massive Transfusion Protocol (MTP) blood delivery.',
+    requirements: ['BSN with active MA RN License', 'AACN CCRN and ENA TNCC certified', '4+ years Level 1 Trauma Center emergency nursing', 'ACLS, PALS, BLS certified'],
+    languageRequirement: 'English',
+    applyUrl: 'https://www.massgeneral.org/careers',
+    source: 'MGH Talent ATS',
+    tags: ['Trauma & Emergency', 'Nursing', 'Critical Care', 'CCRN', 'Recommended']
+  },
+  {
+    id: 'health_3',
+    countryCode: 'US',
+    countryName: 'United States',
+    professionEnclave: 'healthcare_medicine',
+    domainCategory: 'Contract',
+    title: 'Surgical Critical Care ICU Staff Nurse (Travel / PRN)',
+    company: 'Cleveland Clinic Foundation',
+    companyLogo: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=100&auto=format&fit=crop&q=80',
+    location: 'New York, NY (Hybrid)',
+    hub: 'New York, NY',
+    workplaceType: 'On-site',
+    employmentType: 'Contract',
+    postedTime: '1 day ago',
+    applicantsCount: 16,
+    salaryRange: '$3,100 - $4,200 / week ($150,000+ eq.)',
+    easyApply: true,
+    description: '13-week high-acuity surgical intensive care travel contract. Management of hemodynamic instability, ECMO, mechanical ventilation, and multi-organ failure post-cardiothoracic surgery.',
+    requirements: ['Active Compact RN License or NY RN license', 'CCRN or CMC certification preferred', '2+ years Cardiothoracic or Trauma ICU experience'],
+    languageRequirement: 'English',
+    applyUrl: 'https://my.clevelandclinic.org/careers',
+    source: 'Cleveland Clinic Staffing',
+    tags: ['Critical Care', 'Nursing', 'Locum Tenens', 'Contract']
+  },
+  {
+    id: 'health_4',
+    countryCode: 'US',
+    countryName: 'United States',
+    professionEnclave: 'healthcare_medicine',
+    domainCategory: 'Contract',
+    title: 'Locum Tenens Acute Care Trauma Surgeon',
+    company: 'Envision Healthcare / Medical Staffing',
+    companyLogo: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=100&auto=format&fit=crop&q=80',
+    location: 'Austin, TX (On-site)',
+    hub: 'Austin, TX',
+    workplaceType: 'On-site',
+    employmentType: 'Contract',
+    postedTime: '2 days ago',
+    applicantsCount: 5,
+    salaryRange: '$3,400 - $4,600 / 24-hr shift',
+    easyApply: true,
+    description: 'Provide 24-hour in-house Level 2 Trauma coverage and emergency general surgery call. Full malpractice insurance and private travel/lodging provided.',
+    requirements: ['Board Certified General Surgery (ABMS/ABS)', 'Surgical Critical Care fellowship a plus', 'ATLS instructor status preferred'],
+    languageRequirement: 'English',
+    applyUrl: 'https://www.envisionhealth.com/careers',
+    source: 'Envision Direct',
+    tags: ['Surgery', 'Locum Tenens', 'Trauma & Emergency']
+  },
+
+  // ================= AUTOMOTIVE & FLEET MECHANICS ENCLAVE =================
+  {
+    id: 'auto_1',
+    countryCode: 'US',
+    countryName: 'United States',
+    professionEnclave: 'automotive_mechanics',
+    domainCategory: 'Recommended',
+    title: 'ASE World Class Master Automobile Technician & Shop Foreman',
+    company: 'Penske Automotive Group',
+    companyLogo: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=100&auto=format&fit=crop&q=80',
+    location: 'New York, NY (On-site)',
+    hub: 'New York, NY',
+    workplaceType: 'On-site',
+    employmentType: 'Full-time',
+    postedTime: '2 hours ago',
+    applicantsCount: 7,
+    salaryRange: '$110,000 - $155,000 / yr ($55 - $72 / flag hr)',
+    easyApply: true,
+    description: 'Lead dealership diagnostic bay and mentor apprentice technicians. Perform complex driveability diagnostics, CAN-FD scope analysis, transmission teardowns, and high-voltage hybrid powertrain service.',
+    requirements: ['ASE Certified Master Automobile Technician (A1–A8)', 'ASE L1 Advanced Engine Performance certification', '8+ years dealership or premier independent experience', 'Expertise with Snap-on ZEUS+ and PicoScope'],
+    languageRequirement: 'English',
+    applyUrl: 'https://www.penskeautomotive.com/careers',
+    source: 'Penske Direct',
+    tags: ['Master Diagnostics', 'Automotive', 'ASE', 'Shop Foreman', 'Recommended']
+  },
+  {
+    id: 'auto_2',
+    countryCode: 'US',
+    countryName: 'United States',
+    professionEnclave: 'automotive_mechanics',
+    domainCategory: 'Recommended',
+    title: '800V High-Voltage EV Powertrain & Inverter Diagnostic Specialist',
+    company: 'Rivian Advanced Service Operations',
+    companyLogo: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=100&auto=format&fit=crop&q=80',
+    location: 'San Francisco, CA (On-site)',
+    hub: 'San Francisco, CA',
+    workplaceType: 'On-site',
+    employmentType: 'Full-time',
+    postedTime: '4 hours ago',
+    applicantsCount: 12,
+    salaryRange: '$125,000 - $165,000 / yr',
+    easyApply: true,
+    description: 'Diagnose and repair dual-motor and quad-motor 800V electric drivetrains, silicon-carbide inverters, and high-voltage DC contactors. Perform live pack de-energization using NFPA 70E Category 4 PPE.',
+    requirements: ['NFPA 70E High Voltage Electrical Safety certified', 'ASE L3 Light Duty Hybrid/EV Specialist', 'High proficiency with 1000V insulation testers & CAN-bus decoders'],
+    languageRequirement: 'English',
+    applyUrl: 'https://rivian.com/careers',
+    source: 'Rivian ATS',
+    tags: ['EV Powertrain', 'Automotive', 'Diagnostics', 'High-Voltage', 'Recommended']
+  },
+  {
+    id: 'auto_3',
+    countryCode: 'US',
+    countryName: 'United States',
+    professionEnclave: 'automotive_mechanics',
+    domainCategory: 'Full-time',
+    title: 'Heavy Duty Commercial Fleet Diesel Lead (Cummins & Detroit)',
+    company: 'Ryder Fleet Maintenance Services',
+    companyLogo: 'https://images.unsplash.com/photo-1519003722824-194d4455a60c?w=100&auto=format&fit=crop&q=80',
+    location: 'Austin, TX (On-site)',
+    hub: 'Austin, TX',
+    workplaceType: 'On-site',
+    employmentType: 'Full-time',
+    postedTime: '1 day ago',
+    applicantsCount: 10,
+    salaryRange: '$92,000 - $128,000 / yr',
+    easyApply: true,
+    description: 'Maintain and diagnose Class 8 commercial tractor-trailers powered by Cummins X15 and Detroit DD15 engines. Deep expertise in SCR aftertreatment, DEF dosers, DPF regeneration, and Wabco air brakes.',
+    requirements: ['ASE Master Medium/Heavy Truck (T1–T8)', 'Cummins INSITE and Detroit Diagnostic Link software proficiency', 'Commercial Driver License (CDL Class A) preferred'],
+    languageRequirement: 'English',
+    applyUrl: 'https://ryder.com/careers',
+    source: 'Ryder Fleet Careers',
+    tags: ['Heavy Diesel', 'Automotive', 'Fleet', 'Flat-rate']
+  },
+  {
+    id: 'auto_4',
+    countryCode: 'US',
+    countryName: 'United States',
+    professionEnclave: 'automotive_mechanics',
+    domainCategory: 'Contract',
+    title: 'Master Diagnostic Technician (PicoScope & CAN-FD Specialist)',
+    company: 'Audi & Porsche Performance Center',
+    companyLogo: 'https://images.unsplash.com/photo-1617788138017-80ad40651399?w=100&auto=format&fit=crop&q=80',
+    location: 'Seattle, WA (On-site)',
+    hub: 'Seattle, WA',
+    workplaceType: 'On-site',
+    employmentType: 'Contract',
+    postedTime: '2 days ago',
+    applicantsCount: 8,
+    salaryRange: '$65 - $85 / flat hr ($130,000 - $170,000 eq.)',
+    easyApply: true,
+    description: 'Dedicated diagnostic contractor resolving stubborn intermittent electrical faults, CAN-FD communication dropouts, and FlexRay bus glitches on German luxury and performance vehicles.',
+    requirements: ['ASE Master Tech or European OEM Master Certified', 'Mastery of 4-channel PicoScope and current clamps', 'ODIS and VCDS diagnostic suites'],
+    languageRequirement: 'English',
+    applyUrl: 'https://www.audi.com/careers',
+    source: 'Audi Master Tech Portal',
+    tags: ['Master Diagnostics', 'Automotive', 'Flat-rate']
+  },
+
+  // ================= UNITED STATES TECH & CYBERSECURITY =================
   {
     id: 'us_1',
     countryCode: 'US',
@@ -837,3 +1132,26 @@ export const initialCandidatesData: CandidateProfile[] = [
     currentStatus: 'Open to Offers'
   }
 ]
+
+export function getEnclaveGlobalJobs(enclaveId?: string): GlobalJobItem[] {
+  const enclave = enclaveId || 'tech_cybersecurity'
+  return GLOBAL_JOBS_CATALOG.filter(j => {
+    if (enclave === 'trades_construction') {
+      return j.professionEnclave === 'trades_construction' ||
+             j.tags.some(t => ['Carpentry', 'Construction', 'Framing', 'Timber', 'Joinery'].includes(t)) ||
+             j.title.toLowerCase().includes('carpenter') || j.title.toLowerCase().includes('framing')
+    }
+    if (enclave === 'healthcare_medicine') {
+      return j.professionEnclave === 'healthcare_medicine' ||
+             j.tags.some(t => ['Surgery', 'Nursing', 'Trauma', 'Clinical', 'Medicine', 'Hospital'].includes(t)) ||
+             j.title.toLowerCase().includes('surgeon') || j.title.toLowerCase().includes('nurse') || j.title.toLowerCase().includes('doctor')
+    }
+    if (enclave === 'automotive_mechanics') {
+      return j.professionEnclave === 'automotive_mechanics' ||
+             j.tags.some(t => ['Automotive', 'Diagnostic', 'EV', 'Powertrain', 'Mechanic'].includes(t)) ||
+             j.title.toLowerCase().includes('diagnostic') || j.title.toLowerCase().includes('technician') || j.title.toLowerCase().includes('mechanic')
+    }
+    return j.professionEnclave === enclave ||
+           (!j.professionEnclave && !['trades_construction', 'healthcare_medicine', 'automotive_mechanics'].includes(enclave))
+  })
+}

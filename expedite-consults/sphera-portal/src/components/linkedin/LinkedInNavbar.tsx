@@ -44,6 +44,8 @@ import {
 import { UserProfile, SuggestedConnection } from "@/lib/linkedin-data"
 import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
 import { isSuperAdminUser } from "@/lib/connectin-profile"
+import { getCategorizedMoreMenu, getEnclaveSearchPlaceholder, getEnclaveModules } from "@/lib/connectin-navbar-data"
+import { findEnclaveById } from "@/lib/connectin-professions"
 
 interface LinkedInNavbarProps {
   user: UserProfile
@@ -121,47 +123,7 @@ export function LinkedInNavbar({
 
   const isAdminUser = isSuperAdminUser(user)
 
-  const categorizedMoreMenu = [
-    {
-      category: "Business & Enterprise 🏢",
-      items: [
-        { id: "procurement", label: "🏢 Procurement & RFPs", desc: "$2.4M enterprise spend & bids" },
-        { id: "bounties", label: "🏆 Enterprise Bounties", desc: "$15K–$50K hackathons in escrow" },
-        ...(isAdminUser ? [{ id: "adminiam", label: "🛡️ Admin & IAM Console", desc: "User enforcement, 4-eyes & audit log" }] : []),
-        { id: "company", label: "🏛️ Company Hub", desc: "Expedite Consults enterprise profile" },
-        { id: "sellercenter", label: "💼 Seller Center", desc: "Manage software & $122.7K MRR" },
-        { id: "wallet", label: "💳 Pay, Wallet & Invoicing", desc: "$2,430 Balance & SOWs" },
-      ]
-    },
-    {
-      category: "AI & Innovation 🤖",
-      items: [
-        { id: "aiagents", label: "🤖 AI Agents Marketplace", desc: "Test & deploy autonomous agents" },
-        { id: "missions", label: "🔥 Career Missions & Journey", desc: "10-step lifecycle & +1,850 XP" },
-        { id: "collaboration", label: "🤝 Co-Founders & Ideas", desc: "Incubator & crowdsourced pilots" },
-        { id: "mentorship", label: "👨‍🏫 Mentorship & Creators", desc: "1:1 CISO bookings & brand briefs" },
-      ]
-    },
-    {
-      category: "Developer & Defense Labs 🧪",
-      items: [
-        { id: "code", label: "🧑‍💻 ConnectIn Code", desc: "GitHub repo sync & recruit by code" },
-        { id: "labs", label: "🧪 Security Labs Sandbox", desc: "Firecracker microVM sandboxes" },
-        { id: "ecosystem", label: "🌐 Ecosystem Platform", desc: "APIs, SDKs & multi-cloud connectors" },
-      ]
-    },
-    {
-      category: "Trust & Community 🛡️",
-      items: [
-        { id: "accountsecurity", label: "🔐 Account Security & Passkeys", desc: "FIDO2, sessions & privacy" },
-        { id: "guilds", label: "🛡️ Gated Guilds & Enclaves", desc: "TS/SCI & Founder roundtables" },
-        { id: "trustcenter", label: "🛡️ Trust Center", desc: "SOC 2, FedRAMP & 99.99% uptime" },
-        { id: "peerreview", label: "⭐ Peer Review", desc: "Verified expert validation ($150/hr)" },
-        { id: "compensation", label: "💰 Compensation Intelligence", desc: "Salary benchmarks & contractor rates" },
-        { id: "events", label: "📅 Events & Live Demos", desc: "Webinars & live teardowns" },
-      ]
-    }
-  ]
+  const categorizedMoreMenu = getCategorizedMoreMenu(user.professionEnclave, isAdminUser, user.profession)
 
   // Complete directory profiles (merging suggested with verified seed accounts)
   const defaultDirectory = [
@@ -249,18 +211,7 @@ export function LinkedInNavbar({
   ).slice(0, 4)
 
   // Module & Hub fast shortcuts
-  const ALL_MODULES = [
-    { id: "jobs", label: "Jobs Hub & Requisitions", desc: "1,283 active cleared roles", icon: "💼" },
-    { id: "marketplace", label: "Enterprise Marketplace", desc: "Software, tools & cATO packs", icon: "🛍️" },
-    { id: "procurement", label: "Procurement & RFPs", desc: "$2.4M enterprise spend & bids", icon: "🏢" },
-    { id: "bounties", label: "Enterprise Bounties", desc: "$15K–$50K hackathons in escrow", icon: "🏆" },
-    { id: "media", label: "ConnectIn TV & Media", desc: "Live streams & tech podcasts", icon: "🎥" },
-    { id: "pulserooms", label: "Pulse Rooms", desc: "Live audio roundtables & news", icon: "📰" },
-    { id: "learning", label: "Learning & Certifications", desc: "Defense labs & credentials", icon: "🎓" },
-    { id: "labs", label: "Security Labs Sandbox", desc: "Firecracker microVM sandboxes", icon: "🧪" },
-    ...(isAdminUser ? [{ id: "adminiam", label: "Admin & IAM Console", desc: "User enforcement & audit log", icon: "🛡️" }] : []),
-    { id: "accountsecurity", label: "Account Security & Passkeys", desc: "FIDO2, sessions & privacy", icon: "🔐" }
-  ]
+  const ALL_MODULES = getEnclaveModules(user.professionEnclave, isAdminUser)
 
   const matchingModules = searchQuery.trim()
     ? ALL_MODULES.filter(m =>
@@ -301,7 +252,7 @@ export function LinkedInNavbar({
               <Search className="h-3.5 w-3.5 text-zinc-500 shrink-0" />
               <input
                 type="text"
-                placeholder="Search people, jobs, hubs..."
+                placeholder={getEnclaveSearchPlaceholder(user.professionEnclave)}
                 value={searchQuery}
                 onChange={(e) => {
                   onSearchChange(e.target.value)
@@ -671,6 +622,16 @@ export function LinkedInNavbar({
                       <p className="text-xs text-zinc-500 truncate dark:text-zinc-400">
                         {user.headline}
                       </p>
+                      {user.professionEnclave && (() => {
+                        const enc = findEnclaveById(user.professionEnclave)
+                        return (
+                          <div className="mt-1 flex items-center gap-1">
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                              {enc?.icon || '🛡️'} {enc?.shortName || enc?.name || 'Verified Enclave'}
+                            </span>
+                          </div>
+                        )
+                      })()}
                     </div>
                   </div>
 

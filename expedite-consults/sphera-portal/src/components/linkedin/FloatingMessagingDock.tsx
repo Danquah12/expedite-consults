@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import {
   MessageSquare,
   ChevronUp,
@@ -14,18 +14,25 @@ import {
   Minimize2,
   Maximize2
 } from "lucide-react"
-import { MessageThread, initialMessages, UserProfile } from "@/lib/linkedin-data"
+import { MessageThread, initialMessages, UserProfile, getEnclaveFloatingMessages } from "@/lib/linkedin-data"
 
 interface FloatingMessagingDockProps {
   currentUser: UserProfile
 }
 
 export function FloatingMessagingDock({ currentUser }: FloatingMessagingDockProps) {
+  const enclaveId = currentUser?.professionEnclave
   const [isDockOpen, setIsDockOpen] = useState(false)
-  const [threads, setThreads] = useState<MessageThread[]>(initialMessages)
+  const [threads, setThreads] = useState<MessageThread[]>(() => getEnclaveFloatingMessages(enclaveId))
   const [activeChatThread, setActiveChatThread] = useState<MessageThread | null>(null)
   const [miniMessageInput, setMiniMessageInput] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
+
+  useEffect(() => {
+    const encThreads = getEnclaveFloatingMessages(enclaveId)
+    setThreads(encThreads)
+    setActiveChatThread(null)
+  }, [enclaveId])
 
   const totalUnread = threads.reduce((acc, t) => acc + t.unreadCount, 0)
 

@@ -432,3 +432,287 @@ export const PODCAST_SHOWS_DATA: PodcastShow[] = [
     episodes: []
   }
 ]
+
+export const TRADES_VIDEOS_DATA: MediaVideoItem[] = [
+  {
+    id: 'vid_timber_joinery',
+    title: 'Heavy Timber Frame Joinery Masterclass: Compound Bents, Mortise & Tenon Layout',
+    channelName: 'David Miller Timber Guild',
+    channelAvatar: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=200&auto=format&fit=crop&q=80',
+    channelRole: 'Master Carpenter & Timber Frame Guild Director',
+    channelFollowers: '36.5K Followers',
+    isVerifiedChannel: true,
+    duration: '28:40',
+    durationSeconds: 1720,
+    views: '54.2K views',
+    uploadTimeAgo: '3 days ago',
+    category: 'Technical Walkthrough',
+    thumbnail: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1000&auto=format&fit=crop&q=80',
+    visibility: 'Public',
+    description: 'Master carpenter David Miller demonstrates traditional draw-bored mortise and tenon joinery layout on 10x10 Douglas Fir posts with white oak octagonal trunnels and Festool Domino XL DF 700 integration.',
+    likesCount: 2940,
+    commentsCount: 184,
+    chapters: [
+      { timestamp: '00:00', seconds: 0, title: 'Timber Sourcing & Moisture Meter Verification' },
+      { timestamp: '06:15', seconds: 375, title: 'Squaring 10x10 Douglas Fir Principal Posts' },
+      { timestamp: '14:20', seconds: 860, title: 'Mortise & Tenon Drawbore Layout (1/8" Offset)' },
+      { timestamp: '22:10', seconds: 1330, title: 'Festool Domino XL DF 700 Compound Bracing' }
+    ],
+    transcript: [
+      { timestamp: '00:30', seconds: 30, speaker: 'David Miller', text: 'Welcome craftsmen. Today we are laying out heavy timber mortise-and-tenon joinery for a 40-foot clear span bent.' },
+      { timestamp: '14:30', seconds: 870, speaker: 'David Miller', text: 'Notice the drawbore hole offset of exactly 1/8 inch. When we drive the octagonal oak peg, it pulls the shoulder air-tight.' }
+    ],
+    embeddedProduct: {
+      id: 'festool-domino-xl',
+      name: 'Festool Domino XL DF 700 Joiner',
+      icon: '🪚',
+      price: '$1,650',
+      tagline: 'Heavy timber mortise joinery system with 14mm cutter.',
+      trialAvailable: false
+    },
+    relatedJobs: [
+      { id: 'job_carp_1', title: 'Heavy Timber Framing Lead', company: 'Pacific Timberworks', location: 'Portland, OR', salary: '$95K - $125K' }
+    ]
+  },
+  {
+    id: 'vid_osha_rigging',
+    title: 'OSHA 1926 Crane Rigging & Clear-Span Truss Erection Safety Protocol',
+    channelName: 'Commercial Construction Guild',
+    channelAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80',
+    channelRole: 'General Contracting & OSHA 30 Safety Administration',
+    channelFollowers: '41.8K Followers',
+    isVerifiedChannel: true,
+    duration: '22:15',
+    durationSeconds: 1335,
+    views: '38.1K views',
+    uploadTimeAgo: '1 week ago',
+    category: 'Learning',
+    thumbnail: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1000&auto=format&fit=crop&q=80',
+    visibility: 'Public',
+    description: 'Job-site superintendent Frank Gallagher breaks down OSHA Subpart M fall protection anchorages, spreader bar rigging, and 100% tie-off lifelines during commercial bent lifts.',
+    likesCount: 1840,
+    commentsCount: 92,
+    chapters: [
+      { timestamp: '00:00', seconds: 0, title: 'OSHA 1926 Subpart M Crane Lift Overview' },
+      { timestamp: '07:30', seconds: 450, title: 'Calculating Sling Angles & Shackle Deflection' },
+      { timestamp: '16:00', seconds: 960, title: '100% Tie-Off Horizontal Lifelines on Open Trusses' }
+    ],
+    transcript: [
+      { timestamp: '00:45', seconds: 45, speaker: 'Frank Gallagher', text: 'Safety is non-negotiable. When picking a 3,500-lb timber bent, sling angles must never drop below 60 degrees.' }
+    ]
+  }
+]
+
+export const HEALTHCARE_VIDEOS_DATA: MediaVideoItem[] = [
+  {
+    id: 'vid_pelvic_orif',
+    title: 'Orthopedic Trauma Masterclass: Unstable Pelvic Ring Reconstruction & Anterior Column ORIF',
+    channelName: 'Dr. Angela Vance, MD, FACS',
+    channelAvatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=200&auto=format&fit=crop&q=80',
+    channelRole: 'Chief of Orthopedic Trauma Surgery · Level 1 Trauma Center',
+    channelFollowers: '62.4K Followers',
+    isVerifiedChannel: true,
+    duration: '34:20',
+    durationSeconds: 2060,
+    views: '71.5K views',
+    uploadTimeAgo: '4 days ago',
+    category: 'Technical Walkthrough',
+    thumbnail: 'https://images.unsplash.com/photo-1551076805-e1869033e561?w=1000&auto=format&fit=crop&q=80',
+    visibility: 'Public',
+    description: 'Dr. Angela Vance provides an operative surgical walkthrough of an anterior column and posterior hemitransverse acetabular fracture repair using 3D anatomical templating and anatomical curved reconstruction plates.',
+    likesCount: 4210,
+    commentsCount: 312,
+    chapters: [
+      { timestamp: '00:00', seconds: 0, title: 'Pelvic CT 3D Reconstruction & Fracture Classification' },
+      { timestamp: '08:15', seconds: 495, title: 'Ilioinguinal Surgical Approach & Vessel Mobilization' },
+      { timestamp: '19:40', seconds: 1180, title: 'Anatomical Reduction Clamp Placement & Fluoroscopy' },
+      { timestamp: '28:10', seconds: 1690, title: 'Plate Contouring & 3.5mm Cortical Screw Fixation' }
+    ],
+    transcript: [
+      { timestamp: '00:25', seconds: 25, speaker: 'Dr. Angela Vance', text: 'Welcome colleagues. Today we are addressing a high-energy polytrauma pelvic ring disruption.' },
+      { timestamp: '19:45', seconds: 1185, speaker: 'Dr. Angela Vance', text: 'Fluoroscopic inlet and outlet views verify anatomical restoration of the articular surface before permanent screw locking.' }
+    ],
+    embeddedProduct: {
+      id: 'butterfly-iq3',
+      name: 'Butterfly iQ3 Handheld Ultrasound',
+      icon: '🩺',
+      price: '$2,899',
+      tagline: 'Whole-body single-probe clinical ultrasound with cloud DICOM.',
+      trialAvailable: true
+    },
+    relatedJobs: [
+      { id: 'job_surg_1', title: 'Attending Orthopedic Trauma Surgeon', company: 'Academic Health Network', location: 'Chicago, IL', salary: '$580K - $750K' }
+    ]
+  },
+  {
+    id: 'vid_trauma_pocus',
+    title: 'Emergency Trauma Resuscitation: Massive Transfusion Protocol (MTP) & Rapid Infusion',
+    channelName: 'Emergency Trauma Nursing Suite',
+    channelAvatar: 'https://images.unsplash.com/photo-1594824813571-638f02614d3f?w=200&auto=format&fit=crop&q=80',
+    channelRole: 'Trauma Resuscitation Nurse Lead · Emergency Services',
+    channelFollowers: '48.9K Followers',
+    isVerifiedChannel: true,
+    duration: '24:50',
+    durationSeconds: 1490,
+    views: '49.8K views',
+    uploadTimeAgo: '6 days ago',
+    category: 'Learning',
+    thumbnail: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=1000&auto=format&fit=crop&q=80',
+    visibility: 'Public',
+    description: 'Trauma nurse lead Elena Rostova demonstrates Belmont Rapid Infuser operation, whole blood warming protocols, and arterial line transducer leveling during hemorrhagic shock resuscitation.',
+    likesCount: 2680,
+    commentsCount: 154,
+    chapters: [
+      { timestamp: '00:00', seconds: 0, title: 'Level 1 Trauma Activation & Initial Survey' },
+      { timestamp: '06:30', seconds: 390, title: 'Belmont Rapid Infuser 500 mL/min Priming' },
+      { timestamp: '15:20', seconds: 920, title: 'Ionized Calcium & Arterial Blood Gas Titration' }
+    ],
+    transcript: [
+      { timestamp: '00:40', seconds: 40, speaker: 'Elena Rostova', text: 'When MTP is triggered, whole blood delivery must commence within 3 minutes through dual large-bore IVs.' }
+    ]
+  }
+]
+
+export const AUTOMOTIVE_VIDEOS_DATA: MediaVideoItem[] = [
+  {
+    id: 'vid_800v_inverter',
+    title: '800-Volt EV Powertrain Diagnostics: Silicon Carbide Inverter & Battery Isolation',
+    channelName: 'Marcus Miller ASE Master Diagnostics',
+    channelAvatar: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=200&auto=format&fit=crop&q=80',
+    channelRole: 'World Class Master Tech & L3 Hybrid Diagnostics Lead',
+    channelFollowers: '58.7K Followers',
+    isVerifiedChannel: true,
+    duration: '31:15',
+    durationSeconds: 1875,
+    views: '63.9K views',
+    uploadTimeAgo: '3 days ago',
+    category: 'Technical Walkthrough',
+    thumbnail: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=1000&auto=format&fit=crop&q=80',
+    visibility: 'Public',
+    description: 'Marcus Miller demonstrates high-voltage CAT IV 1000V de-energization, capacitor discharge verification, and oscilloscope diagnosis of Silicon Carbide (SiC) PWM gate driver circuits on commercial EV powertrains.',
+    likesCount: 3890,
+    commentsCount: 245,
+    chapters: [
+      { timestamp: '00:00', seconds: 0, title: 'NFPA 70E High-Voltage PPE & Proving Dead' },
+      { timestamp: '08:45', seconds: 525, title: 'Manual Service Disconnect (MSD) Lockout' },
+      { timestamp: '17:20', seconds: 1040, title: 'Oscilloscope Differential Voltage on Gate Drivers' },
+      { timestamp: '26:00', seconds: 1560, title: 'Resolving Intermittent High-Voltage Isolation DTCs' }
+    ],
+    transcript: [
+      { timestamp: '00:35', seconds: 35, speaker: 'Marcus Miller', text: 'Safety first: we always test our multimeter on a known live source before and after probing the 800V DC bus.' },
+      { timestamp: '17:30', seconds: 1050, speaker: 'Marcus Miller', text: 'Observe this gate-driver ring-down waveform: excessive ringing indicates gate resistance breakdown.' }
+    ],
+    embeddedProduct: {
+      id: 'snap-on-zeus-plus',
+      name: 'Snap-on ZEUS+ Diagnostic Workstation',
+      icon: '⚡',
+      price: '$14,995',
+      tagline: 'Flagship automotive scan tool with 4-channel high-speed scope.',
+      trialAvailable: false
+    },
+    relatedJobs: [
+      { id: 'job_auto_1', title: 'ASE Master EV Diagnostic Specialist', company: 'Rivian Fleet Services', location: 'Austin, TX', salary: '$110K - $145K' }
+    ]
+  },
+  {
+    id: 'vid_canfd_pico',
+    title: 'CAN-FD Physical Layer Signal Troubleshooting with 4-Channel PicoScope',
+    channelName: 'Automotive Electronics Lab',
+    channelAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+    channelRole: 'Master Scope Instructor · Advanced Multiplex Networks',
+    channelFollowers: '39.4K Followers',
+    isVerifiedChannel: true,
+    duration: '26:40',
+    durationSeconds: 1600,
+    views: '44.3K views',
+    uploadTimeAgo: '1 week ago',
+    category: 'Learning',
+    thumbnail: 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=1000&auto=format&fit=crop&q=80',
+    visibility: 'Public',
+    description: 'Diagnosing CAN-FD baud rate transitions, termination resistance reflections, and terminal pin fretting on central gateway body control modules.',
+    likesCount: 2310,
+    commentsCount: 118,
+    chapters: [
+      { timestamp: '00:00', seconds: 0, title: 'CAN Classic vs CAN Flexible Data-Rate Waveforms' },
+      { timestamp: '09:10', seconds: 550, title: 'Probing DLC Pins 6 and 14 with Math Channels' },
+      { timestamp: '18:30', seconds: 1110, title: 'Locating 120-Ohm Terminating Resistor Failure' }
+    ],
+    transcript: [
+      { timestamp: '00:50', seconds: 50, speaker: 'Kenji Sato', text: 'When CAN-FD shifts into the 5 Mbps data phase, any harness defect creates impedance reflections that corrupt the CRC.' }
+    ]
+  }
+]
+
+export const TRADES_PODCASTS_DATA: PodcastShow[] = [
+  {
+    id: 'show_timber_guild',
+    title: 'The Master Builder Podcast: Heavy Timber, Joinery & Modern Construction',
+    tagline: 'Deep-dive conversations on mass timber architecture, traditional joinery, OSHA safety, and job-site mastery.',
+    hostName: 'David Miller',
+    hostRole: 'Master Carpenter & Timber Frame Guild Director',
+    hostAvatar: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=200&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&auto=format&fit=crop&q=80',
+    category: 'Leadership & CISO',
+    subscribersCount: '28.4K Subscribers',
+    rating: '4.98 ★',
+    reviewsCount: 290,
+    totalEpisodes: 19,
+    isMonetized: true,
+    monthlyMembershipPrice: '$12 / mo (Blueprint Downloads & Tool Drawings)',
+    episodes: []
+  }
+]
+
+export const HEALTHCARE_PODCASTS_DATA: PodcastShow[] = [
+  {
+    id: 'show_trauma_rounds',
+    title: 'Trauma Bay Grand Rounds: Resuscitation, Surgery & Critical Care',
+    tagline: 'Evidence-based clinical discussions on emergency damage control surgery, massive transfusion protocols, and acute care.',
+    hostName: 'Dr. Angela Vance, MD, FACS',
+    hostRole: 'Chief of Orthopedic Trauma Surgery',
+    hostAvatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=200&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=800&auto=format&fit=crop&q=80',
+    category: 'Leadership & CISO',
+    subscribersCount: '44.1K Subscribers',
+    rating: '4.99 ★',
+    reviewsCount: 512,
+    totalEpisodes: 26,
+    isMonetized: true,
+    monthlyMembershipPrice: '$19 / mo (CME Accreditation & Case Reviews)',
+    episodes: []
+  }
+]
+
+export const AUTOMOTIVE_PODCASTS_DATA: PodcastShow[] = [
+  {
+    id: 'show_ase_master',
+    title: 'The Master Tech Diagnostic Lab: Oscilloscopes, 800V EV & Powertrains',
+    tagline: 'Advanced diagnostic techniques for ASE master technicians, fleet directors, and electric vehicle powertrain engineers.',
+    hostName: 'Marcus Miller, ASE Master Tech',
+    hostRole: 'World Class Master Tech & L3 Hybrid Diagnostics Lead',
+    hostAvatar: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=200&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=800&auto=format&fit=crop&q=80',
+    category: 'Leadership & CISO',
+    subscribersCount: '32.6K Subscribers',
+    rating: '4.97 ★',
+    reviewsCount: 340,
+    totalEpisodes: 22,
+    isMonetized: true,
+    monthlyMembershipPrice: '$15 / mo (Waveform Library & DTC Case Studies)',
+    episodes: []
+  }
+]
+
+export function getEnclaveMediaVideos(enclaveId?: string): MediaVideoItem[] {
+  if (enclaveId === 'trades_construction') return TRADES_VIDEOS_DATA
+  if (enclaveId === 'healthcare_medicine') return HEALTHCARE_VIDEOS_DATA
+  if (enclaveId === 'automotive_mechanics') return AUTOMOTIVE_VIDEOS_DATA
+  return FEATURED_VIDEOS_DATA
+}
+
+export function getEnclavePodcasts(enclaveId?: string): PodcastShow[] {
+  if (enclaveId === 'trades_construction') return TRADES_PODCASTS_DATA
+  if (enclaveId === 'healthcare_medicine') return HEALTHCARE_PODCASTS_DATA
+  if (enclaveId === 'automotive_mechanics') return AUTOMOTIVE_PODCASTS_DATA
+  return PODCAST_SHOWS_DATA
+}

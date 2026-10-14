@@ -27,11 +27,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 
+import { UserProfile, getEnclaveConnectedMembers } from "@/lib/linkedin-data"
+import { getEnclaveGlobalJobs } from "@/lib/global-jobs-data"
+import { getEnclaveMarketplaceProducts } from "@/lib/marketplace-engine-data"
+import { getEnclaveLearningCourses } from "@/lib/learning-platform-data"
+import { getEnclavePulseArticles } from "@/lib/pulse-news-data"
+
 interface UniversalSearchModalProps {
   isOpen: boolean
   onClose: () => void
   initialQuery?: string
   onNavigateTab: (tab: string) => void
+  currentUser?: UserProfile
 }
 
 interface PersonSearchResult {
@@ -45,121 +52,80 @@ interface PersonSearchResult {
   skills?: string[]
 }
 
-const BASE_PEOPLE: PersonSearchResult[] = [
-  {
-    id: "usr_rhoda_1",
-    name: "Rhoda Mensah",
-    role: "Senior Cyber Compliance & Risk Analyst",
-    org: "ConnectIn Verified Member",
-    rating: 4.95,
-    verified: true,
-    avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80",
-    skills: ["FedRAMP Compliance", "NIST SP 800-53", "Zero Trust", "SOC 2"]
-  },
-  {
-    id: "usr_rhoda_2",
-    name: "Rhoda",
-    role: "Cybersecurity & Technology Professional",
-    org: "ConnectIn Member",
-    rating: 4.90,
-    verified: true,
-    avatar: "https://api.dicebear.com/7.x/initials/svg?seed=Rhoda&backgroundColor=0a66c2",
-    skills: ["Cloud Security", "Enterprise IAM"]
-  },
-  {
-    id: "usr_kwesi",
-    name: "Kwesi Asiedu",
-    role: "Founder & Chief Security Officer",
-    org: "Expedite Consults",
-    rating: 4.99,
-    verified: true,
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80",
-    skills: ["Zero Trust Architecture", "GovCloud Security", "Enterprise IAM"]
-  },
-  {
-    id: "usr_hayes",
-    name: "Commander Robert Hayes",
-    role: "Platform IAM & Super Administrator",
-    org: "ConnectIn Master Control",
-    rating: 4.99,
-    verified: true,
-    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80",
-    skills: ["SOC 2 Type II Auditing", "RBAC / ABAC Matrix", "FedRAMP High IAM"]
-  },
-  {
-    id: "usr_alex",
-    name: "Alex Taylor",
-    role: "Principal Cloud Security Architect (Fellow)",
-    org: "Expedite Consults",
-    rating: 4.98,
-    verified: true,
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80",
-    skills: ["AWS GovCloud Security", "Kubernetes Zero Trust", "cATO OSCAL Automation"]
-  },
-  {
-    id: "usr_marcus",
-    name: "Marcus Vance",
-    role: "VP of Defense Engineering",
-    org: "CloudScale Corp",
-    rating: 4.92,
-    verified: true,
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80",
-    skills: ["Enterprise Procurement", "FAR / DFARS Compliance", "GovCloud RFPs"]
-  },
-  {
-    id: "usr_elena",
-    name: "Dr. Elena Rostova",
-    role: "Chief AI Research Scientist",
-    org: "Stanford AI Lab / Expedite Research",
-    rating: 4.97,
-    verified: true,
-    avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80",
-    skills: ["AI Security", "Deterministic Sandboxing", "Agent Containment"]
-  }
-]
-
-const ALL_JOBS = [
-  { title: "Principal Cloud & Zero Trust Architect", company: "Expedite Consults", salary: "$195K–$235K Base ($245K TC)", clearance: "TS/SCI", skills: ["AWS", "Zero Trust", "FedRAMP"] },
-  { title: "Lead AWS GovCloud Security Engineer", company: "Northrop Grumman", salary: "$185K–$215K Base", clearance: "Secret", skills: ["GovCloud", "cATO", "eBPF"] },
-  { title: "Cyber Compliance & Risk Analyst (FedRAMP/GRC)", company: "Expedite Consults Advisory", salary: "$145K–$175K Base", clearance: "Public Trust / Tier 3", skills: ["FedRAMP", "NIST", "SOC 2"] },
-  { title: "Senior AppSec & Penetration Test Engineer", company: "Apex Defense Labs", salary: "$170K–$200K Base", clearance: "Top Secret", skills: ["OSCP", "Red Team", "AppSec"] }
-]
-
-const ALL_PRODUCTS = [
-  { name: "AXIOM AI Cyber Suite", icon: "🛡️", tagline: "Autonomous Zero-Trust & Continuous cATO OSCAL telemetry.", price: "$499 / mo", category: "Security" },
-  { name: "Expedite Strike ASPM", icon: "⚡", tagline: "Autonomous Red Teaming, ASPM & Hybrid AI AppSec.", price: "$499 / mo", category: "AppSec" },
-  { name: "KernelGuard eBPF Telemetry", icon: "🔒", tagline: "Kernel-level zero-trust telemetry and runtime defense for Kubernetes.", price: "$299 / mo", category: "Infrastructure" }
-]
-
-const ALL_SERVICES = [
-  { name: "AWS GovCloud cATO Architecture Sprint", vendor: "Expedite Consults Advisory", startingPrice: "$15,000 / Sprint", desc: "Rapid 4-week ATO packaging with automated OSCAL artifacts." },
-  { name: "Full-Scope Cloud Penetration Test (2,000 Hosts)", vendor: "Expedite Strike Labs", startingPrice: "$12,000 / Engagement", desc: "Autonomous and manual exploitation testing across VPCs." },
-  { name: "SOC 2 Type II Audit Readiness Sprint", vendor: "Expedite Consults GRC", startingPrice: "$8,500 / Sprint", desc: "Pre-audit remediation and policy automation." }
-]
-
-const ALL_COURSES = [
-  { title: "AWS GovCloud Multi-Account Zero Trust Defense", duration: "12 Hours", labs: 4, level: "Advanced", instructor: "Kwesi Asiedu" },
-  { title: "Kubernetes Cilium eBPF Micro-Segmentation", duration: "8 Hours", labs: 3, level: "Master", instructor: "Alex Taylor" },
-  { title: "FedRAMP High & NIST SP 800-53 Control Automation", duration: "10 Hours", labs: 2, level: "Intermediate", instructor: "Rhoda Mensah" }
-]
-
-const ALL_RESEARCH = [
-  { title: "2026 Autonomous Threat Surface & AI-BOM Vulnerability Benchmark", date: "August 2026", format: "PDF Report", author: "Dr. Elena Rostova" },
-  { title: "OSCAL Continuous Monitoring Architecture for FedRAMP 2026", date: "July 2026", format: "Machine JSON", author: "Kwesi Asiedu" },
-  { title: "Multi-Agent AI Immunity & Cryptographic Sandboxing Guide", date: "June 2026", format: "Whitepaper", author: "Expedite Labs" }
-]
-
 export function UniversalSearchModal({
   isOpen,
   onClose,
   initialQuery = "",
-  onNavigateTab
+  onNavigateTab,
+  currentUser
 }: UniversalSearchModalProps) {
+  const enclaveId = currentUser?.professionEnclave || 'tech_cybersecurity'
   const [query, setQuery] = useState(initialQuery || "")
   const [selectedCategory, setSelectedCategory] = useState<string>("All")
-  const [liveUsers, setLiveUsers] = useState<PersonSearchResult[]>(BASE_PEOPLE)
+
+  const basePeople: PersonSearchResult[] = getEnclaveConnectedMembers(enclaveId).map(m => ({
+    id: m.id,
+    name: m.name,
+    role: m.headline,
+    org: m.mutualClearance || "Verified Trade Network",
+    rating: 4.95,
+    verified: true,
+    avatar: m.avatar,
+    skills: m.tags || []
+  }))
+
+  const [liveUsers, setLiveUsers] = useState<PersonSearchResult[]>(basePeople)
   const [connectedIds, setConnectedIds] = useState<Set<string>>(new Set())
   const [isLoadingUsers, setIsLoadingUsers] = useState(false)
+
+  useEffect(() => {
+    setLiveUsers(getEnclaveConnectedMembers(enclaveId).map(m => ({
+      id: m.id,
+      name: m.name,
+      role: m.headline,
+      org: m.mutualClearance || "Verified Trade Network",
+      rating: 4.95,
+      verified: true,
+      avatar: m.avatar,
+      skills: m.tags || []
+    })))
+  }, [enclaveId])
+
+  const ALL_JOBS = getEnclaveGlobalJobs(enclaveId).map(j => ({
+    title: j.title,
+    company: j.company,
+    salary: j.salary,
+    clearance: j.clearance,
+    skills: j.tags
+  }))
+
+  const ALL_PRODUCTS = getEnclaveMarketplaceProducts(enclaveId).map(p => ({
+    name: p.name,
+    icon: enclaveId === 'trades_construction' ? '🧰' : (enclaveId === 'healthcare_medicine' ? '🩺' : (enclaveId === 'automotive_mechanics' ? '🔧' : '🛡️')),
+    tagline: p.description,
+    price: p.pricing,
+    category: p.category
+  }))
+
+  const ALL_SERVICES = [
+    { name: `${currentUser?.profession || 'Trade'} Verified Advisory Sprint`, vendor: "ConnectIn Verified Network", startingPrice: "$8,500 / Project", desc: "Expert assessment, compliance audit, and operational readiness." },
+    { name: "Full-Scope Safety & Process Audit", vendor: "Ecosystem Quality Group", startingPrice: "$12,000 / Engagement", desc: "Rigorous standards inspection and field certification." }
+  ]
+
+  const ALL_COURSES = getEnclaveLearningCourses(enclaveId).map(c => ({
+    title: c.title,
+    duration: c.duration,
+    labs: 3,
+    level: c.level,
+    instructor: c.instructor.name
+  }))
+
+  const ALL_RESEARCH = getEnclavePulseArticles(enclaveId).map(a => ({
+    title: a.title,
+    date: a.publishedTime,
+    format: a.category,
+    author: a.source
+  }))
 
   // Sync initial query when opened or changed
   useEffect(() => {

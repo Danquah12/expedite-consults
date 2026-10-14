@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import {
   Play,
   Pause,
@@ -46,6 +46,8 @@ import {
   MEDIA_CLIPS_DATA,
   LIVE_STREAMS_DATA,
   PODCAST_SHOWS_DATA,
+  getEnclaveMediaVideos,
+  getEnclavePodcasts,
   MediaVideoItem,
   MediaClipItem,
   LiveStreamEvent,
@@ -65,32 +67,75 @@ export function MediaView({
   currentUser,
   onNavigateTab
 }: MediaViewProps) {
+  const enclaveId = currentUser?.professionEnclave
+  const initialVideos = getEnclaveMediaVideos(enclaveId)
+  const initialPodcasts = getEnclavePodcasts(enclaveId)
+
   const [activeMediaTab, setActiveMediaTab] = useState<
     'for_you' | 'following' | 'clips' | 'live' | 'learning' | 'podcasts' | 'studio'
   >('for_you')
 
-  const [videos, setVideos] = useState<MediaVideoItem[]>(FEATURED_VIDEOS_DATA)
-  const [selectedVideo, setSelectedVideo] = useState<MediaVideoItem | null>(FEATURED_VIDEOS_DATA[0])
+  const [videos, setVideos] = useState<MediaVideoItem[]>(initialVideos)
+  const [selectedVideo, setSelectedVideo] = useState<MediaVideoItem | null>(initialVideos[0] || null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentPlaybackSeconds, setCurrentPlaybackSeconds] = useState(0)
   const [aiSearchPrompt, setAiSearchPrompt] = useState("")
   const [aiSearchFeedback, setAiSearchFeedback] = useState<string | null>(null)
-  const [liveChatMessages, setLiveChatMessages] = useState<string[]>([
-    "Marcus Vance: Excited to see the eBPF kernel socket benchmark live!",
-    "Elena Rostova: Does AXIOM support FIPS 140-3 cryptographic modules in AWS GovCloud?",
-    "Alex Taylor: Yes Elena, all tokens are validated via FIPS 140-3 HSM enclaves."
-  ])
+
+  const getDefaultLiveChat = (encId?: string) => {
+    if (encId === 'trades_construction') {
+      return [
+        "Frank Gallagher: Great demonstration on the 40-ft bent drawbore offset David!",
+        "Lars Lindqvist: What angle did you set on the Domino XL for the knee braces?",
+        "David Miller: We used a 45-degree bevel with 14x100mm beech tenons."
+      ]
+    }
+    if (encId === 'healthcare_medicine') {
+      return [
+        "Dr. Julian Sterling: Perfect anterior column contouring with the reconstruction plate Dr. Vance!",
+        "Elena Rostova: Belmont infuser ready with 2 units low-titer whole blood warmed.",
+        "Dr. Angela Vance: Excellent, intraoperative fluoroscopy confirms anatomical alignment."
+      ]
+    }
+    if (encId === 'automotive_mechanics') {
+      return [
+        "Kenji Sato: Clean PWM waveform on channel 1 Marcus. Zero ringing!",
+        "Carlos Santana: Did you de-energize the manual service disconnect before probing?",
+        "Marcus Miller: Yes Carlos, verified 0.0V across B+ and B- with CAT IV meter."
+      ]
+    }
+    return [
+      "Marcus Vance: Excited to see the eBPF kernel socket benchmark live!",
+      "Elena Rostova: Does AXIOM support FIPS 140-3 cryptographic modules in AWS GovCloud?",
+      "Alex Taylor: Yes Elena, all tokens are validated via FIPS 140-3 HSM enclaves."
+    ]
+  }
+
+  const [liveChatMessages, setLiveChatMessages] = useState<string[]>(() => getDefaultLiveChat(enclaveId))
   const [newChatText, setNewChatText] = useState("")
 
   // Podcast Suite State
-  const [podcastShows, setPodcastShows] = useState<PodcastShow[]>(PODCAST_SHOWS_DATA)
-  const [selectedShow, setSelectedShow] = useState<PodcastShow>(PODCAST_SHOWS_DATA[0])
-  const [selectedEpisode, setSelectedEpisode] = useState<PodcastEpisode | null>(PODCAST_SHOWS_DATA[0].episodes[0] || null)
+  const [podcastShows, setPodcastShows] = useState<PodcastShow[]>(initialPodcasts)
+  const [selectedShow, setSelectedShow] = useState<PodcastShow>(initialPodcasts[0] || PODCAST_SHOWS_DATA[0])
+  const [selectedEpisode, setSelectedEpisode] = useState<PodcastEpisode | null>(
+    initialPodcasts[0]?.episodes?.[0] || PODCAST_SHOWS_DATA[0]?.episodes?.[0] || null
+  )
   const [isAudioPlaying, setIsAudioPlaying] = useState(false)
   const [audioProgressSeconds, setAudioProgressSeconds] = useState(45)
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1)
   const [isEpisodeVideoMode, setIsEpisodeVideoMode] = useState(false)
   const [podcastSearchQuery, setPodcastSearchQuery] = useState("")
+
+  useEffect(() => {
+    const encVideos = getEnclaveMediaVideos(enclaveId)
+    const encPodcasts = getEnclavePodcasts(enclaveId)
+    setVideos(encVideos)
+    setSelectedVideo(encVideos[0] || null)
+    setPodcastShows(encPodcasts)
+    setSelectedShow(encPodcasts[0] || PODCAST_SHOWS_DATA[0])
+    setSelectedEpisode(encPodcasts[0]?.episodes?.[0] || PODCAST_SHOWS_DATA[0]?.episodes?.[0] || null)
+    setLiveChatMessages(getDefaultLiveChat(enclaveId))
+  }, [enclaveId])
 
   // Live Terminal Sandbox State
   const [isTerminalSandboxOpen, setIsTerminalSandboxOpen] = useState(false)

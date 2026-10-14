@@ -122,8 +122,25 @@ export function MarketplaceView({
   const [newVendorPrice, setNewVendorPrice] = useState("$299 / mo")
   const [newVendorDesc, setNewVendorDesc] = useState("")
 
-  // Filter Products based on category selection
+  const userEnclave = currentUser?.professionEnclave || 'trades_construction'
+
+  // Filter Products strictly based on user enclave and category selection
   const filteredProducts = MASTER_MARKETPLACE_PRODUCTS.filter(p => {
+    // 1. Strict Enclave Least-Privilege Isolation
+    if (userEnclave === 'trades_construction') {
+      if (p.professionEnclave && p.professionEnclave !== 'trades_construction') return false
+      if (!p.professionEnclave && !['Tools & Joinery', 'CAD & Measurement', 'Lumber & Materials', 'Hardware'].includes(p.subCategory)) return false
+    } else if (userEnclave === 'healthcare_medicine') {
+      if (p.professionEnclave && p.professionEnclave !== 'healthcare_medicine') return false
+      if (!p.professionEnclave && !['Diagnostic Devices', 'Trauma & Resuscitation', 'Surgical Implants', 'Clinical Gear'].includes(p.subCategory)) return false
+    } else if (userEnclave === 'automotive_mechanics') {
+      if (p.professionEnclave && p.professionEnclave !== 'automotive_mechanics') return false
+      if (!p.professionEnclave && !['Scan Tools', 'Oscilloscopes', 'EV Safety Gear', 'OEM Repair Data'].includes(p.subCategory)) return false
+    } else {
+      // Tech & Cyber
+      if (p.professionEnclave && p.professionEnclave !== 'tech_cybersecurity') return false
+    }
+
     let matchCategory = true
     if (selectedMainCategory === 'Software') matchCategory = p.category === 'Software'
     else if (selectedMainCategory === 'Services') matchCategory = p.category === 'Services'
@@ -169,19 +186,48 @@ export function MarketplaceView({
     }, 2000)
   }
 
-  const marketplaceTabs = [
-    { id: 'Discover', label: '✨ Discover' },
-    { id: 'Solutions', label: '🎯 Solutions (Business Outcomes)', isSolutions: true },
-    { id: 'Software', label: '💻 Software' },
-    { id: 'Services', label: '🛠️ Services' },
-    { id: 'Cybersecurity', label: '🛡️ Cybersecurity' },
-    { id: 'AI', label: '🤖 AI' },
-    { id: 'Cloud', label: '☁️ Cloud' },
-    { id: 'Training', label: '🎓 Training' },
-    { id: 'Enterprise', label: '🏢 Enterprise' },
-    { id: 'Deals', label: '🏷️ Deals' },
-    { id: 'Sphera', label: '🪐 Sphera (137 Apps)' },
-  ]
+  const marketplaceTabs = (() => {
+    if (userEnclave === 'trades_construction') {
+      return [
+        { id: 'Discover', label: '✨ All Trade Tools & Lumber' },
+        { id: 'Software', label: '🧰 Power Tools & Joinery' },
+        { id: 'Services', label: '📐 CAD & Total Station Measure' },
+        { id: 'Enterprise', label: '🪵 Lumber & Materials Stock' },
+        { id: 'Deals', label: '🏷️ Subcontractor Deals' },
+      ]
+    }
+    if (userEnclave === 'healthcare_medicine') {
+      return [
+        { id: 'Discover', label: '✨ All Medical & Surgical' },
+        { id: 'Software', label: '🩺 Diagnostic Ultrasound & POCUS' },
+        { id: 'Enterprise', label: '🩸 Trauma & Rapid Infusion' },
+        { id: 'Services', label: '🔪 Surgical Hardware & Implants' },
+        { id: 'Deals', label: '🏷️ Hospital RFP Deals' },
+      ]
+    }
+    if (userEnclave === 'automotive_mechanics') {
+      return [
+        { id: 'Discover', label: '✨ All Diagnostic Gear' },
+        { id: 'Software', label: '🧰 Snap-on & Scan Tools' },
+        { id: 'Services', label: '⚡ PicoScope Oscilloscopes' },
+        { id: 'Enterprise', label: '🔋 EV Safety & NFPA 70E' },
+        { id: 'Deals', label: '🏷️ Shop Equipment Deals' },
+      ]
+    }
+    return [
+      { id: 'Discover', label: '✨ Discover' },
+      { id: 'Solutions', label: '🎯 Solutions (Business Outcomes)', isSolutions: true },
+      { id: 'Software', label: '💻 Software' },
+      { id: 'Services', label: '🛠️ Services' },
+      { id: 'Cybersecurity', label: '🛡️ Cybersecurity' },
+      { id: 'AI', label: '🤖 AI' },
+      { id: 'Cloud', label: '☁️ Cloud' },
+      { id: 'Training', label: '🎓 Training' },
+      { id: 'Enterprise', label: '🏢 Enterprise' },
+      { id: 'Deals', label: '🏷️ Deals' },
+      { id: 'Sphera', label: '🪐 Sphera (137 Apps)' },
+    ]
+  })()
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-24">
@@ -200,10 +246,22 @@ export function MarketplaceView({
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-              Discover Products &amp; Solve Business Outcomes
+              {userEnclave === 'trades_construction'
+                ? "Skilled Trades Tools, CAD Equipment & Timber Futures"
+                : userEnclave === 'healthcare_medicine'
+                ? "Clinical Diagnostic Devices, Surgical Implants & Hospital RFPs"
+                : userEnclave === 'automotive_mechanics'
+                ? "Professional Automotive Scan Tools, Lab Scopes & EV Safety"
+                : "Discover Products & Solve Business Outcomes"}
             </h1>
             <p className="text-xs sm:text-sm text-zinc-300 max-w-2xl leading-relaxed">
-              Find individual enterprise tools or select a business problem to receive a complete tailored package: Products + Consulting Services + Verified Experts + Hands-on Training.
+              {userEnclave === 'trades_construction'
+                ? "Acquire verified guild-grade timber joinery systems, laser total stations, Douglas Fir futures, and OSHA-compliant fall protection gear."
+                : userEnclave === 'healthcare_medicine'
+                ? "Procure FDA-cleared bedside ultrasound devices, rapid blood warmers, orthopedic trauma plating sets, and hospital equipment tenders."
+                : userEnclave === 'automotive_mechanics'
+                ? "Equip your bay with Snap-on ZEUS+ diagnostic stations, 4-channel PicoScopes, 1000V EV lineman PPE, and OEM repair data."
+                : "Find individual enterprise tools or select a business problem to receive a complete tailored package: Products + Consulting Services + Verified Experts + Hands-on Training."}
             </p>
           </div>
 

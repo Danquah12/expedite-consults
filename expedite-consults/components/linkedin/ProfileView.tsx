@@ -46,8 +46,10 @@ import {
   WORKSPACE_PUBLICATIONS_DATA,
   WORKSPACE_REVIEWS_DATA,
   MY_PRODUCTS_DATA,
-  VendorProductItem
+  VendorProductItem,
+  getWorkspaceDataForEnclave
 } from "@/lib/my-workspace-data"
+import { findEnclaveById } from "@/lib/connectin-professions"
 import {
   Dialog,
   DialogContent,
@@ -84,6 +86,10 @@ export function ProfileView({
   onOpenAnalytics,
   onNavigateMessaging
 }: ProfileViewProps) {
+  const effectiveEnclaveId = user.professionEnclave || 'trades_construction'
+  const enclaveInfo = findEnclaveById(effectiveEnclaveId)
+  const enclaveWorkspace = getWorkspaceDataForEnclave(effectiveEnclaveId)
+
   // 9 Workspace Sub-Sections
   const [workspaceSection, setWorkspaceSection] = useState<
     'profile' | 'portfolio' | 'skills' | 'certifications' | 'experience' | 'publications' | 'reviews' | 'products' | 'analytics'
@@ -196,12 +202,12 @@ export function ProfileView({
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="rounded-full bg-indigo-500/20 px-3 py-0.5 text-xs font-bold text-indigo-300 border border-indigo-400/40 flex items-center gap-1.5">
-                <ShieldCheck className="h-3.5 w-3.5 text-amber-300" />
-                ConnectIn Developer &amp; Professional Workspace
+              <span className={`rounded-full px-3 py-0.5 text-xs font-bold border flex items-center gap-1.5 ${enclaveInfo?.badgeBg || 'bg-indigo-500/20 text-indigo-300 border-indigo-400/40'}`}>
+                <span>{enclaveInfo?.icon || '🛡️'}</span>
+                <span>{enclaveInfo?.name || 'ConnectIn Professional Workspace'}</span>
               </span>
               <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-xs font-bold text-emerald-300 border border-emerald-500/40">
-                TS/SCI Polygraph Verified · Fellow Grade
+                {enclaveInfo?.securityClearanceTier || 'Verified Professional Grade'}
               </span>
             </div>
 
@@ -249,8 +255,8 @@ export function ProfileView({
                 className={`rounded-xl px-3.5 py-2 text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
                   isSelected
                     ? sec.isHighlight
-                      ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md font-extrabold"
-                      : "bg-white text-zinc-950 shadow-md font-extrabold"
+                    : "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md font-extrabold"
+                    ? "bg-white text-zinc-950 shadow-md font-extrabold"
                     : sec.isHighlight
                     ? "bg-purple-500/20 text-purple-200 hover:bg-purple-500/30 border border-purple-400/40"
                     : "bg-white/10 text-white/80 hover:bg-white/20 hover:text-white"
@@ -272,9 +278,9 @@ export function ProfileView({
             {/* Banner Cover */}
             <div className="relative h-44 w-full bg-gradient-to-r from-[#0A66C2] via-indigo-700 to-purple-800">
               <img
-                src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop&q=80"
+                src={user.coverImage || "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1200&auto=format&fit=crop&q=80"}
                 alt="Banner"
-                className="h-full w-full object-cover opacity-50"
+                className="h-full w-full object-cover opacity-60"
               />
             </div>
 
@@ -295,9 +301,12 @@ export function ProfileView({
                       <h2 className="text-2xl font-black text-zinc-900 dark:text-zinc-100">
                         {user.name}
                       </h2>
-                      <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-[#0A66C2] dark:bg-blue-950 dark:text-blue-300 flex items-center gap-1">
-                        <ShieldCheck className="h-3.5 w-3.5" />
-                        Verified Fellow
+                      <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold border flex items-center gap-1.5 ${enclaveInfo?.badgeBg || 'bg-blue-100 text-[#0A66C2] dark:bg-blue-950 dark:text-blue-300'}`}>
+                        <span>{enclaveInfo?.icon || '🛡️'}</span>
+                        <span>{user.profession || enclaveInfo?.shortName || 'Verified Member'}</span>
+                      </span>
+                      <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                        {enclaveInfo?.securityClearanceTier || 'Level 2 Verified'}
                       </span>
                     </div>
                     <p className="text-xs sm:text-sm font-semibold text-zinc-600 dark:text-zinc-300">
@@ -633,12 +642,12 @@ export function ProfileView({
           <div className="flex items-center justify-between">
             <h3 className="font-black text-lg text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
               <FolderGit2 className="h-5 w-5 text-indigo-600" />
-              <span>Completed Engineering Projects &amp; Architectures ({WORKSPACE_PORTFOLIO_DATA.length})</span>
+              <span>{enclaveInfo?.name || 'Completed'} Portfolio &amp; Projects ({enclaveWorkspace.portfolio.length})</span>
             </h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {WORKSPACE_PORTFOLIO_DATA.map((proj) => (
+            {enclaveWorkspace.portfolio.map((proj) => (
               <div
                 key={proj.id}
                 className="rounded-2xl border border-zinc-200 bg-white overflow-hidden shadow-xs hover:border-indigo-500 hover:shadow-lg transition-all dark:border-zinc-800 dark:bg-zinc-900 flex flex-col justify-between"
@@ -694,19 +703,19 @@ export function ProfileView({
             <div className="space-y-1">
               <span className="rounded-full bg-indigo-500/20 px-3 py-0.5 text-xs font-bold text-indigo-300 border border-indigo-400/40 flex items-center gap-1.5 w-fit">
                 <ShieldCheck className="h-3.5 w-3.5 text-sky-400" />
-                ConnectIn Verified Skill Passport
+                ConnectIn Verified Skill Passport · {enclaveInfo?.shortName || 'Trades'}
               </span>
               <h2 className="text-2xl font-black text-white">
                 Multi-Factor Verified Competency Graph
               </h2>
               <p className="text-xs text-zinc-300 max-w-xl leading-relaxed">
-                Evidence-based verification combining proctored scenario exams, live cloud labs, verified production code repositories, and employer attestations.
+                Evidence-based verification combining proctored scenario exams, live trade/clinical diagnostic assessments, and peer superintendent attestations.
               </p>
             </div>
 
             <div className="rounded-2xl bg-black/40 p-4 border border-white/15 text-center min-w-[170px] shrink-0 space-y-1">
               <span className="text-[10px] uppercase font-mono text-zinc-400">Passport Score</span>
-              <p className="text-3xl font-black text-sky-400">94.8%</p>
+              <p className="text-3xl font-black text-sky-400">95.4%</p>
               <span className="text-[10px] text-emerald-400 font-bold block">Top 1% Fellow Grade</span>
             </div>
           </div>
@@ -718,7 +727,17 @@ export function ProfileView({
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {skills.map((skill) => (
+              {((user.skills && user.skills.length > 0)
+                ? user.skills.map((s: any) => ({
+                    name: typeof s === 'string' ? s : s.name,
+                    category: (enclaveInfo?.shortName || 'Trades') as any,
+                    endorsementsCount: typeof s === 'object' ? (s.endorsements || s.endorsementsCount || 52) : 52,
+                    isVerified: true,
+                    verifiedBy: `${enclaveInfo?.name || 'ConnectIn'} Master Board`,
+                    proficiencyLevel: 'Expert (Top 1%)' as const
+                  }))
+                : enclaveWorkspace.verifiedSkills
+              ).map((skill) => (
                 <div
                   key={skill.name}
                   className="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/40 space-y-3"
@@ -748,10 +767,10 @@ export function ProfileView({
 
                   {/* 4-Factor Evidence Breakdown */}
                   <div className="grid grid-cols-2 gap-1.5 text-[10px] font-mono bg-white dark:bg-zinc-900 p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700/60">
-                    <span className="text-emerald-600 dark:text-emerald-400">✓ Exam: 96/100</span>
-                    <span className="text-sky-600 dark:text-sky-400">✓ 4 Live Labs</span>
-                    <span className="text-purple-600 dark:text-purple-400">✓ GitHub Code</span>
-                    <span className="text-amber-600 dark:text-amber-400">✓ Employer Signed</span>
+                    <span className="text-emerald-600 dark:text-emerald-400">✓ Hands-On Exam: 98/100</span>
+                    <span className="text-sky-600 dark:text-sky-400">✓ Diagnostic Labs</span>
+                    <span className="text-purple-600 dark:text-purple-400">✓ Work Portfolio</span>
+                    <span className="text-amber-600 dark:text-amber-400">✓ Peer Supervised</span>
                   </div>
                 </div>
               ))}
@@ -766,7 +785,7 @@ export function ProfileView({
       {workspaceSection === 'certifications' && (
         <div className="space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {(user.certifications && user.certifications.length > 0
+            {((user.certifications && user.certifications.length > 0)
               ? user.certifications.map((cert) => ({
                   name: cert.title,
                   issuingBody: cert.issuer,
@@ -776,14 +795,14 @@ export function ProfileView({
                   verificationUrl: cert.credentialUrl,
                   isVerifiedBadge: true
                 }))
-              : WORKSPACE_CERTIFICATIONS_DATA
+              : enclaveWorkspace.certifications
             ).map((cert) => (
               <div
                 key={cert.credentialId}
                 className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 flex items-start gap-4"
               >
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-2xl border border-amber-200 dark:bg-amber-950/40 dark:border-amber-900 shrink-0">
-                  {cert.badgeIcon}
+                  {cert.badgeIcon || '📜'}
                 </div>
 
                 <div className="space-y-1">
@@ -831,6 +850,16 @@ export function ProfileView({
                 <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">
                   {exp.description}
                 </p>
+
+                {exp.skills && exp.skills.length > 0 && (
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    {exp.skills.map((sk: string) => (
+                      <span key={sk} className="rounded-md bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-[11px] font-medium text-zinc-700 dark:text-zinc-300">
+                        {sk}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             ))
           ) : (
@@ -846,16 +875,35 @@ export function ProfileView({
       )}
 
       {/* ========================================================================= */}
-      {/* 6. PUBLICATIONS */}
+      {/* 6. PUBLICATIONS & TECHNICAL SPECS */}
       {/* ========================================================================= */}
       {workspaceSection === 'publications' && (
         <div className="space-y-4">
-          <div className="rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 p-8 text-center space-y-3">
-            <FileText className="h-8 w-8 text-zinc-400 mx-auto" />
-            <h4 className="font-bold text-sm text-zinc-700 dark:text-zinc-200">No Technical Publications Yet</h4>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-sm mx-auto">
-              Published research, RFCs, and architecture blueprints will appear here.
-            </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {enclaveWorkspace.publications.map((pub, i) => (
+              <div
+                key={i}
+                className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-2.5"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="rounded-full bg-blue-50 dark:bg-blue-950/60 px-2.5 py-0.5 text-[10px] font-bold text-[#0A66C2] dark:text-sky-300 border border-blue-200 dark:border-blue-900">
+                    {pub.type}
+                  </span>
+                  <span className="text-[11px] font-mono text-zinc-400">{pub.date}</span>
+                </div>
+                <h4 className="font-bold text-sm sm:text-base text-zinc-900 dark:text-zinc-100 leading-snug">
+                  {pub.title}
+                </h4>
+                <p className="text-xs text-zinc-500 font-semibold">{pub.publisher}</p>
+                <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed">
+                  {pub.summary}
+                </p>
+                <div className="pt-1 flex items-center justify-between text-[11px] text-zinc-400 font-mono">
+                  <span>Peer Citations: <strong>{pub.citationsCount}</strong></span>
+                  <span className="text-[#0A66C2] font-bold cursor-pointer hover:underline">Read Spec Sheet →</span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -865,38 +913,43 @@ export function ProfileView({
       {/* ========================================================================= */}
       {workspaceSection === 'reviews' && (
         <div className="space-y-4">
-          {user.recommendations && user.recommendations.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {user.recommendations.map((rev, i) => (
-                <div
-                  key={i}
-                  className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-3"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <img src={rev.authorAvatar} alt="" className="h-10 w-10 rounded-full object-cover" />
-                      <div>
-                        <h4 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">{rev.authorName}</h4>
-                        <p className="text-[11px] text-zinc-500">{rev.authorHeadline}</p>
-                      </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {(user.recommendations && user.recommendations.length > 0
+              ? user.recommendations.map((rev) => ({
+                  reviewerName: rev.authorName,
+                  reviewerRole: rev.authorHeadline,
+                  reviewerAvatar: rev.authorAvatar,
+                  rating: 5,
+                  date: rev.date,
+                  reviewType: 'Peer Review' as const,
+                  comment: rev.text
+                }))
+              : enclaveWorkspace.reviews
+            ).map((rev, i) => (
+              <div
+                key={i}
+                className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-3"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <img src={rev.reviewerAvatar} alt="" className="h-10 w-10 rounded-full object-cover" />
+                    <div>
+                      <h4 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">{rev.reviewerName}</h4>
+                      <p className="text-[11px] text-zinc-500">{rev.reviewerRole}</p>
                     </div>
                   </div>
-                  <p className="text-xs text-zinc-600 dark:text-zinc-300 italic leading-relaxed">
-                    "{rev.text}"
-                  </p>
-                  <span className="text-[10px] text-zinc-400 font-mono">{rev.date}</span>
+                  <span className="text-amber-500 font-bold text-xs">★★★★★</span>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 p-8 text-center space-y-3">
-              <MessageSquarePlus className="h-8 w-8 text-zinc-400 mx-auto" />
-              <h4 className="font-bold text-sm text-zinc-700 dark:text-zinc-200">No Peer Reviews Yet</h4>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-sm mx-auto">
-                Verified peer attestations and recommendations will appear here as you collaborate across the network.
-              </p>
-            </div>
-          )}
+                <p className="text-xs text-zinc-600 dark:text-zinc-300 italic leading-relaxed">
+                  "{rev.comment}"
+                </p>
+                <div className="flex items-center justify-between text-[10px] text-zinc-400 font-mono">
+                  <span>{rev.reviewType}</span>
+                  <span>{rev.date}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

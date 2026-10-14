@@ -64,11 +64,12 @@ export function LeftSidebarProfile({
       return [
         ...adminShortcuts,
         { id: 'blueprints', label: '📐 Blueprint & CAD Specs', badge: 'Active' },
+        { id: 'joinery_calc', label: '🪚 Compound Miter & Joinery Calc', badge: 'Precision' },
         { id: 'lumber_index', label: '🌲 Lumber Market Futures', badge: 'Live Data' },
         { id: 'subcontractor_rfp', label: '📋 Subcontractor Job Board', badge: '8 Bids' },
-        { id: 'tool_vault', label: '🧰 Tool & Rigging Vault', badge: 'Verified' },
+        { id: 'tool_vault', label: '🧰 Festool & Rigging Vault', badge: 'Calibrated' },
         { id: 'osha_locker', label: '🦺 OSHA Safety & Toolbox Talks', badge: 'OSHA 30' },
-        { id: 'permits', label: '🏗️ Job-Site Manifest & Permits', badge: 'Active' },
+        { id: 'permits', label: '🏗️ Job-Site Manifest & Crane Log', badge: 'Active' },
         { id: 'wallet', label: '💳 Trade Escrow & Draws', badge: '$18,400' },
         { id: 'guilds', label: '🔨 Master Craftsman Guild', badge: 'Active' },
         { id: 'jobs', label: '💼 Subcontractor Bids', badge: '4 Status' },
@@ -79,20 +80,59 @@ export function LeftSidebarProfile({
       ]
     }
 
+    if (effectiveEnclaveId === 'automotive_mechanics') {
+      return [
+        ...adminShortcuts,
+        { id: 'diagnostic_scanner', label: '📟 Snap-On ZEUS+ Diagnostic Hub', badge: 'CAN-FD' },
+        { id: 'can_oscilloscope', label: '⚡ OBD-II PicoScope & Bus Waveforms', badge: '4-Channel' },
+        { id: 'oem_wiring', label: '📋 Mitchell 1 & ALLDATA Schematics', badge: 'ProDemand' },
+        { id: 'ev_lockout', label: '🔋 800V High-Voltage LOTO Protocol', badge: 'NFPA 70E' },
+        { id: 'fmcsa_fleet', label: '🚛 Cummins & Detroit Diesel Fleet Log', badge: 'FMCSA DOT' },
+        { id: 'guilds', label: '🔧 ASE Master Technicians Guild', badge: 'L1 Advanced' },
+        { id: 'wallet', label: '💳 Shop ROs & Flat-Rate Draws', badge: '$12,850' },
+        { id: 'jobs', label: '💼 Master Tech & Shop Bids', badge: '6 Bids' },
+        { id: 'profile', label: '📁 ASE Certifications & Bay Logs', badge: 'Master ASE' },
+        { id: 'peerreview', label: '⭐ Shop Master Peer Reviews', badge: '4.97 ★' },
+        { id: 'compensation', label: '💰 Master Tech Flat-Rate Index', badge: 'Top 8%' },
+        { id: 'accountsecurity', label: '🔐 Shop Lockout & FIDO2 Auth', badge: 'FIDO2' }
+      ]
+    }
+
     if (effectiveEnclaveId === 'healthcare_medicine') {
       return [
         ...adminShortcuts,
-        { id: 'hipaa_consults', label: '🏥 HIPAA Case Consults', badge: 'BAA Verified' },
+        { id: 'esi_trauma', label: '🩺 Level 1 Trauma Triage & ESI', badge: 'TNCC Ready' },
+        { id: 'surgical_roster', label: '🔪 OR Schedule & Instrument Packs', badge: 'OR Suite' },
+        { id: 'shifts', label: '🕒 Nurse Shift & Locum Exchange', badge: 'Hospital' },
+        { id: 'hipaa_consults', label: '🏥 HIPAA Encrypted Consults', badge: 'BAA Verified' },
+        { id: 'protocols', label: '📋 Critical Care ICU Protocols', badge: 'Evidence' },
         { id: 'clinical_trials', label: '📑 Clinical Trials & PubMed', badge: 'PubMed' },
-        { id: 'ceu_locker', label: '🎖️ CEU Credential Locker', badge: 'Active CME' },
-        { id: 'shifts', label: '🕒 Peer Shift Exchange', badge: 'Hospital' },
-        { id: 'protocols', label: '📋 ICU Protocol Reference', badge: 'Evidence' },
-        { id: 'guilds', label: '🩺 Medical Staff Guild', badge: 'Active' },
-        { id: 'wallet', label: '💳 Locum Tenens Disbursements', badge: '$8,920' },
-        { id: 'jobs', label: '💼 Clinical & Hospital Roles', badge: '3 Matches' },
-        { id: 'profile', label: '📁 Board Certs & Credentials', badge: 'Verified' },
+        { id: 'ceu_locker', label: '🎖️ CEU & Board Cert Locker', badge: 'Active CME' },
+        { id: 'guilds', label: '🩺 Nursing & Medical Staff Guild', badge: 'Active' },
+        { id: 'wallet', label: '💳 Locum Tenens Disbursements', badge: '$14,200' },
+        { id: 'jobs', label: '💼 Hospital & Trauma Roles', badge: '5 Matches' },
+        { id: 'profile', label: '📁 Board Certs & Clinical Proof', badge: 'Verified' },
         { id: 'peerreview', label: '⭐ Clinical Peer Reviews', badge: '4.99 ★' },
         { id: 'accountsecurity', label: '🔐 HIPAA FIDO2 Passkeys', badge: 'Compliant' }
+      ]
+    }
+
+    if (effectiveEnclaveId === 'tech_cybersecurity') {
+      return [
+        ...adminShortcuts,
+        { id: 'c2_adversary', label: '🎯 C2 Adversary Emulation (Sliver/Havoc)', badge: 'Red Team' },
+        { id: 'scada_ot', label: '🏭 SCADA / Modbus OT Air-Gap Guard', badge: 'Purdue L3' },
+        { id: 'ghidra_vault', label: '🧬 Ghidra & IDA Pro Reverse Eng', badge: 'x86_64/ARM' },
+        { id: 'dfir_forensics', label: '🔍 Velociraptor DFIR Live Forensics', badge: 'Artifacts' },
+        { id: 'cve_radar', label: '🛡️ 0-Day Threat Stream & CVE Radar', badge: 'CVE-2026' },
+        { id: 'bounties', label: '🏆 High-Severity Bug Bounties', badge: '$25K-$50K' },
+        { id: 'crypto_vault', label: '🔐 HSM Keyring & Ephemeral Enclaves', badge: 'Hardware' },
+        { id: 'guilds', label: '🛡️ OSCP/CRTO Red Team Guild', badge: 'Classified' },
+        { id: 'wallet', label: '💳 Bounty Escrow & Retainers', badge: '$38,500' },
+        { id: 'jobs', label: '💼 Red Team & Incident Lead Roles', badge: 'Active' },
+        { id: 'profile', label: '📁 Disclosed CVEs & Exploit Proofs', badge: 'Verified' },
+        { id: 'peerreview', label: '⭐ Red Team Peer Endorsements', badge: '5.00 ★' },
+        { id: 'accountsecurity', label: '🔐 Hardware FIDO2 / YubiKey CAC', badge: 'Strict' }
       ]
     }
 
@@ -125,16 +165,15 @@ export function LeftSidebarProfile({
       ]
     }
 
-    // Default: Software Engineering & Cyber Defense
+    // Default: Software Engineering & Cloud Infrastructure
     return [
       ...adminShortcuts,
       { id: 'labs', label: '🧪 Proof of Work Sandbox', badge: 'Sub-4ms' },
       { id: 'code', label: '🧑‍💻 ConnectIn Code Repos', badge: '3 Repos' },
       { id: 'aiagents', label: '🐙 GitHub Auto-PR & AI Agents', badge: 'Connected' },
-      { id: 'cve_radar', label: '🛡️ Bug Bounty & CVE Radar', badge: 'CVE-2026' },
-      { id: 'bounties', label: '🏆 Enterprise Bounties', badge: '$15K-$25K' },
-      { id: 'guilds', label: '🛡️ Zero-Trust Security Guild', badge: '3 Enclaves' },
-      { id: 'wallet', label: '💳 Pay & Invoicing', badge: '$2,430' },
+      { id: 'cloud_infra', label: '☁️ Multi-Region Kubernetes Mesh', badge: 'Prod 99.99%' },
+      { id: 'guilds', label: '⚡ Cloud & Systems Architects Guild', badge: 'Active' },
+      { id: 'wallet', label: '💳 Dev Pay & Contract Invoicing', badge: '$9,430' },
       { id: 'missions', label: '🔥 Career Mission (72%)', badge: '+1,850 XP' },
       { id: 'jobs', label: '💼 Active Engineering Roles', badge: '4 Status' },
       { id: 'profile', label: '📁 Repos & Cryptographic Proof', badge: '6 Projects' },
@@ -150,21 +189,45 @@ export function LeftSidebarProfile({
   const getRecentItemsForEnclave = () => {
     if (effectiveEnclaveId === 'trades_construction') {
       return [
-        { type: 'group', name: 'Custom Joinery & Heavy Timber Framing Guild', icon: Users },
+        { type: 'group', name: 'Master Heavy Timber & Finish Carpenters Guild', icon: Users },
         { type: 'group', name: 'Commercial General Contractors & Superintendents', icon: Users },
+        { type: 'hashtag', name: 'CarpentryCraft', icon: Hash },
         { type: 'hashtag', name: 'TimberFraming', icon: Hash },
         { type: 'hashtag', name: 'LumberMarket', icon: Hash },
-        { type: 'event', name: 'National Builders & Craftsmen Expo 2026', icon: Calendar }
+        { type: 'event', name: 'International Woodworking Fair (IWF) 2026', icon: Calendar }
+      ]
+    }
+
+    if (effectiveEnclaveId === 'automotive_mechanics') {
+      return [
+        { type: 'group', name: 'ASE Master Technicians & CAN-Bus Diagnosticians', icon: Users },
+        { type: 'group', name: 'Heavy Diesel Fleet & 800V EV Specialist Network', icon: Users },
+        { type: 'hashtag', name: 'OBD2Diagnostics', icon: Hash },
+        { type: 'hashtag', name: 'DieselFleetTech', icon: Hash },
+        { type: 'hashtag', name: 'EVHighVoltage', icon: Hash },
+        { type: 'event', name: 'Heavy Duty Aftermarket Week (HDAW) 2026', icon: Calendar }
       ]
     }
 
     if (effectiveEnclaveId === 'healthcare_medicine') {
       return [
-        { type: 'group', name: 'American College of Physicians Network', icon: Users },
-        { type: 'group', name: 'Critical Care Medicine & ICU Protocols', icon: Users },
+        { type: 'group', name: 'Emergency & Critical Care Trauma Nurses (CCRN/TNCC)', icon: Users },
+        { type: 'group', name: 'American College of Surgeons & Interventionalists', icon: Users },
+        { type: 'hashtag', name: 'TraumaNursing', icon: Hash },
+        { type: 'hashtag', name: 'OrthopedicSurgery', icon: Hash },
         { type: 'hashtag', name: 'ClinicalTrials', icon: Hash },
-        { type: 'hashtag', name: 'HIPAACompliance', icon: Hash },
-        { type: 'event', name: 'Annual Clinical Cardiology Symposium 2026', icon: Calendar }
+        { type: 'event', name: 'Emergency Nurses Association (ENA) Annual 2026', icon: Calendar }
+      ]
+    }
+
+    if (effectiveEnclaveId === 'tech_cybersecurity') {
+      return [
+        { type: 'group', name: 'Offensive Security (OSCP/CRTO) Red Team Guild', icon: Users },
+        { type: 'group', name: 'Critical Infrastructure SCADA/ICS Cyber Defense', icon: Users },
+        { type: 'hashtag', name: 'RedTeaming', icon: Hash },
+        { type: 'hashtag', name: 'OTSecurity', icon: Hash },
+        { type: 'hashtag', name: 'MalwareAnalysis', icon: Hash },
+        { type: 'event', name: 'DEF CON 34 & Black Hat USA 2026', icon: Calendar }
       ]
     }
 

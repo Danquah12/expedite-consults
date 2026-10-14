@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import {
   Radio,
   Mic,
@@ -35,7 +35,8 @@ import {
   Search,
   Globe,
   SlidersHorizontal,
-  ChevronRight
+  ChevronRight,
+  ShieldCheck
 } from "lucide-react"
 import {
   PulseArticle,
@@ -43,6 +44,11 @@ import {
   PULSE_ARTICLES_DATA,
   TODAY_AI_BRIEF,
   TODAY_CYBER_ADVISORIES,
+  getEnclaveDomainAdvisories,
+  getEnclavePulseArticles,
+  getEnclavePulseCategories,
+  getEnclaveAIBrief,
+  getEnclavePulseRooms,
   AIDailyBriefItem,
   CyberThreatAdvisory
 } from "@/lib/pulse-news-data"
@@ -61,13 +67,18 @@ interface PulseRoomsViewProps {
 }
 
 export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewProps) {
+  const enclaveId = currentUser?.professionEnclave
+  const categories = getEnclavePulseCategories(enclaveId)
+  const aiBrief = getEnclaveAIBrief(enclaveId)
+  const domainAdvisories = getEnclaveDomainAdvisories(enclaveId)
+
   // Master View Mode
   const [pulseMode, setPulseMode] = useState<'news' | 'ai_brief' | 'cyber_threats' | 'audio_rooms'>('news')
 
   // News Filtering
   const [selectedCategory, setSelectedCategory] = useState<string>('All')
   const [searchQuery, setSearchQuery] = useState<string>('')
-  const [articles, setArticles] = useState<PulseArticle[]>(PULSE_ARTICLES_DATA)
+  const [articles, setArticles] = useState<PulseArticle[]>(() => getEnclavePulseArticles(enclaveId))
   const [selectedArticle, setSelectedArticle] = useState<PulseArticle | null>(null)
 
   // Audio Playback Simulation for AI Brief
@@ -78,7 +89,7 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
   const [savedArticleIds, setSavedArticleIds] = useState<string[]>([])
 
   // Audio Stage / Room State
-  const [rooms, setRooms] = useState<PulseRoom[]>(pulseRoomsData)
+  const [rooms, setRooms] = useState<PulseRoom[]>(() => getEnclavePulseRooms(enclaveId))
   const [activeRoom, setActiveRoom] = useState<PulseRoom | null>(null)
   const [isMuted, setIsMuted] = useState(false)
   const [handRaised, setHandRaised] = useState(false)
@@ -87,6 +98,12 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
     { sender: "Devon Hughes", text: "Are you benchmarking on AWS Graviton4 or x86?" }
   ])
   const [chatInput, setChatInput] = useState("")
+
+  useEffect(() => {
+    setArticles(getEnclavePulseArticles(enclaveId))
+    setRooms(getEnclavePulseRooms(enclaveId))
+    setSelectedCategory('All')
+  }, [enclaveId])
 
   const handleSendChat = (e: React.FormEvent) => {
     e.preventDefault()
@@ -131,24 +148,64 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-20">
       {/* 1. TOP PULSE HERO BANNER */}
-      <div className="rounded-2xl border border-sky-500/30 bg-gradient-to-r from-slate-900 via-sky-950 to-indigo-950 p-6 text-white shadow-xl">
+      <div className={`rounded-2xl border p-6 text-white shadow-xl ${
+        enclaveId === 'trades_construction'
+          ? "border-amber-500/30 bg-gradient-to-r from-stone-900 via-amber-950 to-neutral-900"
+          : enclaveId === 'healthcare_medicine'
+          ? "border-rose-500/30 bg-gradient-to-r from-slate-900 via-rose-950 to-slate-950"
+          : enclaveId === 'automotive_mechanics'
+          ? "border-blue-500/30 bg-gradient-to-r from-zinc-900 via-blue-950 to-slate-900"
+          : "border-sky-500/30 bg-gradient-to-r from-slate-900 via-sky-950 to-indigo-950"
+      }`}>
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
           <div className="space-y-2">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="rounded-full bg-sky-500/20 px-3 py-0.5 text-xs font-bold text-sky-300 border border-sky-400/40 flex items-center gap-1.5">
+              <span className={`rounded-full px-3 py-0.5 text-xs font-bold border flex items-center gap-1.5 ${
+                enclaveId === 'trades_construction'
+                  ? "bg-amber-500/20 text-amber-300 border-amber-400/40"
+                  : enclaveId === 'healthcare_medicine'
+                  ? "bg-rose-500/20 text-rose-300 border-rose-400/40"
+                  : enclaveId === 'automotive_mechanics'
+                  ? "bg-blue-500/20 text-blue-300 border-blue-400/40"
+                  : "bg-sky-500/20 text-sky-300 border-sky-400/40"
+              }`}>
                 <Newspaper className="h-3.5 w-3.5 text-amber-300" />
-                ConnectIn Pulse · Professional Media Layer
+                {enclaveId === 'trades_construction'
+                  ? "ConnectIn Pulse · Construction & Skilled Trades Intelligence"
+                  : enclaveId === 'healthcare_medicine'
+                  ? "ConnectIn Pulse · Clinical & Medical Intelligence"
+                  : enclaveId === 'automotive_mechanics'
+                  ? "ConnectIn Pulse · Automotive & Master Diagnostics Intelligence"
+                  : "ConnectIn Pulse · Professional Media Layer"}
               </span>
               <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-xs font-bold text-emerald-300 border border-emerald-500/40">
-                LinkedIn + TechCrunch + Research Intelligence
+                {enclaveId === 'trades_construction'
+                  ? "OSHA Directives + Building Codes + Heavy Equipment"
+                  : enclaveId === 'healthcare_medicine'
+                  ? "FDA Advisories + NEJM Research + Trauma Standards"
+                  : enclaveId === 'automotive_mechanics'
+                  ? "NHTSA Recalls + ASE Diagnostics + 800V EV"
+                  : "LinkedIn + TechCrunch + Research Intelligence"}
               </span>
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-              Professional News, AI Briefings & Threat Intelligence
+              {enclaveId === 'trades_construction'
+                ? "Trade News, Daily Safety Briefings & Code Advisories"
+                : enclaveId === 'healthcare_medicine'
+                ? "Clinical News, Daily Medical Briefings & FDA Directives"
+                : enclaveId === 'automotive_mechanics'
+                ? "Automotive News, Shop Briefings & NHTSA Safety Bulletins"
+                : "Professional News, AI Briefings & Threat Intelligence"}
             </h1>
             <p className="text-xs sm:text-sm text-zinc-300 max-w-2xl leading-relaxed">
-              Synthesizing breakthrough papers, CISA emergency security directives, enterprise cloud architectures, and venture rounds with source-grounded citations.
+              {enclaveId === 'trades_construction'
+                ? "Synthesizing mass timber engineering breakthroughs, OSHA job-site directives, commercial framing standards, and heavy tooling reviews with verified master-trade citations."
+                : enclaveId === 'healthcare_medicine'
+                ? "Synthesizing peer-reviewed clinical trials, FDA drug and device alerts, emergency surgery protocols, and trauma resuscitation standards."
+                : enclaveId === 'automotive_mechanics'
+                ? "Synthesizing EV powertrain breakthroughs, NHTSA safety recalls, oscilloscope diagnostic protocols, and commercial fleet maintenance standards."
+                : "Synthesizing breakthrough papers, CISA emergency security directives, enterprise cloud architectures, and venture rounds with source-grounded citations."}
             </p>
           </div>
 
@@ -182,12 +239,37 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
               onClick={() => setPulseMode('cyber_threats')}
               className={`px-3.5 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
                 pulseMode === 'cyber_threats'
-                  ? "bg-red-600 text-white shadow-md font-extrabold"
-                  : "text-red-300 hover:text-white hover:bg-white/10"
+                  ? enclaveId === 'trades_construction'
+                    ? "bg-amber-600 text-white shadow-md font-extrabold"
+                    : enclaveId === 'healthcare_medicine'
+                    ? "bg-rose-600 text-white shadow-md font-extrabold"
+                    : enclaveId === 'automotive_mechanics'
+                    ? "bg-blue-600 text-white shadow-md font-extrabold"
+                    : "bg-red-600 text-white shadow-md font-extrabold"
+                  : "text-zinc-300 hover:text-white hover:bg-white/10"
               }`}
             >
-              <Shield className="h-3.5 w-3.5" />
-              <span>Cyber Threat Radar</span>
+              {enclaveId === 'trades_construction' ? (
+                <>
+                  <AlertTriangle className="h-3.5 w-3.5 text-amber-300" />
+                  <span>OSHA & Code Radar</span>
+                </>
+              ) : enclaveId === 'healthcare_medicine' ? (
+                <>
+                  <ShieldCheck className="h-3.5 w-3.5 text-rose-300" />
+                  <span>FDA & Clinical Radar</span>
+                </>
+              ) : enclaveId === 'automotive_mechanics' ? (
+                <>
+                  <Zap className="h-3.5 w-3.5 text-blue-300" />
+                  <span>NHTSA & OEM Radar</span>
+                </>
+              ) : (
+                <>
+                  <Shield className="h-3.5 w-3.5" />
+                  <span>Cyber Threat Radar</span>
+                </>
+              )}
             </button>
 
             <button
@@ -204,13 +286,13 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
           </div>
         </div>
 
-        {/* 9 Category Filter Ribbon (Visible in News Feed) */}
+        {/* Dynamic Category Filter Ribbon (Visible in News Feed) */}
         {pulseMode === 'news' && (
           <div className="mt-5 pt-4 border-t border-white/10 flex items-center gap-2 overflow-x-auto pb-1 text-xs">
             <span className="text-[10px] font-bold uppercase tracking-wider text-sky-300 shrink-0 mr-1 flex items-center gap-1">
               <Filter className="h-3.5 w-3.5" /> Filter Feed:
             </span>
-            {PULSE_CATEGORIES.map((cat) => {
+            {categories.map((cat) => {
               const isSelected = selectedCategory === cat.id
               return (
                 <button
@@ -411,9 +493,9 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
                   <Sparkles className="h-3.5 w-3.5 text-amber-300" />
                   ConnectIn AI Daily Briefing
                 </span>
-                <p className="text-xs text-purple-300 font-mono mt-1">{TODAY_AI_BRIEF.date}</p>
+                <p className="text-xs text-purple-300 font-mono mt-1">{aiBrief.date}</p>
                 <h2 className="text-xl sm:text-2xl font-black text-white mt-1">
-                  {TODAY_AI_BRIEF.headline}
+                  {aiBrief.headline}
                 </h2>
               </div>
 
@@ -425,25 +507,25 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
                 {isPlayingAudio ? (
                   <>
                     <Pause className="h-4 w-4 text-amber-300" />
-                    <span>Pause Audio Brief ({TODAY_AI_BRIEF.audioDuration})</span>
+                    <span>Pause Audio Brief ({aiBrief.audioDuration})</span>
                   </>
                 ) : (
                   <>
                     <Play className="h-4 w-4 text-emerald-300 fill-emerald-300" />
-                    <span>🎧 Listen to Brief ({TODAY_AI_BRIEF.audioDuration})</span>
+                    <span>🎧 Listen to Brief ({aiBrief.audioDuration})</span>
                   </>
                 )}
               </button>
             </div>
 
             <p className="text-xs sm:text-sm text-purple-100 leading-relaxed max-w-3xl pt-1">
-              {TODAY_AI_BRIEF.executiveSummary}
+              {aiBrief.executiveSummary}
             </p>
           </div>
 
           {/* The 3 Core Pillars with Grounded Source Links */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {TODAY_AI_BRIEF.keyPillars.map((pillar, idx) => (
+            {aiBrief.keyPillars.map((pillar, idx) => (
               <div
                 key={idx}
                 className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs hover:border-purple-400 hover:shadow-lg transition-all dark:border-zinc-800 dark:bg-zinc-900 flex flex-col justify-between space-y-4"
@@ -482,30 +564,70 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
       )}
 
       {/* ========================================================================= */}
-      {/* MODE 3: TODAY'S CYBERSECURITY THREAT RADAR */}
+      {/* MODE 3: TODAY'S ENCLAVE DIRECTIVES & SAFETY ADVISORIES */}
       {/* ========================================================================= */}
       {pulseMode === 'cyber_threats' && (
         <div className="space-y-5">
-          <div className="rounded-2xl border border-red-500/30 bg-gradient-to-r from-slate-900 via-red-950 to-indigo-950 p-6 text-white shadow-xl space-y-2">
+          <div className={`rounded-2xl border p-6 text-white shadow-xl space-y-2 ${
+            enclaveId === 'trades_construction'
+              ? "border-amber-500/30 bg-gradient-to-r from-stone-900 via-amber-950 to-neutral-900"
+              : enclaveId === 'healthcare_medicine'
+              ? "border-rose-500/30 bg-gradient-to-r from-slate-900 via-rose-950 to-slate-950"
+              : enclaveId === 'automotive_mechanics'
+              ? "border-blue-500/30 bg-gradient-to-r from-zinc-900 via-blue-950 to-slate-900"
+              : "border-red-500/30 bg-gradient-to-r from-slate-900 via-red-950 to-indigo-950"
+          }`}>
             <div className="flex items-center gap-2">
-              <span className="rounded-full bg-red-500/30 px-3 py-0.5 text-xs font-bold text-red-200 border border-red-400/40 flex items-center gap-1.5">
-                <Shield className="h-3.5 w-3.5 text-red-400" />
-                Live Cyber Threat Intelligence Radar
+              <span className={`rounded-full px-3 py-0.5 text-xs font-bold border flex items-center gap-1.5 ${
+                enclaveId === 'trades_construction'
+                  ? "bg-amber-500/30 text-amber-200 border-amber-400/40"
+                  : enclaveId === 'healthcare_medicine'
+                  ? "bg-rose-500/30 text-rose-200 border-rose-400/40"
+                  : enclaveId === 'automotive_mechanics'
+                  ? "bg-blue-500/30 text-blue-200 border-blue-400/40"
+                  : "bg-red-500/30 text-red-200 border-red-400/40"
+              }`}>
+                <Shield className="h-3.5 w-3.5" />
+                {enclaveId === 'trades_construction'
+                  ? "OSHA & Structural Engineering Radar"
+                  : enclaveId === 'healthcare_medicine'
+                  ? "Clinical Directives & FDA Safety Radar"
+                  : enclaveId === 'automotive_mechanics'
+                  ? "NHTSA Recalls & Master OEM Bulletins"
+                  : "Live Cyber Threat Intelligence Radar"}
               </span>
               <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-bold text-amber-300">
-                Direct CISA / NIST Feed Sync
+                {enclaveId === 'trades_construction'
+                  ? "Direct OSHA / ANSI Regulatory Sync"
+                  : enclaveId === 'healthcare_medicine'
+                  ? "Direct FDA / CDC Clinical Feed Sync"
+                  : enclaveId === 'automotive_mechanics'
+                  ? "Direct NHTSA / SAE Standards Sync"
+                  : "Direct CISA / NIST Feed Sync"}
               </span>
             </div>
             <h2 className="text-xl sm:text-2xl font-black text-white">
-              Today's Critical Vulnerabilities & Zero-Day Threat Advisories
+              {enclaveId === 'trades_construction'
+                ? "Today's Job-Site Safety Directives & Structural Code Advisories"
+                : enclaveId === 'healthcare_medicine'
+                ? "Today's Critical Clinical Directives & Emergency Safety Alerts"
+                : enclaveId === 'automotive_mechanics'
+                ? "Today's Critical Safety Recalls & Master OEM Bulletins"
+                : "Today's Critical Vulnerabilities & Zero-Day Threat Advisories"}
             </h2>
-            <p className="text-xs sm:text-sm text-red-100 max-w-2xl leading-relaxed">
-              Actionable threat briefs for Security Architects, CISOs, and DevSecOps squads with immediate remediation playbooks and affected component breakdowns.
+            <p className="text-xs sm:text-sm text-zinc-200 max-w-2xl leading-relaxed">
+              {enclaveId === 'trades_construction'
+                ? "Actionable fall-protection advisories, heavy timber engineering guidelines, and OSHA tie-off mandates for commercial superintendents and craftsmen."
+                : enclaveId === 'healthcare_medicine'
+                ? "Actionable clinical guidelines, massive transfusion protocol thresholds, and pharmacological alerts for surgeons, emergency nurses, and critical care units."
+                : enclaveId === 'automotive_mechanics'
+                ? "Actionable high-voltage de-energization guidelines, contactor recalls, and CAN-FD oscilloscope diagnostic procedures for master technicians."
+                : "Actionable threat briefs for Security Architects, CISOs, and DevSecOps squads with immediate remediation playbooks and affected component breakdowns."}
             </p>
           </div>
 
           <div className="space-y-4">
-            {TODAY_CYBER_ADVISORIES.map((adv) => (
+            {domainAdvisories.map((adv) => (
               <div
                 key={adv.id}
                 className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-3"
@@ -533,7 +655,15 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
                     rel="noreferrer"
                     className="rounded-full bg-zinc-100 hover:bg-zinc-200 px-3 py-1 text-xs font-bold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 flex items-center gap-1 shrink-0"
                   >
-                    <span>CISA Advisory</span>
+                    <span>
+                      {enclaveId === 'trades_construction'
+                        ? "OSHA Standards"
+                        : enclaveId === 'healthcare_medicine'
+                        ? "FDA / CDC Guideline"
+                        : enclaveId === 'automotive_mechanics'
+                        ? "NHTSA Bulletin"
+                        : "CISA Advisory"}
+                    </span>
                     <ExternalLink className="h-3 w-3" />
                   </a>
                 </div>
@@ -551,7 +681,7 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
                 <div className="rounded-xl bg-zinc-50 p-3 text-xs dark:bg-zinc-800/60 space-y-1.5">
                   <p className="font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
                     <Zap className="h-3.5 w-3.5 text-amber-500" />
-                    Recommended Remediation Playbook:
+                    Recommended Protocol:
                   </p>
                   <p className="text-zinc-600 dark:text-zinc-300">
                     {adv.mitigationAction}
