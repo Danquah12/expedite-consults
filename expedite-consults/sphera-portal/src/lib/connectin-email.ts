@@ -48,11 +48,9 @@ export async function sendConnectInOTPEmail({
     let { data, error } = await resend.emails.send({
       from: fromAddress,
       to: [toEmail.toLowerCase().trim()],
+      replyTo: "auth@expediteconsults.com",
       subject,
       text: plainText,
-      headers: {
-        "X-Entity-Ref-ID": `connectin-otp-${Date.now()}`
-      },
       html: `
         <!DOCTYPE html>
         <html>
