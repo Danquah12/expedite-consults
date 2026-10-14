@@ -6,7 +6,8 @@ import {
   Shield, Swords, Zap, Activity, AlertTriangle, CheckCircle, Terminal,
   Layers, Play, Copy, Check, Download, RefreshCw, Filter, Search,
   ExternalLink, Eye, ChevronRight, Server, Globe, Lock, Cpu, Bot,
-  MessageSquare, Flame, Radio, Code2, Sparkles, Send, FileCode, CheckSquare
+  MessageSquare, Flame, Radio, Code2, Sparkles, Send, FileCode, CheckSquare,
+  Maximize2, Minimize2, ArrowUpRight, ShieldCheck, ChevronDown
 } from "lucide-react";
 import { FINDINGS } from "@/data/findings";
 
@@ -37,21 +38,28 @@ function AegisSocContent() {
   const [aiMessages, setAiMessages] = useState<{ role: "user" | "assistant"; text: string }[]>([
     {
       role: "assistant",
-      text: "⚡ **ÆGIS Cyber AI Analyst initialized.** I have indexed all findings across target `" + selectedTarget.host + "`. What would you like to investigate? I can generate cURL reproduction scripts, calculate CVSS 3.1 blast radius, or craft WAF virtual patches."
+      text: `Hello, I am your Security Intelligence Copilot. I have analyzed all scan telemetry for **${selectedTarget.host}**. 
+
+I can help you:
+- **Reproduce findings**: Generate precise cURL commands or Burp repeater requests
+- **Evaluate blast radius**: Calculate CVSS 3.1 vector metrics and asset impact
+- **Remediate vulnerabilities**: Draft WAF virtual patches and developer guidance
+
+Select a finding or type a question below to begin.`
     }
   ]);
 
-  // Real-time telemetry
-  const [telemetry, setTelemetry] = useState({ reqPerSec: 164, latency: 12, memoryUsage: "412 MB", blockedProbes: 89 });
+  // Real-time telemetry (calm, realistic updates)
+  const [telemetry, setTelemetry] = useState({ reqPerSec: 164, latency: 12, memoryUsage: "412 MB", activeRules: 247 });
   useEffect(() => {
     const timer = setInterval(() => {
       setTelemetry(prev => ({
-        reqPerSec: Math.floor(140 + Math.random() * 50),
-        latency: Math.floor(10 + Math.random() * 8),
-        memoryUsage: "418 MB",
-        blockedProbes: prev.blockedProbes + (Math.random() > 0.7 ? 1 : 0)
+        reqPerSec: Math.floor(150 + Math.random() * 25),
+        latency: Math.floor(10 + Math.random() * 5),
+        memoryUsage: "416 MB",
+        activeRules: 247
       }));
-    }, 2500);
+    }, 4000);
     return () => clearInterval(timer);
   }, []);
 
@@ -70,507 +78,674 @@ function AegisSocContent() {
     setTimeout(() => { setScanProgress(100); setActiveStage(4); setIsScanning(false); }, 3600);
   };
 
-  const handleSendAiMessage = () => {
-    if (!aiPrompt.trim()) return;
-    const userText = aiPrompt;
+  const handleSendAiMessage = (promptText?: string) => {
+    const textToSend = promptText || aiPrompt;
+    if (!textToSend.trim()) return;
+    const userText = textToSend;
     setAiMessages(prev => [...prev, { role: "user", text: userText }]);
-    setAiPrompt("");
+    if (!promptText) setAiPrompt("");
 
     setTimeout(() => {
       let reply = "";
-      if (userText.toLowerCase().includes("curl") || userText.toLowerCase().includes("poc")) {
-        reply = "```bash\n# Verified PoC exploit script against " + selectedTarget.host + "\ncurl -X POST 'https://" + selectedTarget.host + "/api/v2/auth/login' \\\n  -H 'Content-Type: application/json' \\\n  -H 'X-Forwarded-For: 127.0.0.1' \\\n  -d '{\"username\": \"admin' OR '1'='1\", \"password\": \"bypass\"}'\n```\n**Impact**: Bypasses rate limiting and executes boolean-based blind SQLi injection on underlying PostgreSQL cluster.";
-      } else if (userText.toLowerCase().includes("waf") || userText.toLowerCase().includes("patch")) {
-        reply = "```nginx\n# Nginx WAF Virtual Patch for " + selectedTarget.host + "\nlocation /api/v2/auth {\n    if ($request_body ~* \"(union|select|insert|update|delete|drop|or\\s+1=1)\") {\n        return 403;\n    }\n    proxy_pass http://backend_pool;\n}\n```\nRecommended deployment: Push to Cloudflare/AWS WAF via Platform 18 Unified Integration Layer.";
+      const lower = userText.toLowerCase();
+      if (lower.includes("curl") || lower.includes("poc")) {
+        reply = `Here is the verified cURL reproduction command for **${selectedFinding?.title || selectedTarget.host}**:
+
+\`\`\`bash
+# Reproduction cURL against ${selectedTarget.host}
+curl -i -s -k -X POST 'https://${selectedTarget.host}/api/v2/auth/login' \\
+  -H 'Content-Type: application/json' \\
+  -H 'X-Forwarded-For: 127.0.0.1' \\
+  -d '{"username": "admin'\'' OR 1=1--", "password": "verification_payload"}'
+\`\`\`
+
+**Expected Result**: Bypasses authentication checks and confirms database error or unauthorized session token generation.`;
+      } else if (lower.includes("waf") || lower.includes("patch")) {
+        reply = `Here is a recommended WAF virtual patch for **${selectedTarget.host}**:
+
+\`\`\`nginx
+# Nginx / ModSecurity Rule definition
+location /api/v2/auth {
+    if ($request_body ~* "(union\\s+select|or\\s+1=1|drop\\s+table|--|/\\*)") {
+        return 403 '{"error": "Security rule violation", "code": "SEC_WAF_089"}';
+    }
+    proxy_pass http://backend_cluster;
+}
+\`\`\`
+
+**Deployment Note**: Apply this rule at the edge (Cloudflare / AWS WAF) for immediate mitigation while applying database parameterized queries.`;
+      } else if (lower.includes("cvss") || lower.includes("blast")) {
+        reply = `### Impact & Blast Radius Analysis for ${selectedTarget.host}
+- **Assessed CVSS Score**: 9.8 (Critical)
+- **Vector**: \`CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H\`
+- **Affected Assets**: Database cluster, authentication tokens, downstream customer records
+- **Confidentiality**: High (direct database extraction)
+- **Integrity**: High (potential data modification)
+- **Availability**: Moderate (risk of resource exhaustion via denial of service)`;
       } else {
-        reply = "Target `" + selectedTarget.host + "` presents **3 Critical Vulnerabilities** (CVE-2025-2490 SQLi, JWT Algorithm Confusion, SSRF to AWS Metadata `169.254.169.254`). Recommended remediation order: Restrict IAM Role session, enforce HS256/RS256 strict verification, and parameterize database queries.";
+        reply = `Target **${selectedTarget.host}** is currently evaluated at **DEFCON ${activeDefcon}**.
+
+**Summary**:
+- **Critical Issues**: 5 vulnerabilities requiring priority triage (SQLi, Broken Object Auth, JWT Algorithm Confusion).
+- **Recommended Order**:
+  1. Patch unparameterized queries on \`/api/products/search\` and \`/api/v2/auth/login\`.
+  2. Enforce strict RS256 algorithm validation on JWT authorization tokens.
+  3. Restrict internal network egress to block SSRF metadata calls to \`169.254.169.254\`.`;
       }
       setAiMessages(prev => [...prev, { role: "assistant", text: reply }]);
-    }, 600);
+    }, 500);
   };
 
   const filteredFindings = FINDINGS.filter((f: any) => {
     const matchSev = filterSev === "ALL" || f.severity === filterSev;
     const targetUrl = f.url || f.target || "";
-    const matchQuery = !searchQuery || f.title.toLowerCase().includes(searchQuery.toLowerCase()) || targetUrl.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchQuery = !searchQuery || f.title.toLowerCase().includes(searchQuery.toLowerCase()) || targetUrl.toLowerCase().includes(searchQuery.toLowerCase()) || (f.cweId && f.cweId.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchSev && matchQuery;
   });
 
   return (
-    <div style={{
-      display: "flex", flexDirection: "column", height: "100%",
-      background: "radial-gradient(ellipse at 50% 0%, rgba(225, 29, 72, 0.08) 0%, #06080d 75%)",
-      color: "#e2e8f0", overflow: "hidden"
-    }}>
+    <div className="flex flex-col h-full bg-slate-950 text-slate-100 overflow-hidden font-sans selection:bg-sky-500/20 selection:text-white">
 
-      {/* Top SOC Status & Tactical Bar */}
-      <div style={{
-        padding: "12px 18px", borderBottom: "1px solid var(--border)",
-        background: "rgba(11, 15, 23, 0.9)", backdropFilter: "blur(16px)",
-        display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, flexShrink: 0
-      }}>
-        {/* Left Target & Brand */}
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{
-              width: 32, height: 32, borderRadius: 8,
-              background: "linear-gradient(135deg, #e11d48, #be123c)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              boxShadow: "0 0 16px rgba(225, 29, 72, 0.5)"
-            }}>
-              <Swords size={18} color="#fff" />
+      {/* Top Header: Dignified, Clean, Professional */}
+      <header className="px-5 py-3 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md flex items-center justify-between gap-4 shrink-0">
+        
+        {/* Left: Brand Identity & Target Selector */}
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+          <div className="flex items-center gap-2.5">
+            <div className="size-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-200 shrink-0">
+              <Shield className="size-4 text-sky-400" />
             </div>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 900, color: "#fff", display: "flex", alignItems: "center", gap: 6 }}>
-                ÆGIS · SOC
-                <span style={{ fontSize: 9, background: "rgba(225,29,72,0.2)", color: "#ff4d79", border: "1px solid rgba(225,29,72,0.4)", borderRadius: 4, padding: "1px 6px", fontWeight: 800 }}>
-                  LIVE COMMAND
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-white tracking-tight">ÆGIS · SOC</span>
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-800 text-slate-300 border border-slate-700">
+                  Platform 11
                 </span>
+                {isStandalone && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-sky-950 text-sky-300 border border-sky-800/60 hidden sm:inline-block">
+                    Standalone Console
+                  </span>
+                )}
               </div>
-              <div style={{ fontSize: 9, color: "var(--muted)", fontWeight: 700 }}>DAST INTELLIGENCE & ATTACK SIMULATOR</div>
+              <p className="text-[11px] text-slate-400 hidden sm:block">Security Operations & Dynamic Analysis</p>
             </div>
           </div>
 
-          <div style={{ height: 24, width: 1, background: "var(--border)" }} />
+          <div className="h-5 w-px bg-slate-800 hidden md:block" />
 
-          {/* Target Selector */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <Server size={14} color="#00f0ff" />
-            <select
-              value={selectedTarget.host}
-              onChange={e => {
-                const found = SAMPLE_TARGETS.find(t => t.host === e.target.value);
-                if (found) setSelectedTarget(found);
-              }}
-              style={{
-                background: "rgba(6, 8, 13, 0.85)", border: "1px solid var(--border-2)",
-                color: "#00f0ff", fontSize: 11.5, fontWeight: 700, padding: "5px 10px", borderRadius: 6,
-                outline: "none", cursor: "pointer", fontFamily: "var(--font-geist-mono)"
-              }}
-            >
-              {SAMPLE_TARGETS.map(t => (
-                <option key={t.host} value={t.host} style={{ background: "#0b0f17", color: "#fff" }}>
-                  {t.host} ({t.env})
-                </option>
-              ))}
-            </select>
-            <span style={{ fontSize: 10, color: "var(--muted)", fontFamily: "var(--font-geist-mono)" }}>
+          {/* Clean Target Dropdown */}
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="relative">
+              <select
+                value={selectedTarget.host}
+                onChange={e => {
+                  const found = SAMPLE_TARGETS.find(t => t.host === e.target.value);
+                  if (found) setSelectedTarget(found);
+                }}
+                className="appearance-none bg-slate-900 border border-slate-700 hover:border-slate-600 rounded-lg px-3 py-1.5 pr-8 text-xs font-medium text-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500 cursor-pointer transition-colors"
+              >
+                {SAMPLE_TARGETS.map(t => (
+                  <option key={t.host} value={t.host} className="bg-slate-900 text-slate-200">
+                    {t.host} ({t.env})
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="size-3 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+
+            <span className="text-[11px] font-mono text-slate-500 hidden lg:inline">
               {selectedTarget.ip}
             </span>
           </div>
         </div>
 
-        {/* Center Live Telemetry Pills */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(0, 240, 255, 0.08)", border: "1px solid rgba(0, 240, 255, 0.25)", padding: "4px 10px", borderRadius: 6 }}>
-            <Activity size={12} color="#00f0ff" />
-            <span style={{ fontSize: 10, fontWeight: 700, color: "#00f0ff", fontFamily: "var(--font-geist-mono)" }}>
-              {telemetry.reqPerSec} REQ/S
-            </span>
+        {/* Center: Calm System Health Telemetry */}
+        <div className="hidden xl:flex items-center gap-2 px-3 py-1 rounded-lg bg-slate-900/60 border border-slate-800/80 text-xs text-slate-300 font-mono">
+          <div className="flex items-center gap-1.5 px-2 py-0.5">
+            <span className="size-1.5 rounded-full bg-emerald-400" />
+            <span>{telemetry.reqPerSec} req/s</span>
           </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(16, 185, 129, 0.08)", border: "1px solid rgba(16, 185, 129, 0.25)", padding: "4px 10px", borderRadius: 6 }}>
-            <span className="beacon-green" />
-            <span style={{ fontSize: 10, fontWeight: 700, color: "#10b981", fontFamily: "var(--font-geist-mono)" }}>
-              {telemetry.latency}ms LATENCY
-            </span>
+          <span className="text-slate-700">·</span>
+          <div className="px-2 py-0.5 text-slate-400">
+            <span>{telemetry.latency}ms latency</span>
           </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(245, 158, 11, 0.08)", border: "1px solid rgba(245, 158, 11, 0.25)", padding: "4px 10px", borderRadius: 6 }}>
-            <Lock size={12} color="#f59e0b" />
-            <span style={{ fontSize: 10, fontWeight: 700, color: "#f59e0b", fontFamily: "var(--font-geist-mono)" }}>
-              OOB LISTENER: 247/247
-            </span>
+          <span className="text-slate-700">·</span>
+          <div className="px-2 py-0.5 text-slate-400">
+            <span>{telemetry.activeRules} active rules</span>
           </div>
         </div>
 
-        {/* Right Scan Action & DEFCON */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {/* DEFCON Selector */}
-          <div style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(6, 8, 13, 0.8)", padding: "3px 6px", borderRadius: 6, border: "1px solid var(--border)" }}>
-            <span style={{ fontSize: 9, fontWeight: 800, color: "var(--muted)", marginRight: 2 }}>DEFCON</span>
-            {[1, 2, 3, 4, 5].map(d => (
-              <button
-                key={d}
-                onClick={() => setActiveDefcon(d)}
-                style={{
-                  width: 18, height: 18, borderRadius: 3, border: "none", fontSize: 9, fontWeight: 900,
-                  cursor: "pointer",
-                  background: activeDefcon === d ? (d <= 2 ? "#e11d48" : d === 3 ? "#f59e0b" : "#10b981") : "rgba(255,255,255,0.06)",
-                  color: activeDefcon === d ? "#fff" : "var(--muted)"
-                }}
-              >
-                {d}
-              </button>
-            ))}
+        {/* Right: DEFCON Selector & Main Scan Trigger */}
+        <div className="flex items-center gap-3 shrink-0">
+          
+          {/* Subtle DEFCON Segmented Control */}
+          <div className="hidden sm:flex items-center gap-1 p-1 rounded-lg bg-slate-900 border border-slate-800">
+            <span className="text-[10px] font-medium text-slate-400 px-1.5 uppercase tracking-wider">DEFCON</span>
+            {[1, 2, 3, 4, 5].map(d => {
+              const isActive = activeDefcon === d;
+              return (
+                <button
+                  key={d}
+                  onClick={() => setActiveDefcon(d)}
+                  className={`size-6 rounded text-xs font-semibold transition-all ${
+                    isActive
+                      ? d <= 2
+                        ? "bg-rose-500/20 text-rose-300 border border-rose-500/40"
+                        : d === 3
+                        ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                        : "bg-slate-700 text-white"
+                      : "text-slate-400 hover:text-slate-200"
+                  }`}
+                  title={`DEFCON ${d}`}
+                >
+                  {d}
+                </button>
+              );
+            })}
           </div>
 
+          {/* Primary Action Button */}
           <button
             onClick={handleTriggerScan}
             disabled={isScanning}
-            className="btn-primary"
-            style={{ padding: "6px 14px", fontSize: 11.5 }}
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white shadow-sm transition-all disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {isScanning ? (
               <>
-                <RefreshCw size={13} className="animate-spin" /> Scanning Stage {activeStage}/4 ({scanProgress}%)
+                <RefreshCw className="size-3.5 animate-spin" />
+                <span>Stage {activeStage}/4 ({scanProgress}%)</span>
               </>
             ) : (
               <>
-                <Play size={13} /> Launch 4-Stage Scan
+                <Play className="size-3.5 fill-current" />
+                <span>Run 4-Stage Scan</span>
               </>
             )}
           </button>
         </div>
-      </div>
+      </header>
 
-      {/* Navigation Suite Sub-Bar */}
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "0 18px", borderBottom: "1px solid var(--border)", background: "rgba(11, 15, 23, 0.6)",
-        flexShrink: 0
-      }}>
-        <div className="tab-bar" style={{ border: "none", background: "transparent" }}>
+      {/* Navigation Sub-Tabs */}
+      <div className="px-5 border-b border-slate-800 bg-slate-900/40 flex items-center justify-between gap-4 shrink-0 overflow-x-auto">
+        <div className="flex items-center gap-1">
           <button
             onClick={() => setActiveTab("matrix")}
-            className={`tab-item ${activeTab === "matrix" ? "active" : ""}`}
-            style={{ display: "flex", alignItems: "center", gap: 6, borderRight: "1px solid var(--border)" }}
+            className={`px-3.5 py-2.5 text-xs font-medium border-b-2 flex items-center gap-2 transition-colors ${
+              activeTab === "matrix"
+                ? "border-sky-400 text-white"
+                : "border-transparent text-slate-400 hover:text-slate-200"
+            }`}
           >
-            <Shield size={13} /> Threat Matrix & Risk Radar
+            <Shield className="size-3.5" />
+            <span>Vulnerability Matrix</span>
           </button>
+
           <button
             onClick={() => setActiveTab("pipeline")}
-            className={`tab-item ${activeTab === "pipeline" ? "active" : ""}`}
-            style={{ display: "flex", alignItems: "center", gap: 6, borderRight: "1px solid var(--border)" }}
+            className={`px-3.5 py-2.5 text-xs font-medium border-b-2 flex items-center gap-2 transition-colors ${
+              activeTab === "pipeline"
+                ? "border-sky-400 text-white"
+                : "border-transparent text-slate-400 hover:text-slate-200"
+            }`}
           >
-            <Layers size={13} /> 4-Stage Live Attack Pipeline
+            <Layers className="size-3.5" />
+            <span>Attack Pipeline</span>
           </button>
+
           <button
             onClick={() => setActiveTab("forge")}
-            className={`tab-item ${activeTab === "forge" ? "active" : ""}`}
-            style={{ display: "flex", alignItems: "center", gap: 6, borderRight: "1px solid var(--border)" }}
+            className={`px-3.5 py-2.5 text-xs font-medium border-b-2 flex items-center gap-2 transition-colors ${
+              activeTab === "forge"
+                ? "border-sky-400 text-white"
+                : "border-transparent text-slate-400 hover:text-slate-200"
+            }`}
           >
-            <Flame size={13} /> Traffic Interceptor & Forge
+            <Code2 className="size-3.5" />
+            <span>HTTP Request Studio</span>
           </button>
+
           <button
             onClick={() => setActiveTab("copilot")}
-            className={`tab-item ${activeTab === "copilot" ? "active" : ""}`}
-            style={{ display: "flex", alignItems: "center", gap: 6, borderRight: "1px solid var(--border)" }}
+            className={`px-3.5 py-2.5 text-xs font-medium border-b-2 flex items-center gap-2 transition-colors ${
+              activeTab === "copilot"
+                ? "border-sky-400 text-white"
+                : "border-transparent text-slate-400 hover:text-slate-200"
+            }`}
           >
-            <Bot size={13} color="#00f0ff" /> Autonomous AI Copilot
+            <Bot className="size-3.5" />
+            <span>AI Security Assistant</span>
           </button>
+
           <button
             onClick={() => setActiveTab("evidence")}
-            className={`tab-item ${activeTab === "evidence" ? "active" : ""}`}
-            style={{ display: "flex", alignItems: "center", gap: 6 }}
+            className={`px-3.5 py-2.5 text-xs font-medium border-b-2 flex items-center gap-2 transition-colors ${
+              activeTab === "evidence"
+                ? "border-sky-400 text-white"
+                : "border-transparent text-slate-400 hover:text-slate-200"
+            }`}
           >
-            <FileCode size={13} /> Evidence Vault & Reports
+            <FileCode className="size-3.5" />
+            <span>Evidence & Reports</span>
           </button>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Link href="/live-scan" style={{ fontSize: 11, color: "var(--muted)", textDecoration: "none", display: "flex", alignItems: "center", gap: 4 }}>
-            <span>Full Engine Grid</span> <ExternalLink size={11} />
+        <div className="flex items-center gap-3 py-1.5 shrink-0">
+          <Link
+            href="/live-scan"
+            className="text-xs text-slate-400 hover:text-slate-200 flex items-center gap-1 transition-colors"
+          >
+            <span>Scan Engine Matrix</span>
+            <ArrowUpRight className="size-3" />
           </Link>
         </div>
       </div>
 
-      {/* Main Studio View Body */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px" }}>
-
-        {/* TAB 1: THREAT MATRIX & RISK RADAR */}
+      {/* Main Content Workspace */}
+      <main className="flex-1 overflow-y-auto p-5 sm:p-6">
+        
+        {/* ============================================================== */}
+        {/* TAB 1: VULNERABILITY MATRIX & RISK RADAR                       */}
+        {/* ============================================================== */}
         {activeTab === "matrix" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {/* Top Metric Cards */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
-              <div className="cyber-card-crimson" style={{ padding: "16px 18px" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                  <span style={{ fontSize: 11, fontWeight: 800, color: "#ff4d79", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                    Critical Exploits
-                  </span>
-                  <AlertTriangle size={16} color="#ef4444" />
+          <div className="space-y-5 max-w-7xl mx-auto">
+            
+            {/* 4 Unified, Clean Metric Cards (Reduced Coloring) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              
+              {/* Metric 1: Critical Issues */}
+              <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
+                    <span>Critical Exploits</span>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                      Action Required
+                    </span>
+                  </div>
+                  <div className="text-2xl font-bold text-white tracking-tight">5</div>
                 </div>
-                <div style={{ fontSize: 32, fontWeight: 900, color: "#fff", lineHeight: 1 }}>5</div>
-                <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 6 }}>Immediate RCE & Blind SQLi active</div>
+                <p className="text-xs text-slate-400 mt-2">
+                  Immediate RCE and unauthenticated blind SQL injection.
+                </p>
               </div>
 
-              <div className="cyber-card" style={{ padding: "16px 18px" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                  <span style={{ fontSize: 11, fontWeight: 800, color: "#f59e0b", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                    High Vulnerabilities
-                  </span>
-                  <Zap size={16} color="#f59e0b" />
+              {/* Metric 2: High Severity */}
+              <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
+                    <span>High Vulnerabilities</span>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                      12 Active
+                    </span>
+                  </div>
+                  <div className="text-2xl font-bold text-white tracking-tight">12</div>
                 </div>
-                <div style={{ fontSize: 32, fontWeight: 900, color: "#fff", lineHeight: 1 }}>12</div>
-                <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 6 }}>BOLA, IDOR & SSRF vectors</div>
+                <p className="text-xs text-slate-400 mt-2">
+                  BOLA, IDOR, and SSRF internal service probes.
+                </p>
               </div>
 
-              <div className="cyber-card" style={{ padding: "16px 18px" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                  <span style={{ fontSize: 11, fontWeight: 800, color: "#00f0ff", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                    Verified PoCs
-                  </span>
-                  <CheckSquare size={16} color="#00f0ff" />
+              {/* Metric 3: Verified Proof of Concept */}
+              <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
+                    <span>Verified PoCs</span>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      Verified
+                    </span>
+                  </div>
+                  <div className="text-2xl font-bold text-white tracking-tight">100%</div>
                 </div>
-                <div style={{ fontSize: 32, fontWeight: 900, color: "#fff", lineHeight: 1 }}>100%</div>
-                <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 6 }}>Zero false positives (OAST verified)</div>
+                <p className="text-xs text-slate-400 mt-2">
+                  Zero false positives confirmed via OAST callbacks.
+                </p>
               </div>
 
-              <div className="cyber-card" style={{ padding: "16px 18px" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                  <span style={{ fontSize: 11, fontWeight: 800, color: "#10b981", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                    Attack Surface
-                  </span>
-                  <Globe size={16} color="#10b981" />
+              {/* Metric 4: Monitored Attack Surface */}
+              <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
+                    <span>Attack Surface</span>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-800 text-slate-300 border border-slate-700">
+                      Monitored
+                    </span>
+                  </div>
+                  <div className="text-2xl font-bold text-white tracking-tight">48 Endpoints</div>
                 </div>
-                <div style={{ fontSize: 32, fontWeight: 900, color: "#fff", lineHeight: 1 }}>48 Endpoints</div>
-                <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 6 }}>12 API routes · 36 Web endpoints</div>
+                <p className="text-xs text-slate-400 mt-2">
+                  12 API routes and 36 public web service endpoints.
+                </p>
               </div>
+
             </div>
 
-            {/* Split Threat Workspace */}
-            <div style={{ display: "grid", gridTemplateColumns: "1.1fr 0.9fr", gap: 16 }}>
-              {/* Left: Interactive Findings Matrix */}
-              <div className="tool-panel">
-                <div className="tool-panel-header" style={{ justifyContent: "space-between" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <Shield size={14} color="#e11d48" />
-                    <span>Real-Time Vulnerability Stream</span>
+            {/* Split Workspace: Findings List + Detail Inspector */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+              
+              {/* Left Column: Interactive Table (7 cols) */}
+              <div className="lg:col-span-7 rounded-xl bg-slate-900/60 border border-slate-800 overflow-hidden flex flex-col">
+                
+                {/* Search & Filter Header */}
+                <div className="p-3 border-b border-slate-800 bg-slate-900/80 flex flex-wrap items-center justify-between gap-3">
+                  <div className="relative flex-1 min-w-[200px]">
+                    <Search className="size-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      placeholder="Filter by vulnerability, endpoint, or CWE..."
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-slate-700"
+                    />
                   </div>
 
                   {/* Filter Pills */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    {["ALL", "Critical", "High", "Medium"].map(sev => (
-                      <button
-                        key={sev}
-                        onClick={() => setFilterSev(sev)}
-                        style={{
-                          fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 4,
-                          background: filterSev === sev ? "rgba(225,29,72,0.25)" : "transparent",
-                          color: filterSev === sev ? "#fff" : "var(--muted)",
-                          border: `1px solid ${filterSev === sev ? "rgba(225,29,72,0.5)" : "var(--border)"}`,
-                          cursor: "pointer"
-                        }}
-                      >
-                        {sev}
-                      </button>
-                    ))}
+                  <div className="flex items-center gap-1">
+                    {["ALL", "Critical", "High", "Medium"].map(sev => {
+                      const isSel = filterSev === sev;
+                      return (
+                        <button
+                          key={sev}
+                          onClick={() => setFilterSev(sev)}
+                          className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                            isSel
+                              ? "bg-slate-800 text-white border border-slate-700"
+                              : "text-slate-400 hover:text-slate-200"
+                          }`}
+                        >
+                          {sev}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
-                <div style={{ padding: 10, borderBottom: "1px solid var(--border)" }}>
-                  <div style={{ position: "relative" }}>
-                    <Search size={13} style={{ position: "absolute", left: 10, top: 9, color: "var(--muted)" }} />
-                    <input
-                      type="text"
-                      placeholder="Filter findings by CVE, CWE, or endpoint..."
-                      value={searchQuery}
-                      onChange={e => setSearchQuery(e.target.value)}
-                      style={{
-                        width: "100%", background: "#06080d", border: "1px solid var(--border)",
-                        borderRadius: 6, padding: "6px 10px 6px 30px", fontSize: 11.5, color: "#fff",
-                        outline: "none"
-                      }}
-                    />
-                  </div>
-                </div>
-
-                <div style={{ maxHeight: 380, overflowY: "auto" }}>
-                  <table className="data-table">
-                    <thead>
+                {/* Table Data */}
+                <div className="overflow-x-auto max-h-[460px]">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-900/90 text-slate-400 font-medium border-b border-slate-800 sticky top-0 z-10">
                       <tr>
-                        <th>Severity</th>
-                        <th>Vulnerability</th>
-                        <th>Target Endpoint</th>
-                        <th>CWE / CVE</th>
-                        <th>Action</th>
+                        <th className="py-2.5 px-3">Severity</th>
+                        <th className="py-2.5 px-3">Vulnerability</th>
+                        <th className="py-2.5 px-3">Endpoint</th>
+                        <th className="py-2.5 px-3">CWE</th>
+                        <th className="py-2.5 px-3 text-right">Action</th>
                       </tr>
                     </thead>
-                    <tbody>
-                      {filteredFindings.map((f: any) => (
-                        <tr
-                          key={f.id}
-                          className={selectedFinding.id === f.id ? "selected" : ""}
-                          onClick={() => setSelectedFinding(f)}
-                        >
-                          <td>
-                            <span style={{
-                              fontSize: 10, fontWeight: 800, padding: "2px 6px", borderRadius: 4,
-                              background: f.severity === "Critical" ? "rgba(239,68,68,0.2)" : f.severity === "High" ? "rgba(245,158,11,0.2)" : "rgba(16,185,129,0.2)",
-                              color: f.severity === "Critical" ? "#ef4444" : f.severity === "High" ? "#f59e0b" : "#10b981",
-                              border: `1px solid ${f.severity === "Critical" ? "rgba(239,68,68,0.4)" : f.severity === "High" ? "rgba(245,158,11,0.4)" : "rgba(16,185,129,0.4)"}`
-                            }}>
-                              {f.severity}
-                            </span>
-                          </td>
-                          <td style={{ fontWeight: 600, color: "#fff" }}>{f.title}</td>
-                          <td style={{ fontFamily: "var(--font-geist-mono)", fontSize: 11, color: "var(--fg-2)" }}>{f.url || f.target || ""}</td>
-                          <td style={{ fontFamily: "var(--font-geist-mono)", fontSize: 11, color: "#00f0ff" }}>{f.cweId || f.cwe || "CWE-89"}</td>
-                          <td>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setSelectedFinding(f); setActiveTab("forge"); }}
-                              className="btn-cyan"
-                              style={{ padding: "3px 8px", fontSize: 10.5 }}
-                            >
-                              Forge PoC
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                    <tbody className="divide-y divide-slate-800/60">
+                      {filteredFindings.map((f: any) => {
+                        const isSelected = selectedFinding?.id === f.id;
+                        const isCrit = f.severity === "Critical";
+                        const isHigh = f.severity === "High";
+                        return (
+                          <tr
+                            key={f.id}
+                            onClick={() => setSelectedFinding(f)}
+                            className={`cursor-pointer transition-colors ${
+                              isSelected
+                                ? "bg-slate-800/60 border-l-2 border-sky-400"
+                                : "hover:bg-slate-800/30"
+                            }`}
+                          >
+                            <td className="py-2.5 px-3">
+                              <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold border ${
+                                isCrit
+                                  ? "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                                  : isHigh
+                                  ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                                  : "bg-sky-500/10 text-sky-400 border-sky-500/20"
+                              }`}>
+                                {f.severity}
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-3 font-medium text-slate-100 max-w-[200px] truncate">
+                              {f.title}
+                            </td>
+                            <td className="py-2.5 px-3 font-mono text-slate-400 max-w-[180px] truncate">
+                              {f.url || f.target || "—"}
+                            </td>
+                            <td className="py-2.5 px-3 font-mono text-slate-400">
+                              {f.cweId || f.cwe || "CWE-89"}
+                            </td>
+                            <td className="py-2.5 px-3 text-right">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedFinding(f);
+                                  setActiveTab("forge");
+                                }}
+                                className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-medium transition-colors"
+                              >
+                                Test
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
+
+                {/* Table Footer Summary */}
+                <div className="p-2.5 border-t border-slate-800 bg-slate-900/60 text-[11px] text-slate-400 flex items-center justify-between">
+                  <span>Showing {filteredFindings.length} of {FINDINGS.length} security findings</span>
+                  <span className="font-mono text-slate-500">Target: {selectedTarget.host}</span>
+                </div>
               </div>
 
-              {/* Right: Deep Finding Inspection Drawer */}
-              <div className="cyber-card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid var(--border)", paddingBottom: 10 }}>
-                  <div>
-                    <span style={{ fontSize: 10, fontWeight: 800, color: "#00f0ff", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                      Finding Detail Inspector
+              {/* Right Column: Finding Detail Inspector (5 cols) */}
+              <div className="lg:col-span-5 rounded-xl bg-slate-900/60 border border-slate-800 p-5 flex flex-col justify-between">
+                
+                <div>
+                  {/* Top Bar: Title & CVSS */}
+                  <div className="flex items-start justify-between gap-3 border-b border-slate-800 pb-3 mb-4">
+                    <div>
+                      <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+                        Finding Inspection
+                      </span>
+                      <h3 className="text-sm font-semibold text-white mt-1 leading-snug">
+                        {selectedFinding?.title}
+                      </h3>
+                    </div>
+                    <span className="px-2 py-1 rounded text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20 shrink-0">
+                      CVSS {selectedFinding?.cvss || "9.8"}
                     </span>
-                    <h3 style={{ fontSize: 14, fontWeight: 800, color: "#fff", marginTop: 2 }}>{selectedFinding.title}</h3>
                   </div>
-                  <span style={{
-                    fontSize: 11, fontWeight: 800, padding: "3px 8px", borderRadius: 4,
-                    background: "rgba(239,68,68,0.2)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.5)"
-                  }}>
-                    CVSS {selectedFinding.cvss || "9.8"}
-                  </span>
-                </div>
 
-                <div style={{ fontSize: 12, color: "#94a3b8", lineHeight: 1.5 }}>
-                  {selectedFinding.description || "The target parameter does not sanitize user inputs prior to executing backend database queries, enabling unauthenticated remote command execution."}
-                </div>
-
-                {/* Evidence Code Box */}
-                <div style={{ position: "relative" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase" }}>Proof of Concept Payload</span>
-                    <button
-                      onClick={() => handleCopy(selectedFinding.evidence?.payload || selectedFinding.payload || "admin' OR 1=1--", "payload")}
-                      style={{ fontSize: 10, color: "#00f0ff", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 3 }}
-                    >
-                      {copiedId === "payload" ? <Check size={11} color="#10b981" /> : <Copy size={11} />}
-                      {copiedId === "payload" ? "Copied" : "Copy Payload"}
-                    </button>
+                  {/* Description */}
+                  <div className="text-xs text-slate-300 leading-relaxed mb-4">
+                    {selectedFinding?.description ||
+                      "The target endpoint is vulnerable to unauthenticated manipulation. User input is reflected or concatenated directly into backend commands."}
                   </div>
-                  <pre className="http-raw" style={{ maxHeight: 110 }}>
-                    {selectedFinding.evidence?.testRequest || selectedFinding.payload || "POST /api/v2/auth/login HTTP/1.1\nHost: " + selectedTarget.host + "\nContent-Type: application/json\n\n{\"user\": \"admin' OR '1'='1\", \"pass\": \"x\"}"}
-                  </pre>
+
+                  {/* Impact */}
+                  {selectedFinding?.impact && (
+                    <div className="mb-4 p-3 rounded-lg bg-slate-950/60 border border-slate-800/80">
+                      <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                        Business Impact
+                      </div>
+                      <p className="text-xs text-slate-300 leading-relaxed">
+                        {selectedFinding.impact}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Proof of Concept Snippet */}
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between text-xs text-slate-400 mb-1.5">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider">Reproduction Payload</span>
+                      <button
+                        onClick={() => handleCopy(selectedFinding?.evidence?.payload || selectedFinding?.payload || "admin' OR 1=1--", "payload")}
+                        className="text-xs text-sky-400 hover:text-sky-300 flex items-center gap-1 transition-colors"
+                      >
+                        {copiedId === "payload" ? <Check className="size-3 text-emerald-400" /> : <Copy className="size-3" />}
+                        <span>{copiedId === "payload" ? "Copied" : "Copy"}</span>
+                      </button>
+                    </div>
+
+                    <pre className="p-3 rounded-lg bg-slate-950 border border-slate-800 font-mono text-[11px] text-slate-300 overflow-x-auto max-h-[140px] leading-relaxed">
+                      {selectedFinding?.evidence?.testRequest || selectedFinding?.payload || `POST /api/v2/auth/login HTTP/1.1\nHost: ${selectedTarget.host}\nContent-Type: application/json\n\n{"username": "admin' OR 1=1--", "password": "x"}`}
+                    </pre>
+                  </div>
                 </div>
 
-                {/* Remediation & 1-Click Action */}
-                <div style={{ marginTop: "auto", display: "flex", gap: 8 }}>
+                {/* Bottom Quick Action Strip */}
+                <div className="pt-3 border-t border-slate-800 flex items-center gap-2 mt-4">
                   <button
-                    onClick={() => { setActiveTab("copilot"); setAiPrompt("Generate an emergency WAF virtual patch for " + selectedFinding.title); }}
-                    className="btn-cyan"
-                    style={{ flex: 1 }}
+                    onClick={() => {
+                      setActiveTab("copilot");
+                      handleSendAiMessage("How do I remediate " + selectedFinding?.title + "?");
+                    }}
+                    className="flex-1 px-3 py-2 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 flex items-center justify-center gap-1.5 transition-colors"
                   >
-                    <Bot size={13} /> Ask AI Remediation
+                    <Bot className="size-3.5 text-sky-400" />
+                    <span>Ask AI Remediation</span>
                   </button>
+
                   <button
-                    onClick={() => handleCopy(JSON.stringify(selectedFinding, null, 2), "json")}
-                    className="btn-secondary"
+                    onClick={() => handleCopy(JSON.stringify(selectedFinding, null, 2), "sarif")}
+                    className="px-3 py-2 rounded-lg text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 flex items-center gap-1.5 transition-colors"
+                    title="Copy finding as JSON"
                   >
-                    <Download size={13} /> Export SARIF
+                    <Download className="size-3.5" />
+                    <span>{copiedId === "sarif" ? "Copied" : "JSON"}</span>
                   </button>
                 </div>
+
               </div>
+
             </div>
+
           </div>
         )}
 
-        {/* TAB 2: 4-STAGE ATTACK PIPELINE */}
+        {/* ============================================================== */}
+        {/* TAB 2: 4-STAGE ATTACK PIPELINE                                 */}
+        {/* ============================================================== */}
         {activeTab === "pipeline" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <div className="cyber-card" style={{ padding: 18 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+          <div className="space-y-5 max-w-7xl mx-auto">
+            
+            <div className="p-5 rounded-xl bg-slate-900/60 border border-slate-800">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
                 <div>
-                  <h3 style={{ fontSize: 15, fontWeight: 800, color: "#fff" }}>Automated 4-Stage DAST Pipeline Flow</h3>
-                  <p style={{ fontSize: 11.5, color: "var(--muted)" }}>Autonomous progression from initial port enumeration to proof-of-exploit verification.</p>
+                  <h3 className="text-sm font-semibold text-white">Autonomous 4-Stage Attack Pipeline</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">Automated progression from reconnaissance to verified proof generation.</p>
                 </div>
-                <button onClick={handleTriggerScan} disabled={isScanning} className="btn-primary">
-                  <Play size={13} /> Run Live Pipeline
+                <button
+                  onClick={handleTriggerScan}
+                  disabled={isScanning}
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-sky-600 hover:bg-sky-500 text-white self-start sm:self-auto flex items-center gap-1.5"
+                >
+                  <Play className="size-3.5 fill-current" />
+                  <span>Execute Pipeline</span>
                 </button>
               </div>
 
-              {/* Visual Stages Grid */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+              {/* 4 Stage Progression Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
                   {
-                    num: 1, title: "Stage 1: Recon & Spider", desc: "Nmap port mapper + ZAP dynamic web crawler discovering all routes.",
-                    badge: "Nmap / ZAP", status: activeStage >= 1 ? "Complete" : "Pending"
+                    num: 1,
+                    title: "Stage 1: Recon & Spider",
+                    desc: "Port enumeration and automated crawling of exposed API routes.",
+                    tool: "Nmap & Spider",
+                    active: activeStage >= 1
                   },
                   {
-                    num: 2, title: "Stage 2: Active Fuzzing", desc: "OWASP Top 10 injection engine testing SQLi, XSS, SSRF, & JWT flaws.",
-                    badge: "Fuzz Matrix", status: activeStage >= 2 ? "Complete" : "Pending"
+                    num: 2,
+                    title: "Stage 2: Active Fuzzing",
+                    desc: "OWASP Top 10 injection engine testing SQLi, SSRF, & auth parameters.",
+                    tool: "Fuzz Matrix",
+                    active: activeStage >= 2
                   },
                   {
-                    num: 3, title: "Stage 3: Proof-of-Exploit", desc: "OAST out-of-band callback verification and privilege escalation check.",
-                    badge: "OAST / Burp", status: activeStage >= 3 ? "Complete" : "Pending"
+                    num: 3,
+                    title: "Stage 3: Proof Verification",
+                    desc: "OAST out-of-band callback confirmation with zero false positives.",
+                    tool: "OAST Engine",
+                    active: activeStage >= 3
                   },
                   {
-                    num: 4, title: "Stage 4: SIEM Dispatch", desc: "Automated SARIF generation, JIRA ticket filing, and WAF virtual patches.",
-                    badge: "SARIF / SOAR", status: activeStage >= 4 ? "Complete" : "Pending"
+                    num: 4,
+                    title: "Stage 4: SIEM Dispatch",
+                    desc: "Automated SARIF ledger generation, virtual patch export & triage.",
+                    tool: "SARIF Ledger",
+                    active: activeStage >= 4
                   }
-                ].map(s => (
-                  <div key={s.num} style={{
-                    padding: 14, borderRadius: 8, background: "rgba(6, 8, 13, 0.9)",
-                    border: `1px solid ${activeStage >= s.num ? "rgba(225,29,72,0.4)" : "var(--border)"}`,
-                    boxShadow: activeStage >= s.num ? "0 0 15px rgba(225,29,72,0.15)" : "none"
-                  }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-                      <span style={{ fontSize: 10, fontWeight: 800, color: activeStage >= s.num ? "#ff4d79" : "var(--muted)" }}>STAGE {s.num}</span>
-                      <span style={{
-                        fontSize: 9, fontWeight: 700, padding: "1px 5px", borderRadius: 4,
-                        background: activeStage >= s.num ? "rgba(16,185,129,0.2)" : "rgba(255,255,255,0.05)",
-                        color: activeStage >= s.num ? "#10b981" : "var(--muted)"
-                      }}>
-                        {s.status}
+                ].map(stage => (
+                  <div
+                    key={stage.num}
+                    className={`p-3.5 rounded-lg border transition-all ${
+                      stage.active
+                        ? "bg-slate-900 border-slate-700 shadow-sm"
+                        : "bg-slate-950/40 border-slate-800/60 opacity-60"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between text-xs mb-2">
+                      <span className="font-semibold text-slate-400">Stage {stage.num}</span>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-medium border ${
+                        stage.active
+                          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                          : "bg-slate-800 text-slate-500 border-slate-700"
+                      }`}>
+                        {stage.active ? "Complete" : "Pending"}
                       </span>
                     </div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 4 }}>{s.title}</div>
-                    <div style={{ fontSize: 11, color: "#94a3b8", lineHeight: 1.4 }}>{s.desc}</div>
+                    <div className="text-xs font-semibold text-white mb-1">{stage.title}</div>
+                    <p className="text-[11px] text-slate-400 leading-relaxed mb-3">{stage.desc}</p>
+                    <div className="text-[10px] font-mono text-slate-500 border-t border-slate-800/60 pt-2">
+                      Tool: {stage.tool}
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Pipeline Execution Log Stream */}
-            <div className="tool-panel">
-              <div className="tool-panel-header">
-                <Terminal size={14} color="#10b981" />
-                <span>Live Execution Terminal Stream</span>
+            {/* Execution Log Terminal */}
+            <div className="rounded-xl bg-slate-900/60 border border-slate-800 overflow-hidden">
+              <div className="p-3 border-b border-slate-800 bg-slate-900/80 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-medium text-slate-300">
+                  <Terminal className="size-3.5 text-slate-400" />
+                  <span>Execution Log Stream</span>
+                </div>
+                <span className="text-[11px] font-mono text-slate-500">Live Telemetry</span>
               </div>
-              <pre className="http-raw" style={{ height: 220, fontSize: 11 }}>
-{`[INFO] [00:00:01] Engine Dispatch: Target initialized at ${selectedTarget.host} (${selectedTarget.ip})
-[STAGE 1] Running Nmap Port Enumeration: Discovered ports 80, 443, 8080, 8443 OPEN
-[STAGE 1] Spawning ZAP Spider: Crawling 48 endpoints across /api/v2, /auth, /billing, /internal
-[STAGE 2] Fuzzing Engine Engaged: Injecting 2,400 payloads across query & body parameters
-[ALERT] Vulnerability Triggered: SQL Injection found on /api/v2/auth/login (Parameter 'username')
+
+              <pre className="p-4 bg-slate-950 font-mono text-xs text-slate-300 leading-relaxed max-h-[300px] overflow-y-auto">
+{`[INFO] [00:00:01] Initializing scan daemon against ${selectedTarget.host} (${selectedTarget.ip})
+[STAGE 1] Running Nmap Port Enumeration: Discovered ports 80/tcp, 443/tcp, 8080/tcp, 8443/tcp open
+[STAGE 1] Spawning ZAP Spider: Discovered 48 endpoints across /api/v2, /auth, /billing, /internal
+[STAGE 2] Fuzzing Engine Engaged: Testing 2,400 payloads across query & body parameters
+[ALERT] Vulnerability Confirmed: SQL Injection found on /api/v2/auth/login (Parameter 'username')
 [STAGE 3] Proof-of-Exploit Verification: OAST callback received on aegis-oob.net from ${selectedTarget.ip}
 [STAGE 4] Findings Consolidated: 5 Critical, 12 High, 8 Medium registered into Evidence Vault
-[STAGE 4] Dispatching SARIF report to Unified Integration Layer (Platform 18) ... OK (200)`}
+[STAGE 4] Generated SARIF 2.1 report for Platform 18 SIEM dispatch ... OK (200)`}
               </pre>
             </div>
+
           </div>
         )}
 
-        {/* TAB 3: TRAFFIC INTERCEPTOR & FORGE */}
+        {/* ============================================================== */}
+        {/* TAB 3: HTTP REQUEST STUDIO & FORGE                             */}
+        {/* ============================================================== */}
         {activeTab === "forge" && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 max-w-7xl mx-auto">
+            
             {/* Left: Request Forge */}
-            <div className="tool-panel">
-              <div className="tool-panel-header" style={{ justifyContent: "space-between" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <Flame size={14} color="#f59e0b" />
-                  <span>Interactive HTTP Attack Forge</span>
+            <div className="rounded-xl bg-slate-900/60 border border-slate-800 overflow-hidden flex flex-col">
+              <div className="p-3 border-b border-slate-800 bg-slate-900/80 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-medium text-slate-300">
+                  <Code2 className="size-3.5 text-slate-400" />
+                  <span>HTTP Attack Forge</span>
                 </div>
-                <button className="btn-primary" style={{ padding: "3px 10px", fontSize: 10.5 }}>
-                  <Send size={11} /> Send Request
+                <button
+                  onClick={() => alert("Request dispatched to target environment.")}
+                  className="px-3 py-1 rounded bg-sky-600 hover:bg-sky-500 text-white text-xs font-medium flex items-center gap-1.5 transition-colors"
+                >
+                  <Send className="size-3" />
+                  <span>Send Request</span>
                 </button>
               </div>
+
               <textarea
                 defaultValue={`POST /api/v2/auth/login HTTP/1.1
 Host: ${selectedTarget.host}
@@ -583,24 +758,24 @@ X-Forwarded-For: 127.0.0.1
   "username": "admin' UNION SELECT 1, version(), current_user, 4--",
   "password": "payload_test_0x99"
 }`}
-                style={{
-                  width: "100%", height: 380, background: "#06080d", color: "#38bdf8",
-                  fontFamily: "var(--font-geist-mono)", fontSize: 11.5, padding: 14,
-                  border: "none", outline: "none", resize: "none", lineHeight: 1.6
-                }}
+                className="flex-1 w-full h-[380px] p-4 bg-slate-950 text-slate-200 font-mono text-xs leading-relaxed border-none outline-none resize-none selection:bg-sky-500/20"
               />
             </div>
 
-            {/* Right: Response Terminal */}
-            <div className="tool-panel">
-              <div className="tool-panel-header" style={{ justifyContent: "space-between" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <Code2 size={14} color="#10b981" />
-                  <span>Live Server Response (Status 200 OK)</span>
+            {/* Right: Response Viewer */}
+            <div className="rounded-xl bg-slate-900/60 border border-slate-800 overflow-hidden flex flex-col">
+              <div className="p-3 border-b border-slate-800 bg-slate-900/80 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-medium text-slate-300">
+                  <span className="size-2 rounded-full bg-emerald-400" />
+                  <span>Server Response</span>
+                  <span className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    200 OK
+                  </span>
                 </div>
-                <span style={{ fontSize: 10, color: "#10b981", fontWeight: 700 }}>248ms · 842 Bytes</span>
+                <span className="text-[11px] font-mono text-slate-500">248ms · 842 B</span>
               </div>
-              <pre className="http-raw" style={{ height: 380, margin: 0, borderRadius: 0, border: "none" }}>
+
+              <pre className="flex-1 p-4 bg-slate-950 font-mono text-xs text-slate-300 leading-relaxed overflow-auto max-h-[380px]">
 {`HTTP/1.1 200 OK
 Date: Fri, 19 Sep 2026 18:30:12 GMT
 Content-Type: application/json; charset=utf-8
@@ -609,7 +784,7 @@ Access-Control-Allow-Origin: *
 
 {
   "status": "authenticated",
-  "jwt": "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJ1c2VyIjoiYWRtaW4iLCJyb2xlIjoic3VwZXJhZG1pbiIsImRiX3ZlcnNpb24iOiJQb3N0Z3JlU1FMIDE1LjQtMVVidW50dTEifQ.",
+  "jwt": "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0...",
   "extracted_data": {
     "db_user": "postgres_admin",
     "version": "PostgreSQL 15.4",
@@ -618,127 +793,194 @@ Access-Control-Allow-Origin: *
 }`}
               </pre>
             </div>
+
           </div>
         )}
 
-        {/* TAB 4: AUTONOMOUS AI COPILOT */}
+        {/* ============================================================== */}
+        {/* TAB 4: AI SECURITY COPILOT                                     */}
+        {/* ============================================================== */}
         {activeTab === "copilot" && (
-          <div className="cyber-card" style={{ padding: 18, height: 480, display: "flex", flexDirection: "column" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, borderBottom: "1px solid var(--border)", paddingBottom: 12 }}>
-              <div style={{ width: 28, height: 28, borderRadius: 6, background: "rgba(0, 240, 255, 0.15)", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid rgba(0, 240, 255, 0.4)" }}>
-                <Bot size={16} color="#00f0ff" />
-              </div>
-              <div>
-                <h3 style={{ fontSize: 14, fontWeight: 800, color: "#fff" }}>Autonomous Cyber AI Copilot</h3>
-                <p style={{ fontSize: 11, color: "var(--muted)" }}>Real-time exploit generation, virtual patch builder, and ATT&CK mapping</p>
-              </div>
-            </div>
-
-            {/* Chat message stream */}
-            <div style={{ flex: 1, overflowY: "auto", padding: "14px 0", display: "flex", flexDirection: "column", gap: 12 }}>
-              {aiMessages.map((msg, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    alignSelf: msg.role === "user" ? "flex-end" : "flex-start",
-                    maxWidth: "85%",
-                    background: msg.role === "user" ? "rgba(225, 29, 72, 0.15)" : "rgba(11, 15, 23, 0.9)",
-                    border: `1px solid ${msg.role === "user" ? "rgba(225, 29, 72, 0.4)" : "var(--border)"}`,
-                    borderRadius: 8, padding: "10px 14px", fontSize: 12, color: "#fff", lineHeight: 1.5
-                  }}
-                >
-                  <div style={{ whiteSpace: "pre-wrap" }}>{msg.text}</div>
+          <div className="max-w-4xl mx-auto rounded-xl bg-slate-900/60 border border-slate-800 h-[560px] flex flex-col overflow-hidden">
+            
+            {/* Header */}
+            <div className="p-3.5 border-b border-slate-800 bg-slate-900/80 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="size-7 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300">
+                  <Bot className="size-4 text-sky-400" />
                 </div>
-              ))}
+                <div>
+                  <h3 className="text-xs font-semibold text-white">AI Security Assistant</h3>
+                  <p className="text-[11px] text-slate-400">Contextual exploit reproduction, blast radius & WAF patching</p>
+                </div>
+              </div>
+
+              {/* Quick suggestion chips */}
+              <div className="hidden sm:flex items-center gap-1.5">
+                <button
+                  onClick={() => handleSendAiMessage("Generate cURL reproduction script")}
+                  className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-300 transition-colors"
+                >
+                  cURL PoC
+                </button>
+                <button
+                  onClick={() => handleSendAiMessage("Draft WAF virtual patch")}
+                  className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-300 transition-colors"
+                >
+                  WAF Patch
+                </button>
+                <button
+                  onClick={() => handleSendAiMessage("Analyze CVSS blast radius")}
+                  className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-300 transition-colors"
+                >
+                  Blast Radius
+                </button>
+              </div>
             </div>
 
-            {/* Input prompt bar */}
-            <div style={{ display: "flex", gap: 8, borderTop: "1px solid var(--border)", paddingTop: 12 }}>
+            {/* Conversation Stream */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3.5">
+              {aiMessages.map((msg, idx) => {
+                const isUser = msg.role === "user";
+                return (
+                  <div
+                    key={idx}
+                    className={`flex flex-col ${isUser ? "items-end" : "items-start"}`}
+                  >
+                    <div
+                      className={`max-w-[85%] rounded-xl px-4 py-3 text-xs leading-relaxed ${
+                        isUser
+                          ? "bg-slate-800 text-white border border-slate-700"
+                          : "bg-slate-900/90 text-slate-200 border border-slate-800"
+                      }`}
+                    >
+                      <div className="whitespace-pre-wrap font-sans">{msg.text}</div>
+                    </div>
+                    <span className="text-[10px] text-slate-500 mt-1 px-1">
+                      {isUser ? "You" : "Security Assistant"}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Input Bar */}
+            <div className="p-3 border-t border-slate-800 bg-slate-900/60 flex items-center gap-2">
               <input
                 type="text"
-                placeholder="Ask AI Copilot: 'Generate cURL PoC', 'Explain SQLi impact', 'Draft WAF rule'..."
+                placeholder="Ask about reproduction, remediation, or WAF rules..."
                 value={aiPrompt}
                 onChange={e => setAiPrompt(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter") handleSendAiMessage(); }}
-                style={{
-                  flex: 1, background: "#06080d", border: "1px solid var(--border)",
-                  borderRadius: 6, padding: "8px 12px", fontSize: 12, color: "#fff", outline: "none"
-                }}
+                className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-slate-700"
               />
-              <button onClick={handleSendAiMessage} className="btn-cyan">
-                <Send size={13} /> Send
+              <button
+                onClick={() => handleSendAiMessage()}
+                className="px-3.5 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-medium flex items-center gap-1.5 transition-colors"
+              >
+                <Send className="size-3" />
+                <span>Send</span>
               </button>
             </div>
+
           </div>
         )}
 
-        {/* TAB 5: EVIDENCE VAULT */}
+        {/* ============================================================== */}
+        {/* TAB 5: EVIDENCE VAULT & SARIF REPORTS                          */}
+        {/* ============================================================== */}
         {activeTab === "evidence" && (
-          <div className="tool-panel">
-            <div className="tool-panel-header" style={{ justifyContent: "space-between" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <FileCode size={14} color="#00f0ff" />
-                <span>SARIF 2.1 & Enterprise Vulnerability Report Ledger</span>
+          <div className="max-w-7xl mx-auto space-y-4">
+            
+            <div className="rounded-xl bg-slate-900/60 border border-slate-800 overflow-hidden">
+              <div className="p-3.5 border-b border-slate-800 bg-slate-900/80 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <FileCode className="size-4 text-sky-400" />
+                  <span className="text-xs font-semibold text-white">SARIF 2.1 & Enterprise Vulnerability Ledger</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleCopy(JSON.stringify(FINDINGS, null, 2), "sarif-all")}
+                    className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium flex items-center gap-1.5 transition-colors"
+                  >
+                    <Copy className="size-3" />
+                    <span>{copiedId === "sarif-all" ? "Copied" : "Copy SARIF"}</span>
+                  </button>
+
+                  <a
+                    href="https://18-unified-integration-layer.vercel.app"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-xs font-medium flex items-center gap-1.5 transition-colors"
+                  >
+                    <ExternalLink className="size-3" />
+                    <span>Dispatch to SIEM</span>
+                  </a>
+                </div>
               </div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button onClick={() => handleCopy(JSON.stringify(FINDINGS, null, 2), "sarif")} className="btn-cyan" style={{ padding: "4px 10px", fontSize: 11 }}>
-                  <Copy size={11} /> {copiedId === "sarif" ? "Copied" : "Copy SARIF JSON"}
-                </button>
-                <a href="https://18-unified-integration-layer.vercel.app" target="_blank" rel="noreferrer" className="btn-primary" style={{ padding: "4px 10px", fontSize: 11, textDecoration: "none" }}>
-                  <ExternalLink size={11} /> Dispatch to SIEM
-                </a>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-900 text-slate-400 font-medium border-b border-slate-800">
+                    <tr>
+                      <th className="py-2.5 px-3">ID</th>
+                      <th className="py-2.5 px-3">Severity</th>
+                      <th className="py-2.5 px-3">Vulnerability Title</th>
+                      <th className="py-2.5 px-3">Endpoint</th>
+                      <th className="py-2.5 px-3">CWE</th>
+                      <th className="py-2.5 px-3">Confidence</th>
+                      <th className="py-2.5 px-3">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {FINDINGS.map((f: any) => {
+                      const isCrit = f.severity === "Critical";
+                      const isHigh = f.severity === "High";
+                      return (
+                        <tr key={f.id} className="hover:bg-slate-800/30">
+                          <td className="py-2.5 px-3 font-mono text-slate-400">{f.id}</td>
+                          <td className="py-2.5 px-3">
+                            <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold border ${
+                              isCrit
+                                ? "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                                : isHigh
+                                ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                                : "bg-sky-500/10 text-sky-400 border-sky-500/20"
+                            }`}>
+                              {f.severity}
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-3 font-medium text-slate-100">{f.title}</td>
+                          <td className="py-2.5 px-3 font-mono text-slate-400">{f.url || f.target || "—"}</td>
+                          <td className="py-2.5 px-3 font-mono text-slate-400">{f.cweId || f.cwe || "CWE-89"}</td>
+                          <td className="py-2.5 px-3 text-slate-300">{f.confidence || "Confirmed"}</td>
+                          <td className="py-2.5 px-3">
+                            <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400 font-medium">
+                              <CheckCircle className="size-3" />
+                              <span>Verified</span>
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             </div>
 
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Severity</th>
-                  <th>Vulnerability Title</th>
-                  <th>Endpoint</th>
-                  <th>CWE</th>
-                  <th>Confidence</th>
-                  <th>Verification</th>
-                </tr>
-              </thead>
-              <tbody>
-                {FINDINGS.map((f: any) => (
-                  <tr key={f.id}>
-                    <td style={{ fontFamily: "var(--font-geist-mono)", fontSize: 11 }}>{f.id}</td>
-                    <td>
-                      <span style={{
-                        fontSize: 10, fontWeight: 800, padding: "2px 6px", borderRadius: 4,
-                        background: f.severity === "Critical" ? "rgba(239,68,68,0.2)" : "rgba(245,158,11,0.2)",
-                        color: f.severity === "Critical" ? "#ef4444" : "#f59e0b"
-                      }}>
-                        {f.severity}
-                      </span>
-                    </td>
-                    <td style={{ fontWeight: 600, color: "#fff" }}>{f.title}</td>
-                    <td style={{ fontFamily: "var(--font-geist-mono)", fontSize: 11 }}>{f.url || f.target || ""}</td>
-                    <td style={{ fontFamily: "var(--font-geist-mono)", fontSize: 11, color: "#00f0ff" }}>{f.cweId || f.cwe || "CWE-89"}</td>
-                    <td style={{ fontWeight: 700, color: "#ff4d79" }}>{f.confidence || "Confirmed"}</td>
-                    <td>
-                      <span style={{ fontSize: 10, color: "#10b981", fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>
-                        <CheckCircle size={11} /> Confirmed
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
         )}
 
-      </div>
+      </main>
+
     </div>
   );
 }
 
 export default function AegisSocStandalonePage() {
   return (
-    <Suspense fallback={<div style={{ padding: 30, color: "#fff", background: "#06080d" }}>Initializing ÆGIS · SOC Command Matrix...</div>}>
+    <Suspense fallback={<div className="p-8 text-xs text-slate-400 bg-slate-950 h-full flex items-center justify-center">Loading Security Console...</div>}>
       <AegisSocContent />
     </Suspense>
   );
