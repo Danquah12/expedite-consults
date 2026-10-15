@@ -1157,12 +1157,11 @@ export default function EnginePage() {
   // Automated Report Email Dispatch & SMTP Relay Infrastructure State
   const [autoEmailOnComplete, setAutoEmailOnComplete] = useState<boolean>(true);
   const [emailRecipients, setEmailRecipients] = useState<string[]>([
-    "soc-alerts@expedite-consults.com",
-    "ciso-sandbox@vmware-lab.local"
+    "asiedudanquah@gmail.com"
   ]);
   const [newRecipientInput, setNewRecipientInput] = useState<string>("");
-  const [emailCcInput, setEmailCcInput] = useState<string>("devsecops-lead@expedite-consults.com");
-  const [emailProvider, setEmailProvider] = useState<"SANDBOX_RELAY" | "RESEND" | "SENDGRID" | "SMTP_WEBHOOK">("SANDBOX_RELAY");
+  const [emailCcInput, setEmailCcInput] = useState<string>("");
+  const [emailProvider, setEmailProvider] = useState<"SANDBOX_RELAY" | "RESEND" | "SENDGRID" | "SMTP_WEBHOOK">("RESEND");
   const [emailApiKey, setEmailApiKey] = useState<string>("");
   const [emailWebhookUrl, setEmailWebhookUrl] = useState<string>("");
   const [emailSmtpHost, setEmailSmtpHost] = useState<string>("smtp.expedite-sandbox.local");
@@ -2305,7 +2304,18 @@ ${f.remediation}
     overrideFindings?: Finding[],
     overrideTargetUrls?: string[]
   ) => {
-    if (emailRecipients.length === 0) return;
+    const pendingTyped = newRecipientInput.trim();
+    const effectiveRecipients = Array.from(
+      new Set([
+        ...emailRecipients,
+        ...(pendingTyped.includes("@") ? [pendingTyped] : [])
+      ])
+    );
+    if (effectiveRecipients.length === 0) return;
+    if (pendingTyped.includes("@")) {
+      setEmailRecipients(effectiveRecipients);
+      setNewRecipientInput("");
+    }
     setEmailDispatching(true);
     const findingsPayload = overrideFindings && overrideFindings.length > 0 ? overrideFindings : getContextualFindings();
     const urlsPayload = overrideTargetUrls && overrideTargetUrls.length > 0 ? overrideTargetUrls : targets.map(t => t.url);
@@ -2319,7 +2329,7 @@ ${f.remediation}
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          recipients: emailRecipients,
+          recipients: effectiveRecipients,
           ccRecipients: ccList,
           targetUrls: urlsPayload,
           scanMode: scanExecutionMode,
@@ -2343,7 +2353,7 @@ ${f.remediation}
             phase: "report",
             tag: "ORCHESTRATOR",
             time: new Date().toLocaleTimeString(),
-            msg: `📧 [AUTOMATED REPORT EMAIL DISPATCH · ${triggerType}] 250 2.0.0 OK — Sent security assessment dossier (${findingsPayload.length} findings · SHA-256: ${String(data.reportSha256 || "").slice(0, 12)}...) to ${emailRecipients.join(", ")}${ccList.length > 0 ? ` (CC: ${ccList.join(", ")})` : ""} via ${data.providerStatus}`,
+            msg: `📧 [AUTOMATED REPORT EMAIL DISPATCH · ${triggerType}] 250 2.0.0 OK — Sent security assessment dossier + attached .PDF (${data.pdfFilename || "report.pdf"}) & .HTML (${data.htmlFilename || "report.html"}) (${findingsPayload.length} findings · SHA-256: ${String(data.reportSha256 || "").slice(0, 12)}...) to ${effectiveRecipients.join(", ")}${ccList.length > 0 ? ` (CC: ${ccList.join(", ")})` : ""} via ${data.providerStatus}`,
             c: "#10b981"
           }
         ]);
@@ -2385,6 +2395,36 @@ ${f.remediation}
     const a = document.createElement("a");
     a.href = url;
     a.download = `expedite-strike-assessment-report-${targetItem.queueId || Date.now()}.eml`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadDispatchedPdf = (dispatchItem?: any) => {
+    const targetItem = dispatchItem || emailDispatchHistory[0];
+    if (!targetItem?.pdfAttachmentBase64) return;
+    const binaryStr = atob(targetItem.pdfAttachmentBase64);
+    const bytes = new Uint8Array(binaryStr.length);
+    for (let i = 0; i < binaryStr.length; i++) {
+      bytes[i] = binaryStr.charCodeAt(i);
+    }
+    const blob = new Blob([bytes], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = targetItem.pdfFilename || `EXPEDITE-STRIKE-Assessment-Dossier-${targetItem.queueId || Date.now()}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadDispatchedHtml = (dispatchItem?: any) => {
+    const targetItem = dispatchItem || emailDispatchHistory[0];
+    const htmlStr = targetItem?.htmlPreview || (targetItem?.htmlAttachmentBase64 ? atob(targetItem.htmlAttachmentBase64) : "");
+    if (!htmlStr) return;
+    const blob = new Blob([htmlStr], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = targetItem.htmlFilename || `EXPEDITE-STRIKE-Assessment-Dossier-${targetItem.queueId || Date.now()}.html`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -5661,7 +5701,7 @@ ${f.remediation}
                         </span>
                       </div>
                       <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
-                        Automatically compiles and emails the full security assessment dossier (65,535 TCP/UDP port scripts, findings, MITRE ATT&amp;CK® TTPs, Linux/Windows PrivEsc, Lateral Movement &amp; Post-Exploitation scripts, and D3FEND™ remediations) to configured recipients when an assessment finishes.
+                        Automatically compiles and emails the full security assessment dossier — with both standalone <strong>.PDF</strong> and <strong>.HTML</strong> report attachments — (65,535 TCP/UDP port scripts, findings, MITRE ATT&amp;CK® TTPs, Linux/Windows PrivEsc, Lateral Movement &amp; Post-Exploitation scripts, and D3FEND™ remediations) to configured recipients when an assessment finishes.
                       </div>
                     </div>
                   </div>
@@ -5674,7 +5714,7 @@ ${f.remediation}
                         onChange={(e) => setAutoEmailOnComplete(e.target.checked)}
                         style={{ accentColor: "#10b981" }}
                       />
-                      <span>Auto-Email When Assessment Completes</span>
+                      <span>Auto-Email (.HTML + .PDF Attached) When Assessment Completes</span>
                     </label>
                     <button
                       onClick={() => dispatchAssessmentEmailReport("MANUAL_DISPATCH")}
@@ -5693,7 +5733,7 @@ ${f.remediation}
                         gap: 6
                       }}
                     >
-                      <span>{emailDispatching ? "⏳ Dispatching via SMTP Relay..." : `📤 Send Report Email Now (${emailRecipients.length} Recipients)`}</span>
+                      <span>{emailDispatching ? "⏳ Dispatching (.HTML + .PDF)..." : `📤 Send Report + .PDF/.HTML Attachments (${emailRecipients.length} Recipients)`}</span>
                     </button>
                     <button
                       onClick={() => setShowEmailModal(true)}
@@ -5809,11 +5849,41 @@ ${f.remediation}
                       <span style={{ color: "#38bdf8", fontFamily: "monospace" }}>
                         To: {(emailDispatchHistory[0].recipients || []).join(", ")}
                       </span>
-                      <span style={{ color: "#a78bfa", fontFamily: "monospace", fontSize: 10 }}>
-                        SHA-256: {String(emailDispatchHistory[0].reportSha256 || "").slice(0, 16)}...
+                      <span style={{ color: "#fbbf24", fontFamily: "monospace", fontSize: 10 }}>
+                        📎 Attached: {emailDispatchHistory[0].pdfFilename || "Dossier.pdf"} + {emailDispatchHistory[0].htmlFilename || "Dossier.html"}
                       </span>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                      <button
+                        onClick={() => downloadDispatchedPdf(emailDispatchHistory[0])}
+                        style={{
+                          background: "rgba(244,63,94,0.18)",
+                          border: "1px solid #f43f5e",
+                          color: "#fda4af",
+                          fontSize: 10.5,
+                          fontWeight: 800,
+                          padding: "3px 9px",
+                          borderRadius: 4,
+                          cursor: "pointer"
+                        }}
+                      >
+                        📄 Download Attached .PDF
+                      </button>
+                      <button
+                        onClick={() => downloadDispatchedHtml(emailDispatchHistory[0])}
+                        style={{
+                          background: "rgba(168,85,247,0.18)",
+                          border: "1px solid #a855f7",
+                          color: "#d8b4fe",
+                          fontSize: 10.5,
+                          fontWeight: 800,
+                          padding: "3px 9px",
+                          borderRadius: 4,
+                          cursor: "pointer"
+                        }}
+                      >
+                        🌐 Download Attached .HTML
+                      </button>
                       <button
                         onClick={() => downloadDispatchedEml(emailDispatchHistory[0])}
                         style={{
@@ -8965,7 +9035,7 @@ http://192.168.195.140/peruggia`}
                 gap: 10
               }}>
                 <div style={{ fontSize: 11.5, color: "#cbd5e1" }}>
-                  <strong>Included in Email Dossier:</strong> Executive Posture Score, 65,535 TCP/UDP Port-to-Script Mappings, Validated Findings, MITRE ATT&amp;CK® TTPs, Triggered Linux &amp; Windows PrivEsc / Lateral / Post-Exploit Scripts, and D3FEND™ Remediations.
+                  <strong>Included in Email Dossier &amp; Attachments:</strong> Standalone <strong>.PDF</strong> Report + Standalone <strong>.HTML</strong> Report + Executive Posture Score, 65,535 TCP/UDP Port-to-Script Mappings, Validated Findings, MITRE ATT&amp;CK® TTPs, Triggered Linux &amp; Windows PrivEsc / Lateral / Post-Exploit Scripts, and D3FEND™ Remediations.
                 </div>
                 <button
                   onClick={() => dispatchAssessmentEmailReport("MANUAL_DISPATCH")}
@@ -8981,7 +9051,7 @@ http://192.168.195.140/peruggia`}
                     cursor: emailDispatching ? "wait" : "pointer"
                   }}
                 >
-                  {emailDispatching ? "⏳ Dispatching Assessment Report..." : `📤 Dispatch Report Email Now (${emailRecipients.length} Recipients)`}
+                  {emailDispatching ? "⏳ Dispatching (.HTML + .PDF)..." : `📤 Dispatch Report + .PDF/.HTML Now (${emailRecipients.length} Recipients)`}
                 </button>
               </div>
 
@@ -9001,7 +9071,7 @@ http://192.168.195.140/peruggia`}
                     color: "var(--muted)",
                     fontSize: 12
                   }}>
-                    No emails dispatched yet in this session. Complete an assessment (with Auto-Send enabled) or click <strong>&quot;Dispatch Report Email Now&quot;</strong> above to send the full dossier to your recipients.
+                    No emails dispatched yet in this session. Complete an assessment (with Auto-Send enabled) or click <strong>&quot;Dispatch Report + .PDF/.HTML Now&quot;</strong> above to send the full dossier to your recipients.
                   </div>
                 ) : (
                   emailDispatchHistory.map((item, hIdx) => (
@@ -9040,21 +9110,53 @@ http://192.168.195.140/peruggia`}
                             {item.providerDetail}
                           </span>
                         </div>
-                        <button
-                          onClick={() => downloadDispatchedEml(item)}
-                          style={{
-                            background: "rgba(16,185,129,0.18)",
-                            border: "1px solid #10b981",
-                            color: "#34d399",
-                            fontSize: 11,
-                            fontWeight: 800,
-                            padding: "5px 12px",
-                            borderRadius: 6,
-                            cursor: "pointer"
-                          }}
-                        >
-                          📥 Download Signed .EML File (RFC 5322)
-                        </button>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                          <button
+                            onClick={() => downloadDispatchedPdf(item)}
+                            style={{
+                              background: "rgba(244,63,94,0.18)",
+                              border: "1px solid #f43f5e",
+                              color: "#fda4af",
+                              fontSize: 11,
+                              fontWeight: 800,
+                              padding: "5px 11px",
+                              borderRadius: 6,
+                              cursor: "pointer"
+                            }}
+                          >
+                            📄 Download Attached .PDF
+                          </button>
+                          <button
+                            onClick={() => downloadDispatchedHtml(item)}
+                            style={{
+                              background: "rgba(168,85,247,0.18)",
+                              border: "1px solid #a855f7",
+                              color: "#d8b4fe",
+                              fontSize: 11,
+                              fontWeight: 800,
+                              padding: "5px 11px",
+                              borderRadius: 6,
+                              cursor: "pointer"
+                            }}
+                          >
+                            🌐 Download Attached .HTML
+                          </button>
+                          <button
+                            onClick={() => downloadDispatchedEml(item)}
+                            style={{
+                              background: "rgba(16,185,129,0.18)",
+                              border: "1px solid #10b981",
+                              color: "#34d399",
+                              fontSize: 11,
+                              fontWeight: 800,
+                              padding: "5px 11px",
+                              borderRadius: 6,
+                              cursor: "pointer"
+                            }}
+                          >
+                            📥 Download Signed .EML (RFC 5322)
+                          </button>
+                        </div>
                       </div>
 
                       <div style={{ fontSize: 11, color: "#cbd5e1", fontFamily: "monospace" }}>
