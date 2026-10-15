@@ -94,6 +94,23 @@ export default function Sidebar() {
   const path = usePathname();
   const [filter, setFilter] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    "Command Center": true,
+    "Active Attack & Probe": true
+  });
+
+  const toggleSection = (title: string) => {
+    setExpandedSections(prev => ({ ...prev, [title]: !prev[title] }));
+  };
+
+  const allExpanded = SECTIONS.every(s => expandedSections[s.title]);
+  const toggleAllSections = () => {
+    const nextState: Record<string, boolean> = {};
+    SECTIONS.forEach(s => {
+      nextState[s.title] = !allExpanded;
+    });
+    setExpandedSections(nextState);
+  };
 
   return (
     <>
@@ -214,23 +231,22 @@ export default function Sidebar() {
         }}
       >
         {/* Brand Header */}
-        <div style={{ padding: "16px 14px 12px", borderBottom: "1px solid var(--border)" }}>
+        <div style={{ padding: "14px 14px 10px", borderBottom: "1px solid var(--border)" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
             <Link href="/app" onClick={() => setMobileMenuOpen(false)} style={{ textDecoration: "none" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <div style={{
-                  width: 32, height: 32, borderRadius: 8,
-                  background: "linear-gradient(135deg, #e11d48, #be123c)",
+                  width: 30, height: 30, borderRadius: 8,
+                  background: "linear-gradient(135deg, #0284c7, #0f172a)",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  boxShadow: "0 0 16px rgba(225, 29, 72, 0.5)",
-                  border: "1px solid rgba(225, 29, 72, 0.6)"
+                  border: "1px solid rgba(56, 189, 248, 0.45)"
                 }}>
-                  <Swords size={18} color="#fff" />
+                  <Swords size={16} color="#38bdf8" />
                 </div>
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 900, color: "#fff", letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: 5 }}>
                     ÆGIS · SOC
-                    <span style={{ fontSize: 9, background: "rgba(0,240,255,0.15)", color: "#00f0ff", border: "1px solid rgba(0,240,255,0.4)", borderRadius: 4, padding: "0 4px", fontWeight: 800 }}>v5.2</span>
+                    <span style={{ fontSize: 9, background: "rgba(56,189,248,0.12)", color: "#38bdf8", border: "1px solid rgba(56,189,248,0.3)", borderRadius: 4, padding: "0 4px", fontWeight: 800 }}>v5.2</span>
                   </div>
                   <div style={{ fontSize: 9, color: "var(--muted)", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>AXIOM DAST ENGINE</div>
                 </div>
@@ -256,11 +272,11 @@ export default function Sidebar() {
           </div>
 
           {/* Quick Filter */}
-          <div style={{ marginTop: 12, position: "relative" }}>
+          <div style={{ marginTop: 10, position: "relative" }}>
             <Search size={12} style={{ position: "absolute", left: 8, top: 8, color: "var(--muted)" }} />
             <input
               type="text"
-              placeholder="Search 40+ studios..."
+              placeholder="Search 36 studios..."
               value={filter}
               onChange={e => setFilter(e.target.value)}
               style={{
@@ -270,9 +286,28 @@ export default function Sidebar() {
               }}
             />
           </div>
+
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6 }}>
+            <span style={{ fontSize: 9, color: "var(--muted)", fontWeight: 700 }}>7 STUDIO GROUPS</span>
+            <button
+              type="button"
+              onClick={toggleAllSections}
+              style={{
+                background: "none",
+                border: "none",
+                color: "#38bdf8",
+                fontSize: 9.5,
+                fontWeight: 700,
+                cursor: "pointer",
+                padding: 0
+              }}
+            >
+              {allExpanded ? "Collapse Groups" : "Expand All (36)"}
+            </button>
+          </div>
         </div>
 
-        {/* Navigation Sections */}
+        {/* Navigation Sections (Collapsible Accordions) */}
         <nav style={{ flex: 1, padding: "8px 6px" }}>
           {SECTIONS.map(section => {
             const matchingItems = section.items.filter(item =>
@@ -280,29 +315,51 @@ export default function Sidebar() {
             );
             if (filter && matchingItems.length === 0) return null;
 
+            const hasActiveChild = section.items.some(
+              item => path === item.href || (item.href !== "/" && item.href !== "/app" && path.startsWith(item.href)) || (item.href === "/app" && path === "/app")
+            );
+            const isExpanded = Boolean(filter) || Boolean(expandedSections[section.title]) || hasActiveChild;
+
             return (
-              <div key={section.title} style={{ marginBottom: 8 }}>
-                <div style={{
-                  padding: "6px 10px 4px", fontSize: 9, fontWeight: 800,
-                  color: "#64748b", textTransform: "uppercase", letterSpacing: "0.1em",
-                  display: "flex", alignItems: "center", justifyContent: "space-between"
-                }}>
+              <div key={section.title} style={{ marginBottom: 6 }}>
+                <button
+                  type="button"
+                  onClick={() => toggleSection(section.title)}
+                  style={{
+                    width: "100%",
+                    background: "rgba(255,255,255,0.02)",
+                    border: "none",
+                    borderRadius: 5,
+                    padding: "6px 10px",
+                    fontSize: 9.5,
+                    fontWeight: 800,
+                    color: hasActiveChild ? "#38bdf8" : "#94a3b8",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    cursor: "pointer"
+                  }}
+                >
                   <span>{section.title}</span>
-                  <span style={{ fontSize: 8, color: "var(--muted)" }}>{matchingItems.length}</span>
-                </div>
-                {matchingItems.map(item => {
+                  <span style={{ fontSize: 9, color: "var(--muted)", fontFamily: "monospace" }}>
+                    {matchingItems.length} {isExpanded ? "▾" : "▸"}
+                  </span>
+                </button>
+                {isExpanded && matchingItems.map(item => {
                   const Icon = item.icon;
                   const active = path === item.href || (item.href !== "/" && item.href !== "/app" && path.startsWith(item.href)) || (item.href === "/app" && path === "/app");
                   return (
                     <Link key={item.href} href={item.href} onClick={() => setMobileMenuOpen(false)} style={{ textDecoration: "none" }}>
                       <div style={{
                         display: "flex", alignItems: "center", gap: 8,
-                        padding: "7px 10px", margin: "1px 0", borderRadius: 6,
-                        background: active ? "rgba(225, 29, 72, 0.15)" : "transparent",
-                        border: active ? "1px solid rgba(225, 29, 72, 0.35)" : "1px solid transparent",
+                        padding: "6px 10px", margin: "1px 0", borderRadius: 6,
+                        background: active ? "rgba(56, 189, 248, 0.14)" : "transparent",
+                        border: active ? "1px solid rgba(56, 189, 248, 0.35)" : "1px solid transparent",
                         cursor: "pointer", transition: "all 0.15s ease-out"
                       }}>
-                        <Icon size={14} color={active ? "#ff2a5f" : "var(--muted)"} />
+                        <Icon size={13.5} color={active ? "#38bdf8" : "var(--muted)"} />
                         <span style={{
                           fontSize: 11.5,
                           color: active ? "#fff" : "var(--fg-2)",
@@ -313,10 +370,10 @@ export default function Sidebar() {
                         </span>
                         {item.badge && (
                           <span style={{
-                            fontSize: 8.5, padding: "1px 5px", borderRadius: 4, fontWeight: 800,
-                            background: item.hot ? "rgba(225, 29, 72, 0.2)" : "rgba(255,255,255,0.05)",
-                            color: item.hot ? "#ff4d79" : "var(--muted)",
-                            border: `1px solid ${item.hot ? "rgba(225, 29, 72, 0.4)" : "var(--border)"}`,
+                            fontSize: 8.5, padding: "1px 5px", borderRadius: 4, fontWeight: 700,
+                            background: active ? "rgba(56, 189, 248, 0.2)" : "rgba(255,255,255,0.04)",
+                            color: active ? "#38bdf8" : "var(--muted)",
+                            border: "1px solid rgba(255,255,255,0.08)",
                           }}>
                             {item.badge}
                           </span>

@@ -1170,7 +1170,9 @@ export default function EnginePage() {
   const [emailDispatchHistory, setEmailDispatchHistory] = useState<any[]>([]);
   const [showEmailModal, setShowEmailModal] = useState<boolean>(false);
 
-  // Modals
+  // Modals & Collapsible Drawer States (keeps 100% of features while making the main view less busy)
+  const [showPipelineDetails, setShowPipelineDetails] = useState<boolean>(false);
+  const [showScopeManager, setShowScopeManager] = useState<boolean>(false);
   const [selectedFinding, setSelectedFinding] = useState<Finding | null>(null);
   const [pocModalTab, setPocModalTab] = useState<"POC" | "INTEL_SCRIPTS" | "KILLCHAIN_DEEPDIVE" | "TTP" | "EVIDENCE" | "REMEDIATION">("POC");
   const [showConfigModal, setShowConfigModal] = useState<boolean>(false);
@@ -4037,27 +4039,27 @@ ${f.remediation}
         background: "var(--surface)",
         border: "1px solid var(--border)",
         borderRadius: 10,
-        padding: "14px 20px",
+        padding: "12px 18px",
         flexWrap: "wrap",
-        gap: 14
+        gap: 12
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{
-            width: 40,
-            height: 40,
+            width: 36,
+            height: 36,
             borderRadius: 8,
-            background: "linear-gradient(135deg, rgba(239,68,68,0.2), rgba(245,158,11,0.2))",
-            border: "1px solid rgba(239,68,68,0.4)",
+            background: "linear-gradient(135deg, rgba(239,68,68,0.18), rgba(245,158,11,0.18))",
+            border: "1px solid rgba(239,68,68,0.35)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center"
           }}>
-            <Brain size={20} color="#f59e0b" />
+            <Brain size={18} color="#f59e0b" />
           </div>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-              <h1 style={{ fontSize: 18, fontWeight: 900, color: "#f8fafc", margin: 0 }}>
-                EXPEDITE STRIKE™ Multi-Framework Autonomous Brain (14 Standards · 15 Capabilities · 8-Stage Workflow)
+              <h1 style={{ fontSize: 16.5, fontWeight: 900, color: "#f8fafc", margin: 0 }}>
+                EXPEDITE STRIKE™ Autonomous Security Engine
               </h1>
               <span style={{
                 fontSize: 10,
@@ -4070,56 +4072,21 @@ ${f.remediation}
               }}>
                 {running ? `SCANNING ${targets.length} TARGETS (${progress}% · ${formatDuration(elapsedSec)})` : done ? `${targets.length} TARGETS COMPLETED (${formatDuration(elapsedSec)})` : `${targets.length} TARGETS STAGED`}
               </span>
-              <span style={{ fontSize: 10, fontWeight: 800, background: "rgba(168,85,247,0.18)", color: "#c084fc", padding: "2px 7px", borderRadius: 4, border: "1px solid rgba(168,85,247,0.35)" }}>
-                ⚔️ WSTG · ASVS · API10 · MITRE 14 TACTICS · PTES · NIST 800-115 · EPSS/KEV · ATLAS/LLM10 · SCVS/SSDF
-              </span>
             </div>
-            <p style={{ fontSize: 11.5, color: "var(--muted)", margin: "2px 0 0 0" }}>
-              8-Stage Autonomous Engine: 1.Discover ➔ 2.Understand (Trust Graph) ➔ 3.Plan (EPSS/KEV) ➔ 4.Execute (WSTG/API/Logic/Role Diff) ➔ 5.Validate (0% FP) ➔ 6.Correlate (Attack Paths &amp; Root Causes) ➔ 7.Report ➔ 8.Retest.
+            <p style={{ fontSize: 11, color: "var(--muted)", margin: "2px 0 0 0" }}>
+              65,535 TCP &amp; 65,535 UDP Port-to-Script Recon · Linux/Windows PrivEsc, Lateral &amp; Post-Exploit · 14 Standards · Auto-Email Dispatch
             </p>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-          {/* Standard Selector (14-Standard Multi-Framework Mapping Engine) */}
-          <select
-            value={pentestStandard}
-            onChange={e => setPentestStandard(e.target.value as PentestStandard)}
-            style={{
-              background: "var(--surface-2)",
-              color: "#c084fc",
-              border: "1px solid rgba(192,132,252,0.4)",
-              borderRadius: 6,
-              padding: "6px 10px",
-              fontSize: 11,
-              fontWeight: 800,
-              cursor: "pointer"
-            }}
-          >
-            <option value="PTES_NIST_UNIFIED">Standard: All 14 Frameworks Unified (WSTG · ASVS · API10 · MITRE 14 · PTES · NIST · EPSS/KEV · ATLAS)</option>
-            <option value="WSTG_ASVS_API_ATLAS">Standard: OWASP WSTG + ASVS + API Top 10 + LLM10/ATLAS + SCVS + SSDF/SAMM</option>
-            <option value="MITRE_ATTACK_V15">Standard: MITRE ATT&amp;CK® Enterprise v15 (TA0043 ➔ TA0040 + D3FEND™)</option>
-            <option value="PTES">Standard: PTES (7-Phase Execution Standard)</option>
-            <option value="NIST_800_115">Standard: NIST SP 800-115 (4-Phase Technical Guide)</option>
-          </select>
-
-          <button
-            onClick={() => setShowBatchModal(true)}
-            className="btn-secondary"
-            disabled={running}
-            style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, padding: "7px 12px" }}
-          >
-            <UploadCloud size={13} color="#38bdf8" />
-            <span>Batch Scope ({targets.length})</span>
-          </button>
-
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <div style={{ display: "flex", background: "var(--surface-2)", padding: 2, borderRadius: 6, border: "1px solid var(--border)", flexWrap: "wrap", gap: 2 }}>
             {[
               { id: "FAST", label: "⚡ Fast (~2m)" },
               { id: "BALANCED", label: "🔍 Standard (~5m)" },
               { id: "DEEP", label: "🛡️ Deep (~12m)" },
-              { id: "COMMERCIAL_1HR", label: "🕒 1-Hr Commercial Deep-Dive (~60m)" }
+              { id: "COMMERCIAL_1HR", label: "🕒 1-Hr Deep-Dive" }
             ].map(s => (
               <button
                 key={s.id}
@@ -4148,10 +4115,10 @@ ${f.remediation}
             <button
               onClick={() => startEngine()}
               className="btn-primary"
-              style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, padding: "7px 16px" }}
+              style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, padding: "7px 14px" }}
             >
               <Play size={13} fill="#fff" />
-              <span>Launch MITRE / PTES Scan ({targets.length} URLs)</span>
+              <span>Launch Scan ({targets.length} URLs)</span>
             </button>
           ) : (
             <div style={{ display: "flex", gap: 6 }}>
@@ -4200,7 +4167,7 @@ ${f.remediation}
           <button
             onClick={printFormattedReport}
             className="btn-secondary"
-            style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, padding: "7px 12px", border: "1px solid rgba(220,231,117,0.4)", color: "#dce775" }}
+            style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, padding: "7px 11px", border: "1px solid rgba(220,231,117,0.4)", color: "#dce775" }}
           >
             <Printer size={13} color="#dce775" />
             <span>Print Dossier</span>
@@ -4213,8 +4180,8 @@ ${f.remediation}
               display: "flex",
               alignItems: "center",
               gap: 6,
-              fontSize: 12,
-              padding: "7px 12px",
+              fontSize: 11.5,
+              padding: "7px 11px",
               border: autoEmailOnComplete ? "1px solid rgba(16,185,129,0.55)" : "1px solid rgba(56,189,248,0.4)",
               background: autoEmailOnComplete ? "rgba(16,185,129,0.12)" : "rgba(56,189,248,0.08)",
               color: autoEmailOnComplete ? "#34d399" : "#38bdf8"
@@ -4241,7 +4208,7 @@ ${f.remediation}
           <button
             onClick={() => setShowConfigModal(true)}
             className="btn-secondary"
-            style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, padding: "7px 14px" }}
+            style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, padding: "7px 11px" }}
           >
             <Settings size={13} color="#06b6d4" />
             <span>Daemons</span>
@@ -4249,23 +4216,23 @@ ${f.remediation}
         </div>
       </div>
 
-      {/* ── Step-by-Step Engine Pipeline + Complete 14-Tactic MITRE ATT&CK® Progression Ribbon + 8-Stage Autonomous Workflow Bar ── */}
-      <div className="card-tactical" style={{ padding: "10px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, flexWrap: "wrap" }}>
+      {/* ── Step-by-Step Engine Pipeline + Collapsible 14-Tactic MITRE ATT&CK® & 8-Stage Autonomous Brain Matrix ── */}
+      <div className="card-tactical" style={{ padding: "8px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 5, flex: 1, flexWrap: "wrap" }}>
             {[
-              { step: 1, tab: "NMAP" as LogTab,         label: "1. 📡 Nmap (TA0043 Recon · TA0007)",     color: "#a5d6a7" },
-              { step: 2, tab: "OPENVAS" as LogTab,      label: "2. 🛡️ OpenVAS (EPSS/KEV · TA0001)",      color: "#80cbc4" },
-              { step: 3, tab: "ZAP" as LogTab,          label: "3. ⚡ OWASP ZAP (WSTG · ASVS · API10)",  color: "#4fc3f7" },
-              { step: 4, tab: "BURP" as LogTab,         label: "4. 🔍 Burp (TA0011 C2 · T1528 SSRF)",    color: "#ff8a65" },
-              { step: 5, tab: "POST_EXPLOIT" as LogTab, label: "5. 🔑 PrivEsc & Lateral (TA0003–TA0010)",color: "#c084fc" },
-              { step: 6, tab: "AI" as LogTab,           label: "6. 🧠 Autonomous Brain (14 Std · 15 Cap)",color: "#60a5fa" },
-              { step: 7, tab: "REPORT" as LogTab,       label: "7. 📄 EXPEDITE STRIKE™ Dossier & Retest",color: "#dce775" },
+              { step: 1, tab: "NMAP" as LogTab,         label: "1. 📡 Nmap",            color: "#a5d6a7" },
+              { step: 2, tab: "OPENVAS" as LogTab,      label: "2. 🛡️ OpenVAS",         color: "#80cbc4" },
+              { step: 3, tab: "ZAP" as LogTab,          label: "3. ⚡ OWASP ZAP",        color: "#4fc3f7" },
+              { step: 4, tab: "BURP" as LogTab,         label: "4. 🔍 Burp Suite",       color: "#ff8a65" },
+              { step: 5, tab: "POST_EXPLOIT" as LogTab, label: "5. 🔑 PrivEsc & Lateral",color: "#c084fc" },
+              { step: 6, tab: "AI" as LogTab,           label: "6. 🧠 Autonomous Brain", color: "#60a5fa" },
+              { step: 7, tab: "REPORT" as LogTab,       label: "7. 📄 Dossier & Retest", color: "#dce775" },
             ].map((item, idx) => {
               const isCurrent = running && currentEngineStep === item.step;
               const isCompleted = done || currentEngineStep > item.step;
               return (
-                <div key={item.step} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <div key={item.step} style={{ display: "flex", alignItems: "center", gap: 5 }}>
                   <button
                     onClick={() => setActiveLogTab(item.tab)}
                     style={{
@@ -4297,393 +4264,284 @@ ${f.remediation}
             })}
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--fg-2)", cursor: "pointer", userSelect: "none" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10.5, color: "var(--fg-2)", cursor: "pointer", userSelect: "none" }}>
               <input
                 type="checkbox"
                 checked={autoFollowTabs}
                 onChange={e => setAutoFollowTabs(e.target.checked)}
                 style={{ accentColor: "#06b6d4", cursor: "pointer" }}
               />
-              <span>Auto-Step Tabs</span>
+              <span>Auto-Step</span>
             </label>
             {(running || liveExternalProbing || done) && (
-              <span style={{ fontSize: 11, fontWeight: 800, color: done ? "#10b981" : "#06b6d4", fontFamily: "monospace" }}>
-                {progress}% · {formatDuration(elapsedSec)} {scanSpeed === "COMMERCIAL_1HR" ? "(target ~60m)" : ""}
+              <span style={{ fontSize: 10.5, fontWeight: 800, color: done ? "#10b981" : "#06b6d4", fontFamily: "monospace" }}>
+                {progress}% · {formatDuration(elapsedSec)}
               </span>
             )}
-          </div>
-        </div>
-
-        {/* 14-Tactic MITRE ATT&CK® Enterprise v15 Live Kill-Chain Bar (From Initial Reconnaissance TA0043 to Impact TA0040) */}
-        <div style={{
-          borderTop: "1px solid rgba(255,255,255,0.06)",
-          paddingTop: 6,
-          display: "flex",
-          alignItems: "center",
-          gap: 4,
-          flexWrap: "wrap"
-        }}>
-          <span style={{ fontSize: 9.5, fontWeight: 900, color: "#c084fc", whiteSpace: "nowrap", marginRight: 4, fontFamily: "monospace" }}>
-            ⚔️ MITRE ATT&amp;CK® 14 TACTICS:
-          </span>
-          {MITRE_ATTACK_14_TACTICS.map((tactic) => {
-            const activeThreshold = Math.round((tactic.order / 14) * 100);
-            const tacticDone = done || progress >= activeThreshold;
-            const tacticActive = running && !tacticDone && progress >= activeThreshold - 12;
-            return (
-              <div
-                key={tactic.tacticId}
-                onClick={() => {
-                  if (tactic.order <= 2) setActiveLogTab("NMAP");
-                  else if (tactic.order <= 4) setActiveLogTab("ZAP");
-                  else if (tactic.order === 12) setActiveLogTab("BURP");
-                  else if (tactic.order === 14) setActiveLogTab("REPORT");
-                  else {
-                    setActiveLogTab("POST_EXPLOIT");
-                    setPostAssessSubTab("MITRE14");
-                  }
-                }}
-                title={`${tactic.tacticId}: ${tactic.tactic} — ${tactic.techniques} (${tactic.engineModule})`}
-                style={{
-                  padding: "3px 7px",
-                  borderRadius: 4,
-                  fontSize: 9,
-                  fontFamily: "monospace",
-                  fontWeight: 800,
-                  whiteSpace: "nowrap",
-                  cursor: "pointer",
-                  border: tacticActive
-                    ? "1px solid #f59e0b"
-                    : tacticDone
-                    ? "1px solid rgba(16,185,129,0.45)"
-                    : "1px solid rgba(192,132,252,0.25)",
-                  background: tacticActive
-                    ? "rgba(245,158,11,0.2)"
-                    : tacticDone
-                    ? "rgba(16,185,129,0.12)"
-                    : "rgba(192,132,252,0.06)",
-                  color: tacticActive ? "#fbbf24" : tacticDone ? "#10b981" : "#c084fc"
-                }}
-              >
-                {tactic.order}.{tactic.tacticId} {tactic.tactic.split(" ")[0]}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* 8-Stage Autonomous Testing & Verification Workflow Ribbon (Discover ➔ Understand ➔ Plan ➔ Execute ➔ Validate ➔ Correlate ➔ Report ➔ Retest) */}
-        <div style={{
-          borderTop: "1px solid rgba(56,189,248,0.2)",
-          paddingTop: 8,
-          display: "flex",
-          flexDirection: "column",
-          gap: 6
-        }}>
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            flexWrap: "wrap"
-          }}>
-            <span style={{ fontSize: 10, fontWeight: 900, color: "#38bdf8", whiteSpace: "nowrap", marginRight: 2, fontFamily: "monospace", display: "inline-flex", alignItems: "center", gap: 4 }}>
-              🧠 8-STAGE AUTONOMOUS BRAIN (32 COMMERCIAL PLUGINS):
-            </span>
-            {AUTONOMOUS_8_STAGE_WORKFLOW.map((wf) => {
-              const wfThreshold = Math.round((wf.stageNum / 8) * 100);
-              const wfActive = (running || liveExternalProbing) && currentBrainStage === wf.stageNum;
-              const wfDone = done || (currentBrainStage > wf.stageNum) || (!running && !liveExternalProbing && currentBrainStage === 8) || progress >= wfThreshold;
-              const wfSelected = selectedBrainStage === wf.stageNum;
-              return (
-                <div
-                  key={wf.stageNum}
-                  onClick={() => {
-                    setSelectedBrainStage(wf.stageNum);
-                    if (wf.stageNum === 1) setActiveLogTab("NMAP");
-                    else if (wf.stageNum === 2) setActiveLogTab("OPENVAS");
-                    else if (wf.stageNum === 3 || wf.stageNum === 4) setActiveLogTab("ZAP");
-                    else if (wf.stageNum === 5) setActiveLogTab("POST_EXPLOIT");
-                    else if (wf.stageNum === 6) {
-                      setActiveLogTab("AI");
-                      setAiSubTab("WORKFLOW8");
-                    } else {
-                      setActiveLogTab("REPORT");
-                    }
-                  }}
-                  title={`${wf.name}: ${wf.title} — ${contextualizeText(wf.detail)} (${wf.standards})`}
-                  style={{
-                    padding: "4px 9px",
-                    borderRadius: 5,
-                    fontSize: 9.5,
-                    fontFamily: "monospace",
-                    fontWeight: 900,
-                    whiteSpace: "nowrap",
-                    cursor: "pointer",
-                    transition: "all 0.2s ease",
-                    border: wfActive
-                      ? "1.5px solid #fbbf24"
-                      : wfSelected
-                      ? "1.5px solid #38bdf8"
-                      : wfDone
-                      ? "1px solid rgba(16,185,129,0.55)"
-                      : "1px solid rgba(56,189,248,0.22)",
-                    background: wfActive
-                      ? "linear-gradient(135deg, rgba(245,158,11,0.28), rgba(56,189,248,0.22))"
-                      : wfSelected
-                      ? "rgba(56,189,248,0.22)"
-                      : wfDone
-                      ? "rgba(16,185,129,0.14)"
-                      : "rgba(56,189,248,0.05)",
-                    color: wfActive ? "#fde68a" : wfDone ? "#10b981" : wfSelected ? "#38bdf8" : "#94a3b8",
-                    boxShadow: wfActive
-                      ? "0 0 12px rgba(245,158,11,0.45)"
-                      : wfSelected
-                      ? "0 0 8px rgba(56,189,248,0.3)"
-                      : "none",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 5
-                  }}
-                >
-                  <span>{wfActive ? "⚡" : wfDone ? "✓" : "○"}</span>
-                  <span>{wf.name} · {wf.title.split(" ")[0]}</span>
-                  {wfActive && (
-                    <span style={{ fontSize: 8, background: "#f59e0b", color: "#050811", padding: "1px 4px", borderRadius: 3, fontWeight: 900 }}>
-                      ACTIVE
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Highlighted Active / Selected Brain Stage Live Telemetry Banner + 4 Stage Commercial Deep-Dive Plugins */}
-          {(() => {
-            const activeStageNum = (running || liveExternalProbing) && currentBrainStage > 0
-              ? currentBrainStage
-              : (selectedBrainStage || (done ? 8 : 1));
-            const activeWf = AUTONOMOUS_8_STAGE_WORKFLOW.find(w => w.stageNum === activeStageNum) || AUTONOMOUS_8_STAGE_WORKFLOW[0];
-            const isStageRunning = (running || liveExternalProbing) && currentBrainStage === activeWf.stageNum;
-            const isStageDone = done || currentBrainStage > activeWf.stageNum || progress >= Math.round((activeWf.stageNum / 8) * 100);
-            const stagePlugins = COMMERCIAL_DEEP_DIVE_PLUGINS.filter(p => p.brainStage === activeWf.stageNum);
-            return (
-              <div style={{
-                background: isStageRunning
-                  ? "linear-gradient(90deg, rgba(245,158,11,0.16), rgba(56,189,248,0.12))"
-                  : isStageDone
-                  ? "linear-gradient(90deg, rgba(16,185,129,0.12), rgba(56,189,248,0.08))"
-                  : "rgba(15,23,42,0.75)",
-                border: isStageRunning
-                  ? "1px solid rgba(245,158,11,0.55)"
-                  : isStageDone
-                  ? "1px solid rgba(16,185,129,0.4)"
-                  : "1px solid rgba(56,189,248,0.25)",
-                borderRadius: 6,
-                padding: "8px 10px",
-                display: "flex",
-                flexDirection: "column",
-                gap: 6,
-                fontFamily: "monospace",
-                fontSize: 10
-              }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                    <span style={{
-                      padding: "2px 7px",
-                      borderRadius: 4,
-                      fontWeight: 900,
-                      fontSize: 9.5,
-                      background: isStageRunning ? "#f59e0b" : isStageDone ? "#10b981" : "#38bdf8",
-                      color: "#050811"
-                    }}>
-                      {isStageRunning ? `⚡ EXECUTING STAGE ${activeWf.stageNum}/8` : isStageDone ? `✓ VERIFIED STAGE ${activeWf.stageNum}/8` : `🧠 STAGE ${activeWf.stageNum}/8`} · {activeWf.name}
-                    </span>
-                    <strong style={{ color: "#f8fafc", fontSize: 10.5 }}>{activeWf.title}:</strong>
-                    <span style={{ color: "#cbd5e1" }}>{contextualizeText(activeWf.detail)}</span>
-                  </div>
-                  <span style={{ color: "#c084fc", fontWeight: 800, fontSize: 9.5 }}>
-                    [{activeWf.standards}]
-                  </span>
-                </div>
-
-                {/* 4 Commercial Deep-Dive Plugins for this Brain Stage */}
-                <div style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-                  gap: 6,
-                  borderTop: "1px solid rgba(255,255,255,0.08)",
-                  paddingTop: 6
-                }}>
-                  {stagePlugins.map((plg) => {
-                    const isActivePlg = activePluginCode === plg.code && (running || liveExternalProbing);
-                    return (
-                      <div
-                        key={plg.code}
-                        style={{
-                          background: isActivePlg ? "rgba(245,158,11,0.18)" : "rgba(5,8,17,0.7)",
-                          border: isActivePlg ? "1px solid #fbbf24" : "1px solid rgba(56,189,248,0.22)",
-                          borderRadius: 5,
-                          padding: "5px 8px",
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 2
-                        }}
-                      >
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4 }}>
-                          <span style={{ fontSize: 9, fontWeight: 900, color: isActivePlg ? "#fde68a" : "#38bdf8" }}>
-                            🔌 {plg.code} · {plg.engineModule}
-                          </span>
-                          <span style={{ fontSize: 8.5, color: "#10b981", fontWeight: 800 }}>
-                            ~{plg.estimatedMinutes1HrMode}m (1-Hr Mode)
-                          </span>
-                        </div>
-                        <div style={{ fontSize: 9.5, fontWeight: 800, color: "#f8fafc" }}>{plg.name}</div>
-                        <div style={{ fontSize: 8.5, color: "#94a3b8", lineHeight: 1.3 }}>
-                          🕷️ {contextualizeText(plg.deepDiveActions[0] || plg.description)}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })()}
-        </div>
-      </div>
-
-      {/* ── Multi-Target Scope Grid / Management Bar + Live External Website Scanner ── */}
-      <div className="card-tactical" style={{ padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <Globe size={15} color="#38bdf8" />
-            <strong style={{ fontSize: 12.5, color: "#f8fafc" }}>
-              External Public Websites &amp; Virtual Lab Target URL Scope ({targets.length} Targets Staged · PTES P1 &amp; Live Outbound Prober Ready)
-            </strong>
-            <span style={{
-              fontSize: 9.5,
-              fontWeight: 800,
-              fontFamily: "monospace",
-              background: "rgba(16,185,129,0.16)",
-              color: "#10b981",
-              border: "1px solid rgba(16,185,129,0.35)",
-              padding: "2px 7px",
-              borderRadius: 4
-            }}>
-              ✓ PROVISIONED FOR EXTERNAL PUBLIC WEBSITES &amp; VIRTUAL LABS
-            </span>
-          </div>
-
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", maxWidth: "100%" }}>
-            {/* Scan Execution Mode Selector */}
-            <select
-              value={scanExecutionMode}
-              onChange={e => setScanExecutionMode(e.target.value as any)}
-              disabled={running}
+            <button
+              onClick={() => setShowPipelineDetails(prev => !prev)}
               style={{
-                background: "#050811",
-                color: scanExecutionMode === "LIVE_EXTERNAL_ONLY" ? "#10b981" : "#38bdf8",
-                border: `1px solid ${scanExecutionMode === "LIVE_EXTERNAL_ONLY" ? "#10b981" : "rgba(56,189,248,0.4)"}`,
-                borderRadius: 5,
-                padding: "4px 8px",
+                background: showPipelineDetails ? "rgba(192,132,252,0.18)" : "rgba(255,255,255,0.05)",
+                border: `1px solid ${showPipelineDetails ? "rgba(192,132,252,0.45)" : "var(--border)"}`,
+                color: showPipelineDetails ? "#c084fc" : "#94a3b8",
                 fontSize: 10.5,
                 fontWeight: 800,
-                fontFamily: "monospace",
-                maxWidth: "100%",
-                cursor: running ? "not-allowed" : "pointer"
-              }}
-            >
-              <option value="HYBRID_LIVE_AND_LAB">Mode: 🔬 Hybrid (Live External Website Probe + Full 7-Step PTES/MITRE Lab Chain)</option>
-              <option value="LIVE_EXTERNAL_ONLY">Mode: 🌐 100% Live External Website Audit Only (Real HTTP/DOM/WSTG/Cookie/CORS Telemetry)</option>
-            </select>
-
-            <button
-              onClick={loadPublicExternalTargets}
-              disabled={running}
-              title="Load sample public-facing websites for live external scanning"
-              style={{
-                background: "rgba(16,185,129,0.14)",
-                border: "1px solid rgba(16,185,129,0.4)",
-                color: "#10b981",
-                fontSize: 10.5,
-                fontWeight: 800,
-                padding: "4px 9px",
-                borderRadius: 5,
-                cursor: running ? "not-allowed" : "pointer"
-              }}
-            >
-              🌐 Load Public Websites
-            </button>
-
-            <button
-              onClick={loadVirtualLabTargets}
-              disabled={running}
-              title="Restore the 8 internal virtual lab targets (192.168.195.x & OWASP benchmark apps)"
-              style={{
-                background: "rgba(168,85,247,0.14)",
-                border: "1px solid rgba(168,85,247,0.38)",
-                color: "#c084fc",
-                fontSize: 10.5,
-                fontWeight: 800,
-                padding: "4px 9px",
-                borderRadius: 5,
-                cursor: running ? "not-allowed" : "pointer"
-              }}
-            >
-              🏠 Restore Lab Preset (8)
-            </button>
-
-            {verifiedFindings.length > 0 && (
-              <button
-                onClick={clearFindings}
-                disabled={running}
-                style={{
-                  background: "rgba(244,63,94,0.1)",
-                  border: "1px solid rgba(244,63,94,0.3)",
-                  color: "#f43f5e",
-                  fontSize: 11,
-                  fontWeight: 700,
-                  padding: "4px 10px",
-                  borderRadius: 5,
-                  cursor: running ? "not-allowed" : "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4
-                }}
-              >
-                <Trash2 size={12} />
-                <span>Clear Findings</span>
-              </button>
-            )}
-
-            <button
-              onClick={addTargetUrl}
-              disabled={running || targets.length >= 50}
-              style={{
-                background: "rgba(6,182,212,0.15)",
-                border: "1px solid #06b6d4",
-                color: "#06b6d4",
-                fontSize: 11,
-                fontWeight: 700,
                 padding: "4px 10px",
                 borderRadius: 5,
-                cursor: running ? "not-allowed" : "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: 4
+                cursor: "pointer"
               }}
+              title="Toggle 14 MITRE ATT&CK Tactics, 8-Stage Autonomous Brain & 32 Commercial Plugins"
             >
-              <Plus size={12} />
-              <span>Add URL</span>
+              {showPipelineDetails ? "▲ Hide MITRE 14 & 8-Stage Brain" : "▼ Show MITRE 14 & 8-Stage Brain (32 Plugins)"}
             </button>
           </div>
         </div>
 
+        {showPipelineDetails && (
+          <>
+            {/* 14-Tactic MITRE ATT&CK® Enterprise v15 Live Kill-Chain Bar (From Initial Reconnaissance TA0043 to Impact TA0040) */}
+            <div style={{
+              borderTop: "1px solid rgba(255,255,255,0.06)",
+              paddingTop: 6,
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+              flexWrap: "wrap"
+            }}>
+              <span style={{ fontSize: 9.5, fontWeight: 900, color: "#c084fc", whiteSpace: "nowrap", marginRight: 4, fontFamily: "monospace" }}>
+                ⚔️ MITRE ATT&amp;CK® 14 TACTICS:
+              </span>
+              {MITRE_ATTACK_14_TACTICS.map((tactic) => {
+                const activeThreshold = Math.round((tactic.order / 14) * 100);
+                const tacticDone = done || progress >= activeThreshold;
+                const tacticActive = running && !tacticDone && progress >= activeThreshold - 12;
+                return (
+                  <div
+                    key={tactic.tacticId}
+                    onClick={() => {
+                      if (tactic.order <= 2) setActiveLogTab("NMAP");
+                      else if (tactic.order <= 4) setActiveLogTab("ZAP");
+                      else if (tactic.order === 12) setActiveLogTab("BURP");
+                      else if (tactic.order === 14) setActiveLogTab("REPORT");
+                      else {
+                        setActiveLogTab("POST_EXPLOIT");
+                        setPostAssessSubTab("MITRE14");
+                      }
+                    }}
+                    title={`${tactic.tacticId}: ${tactic.tactic} — ${tactic.techniques} (${tactic.engineModule})`}
+                    style={{
+                      padding: "3px 7px",
+                      borderRadius: 4,
+                      fontSize: 9,
+                      fontFamily: "monospace",
+                      fontWeight: 800,
+                      whiteSpace: "nowrap",
+                      cursor: "pointer",
+                      border: tacticActive
+                        ? "1px solid #f59e0b"
+                        : tacticDone
+                        ? "1px solid rgba(16,185,129,0.45)"
+                        : "1px solid rgba(192,132,252,0.25)",
+                      background: tacticActive
+                        ? "rgba(245,158,11,0.2)"
+                        : tacticDone
+                        ? "rgba(16,185,129,0.12)"
+                        : "rgba(192,132,252,0.06)",
+                      color: tacticActive ? "#fbbf24" : tacticDone ? "#10b981" : "#c084fc"
+                    }}
+                  >
+                    {tactic.order}.{tactic.tacticId} {tactic.tactic.split(" ")[0]}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* 8-Stage Autonomous Testing & Verification Workflow Ribbon (Discover ➔ Understand ➔ Plan ➔ Execute ➔ Validate ➔ Correlate ➔ Report ➔ Retest) */}
+            <div style={{
+              borderTop: "1px solid rgba(56,189,248,0.2)",
+              paddingTop: 8,
+              display: "flex",
+              flexDirection: "column",
+              gap: 6
+            }}>
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                flexWrap: "wrap"
+              }}>
+                <span style={{ fontSize: 10, fontWeight: 900, color: "#38bdf8", whiteSpace: "nowrap", marginRight: 2, fontFamily: "monospace", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                  🧠 8-STAGE AUTONOMOUS BRAIN (32 COMMERCIAL PLUGINS):
+                </span>
+                {AUTONOMOUS_8_STAGE_WORKFLOW.map((wf) => {
+                  const wfThreshold = Math.round((wf.stageNum / 8) * 100);
+                  const wfActive = (running || liveExternalProbing) && currentBrainStage === wf.stageNum;
+                  const wfDone = done || (currentBrainStage > wf.stageNum) || (!running && !liveExternalProbing && currentBrainStage === 8) || progress >= wfThreshold;
+                  const wfSelected = selectedBrainStage === wf.stageNum;
+                  return (
+                    <div
+                      key={wf.stageNum}
+                      onClick={() => {
+                        setSelectedBrainStage(wf.stageNum);
+                        if (wf.stageNum === 1) setActiveLogTab("NMAP");
+                        else if (wf.stageNum === 2) setActiveLogTab("OPENVAS");
+                        else if (wf.stageNum === 3 || wf.stageNum === 4) setActiveLogTab("ZAP");
+                        else if (wf.stageNum === 5) setActiveLogTab("POST_EXPLOIT");
+                        else if (wf.stageNum === 6) {
+                          setActiveLogTab("AI");
+                          setAiSubTab("WORKFLOW8");
+                        } else {
+                          setActiveLogTab("REPORT");
+                        }
+                      }}
+                      title={`${wf.name}: ${wf.title} — ${contextualizeText(wf.detail)} (${wf.standards})`}
+                      style={{
+                        padding: "4px 9px",
+                        borderRadius: 5,
+                        fontSize: 9.5,
+                        fontFamily: "monospace",
+                        fontWeight: 900,
+                        whiteSpace: "nowrap",
+                        cursor: "pointer",
+                        transition: "all 0.2s ease",
+                        border: wfActive
+                          ? "1.5px solid #fbbf24"
+                          : wfSelected
+                          ? "1.5px solid #38bdf8"
+                          : wfDone
+                          ? "1px solid rgba(16,185,129,0.55)"
+                          : "1px solid rgba(56,189,248,0.22)",
+                        background: wfActive
+                          ? "linear-gradient(135deg, rgba(245,158,11,0.28), rgba(56,189,248,0.22))"
+                          : wfSelected
+                          ? "rgba(56,189,248,0.22)"
+                          : wfDone
+                          ? "rgba(16,185,129,0.14)"
+                          : "rgba(56,189,248,0.05)",
+                        color: wfActive ? "#fde68a" : wfDone ? "#10b981" : wfSelected ? "#38bdf8" : "#94a3b8",
+                        boxShadow: wfActive
+                          ? "0 0 12px rgba(245,158,11,0.45)"
+                          : wfSelected
+                          ? "0 0 8px rgba(56,189,248,0.3)"
+                          : "none",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 5
+                      }}
+                    >
+                      <span>{wfActive ? "⚡" : wfDone ? "✓" : "○"}</span>
+                      <span>{wf.name} · {wf.title.split(" ")[0]}</span>
+                      {wfActive && (
+                        <span style={{ fontSize: 8, background: "#f59e0b", color: "#050811", padding: "1px 4px", borderRadius: 3, fontWeight: 900 }}>
+                          ACTIVE
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Highlighted Active / Selected Brain Stage Live Telemetry Banner + 4 Stage Commercial Deep-Dive Plugins */}
+              {(() => {
+                const activeStageNum = (running || liveExternalProbing) && currentBrainStage > 0
+                  ? currentBrainStage
+                  : (selectedBrainStage || (done ? 8 : 1));
+                const activeWf = AUTONOMOUS_8_STAGE_WORKFLOW.find(w => w.stageNum === activeStageNum) || AUTONOMOUS_8_STAGE_WORKFLOW[0];
+                const isStageRunning = (running || liveExternalProbing) && currentBrainStage === activeWf.stageNum;
+                const isStageDone = done || currentBrainStage > activeWf.stageNum || progress >= Math.round((activeWf.stageNum / 8) * 100);
+                const stagePlugins = COMMERCIAL_DEEP_DIVE_PLUGINS.filter(p => p.brainStage === activeWf.stageNum);
+                return (
+                  <div style={{
+                    background: isStageRunning
+                      ? "linear-gradient(90deg, rgba(245,158,11,0.16), rgba(56,189,248,0.12))"
+                      : isStageDone
+                      ? "linear-gradient(90deg, rgba(16,185,129,0.12), rgba(56,189,248,0.08))"
+                      : "rgba(15,23,42,0.75)",
+                    border: isStageRunning
+                      ? "1px solid rgba(245,158,11,0.55)"
+                      : isStageDone
+                      ? "1px solid rgba(16,185,129,0.4)"
+                      : "1px solid rgba(56,189,248,0.25)",
+                    borderRadius: 6,
+                    padding: "8px 10px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 6,
+                    fontFamily: "monospace",
+                    fontSize: 10
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                        <span style={{
+                          padding: "2px 7px",
+                          borderRadius: 4,
+                          fontWeight: 900,
+                          fontSize: 9.5,
+                          background: isStageRunning ? "#f59e0b" : isStageDone ? "#10b981" : "#38bdf8",
+                          color: "#050811"
+                        }}>
+                          {isStageRunning ? `⚡ EXECUTING STAGE ${activeWf.stageNum}/8` : isStageDone ? `✓ VERIFIED STAGE ${activeWf.stageNum}/8` : `🧠 STAGE ${activeWf.stageNum}/8`} · {activeWf.name}
+                        </span>
+                        <strong style={{ color: "#f8fafc", fontSize: 10.5 }}>{activeWf.title}:</strong>
+                        <span style={{ color: "#cbd5e1" }}>{contextualizeText(activeWf.detail)}</span>
+                      </div>
+                      <span style={{ color: "#c084fc", fontWeight: 800, fontSize: 9.5 }}>
+                        [{activeWf.standards}]
+                      </span>
+                    </div>
+
+                    {/* 4 Commercial Deep-Dive Plugins for this Brain Stage */}
+                    <div style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                      gap: 6,
+                      borderTop: "1px solid rgba(255,255,255,0.08)",
+                      paddingTop: 6
+                    }}>
+                      {stagePlugins.map((plg) => {
+                        const isActivePlg = activePluginCode === plg.code && (running || liveExternalProbing);
+                        return (
+                          <div
+                            key={plg.code}
+                            style={{
+                              background: isActivePlg ? "rgba(245,158,11,0.18)" : "rgba(5,8,17,0.7)",
+                              border: isActivePlg ? "1px solid #fbbf24" : "1px solid rgba(56,189,248,0.22)",
+                              borderRadius: 5,
+                              padding: "5px 8px",
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: 2
+                            }}
+                          >
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4 }}>
+                              <span style={{ fontSize: 9, fontWeight: 900, color: isActivePlg ? "#fde68a" : "#38bdf8" }}>
+                                🔌 {plg.code} · {plg.engineModule}
+                              </span>
+                              <span style={{ fontSize: 8.5, color: "#10b981", fontWeight: 800 }}>
+                                ~{plg.estimatedMinutes1HrMode}m (1-Hr Mode)
+                              </span>
+                            </div>
+                            <div style={{ fontSize: 9.5, fontWeight: 800, color: "#f8fafc" }}>{plg.name}</div>
+                            <div style={{ fontSize: 8.5, color: "#94a3b8", lineHeight: 1.3 }}>
+                              🕷️ {contextualizeText(plg.deepDiveActions[0] || plg.description)}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* ── Live Website Scanner + Collapsible Multi-Target Scope Grid ── */}
+      <div className="card-tactical" style={{ padding: "10px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
         {/* Instant Live External Website Quick-Probe Bar + Authenticated Header/Cookie Injector */}
         <div style={{
-          background: "linear-gradient(90deg, rgba(16,185,129,0.08), rgba(6,182,212,0.08))",
-          border: "1px solid rgba(16,185,129,0.35)",
-          borderRadius: 7,
-          padding: "8px 12px",
           display: "flex",
           flexDirection: "column",
           gap: 8
@@ -4693,23 +4551,23 @@ ${f.remediation}
             alignItems: "center",
             justifyContent: "space-between",
             flexWrap: "wrap",
-            gap: 10
+            gap: 8
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flex: "1 1 240px", minWidth: 0, flexWrap: "wrap" }}>
               <span style={{ fontSize: 10.5, fontWeight: 900, color: "#10b981", whiteSpace: "nowrap", fontFamily: "monospace" }}>
-                🌐 LIVE PUBLIC WEBSITE SCANNER:
+                🌐 TARGET / LIVE WEBSITE:
               </span>
               <input
                 type="text"
                 value={customExternalUrlInput}
                 disabled={running}
                 onChange={e => setCustomExternalUrlInput(e.target.value)}
-                placeholder="Enter any public-facing website URL (e.g. https://customer-domain.com or http://testphp.vulnweb.com)"
+                placeholder="Enter any public-facing website or VMware sandbox URL (e.g. https://customer-domain.com)"
                 style={{
                   flex: "1 1 200px",
                   minWidth: 0,
                   background: "#050811",
-                  border: "1px solid rgba(56,189,248,0.4)",
+                  border: "1px solid rgba(56,189,248,0.35)",
                   borderRadius: 5,
                   padding: "5px 10px",
                   color: "#38bdf8",
@@ -4720,28 +4578,12 @@ ${f.remediation}
               />
             </div>
 
-            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-              <button
-                onClick={() => setShowAuthInjector(prev => !prev)}
-                style={{
-                  background: (customAuthHeader || customSessionCookie || showAuthInjector) ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.05)",
-                  border: `1px solid ${(customAuthHeader || customSessionCookie || showAuthInjector) ? "#f59e0b" : "var(--border)"}`,
-                  color: (customAuthHeader || customSessionCookie || showAuthInjector) ? "#fbbf24" : "var(--fg-2)",
-                  fontSize: 10.5,
-                  fontWeight: 800,
-                  padding: "5px 10px",
-                  borderRadius: 5,
-                  cursor: "pointer"
-                }}
-              >
-                🔑 {customAuthHeader || customSessionCookie ? "Auth Session Active ✓" : "Auth Header / Cookie"}
-              </button>
-
+            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
               <button
                 onClick={() => runLiveExternalWebsiteScan(customExternalUrlInput)}
                 disabled={running || !customExternalUrlInput.trim()}
                 style={{
-                  background: "rgba(16,185,129,0.22)",
+                  background: "rgba(16,185,129,0.2)",
                   border: "1px solid #10b981",
                   color: "#10b981",
                   fontSize: 11,
@@ -4755,24 +4597,56 @@ ${f.remediation}
                 }}
               >
                 <Zap size={12} />
-                <span>{liveExternalProbing ? "Probing Live Website..." : "⚡ Scan Public Website Live Now"}</span>
+                <span>{liveExternalProbing ? "Probing Live..." : "⚡ Scan Website Live"}</span>
               </button>
 
               <button
                 onClick={() => runLiveExternalWebsiteScan()}
                 disabled={running}
                 style={{
-                  background: "rgba(56,189,248,0.16)",
-                  border: "1px solid #38bdf8",
+                  background: "rgba(56,189,248,0.14)",
+                  border: "1px solid rgba(56,189,248,0.45)",
                   color: "#38bdf8",
                   fontSize: 11,
                   fontWeight: 800,
-                  padding: "5px 12px",
+                  padding: "5px 11px",
                   borderRadius: 5,
                   cursor: running ? "not-allowed" : "pointer"
                 }}
               >
-                🔍 Audit All {targets.length} Staged URLs Live
+                🔍 Audit Staged ({targets.length})
+              </button>
+
+              <button
+                onClick={() => setShowAuthInjector(prev => !prev)}
+                style={{
+                  background: (customAuthHeader || customSessionCookie || showAuthInjector) ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.05)",
+                  border: `1px solid ${(customAuthHeader || customSessionCookie || showAuthInjector) ? "#f59e0b" : "var(--border)"}`,
+                  color: (customAuthHeader || customSessionCookie || showAuthInjector) ? "#fbbf24" : "var(--fg-2)",
+                  fontSize: 10.5,
+                  fontWeight: 800,
+                  padding: "5px 9px",
+                  borderRadius: 5,
+                  cursor: "pointer"
+                }}
+              >
+                🔑 {customAuthHeader || customSessionCookie ? "Auth Active ✓" : "Auth"}
+              </button>
+
+              <button
+                onClick={() => setShowScopeManager(prev => !prev)}
+                style={{
+                  background: showScopeManager ? "rgba(56,189,248,0.18)" : "rgba(255,255,255,0.05)",
+                  border: `1px solid ${showScopeManager ? "#38bdf8" : "var(--border)"}`,
+                  color: showScopeManager ? "#38bdf8" : "#cbd5e1",
+                  fontSize: 10.5,
+                  fontWeight: 800,
+                  padding: "5px 10px",
+                  borderRadius: 5,
+                  cursor: "pointer"
+                }}
+              >
+                {showScopeManager ? `▲ Hide Staged URLs (${targets.length})` : `▼ Staged URLs & Scope Settings (${targets.length})`}
               </button>
             </div>
           </div>
@@ -4835,71 +4709,219 @@ ${f.remediation}
           )}
         </div>
 
-        {/* Horizontal Target Pills */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 6, maxHeight: 112, overflowY: "auto" }}>
-          {targets.map((t, idx) => (
-            <div
-              key={t.id}
-              style={{
-                background: "var(--surface-2)",
-                border: `1px solid ${t.status !== "idle" && t.status !== "queued" && t.status !== "complete" ? "#06b6d4" : t.status === "complete" ? "rgba(16,185,129,0.4)" : "var(--border)"}`,
-                borderRadius: 6,
-                padding: "6px 10px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 8
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 6, overflow: "hidden", flex: 1 }}>
-                <span style={{ fontSize: 9.5, color: "var(--muted)", fontFamily: "monospace" }}>#{idx + 1}</span>
-                <input
-                  type="text"
-                  value={t.url}
-                  disabled={running}
-                  onChange={e => updateTargetUrl(t.id, e.target.value)}
+        {/* Collapsible Staged Target URLs, Framework Standard & Mode Controls */}
+        {showScopeManager && (
+          <div style={{
+            borderTop: "1px solid rgba(255,255,255,0.08)",
+            paddingTop: 8,
+            display: "flex",
+            flexDirection: "column",
+            gap: 8
+          }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                {/* Standard Selector (14-Standard Multi-Framework Mapping Engine) */}
+                <select
+                  value={pentestStandard}
+                  onChange={e => setPentestStandard(e.target.value as PentestStandard)}
                   style={{
-                    background: "transparent",
-                    border: "none",
-                    color: t.status === "complete" ? "#10b981" : "#38bdf8",
-                    fontSize: 11,
-                    fontFamily: "monospace",
-                    width: "100%",
-                    outline: "none"
+                    background: "var(--surface-2)",
+                    color: "#c084fc",
+                    border: "1px solid rgba(192,132,252,0.4)",
+                    borderRadius: 5,
+                    padding: "4px 8px",
+                    fontSize: 10.5,
+                    fontWeight: 800,
+                    cursor: "pointer"
                   }}
-                />
+                >
+                  <option value="PTES_NIST_UNIFIED">Standard: All 14 Frameworks Unified (WSTG · ASVS · API10 · MITRE 14 · PTES · NIST · EPSS/KEV · ATLAS)</option>
+                  <option value="WSTG_ASVS_API_ATLAS">Standard: OWASP WSTG + ASVS + API Top 10 + LLM10/ATLAS + SCVS + SSDF/SAMM</option>
+                  <option value="MITRE_ATTACK_V15">Standard: MITRE ATT&amp;CK® Enterprise v15 (TA0043 ➔ TA0040 + D3FEND™)</option>
+                  <option value="PTES">Standard: PTES (7-Phase Execution Standard)</option>
+                  <option value="NIST_800_115">Standard: NIST SP 800-115 (4-Phase Technical Guide)</option>
+                </select>
+
+                {/* Scan Execution Mode Selector */}
+                <select
+                  value={scanExecutionMode}
+                  onChange={e => setScanExecutionMode(e.target.value as any)}
+                  disabled={running}
+                  style={{
+                    background: "#050811",
+                    color: scanExecutionMode === "LIVE_EXTERNAL_ONLY" ? "#10b981" : "#38bdf8",
+                    border: `1px solid ${scanExecutionMode === "LIVE_EXTERNAL_ONLY" ? "#10b981" : "rgba(56,189,248,0.4)"}`,
+                    borderRadius: 5,
+                    padding: "4px 8px",
+                    fontSize: 10.5,
+                    fontWeight: 800,
+                    fontFamily: "monospace",
+                    cursor: running ? "not-allowed" : "pointer"
+                  }}
+                >
+                  <option value="HYBRID_LIVE_AND_LAB">Mode: 🔬 Hybrid (Live External Website Probe + Full 7-Step PTES/MITRE Lab Chain)</option>
+                  <option value="LIVE_EXTERNAL_ONLY">Mode: 🌐 100% Live External Website Audit Only (Real HTTP/DOM/WSTG/Cookie/CORS Telemetry)</option>
+                </select>
               </div>
 
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                {t.phase !== "Standby" && (
-                  <span style={{ fontSize: 8.5, color: "#06b6d4", fontFamily: "monospace", whiteSpace: "nowrap" }}>
-                    {t.phase}
-                  </span>
-                )}
-                <span style={{
-                  fontSize: 9,
-                  fontWeight: 800,
-                  fontFamily: "monospace",
-                  background: t.status === "complete" ? "rgba(16,185,129,0.2)" : "rgba(255,255,255,0.06)",
-                  color: t.status === "complete" ? "#10b981" : "var(--muted)",
-                  padding: "1px 5px",
-                  borderRadius: 3
-                }}>
-                  {t.progress}%
-                </span>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                <button
+                  onClick={() => setShowBatchModal(true)}
+                  className="btn-secondary"
+                  disabled={running}
+                  style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10.5, padding: "4px 9px" }}
+                >
+                  <UploadCloud size={12} color="#38bdf8" />
+                  <span>Batch Import ({targets.length})</span>
+                </button>
 
-                {!running && (
+                <button
+                  onClick={loadPublicExternalTargets}
+                  disabled={running}
+                  style={{
+                    background: "rgba(16,185,129,0.14)",
+                    border: "1px solid rgba(16,185,129,0.4)",
+                    color: "#10b981",
+                    fontSize: 10.5,
+                    fontWeight: 800,
+                    padding: "4px 9px",
+                    borderRadius: 5,
+                    cursor: running ? "not-allowed" : "pointer"
+                  }}
+                >
+                  🌐 Load Public Websites
+                </button>
+
+                <button
+                  onClick={loadVirtualLabTargets}
+                  disabled={running}
+                  style={{
+                    background: "rgba(168,85,247,0.14)",
+                    border: "1px solid rgba(168,85,247,0.38)",
+                    color: "#c084fc",
+                    fontSize: 10.5,
+                    fontWeight: 800,
+                    padding: "4px 9px",
+                    borderRadius: 5,
+                    cursor: running ? "not-allowed" : "pointer"
+                  }}
+                >
+                  🏠 Restore Lab Preset (8)
+                </button>
+
+                {verifiedFindings.length > 0 && (
                   <button
-                    onClick={() => removeTargetUrl(t.id)}
-                    style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer", padding: 0 }}
+                    onClick={clearFindings}
+                    disabled={running}
+                    style={{
+                      background: "rgba(244,63,94,0.1)",
+                      border: "1px solid rgba(244,63,94,0.3)",
+                      color: "#f43f5e",
+                      fontSize: 10.5,
+                      fontWeight: 700,
+                      padding: "4px 9px",
+                      borderRadius: 5,
+                      cursor: running ? "not-allowed" : "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4
+                    }}
                   >
-                    <Trash2 size={12} />
+                    <Trash2 size={11} />
+                    <span>Clear Findings</span>
                   </button>
                 )}
+
+                <button
+                  onClick={addTargetUrl}
+                  disabled={running || targets.length >= 50}
+                  style={{
+                    background: "rgba(6,182,212,0.15)",
+                    border: "1px solid #06b6d4",
+                    color: "#06b6d4",
+                    fontSize: 10.5,
+                    fontWeight: 700,
+                    padding: "4px 9px",
+                    borderRadius: 5,
+                    cursor: running ? "not-allowed" : "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4
+                  }}
+                >
+                  <Plus size={11} />
+                  <span>Add URL</span>
+                </button>
               </div>
             </div>
-          ))}
-        </div>
+
+            {/* Horizontal Target Pills */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 6, maxHeight: 112, overflowY: "auto" }}>
+              {targets.map((t, idx) => (
+                <div
+                  key={t.id}
+                  style={{
+                    background: "var(--surface-2)",
+                    border: `1px solid ${t.status !== "idle" && t.status !== "queued" && t.status !== "complete" ? "#06b6d4" : t.status === "complete" ? "rgba(16,185,129,0.4)" : "var(--border)"}`,
+                    borderRadius: 6,
+                    padding: "5px 10px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 8
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, overflow: "hidden", flex: 1 }}>
+                    <span style={{ fontSize: 9.5, color: "var(--muted)", fontFamily: "monospace" }}>#{idx + 1}</span>
+                    <input
+                      type="text"
+                      value={t.url}
+                      disabled={running}
+                      onChange={e => updateTargetUrl(t.id, e.target.value)}
+                      style={{
+                        background: "transparent",
+                        border: "none",
+                        color: t.status === "complete" ? "#10b981" : "#38bdf8",
+                        fontSize: 11,
+                        fontFamily: "monospace",
+                        width: "100%",
+                        outline: "none"
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    {t.phase !== "Standby" && (
+                      <span style={{ fontSize: 8.5, color: "#06b6d4", fontFamily: "monospace", whiteSpace: "nowrap" }}>
+                        {t.phase}
+                      </span>
+                    )}
+                    <span style={{
+                      fontSize: 9,
+                      fontWeight: 800,
+                      fontFamily: "monospace",
+                      background: t.status === "complete" ? "rgba(16,185,129,0.2)" : "rgba(255,255,255,0.06)",
+                      color: t.status === "complete" ? "#10b981" : "var(--muted)",
+                      padding: "1px 5px",
+                      borderRadius: 3
+                    }}>
+                      {t.progress}%
+                    </span>
+
+                    {!running && (
+                      <button
+                        onClick={() => removeTargetUrl(t.id)}
+                        style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer", padding: 0 }}
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Live External Telemetry Summary Strip (renders when engineResults has live HTTP/DOM/WSTG/DNS telemetry) */}
         {engineResults.length > 0 && (
@@ -5000,8 +5022,8 @@ ${f.remediation}
         )}
       </div>
 
-      {/* ── 5 Connected Engine Brain Status Cards ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 10 }}>
+      {/* ── Compact 5-Daemon Status Strip ── */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 8 }}>
         {scanners.map((sc) => {
           const isRunning = sc.status === "RUNNING";
           const isDone = sc.status === "COMPLETED";
@@ -5015,41 +5037,42 @@ ${f.remediation}
                 background: isRunning ? "rgba(6,182,212,0.12)" : isDone ? "rgba(16,185,129,0.08)" : isSelected ? "rgba(56,189,248,0.08)" : "var(--surface)",
                 border: `1px solid ${isRunning ? "#06b6d4" : isDone ? "rgba(16,185,129,0.4)" : isSelected ? sc.color : "var(--border)"}`,
                 borderRadius: 8,
-                padding: "10px 12px",
+                padding: "7px 11px",
                 display: "flex",
-                flexDirection: "column",
-                gap: 6,
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 8,
                 cursor: "pointer",
                 transition: "all 0.15s"
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: "50%",
-                    background: isRunning ? "#10b981" : isDone ? "#06b6d4" : sc.color,
-                    boxShadow: isRunning ? "0 0 10px #10b981" : "none"
-                  }} />
-                  <strong style={{ fontSize: 12, color: "#f8fafc" }}>Step {sc.stepOrder} · {sc.name}</strong>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+                <span style={{
+                  width: 7,
+                  height: 7,
+                  borderRadius: "50%",
+                  flexShrink: 0,
+                  background: isRunning ? "#10b981" : isDone ? "#06b6d4" : sc.color,
+                  boxShadow: isRunning ? "0 0 8px #10b981" : "none"
+                }} />
+                <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <strong style={{ fontSize: 11.5, color: "#f8fafc" }}>{sc.stepOrder}. {sc.name}</strong>
+                  <span style={{ fontSize: 9, color: "var(--muted)", fontFamily: "monospace", marginLeft: 5 }}>{sc.version}</span>
                 </div>
-                <span style={{ fontSize: 9, color: "var(--muted)", fontFamily: "monospace" }}>{sc.version}</span>
               </div>
 
-              <div style={{ background: "var(--surface-2)", padding: "6px 8px", borderRadius: 6, fontSize: 10, display: "flex", flexDirection: "column", gap: 2 }}>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "var(--muted)" }}>Probes:</span>
-                  <strong style={{ color: isRunning ? "#38bdf8" : "#f8fafc" }}>
-                    {sc.activeRequests > 0 ? `${sc.activeRequests} (${sc.findingsFound} hits)` : "Ready · Active"}
-                  </strong>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ color: "var(--muted)" }}>State:</span>
-                  <strong style={{ color: isRunning ? "#10b981" : isDone ? "#06b6d4" : sc.color }}>
-                    {sc.status}
-                  </strong>
-                </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0, fontSize: 9.5, fontFamily: "monospace" }}>
+                {sc.activeRequests > 0 && (
+                  <span style={{ color: "#38bdf8" }}>{sc.activeRequests} ({sc.findingsFound})</span>
+                )}
+                <strong style={{
+                  color: isRunning ? "#10b981" : isDone ? "#06b6d4" : sc.color,
+                  background: "var(--surface-2)",
+                  padding: "2px 6px",
+                  borderRadius: 4
+                }}>
+                  {sc.status}
+                </strong>
               </div>
             </div>
           );
