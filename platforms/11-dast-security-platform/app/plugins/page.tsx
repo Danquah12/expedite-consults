@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { COMMERCIAL_DEEP_DIVE_PLUGINS } from "@/data/deepDivePlugins";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -17,11 +18,37 @@ interface InstalledPlugin {
   lastUpdated: string;
   description: string;
   permissions: string[];
+  brainStage?: number;
+  brainStageName?: string;
+  code?: string;
+  standards?: string;
+  deepDiveActions?: string[];
+  estimatedMinutes1HrMode?: number;
 }
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
+const DEEP_DIVE_INSTALLED: InstalledPlugin[] = COMMERCIAL_DEEP_DIVE_PLUGINS.map(p => ({
+  id: p.id,
+  code: p.code,
+  name: `[${p.brainStageName}] ${p.name}`,
+  author: p.author,
+  version: p.version,
+  category: p.category,
+  status: "healthy" as const,
+  installedDate: "2026-09-01",
+  lastUpdated: "2026-10-15",
+  description: `${p.description} (Standards: ${p.standards} · 1-Hr Mode Budget: ~${p.estimatedMinutes1HrMode}m)`,
+  permissions: p.permissions,
+  brainStage: p.brainStage,
+  brainStageName: p.brainStageName,
+  standards: p.standards,
+  deepDiveActions: p.deepDiveActions,
+  estimatedMinutes1HrMode: p.estimatedMinutes1HrMode
+}));
+
 const INSTALLED: InstalledPlugin[] = [
+  ...DEEP_DIVE_INSTALLED,
   {
     id: "jira-enterprise",
     name: "Jira Enterprise Connector",
@@ -90,6 +117,14 @@ const INSTALLED: InstalledPlugin[] = [
 ];
 
 const CAPABILITIES = [
+  ...COMMERCIAL_DEEP_DIVE_PLUGINS.map(p => ({
+    capability: p.code.toLowerCase().replace(/-/g, "_"),
+    plugin: `[${p.brainStageName}] ${p.name}`,
+    pluginId: p.id,
+    version: p.version,
+    status: "active",
+    tools: p.permissions
+  })),
   {
     capability: "create_ticket",
     plugin: "Jira Enterprise Connector",

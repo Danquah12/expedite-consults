@@ -125,12 +125,12 @@ export default function EvidencePage() {
   const doDownloadCSV = () => downloadBlob(generateCSV(findings), `axiom-report-${date}.csv`, "text/csv");
 
   return (
-    <div style={{ height: "100%", display: "flex", flexDirection: "column", overflow: "hidden", position: "relative" }}>
+    <div style={{ minHeight: "100%", display: "flex", flexDirection: "column", position: "relative" }}>
 
       {/* ── Report config modal ── */}
       {showReportModal && (
-        <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 10, padding: 24, width: 420 }}>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 1300, display: "flex", alignItems: "center", justifyContent: "center", padding: 12 }}>
+          <div style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 10, padding: 20, width: "min(420px, 95vw)", maxHeight: "90dvh", overflowY: "auto" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
               <span style={{ fontSize: 14, fontWeight: 700, color: "var(--fg)" }}>Generate DAST Report</span>
               <button onClick={() => setShowReportModal(false)} style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer" }}><X size={14} /></button>
@@ -153,7 +153,7 @@ export default function EvidencePage() {
             </div>
 
             <div style={{ display: "flex", gap: 8, flexDirection: "column" }}>
-              <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button className="btn-secondary" onClick={() => setShowReportModal(false)} style={{ flex: 1 }}>Cancel</button>
                 <button className="btn-primary" onClick={doDownloadHTML} style={{ flex: 2, fontWeight: 700, display:"flex", alignItems:"center", gap:6, justifyContent:"center" }}>
                   <Download size={12} /> Download HTML
@@ -171,7 +171,7 @@ export default function EvidencePage() {
       )}
 
       {/* ── Toolbar ── */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 12px", background: "var(--surface)", borderBottom: "1px solid var(--border)", flexShrink: 0, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: "var(--surface)", borderBottom: "1px solid var(--border)", flexShrink: 0, flexWrap: "wrap" }}>
         <Shield size={13} color="var(--primary)" />
         <span style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)" }}>Evidence Vault</span>
         {(["All","Critical","High","Medium","Low"] as const).map(s => (
@@ -183,7 +183,7 @@ export default function EvidencePage() {
         <span style={{ fontSize: 11, color: "var(--muted)" }}>
           {visible.length} findings · {findings.filter(f => f.verificationStatus === "Verified").length} verified
         </span>
-        <div style={{ marginLeft: "auto", display: "flex", gap: 5 }}>
+        <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
           <button className="btn-secondary" onClick={() => setShowAllEvidence(true)}
             style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 4, borderColor:"var(--primary)", color:"var(--primary)" }}>
             🗂️ All Evidence
@@ -210,20 +210,20 @@ export default function EvidencePage() {
         </div>
       </div>
 
-      <div className="split-h" style={{ flex: 1 }}>
+      <div className="split-h" style={{ flex: 1, display: "grid", gridTemplateColumns: "280px 1fr" }}>
         {/* ── Finding list ── */}
-        <div style={{ width: 280, flexShrink: 0, borderRight: "1px solid var(--border)", overflowY: "auto" }}>
+        <div style={{ width: "100%", borderRight: "1px solid var(--border)", borderBottom: "1px solid var(--border)", overflowY: "auto" }}>
           {visible.map(f => {
             const active = selected?.id === f.id;
             return (
               <div key={f.id} onClick={() => { setSelected(f); setTab("Description"); }}
                 style={{ padding: "9px 12px", borderBottom: "1px solid var(--border)", cursor: "pointer", background: active ? "rgba(232,145,45,0.06)" : "transparent", borderLeft: active ? "2px solid var(--primary)" : "2px solid transparent" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 3 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 3, flexWrap: "wrap" }}>
                   <span className="badge-sev" style={{ background: sevBg(f.severity), color: sevColor(f.severity), border: `1px solid ${sevBorder(f.severity)}` }}>{f.severity}</span>
                   {f.verificationStatus === "Verified" && <CheckCircle size={10} color="var(--green)" />}
                   <span style={{ fontSize: 9.5, color: "var(--muted)", marginLeft: "auto", fontFamily: "monospace" }}>{f.id}</span>
                 </div>
-                <div style={{ fontSize: 11.5, fontWeight: 500, color: "var(--fg)", lineHeight: 1.4 }}>{f.title}</div>
+                <div style={{ fontSize: 11.5, fontWeight: 500, color: "var(--fg)", lineHeight: 1.4, wordBreak: "break-word" }}>{f.title}</div>
                 <div style={{ fontSize: 10.5, color: pluginColor(f.plugin), marginTop: 2 }}>{f.plugin}</div>
               </div>
             );
@@ -232,11 +232,11 @@ export default function EvidencePage() {
 
         {/* ── Detail panel ── */}
         {selected ? (
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
             <div style={{ padding: "10px 14px", background: "var(--surface)", borderBottom: "1px solid var(--border)", flexShrink: 0 }}>
               <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", marginBottom: 6 }}>
                 <span className="badge-sev" style={{ background: sevBg(selected.severity), color: sevColor(selected.severity), border: `1px solid ${sevBorder(selected.severity)}` }}>{selected.severity}</span>
-                <span style={{ fontSize: 13.5, fontWeight: 700, color: "#fff" }}>{selected.title}</span>
+                <span style={{ fontSize: 13.5, fontWeight: 700, color: "#fff", wordBreak: "break-word" }}>{selected.title}</span>
                 {selected.verificationStatus === "Verified" && (
                   <span style={{ fontSize: 10, color: "var(--green)", background: "rgba(61,220,132,0.08)", padding: "2px 8px", borderRadius: 8, border: "1px solid rgba(61,220,132,0.2)", display: "flex", alignItems: "center", gap: 4 }}>
                     <CheckCircle size={10} /> VERIFIED
@@ -244,7 +244,7 @@ export default function EvidencePage() {
                 )}
               </div>
               <div style={{ display: "flex", gap: 10, fontSize: 11, flexWrap: "wrap" }}>
-                <span style={{ color: "var(--muted)" }}>
+                <span style={{ color: "var(--muted)", wordBreak: "break-all" }}>
                   <span className="pill" style={{ background: methodBg(selected.method), color: methodColor(selected.method), fontSize: 9 }}>{selected.method}</span>
                   {" "}<span style={{ fontFamily: "monospace", color: "var(--primary)" }}>{selected.url.replace("https://app.target.local", "")}</span>
                 </span>
@@ -255,7 +255,7 @@ export default function EvidencePage() {
               </div>
             </div>
 
-            <div style={{ display: "flex", borderBottom: "1px solid var(--border)", flexShrink: 0, background: "var(--surface)", overflowX: "auto" }}>
+            <div style={{ display: "flex", borderBottom: "1px solid var(--border)", flexShrink: 0, background: "var(--surface)", flexWrap: "wrap" }}>
               {(["Description","Evidence","Impact","Remediation","Reproduction","TTP","POC","Collected"] as EvidenceTab[]).map(t => (
                 <button key={t} onClick={() => setTab(t)} style={{ padding: "7px 12px", background: "none", border: "none", borderBottom: tab === t ? "2px solid var(--primary)" : "2px solid transparent", color: tab === t ? "var(--primary)" : "var(--muted)", cursor: "pointer", fontSize: 11, fontWeight: tab === t ? 600 : 400, whiteSpace: "nowrap",
                   ...(t==="TTP"||t==="POC"||t==="Collected" ? { color: tab===t?"#a78bfa":"var(--muted)", borderBottomColor: tab===t?"#a78bfa":"transparent" } : {})

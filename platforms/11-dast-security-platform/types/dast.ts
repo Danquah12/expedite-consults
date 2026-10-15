@@ -71,9 +71,10 @@ export interface POC {
 
 // Annotated captured evidence item
 export interface CollectedEvidence {
-  id:          string;
-  label:       string;
-  type:        "http-request" | "http-response" | "diff" | "screenshot-desc" | "log-snippet";
+  id?:         string;
+  label?:      string;
+  title?:      string;
+  type:        "http-request" | "http-response" | "diff" | "screenshot-desc" | "log-snippet" | string;
   content:     string;
   highlight?:  string;   // regex or string to highlight in content
   annotation?: string;   // analyst note on this evidence item

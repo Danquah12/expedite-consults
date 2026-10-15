@@ -38,10 +38,10 @@
     -webkit-font-smoothing: antialiased;
     font-size: 13px;
   }
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: rgba(9, 13, 22, 0.8); }
-  ::-webkit-scrollbar-thumb { background: #242f44; border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: #334155; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: rgba(9, 13, 22, 0.9); }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #38bdf8; }
   ::selection { background: rgba(56, 189, 248, 0.25); color: #fff; }
 }
 
@@ -243,3 +243,278 @@
   background: #38bdf8;
   display: inline-block;
 }
+
+/* ── Mobile Navigation & Universal Device Responsiveness ── */
+.mobile-topbar {
+  display: none;
+}
+
+.mobile-sidebar-backdrop {
+  display: none;
+}
+
+.mobile-drawer-close-btn {
+  display: none;
+}
+
+/* Tablet & Mobile Layout (<= 960px) */
+@media (max-width: 960px) {
+  html, body {
+    height: auto !important;
+    min-height: 100dvh !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .app-shell-body {
+    flex-direction: column !important;
+    height: auto !important;
+    min-height: 100dvh !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+  }
+
+  .mobile-topbar {
+    display: flex !important;
+    position: sticky !important;
+    top: 0 !important;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: max(8px, env(safe-area-inset-top)) 12px 8px 12px;
+    background: rgba(11, 15, 25, 0.96);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    z-index: 1100;
+    flex-shrink: 0;
+    width: 100%;
+  }
+
+  .app-sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    height: 100dvh !important;
+    width: min(280px, 84vw) !important;
+    z-index: 1200 !important;
+    transform: translateX(-105%);
+    transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
+  }
+
+  .app-sidebar.mobile-open {
+    transform: translateX(0) !important;
+  }
+
+  .mobile-sidebar-backdrop {
+    display: block !important;
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.72);
+    backdrop-filter: blur(4px);
+    z-index: 1150;
+  }
+
+  .mobile-drawer-close-btn {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    border: 1px solid rgba(244, 63, 94, 0.35);
+    background: rgba(244, 63, 94, 0.12);
+    color: #fda4af;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .app-shell-main {
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    height: auto !important;
+    min-height: calc(100dvh - 52px) !important;
+    overflow-y: visible !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: max(32px, env(safe-area-inset-bottom)) !important;
+  }
+
+  /* Release fixed-height and overflow-hidden traps on child page wrappers */
+  .app-shell-main > div {
+    height: auto !important;
+    min-height: calc(100dvh - 52px) !important;
+    overflow-y: visible !important;
+    max-width: 100% !important;
+  }
+
+  .engine-mobile-shell {
+    padding: 10px 10px 90px 10px !important;
+    gap: 10px !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Ensure every card, grid item, flex child, select, input, and button fits inside viewport */
+  .app-shell-main *,
+  .engine-mobile-shell * {
+    box-sizing: border-box !important;
+    min-width: 0;
+  }
+
+  .app-shell-main select,
+  .app-shell-main input[type="text"],
+  .app-shell-main input[type="search"],
+  .app-shell-main textarea {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  /* Release restrictive max-height scroll traps so all URLs, telemetry, and findings show completely */
+  .engine-mobile-shell [style*="max-height: 112px"],
+  .engine-mobile-shell [style*="max-height: 155px"],
+  .engine-mobile-shell [style*="max-height: 165px"],
+  .engine-mobile-shell [style*="max-height: 170px"],
+  .engine-mobile-shell [style*="max-height: 175px"],
+  .engine-mobile-shell [style*="max-height: 180px"],
+  .engine-mobile-shell [style*="max-height: 185px"],
+  .engine-mobile-shell [style*="max-height: 190px"],
+  .engine-mobile-shell [style*="max-height: 195px"],
+  .engine-mobile-shell [style*="max-height: 210px"],
+  .engine-mobile-shell [style*="max-height: 220px"],
+  .engine-mobile-shell [style*="max-height: 330px"],
+  .engine-mobile-shell [style*="max-height: 540px"] {
+    max-height: none !important;
+    overflow-y: visible !important;
+  }
+
+  /* Collapse wide multi-column split panels on tablet & mobile */
+  .app-shell-main [style*="grid-template-columns: 1.4fr"],
+  .app-shell-main [style*="grid-template-columns: 1.15fr"],
+  .app-shell-main [style*="grid-template-columns: 1.08fr"],
+  .app-shell-main [style*="grid-template-columns: 1fr 1.15fr"],
+  .app-shell-main [style*="grid-template-columns: auto 1fr"],
+  .app-shell-main [style*="grid-template-columns: 280px"],
+  .app-shell-main [style*="grid-template-columns:280px"],
+  .app-shell-main [style*="grid-template-columns: 320px"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  .app-shell-main [style*="grid-template-columns: repeat(6"],
+  .app-shell-main [style*="grid-template-columns:repeat(6"],
+  .app-shell-main [style*="grid-template-columns: repeat(5"],
+  .app-shell-main [style*="grid-template-columns:repeat(5"],
+  .app-shell-main [style*="grid-template-columns: repeat(4"],
+  .app-shell-main [style*="grid-template-columns:repeat(4"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  /* Ensure all tables fit and wrap cell text instead of cutting it off with ellipsis */
+  .data-table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .data-table td,
+  .data-table th {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    word-break: break-word !important;
+    padding: 8px 10px !important;
+    font-size: 11px !important;
+  }
+
+  .app-shell-main table {
+    display: block;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .app-shell-main pre,
+  .app-shell-main code,
+  .http-raw {
+    white-space: pre-wrap !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+    max-width: 100% !important;
+  }
+
+  /* Split-pane layouts (like Evidence Vault) stack vertically on mobile so both list & detail are 100% visible */
+  .split-h {
+    display: flex !important;
+    flex-direction: column !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+}
+
+/* Smartphone Layout (<= 640px) */
+@media (max-width: 640px) {
+  .engine-mobile-shell {
+    padding: 8px 8px 96px 8px !important;
+  }
+
+  .engine-mobile-shell h1 {
+    font-size: 14px !important;
+    line-height: 1.35 !important;
+    word-break: break-word !important;
+  }
+
+  /* Stack 2-column, 3-column, and wide auto-fill grids cleanly on phone screens */
+  .app-shell-main [style*="grid-template-columns: 1fr 1fr"],
+  .app-shell-main [style*="grid-template-columns:1fr 1fr"],
+  .app-shell-main [style*="grid-template-columns: repeat(3"],
+  .app-shell-main [style*="grid-template-columns:repeat(3"],
+  .app-shell-main [style*="grid-template-columns: 1fr 1fr 1fr"],
+  .app-shell-main [style*="grid-template-columns:1fr 1fr 1fr"],
+  .app-shell-main [style*="minmax(260px"],
+  .app-shell-main [style*="minmax(300px"],
+  .app-shell-main [style*="minmax(320px"],
+  .app-shell-main [style*="minmax(340px"],
+  .app-shell-main [style*="minmax(210px"],
+  .app-shell-main [style*="minmax(220px"],
+  .app-shell-main [style*="minmax(175px"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Allow 6-col / 5-col / 4-col metric strips to display 2 per row on standard phones */
+  .app-shell-main [style*="grid-template-columns: repeat(6"],
+  .app-shell-main [style*="grid-template-columns:repeat(6"],
+  .app-shell-main [style*="grid-template-columns: repeat(5"],
+  .app-shell-main [style*="grid-template-columns:repeat(5"],
+  .app-shell-main [style*="grid-template-columns: repeat(4"],
+  .app-shell-main [style*="grid-template-columns:repeat(4"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  /* Convert fixed-height inner desktop split panes to natural scrollable flow on phones */
+  .app-shell-main > div[style*="height: 100vh"],
+  .app-shell-main > div[style*="height:100vh"] {
+    height: auto !important;
+    min-height: 100% !important;
+    overflow: visible !important;
+  }
+}
+
+/* Compact Smartphone Layout (<= 400px, e.g. iPhone SE / Mini) */
+@media (max-width: 400px) {
+  .app-shell-main [style*="grid-template-columns: repeat(6"],
+  .app-shell-main [style*="grid-template-columns:repeat(6"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+

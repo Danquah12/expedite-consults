@@ -30,7 +30,7 @@ function DonutChart({ counts, total }: { counts: Record<string, number>, total: 
     return arc;
   });
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
       <svg width={140} height={140} style={{ flexShrink: 0 }}>
         {arcs.map(a => (
           <circle key={a.label} cx={cx} cy={cy} r={r} fill="none" stroke={a.color}
@@ -40,7 +40,7 @@ function DonutChart({ counts, total }: { counts: Record<string, number>, total: 
         <text x={cx} y={cy-5}  textAnchor="middle" fill="#fff" fontSize={22} fontWeight={900}>{tot}</text>
         <text x={cx} y={cy+12} textAnchor="middle" fill="#64748b" fontSize={10} fontWeight={700}>VULNS</text>
       </svg>
-      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: "1 1 120px" }}>
         {slices.map(s => (
           <div key={s.label} style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ width: 10, height: 10, borderRadius: 3, background: s.color, flexShrink: 0 }} />
@@ -58,7 +58,7 @@ function Sparkline({ data, color }: { data: number[], color: string }) {
   const max = Math.max(...data, 1);
   const pts = data.map((v, i) => `${(i/(data.length-1))*w},${h - (v/max)*(h-8)+4}`).join(" ");
   return (
-    <svg width={w} height={h}>
+    <svg width={w} height={h} style={{ maxWidth: "100%" }}>
       <polyline points={pts} fill="none" stroke={color} strokeWidth={2.5} strokeLinejoin="round" />
       {data.map((v, i) => (
         <circle key={i} cx={(i/(data.length-1))*w} cy={h-(v/max)*(h-8)+4} r={3} fill={color} />
@@ -194,16 +194,16 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div style={{ height: "100%", overflowY: "auto", padding: "16px 20px" }}>
+    <div style={{ minHeight: "100%", overflowY: "auto", padding: "12px 14px" }}>
 
       {/* Hero Standalone Callout Banner */}
-      <div className="cyber-card-crimson" style={{ padding: "14px 18px", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ width: 34, height: 34, borderRadius: 8, background: "rgba(225,29,72,0.2)", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid rgba(225,29,72,0.4)" }}>
+      <div className="cyber-card-crimson" style={{ padding: "14px 16px", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", flex: "1 1 240px" }}>
+          <div style={{ width: 34, height: 34, borderRadius: 8, background: "rgba(225,29,72,0.2)", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid rgba(225,29,72,0.4)", flexShrink: 0 }}>
             <Swords size={18} color="#ff2a5f" />
           </div>
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 900, color: "#fff", display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 900, color: "#fff", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
               ÆGIS · SOC STANDALONE COMMAND PORTAL
               <span style={{ fontSize: 9, background: "#10b981", color: "#000", padding: "1px 6px", borderRadius: 4, fontWeight: 900 }}>READY</span>
             </div>
@@ -216,10 +216,10 @@ export default function DashboardPage() {
       </div>
 
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-        <div style={{ flex: 1 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
+        <div style={{ flex: "1 1 220px" }}>
           <div style={{ fontSize: 20, fontWeight: 900, color: "#fff", letterSpacing: "-0.03em" }}>DAST Security Dashboard</div>
-          <div style={{ fontSize: 11, color: "var(--muted)", display: "flex", alignItems: "center", gap: 8, marginTop: 2 }}>
+          <div style={{ fontSize: 11, color: "var(--muted)", display: "flex", alignItems: "center", gap: 8, marginTop: 2, flexWrap: "wrap" }}>
             AXIOM Engine Brain · Automated · AI-Powered · Evidence-Driven
             {isRealData && (
               <span style={{ background: "rgba(16,185,129,0.15)", border: "1px solid #10b981", borderRadius: 4, padding: "1px 6px", fontSize: 9, color: "#10b981", fontWeight: 700 }}>
@@ -228,7 +228,7 @@ export default function DashboardPage() {
             )}
           </div>
         </div>
-        <Link href="/live-scan" className="btn-primary" style={{ textDecoration: "none", fontSize: 12, padding: "8px 18px" }}>
+        <Link href="/live-scan" className="btn-primary" style={{ textDecoration: "none", fontSize: 12, padding: "8px 14px" }}>
           <Play size={13} /> Run 4-Stage Scan
         </Link>
         <Link href="/evidence" className="btn-secondary" style={{ textDecoration: "none", fontSize: 12 }}>
@@ -260,7 +260,7 @@ export default function DashboardPage() {
 
         {/* Trend Sparkline */}
         <div className="tool-panel">
-          <div className="tool-panel-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div className="tool-panel-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 6 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <Zap size={12}/> Attack Vector Trajectory
             </div>
@@ -270,7 +270,7 @@ export default function DashboardPage() {
           </div>
           <div style={{ padding: "14px 16px" }}>
             <Sparkline data={trendData} color="#ff2a5f" />
-            <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 6 }}>
+            <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 6, wordBreak: "break-word" }}>
               {isRealData ? `Latest: ${findings.length} findings from ${topTarget}` : "Continuous telemetry across target quad"}
             </div>
           </div>
@@ -294,10 +294,10 @@ export default function DashboardPage() {
                   {(f.severity || "").toUpperCase()}
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 12, color: "#fff", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <div style={{ fontSize: 12, color: "#fff", fontWeight: 600, wordBreak: "break-word" }}>
                     {f.title ?? f.name}
                   </div>
-                  <div style={{ fontSize: 10.5, color: "var(--muted)", fontFamily: "var(--font-geist-mono)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <div style={{ fontSize: 10.5, color: "var(--muted)", fontFamily: "var(--font-geist-mono)", marginTop: 2, wordBreak: "break-all" }}>
                     {f.target ?? f.url ?? ""}
                   </div>
                 </div>
@@ -348,7 +348,7 @@ export default function DashboardPage() {
 
       {/* Recent Scans Table */}
       <div className="tool-panel">
-        <div className="tool-panel-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div className="tool-panel-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 6 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <Database size={12}/> Recent Scans & Targets
           </div>
@@ -366,11 +366,11 @@ export default function DashboardPage() {
             {displayScans.map((sc: any) => (
               <tr key={sc.id}>
                 <td style={{ fontSize: 11, fontFamily: "var(--font-geist-mono)", color: "#00f0ff" }}>
-                  {sc.live ? sc.id.slice(0, 12) : sc.id}
+                  {sc.id}
                 </td>
                 <td style={{ fontWeight: 600, color: "#fff" }}>{sc.name}</td>
-                <td style={{ fontSize: 11, fontFamily: "var(--font-geist-mono)", color: "var(--fg-2)" }}>
-                  {sc.target.length > 32 ? sc.target.slice(0, 32) + "…" : sc.target}
+                <td style={{ fontSize: 11, fontFamily: "var(--font-geist-mono)", color: "var(--fg-2)", wordBreak: "break-all" }}>
+                  {sc.target}
                 </td>
                 <td style={{ fontSize: 11, color: "var(--muted)" }}>{sc.date}</td>
                 <td style={{ fontSize: 11, color: "var(--muted)" }}>{sc.duration}</td>

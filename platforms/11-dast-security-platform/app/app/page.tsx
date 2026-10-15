@@ -18,6 +18,17 @@ const SAMPLE_TARGETS = [
   { host: "k8s-ingress.prod.us-east.aws", env: "Edge Gateway", ip: "54.210.14.99", risk: "Critical" }
 ];
 
+const BRAIN_8_STAGES = [
+  { num: 1, key: "DISCOVER",   title: "1. DISCOVER · Surface & API Discovery",      desc: "Nmap TCP SYN sweep, DOM spider, OpenAPI/GraphQL & Cloudflare DoH DNS enumeration.", tool: "Nmap NSE & DOM Spider", standards: "PTES P2 · WSTG-INFO · MITRE TA0043" },
+  { num: 2, key: "UNDERSTAND", title: "2. UNDERSTAND · App Model & Trust Boundaries", desc: "Maps roles (Admin/User/Guest), JWT/cookie state machines & microservice trust boundaries.", tool: "Trust Boundary Modeler", standards: "OWASP ASVS v4.0.3 · NIST §3" },
+  { num: 3, key: "PLAN",       title: "3. PLAN · Adaptive Risk-Based Test Plan",     desc: "Prioritizes attack vectors via FIRST EPSS v4 exploit probability & CISA KEV catalog.", tool: "EPSS / KEV Planner", standards: "FIRST EPSS · CISA KEV · WSTG v4.2" },
+  { num: 4, key: "EXECUTE",    title: "4. EXECUTE · Controlled Dynamic Testing",     desc: "Rate-limited DAST fuzzing across SQLi, XSS, SSRF, BOLA/BFLA & auth bypass vectors.", tool: "OWASP ZAP & Burp OOB", standards: "OWASP Top 10 · API Top 10 · MITRE TA0001" },
+  { num: 5, key: "VALIDATE",   title: "5. VALIDATE · Exploitability Verification",   desc: "Independent safe PoC replay & OAST callback verification — 0% false positives.", tool: "OAST & Safe PoC Verifier", standards: "PTES P5 · NIST §5 · MITRE TA0004" },
+  { num: 6, key: "CORRELATE",  title: "6. CORRELATE · Attack-Path & Root-Cause",     desc: "Chains findings into multi-hop kill paths & groups into systemic CWE / NIST SSDF root causes.", tool: "Attack-Path Graph Brain", standards: "CWE · NIST SP 800-218 (SSDF)" },
+  { num: 7, key: "REPORT",     title: "7. REPORT · Evidence-Traceable Dossier",      desc: "Generates SHA-256 signed HTTP transcripts, CVSS v3.1/v4.0 vectors & cURL reproduction.", tool: "Dossier & SARIF Engine", standards: "SARIF v2.1.0 · CVSS v4.0 · PTES P7" },
+  { num: 8, key: "RETEST",     title: "8. RETEST · Automated Regression Check",      desc: "Re-executes post-patch verification probes & MITRE D3FEND™ countermeasure validation.", tool: "MITRE D3FEND™ Retester", standards: "MITRE D3FEND™ · OWASP SAMM" }
+];
+
 function AegisSocContent() {
   const searchParams = useSearchParams();
   const isStandalone = searchParams.get("standalone") === "1";
@@ -31,7 +42,7 @@ function AegisSocContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(100);
-  const [activeStage, setActiveStage] = useState(4);
+  const [activeStage, setActiveStage] = useState(8);
 
   // Copilot State
   const [aiPrompt, setAiPrompt] = useState("");
@@ -71,11 +82,23 @@ Select a finding or type a question below to begin.`
 
   const handleTriggerScan = () => {
     setIsScanning(true);
-    setScanProgress(15);
-    setActiveStage(1);
-    setTimeout(() => { setScanProgress(45); setActiveStage(2); }, 1200);
-    setTimeout(() => { setScanProgress(75); setActiveStage(3); }, 2400);
-    setTimeout(() => { setScanProgress(100); setActiveStage(4); setIsScanning(false); }, 3600);
+    const stageSteps = [
+      { stage: 1, pct: 12 },
+      { stage: 2, pct: 25 },
+      { stage: 3, pct: 38 },
+      { stage: 4, pct: 52 },
+      { stage: 5, pct: 66 },
+      { stage: 6, pct: 80 },
+      { stage: 7, pct: 92 },
+      { stage: 8, pct: 100 }
+    ];
+    stageSteps.forEach((s, idx) => {
+      setTimeout(() => {
+        setActiveStage(s.stage);
+        setScanProgress(s.pct);
+        if (s.stage === 8) setIsScanning(false);
+      }, idx * 550);
+    });
   };
 
   const handleSendAiMessage = (promptText?: string) => {
@@ -144,45 +167,45 @@ location /api/v2/auth {
   });
 
   return (
-    <div className="flex flex-col h-full bg-slate-950 text-slate-100 overflow-hidden font-sans selection:bg-sky-500/20 selection:text-white">
+    <div className="flex flex-col min-h-full bg-slate-950 text-slate-100 overflow-x-hidden font-sans selection:bg-sky-500/20 selection:text-white">
 
-      {/* Top Header: Dignified, Clean, Professional */}
-      <header className="px-5 py-3 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md flex items-center justify-between gap-4 shrink-0">
+      {/* Top Header: Dignified, Clean, Professional — 100% visible on mobile & desktop */}
+      <header className="px-3 sm:px-5 py-3 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md flex flex-wrap items-center justify-between gap-3 shrink-0">
         
         {/* Left: Brand Identity & Target Selector */}
-        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4 min-w-0">
           <div className="flex items-center gap-2.5">
             <div className="size-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-200 shrink-0">
               <Shield className="size-4 text-sky-400" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm font-semibold text-white tracking-tight">ÆGIS · SOC</span>
                 <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-800 text-slate-300 border border-slate-700">
                   Platform 11
                 </span>
                 {isStandalone && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-sky-950 text-sky-300 border border-sky-800/60 hidden sm:inline-block">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-sky-950 text-sky-300 border border-sky-800/60 inline-block">
                     Standalone Console
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-slate-400 hidden sm:block">Security Operations & Dynamic Analysis</p>
+              <p className="text-[11px] text-slate-400 block">Security Operations & Dynamic Analysis</p>
             </div>
           </div>
 
           <div className="h-5 w-px bg-slate-800 hidden md:block" />
 
           {/* Clean Target Dropdown */}
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="relative">
+          <div className="flex flex-wrap items-center gap-2 min-w-0">
+            <div className="relative max-w-full">
               <select
                 value={selectedTarget.host}
                 onChange={e => {
                   const found = SAMPLE_TARGETS.find(t => t.host === e.target.value);
                   if (found) setSelectedTarget(found);
                 }}
-                className="appearance-none bg-slate-900 border border-slate-700 hover:border-slate-600 rounded-lg px-3 py-1.5 pr-8 text-xs font-medium text-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500 cursor-pointer transition-colors"
+                className="appearance-none bg-slate-900 border border-slate-700 hover:border-slate-600 rounded-lg px-3 py-1.5 pr-8 text-xs font-medium text-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500 cursor-pointer transition-colors max-w-full"
               >
                 {SAMPLE_TARGETS.map(t => (
                   <option key={t.host} value={t.host} className="bg-slate-900 text-slate-200">
@@ -193,33 +216,33 @@ location /api/v2/auth {
               <ChevronDown className="size-3 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
 
-            <span className="text-[11px] font-mono text-slate-500 hidden lg:inline">
+            <span className="text-[11px] font-mono text-slate-400 inline-block">
               {selectedTarget.ip}
             </span>
           </div>
         </div>
 
-        {/* Center: Calm System Health Telemetry */}
-        <div className="hidden xl:flex items-center gap-2 px-3 py-1 rounded-lg bg-slate-900/60 border border-slate-800/80 text-xs text-slate-300 font-mono">
-          <div className="flex items-center gap-1.5 px-2 py-0.5">
+        {/* Center: System Health Telemetry (Visible on all devices) */}
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 px-2.5 py-1 rounded-lg bg-slate-900/60 border border-slate-800/80 text-[11px] sm:text-xs text-slate-300 font-mono">
+          <div className="flex items-center gap-1.5 px-1.5 py-0.5">
             <span className="size-1.5 rounded-full bg-emerald-400" />
             <span>{telemetry.reqPerSec} req/s</span>
           </div>
           <span className="text-slate-700">·</span>
-          <div className="px-2 py-0.5 text-slate-400">
+          <div className="px-1.5 py-0.5 text-slate-400">
             <span>{telemetry.latency}ms latency</span>
           </div>
           <span className="text-slate-700">·</span>
-          <div className="px-2 py-0.5 text-slate-400">
+          <div className="px-1.5 py-0.5 text-slate-400">
             <span>{telemetry.activeRules} active rules</span>
           </div>
         </div>
 
         {/* Right: DEFCON Selector & Main Scan Trigger */}
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 shrink-0">
           
-          {/* Subtle DEFCON Segmented Control */}
-          <div className="hidden sm:flex items-center gap-1 p-1 rounded-lg bg-slate-900 border border-slate-800">
+          {/* Subtle DEFCON Segmented Control (Visible on mobile & desktop) */}
+          <div className="flex items-center gap-1 p-1 rounded-lg bg-slate-900 border border-slate-800">
             <span className="text-[10px] font-medium text-slate-400 px-1.5 uppercase tracking-wider">DEFCON</span>
             {[1, 2, 3, 4, 5].map(d => {
               const isActive = activeDefcon === d;
@@ -253,17 +276,53 @@ location /api/v2/auth {
             {isScanning ? (
               <>
                 <RefreshCw className="size-3.5 animate-spin" />
-                <span>Stage {activeStage}/4 ({scanProgress}%)</span>
+                <span>Brain Stage {activeStage}/8 ({scanProgress}%)</span>
               </>
             ) : (
               <>
                 <Play className="size-3.5 fill-current" />
-                <span>Run 4-Stage Scan</span>
+                <span>Run 8-Stage Brain Scan</span>
               </>
             )}
           </button>
         </div>
       </header>
+
+      {/* Live 8-Stage Autonomous Brain Progression & Highlight Ribbon */}
+      <div className="px-3 sm:px-5 py-2 border-b border-slate-800 bg-slate-900/60 flex flex-wrap items-center gap-1.5 shrink-0">
+        <span className="text-[10px] font-bold font-mono text-sky-400 mr-1 whitespace-nowrap">
+          🧠 8-STAGE AUTONOMOUS BRAIN:
+        </span>
+        {BRAIN_8_STAGES.map(st => {
+          const isCurrent = isScanning && activeStage === st.num;
+          const isDone = (!isScanning && activeStage >= st.num) || (isScanning && activeStage > st.num);
+          return (
+            <button
+              key={st.num}
+              onClick={() => {
+                setActiveStage(st.num);
+                setActiveTab("pipeline");
+              }}
+              className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold transition-all flex items-center gap-1 ${
+                isCurrent
+                  ? "bg-amber-500/25 text-amber-300 border border-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.4)]"
+                  : isDone
+                  ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/40"
+                  : "bg-slate-900 text-slate-400 border border-slate-800"
+              }`}
+              title={`${st.title} — ${st.desc}`}
+            >
+              <span>{isCurrent ? "⚡" : isDone ? "✓" : "○"}</span>
+              <span>{st.num}. {st.key}</span>
+              {isCurrent && (
+                <span className="px-1 rounded bg-amber-400 text-slate-950 text-[8px] font-black">
+                  ACTIVE
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
 
       {/* Navigation Sub-Tabs */}
       <div className="px-5 border-b border-slate-800 bg-slate-900/40 flex items-center justify-between gap-4 shrink-0 overflow-x-auto">
@@ -289,7 +348,7 @@ location /api/v2/auth {
             }`}
           >
             <Layers className="size-3.5" />
-            <span>Attack Pipeline</span>
+            <span>8-Stage Brain Pipeline</span>
           </button>
 
           <button
@@ -496,10 +555,10 @@ location /api/v2/auth {
                                 {f.severity}
                               </span>
                             </td>
-                            <td className="py-2.5 px-3 font-medium text-slate-100 max-w-[200px] truncate">
+                            <td className="py-2.5 px-3 font-medium text-slate-100 break-words">
                               {f.title}
                             </td>
-                            <td className="py-2.5 px-3 font-mono text-slate-400 max-w-[180px] truncate">
+                            <td className="py-2.5 px-3 font-mono text-slate-400 break-all">
                               {f.url || f.target || "—"}
                             </td>
                             <td className="py-2.5 px-3 font-mono text-slate-400">
@@ -525,7 +584,7 @@ location /api/v2/auth {
                 </div>
 
                 {/* Table Footer Summary */}
-                <div className="p-2.5 border-t border-slate-800 bg-slate-900/60 text-[11px] text-slate-400 flex items-center justify-between">
+                <div className="p-2.5 border-t border-slate-800 bg-slate-900/60 text-[11px] text-slate-400 flex flex-wrap items-center justify-between gap-2">
                   <span>Showing {filteredFindings.length} of {FINDINGS.length} security findings</span>
                   <span className="font-mono text-slate-500">Target: {selectedTarget.host}</span>
                 </div>
@@ -618,7 +677,7 @@ location /api/v2/auth {
         )}
 
         {/* ============================================================== */}
-        {/* TAB 2: 4-STAGE ATTACK PIPELINE                                 */}
+        {/* TAB 2: 8-STAGE AUTONOMOUS BRAIN PIPELINE                       */}
         {/* ============================================================== */}
         {activeTab === "pipeline" && (
           <div className="space-y-5 max-w-7xl mx-auto">
@@ -626,8 +685,10 @@ location /api/v2/auth {
             <div className="p-5 rounded-xl bg-slate-900/60 border border-slate-800">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
                 <div>
-                  <h3 className="text-sm font-semibold text-white">Autonomous 4-Stage Attack Pipeline</h3>
-                  <p className="text-xs text-slate-400 mt-0.5">Automated progression from reconnaissance to verified proof generation.</p>
+                  <h3 className="text-sm font-semibold text-white">Autonomous 8-Stage Brain Assessment Pipeline</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Every assessment steps sequentially through all 8 Autonomous Brain Stages (1. Discover ➔ 8. Retest), highlighting each stage in real time.
+                  </p>
                 </div>
                 <button
                   onClick={handleTriggerScan}
@@ -635,67 +696,48 @@ location /api/v2/auth {
                   className="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-sky-600 hover:bg-sky-500 text-white self-start sm:self-auto flex items-center gap-1.5"
                 >
                   <Play className="size-3.5 fill-current" />
-                  <span>Execute Pipeline</span>
+                  <span>{isScanning ? `Running Stage ${activeStage}/8...` : "Execute 8-Stage Brain Pipeline"}</span>
                 </button>
               </div>
 
-              {/* 4 Stage Progression Cards */}
+              {/* 8 Stage Progression Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {[
-                  {
-                    num: 1,
-                    title: "Stage 1: Recon & Spider",
-                    desc: "Port enumeration and automated crawling of exposed API routes.",
-                    tool: "Nmap & Spider",
-                    active: activeStage >= 1
-                  },
-                  {
-                    num: 2,
-                    title: "Stage 2: Active Fuzzing",
-                    desc: "OWASP Top 10 injection engine testing SQLi, SSRF, & auth parameters.",
-                    tool: "Fuzz Matrix",
-                    active: activeStage >= 2
-                  },
-                  {
-                    num: 3,
-                    title: "Stage 3: Proof Verification",
-                    desc: "OAST out-of-band callback confirmation with zero false positives.",
-                    tool: "OAST Engine",
-                    active: activeStage >= 3
-                  },
-                  {
-                    num: 4,
-                    title: "Stage 4: SIEM Dispatch",
-                    desc: "Automated SARIF ledger generation, virtual patch export & triage.",
-                    tool: "SARIF Ledger",
-                    active: activeStage >= 4
-                  }
-                ].map(stage => (
-                  <div
-                    key={stage.num}
-                    className={`p-3.5 rounded-lg border transition-all ${
-                      stage.active
-                        ? "bg-slate-900 border-slate-700 shadow-sm"
-                        : "bg-slate-950/40 border-slate-800/60 opacity-60"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between text-xs mb-2">
-                      <span className="font-semibold text-slate-400">Stage {stage.num}</span>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-medium border ${
-                        stage.active
-                          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                          : "bg-slate-800 text-slate-500 border-slate-700"
-                      }`}>
-                        {stage.active ? "Complete" : "Pending"}
-                      </span>
+                {BRAIN_8_STAGES.map(stage => {
+                  const isCurrent = isScanning && activeStage === stage.num;
+                  const isDone = (!isScanning && activeStage >= stage.num) || (isScanning && activeStage > stage.num);
+                  return (
+                    <div
+                      key={stage.num}
+                      onClick={() => setActiveStage(stage.num)}
+                      className={`p-3.5 rounded-lg border transition-all cursor-pointer ${
+                        isCurrent
+                          ? "bg-amber-500/10 border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.3)]"
+                          : isDone
+                          ? "bg-slate-900 border-emerald-500/40 shadow-sm"
+                          : "bg-slate-950/40 border-slate-800/60 opacity-60"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between text-xs mb-2">
+                        <span className="font-mono font-bold text-sky-400">Brain Stage {stage.num}/8</span>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                          isCurrent
+                            ? "bg-amber-400 text-slate-950 border-amber-300"
+                            : isDone
+                            ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                            : "bg-slate-800 text-slate-500 border-slate-700"
+                        }`}>
+                          {isCurrent ? "⚡ ACTIVE STAGE" : isDone ? "✓ Verified" : "Pending"}
+                        </span>
+                      </div>
+                      <div className="text-xs font-semibold text-white mb-1">{stage.title}</div>
+                      <p className="text-[11px] text-slate-400 leading-relaxed mb-3">{stage.desc}</p>
+                      <div className="text-[10px] font-mono text-slate-400 border-t border-slate-800/60 pt-2 flex flex-col gap-0.5">
+                        <span>Engine: <strong className="text-slate-200">{stage.tool}</strong></span>
+                        <span className="text-purple-400">{stage.standards}</span>
+                      </div>
                     </div>
-                    <div className="text-xs font-semibold text-white mb-1">{stage.title}</div>
-                    <p className="text-[11px] text-slate-400 leading-relaxed mb-3">{stage.desc}</p>
-                    <div className="text-[10px] font-mono text-slate-500 border-t border-slate-800/60 pt-2">
-                      Tool: {stage.tool}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -801,10 +843,10 @@ Access-Control-Allow-Origin: *
         {/* TAB 4: AI SECURITY COPILOT                                     */}
         {/* ============================================================== */}
         {activeTab === "copilot" && (
-          <div className="max-w-4xl mx-auto rounded-xl bg-slate-900/60 border border-slate-800 h-[560px] flex flex-col overflow-hidden">
+          <div className="max-w-4xl mx-auto rounded-xl bg-slate-900/60 border border-slate-800 min-h-[520px] flex flex-col overflow-hidden">
             
             {/* Header */}
-            <div className="p-3.5 border-b border-slate-800 bg-slate-900/80 flex items-center justify-between">
+            <div className="p-3.5 border-b border-slate-800 bg-slate-900/80 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
                 <div className="size-7 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300">
                   <Bot className="size-4 text-sky-400" />
@@ -815,8 +857,8 @@ Access-Control-Allow-Origin: *
                 </div>
               </div>
 
-              {/* Quick suggestion chips */}
-              <div className="hidden sm:flex items-center gap-1.5">
+              {/* Quick suggestion chips (Visible on mobile & desktop) */}
+              <div className="flex flex-wrap items-center gap-1.5">
                 <button
                   onClick={() => handleSendAiMessage("Generate cURL reproduction script")}
                   className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-300 transition-colors"

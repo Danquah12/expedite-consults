@@ -9,7 +9,7 @@ import {
   ListOrdered, SlidersHorizontal, ScrollText, Layers, Target, Settings, Zap,
   MessageSquare, Share2, Store, Package, Lock, ClipboardList, Network,
   FolderOpen, Server, GitBranch, CheckSquare, TrendingUp, Workflow,
-  ShieldAlert, Swords, Waypoints, Sparkles, Search
+  ShieldAlert, Swords, Waypoints, Sparkles, Search, Menu, X
 } from "lucide-react";
 
 const SECTIONS = [
@@ -93,129 +93,258 @@ const SECTIONS = [
 export default function Sidebar() {
   const path = usePathname();
   const [filter, setFilter] = useState("");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <aside style={{
-      width: 220, flexShrink: 0, 
-      background: "rgba(11, 15, 23, 0.95)",
-      backdropFilter: "blur(20px)",
-      borderRight: "1px solid var(--border)", 
-      overflowY: "auto",
-      display: "flex", flexDirection: "column",
-      zIndex: 20
-    }}>
-      {/* Brand Header */}
-      <div style={{ padding: "16px 14px 12px", borderBottom: "1px solid var(--border)" }}>
-        <Link href="/app" style={{ textDecoration: "none" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+    <>
+      {/* Mobile & Tablet Top Navigation Bar (visible on screens <= 960px) */}
+      <header className="mobile-topbar">
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(prev => !prev)}
+            aria-label="Toggle navigation menu"
+            style={{
+              background: mobileMenuOpen ? "rgba(225, 29, 72, 0.25)" : "rgba(56, 189, 248, 0.14)",
+              border: `1px solid ${mobileMenuOpen ? "#f43f5e" : "rgba(56, 189, 248, 0.45)"}`,
+              color: "#f8fafc",
+              borderRadius: 6,
+              padding: "6px 10px",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: 11,
+              fontWeight: 800,
+              cursor: "pointer"
+            }}
+          >
+            {mobileMenuOpen ? <X size={15} color="#f43f5e" /> : <Menu size={15} color="#38bdf8" />}
+            <span>{mobileMenuOpen ? "Close" : "Studios"}</span>
+          </button>
+
+          <Link href="/engine" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 7 }}>
             <div style={{
-              width: 32, height: 32, borderRadius: 8,
+              width: 26, height: 26, borderRadius: 6,
               background: "linear-gradient(135deg, #e11d48, #be123c)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              boxShadow: "0 0 16px rgba(225, 29, 72, 0.5)",
-              border: "1px solid rgba(225, 29, 72, 0.6)"
+              display: "flex", alignItems: "center", justifyContent: "center"
             }}>
-              <Swords size={18} color="#fff" />
+              <Swords size={14} color="#fff" />
             </div>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 900, color: "#fff", letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: 5 }}>
-                ÆGIS · SOC
-                <span style={{ fontSize: 9, background: "rgba(0,240,255,0.15)", color: "#00f0ff", border: "1px solid rgba(0,240,255,0.4)", borderRadius: 4, padding: "0 4px", fontWeight: 800 }}>v4.5</span>
+              <div style={{ fontSize: 12, fontWeight: 900, color: "#fff", lineHeight: 1.1 }}>
+                EXPEDITE STRIKE™
               </div>
-              <div style={{ fontSize: 9, color: "var(--muted)", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>AXIOM DAST ENGINE</div>
+              <div style={{ fontSize: 8.5, color: "#38bdf8", fontWeight: 700, fontFamily: "monospace" }}>
+                MOBILE &amp; DESKTOP DAST v5.2
+              </div>
             </div>
-          </div>
-        </Link>
+          </Link>
+        </div>
 
-        {/* Quick Filter */}
-        <div style={{ marginTop: 12, position: "relative" }}>
-          <Search size={12} style={{ position: "absolute", left: 8, top: 8, color: "var(--muted)" }} />
-          <input
-            type="text"
-            placeholder="Search 40+ studios..."
-            value={filter}
-            onChange={e => setFilter(e.target.value)}
+        <div style={{ display: "flex", alignItems: "center", gap: 6, overflowX: "auto" }}>
+          <Link
+            href="/engine"
             style={{
-              width: "100%", background: "rgba(6, 8, 13, 0.8)", border: "1px solid var(--border)",
-              borderRadius: 6, padding: "5px 8px 5px 26px", fontSize: 11, color: "var(--fg)",
-              outline: "none"
+              textDecoration: "none",
+              fontSize: 10.5,
+              fontWeight: 800,
+              padding: "5px 9px",
+              borderRadius: 5,
+              whiteSpace: "nowrap",
+              background: path === "/engine" ? "rgba(16, 185, 129, 0.22)" : "rgba(255,255,255,0.06)",
+              border: `1px solid ${path === "/engine" ? "#10b981" : "var(--border)"}`,
+              color: path === "/engine" ? "#10b981" : "#f8fafc"
             }}
-          />
+          >
+            🧠 Engine Brain
+          </Link>
+          <Link
+            href="/app"
+            style={{
+              textDecoration: "none",
+              fontSize: 10.5,
+              fontWeight: 800,
+              padding: "5px 9px",
+              borderRadius: 5,
+              whiteSpace: "nowrap",
+              background: path === "/app" ? "rgba(225, 29, 72, 0.22)" : "rgba(255,255,255,0.06)",
+              border: `1px solid ${path === "/app" ? "#f43f5e" : "var(--border)"}`,
+              color: path === "/app" ? "#ff4d79" : "#cbd5e1"
+            }}
+          >
+            ⚔️ SOC
+          </Link>
+          <Link
+            href="/live-scan"
+            style={{
+              textDecoration: "none",
+              fontSize: 10.5,
+              fontWeight: 800,
+              padding: "5px 9px",
+              borderRadius: 5,
+              whiteSpace: "nowrap",
+              background: path === "/live-scan" ? "rgba(56, 189, 248, 0.22)" : "rgba(255,255,255,0.06)",
+              border: `1px solid ${path === "/live-scan" ? "#38bdf8" : "var(--border)"}`,
+              color: path === "/live-scan" ? "#38bdf8" : "#cbd5e1"
+            }}
+          >
+            ⚡ Pipeline
+          </Link>
         </div>
-      </div>
+      </header>
 
-      {/* Navigation Sections */}
-      <nav style={{ flex: 1, padding: "8px 6px" }}>
-        {SECTIONS.map(section => {
-          const matchingItems = section.items.filter(item =>
-            !filter || item.label.toLowerCase().includes(filter.toLowerCase())
-          );
-          if (filter && matchingItems.length === 0) return null;
+      {/* Mobile Drawer Backdrop */}
+      {mobileMenuOpen && (
+        <div
+          className="mobile-sidebar-backdrop"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
 
-          return (
-            <div key={section.title} style={{ marginBottom: 8 }}>
-              <div style={{
-                padding: "6px 10px 4px", fontSize: 9, fontWeight: 800,
-                color: "#64748b", textTransform: "uppercase", letterSpacing: "0.1em",
-                display: "flex", alignItems: "center", justifyContent: "space-between"
-              }}>
-                <span>{section.title}</span>
-                <span style={{ fontSize: 8, color: "var(--muted)" }}>{matchingItems.length}</span>
+      <aside
+        className={`app-sidebar ${mobileMenuOpen ? "mobile-open" : ""}`}
+        style={{
+          width: 220, flexShrink: 0, 
+          background: "rgba(11, 15, 23, 0.98)",
+          backdropFilter: "blur(20px)",
+          borderRight: "1px solid var(--border)", 
+          overflowY: "auto",
+          display: "flex", flexDirection: "column",
+          zIndex: 50
+        }}
+      >
+        {/* Brand Header */}
+        <div style={{ padding: "16px 14px 12px", borderBottom: "1px solid var(--border)" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+            <Link href="/app" onClick={() => setMobileMenuOpen(false)} style={{ textDecoration: "none" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{
+                  width: 32, height: 32, borderRadius: 8,
+                  background: "linear-gradient(135deg, #e11d48, #be123c)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  boxShadow: "0 0 16px rgba(225, 29, 72, 0.5)",
+                  border: "1px solid rgba(225, 29, 72, 0.6)"
+                }}>
+                  <Swords size={18} color="#fff" />
+                </div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 900, color: "#fff", letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: 5 }}>
+                    ÆGIS · SOC
+                    <span style={{ fontSize: 9, background: "rgba(0,240,255,0.15)", color: "#00f0ff", border: "1px solid rgba(0,240,255,0.4)", borderRadius: 4, padding: "0 4px", fontWeight: 800 }}>v5.2</span>
+                  </div>
+                  <div style={{ fontSize: 9, color: "var(--muted)", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>AXIOM DAST ENGINE</div>
+                </div>
               </div>
-              {matchingItems.map(item => {
-                const Icon = item.icon;
-                const active = path === item.href || (item.href !== "/" && item.href !== "/app" && path.startsWith(item.href)) || (item.href === "/app" && path === "/app");
-                return (
-                  <Link key={item.href} href={item.href} style={{ textDecoration: "none" }}>
-                    <div style={{
-                      display: "flex", alignItems: "center", gap: 8,
-                      padding: "6px 10px", margin: "1px 0", borderRadius: 6,
-                      background: active ? "rgba(225, 29, 72, 0.15)" : "transparent",
-                      border: active ? "1px solid rgba(225, 29, 72, 0.35)" : "1px solid transparent",
-                      cursor: "pointer", transition: "all 0.15s ease-out"
-                    }}>
-                      <Icon size={14} color={active ? "#ff2a5f" : "var(--muted)"} />
-                      <span style={{
-                        fontSize: 11.5,
-                        color: active ? "#fff" : "var(--fg-2)",
-                        fontWeight: active ? 700 : 500,
-                        flex: 1
-                      }}>
-                        {item.label}
-                      </span>
-                      {item.badge && (
-                        <span style={{
-                          fontSize: 8.5, padding: "1px 5px", borderRadius: 4, fontWeight: 800,
-                          background: item.hot ? "rgba(225, 29, 72, 0.2)" : "rgba(255,255,255,0.05)",
-                          color: item.hot ? "#ff4d79" : "var(--muted)",
-                          border: `1px solid ${item.hot ? "rgba(225, 29, 72, 0.4)" : "var(--border)"}`,
-                        }}>
-                          {item.badge}
-                        </span>
-                      )}
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          );
-        })}
-      </nav>
+            </Link>
 
-      {/* Footer Telemetry */}
-      <div style={{
-        padding: "10px 12px", borderTop: "1px solid var(--border)",
-        background: "rgba(6, 8, 13, 0.9)", fontSize: 9.5, color: "var(--muted)"
-      }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-          <span style={{ fontWeight: 800, color: "#fff", display: "flex", alignItems: "center", gap: 5 }}>
-            <span className="beacon-green" /> LIVE RADAR
-          </span>
-          <span style={{ color: "#00f0ff", fontWeight: 700 }}>4 ENGINES</span>
+            <button
+              type="button"
+              className="mobile-drawer-close-btn"
+              onClick={() => setMobileMenuOpen(false)}
+              aria-label="Close drawer"
+              style={{
+                background: "rgba(244,63,94,0.15)",
+                border: "1px solid rgba(244,63,94,0.4)",
+                color: "#f43f5e",
+                borderRadius: 6,
+                padding: 4,
+                cursor: "pointer"
+              }}
+            >
+              <X size={14} />
+            </button>
+          </div>
+
+          {/* Quick Filter */}
+          <div style={{ marginTop: 12, position: "relative" }}>
+            <Search size={12} style={{ position: "absolute", left: 8, top: 8, color: "var(--muted)" }} />
+            <input
+              type="text"
+              placeholder="Search 40+ studios..."
+              value={filter}
+              onChange={e => setFilter(e.target.value)}
+              style={{
+                width: "100%", background: "rgba(6, 8, 13, 0.8)", border: "1px solid var(--border)",
+                borderRadius: 6, padding: "5px 8px 5px 26px", fontSize: 11, color: "var(--fg)",
+                outline: "none"
+              }}
+            />
+          </div>
         </div>
-        <div style={{ color: "var(--fg-2)", fontSize: 9 }}>ZAP · Burp · OpenVAS · Nmap</div>
-        <div style={{ color: "#10b981", fontWeight: 600, marginTop: 2 }}>● 0 Zero-Day Latency</div>
-      </div>
-    </aside>
+
+        {/* Navigation Sections */}
+        <nav style={{ flex: 1, padding: "8px 6px" }}>
+          {SECTIONS.map(section => {
+            const matchingItems = section.items.filter(item =>
+              !filter || item.label.toLowerCase().includes(filter.toLowerCase())
+            );
+            if (filter && matchingItems.length === 0) return null;
+
+            return (
+              <div key={section.title} style={{ marginBottom: 8 }}>
+                <div style={{
+                  padding: "6px 10px 4px", fontSize: 9, fontWeight: 800,
+                  color: "#64748b", textTransform: "uppercase", letterSpacing: "0.1em",
+                  display: "flex", alignItems: "center", justifyContent: "space-between"
+                }}>
+                  <span>{section.title}</span>
+                  <span style={{ fontSize: 8, color: "var(--muted)" }}>{matchingItems.length}</span>
+                </div>
+                {matchingItems.map(item => {
+                  const Icon = item.icon;
+                  const active = path === item.href || (item.href !== "/" && item.href !== "/app" && path.startsWith(item.href)) || (item.href === "/app" && path === "/app");
+                  return (
+                    <Link key={item.href} href={item.href} onClick={() => setMobileMenuOpen(false)} style={{ textDecoration: "none" }}>
+                      <div style={{
+                        display: "flex", alignItems: "center", gap: 8,
+                        padding: "7px 10px", margin: "1px 0", borderRadius: 6,
+                        background: active ? "rgba(225, 29, 72, 0.15)" : "transparent",
+                        border: active ? "1px solid rgba(225, 29, 72, 0.35)" : "1px solid transparent",
+                        cursor: "pointer", transition: "all 0.15s ease-out"
+                      }}>
+                        <Icon size={14} color={active ? "#ff2a5f" : "var(--muted)"} />
+                        <span style={{
+                          fontSize: 11.5,
+                          color: active ? "#fff" : "var(--fg-2)",
+                          fontWeight: active ? 700 : 500,
+                          flex: 1
+                        }}>
+                          {item.label}
+                        </span>
+                        {item.badge && (
+                          <span style={{
+                            fontSize: 8.5, padding: "1px 5px", borderRadius: 4, fontWeight: 800,
+                            background: item.hot ? "rgba(225, 29, 72, 0.2)" : "rgba(255,255,255,0.05)",
+                            color: item.hot ? "#ff4d79" : "var(--muted)",
+                            border: `1px solid ${item.hot ? "rgba(225, 29, 72, 0.4)" : "var(--border)"}`,
+                          }}>
+                            {item.badge}
+                          </span>
+                        )}
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </nav>
+
+        {/* Footer Telemetry */}
+        <div style={{
+          padding: "10px 12px", borderTop: "1px solid var(--border)",
+          background: "rgba(6, 8, 13, 0.9)", fontSize: 9.5, color: "var(--muted)"
+        }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+            <span style={{ fontWeight: 800, color: "#fff", display: "flex", alignItems: "center", gap: 5 }}>
+              <span className="beacon-green" /> LIVE RADAR
+            </span>
+            <span style={{ color: "#00f0ff", fontWeight: 700 }}>4 ENGINES</span>
+          </div>
+          <div style={{ color: "var(--fg-2)", fontSize: 9 }}>ZAP · Burp · OpenVAS · Nmap</div>
+          <div style={{ color: "#10b981", fontWeight: 600, marginTop: 2 }}>● Mobile &amp; Desktop Ready</div>
+        </div>
+      </aside>
+    </>
   );
 }
