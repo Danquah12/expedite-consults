@@ -66,7 +66,6 @@ const SECTIONS = [
   {
     title: "Enterprise Governance",
     items: [
-      { href: "/vuln-management", icon: ShieldAlert,      label: "DAST Vuln Mgmt",    badge: "RISK", hot: true },
       { href: "/projects",        icon: FolderOpen,       label: "Projects & Orgs",   hot: true },
       { href: "/assets",          icon: Server,           label: "Asset Inventory",   hot: true },
       { href: "/pipeline",        icon: GitBranch,        label: "Findings Pipeline", hot: true },
