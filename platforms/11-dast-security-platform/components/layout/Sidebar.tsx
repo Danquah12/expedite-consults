@@ -139,67 +139,71 @@ export default function Sidebar() {
             <span>{mobileMenuOpen ? "Close" : "Studios"}</span>
           </button>
 
-          <Link href="/engine" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 7 }}>
+          <Link href="/engine" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 7, flexShrink: 0 }}>
             <div style={{
               width: 26, height: 26, borderRadius: 6,
-              background: "linear-gradient(135deg, #e11d48, #be123c)",
-              display: "flex", alignItems: "center", justifyContent: "center"
+              background: "linear-gradient(135deg, #0284c7, #10b981)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              flexShrink: 0
             }}>
-              <Swords size={14} color="#fff" />
+              <Globe size={14} color="#fff" />
             </div>
             <div>
-              <div style={{ fontSize: 12, fontWeight: 900, color: "#fff", lineHeight: 1.1 }}>
-                EXPEDITE STRIKE™
+              <div style={{ fontSize: 11.5, fontWeight: 900, color: "#fff", lineHeight: 1.1, whiteSpace: "nowrap" }}>
+                XTRIKE™ · DAST WEB
               </div>
-              <div style={{ fontSize: 8.5, color: "#38bdf8", fontWeight: 700, fontFamily: "monospace" }}>
-                MOBILE &amp; DESKTOP DAST v5.2
+              <div style={{ fontSize: 8.5, color: "#38bdf8", fontWeight: 800, fontFamily: "monospace", whiteSpace: "nowrap" }}>
+                🌐 WEB INTERFACE DAST
               </div>
             </div>
           </Link>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 6, overflowX: "auto" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 5, overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
           <Link
             href="/engine"
             style={{
               textDecoration: "none",
-              fontSize: 10.5,
+              fontSize: 10,
               fontWeight: 800,
-              padding: "5px 9px",
+              padding: "5px 8px",
               borderRadius: 5,
               whiteSpace: "nowrap",
+              flexShrink: 0,
               background: path === "/engine" ? "rgba(16, 185, 129, 0.22)" : "rgba(255,255,255,0.06)",
               border: `1px solid ${path === "/engine" ? "#10b981" : "var(--border)"}`,
               color: path === "/engine" ? "#10b981" : "#f8fafc"
             }}
           >
-            🧠 Engine Brain
+            🌐 DAST Scanner
           </Link>
           <Link
             href="/app"
             style={{
               textDecoration: "none",
-              fontSize: 10.5,
+              fontSize: 10,
               fontWeight: 800,
-              padding: "5px 9px",
+              padding: "5px 8px",
               borderRadius: 5,
               whiteSpace: "nowrap",
+              flexShrink: 0,
               background: path === "/app" ? "rgba(225, 29, 72, 0.22)" : "rgba(255,255,255,0.06)",
               border: `1px solid ${path === "/app" ? "#f43f5e" : "var(--border)"}`,
               color: path === "/app" ? "#ff4d79" : "#cbd5e1"
             }}
           >
-            ⚔️ SOC
+            ⚔️ Aegis.SOC
           </Link>
           <Link
             href="/live-scan"
             style={{
               textDecoration: "none",
-              fontSize: 10.5,
+              fontSize: 10,
               fontWeight: 800,
-              padding: "5px 9px",
+              padding: "5px 8px",
               borderRadius: 5,
               whiteSpace: "nowrap",
+              flexShrink: 0,
               background: path === "/live-scan" ? "rgba(56, 189, 248, 0.22)" : "rgba(255,255,255,0.06)",
               border: `1px solid ${path === "/live-scan" ? "#38bdf8" : "var(--border)"}`,
               color: path === "/live-scan" ? "#38bdf8" : "#cbd5e1"
@@ -233,20 +237,21 @@ export default function Sidebar() {
         {/* Brand Header */}
         <div style={{ padding: "14px 14px 10px", borderBottom: "1px solid var(--border)" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-            <Link href="/app" onClick={() => setMobileMenuOpen(false)} style={{ textDecoration: "none" }}>
+            <Link href="/engine" onClick={() => setMobileMenuOpen(false)} style={{ textDecoration: "none" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <div style={{
                   width: 30, height: 30, borderRadius: 8,
                   background: "linear-gradient(135deg, #0284c7, #0f172a)",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  border: "1px solid rgba(56, 189, 248, 0.45)"
+                  border: "1px solid rgba(56, 189, 248, 0.45)",
+                  flexShrink: 0
                 }}>
-                  <Swords size={16} color="#38bdf8" />
+                  <Globe size={16} color="#38bdf8" />
                 </div>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 900, color: "#fff", letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: 5 }}>
-                    ÆGIS · SOC
-                    <span style={{ fontSize: 9, background: "rgba(56,189,248,0.12)", color: "#38bdf8", border: "1px solid rgba(56,189,248,0.3)", borderRadius: 4, padding: "0 4px", fontWeight: 800 }}>v5.2</span>
+                  <div style={{ fontSize: 12.5, fontWeight: 900, color: "#fff", letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: 5 }}>
+                    XTRIKE™ · DAST
+                    <span style={{ fontSize: 8.5, background: "rgba(16,185,129,0.18)", color: "#10b981", border: "1px solid rgba(16,185,129,0.4)", borderRadius: 4, padding: "0 4px", fontWeight: 800 }}>WEB</span>
                   </div>
                   <div style={{ fontSize: 9, color: "var(--muted)", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>AXIOM DAST ENGINE</div>
                 </div>

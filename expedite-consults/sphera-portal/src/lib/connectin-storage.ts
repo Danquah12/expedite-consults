@@ -3,6 +3,7 @@
 import { Post, UserProfile, MessageThread, SuggestedConnection, initialPosts, currentUser, initialMessages, suggestedConnections } from "./linkedin-data"
 import { AdminUserRecord, ADMIN_USERS_DIRECTORY } from "./connectin-iam-data"
 import { createUniqueUserProfile } from "./connectin-profile"
+import { KWESI_ASIEDU_PARSED_DATA } from "./resume-parser"
 
 const STORAGE_KEYS = {
   POSTS: 'connectin_posts_v1',
@@ -44,13 +45,27 @@ export function getExplicitStoredUser(): UserProfile | null {
     // Only require name — email may be missing from API UserProfileRecord
     if (parsed && parsed.name) {
       const email = parsed.email || `${parsed.name.toLowerCase().replace(/\s+/g, '.')}@connectin.com`
-      // Return the stored data directly — avoid calling createUniqueUserProfile which can throw
+      const isKwesi = parsed.name.toLowerCase().includes("kwesi") || email.includes("asiedu")
+      const finalExp = (isKwesi && (!parsed.experience || parsed.experience.length === 0))
+        ? KWESI_ASIEDU_PARSED_DATA.experiences
+        : (parsed.experience || [])
+
+      const finalHeadline = (isKwesi && (!parsed.headline || parsed.headline.includes("Master Carpenter") || parsed.headline.includes("Verified ConnectIn Member")))
+        ? KWESI_ASIEDU_PARSED_DATA.headline
+        : (parsed.headline || 'Verified ConnectIn Member')
+
+      const finalAbout = (isKwesi && (!parsed.about || parsed.about.includes("Practicing") || parsed.about.length < 50))
+        ? KWESI_ASIEDU_PARSED_DATA.about
+        : parsed.about
+
       return {
         ...parsed,
         email,
         id: parsed.id || parsed.userId || `USR-${Date.now()}`,
         name: parsed.name,
-        headline: parsed.headline || 'Verified ConnectIn Member',
+        headline: finalHeadline,
+        about: finalAbout,
+        experience: finalExp,
         avatar: parsed.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(parsed.name)}&backgroundColor=0a66c2`,
         role: parsed.role || 'personal',
       }

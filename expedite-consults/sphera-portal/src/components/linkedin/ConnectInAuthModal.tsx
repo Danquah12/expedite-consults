@@ -16,8 +16,11 @@ import {
 import { UserProfile } from "@/lib/linkedin-data"
 import { saveStoredUser, saveStoredSessionRoute } from "@/lib/connectin-storage"
 import { createUniqueUserProfile, resolveDisplayName, isSuperAdminUser } from "@/lib/connectin-profile"
+import { findProfessionById, PROFESSION_ENCLAVES } from "@/lib/connectin-professions"
+import { ProfessionSearchPopout } from "@/components/linkedin/ProfessionSearchPopout"
 import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
 import { signIn } from "next-auth/react"
+import { useLanguage } from "@/context/LanguageContext"
 
 export interface AuthPersona {
   id: string
@@ -210,6 +213,7 @@ export function ConnectInAuthModal({
   onClose,
   onLoginSuccess
 }: ConnectInAuthModalProps) {
+  const { t } = useLanguage()
   const [activeView, setActiveView] = useState<'signin' | 'join'>('signin')
   const [showPassword, setShowPassword] = useState(false)
 
@@ -217,6 +221,7 @@ export function ConnectInAuthModal({
   const [signInEmail, setSignInEmail] = useState("")
   const [signInPhone, setSignInPhone] = useState("")
   const [signInPassword, setSignInPassword] = useState("")
+  const [signInProfessionId, setSignInProfessionId] = useState<string>("auto_detect")
   const [signInChannel, setSignInChannel] = useState<'email' | 'sms' | 'call'>('email')
   const [signInStep, setSignInStep] = useState<'credentials' | '2fa'>('credentials')
   const [signIn2FACode, setSignIn2FACode] = useState("")
@@ -356,15 +361,43 @@ export function ConnectInAuthModal({
         throw new Error(data.error || "Invalid verification code.")
       }
 
+      const selectedProf = signInProfessionId !== "auto_detect" ? findProfessionById(signInProfessionId) : null
+      const effectiveProfessionId = selectedProf?.id || data.profile?.professionId
+      const effectiveEnclave = selectedProf?.enclaveId || data.profile?.professionEnclave
+
+      const baseProfile = data.profile || createUniqueUserProfile({
+        name: resolvedName,
+        email: signInEmail,
+        role: "personal",
+        professionId: effectiveProfessionId,
+        professionEnclave: effectiveEnclave
+      })
+
+      const generatedDomainProfile = selectedProf ? createUniqueUserProfile({
+        name: resolvedName,
+        email: signInEmail,
+        professionId: selectedProf.id,
+        professionEnclave: selectedProf.enclaveId,
+        role: "personal"
+      }) : null
+
       // Always inject email — API's UserProfileRecord has no email field
       const profileToSave = {
-        ...(data.profile || createUniqueUserProfile({
-          name: resolvedName,
-          email: signInEmail,
-          role: "personal"
-        })),
+        ...baseProfile,
         email: signInEmail,
-        id: data.profile?.userId || data.user?.id || data.profile?.id
+        id: data.profile?.userId || data.user?.id || data.profile?.id || baseProfile.id,
+        ...(selectedProf && generatedDomainProfile ? {
+          profession: selectedProf.title,
+          professionId: selectedProf.id,
+          professionCategory: selectedProf.categoryName,
+          professionEnclave: selectedProf.enclaveId,
+          headline: selectedProf.defaultHeadline,
+          experience: generatedDomainProfile.experience,
+          certifications: generatedDomainProfile.certifications,
+          skills: generatedDomainProfile.skills,
+          coverImage: generatedDomainProfile.coverImage,
+          about: generatedDomainProfile.about
+        } : {})
       }
 
       const isAdminUser = isSuperAdminUser({ ...profileToSave, email: signInEmail })
@@ -606,7 +639,7 @@ export function ConnectInAuthModal({
                 : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
             }`}
           >
-            Sign in
+            {t("sign_in_btn", "Sign in")}
           </button>
           <button
             onClick={() => {
@@ -621,7 +654,7 @@ export function ConnectInAuthModal({
                 : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
             }`}
           >
-            Join now
+            {t("join_now_btn", "Join now")}
           </button>
         </div>
 
@@ -644,8 +677,16 @@ export function ConnectInAuthModal({
           <>
             {signInStep === 'credentials' ? (
               <form onSubmit={(e) => handleSignInSubmit(e)} className="space-y-4">
+                {/* Professional Profile Search & Popout Selector */}
+                <ProfessionSearchPopout
+                  selectedProfessionId={signInProfessionId}
+                  onSelectProfession={(profId) => setSignInProfessionId(profId)}
+                  label={t("profession_label", "Professional Profile & Enclave")}
+                  showAutoDetectOption={true}
+                />
+
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Email address or username</label>
+                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{t("email_or_phone", "Email address or username")}</label>
                   <input
                     type="text"
                     required
@@ -658,7 +699,7 @@ export function ConnectInAuthModal({
 
                 {/* 2FA Delivery Channel Selector */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Send 2FA Security Code Via</label>
+                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{t("deliver_2fa_via", "Send 2FA Security Code Via")}</label>
                   <div className="grid grid-cols-3 gap-1.5 p-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-xl text-xs font-semibold">
                     <button
                       type="button"
@@ -669,7 +710,7 @@ export function ConnectInAuthModal({
                           : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
                       }`}
                     >
-                      <span>✉️ Email</span>
+                      <span>{t("send_code_via_email", "✉️ Email")}</span>
                     </button>
                     <button
                       type="button"
@@ -680,7 +721,7 @@ export function ConnectInAuthModal({
                           : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
                       }`}
                     >
-                      <span>💬 SMS</span>
+                      <span>{t("send_code_via_sms", "💬 SMS")}</span>
                     </button>
                     <button
                       type="button"
@@ -691,7 +732,7 @@ export function ConnectInAuthModal({
                           : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
                       }`}
                     >
-                      <span>📞 Call</span>
+                      <span>{t("send_code_via_call", "📞 Call")}</span>
                     </button>
                   </div>
                 </div>
@@ -700,7 +741,7 @@ export function ConnectInAuthModal({
                 {(signInChannel === 'sms' || signInChannel === 'call') && (
                   <div className="space-y-1 animate-in fade-in duration-150">
                     <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-                      Mobile Phone Number {signInChannel === 'call' ? 'for Voice Call' : 'for SMS'}
+                      {t("phone_number", "Mobile Phone Number")} {signInChannel === 'call' ? 'for Voice Call' : 'for SMS'}
                     </label>
                     <input
                       type="tel"
@@ -714,7 +755,7 @@ export function ConnectInAuthModal({
 
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Password</label>
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{t("password", "Password")}</label>
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
@@ -738,13 +779,13 @@ export function ConnectInAuthModal({
                   className="w-full rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white font-bold py-2.5 text-sm shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer mt-2"
                 >
                   {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-                  <span>Sign in with 2FA</span>
+                  <span>{t("sign_in_btn", "Sign in with 2FA")}</span>
                 </button>
 
                 <div className="relative flex items-center justify-center my-3">
                   <div className="w-full border-t border-zinc-200 dark:border-zinc-800" />
                   <span className="bg-white dark:bg-zinc-900 px-2 text-[11px] text-zinc-400 font-medium absolute">
-                    or sign in with
+                    {t("or_divider", "or")}
                   </span>
                 </div>
 
@@ -761,7 +802,7 @@ export function ConnectInAuthModal({
                       <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
                       <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
                     </svg>
-                    <span>Continue with Google</span>
+                    <span>{t("continue_with_google", "Continue with Google")}</span>
                   </button>
 
                   <button
@@ -776,7 +817,7 @@ export function ConnectInAuthModal({
                       <rect x="1" y="11" width="9" height="9" fill="#00a4ef" />
                       <rect x="11" y="11" width="9" height="9" fill="#ffb900" />
                     </svg>
-                    <span>Continue with Microsoft</span>
+                    <span>{t("continue_with_microsoft", "Continue with Microsoft")}</span>
                   </button>
                 </div>
               </form>
@@ -787,9 +828,9 @@ export function ConnectInAuthModal({
                   <div className="h-10 w-10 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-[#0A66C2] dark:text-sky-400 flex items-center justify-center mx-auto text-lg font-bold">
                     🔒
                   </div>
-                  <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100">Enter Security Code</h3>
+                  <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100">{t("two_step_verification", "Enter Security Code")}</h3>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    Enter the 6-digit code delivered to <strong className="text-zinc-900 dark:text-zinc-200">{activeTargetDisplay || signInEmail}</strong>
+                    {t("enter_code_delivered_to", "Enter the 6-digit code delivered to")} <strong className="text-zinc-900 dark:text-zinc-200">{activeTargetDisplay || signInEmail}</strong>
                   </p>
                 </div>
 
@@ -813,7 +854,7 @@ export function ConnectInAuthModal({
 
                   {/* Resend via Alternative Channels */}
                   <div className="text-xs text-zinc-500 space-y-1.5 pt-1">
-                    <p className="text-[11px] text-zinc-400">Didn't receive the code? Resend via:</p>
+                    <p className="text-[11px] text-zinc-400">{t("didnt_receive_code", "Didn't receive the code? Resend via:")}</p>
                     <div className="flex items-center justify-center gap-2 flex-wrap">
                       <button
                         type="button"
@@ -821,7 +862,7 @@ export function ConnectInAuthModal({
                         disabled={isLoading}
                         className="font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md"
                       >
-                        ✉️ Email
+                        {t("send_code_via_email", "✉️ Email")}
                       </button>
                       <button
                         type="button"
@@ -829,7 +870,7 @@ export function ConnectInAuthModal({
                         disabled={isLoading}
                         className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md"
                       >
-                        💬 SMS Text
+                        {t("send_code_via_sms", "💬 SMS Text")}
                       </button>
                       <button
                         type="button"
@@ -837,7 +878,7 @@ export function ConnectInAuthModal({
                         disabled={isLoading}
                         className="font-semibold text-purple-600 dark:text-purple-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md"
                       >
-                        📞 Phone Call
+                        {t("send_code_via_call", "📞 Phone Call")}
                       </button>
                     </div>
                   </div>
@@ -876,7 +917,7 @@ export function ConnectInAuthModal({
                       onClick={() => setSignInStep('credentials')}
                       className="flex-1 rounded-full border border-zinc-300 dark:border-zinc-700 py-2 text-xs font-semibold cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800"
                     >
-                      Back
+                      {t("back", "Back")}
                     </button>
                     <button
                       type="submit"
@@ -884,12 +925,12 @@ export function ConnectInAuthModal({
                       className="flex-1 rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white py-2 text-xs font-bold cursor-pointer disabled:opacity-50"
                     >
                       {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
-                      <span>Verify &amp; Sign in</span>
+                      <span>{t("verify_and_sign_in", "Verify & Sign in")}</span>
                     </button>
                   </div>
 
                   <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 text-center">
-                    <p className="text-[11px] text-zinc-400 mb-1.5">Or verify instantly via single sign-on:</p>
+                    <p className="text-[11px] text-zinc-400 mb-1.5">{t("or_verify_sso", "Or verify instantly via single sign-on:")}</p>
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
@@ -931,7 +972,7 @@ export function ConnectInAuthModal({
                       <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
                       <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
                     </svg>
-                    <span>Join with Google</span>
+                    <span>{t("join_with_google", "Join with Google")}</span>
                   </button>
 
                   <button
@@ -946,21 +987,21 @@ export function ConnectInAuthModal({
                       <rect x="1" y="11" width="9" height="9" fill="#00a4ef" />
                       <rect x="11" y="11" width="9" height="9" fill="#ffb900" />
                     </svg>
-                    <span>Join with Microsoft</span>
+                    <span>{t("join_with_microsoft", "Join with Microsoft")}</span>
                   </button>
                 </div>
 
                 <div className="relative flex items-center justify-center my-2">
                   <div className="w-full border-t border-zinc-200 dark:border-zinc-800" />
                   <span className="bg-white dark:bg-zinc-900 px-2 text-[11px] text-zinc-400 font-medium absolute">
-                    or continue with email
+                    {t("or_continue_with_email", "or continue with email")}
                   </span>
                 </div>
 
                 <form onSubmit={handleJoinSubmit} className="space-y-3">
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">First name</label>
+                      <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{t("first_name", "First name")}</label>
                       <input
                         type="text"
                         required
@@ -971,7 +1012,7 @@ export function ConnectInAuthModal({
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Last name</label>
+                      <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{t("last_name", "Last name")}</label>
                       <input
                         type="text"
                         required
@@ -984,7 +1025,7 @@ export function ConnectInAuthModal({
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Email Address</label>
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{t("email_or_phone", "Email Address")}</label>
                     <input
                       type="email"
                       required
@@ -997,7 +1038,7 @@ export function ConnectInAuthModal({
 
                   {/* 2FA Delivery Channel Selector */}
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Deliver 2FA Code Via</label>
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{t("deliver_2fa_via", "Deliver 2FA Code Via")}</label>
                     <div className="grid grid-cols-3 gap-1.5 p-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-xl text-xs font-semibold">
                       <button
                         type="button"
@@ -1039,7 +1080,7 @@ export function ConnectInAuthModal({
                   {(joinChannel === 'sms' || joinChannel === 'call') && (
                     <div className="space-y-1 animate-in fade-in duration-150">
                       <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-                        Mobile Phone Number {joinChannel === 'call' ? 'for Voice Call' : 'for SMS Text'}
+                        {t("phone_number", "Mobile Phone Number")} {joinChannel === 'call' ? '(Voice Call)' : '(SMS Text)'}
                       </label>
                       <input
                         type="tel"
@@ -1052,7 +1093,7 @@ export function ConnectInAuthModal({
                   )}
 
                   <div>
-                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Password (6+ chars)</label>
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{t("password", "Password")} (6+ chars)</label>
                     <input
                       type="password"
                       required
@@ -1065,17 +1106,17 @@ export function ConnectInAuthModal({
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Primary Role</label>
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{t("primary_workspace", "Primary Role")}</label>
                     <select
                       value={joinRole}
                       onChange={(e) => setJoinRole(e.target.value as any)}
                       className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
                     >
-                      <option value="personal">👤 Individual Professional (Feed &amp; Skills)</option>
-                      <option value="enterprise">🏢 Enterprise Buyer (Procurement &amp; RFPs)</option>
-                      <option value="creator">🎬 Creator &amp; Studio Host (Video &amp; Podcasts)</option>
-                      <option value="seller">💼 Marketplace Seller (Storefront &amp; Licenses)</option>
-                      <option value="developer">🧑‍💻 Defense &amp; Kernel Developer (Code &amp; Labs)</option>
+                      <option value="personal">👤 {t("workspace_individual", "Individual Professional (Feed & Skills)")}</option>
+                      <option value="enterprise">🏢 {t("workspace_enterprise", "Enterprise Buyer (Procurement & RFPs)")}</option>
+                      <option value="creator">🎬 {t("workspace_creator", "Creator & Studio Host (Video & Podcasts)")}</option>
+                      <option value="seller">💼 {t("workspace_seller", "Marketplace Seller (Storefront & Licenses)")}</option>
+                      <option value="developer">🧑‍💻 Defense & Kernel Developer (Code & Labs)</option>
                     </select>
                   </div>
 
@@ -1085,7 +1126,7 @@ export function ConnectInAuthModal({
                     className="w-full rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white font-bold py-2.5 text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer mt-2"
                   >
                     {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                    <span>Agree &amp; Join</span>
+                    <span>{t("agree_and_join", "Agree & Join")}</span>
                   </button>
                 </form>
               </div>
@@ -1093,9 +1134,9 @@ export function ConnectInAuthModal({
               /* Join 2FA -> Direct Launch */
               <form onSubmit={(e) => { e.preventDefault(); handleVerifyJoin2FA(); }} className="space-y-4 text-center">
                 <div className="space-y-1">
-                  <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100">Confirm Your Code</h3>
+                  <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100">{t("confirm_verification_code", "Confirm Your Code")}</h3>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    Enter the 6-digit code sent to <strong className="text-zinc-900 dark:text-zinc-200">{joinEmail}</strong>
+                    {t("enter_code_delivered_to", "Enter the 6-digit code sent to")} <strong className="text-zinc-900 dark:text-zinc-200">{joinEmail}</strong>
                   </p>
                 </div>
 
@@ -1118,7 +1159,7 @@ export function ConnectInAuthModal({
                   />
 
                   <div className="text-xs text-zinc-500 space-y-1.5 pt-1">
-                    <p className="text-[11px] text-zinc-400">Didn't receive the code? Resend via:</p>
+                    <p className="text-[11px] text-zinc-400">{t("didnt_receive_code", "Didn't receive the code? Resend via:")}</p>
                     <div className="flex items-center justify-center gap-2 flex-wrap">
                       <button
                         type="button"
@@ -1126,7 +1167,7 @@ export function ConnectInAuthModal({
                         disabled={isLoading}
                         className="font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md"
                       >
-                        ✉️ Email
+                        {t("send_code_via_email", "✉️ Email")}
                       </button>
                       <button
                         type="button"
@@ -1134,7 +1175,7 @@ export function ConnectInAuthModal({
                         disabled={isLoading}
                         className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md"
                       >
-                        💬 SMS Text
+                        {t("send_code_via_sms", "💬 SMS Text")}
                       </button>
                       <button
                         type="button"
@@ -1142,7 +1183,7 @@ export function ConnectInAuthModal({
                         disabled={isLoading}
                         className="font-semibold text-purple-600 dark:text-purple-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md"
                       >
-                        📞 Phone Call
+                        {t("send_code_via_call", "📞 Phone Call")}
                       </button>
                     </div>
                   </div>
@@ -1151,15 +1192,15 @@ export function ConnectInAuthModal({
                   <div className="rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 p-3 text-left space-y-2">
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
-                        <span>✉️ Check Spam &amp; Junk Folders</span>
+                        <span>{t("check_spam_folders", "✉️ Check Spam & Junk Folders")}</span>
                       </span>
                       <span className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400">auth@expediteconsults.com</span>
                     </div>
                     <p className="text-[11px] text-zinc-600 dark:text-zinc-300 leading-normal">
-                      Security emails from automated transactional gateways are often filtered by Gmail, Outlook, or corporate firewalls into <strong>Spam</strong> or <strong>Promotions</strong>.
+                      {t("spam_notice_desc", "Security emails from automated transactional gateways are often filtered by Gmail, Outlook, or corporate firewalls into Spam or Promotions.")}
                     </p>
                     <div className="pt-1.5 border-t border-amber-300/40 dark:border-amber-700/40 flex items-center justify-between gap-2">
-                      <span className="text-[10px] text-zinc-500 dark:text-zinc-400">Delayed or filtered?</span>
+                      <span className="text-[10px] text-zinc-500 dark:text-zinc-400">{t("delayed_or_filtered", "Delayed or filtered?")}</span>
                       <button
                         type="button"
                         onClick={() => {
@@ -1170,7 +1211,7 @@ export function ConnectInAuthModal({
                         className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] shadow-xs transition-colors flex items-center gap-1 cursor-pointer"
                       >
                         <Sparkles className="h-3 w-3" />
-                        <span>Instant Auto-Fill ({dispatchedOtpCode || fallbackDemoCode || "123456"})</span>
+                        <span>{t("instant_access_label", "Instant Auto-Fill")} ({dispatchedOtpCode || fallbackDemoCode || "123456"})</span>
                       </button>
                     </div>
                   </div>
@@ -1181,7 +1222,7 @@ export function ConnectInAuthModal({
                       onClick={() => setJoinStep('form')}
                       className="flex-1 rounded-full border border-zinc-300 dark:border-zinc-700 py-2 text-xs font-semibold cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800"
                     >
-                      Back
+                      {t("back", "Back")}
                     </button>
                     <button
                       type="submit"
@@ -1189,12 +1230,12 @@ export function ConnectInAuthModal({
                       className="flex-1 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white py-2 text-xs font-bold cursor-pointer disabled:opacity-50"
                     >
                       {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
-                      <span>Confirm &amp; Join</span>
+                      <span>{t("confirm_and_join", "Confirm & Join")}</span>
                     </button>
                   </div>
 
                   <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 text-center">
-                    <p className="text-[11px] text-zinc-400 mb-1.5">Or verify instantly via single sign-on:</p>
+                    <p className="text-[11px] text-zinc-400 mb-1.5">{t("or_verify_sso", "Or verify instantly via single sign-on:")}</p>
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
@@ -1226,7 +1267,7 @@ export function ConnectInAuthModal({
           >
             <span className="flex items-center gap-1.5">
               <Sparkles className="h-3 w-3 text-[#0A66C2]" />
-              <span>⚡ Try 1-Click Demo Personas</span>
+              <span>{t("try_demo_personas", "⚡ Try 1-Click Demo Personas")}</span>
             </span>
             {isDemoDrawerOpen ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
           </button>
@@ -1243,7 +1284,7 @@ export function ConnectInAuthModal({
                     <img src={p.avatar} alt="" className="h-5 w-5 rounded-full object-cover" />
                     <span className="font-semibold truncate">{p.name}</span>
                   </div>
-                  <span className="text-[10px] font-mono text-[#0A66C2] font-bold">Log In</span>
+                  <span className="text-[10px] font-mono text-[#0A66C2] font-bold">{t("sign_in_btn", "Log In")}</span>
                 </div>
               ))}
             </div>

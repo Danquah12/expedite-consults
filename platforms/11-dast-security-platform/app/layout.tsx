@@ -16,12 +16,12 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: { default: "SAST-2 VERSION-DAST: AXIOM Security Intelligence (Version 2)", template: "%s | SAST-2 VERSION-DAST" },
-  description: "AXIOM is an automated web security intelligence platform with an AI-powered engine brain, intercepting proxy, active scanner, evidence engine, and enterprise reporting.",
+  title: { default: "EXPEDITE STRIKE™ (XTRIKE & Aegis.SOC) — DAST & Web Interface Security Platform", template: "%s | EXPEDITE STRIKE™ DAST" },
+  description: "Dynamic Application Security Testing (DAST) & Web Interface Security Assessment Platform powered by XTRIKE™ and Aegis.SOC™ with visual exploitation evidence and automated reporting.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "EXPEDITE STRIKE",
+    title: "XTRIKE DAST",
   },
 };
 

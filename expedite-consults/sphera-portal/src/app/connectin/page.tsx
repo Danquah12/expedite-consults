@@ -71,9 +71,11 @@ import {
 } from "@/lib/connectin-storage"
 import { isSuperAdminUser } from "@/lib/connectin-profile"
 import { PROFESSION_ENCLAVES, findEnclaveById, findProfessionById } from "@/lib/connectin-professions"
-import { SlidersHorizontal, Sparkles, Bell, CheckCircle2, ShieldCheck, Filter, Bookmark, Vote, BookOpen } from "lucide-react"
+import { SlidersHorizontal, Sparkles, Bell, CheckCircle2, ShieldCheck, Filter, Bookmark, Vote, BookOpen, ExternalLink } from "lucide-react"
+import { useLanguage } from "@/context/LanguageContext"
 
 export default function LinkedInPage() {
+  const { t } = useLanguage()
   const [activeTab, setActiveTab] = useState<
     | 'home'
     | 'network'
@@ -109,6 +111,7 @@ export default function LinkedInPage() {
     | 'messaging'
     | 'notifications'
     | 'profile'
+    | 'vibe'
   >('home')
 
   const router = useRouter()
@@ -550,25 +553,25 @@ export default function LinkedInPage() {
   const FEED_CATEGORIES = [
     {
       id: 'for_you' as const,
-      label: 'For You',
+      label: t('stream_for_you', 'For You'),
       icon: '🔥',
       subCategories: ['All', 'AI discussions', 'Cybersecurity', 'Cloud', 'Technology', 'Business', 'Career']
     },
     {
       id: 'products' as const,
-      label: 'Products',
+      label: t('stream_products', 'Products'),
       icon: '🚀',
       subCategories: ['All', 'Launches', 'Demos', 'Updates', 'Deals', 'New software', 'Recommended solutions']
     },
     {
       id: 'research' as const,
-      label: 'Research',
+      label: t('stream_research', 'Research'),
       icon: '📑',
       subCategories: ['All', 'Papers', 'Whitepapers', 'Technical reports', 'Case studies']
     },
     {
       id: 'following' as const,
-      label: 'Following',
+      label: t('stream_following', 'Following'),
       icon: '👥',
       subCategories: ['All', 'People', 'Companies', 'Products', 'Topics']
     }
@@ -641,7 +644,7 @@ export default function LinkedInPage() {
 
   if (isAuthenticated === null && !hasHydrated) {
     return (
-      <div className="min-h-screen bg-[#F4F2EE] dark:bg-[#000000] flex flex-col items-center justify-center gap-3">
+      <div className="min-h-screen bg-[var(--bg-core,#f3f2f0)] text-[var(--text-pure,#18181b)] flex flex-col items-center justify-center gap-3 transition-colors duration-300">
         <ConnectInLogo size="lg" showSubtitle={true} className="animate-pulse" />
         <p className="text-xs text-zinc-500 font-mono mt-2">Verifying ConnectIn session...</p>
       </div>
@@ -649,7 +652,7 @@ export default function LinkedInPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F4F2EE] text-zinc-900 antialiased dark:bg-[#000000] dark:text-zinc-100 selection:bg-[#0A66C2] selection:text-white">
+    <div className="min-h-screen bg-[var(--bg-core,#f3f2f0)] text-[var(--text-pure,#18181b)] antialiased transition-colors duration-300 selection:bg-[#0A66C2] selection:text-white">
       {/* Top Sticky Navigation */}
       <LinkedInNavbar
         activeTab={activeTab}
@@ -736,18 +739,18 @@ export default function LinkedInPage() {
                       {/* Enclave Verification Tag */}
                       <div className="shrink-0 text-left sm:text-right">
                         <span className="text-[10px] font-mono font-bold text-zinc-700 dark:text-zinc-300 bg-white/70 dark:bg-zinc-800/70 px-2 py-1 rounded-md border border-zinc-200/60 dark:border-zinc-700/60">
-                          {filteredPosts.length} Enclave Posts
+                          {filteredPosts.length} {t("enclave_posts", "Enclave Posts")}
                         </span>
                       </div>
                     </div>
 
                     <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-tight">
-                      🔒 <strong>Least-Privilege Isolation:</strong> Content is strictly segregated by verified profession. Software developers and healthcare personnel cannot view your trade specs, and trade members are shielded from code sandboxes.
+                      🔒 <strong>{t("least_privilege_enclave_tag", "Least-Privilege Isolation")}:</strong> {t("least_privilege_isolation", "Content is strictly segregated by verified profession. Software developers and healthcare personnel cannot view your trade specs, and trade members are shielded from code sandboxes.")}
                     </p>
 
                     {/* Enclave Feed Tags */}
                     <div className="flex items-center gap-1.5 overflow-x-auto pt-0.5">
-                      <span className="text-[10px] uppercase font-bold text-zinc-400 shrink-0">Enclave Tags:</span>
+                      <span className="text-[10px] uppercase font-bold text-zinc-400 shrink-0">{t("enclave_tags", "Enclave Tags:")}</span>
                       {enc.feedTags.map((tag) => (
                         <button
                           key={tag}
@@ -763,7 +766,7 @@ export default function LinkedInPage() {
                     {isAdmin && (
                       <div className="mt-2 pt-2 border-t border-zinc-200/70 dark:border-zinc-700/70 flex items-center justify-between gap-2 flex-wrap text-xs">
                         <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-300 flex items-center gap-1">
-                          🛡️ Super Admin Auditor Switcher:
+                          {t("super_admin_switcher", "🛡️ Super Admin Auditor Switcher:")}
                         </span>
                         <div className="flex items-center gap-1 overflow-x-auto">
                           {PROFESSION_ENCLAVES.map(e => (
@@ -787,7 +790,7 @@ export default function LinkedInPage() {
                                 : "bg-white/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-white"
                             }`}
                           >
-                            🌐 All Enclaves
+                            {t("all_enclaves", "🌐 All Enclaves")}
                           </button>
                         </div>
                       </div>
@@ -826,7 +829,7 @@ export default function LinkedInPage() {
                 {/* Dynamic Sub-Category Filter Ribbon */}
                 <div className="flex items-center gap-1.5 overflow-x-auto text-[11px] pt-0.5">
                   <span className="text-zinc-400 font-semibold text-[10px] uppercase tracking-wider shrink-0 mr-1">
-                    Filter:
+                    {t("filter_label", "Filter:")}
                   </span>
                   {activeCategoryConfig.subCategories.map((sub) => {
                     const isSelected = activeFeedSubCategory === sub
@@ -850,12 +853,12 @@ export default function LinkedInPage() {
               {/* Filter Active Badge if Tag is selected */}
               {selectedTagFilter && (
                 <div className="flex items-center justify-between rounded-xl border border-blue-200 bg-sky-50 px-4 py-2 text-xs font-semibold text-[#0A66C2] dark:border-blue-900/50 dark:bg-sky-950/30">
-                  <span>Filtered by: {selectedTagFilter}</span>
+                  <span>{t("filtered_by", "Filtered by:")} {selectedTagFilter}</span>
                   <button
                     onClick={() => setSelectedTagFilter(null)}
                     className="hover:underline text-zinc-600 dark:text-zinc-300"
                   >
-                    Clear filter
+                    {t("clear_filter", "Clear filter")}
                   </button>
                 </div>
               )}
@@ -867,12 +870,12 @@ export default function LinkedInPage() {
               <div className="flex items-center justify-between py-1 px-1 text-xs text-zinc-500 dark:text-zinc-400">
                 <div className="h-[1px] flex-1 bg-zinc-300 dark:bg-zinc-800 mr-3" />
                 <div className="flex items-center gap-1.5 shrink-0">
-                  <span>Sort by:</span>
+                  <span>{t("sort_by", "Sort by:")}</span>
                   <button
                     onClick={() => setFeedSort(feedSort === 'top' ? 'recent' : 'top')}
                     className="font-bold text-zinc-900 hover:text-[#0A66C2] dark:text-zinc-100 flex items-center gap-1"
                   >
-                    {feedSort === 'top' ? 'Top' : 'Recent'}
+                    {feedSort === 'top' ? t("sort_top", "Top") : t("sort_recent", "Recent")}
                     <SlidersHorizontal className="h-3 w-3" />
                   </button>
                 </div>
@@ -895,7 +898,7 @@ export default function LinkedInPage() {
                 {filteredPosts.length === 0 && (
                   <div className="rounded-xl border border-zinc-200 bg-white p-8 text-center dark:border-zinc-800 dark:bg-zinc-900">
                     <p className="text-sm font-semibold text-zinc-600 dark:text-zinc-300">
-                      No posts found in this filter.
+                      {t("no_posts_found", "No posts found in this filter.")}
                     </p>
                     <button
                       onClick={() => {
@@ -905,7 +908,7 @@ export default function LinkedInPage() {
                       }}
                       className="mt-2 text-xs font-semibold text-[#0A66C2] hover:underline"
                     >
-                      Reset filters
+                      {t("reset_filters", "Reset filters")}
                     </button>
                   </div>
                 )}
@@ -920,6 +923,10 @@ export default function LinkedInPage() {
                 onToggleConnect={handleToggleConnect}
                 onNewsClick={(headline) => setSearchQuery(headline.slice(0, 15))}
                 onNavigateTab={(tab) => setActiveTab(tab as any)}
+                onOpenAIAssistant={(query) => {
+                  if (query) setSearchQuery(query)
+                  setIsAIAssistantOpen(true)
+                }}
               />
             </div>
           </div>
@@ -1214,7 +1221,71 @@ export default function LinkedInPage() {
         {activeTab === 'notifications' && (
           <NotificationsView onNavigateTab={(tab) => setActiveTab(tab as any)} />
         )}
+
+        {/* VIEW 17: VIBE AI EMBEDDED IMMERSIVE HUB */}
+        {activeTab === 'vibe' && (
+          <div className="rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-md h-[88vh] flex flex-col">
+            <div className="bg-gradient-to-r from-slate-950 via-indigo-950 to-purple-950 px-4 py-3 text-white flex items-center justify-between border-b border-white/10 shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-purple-500 via-indigo-500 to-amber-400 flex items-center justify-center text-white shadow-md">
+                  <Sparkles className="h-4 w-4 animate-pulse text-amber-200" />
+                </div>
+                <div>
+                  <h2 className="font-bold text-sm text-white flex items-center gap-2">
+                    <span>Vibe AI Q&amp;A Clinic &amp; Campus</span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-2 py-0.5 text-[9px] font-mono text-emerald-300 border border-emerald-500/30">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      Live Embedded
+                    </span>
+                  </h2>
+                  <p className="text-[11px] text-zinc-400">
+                    Live interactive learning, Q&amp;A, and career knowledge from vibe-tok-inky.vercel.app/vibe
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setActiveTab('home')}
+                  className="px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition-colors cursor-pointer"
+                >
+                  ← Back to Feed
+                </button>
+                <a
+                  href="https://vibe-tok-inky.vercel.app/vibe"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-xs font-bold text-white flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                >
+                  Open Fullscreen <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              </div>
+            </div>
+            <iframe
+              src="https://vibe-tok-inky.vercel.app/vibe"
+              className="w-full flex-1 border-0 bg-slate-950"
+              allow="camera; microphone; display-capture; autoplay; clipboard-write; fullscreen"
+              title="Vibe AI Full Hub"
+            />
+          </div>
+        )}
       </main>
+
+      {/* Floating "✨ Ask Vibe AI" Quick Launcher Pill */}
+      <div className="fixed bottom-4 left-4 z-40">
+        <button
+          onClick={() => setIsAIAssistantOpen(true)}
+          className="flex items-center gap-2 rounded-full bg-gradient-to-r from-purple-700 via-indigo-700 to-slate-900 hover:from-purple-600 hover:to-indigo-600 text-white px-4 py-2.5 shadow-2xl border border-purple-400/40 hover:scale-105 active:scale-95 transition-all cursor-pointer group"
+          title="Ask Vibe AI anything (Cyber, Engineering, Career, Tools)"
+        >
+          <div className="h-5 w-5 rounded-full bg-amber-400/20 flex items-center justify-center text-amber-300">
+            <Sparkles className="h-3.5 w-3.5 animate-pulse" />
+          </div>
+          <span className="text-xs font-bold tracking-tight">Ask Vibe AI</span>
+          <span className="hidden sm:inline text-[10px] font-mono bg-purple-500/40 px-1.5 py-0.5 rounded text-purple-200 border border-purple-400/30">
+            Q&amp;A
+          </span>
+        </button>
+      </div>
 
       {/* Signature Persistent Floating Bottom-Right Messaging Dock */}
       <FloatingMessagingDock currentUser={userData} />

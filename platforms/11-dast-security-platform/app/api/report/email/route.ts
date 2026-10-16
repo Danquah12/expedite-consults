@@ -100,8 +100,8 @@ function generateMultiPageAssessmentPdfBuffer(params: {
   } = params;
 
   const docLines: PdfLineItem[] = [
-    { text: "XTRIKE & AEGIS.SOC - FORMAL EXTERNAL PENETRATION TESTING REPORT", bold: true, size: 12.5, colorRgb: [0.02, 0.35, 0.65] },
-    { text: "PTES | NIST SP 800-115 | MITRE ATT&CK v15 | OWASP WSTG / Top 10 | MITRE D3FEND", bold: true, size: 8.5, colorRgb: [0.25, 0.32, 0.45] },
+    { text: "XTRIKE & AEGIS.SOC - DAST & WEB INTERFACE SECURITY ASSESSMENT REPORT", bold: true, size: 12, colorRgb: [0.02, 0.35, 0.65] },
+    { text: "Dynamic Application Security Testing (DAST) | OWASP WSTG v4.2 | OWASP Top 10 | MITRE ATT&CK v15 | NIST SP 800-115", bold: true, size: 8, colorRgb: [0.25, 0.32, 0.45] },
     { text: "==============================================================================================", bold: true, size: 9 },
     { text: `Target Scope: ${targetUrls.join(", ")}`, bold: true, size: 9 },
     { text: `Generated At: ${timestampIso}   |   Message-ID: ${messageId}`, size: 8.5 },
@@ -155,11 +155,31 @@ function generateMultiPageAssessmentPdfBuffer(params: {
       }
     });
 
-    docLines.push({ text: "Evidence", bold: true, size: 9.5, colorRgb: [0.05, 0.15, 0.35] });
+    docLines.push({ text: "Evidence & Collected Exploitation Proof", bold: true, size: 9.5, colorRgb: [0.05, 0.15, 0.35] });
+    docLines.push({ text: `  Exploitation Status: ${fr.exploitationStatusLabel}`, bold: true, size: 8.5, colorRgb: [0.75, 0.08, 0.18] });
     docLines.push({ text: `  Forensic Evidence of TTP: ${fr.evidence.forensicHeader}`, bold: true, size: 8.5, colorRgb: [0.55, 0.1, 0.25] });
     for (const ln of wrapTextLine(`  ${fr.evidence.ruleMatchLine} | Matched Indicator: ${fr.evidence.matchedIndicator}`, 94)) {
       docLines.push({ text: `  ${ln}`, size: 8.5 });
     }
+    docLines.push({ text: "  Sample Collected Exploitation Evidence Artifacts:", bold: true, size: 8.5, colorRgb: [0.05, 0.15, 0.35] });
+    fr.evidence.collectedExploitationSamples.forEach(ev => {
+      docLines.push({ text: `    [${ev.artifactId}] ${ev.title} (${ev.category})`, bold: true, size: 8, colorRgb: [0.65, 0.08, 0.2] });
+      for (const ln of wrapTextLine(`      Request/Cmd: ${ev.capturedCommandOrRequest.replace(/\n+/g, " | ")}`, 92)) {
+        docLines.push({ text: ln, size: 7.8 });
+      }
+      for (const ln of wrapTextLine(`      Collected Output: ${ev.capturedOutputOrLoot.replace(/\n+/g, " | ")}`, 92)) {
+        docLines.push({ text: ln, size: 7.8, colorRgb: [0.02, 0.42, 0.32] });
+      }
+      for (const ln of wrapTextLine(`      Customer CI Verdict: ${ev.customerCiSummary} (SHA-256: ${ev.sha256Digest.slice(0, 24)}...)`, 92)) {
+        docLines.push({ text: ln, size: 7.8 });
+      }
+    });
+    docLines.push({ text: "  Visual Exploitation Screenshots Included in HTML & Portal Dossier:", bold: true, size: 8.5, colorRgb: [0.05, 0.15, 0.35] });
+    fr.evidence.exploitationPictures.forEach(pic => {
+      for (const ln of wrapTextLine(`    * [${pic.figureId}] ${pic.title} — ${pic.caption}`, 92)) {
+        docLines.push({ text: ln, size: 7.8 });
+      }
+    });
     for (const ln of wrapTextLine(`  Mapped Assessment Scripts: ${fr.evidence.mappedAssessmentScripts.join(" | ")}`, 94)) {
       docLines.push({ text: `  ${ln}`, size: 8 });
     }
@@ -252,7 +272,7 @@ function generateMultiPageAssessmentPdfBuffer(params: {
     const streamCmds: string[] = [];
     // Top header bar
     streamCmds.push("0.06 0.09 0.16 rg 36 756 540 20 re f");
-    streamCmds.push("BT /F2 8.5 Tf 1 1 1 rg 44 763 Td (XTRIKE & AEGIS.SOC - FORMAL EXTERNAL PENETRATION TESTING DOSSIER) Tj ET");
+    streamCmds.push("BT /F2 8.5 Tf 1 1 1 rg 44 763 Td (XTRIKE & AEGIS.SOC - DAST & WEB INTERFACE SECURITY ASSESSMENT DOSSIER) Tj ET");
     streamCmds.push(`BT /F1 8 Tf 0.75 0.88 0.98 rg 470 763 Td (Page ${pIdx + 1} of ${pages.length}) Tj ET`);
 
     let y = 738;
@@ -361,7 +381,7 @@ export async function POST(req: NextRequest) {
 
     const subject =
       body.subject?.trim() ||
-      `[XTRIKE™ & Aegis.SOC™ PENTEST REPORT] ${critCount} Critical, ${highCount} High Findings on ${primaryHost} (EXT-2026 Formal Dossier)`;
+      `[XTRIKE™ & Aegis.SOC™ DAST WEB INTERFACE REPORT] ${critCount} Critical, ${highCount} High Web Findings on ${primaryHost} (DAST-WEB-2026 Dossier)`;
 
     const fromEmail =
       body.smtpConfig?.fromEmail?.trim() ||
@@ -369,7 +389,7 @@ export async function POST(req: NextRequest) {
       process.env.REPORT_FROM_EMAIL ||
       "Expedite Strike Security <auth@expediteconsults.com>";
 
-    // Build Executive + Technical HTML Email Dossier in the exact EXT-2026-XXX Formal Format
+    // Build Executive + Technical HTML Email Dossier in the DAST-WEB-2026-XXX Format
     const findingsRowsHtml = findings
       .slice(0, 20)
       .map((f, idx) => {
@@ -391,7 +411,7 @@ export async function POST(req: NextRequest) {
             <div><strong>Severity:</strong> <span style="color:${sevColor};font-weight:800;">${escapeHtml(fr.severity)}</span></div>
             <div><strong>CVSS Score:</strong> <strong>${escapeHtml(fr.cvssScore)}</strong></div>
             <div><strong>CVSS Vector:</strong> <code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;">${escapeHtml(fr.cvssVector)}</code></div>
-            <div><strong>Status:</strong> ${escapeHtml(fr.status)}</div>
+            <div><strong>Status:</strong> ${escapeHtml(fr.status)} &nbsp;·&nbsp; <span style="background:#ffe4e6;color:#be123c;padding:2px 8px;border-radius:4px;font-weight:800;font-size:11px;">⚡ ${escapeHtml(fr.exploitationStatusLabel)}</span></div>
             <div><strong>Discovery Date:</strong> ${escapeHtml(fr.discoveryDate)}</div>
             <div><strong>Tester / Tool:</strong> ${escapeHtml(fr.testerTool)}</div>
             <div><strong>Framework Mapping:</strong> ${escapeHtml(fr.frameworkMapping)}</div>
@@ -428,14 +448,64 @@ export async function POST(req: NextRequest) {
             ${fr.stepsToReproduce.map(st => `<li style="margin-bottom:4px;">${escapeHtml(st)}</li>`).join("")}
           </ol>
 
-          <h3 style="margin:14px 0 6px 0;font-size:14px;color:#0f172a;border-bottom:1px solid #f1f5f9;padding-bottom:4px;">Evidence</h3>
-          <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:10px 12px;font-size:12px;margin-bottom:12px;">
-            <div style="margin-bottom:6px;">
+          <h3 style="margin:14px 0 6px 0;font-size:14px;color:#0f172a;border-bottom:1px solid #f1f5f9;padding-bottom:4px;">Evidence &amp; Collected Exploitation Proof</h3>
+          <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:12px 14px;font-size:12px;margin-bottom:12px;">
+            <div style="margin-bottom:8px;">
               <strong>Forensic Evidence of TTP:</strong><br/>
               <code style="color:#be123c;font-weight:700;">${escapeHtml(fr.evidence.forensicHeader)}</code><br/>
               <span>${escapeHtml(fr.evidence.ruleMatchLine)}</span><br/>
               <strong>Matched Indicator:</strong> <code>${escapeHtml(fr.evidence.matchedIndicator)}</code>
             </div>
+
+            <!-- Sample Collected Exploitation Evidence Cards -->
+            <div style="margin:12px 0;padding:10px 12px;background:#fff1f2;border:1px solid #fecdd3;border-radius:6px;">
+              <div style="font-weight:800;color:#be123c;font-size:12.5px;margin-bottom:8px;">
+                🔬 Sample Collected Evidence of Exploitation (${fr.evidence.collectedExploitationSamples.length} Verified Forensic Captures):
+              </div>
+              ${fr.evidence.collectedExploitationSamples
+                .map(
+                  ev => `
+                <div style="background:#ffffff;border:1px solid #fda4af;border-radius:6px;padding:10px;margin-bottom:8px;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                    <strong style="color:#9f1239;font-size:12px;">[${escapeHtml(ev.artifactId)}] ${escapeHtml(ev.title)}</strong>
+                    <span style="background:#ffe4e6;color:#be123c;font-family:monospace;font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;">${escapeHtml(ev.category)}</span>
+                  </div>
+                  <div style="font-size:11px;font-weight:700;color:#475569;margin-bottom:2px;">Injected Exploit Request / Command:</div>
+                  <pre style="margin:0 0 6px 0;padding:8px;background:#0f172a;color:#38bdf8;border-radius:4px;font-size:11px;font-family:monospace;white-space:pre-wrap;word-break:break-all;">${escapeHtml(ev.capturedCommandOrRequest)}</pre>
+                  <div style="font-size:11px;font-weight:700;color:#065f46;margin-bottom:2px;">Collected Exploitation Output / Sample Loot Proof:</div>
+                  <pre style="margin:0 0 6px 0;padding:8px;background:#022c22;color:#6ee7b7;border-radius:4px;font-size:11px;font-family:monospace;white-space:pre-wrap;word-break:break-all;">${escapeHtml(ev.capturedOutputOrLoot)}</pre>
+                  <div style="font-size:11.5px;color:#1e293b;"><strong>Customer Confidence (CI) Summary:</strong> ${escapeHtml(ev.customerCiSummary)}</div>
+                  <div style="font-size:10px;color:#64748b;font-family:monospace;margin-top:3px;">Chain-of-Custody SHA-256: ${escapeHtml(ev.sha256Digest)}</div>
+                </div>`
+                )
+                .join("")}
+            </div>
+
+            <!-- Visual Pictures of How It Was Exploited -->
+            <div style="margin:12px 0;padding:10px 12px;background:#0f172a;border:1px solid #38bdf8;border-radius:6px;color:#f8fafc;">
+              <div style="font-weight:800;color:#38bdf8;font-size:12.5px;margin-bottom:8px;">
+                📸 Visual Pictures of How ${escapeHtml(fr.findingId)} Was Exploited (Customer CI Forensic Screenshots):
+              </div>
+              ${fr.evidence.exploitationPictures
+                .map(
+                  pic => `
+                <div style="background:#050811;border:1px solid #334155;border-radius:6px;padding:10px;margin-bottom:10px;">
+                  <div style="font-weight:800;color:#f8fafc;font-size:12px;margin-bottom:4px;">[${escapeHtml(pic.figureId)}] ${escapeHtml(pic.title)}</div>
+                  <div style="margin-bottom:8px;">
+                    ${pic.stepBadges
+                      .map(
+                        b =>
+                          `<span style="display:inline-block;background:#1e293b;color:#38bdf8;border:1px solid #38bdf8;font-family:monospace;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;margin-right:6px;">${escapeHtml(b)}</span>`
+                      )
+                      .join("")}
+                  </div>
+                  <img src="${pic.svgDataUri}" alt="${escapeHtml(pic.title)}" style="width:100%;max-width:860px;height:auto;border-radius:6px;border:1px solid #1e293b;display:block;margin-bottom:6px;" />
+                  <div style="font-size:11px;color:#cbd5e1;line-height:1.45;">${escapeHtml(pic.caption)}</div>
+                </div>`
+                )
+                .join("")}
+            </div>
+
             <div style="margin-top:8px;">
               <strong>Mapped Assessment Scripts:</strong>
               <ul style="margin:4px 0 6px 18px;padding:0;">
@@ -541,19 +611,35 @@ export async function POST(req: NextRequest) {
 <html>
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${escapeHtml(subject)}</title>
+  <style>
+    * { box-sizing: border-box; }
+    img { max-width: 100% !important; height: auto !important; }
+    pre, code { white-space: pre-wrap !important; word-break: break-word !important; overflow-wrap: anywhere !important; }
+    .table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    @media only screen and (max-width: 640px) {
+      body { padding: 8px !important; }
+      .report-shell { border-radius: 8px !important; }
+      .report-pad { padding: 12px !important; }
+      .kpi-table tr { display: flex !important; flex-wrap: wrap !important; gap: 6px !important; }
+      .kpi-table td { flex: 1 1 calc(50% - 6px) !important; display: block !important; min-width: 130px !important; }
+      h1 { font-size: 16px !important; line-height: 1.3 !important; }
+      h2 { font-size: 14px !important; }
+    }
+  </style>
 </head>
-<body style="font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#f1f5f9;color:#0f172a;margin:0;padding:24px;">
-  <div style="max-width:920px;margin:0 auto;background:#ffffff;border:1px solid #cbd5e1;border-radius:10px;overflow:hidden;">
-    <div style="background:#0f172a;color:#f8fafc;padding:20px 24px;border-bottom:4px solid #06b6d4;">
-      <div style="font-size:11px;font-family:monospace;color:#38bdf8;font-weight:700;letter-spacing:0.08em;">
-        XTRIKE™ &amp; AEGIS.SOC™ v3.0 · FORMAL EXTERNAL PENETRATION TESTING REPORT
+<body style="font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#f1f5f9;color:#0f172a;margin:0;padding:20px;">
+  <div class="report-shell" style="max-width:920px;margin:0 auto;background:#ffffff;border:1px solid #cbd5e1;border-radius:10px;overflow:hidden;">
+    <div class="report-pad" style="background:#0f172a;color:#f8fafc;padding:20px 24px;border-bottom:4px solid #06b6d4;">
+      <div style="font-size:11px;font-family:monospace;color:#38bdf8;font-weight:700;letter-spacing:0.06em;">
+        🌐 XTRIKE™ &amp; AEGIS.SOC™ v3.0 · DAST (DYNAMIC APPLICATION SECURITY TESTING) &amp; WEB INTERFACE SECURITY REPORT
       </div>
       <h1 style="margin:6px 0 4px 0;font-size:20px;color:#ffffff;">
-        PTES · NIST SP 800-115 · MITRE ATT&amp;CK® v15 · OWASP Top 10 Validation Dossier
+        DAST &amp; Web Interface Security Assessment Report (OWASP WSTG v4.2 · OWASP Top 10 · MITRE ATT&amp;CK® v15)
       </h1>
-      <div style="font-size:12px;color:#94a3b8;">
-        Scoped Target(s): <strong style="color:#38bdf8;">${escapeHtml(
+      <div style="font-size:12px;color:#94a3b8;word-break:break-word;">
+        Scoped Web Interface Target(s): <strong style="color:#38bdf8;">${escapeHtml(
           targetUrls.join(", ")
         )}</strong> &nbsp;|&nbsp;
         Generated: <strong>${escapeHtml(timestampIso)}</strong> &nbsp;|&nbsp;
@@ -561,16 +647,16 @@ export async function POST(req: NextRequest) {
       </div>
     </div>
 
-    <div style="padding:20px 24px;">
+    <div class="report-pad" style="padding:20px 24px;">
       <!-- Executive Summary Scorecard -->
-      <table style="width:100%;border-collapse:collapse;margin-bottom:18px;">
+      <table class="kpi-table" style="width:100%;border-collapse:collapse;margin-bottom:18px;">
         <tr>
           <td style="padding:10px;border:1px solid #fecdd3;background:#fff1f2;text-align:center;border-radius:6px;">
-            <div style="font-size:10px;font-weight:800;color:#be123c;">CRITICAL</div>
+            <div style="font-size:10px;font-weight:800;color:#be123c;">CRITICAL (WEB / DAST)</div>
             <div style="font-size:22px;font-weight:900;color:#e11d48;">${critCount}</div>
           </td>
           <td style="padding:10px;border:1px solid #fed7aa;background:#fff7ed;text-align:center;border-radius:6px;">
-            <div style="font-size:10px;font-weight:800;color:#c2410c;">HIGH</div>
+            <div style="font-size:10px;font-weight:800;color:#c2410c;">HIGH (WEB / API)</div>
             <div style="font-size:22px;font-weight:900;color:#ea580c;">${highCount}</div>
           </td>
           <td style="padding:10px;border:1px solid #fde68a;background:#fefce8;text-align:center;border-radius:6px;">
@@ -578,47 +664,50 @@ export async function POST(req: NextRequest) {
             <div style="font-size:22px;font-weight:900;color:#d97706;">${medCount + lowCount}</div>
           </td>
           <td style="padding:10px;border:1px solid #bae6fd;background:#f0f9ff;text-align:center;border-radius:6px;">
-            <div style="font-size:10px;font-weight:800;color:#0369a1;">TCP &amp; UDP PORTS AUDITED</div>
-            <div style="font-size:18px;font-weight:900;color:#0284c7;">65,535 TCP + 65,535 UDP</div>
-            <div style="font-size:10px;color:#475569;">131,070 Total Sockets</div>
+            <div style="font-size:10px;font-weight:800;color:#0369a1;">WEB + PORT SURFACE AUDITED</div>
+            <div style="font-size:16px;font-weight:900;color:#0284c7;">DAST HTTP/API + 131,070 Ports</div>
+            <div style="font-size:10px;color:#475569;">65,535 TCP + 65,535 UDP</div>
           </td>
         </tr>
       </table>
 
-      <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:10px 14px;margin-bottom:18px;font-size:12px;font-family:monospace;">
+      <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:10px 14px;margin-bottom:18px;font-size:12px;font-family:monospace;word-break:break-word;">
+        <div><strong>Assessment Type:</strong> Dynamic Application Security Testing (DAST) &amp; Web Interface Exploitation Dossier</div>
         <div><strong>Message-ID:</strong> ${escapeHtml(messageId)}</div>
         <div><strong>Chain-of-Custody SHA-256:</strong> ${escapeHtml(reportSha256)}</div>
         <div><strong>Recipients:</strong> ${escapeHtml(recipients.join(", "))}${
       ccRecipients.length > 0 ? ` (CC: ${escapeHtml(ccRecipients.join(", "))})` : ""
     }</div>
-        <div><strong>XTRIKE™ &amp; Aegis.SOC™ Engines:</strong> XTRIKE-NetRecon™ (Nmap) · Aegis.SOC-VulnCore™ (OpenVAS) · XTRIKE-WebPulse™ (OWASP ZAP) · XTRIKE-StrikeFuzzer™ (Burp) · Aegis.SOC-Apex™ (PrivEsc/Lateral)</div>
+        <div><strong>XTRIKE™ &amp; Aegis.SOC™ DAST Engines:</strong> XTRIKE-WebPulse™ (OWASP ZAP DAST) · XTRIKE-StrikeFuzzer™ (Burp DAST) · Aegis.SOC-VulnCore™ (OpenVAS) · XTRIKE-NetRecon™ (Nmap) · Aegis.SOC-Apex™</div>
       </div>
 
       <h2 style="font-size:16px;color:#0f172a;border-bottom:2px solid #e2e8f0;padding-bottom:6px;">
-        1. Formal Validated Findings (EXT-2026-001 – EXT-2026-${String(findings.length).padStart(3, "0")})
+        1. Validated DAST &amp; Web Interface Security Findings (DAST-WEB-2026-001 – DAST-WEB-2026-${String(findings.length).padStart(3, "0")})
       </h2>
       ${findingsRowsHtml}
 
       <h2 style="font-size:16px;color:#0f172a;border-bottom:2px solid #e2e8f0;padding-bottom:6px;margin-top:22px;">
-        2. 65,535 TCP &amp; 65,535 UDP Port-to-Assessment-Script Mapping Summary (131,070 Sockets)
+        2. Supporting 65,535 TCP &amp; 65,535 UDP Web &amp; Transport Port-to-Script Mapping (131,070 Sockets)
       </h2>
-      <table style="width:100%;border-collapse:collapse;margin-bottom:18px;">
-        <thead>
-          <tr style="background:#f1f5f9;text-align:left;font-size:11px;">
-            <th style="padding:6px;border:1px solid #cbd5e1;">Port / Range (1–65535)</th>
-            <th style="padding:6px;border:1px solid #cbd5e1;">Daemon</th>
-            <th style="padding:6px;border:1px solid #cbd5e1;">Mapped Scripts</th>
-            <th style="padding:6px;border:1px solid #cbd5e1;">MITRE ATT&amp;CK® TTP</th>
-            <th style="padding:6px;border:1px solid #cbd5e1;">MITRE D3FEND™ Fix</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${portCatalogRowsHtml}
-        </tbody>
-      </table>
+      <div class="table-wrap">
+        <table style="width:100%;border-collapse:collapse;margin-bottom:18px;">
+          <thead>
+            <tr style="background:#f1f5f9;text-align:left;font-size:11px;">
+              <th style="padding:6px;border:1px solid #cbd5e1;">Port / Range (1–65535)</th>
+              <th style="padding:6px;border:1px solid #cbd5e1;">Daemon</th>
+              <th style="padding:6px;border:1px solid #cbd5e1;">Mapped Scripts</th>
+              <th style="padding:6px;border:1px solid #cbd5e1;">MITRE ATT&amp;CK® TTP</th>
+              <th style="padding:6px;border:1px solid #cbd5e1;">MITRE D3FEND™ Fix</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${portCatalogRowsHtml}
+          </tbody>
+        </table>
+      </div>
 
       <div style="border-top:1px solid #cbd5e1;padding-top:12px;font-size:11px;color:#64748b;">
-        Dispatched automatically by <strong>XTRIKE™ &amp; Aegis.SOC™ Autonomous Security Assessment Platform</strong> upon scan completion. All validation checks and OS posture scripts are non-destructive and read-only in accordance with NIST SP 800-115 §6.
+        Dispatched automatically by <strong>XTRIKE™ &amp; Aegis.SOC™ DAST &amp; Web Interface Security Assessment Platform</strong> upon scan completion. Includes Sample Collected Exploitation Evidence and Visual Exploitation Screenshots for Customer CI.
       </div>
     </div>
   </div>
@@ -626,14 +715,15 @@ export async function POST(req: NextRequest) {
 </html>`;
 
     const textContent = [
-      `XTRIKE™ & AEGIS.SOC™ — FORMAL EXTERNAL PENETRATION TESTING REPORT`,
-      `====================================================================`,
+      `XTRIKE™ & AEGIS.SOC™ — DAST & WEB INTERFACE SECURITY ASSESSMENT REPORT`,
+      `========================================================================`,
+      `Assessment Focus: Dynamic Application Security Testing (DAST) & Web Interface Security`,
       `Target Scope: ${targetUrls.join(", ")}`,
       `Generated At: ${timestampIso}`,
       `Message-ID: ${messageId}`,
       `SHA-256 Digest: ${reportSha256}`,
       `Recipients: ${recipients.join(", ")}`,
-      `Summary: ${findings.length} Total Findings (${critCount} Critical, ${highCount} High, ${medCount} Medium, ${lowCount} Low)`,
+      `Summary: ${findings.length} Total DAST Web Findings (${critCount} Critical, ${highCount} High, ${medCount} Medium, ${lowCount} Low)`,
       `Port Coverage: 65,535 TCP + 65,535 UDP (131,070 Total Transport Sockets Mapped)`,
       ``,
       ...findings.slice(0, 20).map((f, idx) => {
@@ -645,7 +735,7 @@ export async function POST(req: NextRequest) {
           `Severity: ${fr.severity}`,
           `CVSS Score: ${fr.cvssScore}`,
           `CVSS Vector: ${fr.cvssVector}`,
-          `Status: ${fr.status}`,
+          `Status: ${fr.status} (${fr.exploitationStatusLabel})`,
           `Discovery Date: ${fr.discoveryDate}`,
           `Tester / Tool: ${fr.testerTool}`,
           `Framework Mapping: ${fr.frameworkMapping}`,
@@ -659,10 +749,17 @@ export async function POST(req: NextRequest) {
           `Steps to Reproduce`,
           ...fr.stepsToReproduce.map((s, i) => `${i + 1}. ${s}`),
           ``,
-          `Evidence`,
+          `Evidence & Sample Collected Exploitation Proof`,
           `Forensic Evidence of TTP: ${fr.evidence.forensicHeader}`,
           `${fr.evidence.ruleMatchLine}`,
           `Matched Indicator: ${fr.evidence.matchedIndicator}`,
+          ...fr.evidence.collectedExploitationSamples.map(
+            ev =>
+              `  * [${ev.artifactId}] ${ev.title} (${ev.category})\n    Request/Cmd: ${ev.capturedCommandOrRequest.replace(/\n+/g, " | ")}\n    Collected Output: ${ev.capturedOutputOrLoot.replace(/\n+/g, " | ")}\n    Customer CI: ${ev.customerCiSummary} (SHA-256: ${ev.sha256Digest})`
+          ),
+          ...fr.evidence.exploitationPictures.map(
+            pic => `  * [Visual Screenshot ${pic.figureId}] ${pic.title} — ${pic.caption}`
+          ),
           `Mapped Assessment Scripts: ${fr.evidence.mappedAssessmentScripts.join(", ")}`,
           `Triggered Privilege Escalation Scripts (TA0004): ${fr.evidence.triggeredPrivEscScripts.join(", ")}`,
           `Triggered Lateral Movement Scripts (TA0008): ${fr.evidence.triggeredLateralScripts.join(" | ")}`,
@@ -703,8 +800,8 @@ export async function POST(req: NextRequest) {
     const safeHostSlug = (primaryHost || "dast-target")
       .replace(/[^a-zA-Z0-9.-]/g, "-")
       .replace(/-+/g, "-");
-    const htmlFilename = `EXPEDITE-STRIKE-Assessment-Dossier-${safeHostSlug}.html`;
-    const pdfFilename = `EXPEDITE-STRIKE-Assessment-Dossier-${safeHostSlug}.pdf`;
+    const htmlFilename = `XTRIKE-DAST-Web-Interface-Security-Report-${safeHostSlug}.html`;
+    const pdfFilename = `XTRIKE-DAST-Web-Interface-Security-Report-${safeHostSlug}.pdf`;
 
     const htmlBuffer = Buffer.from(htmlContent, "utf8");
     const htmlBase64 = htmlBuffer.toString("base64");

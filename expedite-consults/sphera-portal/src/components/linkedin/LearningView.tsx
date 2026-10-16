@@ -121,6 +121,156 @@ export function LearningView({
     }
   }
 
+  // Ecosystem Live Learning & Practice Platforms for Current Enclave
+  const getEcosystemLivePlatforms = () => {
+    switch (user.professionEnclave) {
+      case 'trades_construction':
+        return [
+          {
+            title: "SkillHands Vocational Trades",
+            desc: "Apprenticeship modules, carpentry masterclasses & craftsman credentials",
+            url: "https://skillhands-client.vercel.app",
+            badge: "LIVE TRADES PLATFORM",
+          },
+          {
+            title: "DeskNote Field Journal",
+            desc: "Jobsite timber logs, blueprint takeoffs & cut-list calculations",
+            url: "https://desk-note-kwesi-asiedus-projects.vercel.app",
+            badge: "LIVE FIELD NOTEBOOK",
+          },
+          {
+            title: "VibeTok Trades Hub",
+            desc: "Bite-sized joinery videos, framing demos & tool restoration streams",
+            url: "https://vibetok-learning-hub.vercel.app",
+            badge: "LIVE VIDEO MASTERCLASSES",
+          }
+        ]
+      case 'automotive_mechanics':
+        return [
+          {
+            title: "DeskNote Diagnostic Bay",
+            desc: "Field oscilloscope records, CAN-FD captures & repair logs",
+            url: "https://desk-note-kwesi-asiedus-projects.vercel.app",
+            badge: "LIVE DIAGNOSTICS",
+          },
+          {
+            title: "SkillHands Automotive",
+            desc: "ASE diagnostic training, EV isolation procedures & engine repair",
+            url: "https://skillhands-client.vercel.app",
+            badge: "LIVE VOCATIONAL",
+          },
+          {
+            title: "VibeTok Waveform Academy",
+            desc: "Bite-sized oscilloscope masterclasses & diagnostic walkthroughs",
+            url: "https://vibetok-learning-hub.vercel.app",
+            badge: "LIVE VIDEO MASTERCLASSES",
+          }
+        ]
+      case 'healthcare_medicine':
+        return [
+          {
+            title: "CareerOrbit Skill Passport",
+            desc: "Physician & nursing CME tracking, fellowship credentials & AI resume",
+            url: "https://careerorbit-standalone.vercel.app",
+            badge: "LIVE CME PASSPORT",
+          },
+          {
+            title: "VibeTok Grand Rounds",
+            desc: "Surgical video masterclasses, emergency procedures & clinical briefs",
+            url: "https://vibetok-learning-hub.vercel.app",
+            badge: "LIVE CLINICAL HUB",
+          }
+        ]
+      case 'tech_software':
+        return [
+          {
+            title: "05-SAST Static Code Analyzer",
+            desc: "Live AST vulnerability scanning & automated GitHub PR remediation",
+            url: "https://05-sast-platform.vercel.app",
+            badge: "LIVE SAST ENGINE",
+          },
+          {
+            title: "CareerOrbit Skill Navigator",
+            desc: "AI technical skills passport, Git contributions & career benchmarking",
+            url: "https://careerorbit-standalone.vercel.app",
+            badge: "LIVE SKILLS PASSPORT",
+          },
+          {
+            title: "18-Unified Integration Bus",
+            desc: "API gateways, event-driven webhooks & enterprise microservices",
+            url: "https://18-unified-integration-layer.vercel.app",
+            badge: "LIVE INTEGRATION BUS",
+          }
+        ]
+      case 'law_gov_defense':
+        return [
+          {
+            title: "Aegis RMF Continuous ATO",
+            desc: "NIST SP 800-53 OSCAL machine-readable compliance & POAM engine",
+            url: "https://aegis-rmf.vercel.app",
+            badge: "LIVE cATO PLATFORM",
+          },
+          {
+            title: "15-Threat Modeling Suite",
+            desc: "STRIDE automated threat vectors, DFD graphs & mitigation catalog",
+            url: "https://15-threat-modeling-platform.vercel.app",
+            badge: "LIVE THREAT SUITE",
+          },
+          {
+            title: "CareerOrbit DoD 8140 Hub",
+            desc: "Defense credential verification, TS/SCI mapping & career paths",
+            url: "https://careerorbit-standalone.vercel.app",
+            badge: "LIVE CLEARANCE HUB",
+          }
+        ]
+      case 'campus_students':
+        return [
+          {
+            title: "Salisbury Campus OS",
+            desc: "University academic planner, class rosters & campus events",
+            url: "https://20-salisbury-campus-kwesi-asiedus-projects.vercel.app",
+            badge: "LIVE CAMPUS OS",
+          },
+          {
+            title: "TU Housing Portal",
+            desc: "Off-campus & dorm room placement, roommate matching & leases",
+            url: "https://tuhousing.vercel.app",
+            badge: "LIVE HOUSING",
+          },
+          {
+            title: "CareerOrbit Student Navigator",
+            desc: "Entry-level tech internships, verified academic projects & portfolios",
+            url: "https://careerorbit-standalone.vercel.app",
+            badge: "LIVE STUDENT PASSPORT",
+          }
+        ]
+      case 'tech_cybersecurity':
+      default:
+        return [
+          {
+            title: "11-DAST Dynamic Pentest Sandbox",
+            desc: "Dynamic application penetration testing, OWASP Top 10 fuzzing engine",
+            url: "https://11-dast-security-platform.vercel.app",
+            badge: "LIVE PENTEST PLATFORM",
+          },
+          {
+            title: "16-Malware Analysis Hypervisor",
+            desc: "Safe binary detonation sandbox, API hook monitoring & memory dump analysis",
+            url: "https://16-malware-analysis-platform.vercel.app",
+            badge: "LIVE DETONATION LAB",
+          },
+          {
+            title: "CareerOrbit Cyber Passport",
+            desc: "CISSP, OSCP & CEH credential mapping, offensive skills benchmarking",
+            url: "https://careerorbit-standalone.vercel.app",
+            badge: "LIVE CAREER NAVIGATOR",
+          }
+        ]
+    }
+  }
+
+  const liveEcosystemPlatforms = getEcosystemLivePlatforms()
+
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-20">
       {/* 1. TOP LEARNING HERO BANNER */}
@@ -141,7 +291,7 @@ export function LearningView({
               Hands-On Technical Mastery & Career Blueprints
             </h1>
             <p className="text-xs sm:text-sm text-zinc-300 max-w-2xl leading-relaxed">
-              Upskill through multi-stage learning paths, live ephemeral cloud & pentesting sandboxes, practice exams for CISSP and AWS Security, and direct connections to marketplace tools.
+              Upskill through multi-stage learning paths, live ephemeral sandboxes, practice exams, and direct connections to professional ecosystem tools.
             </p>
           </div>
 
@@ -150,13 +300,58 @@ export function LearningView({
             <div className="rounded-2xl bg-black/40 border border-white/15 p-4 text-center min-w-[170px]">
               <span className="text-[10px] uppercase font-mono text-indigo-300">Your Learning Progress</span>
               <p className="text-2xl font-black text-amber-300">65% Completed</p>
-              <p className="text-[11px] text-zinc-400 mt-0.5">Cloud Security Engineer Path</p>
+              <p className="text-[11px] text-zinc-400 mt-0.5">Enclave Specialist Track</p>
             </div>
           </div>
         </div>
 
+        {/* Live Ecosystem External Learning Platforms */}
+        {liveEcosystemPlatforms.length > 0 && (
+          <div className="mt-5 pt-4 border-t border-white/10">
+            <div className="flex items-center justify-between mb-2.5">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-amber-300" />
+                <span className="text-xs font-bold text-white tracking-wide uppercase">
+                  Connected Live Ecosystem Platforms
+                </span>
+              </div>
+              <span className="text-[10px] text-zinc-400 font-mono">1-Click External Launch ↗</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {liveEcosystemPlatforms.map((plat, idx) => (
+                <a
+                  key={idx}
+                  href={plat.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group rounded-xl bg-black/40 hover:bg-black/60 border border-white/15 hover:border-white/30 p-3 transition-all flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="rounded bg-indigo-500/20 px-1.5 py-0.5 text-[9px] font-mono font-bold text-amber-300 border border-indigo-400/30">
+                        {plat.badge}
+                      </span>
+                      <ExternalLink className="h-3.5 w-3.5 text-zinc-400 group-hover:text-white transition-colors" />
+                    </div>
+                    <h4 className="font-bold text-xs text-white group-hover:text-amber-300 transition-colors line-clamp-1">
+                      {plat.title}
+                    </h4>
+                    <p className="text-[11px] text-zinc-400 line-clamp-2 mt-0.5 leading-snug">
+                      {plat.desc}
+                    </p>
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-white/10 flex items-center justify-between text-[10px] text-zinc-400 group-hover:text-zinc-200">
+                    <span className="font-mono truncate">{new URL(plat.url).hostname}</span>
+                    <span className="font-bold text-amber-300 group-hover:underline">Launch →</span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* 4 Master Modes Switcher */}
-        <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between gap-3 flex-wrap">
+        <div className="mt-5 pt-4 border-t border-white/10 flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
             <button
               onClick={() => setLearningMode('paths')}
@@ -191,7 +386,7 @@ export function LearningView({
               }`}
             >
               <FlaskConical className="h-3.5 w-3.5 text-emerald-500" />
-              <span>🧪 Interactive Labs ({INTERACTIVE_LABS_DATA.length})</span>
+              <span>🧪 Interactive Labs ({enclaveLabs.length})</span>
             </button>
 
             <button
@@ -203,7 +398,7 @@ export function LearningView({
               }`}
             >
               <Award className="h-3.5 w-3.5 text-amber-500" />
-              <span>📜 Certifications & Exams ({CERTIFICATION_TRACKS_DATA.length})</span>
+              <span>📜 Certifications & Exams ({enclaveCertTracks.length})</span>
             </button>
           </div>
         </div>
@@ -533,18 +728,30 @@ export function LearningView({
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
-                  <span className="text-[10px] font-mono text-zinc-400">{lab.environment}</span>
-                  <button
-                    onClick={() => {
-                      setActiveLab(lab)
-                      setIsTerminalRunning(true)
-                    }}
-                    className="rounded-full bg-emerald-600 hover:bg-emerald-700 px-4 py-1.5 text-xs font-bold text-white shadow-xs flex items-center gap-1.5"
-                  >
-                    <Play className="h-3 w-3 fill-white" />
-                    <span>Launch Sandbox</span>
-                  </button>
+                <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2">
+                  <span className="text-[10px] font-mono text-zinc-400 truncate max-w-[120px]">{lab.environment}</span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {lab.liveUrl && (
+                      <button
+                        onClick={() => window.open(lab.liveUrl, '_blank', 'noopener,noreferrer')}
+                        className="rounded-full bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 text-xs font-bold text-white shadow-xs flex items-center gap-1"
+                        title={`Open live platform: ${lab.liveUrl}`}
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        <span>Live Platform</span>
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        setActiveLab(lab)
+                        setIsTerminalRunning(true)
+                      }}
+                      className="rounded-full bg-emerald-600 hover:bg-emerald-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs flex items-center gap-1.5"
+                    >
+                      <Play className="h-3 w-3 fill-white" />
+                      <span>Sandbox</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -757,12 +964,23 @@ export function LearningView({
 
               <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-zinc-800">
                 <span className="text-xs text-emerald-600 font-bold">✓ Sandbox Session Active</span>
-                <button
-                  onClick={() => setActiveLab(null)}
-                  className="rounded-full bg-[#0A66C2] px-5 py-1.5 text-xs font-bold text-white"
-                >
-                  Complete Lab Session
-                </button>
+                <div className="flex items-center gap-2">
+                  {activeLab.liveUrl && (
+                    <button
+                      onClick={() => window.open(activeLab.liveUrl, '_blank', 'noopener,noreferrer')}
+                      className="rounded-full bg-indigo-600 hover:bg-indigo-700 px-4 py-1.5 text-xs font-bold text-white flex items-center gap-1.5 shadow-xs"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                      <span>Open Deployed App ↗</span>
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setActiveLab(null)}
+                    className="rounded-full bg-[#0A66C2] px-5 py-1.5 text-xs font-bold text-white hover:bg-[#084e96]"
+                  >
+                    Complete Lab Session
+                  </button>
+                </div>
               </div>
             </div>
           )}

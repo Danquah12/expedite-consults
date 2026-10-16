@@ -1,5 +1,6 @@
 import { UserProfile } from "./linkedin-data"
 import { findProfessionById, findEnclaveById, getEnclaveForProfession } from "./connectin-professions"
+import { KWESI_ASIEDU_PARSED_DATA } from "./resume-parser"
 
 export interface UserInitParams {
   id?: string
@@ -121,7 +122,89 @@ export function createUniqueUserProfile(params: UserInitParams): UserProfile {
   const searchTarget = `${cleanName} ${cleanEmail} ${params.headline || ''} ${params.profession || ''}`.toLowerCase()
 
   if (!professionId) {
-    if (searchTarget.includes("trauma nurse") || searchTarget.includes("er nurse") || searchTarget.includes("ccrn") || searchTarget.includes("elena.nurse")) {
+    if (searchTarget.includes("realtor") || searchTarget.includes("real estate") || searchTarget.includes("broker")) {
+      professionId = "realtor"
+    } else if (searchTarget.includes("veteran") || searchTarget.includes("veterance") || searchTarget.includes("military") || searchTarget.includes("army") || searchTarget.includes("navy")) {
+      professionId = "military_veteran"
+    } else if (searchTarget.includes("dentist") || searchTarget.includes("dental") || searchTarget.includes("dds") || searchTarget.includes("dmd")) {
+      professionId = "dentist"
+    } else if (searchTarget.includes("electrician") || searchTarget.includes("electrical") || searchTarget.includes("nec")) {
+      professionId = "electrician"
+    } else if (searchTarget.includes("plumber") || searchTarget.includes("plumbing") || searchTarget.includes("pipefitter")) {
+      professionId = "plumber"
+    } else if (searchTarget.includes("welder") || searchTarget.includes("welding") || searchTarget.includes("fabricator")) {
+      professionId = "welder"
+    } else if (searchTarget.includes("painter") || searchTarget.includes("painting")) {
+      professionId = "painter"
+    } else if (searchTarget.includes("roofer") || searchTarget.includes("roofing")) {
+      professionId = "roofer"
+    } else if (searchTarget.includes("barber") || searchTarget.includes("fade")) {
+      professionId = "barber"
+    } else if (searchTarget.includes("hairstylist") || searchTarget.includes("hair stylist") || searchTarget.includes("colorist")) {
+      professionId = "hairstylist"
+    } else if (searchTarget.includes("tailor") || searchTarget.includes("clothier")) {
+      professionId = "tailor"
+    } else if (searchTarget.includes("beautician") || searchTarget.includes("esthetician")) {
+      professionId = "beautician"
+    } else if (searchTarget.includes("personal trainer") || searchTarget.includes("fitness")) {
+      professionId = "personal_trainer"
+    } else if (searchTarget.includes("caterer") || searchTarget.includes("catering")) {
+      professionId = "caterer"
+    } else if (searchTarget.includes("farmer") || searchTarget.includes("farming") || searchTarget.includes("agri")) {
+      professionId = "farmer"
+    } else if (searchTarget.includes("livestock") || searchTarget.includes("ranch")) {
+      professionId = "livestock_breeder"
+    } else if (searchTarget.includes("fish farmer") || searchTarget.includes("aquaculture")) {
+      professionId = "fish_farmer"
+    } else if (searchTarget.includes("beekeeper") || searchTarget.includes("apiary")) {
+      professionId = "beekeeper"
+    } else if (searchTarget.includes("truck driver") || searchTarget.includes("trucking") || searchTarget.includes("cdl")) {
+      professionId = "truck_driver"
+    } else if (searchTarget.includes("delivery") || searchTarget.includes("courier")) {
+      professionId = "delivery_driver"
+    } else if (searchTarget.includes("rideshare") || searchTarget.includes("uber") || searchTarget.includes("lyft")) {
+      professionId = "rideshare_driver"
+    } else if (searchTarget.includes("warehouse") || searchTarget.includes("forklift")) {
+      professionId = "warehouse_worker"
+    } else if (searchTarget.includes("musician") || searchTarget.includes("music") || searchTarget.includes("song")) {
+      professionId = "musician"
+    } else if (searchTarget.includes("photographer") || searchTarget.includes("photo")) {
+      professionId = "photographer"
+    } else if (searchTarget.includes("actor") || searchTarget.includes("acting")) {
+      professionId = "actor"
+    } else if (searchTarget.includes("filmmaker") || searchTarget.includes("film") || searchTarget.includes("director")) {
+      professionId = "filmmaker"
+    } else if (searchTarget.includes("writer") || searchTarget.includes("author") || searchTarget.includes("journalist")) {
+      professionId = "independent_writer"
+    } else if (searchTarget.includes("graphic designer") || searchTarget.includes("designer")) {
+      professionId = "graphic_designer"
+    } else if (searchTarget.includes("home health") || searchTarget.includes("chha")) {
+      professionId = "home_health_aide"
+    } else if (searchTarget.includes("caregiver")) {
+      professionId = "caregiver"
+    } else if (searchTarget.includes("childcare") || searchTarget.includes("daycare")) {
+      professionId = "childcare_worker"
+    } else if (searchTarget.includes("elderly care") || searchTarget.includes("geriatric")) {
+      professionId = "elderly_care_worker"
+    } else if (searchTarget.includes("tutor") || searchTarget.includes("tutoring")) {
+      professionId = "tutor"
+    } else if (searchTarget.includes("driving instructor")) {
+      professionId = "driving_instructor"
+    } else if (searchTarget.includes("apprentice")) {
+      professionId = "apprentice"
+    } else if (searchTarget.includes("security guard") || searchTarget.includes("security officer")) {
+      professionId = "security_guard"
+    } else if (searchTarget.includes("cleaner") || searchTarget.includes("cleaning")) {
+      professionId = "cleaner"
+    } else if (searchTarget.includes("landscaper") || searchTarget.includes("landscaping")) {
+      professionId = "landscaper"
+    } else if (searchTarget.includes("veterinarian") || searchTarget.includes("vet") || searchTarget.includes("dvm")) {
+      professionId = "veterinarian"
+    } else if (searchTarget.includes("translator") || searchTarget.includes("interpreter")) {
+      professionId = "translator_interpreter"
+    } else if (searchTarget.includes("sign language") || searchTarget.includes("asl")) {
+      professionId = "sign_language_interpreter"
+    } else if (searchTarget.includes("trauma nurse") || searchTarget.includes("er nurse") || searchTarget.includes("ccrn") || searchTarget.includes("elena.nurse")) {
       professionId = "er_trauma_nurse"
     } else if (searchTarget.includes("nurse") || searchTarget.includes("rn") || searchTarget.includes("fnp") || searchTarget.includes("crna")) {
       professionId = "registered_nurse"
@@ -130,9 +213,9 @@ export function createUniqueUserProfile(params: UserInitParams): UserProfile {
     } else if (searchTarget.includes("cardiologist") || searchTarget.includes("thorne") || searchTarget.includes("physician") || searchTarget.includes("doctor")) {
       professionId = "physician"
     } else if (searchTarget.includes("diesel") || searchTarget.includes("cummins") || searchTarget.includes("carlos.diesel")) {
-      professionId = "heavy_diesel_mechanic"
+      professionId = "diesel_fleet_mechanic"
     } else if (searchTarget.includes("mechanic") || searchTarget.includes("auto tech") || searchTarget.includes("ase") || searchTarget.includes("marcus.mechanic")) {
-      professionId = "ase_master_auto_tech"
+      professionId = "mechanic"
     } else if (searchTarget.includes("ev tech") || searchTarget.includes("powertrain")) {
       professionId = "ev_powertrain_technician"
     } else if (searchTarget.includes("finish carpenter") || searchTarget.includes("joiner") || searchTarget.includes("lindqvist")) {
@@ -144,9 +227,9 @@ export function createUniqueUserProfile(params: UserInitParams): UserProfile {
     } else if (searchTarget.includes("carpenter") || searchTarget.includes("timber") || searchTarget.includes("david.miller")) {
       professionId = "carpenter"
     } else if (searchTarget.includes("scada") || searchTarget.includes("ics") || searchTarget.includes("kowalski") || searchTarget.includes("ot security")) {
-      professionId = "scada_ics_engineer"
+      professionId = "scada_ics_security"
     } else if (searchTarget.includes("red team") || searchTarget.includes("oscp") || searchTarget.includes("crto") || searchTarget.includes("tariq.cyber") || searchTarget.includes("exploit")) {
-      professionId = "red_team_lead"
+      professionId = "red_team_operator"
     } else if (searchTarget.includes("malware") || searchTarget.includes("reverse engineer") || searchTarget.includes("ghidra")) {
       professionId = "malware_reverse_engineer"
     } else if (searchTarget.includes("cpa") || searchTarget.includes("controller") || searchTarget.includes("accountant")) {
@@ -182,15 +265,31 @@ export function createUniqueUserProfile(params: UserInitParams): UserProfile {
     } else if (enclaveId === "automotive_mechanics") {
       coverImage = "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=1200&auto=format&fit=crop&q=80" // Precision automotive diagnostic bay & lifts
     } else if (enclaveId === "healthcare_medicine") {
-      coverImage = "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=1200&auto=format&fit=crop&q=80" // Modern surgical & trauma clinical suite
+      coverImage = "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=1200&auto=format&fit=crop&q=80" // Modern surgical & clinical suite
+    } else if (enclaveId === "agriculture_natural_resources") {
+      coverImage = "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=1200&auto=format&fit=crop&q=80" // Golden farmland and agricultural fields
+    } else if (enclaveId === "personal_services_wellness") {
+      coverImage = "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=1200&auto=format&fit=crop&q=80" // Classic barber shop & grooming studio
+    } else if (enclaveId === "culinary_hospitality_events") {
+      coverImage = "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200&auto=format&fit=crop&q=80" // Commercial culinary & banquet events
+    } else if (enclaveId === "commerce_small_business") {
+      coverImage = "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1200&auto=format&fit=crop&q=80" // Modern commercial real estate & storefronts
+    } else if (enclaveId === "creative_media_arts") {
+      coverImage = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=1200&auto=format&fit=crop&q=80" // Professional creative studio & audio console
+    } else if (enclaveId === "education_workforce") {
+      coverImage = "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=1200&auto=format&fit=crop&q=80" // Interactive lecture & vocational training
+    } else if (enclaveId === "community_civic_security") {
+      coverImage = "https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&auto=format&fit=crop&q=80" // Civic operational headquarters & defense
     } else if (enclaveId === "tech_cybersecurity") {
-      coverImage = "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1200&auto=format&fit=crop&q=80" // Dark-mode cyber terminal & SOC operations
+      coverImage = "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1200&auto=format&fit=crop&q=80" // Cyber terminal & SOC operations
     } else if (enclaveId === "law_gov_defense") {
       coverImage = "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=1200&auto=format&fit=crop&q=80" // Federal defense briefing & appellate law
     } else if (enclaveId === "finance_accounting") {
       coverImage = "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=1200&auto=format&fit=crop&q=80" // Financial markets & analytics terminal
+    } else if (enclaveId === "campus_students") {
+      coverImage = "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=1200&auto=format&fit=crop&q=80" // University campus quad
     } else {
-      coverImage = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop&q=80" // Cloud architecture
+      coverImage = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop&q=80" // Enterprise architecture
     }
   }
 
@@ -222,7 +321,7 @@ export function createUniqueUserProfile(params: UserInitParams): UserProfile {
   }
 
   // 4. Headline
-  const headline = params.headline || (
+  let headline = params.headline || (
     isAdmin
       ? "Platform IAM & Super Administrator · ConnectIn Master Control"
       : (profDef?.defaultHeadline || `${professionTitle} · Verified ConnectIn Member`)
@@ -236,7 +335,44 @@ export function createUniqueUserProfile(params: UserInitParams): UserProfile {
   let skills = params.skills || []
   let featured = []
 
-  if (enclaveId === "healthcare_medicine") {
+  const isKwesiUser =
+    cleanName.toLowerCase().includes("kwesi") ||
+    cleanEmail.includes("asiedudanquah") ||
+    cleanEmail.includes("kasiedu") ||
+    searchTarget.includes("syneren") ||
+    searchTarget.includes("pentagon") ||
+    searchTarget.includes("dtsa")
+
+  if (isKwesiUser) {
+    if (experience.length === 0 || !params.experience) {
+      experience = KWESI_ASIEDU_PARSED_DATA.experiences
+    }
+    if (!params.headline || params.headline.includes("Master Carpenter") || params.headline.includes("Verified ConnectIn Member")) {
+      headline = KWESI_ASIEDU_PARSED_DATA.headline
+    }
+    if (!about || about.includes("Practicing") || about.length < 50) {
+      about = KWESI_ASIEDU_PARSED_DATA.about
+    }
+    if (skills.length === 0) {
+      skills = KWESI_ASIEDU_PARSED_DATA.skills.map(s => ({
+        name: s,
+        endorsements: 95 + Math.floor(Math.random() * 5),
+        endorsers: ['DoD Cyber Command', 'Pentagon DTSA', 'FBI CISO']
+      }))
+    }
+    if (education.length === 0) {
+      education = [
+        {
+          id: `edu_${userId}_1`,
+          school: "Johns Hopkins University",
+          schoolLogo: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=100&auto=format&fit=crop&q=80",
+          degree: "Master of Science in Cybersecurity",
+          fieldOfStudy: "Enterprise Security Architecture & Information Assurance",
+          duration: "Graduated"
+        }
+      ]
+    }
+  } else if (enclaveId === "healthcare_medicine") {
     const isDoctor = professionId.includes("surgeon") || professionId.includes("physician") || cleanName.includes("Dr.")
     if (isDoctor) {
       about = about || `Board-Certified Attending Orthopedic Trauma Surgeon (MD, FACS) with 12+ years of surgical experience leading Level 1 trauma resuscitation, complex pelvic ring reductions, periprosthetic reconstruction, and multi-fragment articular reconstruction.\n\nDedicated to surgical excellence, sub-millimeter anatomical reduction, intraoperative fluoroscopy guidance, and mentoring surgical residents in modern limb salvage techniques.`
@@ -636,10 +772,38 @@ export function createUniqueUserProfile(params: UserInitParams): UserProfile {
       ]
     }
   } else {
-    // Default fallback
-    about = about || `Verified ${professionTitle} operating within the ${enclaveInfo?.name || "ConnectIn"} Enclave with strict cryptographic identity assurance and least-privilege role segregation.`
+    // Rich domain generation for all professional enclaves (Realtors, Veterans, Dentists, Farmers, Barbers, Tutors, etc.)
+    about = about || `Practicing ${professionTitle} operating within the ${enclaveInfo?.name || "ConnectIn"} Enclave with verified credentials, industry compliance, and professional excellence.`
+    if (experience.length === 0 && profDef) {
+      experience = [
+        {
+          id: `exp_${userId}_1`,
+          role: profDef.title,
+          company: `${profDef.categoryName} Professional Group`,
+          companyLogo: coverImage,
+          employmentType: "Full-time",
+          duration: "2019 - Present · 7 yrs",
+          location: "United States · On Site",
+          description: `Leading domain execution in ${profDef.title.toLowerCase()}. Specializing in ${profDef.typicalSkills.slice(0, 4).join(', ')} with verified professional execution, safety compliance, and client satisfaction.`,
+          skills: profDef.typicalSkills.slice(0, 4)
+        }
+      ]
+    }
+    if (certifications.length === 0 && profDef) {
+      certifications = [
+        {
+          id: `cert_${userId}_1`,
+          title: `Verified ${profDef.title} License & Professional Credentials`,
+          issuer: `${profDef.categoryName} National Accreditation Board`,
+          issuerLogo: coverImage,
+          issueDate: "2021 · Active",
+          credentialId: `VERIF-${professionId.toUpperCase().slice(0, 8)}-${userId.slice(0, 4).toUpperCase()}`,
+          credentialUrl: "https://connectin.expediteconsults.com"
+        }
+      ]
+    }
     if (skills.length === 0 && profDef?.typicalSkills) {
-      skills = profDef.typicalSkills.map((s, idx) => ({ name: s, endorsements: 45 + (idx * 7) }))
+      skills = profDef.typicalSkills.map((s, idx) => ({ name: s, endorsements: 54 + (idx * 7) }))
     }
   }
 

@@ -361,15 +361,35 @@
     overflow-x: hidden !important;
   }
 
-  /* Ensure every card, grid item, flex child, select, input, and button fits inside viewport */
+  /* Ensure container divs fit inside viewport without crushing inline spans, buttons, or SVG icons */
   .app-shell-main *,
   .engine-mobile-shell * {
     box-sizing: border-box !important;
+  }
+
+  .app-shell-main div,
+  .engine-mobile-shell div,
+  .app-shell-main section,
+  .app-shell-main article {
     min-width: 0;
+    max-width: 100%;
+  }
+
+  .app-shell-main svg,
+  .engine-mobile-shell svg {
+    flex-shrink: 0 !important;
+  }
+
+  .app-shell-main img,
+  .engine-mobile-shell img {
+    max-width: 100% !important;
+    height: auto !important;
   }
 
   .app-shell-main select,
   .app-shell-main input[type="text"],
+  .app-shell-main input[type="email"],
+  .app-shell-main input[type="url"],
   .app-shell-main input[type="search"],
   .app-shell-main textarea {
     max-width: 100% !important;
@@ -416,42 +436,47 @@
     gap: 8px !important;
   }
 
-  /* Ensure all tables fit and wrap cell text instead of cutting it off with ellipsis */
-  .data-table {
-    display: block;
-    width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .data-table td,
-  .data-table th {
-    white-space: normal !important;
-    overflow: visible !important;
-    text-overflow: clip !important;
-    word-break: break-word !important;
-    padding: 8px 10px !important;
-    font-size: 11px !important;
-  }
-
+  /* Tables: scroll horizontally without squishing cells into 1-letter vertical towers */
+  .data-table,
   .app-shell-main table {
-    display: block;
+    display: block !important;
     width: 100% !important;
     max-width: 100% !important;
     overflow-x: auto !important;
     -webkit-overflow-scrolling: touch;
+    border-collapse: collapse;
+  }
+
+  .data-table th,
+  .data-table td,
+  .app-shell-main table th,
+  .app-shell-main table td {
+    min-width: 105px;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+    vertical-align: top;
+    padding: 6px 8px !important;
+    font-size: 10.5px !important;
+    line-height: 1.4 !important;
   }
 
   .app-shell-main pre,
-  .app-shell-main code,
   .http-raw {
     white-space: pre-wrap !important;
     word-break: break-word !important;
-    overflow-wrap: anywhere !important;
+    overflow-wrap: break-word !important;
     max-width: 100% !important;
+    overflow-x: auto !important;
   }
 
-  /* Split-pane layouts (like Evidence Vault) stack vertically on mobile so both list & detail are 100% visible */
+  .app-shell-main code {
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+
+  /* Split-pane layouts stack vertically on mobile */
   .split-h {
     display: flex !important;
     flex-direction: column !important;
@@ -460,36 +485,29 @@
   }
 }
 
-/* Smartphone Layout (<= 640px) */
-@media (max-width: 640px) {
+/* Smartphone Layout (<= 768px) — Prevent Any Side-by-Side Squishing or Distortion */
+@media (max-width: 768px) {
   .engine-mobile-shell {
     padding: 8px 8px 96px 8px !important;
+    gap: 10px !important;
   }
 
   .engine-mobile-shell h1 {
-    font-size: 14px !important;
+    font-size: 14.5px !important;
     line-height: 1.35 !important;
-    word-break: break-word !important;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
   }
 
-  /* Stack 2-column, 3-column, and wide auto-fill grids cleanly on phone screens */
-  .app-shell-main [style*="grid-template-columns: 1fr 1fr"],
-  .app-shell-main [style*="grid-template-columns:1fr 1fr"],
-  .app-shell-main [style*="grid-template-columns: repeat(3"],
-  .app-shell-main [style*="grid-template-columns:repeat(3"],
-  .app-shell-main [style*="grid-template-columns: 1fr 1fr 1fr"],
-  .app-shell-main [style*="grid-template-columns:1fr 1fr 1fr"],
-  .app-shell-main [style*="minmax(260px"],
-  .app-shell-main [style*="minmax(300px"],
-  .app-shell-main [style*="minmax(320px"],
-  .app-shell-main [style*="minmax(340px"],
-  .app-shell-main [style*="minmax(210px"],
-  .app-shell-main [style*="minmax(220px"],
-  .app-shell-main [style*="minmax(175px"] {
+  /* Force ALL grid layouts inside the portal to stack cleanly 1-column on phones */
+  .engine-mobile-shell [style*="display: grid"],
+  .engine-mobile-shell [style*="display:grid"],
+  .app-shell-main [style*="grid-template-columns"] {
     grid-template-columns: 1fr !important;
+    gap: 8px !important;
   }
 
-  /* Allow 6-col / 5-col / 4-col metric strips to display 2 per row on standard phones */
+  /* Keep compact 4/5/6-item KPI metric strips at 2 columns per row on phones */
   .app-shell-main [style*="grid-template-columns: repeat(6"],
   .app-shell-main [style*="grid-template-columns:repeat(6"],
   .app-shell-main [style*="grid-template-columns: repeat(5"],
@@ -497,7 +515,44 @@
   .app-shell-main [style*="grid-template-columns: repeat(4"],
   .app-shell-main [style*="grid-template-columns:repeat(4"] {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 8px !important;
+    gap: 6px !important;
+  }
+
+  /* Ensure flex rows inside the engine wrap cleanly instead of overflowing or crushing siblings */
+  .engine-mobile-shell div[style*="display: flex"],
+  .engine-mobile-shell div[style*="display:flex"] {
+    flex-wrap: wrap !important;
+  }
+
+  /* Allow buttons and badges with nowrap to wrap cleanly if they exceed phone width */
+  .engine-mobile-shell button,
+  .engine-mobile-shell span[style*="white-space: nowrap"] {
+    white-space: normal !important;
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Override any fixed pixel widths on inputs or cards on phone screens */
+  .engine-mobile-shell input[style*="width"],
+  .engine-mobile-shell select[style*="width"],
+  .engine-mobile-shell div[style*="min-width: 135px"],
+  .engine-mobile-shell div[style*="min-width: 220px"],
+  .engine-mobile-shell div[style*="min-width: 260px"],
+  .engine-mobile-shell div[style*="min-width: 280px"] {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  /* Make modals fit phone viewports cleanly */
+  div[style*="position: fixed"] {
+    padding: 8px !important;
+  }
+
+  div[style*="position: fixed"] > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 90dvh !important;
+    padding: 12px !important;
   }
 
   /* Convert fixed-height inner desktop split panes to natural scrollable flow on phones */

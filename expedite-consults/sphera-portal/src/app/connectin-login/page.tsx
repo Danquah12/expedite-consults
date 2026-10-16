@@ -25,11 +25,16 @@ import { DEMO_AUTH_PERSONAS, AuthPersona } from "@/components/linkedin/ConnectIn
 import { saveStoredUser, saveStoredSessionRoute } from "@/lib/connectin-storage"
 import { createUniqueUserProfile, resolveDisplayName, isSuperAdminUser } from "@/lib/connectin-profile"
 import { PROFESSION_ENCLAVES, findProfessionById, findEnclaveById, getProfessionsByEnclave } from "@/lib/connectin-professions"
+import { ProfessionSearchPopout } from "@/components/linkedin/ProfessionSearchPopout"
+import { ThemeColorSwitcher } from "@/components/theme/ThemeColorSwitcher"
+import { LanguageSwitcher } from "@/components/language/LanguageSwitcher"
+import { useLanguage } from "@/context/LanguageContext"
 
 import { signIn } from "next-auth/react"
 
 export default function ConnectInLoginPage() {
   const router = useRouter()
+  const { t } = useLanguage()
 
   // Main Mode: 'signin' (Sign in) vs 'join' (Join now / Register)
   const [activeView, setActiveView] = useState<'signin' | 'join'>('signin')
@@ -41,6 +46,7 @@ export default function ConnectInLoginPage() {
   const [signInEmail, setSignInEmail] = useState("")
   const [signInPhone, setSignInPhone] = useState("")
   const [signInPassword, setSignInPassword] = useState("")
+  const [signInProfessionId, setSignInProfessionId] = useState<string>("auto_detect")
   const [signInStep, setSignInStep] = useState<'credentials' | '2fa'>('credentials')
   const [signIn2FACode, setSignIn2FACode] = useState("")
   const [activeSignInTarget, setActiveSignInTarget] = useState("")
@@ -203,16 +209,42 @@ export default function ConnectInLoginPage() {
         throw new Error(data.error || "Invalid verification code.")
       }
 
-      // Always inject email into profile — API returns UserProfileRecord which has no email field,
-      // but getExplicitStoredUser() requires email to detect a real stored user
-      const profileToSave = {
-        ...(data.profile || createUniqueUserProfile({
-          name: resolvedName,
-          email: signInEmail,
-          role: "personal"
-        })),
+      const selectedProf = signInProfessionId !== "auto_detect" ? findProfessionById(signInProfessionId) : null
+      const effectiveProfessionId = selectedProf?.id || data.profile?.professionId
+      const effectiveEnclave = selectedProf?.enclaveId || data.profile?.professionEnclave
+
+      const baseProfile = data.profile || createUniqueUserProfile({
+        name: resolvedName,
         email: signInEmail,
-        id: data.profile?.userId || data.user?.id || data.profile?.id
+        role: "personal",
+        professionId: effectiveProfessionId,
+        professionEnclave: effectiveEnclave
+      })
+
+      const generatedDomainProfile = selectedProf ? createUniqueUserProfile({
+        name: resolvedName,
+        email: signInEmail,
+        professionId: selectedProf.id,
+        professionEnclave: selectedProf.enclaveId,
+        role: "personal"
+      }) : null
+
+      const profileToSave = {
+        ...baseProfile,
+        email: signInEmail,
+        id: data.profile?.userId || data.user?.id || data.profile?.id || baseProfile.id,
+        ...(selectedProf && generatedDomainProfile ? {
+          profession: selectedProf.title,
+          professionId: selectedProf.id,
+          professionCategory: selectedProf.categoryName,
+          professionEnclave: selectedProf.enclaveId,
+          headline: selectedProf.defaultHeadline,
+          experience: generatedDomainProfile.experience,
+          certifications: generatedDomainProfile.certifications,
+          skills: generatedDomainProfile.skills,
+          coverImage: generatedDomainProfile.coverImage,
+          about: generatedDomainProfile.about
+        } : {})
       }
 
       const isAdminUser = isSuperAdminUser({ ...profileToSave, email: signInEmail })
@@ -230,7 +262,7 @@ export default function ConnectInLoginPage() {
       setSuccessMessage(
         isAdminUser 
           ? `✓ Verified as Platform Administrator (${profileToSave.name})! Launching Master Control Enclave...`
-          : `✓ Verified as ${profileToSave.name}! Launching your workspace...`
+          : `✓ Verified as ${profileToSave.name} (${selectedProf?.title || profileToSave.profession || 'Professional'})! Launching your ${selectedProf?.categoryName || 'segregated'} workspace...`
       )
       setTimeout(() => {
         window.location.href = targetUrl
@@ -429,7 +461,7 @@ export default function ConnectInLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f3f2f0] dark:bg-[#000000] text-zinc-900 dark:text-zinc-100 flex flex-col justify-between font-sans selection:bg-[#0A66C2] selection:text-white">
+    <div className="min-h-screen bg-[var(--bg-core,#f3f2f0)] text-[var(--text-pure,#18181b)] flex flex-col justify-between font-sans transition-colors duration-300 selection:bg-[#0A66C2] selection:text-white">
       {/* ─── 1. TOP LINKEDIN-STYLE NAVBAR ─── */}
       <header className="w-full bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 px-6 sm:px-12 py-3 flex items-center justify-between shadow-xs">
         <Link href="/connectin" className="flex items-center gap-1.5 group">
@@ -437,10 +469,18 @@ export default function ConnectInLoginPage() {
         </Link>
 
         {/* Right Switch Button: If on sign in, show Join now; if on join, show Sign in */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          {/* Theme & Background Color Switcher */}
+          <ThemeColorSwitcher compact={true} align="right" />
+
+          {/* Global Multi-Language Switcher */}
+          <LanguageSwitcher compact={true} align="right" />
+
           {activeView === 'signin' ? (
             <div className="flex items-center gap-2 text-sm">
-              <span className="text-zinc-500 dark:text-zinc-400 hidden sm:inline">New to ConnectIn?</span>
+              <span className="text-zinc-500 dark:text-zinc-400 hidden sm:inline">
+                {t("new_to_connectin", "New to ConnectIn?")}
+              </span>
               <button
                 onClick={() => {
                   setActiveView('join')
@@ -450,12 +490,14 @@ export default function ConnectInLoginPage() {
                 }}
                 className="rounded-full border border-[#0A66C2] px-4 py-1.5 text-sm font-semibold text-[#0A66C2] dark:text-sky-400 hover:bg-[#0A66C2]/10 transition-colors"
               >
-                Join now
+                {t("join_now_btn", "Join now")}
               </button>
             </div>
           ) : (
             <div className="flex items-center gap-2 text-sm">
-              <span className="text-zinc-500 dark:text-zinc-400 hidden sm:inline">Already on ConnectIn?</span>
+              <span className="text-zinc-500 dark:text-zinc-400 hidden sm:inline">
+                {t("already_on_connectin", "Already on ConnectIn?")}
+              </span>
               <button
                 onClick={() => {
                   setActiveView('signin')
@@ -465,7 +507,7 @@ export default function ConnectInLoginPage() {
                 }}
                 className="rounded-full border border-[#0A66C2] px-4 py-1.5 text-sm font-semibold text-[#0A66C2] dark:text-sky-400 hover:bg-[#0A66C2]/10 transition-colors"
               >
-                Sign in
+                {t("sign_in_btn", "Sign in")}
               </button>
             </div>
           )}
@@ -500,18 +542,26 @@ export default function ConnectInLoginPage() {
                 <div className="space-y-5">
                   <div className="space-y-1">
                     <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-                      Sign in
+                      {t("sign_in_title", "Sign in")}
                     </h1>
                     <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
-                      Stay updated on your professional world
+                      {t("sign_in_subtitle", "Stay updated on your professional world")}
                     </p>
                   </div>
 
                   <form onSubmit={handleSignInSubmit} className="space-y-4">
+                    {/* Professional Profile Search & Popout Selector (Determines Platform View) */}
+                    <ProfessionSearchPopout
+                      selectedProfessionId={signInProfessionId}
+                      onSelectProfession={(profId) => setSignInProfessionId(profId)}
+                      label={t("profession_label", "Select Professional Profile & Enclave")}
+                      showAutoDetectOption={true}
+                    />
+
                     {/* Email Input */}
                     <div className="space-y-1">
                       <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-                        Email address or username
+                        {t("email_or_phone", "Email address or username")}
                       </label>
                       <input
                         type="text"
@@ -525,7 +575,9 @@ export default function ConnectInLoginPage() {
 
                     {/* 2FA Delivery Channel Selector */}
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Deliver 2FA Security Code Via</label>
+                      <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                        {t("deliver_2fa_via", "Deliver 2FA Security Code Via")}
+                      </label>
                       <div className="grid grid-cols-3 gap-1.5 p-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-xl text-xs font-semibold">
                         <button
                           type="button"
@@ -536,7 +588,7 @@ export default function ConnectInLoginPage() {
                               : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
                           }`}
                         >
-                          <span>✉️ Email</span>
+                          <span>{t("send_code_via_email", "✉️ Email")}</span>
                         </button>
                         <button
                           type="button"
@@ -547,7 +599,7 @@ export default function ConnectInLoginPage() {
                               : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
                           }`}
                         >
-                          <span>💬 SMS</span>
+                          <span>{t("send_code_via_sms", "💬 SMS")}</span>
                         </button>
                         <button
                           type="button"
@@ -558,7 +610,7 @@ export default function ConnectInLoginPage() {
                               : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
                           }`}
                         >
-                          <span>📞 Call</span>
+                          <span>{t("send_code_via_call", "📞 Call")}</span>
                         </button>
                       </div>
                     </div>
@@ -567,7 +619,7 @@ export default function ConnectInLoginPage() {
                     {(signInChannel === 'sms' || signInChannel === 'call') && (
                       <div className="space-y-1 animate-in fade-in duration-150">
                         <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-                          Mobile Phone Number {signInChannel === 'call' ? 'for Voice Call' : 'for SMS Text'}
+                          {t("phone_number", "Mobile Phone Number")} {signInChannel === 'call' ? '(Voice Call)' : '(SMS Text)'}
                         </label>
                         <input
                           type="tel"
@@ -583,7 +635,7 @@ export default function ConnectInLoginPage() {
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
                         <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-                          Password
+                          {t("password", "Password")}
                         </label>
                         <button
                           type="button"
@@ -611,7 +663,7 @@ export default function ConnectInLoginPage() {
                       className="w-full rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white font-bold py-3 text-sm shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer mt-2"
                     >
                       {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-                      <span>Sign in with 2FA</span>
+                      <span>{t("sign_in_btn", "Sign in with 2FA")}</span>
                     </button>
                   </form>
 
@@ -619,7 +671,7 @@ export default function ConnectInLoginPage() {
                   <div className="relative flex items-center justify-center my-4">
                     <div className="w-full border-t border-zinc-200 dark:border-zinc-800" />
                     <span className="bg-white dark:bg-zinc-900 px-3 text-xs text-zinc-400 font-medium absolute">
-                      or sign in with
+                      {t("or_divider", "or")}
                     </span>
                   </div>
 
@@ -638,7 +690,7 @@ export default function ConnectInLoginPage() {
                         <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
                         <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
                       </svg>
-                      <span>Continue with Google</span>
+                      <span>{t("continue_with_google", "Continue with Google")}</span>
                     </button>
 
                     {/* Microsoft SSO Button */}
@@ -654,7 +706,7 @@ export default function ConnectInLoginPage() {
                         <rect x="1" y="11" width="9" height="9" fill="#00a4ef" />
                         <rect x="11" y="11" width="9" height="9" fill="#ffb900" />
                       </svg>
-                      <span>Continue with Microsoft (Entra ID)</span>
+                      <span>{t("continue_with_microsoft", "Continue with Microsoft Entra ID")}</span>
                     </button>
                   </div>
                 </div>
@@ -666,10 +718,10 @@ export default function ConnectInLoginPage() {
                       🔐
                     </div>
                     <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
-                      Two-Step Verification
+                      {t("two_step_verification", "Two-Step Verification")}
                     </h2>
                     <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                      Enter the 6-digit verification code delivered to <strong className="text-zinc-900 dark:text-zinc-200">{activeSignInTarget || signInEmail}</strong>
+                      {t("enter_code_delivered_to", "Enter the 6-digit verification code delivered to")} <strong className="text-zinc-900 dark:text-zinc-200">{activeSignInTarget || signInEmail}</strong>
                     </p>
                   </div>
 
@@ -690,7 +742,7 @@ export default function ConnectInLoginPage() {
                             : "text-sky-900 dark:text-sky-200"
                         }`}>
                           <span>{signInChannel === 'call' ? '📞' : signInChannel === 'sms' ? '💬' : '✉️'}</span>
-                          <span>{signInChannel === 'call' ? 'Voice Call Dispatched Code:' : signInChannel === 'sms' ? 'SMS Text Dispatched Code:' : 'Email Dispatched Code:'}</span>
+                          <span>{signInChannel === 'call' ? t("dispatched_voice_code", "Voice Call Dispatched Code:") : signInChannel === 'sms' ? t("dispatched_sms_code", "SMS Text Dispatched Code:") : t("dispatched_email_code", "Email Dispatched Code:")}</span>
                         </span>
                         <span className={`font-mono text-lg font-black tracking-[4px] ${
                           signInChannel === 'call'
@@ -708,7 +760,7 @@ export default function ConnectInLoginPage() {
                             onClick={() => playVoiceCallAudio(activeDispatchedCode)}
                             className="rounded-lg bg-purple-600 hover:bg-purple-700 text-white py-2 px-3 text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
                           >
-                            <span>🔊 Hear Call Again</span>
+                            <span>{t("hear_call_again", "🔊 Hear Call Again")}</span>
                           </button>
                           <button
                             type="button"
@@ -718,7 +770,7 @@ export default function ConnectInLoginPage() {
                             }}
                             className="rounded-lg bg-[#0A66C2] hover:bg-[#004182] text-white py-2 px-3 text-xs font-bold shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                           >
-                            <span>⚡ Auto-Fill &amp; Enter</span>
+                            <span>{t("autofill_enter", "⚡ Auto-Fill & Enter")}</span>
                           </button>
                         </div>
                       ) : (
@@ -734,7 +786,7 @@ export default function ConnectInLoginPage() {
                               : "bg-[#0A66C2] hover:bg-[#004182]"
                           }`}
                         >
-                          <span>⚡ 1-Click Auto-Fill &amp; Enter ({activeDispatchedCode})</span>
+                          <span>{t("autofill_enter", "⚡ 1-Click Auto-Fill & Enter")} ({activeDispatchedCode})</span>
                         </button>
                       )}
                     </div>
@@ -760,7 +812,7 @@ export default function ConnectInLoginPage() {
 
                     {/* Resend via Alternative Channels */}
                     <div className="text-xs text-zinc-500 space-y-2 pt-1">
-                      <p className="text-[11px] text-zinc-400">Didn't receive the code? Check your <strong>Spam / Junk</strong> folder, or resend via:</p>
+                      <p className="text-[11px] text-zinc-400">{t("didnt_receive_code", "Didn't receive the code? Check your Spam / Junk folder, or resend via:")}</p>
                       <div className="flex items-center justify-center gap-2 flex-wrap">
                         <button
                           type="button"
@@ -768,7 +820,7 @@ export default function ConnectInLoginPage() {
                           disabled={isLoading}
                           className="font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-md"
                         >
-                          ✉️ Email
+                          {t("send_code_via_email", "✉️ Email")}
                         </button>
                         <button
                           type="button"
@@ -776,7 +828,7 @@ export default function ConnectInLoginPage() {
                           disabled={isLoading}
                           className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-md"
                         >
-                          💬 SMS Text
+                          {t("send_code_via_sms", "💬 SMS Text")}
                         </button>
                         <button
                           type="button"
@@ -784,13 +836,13 @@ export default function ConnectInLoginPage() {
                           disabled={isLoading}
                           className="font-semibold text-purple-600 dark:text-purple-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-md"
                         >
-                          📞 Phone Call
+                          {t("send_code_via_call", "📞 Phone Call")}
                         </button>
                       </div>
 
                       {/* Demo / Sandbox Access Hint */}
                       <div className="mt-3 rounded-lg bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800/50 p-2.5 text-center text-xs text-sky-800 dark:text-sky-300">
-                        <span className="font-semibold">💡 Instant Access Code:</span> You can also enter <code className="font-mono font-bold bg-sky-200/70 dark:bg-sky-900/70 px-1.5 py-0.5 rounded text-sky-950 dark:text-sky-100">123456</code> or <code className="font-mono font-bold bg-sky-200/70 dark:bg-sky-900/70 px-1.5 py-0.5 rounded text-sky-950 dark:text-sky-100">849201</code> to verify instantly.
+                        <span className="font-semibold">{t("instant_access_label", "💡 Instant Access Code:")}</span> {t("instant_access_hint", "You can also enter 123456 or 849201 to verify instantly.")}
                       </div>
                     </div>
 
@@ -800,7 +852,7 @@ export default function ConnectInLoginPage() {
                         onClick={() => setSignInStep('credentials')}
                         className="flex-1 rounded-full border border-zinc-300 dark:border-zinc-700 py-2.5 text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
                       >
-                        Back
+                        {t("back", "Back")}
                       </button>
                       <button
                         type="submit"
@@ -808,12 +860,12 @@ export default function ConnectInLoginPage() {
                         className="flex-1 rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white py-2.5 text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                       >
                         {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
-                        <span>Verify &amp; Sign in</span>
+                        <span>{t("verify_and_sign_in", "Verify & Sign in")}</span>
                       </button>
                     </div>
 
                     <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 text-center">
-                      <p className="text-[11px] text-zinc-400 mb-2">Or verify instantly via single sign-on:</p>
+                      <p className="text-[11px] text-zinc-400 mb-2">{t("or_verify_sso", "Or verify instantly via single sign-on:")}</p>
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
@@ -846,10 +898,10 @@ export default function ConnectInLoginPage() {
                 <div className="space-y-5">
                   <div className="space-y-1">
                     <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-                      Join ConnectIn
+                      {t("join_connectin", "Join ConnectIn")}
                     </h1>
                     <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
-                      Make the most of your professional life
+                      {t("join_now_title", "Make the most of your professional life")}
                     </p>
                   </div>
 
@@ -867,7 +919,7 @@ export default function ConnectInLoginPage() {
                         <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
                         <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
                       </svg>
-                      <span>Join with Google</span>
+                      <span>{t("join_with_google", "Join with Google")}</span>
                     </button>
 
                     <button
@@ -882,14 +934,14 @@ export default function ConnectInLoginPage() {
                         <rect x="1" y="11" width="9" height="9" fill="#00a4ef" />
                         <rect x="11" y="11" width="9" height="9" fill="#ffb900" />
                       </svg>
-                      <span>Join with Microsoft</span>
+                      <span>{t("join_with_microsoft", "Join with Microsoft")}</span>
                     </button>
                   </div>
 
                   <div className="relative flex items-center justify-center my-3">
                     <div className="w-full border-t border-zinc-200 dark:border-zinc-800" />
                     <span className="bg-white dark:bg-zinc-900 px-3 text-xs text-zinc-400 font-medium absolute">
-                      or continue with email
+                      {t("or_continue_with_email", "or continue with email")}
                     </span>
                   </div>
 
@@ -897,7 +949,7 @@ export default function ConnectInLoginPage() {
                     {/* Names Row */}
                     <div className="grid grid-cols-2 gap-2.5">
                       <div className="space-y-1">
-                        <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">First name</label>
+                        <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{t("first_name", "First name")}</label>
                         <input
                           type="text"
                           required
@@ -908,7 +960,7 @@ export default function ConnectInLoginPage() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Last name</label>
+                        <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{t("last_name", "Last name")}</label>
                         <input
                           type="text"
                           required
@@ -922,7 +974,7 @@ export default function ConnectInLoginPage() {
 
                     {/* Email */}
                     <div className="space-y-1">
-                      <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Work / Personal Email</label>
+                      <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{t("work_email", "Work / Personal Email")}</label>
                       <input
                         type="email"
                         required
@@ -937,7 +989,7 @@ export default function ConnectInLoginPage() {
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
                         <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-                          Mobile Phone Number {(joinChannel === 'sms' || joinChannel === 'call') ? '(Required for ' + (joinChannel === 'call' ? 'Call' : 'SMS') + ')' : '(Optional)'}
+                          {t("phone_number", "Mobile Phone Number")} {(joinChannel === 'sms' || joinChannel === 'call') ? '(Required for ' + (joinChannel === 'call' ? 'Call' : 'SMS') + ')' : '(Optional)'}
                         </label>
                         <span className="text-[10px] text-zinc-400 font-mono">SMS / VOICE</span>
                       </div>
@@ -952,7 +1004,7 @@ export default function ConnectInLoginPage() {
 
                     {/* 2FA Delivery Channel Selection */}
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Deliver 2FA Security Code Via</label>
+                      <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{t("deliver_2fa_via", "Deliver 2FA Security Code Via")}</label>
                       <div className="grid grid-cols-3 gap-1.5 p-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-xl text-xs font-semibold">
                         <button
                           type="button"
@@ -963,7 +1015,7 @@ export default function ConnectInLoginPage() {
                               : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
                           }`}
                         >
-                          <span>✉️ Email</span>
+                          <span>{t("send_code_via_email", "✉️ Email")}</span>
                         </button>
                         <button
                           type="button"
@@ -974,7 +1026,7 @@ export default function ConnectInLoginPage() {
                               : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
                           }`}
                         >
-                          <span>💬 SMS</span>
+                          <span>{t("send_code_via_sms", "💬 SMS")}</span>
                         </button>
                         <button
                           type="button"
@@ -985,14 +1037,14 @@ export default function ConnectInLoginPage() {
                               : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
                           }`}
                         >
-                          <span>📞 Call</span>
+                          <span>{t("send_code_via_call", "📞 Call")}</span>
                         </button>
                       </div>
                     </div>
 
                     {/* Password */}
                     <div className="space-y-1">
-                      <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Password (6 or more characters)</label>
+                      <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{t("password", "Password (6 or more characters)")}</label>
                       <input
                         type="password"
                         required
@@ -1008,10 +1060,10 @@ export default function ConnectInLoginPage() {
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
                         <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-                          Industry &amp; Professional Domain
+                          {t("industry_domain", "Industry & Professional Domain")}
                         </label>
                         <span className="text-[10px] font-mono text-[#0A66C2] dark:text-sky-400 font-bold">
-                          🔒 Need-to-Know Enclave
+                          {t("need_to_know_enclave", "🔒 Need-to-Know Enclave")}
                         </span>
                       </div>
                       <select
@@ -1034,23 +1086,17 @@ export default function ConnectInLoginPage() {
                       </select>
                     </div>
 
-                    {/* Specific Profession Dropdown */}
-                    <div className="space-y-1">
-                      <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-                        Your Specific Profession / Trade
-                      </label>
-                      <select
-                        value={joinProfessionId}
-                        onChange={(e) => setJoinProfessionId(e.target.value)}
-                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-xs font-semibold text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
-                      >
-                        {getProfessionsByEnclave(joinEnclaveId).map(prof => (
-                          <option key={prof.id} value={prof.id}>
-                            {prof.title}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    {/* Search & Popout Profession Picker for Registration */}
+                    <ProfessionSearchPopout
+                      selectedProfessionId={joinProfessionId}
+                      onSelectProfession={(profId) => {
+                        setJoinProfessionId(profId)
+                        const p = findProfessionById(profId)
+                        if (p) setJoinEnclaveId(p.enclaveId)
+                      }}
+                      label={t("your_profession_picker", "Your Specific Profession / Trade (Search or Select)")}
+                      showAutoDetectOption={false}
+                    />
 
                     {/* Least-Privilege Enclave Preview Badge & Dedicated Tools */}
                     {(() => {
@@ -1094,7 +1140,7 @@ export default function ConnectInLoginPage() {
                       className="w-full rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white font-bold py-3 text-sm shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer mt-2"
                     >
                       {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-                      <span>Agree &amp; Join</span>
+                      <span>{t("agree_and_join", "Agree & Join")}</span>
                     </button>
                   </form>
                 </div>
@@ -1112,10 +1158,10 @@ export default function ConnectInLoginPage() {
                       {joinChannel === 'call' ? '📞' : joinChannel === 'sms' && joinPhone ? '💬' : '✉️'}
                     </div>
                     <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
-                      Confirm Verification Code
+                      {t("confirm_verification_code", "Confirm Verification Code")}
                     </h2>
                     <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                      Enter the 6-digit code sent to <strong className="text-zinc-900 dark:text-zinc-200">{(joinChannel === 'sms' || joinChannel === 'call') && joinPhone ? joinPhone : joinEmail}</strong>
+                      {t("enter_code_delivered_to", "Enter the 6-digit code sent to")} <strong className="text-zinc-900 dark:text-zinc-200">{(joinChannel === 'sms' || joinChannel === 'call') && joinPhone ? joinPhone : joinEmail}</strong>
                     </p>
                   </div>
 
@@ -1136,7 +1182,7 @@ export default function ConnectInLoginPage() {
                             : "text-sky-900 dark:text-sky-200"
                         }`}>
                           <span>{joinChannel === 'call' ? '📞' : joinChannel === 'sms' ? '💬' : '✉️'}</span>
-                          <span>{joinChannel === 'call' ? 'Voice Call Security Code:' : joinChannel === 'sms' ? 'SMS Text Security Code:' : 'Email Security Code:'}</span>
+                          <span>{joinChannel === 'call' ? t("dispatched_voice_code", "Voice Call Security Code:") : joinChannel === 'sms' ? t("dispatched_sms_code", "SMS Text Security Code:") : t("dispatched_email_code", "Email Security Code:")}</span>
                         </span>
                         <span className={`font-mono text-lg font-black tracking-[4px] ${
                           joinChannel === 'call'
@@ -1154,7 +1200,7 @@ export default function ConnectInLoginPage() {
                             onClick={() => playVoiceCallAudio(activeDispatchedCode)}
                             className="rounded-lg bg-purple-600 hover:bg-purple-700 text-white py-2 px-3 text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
                           >
-                            <span>🔊 Hear Call Again</span>
+                            <span>{t("hear_call_again", "🔊 Hear Call Again")}</span>
                           </button>
                           <button
                             type="button"
@@ -1164,7 +1210,7 @@ export default function ConnectInLoginPage() {
                             }}
                             className="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white py-2 px-3 text-xs font-bold shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                           >
-                            <span>⚡ Auto-Fill &amp; Enter</span>
+                            <span>{t("autofill_enter", "⚡ Auto-Fill & Enter")}</span>
                           </button>
                         </div>
                       ) : (
@@ -1180,7 +1226,7 @@ export default function ConnectInLoginPage() {
                               : "bg-[#0A66C2] hover:bg-[#004182]"
                           }`}
                         >
-                          <span>⚡ 1-Click Auto-Fill &amp; Enter ({activeDispatchedCode})</span>
+                          <span>{t("autofill_enter", "⚡ 1-Click Auto-Fill & Enter")} ({activeDispatchedCode})</span>
                         </button>
                       )}
                     </div>
@@ -1206,7 +1252,7 @@ export default function ConnectInLoginPage() {
 
                     {/* Resend via Alternative Channels */}
                     <div className="text-xs text-zinc-500 space-y-2 pt-1">
-                      <p className="text-[11px] text-zinc-400">Didn't receive the code? Resend via:</p>
+                      <p className="text-[11px] text-zinc-400">{t("didnt_receive_code", "Didn't receive the code? Resend via:")}</p>
                       <div className="flex items-center justify-center gap-2 flex-wrap">
                         <button
                           type="button"
@@ -1214,7 +1260,7 @@ export default function ConnectInLoginPage() {
                           disabled={isLoading}
                           className="font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-md"
                         >
-                          ✉️ Email
+                          {t("send_code_via_email", "✉️ Email")}
                         </button>
                         <button
                           type="button"
@@ -1222,7 +1268,7 @@ export default function ConnectInLoginPage() {
                           disabled={isLoading}
                           className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-md"
                         >
-                          💬 SMS Text
+                          {t("send_code_via_sms", "💬 SMS Text")}
                         </button>
                         <button
                           type="button"
@@ -1230,7 +1276,7 @@ export default function ConnectInLoginPage() {
                           disabled={isLoading}
                           className="font-semibold text-purple-600 dark:text-purple-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-md"
                         >
-                          📞 Phone Call
+                          {t("send_code_via_call", "📞 Phone Call")}
                         </button>
                       </div>
                     </div>
@@ -1241,20 +1287,20 @@ export default function ConnectInLoginPage() {
                         onClick={() => setJoinStep('form')}
                         className="flex-1 rounded-full border border-zinc-300 dark:border-zinc-700 py-2.5 text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
                       >
-                        Back
+                        {t("back", "Back")}
                       </button>
                       <button
                         type="submit"
                         disabled={isLoading || join2FACode.length < 6}
                         className="flex-1 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                       >
-                        {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                        <span>Confirm &amp; Join</span>
+                        {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
+                        <span>{t("confirm_and_join", "Confirm & Join")}</span>
                       </button>
                     </div>
 
                     <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 text-center">
-                      <p className="text-[11px] text-zinc-400 mb-2">Or verify instantly via single sign-on:</p>
+                      <p className="text-[11px] text-zinc-400 mb-2">{t("or_verify_sso", "Or verify instantly via single sign-on:")}</p>
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
@@ -1288,7 +1334,7 @@ export default function ConnectInLoginPage() {
           >
             <span className="flex items-center gap-1.5">
               <Sparkles className="h-3.5 w-3.5 text-[#0A66C2]" />
-              <span>⚡ Testing? Try 1-Click Demo Personas</span>
+              <span>{t("try_demo_personas", "⚡ Testing? Try 1-Click Demo Personas")}</span>
             </span>
             {isDemoDrawerOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </button>
@@ -1296,7 +1342,7 @@ export default function ConnectInLoginPage() {
           {isDemoDrawerOpen && (
             <div className="mt-2 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-3.5 shadow-lg space-y-2 animate-in fade-in zoom-in-95">
               <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                Instantly switch roles to test different workspace views:
+                {t("switch_roles_hint", "Instantly switch roles to test different workspace views:")}
               </p>
               <div className="grid grid-cols-1 gap-1.5 max-h-[220px] overflow-y-auto pr-1">
                 {DEMO_AUTH_PERSONAS.map((p) => (
@@ -1328,11 +1374,11 @@ export default function ConnectInLoginPage() {
       {/* ─── 4. LINKEDIN-STYLE CLEAN FOOTER ─── */}
       <footer className="w-full bg-white dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800 py-4 px-6 text-center text-[11px] text-zinc-500 space-y-1">
         <div className="flex items-center justify-center gap-4 flex-wrap">
-          <Link href="/about-us" className="hover:underline">About</Link>
-          <Link href="/assessment" className="hover:underline">Security Framework</Link>
-          <Link href="/legal/privacy-policy" className="hover:underline">Privacy Policy</Link>
-          <Link href="/services" className="hover:underline">Ecosystem Services</Link>
-          <Link href="/contact-us" className="hover:underline">Support</Link>
+          <Link href="/about-us" className="hover:underline">{t("footer_about", "About")}</Link>
+          <Link href="/assessment" className="hover:underline">{t("footer_security", "Security Framework")}</Link>
+          <Link href="/legal/privacy-policy" className="hover:underline">{t("footer_privacy", "Privacy Policy")}</Link>
+          <Link href="/services" className="hover:underline">{t("footer_services", "Ecosystem Services")}</Link>
+          <Link href="/contact-us" className="hover:underline">{t("footer_support", "Support")}</Link>
         </div>
         <p className="text-zinc-400">Expedite Consults LLC © 2026 · ConnectIn Zero-Trust Identity Protocol</p>
       </footer>

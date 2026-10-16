@@ -39,13 +39,17 @@ import {
   Bot,
   Zap,
   Tv,
-  Key
+  Key,
+  ExternalLink
 } from "lucide-react"
 import { UserProfile, SuggestedConnection } from "@/lib/linkedin-data"
 import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
 import { isSuperAdminUser } from "@/lib/connectin-profile"
 import { getCategorizedMoreMenu, getEnclaveSearchPlaceholder, getEnclaveModules } from "@/lib/connectin-navbar-data"
 import { findEnclaveById } from "@/lib/connectin-professions"
+import { ThemeColorSwitcher } from "@/components/theme/ThemeColorSwitcher"
+import { LanguageSwitcher } from "@/components/language/LanguageSwitcher"
+import { useLanguage } from "@/context/LanguageContext"
 
 interface LinkedInNavbarProps {
   user: UserProfile
@@ -88,6 +92,7 @@ export function LinkedInNavbar({
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [connectedIds, setConnectedIds] = useState<Set<string>>(new Set())
+  const { t } = useLanguage()
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -111,14 +116,14 @@ export function LinkedInNavbar({
 
   // Streamlined Clean Primary Navigation
   const primaryNavItems = [
-    { id: "home", label: "Home", icon: House, badge: 0 },
-    { id: "network", label: "Network", icon: Users, badge: 2 },
-    { id: "jobs", label: "Jobs", icon: Briefcase, badge: 0 },
-    { id: "marketplace", label: "Marketplace 🛍️", icon: ShoppingBag, badge: 0, isMarketplace: true },
-    { id: "media", label: "Media 🎥", icon: Tv, badge: 0 },
-    { id: "pulserooms", label: "Pulse 📰", icon: Radio, badge: 1 },
-    { id: "learning", label: "Learning 🎓", icon: GraduationCap, badge: 0 },
-    { id: "messaging", label: "Messages 💬", icon: MessageSquare, badge: unreadMessagesCount },
+    { id: "home", label: t("nav_home", "Home"), icon: House, badge: 0 },
+    { id: "network", label: t("nav_network", "Network"), icon: Users, badge: 2 },
+    { id: "jobs", label: t("nav_jobs", "Jobs"), icon: Briefcase, badge: 0 },
+    { id: "marketplace", label: t("nav_marketplace", "Marketplace 🛍️"), icon: ShoppingBag, badge: 0, isMarketplace: true },
+    { id: "media", label: t("nav_media", "Media 🎥"), icon: Tv, badge: 0 },
+    { id: "pulserooms", label: t("nav_pulse", "Pulse 📰"), icon: Radio, badge: 1 },
+    { id: "learning", label: t("nav_learning", "Learning 🎓"), icon: GraduationCap, badge: 0 },
+    { id: "messaging", label: t("nav_messages", "Messages 💬"), icon: MessageSquare, badge: unreadMessagesCount },
   ]
 
   const isAdminUser = isSuperAdminUser(user)
@@ -252,7 +257,7 @@ export function LinkedInNavbar({
               <Search className="h-3.5 w-3.5 text-zinc-500 shrink-0" />
               <input
                 type="text"
-                placeholder={getEnclaveSearchPlaceholder(user.professionEnclave)}
+                placeholder={t("search_placeholder", getEnclaveSearchPlaceholder(user.professionEnclave))}
                 value={searchQuery}
                 onChange={(e) => {
                   onSearchChange(e.target.value)
@@ -288,7 +293,7 @@ export function LinkedInNavbar({
                 title="Search platform"
               >
                 <Search className="h-2.5 w-2.5" />
-                <span className="hidden sm:inline">Search</span>
+                <span className="hidden sm:inline">{t("search_button", "Search")}</span>
               </button>
             </div>
 
@@ -359,7 +364,7 @@ export function LinkedInNavbar({
                                     : "bg-[#0A66C2] text-white hover:bg-[#004182]"
                                 }`}
                               >
-                                {isConnected ? "✓ Sent" : "Connect"}
+                                {isConnected ? t("sent", "✓ Sent") : t("connect", "Connect")}
                               </button>
                             </div>
                           )
@@ -367,7 +372,7 @@ export function LinkedInNavbar({
                       </div>
                     ) : (
                       <div className="p-3 text-center text-xs text-zinc-500 dark:text-zinc-400">
-                        No members matching &ldquo;{searchQuery}&rdquo;. Try Omnisearch below.
+                        {t("no_members_found", `No members matching "${searchQuery}". Try Omnisearch below.`)}
                       </div>
                     )}
                   </div>
@@ -376,7 +381,7 @@ export function LinkedInNavbar({
                   {matchingModules.length > 0 && (
                     <div className="space-y-1.5 border-t border-zinc-100 pt-2 dark:border-zinc-800">
                       <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400">
-                        Platform Hubs &amp; Modules
+                        {t("hubs_and_modules", "Platform Hubs & Modules")}
                       </p>
                       <div className="space-y-1">
                         {matchingModules.map((mod) => (
@@ -384,21 +389,36 @@ export function LinkedInNavbar({
                             key={mod.id}
                             type="button"
                             onClick={() => {
-                              onSelectTab(mod.id)
+                              if (mod.url) {
+                                window.open(mod.url, '_blank', 'noopener,noreferrer')
+                              } else {
+                                onSelectTab(mod.id)
+                              }
                               setIsSearchFocused(false)
                             }}
                             className="w-full flex items-center justify-between rounded-xl p-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors group cursor-pointer"
                           >
-                            <div className="flex items-center gap-2">
-                              <span className="text-base">{mod.icon}</span>
-                              <div>
-                                <p className="font-bold text-xs text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2]">
-                                  {mod.label}
-                                </p>
-                                <p className="text-[10px] text-zinc-400">{mod.desc}</p>
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="text-base shrink-0">{mod.icon}</span>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <p className="font-bold text-xs text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2] truncate">
+                                    {mod.label}
+                                  </p>
+                                  {mod.badge && (
+                                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300 shrink-0">
+                                      {mod.badge}
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-[10px] text-zinc-400 truncate">{mod.desc}</p>
                               </div>
                             </div>
-                            <span className="text-xs text-zinc-400 group-hover:text-[#0A66C2]">→</span>
+                            {mod.url ? (
+                              <ExternalLink className="h-3.5 w-3.5 text-zinc-400 group-hover:text-[#0A66C2] shrink-0" />
+                            ) : (
+                              <span className="text-xs text-zinc-400 group-hover:text-[#0A66C2] shrink-0">→</span>
+                            )}
                           </button>
                         ))}
                       </div>
@@ -418,8 +438,8 @@ export function LinkedInNavbar({
                       <Search className="h-3.5 w-3.5" />
                       <span>
                         {searchQuery.trim()
-                          ? `Search all results for "${searchQuery}" in Omnisearch →`
-                          : "Open Universal Omnisearch Directory →"}
+                          ? t("search_all_results", `Search all results for "${searchQuery}" in Omnisearch →`).replace("{query}", searchQuery)
+                          : t("search_open_omnisearch", "Open Universal Omnisearch Directory →")}
                       </span>
                     </button>
                   </div>
@@ -483,7 +503,7 @@ export function LinkedInNavbar({
             >
               <Grid3X3 className="h-4.5 w-4.5" />
               <span className="flex items-center gap-0.5 text-[10px] lg:text-[11px] mt-0.5 font-medium">
-                More <ChevronDown className="h-3 w-3" />
+                {t("nav_more", "More")} <ChevronDown className="h-3 w-3" />
               </span>
             </button>
 
@@ -493,10 +513,10 @@ export function LinkedInNavbar({
                 <div className="absolute right-0 top-12 z-50 w-72 rounded-2xl border border-zinc-200 bg-white p-3 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 space-y-2">
                   <div className="border-b border-zinc-100 pb-2 dark:border-zinc-800">
                     <p className="font-bold text-xs text-zinc-900 dark:text-zinc-100">
-                      ConnectIn Modules &amp; Hubs
+                      {t("connectin_modules_hubs", "ConnectIn Modules & Hubs")}
                     </p>
                     <p className="text-[10px] text-zinc-400">
-                      Enterprise Solutions, Company Pages &amp; Trust Operations
+                      {t("enterprise_solutions_desc", "Enterprise Solutions, Company Pages & Trust Operations")}
                     </p>
                   </div>
 
@@ -511,17 +531,31 @@ export function LinkedInNavbar({
                             <button
                               key={menu.id + menu.label}
                               onClick={() => {
-                                onSelectTab(menu.id)
+                                if (menu.url) {
+                                  window.open(menu.url, '_blank', 'noopener,noreferrer')
+                                } else {
+                                  onSelectTab(menu.id)
+                                }
                                 setIsMoreOpen(false)
                               }}
                               className="w-full rounded-xl p-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors flex items-center justify-between group cursor-pointer"
                             >
-                              <div>
-                                <p className="font-bold text-xs text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2]">
-                                  {menu.label}
-                                </p>
-                                <p className="text-[10px] text-zinc-400">{menu.desc}</p>
+                              <div className="min-w-0 flex-1 pr-2">
+                                <div className="flex items-center gap-1.5">
+                                  <p className="font-bold text-xs text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2] truncate">
+                                    {menu.label}
+                                  </p>
+                                  {menu.badge && (
+                                    <span className="text-[8px] font-mono font-bold px-1.5 py-0.2 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300 shrink-0">
+                                      {menu.badge}
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-[10px] text-zinc-400 truncate">{menu.desc}</p>
                               </div>
+                              {menu.url && (
+                                <ExternalLink className="h-3.5 w-3.5 text-zinc-400 group-hover:text-[#0A66C2] shrink-0" />
+                              )}
                             </button>
                           ))}
                         </div>
@@ -532,14 +566,18 @@ export function LinkedInNavbar({
               </>
             )}
           </div>
-          {/* ConnectIn AI Launcher Button */}
+          {/* Vibe AI Global Assistant Launcher Button */}
           <button
             onClick={onOpenAIAssistant}
-            className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-all"
-            title="Open ConnectIn AI Assistant"
+            className="group flex items-center gap-1.5 rounded-full bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-700 hover:from-purple-500 hover:to-indigo-500 px-3 py-1.5 text-xs font-bold text-white shadow-md hover:shadow-purple-500/25 transition-all ring-1 ring-white/20 cursor-pointer"
+            title="Ask Vibe AI — Interactive Q&A, Campus Intelligence & Answers"
           >
-            <Sparkles className="h-3.5 w-3.5 text-amber-300 animate-pulse" />
-            <span className="hidden sm:inline">ConnectIn AI</span>
+            <Sparkles className="h-3.5 w-3.5 text-amber-300 animate-pulse group-hover:scale-110 transition-transform" />
+            <span className="hidden sm:inline">✨ Vibe AI</span>
+            <span className="sm:hidden font-bold">Vibe</span>
+            <span className="hidden md:inline rounded bg-white/20 px-1.5 py-0.2 text-[9px] font-mono text-amber-200">
+              Q&amp;A
+            </span>
           </button>
 
           {/* Notifications Tab Button */}
@@ -637,7 +675,7 @@ export function LinkedInNavbar({
 
                   <div className="pt-2 space-y-1.5">
                     <p className="px-2 py-0.5 font-bold text-zinc-900 dark:text-zinc-100 text-[10px] uppercase tracking-wider font-mono">
-                      Active Workspace Switcher
+                      {t("active_workspace_switcher", "Active Workspace Switcher")}
                     </p>
 
                     {/* 4 Persona Cards */}
@@ -654,8 +692,8 @@ export function LinkedInNavbar({
                             : "bg-zinc-50 border-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300"
                         }`}
                       >
-                        <p className="font-bold text-[11px]">👤 Personal</p>
-                        <p className="text-[9px] opacity-70">Feed, Jobs &amp; Labs</p>
+                        <p className="font-bold text-[11px]">👤 {t("workspace_personal", "Personal")}</p>
+                        <p className="text-[9px] opacity-70">{t("workspace_personal_desc", "Feed, Jobs & Labs")}</p>
                       </button>
 
                       <button
@@ -670,8 +708,8 @@ export function LinkedInNavbar({
                             : "bg-zinc-50 border-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300"
                         }`}
                       >
-                        <p className="font-bold text-[11px]">🏢 Enterprise</p>
-                        <p className="text-[9px] opacity-70">$2.4M Spend Desk</p>
+                        <p className="font-bold text-[11px]">🏢 {t("workspace_enterprise", "Enterprise")}</p>
+                        <p className="text-[9px] opacity-70">{t("workspace_enterprise_desc", "$2.4M Spend Desk")}</p>
                       </button>
 
                       <button
@@ -686,8 +724,8 @@ export function LinkedInNavbar({
                             : "bg-zinc-50 border-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300"
                         }`}
                       >
-                        <p className="font-bold text-[11px]">🎬 Studio</p>
-                        <p className="text-[9px] opacity-70">Video &amp; Podcasts</p>
+                        <p className="font-bold text-[11px]">🎬 {t("workspace_studio", "Studio")}</p>
+                        <p className="text-[9px] opacity-70">{t("workspace_studio_desc", "Video & Podcasts")}</p>
                       </button>
 
                       <button
@@ -702,8 +740,8 @@ export function LinkedInNavbar({
                             : "bg-zinc-50 border-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300"
                         }`}
                       >
-                        <p className="font-bold text-[11px]">💼 Seller</p>
-                        <p className="text-[9px] opacity-70">$122.7K MRR</p>
+                        <p className="font-bold text-[11px]">💼 {t("workspace_seller", "Seller")}</p>
+                        <p className="text-[9px] opacity-70">{t("workspace_seller_desc", "$122.7K MRR")}</p>
                       </button>
                     </div>
 
@@ -714,7 +752,7 @@ export function LinkedInNavbar({
                       }}
                       className="w-full rounded-xl bg-[#0A66C2] py-2 text-center text-xs font-bold text-white hover:bg-[#004182] transition-colors shadow-xs mt-2"
                     >
-                      View Unified Profile &amp; Portfolio 📁
+                      {t("view_unified_profile", "View Unified Profile & Portfolio 📁")}
                     </button>
 
                     {isAdminUser ? (
@@ -726,7 +764,7 @@ export function LinkedInNavbar({
                           }}
                           className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 p-1.5 text-center text-[11px] font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100"
                         >
-                          🔐 Security &amp; Keys
+                          {t("security_keys", "🔐 Security & Keys")}
                         </button>
                         <button
                           onClick={() => {
@@ -735,7 +773,7 @@ export function LinkedInNavbar({
                           }}
                           className="rounded-xl border border-red-200 dark:border-red-800/60 bg-red-50/50 dark:bg-red-950/40 p-1.5 text-center text-[11px] font-bold text-red-700 dark:text-red-300 hover:bg-red-100"
                         >
-                          🛡️ Admin Console
+                          {t("admin_console", "🛡️ Admin Console")}
                         </button>
                       </div>
                     ) : (
@@ -747,7 +785,7 @@ export function LinkedInNavbar({
                           }}
                           className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 p-2 text-center text-xs font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 transition-colors"
                         >
-                          🔐 Account Security &amp; Passkeys
+                          {t("account_security_passkeys", "🔐 Account Security & Passkeys")}
                         </button>
                       </div>
                     )}
@@ -755,12 +793,12 @@ export function LinkedInNavbar({
 
                   <div className="mt-3 space-y-1 border-t border-zinc-100 pt-2 text-xs text-zinc-600 dark:border-zinc-800 dark:text-zinc-300">
                     <p className="px-2 py-1 font-bold text-zinc-900 dark:text-zinc-100 text-[11px] uppercase tracking-wider">
-                      Verified Identity Status
+                      {t("verified_identity_status", "Verified Identity Status")}
                     </p>
                     <div className="px-2 text-[11px] text-zinc-500 space-y-0.5">
-                      <p>• Role: <span className="font-semibold text-zinc-700 dark:text-zinc-200 capitalize">{(user as any).role || "personal"}</span></p>
-                      <p>• Clearance: <span className="font-semibold text-zinc-700 dark:text-zinc-200">{(user as any).clearanceLevel || "Level 2 Verified Identity"}</span></p>
-                      <p>• Verification: <span className="text-emerald-600 font-semibold">FIDO2 / Zero-Trust Active ✓</span></p>
+                      <p>• {t("role_label", "Role")}: <span className="font-semibold text-zinc-700 dark:text-zinc-200 capitalize">{(user as any).role || "personal"}</span></p>
+                      <p>• {t("clearance_label", "Clearance")}: <span className="font-semibold text-zinc-700 dark:text-zinc-200">{(user as any).clearanceLevel || "Level 2 Verified Identity"}</span></p>
+                      <p>• {t("verification_label", "Verification")}: <span className="text-emerald-600 font-semibold">FIDO2 / Zero-Trust Active ✓</span></p>
                     </div>
 
                     {isAdminUser && onOpenAuthModal && (
@@ -772,7 +810,7 @@ export function LinkedInNavbar({
                         className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-950 py-2 text-xs font-bold shadow-xs hover:opacity-90 transition-all mt-2 cursor-pointer"
                       >
                         <Key className="h-3.5 w-3.5 text-amber-300" />
-                        <span>Switch Persona / Auth Gate 🔑</span>
+                        <span>{t("switch_persona_gate", "Switch Persona / Auth Gate 🔑")}</span>
                       </button>
                     )}
 
@@ -788,7 +826,7 @@ export function LinkedInNavbar({
                       className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 font-semibold mt-1.5 cursor-pointer"
                     >
                       <LogOut className="h-4 w-4" />
-                      <span>Sign Out</span>
+                      <span>{t("sign_out", "Sign Out")}</span>
                     </button>
                   </div>
                 </div>
@@ -796,18 +834,11 @@ export function LinkedInNavbar({
             )}
           </div>
 
-          {/* Dark / Light Mode Toggle */}
-          <button
-            onClick={toggleTheme}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 transition-colors"
-            title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-          >
-            {isDarkMode ? (
-              <Sun className="h-4 w-4 text-amber-400" />
-            ) : (
-              <Moon className="h-4 w-4" />
-            )}
-          </button>
+          {/* Theme & Background Color Switcher Popover */}
+          <ThemeColorSwitcher align="right" />
+
+          {/* Global Multi-Language Switcher Popover */}
+          <LanguageSwitcher align="right" />
         </div>
       </div>
     </header>

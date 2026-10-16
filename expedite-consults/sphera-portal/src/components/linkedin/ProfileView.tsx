@@ -35,8 +35,14 @@ import {
   FolderGit2,
   BarChart3,
   Tag,
-  ArrowRight
+  ArrowRight,
+  Trash2,
+  Upload
 } from "lucide-react"
+import { useLanguage } from "@/context/LanguageContext"
+import { ResumeUploadModal } from "./ResumeUploadModal"
+import { ExperienceFormModal } from "./ExperienceFormModal"
+import { ParsedExperience, DEMO_RESUME_PRESETS } from "@/lib/resume-parser"
 import { UserProfile } from "@/lib/linkedin-data"
 import {
   WORKSPACE_PORTFOLIO_DATA,
@@ -86,9 +92,126 @@ export function ProfileView({
   onOpenAnalytics,
   onNavigateMessaging
 }: ProfileViewProps) {
+  const { t } = useLanguage()
   const effectiveEnclaveId = user.professionEnclave || 'trades_construction'
   const enclaveInfo = findEnclaveById(effectiveEnclaveId)
   const enclaveWorkspace = getWorkspaceDataForEnclave(effectiveEnclaveId)
+
+  // Resume & Experience Builder State
+  const [isResumeModalOpen, setIsResumeModalOpen] = useState(false)
+  const [isExpFormModalOpen, setIsExpFormModalOpen] = useState(false)
+  const [editingExperience, setEditingExperience] = useState<ParsedExperience | null>(null)
+  const [resumeSuccessBanner, setResumeSuccessBanner] = useState<string | null>(null)
+
+  const handleApplyResumeExperience = (
+    newExperiences: ParsedExperience[],
+    options: {
+      updateHeadline?: boolean
+      newHeadline?: string
+      updateAbout?: boolean
+      newAbout?: string
+      updateSkills?: boolean
+      extractedSkills?: string[]
+      appendMode?: boolean
+    }
+  ) => {
+    const formattedNewExp = newExperiences.map(e => ({
+      id: e.id,
+      role: e.role,
+      company: e.company,
+      companyLogo: e.companyLogo || 'https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?w=100&auto=format&fit=crop&q=80',
+      employmentType: e.employmentType || 'Full-time',
+      duration: e.duration,
+      location: e.location,
+      description: e.description,
+      skills: e.skills
+    }))
+
+    const finalExperiences = options.appendMode && user.experience && user.experience.length > 0
+      ? [...user.experience, ...formattedNewExp]
+      : formattedNewExp
+
+    const updatedUser: UserProfile = {
+      ...user,
+      experience: finalExperiences,
+      headline: options.updateHeadline && options.newHeadline ? options.newHeadline : user.headline,
+      about: options.updateAbout && options.newAbout ? options.newAbout : user.about,
+    }
+
+    if (options.updateSkills && options.extractedSkills && options.extractedSkills.length > 0) {
+      const existingSkillNames = (user.skills || []).map(s => s.name.toLowerCase())
+      const additionalSkills = options.extractedSkills
+        .filter(s => !existingSkillNames.includes(s.toLowerCase()))
+        .map(s => ({ name: s, endorsements: 1, endorsers: ['Verified Resume NLP'] }))
+      updatedUser.skills = [...(user.skills || []), ...additionalSkills]
+    }
+
+    saveStoredUser(updatedUser)
+    if (onUpdateUser) {
+      onUpdateUser(updatedUser)
+    }
+
+    setResumeSuccessBanner(`🎉 Successfully imported ${newExperiences.length} career positions from your resume!`)
+    setTimeout(() => setResumeSuccessBanner(null), 6000)
+  }
+
+  const handleSaveManualExperience = (exp: ParsedExperience) => {
+    const formattedExp = {
+      id: exp.id,
+      role: exp.role,
+      company: exp.company,
+      companyLogo: exp.companyLogo || 'https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?w=100&auto=format&fit=crop&q=80',
+      employmentType: exp.employmentType || 'Full-time',
+      duration: exp.duration,
+      location: exp.location,
+      description: exp.description,
+      skills: exp.skills
+    }
+
+    let nextExpList: any[] = []
+    if (editingExperience) {
+      nextExpList = (user.experience || []).map(e => (e.id === exp.id ? formattedExp : e))
+    } else {
+      nextExpList = [formattedExp, ...(user.experience || [])]
+    }
+
+    const updatedUser: UserProfile = {
+      ...user,
+      experience: nextExpList
+    }
+
+    saveStoredUser(updatedUser)
+    if (onUpdateUser) {
+      onUpdateUser(updatedUser)
+    }
+    setEditingExperience(null)
+  }
+
+  const handleDeleteExperience = (expId: string) => {
+    const nextExpList = (user.experience || []).filter(e => e.id !== expId)
+    const updatedUser: UserProfile = {
+      ...user,
+      experience: nextExpList
+    }
+    saveStoredUser(updatedUser)
+    if (onUpdateUser) {
+      onUpdateUser(updatedUser)
+    }
+  }
+
+  const handleQuickPresetImport = (presetId: string) => {
+    const preset = DEMO_RESUME_PRESETS.find(p => p.id === presetId)
+    if (!preset) return
+    handleApplyResumeExperience(preset.parsed.experiences, {
+      updateHeadline: true,
+      newHeadline: preset.parsed.headline,
+      updateAbout: true,
+      newAbout: preset.parsed.about,
+      updateSkills: true,
+      extractedSkills: preset.parsed.skills,
+      appendMode: false
+    })
+  }
 
   // 9 Workspace Sub-Sections
   const [workspaceSection, setWorkspaceSection] = useState<
@@ -826,49 +949,202 @@ export function ProfileView({
       {/* ========================================================================= */}
       {workspaceSection === 'experience' && (
         <div className="space-y-4">
-          {user.experience && user.experience.length > 0 ? (
-            user.experience.map((exp, i) => (
-              <div
-                key={i}
-                className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-3"
+          {/* Header Toolbar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-zinc-200 dark:border-zinc-800">
+            <div>
+              <h3 className="font-bold text-base sm:text-lg text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                <span>{t("experience_header", "Work Experience")}</span>
+                {user.experience && user.experience.length > 0 && (
+                  <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-[#0A66C2] dark:text-sky-300">
+                    {user.experience.length}
+                  </span>
+                )}
+              </h3>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                {t("experience_subheader", "Verified career history, operational responsibilities, and enclave accomplishments.")}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsResumeModalOpen(true)}
+                className="rounded-full bg-linear-to-r from-sky-600 to-[#0A66C2] hover:from-sky-500 hover:to-[#004182] text-white px-4 py-2 text-xs font-bold shadow-sm shadow-blue-500/20 transition-all flex items-center gap-1.5 cursor-pointer"
               >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h4 className="font-bold text-base text-zinc-900 dark:text-zinc-100">
-                      {exp.role}
-                    </h4>
-                    <p className="text-xs sm:text-sm font-semibold text-[#0A66C2]">{exp.company}</p>
-                    <p className="text-xs text-zinc-400">{exp.duration} · {exp.location}</p>
+                <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+                <span>Upload Resume</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingExperience(null)
+                  setIsExpFormModalOpen(true)
+                }}
+                className="rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 text-zinc-700 dark:text-zinc-200 px-3.5 py-2 text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>Add Position</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Success Banner */}
+          {resumeSuccessBanner && (
+            <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 p-4 text-xs font-semibold text-emerald-800 dark:text-emerald-300 flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                <span>{resumeSuccessBanner}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setResumeSuccessBanner(null)}
+                className="text-emerald-600 hover:text-emerald-800 p-1 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          {user.experience && user.experience.length > 0 ? (
+            <div className="space-y-4">
+              {user.experience.map((exp, i) => (
+                <div
+                  key={exp.id || i}
+                  className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-3 relative group transition-all hover:border-zinc-300 dark:hover:border-zinc-700"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-bold text-base text-zinc-900 dark:text-zinc-100">
+                          {exp.role}
+                        </h4>
+                        {exp.duration?.includes('Present') && (
+                          <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300/40">
+                            Present Role
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs sm:text-sm font-semibold text-[#0A66C2]">{exp.company}</p>
+                      <p className="text-xs text-zinc-400">{exp.duration} · {exp.location}</p>
+                    </div>
+
+                    <div className="flex items-center gap-1 opacity-90 group-hover:opacity-100 transition-opacity">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingExperience({
+                            id: exp.id || 'exp_' + i,
+                            role: exp.role,
+                            company: exp.company,
+                            employmentType: exp.employmentType || 'Full-time',
+                            duration: exp.duration,
+                            location: exp.location,
+                            description: exp.description,
+                            skills: exp.skills || []
+                          })
+                          setIsExpFormModalOpen(true)
+                        }}
+                        className="p-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 text-xs font-medium flex items-center gap-1 cursor-pointer transition-colors"
+                        title="Edit position"
+                      >
+                        <Edit3 className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Edit</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteExperience(exp.id)}
+                        className="p-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-red-50 dark:hover:bg-red-950/50 text-zinc-400 hover:text-red-500 cursor-pointer transition-colors"
+                        title="Delete position"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </div>
-                  {exp.duration?.includes('Present') && (
-                    <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                      Present Role
-                    </span>
+
+                  <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed whitespace-pre-line">
+                    {exp.description}
+                  </p>
+
+                  {exp.skills && exp.skills.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {exp.skills.map((sk: string) => (
+                        <span key={sk} className="rounded-md bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/60 dark:border-zinc-700/60 px-2 py-0.5 text-[11px] font-medium text-zinc-700 dark:text-zinc-300">
+                          {sk}
+                        </span>
+                      ))}
+                    </div>
                   )}
                 </div>
-
-                <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                  {exp.description}
-                </p>
-
-                {exp.skills && exp.skills.length > 0 && (
-                  <div className="flex flex-wrap gap-1 pt-1">
-                    {exp.skills.map((sk: string) => (
-                      <span key={sk} className="rounded-md bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-[11px] font-medium text-zinc-700 dark:text-zinc-300">
-                        {sk}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))
+              ))}
+            </div>
           ) : (
-            <div className="rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 p-8 text-center space-y-3">
-              <Briefcase className="h-8 w-8 text-zinc-400 mx-auto" />
-              <h4 className="font-bold text-sm text-zinc-700 dark:text-zinc-200">No Work Experience Added Yet</h4>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-sm mx-auto">
-                Click <strong>Edit Profile &amp; Name</strong> above to update your professional background and current role.
-              </p>
+            <div className="rounded-3xl border border-dashed border-zinc-300 dark:border-zinc-800 bg-linear-to-b from-zinc-50/80 to-blue-50/30 dark:from-zinc-900/60 dark:to-blue-950/20 p-8 sm:p-12 text-center space-y-5">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-white dark:bg-zinc-800 shadow-md border border-zinc-200 dark:border-zinc-700 text-[#0A66C2]">
+                <FileText className="h-8 w-8 text-[#0A66C2]" />
+              </div>
+
+              <div className="space-y-1.5 max-w-md mx-auto">
+                <h4 className="font-bold text-base sm:text-lg text-zinc-900 dark:text-zinc-100">
+                  Build Your Experience from Your Resume
+                </h4>
+                <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                  Upload your resume in PDF, Word, or text format. Our parser extracts your career history, companies, dates, achievements, and verified skills into your profile experience.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsResumeModalOpen(true)}
+                  className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white px-6 py-2.5 text-xs font-bold shadow-md shadow-blue-500/20 transition-all flex items-center gap-2 cursor-pointer"
+                >
+                  <Sparkles className="h-4 w-4 text-amber-300" />
+                  <span>Upload Resume (Auto-Build)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingExperience(null)
+                    setIsExpFormModalOpen(true)
+                  }}
+                  className="rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 text-zinc-700 dark:text-zinc-200 px-5 py-2.5 text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>Add Position Manually</span>
+                </button>
+              </div>
+
+              {/* Quick 1-Click Samples for Immediate Testing */}
+              <div className="pt-4 border-t border-zinc-200/80 dark:border-zinc-800 max-w-xl mx-auto space-y-2">
+                <p className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+                  Or test immediately with 1-click verified enclave presets:
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleQuickPresetImport('trades_carpenter')}
+                    className="px-3 py-1.5 rounded-full bg-amber-50 hover:bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-200 border border-amber-200 dark:border-amber-800 text-[11px] font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                  >
+                    <span>🔨 Master Carpenter &amp; Superintendent</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickPresetImport('cyber_security')}
+                    className="px-3 py-1.5 rounded-full bg-sky-50 hover:bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-200 border border-sky-200 dark:border-sky-800 text-[11px] font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                  >
+                    <span>🛡️ Cyber Security Architect</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickPresetImport('healthcare_nurse')}
+                    className="px-3 py-1.5 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800 text-[11px] font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                  >
+                    <span>🩺 Trauma ICU Charge Nurse</span>
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -1234,6 +1510,26 @@ export function ProfileView({
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Resume Upload & Experience Builder Modal */}
+      <ResumeUploadModal
+        isOpen={isResumeModalOpen}
+        onClose={() => setIsResumeModalOpen(false)}
+        onApplyExperience={handleApplyResumeExperience}
+        currentHeadline={user.headline}
+        currentEnclave={effectiveEnclaveId}
+      />
+
+      {/* Manual Add / Edit Experience Modal */}
+      <ExperienceFormModal
+        isOpen={isExpFormModalOpen}
+        onClose={() => {
+          setIsExpFormModalOpen(false)
+          setEditingExperience(null)
+        }}
+        onSave={handleSaveManualExperience}
+        initialData={editingExperience}
+      />
     </div>
   )
 }

@@ -42,6 +42,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { useLanguage } from "@/context/LanguageContext"
 
 interface FeedPostCardProps {
   post: Post
@@ -71,6 +72,7 @@ export function FeedPostCard({
   onFollowToggle,
   onVotePoll
 }: FeedPostCardProps) {
+  const { t } = useLanguage()
   const [isExpanded, setIsExpanded] = useState(false)
   const [showComments, setShowComments] = useState(false)
   const [newCommentText, setNewCommentText] = useState("")
@@ -226,14 +228,14 @@ export function FeedPostCard({
                   className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
                 >
                   <Bookmark className={`h-4 w-4 ${post.isSaved ? "fill-zinc-700 dark:fill-zinc-200 text-transparent" : ""}`} />
-                  <span>{post.isSaved ? "Unsave post" : "Save post"}</span>
+                  <span>{post.isSaved ? t("unsave_post", "Unsave post") : t("save_post", "Save post")}</span>
                 </button>
                 <button
                   onClick={handleCopyLink}
                   className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
                 >
                   <Share2 className="h-4 w-4" />
-                  <span>{copiedLink ? "Link copied!" : "Copy link to post"}</span>
+                  <span>{copiedLink ? t("link_copied", "Link copied!") : t("copy_link", "Copy link to post")}</span>
                 </button>
               </div>
             </>
@@ -249,7 +251,7 @@ export function FeedPostCard({
             onClick={() => setIsExpanded(true)}
             className="ml-1 font-semibold text-zinc-500 hover:text-[#0A66C2] focus:outline-none"
           >
-            ...see more
+            {t("see_more", "...see more")}
           </button>
         )}
       </div>
@@ -583,11 +585,11 @@ export function FeedPostCard({
             onClick={() => setShowComments(!showComments)}
             className="hover:underline hover:text-[#0A66C2]"
           >
-            {post.comments.length} comments
+            {post.comments.length} {t("comments_count", "comments")}
           </button>
           <span>·</span>
           <span className="hover:underline hover:text-[#0A66C2]">
-            {post.stats.repostsCount} reposts
+            {post.stats.repostsCount} {t("reposts_count", "reposts")}
           </span>
         </div>
       </div>
@@ -632,7 +634,7 @@ export function FeedPostCard({
               <ThumbsUp className="h-4 w-4" />
             )}
             <span>
-              {post.userReaction ? reactionIcons[post.userReaction].label : "Like"}
+              {post.userReaction ? reactionIcons[post.userReaction].label : t("like", "Like")}
             </span>
           </button>
         </div>
@@ -643,7 +645,7 @@ export function FeedPostCard({
           className="flex items-center gap-1.5 rounded-md px-3 py-2 text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-colors"
         >
           <MessageSquare className="h-4 w-4" />
-          <span>Comment</span>
+          <span>{t("comment", "Comment")}</span>
         </button>
 
         {/* Repost Button */}
@@ -652,7 +654,7 @@ export function FeedPostCard({
           className="flex items-center gap-1.5 rounded-md px-3 py-2 text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-colors"
         >
           <Repeat2 className="h-4 w-4" />
-          <span>Repost</span>
+          <span>{t("repost", "Repost")}</span>
         </button>
 
         {/* Send Button */}
@@ -661,7 +663,7 @@ export function FeedPostCard({
           className="flex items-center gap-1.5 rounded-md px-3 py-2 text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-colors"
         >
           {copiedLink ? <Check className="h-4 w-4 text-emerald-600" /> : <Send className="h-4 w-4" />}
-          <span>{copiedLink ? "Sent" : "Send"}</span>
+          <span>{copiedLink ? t("sent", "Sent") : t("send", "Send")}</span>
         </button>
       </div>
 
@@ -679,7 +681,7 @@ export function FeedPostCard({
               <div className="flex items-center rounded-full border border-zinc-300 bg-white px-3 py-1.5 shadow-2xs dark:border-zinc-700 dark:bg-zinc-800">
                 <input
                   type="text"
-                  placeholder="Add a comment or thought..."
+                  placeholder={t("add_comment_placeholder", "Add a comment or thought...")}
                   value={newCommentText}
                   onChange={(e) => setNewCommentText(e.target.value)}
                   className="w-full bg-transparent text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none dark:text-zinc-100"

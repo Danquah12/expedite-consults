@@ -1063,6 +1063,268 @@ The automated GAAP Ledger Reconciler spreadsheet model is now shared in the Fina
     comments: []
   },
 
+  // ─── 4b. AGRICULTURE & NATURAL RESOURCES ENCLAVE ───
+  {
+    id: 'post_ag_precision_farming_soil',
+    professionEnclave: 'agriculture_natural_resources',
+    targetProfessions: ['farmer', 'beekeeper', 'livestock_breeder', 'agricultural_worker'],
+    author: {
+      id: 'author_clayton_ag',
+      name: 'Clayton Vance',
+      headline: '4th Generation Precision Agronomist & Apiary Operations Specialist',
+      avatar: 'https://images.unsplash.com/photo-1595273670150-bd0c3c392e46?w=400&auto=format&fit=crop&q=80',
+      connectionDegree: '1st'
+    },
+    timestamp: '2h ago · 🌱 Precision Ag & Apiary Report · 🌐',
+    visibility: 'Public',
+    postType: 'standard',
+    feedCategory: 'for_you',
+    feedSubCategory: 'Precision Farming',
+    content: `🌱 Field update from our 1,200-acre corn & soybean test parcel + 60-hive commercial apiary.
+
+We just completed soil sensor IoT calibration across Zones 1 through 4. Incorporating sub-surface moisture capacitance probes alongside satellite NDVI imagery reduced our scheduled nitrogen runoffs by 22% while boosting pollinator vitality across our honey frames.
+
+Essential takeaways for regenerative growers:
+• Varroa mite IPM threshold: Monthly alcohol wash counts remained strictly below 1% using formic acid flash treatments.
+• Soil microbiome respiration tests showed a 34% increase in organic active carbon beneath no-till winter rye covers.
+• Live Chicago Board of Trade (CBOT) grain futures hedge locked in at $4.85/bushel basis.
+
+Feel free to download our raw soil telemetry and apiary health logbook directly in the Ag Enclave!`,
+    hashtags: ['#PrecisionAg', '#RegenerativeFarming', '#Beekeeping', '#SoilHealth', '#Agriculture'],
+    stats: {
+      likesCount: 284,
+      commentsCount: 41,
+      repostsCount: 36,
+      reactionsBreakdown: { like: 160, celebrate: 48, support: 32, love: 24, insightful: 20, funny: 0 }
+    },
+    userReaction: null,
+    isSaved: false,
+    comments: []
+  },
+
+  // ─── 4c. PERSONAL SERVICES, BEAUTY & WELLNESS ENCLAVE ───
+  {
+    id: 'post_barber_wellness_technique',
+    professionEnclave: 'personal_services_wellness',
+    targetProfessions: ['barber', 'hairstylist', 'personal_trainer', 'beautician'],
+    author: {
+      id: 'author_dante_barber',
+      name: 'Dante Rivera',
+      headline: 'Master Barber Educator & NSCA Certified Strength & Conditioning Specialist',
+      avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&auto=format&fit=crop&q=80',
+      connectionDegree: '1st'
+    },
+    timestamp: '3h ago · ✂️ Master Grooming & Biomechanics · 🌐',
+    visibility: 'Public',
+    postType: 'standard',
+    feedCategory: 'for_you',
+    feedSubCategory: 'Professional Grooming',
+    content: `✂️ Ergonomics behind the chair & client retention metrics for boutique studios.
+
+After analyzing 250+ haircut appointments and personalized fitness client assessments this month, two critical habits stand out:
+
+1. Scissor & Clipper Wrist Neutrality: Reducing wrist extension through offset crane shear designs eliminated repetitive strain injury (RSI) across 8 team stylists.
+2. Form-first progressive overload: In personal training sessions, prioritizing posterior chain stability before loaded spinal squats improved client compliance and decreased lower-back complaints to zero.
+3. Client booking frequency: Text-based automated 3-week rebooking prompts boosted recurring chair revenue by 28%.
+
+Access the complete client formula chart and 1RM calculation sheets in the Personal Services Command Center.`,
+    hashtags: ['#BarberLife', '#Hairstyling', '#PersonalTraining', '#Biomechanics', '#Wellness'],
+    stats: {
+      likesCount: 312,
+      commentsCount: 52,
+      repostsCount: 29,
+      reactionsBreakdown: { like: 190, celebrate: 50, support: 34, love: 26, insightful: 12, funny: 0 }
+    },
+    userReaction: null,
+    isSaved: false,
+    comments: []
+  },
+
+  // ─── 4d. CULINARY, HOSPITALITY & EVENTS ENCLAVE ───
+  {
+    id: 'post_culinary_catering_haccp',
+    professionEnclave: 'culinary_hospitality_events',
+    targetProfessions: ['caterer', 'event_planner', 'restaurant_server', 'hospitality_worker'],
+    author: {
+      id: 'author_chef_camille',
+      name: 'Chef Camille Dubois',
+      headline: 'Executive Catering Director · Large-Scale Event Logistics & HACCP Food Safety',
+      avatar: 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?w=400&auto=format&fit=crop&q=80',
+      connectionDegree: '1st'
+    },
+    timestamp: '4h ago · 🍷 Banquet Operations & Cold Chain · 🌐',
+    visibility: 'Public',
+    postType: 'standard',
+    feedCategory: 'for_you',
+    feedSubCategory: 'Catering Operations',
+    content: `🍷 Coordinating a 650-guest plated wedding gala: Cold-chain integrity from commissary to plating line.
+
+Executing simultaneous multi-course service under tight timelines requires zero room for temperature drift:
+• HACCP Critical Control Point 2: Hot holding above 142°F verified via wireless probe telemetry across 8 Cambro transport carts.
+• Food costing & portion yield: Prime protein yield hit 94.6% using precision sous-vide batch searing.
+• Front-of-House synchronization: Server table captain briefings reduced kitchen plate turnaround from 14 minutes to 6.5 minutes.
+
+Full Banquet Event Order (BEO) template and portion yield matrix available in the Hospitality Enclave.`,
+    hashtags: ['#CateringLogistics', '#ExecutiveChef', '#EventPlanning', '#HACCP', '#Hospitality'],
+    stats: {
+      likesCount: 245,
+      commentsCount: 38,
+      repostsCount: 22,
+      reactionsBreakdown: { like: 140, celebrate: 42, support: 28, love: 20, insightful: 15, funny: 0 }
+    },
+    userReaction: null,
+    isSaved: false,
+    comments: []
+  },
+
+  // ─── 4e. COMMERCE, RETAIL & SMALL BUSINESS ENCLAVE ───
+  {
+    id: 'post_commerce_realtor_commercial',
+    professionEnclave: 'commerce_small_business',
+    targetProfessions: ['realtor', 'small_shop_owner', 'independent_consultant', 'market_trader'],
+    author: {
+      id: 'author_realtor_marcus',
+      name: 'Marcus Sterling',
+      headline: 'Principal Broker (CCIM, NAR) · Commercial Real Estate & Retail Portfolio Advisory',
+      avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&auto=format&fit=crop&q=80',
+      connectionDegree: '1st'
+    },
+    timestamp: '5h ago · 🏡 Commercial Real Estate & Cap Rates · 🌐',
+    visibility: 'Public',
+    postType: 'standard',
+    feedCategory: 'for_you',
+    feedSubCategory: 'Commercial Real Estate',
+    content: `🏡 Market Analysis: Cap Rate compression & retail tenant lease structuring in mixed-use developments.
+
+With Q3 transaction volume rising across neighborhood boutique storefronts and medical office plazas:
+• Weighted Average Lease Term (WALT) has rebounded to 7.4 years for credit-worthy commercial tenants.
+• Net Operating Income (NOI) stress-testing indicates triple-net (NNN) leases are outperforming gross modified leases by 180 basis points amidst fluctuating utility overhead.
+• MLS property syndication: 1031 Exchange buyer demand is prioritizing high-walkability urban retail over suburban strip centers.
+
+Run our updated Cap Rate & NOI Sensitivity Spreadsheet in the Commerce Workspace!`,
+    hashtags: ['#RealEstate', '#Realtor', '#CommercialRealEstate', '#CapRates', '#SmallBusiness', '#Retail'],
+    stats: {
+      likesCount: 350,
+      commentsCount: 64,
+      repostsCount: 47,
+      reactionsBreakdown: { like: 210, celebrate: 62, support: 34, love: 24, insightful: 20, funny: 0 }
+    },
+    userReaction: null,
+    isSaved: false,
+    comments: []
+  },
+
+  // ─── 4f. CREATIVE ARTS, MEDIA & ENTERTAINMENT ENCLAVE ───
+  {
+    id: 'post_creative_audio_mixing_atmos',
+    professionEnclave: 'creative_media_arts',
+    targetProfessions: ['musician', 'photographer', 'content_creator', 'graphic_designer', 'filmmaker'],
+    author: {
+      id: 'author_creative_maya',
+      name: 'Maya Lin',
+      headline: 'Grammy-Nominated Audio Engineer & Documentary Cinematographer',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
+      connectionDegree: '1st'
+    },
+    timestamp: '6h ago · 🎧 Spatial Audio & Film Scoring · 🌐',
+    visibility: 'Public',
+    postType: 'standard',
+    feedCategory: 'for_you',
+    feedSubCategory: 'Audio Engineering',
+    content: `🎧 Delivering our latest documentary soundtrack in Dolby Atmos 7.1.4: Dynamic binaural rendering notes.
+
+Mixing spatial audio for streaming platforms requires careful management of the binaural render metadata:
+• Center channel anchor: Dialogue remains locked at 79 dBC Leq(m) to prevent spatial masking during heavy orchestral swelling.
+• Bed vs. Object allocation: Sub-bass LFE elements are restricted to bed tracks to avoid phase cancellation on consumer headphone renders.
+• Color grade grading workflow: Synchronized ARRI LogC4 RAW color pipeline ensured seamless delivery for both IMAX and OLED screenings.
+
+Stem packs, LUT color profiles, and ASCAP/BMI sync licensing templates are available in the Creative Hub.`,
+    hashtags: ['#AudioEngineering', '#MusicProduction', '#DolbyAtmos', '#Cinematography', '#FilmScoring'],
+    stats: {
+      likesCount: 298,
+      commentsCount: 44,
+      repostsCount: 38,
+      reactionsBreakdown: { like: 175, celebrate: 52, support: 30, love: 25, insightful: 16, funny: 0 }
+    },
+    userReaction: null,
+    isSaved: false,
+    comments: []
+  },
+
+  // ─── 4g. EDUCATION, TRAINING & WORKFORCE DEVELOPMENT ENCLAVE ───
+  {
+    id: 'post_education_tutor_curriculum',
+    professionEnclave: 'education_workforce',
+    targetProfessions: ['tutor', 'vocational_trainer', 'apprentice', 'trade_school_student'],
+    author: {
+      id: 'author_prof_adams',
+      name: 'Dr. Leonard Adams',
+      headline: 'Director of Workforce Apprenticeships & STEM Educational Diagnostic Specialist',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
+      connectionDegree: '1st'
+    },
+    timestamp: '7h ago · 📚 Vocational Education & Diagnostic Rubrics · 🌐',
+    visibility: 'Public',
+    postType: 'standard',
+    feedCategory: 'for_you',
+    feedSubCategory: 'Vocational Training',
+    content: `📚 Bridging trade school apprenticeships and STEM degree pathways: Results from our 2026 cohort.
+
+Over 180 apprentices completed their initial 2,000 On-the-Job Training (OJT) hours across electrical, carpentry, and mechatronics sectors this semester:
+• Diagnostic pre-tests vs. midterms: Scaffolded problem-solving rubrics boosted blueprint reading accuracy by 41%.
+• High school to trade transition: 96% placement rate within certified union and merit contractors within 30 days of program completion.
+• Tutoring diagnostic tools: Individualized SAT/ACT math prep modules improved scores by an average of 190 points.
+
+Curriculum lesson plans, OJT logbooks, and DoL apprenticeship certification guides are live in the Education Enclave.`,
+    hashtags: ['#WorkforceDevelopment', '#VocationalTraining', '#Apprenticeship', '#STEM', '#Tutoring'],
+    stats: {
+      likesCount: 340,
+      commentsCount: 49,
+      repostsCount: 42,
+      reactionsBreakdown: { like: 200, celebrate: 68, support: 36, love: 22, insightful: 14, funny: 0 }
+    },
+    userReaction: null,
+    isSaved: false,
+    comments: []
+  },
+
+  // ─── 4h. COMMUNITY, CIVIC & SECURITY ENCLAVE ───
+  {
+    id: 'post_community_veteran_transition',
+    professionEnclave: 'community_civic_security',
+    targetProfessions: ['military_veteran', 'security_guard', 'community_organizer', 'volunteer'],
+    author: {
+      id: 'author_sgt_miller',
+      name: 'First Sergeant (Ret.) Kenneth Miller',
+      headline: 'Military Veteran Transition Director & Physical Security Lead (CPP, PSP)',
+      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80',
+      connectionDegree: '1st'
+    },
+    timestamp: '8h ago · 🎖️ Veteran Leadership & Asset Protection · 🌐',
+    visibility: 'Public',
+    postType: 'standard',
+    feedCategory: 'for_you',
+    feedSubCategory: 'Veteran Leadership',
+    content: `🎖️ Translating military command and defense operations into corporate physical security and civic leadership.
+
+Veterans possess unmatched operational discipline under pressure. In our corporate security audit across 14 distribution centers:
+• Defense-in-Depth access controls: Layered perimeter biometric badging and CCTV thermal tripwires stopped 100% of simulated intrusion breaches.
+• DoD SkillBridge & Veteran Mentorship: Placed 48 transitioning service members into supervisory asset protection and emergency response positions.
+• 501(c)(3) civic outreach: Coordinated food distribution logistics serving over 3,200 local families in partnership with veteran volunteers.
+
+Access our VA SkillBridge transition checklist and physical security threat assessment matrix in the Civic Enclave.`,
+    hashtags: ['#Veterans', '#MilitaryTransition', '#PhysicalSecurity', '#AssetProtection', '#CommunityService'],
+    stats: {
+      likesCount: 420,
+      commentsCount: 67,
+      repostsCount: 58,
+      reactionsBreakdown: { like: 240, celebrate: 85, support: 45, love: 35, insightful: 15, funny: 0 }
+    },
+    userReaction: null,
+    isSaved: false,
+    comments: []
+  },
+
   // ─── 5. SOFTWARE ENGINEERING & CYBER DEFENSE ENCLAVE (ORIGINAL SUITE) ───
   {
     id: 'post_product_strike',

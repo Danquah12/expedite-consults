@@ -26,6 +26,8 @@ export interface MarketplaceProduct {
   features: { title: string; desc: string }[]
   screenshots: string[]
   demoUrl?: string
+  liveUrl?: string
+  isVercelLive?: boolean
   architecture: {
     title: string
     summary: string
@@ -651,18 +653,19 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
     }
   },
   {
-    id: 'aegis_pentest',
-    name: 'ÆGIS · SOC Autonomous PenTest Hub',
-    tagline: 'Full Autonomous Agentic AI Penetration Testing & Exploit Hub',
+    id: 'prod_11_dast',
+    professionEnclave: 'tech_cybersecurity',
+    name: '11-DAST Dynamic Pentesting Platform',
+    tagline: 'Autonomous dynamic vulnerability scanner, API fuzzing engine & attack surface analyzer',
     category: 'Software',
     subCategory: 'Cybersecurity',
     icon: '🎯',
-    badge: '⭐ Red Team Certified',
-    rating: 4.95,
-    reviewsCount: 164,
-    activeUsersCount: '8,400+ Targets Scanned',
+    badge: '⚡ Live Vercel Pentest',
+    rating: 4.97,
+    reviewsCount: 182,
+    activeUsersCount: '9,200+ Scans Completed',
     pricing: {
-      displayPrice: '$349',
+      displayPrice: '$499',
       billingPeriod: '/ month',
       hasFreeTrial: true,
       trialDays: 14
@@ -670,78 +673,849 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
     vendor: {
       name: 'Expedite Offensive Red Team',
       logo: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=100&auto=format&fit=crop&q=80',
-      isVerified: true
+      isVerified: true,
+      isFellow: true
     },
-    overview: 'Autonomous agentic AI penetration testing console featuring multi-target asset discovery, weaponized auto-exploit queues, PoC interactive evidence terminals, and Neo4j attack graphs.',
+    overview: 'Production-ready dynamic application security testing (DAST) platform for enterprise APIs, single-page web applications, and authenticated user flows with automated exploit verification.',
     features: [
-      { title: 'Autonomous Reconnaissance', desc: 'Discovers subdomains, exposed cloud buckets, and API endpoints across multi-cloud assets.' },
-      { title: 'Interactive Evidence Terminal', desc: 'Inspects HTTP payloads, shell returns, and cryptographic proofs in a browser terminal.' },
-      { title: 'Zero-Noise PoC Validation', desc: 'Validates that every single flagged CVE is genuinely exploitable before reporting.' }
+      { title: 'Automated Web & API Crawling', desc: 'Discovers REST, GraphQL, and WebSocket endpoints with authenticated token injection.' },
+      { title: 'Active Exploitation Verification', desc: 'Tests SQLi, SSRF, XSS, and command injections in safe microVM sandboxes.' },
+      { title: 'Zero False Positive Proofs', desc: 'Attaches executable cURL reproduction commands and response traces to every finding.' }
     ],
     screenshots: [
       'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80',
       'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&auto=format&fit=crop&q=80'
     ],
-    demoUrl: 'http://localhost:9011/app/?standalone=1',
+    demoUrl: 'https://11-dast-security-platform.vercel.app',
+    liveUrl: 'https://11-dast-security-platform.vercel.app',
+    isVercelLive: true,
     architecture: {
-      title: 'Sandboxed Exploit Execution MicroVMs',
-      summary: 'Isolated Firecracker microVMs executing parameterized exploit modules without touching production data.',
-      layers: ['Next.js Terminal Interface', 'Docker / Firecracker Sandbox', 'Neo4j Target Graph'],
-      latency: '< 50ms command execution',
-      dataPrivacy: 'Encrypted ephemeral evidence storage destroyed post-report.'
+      title: 'Distributed Asynchronous Scanning Engine',
+      summary: 'Stateless scanning workers executed on serverless edge nodes.',
+      layers: ['Next.js App Router', 'Playwright Headless Browser Fleet', 'PostgreSQL Vulnerability DB'],
+      latency: '< 15ms endpoint probe',
+      dataPrivacy: 'All target data encrypted in transit and at rest with customer-managed keys.'
     },
-    integrations: ['Jira', 'GitHub Issues', 'Slack', 'Splunk', 'AWS GuardDuty'],
+    integrations: ['GitHub Actions', 'GitLab CI', 'Jira', 'Slack', 'DefectDojo'],
     security: {
-      compliance: ['ISO 27001', 'SOC 2 Type II'],
-      encryption: 'End-to-End PGP & AES-256',
+      compliance: ['SOC 2 Type II', 'OWASP Top 10', 'FedRAMP High'],
+      encryption: 'TLS 1.3 / AES-256',
       isolation: 'Ephemeral container isolation'
     },
     pricingTiers: [
       {
-        name: 'Target Pack 10',
-        price: '$349',
+        name: 'Starter Pentest',
+        price: '$499',
         period: '/ month',
-        description: 'Scan up to 10 root domains with unlimited continuous scheduled pentests.',
-        features: ['10 Target Domains', 'Continuous Scheduled Scans', 'Evidence PoC Terminal', 'PDF Board Dossiers'],
+        description: 'Continuous DAST scanning for up to 5 web apps and 20 APIs.',
+        features: ['5 Web Applications', '20 API Endpoints', 'Weekly Automated Scans', 'PDF Audit Reports'],
         ctaText: 'Start Free Trial'
       },
       {
-        name: 'Red Team Unlimited',
-        price: '$999',
+        name: 'Enterprise Defense',
+        price: '$1,499',
         period: '/ month',
         recommended: true,
-        description: 'Unlimited external and internal target IPs, priority exploit queues, and live chat assistance.',
-        features: ['Unlimited Targets', 'Custom Exploit Module Builder', 'API & CI/CD Gating', 'Dedicated Offensive Engineer Support'],
-        ctaText: 'Activate Unlimited'
+        description: 'Unlimited continuous scans, custom header auth, and CI/CD gating.',
+        features: ['Unlimited Targets', 'CI/CD Break-Build Gates', 'Real-time Webhook Alerts', 'Dedicated AppSec Specialist'],
+        ctaText: 'Launch Enterprise'
       }
     ],
     reviews: [
       {
-        author: 'David Sterling',
-        role: 'Principal Red Team Lead',
-        company: 'Apex Defense',
-        avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&auto=format&fit=crop&q=80',
+        author: 'Marcus Vance',
+        role: 'VP Defense Systems',
+        company: 'Defense Systems Group',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
         rating: 5,
-        text: 'The automatic exploit verification proves to clients without doubt that vulnerabilities are real, completely eliminating back-and-forth arguments.',
+        text: 'The automated proof-of-concept verification saved our team dozens of hours of manual verification.',
+        date: 'September 2026'
+      }
+    ],
+    documentation: {
+      quickstart: 'npx dast-cli scan --target=https://api.yourdomain.com --auth=Bearer token',
+      apiEndpoints: ['POST /api/v1/scan', 'GET /api/v1/scan/:id/status'],
+      sdkSupport: ['TypeScript', 'Python', 'Go']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.99% Uptime',
+      channel: 'Slack Connect & Portal Ticket',
+      responseHours: '< 1 Hour'
+    }
+  },
+  {
+    id: 'prod_16_malware',
+    professionEnclave: 'tech_cybersecurity',
+    name: '16-Malware Analysis & Detonation Hypervisor',
+    tagline: 'Automated bare-metal detonation sandbox, Ghidra reverse engineering & YARA generator',
+    category: 'Software',
+    subCategory: 'Cybersecurity',
+    icon: '🔬',
+    badge: '☣️ Live Sandboxing',
+    rating: 4.96,
+    reviewsCount: 142,
+    activeUsersCount: '3,800+ Samples Analyzed',
+    pricing: {
+      displayPrice: '$650',
+      billingPeriod: '/ month',
+      hasFreeTrial: true,
+      trialDays: 7
+    },
+    vendor: {
+      name: 'Expedite DFIR Labs',
+      logo: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=100&auto=format&fit=crop&q=80',
+      isVerified: true
+    },
+    overview: 'High-security dynamic malware detonation and reverse engineering platform with automated memory forensics, syscall tracing, and Ghidra decompilation in isolated hypervisors.',
+    features: [
+      { title: 'Bare-Metal Detonation', desc: 'Traces kernel-level hooking, hollowed processes, and reflective DLL injection in isolated microVMs.' },
+      { title: 'Interactive Ghidra Decompiler', desc: 'Browse decompiled C pseudocode and control-flow graphs directly in your browser.' },
+      { title: 'Automated YARA Authoring', desc: 'Produces production-ready YARA rules for newly unpacked payload signatures.' }
+    ],
+    screenshots: [
+      'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&auto=format&fit=crop&q=80'
+    ],
+    demoUrl: 'https://16-malware-analysis-platform.vercel.app',
+    liveUrl: 'https://16-malware-analysis-platform.vercel.app',
+    isVercelLive: true,
+    architecture: {
+      title: 'Hypervisor Detonation Engine',
+      summary: 'Air-gapped Firecracker microVMs with kernel-level eBPF tracing.',
+      layers: ['Web Hypervisor UI', 'Kernel eBPF Telemetry', 'Ghidra Headless Analyzer'],
+      latency: '< 20ms instruction tracing',
+      dataPrivacy: 'Samples automatically sanitized and encrypted in air-gapped enclaves.'
+    },
+    integrations: ['MISP', 'OpenCTI', 'Elastic SIEM', 'Splunk'],
+    security: {
+      compliance: ['NIST SP 800-61', 'DoD 8570'],
+      encryption: 'AES-256 GCM',
+      isolation: 'Hardware virtualized air-gap'
+    },
+    pricingTiers: [
+      {
+        name: 'DFIR Tier',
+        price: '$650',
+        period: '/ month',
+        description: 'Up to 50 sample detonations per day with full Ghidra disassembly reports.',
+        features: ['50 Detonations / Day', 'Full Memory Dumps', 'Automated YARA Rules', 'MITRE ATT&CK Mapping'],
+        ctaText: 'Start Free Trial'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'curl -X POST https://16-malware-analysis-platform.vercel.app/api/analyze -F "sample=@malware.bin"',
+      apiEndpoints: ['POST /api/analyze', 'GET /api/report/:id'],
+      sdkSupport: ['Python', 'REST']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.9% Uptime',
+      channel: 'Dedicated DFIR Channel',
+      responseHours: '< 30 Minutes'
+    }
+  },
+  {
+    id: 'prod_17_ransomware',
+    professionEnclave: 'tech_cybersecurity',
+    name: '17-Ransomware Blast Radius & Recovery Console',
+    tagline: 'Automated lateral blast radius isolation, shadow copy decryption & recovery orchestration',
+    category: 'Software',
+    subCategory: 'Cybersecurity',
+    icon: '☣️',
+    badge: '⚡ Live Recovery',
+    rating: 4.98,
+    reviewsCount: 96,
+    activeUsersCount: '450+ Enclaves Protected',
+    pricing: {
+      displayPrice: '$890',
+      billingPeriod: '/ month',
+      hasFreeTrial: true,
+      trialDays: 14
+    },
+    vendor: {
+      name: 'Expedite Incident Recovery',
+      logo: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=100&auto=format&fit=crop&q=80',
+      isVerified: true
+    },
+    overview: 'Enterprise incident containment system for simulated and real ransomware attacks. Automatically calculates the lateral infection graph and generates immutable recovery orchestrations.',
+    features: [
+      { title: 'Blast Radius Mapping', desc: 'Identifies infected domain controllers, backup repositories, and tier-0 credentials in seconds.' },
+      { title: 'Zero-Data Loss Recovery', desc: 'Orchestrates point-in-time immutable snapshot restores across AWS, Azure, and on-prem VMware.' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80'],
+    demoUrl: 'https://17-ransomware-recovery-platform.vercel.app',
+    liveUrl: 'https://17-ransomware-recovery-platform.vercel.app',
+    isVercelLive: true,
+    architecture: {
+      title: 'Immutable Recovery Bus',
+      summary: 'Air-gapped vault orchestration engine with hardware key verification.',
+      layers: ['Incident Commander Console', 'Immutable Object Storage', 'Active Directory Restorer'],
+      latency: 'Sub-second blast radius calculation',
+      dataPrivacy: 'Zero-knowledge encrypted key vault.'
+    },
+    integrations: ['CrowdStrike Falcon', 'SentinelOne', 'Veeam', 'AWS Backup'],
+    security: {
+      compliance: ['CMMC 2.0 Level 3', 'NIST SP 800-34'],
+      encryption: 'FIPS 140-3 Validated Cryptography',
+      isolation: 'Cryptographic air-gap'
+    },
+    pricingTiers: [
+      {
+        name: 'Enterprise Shield',
+        price: '$890',
+        period: '/ month',
+        description: 'Continuous blast radius monitoring and disaster recovery automation.',
+        features: ['Automated AD Recovery', 'Immutable Snapshots', 'Blast Radius Graphing', '24/7 War Room Access'],
+        ctaText: 'Activate Console'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'npx ransomware-guard init --enclave=prod-us-east',
+      apiEndpoints: ['POST /api/incident/isolate', 'GET /api/incident/blast-radius'],
+      sdkSupport: ['TypeScript', 'Python']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.999% Incident Readiness',
+      channel: '24/7 Red Alert Hotline & Signal',
+      responseHours: '< 5 Minutes'
+    }
+  },
+  {
+    id: 'prod_aegis_rmf',
+    professionEnclave: 'law_gov_defense',
+    name: 'Aegis RMF Continuous ATO Platform',
+    tagline: 'Automated NIST SP 800-53 Rev 5 compliance, eMASS artifact sync & continuous authorization',
+    category: 'Enterprise Solutions',
+    subCategory: 'cATO & Governance',
+    icon: '🛡️',
+    badge: '🏛️ Live NIST SP 800-53',
+    rating: 4.99,
+    reviewsCount: 312,
+    activeUsersCount: '48 Federal Systems Authorized',
+    pricing: {
+      displayPrice: '$1,200',
+      billingPeriod: '/ month',
+      hasFreeTrial: true,
+      trialDays: 30
+    },
+    vendor: {
+      name: 'Expedite Consults Defense Advisory',
+      logo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+      isVerified: true,
+      isFellow: true
+    },
+    overview: 'Aegis RMF transforms months of manual NIST SP 800-53 Rev 5 and DoD RMF compliance paperwork into real-time machine-readable OSCAL and eMASS evidence packages for automated continuous ATO.',
+    features: [
+      { title: 'Automated 800-53 Rev 5 Controls', desc: 'Maps telemetry directly to AC, AU, IA, SC, and SI control requirements.' },
+      { title: 'Direct eMASS & OSCAL Export', desc: 'One-click generation of System Security Plans (SSP) and SAR test evidence.' },
+      { title: 'Continuous Assessment', desc: 'Real-time drift detection flags unapproved config alterations before audit cycles.' }
+    ],
+    screenshots: [
+      'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&auto=format&fit=crop&q=80'
+    ],
+    demoUrl: 'https://aegis-rmf.vercel.app',
+    liveUrl: 'https://aegis-rmf.vercel.app',
+    isVercelLive: true,
+    architecture: {
+      title: 'OSCAL Policy-as-Code Engine',
+      summary: 'Deterministic compliance telemetry pipeline parsing cloud infrastructure manifests.',
+      layers: ['eMASS REST Gateway', 'NIST SP 800-53 Engine', 'Audit Log Attestation Enclave'],
+      latency: 'Continuous real-time compliance score',
+      dataPrivacy: 'FedRAMP High & ITAR compliant data sovereignty.'
+    },
+    integrations: ['AWS GovCloud', 'Azure Government', 'eMASS', 'Jira Service Desk', 'GitLab'],
+    security: {
+      compliance: ['NIST SP 800-53 Rev 5', 'FedRAMP High', 'CMMC 2.0 Level 3', 'DoD IL5/IL6'],
+      encryption: 'FIPS 140-3 Level 2 HSM',
+      isolation: 'Dedicated VPC Enclave'
+    },
+    pricingTiers: [
+      {
+        name: 'Federal System Pack',
+        price: '$1,200',
+        period: '/ month',
+        description: 'Complete continuous ATO automation for 1 federal system boundary.',
+        features: ['Full NIST 800-53 Rev 5 Controls', 'eMASS OSCAL Sync', 'Automated POAM Tracking', 'Continuous Evidence Collector'],
+        ctaText: 'Schedule cATO Demo'
+      }
+    ],
+    reviews: [
+      {
+        author: 'Commander Robert Hayes',
+        role: 'Platform IAM & Super Administrator',
+        company: 'ConnectIn Master Control',
+        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80',
+        rating: 5,
+        text: 'Aegis reduced our cATO preparation from 9 months to under 3 weeks with automated OSCAL evidence generation.',
+        date: 'October 2026'
+      }
+    ],
+    documentation: {
+      quickstart: 'npx aegis-rmf audit --boundary=fedramp-high --oscal-out=./ssp.json',
+      apiEndpoints: ['POST /api/v1/controls/validate', 'GET /api/v1/emass/package'],
+      sdkSupport: ['TypeScript', 'Python', 'Go']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.99% Government SLA',
+      channel: 'TS/SCI Cleared Advisory Hotline & Encrypted Chat',
+      responseHours: '< 15 Minutes'
+    }
+  },
+  {
+    id: 'prod_05_sast',
+    professionEnclave: 'tech_software',
+    name: '05-SAST Static Application Security Testing',
+    tagline: 'Sub-4ms AST static code analysis, real-time vulnerability detection & automated fix PR dispatch',
+    category: 'Software',
+    subCategory: 'DevSecOps & Code Analysis',
+    icon: '🔍',
+    badge: '⚡ Live AST Analysis',
+    rating: 4.97,
+    reviewsCount: 228,
+    activeUsersCount: '64,000+ Repos Analyzed',
+    pricing: {
+      displayPrice: '$199',
+      billingPeriod: '/ month',
+      hasFreeTrial: true,
+      trialDays: 14
+    },
+    vendor: {
+      name: 'Expedite DevSecOps Labs',
+      logo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+      isVerified: true
+    },
+    overview: 'Ultra-fast static code security analysis engine for TypeScript, Rust, Go, Python, and Java. Parses Abstract Syntax Trees to catch tainted user input and automatically drafts verified GitHub remediation PRs.',
+    features: [
+      { title: 'Sub-4ms Incremental AST Parsing', desc: 'Runs seamlessly in CI/CD pipelines without delaying developer pull requests.' },
+      { title: 'Automated Fix PR Dispatch', desc: 'Dispatches ready-to-merge GitHub pull requests with passing unit tests to fix identified bugs.' },
+      { title: 'Taint Flow Tracking', desc: 'Traces data flow from unauthenticated HTTP inputs straight to database execution sinks.' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&auto=format&fit=crop&q=80'],
+    demoUrl: 'https://05-sast-platform.vercel.app',
+    liveUrl: 'https://05-sast-platform.vercel.app',
+    isVercelLive: true,
+    architecture: {
+      title: 'WebAssembly AST Parsing Engine',
+      summary: 'High-speed Rust WebAssembly core executing in memory without source code persistence.',
+      layers: ['GitHub App Webhook', 'Wasm Taint Analyzer', 'Auto-PR Code Transformer'],
+      latency: '< 4ms per 1,000 LOC',
+      dataPrivacy: 'Source code is parsed in memory and never stored on remote servers.'
+    },
+    integrations: ['GitHub', 'GitLab', 'Bitbucket', 'VS Code', 'JetBrains'],
+    security: {
+      compliance: ['SOC 2 Type II', 'OWASP Top 10', 'CWE/SANS Top 25'],
+      encryption: 'Ephemeral in-memory execution',
+      isolation: 'Zero code retention policy'
+    },
+    pricingTiers: [
+      {
+        name: 'Developer Pro',
+        price: '$199',
+        period: '/ month',
+        description: 'Unlimited static scans for up to 20 developer seats and 50 repositories.',
+        features: ['50 Repositories', 'Auto-PR Remediation', 'IDE Extension', 'CI/CD Break-Build Gates'],
+        ctaText: 'Start Free Trial'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'npx sast-scan --repo=current --auto-pr=true',
+      apiEndpoints: ['POST /api/scan/ast', 'GET /api/scan/report'],
+      sdkSupport: ['Node.js', 'Python', 'CLI']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.99% Availability',
+      channel: 'Discord & GitHub Support',
+      responseHours: '< 1 Hour'
+    }
+  },
+  {
+    id: 'prod_06_sca',
+    professionEnclave: 'tech_software',
+    name: '06-SCA Software Composition Analysis & AI-BOM',
+    tagline: 'Dependency vulnerability scanner, AI-BOM supply-chain auditing & license risk scoring',
+    category: 'Software',
+    subCategory: 'Software Composition Analysis',
+    icon: '📦',
+    badge: '⚡ Live SBOM Scanner',
+    rating: 4.95,
+    reviewsCount: 190,
+    activeUsersCount: '1.2M Dependencies Tracked',
+    pricing: {
+      displayPrice: '$179',
+      billingPeriod: '/ month',
+      hasFreeTrial: true,
+      trialDays: 14
+    },
+    vendor: {
+      name: 'Expedite DevSecOps Labs',
+      logo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+      isVerified: true
+    },
+    overview: 'Enterprise software composition analysis (SCA) and AI Bill of Materials (AI-BOM) platform. Audits NPM, Cargo, PyPI, and Go dependencies for malicious maintainer takeovers and license conflicts.',
+    features: [
+      { title: 'AI-BOM & LLM Guardrails', desc: 'Inspects HuggingFace weights, tokenizers, and model dependencies for poisoned checkpoints.' },
+      { title: 'Zero-Day Supply Chain Alerts', desc: 'Notifies within seconds of malicious packages published to open-source registries.' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&auto=format&fit=crop&q=80'],
+    demoUrl: 'https://06-sca-platform.vercel.app',
+    liveUrl: 'https://06-sca-platform.vercel.app',
+    isVercelLive: true,
+    architecture: {
+      title: 'CycloneDX / SPDX Parsing Bus',
+      summary: 'High-speed package graph traversal resolving nested dependency trees.',
+      layers: ['Registry Ingestion Pipeline', 'CVE Vulnerability Knowledgebase', 'License Engine'],
+      latency: '< 500ms full lockfile scan',
+      dataPrivacy: 'Lockfiles analyzed in ephemeral memory.'
+    },
+    integrations: ['npm', 'Cargo', 'pip', 'Maven', 'GitHub Actions'],
+    security: {
+      compliance: ['Executive Order 14028', 'NIST SP 800-161'],
+      encryption: 'TLS 1.3 / AES-256',
+      isolation: 'Stateless container'
+    },
+    pricingTiers: [
+      {
+        name: 'Team SCA',
+        price: '$179',
+        period: '/ month',
+        description: 'Comprehensive dependency security and license compliance.',
+        features: ['Full AI-BOM Generation', 'License Risk Audit', 'Automated Patch PRs', 'Registry Poisoning Alerts'],
+        ctaText: 'Start Free Trial'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'npx sca-audit generate-sbom --format=cyclonedx',
+      apiEndpoints: ['POST /api/sbom/generate', 'POST /api/sbom/verify'],
+      sdkSupport: ['TypeScript', 'CLI']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.9% Uptime',
+      channel: 'Dev Support Portal',
+      responseHours: '< 2 Hours'
+    }
+  },
+  {
+    id: 'prod_10_iac',
+    professionEnclave: 'tech_software',
+    name: '10-IaC Terraform & Cloud Guard',
+    tagline: 'Infrastructure as Code security scanner, drift detector & policy-as-code validator',
+    category: 'Software',
+    subCategory: 'Infrastructure as Code',
+    icon: '☁️',
+    badge: '⚡ Live IaC Guard',
+    rating: 4.96,
+    reviewsCount: 165,
+    activeUsersCount: '320k Cloud Resources Guarded',
+    pricing: {
+      displayPrice: '$249',
+      billingPeriod: '/ month',
+      hasFreeTrial: true,
+      trialDays: 14
+    },
+    vendor: {
+      name: 'Expedite Cloud Security',
+      logo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+      isVerified: true
+    },
+    overview: 'Pre-deployment Infrastructure as Code (IaC) verification engine for Terraform, OpenTofu, Pulumi, and CloudFormation. Catches publicly exposed S3 buckets, open security groups, and unencrypted EBS volumes.',
+    features: [
+      { title: 'Static Terraform Analysis', desc: 'Validates HCL2 AST against CIS Benchmarks, NIST SP 800-53, and custom OPA Rego policies.' },
+      { title: 'Real-Time Drift Detection', desc: 'Compares live AWS/Azure state against Git master branch commits.' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&auto=format&fit=crop&q=80'],
+    demoUrl: 'https://10-iac-security-platform.vercel.app',
+    liveUrl: 'https://10-iac-security-platform.vercel.app',
+    isVercelLive: true,
+    architecture: {
+      title: 'Open Policy Agent (OPA) Evaluation',
+      summary: 'Rego policy evaluation engine integrated into Git commit hooks.',
+      layers: ['HCL2 Parser', 'OPA Policy Engine', 'Cloud Provider State Diff'],
+      latency: '< 80ms per plan evaluation',
+      dataPrivacy: 'Manifests analyzed locally or in dedicated tenant VPC.'
+    },
+    integrations: ['Terraform Cloud', 'Spacelift', 'Atlantis', 'GitHub Actions'],
+    security: {
+      compliance: ['CIS Cloud Benchmarks', 'NIST SP 800-53', 'PCI DSS 4.0'],
+      encryption: 'AES-256 GCM',
+      isolation: 'Dedicated policy runner'
+    },
+    pricingTiers: [
+      {
+        name: 'Cloud Guard',
+        price: '$249',
+        period: '/ month',
+        description: 'Unlimited Terraform plans evaluation and automated drift alerts.',
+        features: ['Unlimited Plan Reviews', 'Pre-Commit Hooks', 'CIS Benchmark Audit', 'Slack Notifications'],
+        ctaText: 'Start Free Trial'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'npx iac-guard check ./terraform --policy=cis-aws',
+      apiEndpoints: ['POST /api/iac/evaluate', 'GET /api/iac/policies'],
+      sdkSupport: ['CLI', 'Node.js']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.9% Uptime',
+      channel: 'Cloud Security Slack',
+      responseHours: '< 1 Hour'
+    }
+  },
+  {
+    id: 'prod_careerorbit',
+    professionEnclave: 'tech_software',
+    name: 'CareerOrbit AI Career Navigator & Skill Passport',
+    tagline: 'AI-guided career trajectory, cryptographic skill passport & job role competency matrix',
+    category: 'Training',
+    subCategory: 'Career Navigation & Skill Passports',
+    icon: '🪐',
+    badge: '⚡ Live Career Passport',
+    rating: 4.98,
+    reviewsCount: 420,
+    activeUsersCount: '28,000+ Career Passports',
+    pricing: {
+      displayPrice: '$49',
+      billingPeriod: '/ month',
+      hasFreeTrial: true,
+      trialDays: 14
+    },
+    vendor: {
+      name: 'CareerOrbit Labs',
+      logo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+      isVerified: true
+    },
+    overview: 'Next-generation AI career roadmap and portable skill passport. Evaluates GitHub code proofs, verified certifications, and technical milestones to recommend hyper-targeted promotion tracks and salaries.',
+    features: [
+      { title: 'Cryptographic Skill Proofs', desc: 'Verifies real code submissions, pull requests, and architecture reviews as immutable credentials.' },
+      { title: 'Salary Intelligence & Benchmarking', desc: 'Accurate real-time compensation data cross-referenced against equity, clearance, and skill sets.' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80'],
+    demoUrl: 'https://careerorbit-standalone.vercel.app',
+    liveUrl: 'https://careerorbit-standalone.vercel.app',
+    isVercelLive: true,
+    architecture: {
+      title: 'Competency Graph Vector DB',
+      summary: 'Embeds job requisitions and candidate code artifacts into high-dimensional vector space.',
+      layers: ['Profile Vectorizer', 'Career Trajectory Predictor', 'Salary Benchmark Engine'],
+      latency: '< 10ms match resolution',
+      dataPrivacy: 'Candidate identity anonymized until formal employer introduction.'
+    },
+    integrations: ['LinkedIn', 'GitHub', 'ConnectIn Identity', 'Greenhouse', 'Lever'],
+    security: {
+      compliance: ['SOC 2 Type II', 'GDPR Compliant'],
+      encryption: 'Ed25519 Cryptographic Signatures',
+      isolation: 'Zero-knowledge candidate encryption'
+    },
+    pricingTiers: [
+      {
+        name: 'Pro Career Passport',
+        price: '$49',
+        period: '/ month',
+        description: 'Full AI skill roadmap, salary benchmark calculator, and employer discovery.',
+        features: ['Verified Skill Passport', 'Salary Benchmark Engine', '1-Click Warm Introductions', 'Weekly Requisition Matching'],
+        ctaText: 'Claim Your Passport'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'Sign in at https://careerorbit-standalone.vercel.app to sync your GitHub repositories.',
+      apiEndpoints: ['GET /api/passport/:id', 'POST /api/skills/verify'],
+      sdkSupport: ['Web', 'API']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.9% Uptime',
+      channel: 'Member Helpdesk',
+      responseHours: '< 4 Hours'
+    }
+  },
+  {
+    id: 'prod_skillhands',
+    professionEnclave: 'trades_construction',
+    name: 'SkillHands Vocational Trade Hub',
+    tagline: 'Hands-on trade task platform, verified craftsman matching & vocational apprenticeships',
+    category: 'Services',
+    subCategory: 'Trades & Vocational Network',
+    icon: '🛠️',
+    badge: '🔨 Live Trade Hub',
+    rating: 4.97,
+    reviewsCount: 380,
+    activeUsersCount: '12,500+ Verified Craftsmen',
+    pricing: {
+      displayPrice: '$79',
+      billingPeriod: '/ month',
+      hasFreeTrial: true,
+      trialDays: 14
+    },
+    vendor: {
+      name: 'SkillHands Vocational Guild',
+      logo: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=100&auto=format&fit=crop&q=80',
+      isVerified: true
+    },
+    overview: 'SkillHands is the dedicated marketplace connecting verified carpenters, electricians, plumbers, masons, and mechanics with high-value residential and commercial contracts.',
+    features: [
+      { title: 'Verified Trade Credentials', desc: 'Validates state licensing, OSHA cards, insurance certificates, and photographic proof of prior builds.' },
+      { title: 'Direct Subcontractor Matching', desc: 'General contractors post commercial bid packages and book specialized craft crews directly.' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&auto=format&fit=crop&q=80'],
+    demoUrl: 'https://skillhands-client.vercel.app',
+    liveUrl: 'https://skillhands-client.vercel.app',
+    isVercelLive: true,
+    architecture: {
+      title: 'Real-Time Job Dispatch Bus',
+      summary: 'Geolocation-based matching engine pairing certified tradesmen with local project specifications.',
+      layers: ['Craftsman Mobile Client', 'Contractor Dispatch Engine', 'Escrow Payment Pipeline'],
+      latency: 'Instant contractor bidding',
+      dataPrivacy: 'Encrypted trade credentials.'
+    },
+    integrations: ['Procore', 'QuickBooks', 'Buildertrend', 'Stripe Connect'],
+    security: {
+      compliance: ['OSHA Compliant', 'State Licensing Boards Verified'],
+      encryption: 'AES-256',
+      isolation: 'Secure Escrow Accounts'
+    },
+    pricingTiers: [
+      {
+        name: 'Master Craftsman Listing',
+        price: '$79',
+        period: '/ month',
+        description: 'Unlimited bid submissions, featured artisan directory placement, and instant milestone escrow.',
+        features: ['Unlimited Bid Submissions', 'Verified Guild Badge', 'Lien Waiver Automation', 'Fast-Pay Escrow Draws'],
+        ctaText: 'Join Trade Hub'
+      }
+    ],
+    reviews: [
+      {
+        author: 'David Miller',
+        role: 'Master Timber Carpenter',
+        company: 'Heritage Guild',
+        avatar: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=100&auto=format&fit=crop&q=80',
+        rating: 5,
+        text: 'SkillHands brought our timber framing crew two $300k+ custom home contracts within our first month.',
         date: 'August 2026'
       }
     ],
     documentation: {
-      quickstart: 'curl -sSL https://portal.expediteconsults.com/install-aegis.sh | bash',
-      apiEndpoints: ['POST /api/pentest/target', 'GET /api/pentest/evidence/:id'],
-      sdkSupport: ['Python', 'CLI', 'REST']
+      quickstart: 'Register your license and submit three photographic portfolio builds to unlock verified status.',
+      apiEndpoints: ['POST /api/bids/create', 'GET /api/contractors/:id'],
+      sdkSupport: ['Web', 'Mobile App']
     },
-    caseStudies: [
-      {
-        customer: 'Quantico Capital',
-        logo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80',
-        headline: 'Eliminated $180k in third-party penetration testing vendor costs',
-        results: ['100% automated weekly audits', 'Discovered critical SSRF before production launch']
-      }
-    ],
+    caseStudies: [],
     support: {
       sla: '99.9% Uptime',
-      channel: 'Red Team Priority Discord & Slack Connect',
+      channel: 'Trade Dispatch Helpline & SMS',
+      responseHours: '< 15 Minutes'
+    }
+  },
+  {
+    id: 'prod_desknote',
+    professionEnclave: 'trades_construction',
+    name: 'DeskNote Digital Field Notebook & Jobsite Logs',
+    tagline: 'Jobsite cut-lists, structural takeoff notes, daily foreman logs & diagnostic records',
+    category: 'Software',
+    subCategory: 'Productivity & Field Notes',
+    icon: '📓',
+    badge: '📝 Live Field App',
+    rating: 4.95,
+    reviewsCount: 260,
+    activeUsersCount: '18,000+ Field Notes Recorded',
+    pricing: {
+      displayPrice: '$29',
+      billingPeriod: '/ month',
+      hasFreeTrial: true,
+      trialDays: 14
+    },
+    vendor: {
+      name: 'DeskNote Field Systems',
+      logo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+      isVerified: true
+    },
+    overview: 'Ruggedized, offline-first digital field notebook built for trade superintendents, framing foremen, and field diagnostic technicians. Captures punch-lists, audio memos, board-foot cut tables, and weather logs.',
+    features: [
+      { title: 'Offline-First Sync', desc: 'Works with zero cellular reception in deep basements and rural jobsites; automatically syncs on reconnect.' },
+      { title: 'Voice-to-Cut-List', desc: 'Dictate lumber dimensions or automotive DTC codes; DeskNote parses them into structured spreadsheets.' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&auto=format&fit=crop&q=80'],
+    demoUrl: 'https://desk-note-kwesi-asiedus-projects.vercel.app',
+    liveUrl: 'https://desk-note-kwesi-asiedus-projects.vercel.app',
+    isVercelLive: true,
+    architecture: {
+      title: 'Local-First CRDT Storage',
+      summary: 'Conflict-free replicated data types (CRDT) storing notes in IndexedDB with cloud synchronization.',
+      layers: ['Progressive Web App (PWA)', 'IndexedDB Offline Cache', 'WebSocket Live Sync'],
+      latency: '< 1ms local keystroke latency',
+      dataPrivacy: 'End-to-end encrypted notes.'
+    },
+    integrations: ['Google Drive', 'Dropbox', 'PlanGrid', 'Procore'],
+    security: {
+      compliance: ['SOC 2 Type II'],
+      encryption: 'AES-256 On-Device Encryption',
+      isolation: 'Local SQLite Sandbox'
+    },
+    pricingTiers: [
+      {
+        name: 'Foreman Pro',
+        price: '$29',
+        period: '/ month',
+        description: 'Unlimited offline notes, voice transcription, and PDF export.',
+        features: ['Offline-First Sync', 'Unlimited Audio Notes', 'PDF Takeoff Export', 'Team Collaboration'],
+        ctaText: 'Start Free Trial'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'Launch https://desk-note-kwesi-asiedus-projects.vercel.app on your tablet or smartphone.',
+      apiEndpoints: ['GET /api/notes', 'POST /api/notes/sync'],
+      sdkSupport: ['PWA', 'REST']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.9% Uptime',
+      channel: 'Email & WhatsApp Field Desk',
+      responseHours: '< 2 Hours'
+    }
+  },
+  {
+    id: 'prod_vibetok',
+    professionEnclave: 'trades_construction',
+    name: 'VibeTok Interactive Learning & Video Masterclasses',
+    tagline: 'Bite-sized video masterclasses, practical trade demonstrations & interactive lessons',
+    category: 'Training',
+    subCategory: 'Video Masterclasses & Tutorials',
+    icon: '🎥',
+    badge: '🎓 Live Learning Hub',
+    rating: 4.99,
+    reviewsCount: 840,
+    activeUsersCount: '45,000+ Students & Apprentices',
+    pricing: {
+      displayPrice: '$39',
+      billingPeriod: '/ month',
+      hasFreeTrial: true,
+      trialDays: 7
+    },
+    vendor: {
+      name: 'VibeTok Education Network',
+      logo: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=100&auto=format&fit=crop&q=80',
+      isVerified: true
+    },
+    overview: 'High-engagement micro-learning platform delivering 60-second to 5-minute video tutorials from verified master craftsmen, doctors, and security researchers. Includes interactive comprehension quizzes and code/cut sandboxes.',
+    features: [
+      { title: 'Interactive Video Sandboxes', desc: 'Code editors, miter angle calculators, and ECG waveforms rendered directly below tutorial videos.' },
+      { title: 'Verified Creator Guilds', desc: 'Every instructor is verified for authentic industry experience (Master Joiner, Attending MD, OSCP).' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&auto=format&fit=crop&q=80'],
+    demoUrl: 'https://vibetok-learning-hub.vercel.app',
+    liveUrl: 'https://vibetok-learning-hub.vercel.app',
+    isVercelLive: true,
+    architecture: {
+      title: 'Global HLS Video CDN',
+      summary: 'Adaptive bitrate video streaming optimized for mobile and jobsite field conditions.',
+      layers: ['Cloudflare Stream CDN', 'Next.js Interactive Layer', 'Supabase Progress Tracking'],
+      latency: '< 100ms video start time',
+      dataPrivacy: 'Strict privacy controls.'
+    },
+    integrations: ['ConnectIn Profile', 'CareerOrbit', 'Google Classroom'],
+    security: {
+      compliance: ['FERPA Compliant', 'SOC 2 Type II'],
+      encryption: 'DRM / TLS 1.3',
+      isolation: 'Encrypted user metrics'
+    },
+    pricingTiers: [
+      {
+        name: 'All-Access Learning Pass',
+        price: '$39',
+        period: '/ month',
+        description: 'Unlimited access to all 500+ masterclass video tracks and interactive sandboxes.',
+        features: ['500+ Video Lessons', 'Interactive Quizzes', 'Certificate of Completion', 'Direct Q&A with Master Instructors'],
+        ctaText: 'Start Learning'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'Access masterclasses at https://vibetok-learning-hub.vercel.app',
+      apiEndpoints: ['GET /api/courses', 'POST /api/progress/sync'],
+      sdkSupport: ['Web', 'iOS', 'Android']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.9% Uptime',
+      channel: 'Discord Community & In-App Chat',
+      responseHours: '< 1 Hour'
+    }
+  },
+  {
+    id: 'prod_bazaar',
+    professionEnclave: 'trades_construction',
+    name: 'Bazaar Industrial Tooling & Commerce Platform',
+    tagline: 'Decentralized trade machinery marketplace, heavy timber tools & industrial equipment',
+    category: 'Enterprise Solutions',
+    subCategory: 'Trade Machinery & Commerce',
+    icon: '🛍️',
+    badge: '📦 Live B2B Commerce',
+    rating: 4.94,
+    reviewsCount: 155,
+    activeUsersCount: '$4.2M Tooling Transacted',
+    pricing: {
+      displayPrice: '$120',
+      billingPeriod: '/ month',
+      hasFreeTrial: false
+    },
+    vendor: {
+      name: 'Bazaar Trade Network',
+      logo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+      isVerified: true
+    },
+    overview: 'Specialized commercial equipment exchange for contractors, machine shops, and fabrication facilities. Purchase or lease high-end CNC routers, total stations, heavy excavators, and commercial framing tools with verified escrow.',
+    features: [
+      { title: 'Verified Tooling Escrow', desc: 'Buyer inspection window guarantees equipment condition before funds release to seller.' },
+      { title: 'Freight & Rigging Logistics', desc: 'Integrated heavy-freight shipping quotes and jobsite crane drop-off scheduling.' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&auto=format&fit=crop&q=80'],
+    demoUrl: 'https://bazaar-standalone.vercel.app',
+    liveUrl: 'https://bazaar-standalone.vercel.app',
+    isVercelLive: true,
+    architecture: {
+      title: 'Decentralized Escrow Ledger',
+      summary: 'Milestone escrow protocol ensuring zero-fraud transactions for industrial assets.',
+      layers: ['B2B Product Catalog', 'Milestone Escrow Smart Contracts', 'Freight Dispatch API'],
+      latency: 'Real-time inventory lookup',
+      dataPrivacy: 'Enterprise financial privacy.'
+    },
+    integrations: ['Stripe Treasury', 'FreightQuote', 'QuickBooks Enterprise'],
+    security: {
+      compliance: ['FinCEN Compliant', 'SOC 2 Type II'],
+      encryption: 'AES-256 GCM',
+      isolation: 'Segregated Escrow Accounts'
+    },
+    pricingTiers: [
+      {
+        name: 'Equipment Dealer Listing',
+        price: '$120',
+        period: '/ month',
+        description: 'Unlimited heavy machinery and tool listings with verified seller badge.',
+        features: ['Unlimited Equipment Listings', 'Verified Escrow Checkout', 'Freight Logistics Automation', 'Priority Placement'],
+        ctaText: 'List Your Equipment'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'Explore industrial equipment at https://bazaar-standalone.vercel.app',
+      apiEndpoints: ['GET /api/inventory', 'POST /api/escrow/order'],
+      sdkSupport: ['REST', 'Web']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.9% Uptime',
+      channel: 'Equipment Escrow Hotline',
       responseHours: '< 30 Minutes'
     }
   },
@@ -1126,7 +1900,7 @@ export function getEnclaveMarketplaceProducts(enclaveId?: string): MarketplacePr
   return MASTER_MARKETPLACE_PRODUCTS.filter(p => {
     if (userEnclave === 'trades_construction') {
       if (p.professionEnclave && p.professionEnclave !== 'trades_construction') return false
-      if (!p.professionEnclave && !['Tools & Joinery', 'CAD & Measurement', 'Lumber & Materials', 'Hardware'].includes(p.subCategory)) return false
+      if (!p.professionEnclave && !['Tools & Joinery', 'CAD & Measurement', 'Lumber & Materials', 'Hardware', 'Trades & Vocational Network', 'Productivity & Field Notes', 'Trade Machinery & Commerce', 'Video Masterclasses & Tutorials'].includes(p.subCategory)) return false
       return true
     }
     if (userEnclave === 'healthcare_medicine') {
@@ -1136,10 +1910,22 @@ export function getEnclaveMarketplaceProducts(enclaveId?: string): MarketplacePr
     }
     if (userEnclave === 'automotive_mechanics') {
       if (p.professionEnclave && p.professionEnclave !== 'automotive_mechanics') return false
-      if (!p.professionEnclave && !['Scan Tools', 'Oscilloscopes', 'EV Safety Gear', 'OEM Repair Data'].includes(p.subCategory)) return false
+      if (!p.professionEnclave && !['Scan Tools', 'Oscilloscopes', 'EV Safety Gear', 'OEM Repair Data', 'Productivity & Field Notes'].includes(p.subCategory)) return false
+      return true
+    }
+    if (userEnclave === 'tech_software') {
+      if (p.professionEnclave && p.professionEnclave !== 'tech_software') return false
+      return true
+    }
+    if (userEnclave === 'law_gov_defense') {
+      if (p.professionEnclave && p.professionEnclave !== 'law_gov_defense') return false
+      return true
+    }
+    if (userEnclave === 'finance_accounting') {
+      if (p.professionEnclave && p.professionEnclave !== 'finance_accounting') return false
       return true
     }
     // tech_cybersecurity or default
-    return p.professionEnclave === userEnclave || (!p.professionEnclave && !['Tools & Joinery', 'Diagnostic Devices', 'Scan Tools'].includes(p.subCategory))
+    return p.professionEnclave === userEnclave || (!p.professionEnclave && !['Tools & Joinery', 'Diagnostic Devices', 'Scan Tools', 'Trades & Vocational Network'].includes(p.subCategory))
   })
 }

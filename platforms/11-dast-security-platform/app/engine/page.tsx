@@ -2641,14 +2641,14 @@ ${f.remediation}
 </head>
 <body>
   <div class="no-print">
-    <div><strong>📘 EXPEDITE STRIKE™ — Automated Penetration Testing &amp; DAST Validation Dossier (${allScopedUrlsStr})</strong></div>
-    <button class="print-btn" onclick="window.print()">🖨️ Print / Save EXPEDITE STRIKE™ Dossier as PDF</button>
+    <div><strong>🌐 EXPEDITE STRIKE™ (XTRIKE™ &amp; Aegis.SOC™) — DAST &amp; Web Interface Security Assessment Report (${allScopedUrlsStr})</strong></div>
+    <button class="print-btn" onclick="window.print()">🖨️ Print / Save DAST &amp; Web Interface Security Report as PDF</button>
   </div>
 
   <div class="header">
     <div>
-      <div style="font-size:11px;font-weight:800;color:#0284c7;letter-spacing:0.08em;">EXPEDITE CONSULTS · EXPEDITE STRIKE™ AUTONOMOUS SECURITY ENGINE v5.2 · ${classificationLevel}</div>
-      <h1 style="margin:4px 0;font-size:20px;">EXPEDITE STRIKE™ — Automated Penetration Testing &amp; DAST Validation Dossier</h1>
+      <div style="font-size:11px;font-weight:800;color:#0284c7;letter-spacing:0.08em;">🌐 EXPEDITE CONSULTS · XTRIKE™ &amp; AEGIS.SOC™ DAST (DYNAMIC APPLICATION SECURITY TESTING) v5.2 · ${classificationLevel}</div>
+      <h1 style="margin:4px 0;font-size:20px;">XTRIKE™ &amp; Aegis.SOC™ — DAST &amp; Web Interface Security Assessment Report</h1>
       <div style="font-size:11.5px;color:#0f172a;margin:3px 0;">
         <strong>Prepared For Client:</strong> <span class="badge std-badge">${clientOrgName}</span> &nbsp;|&nbsp;
         <strong>Lead Assessor:</strong> ${leadAssessorName} &nbsp;|&nbsp;
@@ -3175,12 +3175,12 @@ ${f.remediation}
         </table>
       </div>
 
-      <!-- PART C: FORENSIC EVIDENCE OF EXPLOITATION (BASELINE VS EXPLOITED HTTP TRACE + COLLECTED ARTIFACTS) -->
+      <!-- PART C: FORENSIC EVIDENCE OF EXPLOITATION (BASELINE VS EXPLOITED HTTP TRACE + COLLECTED SAMPLES + VISUAL SCREENSHOTS) -->
       <div style="background:#fff1f2;border:1px solid #fecdd3;border-left:4px solid #e11d48;border-radius:4px;padding:8px 10px;margin-bottom:8px;">
-        <div style="font-size:11px;font-weight:800;color:#be123c;margin-bottom:6px;">🔬 PART 3 · FORENSIC EVIDENCE OF EXPLOITATION (BASELINE VS. EXPLOITED HTTP PROOF + ${sampleEvList.length} ARTIFACT${sampleEvList.length > 1 ? "S" : ""}):</div>
+        <div style="font-size:11px;font-weight:800;color:#be123c;margin-bottom:6px;">🔬 PART 3 · FORENSIC EVIDENCE OF EXPLOITATION (${fr.exploitationStatusLabel}):</div>
         <div style="font-size:10.5px;color:#881337;margin-bottom:6px;">
           <strong>Injected Payload:</strong> <code>${(f.evidence?.payload || "N/A").replace(/</g, "&lt;")}</code> &nbsp;|&nbsp;
-          <strong>Matched Exploitation Indicator:</strong> <code>${(f.evidence?.matchedPattern || "Verified response differential").replace(/</g, "&lt;")}</code>
+          <strong>Matched Exploitation Indicator:</strong> <code>${(f.evidence?.matchedPattern || fr.evidence.matchedIndicator).replace(/</g, "&lt;")}</code>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
           <div>
@@ -3192,6 +3192,36 @@ ${f.remediation}
             <pre style="margin:3px 0;">${(f.evidence?.testRequest || `${f.method} ${f.url}`).replace(/</g, "&lt;")}\n\n${(f.evidence?.testResponse || "").replace(/</g, "&lt;")}</pre>
           </div>
         </div>
+
+        <!-- Sample Collected Exploitation Evidence (EVD-01..03) -->
+        <div style="margin-bottom:8px;">
+          <div style="font-size:10.5px;font-weight:800;color:#9f1239;margin-bottom:4px;">📂 Sample Collected Exploitation Artifacts (${fr.evidence.collectedExploitationSamples.length} Verified Captures):</div>
+          ${fr.evidence.collectedExploitationSamples.map(ev => `
+            <div style="background:#ffffff;border:1px solid #fda4af;border-radius:4px;padding:6px 8px;margin-bottom:6px;">
+              <div style="display:flex;justify-content:space-between;font-size:10px;font-weight:800;color:#be123c;">
+                <span>[${ev.artifactId}] ${ev.title.replace(/</g, "&lt;")}</span>
+                <span>${ev.category} · SHA-256: ${ev.sha256Digest.slice(0, 16)}...</span>
+              </div>
+              <pre style="margin:3px 0;">${ev.capturedCommandOrRequest.replace(/</g, "&lt;")}\n---\n${ev.capturedOutputOrLoot.replace(/</g, "&lt;")}</pre>
+              <div style="font-size:10px;color:#0f172a;"><strong>Customer Confidence (CI) Summary:</strong> ${ev.customerCiSummary.replace(/</g, "&lt;")}</div>
+            </div>
+          `).join("")}
+        </div>
+
+        <!-- Visual Screenshots of How It Was Exploited -->
+        <div style="background:#0f172a;border:1px solid #38bdf8;border-radius:6px;padding:8px 10px;margin-bottom:8px;color:#f8fafc;">
+          <div style="font-size:10.5px;font-weight:800;color:#38bdf8;margin-bottom:6px;">📸 Visual Pictures of How ${fr.findingId} Was Exploited (Forensic Screenshots for Customer CI):</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            ${fr.evidence.exploitationPictures.map(pic => `
+              <div style="background:#050811;border:1px solid #334155;border-radius:5px;padding:6px;">
+                <div style="font-size:10px;font-weight:800;color:#f8fafc;margin-bottom:4px;">[${pic.figureId}] ${pic.title.replace(/</g, "&lt;")}</div>
+                <img src="${pic.svgDataUri}" alt="${pic.title.replace(/"/g, "&quot;")}" style="width:100%;height:auto;border-radius:4px;border:1px solid #1e293b;display:block;margin-bottom:4px;" />
+                <div style="font-size:9.5px;color:#cbd5e1;line-height:1.35;">${pic.caption.replace(/</g, "&lt;")}</div>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+
         ${sampleEvList.map((ev, evIdx) => `
           <div style="margin-bottom:6px;padding-bottom:6px;border-bottom:${evIdx < sampleEvList.length - 1 ? "1px dashed #fda4af" : "none"};">
             <div style="font-size:10.5px;font-weight:700;color:#881337;">[${ev.type}] ${(ev.title || ev.label || "Sample Evidence").replace(/</g, "&lt;")}</div>
@@ -4128,8 +4158,21 @@ ${f.remediation}
           </div>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <span style={{
+                fontSize: 10,
+                fontWeight: 900,
+                background: "linear-gradient(135deg, rgba(6,182,212,0.28), rgba(16,185,129,0.25))",
+                border: "1px solid #06b6d4",
+                color: "#38bdf8",
+                padding: "2px 8px",
+                borderRadius: 4,
+                fontFamily: "monospace",
+                letterSpacing: "0.04em"
+              }}>
+                🌐 DAST · DYNAMIC APPLICATION SECURITY TESTING
+              </span>
               <h1 style={{ fontSize: 16.5, fontWeight: 900, color: "#f8fafc", margin: 0 }}>
-                EXPEDITE STRIKE™ Autonomous Security Engine
+                EXPEDITE STRIKE™ — DAST &amp; Web Interface Security Platform
               </h1>
               <span style={{
                 fontSize: 10,
@@ -4140,11 +4183,11 @@ ${f.remediation}
                 borderRadius: 4,
                 fontFamily: "monospace"
               }}>
-                {running ? `SCANNING ${targets.length} TARGETS (${progress}% · ${formatDuration(elapsedSec)})` : done ? `${targets.length} TARGETS COMPLETED (${formatDuration(elapsedSec)})` : `${targets.length} TARGETS STAGED`}
+                {running ? `DAST SCANNING ${targets.length} WEB TARGETS (${progress}% · ${formatDuration(elapsedSec)})` : done ? `${targets.length} WEB TARGETS COMPLETED (${formatDuration(elapsedSec)})` : `${targets.length} WEB TARGETS STAGED`}
               </span>
             </div>
             <p style={{ fontSize: 11, color: "var(--muted)", margin: "2px 0 0 0" }}>
-              65,535 TCP &amp; 65,535 UDP Port-to-Script Recon · Linux/Windows PrivEsc, Lateral &amp; Post-Exploit · 14 Standards · Auto-Email Dispatch
+              🌐 Live DAST Web Interface &amp; API Exploitation Scanner (XTRIKE™ &amp; Aegis.SOC™) · OWASP WSTG / Top 10 · Visual Exploit Evidence · 65,535 TCP/UDP Port Recon · Auto-Email Report
             </p>
           </div>
         </div>
@@ -4188,13 +4231,13 @@ ${f.remediation}
               style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, padding: "7px 14px" }}
             >
               <Play size={13} fill="#fff" />
-              <span>Launch Scan ({targets.length} URLs)</span>
+              <span>Launch DAST Scan ({targets.length} URLs)</span>
             </button>
           ) : (
-            <div style={{ display: "flex", gap: 6 }}>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               <button
                 onClick={fastForwardToReport}
-                title="Complete all remaining MITRE ATT&CK / PTES / NIST phases immediately and open the Validated Printable Report"
+                title="Complete all remaining DAST / MITRE ATT&CK / OWASP WSTG phases immediately and open the DAST & Web Interface Security Report"
                 style={{
                   background: "rgba(6,182,212,0.18)",
                   border: "1px solid #06b6d4",
@@ -4210,7 +4253,7 @@ ${f.remediation}
                 }}
               >
                 <FastForward size={13} />
-                <span>Complete &amp; View Report</span>
+                <span>Complete &amp; View DAST Report</span>
               </button>
               <button
                 onClick={handleStopEngine}
@@ -4240,7 +4283,7 @@ ${f.remediation}
             style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, padding: "7px 11px", border: "1px solid rgba(220,231,117,0.4)", color: "#dce775" }}
           >
             <Printer size={13} color="#dce775" />
-            <span>Print Dossier</span>
+            <span>Print DAST Web Report</span>
           </button>
 
           <button
@@ -4256,7 +4299,7 @@ ${f.remediation}
               background: autoEmailOnComplete ? "rgba(16,185,129,0.12)" : "rgba(56,189,248,0.08)",
               color: autoEmailOnComplete ? "#34d399" : "#38bdf8"
             }}
-            title="Configure Automated Report Email Dispatch & Recipients"
+            title="Configure Automated DAST Web Report Email Dispatch & Recipients"
           >
             <span>📧</span>
             <span>Auto-Email ({emailRecipients.length})</span>
@@ -4291,13 +4334,13 @@ ${f.remediation}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 5, flex: 1, flexWrap: "wrap" }}>
             {[
-              { step: 1, tab: "NMAP" as LogTab,         label: "1. 📡 Nmap",            color: "#a5d6a7" },
-              { step: 2, tab: "OPENVAS" as LogTab,      label: "2. 🛡️ OpenVAS",         color: "#80cbc4" },
-              { step: 3, tab: "ZAP" as LogTab,          label: "3. ⚡ OWASP ZAP",        color: "#4fc3f7" },
-              { step: 4, tab: "BURP" as LogTab,         label: "4. 🔍 Burp Suite",       color: "#ff8a65" },
-              { step: 5, tab: "POST_EXPLOIT" as LogTab, label: "5. 🔑 PrivEsc & Lateral",color: "#c084fc" },
-              { step: 6, tab: "AI" as LogTab,           label: "6. 🧠 Autonomous Brain", color: "#60a5fa" },
-              { step: 7, tab: "REPORT" as LogTab,       label: "7. 📄 Dossier & Retest", color: "#dce775" },
+              { step: 1, tab: "NMAP" as LogTab,         label: "1. 📡 XTRIKE-NetRecon (Nmap)",         color: "#a5d6a7" },
+              { step: 2, tab: "OPENVAS" as LogTab,      label: "2. 🛡️ Aegis.SOC-VulnCore (OpenVAS)",  color: "#80cbc4" },
+              { step: 3, tab: "ZAP" as LogTab,          label: "3. ⚡ XTRIKE-WebPulse (OWASP ZAP DAST)", color: "#4fc3f7" },
+              { step: 4, tab: "BURP" as LogTab,         label: "4. 🔍 XTRIKE-StrikeFuzzer (Burp DAST)", color: "#ff8a65" },
+              { step: 5, tab: "POST_EXPLOIT" as LogTab, label: "5. 🔑 Aegis.SOC-Apex (PrivEsc)",       color: "#c084fc" },
+              { step: 6, tab: "AI" as LogTab,           label: "6. 🧠 Autonomous DAST Brain",          color: "#60a5fa" },
+              { step: 7, tab: "REPORT" as LogTab,       label: "7. 📄 DAST Web Interface Report",      color: "#dce775" },
             ].map((item, idx) => {
               const isCurrent = running && currentEngineStep === item.step;
               const isCompleted = done || currentEngineStep > item.step;
@@ -5253,18 +5296,21 @@ ${f.remediation}
                 <div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                     <FileText size={18} color="#10b981" />
+                    <span style={{ fontSize: 10, fontWeight: 900, background: "rgba(6,182,212,0.22)", color: "#38bdf8", padding: "2px 8px", borderRadius: 4, border: "1px solid #06b6d4", fontFamily: "monospace" }}>
+                      🌐 DAST · WEB INTERFACE &amp; API REPORT
+                    </span>
                     <strong style={{ fontSize: 15, color: "#f8fafc" }}>
-                      EXPEDITE STRIKE™ — Automated Penetration Testing &amp; DAST Validation Dossier ({clientOrgName} · {engagementId})
+                      XTRIKE™ &amp; Aegis.SOC™ — DAST &amp; Web Interface Security Assessment Report ({clientOrgName} · {engagementId})
                     </strong>
                     <span style={{ fontSize: 10, fontWeight: 900, background: "rgba(168,85,247,0.22)", color: "#e879f9", padding: "2px 8px", borderRadius: 4, border: "1px solid rgba(192,132,252,0.4)" }}>
-                      ⚔️ ALL 14 MITRE ATT&amp;CK® TACTICS (TA0043 ➔ TA0040)
+                      ⚔️ OWASP WSTG · TOP 10 · MITRE ATT&amp;CK®
                     </span>
                     <span style={{ fontSize: 10, fontWeight: 900, background: "rgba(16,185,129,0.2)", color: "#10b981", padding: "2px 8px", borderRadius: 4 }}>
-                      ✓ RETEST TRACKER &amp; APPENDIX A–D READY
+                      ✓ EXPLOIT EVIDENCE &amp; VISUAL SCREENSHOTS INCLUDED
                     </span>
                   </div>
                   <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 4 }}>
-                    Prepared for <strong style={{ color: "#38bdf8" }}>{clientOrgName}</strong> by <strong style={{ color: "#f8fafc" }}>{leadAssessorName}</strong> · Classification: <strong style={{ color: "#fbbf24" }}>{classificationLevel}</strong>
+                    Dynamic Application Security Testing (DAST) &amp; Web Interface Dossier prepared for <strong style={{ color: "#38bdf8" }}>{clientOrgName}</strong> by <strong style={{ color: "#f8fafc" }}>{leadAssessorName}</strong> · Classification: <strong style={{ color: "#fbbf24" }}>{classificationLevel}</strong>
                   </div>
                 </div>
 
@@ -5275,7 +5321,7 @@ ${f.remediation}
                     style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, padding: "8px 14px" }}
                   >
                     <Printer size={14} />
-                    <span>Print / Save Client PDF Dossier</span>
+                    <span>Print / Save DAST Web Interface PDF</span>
                   </button>
                   <button
                     onClick={exportSarifReport}
@@ -6499,31 +6545,23 @@ ${f.remediation}
                                 )}
                               </div>
 
-                              {/* Right Column: Sample Collected Evidence */}
+                              {/* Right Column: Sample Collected Exploitation Evidence */}
                               <div style={{ background: "#050811", border: "1px solid rgba(244,63,94,0.35)", borderRadius: 6, padding: 10, display: "flex", flexDirection: "column", gap: 8 }}>
-                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6 }}>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                                   <div style={{ fontSize: 10.5, fontWeight: 800, color: "#f43f5e" }}>
-                                    🔬 Sample Collected Evidence &amp; Forensic Captures:
+                                    🔬 Sample Collected Evidence of Exploitation ({fr.findingId}):
                                   </div>
-                                  <span style={{ fontSize: 9, fontFamily: "monospace", color: "#fda4af", background: "rgba(244,63,94,0.14)", padding: "1px 6px", borderRadius: 4 }}>
-                                    {(f.collectedEvidence?.length || 0) + 1} ARTIFACTS
+                                  <span style={{ fontSize: 9, fontFamily: "monospace", color: "#fda4af", background: "rgba(244,63,94,0.18)", padding: "2px 6px", borderRadius: 4, fontWeight: 800 }}>
+                                    ⚡ {fr.exploitationStatusLabel}
                                   </span>
                                 </div>
 
-                                {(f.collectedEvidence && f.collectedEvidence.length > 0 ? f.collectedEvidence : [
-                                  {
-                                    type: "HTTP_TRACE" as const,
-                                    title: "Sample Evidence 1 — Injected HTTP Request & Response Proof",
-                                    content: `${f.evidence?.testRequest || `${f.method} ${f.url}`}\n\n${f.evidence?.testResponse || ""}`,
-                                    highlight: f.evidence?.matchedPattern || "Verified response differential",
-                                    annotation: "Captured during automated DAST active validation against target endpoint."
-                                  }
-                                ]).map((ev, evIdx) => (
+                                {fr.evidence.collectedExploitationSamples.map((ev) => (
                                   <div
-                                    key={evIdx}
+                                    key={ev.artifactId}
                                     style={{
-                                      background: "rgba(244,63,94,0.04)",
-                                      border: "1px solid rgba(244,63,94,0.22)",
+                                      background: "rgba(244,63,94,0.05)",
+                                      border: "1px solid rgba(244,63,94,0.26)",
                                       borderRadius: 5,
                                       padding: 8,
                                       display: "flex",
@@ -6531,36 +6569,101 @@ ${f.remediation}
                                       gap: 4
                                     }}
                                   >
-                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6 }}>
-                                      <strong style={{ fontSize: 10, color: "#fda4af" }}>{ev.title || ev.label || "Sample Evidence"}</strong>
+                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                                      <strong style={{ fontSize: 10, color: "#fda4af" }}>[{ev.artifactId}] {ev.title}</strong>
                                       <span style={{ fontSize: 8.5, fontFamily: "monospace", fontWeight: 800, color: "#f43f5e", background: "rgba(244,63,94,0.16)", padding: "1px 5px", borderRadius: 3 }}>
-                                        {ev.type}
+                                        {ev.category}
                                       </span>
                                     </div>
-                                    <pre style={{ margin: 0, fontSize: 9.5, color: "#fecdd3", whiteSpace: "pre-wrap", wordBreak: "break-all", fontFamily: "monospace", background: "#020409", padding: 6, borderRadius: 4, maxHeight: 135, overflowY: "auto" }}>
-                                      {ev.content}
+                                    <div style={{ fontSize: 9, color: "#94a3b8", fontWeight: 700 }}>Executed DAST Web Exploit Request / Command:</div>
+                                    <pre style={{ margin: 0, fontSize: 9.2, color: "#38bdf8", whiteSpace: "pre-wrap", wordBreak: "break-word", fontFamily: "monospace", background: "#020409", padding: 6, borderRadius: 4 }}>
+                                      {ev.capturedCommandOrRequest}
                                     </pre>
-                                    {ev.highlight && (
-                                      <div style={{ fontSize: 9.5, fontFamily: "monospace", color: "#fbbf24" }}>
-                                        <strong>Matched Indicator:</strong> {ev.highlight}
-                                      </div>
-                                    )}
-                                    <div style={{ fontSize: 9.5, color: "var(--fg-2)", lineHeight: 1.35 }}>
-                                      <strong>Forensic Note:</strong> {ev.annotation}
+                                    <div style={{ fontSize: 9, color: "#34d399", fontWeight: 700 }}>Collected Exploitation Output / Sample Loot Proof:</div>
+                                    <pre style={{ margin: 0, fontSize: 9.2, color: "#6ee7b7", whiteSpace: "pre-wrap", wordBreak: "break-word", fontFamily: "monospace", background: "rgba(6,78,59,0.28)", padding: 6, borderRadius: 4, border: "1px solid rgba(16,185,129,0.25)" }}>
+                                      {ev.capturedOutputOrLoot}
+                                    </pre>
+                                    <div style={{ fontSize: 9.5, color: "#e2e8f0", lineHeight: 1.35 }}>
+                                      <strong style={{ color: "#fbbf24" }}>Customer CI Verdict:</strong> {ev.customerCiSummary}
+                                    </div>
+                                    <div style={{ fontSize: 8.5, fontFamily: "monospace", color: "#64748b", wordBreak: "break-all" }}>
+                                      SHA-256: {ev.sha256Digest}
                                     </div>
                                   </div>
                                 ))}
+                              </div>
+                            </div>
 
-                                <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--border)", borderRadius: 5, padding: 8 }}>
-                                  <div style={{ fontSize: 9.5, fontWeight: 700, color: "#fca5a5", marginBottom: 3 }}>
-                                    Raw HTTP Request / Response Differential:
+                            {/* 📸 Visual Pictures of How It Was Exploited (Customer CI Forensic Screenshots) */}
+                            <div style={{
+                              background: "#050811",
+                              border: "1px solid rgba(56,189,248,0.42)",
+                              borderRadius: 6,
+                              padding: 10,
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: 8
+                            }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6 }}>
+                                <strong style={{ fontSize: 11, color: "#38bdf8", fontFamily: "monospace" }}>
+                                  📸 Visual Pictures of How {fr.findingId} Was Exploited on the Web Interface (Customer CI Screenshots):
+                                </strong>
+                                <span style={{ fontSize: 9.5, fontFamily: "monospace", color: "#10b981", background: "rgba(16,185,129,0.14)", padding: "2px 7px", borderRadius: 4, fontWeight: 800 }}>
+                                  {fr.evidence.exploitationPictures.length} FORENSIC EXPLOIT SCREENSHOTS
+                                </span>
+                              </div>
+                              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 10 }}>
+                                {fr.evidence.exploitationPictures.map((pic) => (
+                                  <div
+                                    key={pic.figureId}
+                                    style={{
+                                      background: "rgba(15,23,42,0.75)",
+                                      border: "1px solid rgba(56,189,248,0.28)",
+                                      borderRadius: 6,
+                                      padding: 8,
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      gap: 6
+                                    }}
+                                  >
+                                    <div style={{ fontSize: 10.5, fontWeight: 800, color: "#f8fafc" }}>
+                                      [{pic.figureId}] {pic.title}
+                                    </div>
+                                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                                      {pic.stepBadges.map((b, bIdx) => (
+                                        <span
+                                          key={bIdx}
+                                          style={{
+                                            fontSize: 8.5,
+                                            fontFamily: "monospace",
+                                            fontWeight: 800,
+                                            color: "#38bdf8",
+                                            background: "rgba(56,189,248,0.14)",
+                                            border: "1px solid rgba(56,189,248,0.35)",
+                                            padding: "1px 6px",
+                                            borderRadius: 4
+                                          }}
+                                        >
+                                          {b}
+                                        </span>
+                                      ))}
+                                    </div>
+                                    <img
+                                      src={pic.svgDataUri}
+                                      alt={pic.title}
+                                      style={{
+                                        width: "100%",
+                                        height: "auto",
+                                        borderRadius: 5,
+                                        border: "1px solid rgba(255,255,255,0.12)",
+                                        display: "block"
+                                      }}
+                                    />
+                                    <div style={{ fontSize: 9.5, color: "#cbd5e1", lineHeight: 1.4 }}>
+                                      {pic.caption}
+                                    </div>
                                   </div>
-                                  <pre style={{ margin: 0, fontSize: 9.5, color: "#fca5a5", whiteSpace: "pre-wrap", wordBreak: "break-all", fontFamily: "monospace", maxHeight: 110, overflowY: "auto" }}>
-                                    {f.evidence?.testRequest || `${f.method} ${f.url}`}
-                                    {f.evidence?.testResponse ? `\n\n${f.evidence.testResponse}` : ""}
-                                    {"\n"}Matched: {f.evidence?.matchedPattern || "Verified response differential"}
-                                  </pre>
-                                </div>
+                                ))}
                               </div>
                             </div>
 
@@ -8757,60 +8860,85 @@ http://192.168.195.140/peruggia`}
                 </div>
               )}
 
-              {pocModalTab === "EVIDENCE" && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                    <strong style={{ fontSize: 12.5, color: "#f43f5e" }}>
-                      🔬 Sample Collected Evidence Artifacts ({(selectedFinding.collectedEvidence?.length || 0) + 1} Captures):
-                    </strong>
-                    {(selectedFinding.collectedEvidence && selectedFinding.collectedEvidence.length > 0 ? selectedFinding.collectedEvidence : [
-                      {
-                        type: "HTTP_TRACE" as const,
-                        title: "Sample Evidence 1 — Injected HTTP Request & Response Proof",
-                        content: `${selectedFinding.evidence?.testRequest || `${selectedFinding.method} ${selectedFinding.url}`}\n\n${selectedFinding.evidence?.testResponse || ""}`,
-                        highlight: selectedFinding.evidence?.matchedPattern || "Verified response differential",
-                        annotation: "Captured during automated DAST active validation against target endpoint."
-                      }
-                    ]).map((ev, evIdx) => (
-                      <div key={evIdx} style={{ background: "rgba(244,63,94,0.05)", border: "1px solid rgba(244,63,94,0.3)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 6 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <strong style={{ fontSize: 11.5, color: "#fda4af" }}>{ev.title || ev.label || "Sample Evidence"}</strong>
-                          <span style={{ fontSize: 9.5, fontFamily: "monospace", fontWeight: 800, color: "#f43f5e", background: "rgba(244,63,94,0.18)", padding: "2px 6px", borderRadius: 4 }}>
-                            {ev.type}
-                          </span>
-                        </div>
-                        <pre style={{ margin: 0, background: "#050811", border: "1px solid var(--border)", padding: 10, borderRadius: 6, fontFamily: "monospace", fontSize: 10.5, color: "#fecdd3", whiteSpace: "pre-wrap", overflowX: "auto" }}>
-                          {ev.content}
-                        </pre>
-                        {ev.highlight && (
-                          <div style={{ fontSize: 10.5, fontFamily: "monospace", color: "#fbbf24" }}>
-                            <strong>Matched Indicator:</strong> {ev.highlight}
-                          </div>
-                        )}
-                        <div style={{ fontSize: 11, color: "var(--fg-2)" }}>
-                          <strong>Forensic Annotation:</strong> {ev.annotation}
-                        </div>
+              {pocModalTab === "EVIDENCE" && (() => {
+                const modalFormalReport = buildFormalFindingReport(selectedFinding, 0, primaryTargetUrl);
+                return (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6 }}>
+                        <strong style={{ fontSize: 12.5, color: "#f43f5e" }}>
+                          🔬 Sample Collected Evidence of Exploitation ({modalFormalReport.findingId}):
+                        </strong>
+                        <span style={{ fontSize: 10, fontFamily: "monospace", fontWeight: 900, color: "#fda4af", background: "rgba(244,63,94,0.2)", padding: "2px 8px", borderRadius: 4 }}>
+                          ⚡ {modalFormalReport.exploitationStatusLabel}
+                        </span>
                       </div>
-                    ))}
-                  </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                    <div>
-                      <strong style={{ fontSize: 12, color: "#10b981" }}>Baseline Normal Request/Response:</strong>
-                      <pre style={{ background: "#050811", border: "1px solid var(--border)", padding: 10, fontFamily: "monospace", fontSize: 10.5, color: "var(--muted)", marginTop: 4, maxHeight: 160, overflowX: "auto", whiteSpace: "pre-wrap" }}>
-                        {selectedFinding.evidence?.originalRequest || "GET /api/search?q=test HTTP/1.1"}
-                      </pre>
+                      {modalFormalReport.evidence.collectedExploitationSamples.map((ev) => (
+                        <div key={ev.artifactId} style={{ background: "rgba(244,63,94,0.05)", border: "1px solid rgba(244,63,94,0.3)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6 }}>
+                            <strong style={{ fontSize: 11.5, color: "#fda4af" }}>[{ev.artifactId}] {ev.title}</strong>
+                            <span style={{ fontSize: 9.5, fontFamily: "monospace", fontWeight: 800, color: "#f43f5e", background: "rgba(244,63,94,0.18)", padding: "2px 6px", borderRadius: 4 }}>
+                              {ev.category}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: 10, color: "#94a3b8", fontWeight: 700 }}>Executed DAST Web Exploit Request / Command:</div>
+                          <pre style={{ margin: 0, background: "#050811", border: "1px solid var(--border)", padding: 10, borderRadius: 6, fontFamily: "monospace", fontSize: 10.5, color: "#38bdf8", whiteSpace: "pre-wrap", overflowX: "auto" }}>
+                            {ev.capturedCommandOrRequest}
+                          </pre>
+                          <div style={{ fontSize: 10, color: "#34d399", fontWeight: 700 }}>Collected Exploitation Output / Sample Loot Proof:</div>
+                          <pre style={{ margin: 0, background: "rgba(6,78,59,0.28)", border: "1px solid rgba(16,185,129,0.35)", padding: 10, borderRadius: 6, fontFamily: "monospace", fontSize: 10.5, color: "#6ee7b7", whiteSpace: "pre-wrap", overflowX: "auto" }}>
+                            {ev.capturedOutputOrLoot}
+                          </pre>
+                          <div style={{ fontSize: 11, color: "var(--fg-2)" }}>
+                            <strong style={{ color: "#fbbf24" }}>Customer Confidence (CI) Summary:</strong> {ev.customerCiSummary}
+                          </div>
+                          <div style={{ fontSize: 9.5, fontFamily: "monospace", color: "#64748b" }}>
+                            Chain-of-Custody SHA-256: {ev.sha256Digest}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <div>
-                      <strong style={{ fontSize: 12, color: "#f43f5e" }}>Exploit Injected Request &amp; Response Proof:</strong>
-                      <pre style={{ background: "#050811", border: "1px solid rgba(244,63,94,0.4)", padding: 10, fontFamily: "monospace", fontSize: 10.5, color: "#f87171", marginTop: 4, maxHeight: 160, overflowX: "auto", whiteSpace: "pre-wrap" }}>
-                        {selectedFinding.evidence?.testRequest || "GET /api/search?q=' UNION SELECT 1,2,3-- HTTP/1.1"}
-                        {selectedFinding.evidence?.testResponse ? `\n\n${selectedFinding.evidence.testResponse}` : ""}
-                      </pre>
+
+                    {/* Visual Pictures of How It Was Exploited */}
+                    <div style={{ background: "#050811", border: "1px solid rgba(56,189,248,0.4)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 10 }}>
+                      <strong style={{ fontSize: 12.5, color: "#38bdf8" }}>
+                        📸 Visual Pictures of How {modalFormalReport.findingId} Was Exploited (Customer CI Screenshots):
+                      </strong>
+                      {modalFormalReport.evidence.exploitationPictures.map((pic) => (
+                        <div key={pic.figureId} style={{ background: "rgba(15,23,42,0.8)", border: "1px solid rgba(56,189,248,0.3)", borderRadius: 6, padding: 10, display: "flex", flexDirection: "column", gap: 6 }}>
+                          <strong style={{ fontSize: 11.5, color: "#f8fafc" }}>[{pic.figureId}] {pic.title}</strong>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                            {pic.stepBadges.map((b, bIdx) => (
+                              <span key={bIdx} style={{ fontSize: 9.5, fontFamily: "monospace", fontWeight: 800, color: "#38bdf8", background: "rgba(56,189,248,0.15)", border: "1px solid rgba(56,189,248,0.35)", padding: "2px 7px", borderRadius: 4 }}>
+                                {b}
+                              </span>
+                            ))}
+                          </div>
+                          <img src={pic.svgDataUri} alt={pic.title} style={{ width: "100%", height: "auto", borderRadius: 6, border: "1px solid rgba(255,255,255,0.15)" }} />
+                          <div style={{ fontSize: 10.5, color: "#cbd5e1", lineHeight: 1.45 }}>{pic.caption}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                      <div>
+                        <strong style={{ fontSize: 12, color: "#10b981" }}>Baseline Normal Request/Response:</strong>
+                        <pre style={{ background: "#050811", border: "1px solid var(--border)", padding: 10, fontFamily: "monospace", fontSize: 10.5, color: "var(--muted)", marginTop: 4, maxHeight: 160, overflowX: "auto", whiteSpace: "pre-wrap" }}>
+                          {selectedFinding.evidence?.originalRequest || "GET /api/search?q=test HTTP/1.1"}
+                        </pre>
+                      </div>
+                      <div>
+                        <strong style={{ fontSize: 12, color: "#f43f5e" }}>Exploit Injected Request &amp; Response Proof:</strong>
+                        <pre style={{ background: "#050811", border: "1px solid rgba(244,63,94,0.4)", padding: 10, fontFamily: "monospace", fontSize: 10.5, color: "#f87171", marginTop: 4, maxHeight: 160, overflowX: "auto", whiteSpace: "pre-wrap" }}>
+                          {selectedFinding.evidence?.testRequest || "GET /api/search?q=' UNION SELECT 1,2,3-- HTTP/1.1"}
+                          {selectedFinding.evidence?.testResponse ? `\n\n${selectedFinding.evidence.testResponse}` : ""}
+                        </pre>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {pocModalTab === "REMEDIATION" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>

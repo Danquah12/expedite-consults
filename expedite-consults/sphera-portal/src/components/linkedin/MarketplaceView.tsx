@@ -129,15 +129,21 @@ export function MarketplaceView({
     // 1. Strict Enclave Least-Privilege Isolation
     if (userEnclave === 'trades_construction') {
       if (p.professionEnclave && p.professionEnclave !== 'trades_construction') return false
-      if (!p.professionEnclave && !['Tools & Joinery', 'CAD & Measurement', 'Lumber & Materials', 'Hardware'].includes(p.subCategory)) return false
+      if (!p.professionEnclave && !['Tools & Joinery', 'CAD & Measurement', 'Lumber & Materials', 'Hardware', 'Trades & Vocational Network', 'Productivity & Field Notes', 'Trade Machinery & Commerce', 'Video Masterclasses & Tutorials'].includes(p.subCategory)) return false
     } else if (userEnclave === 'healthcare_medicine') {
       if (p.professionEnclave && p.professionEnclave !== 'healthcare_medicine') return false
       if (!p.professionEnclave && !['Diagnostic Devices', 'Trauma & Resuscitation', 'Surgical Implants', 'Clinical Gear'].includes(p.subCategory)) return false
     } else if (userEnclave === 'automotive_mechanics') {
       if (p.professionEnclave && p.professionEnclave !== 'automotive_mechanics') return false
-      if (!p.professionEnclave && !['Scan Tools', 'Oscilloscopes', 'EV Safety Gear', 'OEM Repair Data'].includes(p.subCategory)) return false
+      if (!p.professionEnclave && !['Scan Tools', 'Oscilloscopes', 'EV Safety Gear', 'OEM Repair Data', 'Productivity & Field Notes'].includes(p.subCategory)) return false
+    } else if (userEnclave === 'tech_software') {
+      if (p.professionEnclave && p.professionEnclave !== 'tech_software') return false
+    } else if (userEnclave === 'law_gov_defense') {
+      if (p.professionEnclave && p.professionEnclave !== 'law_gov_defense') return false
+    } else if (userEnclave === 'finance_accounting') {
+      if (p.professionEnclave && p.professionEnclave !== 'finance_accounting') return false
     } else {
-      // Tech & Cyber
+      // Tech & Cyber (tech_cybersecurity or default)
       if (p.professionEnclave && p.professionEnclave !== 'tech_cybersecurity') return false
     }
 
@@ -703,7 +709,7 @@ export function MarketplaceView({
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+                <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2">
                   <button
                     onClick={() => {
                       setSelectedProduct(product)
@@ -714,12 +720,25 @@ export function MarketplaceView({
                     View Details →
                   </button>
 
-                  <button
-                    onClick={() => handleGenerateLicense(product, 'trial')}
-                    className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white px-4 py-1.5 text-xs font-bold shadow-xs transition-all"
-                  >
-                    {product.pricing.hasFreeTrial ? "Free Trial" : "Buy Now"}
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    {product.liveUrl && (
+                      <button
+                        onClick={() => window.open(product.liveUrl, '_blank', 'noopener,noreferrer')}
+                        className="rounded-full bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-xs font-bold shadow-xs transition-all flex items-center gap-1"
+                        title="Launch deployed application in new tab"
+                      >
+                        <Zap className="h-3 w-3 fill-amber-300 text-amber-300" />
+                        <span>Launch App</span>
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => handleGenerateLicense(product, 'trial')}
+                      className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white px-3.5 py-1.5 text-xs font-bold shadow-xs transition-all"
+                    >
+                      {product.pricing.hasFreeTrial ? "Free Trial" : "Buy Now"}
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -919,6 +938,15 @@ export function MarketplaceView({
                 </button>
 
                 <div className="flex items-center gap-2">
+                  {selectedProduct.liveUrl && (
+                    <button
+                      onClick={() => window.open(selectedProduct.liveUrl, '_blank', 'noopener,noreferrer')}
+                      className="rounded-full bg-emerald-600 hover:bg-emerald-700 px-4 py-2 text-xs font-bold text-white shadow-md flex items-center gap-1.5 transition-all"
+                    >
+                      <Zap className="h-3.5 w-3.5 fill-amber-300 text-amber-300" />
+                      <span>Launch Live Application →</span>
+                    </button>
+                  )}
                   <button
                     onClick={() => handleGenerateLicense(selectedProduct, 'trial')}
                     className="rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 px-5 py-2 text-xs font-bold text-white shadow-md hover:from-purple-500 hover:to-indigo-500"

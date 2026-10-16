@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dialog"
 import { AIPostModal } from "./AIPostModal"
 import { PostImpactSimulator } from "./PostImpactSimulator"
+import { useLanguage } from "@/context/LanguageContext"
 
 interface PostCreatorProps {
   user: UserProfile
@@ -32,6 +33,7 @@ interface PostCreatorProps {
 }
 
 export function PostCreator({ user, onAddPost }: PostCreatorProps) {
+  const { t } = useLanguage()
   const [isOpen, setIsOpen] = useState(false)
   const [isAIOpen, setIsAIOpen] = useState(false)
   const [isSimulatorOpen, setIsSimulatorOpen] = useState(false)
@@ -189,7 +191,7 @@ export function PostCreator({ user, onAddPost }: PostCreatorProps) {
             }}
             className="flex-1 rounded-full border border-zinc-300 bg-zinc-50/70 px-4 py-2.5 text-left text-xs sm:text-sm font-medium text-zinc-500 hover:bg-zinc-100 transition-colors dark:border-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-400 dark:hover:bg-zinc-800"
           >
-            Start a post, share insights or milestones...
+            {t("start_post_placeholder", "Start a post, share insights or milestones...")}
           </button>
         </div>
 
@@ -203,7 +205,7 @@ export function PostCreator({ user, onAddPost }: PostCreatorProps) {
             className="flex items-center gap-1.5 rounded-md p-2 hover:bg-zinc-100 transition-colors text-sky-600 dark:hover:bg-zinc-800"
           >
             <ImageIcon className="h-4 w-4" />
-            <span className="hidden sm:inline">Media</span>
+            <span className="hidden sm:inline">{t("action_media", "Media")}</span>
           </button>
 
           <button
@@ -214,7 +216,7 @@ export function PostCreator({ user, onAddPost }: PostCreatorProps) {
             className="flex items-center gap-1.5 rounded-md p-2 hover:bg-zinc-100 transition-colors text-indigo-600 dark:hover:bg-zinc-800"
           >
             <Vote className="h-4 w-4" />
-            <span className="hidden sm:inline">Create a Poll</span>
+            <span className="hidden sm:inline">{t("action_poll", "Create a Poll")}</span>
           </button>
 
           <button
@@ -225,7 +227,7 @@ export function PostCreator({ user, onAddPost }: PostCreatorProps) {
             className="flex items-center gap-1.5 rounded-md p-2 hover:bg-zinc-100 transition-colors text-emerald-600 dark:hover:bg-zinc-800"
           >
             <Sparkles className="h-4 w-4" />
-            <span className="hidden sm:inline">Celebrate</span>
+            <span className="hidden sm:inline">{t("action_celebrate", "Celebrate")}</span>
           </button>
 
           <button
@@ -236,7 +238,7 @@ export function PostCreator({ user, onAddPost }: PostCreatorProps) {
             className="flex items-center gap-1.5 rounded-md p-2 hover:bg-zinc-100 transition-colors text-orange-600 dark:hover:bg-zinc-800"
           >
             <BookOpen className="h-4 w-4" />
-            <span className="hidden sm:inline">Document</span>
+            <span className="hidden sm:inline">{t("action_document", "Document")}</span>
           </button>
 
           <button
@@ -244,14 +246,14 @@ export function PostCreator({ user, onAddPost }: PostCreatorProps) {
             className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:from-purple-700 hover:to-indigo-700 transition-all"
           >
             <Sparkles className="h-3.5 w-3.5 text-amber-300 animate-pulse" />
-            <span>Write with AI</span>
+            <span>{t("action_ai", "Write with AI")}</span>
           </button>
 
           <button
             onClick={() => setIsSimulatorOpen(true)}
             className="hidden sm:flex items-center gap-1.5 rounded-full border border-sky-600/40 bg-sky-50 px-3 py-1.5 text-xs font-bold text-[#0A66C2] hover:bg-sky-100 dark:bg-sky-950/40 dark:border-sky-800 dark:text-sky-300 transition-all"
           >
-            <span>🔮 Virality Simulator</span>
+            <span>{t("action_simulator", "🔮 Virality Simulator")}</span>
           </button>
         </div>
       </div>

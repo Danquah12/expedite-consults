@@ -45,6 +45,7 @@ export interface InteractiveLab {
     actionText: string
   }[]
   isLiveSandboxReady: boolean
+  liveUrl?: string
 }
 
 export interface CertificationTrack {
@@ -1045,6 +1046,78 @@ export function getEnclaveInteractiveLabs(enclaveId?: string): InteractiveLab[] 
   if (enclaveId === 'trades_construction') {
     return [
       {
+        id: 'lab_skillhands_trades',
+        title: 'SkillHands Vocational Trade Master Network',
+        category: 'Cloud labs',
+        difficulty: 'Intermediate',
+        estimatedDuration: 'Live Marketplace',
+        environment: 'AWS MicroVM Sandbox',
+        summary: 'Explore real-world trade project specifications, architectural joinery takeoffs, and contractor bidding pipelines.',
+        learningObjectives: [
+          'Review residential and commercial timber framing requisitions',
+          'Evaluate verified craftsman certifications and portfolio standards',
+          'Test milestone escrow disbursements and lien waiver workflows'
+        ],
+        recommendedMarketplaceTools: [
+          {
+            name: 'SkillHands Vocational Hub',
+            icon: '🛠️',
+            tagline: 'Verified craftsman network.',
+            actionText: 'Launch Hub'
+          }
+        ],
+        isLiveSandboxReady: true,
+        liveUrl: 'https://skillhands-client.vercel.app'
+      },
+      {
+        id: 'lab_desknote_trades',
+        title: 'DeskNote Field Takeoff & Cut-List Notebook',
+        category: 'Secure coding',
+        difficulty: 'Beginner',
+        estimatedDuration: '20 mins',
+        environment: 'Live IDE Terminal',
+        summary: 'Ruggedized digital field notebook for recording lumber takeoff specs, saw kerf calculations, and jobsite daily logs.',
+        learningObjectives: [
+          'Test offline-first note sync with IndexedDB',
+          'Format structural timber cut tables with board-foot calculations',
+          'Export PE-ready PDF site logs'
+        ],
+        recommendedMarketplaceTools: [
+          {
+            name: 'DeskNote Field Systems',
+            icon: '📓',
+            tagline: 'Digital field notebook.',
+            actionText: 'Open App'
+          }
+        ],
+        isLiveSandboxReady: true,
+        liveUrl: 'https://desk-note-kwesi-asiedus-projects.vercel.app'
+      },
+      {
+        id: 'lab_vibetok_trades',
+        title: 'VibeTok Trade Video Masterclasses',
+        category: 'Cloud labs',
+        difficulty: 'Intermediate',
+        estimatedDuration: '30 mins',
+        environment: 'Live IDE Terminal',
+        summary: 'Stream master joinery demonstrations, mortise geometry walkthroughs, and Festool precision tool calibrations.',
+        learningObjectives: [
+          'Watch high-definition step-by-step joinery tutorials',
+          'Complete interactive quizzes on compound roof rafter pitch math',
+          'Earn verifiable master craftsman digital credentials'
+        ],
+        recommendedMarketplaceTools: [
+          {
+            name: 'VibeTok Learning Hub',
+            icon: '🎥',
+            tagline: 'Masterclass video learning.',
+            actionText: 'Watch Masterclass'
+          }
+        ],
+        isLiveSandboxReady: true,
+        liveUrl: 'https://vibetok-learning-hub.vercel.app'
+      },
+      {
         id: 'lab_cutlist',
         title: 'Cut-List & Board-Foot Timber Optimization Sandbox',
         category: 'Cloud labs',
@@ -1057,29 +1130,6 @@ export function getEnclaveInteractiveLabs(enclaveId?: string): InteractiveLab[] 
           'Optimize nesting to achieve sub-4% scrap rate',
           'Export PE-ready timber takeoff spreadsheet'
         ],
-        recommendedMarketplaceTools: [
-          {
-            name: 'Festool Domino Joiner',
-            icon: '🧰',
-            tagline: 'Heavy mortising joinery.',
-            actionText: 'View Tool'
-          }
-        ],
-        isLiveSandboxReady: true
-      },
-      {
-        id: 'lab_miter_cad',
-        title: 'Compound Miter Angle & Mortise Tolerances 3D Sandbox',
-        category: 'Pentesting labs',
-        difficulty: 'Advanced',
-        estimatedDuration: '45 mins',
-        environment: 'AWS MicroVM Sandbox',
-        summary: 'Solve complex compound roof hip rafter angles in 3D and verify draw-bore pin alignment under simulated 45 PSF snow loads.',
-        learningObjectives: [
-          'Compute backing bevels for non-orthogonal roof pitches',
-          'Simulate draw-bore tension on 1" oak trunnels',
-          'Inspect deflection envelope under live load'
-        ],
         recommendedMarketplaceTools: [],
         isLiveSandboxReady: true
       }
@@ -1088,6 +1138,23 @@ export function getEnclaveInteractiveLabs(enclaveId?: string): InteractiveLab[] 
 
   if (enclaveId === 'healthcare_medicine') {
     return [
+      {
+        id: 'lab_vibetok_med',
+        title: 'VibeTok Clinical Grand Rounds Video Hub',
+        category: 'Cloud labs',
+        difficulty: 'Intermediate',
+        estimatedDuration: '30 mins',
+        environment: 'Live IDE Terminal',
+        summary: 'Interactive video streams covering level 1 trauma resuscitation, sterile surgical field setup, and advanced hemodynamic monitoring.',
+        learningObjectives: [
+          'Observe synchronized dual-angle procedural surgery',
+          'Answer clinical decision check-points during active hemorrhage cases',
+          'Track CME contact hours for state board licensing'
+        ],
+        recommendedMarketplaceTools: [],
+        isLiveSandboxReady: true,
+        liveUrl: 'https://vibetok-learning-hub.vercel.app'
+      },
       {
         id: 'lab_belmont',
         title: 'Belmont RI-2 Rapid Blood Infusion & MTP Simulator',
@@ -1133,6 +1200,40 @@ export function getEnclaveInteractiveLabs(enclaveId?: string): InteractiveLab[] 
   if (enclaveId === 'automotive_mechanics') {
     return [
       {
+        id: 'lab_desknote_auto',
+        title: 'DeskNote Vehicle Diagnostic Field Notes',
+        category: 'Secure coding',
+        difficulty: 'Beginner',
+        estimatedDuration: '20 mins',
+        environment: 'Live IDE Terminal',
+        summary: 'Ruggedized shop notebook for logging CAN-bus pinouts, intermittent DTC freeze frames, and warranty repair orders.',
+        learningObjectives: [
+          'Record multi-channel oscilloscope pinout connections',
+          'Structure diagnostic troubleshooting trees for CAN-FD communication faults',
+          'Sync records with fleet maintenance databases'
+        ],
+        recommendedMarketplaceTools: [],
+        isLiveSandboxReady: true,
+        liveUrl: 'https://desk-note-kwesi-asiedus-projects.vercel.app'
+      },
+      {
+        id: 'lab_vibetok_auto',
+        title: 'VibeTok Automotive Waveform Masterclasses',
+        category: 'Cloud labs',
+        difficulty: 'Intermediate',
+        estimatedDuration: '30 mins',
+        environment: 'Live IDE Terminal',
+        summary: 'Video teardowns of modern direct injection current waveforms, EV battery pack cell balance diagnostics, and turbo boost control.',
+        learningObjectives: [
+          'Analyze high-speed secondary ignition waveforms',
+          'Troubleshoot CAN-FD bus termination reflection glitches',
+          'Complete ASE L1 Advanced Engine Performance quizzes'
+        ],
+        recommendedMarketplaceTools: [],
+        isLiveSandboxReady: true,
+        liveUrl: 'https://vibetok-learning-hub.vercel.app'
+      },
+      {
         id: 'lab_pico_canfd',
         title: 'Live PicoScope 4425A CAN-FD Waveform Signal Generator',
         category: 'Pentesting labs',
@@ -1145,14 +1246,7 @@ export function getEnclaveInteractiveLabs(enclaveId?: string): InteractiveLab[] 
           'Decode CAN-FD packet arbitration and payload data phases',
           'Diagnose stub line impedance mismatches and ground offsets'
         ],
-        recommendedMarketplaceTools: [
-          {
-            name: 'PicoScope 4425A Master Kit',
-            icon: '⚡',
-            tagline: 'High-speed CAN-FD diagnostics.',
-            actionText: 'View Specs'
-          }
-        ],
+        recommendedMarketplaceTools: [],
         isLiveSandboxReady: true
       },
       {
@@ -1174,8 +1268,269 @@ export function getEnclaveInteractiveLabs(enclaveId?: string): InteractiveLab[] 
     ]
   }
 
+  if (enclaveId === 'tech_software') {
+    return [
+      {
+        id: 'lab_sast_live',
+        title: '05-SAST Abstract Syntax Tree Security Analysis',
+        category: 'Secure coding',
+        difficulty: 'Intermediate',
+        estimatedDuration: '25 mins',
+        environment: 'Live IDE Terminal',
+        summary: 'Inspect live AST taint flow analysis in TypeScript/Rust codebases and verify automated GitHub remediation PR generation.',
+        learningObjectives: [
+          'Trace unvalidated query parameter to PostgreSQL execution sink',
+          'Observe AST parsing identifying injection vectors in <4ms',
+          'Merge automated fix PR with verified regression test suite'
+        ],
+        recommendedMarketplaceTools: [
+          {
+            name: '05-SAST Platform',
+            icon: '🔍',
+            tagline: 'Sub-4ms AST code analysis.',
+            actionText: 'Launch SAST'
+          }
+        ],
+        isLiveSandboxReady: true,
+        liveUrl: 'https://05-sast-platform.vercel.app'
+      },
+      {
+        id: 'lab_sca_live',
+        title: '06-SCA Software Composition & AI-BOM Sandbox',
+        category: 'Cloud labs',
+        difficulty: 'Intermediate',
+        estimatedDuration: '30 mins',
+        environment: 'AWS MicroVM Sandbox',
+        summary: 'Audit dependency lockfiles, scan AI model weights for deserialization attacks, and generate compliant CycloneDX SBOM packages.',
+        learningObjectives: [
+          'Generate CycloneDX and SPDX format software bills of materials',
+          'Detect malicious typosquatting packages in NPM/Cargo manifests',
+          'Enforce strict open-source licensing policy gates'
+        ],
+        recommendedMarketplaceTools: [],
+        isLiveSandboxReady: true,
+        liveUrl: 'https://06-sca-platform.vercel.app'
+      },
+      {
+        id: 'lab_iac_live',
+        title: '10-IaC Terraform Drift & Security Audit',
+        category: 'Cloud labs',
+        difficulty: 'Advanced',
+        estimatedDuration: '35 mins',
+        environment: 'Live IDE Terminal',
+        summary: 'Evaluate Terraform plans against CIS AWS Benchmarks using Open Policy Agent (OPA) Rego rules to catch misconfigured S3 buckets.',
+        learningObjectives: [
+          'Write custom OPA Rego rules for AWS GovCloud guardrails',
+          'Evaluate Terraform JSON plans in pre-commit hooks',
+          'Remediate unencrypted EBS volume and public subnet findings'
+        ],
+        recommendedMarketplaceTools: [],
+        isLiveSandboxReady: true,
+        liveUrl: 'https://10-iac-security-platform.vercel.app'
+      },
+      {
+        id: 'lab_careerorbit_live',
+        title: 'CareerOrbit Skill Passport & Competency Assessment',
+        category: 'Cloud labs',
+        difficulty: 'Beginner',
+        estimatedDuration: '15 mins',
+        environment: 'Live IDE Terminal',
+        summary: 'Analyze your GitHub repositories to generate verified competency vectors and unlock high-paying Staff+ software roles.',
+        learningObjectives: [
+          'Sync public and private GitHub repositories',
+          'Generate cryptographic proof of distributed systems proficiency',
+          'Match competencies against real-time $250k+ software requisitions'
+        ],
+        recommendedMarketplaceTools: [],
+        isLiveSandboxReady: true,
+        liveUrl: 'https://careerorbit-standalone.vercel.app'
+      },
+      {
+        id: 'lab_vibetok_dev_live',
+        title: 'VibeTok Developer Video Learning Hub',
+        category: 'Cloud labs',
+        difficulty: 'Intermediate',
+        estimatedDuration: '30 mins',
+        environment: 'Live IDE Terminal',
+        summary: 'Bite-sized system design video masterclasses, eBPF microVM deep dives, and Next.js 16 architectural teardowns.',
+        learningObjectives: [
+          'Master distributed consensus algorithms (Raft, Paxos)',
+          'Build low-latency WebAssembly microVM sandbox runners',
+          'Earn verifiable DevSecOps completion certificates'
+        ],
+        recommendedMarketplaceTools: [],
+        isLiveSandboxReady: true,
+        liveUrl: 'https://vibetok-learning-hub.vercel.app'
+      }
+    ]
+  }
+
+  if (enclaveId === 'law_gov_defense') {
+    return [
+      {
+        id: 'lab_aegis_rmf_live',
+        title: 'Aegis RMF Continuous ATO Compliance Engine',
+        category: 'Cloud labs',
+        difficulty: 'Expert',
+        estimatedDuration: '45 mins',
+        environment: 'AWS MicroVM Sandbox',
+        summary: 'Map live cloud telemetry to NIST SP 800-53 Rev 5 controls and export automated OSCAL packages for DoD eMASS review.',
+        learningObjectives: [
+          'Evaluate AC, AU, IA, and SC controls against AWS GovCloud posture',
+          'Generate System Security Plan (SSP) artifacts automatically',
+          'Synchronize real-time evidence directly with eMASS APIs'
+        ],
+        recommendedMarketplaceTools: [
+          {
+            name: 'Aegis RMF Platform',
+            icon: '🛡️',
+            tagline: 'Continuous ATO automation.',
+            actionText: 'Launch Aegis'
+          }
+        ],
+        isLiveSandboxReady: true,
+        liveUrl: 'https://aegis-rmf.vercel.app'
+      },
+      {
+        id: 'lab_threat_modeling_live',
+        title: '15-Threat Modeling STRIDE Suite',
+        category: 'Secure coding',
+        difficulty: 'Advanced',
+        estimatedDuration: '40 mins',
+        environment: 'Live IDE Terminal',
+        summary: 'Construct architectural data flow diagrams (DFDs) and compute automated STRIDE threat matrices for cleared defense applications.',
+        learningObjectives: [
+          'Diagram trust boundaries and external entity data flows',
+          'Identify Spoofing, Tampering, and Elevation of Privilege threats',
+          'Export CMMC 2.0 Level 3 compliant threat documentation'
+        ],
+        recommendedMarketplaceTools: [],
+        isLiveSandboxReady: true,
+        liveUrl: 'https://15-threat-modeling-platform.vercel.app'
+      },
+      {
+        id: 'lab_secrets_live',
+        title: '07-Secrets Token Vault & Auditing',
+        category: 'Pentesting labs',
+        difficulty: 'Intermediate',
+        estimatedDuration: '30 mins',
+        environment: 'Live IDE Terminal',
+        summary: 'Detect exposed private keys, AWS access tokens, and API credentials across Git commits with automated revocation hooks.',
+        learningObjectives: [
+          'Execute entropy-based secret detection across git commit history',
+          'Integrate automatic revocation webhooks with AWS IAM',
+          'Enforce pre-commit cryptographic secret blocking'
+        ],
+        recommendedMarketplaceTools: [],
+        isLiveSandboxReady: true,
+        liveUrl: 'https://07-secrets-platform.vercel.app'
+      }
+    ]
+  }
+
   // tech_cybersecurity or default
-  return INTERACTIVE_LABS_DATA
+  return [
+    {
+      id: 'lab_11_dast_live',
+      title: '11-DAST Automated Dynamic Pentesting Live Sandbox',
+      category: 'Pentesting labs',
+      difficulty: 'Expert',
+      estimatedDuration: '45 mins',
+      environment: 'Kali Linux Enclave',
+      summary: 'Execute autonomous dynamic vulnerability scans against authenticated REST/GraphQL endpoints with weaponized proof-of-concept verification.',
+      learningObjectives: [
+        'Perform unauthenticated and JWT-authenticated attack surface discovery',
+        'Verify SQLi and remote code execution vulnerabilities in isolated sandboxes',
+        'Inspect raw HTTP request/response proofs with zero false-positive rate'
+      ],
+      recommendedMarketplaceTools: [
+        {
+          name: '11-DAST Security Platform',
+          icon: '🎯',
+          tagline: 'Dynamic application pentesting.',
+          actionText: 'Launch DAST'
+        }
+      ],
+      isLiveSandboxReady: true,
+      liveUrl: 'https://11-dast-security-platform.vercel.app'
+    },
+    {
+      id: 'lab_16_malware_live',
+      title: '16-Malware Dynamic Reverse Engineering Hypervisor',
+      category: 'Malware analysis',
+      difficulty: 'Expert',
+      estimatedDuration: '50 mins',
+      environment: 'AWS MicroVM Sandbox',
+      summary: 'Detonate live malware samples in bare-metal hypervisor sandboxes and inspect decompiled C pseudocode in interactive Ghidra workspaces.',
+      learningObjectives: [
+        'Monitor kernel-level process injection and reflective DLL loading',
+        'Decompile obfuscated binaries into clean C pseudocode in Ghidra',
+        'Generate automated YARA and Sigma rules for threat detection'
+      ],
+      recommendedMarketplaceTools: [
+        {
+          name: '16-Malware Analysis Platform',
+          icon: '🔬',
+          tagline: 'Dynamic hypervisor detonation.',
+          actionText: 'Launch Sandbox'
+        }
+      ],
+      isLiveSandboxReady: true,
+      liveUrl: 'https://16-malware-analysis-platform.vercel.app'
+    },
+    {
+      id: 'lab_17_ransomware_live',
+      title: '17-Ransomware Blast Radius & Recovery Console',
+      category: 'Cloud labs',
+      difficulty: 'Advanced',
+      estimatedDuration: '40 mins',
+      environment: 'AWS MicroVM Sandbox',
+      summary: 'Simulate an enterprise ransomware outbreak, compute lateral blast radius paths, and execute point-in-time immutable recoveries.',
+      learningObjectives: [
+        'Contain lateral infection movement across Active Directory forests',
+        'Verify cryptographic integrity of immutable cloud snapshots',
+        'Execute automated disaster recovery workflows in < 15 minutes'
+      ],
+      recommendedMarketplaceTools: [],
+      isLiveSandboxReady: true,
+      liveUrl: 'https://17-ransomware-recovery-platform.vercel.app'
+    },
+    {
+      id: 'lab_careerorbit_cyber_live',
+      title: 'CareerOrbit Cyber Skills Passport',
+      category: 'Cloud labs',
+      difficulty: 'Intermediate',
+      estimatedDuration: '20 mins',
+      environment: 'Live IDE Terminal',
+      summary: 'Verify your offensive red teaming and penetration testing competencies to unlock top-tier cyber defense roles and bounties.',
+      learningObjectives: [
+        'Link verified OSCP, CRTO, and CISSP credentials',
+        'Showcase published CVE discoveries and authorized exploit proofs',
+        'Match with cleared enterprise defense and GovCloud security requisitions'
+      ],
+      recommendedMarketplaceTools: [],
+      isLiveSandboxReady: true,
+      liveUrl: 'https://careerorbit-standalone.vercel.app'
+    },
+    {
+      id: 'lab_vibetok_cyber_live',
+      title: 'VibeTok Cyber Labs & Adversary Teardowns',
+      category: 'Pentesting labs',
+      difficulty: 'Intermediate',
+      estimatedDuration: '30 mins',
+      environment: 'Live IDE Terminal',
+      summary: 'Interactive video masterclasses covering EDR hooking bypasses, Active Directory Kerberoasting, and SCADA PLC defense.',
+      learningObjectives: [
+        'Watch real-time adversary simulation and evasion techniques',
+        'Solve interactive sandbox challenges following video modules',
+        'Earn verified offensive security training credentials'
+      ],
+      recommendedMarketplaceTools: [],
+      isLiveSandboxReady: true,
+      liveUrl: 'https://vibetok-learning-hub.vercel.app'
+    },
+    ...INTERACTIVE_LABS_DATA
+  ]
 }
 
 export function getEnclaveCertificationTracks(enclaveId?: string): CertificationTrack[] {

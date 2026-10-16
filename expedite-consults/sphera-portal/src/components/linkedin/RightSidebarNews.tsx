@@ -18,6 +18,7 @@ import {
   ShieldCheck
 } from "lucide-react"
 import { NewsItem, SuggestedConnection } from "@/lib/linkedin-data"
+import { useLanguage } from "@/context/LanguageContext"
 
 interface RightSidebarNewsProps {
   news: NewsItem[]
@@ -25,6 +26,7 @@ interface RightSidebarNewsProps {
   onToggleConnect: (personId: string) => void
   onNewsClick?: (headline: string) => void
   onNavigateTab?: (tab: string) => void
+  onOpenAIAssistant?: (initialQuery?: string) => void
 }
 
 export function RightSidebarNews({
@@ -32,21 +34,92 @@ export function RightSidebarNews({
   suggestedPeople,
   onToggleConnect,
   onNewsClick,
-  onNavigateTab
+  onNavigateTab,
+  onOpenAIAssistant
 }: RightSidebarNewsProps) {
   const [showAllNews, setShowAllNews] = useState(false)
+  const [sidebarQuery, setSidebarQuery] = useState("")
+  const { t } = useLanguage()
   const displayedNews = showAllNews ? news : news.slice(0, 3)
 
   return (
     <aside className="space-y-3">
+      {/* 0. VIBE AI EMBEDDED Q&A ENGINE */}
+      <div className="rounded-xl border border-purple-500/40 bg-gradient-to-br from-slate-950 via-indigo-950 to-purple-950 p-3.5 text-white shadow-lg space-y-2.5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <div className="h-6 w-6 rounded-full bg-gradient-to-tr from-purple-500 to-amber-400 flex items-center justify-center shadow-xs">
+              <Sparkles className="h-3.5 w-3.5 text-white animate-pulse" />
+            </div>
+            <div>
+              <h3 className="font-bold text-xs text-white">Ask Vibe AI</h3>
+              <p className="text-[10px] text-zinc-300">Live Campus &amp; Professional Q&amp;A</p>
+            </div>
+          </div>
+          <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[9px] font-mono font-bold text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            LIVE
+          </span>
+        </div>
+
+        <p className="text-[11px] text-zinc-300 leading-snug">
+          Ask any question about cybersecurity, career growth, tools, certifications or code. Vibe is embedded to answer everything.
+        </p>
+
+        {/* Query Input */}
+        <div className="flex items-center gap-1.5 bg-black/40 rounded-xl p-1 border border-white/15">
+          <input
+            type="text"
+            placeholder="Ask Vibe anything..."
+            value={sidebarQuery}
+            onChange={(e) => setSidebarQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && onOpenAIAssistant) {
+                onOpenAIAssistant(sidebarQuery)
+                setSidebarQuery("")
+              }
+            }}
+            className="flex-1 bg-transparent px-2.5 py-1 text-xs text-white placeholder:text-zinc-400 focus:outline-none"
+          />
+          <button
+            onClick={() => {
+              if (onOpenAIAssistant) {
+                onOpenAIAssistant(sidebarQuery)
+                setSidebarQuery("")
+              }
+            }}
+            className="rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 px-2.5 py-1 text-xs font-bold text-white transition-all shrink-0 cursor-pointer shadow-xs flex items-center gap-1"
+          >
+            Ask <ArrowUpRight className="h-3 w-3" />
+          </button>
+        </div>
+
+        {/* Quick prompt sparks */}
+        <div className="flex flex-wrap gap-1 pt-0.5">
+          {[
+            { label: "🛡️ DoD Zero Trust", q: "Explain DoD Zero Trust" },
+            { label: "📄 Resume Tips", q: "Resume optimization tips" },
+            { label: "💼 Top Cyber Jobs", q: "Senior Cyber roles" },
+            { label: "⚙️ NIST 800-53", q: "NIST 800-53 controls" },
+          ].map((chip, idx) => (
+            <button
+              key={idx}
+              onClick={() => onOpenAIAssistant && onOpenAIAssistant(chip.q)}
+              className="text-[10px] rounded-md bg-white/10 hover:bg-white/20 text-zinc-300 hover:text-white px-2 py-0.5 transition-colors border border-white/10 cursor-pointer"
+            >
+              {chip.label}
+            </button>
+          ))}
+        </div>
+      </div>
       {/* 1. CONTEXTUAL COMMERCIAL RECOMMENDATION (POWERED BY CONNECTIN AI) */}
       <div className="rounded-xl border border-purple-500/30 bg-gradient-to-br from-slate-900 via-indigo-950/90 to-purple-950 p-3.5 text-white shadow-md space-y-2.5">
         <div className="flex items-center justify-between">
           <span className="rounded-full bg-purple-500/30 px-2 py-0.5 text-[9px] font-bold text-purple-200 border border-purple-400/30 flex items-center gap-1">
             <Sparkles className="h-3 w-3 text-amber-300" />
-            Recommended for you
+            {t("recommended_for_you", "Recommended for you")}
           </span>
-          <span className="text-[10px] font-mono font-bold text-emerald-400">92% Match</span>
+          <span className="text-[10px] font-mono font-bold text-emerald-400">92% {t("match_rate", "Match")}</span>
         </div>
 
         <p className="text-[11px] text-zinc-300">
@@ -66,9 +139,9 @@ export function RightSidebarNews({
           </p>
           <button
             onClick={() => onNavigateTab && onNavigateTab('marketplace')}
-            className="w-full rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-400 hover:to-indigo-400 py-1.5 text-center text-xs font-bold text-white shadow-xs transition-all"
+            className="w-full rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-400 hover:to-indigo-400 py-1.5 text-center text-xs font-bold text-white shadow-xs transition-all cursor-pointer"
           >
-            Start 14-Day Free Trial →
+            {t("start_trial", "Start 14-Day Free Trial →")}
           </button>
         </div>
       </div>
@@ -77,13 +150,13 @@ export function RightSidebarNews({
       <div className="rounded-xl border border-zinc-200 bg-white p-3.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
         <div className="flex items-center justify-between pb-2">
           <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
-            ConnectIn News &amp; Pulse
+            {t("news_and_pulse", "ConnectIn News & Pulse")}
           </h3>
           <Info className="h-4 w-4 text-zinc-400 cursor-pointer hover:text-zinc-600" />
         </div>
 
         <p className="text-xs font-semibold text-zinc-500 mb-2 dark:text-zinc-400">
-          Top stories &amp; cyber intelligence
+          {t("top_stories", "Top stories & cyber intelligence")}
         </p>
 
         <div className="space-y-2.5">
@@ -110,9 +183,9 @@ export function RightSidebarNews({
 
         <button
           onClick={() => setShowAllNews(!showAllNews)}
-          className="mt-2.5 flex items-center gap-1 text-xs font-semibold text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 focus:outline-none"
+          className="mt-2.5 flex items-center gap-1 text-xs font-semibold text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 focus:outline-none cursor-pointer"
         >
-          <span>{showAllNews ? "Show less" : "Show more"}</span>
+          <span>{showAllNews ? t("show_less", "Show less") : t("show_more", "Show more")}</span>
           {showAllNews ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
         </button>
       </div>
@@ -121,7 +194,7 @@ export function RightSidebarNews({
       <div className="rounded-xl border border-zinc-200 bg-white p-3.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
         <div className="flex items-center justify-between pb-2">
           <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
-            Verified Fellows to Follow
+            {t("verified_fellows", "Verified Fellows to Follow")}
           </h3>
           <Info className="h-4 w-4 text-zinc-400" />
         </div>
@@ -146,14 +219,14 @@ export function RightSidebarNews({
                 </p>
                 <button
                   onClick={() => onToggleConnect(person.id)}
-                  className={`mt-1.5 flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold transition-all ${
+                  className={`mt-1.5 flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold transition-all cursor-pointer ${
                     person.isConnected
                       ? "border-emerald-600 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
                       : "border-zinc-400 text-zinc-700 hover:bg-zinc-100 hover:border-zinc-600 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800"
                   }`}
                 >
                   {person.isConnected ? <Check className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
-                  <span>{person.isConnected ? "Following" : "Follow"}</span>
+                  <span>{person.isConnected ? t("following", "Following") : t("follow", "Follow")}</span>
                 </button>
               </div>
             </div>
@@ -166,7 +239,7 @@ export function RightSidebarNews({
         <div className="flex items-center justify-between">
           <span className="font-bold text-sky-950 dark:text-sky-200 flex items-center gap-1 text-[11px]">
             <Calendar className="h-3.5 w-3.5 text-[#0A66C2]" />
-            Upcoming Live Demo
+            {t("upcoming_demo", "Upcoming Live Demo")}
           </span>
           <span className="text-[10px] text-zinc-400">Wed 2 PM EST</span>
         </div>
@@ -175,9 +248,9 @@ export function RightSidebarNews({
         </p>
         <button
           onClick={() => onNavigateTab && onNavigateTab('events')}
-          className="text-xs font-bold text-[#0A66C2] hover:underline block text-right pt-0.5"
+          className="text-xs font-bold text-[#0A66C2] hover:underline block text-right pt-0.5 cursor-pointer"
         >
-          Register for Free →
+          {t("register_free", "Register for Free →")}
         </button>
       </div>
     </aside>
