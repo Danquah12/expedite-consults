@@ -1198,6 +1198,23 @@ export default function EnginePage() {
   }, [autoEmailOnComplete]);
 
   useEffect(() => {
+    try {
+      const savedResults = localStorage.getItem("axiom_last_engine_results");
+      if (savedResults) {
+        const parsedRes = JSON.parse(savedResults);
+        if (Array.isArray(parsedRes) && parsedRes.length > 0) {
+          setEngineResults(parsedRes);
+        }
+      }
+      const savedRetest = localStorage.getItem("axiom_last_retest_map");
+      if (savedRetest) {
+        const parsedRt = JSON.parse(savedRetest);
+        if (parsedRt && typeof parsedRt === "object") {
+          setRetestMap(parsedRt);
+        }
+      }
+    } catch { /* ignore */ }
+
     fetch(`${BACKEND_URL}/api/health`)
       .then(r => r.json())
       .then(d => { if (d.status === "ok") setBackendLive(true); })
@@ -4327,6 +4344,21 @@ ${f.remediation}
     const st = getRetestRecord(f, idx).status;
     return st === "VERIFIED_FIXED" || st === "MITIGATED_WAF";
   }).length;
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("axiom_last_findings", JSON.stringify(reportFindings));
+      localStorage.setItem("axiom_last_finding_count", String(reportFindings.length));
+      localStorage.setItem("axiom_last_targets", allScopedUrlsStr);
+      localStorage.setItem("axiom_last_engine_results", JSON.stringify(engineResults));
+      localStorage.setItem("axiom_last_retest_map", JSON.stringify(retestMap));
+      localStorage.setItem("axiom_last_client_org", clientOrgName);
+      localStorage.setItem("axiom_last_engagement_id", engagementId);
+      if (elapsedSec > 0) {
+        localStorage.setItem("axiom_last_duration", `${elapsedSec}s`);
+      }
+    } catch { /* ignore */ }
+  }, [reportFindings, allScopedUrlsStr, engineResults, retestMap, clientOrgName, engagementId, elapsedSec]);
 
   return (
     <div className="engine-mobile-shell" style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 1600, width: "100%", margin: "0 auto", padding: "14px 18px 80px 18px" }}>
