@@ -3,7 +3,8 @@ import crypto from "crypto";
 import {
   PORT_ASSESSMENT_SCRIPT_CATALOG,
   getDaemonFindingTtpDossier,
-  buildFormalFindingReport
+  buildFormalFindingReport,
+  buildExecutiveSummaryDossier
 } from "@/data/portAndDaemonTtpCatalog";
 import type { Finding } from "@/types/dast";
 
@@ -99,6 +100,11 @@ function generateMultiPageAssessmentPdfBuffer(params: {
     primaryUrl
   } = params;
 
+  const execSummary = buildExecutiveSummaryDossier({
+    targetUrls,
+    findings
+  });
+
   const docLines: PdfLineItem[] = [
     { text: "XTRIKE & AEGIS.SOC - DAST & WEB INTERFACE SECURITY ASSESSMENT REPORT", bold: true, size: 12, colorRgb: [0.02, 0.35, 0.65] },
     { text: "Dynamic Application Security Testing (DAST) | OWASP WSTG v4.2 | OWASP Top 10 | MITRE ATT&CK v15 | NIST SP 800-115", bold: true, size: 8, colorRgb: [0.25, 0.32, 0.45] },
@@ -107,8 +113,49 @@ function generateMultiPageAssessmentPdfBuffer(params: {
     { text: `Generated At: ${timestampIso}   |   Message-ID: ${messageId}`, size: 8.5 },
     { text: `Chain-of-Custody SHA-256: ${reportSha256}`, size: 8.5 },
     { text: `Recipients: ${recipients.join(", ")}`, size: 8.5 },
-    { text: `Executive Summary: ${findings.length} Total Findings (${critCount} Critical, ${highCount} High, ${medCount} Medium, ${lowCount} Low)`, bold: true, size: 9.5, colorRgb: [0.75, 0.08, 0.22] },
     { text: `XTRIKE / Aegis.SOC Port Coverage: 65,535 TCP + 65,535 UDP (131,070 Total Transport Sockets Audited)`, bold: true, size: 8.5, colorRgb: [0.02, 0.45, 0.35] },
+    { text: "" },
+    { text: "==============================================================================================", bold: true, size: 9 },
+    { text: "EXECUTIVE SUMMARY (FOR BOARD MEMBERS, EXECUTIVES & RISK OWNERS)", bold: true, size: 11, colorRgb: [0.02, 0.35, 0.65] },
+    { text: "==============================================================================================", bold: true, size: 9 },
+    { text: "1. Engagement Overview", bold: true, size: 9.5, colorRgb: [0.05, 0.15, 0.35] },
+    ...wrapTextLine(execSummary.engagementOverview.narrativeParagraph, 94).map(ln => ({ text: `  ${ln}`, size: 8.5 })),
+    ...wrapTextLine(`  Methodology: ${execSummary.engagementOverview.methodologyReferenced}`, 94).map(ln => ({ text: `  ${ln}`, size: 8 })),
+    ...wrapTextLine(`  Rules of Engagement: ${execSummary.engagementOverview.rulesOfEngagement}`, 94).map(ln => ({ text: `  ${ln}`, size: 8 })),
+    { text: "" },
+    { text: `2. Overall Risk Rating: ${execSummary.overallRiskRating.rating.toUpperCase()}`, bold: true, size: 9.5, colorRgb: [0.78, 0.07, 0.2] },
+    ...wrapTextLine(execSummary.overallRiskRating.justification, 94).map(ln => ({ text: `  ${ln}`, size: 8.5 })),
+    { text: "" },
+    { text: "3. Findings Summary", bold: true, size: 9.5, colorRgb: [0.05, 0.15, 0.35] },
+    { text: `  A total of ${execSummary.findingsSummary.totalFindings} confirmed findings were identified (${execSummary.findingsSummary.informational} informational observations):`, bold: true, size: 8.5 },
+    { text: `    - Critical: ${execSummary.findingsSummary.critical} (Confirmed)   |   High: ${execSummary.findingsSummary.high} (Confirmed)   |   Medium: ${execSummary.findingsSummary.medium}   |   Low: ${execSummary.findingsSummary.low}   |   Informational: ${execSummary.findingsSummary.informational}`, bold: true, size: 8.5, colorRgb: [0.75, 0.08, 0.2] },
+    ...wrapTextLine(`  ${execSummary.findingsSummary.confirmationNote}`, 94).map(ln => ({ text: `  ${ln}`, size: 8 })),
+    { text: "" },
+    { text: "4. Key Findings Highlights", bold: true, size: 9.5, colorRgb: [0.05, 0.15, 0.35] },
+    ...execSummary.keyFindingsHighlights.flatMap(kh => [
+      { text: `  * [${kh.findingId} - ${kh.severity.toUpperCase()}] ${kh.headline}:`, bold: true, size: 8.5, colorRgb: [0.75, 0.08, 0.2] as [number, number, number] },
+      ...wrapTextLine(`    ${kh.plainLanguageSummary} Business Risk: ${kh.businessRiskImpact}`, 92).map(ln => ({ text: ln, size: 8 }))
+    ]),
+    { text: "" },
+    { text: "5. Business Impact", bold: true, size: 9.5, colorRgb: [0.05, 0.15, 0.35] },
+    ...wrapTextLine(execSummary.businessImpact.narrativeParagraph, 94).map(ln => ({ text: `  ${ln}`, size: 8.5 })),
+    ...execSummary.businessImpact.impactPillars.flatMap(ip =>
+      wrapTextLine(`  - ${ip.category}: ${ip.description}`, 92).map(ln => ({ text: ln, size: 8 }))
+    ),
+    { text: "" },
+    { text: "6. Positive Security Observations", bold: true, size: 9.5, colorRgb: [0.02, 0.42, 0.32] },
+    ...execSummary.positiveObservations.flatMap(po =>
+      wrapTextLine(`  + ${po}`, 92).map(ln => ({ text: ln, size: 8, colorRgb: [0.02, 0.42, 0.32] as [number, number, number] }))
+    ),
+    { text: "" },
+    { text: "7. High-Level Recommendations", bold: true, size: 9.5, colorRgb: [0.05, 0.15, 0.35] },
+    ...execSummary.highLevelRecommendations.flatMap(rec =>
+      wrapTextLine(`  - [${rec.priorityWindow}] ${rec.action}`, 92).map(ln => ({ text: ln, size: 8 }))
+    ),
+    { text: "" },
+    { text: "8. Conclusion and Next Steps", bold: true, size: 9.5, colorRgb: [0.05, 0.15, 0.35] },
+    ...wrapTextLine(execSummary.conclusionAndNextSteps.conclusionParagraph, 94).map(ln => ({ text: `  ${ln}`, size: 8.5 })),
+    ...execSummary.conclusionAndNextSteps.nextStepsChecklist.map(ns => ({ text: `  ${ns}`, size: 8 })),
     { text: "" }
   ];
 
@@ -681,6 +728,133 @@ export async function POST(req: NextRequest) {
         <div><strong>XTRIKE™ &amp; Aegis.SOC™ DAST Engines:</strong> XTRIKE-WebPulse™ (OWASP ZAP DAST) · XTRIKE-StrikeFuzzer™ (Burp DAST) · Aegis.SOC-VulnCore™ (OpenVAS) · XTRIKE-NetRecon™ (Nmap) · Aegis.SOC-Apex™</div>
       </div>
 
+      ${(() => {
+        const execSum = buildExecutiveSummaryDossier({
+          targetUrls,
+          findings
+        });
+        const ratingColor =
+          execSum.overallRiskRating.rating === "Critical"
+            ? "#e11d48"
+            : execSum.overallRiskRating.rating === "High"
+            ? "#ea580c"
+            : "#d97706";
+        return `
+      <!-- EXECUTIVE SUMMARY (1–2 PAGE BOARD & RISK OWNER BRIEFING) -->
+      <div style="border:2px solid #0284c7;border-radius:10px;padding:18px 20px;margin-bottom:24px;background:#f8fafc;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;border-bottom:2px solid #cbd5e1;padding-bottom:10px;margin-bottom:14px;">
+          <div>
+            <div style="font-size:10.5px;font-family:monospace;font-weight:800;color:#0284c7;letter-spacing:0.06em;">
+              📋 EXECUTIVE &amp; BOARD BRIEFING · NON-TECHNICAL STAKEHOLDER SUMMARY
+            </div>
+            <h2 style="margin:2px 0 0 0;font-size:18px;color:#0f172a;">
+              Executive Summary
+            </h2>
+          </div>
+          <span style="background:${ratingColor};color:#ffffff;font-weight:900;font-size:12px;padding:5px 12px;border-radius:6px;font-family:monospace;">
+            OVERALL RISK RATING: ${escapeHtml(execSum.overallRiskRating.rating.toUpperCase())}
+          </span>
+        </div>
+
+        <h3 style="margin:10px 0 4px 0;font-size:14px;color:#0f172a;">1. Engagement Overview</h3>
+        <p style="margin:0 0 8px 0;font-size:12.5px;color:#1e293b;line-height:1.55;">
+          ${escapeHtml(execSum.engagementOverview.narrativeParagraph)}
+        </p>
+        <div style="font-size:11.5px;color:#334155;background:#ffffff;border:1px solid #cbd5e1;border-radius:6px;padding:8px 12px;margin-bottom:12px;line-height:1.5;">
+          <div><strong>Assessment Type:</strong> ${escapeHtml(execSum.engagementOverview.assessmentType)}</div>
+          <div><strong>Testing Dates:</strong> ${escapeHtml(execSum.engagementOverview.testingDates)} &nbsp;|&nbsp; <strong>Scoped Target(s):</strong> <code>${escapeHtml(execSum.engagementOverview.scopedTargets.join(", "))}</code></div>
+          <div><strong>Methodology Referenced:</strong> ${escapeHtml(execSum.engagementOverview.methodologyReferenced)}</div>
+          <div><strong>Rules of Engagement:</strong> ${escapeHtml(execSum.engagementOverview.rulesOfEngagement)}</div>
+        </div>
+
+        <h3 style="margin:12px 0 4px 0;font-size:14px;color:#0f172a;">
+          2. Overall Risk Rating: <span style="color:${ratingColor};">${escapeHtml(execSum.overallRiskRating.rating)}</span>
+        </h3>
+        <p style="margin:0 0 12px 0;font-size:12.5px;color:#1e293b;line-height:1.55;background:#fff1f2;border-left:4px solid ${ratingColor};padding:8px 12px;border-radius:0 6px 6px 0;">
+          ${escapeHtml(execSum.overallRiskRating.justification)}
+        </p>
+
+        <h3 style="margin:12px 0 6px 0;font-size:14px;color:#0f172a;">3. Findings Summary</h3>
+        <p style="margin:0 0 6px 0;font-size:12.5px;color:#1e293b;">
+          A total of <strong>${execSum.findingsSummary.totalFindings} confirmed findings</strong> were identified (plus ${execSum.findingsSummary.informational} informational hardening observations):
+        </p>
+        <ul style="margin:0 0 8px 18px;padding:0;font-size:12.5px;color:#1e293b;line-height:1.5;">
+          <li><strong style="color:#e11d48;">Critical:</strong> ${execSum.findingsSummary.critical} (${execSum.findingsSummary.critical} Confirmed, 0 Potential)</li>
+          <li><strong style="color:#ea580c;">High:</strong> ${execSum.findingsSummary.high} (${execSum.findingsSummary.high} Confirmed, 0 Potential)</li>
+          <li><strong style="color:#d97706;">Medium:</strong> ${execSum.findingsSummary.medium}</li>
+          <li><strong style="color:#0284c7;">Low:</strong> ${execSum.findingsSummary.low}</li>
+          <li><strong style="color:#475569;">Informational:</strong> ${execSum.findingsSummary.informational}</li>
+        </ul>
+        <p style="margin:0 0 12px 0;font-size:11.5px;color:#475569;">
+          ${escapeHtml(execSum.findingsSummary.confirmationNote)}
+        </p>
+
+        <h3 style="margin:12px 0 6px 0;font-size:14px;color:#0f172a;">4. Key Findings Highlights</h3>
+        <div style="margin-bottom:12px;">
+          ${execSum.keyFindingsHighlights
+            .map(
+              kh => `
+            <div style="background:#ffffff;border:1px solid #cbd5e1;border-left:4px solid ${
+              kh.severity === "Critical" ? "#e11d48" : "#ea580c"
+            };border-radius:6px;padding:9px 12px;margin-bottom:8px;">
+              <div style="font-size:12.5px;font-weight:800;color:#0f172a;margin-bottom:3px;">
+                <span style="color:${
+                  kh.severity === "Critical" ? "#e11d48" : "#ea580c"
+                };">[${escapeHtml(kh.findingId)} · ${escapeHtml(kh.severity)}]</span> ${escapeHtml(kh.headline)}
+              </div>
+              <div style="font-size:12px;color:#1e293b;line-height:1.5;margin-bottom:3px;">
+                ${escapeHtml(kh.plainLanguageSummary)}
+              </div>
+              <div style="font-size:11.5px;color:#475569;">
+                <strong>Business Risk:</strong> ${escapeHtml(kh.businessRiskImpact)}
+              </div>
+            </div>`
+            )
+            .join("")}
+        </div>
+
+        <h3 style="margin:12px 0 4px 0;font-size:14px;color:#0f172a;">5. Business Impact</h3>
+        <p style="margin:0 0 8px 0;font-size:12.5px;color:#1e293b;line-height:1.55;">
+          ${escapeHtml(execSum.businessImpact.narrativeParagraph)}
+        </p>
+        <ul style="margin:0 0 12px 18px;padding:0;font-size:12px;color:#1e293b;line-height:1.5;">
+          ${execSum.businessImpact.impactPillars
+            .map(
+              ip =>
+                `<li style="margin-bottom:4px;"><strong>${escapeHtml(ip.category)}:</strong> ${escapeHtml(ip.description)}</li>`
+            )
+            .join("")}
+        </ul>
+
+        <h3 style="margin:12px 0 4px 0;font-size:14px;color:#065f46;">6. Positive Security Observations</h3>
+        <ul style="margin:0 0 12px 18px;padding:0;font-size:12px;color:#065f46;line-height:1.5;">
+          ${execSum.positiveObservations
+            .map(po => `<li style="margin-bottom:4px;">${escapeHtml(po)}</li>`)
+            .join("")}
+        </ul>
+
+        <h3 style="margin:12px 0 6px 0;font-size:14px;color:#0f172a;">7. High-Level Recommendations</h3>
+        <ul style="margin:0 0 12px 18px;padding:0;font-size:12px;color:#1e293b;line-height:1.5;">
+          ${execSum.highLevelRecommendations
+            .map(
+              rec =>
+                `<li style="margin-bottom:5px;"><strong>[${escapeHtml(rec.priorityWindow)}]</strong> ${escapeHtml(rec.action)}</li>`
+            )
+            .join("")}
+        </ul>
+
+        <h3 style="margin:12px 0 4px 0;font-size:14px;color:#0f172a;">8. Conclusion and Next Steps</h3>
+        <p style="margin:0 0 6px 0;font-size:12.5px;color:#1e293b;line-height:1.55;">
+          ${escapeHtml(execSum.conclusionAndNextSteps.conclusionParagraph)}
+        </p>
+        <ul style="margin:0;padding-left:18px;font-size:12px;color:#0f172a;line-height:1.5;list-style:none;">
+          ${execSum.conclusionAndNextSteps.nextStepsChecklist
+            .map(ns => `<li style="margin-bottom:3px;">☑️ ${escapeHtml(ns)}</li>`)
+            .join("")}
+        </ul>
+      </div>`;
+      })()}
+
       <h2 style="font-size:16px;color:#0f172a;border-bottom:2px solid #e2e8f0;padding-bottom:6px;">
         1. Validated DAST &amp; Web Interface Security Findings (DAST-WEB-2026-001 – DAST-WEB-2026-${String(findings.length).padStart(3, "0")})
       </h2>
@@ -707,13 +881,14 @@ export async function POST(req: NextRequest) {
       </div>
 
       <div style="border-top:1px solid #cbd5e1;padding-top:12px;font-size:11px;color:#64748b;">
-        Dispatched automatically by <strong>XTRIKE™ &amp; Aegis.SOC™ DAST &amp; Web Interface Security Assessment Platform</strong> upon scan completion. Includes Sample Collected Exploitation Evidence and Visual Exploitation Screenshots for Customer CI.
+        Dispatched automatically by <strong>XTRIKE™ &amp; Aegis.SOC™ DAST &amp; Web Interface Security Assessment Platform</strong> upon scan completion. Includes Executive Summary, Sample Collected Exploitation Evidence, and Visual Exploitation Screenshots for Customer CI.
       </div>
     </div>
   </div>
 </body>
 </html>`;
 
+    const execSumText = buildExecutiveSummaryDossier({ targetUrls, findings });
     const textContent = [
       `XTRIKE™ & AEGIS.SOC™ — DAST & WEB INTERFACE SECURITY ASSESSMENT REPORT`,
       `========================================================================`,
@@ -723,8 +898,46 @@ export async function POST(req: NextRequest) {
       `Message-ID: ${messageId}`,
       `SHA-256 Digest: ${reportSha256}`,
       `Recipients: ${recipients.join(", ")}`,
-      `Summary: ${findings.length} Total DAST Web Findings (${critCount} Critical, ${highCount} High, ${medCount} Medium, ${lowCount} Low)`,
       `Port Coverage: 65,535 TCP + 65,535 UDP (131,070 Total Transport Sockets Mapped)`,
+      ``,
+      `========================================================================`,
+      `EXECUTIVE SUMMARY`,
+      `========================================================================`,
+      `1. Engagement Overview`,
+      execSumText.engagementOverview.narrativeParagraph,
+      `Methodology: ${execSumText.engagementOverview.methodologyReferenced}`,
+      `Rules of Engagement: ${execSumText.engagementOverview.rulesOfEngagement}`,
+      ``,
+      `2. Overall Risk Rating: ${execSumText.overallRiskRating.rating}`,
+      execSumText.overallRiskRating.justification,
+      ``,
+      `3. Findings Summary`,
+      `A total of ${execSumText.findingsSummary.totalFindings} confirmed findings were identified:`,
+      `- Critical: ${execSumText.findingsSummary.critical}`,
+      `- High: ${execSumText.findingsSummary.high}`,
+      `- Medium: ${execSumText.findingsSummary.medium}`,
+      `- Low: ${execSumText.findingsSummary.low}`,
+      `- Informational: ${execSumText.findingsSummary.informational}`,
+      execSumText.findingsSummary.confirmationNote,
+      ``,
+      `4. Key Findings Highlights`,
+      ...execSumText.keyFindingsHighlights.map(
+        kh => `- [${kh.findingId} · ${kh.severity}] ${kh.headline}: ${kh.plainLanguageSummary} (Business Risk: ${kh.businessRiskImpact})`
+      ),
+      ``,
+      `5. Business Impact`,
+      execSumText.businessImpact.narrativeParagraph,
+      ...execSumText.businessImpact.impactPillars.map(ip => `- ${ip.category}: ${ip.description}`),
+      ``,
+      `6. Positive Observations`,
+      ...execSumText.positiveObservations.map(po => `+ ${po}`),
+      ``,
+      `7. High-Level Recommendations`,
+      ...execSumText.highLevelRecommendations.map(rec => `- [${rec.priorityWindow}] ${rec.action}`),
+      ``,
+      `8. Conclusion and Next Steps`,
+      execSumText.conclusionAndNextSteps.conclusionParagraph,
+      ...execSumText.conclusionAndNextSteps.nextStepsChecklist,
       ``,
       ...findings.slice(0, 20).map((f, idx) => {
         const fr = buildFormalFindingReport(f, idx, primaryUrl);

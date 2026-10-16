@@ -11,7 +11,8 @@ import {
   LINUX_WINDOWS_POST_EXPLOITATION_SCRIPT_INVENTORY,
   mapDetectedPortToAssessmentScript,
   getDaemonFindingTtpDossier,
-  buildFormalFindingReport
+  buildFormalFindingReport,
+  buildExecutiveSummaryDossier
 } from "@/data/portAndDaemonTtpCatalog";
 import {
   Brain, Play, Square, CheckCircle, Activity, Zap,
@@ -2699,6 +2700,110 @@ ${f.remediation}
       <div class="val" style="color:#15803d;">${verifiedFixedCount} / ${reportItems.length} Fixed</div>
     </div>
   </div>
+
+  ${(() => {
+    const execSum = buildExecutiveSummaryDossier({
+      targetUrls: targets.map(t => t.url),
+      findings: reportItems,
+      clientOrgName,
+      engagementId
+    });
+    const ratingColor =
+      execSum.overallRiskRating.rating === "Critical"
+        ? "#e11d48"
+        : execSum.overallRiskRating.rating === "High"
+        ? "#ea580c"
+        : "#d97706";
+    return `
+  <div style="border:2px solid #0284c7;border-radius:10px;padding:16px 20px;margin-bottom:22px;background:#f8fafc;page-break-inside:avoid;">
+    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #cbd5e1;padding-bottom:10px;margin-bottom:12px;">
+      <div>
+        <div style="font-size:10px;font-family:monospace;font-weight:800;color:#0284c7;letter-spacing:0.06em;">
+          📋 EXECUTIVE &amp; BOARD BRIEFING · NON-TECHNICAL STAKEHOLDER SUMMARY (1–2 PAGES)
+        </div>
+        <h2 style="margin:2px 0 0 0;border:none;padding:0;font-size:17px;color:#0f172a;">Executive Summary</h2>
+      </div>
+      <span class="badge crit" style="font-size:11.5px;padding:4px 10px;background:${ratingColor};color:#fff;">
+        OVERALL RISK RATING: ${execSum.overallRiskRating.rating.toUpperCase()}
+      </span>
+    </div>
+
+    <div style="margin-bottom:10px;">
+      <strong style="font-size:12.5px;color:#0f172a;">1. Engagement Overview</strong>
+      <p style="margin:4px 0 6px 0;font-size:11.5px;color:#1e293b;line-height:1.5;">
+        ${execSum.engagementOverview.narrativeParagraph}
+      </p>
+      <div style="font-size:10.5px;color:#334155;background:#ffffff;border:1px solid #cbd5e1;border-radius:6px;padding:7px 10px;">
+        <strong>Assessment Type:</strong> ${execSum.engagementOverview.assessmentType} &nbsp;|&nbsp;
+        <strong>Testing Dates:</strong> ${execSum.engagementOverview.testingDates}<br/>
+        <strong>Methodology Referenced:</strong> ${execSum.engagementOverview.methodologyReferenced}<br/>
+        <strong>Rules of Engagement:</strong> ${execSum.engagementOverview.rulesOfEngagement}
+      </div>
+    </div>
+
+    <div style="margin-bottom:10px;">
+      <strong style="font-size:12.5px;color:#0f172a;">2. Overall Risk Rating: <span style="color:${ratingColor};">${execSum.overallRiskRating.rating}</span></strong>
+      <p style="margin:4px 0 0 0;font-size:11.5px;color:#1e293b;background:#fff1f2;border-left:4px solid ${ratingColor};padding:7px 10px;border-radius:0 6px 6px 0;">
+        ${execSum.overallRiskRating.justification}
+      </p>
+    </div>
+
+    <div style="margin-bottom:10px;">
+      <strong style="font-size:12.5px;color:#0f172a;">3. Findings Summary</strong>
+      <div style="font-size:11.5px;color:#1e293b;margin-top:3px;">
+        A total of <strong>${execSum.findingsSummary.totalFindings} confirmed findings</strong> were identified (plus ${execSum.findingsSummary.informational} informational observations):
+        <ul style="margin:4px 0 4px 18px;padding:0;">
+          <li><strong>Critical:</strong> ${execSum.findingsSummary.critical} (Confirmed) &nbsp;|&nbsp; <strong>High:</strong> ${execSum.findingsSummary.high} (Confirmed) &nbsp;|&nbsp; <strong>Medium:</strong> ${execSum.findingsSummary.medium} &nbsp;|&nbsp; <strong>Low:</strong> ${execSum.findingsSummary.low} &nbsp;|&nbsp; <strong>Informational:</strong> ${execSum.findingsSummary.informational}</li>
+        </ul>
+        <span style="font-size:10.5px;color:#475569;">${execSum.findingsSummary.confirmationNote}</span>
+      </div>
+    </div>
+
+    <div style="margin-bottom:10px;">
+      <strong style="font-size:12.5px;color:#0f172a;">4. Key Findings Highlights (Plain-Language Business Summary)</strong>
+      <div style="margin-top:5px;">
+        ${execSum.keyFindingsHighlights.map(kh => `
+          <div style="background:#ffffff;border:1px solid #cbd5e1;border-left:4px solid ${kh.severity === "Critical" ? "#e11d48" : "#ea580c"};border-radius:5px;padding:7px 10px;margin-bottom:6px;font-size:11px;">
+            <div><strong>[${kh.findingId} · ${kh.severity}] ${kh.headline}:</strong> ${kh.plainLanguageSummary}</div>
+            <div style="color:#475569;margin-top:2px;"><strong>Business Risk:</strong> ${kh.businessRiskImpact}</div>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;">
+      <div style="background:#ffffff;border:1px solid #cbd5e1;border-radius:6px;padding:8px 10px;font-size:11px;">
+        <strong style="font-size:12px;color:#0f172a;">5. Business Impact</strong>
+        <p style="margin:4px 0 6px 0;color:#1e293b;">${execSum.businessImpact.narrativeParagraph}</p>
+        <ul style="margin:0 0 0 16px;padding:0;color:#334155;">
+          ${execSum.businessImpact.impactPillars.map(ip => `<li style="margin-bottom:3px;"><strong>${ip.category}:</strong> ${ip.description}</li>`).join("")}
+        </ul>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="background:#ecfdf5;border:1px solid #6ee7b7;border-radius:6px;padding:8px 10px;font-size:11px;color:#065f46;">
+          <strong style="font-size:12px;">6. Positive Security Observations</strong>
+          <ul style="margin:4px 0 0 16px;padding:0;">
+            ${execSum.positiveObservations.map(po => `<li style="margin-bottom:3px;">${po}</li>`).join("")}
+          </ul>
+        </div>
+        <div style="background:#ffffff;border:1px solid #cbd5e1;border-radius:6px;padding:8px 10px;font-size:11px;">
+          <strong style="font-size:12px;color:#0f172a;">7. High-Level Recommendations</strong>
+          <ul style="margin:4px 0 0 16px;padding:0;color:#1e293b;">
+            ${execSum.highLevelRecommendations.map(rec => `<li style="margin-bottom:3px;"><strong>[${rec.priorityWindow}]</strong> ${rec.action}</li>`).join("")}
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#f1f5f9;border:1px solid #cbd5e1;border-radius:6px;padding:8px 10px;font-size:11px;">
+      <strong style="font-size:12px;color:#0f172a;">8. Conclusion and Next Steps</strong>
+      <p style="margin:3px 0 5px 0;color:#1e293b;">${execSum.conclusionAndNextSteps.conclusionParagraph}</p>
+      <div style="color:#0f172a;font-family:monospace;font-size:10.5px;">
+        ${execSum.conclusionAndNextSteps.nextStepsChecklist.map(ns => `<div>☑️ ${ns}</div>`).join("")}
+      </div>
+    </div>
+  </div>`;
+  })()}
 
   <h2>1. Complete 14-Tactic MITRE ATT&amp;CK® Enterprise v15 Kill-Chain &amp; D3FEND™ Countermeasure Matrix (Start to End)</h2>
   <table>
@@ -6063,6 +6168,220 @@ ${f.remediation}
                   </div>
                 ))}
               </div>
+
+              {/* ── 📋 EXECUTIVE SUMMARY (FOR EXECUTIVES, BOARD MEMBERS & RISK OWNERS) ── */}
+              {(() => {
+                const execSum = buildExecutiveSummaryDossier({
+                  targetUrls: targets.map(t => t.url),
+                  findings: reportFindings,
+                  clientOrgName,
+                  engagementId
+                });
+                const isAllRemediated = remediatedCount === reportFindings.length && reportFindings.length > 0;
+                const displayRating = isAllRemediated ? "Low (Remediated)" : execSum.overallRiskRating.rating;
+                const ratingHex = isAllRemediated
+                  ? "#10b981"
+                  : execSum.overallRiskRating.rating === "Critical"
+                  ? "#f43f5e"
+                  : execSum.overallRiskRating.rating === "High"
+                  ? "#fb923c"
+                  : "#fbbf24";
+
+                return (
+                  <div style={{
+                    background: "linear-gradient(180deg, rgba(15,23,42,0.96), rgba(5,8,17,0.98))",
+                    border: "1.5px solid rgba(56,189,248,0.45)",
+                    borderRadius: 10,
+                    padding: "16px 18px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 12
+                  }}>
+                    <div style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      flexWrap: "wrap",
+                      gap: 10,
+                      borderBottom: "1px solid rgba(56,189,248,0.25)",
+                      paddingBottom: 10
+                    }}>
+                      <div>
+                        <div style={{ fontSize: 10, fontFamily: "monospace", fontWeight: 900, color: "#38bdf8", letterSpacing: "0.06em" }}>
+                          📋 EXECUTIVE SUMMARY · WRITTEN FOR EXECUTIVES, BOARD MEMBERS &amp; RISK OWNERS
+                        </div>
+                        <strong style={{ fontSize: 15.5, color: "#f8fafc" }}>
+                          Executive Summary — {clientOrgName} ({primaryHost})
+                        </strong>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                        <span style={{
+                          background: `${ratingHex}22`,
+                          border: `1.5px solid ${ratingHex}`,
+                          color: ratingHex,
+                          fontWeight: 900,
+                          fontSize: 11.5,
+                          padding: "4px 12px",
+                          borderRadius: 6,
+                          fontFamily: "monospace"
+                        }}>
+                          OVERALL RISK RATING: {displayRating.toUpperCase()}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* 1. Engagement Overview & 2. Overall Risk Rating */}
+                    <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 12 }}>
+                      <div style={{ background: "#050811", border: "1px solid rgba(56,189,248,0.25)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+                        <strong style={{ fontSize: 12, color: "#38bdf8" }}>1. Engagement Overview</strong>
+                        <div style={{ fontSize: 11.5, color: "#e2e8f0", lineHeight: 1.55 }}>
+                          {execSum.engagementOverview.narrativeParagraph}
+                        </div>
+                        <div style={{ fontSize: 10.5, color: "#94a3b8", fontFamily: "monospace", borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 6, display: "flex", flexDirection: "column", gap: 3 }}>
+                          <div><strong style={{ color: "#cbd5e1" }}>Type:</strong> {execSum.engagementOverview.assessmentType}</div>
+                          <div><strong style={{ color: "#cbd5e1" }}>Dates:</strong> {execSum.engagementOverview.testingDates} &nbsp;|&nbsp; <strong style={{ color: "#cbd5e1" }}>Scope:</strong> <span style={{ color: "#38bdf8" }}>{execSum.engagementOverview.scopedTargets.join(", ")}</span></div>
+                          <div><strong style={{ color: "#cbd5e1" }}>Methodology:</strong> {execSum.engagementOverview.methodologyReferenced}</div>
+                          <div><strong style={{ color: "#cbd5e1" }}>ROE &amp; Boundaries:</strong> {execSum.engagementOverview.rulesOfEngagement}</div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                        <div style={{ background: "rgba(244,63,94,0.07)", border: `1px solid ${ratingHex}`, borderRadius: 8, padding: 12 }}>
+                          <strong style={{ fontSize: 12, color: ratingHex, display: "block", marginBottom: 4 }}>
+                            2. Overall Risk Rating: {displayRating}
+                          </strong>
+                          <div style={{ fontSize: 11.5, color: "#f8fafc", lineHeight: 1.5 }}>
+                            {execSum.overallRiskRating.justification}
+                          </div>
+                        </div>
+
+                        <div style={{ background: "#050811", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: 12 }}>
+                          <strong style={{ fontSize: 12, color: "#38bdf8", display: "block", marginBottom: 6 }}>
+                            3. Findings Summary ({execSum.findingsSummary.totalFindings} Confirmed · 0 False Positives)
+                          </strong>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 6, fontFamily: "monospace", fontSize: 10.5 }}>
+                            <span style={{ background: "rgba(244,63,94,0.18)", border: "1px solid #f43f5e", color: "#fda4af", padding: "2px 8px", borderRadius: 4, fontWeight: 800 }}>
+                              Critical: {execSum.findingsSummary.critical}
+                            </span>
+                            <span style={{ background: "rgba(251,146,60,0.18)", border: "1px solid #fb923c", color: "#fdba74", padding: "2px 8px", borderRadius: 4, fontWeight: 800 }}>
+                              High: {execSum.findingsSummary.high}
+                            </span>
+                            <span style={{ background: "rgba(250,204,21,0.16)", border: "1px solid #facc15", color: "#fde047", padding: "2px 8px", borderRadius: 4, fontWeight: 800 }}>
+                              Medium: {execSum.findingsSummary.medium}
+                            </span>
+                            <span style={{ background: "rgba(56,189,248,0.16)", border: "1px solid #38bdf8", color: "#bae6fd", padding: "2px 8px", borderRadius: 4, fontWeight: 800 }}>
+                              Low: {execSum.findingsSummary.low}
+                            </span>
+                            <span style={{ background: "rgba(148,163,184,0.16)", border: "1px solid #64748b", color: "#cbd5e1", padding: "2px 8px", borderRadius: 4, fontWeight: 800 }}>
+                              Informational: {execSum.findingsSummary.informational}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: 10.5, color: "#94a3b8", lineHeight: 1.45 }}>
+                            {execSum.findingsSummary.confirmationNote}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 4. Key Findings Highlights (Plain-Language Business Summary) */}
+                    <div style={{ background: "#050811", border: "1px solid rgba(244,63,94,0.3)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+                      <strong style={{ fontSize: 12, color: "#fda4af" }}>
+                        4. Key Findings Highlights (Plain-Language Summary for Leadership &amp; Risk Owners)
+                      </strong>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 8 }}>
+                        {execSum.keyFindingsHighlights.map((kh) => (
+                          <div
+                            key={kh.findingId}
+                            style={{
+                              background: "rgba(15,23,42,0.8)",
+                              border: `1px solid ${kh.severity === "Critical" ? "rgba(244,63,94,0.4)" : "rgba(251,146,60,0.4)"}`,
+                              borderLeft: `4px solid ${kh.severity === "Critical" ? "#f43f5e" : "#fb923c"}`,
+                              borderRadius: 6,
+                              padding: "8px 10px",
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: 4
+                            }}
+                          >
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                              <strong style={{ fontSize: 11.5, color: "#f8fafc" }}>{kh.headline}</strong>
+                              <span style={{
+                                fontSize: 9,
+                                fontFamily: "monospace",
+                                fontWeight: 900,
+                                padding: "1px 6px",
+                                borderRadius: 4,
+                                background: kh.severity === "Critical" ? "rgba(244,63,94,0.2)" : "rgba(251,146,60,0.2)",
+                                color: kh.severity === "Critical" ? "#fda4af" : "#fdba74"
+                              }}>
+                                {kh.findingId} · {kh.severity.toUpperCase()}
+                              </span>
+                            </div>
+                            <div style={{ fontSize: 11, color: "#cbd5e1", lineHeight: 1.45 }}>
+                              {kh.plainLanguageSummary}
+                            </div>
+                            <div style={{ fontSize: 10.5, color: "#fde68a", lineHeight: 1.4 }}>
+                              <strong>Business Impact:</strong> {kh.businessRiskImpact}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 5. Business Impact, 6. Positive Observations & 7. High-Level Recommendations */}
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 10 }}>
+                      <div style={{ background: "#050811", border: "1px solid rgba(251,146,60,0.3)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+                        <strong style={{ fontSize: 12, color: "#fdba74" }}>5. Business Impact</strong>
+                        <div style={{ fontSize: 11, color: "#e2e8f0", lineHeight: 1.5 }}>
+                          {execSum.businessImpact.narrativeParagraph}
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 5, marginTop: 2 }}>
+                          {execSum.businessImpact.impactPillars.map((ip, idx) => (
+                            <div key={idx} style={{ fontSize: 10.5, color: "#cbd5e1", lineHeight: 1.4, borderLeft: "2px solid #fb923c", paddingLeft: 8 }}>
+                              <strong style={{ color: "#f8fafc" }}>{ip.category}:</strong> {ip.description}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div style={{ background: "#050811", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+                        <strong style={{ fontSize: 12, color: "#34d399" }}>6. Positive Security Observations</strong>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                          {execSum.positiveObservations.map((po, idx) => (
+                            <div key={idx} style={{ fontSize: 10.5, color: "#d1fae5", lineHeight: 1.45, borderLeft: "2px solid #10b981", paddingLeft: 8 }}>
+                              ✓ {po}
+                            </div>
+                          ))}
+                        </div>
+
+                        <strong style={{ fontSize: 12, color: "#38bdf8", marginTop: 6 }}>7. High-Level Recommendations</strong>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                          {execSum.highLevelRecommendations.map((rec, idx) => (
+                            <div key={idx} style={{ fontSize: 10.5, color: "#e2e8f0", lineHeight: 1.4, borderLeft: "2px solid #38bdf8", paddingLeft: 8 }}>
+                              <strong style={{ color: "#38bdf8", fontFamily: "monospace" }}>[{rec.priorityWindow}]</strong> {rec.action}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 8. Conclusion and Next Steps */}
+                    <div style={{ background: "rgba(56,189,248,0.07)", border: "1px solid rgba(56,189,248,0.35)", borderRadius: 8, padding: "10px 12px", display: "flex", flexDirection: "column", gap: 6 }}>
+                      <strong style={{ fontSize: 12, color: "#38bdf8" }}>8. Conclusion and Next Steps</strong>
+                      <div style={{ fontSize: 11, color: "#f8fafc", lineHeight: 1.5 }}>
+                        {execSum.conclusionAndNextSteps.conclusionParagraph}
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 6, fontFamily: "monospace", fontSize: 10, color: "#bae6fd" }}>
+                        {execSum.conclusionAndNextSteps.nextStepsChecklist.map((ns, idx) => (
+                          <div key={idx} style={{ background: "#050811", border: "1px solid rgba(56,189,248,0.22)", borderRadius: 4, padding: "5px 8px" }}>
+                            ☑️ {ns}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* ── COMPLETE 14-TACTIC MITRE ATT&CK® ENTERPRISE v15 MATRIX (DISPLAYED IN BOTH FORMATS FROM START TO END) ── */}
               <div style={{ background: "var(--surface-2)", border: "1px solid rgba(192,132,252,0.45)", borderRadius: 8, padding: 14 }}>
