@@ -126,10 +126,25 @@ function generateMultiPageAssessmentPdfBuffer(params: {
     { text: `2. Overall Risk Rating: ${execSummary.overallRiskRating.rating.toUpperCase()}`, bold: true, size: 9.5, colorRgb: [0.78, 0.07, 0.2] },
     ...wrapTextLine(execSummary.overallRiskRating.justification, 94).map(ln => ({ text: `  ${ln}`, size: 8.5 })),
     { text: "" },
-    { text: "3. Findings Summary", bold: true, size: 9.5, colorRgb: [0.05, 0.15, 0.35] },
+    { text: "3. Findings Summary & Severity Breakdown Table", bold: true, size: 9.5, colorRgb: [0.05, 0.15, 0.35] },
     { text: `  A total of ${execSummary.findingsSummary.totalFindings} confirmed findings were identified (${execSummary.findingsSummary.informational} informational observations):`, bold: true, size: 8.5 },
     { text: `    - Critical: ${execSummary.findingsSummary.critical} (Confirmed)   |   High: ${execSummary.findingsSummary.high} (Confirmed)   |   Medium: ${execSummary.findingsSummary.medium}   |   Low: ${execSummary.findingsSummary.low}   |   Informational: ${execSummary.findingsSummary.informational}`, bold: true, size: 8.5, colorRgb: [0.75, 0.08, 0.2] },
+    { text: "  +---------------+-----------+-----------+------------+----------+-----------------------------+------------------------+", bold: true, size: 7.5 },
+    { text: "  | Severity      | Confirmed | Potential | Risk Share | Max CVSS | Business Risk Exposure      | Target Remediation SLA |", bold: true, size: 7.5, colorRgb: [0.05, 0.25, 0.55] },
+    { text: "  +---------------+-----------+-----------+------------+----------+-----------------------------+------------------------+", bold: true, size: 7.5 },
+    ...execSummary.severityBreakdownTable.map(row => ({
+      text: `  | ${row.severity.padEnd(13)} | ${String(row.confirmedCount).padEnd(9)} | ${String(row.potentialCount).padEnd(9)} | ${row.riskWeightPct.padEnd(10)} | ${row.maxCvss.padEnd(8)} | ${row.businessRiskExposure.slice(0, 27).padEnd(27)} | ${row.remediationSla.slice(0, 22).padEnd(22)} |`,
+      size: 7.5
+    })),
+    { text: "  +---------------+-----------+-----------+------------+----------+-----------------------------+------------------------+", bold: true, size: 7.5 },
     ...wrapTextLine(`  ${execSummary.findingsSummary.confirmationNote}`, 94).map(ln => ({ text: `  ${ln}`, size: 8 })),
+    { text: "" },
+    { text: "3B. Multi-Quarter Security Posture Trend & Trajectory Table (Q1 2026 -> Projected Retest)", bold: true, size: 9.5, colorRgb: [0.02, 0.38, 0.55] },
+    { text: "  Posture Trajectory Graph: Q1[54/100 D] ===> Q2[61/100 C-] ===> Q3[64/100 C] ===> Current DAST[68/100 C+] ===> 7-Day SLA[88/100 B+] ===> Retest[98/100 A+]", bold: true, size: 8, colorRgb: [0.02, 0.45, 0.35] },
+    ...execSummary.securityPostureTrendTable.map(tr => ({
+      text: `  * ${tr.periodLabel.padEnd(28)} | Score: ${String(tr.postureScore).padEnd(3)}/100 (${tr.securityGrade.padEnd(2)}) | Crit: ${tr.criticalOpen} | High: ${tr.highOpen} | Med/Low: ${tr.mediumLowOpen} | MTTR: ${tr.mttrDays.padEnd(9)} | ${tr.trendDelta}`,
+      size: 7.8
+    })),
     { text: "" },
     { text: "4. Key Findings Highlights", bold: true, size: 9.5, colorRgb: [0.05, 0.15, 0.35] },
     ...execSummary.keyFindingsHighlights.flatMap(kh => [
@@ -148,10 +163,15 @@ function generateMultiPageAssessmentPdfBuffer(params: {
       wrapTextLine(`  + ${po}`, 92).map(ln => ({ text: ln, size: 8, colorRgb: [0.02, 0.42, 0.32] as [number, number, number] }))
     ),
     { text: "" },
-    { text: "7. High-Level Recommendations", bold: true, size: 9.5, colorRgb: [0.05, 0.15, 0.35] },
+    { text: "7. High-Level Recommendations & Prioritized Action Roadmap Table", bold: true, size: 9.5, colorRgb: [0.05, 0.15, 0.35] },
     ...execSummary.highLevelRecommendations.flatMap(rec =>
       wrapTextLine(`  - [${rec.priorityWindow}] ${rec.action}`, 92).map(ln => ({ text: ln, size: 8 }))
     ),
+    ...execSummary.executiveActionRoadmapTable.map(rm => ({
+      text: `  [ROADMAP ${rm.phaseWindow}] ${rm.focusArea} | Findings: ${rm.targetFindings} | Risk Reduction: ${rm.projectedRiskReduction} | Owner: ${rm.stakeholderOwner}`,
+      size: 7.8,
+      bold: true
+    })),
     { text: "" },
     { text: "8. Conclusion and Next Steps", bold: true, size: 9.5, colorRgb: [0.05, 0.15, 0.35] },
     ...wrapTextLine(execSummary.conclusionAndNextSteps.conclusionParagraph, 94).map(ln => ({ text: `  ${ln}`, size: 8.5 })),
@@ -774,20 +794,110 @@ export async function POST(req: NextRequest) {
           ${escapeHtml(execSum.overallRiskRating.justification)}
         </p>
 
-        <h3 style="margin:12px 0 6px 0;font-size:14px;color:#0f172a;">3. Findings Summary</h3>
+        <h3 style="margin:12px 0 6px 0;font-size:14px;color:#0f172a;">3. Findings Summary &amp; Severity Breakdown Table</h3>
         <p style="margin:0 0 6px 0;font-size:12.5px;color:#1e293b;">
           A total of <strong>${execSum.findingsSummary.totalFindings} confirmed findings</strong> were identified (plus ${execSum.findingsSummary.informational} informational hardening observations):
         </p>
-        <ul style="margin:0 0 8px 18px;padding:0;font-size:12.5px;color:#1e293b;line-height:1.5;">
-          <li><strong style="color:#e11d48;">Critical:</strong> ${execSum.findingsSummary.critical} (${execSum.findingsSummary.critical} Confirmed, 0 Potential)</li>
-          <li><strong style="color:#ea580c;">High:</strong> ${execSum.findingsSummary.high} (${execSum.findingsSummary.high} Confirmed, 0 Potential)</li>
-          <li><strong style="color:#d97706;">Medium:</strong> ${execSum.findingsSummary.medium}</li>
-          <li><strong style="color:#0284c7;">Low:</strong> ${execSum.findingsSummary.low}</li>
-          <li><strong style="color:#475569;">Informational:</strong> ${execSum.findingsSummary.informational}</li>
-        </ul>
+        <div class="table-wrap" style="margin-bottom:10px;">
+          <table style="width:100%;border-collapse:collapse;font-size:11.5px;background:#ffffff;border:1px solid #cbd5e1;">
+            <thead>
+              <tr style="background:#0f172a;color:#f8fafc;text-align:left;">
+                <th style="padding:7px 9px;border:1px solid #334155;">Severity</th>
+                <th style="padding:7px 9px;border:1px solid #334155;">Confirmed</th>
+                <th style="padding:7px 9px;border:1px solid #334155;">Potential</th>
+                <th style="padding:7px 9px;border:1px solid #334155;">% Risk Share</th>
+                <th style="padding:7px 9px;border:1px solid #334155;">Max CVSS</th>
+                <th style="padding:7px 9px;border:1px solid #334155;">Business Risk Exposure</th>
+                <th style="padding:7px 9px;border:1px solid #334155;">Target Remediation SLA</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${execSum.severityBreakdownTable
+                .map(
+                  row => `
+                <tr>
+                  <td style="padding:6px 9px;border:1px solid #cbd5e1;font-weight:900;color:${
+                    row.severity === "Critical"
+                      ? "#e11d48"
+                      : row.severity === "High"
+                      ? "#ea580c"
+                      : row.severity === "Medium"
+                      ? "#d97706"
+                      : "#0284c7"
+                  };">${escapeHtml(row.severity)}</td>
+                  <td style="padding:6px 9px;border:1px solid #cbd5e1;font-weight:800;">${row.confirmedCount}</td>
+                  <td style="padding:6px 9px;border:1px solid #cbd5e1;color:#64748b;">${row.potentialCount}</td>
+                  <td style="padding:6px 9px;border:1px solid #cbd5e1;font-family:monospace;font-weight:700;">${escapeHtml(row.riskWeightPct)}</td>
+                  <td style="padding:6px 9px;border:1px solid #cbd5e1;font-family:monospace;font-weight:800;">${escapeHtml(row.maxCvss)}</td>
+                  <td style="padding:6px 9px;border:1px solid #cbd5e1;">${escapeHtml(row.businessRiskExposure)}</td>
+                  <td style="padding:6px 9px;border:1px solid #cbd5e1;font-weight:700;color:#0f172a;">${escapeHtml(row.remediationSla)}</td>
+                </tr>`
+                )
+                .join("")}
+            </tbody>
+          </table>
+        </div>
         <p style="margin:0 0 12px 0;font-size:11.5px;color:#475569;">
           ${escapeHtml(execSum.findingsSummary.confirmationNote)}
         </p>
+
+        <h3 style="margin:14px 0 6px 0;font-size:14px;color:#0284c7;">
+          📊 Executive Visual Analytics, Multi-Quarter Posture Trends &amp; Benchmark Graphs
+        </h3>
+        <div style="margin-bottom:14px;">
+          ${execSum.executiveCharts
+            .map(
+              chart => `
+            <div style="background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:10px 12px;margin-bottom:10px;color:#e2e8f0;">
+              <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:6px;">
+                <span style="font-size:11.5px;font-weight:800;color:#38bdf8;font-family:monospace;">[${escapeHtml(chart.chartId)}] ${escapeHtml(chart.title)}</span>
+                <span style="font-size:10px;background:#1e293b;color:#a7f3d0;padding:2px 8px;border-radius:4px;font-family:monospace;">EXECUTIVE TELEMETRY GRAPH</span>
+              </div>
+              <img src="${chart.svgDataUri}" alt="${escapeHtml(chart.title)}" style="width:100%;max-width:100%;height:auto;display:block;border-radius:6px;border:1px solid #334155;margin-bottom:6px;" />
+              <div style="font-size:11px;color:#cbd5e1;line-height:1.45;">
+                <strong style="color:#fcd34d;">Executive Takeaway:</strong> ${escapeHtml(chart.keyTakeaway)}
+              </div>
+            </div>`
+            )
+            .join("")}
+        </div>
+
+        <h3 style="margin:12px 0 6px 0;font-size:14px;color:#0f172a;">
+          📈 Multi-Quarter Security Posture &amp; Remediation Velocity Trend Table
+        </h3>
+        <div class="table-wrap" style="margin-bottom:14px;">
+          <table style="width:100%;border-collapse:collapse;font-size:11.5px;background:#ffffff;border:1px solid #cbd5e1;">
+            <thead>
+              <tr style="background:#0f172a;color:#f8fafc;text-align:left;">
+                <th style="padding:7px 9px;border:1px solid #334155;">Assessment Cycle / Milestone</th>
+                <th style="padding:7px 9px;border:1px solid #334155;">Security Score &amp; Grade</th>
+                <th style="padding:7px 9px;border:1px solid #334155;">Critical Open</th>
+                <th style="padding:7px 9px;border:1px solid #334155;">High Open</th>
+                <th style="padding:7px 9px;border:1px solid #334155;">Med / Low Open</th>
+                <th style="padding:7px 9px;border:1px solid #334155;">Mean Time to Remediate (MTTR)</th>
+                <th style="padding:7px 9px;border:1px solid #334155;">Posture Trajectory</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${execSum.securityPostureTrendTable
+                .map(
+                  tr => `
+                <tr style="${tr.periodLabel.includes("Current") ? "background:#fff1f2;" : tr.periodLabel.includes("Projected") ? "background:#ecfdf5;" : ""}">
+                  <td style="padding:6px 9px;border:1px solid #cbd5e1;font-weight:800;color:#0f172a;">${escapeHtml(tr.periodLabel)}</td>
+                  <td style="padding:6px 9px;border:1px solid #cbd5e1;font-family:monospace;font-weight:900;color:${
+                    tr.postureScore >= 85 ? "#059669" : tr.postureScore >= 65 ? "#0284c7" : "#d97706"
+                  };">${tr.postureScore}/100 (${escapeHtml(tr.securityGrade)})</td>
+                  <td style="padding:6px 9px;border:1px solid #cbd5e1;font-weight:800;color:${tr.criticalOpen > 0 ? "#e11d48" : "#059669"};">${tr.criticalOpen}</td>
+                  <td style="padding:6px 9px;border:1px solid #cbd5e1;font-weight:800;color:${tr.highOpen > 0 ? "#ea580c" : "#059669"};">${tr.highOpen}</td>
+                  <td style="padding:6px 9px;border:1px solid #cbd5e1;">${tr.mediumLowOpen}</td>
+                  <td style="padding:6px 9px;border:1px solid #cbd5e1;font-family:monospace;">${escapeHtml(tr.mttrDays)}</td>
+                  <td style="padding:6px 9px;border:1px solid #cbd5e1;font-weight:700;color:#0f172a;">${escapeHtml(tr.trendDelta)}</td>
+                </tr>`
+                )
+                .join("")}
+            </tbody>
+          </table>
+        </div>
 
         <h3 style="margin:12px 0 6px 0;font-size:14px;color:#0f172a;">4. Key Findings Highlights</h3>
         <div style="margin-bottom:12px;">
@@ -833,8 +943,8 @@ export async function POST(req: NextRequest) {
             .join("")}
         </ul>
 
-        <h3 style="margin:12px 0 6px 0;font-size:14px;color:#0f172a;">7. High-Level Recommendations</h3>
-        <ul style="margin:0 0 12px 18px;padding:0;font-size:12px;color:#1e293b;line-height:1.5;">
+        <h3 style="margin:12px 0 6px 0;font-size:14px;color:#0f172a;">7. High-Level Recommendations &amp; Executive Action Roadmap Table</h3>
+        <ul style="margin:0 0 10px 18px;padding:0;font-size:12px;color:#1e293b;line-height:1.5;">
           ${execSum.highLevelRecommendations
             .map(
               rec =>
@@ -842,6 +952,35 @@ export async function POST(req: NextRequest) {
             )
             .join("")}
         </ul>
+        <div class="table-wrap" style="margin-bottom:12px;">
+          <table style="width:100%;border-collapse:collapse;font-size:11.5px;background:#ffffff;border:1px solid #cbd5e1;">
+            <thead>
+              <tr style="background:#0f172a;color:#f8fafc;text-align:left;">
+                <th style="padding:7px 9px;border:1px solid #334155;">Phase &amp; SLA Window</th>
+                <th style="padding:7px 9px;border:1px solid #334155;">Executive Focus Area</th>
+                <th style="padding:7px 9px;border:1px solid #334155;">Target Findings</th>
+                <th style="padding:7px 9px;border:1px solid #334155;">Projected Risk Reduction</th>
+                <th style="padding:7px 9px;border:1px solid #334155;">Accountable Owner</th>
+                <th style="padding:7px 9px;border:1px solid #334155;">Verification Gate</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${execSum.executiveActionRoadmapTable
+                .map(
+                  rm => `
+                <tr>
+                  <td style="padding:6px 9px;border:1px solid #cbd5e1;font-weight:800;color:#0284c7;">${escapeHtml(rm.phaseWindow)}</td>
+                  <td style="padding:6px 9px;border:1px solid #cbd5e1;font-weight:700;color:#0f172a;">${escapeHtml(rm.focusArea)}</td>
+                  <td style="padding:6px 9px;border:1px solid #cbd5e1;font-family:monospace;font-weight:700;color:#e11d48;">${escapeHtml(rm.targetFindings)}</td>
+                  <td style="padding:6px 9px;border:1px solid #cbd5e1;font-weight:800;color:#059669;">${escapeHtml(rm.projectedRiskReduction)}</td>
+                  <td style="padding:6px 9px;border:1px solid #cbd5e1;">${escapeHtml(rm.stakeholderOwner)}</td>
+                  <td style="padding:6px 9px;border:1px solid #cbd5e1;">${escapeHtml(rm.verificationMethod)}</td>
+                </tr>`
+                )
+                .join("")}
+            </tbody>
+          </table>
+        </div>
 
         <h3 style="margin:12px 0 4px 0;font-size:14px;color:#0f172a;">8. Conclusion and Next Steps</h3>
         <p style="margin:0 0 6px 0;font-size:12.5px;color:#1e293b;line-height:1.55;">
@@ -881,7 +1020,7 @@ export async function POST(req: NextRequest) {
       </div>
 
       <div style="border-top:1px solid #cbd5e1;padding-top:12px;font-size:11px;color:#64748b;">
-        Dispatched automatically by <strong>XTRIKE™ &amp; Aegis.SOC™ DAST &amp; Web Interface Security Assessment Platform</strong> upon scan completion. Includes Executive Summary, Sample Collected Exploitation Evidence, and Visual Exploitation Screenshots for Customer CI.
+        Dispatched automatically by <strong>XTRIKE™ &amp; Aegis.SOC™ DAST &amp; Web Interface Security Assessment Platform</strong> upon scan completion. Includes Executive Summary (with Visual Graphs, Multi-Quarter Posture Trends, and Tables), Sample Collected Exploitation Evidence, and Visual Exploitation Screenshots for Customer CI.
       </div>
     </div>
   </div>
@@ -911,14 +1050,17 @@ export async function POST(req: NextRequest) {
       `2. Overall Risk Rating: ${execSumText.overallRiskRating.rating}`,
       execSumText.overallRiskRating.justification,
       ``,
-      `3. Findings Summary`,
+      `3. Findings Summary & Severity Breakdown Table`,
       `A total of ${execSumText.findingsSummary.totalFindings} confirmed findings were identified:`,
-      `- Critical: ${execSumText.findingsSummary.critical}`,
-      `- High: ${execSumText.findingsSummary.high}`,
-      `- Medium: ${execSumText.findingsSummary.medium}`,
-      `- Low: ${execSumText.findingsSummary.low}`,
-      `- Informational: ${execSumText.findingsSummary.informational}`,
+      ...execSumText.severityBreakdownTable.map(
+        r => `- ${r.severity}: ${r.confirmedCount} Confirmed (${r.potentialCount} Potential) | Risk Share: ${r.riskWeightPct} | Max CVSS: ${r.maxCvss} | Exposure: ${r.businessRiskExposure} | SLA: ${r.remediationSla}`
+      ),
       execSumText.findingsSummary.confirmationNote,
+      ``,
+      `3B. Multi-Quarter Security Posture Trend Table`,
+      ...execSumText.securityPostureTrendTable.map(
+        t => `- ${t.periodLabel}: Score ${t.postureScore}/100 (${t.securityGrade}) | Crit: ${t.criticalOpen} | High: ${t.highOpen} | Med/Low: ${t.mediumLowOpen} | MTTR: ${t.mttrDays} | ${t.trendDelta}`
+      ),
       ``,
       `4. Key Findings Highlights`,
       ...execSumText.keyFindingsHighlights.map(
@@ -932,8 +1074,11 @@ export async function POST(req: NextRequest) {
       `6. Positive Observations`,
       ...execSumText.positiveObservations.map(po => `+ ${po}`),
       ``,
-      `7. High-Level Recommendations`,
+      `7. High-Level Recommendations & Action Roadmap`,
       ...execSumText.highLevelRecommendations.map(rec => `- [${rec.priorityWindow}] ${rec.action}`),
+      ...execSumText.executiveActionRoadmapTable.map(
+        rm => `* [${rm.phaseWindow}] ${rm.focusArea} | Target: ${rm.targetFindings} | Impact: ${rm.projectedRiskReduction} | Owner: ${rm.stakeholderOwner}`
+      ),
       ``,
       `8. Conclusion and Next Steps`,
       execSumText.conclusionAndNextSteps.conclusionParagraph,

@@ -2749,14 +2749,80 @@ ${f.remediation}
     </div>
 
     <div style="margin-bottom:10px;">
-      <strong style="font-size:12.5px;color:#0f172a;">3. Findings Summary</strong>
+      <strong style="font-size:12.5px;color:#0f172a;">3. Findings Summary &amp; Severity Breakdown Table</strong>
       <div style="font-size:11.5px;color:#1e293b;margin-top:3px;">
         A total of <strong>${execSum.findingsSummary.totalFindings} confirmed findings</strong> were identified (plus ${execSum.findingsSummary.informational} informational observations):
-        <ul style="margin:4px 0 4px 18px;padding:0;">
-          <li><strong>Critical:</strong> ${execSum.findingsSummary.critical} (Confirmed) &nbsp;|&nbsp; <strong>High:</strong> ${execSum.findingsSummary.high} (Confirmed) &nbsp;|&nbsp; <strong>Medium:</strong> ${execSum.findingsSummary.medium} &nbsp;|&nbsp; <strong>Low:</strong> ${execSum.findingsSummary.low} &nbsp;|&nbsp; <strong>Informational:</strong> ${execSum.findingsSummary.informational}</li>
-        </ul>
+        <table style="width:100%;border-collapse:collapse;font-size:10.5px;background:#ffffff;border:1px solid #cbd5e1;margin:6px 0;">
+          <thead>
+            <tr style="background:#0f172a;color:#f8fafc;text-align:left;">
+              <th style="padding:5px 7px;border:1px solid #334155;">Severity</th>
+              <th style="padding:5px 7px;border:1px solid #334155;">Confirmed</th>
+              <th style="padding:5px 7px;border:1px solid #334155;">Potential</th>
+              <th style="padding:5px 7px;border:1px solid #334155;">% Risk Share</th>
+              <th style="padding:5px 7px;border:1px solid #334155;">Max CVSS</th>
+              <th style="padding:5px 7px;border:1px solid #334155;">Business Risk Exposure</th>
+              <th style="padding:5px 7px;border:1px solid #334155;">Target Remediation SLA</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${execSum.severityBreakdownTable.map(row => `
+              <tr>
+                <td style="padding:5px 7px;border:1px solid #cbd5e1;font-weight:800;color:${row.severity === "Critical" ? "#e11d48" : row.severity === "High" ? "#ea580c" : "#0284c7"};">${row.severity}</td>
+                <td style="padding:5px 7px;border:1px solid #cbd5e1;font-weight:800;">${row.confirmedCount}</td>
+                <td style="padding:5px 7px;border:1px solid #cbd5e1;">${row.potentialCount}</td>
+                <td style="padding:5px 7px;border:1px solid #cbd5e1;font-family:monospace;">${row.riskWeightPct}</td>
+                <td style="padding:5px 7px;border:1px solid #cbd5e1;font-family:monospace;font-weight:800;">${row.maxCvss}</td>
+                <td style="padding:5px 7px;border:1px solid #cbd5e1;">${row.businessRiskExposure}</td>
+                <td style="padding:5px 7px;border:1px solid #cbd5e1;font-weight:700;">${row.remediationSla}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
         <span style="font-size:10.5px;color:#475569;">${execSum.findingsSummary.confirmationNote}</span>
       </div>
+    </div>
+
+    <div style="margin-bottom:10px;">
+      <strong style="font-size:12.5px;color:#0284c7;">📊 Executive Visual Graphs, Multi-Quarter Posture Trends &amp; Benchmark Analytics</strong>
+      <div style="margin-top:6px;">
+        ${execSum.executiveCharts.map(chart => `
+          <div style="background:#0f172a;border:1px solid #1e293b;border-radius:7px;padding:8px 10px;margin-bottom:8px;color:#e2e8f0;page-break-inside:avoid;">
+            <div style="font-size:11px;font-weight:800;color:#38bdf8;font-family:monospace;margin-bottom:5px;">[${chart.chartId}] ${chart.title}</div>
+            <img src="${chart.svgDataUri}" alt="${chart.title}" style="width:100%;max-width:100%;height:auto;display:block;border-radius:5px;border:1px solid #334155;margin-bottom:5px;" />
+            <div style="font-size:10px;color:#cbd5e1;"><strong style="color:#fcd34d;">Executive Takeaway:</strong> ${chart.keyTakeaway}</div>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+
+    <div style="margin-bottom:10px;">
+      <strong style="font-size:12.5px;color:#0f172a;">📈 Multi-Quarter Security Posture &amp; Remediation Velocity Trend Table</strong>
+      <table style="width:100%;border-collapse:collapse;font-size:10.5px;background:#ffffff;border:1px solid #cbd5e1;margin-top:5px;">
+        <thead>
+          <tr style="background:#0f172a;color:#f8fafc;text-align:left;">
+            <th style="padding:5px 7px;border:1px solid #334155;">Assessment Cycle / Milestone</th>
+            <th style="padding:5px 7px;border:1px solid #334155;">Score &amp; Grade</th>
+            <th style="padding:5px 7px;border:1px solid #334155;">Crit Open</th>
+            <th style="padding:5px 7px;border:1px solid #334155;">High Open</th>
+            <th style="padding:5px 7px;border:1px solid #334155;">Med/Low Open</th>
+            <th style="padding:5px 7px;border:1px solid #334155;">MTTR</th>
+            <th style="padding:5px 7px;border:1px solid #334155;">Posture Trajectory</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${execSum.securityPostureTrendTable.map(tr => `
+            <tr style="${tr.periodLabel.includes("Current") ? "background:#fff1f2;" : tr.periodLabel.includes("Projected") ? "background:#ecfdf5;" : ""}">
+              <td style="padding:5px 7px;border:1px solid #cbd5e1;font-weight:800;">${tr.periodLabel}</td>
+              <td style="padding:5px 7px;border:1px solid #cbd5e1;font-family:monospace;font-weight:800;">${tr.postureScore}/100 (${tr.securityGrade})</td>
+              <td style="padding:5px 7px;border:1px solid #cbd5e1;font-weight:800;color:${tr.criticalOpen > 0 ? "#e11d48" : "#059669"};">${tr.criticalOpen}</td>
+              <td style="padding:5px 7px;border:1px solid #cbd5e1;font-weight:800;color:${tr.highOpen > 0 ? "#ea580c" : "#059669"};">${tr.highOpen}</td>
+              <td style="padding:5px 7px;border:1px solid #cbd5e1;">${tr.mediumLowOpen}</td>
+              <td style="padding:5px 7px;border:1px solid #cbd5e1;font-family:monospace;">${tr.mttrDays}</td>
+              <td style="padding:5px 7px;border:1px solid #cbd5e1;font-weight:700;">${tr.trendDelta}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
     </div>
 
     <div style="margin-bottom:10px;">
@@ -2793,6 +2859,34 @@ ${f.remediation}
           </ul>
         </div>
       </div>
+    </div>
+
+    <div style="margin-bottom:10px;">
+      <strong style="font-size:12px;color:#0f172a;">🗺️ Prioritized Executive Action Plan &amp; Risk Reduction Roadmap Table</strong>
+      <table style="width:100%;border-collapse:collapse;font-size:10.5px;background:#ffffff;border:1px solid #cbd5e1;margin-top:5px;">
+        <thead>
+          <tr style="background:#0f172a;color:#f8fafc;text-align:left;">
+            <th style="padding:5px 7px;border:1px solid #334155;">Phase &amp; SLA Window</th>
+            <th style="padding:5px 7px;border:1px solid #334155;">Executive Focus Area</th>
+            <th style="padding:5px 7px;border:1px solid #334155;">Target Findings</th>
+            <th style="padding:5px 7px;border:1px solid #334155;">Projected Risk Reduction</th>
+            <th style="padding:5px 7px;border:1px solid #334155;">Accountable Owner</th>
+            <th style="padding:5px 7px;border:1px solid #334155;">Verification Gate</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${execSum.executiveActionRoadmapTable.map(rm => `
+            <tr>
+              <td style="padding:5px 7px;border:1px solid #cbd5e1;font-weight:800;color:#0284c7;">${rm.phaseWindow}</td>
+              <td style="padding:5px 7px;border:1px solid #cbd5e1;font-weight:700;">${rm.focusArea}</td>
+              <td style="padding:5px 7px;border:1px solid #cbd5e1;font-family:monospace;font-weight:700;color:#e11d48;">${rm.targetFindings}</td>
+              <td style="padding:5px 7px;border:1px solid #cbd5e1;font-weight:800;color:#059669;">${rm.projectedRiskReduction}</td>
+              <td style="padding:5px 7px;border:1px solid #cbd5e1;">${rm.stakeholderOwner}</td>
+              <td style="padding:5px 7px;border:1px solid #cbd5e1;">${rm.verificationMethod}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
     </div>
 
     <div style="background:#f1f5f9;border:1px solid #cbd5e1;border-radius:6px;padding:8px 10px;font-size:11px;">
@@ -6283,6 +6377,132 @@ ${f.remediation}
                       </div>
                     </div>
 
+                    {/* 3A. Executive Visual Analytics, Multi-Quarter Posture Trends & Benchmark Graphs */}
+                    <div style={{ background: "#050811", border: "1px solid rgba(56,189,248,0.35)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 10 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6 }}>
+                        <strong style={{ fontSize: 12.5, color: "#38bdf8" }}>
+                          📊 Executive Visual Analytics, Multi-Quarter Posture Trajectory &amp; 5-Pillar Benchmark Graphs
+                        </strong>
+                        <span style={{ fontSize: 9.5, fontFamily: "monospace", color: "#a7f3d0", background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.35)", padding: "2px 8px", borderRadius: 4 }}>
+                          3 BOARD-READY TELEMETRY GRAPHS · SVG VECTOR DATA-URI
+                        </span>
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(290px, 1fr))", gap: 10 }}>
+                        {execSum.executiveCharts.map((chart) => (
+                          <div
+                            key={chart.chartId}
+                            style={{
+                              background: "rgba(15,23,42,0.85)",
+                              border: "1px solid rgba(56,189,248,0.28)",
+                              borderRadius: 7,
+                              padding: 10,
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: 6
+                            }}
+                          >
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                              <span style={{ fontSize: 11, fontWeight: 800, color: "#38bdf8", fontFamily: "monospace" }}>
+                                [{chart.chartId}] {chart.title}
+                              </span>
+                            </div>
+                            <img
+                              src={chart.svgDataUri}
+                              alt={chart.title}
+                              style={{ width: "100%", maxWidth: "100%", height: "auto", borderRadius: 6, border: "1px solid rgba(255,255,255,0.12)", display: "block" }}
+                            />
+                            <div style={{ fontSize: 10.5, color: "#cbd5e1", lineHeight: 1.45 }}>
+                              <strong style={{ color: "#fde68a" }}>Executive Takeaway:</strong> {chart.keyTakeaway}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 3B. Executive Findings & SLA Breakdown Table + Multi-Quarter Security Posture Trend Table */}
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 10 }}>
+                      <div style={{ background: "#050811", border: "1px solid rgba(244,63,94,0.3)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+                        <strong style={{ fontSize: 12, color: "#fda4af" }}>
+                          📋 Table 1 — Executive Findings Severity, Risk Share &amp; SLA Remediation Breakdown
+                        </strong>
+                        <div style={{ overflowX: "auto" }}>
+                          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10.5 }}>
+                            <thead>
+                              <tr style={{ background: "rgba(15,23,42,0.95)", color: "#94a3b8", textAlign: "left" }}>
+                                <th style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.1)" }}>Severity</th>
+                                <th style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.1)" }}>Confirmed</th>
+                                <th style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.1)" }}>Potential</th>
+                                <th style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.1)" }}>% Risk Share</th>
+                                <th style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.1)" }}>Max CVSS</th>
+                                <th style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.1)" }}>Business Exposure</th>
+                                <th style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.1)" }}>Remediation SLA</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {execSum.severityBreakdownTable.map((row) => (
+                                <tr key={row.severity} style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                                  <td style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.08)", fontWeight: 900, color: row.severity === "Critical" ? "#fda4af" : row.severity === "High" ? "#fdba74" : row.severity === "Medium" ? "#fde047" : "#38bdf8" }}>
+                                    {row.severity}
+                                  </td>
+                                  <td style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.08)", fontWeight: 800, color: "#f8fafc" }}>{row.confirmedCount}</td>
+                                  <td style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.08)", color: "#64748b" }}>{row.potentialCount}</td>
+                                  <td style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.08)", fontFamily: "monospace", color: "#e2e8f0" }}>{row.riskWeightPct}</td>
+                                  <td style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.08)", fontFamily: "monospace", fontWeight: 800, color: "#fde68a" }}>{row.maxCvss}</td>
+                                  <td style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.08)", color: "#cbd5e1" }}>{row.businessRiskExposure}</td>
+                                  <td style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.08)", color: "#a7f3d0", fontWeight: 700 }}>{row.remediationSla}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      <div style={{ background: "#050811", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+                        <strong style={{ fontSize: 12, color: "#34d399" }}>
+                          📈 Table 2 — Multi-Quarter Security Posture &amp; Remediation Velocity Trend Table
+                        </strong>
+                        <div style={{ overflowX: "auto" }}>
+                          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10.5 }}>
+                            <thead>
+                              <tr style={{ background: "rgba(15,23,42,0.95)", color: "#94a3b8", textAlign: "left" }}>
+                                <th style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.1)" }}>Cycle / Milestone</th>
+                                <th style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.1)" }}>Score &amp; Grade</th>
+                                <th style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.1)" }}>Crit</th>
+                                <th style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.1)" }}>High</th>
+                                <th style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.1)" }}>Med/Low</th>
+                                <th style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.1)" }}>MTTR</th>
+                                <th style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.1)" }}>Posture Trajectory</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {execSum.securityPostureTrendTable.map((tr) => (
+                                <tr
+                                  key={tr.periodLabel}
+                                  style={{
+                                    background: tr.periodLabel.includes("Current")
+                                      ? "rgba(244,63,94,0.1)"
+                                      : tr.periodLabel.includes("Projected")
+                                      ? "rgba(16,185,129,0.08)"
+                                      : "transparent"
+                                  }}
+                                >
+                                  <td style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.08)", fontWeight: 800, color: "#f8fafc" }}>{tr.periodLabel}</td>
+                                  <td style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.08)", fontFamily: "monospace", fontWeight: 900, color: tr.postureScore >= 85 ? "#34d399" : tr.postureScore >= 65 ? "#38bdf8" : "#fde047" }}>
+                                    {tr.postureScore}/100 ({tr.securityGrade})
+                                  </td>
+                                  <td style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.08)", fontWeight: 800, color: tr.criticalOpen > 0 ? "#fda4af" : "#34d399" }}>{tr.criticalOpen}</td>
+                                  <td style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.08)", fontWeight: 800, color: tr.highOpen > 0 ? "#fdba74" : "#34d399" }}>{tr.highOpen}</td>
+                                  <td style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.08)", color: "#cbd5e1" }}>{tr.mediumLowOpen}</td>
+                                  <td style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.08)", fontFamily: "monospace", color: "#bae6fd" }}>{tr.mttrDays}</td>
+                                  <td style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.08)", color: "#e2e8f0", fontWeight: 700 }}>{tr.trendDelta}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+
                     {/* 4. Key Findings Highlights (Plain-Language Business Summary) */}
                     <div style={{ background: "#050811", border: "1px solid rgba(244,63,94,0.3)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 8 }}>
                       <strong style={{ fontSize: 12, color: "#fda4af" }}>
@@ -6362,6 +6582,39 @@ ${f.remediation}
                             </div>
                           ))}
                         </div>
+                      </div>
+                    </div>
+
+                    {/* 7B. Table 3 — Prioritized Executive Action Plan & Risk Reduction Roadmap Table */}
+                    <div style={{ background: "#050811", border: "1px solid rgba(56,189,248,0.3)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+                      <strong style={{ fontSize: 12, color: "#38bdf8" }}>
+                        🗺️ Table 3 — Prioritized Executive Action Plan &amp; Risk Reduction Roadmap
+                      </strong>
+                      <div style={{ overflowX: "auto" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10.5 }}>
+                          <thead>
+                            <tr style={{ background: "rgba(15,23,42,0.95)", color: "#94a3b8", textAlign: "left" }}>
+                              <th style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.1)" }}>Phase &amp; SLA Window</th>
+                              <th style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.1)" }}>Executive Focus Area</th>
+                              <th style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.1)" }}>Target Findings</th>
+                              <th style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.1)" }}>Projected Risk Reduction</th>
+                              <th style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.1)" }}>Accountable Owner</th>
+                              <th style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.1)" }}>Verification Gate</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {execSum.executiveActionRoadmapTable.map((rm) => (
+                              <tr key={rm.phaseWindow}>
+                                <td style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.08)", fontWeight: 800, color: "#38bdf8" }}>{rm.phaseWindow}</td>
+                                <td style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.08)", fontWeight: 700, color: "#f8fafc" }}>{rm.focusArea}</td>
+                                <td style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.08)", fontFamily: "monospace", fontWeight: 800, color: "#fda4af" }}>{rm.targetFindings}</td>
+                                <td style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.08)", fontWeight: 800, color: "#34d399" }}>{rm.projectedRiskReduction}</td>
+                                <td style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.08)", color: "#cbd5e1" }}>{rm.stakeholderOwner}</td>
+                                <td style={{ padding: "6px 8px", border: "1px solid rgba(255,255,255,0.08)", color: "#bae6fd" }}>{rm.verificationMethod}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
 
