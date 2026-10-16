@@ -124,8 +124,8 @@ export default function Sidebar() {
             onClick={() => setMobileMenuOpen(prev => !prev)}
             aria-label="Toggle navigation menu"
             style={{
-              background: mobileMenuOpen ? "rgba(225, 29, 72, 0.25)" : "rgba(56, 189, 248, 0.14)",
-              border: `1px solid ${mobileMenuOpen ? "#f43f5e" : "rgba(56, 189, 248, 0.45)"}`,
+              background: mobileMenuOpen ? "#1e293b" : "#0f172a",
+              border: "1px solid #334155",
               color: "#f8fafc",
               borderRadius: 6,
               padding: "6px 10px",
@@ -133,103 +133,64 @@ export default function Sidebar() {
               alignItems: "center",
               gap: 6,
               fontSize: 11,
-              fontWeight: 800,
+              fontWeight: 700,
               cursor: "pointer"
             }}
           >
-            {mobileMenuOpen ? <X size={15} color="#f43f5e" /> : <Menu size={15} color="#38bdf8" />}
+            {mobileMenuOpen ? <X size={15} color="#94a3b8" /> : <Menu size={15} color="#38bdf8" />}
             <span>{mobileMenuOpen ? "Close" : "Studios"}</span>
           </button>
 
           <Link href="/engine" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 7, flexShrink: 0 }}>
             <div style={{
               width: 26, height: 26, borderRadius: 6,
-              background: "linear-gradient(135deg, #0284c7, #10b981)",
+              background: "#1e293b",
+              border: "1px solid #334155",
               display: "flex", alignItems: "center", justifyContent: "center",
               flexShrink: 0
             }}>
-              <Globe size={14} color="#fff" />
+              <Globe size={14} color="#38bdf8" />
             </div>
             <div>
-              <div style={{ fontSize: 11.5, fontWeight: 900, color: "#fff", lineHeight: 1.1, whiteSpace: "nowrap" }}>
-                XTRIKE™ · DAST WEB
+              <div style={{ fontSize: 11.5, fontWeight: 800, color: "#f8fafc", lineHeight: 1.1, whiteSpace: "nowrap" }}>
+                XTRIKE™ · DAST
               </div>
-              <div style={{ fontSize: 8.5, color: "#38bdf8", fontWeight: 800, fontFamily: "monospace", whiteSpace: "nowrap" }}>
-                🌐 WEB INTERFACE DAST
+              <div style={{ fontSize: 8.5, color: "#94a3b8", fontWeight: 600, fontFamily: "monospace", whiteSpace: "nowrap" }}>
+                WEB &amp; API SECURITY
               </div>
             </div>
           </Link>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 5, overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-          <Link
-            href="/vuln-management"
-            style={{
-              textDecoration: "none",
-              fontSize: 10,
-              fontWeight: 800,
-              padding: "5px 8px",
-              borderRadius: 5,
-              whiteSpace: "nowrap",
-              flexShrink: 0,
-              background: path === "/vuln-management" ? "rgba(244, 63, 94, 0.25)" : "rgba(244,63,94,0.12)",
-              border: `1px solid ${path === "/vuln-management" ? "#f43f5e" : "rgba(244,63,94,0.4)"}`,
-              color: "#fda4af"
-            }}
-          >
-            🎯 Vuln Mgmt (0-100)
-          </Link>
-          <Link
-            href="/engine"
-            style={{
-              textDecoration: "none",
-              fontSize: 10,
-              fontWeight: 800,
-              padding: "5px 8px",
-              borderRadius: 5,
-              whiteSpace: "nowrap",
-              flexShrink: 0,
-              background: path === "/engine" ? "rgba(16, 185, 129, 0.22)" : "rgba(255,255,255,0.06)",
-              border: `1px solid ${path === "/engine" ? "#10b981" : "var(--border)"}`,
-              color: path === "/engine" ? "#10b981" : "#f8fafc"
-            }}
-          >
-            🌐 DAST Scanner
-          </Link>
-          <Link
-            href="/app"
-            style={{
-              textDecoration: "none",
-              fontSize: 10,
-              fontWeight: 800,
-              padding: "5px 8px",
-              borderRadius: 5,
-              whiteSpace: "nowrap",
-              flexShrink: 0,
-              background: path === "/app" ? "rgba(225, 29, 72, 0.22)" : "rgba(255,255,255,0.06)",
-              border: `1px solid ${path === "/app" ? "#f43f5e" : "var(--border)"}`,
-              color: path === "/app" ? "#ff4d79" : "#cbd5e1"
-            }}
-          >
-            ⚔️ Aegis.SOC
-          </Link>
-          <Link
-            href="/live-scan"
-            style={{
-              textDecoration: "none",
-              fontSize: 10,
-              fontWeight: 800,
-              padding: "5px 8px",
-              borderRadius: 5,
-              whiteSpace: "nowrap",
-              flexShrink: 0,
-              background: path === "/live-scan" ? "rgba(56, 189, 248, 0.22)" : "rgba(255,255,255,0.06)",
-              border: `1px solid ${path === "/live-scan" ? "#38bdf8" : "var(--border)"}`,
-              color: path === "/live-scan" ? "#38bdf8" : "#cbd5e1"
-            }}
-          >
-            ⚡ Pipeline
-          </Link>
+          {[
+            { href: "/vuln-management", label: "Vuln Mgmt" },
+            { href: "/engine", label: "Engine Brain" },
+            { href: "/app", label: "ÆGIS · SOC" },
+            { href: "/", label: "Overview" }
+          ].map(nav => {
+            const isAct = path === nav.href;
+            return (
+              <Link
+                key={nav.href}
+                href={nav.href}
+                style={{
+                  textDecoration: "none",
+                  fontSize: 10.5,
+                  fontWeight: isAct ? 700 : 500,
+                  padding: "5px 9px",
+                  borderRadius: 6,
+                  whiteSpace: "nowrap",
+                  flexShrink: 0,
+                  background: isAct ? "rgba(56, 189, 248, 0.12)" : "#0f172a",
+                  border: `1px solid ${isAct ? "rgba(56, 189, 248, 0.4)" : "#1e293b"}`,
+                  color: isAct ? "#f8fafc" : "#94a3b8"
+                }}
+              >
+                {nav.label}
+              </Link>
+            );
+          })}
         </div>
       </header>
 
@@ -245,34 +206,33 @@ export default function Sidebar() {
         className={`app-sidebar ${mobileMenuOpen ? "mobile-open" : ""}`}
         style={{
           width: 220, flexShrink: 0, 
-          background: "rgba(11, 15, 23, 0.98)",
-          backdropFilter: "blur(20px)",
-          borderRight: "1px solid var(--border)", 
+          background: "#090d16",
+          borderRight: "1px solid #1e293b", 
           overflowY: "auto",
           display: "flex", flexDirection: "column",
           zIndex: 50
         }}
       >
         {/* Brand Header */}
-        <div style={{ padding: "14px 14px 10px", borderBottom: "1px solid var(--border)" }}>
+        <div style={{ padding: "14px 14px 10px", borderBottom: "1px solid #1e293b" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
             <Link href="/engine" onClick={() => setMobileMenuOpen(false)} style={{ textDecoration: "none" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <div style={{
                   width: 30, height: 30, borderRadius: 8,
-                  background: "linear-gradient(135deg, #0284c7, #0f172a)",
+                  background: "#0f172a",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  border: "1px solid rgba(56, 189, 248, 0.45)",
+                  border: "1px solid #1e293b",
                   flexShrink: 0
                 }}>
-                  <Globe size={16} color="#38bdf8" />
+                  <Globe size={15} color="#38bdf8" />
                 </div>
                 <div>
-                  <div style={{ fontSize: 12.5, fontWeight: 900, color: "#fff", letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: 5 }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 800, color: "#f8fafc", letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: 5 }}>
                     XTRIKE™ · DAST
-                    <span style={{ fontSize: 8.5, background: "rgba(16,185,129,0.18)", color: "#10b981", border: "1px solid rgba(16,185,129,0.4)", borderRadius: 4, padding: "0 4px", fontWeight: 800 }}>WEB</span>
+                    <span style={{ fontSize: 8.5, background: "#1e293b", color: "#cbd5e1", border: "1px solid #334155", borderRadius: 4, padding: "0 4px", fontWeight: 700 }}>WEB</span>
                   </div>
-                  <div style={{ fontSize: 9, color: "var(--muted)", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>AXIOM DAST ENGINE</div>
+                  <div style={{ fontSize: 9, color: "#64748b", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>ENTERPRISE DAST PLATFORM</div>
                 </div>
               </div>
             </Link>
@@ -283,9 +243,9 @@ export default function Sidebar() {
               onClick={() => setMobileMenuOpen(false)}
               aria-label="Close drawer"
               style={{
-                background: "rgba(244,63,94,0.15)",
-                border: "1px solid rgba(244,63,94,0.4)",
-                color: "#f43f5e",
+                background: "#0f172a",
+                border: "1px solid #1e293b",
+                color: "#94a3b8",
                 borderRadius: 6,
                 padding: 4,
                 cursor: "pointer"
@@ -413,17 +373,16 @@ export default function Sidebar() {
 
         {/* Footer Telemetry */}
         <div style={{
-          padding: "10px 12px", borderTop: "1px solid var(--border)",
-          background: "rgba(6, 8, 13, 0.9)", fontSize: 9.5, color: "var(--muted)"
+          padding: "10px 12px", borderTop: "1px solid #1e293b",
+          background: "#090d16", fontSize: 9.5, color: "#64748b"
         }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-            <span style={{ fontWeight: 800, color: "#fff", display: "flex", alignItems: "center", gap: 5 }}>
-              <span className="beacon-green" /> LIVE RADAR
+            <span style={{ fontWeight: 700, color: "#e2e8f0", display: "flex", alignItems: "center", gap: 5 }}>
+              <span className="beacon-green" /> ENGINE BRAIN ONLINE
             </span>
-            <span style={{ color: "#00f0ff", fontWeight: 700 }}>4 ENGINES</span>
+            <span style={{ color: "#94a3b8", fontWeight: 600 }}>4 DAEMONS</span>
           </div>
-          <div style={{ color: "var(--fg-2)", fontSize: 9 }}>ZAP · Burp · OpenVAS · Nmap</div>
-          <div style={{ color: "#10b981", fontWeight: 600, marginTop: 2 }}>● Mobile &amp; Desktop Ready</div>
+          <div style={{ color: "#64748b", fontSize: 9 }}>ZAP · Burp · OpenVAS · Nmap</div>
         </div>
       </aside>
     </>

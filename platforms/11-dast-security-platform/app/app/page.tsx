@@ -746,10 +746,10 @@ ${execSummary.highLevelRecommendations.map(r => `  - **${r.priorityWindow}**: ${
         <div className="flex items-center gap-3 py-1.5 shrink-0">
           <Link
             href="/vuln-management"
-            className="text-xs text-rose-400 hover:text-rose-300 font-semibold flex items-center gap-1 transition-colors whitespace-nowrap"
+            className="text-xs text-slate-300 hover:text-white font-medium flex items-center gap-1 transition-colors whitespace-nowrap"
           >
             <span>DAST Vuln Management</span>
-            <ArrowUpRight className="size-3" />
+            <ArrowUpRight className="size-3 text-slate-400" />
           </Link>
           <Link
             href="/engine"
@@ -796,7 +796,7 @@ ${execSummary.highLevelRecommendations.map(r => `  - **${r.priorityWindow}**: ${
                 <div>
                   <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
                     <span>Confirmed Exploits (Crit / High)</span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-800 text-slate-300 border border-slate-700">
                       {kevCount} CISA KEV
                     </span>
                   </div>
@@ -814,7 +814,7 @@ ${execSummary.highLevelRecommendations.map(r => `  - **${r.priorityWindow}**: ${
                 <div>
                   <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
                     <span>Forensic PoCs & Visual Screenshots</span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-800 text-slate-300 border border-slate-700">
                       100% Verified
                     </span>
                   </div>
@@ -832,7 +832,7 @@ ${execSummary.highLevelRecommendations.map(r => `  - **${r.priorityWindow}**: ${
                 <div>
                   <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
                     <span>Spidered Web & API Surface</span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-800 text-slate-300 border border-slate-700">
                       Grade {primaryLiveResult?.securityGrade || "B"}
                     </span>
                   </div>
@@ -949,13 +949,13 @@ ${execSummary.highLevelRecommendations.map(r => `  - **${r.priorityWindow}**: ${
                                 {f.mitreTechniques.map((m: any) => (
                                   <span
                                     key={m.techniqueId}
-                                    className="px-1.5 py-0.2 rounded text-[9.5px] font-mono bg-purple-500/15 text-purple-300 border border-purple-500/30"
+                                    className="px-1.5 py-0.2 rounded text-[9.5px] font-mono bg-slate-950 text-slate-300 border border-slate-800"
                                   >
                                     {m.techniqueId} · {m.tacticName}
                                   </span>
                                 ))}
                                 {f.inCisaKev && (
-                                  <span className="px-1.5 py-0.2 rounded text-[9.5px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                                  <span className="px-1.5 py-0.2 rounded text-[9.5px] font-semibold bg-slate-950 text-slate-300 border border-slate-700">
                                     CISA KEV
                                   </span>
                                 )}
@@ -1161,9 +1161,9 @@ ${execSummary.highLevelRecommendations.map(r => `  - **${r.priorityWindow}**: ${
                       onClick={() => setActiveStage(stage.num)}
                       className={`p-3.5 rounded-lg border transition-all cursor-pointer ${
                         isCurrent
-                          ? "bg-amber-500/10 border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.3)]"
+                          ? "bg-slate-900 border-sky-400"
                           : isDone
-                          ? "bg-slate-900 border-emerald-500/40 shadow-sm"
+                          ? "bg-slate-900 border-slate-800"
                           : "bg-slate-950/40 border-slate-800/60 opacity-60"
                       }`}
                     >
@@ -1171,9 +1171,9 @@ ${execSummary.highLevelRecommendations.map(r => `  - **${r.priorityWindow}**: ${
                         <span className="font-mono font-bold text-sky-400">Brain Stage {stage.num}/8</span>
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
                           isCurrent
-                            ? "bg-amber-400 text-slate-950 border-amber-300"
+                            ? "bg-sky-500/15 text-sky-300 border-sky-500/30"
                             : isDone
-                            ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                            ? "bg-slate-800 text-emerald-400 border-slate-700"
                             : "bg-slate-800 text-slate-500 border-slate-700"
                         }`}>
                           {isCurrent ? "⚡ ACTIVE STAGE" : isDone ? "✓ Verified" : "Pending"}
@@ -1183,7 +1183,7 @@ ${execSummary.highLevelRecommendations.map(r => `  - **${r.priorityWindow}**: ${
                       <p className="text-[11px] text-slate-400 leading-relaxed mb-3">{stage.desc}</p>
                       <div className="text-[10px] font-mono text-slate-400 border-t border-slate-800/60 pt-2 flex flex-col gap-0.5">
                         <span>Engine: <strong className="text-slate-200">{stage.tool}</strong></span>
-                        <span className="text-purple-400">{stage.standards}</span>
+                        <span className="text-slate-400">{stage.standards}</span>
                       </div>
                     </div>
                   );
@@ -1493,12 +1493,12 @@ ${execSummary.highLevelRecommendations.map(r => `  - **${r.priorityWindow}**: ${
                           </td>
                           <td className="py-2.5 px-3 font-medium text-slate-100">{f.title}</td>
                           <td className="py-2.5 px-3 font-mono text-slate-400 break-all">{f.url}</td>
-                          <td className="py-2.5 px-3 font-mono text-purple-300">
+                          <td className="py-2.5 px-3 font-mono text-slate-300">
                             {f.mitreTechniques.map((m: any) => m.techniqueId).join(", ")}
                           </td>
                           <td className="py-2.5 px-3">
-                            <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400 font-medium">
-                              <CheckCircle className="size-3" />
+                            <span className="inline-flex items-center gap-1 text-[11px] text-slate-300 font-medium">
+                              <CheckCircle className="size-3 text-emerald-400" />
                               <span>3 Samples + 2 Screenshots</span>
                             </span>
                           </td>

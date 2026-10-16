@@ -4380,21 +4380,21 @@ ${f.remediation}
             width: 36,
             height: 36,
             borderRadius: 8,
-            background: "linear-gradient(135deg, rgba(239,68,68,0.18), rgba(245,158,11,0.18))",
-            border: "1px solid rgba(239,68,68,0.35)",
+            background: "#0f172a",
+            border: "1px solid #1e293b",
             display: "flex",
             alignItems: "center",
             justifyContent: "center"
           }}>
-            <Brain size={18} color="#f59e0b" />
+            <Brain size={18} color="#38bdf8" />
           </div>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
               <span style={{
                 fontSize: 10,
-                fontWeight: 900,
-                background: "linear-gradient(135deg, rgba(6,182,212,0.28), rgba(16,185,129,0.25))",
-                border: "1px solid #06b6d4",
+                fontWeight: 800,
+                background: "rgba(56,189,248,0.12)",
+                border: "1px solid rgba(56,189,248,0.35)",
                 color: "#38bdf8",
                 padding: "2px 8px",
                 borderRadius: 4,
@@ -4403,51 +4403,48 @@ ${f.remediation}
               }}>
                 🌐 DAST · DYNAMIC APPLICATION SECURITY TESTING
               </span>
-              <h1 style={{ fontSize: 16.5, fontWeight: 900, color: "#f8fafc", margin: 0 }}>
+              <h1 style={{ fontSize: 16, fontWeight: 800, color: "#f8fafc", margin: 0, letterSpacing: "-0.01em" }}>
                 EXPEDITE STRIKE™ — DAST &amp; Web Interface Security Platform
               </h1>
               <span style={{
                 fontSize: 10,
-                fontWeight: 800,
-                background: running ? "rgba(16,185,129,0.2)" : done ? "rgba(6,182,212,0.2)" : "rgba(255,255,255,0.08)",
-                color: running ? "#10b981" : done ? "#06b6d4" : "var(--muted)",
+                fontWeight: 700,
+                background: "#0f172a",
+                border: "1px solid #1e293b",
+                color: running ? "#10b981" : done ? "#38bdf8" : "#94a3b8",
                 padding: "2px 8px",
                 borderRadius: 4,
                 fontFamily: "monospace"
               }}>
-                {running ? `DAST SCANNING ${targets.length} WEB TARGETS (${progress}% · ${formatDuration(elapsedSec)})` : done ? `${targets.length} WEB TARGETS COMPLETED (${formatDuration(elapsedSec)})` : `${targets.length} WEB TARGETS STAGED`}
+                {running ? `● SCANNING ${targets.length} WEB TARGETS (${progress}% · ${formatDuration(elapsedSec)})` : done ? `✓ ${targets.length} WEB TARGETS COMPLETED (${formatDuration(elapsedSec)})` : `${targets.length} WEB TARGETS STAGED`}
               </span>
             </div>
-            <p style={{ fontSize: 11, color: "var(--muted)", margin: "2px 0 0 0" }}>
-              🌐 Live DAST Web Interface &amp; API Exploitation Scanner (XTRIKE™ &amp; Aegis.SOC™) · OWASP WSTG / Top 10 · Visual Exploit Evidence · 65,535 TCP/UDP Port Recon · Auto-Email Report
+            <p style={{ fontSize: 11, color: "#94a3b8", margin: "2px 0 0 0" }}>
+              Live DAST Web Interface &amp; API Exploitation Scanner (XTRIKE™ &amp; Aegis.SOC™) · OWASP WSTG / Top 10 · Visual Exploit Evidence · 65,535 TCP/UDP Port Recon · Auto-Email Report
             </p>
           </div>
         </div>
 
         {/* Action Buttons */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          <div style={{ display: "flex", background: "var(--surface-2)", padding: 2, borderRadius: 6, border: "1px solid var(--border)", flexWrap: "wrap", gap: 2 }}>
+          <div style={{ display: "flex", background: "#090d16", padding: 2, borderRadius: 6, border: "1px solid #1e293b", flexWrap: "wrap", gap: 2 }}>
             {[
-              { id: "FAST", label: "⚡ Fast (~2m)" },
-              { id: "BALANCED", label: "🔍 Standard (~5m)" },
-              { id: "DEEP", label: "🛡️ Deep (~12m)" },
-              { id: "COMMERCIAL_1HR", label: "🕒 1-Hr Deep-Dive" }
+              { id: "FAST", label: "Fast (~2m)" },
+              { id: "BALANCED", label: "Standard (~5m)" },
+              { id: "DEEP", label: "Deep (~12m)" },
+              { id: "COMMERCIAL_1HR", label: "1-Hr Deep-Dive" }
             ].map(s => (
               <button
                 key={s.id}
                 onClick={() => setScanSpeed(s.id as any)}
                 style={{
                   fontSize: 10.5,
-                  fontWeight: 700,
+                  fontWeight: 600,
                   padding: "4px 8px",
                   borderRadius: 4,
-                  border: "none",
-                  background: scanSpeed === s.id
-                    ? (s.id === "COMMERCIAL_1HR" ? "rgba(245,158,11,0.22)" : "rgba(6,182,212,0.2)")
-                    : "transparent",
-                  color: scanSpeed === s.id
-                    ? (s.id === "COMMERCIAL_1HR" ? "#fbbf24" : "#06b6d4")
-                    : "var(--muted)",
+                  border: scanSpeed === s.id ? "1px solid #334155" : "1px solid transparent",
+                  background: scanSpeed === s.id ? "#1e293b" : "transparent",
+                  color: scanSpeed === s.id ? "#f8fafc" : "#94a3b8",
                   cursor: "pointer"
                 }}
               >
@@ -4471,9 +4468,9 @@ ${f.remediation}
                 onClick={fastForwardToReport}
                 title="Complete all remaining DAST / MITRE ATT&CK / OWASP WSTG phases immediately and open the DAST & Web Interface Security Report"
                 style={{
-                  background: "rgba(6,182,212,0.18)",
-                  border: "1px solid #06b6d4",
-                  color: "#38bdf8",
+                  background: "#1e293b",
+                  border: "1px solid #38bdf8",
+                  color: "#f8fafc",
                   fontWeight: 700,
                   fontSize: 11.5,
                   padding: "7px 12px",
@@ -4484,14 +4481,14 @@ ${f.remediation}
                   gap: 5
                 }}
               >
-                <FastForward size={13} />
+                <FastForward size={13} color="#38bdf8" />
                 <span>Complete &amp; View DAST Report</span>
               </button>
               <button
                 onClick={handleStopEngine}
                 style={{
-                  background: "rgba(244,63,94,0.2)",
-                  border: "1px solid #f43f5e",
+                  background: "rgba(244,63,94,0.12)",
+                  border: "1px solid rgba(244,63,94,0.35)",
                   color: "#f43f5e",
                   fontWeight: 700,
                   fontSize: 12,
@@ -4512,9 +4509,9 @@ ${f.remediation}
           <button
             onClick={printFormattedReport}
             className="btn-secondary"
-            style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, padding: "7px 11px", border: "1px solid rgba(220,231,117,0.4)", color: "#dce775" }}
+            style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, padding: "7px 11px", background: "#0f172a", border: "1px solid #1e293b", color: "#e2e8f0" }}
           >
-            <Printer size={13} color="#dce775" />
+            <Printer size={13} color="#94a3b8" />
             <span>Print DAST Web Report</span>
           </button>
 
@@ -4527,9 +4524,9 @@ ${f.remediation}
               gap: 6,
               fontSize: 11.5,
               padding: "7px 11px",
-              border: autoEmailOnComplete ? "1px solid rgba(16,185,129,0.55)" : "1px solid rgba(56,189,248,0.4)",
-              background: autoEmailOnComplete ? "rgba(16,185,129,0.12)" : "rgba(56,189,248,0.08)",
-              color: autoEmailOnComplete ? "#34d399" : "#38bdf8"
+              border: autoEmailOnComplete ? "1px solid rgba(16,185,129,0.4)" : "1px solid #1e293b",
+              background: "#0f172a",
+              color: "#e2e8f0"
             }}
             title="Configure Automated DAST Web Report Email Dispatch & Recipients"
           >
@@ -4538,9 +4535,10 @@ ${f.remediation}
             {emailDispatchHistory.length > 0 && (
               <span style={{
                 fontSize: 9.5,
-                fontWeight: 900,
-                background: "#10b981",
-                color: "#022c22",
+                fontWeight: 800,
+                background: "rgba(16,185,129,0.15)",
+                color: "#10b981",
+                border: "1px solid rgba(16,185,129,0.3)",
                 padding: "1px 5px",
                 borderRadius: 4,
                 fontFamily: "monospace"
@@ -4553,9 +4551,9 @@ ${f.remediation}
           <button
             onClick={() => setShowConfigModal(true)}
             className="btn-secondary"
-            style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, padding: "7px 11px" }}
+            style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, padding: "7px 11px", background: "#0f172a", border: "1px solid #1e293b", color: "#e2e8f0" }}
           >
-            <Settings size={13} color="#06b6d4" />
+            <Settings size={13} color="#94a3b8" />
             <span>Daemons</span>
           </button>
         </div>
@@ -4566,16 +4564,17 @@ ${f.remediation}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 5, flex: 1, flexWrap: "wrap" }}>
             {[
-              { step: 1, tab: "NMAP" as LogTab,         label: "1. 📡 XTRIKE-NetRecon (Nmap)",         color: "#a5d6a7" },
-              { step: 2, tab: "OPENVAS" as LogTab,      label: "2. 🛡️ Aegis.SOC-VulnCore (OpenVAS)",  color: "#80cbc4" },
-              { step: 3, tab: "ZAP" as LogTab,          label: "3. ⚡ XTRIKE-WebPulse (OWASP ZAP DAST)", color: "#4fc3f7" },
-              { step: 4, tab: "BURP" as LogTab,         label: "4. 🔍 XTRIKE-StrikeFuzzer (Burp DAST)", color: "#ff8a65" },
-              { step: 5, tab: "POST_EXPLOIT" as LogTab, label: "5. 🔑 Aegis.SOC-Apex (PrivEsc)",       color: "#c084fc" },
-              { step: 6, tab: "AI" as LogTab,           label: "6. 🧠 Autonomous DAST Brain",          color: "#60a5fa" },
-              { step: 7, tab: "REPORT" as LogTab,       label: "7. 📄 DAST Web Interface Report",      color: "#dce775" },
+              { step: 1, tab: "NMAP" as LogTab,         label: "1. XTRIKE-NetRecon (Nmap)" },
+              { step: 2, tab: "OPENVAS" as LogTab,      label: "2. Aegis.SOC-VulnCore (OpenVAS)" },
+              { step: 3, tab: "ZAP" as LogTab,          label: "3. XTRIKE-WebPulse (OWASP ZAP)" },
+              { step: 4, tab: "BURP" as LogTab,         label: "4. XTRIKE-StrikeFuzzer (Burp)" },
+              { step: 5, tab: "POST_EXPLOIT" as LogTab, label: "5. Aegis.SOC-Apex (PrivEsc)" },
+              { step: 6, tab: "AI" as LogTab,           label: "6. Autonomous DAST Brain" },
+              { step: 7, tab: "REPORT" as LogTab,       label: "7. DAST Web Interface Report" },
             ].map((item, idx) => {
               const isCurrent = running && currentEngineStep === item.step;
               const isCompleted = done || currentEngineStep > item.step;
+              const isTabSelected = activeLogTab === item.tab;
               return (
                 <div key={item.step} style={{ display: "flex", alignItems: "center", gap: 5 }}>
                   <button
@@ -4586,52 +4585,52 @@ ${f.remediation}
                       gap: 5,
                       padding: "5px 9px",
                       borderRadius: 6,
-                      border: `1px solid ${isCurrent ? item.color : isCompleted ? "rgba(16,185,129,0.4)" : activeLogTab === item.tab ? "#06b6d4" : "var(--border)"}`,
-                      background: isCurrent ? `${item.color}22` : isCompleted ? "rgba(16,185,129,0.1)" : activeLogTab === item.tab ? "rgba(6,182,212,0.12)" : "var(--surface-2)",
-                      color: isCurrent ? item.color : isCompleted ? "#10b981" : "#f8fafc",
+                      border: `1px solid ${isCurrent || isTabSelected ? "#38bdf8" : "#1e293b"}`,
+                      background: isCurrent || isTabSelected ? "#1e293b" : "#090d16",
+                      color: isCurrent || isTabSelected ? "#f8fafc" : isCompleted ? "#cbd5e1" : "#94a3b8",
                       fontSize: 10.5,
-                      fontWeight: 800,
+                      fontWeight: isCurrent || isTabSelected ? 700 : 600,
                       cursor: "pointer",
                       transition: "all 0.2s"
                     }}
                   >
                     <span>{item.label}</span>
                     {isCurrent && (
-                      <span style={{ fontSize: 8.5, background: item.color, color: "#050811", padding: "1px 4px", borderRadius: 3, fontWeight: 900 }}>
+                      <span style={{ fontSize: 8.5, background: "#38bdf8", color: "#090d16", padding: "1px 4px", borderRadius: 3, fontWeight: 800 }}>
                         ACTIVE
                       </span>
                     )}
                     {isCompleted && <CheckCircle2 size={11} color="#10b981" />}
                   </button>
-                  {idx < 6 && <span style={{ color: "var(--muted)", fontSize: 10 }}>➔</span>}
+                  {idx < 6 && <span style={{ color: "#475569", fontSize: 10 }}>➔</span>}
                 </div>
               );
             })}
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10.5, color: "var(--fg-2)", cursor: "pointer", userSelect: "none" }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10.5, color: "#94a3b8", cursor: "pointer", userSelect: "none" }}>
               <input
                 type="checkbox"
                 checked={autoFollowTabs}
                 onChange={e => setAutoFollowTabs(e.target.checked)}
-                style={{ accentColor: "#06b6d4", cursor: "pointer" }}
+                style={{ accentColor: "#38bdf8", cursor: "pointer" }}
               />
               <span>Auto-Step</span>
             </label>
             {(running || liveExternalProbing || done) && (
-              <span style={{ fontSize: 10.5, fontWeight: 800, color: done ? "#10b981" : "#06b6d4", fontFamily: "monospace" }}>
+              <span style={{ fontSize: 10.5, fontWeight: 700, color: done ? "#10b981" : "#38bdf8", fontFamily: "monospace" }}>
                 {progress}% · {formatDuration(elapsedSec)}
               </span>
             )}
             <button
               onClick={() => setShowPipelineDetails(prev => !prev)}
               style={{
-                background: showPipelineDetails ? "rgba(192,132,252,0.18)" : "rgba(255,255,255,0.05)",
-                border: `1px solid ${showPipelineDetails ? "rgba(192,132,252,0.45)" : "var(--border)"}`,
-                color: showPipelineDetails ? "#c084fc" : "#94a3b8",
+                background: showPipelineDetails ? "#1e293b" : "#090d16",
+                border: `1px solid ${showPipelineDetails ? "#38bdf8" : "#1e293b"}`,
+                color: showPipelineDetails ? "#f8fafc" : "#94a3b8",
                 fontSize: 10.5,
-                fontWeight: 800,
+                fontWeight: 600,
                 padding: "4px 10px",
                 borderRadius: 5,
                 cursor: "pointer"
@@ -5379,8 +5378,8 @@ ${f.remediation}
               key={sc.id}
               onClick={() => setActiveLogTab(sc.tabId)}
               style={{
-                background: isRunning ? "rgba(6,182,212,0.12)" : isDone ? "rgba(16,185,129,0.08)" : isSelected ? "rgba(56,189,248,0.08)" : "var(--surface)",
-                border: `1px solid ${isRunning ? "#06b6d4" : isDone ? "rgba(16,185,129,0.4)" : isSelected ? sc.color : "var(--border)"}`,
+                background: isSelected ? "#1e293b" : "#0f172a",
+                border: `1px solid ${isRunning || isSelected ? "#38bdf8" : "#1e293b"}`,
                 borderRadius: 8,
                 padding: "7px 11px",
                 display: "flex",
@@ -5397,22 +5396,22 @@ ${f.remediation}
                   height: 7,
                   borderRadius: "50%",
                   flexShrink: 0,
-                  background: isRunning ? "#10b981" : isDone ? "#06b6d4" : sc.color,
-                  boxShadow: isRunning ? "0 0 8px #10b981" : "none"
+                  background: isRunning ? "#10b981" : isDone ? "#38bdf8" : "#64748b"
                 }} />
                 <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   <strong style={{ fontSize: 11.5, color: "#f8fafc" }}>{sc.stepOrder}. {sc.name}</strong>
-                  <span style={{ fontSize: 9, color: "var(--muted)", fontFamily: "monospace", marginLeft: 5 }}>{sc.version}</span>
+                  <span style={{ fontSize: 9, color: "#64748b", fontFamily: "monospace", marginLeft: 5 }}>{sc.version}</span>
                 </div>
               </div>
 
               <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0, fontSize: 9.5, fontFamily: "monospace" }}>
                 {sc.activeRequests > 0 && (
-                  <span style={{ color: "#38bdf8" }}>{sc.activeRequests} ({sc.findingsFound})</span>
+                  <span style={{ color: "#94a3b8" }}>{sc.activeRequests} ({sc.findingsFound})</span>
                 )}
                 <strong style={{
-                  color: isRunning ? "#10b981" : isDone ? "#06b6d4" : sc.color,
-                  background: "var(--surface-2)",
+                  color: isRunning ? "#10b981" : isDone ? "#38bdf8" : "#94a3b8",
+                  background: "#090d16",
+                  border: "1px solid #1e293b",
                   padding: "2px 6px",
                   borderRadius: 4
                 }}>
@@ -5430,17 +5429,17 @@ ${f.remediation}
         {/* Left: Engine Tabs + Built-In Package Suites + Live Terminal Stream */}
         <div className="card-tactical" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
 
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid var(--border)", paddingBottom: 8, flexWrap: "wrap", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #1e293b", paddingBottom: 8, flexWrap: "wrap", gap: 8 }}>
             <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
               {[
                 { id: "VULN_MGMT",    label: `🎯 DAST Vuln Management (0–100 Risk Score · ${reportFindings.length})` },
                 { id: "ALL",          label: `All Logs (${targets.length})` },
-                { id: "NMAP",         label: "📡 1. XTRIKE-NetRecon (Nmap)" },
-                { id: "OPENVAS",      label: "🛡️ 2. Aegis.SOC-VulnCore (OpenVAS)" },
-                { id: "ZAP",          label: "⚡ 3. XTRIKE-WebPulse (ZAP)" },
-                { id: "BURP",         label: "🔍 4. XTRIKE-Fuzzer (Burp)" },
-                { id: "POST_EXPLOIT", label: "🔑 5. Aegis.SOC-Apex (PrivEsc · Lateral)" },
-                { id: "AI",           label: "🧠 6. Aegis.SOC AI Copilot" },
+                { id: "NMAP",         label: "1. XTRIKE-NetRecon (Nmap)" },
+                { id: "OPENVAS",      label: "2. Aegis.SOC-VulnCore (OpenVAS)" },
+                { id: "ZAP",          label: "3. XTRIKE-WebPulse (ZAP)" },
+                { id: "BURP",         label: "4. XTRIKE-Fuzzer (Burp)" },
+                { id: "POST_EXPLOIT", label: "5. Aegis.SOC-Apex (PrivEsc · Lateral)" },
+                { id: "AI",           label: "6. Aegis.SOC AI Copilot" },
                 { id: "REPORT",       label: `📄 7. Formal Pentest Report (${reportFindings.length})` }
               ].map(tab => (
                 <button
@@ -5448,39 +5447,21 @@ ${f.remediation}
                   onClick={() => setActiveLogTab(tab.id as LogTab)}
                   style={{
                     fontSize: 10.5,
-                    fontWeight: tab.id === "VULN_MGMT" ? 900 : 700,
+                    fontWeight: activeLogTab === tab.id ? 700 : 600,
                     padding: "5px 9px",
-                    borderRadius: 4,
+                    borderRadius: 5,
                     border:
                       activeLogTab === tab.id
-                        ? "1.5px solid #06b6d4"
-                        : tab.id === "VULN_MGMT"
-                        ? "1px solid rgba(244,63,94,0.55)"
-                        : tab.id === "REPORT"
-                        ? "1px solid rgba(220,231,117,0.4)"
-                        : tab.id === "POST_EXPLOIT"
-                        ? "1px solid rgba(192,132,252,0.4)"
-                        : "1px solid var(--border)",
+                        ? "1px solid #38bdf8"
+                        : "1px solid #1e293b",
                     background:
                       activeLogTab === tab.id
-                        ? "rgba(6,182,212,0.18)"
-                        : tab.id === "VULN_MGMT"
-                        ? "rgba(244,63,94,0.14)"
-                        : tab.id === "REPORT"
-                        ? "rgba(220,231,117,0.08)"
-                        : tab.id === "POST_EXPLOIT"
-                        ? "rgba(192,132,252,0.08)"
-                        : "transparent",
+                        ? "#1e293b"
+                        : "#090d16",
                     color:
                       activeLogTab === tab.id
-                        ? "#06b6d4"
-                        : tab.id === "VULN_MGMT"
-                        ? "#fda4af"
-                        : tab.id === "REPORT"
-                        ? "#dce775"
-                        : tab.id === "POST_EXPLOIT"
-                        ? "#c084fc"
-                        : "var(--muted)",
+                        ? "#f8fafc"
+                        : "#94a3b8",
                     cursor: "pointer"
                   }}
                 >

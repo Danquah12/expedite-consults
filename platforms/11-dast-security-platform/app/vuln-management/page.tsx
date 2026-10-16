@@ -31,23 +31,23 @@ export default function VulnManagementPage() {
             href="/engine"
             style={{
               textDecoration: "none",
-              background: "rgba(56,189,248,0.14)",
-              border: "1px solid rgba(56,189,248,0.4)",
-              color: "#38bdf8",
+              background: "#0f172a",
+              border: "1px solid #1e293b",
+              color: "#e2e8f0",
               padding: "6px 12px",
               borderRadius: 6,
               fontSize: 11,
-              fontWeight: 800,
+              fontWeight: 700,
               display: "flex",
               alignItems: "center",
               gap: 6
             }}
           >
-            <ArrowLeft size={13} />
+            <ArrowLeft size={13} color="#38bdf8" />
             <span>Back to Engine Brain DAST Scanner</span>
           </Link>
           <span style={{ fontSize: 11, color: "#94a3b8", fontFamily: "monospace" }}>
-            Synced with Engine Brain Target Scope: <strong style={{ color: "#10b981" }}>{scopedUrls.join(", ")}</strong>
+            Synced with Engine Brain Target Scope: <strong style={{ color: "#38bdf8" }}>{scopedUrls.join(", ")}</strong>
           </span>
         </div>
       </div>

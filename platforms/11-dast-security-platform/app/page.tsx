@@ -341,70 +341,76 @@ export default function SecurityOverviewPage() {
     {
       label: "Engine Brain DAST Risk",
       val: `${overallDastRiskScore}/100`,
-      color: overallDastRiskScore >= 80 ? "#ef4444" : "#f59e0b",
+      badge: overallDastRiskScore >= 80 ? "Critical Tier" : "High Tier",
+      badgeColor: overallDastRiskScore >= 80 ? "#f43f5e" : "#f59e0b",
       icon: <Flame size={14} />,
-      sub: overallDastRiskScore >= 80 ? "Critical Tier (Fix Immediately)" : "High Priority Tier"
+      sub: "Weighted 0–100 DAST formula"
     },
     {
       label: "Total DAST Findings",
       val: enrichedFindings.length,
-      color: "#ff2a5f",
+      badge: isSyncedWithEngine ? "Live Sync" : "Active",
+      badgeColor: "#38bdf8",
       icon: <Zap size={14} />,
-      sub: isSyncedWithEngine ? "Engine Brain Live Sync" : "Engine Brain Baseline"
+      sub: "Confirmed across web & API"
     },
     {
       label: "Critical & CISA KEV",
       val: `${critical} Crit · ${kevCount} KEV`,
-      color: "#ef4444",
+      badge: "Immediate",
+      badgeColor: "#f43f5e",
       icon: <AlertTriangle size={14} />,
       sub: `${high} High severity exploits`
     },
     {
       label: "PoCs & Screenshots",
       val: `${enrichedFindings.length * 2} Captures`,
-      color: "#10b981",
+      badge: "Verified",
+      badgeColor: "#10b981",
       icon: <CheckCircle size={14} />,
       sub: "100% verified HTTP + SVG"
     },
     {
       label: "Target Recon Grade",
       val: `Grade ${primaryLiveResult?.securityGrade || "B"}`,
-      color: "#00f0ff",
+      badge: "Monitored",
+      badgeColor: "#94a3b8",
       icon: <Target size={14} />,
       sub: primaryLiveResult?.serverHeader || targetHost
     },
     {
       label: "MITRE ATT&CK® & SLA",
       val: `${MITRE_TECHNIQUE_LIBRARY.length} T-Codes`,
-      color: "#a855f7",
+      badge: "Mapped",
+      badgeColor: "#94a3b8",
       icon: <Brain size={14} />,
       sub: `Last Scan: ${scanDuration}`
     }
   ];
 
   return (
-    <div style={{ minHeight: "100%", overflowY: "auto", padding: "12px 14px 48px 14px" }}>
+    <div style={{ minHeight: "100%", overflowY: "auto", padding: "14px 16px 48px 16px" }}>
 
-      {/* Top Cross-Portal Synchronized Banner */}
-      <div className="cyber-card-crimson" style={{ padding: "14px 16px", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+      {/* Top Cross-Portal Synchronized Banner (Restrained Monochrome Slate) */}
+      <div className="cyber-card" style={{ padding: "14px 16px", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", flex: "1 1 260px" }}>
-          <div style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(225,29,72,0.2)", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid rgba(225,29,72,0.4)", flexShrink: 0 }}>
-            <Brain size={18} color="#ff2a5f" />
+          <div style={{ width: 36, height: 36, borderRadius: 8, background: "#0f172a", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #1e293b", flexShrink: 0 }}>
+            <Brain size={17} color="#38bdf8" />
           </div>
           <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 900, color: "#fff", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-              WIRED TO ENGINE BRAIN DAST PENETRATION TESTING RESULTS
-              <span style={{ fontSize: 9, background: "#10b981", color: "#000", padding: "1px 6px", borderRadius: 4, fontWeight: 900 }}>
-                {isSyncedWithEngine ? "● LIVE ENGINE BRAIN SYNCED" : "● ACTIVE ENGINE BRAIN"}
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#f8fafc", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <span>Engine Brain DAST Penetration Testing Telemetry</span>
+              <span style={{ fontSize: 9.5, background: "rgba(16,185,129,0.12)", color: "#34d399", border: "1px solid rgba(16,185,129,0.28)", padding: "1px 7px", borderRadius: 4, fontWeight: 600 }}>
+                {isSyncedWithEngine ? "● Live Synchronized" : "● Active Baseline"}
               </span>
             </div>
-            <div style={{ fontSize: 11, color: "var(--fg-2)" }}>
-              Scoped Web Interface Target: <strong style={{ color: "#38bdf8", fontFamily: "var(--font-geist-mono)" }}>{scopedTargetUrl}</strong> · 0–100 DAST Risk Score: <strong style={{ color: "#f43f5e" }}>{overallDastRiskScore}/100</strong> · Executive Summary, MITRE ATT&CK® & Visual Exploitation Screenshots synchronized across Engine Brain, Vuln Management & ÆGIS · SOC.
+            <div style={{ fontSize: 11.5, color: "#94a3b8", marginTop: 2 }}>
+              Scoped Target: <strong style={{ color: "#e2e8f0", fontFamily: "var(--font-geist-mono)" }}>{scopedTargetUrl}</strong> · DAST Risk Score: <strong style={{ color: "#f8fafc" }}>{overallDastRiskScore}/100</strong> · Executive Summary, MITRE ATT&CK® & Visual Exploitation Screenshots synchronized across all views.
             </div>
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          <Link href="/vuln-management" className="btn-primary" style={{ textDecoration: "none", fontSize: 11.5, background: "linear-gradient(135deg, #e11d48, #be123c)" }}>
+          <Link href="/vuln-management" className="btn-secondary" style={{ textDecoration: "none", fontSize: 11.5 }}>
             <Flame size={13} /> DAST Vuln Management
           </Link>
           <Link href="/app" className="btn-primary" style={{ textDecoration: "none", fontSize: 11.5 }}>
@@ -416,13 +422,13 @@ export default function SecurityOverviewPage() {
       {/* Header + Live Engine Brain Scan Bar */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
         <div style={{ flex: "1 1 240px" }}>
-          <div style={{ fontSize: 20, fontWeight: 900, color: "#fff", letterSpacing: "-0.03em", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <div style={{ fontSize: 19, fontWeight: 800, color: "#f8fafc", letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
             <span>DAST Security Overview & Executive Posture</span>
-            <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 4, background: "rgba(56,189,248,0.14)", border: "1px solid rgba(56,189,248,0.35)", color: "#38bdf8", fontWeight: 800 }}>
+            <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 4, background: "#1e293b", border: "1px solid #334155", color: "#cbd5e1", fontWeight: 600, fontFamily: "var(--font-geist-mono)" }}>
               {engagementId}
             </span>
           </div>
-          <div style={{ fontSize: 11, color: "var(--muted)", display: "flex", alignItems: "center", gap: 8, marginTop: 2, flexWrap: "wrap" }}>
+          <div style={{ fontSize: 11.5, color: "#64748b", display: "flex", alignItems: "center", gap: 8, marginTop: 2, flexWrap: "wrap" }}>
             <span>XTRIKE™ & Aegis.SOC™ · 8-Stage Autonomous Engine Brain · PTES & NIST SP 800-115</span>
           </div>
         </div>
@@ -437,11 +443,11 @@ export default function SecurityOverviewPage() {
             placeholder="https://demo.testfire.net"
             style={{
               background: "#090d16",
-              border: "1px solid var(--border)",
+              border: "1px solid #1e293b",
               borderRadius: 6,
               padding: "7px 11px",
               fontSize: 11.5,
-              color: "#fff",
+              color: "#f8fafc",
               fontFamily: "var(--font-geist-mono)",
               minWidth: 220
             }}
@@ -453,7 +459,7 @@ export default function SecurityOverviewPage() {
             style={{ fontSize: 11.5, padding: "7px 13px", cursor: "pointer" }}
           >
             {isProbing ? <RefreshCw size={13} className="animate-spin" /> : <Play size={13} />}
-            <span>{isProbing ? "Probing Target via Engine Brain..." : "Run Engine Brain DAST Scan"}</span>
+            <span>{isProbing ? "Probing Target..." : "Run Engine Brain DAST Scan"}</span>
           </button>
           <Link href="/engine" className="btn-secondary" style={{ textDecoration: "none", fontSize: 11.5 }}>
             <Brain size={13} /> Open Engine Brain
@@ -461,14 +467,27 @@ export default function SecurityOverviewPage() {
         </div>
       </div>
 
-      {/* 6 Engine Brain KPI Stat Cards (Responsive Grid) */}
+      {/* 6 Engine Brain KPI Stat Cards (Restrained Monochrome Slate + Semantic Status Pill) */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(175px, 1fr))", gap: 10, marginBottom: 16 }}>
         {statCards.map(s => (
-          <div key={s.label} className="cyber-card" style={{ padding: "12px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4, color: s.color }}>{s.icon}</div>
-            <div style={{ fontSize: 20, fontWeight: 900, color: s.color, lineHeight: 1.15 }}>{s.val}</div>
-            <div style={{ fontSize: 10.5, color: "var(--muted)", fontWeight: 700, marginTop: 3 }}>{s.label}</div>
-            <div style={{ fontSize: 9.5, color: "var(--muted)", opacity: 0.8, marginTop: 1 }}>{s.sub}</div>
+          <div key={s.label} className="cyber-card" style={{ padding: "13px 15px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, marginBottom: 8 }}>
+              <span style={{ color: "#94a3b8", display: "flex", alignItems: "center" }}>{s.icon}</span>
+              <span style={{
+                fontSize: 9.5,
+                fontWeight: 600,
+                padding: "1px 6px",
+                borderRadius: 4,
+                background: `${s.badgeColor}15`,
+                color: s.badgeColor,
+                border: `1px solid ${s.badgeColor}30`
+              }}>
+                {s.badge}
+              </span>
+            </div>
+            <div style={{ fontSize: 21, fontWeight: 800, color: "#f8fafc", lineHeight: 1.15, letterSpacing: "-0.02em" }}>{s.val}</div>
+            <div style={{ fontSize: 11, color: "#cbd5e1", fontWeight: 600, marginTop: 4 }}>{s.label}</div>
+            <div style={{ fontSize: 10, color: "#64748b", marginTop: 1 }}>{s.sub}</div>
           </div>
         ))}
       </div>
@@ -476,28 +495,36 @@ export default function SecurityOverviewPage() {
       {/* Executive Summary Visual Charts Row (Directly from Engine Brain buildExecutiveSummaryDossier) */}
       <div className="tool-panel" style={{ marginBottom: 16 }}>
         <div className="tool-panel-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 6 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <FileText size={12} color="#38bdf8" />
+          <div style={{ display: "flex", alignItems: "center", gap: 6, color: "#e2e8f0" }}>
+            <FileText size={12} color="#94a3b8" />
             <span>Engine Brain Executive Summary — Posture Graphs, Trends & Risk Rating ({targetHost})</span>
           </div>
-          <span style={{ fontSize: 10, fontWeight: 800, color: "#ef4444" }}>
-            OVERALL POSTURE: {execSummary.overallRiskRating.rating.toUpperCase()} (DAST RISK: {overallDastRiskScore}/100)
+          <span style={{
+            fontSize: 10,
+            fontWeight: 700,
+            padding: "2px 8px",
+            borderRadius: 4,
+            background: "rgba(244, 63, 94, 0.12)",
+            color: "#fb7185",
+            border: "1px solid rgba(244, 63, 94, 0.28)"
+          }}>
+            Overall Posture: {execSummary.overallRiskRating.rating} ({overallDastRiskScore}/100)
           </span>
         </div>
         <div style={{ padding: "14px 16px" }}>
-          <div style={{ fontSize: 11.5, color: "var(--fg-2)", lineHeight: 1.55, marginBottom: 12 }}>
+          <div style={{ fontSize: 12, color: "#cbd5e1", lineHeight: 1.6, marginBottom: 12 }}>
             {execSummary.overallRiskRating.justification}
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
             {execSummary.executiveCharts.map(chart => (
-              <div key={chart.chartId} style={{ background: "#070b14", border: "1px solid var(--border)", borderRadius: 8, padding: 10 }}>
-                <div style={{ fontSize: 11, fontWeight: 800, color: "#f8fafc", marginBottom: 6 }}>{chart.title}</div>
+              <div key={chart.chartId} style={{ background: "#090d16", border: "1px solid #1e293b", borderRadius: 8, padding: 10 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#e2e8f0", marginBottom: 6 }}>{chart.title}</div>
                 <img
                   src={chart.svgDataUri}
                   alt={chart.title}
                   style={{ width: "100%", height: "auto", borderRadius: 6, border: "1px solid #1e293b", display: "block", marginBottom: 6 }}
                 />
-                <div style={{ fontSize: 10, color: "var(--muted)", lineHeight: 1.4 }}>{chart.subtitle}</div>
+                <div style={{ fontSize: 10.5, color: "#64748b", lineHeight: 1.4 }}>{chart.subtitle}</div>
               </div>
             ))}
           </div>
@@ -510,85 +537,87 @@ export default function SecurityOverviewPage() {
         {/* Left: Ranked Findings with 0-100 DAST Risk Score & MITRE ATT&CK */}
         <div className="tool-panel">
           <div className="tool-panel-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 6 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <AlertTriangle size={12} color="#ef4444" />
+            <div style={{ display: "flex", alignItems: "center", gap: 6, color: "#e2e8f0" }}>
+              <AlertTriangle size={12} color="#94a3b8" />
               <span>What to Fix First — Ranked by 0–100 DAST Risk Score</span>
             </div>
-            <Link href="/vuln-management" style={{ fontSize: 10, color: "#38bdf8", textDecoration: "none", fontWeight: 800 }}>
+            <Link href="/vuln-management" style={{ fontSize: 10.5, color: "#38bdf8", textDecoration: "none", fontWeight: 600 }}>
               Open Full Prioritization Queue →
             </Link>
           </div>
           <div>
             {rankedFindings.slice(0, 6).map((f: any, i: number) => {
               const isSelected = selectedScreenshotFindingIdx === i;
+              const isCrit = f.severity === "Critical";
               return (
                 <div
                   key={f.id ?? i}
                   onClick={() => setSelectedScreenshotFindingIdx(i)}
                   style={{
-                    padding: "10px 12px",
-                    borderBottom: "1px solid var(--border)",
+                    padding: "11px 13px",
+                    borderBottom: "1px solid #1e293b",
                     display: "flex",
                     gap: 10,
                     alignItems: "flex-start",
                     cursor: "pointer",
-                    background: isSelected ? "rgba(56,189,248,0.08)" : "transparent",
-                    borderLeft: isSelected ? "3px solid #38bdf8" : "3px solid transparent"
+                    background: isSelected ? "rgba(56,189,248,0.06)" : "transparent",
+                    borderLeft: isSelected ? "2px solid #38bdf8" : "2px solid transparent"
                   }}
                 >
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, flexShrink: 0 }}>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, flexShrink: 0 }}>
                     <span style={{
-                      fontSize: 11, fontWeight: 900, padding: "2px 7px", borderRadius: 5,
-                      background: `${f.riskBreakdown.tierColor}20`,
-                      color: f.riskBreakdown.tierColor,
-                      border: `1px solid ${f.riskBreakdown.tierColor}50`,
+                      fontSize: 11, fontWeight: 800, padding: "2px 7px", borderRadius: 5,
+                      background: isCrit ? "rgba(244,63,94,0.12)" : "rgba(245,158,11,0.12)",
+                      color: isCrit ? "#fb7185" : "#fbbf24",
+                      border: `1px solid ${isCrit ? "rgba(244,63,94,0.3)" : "rgba(245,158,11,0.3)"}`,
                       fontFamily: "var(--font-geist-mono)"
                     }}>
                       {f.riskBreakdown.finalScore}
                     </span>
-                    <span style={{ fontSize: 8.5, color: "var(--muted)", fontWeight: 700 }}>DAST RISK</span>
+                    <span style={{ fontSize: 8.5, color: "#64748b", fontWeight: 600 }}>RISK</span>
                   </div>
 
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                       <span style={{
-                        fontSize: 9, fontWeight: 800, padding: "1px 5px", borderRadius: 3,
-                        background: f.severity === "Critical" ? "rgba(239,68,68,0.2)" : "rgba(245,158,11,0.2)",
-                        color: f.severity === "Critical" ? "#ef4444" : "#f59e0b"
+                        fontSize: 9.5, fontWeight: 700, padding: "1px 6px", borderRadius: 4,
+                        background: isCrit ? "rgba(244,63,94,0.12)" : "rgba(245,158,11,0.12)",
+                        color: isCrit ? "#fb7185" : "#fbbf24",
+                        border: `1px solid ${isCrit ? "rgba(244,63,94,0.25)" : "rgba(245,158,11,0.25)"}`
                       }}>
-                        {f.severity.toUpperCase()}
+                        {f.severity}
                       </span>
-                      <span style={{ fontSize: 10, fontFamily: "var(--font-geist-mono)", color: "#38bdf8", fontWeight: 700 }}>
+                      <span style={{ fontSize: 10.5, fontFamily: "var(--font-geist-mono)", color: "#94a3b8", fontWeight: 600 }}>
                         {f.id}
                       </span>
                       {f.inCisaKev && (
-                        <span style={{ fontSize: 8.5, fontWeight: 800, padding: "1px 5px", borderRadius: 3, background: "rgba(244,63,94,0.2)", color: "#fda4af" }}>
-                          CISA KEV
+                        <span style={{ fontSize: 9, fontWeight: 600, padding: "1px 5px", borderRadius: 3, background: "#1e293b", color: "#e2e8f0", border: "1px solid #334155" }}>
+                          KEV
                         </span>
                       )}
-                      <span style={{ fontSize: 9.5, fontFamily: "var(--font-geist-mono)", color: "var(--muted)" }}>
+                      <span style={{ fontSize: 10, fontFamily: "var(--font-geist-mono)", color: "#64748b" }}>
                         EPSS {f.epssScorePct}%
                       </span>
                     </div>
 
-                    <div style={{ fontSize: 12, color: "#fff", fontWeight: 700, marginTop: 3, wordBreak: "break-word" }}>
+                    <div style={{ fontSize: 12, color: "#f8fafc", fontWeight: 600, marginTop: 3, wordBreak: "break-word" }}>
                       {f.title}
                     </div>
-                    <div style={{ fontSize: 10.5, color: "var(--muted)", fontFamily: "var(--font-geist-mono)", marginTop: 2, wordBreak: "break-all" }}>
+                    <div style={{ fontSize: 10.5, color: "#64748b", fontFamily: "var(--font-geist-mono)", marginTop: 2, wordBreak: "break-all" }}>
                       {f.url}
                     </div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 4 }}>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 5 }}>
                       {f.mitreTechniques.map((m: any) => (
                         <span
                           key={m.techniqueId}
                           style={{
-                            fontSize: 9,
+                            fontSize: 9.5,
                             fontFamily: "var(--font-geist-mono)",
-                            padding: "1px 5px",
-                            borderRadius: 3,
-                            background: "rgba(168,85,247,0.16)",
-                            color: "#d8b4fe",
-                            border: "1px solid rgba(168,85,247,0.35)"
+                            padding: "1px 6px",
+                            borderRadius: 4,
+                            background: "#0f172a",
+                            color: "#94a3b8",
+                            border: "1px solid #1e293b"
                           }}
                         >
                           {m.techniqueId} · {m.tacticName}
@@ -605,25 +634,25 @@ export default function SecurityOverviewPage() {
         {/* Right: Visual Exploitation Screenshots & Forensic Proof for Selected Finding */}
         <div className="tool-panel">
           <div className="tool-panel-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 6 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <Eye size={12} color="#10b981" />
+            <div style={{ display: "flex", alignItems: "center", gap: 6, color: "#e2e8f0" }}>
+              <Eye size={12} color="#94a3b8" />
               <span>Collected Exploitation Evidence & Visual Screenshots ({activeScreenshotFinding?.id})</span>
             </div>
-            <span style={{ fontSize: 9.5, color: "#10b981", fontWeight: 800 }}>● 100% DETERMINISTIC PROOF</span>
+            <span style={{ fontSize: 9.5, color: "#34d399", fontWeight: 600 }}>● Verified Proof</span>
           </div>
           <div style={{ padding: "12px 14px" }}>
-            <div style={{ fontSize: 12, fontWeight: 800, color: "#fff", marginBottom: 4 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#f8fafc", marginBottom: 4 }}>
               {activeScreenshotFinding?.title}
             </div>
-            <div style={{ fontSize: 10.5, color: "var(--muted)", marginBottom: 10 }}>
-              Click any finding on the left to inspect its captured Engine Brain exploitation screenshots and HTTP proof.
+            <div style={{ fontSize: 11, color: "#64748b", marginBottom: 10 }}>
+              Select any finding on the left to inspect its captured Engine Brain exploitation screenshots and HTTP proof.
             </div>
 
             {activeScreenshotFinding?.formalReport?.evidence?.exploitationPictures && (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10, marginBottom: 10 }}>
                 {activeScreenshotFinding.formalReport.evidence.exploitationPictures.map((pic: any) => (
-                  <div key={pic.figureId} style={{ background: "#050811", border: "1px solid var(--border)", borderRadius: 6, padding: 8 }}>
-                    <div style={{ fontSize: 10, fontWeight: 800, color: "#38bdf8", marginBottom: 4 }}>
+                  <div key={pic.figureId} style={{ background: "#090d16", border: "1px solid #1e293b", borderRadius: 6, padding: 8 }}>
+                    <div style={{ fontSize: 10, fontWeight: 600, color: "#e2e8f0", marginBottom: 4 }}>
                       [{pic.figureId}] {pic.title}
                     </div>
                     <img
@@ -631,7 +660,7 @@ export default function SecurityOverviewPage() {
                       alt={pic.title}
                       style={{ width: "100%", height: "auto", borderRadius: 4, border: "1px solid #1e293b", display: "block", marginBottom: 4 }}
                     />
-                    <div style={{ fontSize: 9.5, color: "var(--muted)", lineHeight: 1.35 }}>
+                    <div style={{ fontSize: 9.5, color: "#64748b", lineHeight: 1.35 }}>
                       {pic.caption}
                     </div>
                   </div>
@@ -639,9 +668,9 @@ export default function SecurityOverviewPage() {
               </div>
             )}
 
-            <div style={{ background: "#050811", border: "1px solid var(--border)", borderRadius: 6, padding: 8 }}>
-              <div style={{ fontSize: 9.5, fontWeight: 800, color: "#f43f5e", marginBottom: 4 }}>
-                CAPTURED EXPLOITED HTTP REQUEST & PAYLOAD PROOF:
+            <div style={{ background: "#090d16", border: "1px solid #1e293b", borderRadius: 6, padding: 8 }}>
+              <div style={{ fontSize: 9.5, fontWeight: 600, color: "#94a3b8", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                Captured Exploited HTTP Request Proof
               </div>
               <pre style={{ margin: 0, fontSize: 10, fontFamily: "var(--font-geist-mono)", color: "#cbd5e1", overflowX: "auto", maxHeight: 95, whiteSpace: "pre-wrap" }}>
                 {activeScreenshotFinding?.httpRequestProof}
@@ -655,14 +684,14 @@ export default function SecurityOverviewPage() {
       {/* Distribution Donut + OWASP Top 10 & MITRE Coverage */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 14, marginBottom: 16 }}>
         <div className="tool-panel">
-          <div className="tool-panel-header"><Activity size={12} /> Vulnerability Severity Distribution</div>
+          <div className="tool-panel-header"><Activity size={12} color="#94a3b8" /> Vulnerability Severity Distribution</div>
           <div style={{ padding: "14px 16px" }}>
             <DonutChart counts={counts} total={enrichedFindings.length} />
           </div>
         </div>
 
         <div className="tool-panel">
-          <div className="tool-panel-header"><Shield size={12} /> OWASP Top 10 (2021) & Web Interface Coverage</div>
+          <div className="tool-panel-header"><Shield size={12} color="#94a3b8" /> OWASP Top 10 (2021) & Web Interface Coverage</div>
           <div style={{ padding: "12px 14px" }}>
             {[
               { id: "A01", name: "Broken Access Control (BOLA / IDOR / PrivEsc)" },
@@ -675,12 +704,12 @@ export default function SecurityOverviewPage() {
               const maxBar = Math.max(...Object.values(owaspCounts), 1);
               return (
                 <div key={cat.id} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 9 }}>
-                  <span style={{ fontSize: 10, color: "#00f0ff", width: 30, flexShrink: 0, fontWeight: 700 }}>{cat.id}</span>
-                  <span style={{ fontSize: 11, color: "var(--fg)", flex: 1 }}>{cat.name}</span>
-                  <div style={{ width: 90, height: 6, background: "rgba(255,255,255,0.08)", borderRadius: 3 }}>
-                    <div style={{ width: `${(cnt / maxBar) * 100}%`, height: "100%", background: "linear-gradient(90deg, #e11d48, #ff4d79)", borderRadius: 3, minWidth: cnt > 0 ? 4 : 0 }} />
+                  <span style={{ fontSize: 10.5, fontFamily: "var(--font-geist-mono)", color: "#94a3b8", width: 32, flexShrink: 0, fontWeight: 600 }}>{cat.id}</span>
+                  <span style={{ fontSize: 11.5, color: "#e2e8f0", flex: 1 }}>{cat.name}</span>
+                  <div style={{ width: 90, height: 6, background: "#1e293b", borderRadius: 3 }}>
+                    <div style={{ width: `${(cnt / maxBar) * 100}%`, height: "100%", background: "#38bdf8", borderRadius: 3, minWidth: cnt > 0 ? 4 : 0 }} />
                   </div>
-                  <span style={{ fontSize: 11, fontWeight: 800, color: "#ff4d79", width: 18, textAlign: "right" }}>{cnt}</span>
+                  <span style={{ fontSize: 11.5, fontWeight: 700, color: "#f8fafc", width: 18, textAlign: "right" }}>{cnt}</span>
                 </div>
               );
             })}
@@ -692,9 +721,9 @@ export default function SecurityOverviewPage() {
       <div className="tool-panel">
         <div className="tool-panel-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 6 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <Database size={12} /> Synchronized Engine Brain Target Telemetry & DAST Assessments
+            <Database size={12} color="#94a3b8" /> Synchronized Engine Brain Target Telemetry & DAST Assessments
           </div>
-          <span style={{ fontSize: 9.5, color: "#10b981", fontWeight: 800 }}>● LIVE ENGINE BRAIN TELEMETRY</span>
+          <span style={{ fontSize: 9.5, color: "#34d399", fontWeight: 600 }}>● Live Engine Brain Telemetry</span>
         </div>
         <div style={{ overflowX: "auto" }}>
           <table className="data-table">
@@ -707,38 +736,38 @@ export default function SecurityOverviewPage() {
             </thead>
             <tbody>
               <tr>
-                <td style={{ fontSize: 11, fontFamily: "var(--font-geist-mono)", color: "#00f0ff", fontWeight: 700 }}>
+                <td style={{ fontSize: 11, fontFamily: "var(--font-geist-mono)", color: "#cbd5e1", fontWeight: 600 }}>
                   {engagementId}
                 </td>
-                <td style={{ fontWeight: 700, color: "#fff" }}>
+                <td style={{ fontWeight: 600, color: "#f8fafc" }}>
                   8-Stage Engine Brain DAST Assessment
                 </td>
-                <td style={{ fontSize: 11, fontFamily: "var(--font-geist-mono)", color: "#38bdf8", wordBreak: "break-all" }}>
+                <td style={{ fontSize: 11, fontFamily: "var(--font-geist-mono)", color: "#94a3b8", wordBreak: "break-all" }}>
                   {scopedTargetUrl}
                 </td>
-                <td style={{ fontSize: 11, color: "var(--fg-2)" }}>
+                <td style={{ fontSize: 11, color: "#94a3b8" }}>
                   {primaryLiveResult?.serverHeader || "Apache-Coyote/1.1"} · Grade {primaryLiveResult?.securityGrade || "B"}
                 </td>
-                <td style={{ fontSize: 11, color: "var(--muted)" }}>{scanDuration}</td>
-                <td style={{ fontSize: 12, fontWeight: 800, color: "#ff4d79" }}>{enrichedFindings.length}</td>
+                <td style={{ fontSize: 11, color: "#64748b" }}>{scanDuration}</td>
+                <td style={{ fontSize: 12, fontWeight: 700, color: "#f8fafc" }}>{enrichedFindings.length}</td>
                 <td>
                   <span style={{
-                    fontSize: 10, fontWeight: 900, padding: "2px 7px", borderRadius: 4,
-                    background: `${riskColor.Critical}20`, color: riskColor.Critical,
-                    border: `1px solid ${riskColor.Critical}40`
+                    fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 4,
+                    background: "rgba(244,63,94,0.12)", color: "#fb7185",
+                    border: "1px solid rgba(244,63,94,0.28)"
                   }}>
-                    {overallDastRiskScore}/100 · CRITICAL
+                    {overallDastRiskScore}/100 · Critical
                   </span>
                 </td>
                 <td>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                    <Link href="/vuln-management" style={{ fontSize: 11, color: "#f43f5e", textDecoration: "none", fontWeight: 800 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                    <Link href="/vuln-management" style={{ fontSize: 11, color: "#38bdf8", textDecoration: "none", fontWeight: 600 }}>
                       Vuln Mgmt →
                     </Link>
-                    <Link href="/app" style={{ fontSize: 11, color: "#00f0ff", textDecoration: "none", fontWeight: 800 }}>
+                    <Link href="/app" style={{ fontSize: 11, color: "#cbd5e1", textDecoration: "none", fontWeight: 500 }}>
                       ÆGIS SOC →
                     </Link>
-                    <Link href="/engine" style={{ fontSize: 11, color: "#10b981", textDecoration: "none", fontWeight: 800 }}>
+                    <Link href="/engine" style={{ fontSize: 11, color: "#cbd5e1", textDecoration: "none", fontWeight: 500 }}>
                       Engine Brain →
                     </Link>
                   </div>
