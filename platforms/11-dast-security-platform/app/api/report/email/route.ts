@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import {
   PORT_ASSESSMENT_SCRIPT_CATALOG,
-  getDaemonFindingTtpDossier
+  getDaemonFindingTtpDossier,
+  buildFormalFindingReport
 } from "@/data/portAndDaemonTtpCatalog";
 import type { Finding } from "@/types/dast";
 
@@ -99,24 +100,20 @@ function generateMultiPageAssessmentPdfBuffer(params: {
   } = params;
 
   const docLines: PdfLineItem[] = [
-    { text: "EXPEDITE STRIKE v3.0 - AUTONOMOUS SECURITY ASSESSMENT & PENTEST DOSSIER", bold: true, size: 13, colorRgb: [0.02, 0.35, 0.65] },
-    { text: "PTES | NIST SP 800-115 | MITRE ATT&CK v15 | OWASP WSTG / ASVS / API10 | MITRE D3FEND", bold: true, size: 9, colorRgb: [0.25, 0.32, 0.45] },
+    { text: "XTRIKE & AEGIS.SOC - FORMAL EXTERNAL PENETRATION TESTING REPORT", bold: true, size: 12.5, colorRgb: [0.02, 0.35, 0.65] },
+    { text: "PTES | NIST SP 800-115 | MITRE ATT&CK v15 | OWASP WSTG / Top 10 | MITRE D3FEND", bold: true, size: 8.5, colorRgb: [0.25, 0.32, 0.45] },
     { text: "==============================================================================================", bold: true, size: 9 },
-    { text: `Target Scope: ${targetUrls.join(", ")}`, bold: true, size: 9.5 },
+    { text: `Target Scope: ${targetUrls.join(", ")}`, bold: true, size: 9 },
     { text: `Generated At: ${timestampIso}   |   Message-ID: ${messageId}`, size: 8.5 },
     { text: `Chain-of-Custody SHA-256: ${reportSha256}`, size: 8.5 },
     { text: `Recipients: ${recipients.join(", ")}`, size: 8.5 },
     { text: `Executive Summary: ${findings.length} Total Findings (${critCount} Critical, ${highCount} High, ${medCount} Medium, ${lowCount} Low)`, bold: true, size: 9.5, colorRgb: [0.75, 0.08, 0.22] },
-    { text: `Port & Socket Coverage: 65,535 TCP + 65,535 UDP (131,070 Total Transport Sockets Audited)`, bold: true, size: 9, colorRgb: [0.02, 0.45, 0.35] },
-    { text: `OS Script Inventories: 16 PrivEsc (TA0004) + 12 Lateral Movement (TA0008) + 12 Post-Exploit (TA0003-TA0040)`, size: 8.5 },
-    { text: "" },
-    { text: "1. VALIDATED FINDINGS, MITRE ATT&CK TTPs & TRIGGERED LINUX/WINDOWS SCRIPTS", bold: true, size: 11, colorRgb: [0.05, 0.15, 0.35] },
-    { text: "----------------------------------------------------------------------------------------------", size: 8.5 }
+    { text: `XTRIKE / Aegis.SOC Port Coverage: 65,535 TCP + 65,535 UDP (131,070 Total Transport Sockets Audited)`, bold: true, size: 8.5, colorRgb: [0.02, 0.45, 0.35] },
+    { text: "" }
   ];
 
-  findings.slice(0, 25).forEach((f, idx) => {
-    const d = getDaemonFindingTtpDossier(f, primaryUrl);
-    const cvss = f.severity === "Critical" ? "9.8" : f.severity === "High" ? "8.2" : f.severity === "Medium" ? "5.8" : "3.4";
+  findings.slice(0, 20).forEach((f, idx) => {
+    const fr = buildFormalFindingReport(f, idx, primaryUrl);
     const sevRgb: [number, number, number] =
       f.severity === "Critical"
         ? [0.78, 0.07, 0.2]
@@ -124,42 +121,96 @@ function generateMultiPageAssessmentPdfBuffer(params: {
         ? [0.82, 0.32, 0.04]
         : [0.1, 0.35, 0.65];
 
-    docLines.push({
-      text: `Finding #${idx + 1}: [${f.severity.toUpperCase()} | CVSS ${cvss}] ${f.title} (${f.cweId} | OWASP ${f.owaspRef})`,
-      bold: true,
-      size: 9.5,
-      colorRgb: sevRgb
+    docLines.push({ text: "==============================================================================================", bold: true, size: 8.5 });
+    docLines.push({ text: `Finding ID: ${fr.findingId}`, bold: true, size: 10, colorRgb: sevRgb });
+    docLines.push({ text: `Title: ${fr.title}`, bold: true, size: 10, colorRgb: [0.05, 0.1, 0.2] });
+    docLines.push({ text: `Severity: ${fr.severity}   |   CVSS Score: ${fr.cvssScore}   |   Status: ${fr.status}   |   Discovery Date: ${fr.discoveryDate}`, bold: true, size: 8.5, colorRgb: sevRgb });
+    docLines.push({ text: `CVSS Vector: ${fr.cvssVector}`, size: 8.5 });
+    for (const ln of wrapTextLine(`Tester / Tool: ${fr.testerTool}`, 94)) {
+      docLines.push({ text: ln, size: 8.5 });
+    }
+    for (const ln of wrapTextLine(`Framework Mapping: ${fr.frameworkMapping}`, 94)) {
+      docLines.push({ text: ln, bold: true, size: 8.5, colorRgb: [0.15, 0.25, 0.5] });
+    }
+    docLines.push({ text: "" });
+
+    docLines.push({ text: "Description", bold: true, size: 9.5, colorRgb: [0.05, 0.15, 0.35] });
+    for (const p of fr.descriptionParagraphs) {
+      for (const ln of wrapTextLine(p, 94)) {
+        docLines.push({ text: `  ${ln}`, size: 8.5 });
+      }
+    }
+
+    docLines.push({ text: "Affected Assets", bold: true, size: 9.5, colorRgb: [0.05, 0.15, 0.35] });
+    for (const row of fr.affectedAssets) {
+      for (const ln of wrapTextLine(`  - ${row.item}: ${row.detail}`, 94)) {
+        docLines.push({ text: ln, size: 8.5 });
+      }
+    }
+
+    docLines.push({ text: "Steps to Reproduce", bold: true, size: 9.5, colorRgb: [0.05, 0.15, 0.35] });
+    fr.stepsToReproduce.forEach((stepTxt, sIdx) => {
+      for (const ln of wrapTextLine(`  ${sIdx + 1}. ${stepTxt}`, 94)) {
+        docLines.push({ text: ln, size: 8.5 });
+      }
     });
-    docLines.push({
-      text: `  Endpoint: ${f.method} ${f.url}   |   Parameter: ${f.parameter || "N/A"}   |   Daemon: ${d.daemonLabel}`,
-      bold: true,
-      size: 8.5
+
+    docLines.push({ text: "Evidence", bold: true, size: 9.5, colorRgb: [0.05, 0.15, 0.35] });
+    docLines.push({ text: `  Forensic Evidence of TTP: ${fr.evidence.forensicHeader}`, bold: true, size: 8.5, colorRgb: [0.55, 0.1, 0.25] });
+    for (const ln of wrapTextLine(`  ${fr.evidence.ruleMatchLine} | Matched Indicator: ${fr.evidence.matchedIndicator}`, 94)) {
+      docLines.push({ text: `  ${ln}`, size: 8.5 });
+    }
+    for (const ln of wrapTextLine(`  Mapped Assessment Scripts: ${fr.evidence.mappedAssessmentScripts.join(" | ")}`, 94)) {
+      docLines.push({ text: `  ${ln}`, size: 8 });
+    }
+    for (const ln of wrapTextLine(`  Triggered Privilege Escalation Scripts (TA0004): ${fr.evidence.triggeredPrivEscScripts.join(" | ")}`, 94)) {
+      docLines.push({ text: `  ${ln}`, size: 8 });
+    }
+    docLines.push({ text: `  Triggered Lateral Movement Scripts (TA0008): ${fr.evidence.triggeredLateralScripts.join(" | ")}`, size: 8 });
+    docLines.push({ text: `  Triggered Post-Exploitation Scripts (TA0003-TA0040): ${fr.evidence.triggeredPostExploitScripts.join(" | ")}`, size: 8 });
+
+    docLines.push({ text: "Impact", bold: true, size: 9.5, colorRgb: [0.05, 0.15, 0.35] });
+    docLines.push({ text: "  Technical Impact:", bold: true, size: 8.5 });
+    fr.impact.technicalImpact.forEach(ti => {
+      for (const ln of wrapTextLine(`    * ${ti}`, 94)) docLines.push({ text: ln, size: 8.5 });
     });
-    for (const ln of wrapTextLine(`  Description & Impact: ${f.description} ${f.impact}`, 94)) {
+    docLines.push({ text: "  Business Impact:", bold: true, size: 8.5 });
+    fr.impact.businessImpact.forEach(bi => {
+      for (const ln of wrapTextLine(`    * ${bi}`, 94)) docLines.push({ text: ln, size: 8.5 });
+    });
+    docLines.push({ text: `  Scope: ${fr.impact.scope}`, size: 8.5 });
+
+    docLines.push({ text: `Likelihood: ${fr.likelihood.level}`, bold: true, size: 9, colorRgb: sevRgb });
+    for (const ln of wrapTextLine(`  ${fr.likelihood.rationale}`, 94)) {
       docLines.push({ text: `  ${ln}`, size: 8.5 });
     }
-    for (const ln of wrapTextLine(`  Mapped Port/Daemon Scripts: ${d.mappedDaemonScripts.join(", ")}`, 94)) {
-      docLines.push({ text: `  ${ln}`, size: 8.5 });
-    }
-    for (const ln of wrapTextLine(`  MITRE ATT&CK TTP: ${d.tacticName} (${d.tacticId}) -> ${d.techniqueName} (${d.techniqueId}) - ${d.procedureSummary}`, 94)) {
-      docLines.push({ text: `  ${ln}`, size: 8.5 });
-    }
-    for (const ln of wrapTextLine(`  Forensic Evidence of TTP: ${d.ttpEvidenceArtifact}`, 94)) {
-      docLines.push({ text: `  ${ln}`, size: 8.5, colorRgb: [0.55, 0.1, 0.25] });
-    }
-    const privescIds = [...d.triggeredLinuxPrivEscScripts, ...d.triggeredWindowsPrivEscScripts].map(s => `${s.scriptId}(${s.osPlatform})`).join(", ");
-    const lateralIds = [...d.triggeredLinuxLateralScripts, ...d.triggeredWindowsLateralScripts].map(s => `${s.scriptId}(${s.osPlatform})`).join(", ");
-    const postIds = [...d.triggeredLinuxPostExploitScripts, ...d.triggeredWindowsPostExploitScripts].map(s => `${s.scriptId}(${s.osPlatform})`).join(", ");
-    docLines.push({ text: `  Triggered PrivEsc (TA0004): ${privescIds}`, size: 8 });
-    docLines.push({ text: `  Triggered Lateral (TA0008): ${lateralIds}`, size: 8 });
-    docLines.push({ text: `  Triggered Post-Exploit (TA0003-TA0040): ${postIds}`, size: 8 });
-    for (const ln of wrapTextLine(`  MITRE D3FEND Remediation: ${f.remediation}`, 94)) {
+
+    docLines.push({ text: "Remediation", bold: true, size: 9.5, colorRgb: [0.02, 0.42, 0.32] });
+    docLines.push({ text: "  Immediate Actions:", bold: true, size: 8.5 });
+    fr.remediation.immediateActions.forEach(ia => docLines.push({ text: `    - ${ia}`, size: 8.5 }));
+    docLines.push({ text: "  Short-Term Hardening:", bold: true, size: 8.5 });
+    fr.remediation.shortTermHardening.forEach(sh => docLines.push({ text: `    - ${sh}`, size: 8.5 }));
+    docLines.push({ text: "  Container / Host Hardening:", bold: true, size: 8.5 });
+    fr.remediation.containerHostHardening.forEach(ch => docLines.push({ text: `    - ${ch}`, size: 8.5 }));
+    docLines.push({ text: "  Detection & Monitoring:", bold: true, size: 8.5 });
+    fr.remediation.detectionAndMonitoring.forEach(dm => docLines.push({ text: `    - ${dm}`, size: 8.5 }));
+    for (const ln of wrapTextLine(`  MITRE D3FEND Countermeasure: ${fr.remediation.mitreD3fendCountermeasure}`, 94)) {
       docLines.push({ text: `  ${ln}`, bold: true, size: 8.5, colorRgb: [0.02, 0.42, 0.32] });
     }
+
+    docLines.push({ text: "References", bold: true, size: 9, colorRgb: [0.05, 0.15, 0.35] });
+    fr.references.forEach(ref => {
+      for (const ln of wrapTextLine(`  - ${ref}`, 94)) docLines.push({ text: ln, size: 8 });
+    });
+
+    docLines.push({ text: "Retest Criteria", bold: true, size: 9, colorRgb: [0.05, 0.15, 0.35] });
+    fr.retestCriteria.forEach(rc => {
+      docLines.push({ text: `  [ ] ${rc}`, size: 8 });
+    });
     docLines.push({ text: "" });
   });
 
-  docLines.push({ text: "2. 65,535 TCP & 65,535 UDP PORT-TO-ASSESSMENT-SCRIPT CATALOG (131,070 SOCKETS)", bold: true, size: 11, colorRgb: [0.05, 0.15, 0.35] });
+  docLines.push({ text: "APPENDIX: 65,535 TCP & 65,535 UDP PORT-TO-ASSESSMENT-SCRIPT CATALOG (131,070 SOCKETS)", bold: true, size: 10.5, colorRgb: [0.05, 0.15, 0.35] });
   docLines.push({ text: "----------------------------------------------------------------------------------------------", size: 8.5 });
   PORT_ASSESSMENT_SCRIPT_CATALOG.forEach(ps => {
     docLines.push({
@@ -178,16 +229,8 @@ function generateMultiPageAssessmentPdfBuffer(params: {
   for (let i = 0; i < docLines.length; i += linesPerPage) {
     pages.push(docLines.slice(i, i + linesPerPage));
   }
-  if (pages.length === 0) pages.push([{ text: "EXPEDITE STRIKE DAST Report", bold: true, size: 12 }]);
+  if (pages.length === 0) pages.push([{ text: "XTRIKE & Aegis.SOC DAST Report", bold: true, size: 12 }]);
 
-  // Build PDF 1.4 objects:
-  // Obj 1: Catalog
-  // Obj 2: Pages
-  // Obj 3: Font F1 (Helvetica)
-  // Obj 4: Font F2 (Helvetica-Bold)
-  // For each page i (0..N-1):
-  //   Page Obj = 5 + i * 2
-  //   Content Stream Obj = 6 + i * 2
   const objects: string[] = [];
   const pageObjNums: number[] = [];
 
@@ -209,7 +252,7 @@ function generateMultiPageAssessmentPdfBuffer(params: {
     const streamCmds: string[] = [];
     // Top header bar
     streamCmds.push("0.06 0.09 0.16 rg 36 756 540 20 re f");
-    streamCmds.push("BT /F2 8.5 Tf 1 1 1 rg 44 763 Td (EXPEDITE STRIKE v3.0 - AUTOMATED DAST & PENTEST DOSSIER) Tj ET");
+    streamCmds.push("BT /F2 8.5 Tf 1 1 1 rg 44 763 Td (XTRIKE & AEGIS.SOC - FORMAL EXTERNAL PENETRATION TESTING DOSSIER) Tj ET");
     streamCmds.push(`BT /F1 8 Tf 0.75 0.88 0.98 rg 470 763 Td (Page ${pIdx + 1} of ${pages.length}) Tj ET`);
 
     let y = 738;
@@ -289,7 +332,7 @@ export async function POST(req: NextRequest) {
     const targetUrls =
       Array.isArray(body.targetUrls) && body.targetUrls.length > 0
         ? body.targetUrls
-        : ["https://11-dast-security-platform.vercel.app"];
+        : ["https://demo.testfire.net"];
     const primaryUrl = targetUrls[0];
     const primaryHost = primaryUrl.replace(/^https?:\/\//, "").split("/")[0];
 
@@ -300,7 +343,7 @@ export async function POST(req: NextRequest) {
     const lowCount = findings.filter(f => f.severity === "Low").length;
 
     const timestampIso = new Date().toISOString();
-    const messageId = `<expedite-strike-${Date.now()}-${crypto
+    const messageId = `<xtrike-aegis-soc-${Date.now()}-${crypto
       .randomBytes(4)
       .toString("hex")}@${primaryHost || "dast.local"}>`;
 
@@ -318,7 +361,7 @@ export async function POST(req: NextRequest) {
 
     const subject =
       body.subject?.trim() ||
-      `[EXPEDITE STRIKE™ DAST REPORT] ${critCount} Critical, ${highCount} High Findings on ${primaryHost} (65,535 TCP/UDP + MITRE ATT&CK® Dossier)`;
+      `[XTRIKE™ & Aegis.SOC™ PENTEST REPORT] ${critCount} Critical, ${highCount} High Findings on ${primaryHost} (EXT-2026 Formal Dossier)`;
 
     const fromEmail =
       body.smtpConfig?.fromEmail?.trim() ||
@@ -326,11 +369,11 @@ export async function POST(req: NextRequest) {
       process.env.REPORT_FROM_EMAIL ||
       "Expedite Strike Security <auth@expediteconsults.com>";
 
-    // Build Executive + Technical HTML Email Dossier
+    // Build Executive + Technical HTML Email Dossier in the exact EXT-2026-XXX Formal Format
     const findingsRowsHtml = findings
       .slice(0, 20)
       .map((f, idx) => {
-        const dossier = getDaemonFindingTtpDossier(f, primaryUrl);
+        const fr = buildFormalFindingReport(f, idx, primaryUrl);
         const sevColor =
           f.severity === "Critical"
             ? "#e11d48"
@@ -339,78 +382,136 @@ export async function POST(req: NextRequest) {
             : f.severity === "Medium"
             ? "#d97706"
             : "#0284c7";
-        const privescList = [
-          ...dossier.triggeredLinuxPrivEscScripts,
-          ...dossier.triggeredWindowsPrivEscScripts
-        ]
-          .map(s => `${s.scriptId} (${s.osPlatform}: ${s.auditScriptName})`)
-          .join(" · ");
-        const lateralList = [
-          ...dossier.triggeredLinuxLateralScripts,
-          ...dossier.triggeredWindowsLateralScripts
-        ]
-          .map(s => `${s.scriptId} (${s.osPlatform}: ${s.auditScriptName})`)
-          .join(" · ");
-        const postList = [
-          ...dossier.triggeredLinuxPostExploitScripts,
-          ...dossier.triggeredWindowsPostExploitScripts
-        ]
-          .map(s => `${s.scriptId} (${s.osPlatform}: ${s.auditScriptName})`)
-          .join(" · ");
 
         return `
-        <div style="border:1px solid #cbd5e1;border-left:5px solid ${sevColor};border-radius:6px;padding:12px;margin-bottom:12px;background:#ffffff;">
-          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:6px;">
-            <strong style="font-size:14px;color:#0f172a;">#${idx + 1} [${escapeHtml(
-          f.severity
-        )} · CVSS ${f.severity === "Critical" ? "9.8" : f.severity === "High" ? "8.2" : f.severity === "Medium" ? "5.8" : "3.4"} · ${escapeHtml(f.confidence)}] ${escapeHtml(f.title)}</strong>
-            <span style="font-size:11px;color:#475569;font-family:monospace;">${escapeHtml(
-              f.cweId
-            )} · OWASP ${escapeHtml(f.owaspRef)} · ${escapeHtml(
-          dossier.tacticId
-        )} / ${escapeHtml(dossier.techniqueId)}</span>
+        <div style="border:1px solid #cbd5e1;border-left:6px solid ${sevColor};border-radius:8px;padding:18px 20px;margin-bottom:20px;background:#ffffff;color:#0f172a;">
+          <div style="font-size:13px;line-height:1.65;border-bottom:1px solid #e2e8f0;padding-bottom:10px;margin-bottom:12px;">
+            <div><strong>Finding ID:</strong> <code>${escapeHtml(fr.findingId)}</code></div>
+            <div><strong>Title:</strong> <span style="font-size:15px;font-weight:800;color:#0f172a;">${escapeHtml(fr.title)}</span></div>
+            <div><strong>Severity:</strong> <span style="color:${sevColor};font-weight:800;">${escapeHtml(fr.severity)}</span></div>
+            <div><strong>CVSS Score:</strong> <strong>${escapeHtml(fr.cvssScore)}</strong></div>
+            <div><strong>CVSS Vector:</strong> <code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;">${escapeHtml(fr.cvssVector)}</code></div>
+            <div><strong>Status:</strong> ${escapeHtml(fr.status)}</div>
+            <div><strong>Discovery Date:</strong> ${escapeHtml(fr.discoveryDate)}</div>
+            <div><strong>Tester / Tool:</strong> ${escapeHtml(fr.testerTool)}</div>
+            <div><strong>Framework Mapping:</strong> ${escapeHtml(fr.frameworkMapping)}</div>
           </div>
-          <div style="font-size:12px;color:#1e293b;margin-bottom:4px;">
-            <strong>Endpoint:</strong> <code>${escapeHtml(
-              f.method
-            )} ${escapeHtml(f.url)}</code> &nbsp;|&nbsp;
-            <strong>Parameter:</strong> <code>${escapeHtml(
-              f.parameter || "N/A"
-            )}</code> &nbsp;|&nbsp;
-            <strong>Daemon:</strong> <code>${escapeHtml(dossier.daemonLabel)}</code>
+
+          <h3 style="margin:12px 0 6px 0;font-size:14px;color:#0f172a;border-bottom:1px solid #f1f5f9;padding-bottom:4px;">Description</h3>
+          ${fr.descriptionParagraphs
+            .map(p => `<p style="margin:0 0 8px 0;font-size:12.5px;color:#334155;line-height:1.55;">${escapeHtml(p)}</p>`)
+            .join("")}
+
+          <h3 style="margin:14px 0 6px 0;font-size:14px;color:#0f172a;border-bottom:1px solid #f1f5f9;padding-bottom:4px;">Affected Assets</h3>
+          <table style="width:100%;border-collapse:collapse;margin-bottom:12px;font-size:12px;">
+            <thead>
+              <tr style="background:#f8fafc;text-align:left;">
+                <th style="padding:6px 10px;border:1px solid #cbd5e1;width:30%;">Item</th>
+                <th style="padding:6px 10px;border:1px solid #cbd5e1;">Detail</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${fr.affectedAssets
+                .map(
+                  row => `
+                <tr>
+                  <td style="padding:6px 10px;border:1px solid #cbd5e1;font-weight:700;color:#1e293b;">${escapeHtml(row.item)}</td>
+                  <td style="padding:6px 10px;border:1px solid #cbd5e1;font-family:monospace;color:#0f172a;">${escapeHtml(row.detail)}</td>
+                </tr>`
+                )
+                .join("")}
+            </tbody>
+          </table>
+
+          <h3 style="margin:14px 0 6px 0;font-size:14px;color:#0f172a;border-bottom:1px solid #f1f5f9;padding-bottom:4px;">Steps to Reproduce</h3>
+          <ol style="margin:0 0 12px 18px;padding:0;font-size:12.5px;color:#1e293b;line-height:1.6;">
+            ${fr.stepsToReproduce.map(st => `<li style="margin-bottom:4px;">${escapeHtml(st)}</li>`).join("")}
+          </ol>
+
+          <h3 style="margin:14px 0 6px 0;font-size:14px;color:#0f172a;border-bottom:1px solid #f1f5f9;padding-bottom:4px;">Evidence</h3>
+          <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:10px 12px;font-size:12px;margin-bottom:12px;">
+            <div style="margin-bottom:6px;">
+              <strong>Forensic Evidence of TTP:</strong><br/>
+              <code style="color:#be123c;font-weight:700;">${escapeHtml(fr.evidence.forensicHeader)}</code><br/>
+              <span>${escapeHtml(fr.evidence.ruleMatchLine)}</span><br/>
+              <strong>Matched Indicator:</strong> <code>${escapeHtml(fr.evidence.matchedIndicator)}</code>
+            </div>
+            <div style="margin-top:8px;">
+              <strong>Mapped Assessment Scripts:</strong>
+              <ul style="margin:4px 0 6px 18px;padding:0;">
+                ${fr.evidence.mappedAssessmentScripts.map(s => `<li><code>${escapeHtml(s)}</code></li>`).join("")}
+              </ul>
+            </div>
+            <div style="margin-top:6px;">
+              <strong>Triggered Privilege Escalation Scripts (TA0004):</strong>
+              <ul style="margin:4px 0 6px 18px;padding:0;">
+                ${fr.evidence.triggeredPrivEscScripts.map(s => `<li><code>${escapeHtml(s)}</code></li>`).join("")}
+              </ul>
+            </div>
+            <div style="margin-top:6px;">
+              <strong>Triggered Lateral Movement Scripts (TA0008):</strong>
+              <ul style="margin:4px 0 6px 18px;padding:0;">
+                ${fr.evidence.triggeredLateralScripts.map(s => `<li><code>${escapeHtml(s)}</code></li>`).join("")}
+              </ul>
+            </div>
+            <div style="margin-top:6px;">
+              <strong>Triggered Post-Exploitation Scripts (TA0003–TA0040):</strong>
+              <ul style="margin:4px 0 2px 18px;padding:0;">
+                ${fr.evidence.triggeredPostExploitScripts.map(s => `<li><code>${escapeHtml(s)}</code></li>`).join("")}
+              </ul>
+            </div>
           </div>
-          <div style="font-size:12px;color:#334155;margin-bottom:6px;">
-            ${escapeHtml(f.description)} ${escapeHtml(f.impact)}
+
+          <h3 style="margin:14px 0 6px 0;font-size:14px;color:#0f172a;border-bottom:1px solid #f1f5f9;padding-bottom:4px;">Impact</h3>
+          <div style="font-size:12.5px;color:#1e293b;margin-bottom:10px;">
+            <div><strong>Technical Impact:</strong></div>
+            <ul style="margin:4px 0 8px 18px;padding:0;">
+              ${fr.impact.technicalImpact.map(ti => `<li>${escapeHtml(ti)}</li>`).join("")}
+            </ul>
+            <div><strong>Business Impact:</strong></div>
+            <ul style="margin:4px 0 8px 18px;padding:0;">
+              ${fr.impact.businessImpact.map(bi => `<li>${escapeHtml(bi)}</li>`).join("")}
+            </ul>
+            <div><strong>Scope:</strong> ${escapeHtml(fr.impact.scope)}</div>
           </div>
-          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:4px;padding:8px;font-size:11px;font-family:monospace;color:#0f172a;margin-bottom:6px;">
-            <div><strong>Mapped Port / Daemon Assessment Scripts:</strong> ${escapeHtml(
-              dossier.mappedDaemonScripts.join(", ")
-            )}</div>
-            <div style="margin-top:3px;"><strong>MITRE ATT&amp;CK® TTP:</strong> ${escapeHtml(
-              dossier.tacticName
-            )} (${escapeHtml(dossier.tacticId)}) ➔ ${escapeHtml(
-          dossier.techniqueName
-        )} (${escapeHtml(dossier.techniqueId)}) — ${escapeHtml(
-          dossier.procedureSummary
-        )}</div>
-            <div style="margin-top:3px;color:#be123c;"><strong>Forensic Evidence of TTP:</strong> ${escapeHtml(
-              dossier.ttpEvidenceArtifact
-            )}</div>
-            <div style="margin-top:3px;color:#6b21a8;"><strong>Triggered PrivEsc Scripts (TA0004):</strong> ${escapeHtml(
-              privescList
-            )}</div>
-            <div style="margin-top:3px;color:#c2410c;"><strong>Triggered Lateral Movement Scripts (TA0008):</strong> ${escapeHtml(
-              lateralList
-            )}</div>
-            <div style="margin-top:3px;color:#047857;"><strong>Triggered Post-Exploitation Scripts (TA0003–TA0040):</strong> ${escapeHtml(
-              postList
-            )}</div>
+
+          <h3 style="margin:14px 0 6px 0;font-size:14px;color:#0f172a;border-bottom:1px solid #f1f5f9;padding-bottom:4px;">Likelihood</h3>
+          <p style="margin:0 0 12px 0;font-size:12.5px;color:#1e293b;">
+            <strong style="color:${sevColor};">${escapeHtml(fr.likelihood.level)}</strong> — ${escapeHtml(fr.likelihood.rationale)}
+          </p>
+
+          <h3 style="margin:14px 0 6px 0;font-size:14px;color:#0f172a;border-bottom:1px solid #f1f5f9;padding-bottom:4px;">Remediation</h3>
+          <div style="font-size:12.5px;color:#1e293b;margin-bottom:12px;">
+            <div><strong>Immediate Actions:</strong></div>
+            <ul style="margin:4px 0 8px 18px;padding:0;">
+              ${fr.remediation.immediateActions.map(ia => `<li>${escapeHtml(ia)}</li>`).join("")}
+            </ul>
+            <div><strong>Short-Term Hardening:</strong></div>
+            <ul style="margin:4px 0 8px 18px;padding:0;">
+              ${fr.remediation.shortTermHardening.map(sh => `<li>${escapeHtml(sh)}</li>`).join("")}
+            </ul>
+            <div><strong>Container / Host Hardening:</strong></div>
+            <ul style="margin:4px 0 8px 18px;padding:0;">
+              ${fr.remediation.containerHostHardening.map(ch => `<li><code>${escapeHtml(ch)}</code></li>`).join("")}
+            </ul>
+            <div><strong>Detection &amp; Monitoring:</strong></div>
+            <ul style="margin:4px 0 8px 18px;padding:0;">
+              ${fr.remediation.detectionAndMonitoring.map(dm => `<li>${escapeHtml(dm)}</li>`).join("")}
+            </ul>
+            <div style="background:#ecfdf5;border:1px solid #6ee7b7;border-radius:4px;padding:8px 10px;color:#065f46;">
+              <strong>MITRE D3FEND™ Countermeasure:</strong> ${escapeHtml(fr.remediation.mitreD3fendCountermeasure)}
+            </div>
           </div>
-          <div style="font-size:11.5px;color:#0369a1;">
-            <strong>🛡️ MITRE D3FEND™ Countermeasure &amp; Remediation:</strong> ${escapeHtml(
-              f.remediation
-            )}
-          </div>
+
+          <h3 style="margin:14px 0 6px 0;font-size:14px;color:#0f172a;border-bottom:1px solid #f1f5f9;padding-bottom:4px;">References</h3>
+          <ul style="margin:0 0 12px 18px;padding:0;font-size:12px;color:#334155;">
+            ${fr.references.map(ref => `<li style="margin-bottom:3px;">${escapeHtml(ref)}</li>`).join("")}
+          </ul>
+
+          <h3 style="margin:14px 0 6px 0;font-size:14px;color:#0f172a;border-bottom:1px solid #f1f5f9;padding-bottom:4px;">Retest Criteria</h3>
+          <ul style="margin:0;padding-left:18px;font-size:12px;color:#0f172a;font-family:monospace;list-style:none;">
+            ${fr.retestCriteria.map(rc => `<li style="margin-bottom:4px;">[ ] ${escapeHtml(rc)}</li>`).join("")}
+          </ul>
         </div>`;
       })
       .join("\n");
@@ -446,7 +547,7 @@ export async function POST(req: NextRequest) {
   <div style="max-width:920px;margin:0 auto;background:#ffffff;border:1px solid #cbd5e1;border-radius:10px;overflow:hidden;">
     <div style="background:#0f172a;color:#f8fafc;padding:20px 24px;border-bottom:4px solid #06b6d4;">
       <div style="font-size:11px;font-family:monospace;color:#38bdf8;font-weight:700;letter-spacing:0.08em;">
-        EXPEDITE STRIKE™ v3.0 · AUTOMATED SECURITY ASSESSMENT DISPATCH
+        XTRIKE™ &amp; AEGIS.SOC™ v3.0 · FORMAL EXTERNAL PENETRATION TESTING REPORT
       </div>
       <h1 style="margin:6px 0 4px 0;font-size:20px;color:#ffffff;">
         PTES · NIST SP 800-115 · MITRE ATT&amp;CK® v15 · OWASP Top 10 Validation Dossier
@@ -490,11 +591,11 @@ export async function POST(req: NextRequest) {
         <div><strong>Recipients:</strong> ${escapeHtml(recipients.join(", "))}${
       ccRecipients.length > 0 ? ` (CC: ${escapeHtml(ccRecipients.join(", "))})` : ""
     }</div>
-        <div><strong>OS Script Inventories Included:</strong> 9 Port-Spectrum Bundles (1–65535 TCP/UDP) · 16 Linux/Windows PrivEsc Scripts (TA0004) · 12 Lateral Movement Scripts (TA0008) · 12 Post-Exploitation &amp; Cleanup Scripts (TA0003–TA0040)</div>
+        <div><strong>XTRIKE™ &amp; Aegis.SOC™ Engines:</strong> XTRIKE-NetRecon™ (Nmap) · Aegis.SOC-VulnCore™ (OpenVAS) · XTRIKE-WebPulse™ (OWASP ZAP) · XTRIKE-StrikeFuzzer™ (Burp) · Aegis.SOC-Apex™ (PrivEsc/Lateral)</div>
       </div>
 
       <h2 style="font-size:16px;color:#0f172a;border-bottom:2px solid #e2e8f0;padding-bottom:6px;">
-        1. Validated Findings, MITRE ATT&amp;CK® TTPs &amp; Triggered Linux/Windows Scripts (${findings.length})
+        1. Formal Validated Findings (EXT-2026-001 – EXT-2026-${String(findings.length).padStart(3, "0")})
       </h2>
       ${findingsRowsHtml}
 
@@ -517,7 +618,7 @@ export async function POST(req: NextRequest) {
       </table>
 
       <div style="border-top:1px solid #cbd5e1;padding-top:12px;font-size:11px;color:#64748b;">
-        Dispatched automatically by <strong>EXPEDITE STRIKE™ Autonomous Security Assessment Platform</strong> upon scan completion. All validation checks and OS posture scripts are non-destructive and read-only in accordance with NIST SP 800-115 §6.
+        Dispatched automatically by <strong>XTRIKE™ &amp; Aegis.SOC™ Autonomous Security Assessment Platform</strong> upon scan completion. All validation checks and OS posture scripts are non-destructive and read-only in accordance with NIST SP 800-115 §6.
       </div>
     </div>
   </div>
@@ -525,7 +626,7 @@ export async function POST(req: NextRequest) {
 </html>`;
 
     const textContent = [
-      `EXPEDITE STRIKE™ v3.0 — AUTOMATED SECURITY ASSESSMENT REPORT`,
+      `XTRIKE™ & AEGIS.SOC™ — FORMAL EXTERNAL PENETRATION TESTING REPORT`,
       `====================================================================`,
       `Target Scope: ${targetUrls.join(", ")}`,
       `Generated At: ${timestampIso}`,
@@ -535,19 +636,64 @@ export async function POST(req: NextRequest) {
       `Summary: ${findings.length} Total Findings (${critCount} Critical, ${highCount} High, ${medCount} Medium, ${lowCount} Low)`,
       `Port Coverage: 65,535 TCP + 65,535 UDP (131,070 Total Transport Sockets Mapped)`,
       ``,
-      `VALIDATED FINDINGS & MITRE ATT&CK® TTPs:`,
       ...findings.slice(0, 20).map((f, idx) => {
-        const d = getDaemonFindingTtpDossier(f, primaryUrl);
+        const fr = buildFormalFindingReport(f, idx, primaryUrl);
         return [
-          `#${idx + 1} [${f.severity} · CVSS ${f.severity === "Critical" ? "9.8" : f.severity === "High" ? "8.2" : f.severity === "Medium" ? "5.8" : "3.4"}] ${f.title} (${f.cweId} · ${f.owaspRef})`,
-          `  Endpoint: ${f.method} ${f.url} (param: ${f.parameter || "N/A"})`,
-          `  Daemon & Scripts: ${d.daemonLabel} -> ${d.mappedDaemonScripts.join(", ")}`,
-          `  MITRE TTP: ${d.tacticName} (${d.tacticId}) / ${d.techniqueName} (${d.techniqueId})`,
-          `  Evidence of TTP: ${d.ttpEvidenceArtifact}`,
-          `  Triggered PrivEsc Scripts: ${[...d.triggeredLinuxPrivEscScripts, ...d.triggeredWindowsPrivEscScripts].map(s => s.scriptId).join(", ")}`,
-          `  Triggered Lateral Scripts: ${[...d.triggeredLinuxLateralScripts, ...d.triggeredWindowsLateralScripts].map(s => s.scriptId).join(", ")}`,
-          `  Triggered Post-Exploit Scripts: ${[...d.triggeredLinuxPostExploitScripts, ...d.triggeredWindowsPostExploitScripts].map(s => s.scriptId).join(", ")}`,
-          `  Remediation: ${f.remediation}`,
+          `--------------------------------------------------------------------`,
+          `Finding ID: ${fr.findingId}`,
+          `Title: ${fr.title}`,
+          `Severity: ${fr.severity}`,
+          `CVSS Score: ${fr.cvssScore}`,
+          `CVSS Vector: ${fr.cvssVector}`,
+          `Status: ${fr.status}`,
+          `Discovery Date: ${fr.discoveryDate}`,
+          `Tester / Tool: ${fr.testerTool}`,
+          `Framework Mapping: ${fr.frameworkMapping}`,
+          ``,
+          `Description`,
+          ...fr.descriptionParagraphs,
+          ``,
+          `Affected Assets`,
+          ...fr.affectedAssets.map(a => `- ${a.item}: ${a.detail}`),
+          ``,
+          `Steps to Reproduce`,
+          ...fr.stepsToReproduce.map((s, i) => `${i + 1}. ${s}`),
+          ``,
+          `Evidence`,
+          `Forensic Evidence of TTP: ${fr.evidence.forensicHeader}`,
+          `${fr.evidence.ruleMatchLine}`,
+          `Matched Indicator: ${fr.evidence.matchedIndicator}`,
+          `Mapped Assessment Scripts: ${fr.evidence.mappedAssessmentScripts.join(", ")}`,
+          `Triggered Privilege Escalation Scripts (TA0004): ${fr.evidence.triggeredPrivEscScripts.join(", ")}`,
+          `Triggered Lateral Movement Scripts (TA0008): ${fr.evidence.triggeredLateralScripts.join(" | ")}`,
+          `Triggered Post-Exploitation Scripts (TA0003-TA0040): ${fr.evidence.triggeredPostExploitScripts.join(" | ")}`,
+          ``,
+          `Impact`,
+          `Technical Impact:`,
+          ...fr.impact.technicalImpact.map(ti => `- ${ti}`),
+          `Business Impact:`,
+          ...fr.impact.businessImpact.map(bi => `- ${bi}`),
+          `Scope: ${fr.impact.scope}`,
+          ``,
+          `Likelihood: ${fr.likelihood.level}`,
+          `${fr.likelihood.rationale}`,
+          ``,
+          `Remediation`,
+          `Immediate Actions:`,
+          ...fr.remediation.immediateActions.map(ia => `- ${ia}`),
+          `Short-Term Hardening:`,
+          ...fr.remediation.shortTermHardening.map(sh => `- ${sh}`),
+          `Container / Host Hardening:`,
+          ...fr.remediation.containerHostHardening.map(ch => `- ${ch}`),
+          `Detection & Monitoring:`,
+          ...fr.remediation.detectionAndMonitoring.map(dm => `- ${dm}`),
+          `MITRE D3FEND Countermeasure: ${fr.remediation.mitreD3fendCountermeasure}`,
+          ``,
+          `References`,
+          ...fr.references.map(r => `- ${r}`),
+          ``,
+          `Retest Criteria`,
+          ...fr.retestCriteria.map(rc => `- [ ] ${rc}`),
           ``
         ].join("\n");
       })

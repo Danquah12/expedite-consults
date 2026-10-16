@@ -10,7 +10,8 @@ import {
   LINUX_WINDOWS_LATERAL_MOVEMENT_SCRIPT_INVENTORY,
   LINUX_WINDOWS_POST_EXPLOITATION_SCRIPT_INVENTORY,
   mapDetectedPortToAssessmentScript,
-  getDaemonFindingTtpDossier
+  getDaemonFindingTtpDossier,
+  buildFormalFindingReport
 } from "@/data/portAndDaemonTtpCatalog";
 import {
   Brain, Play, Square, CheckCircle, Activity, Zap,
@@ -24,16 +25,16 @@ import type { Finding } from "@/types/dast";
 
 const BACKEND_URL = "http://localhost:3001";
 
-// ─── PTES + NIST SP 800-115 + MITRE ATT&CK® v15 (14 Tactics) + OWASP Top 10 Pipeline ───
+// ─── PTES + NIST SP 800-115 + MITRE ATT&CK® v15 (14 Tactics) + OWASP Top 10 Pipeline (XTRIKE™ & Aegis.SOC™ Branded) ───
 const PIPELINE = [
-  { id: "scope",        label: "PTES P1 · NIST §2 · MITRE TA0042/TA0043 (Recon & Prep)",     icon: "🎯", color: "#4fc3f7" },
-  { id: "nmap",         label: "PTES P2 · NIST §3 · MITRE TA0043/TA0007 (Nmap NSE)",         icon: "📡", color: "#a5d6a7" },
-  { id: "openvas_scan", label: "PTES P3-4 · NIST §4 · MITRE TA0001/TA0007 (OpenVAS)",        icon: "🛡",  color: "#80cbc4" },
-  { id: "zap_scan",     label: "PTES P5 · OWASP Top 10 · MITRE TA0001–TA0006 (ZAP Suite)",   icon: "⚡", color: "#4fc3f7" },
-  { id: "burp_scan",    label: "PTES P5 · NIST §5 · MITRE TA0006/TA0011 (Burp OOB C2/SSRF)", icon: "🔍", color: "#ff8a65" },
-  { id: "post_assess",  label: "PTES P6 · MITRE TA0003–TA0010 (PrivEsc · Lateral · Exfil)",  icon: "🔑", color: "#c084fc" },
-  { id: "copilot",      label: "AI Copilot · MITRE 14-Tactic Kill-Chain Synthesis",          icon: "🧠", color: "#60a5fa" },
-  { id: "report",       label: "PTES P7 · MITRE TA0040 · EXPEDITE STRIKE™ Report & Retest",  icon: "📄", color: "#dce775" },
+  { id: "scope",        label: "PTES P1 · NIST §2 · MITRE TA0042/TA0043 (Recon & Prep)",                      icon: "🎯", color: "#4fc3f7" },
+  { id: "nmap",         label: "PTES P2 · XTRIKE-NetRecon™ · MITRE TA0043/TA0007 (Embedded Nmap NSE)",        icon: "📡", color: "#a5d6a7" },
+  { id: "openvas_scan", label: "PTES P3-4 · Aegis.SOC-VulnCore™ · MITRE TA0001/TA0007 (Embedded OpenVAS)",    icon: "🛡",  color: "#80cbc4" },
+  { id: "zap_scan",     label: "PTES P5 · XTRIKE-WebPulse™ · MITRE TA0001–TA0006 (Embedded OWASP ZAP)",       icon: "⚡", color: "#4fc3f7" },
+  { id: "burp_scan",    label: "PTES P5 · XTRIKE-StrikeFuzzer™ · MITRE TA0006/TA0011 (Embedded Burp OAST)",   icon: "🔍", color: "#ff8a65" },
+  { id: "post_assess",  label: "PTES P6 · Aegis.SOC-Apex™ · MITRE TA0003–TA0010 (PrivEsc · Lateral · Exfil)", icon: "🔑", color: "#c084fc" },
+  { id: "copilot",      label: "Aegis.SOC AI Copilot · MITRE 14-Tactic Kill-Chain Synthesis",                 icon: "🧠", color: "#60a5fa" },
+  { id: "report",       label: "PTES P7 · MITRE TA0040 · XTRIKE™ / Aegis.SOC™ Formal Report & Retest",        icon: "📄", color: "#dce775" },
 ] as const;
 
 type Stage = typeof PIPELINE[number]["id"];
@@ -95,11 +96,11 @@ const VIRTUAL_LAB_PRESET_TARGETS: TargetItem[] = [
 ];
 
 const INITIAL_SCANNERS: ScannerItem[] = [
-  { id: "nmap",         tabId: "NMAP",         stepOrder: 1, name: "Nmap NSE Recon",        enabled: true, color: "#a5d6a7", version: "TA0043/TA0007", endpoint: "local://nmap-nse",      activeRequests: 0, findingsFound: 0, status: "STANDBY" },
-  { id: "openvas",      tabId: "OPENVAS",      stepOrder: 2, name: "OpenVAS / GVM",         enabled: true, color: "#80cbc4", version: "TA0001/TA0007", endpoint: "http://127.0.0.1:9390", activeRequests: 0, findingsFound: 0, status: "STANDBY" },
-  { id: "zap",          tabId: "ZAP",          stepOrder: 3, name: "OWASP ZAP Top 10",      enabled: true, color: "#4fc3f7", version: "TA0001–TA0009", endpoint: "http://127.0.0.1:8090", activeRequests: 0, findingsFound: 0, status: "STANDBY" },
-  { id: "burp",         tabId: "BURP",         stepOrder: 4, name: "Burp Enterprise",       enabled: true, color: "#ff8a65", version: "TA0006/TA0011", endpoint: "https://burp:8443",     activeRequests: 0, findingsFound: 0, status: "STANDBY" },
-  { id: "post_exploit", tabId: "POST_EXPLOIT", stepOrder: 5, name: "PrivEsc & Lateral Lab", enabled: true, color: "#c084fc", version: "TA0003–TA0040", endpoint: "lab://post-assessment",  activeRequests: 0, findingsFound: 0, status: "STANDBY" },
+  { id: "nmap",         tabId: "NMAP",         stepOrder: 1, name: "XTRIKE-NetRecon™",    enabled: true, color: "#a5d6a7", version: "Nmap NSE · TA0043",   endpoint: "local://nmap-nse",      activeRequests: 0, findingsFound: 0, status: "STANDBY" },
+  { id: "openvas",      tabId: "OPENVAS",      stepOrder: 2, name: "Aegis.SOC-VulnCore™", enabled: true, color: "#80cbc4", version: "OpenVAS · TA0001",    endpoint: "http://127.0.0.1:9390", activeRequests: 0, findingsFound: 0, status: "STANDBY" },
+  { id: "zap",          tabId: "ZAP",          stepOrder: 3, name: "XTRIKE-WebPulse™",    enabled: true, color: "#4fc3f7", version: "OWASP ZAP · TA0001",  endpoint: "http://127.0.0.1:8090", activeRequests: 0, findingsFound: 0, status: "STANDBY" },
+  { id: "burp",         tabId: "BURP",         stepOrder: 4, name: "XTRIKE-StrikeFuzzer™",enabled: true, color: "#ff8a65", version: "Burp OAST · TA0006",  endpoint: "https://burp:8443",     activeRequests: 0, findingsFound: 0, status: "STANDBY" },
+  { id: "post_exploit", tabId: "POST_EXPLOIT", stepOrder: 5, name: "Aegis.SOC-Apex™",     enabled: true, color: "#c084fc", version: "PrivEsc/Lat · TA0004", endpoint: "lab://post-assessment",  activeRequests: 0, findingsFound: 0, status: "STANDBY" },
 ];
 
 // ─── Complete 14-Tactic MITRE ATT&CK® Enterprise v15 Kill-Chain Matrix (Start to End) ───
@@ -3055,17 +3056,15 @@ ${f.remediation}
     </tbody>
   </table>
 
-  <h2>10. Individual Finding Dossiers — Mapped Daemon Assessment Scripts, MITRE ATT&amp;CK® TTPs, 4-Stage Kill-Chain &amp; Forensic Evidence</h2>
+  <h2>10. Formal Penetration Testing Finding Dossiers (EXT-2026-001 – EXT-2026-${String(reportItems.length).padStart(3, "0")}) — XTRIKE™ &amp; Aegis.SOC™</h2>
   ${reportItems.slice(0, 18).map((f, idx) => {
     const rt = getRetestRecord(f, idx);
+    const isFixed = rt.status === "VERIFIED_FIXED" || rt.status === "MITIGATED_WAF";
     const ttpItem = f.ttp?.[0];
     const intel = getFindingDeepDiveIntel(f, primaryTargetUrl);
     const daemonDossier = getDaemonFindingTtpDossier(f, primaryTargetUrl);
-    const reproSteps = f.evidence?.reproductionSteps || [
-      "Step 1 (Baseline Request): Capture normal unauthenticated/authenticated HTTP baseline response.",
-      "Step 2 (Payload Injection): Replay request with targeted security validation payload.",
-      "Step 3 (Evidence Verification): Confirm vulnerability via response differential and execution artifact."
-    ];
+    const fr = buildFormalFindingReport(f, idx, primaryTargetUrl);
+    const reproSteps = fr.stepsToReproduce;
     const sampleEvList = f.collectedEvidence && f.collectedEvidence.length > 0
       ? f.collectedEvidence
       : [
@@ -3079,19 +3078,50 @@ ${f.remediation}
         ];
     return `
     <div class="finding-card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px;">
-        <div>
-          <span class="badge ${f.severity === "Critical" ? "crit" : "high"}">${f.severity} RISK</span>
-          <span class="badge ${rt.status === "VERIFIED_FIXED" || rt.status === "MITIGATED_WAF" ? "verified" : "std-badge"}" style="margin-left:4px;">RETEST: ${rt.status.replace(/_/g, " ")}</span>
-          <strong style="font-size:13.5px;margin-left:6px;">Finding #${idx + 1}: ${f.title}</strong>
-        </div>
-        <span style="font-size:11px;color:#475569;"><strong>${f.cweId}</strong> · OWASP ${f.owaspRef} · <span class="badge mitre-badge">${ttpItem ? `${ttpItem.tacticId}: ${ttpItem.techniqueId}` : "TA0001: T1190"}</span> · EPSS: <strong>${intel.epssScore}</strong></span>
+      <div style="border-bottom:2px solid #cbd5e1;padding-bottom:8px;margin-bottom:10px;font-size:11.5px;line-height:1.6;">
+        <div><strong>Finding ID:</strong> <code>${fr.findingId}</code> &nbsp;|&nbsp; <span class="badge ${f.severity === "Critical" ? "crit" : "high"}">${fr.severity} (CVSS ${fr.cvssScore})</span> &nbsp;|&nbsp; <span class="badge ${isFixed ? "verified" : "std-badge"}">RETEST: ${rt.status.replace(/_/g, " ")}</span></div>
+        <div><strong>Title:</strong> <strong style="font-size:14px;">${fr.title}</strong></div>
+        <div><strong>Severity:</strong> ${fr.severity} &nbsp;|&nbsp; <strong>CVSS Score:</strong> ${fr.cvssScore} &nbsp;|&nbsp; <strong>CVSS Vector:</strong> <code>${fr.cvssVector}</code></div>
+        <div><strong>Status:</strong> ${fr.status} &nbsp;|&nbsp; <strong>Discovery Date:</strong> ${fr.discoveryDate}</div>
+        <div><strong>Tester / Tool:</strong> ${fr.testerTool}</div>
+        <div><strong>Framework Mapping:</strong> ${fr.frameworkMapping} · EPSS: <strong>${intel.epssScore}</strong></div>
       </div>
-      <div style="font-size:11.5px;margin-bottom:4px;"><strong>Customer Host Affected &amp; Endpoint:</strong> <code>${f.method} ${f.url}</code> &nbsp;|&nbsp; <strong>Vulnerable Parameter:</strong> <code>${f.parameter}</code> &nbsp;|&nbsp; <strong>Validation Probe:</strong> <code>${(f.evidence?.payload || "N/A").replace(/</g, "&lt;")}</code></div>
-      <div style="font-size:11.5px;margin-bottom:4px;"><strong>Detecting Daemon &amp; Port Spectrum:</strong> <code>${daemonDossier.daemonLabel}</code> (${daemonDossier.portSpectrumCovered}) &nbsp;|&nbsp; <strong>Mapped Daemon Scripts:</strong> <code>${daemonDossier.mappedDaemonScripts.join(", ")}</code></div>
-      <div style="font-size:11.5px;margin-bottom:4px;"><strong>MITRE ATT&amp;CK® Tactic, Technique &amp; Procedure (TTP):</strong> ${daemonDossier.tacticName} (${daemonDossier.tacticId}) ➔ ${daemonDossier.techniqueName} (${daemonDossier.techniqueId}) — ${daemonDossier.procedureSummary}</div>
-      <div style="font-size:11.5px;margin-bottom:6px;"><strong>Evidence of TTP Detection:</strong> <code>${daemonDossier.ttpEvidenceArtifact.replace(/</g, "&lt;")}</code></div>
-      <div style="font-size:11.5px;margin-bottom:8px;"><strong>Technical Vulnerability Details &amp; Impact:</strong> ${f.description} ${f.impact}</div>
+
+      <div style="font-size:11.5px;margin-bottom:8px;">
+        <strong>Description:</strong><br/>
+        ${fr.descriptionParagraphs.map(p => `<div style="margin-top:4px;">${p.replace(/</g, "&lt;")}</div>`).join("")}
+      </div>
+
+      <div style="font-size:11.5px;margin-bottom:8px;">
+        <strong>Affected Assets:</strong>
+        <table style="margin-top:4px;margin-bottom:6px;font-size:10.5px;">
+          <thead>
+            <tr><th style="width:28%;">Item</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            ${fr.affectedAssets.map(a => `<tr><td><strong>${a.item}</strong></td><td><code>${a.detail.replace(/</g, "&lt;")}</code></td></tr>`).join("")}
+          </tbody>
+        </table>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;font-size:11px;">
+        <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:4px;padding:8px;">
+          <strong>Impact (Technical &amp; Business):</strong>
+          <div style="margin-top:3px;"><em>Technical Impact:</em> ${fr.impact.technicalImpact.join(" · ")}</div>
+          <div style="margin-top:3px;"><em>Business Impact:</em> ${fr.impact.businessImpact.join(" · ")}</div>
+          <div style="margin-top:3px;"><em>Scope:</em> ${fr.impact.scope}</div>
+          <div style="margin-top:4px;"><strong>Likelihood (${fr.likelihood.level}):</strong> ${fr.likelihood.rationale}</div>
+        </div>
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:4px;padding:8px;">
+          <strong>Structured Remediation &amp; Retest Criteria:</strong>
+          <div style="margin-top:3px;"><em>Immediate:</em> ${fr.remediation.immediateActions.join(" · ")}</div>
+          <div style="margin-top:3px;"><em>Short-Term:</em> ${fr.remediation.shortTermHardening.join(" · ")}</div>
+          <div style="margin-top:3px;"><em>Container/Host:</em> <code>${fr.remediation.containerHostHardening.join(" · ").replace(/</g, "&lt;")}</code></div>
+          <div style="margin-top:3px;"><em>Retest Criteria:</em> ${fr.retestCriteria.map(rc => `[${isFixed ? "x" : " "}] ${rc}`).join(" · ")}</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:#475569;margin-bottom:8px;"><strong>References:</strong> ${fr.references.join(" &nbsp;|&nbsp; ")}</div>
+      <div style="display:none;"><span>${ttpItem ? ttpItem.tacticId : ""}</span></div>
 
       <!-- PART A: COMPLETE STEP-BY-STEP EXPLOITATION PROCESS & CLI / SCRIPT REPRODUCTION -->
       <div style="background:#f8fafc;border:1px solid #cbd5e1;border-left:4px solid #0284c7;border-radius:4px;padding:8px 10px;margin-bottom:8px;">
@@ -5129,13 +5159,13 @@ ${f.remediation}
             <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
               {[
                 { id: "ALL",          label: `All Logs (${targets.length})` },
-                { id: "NMAP",         label: "📡 1. Nmap" },
-                { id: "OPENVAS",      label: "🛡️ 2. OpenVAS" },
-                { id: "ZAP",          label: "⚡ 3. OWASP ZAP (Top 10)" },
-                { id: "BURP",         label: "🔍 4. Burp" },
-                { id: "POST_EXPLOIT", label: "🔑 5. PrivEsc · Lateral · Post-Assess" },
-                { id: "AI",           label: "🧠 6. AI Copilot" },
-                { id: "REPORT",       label: `📄 7. PTES / NIST Printable Report (${reportFindings.length})` }
+                { id: "NMAP",         label: "📡 1. XTRIKE-NetRecon (Nmap)" },
+                { id: "OPENVAS",      label: "🛡️ 2. Aegis.SOC-VulnCore (OpenVAS)" },
+                { id: "ZAP",          label: "⚡ 3. XTRIKE-WebPulse (ZAP)" },
+                { id: "BURP",         label: "🔍 4. XTRIKE-Fuzzer (Burp)" },
+                { id: "POST_EXPLOIT", label: "🔑 5. Aegis.SOC-Apex (PrivEsc · Lateral)" },
+                { id: "AI",           label: "🧠 6. Aegis.SOC AI Copilot" },
+                { id: "REPORT",       label: `📄 7. Formal Pentest Report (${reportFindings.length})` }
               ].map(tab => (
                 <button
                   key={tab.id}
@@ -6162,6 +6192,7 @@ ${f.remediation}
                         const isFixed = rt.status === "VERIFIED_FIXED" || rt.status === "MITIGATED_WAF";
                         const isRetestingThis = retestingKey === fKey;
                         const ttpItem = f.ttp?.[0];
+                        const fr = buildFormalFindingReport(f, i, primaryTargetUrl);
                         return (
                           <div
                             key={fKey}
@@ -6172,11 +6203,23 @@ ${f.remediation}
                               padding: 14,
                               display: "flex",
                               flexDirection: "column",
-                              gap: 8
+                              gap: 10
                             }}
                           >
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
                               <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                                <span style={{
+                                  fontSize: 10,
+                                  fontWeight: 900,
+                                  fontFamily: "monospace",
+                                  padding: "2px 8px",
+                                  borderRadius: 4,
+                                  background: "rgba(56,189,248,0.18)",
+                                  color: "#38bdf8",
+                                  border: "1px solid rgba(56,189,248,0.4)"
+                                }}>
+                                  Finding ID: {fr.findingId}
+                                </span>
                                 <span style={{
                                   fontSize: 10,
                                   fontWeight: 900,
@@ -6185,7 +6228,7 @@ ${f.remediation}
                                   background: f.severity === "Critical" ? "rgba(244,63,94,0.2)" : "rgba(245,158,11,0.2)",
                                   color: f.severity === "Critical" ? "#f43f5e" : "#f59e0b"
                                 }}>
-                                  {f.severity.toUpperCase()} RISK
+                                  {fr.severity.toUpperCase()} (CVSS {fr.cvssScore})
                                 </span>
                                 <span style={{
                                   fontSize: 9.5,
@@ -6197,9 +6240,9 @@ ${f.remediation}
                                   color: "#e879f9",
                                   border: "1px solid rgba(192,132,252,0.35)"
                                 }}>
-                                  ⚔️ MITRE {ttpItem ? `${ttpItem.tacticId} · ${ttpItem.techniqueId}` : "TA0001 · T1190"}
+                                  ⚔️ MITRE {ttpItem ? `${ttpItem.tacticId} · ${ttpItem.techniqueId}` : "TA0004 · T1548"}
                                 </span>
-                                <strong style={{ fontSize: 13, color: "#f8fafc" }}>Finding #{i + 1} · {f.title}</strong>
+                                <strong style={{ fontSize: 13.5, color: "#f8fafc" }}>{fr.title}</strong>
                               </div>
 
                               <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
@@ -6309,17 +6352,95 @@ ${f.remediation}
                               </div>
                             </div>
 
-                            <div style={{ fontSize: 11, fontFamily: "monospace", color: "#38bdf8" }}>
-                              <strong>Customer Host Affected &amp; Endpoint:</strong> {f.method} {f.url} &nbsp;|&nbsp; <strong>Parameter:</strong> {f.parameter || "N/A"} &nbsp;|&nbsp; <strong>CWE / OWASP:</strong> {f.cweId} · {f.owaspRef}
+                            {/* ── Formal Penetration Testing Metadata Header + Affected Assets + Impact + Remediation + Retest Criteria ── */}
+                            <div style={{
+                              background: "#050811",
+                              border: "1px solid rgba(56,189,248,0.28)",
+                              borderRadius: 6,
+                              padding: "10px 12px",
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: 8,
+                              fontSize: 11
+                            }}>
+                              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 6, fontFamily: "monospace", borderBottom: "1px solid rgba(255,255,255,0.08)", paddingBottom: 8 }}>
+                                <div><strong style={{ color: "#94a3b8" }}>Finding ID:</strong> <span style={{ color: "#38bdf8", fontWeight: 800 }}>{fr.findingId}</span></div>
+                                <div><strong style={{ color: "#94a3b8" }}>Severity &amp; CVSS Score:</strong> <span style={{ color: f.severity === "Critical" ? "#f43f5e" : "#fbbf24", fontWeight: 800 }}>{fr.severity} ({fr.cvssScore})</span></div>
+                                <div><strong style={{ color: "#94a3b8" }}>CVSS Vector:</strong> <code style={{ color: "#a5f3fc" }}>{fr.cvssVector}</code></div>
+                                <div><strong style={{ color: "#94a3b8" }}>Status &amp; Discovery Date:</strong> <span style={{ color: "#10b981", fontWeight: 800 }}>{fr.status}</span> · {fr.discoveryDate}</div>
+                                <div style={{ gridColumn: "1 / -1" }}><strong style={{ color: "#94a3b8" }}>Tester / Tool:</strong> <span style={{ color: "#f8fafc" }}>{fr.testerTool}</span></div>
+                                <div style={{ gridColumn: "1 / -1" }}><strong style={{ color: "#94a3b8" }}>Framework Mapping:</strong> <span style={{ color: "#e879f9" }}>{fr.frameworkMapping}</span></div>
+                              </div>
+
+                              {/* Description */}
+                              <div style={{ color: "#e2e8f0", lineHeight: 1.5 }}>
+                                <strong style={{ color: "#38bdf8", display: "block", marginBottom: 3 }}>Description</strong>
+                                {fr.descriptionParagraphs.map((p, pIdx) => (
+                                  <div key={pIdx} style={{ marginBottom: 4 }}>{p}</div>
+                                ))}
+                              </div>
+
+                              {/* Affected Assets Table & Impact/Likelihood/Retest Criteria Grid */}
+                              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 10 }}>
+                                <div>
+                                  <strong style={{ color: "#38bdf8", display: "block", marginBottom: 4 }}>Affected Assets</strong>
+                                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10, fontFamily: "monospace" }}>
+                                    <thead>
+                                      <tr style={{ background: "rgba(56,189,248,0.1)", textAlign: "left", color: "#38bdf8" }}>
+                                        <th style={{ padding: "4px 6px", border: "1px solid rgba(255,255,255,0.1)" }}>Item</th>
+                                        <th style={{ padding: "4px 6px", border: "1px solid rgba(255,255,255,0.1)" }}>Detail</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {fr.affectedAssets.map((row, rIdx) => (
+                                        <tr key={rIdx}>
+                                          <td style={{ padding: "4px 6px", border: "1px solid rgba(255,255,255,0.08)", color: "#cbd5e1", fontWeight: 700 }}>{row.item}</td>
+                                          <td style={{ padding: "4px 6px", border: "1px solid rgba(255,255,255,0.08)", color: "#f8fafc" }}>{row.detail}</td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+
+                                <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 10.5 }}>
+                                  <div style={{ background: "rgba(244,63,94,0.06)", border: "1px solid rgba(244,63,94,0.25)", borderRadius: 5, padding: "6px 8px" }}>
+                                    <strong style={{ color: "#fda4af" }}>Impact &amp; Likelihood ({fr.likelihood.level})</strong>
+                                    <div style={{ color: "#cbd5e1", marginTop: 2 }}><strong>Technical:</strong> {fr.impact.technicalImpact.join(" · ")}</div>
+                                    <div style={{ color: "#cbd5e1", marginTop: 2 }}><strong>Business:</strong> {fr.impact.businessImpact.join(" · ")}</div>
+                                    <div style={{ color: "#fde68a", marginTop: 2 }}><strong>Likelihood:</strong> {fr.likelihood.rationale}</div>
+                                  </div>
+
+                                  <div style={{ background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.28)", borderRadius: 5, padding: "6px 8px" }}>
+                                    <strong style={{ color: "#34d399" }}>Structured Remediation (Immediate · Short-Term · Host · Detection)</strong>
+                                    <div style={{ color: "#cbd5e1", marginTop: 2 }}><strong>Immediate:</strong> {fr.remediation.immediateActions.join(" · ")}</div>
+                                    <div style={{ color: "#cbd5e1", marginTop: 2 }}><strong>Short-Term:</strong> {fr.remediation.shortTermHardening.join(" · ")}</div>
+                                    <div style={{ color: "#a5f3fc", marginTop: 2, fontFamily: "monospace", fontSize: 9.8 }}><strong>Container/Host:</strong> {fr.remediation.containerHostHardening.join(" · ")}</div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* References & Retest Criteria Checklist */}
+                              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 8, fontSize: 10, fontFamily: "monospace", borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 6 }}>
+                                <div>
+                                  <strong style={{ color: "#c084fc" }}>References:</strong>
+                                  <div style={{ color: "#cbd5e1", marginTop: 2 }}>{fr.references.join(" · ")}</div>
+                                </div>
+                                <div>
+                                  <strong style={{ color: "#10b981" }}>Retest Criteria Checklist:</strong>
+                                  <div style={{ color: "#d1fae5", marginTop: 2 }}>
+                                    {fr.retestCriteria.map((rc, rcIdx) => (
+                                      <span key={rcIdx} style={{ display: "inline-block", marginRight: 10 }}>
+                                        [{isFixed ? "x" : " "}] {rc}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
                             </div>
 
                             <div style={{ fontSize: 11, fontFamily: "monospace", color: isFixed ? "#10b981" : "#fbbf24", background: "#050811", padding: "5px 8px", borderRadius: 4, border: "1px solid rgba(255,255,255,0.06)" }}>
                               <strong>Retest Verification Ledger:</strong> {rt.retestNote}
                               {rt.verifiedAt && ` · Verified At: ${new Date(rt.verifiedAt).toLocaleTimeString()} · Hash: ${rt.verificationHash}`}
-                            </div>
-
-                            <div style={{ fontSize: 11.5, color: "var(--fg-2)", lineHeight: 1.5 }}>
-                              <strong>Security Risk &amp; Impact:</strong> {f.description} {f.impact}
                             </div>
 
                             <div style={{ display: "grid", gridTemplateColumns: "1.08fr 1fr", gap: 10 }}>
