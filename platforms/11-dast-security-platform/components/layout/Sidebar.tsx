@@ -16,9 +16,10 @@ const SECTIONS = [
   {
     title: "Command Center",
     items: [
+      { href: "/vuln-management", icon: ShieldAlert,      label: "DAST Vuln Mgmt",    badge: "0-100", hot: true },
+      { href: "/engine",          icon: Brain,            label: "Engine Brain",      badge: "AUTO", hot: true },
       { href: "/app",             icon: Swords,           label: "ÆGIS · SOC Portal", badge: "PRO", hot: true },
       { href: "/",                icon: LayoutDashboard,  label: "Security Overview" },
-      { href: "/engine",          icon: Brain,            label: "Engine Brain",      badge: "AUTO", hot: true },
       { href: "/live-scan",       icon: Waypoints,        label: "4-Stage Pipeline",  badge: "LIVE", hot: true },
     ],
   },
@@ -65,6 +66,7 @@ const SECTIONS = [
   {
     title: "Enterprise Governance",
     items: [
+      { href: "/vuln-management", icon: ShieldAlert,      label: "DAST Vuln Mgmt",    badge: "RISK", hot: true },
       { href: "/projects",        icon: FolderOpen,       label: "Projects & Orgs",   hot: true },
       { href: "/assets",          icon: Server,           label: "Asset Inventory",   hot: true },
       { href: "/pipeline",        icon: GitBranch,        label: "Findings Pipeline", hot: true },
@@ -160,6 +162,23 @@ export default function Sidebar() {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 5, overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+          <Link
+            href="/vuln-management"
+            style={{
+              textDecoration: "none",
+              fontSize: 10,
+              fontWeight: 800,
+              padding: "5px 8px",
+              borderRadius: 5,
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+              background: path === "/vuln-management" ? "rgba(244, 63, 94, 0.25)" : "rgba(244,63,94,0.12)",
+              border: `1px solid ${path === "/vuln-management" ? "#f43f5e" : "rgba(244,63,94,0.4)"}`,
+              color: "#fda4af"
+            }}
+          >
+            🎯 Vuln Mgmt (0-100)
+          </Link>
           <Link
             href="/engine"
             style={{

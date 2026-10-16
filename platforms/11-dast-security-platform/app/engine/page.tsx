@@ -23,6 +23,7 @@ import {
   Plus, Trash2, UploadCloud, ShieldCheck, Download
 } from "lucide-react";
 import type { Finding } from "@/types/dast";
+import DastVulnManagementTab from "@/components/vuln-management/DastVulnManagementTab";
 
 const BACKEND_URL = "http://localhost:3001";
 
@@ -39,7 +40,7 @@ const PIPELINE = [
 ] as const;
 
 type Stage = typeof PIPELINE[number]["id"];
-type LogTab = "ALL" | "NMAP" | "OPENVAS" | "ZAP" | "BURP" | "POST_EXPLOIT" | "AI" | "REPORT";
+type LogTab = "VULN_MGMT" | "ALL" | "NMAP" | "OPENVAS" | "ZAP" | "BURP" | "POST_EXPLOIT" | "AI" | "REPORT";
 type ZapSubTab = "OWASP10" | "ALERTS" | "SPIDER" | "ACTIVE" | "PASSIVE" | "FUZZER" | "ADDONS";
 type NmapSubTab = "PORTS" | "NSE" | "TOPOLOGY";
 type OpenvasSubTab = "NVTS" | "FEED" | "CONFIG";
@@ -5400,6 +5401,7 @@ ${f.remediation}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid var(--border)", paddingBottom: 8, flexWrap: "wrap", gap: 8 }}>
             <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
               {[
+                { id: "VULN_MGMT",    label: `🎯 DAST Vuln Management (0–100 Risk Score · ${reportFindings.length})` },
                 { id: "ALL",          label: `All Logs (${targets.length})` },
                 { id: "NMAP",         label: "📡 1. XTRIKE-NetRecon (Nmap)" },
                 { id: "OPENVAS",      label: "🛡️ 2. Aegis.SOC-VulnCore (OpenVAS)" },
@@ -5414,12 +5416,39 @@ ${f.remediation}
                   onClick={() => setActiveLogTab(tab.id as LogTab)}
                   style={{
                     fontSize: 10.5,
-                    fontWeight: 700,
+                    fontWeight: tab.id === "VULN_MGMT" ? 900 : 700,
                     padding: "5px 9px",
                     borderRadius: 4,
-                    border: activeLogTab === tab.id ? "1px solid #06b6d4" : tab.id === "REPORT" ? "1px solid rgba(220,231,117,0.4)" : tab.id === "POST_EXPLOIT" ? "1px solid rgba(192,132,252,0.4)" : "1px solid var(--border)",
-                    background: activeLogTab === tab.id ? "rgba(6,182,212,0.18)" : tab.id === "REPORT" ? "rgba(220,231,117,0.08)" : tab.id === "POST_EXPLOIT" ? "rgba(192,132,252,0.08)" : "transparent",
-                    color: activeLogTab === tab.id ? "#06b6d4" : tab.id === "REPORT" ? "#dce775" : tab.id === "POST_EXPLOIT" ? "#c084fc" : "var(--muted)",
+                    border:
+                      activeLogTab === tab.id
+                        ? "1.5px solid #06b6d4"
+                        : tab.id === "VULN_MGMT"
+                        ? "1px solid rgba(244,63,94,0.55)"
+                        : tab.id === "REPORT"
+                        ? "1px solid rgba(220,231,117,0.4)"
+                        : tab.id === "POST_EXPLOIT"
+                        ? "1px solid rgba(192,132,252,0.4)"
+                        : "1px solid var(--border)",
+                    background:
+                      activeLogTab === tab.id
+                        ? "rgba(6,182,212,0.18)"
+                        : tab.id === "VULN_MGMT"
+                        ? "rgba(244,63,94,0.14)"
+                        : tab.id === "REPORT"
+                        ? "rgba(220,231,117,0.08)"
+                        : tab.id === "POST_EXPLOIT"
+                        ? "rgba(192,132,252,0.08)"
+                        : "transparent",
+                    color:
+                      activeLogTab === tab.id
+                        ? "#06b6d4"
+                        : tab.id === "VULN_MGMT"
+                        ? "#fda4af"
+                        : tab.id === "REPORT"
+                        ? "#dce775"
+                        : tab.id === "POST_EXPLOIT"
+                        ? "#c084fc"
+                        : "var(--muted)",
                     cursor: "pointer"
                   }}
                 >
@@ -5477,8 +5506,27 @@ ${f.remediation}
             </div>
           </div>
 
-          {/* ── TAB 7: PTES / NIST SP 800-115 / MITRE ATT&CK® v15 / OWASP TOP 10 VALIDATED PRINTABLE REPORT TAB ── */}
-          {activeLogTab === "REPORT" ? (
+          {/* ── LEFT-MOST TAB: ENTERPRISE DAST VULNERABILITY MANAGEMENT & PRIORITIZATION (POWERED BY LIVE ENGINE BRAIN RESULTS) ── */}
+          {activeLogTab === "VULN_MGMT" ? (
+            <DastVulnManagementTab
+              primaryTargetUrl={primaryTargetUrl}
+              scopedTargetUrls={targets.map(t => t.url)}
+              engineResults={engineResults}
+              engineBrainFindings={reportFindings}
+              remediatedIds={Object.fromEntries(
+                Object.entries(retestMap)
+                  .filter(([, v]) => v.status === "VERIFIED_FIXED")
+                  .map(([k]) => [k, true])
+              )}
+              onTriggerSingleRetest={(idx, f) => runSingleRetest(f, idx)}
+              onTriggerBatchRetest={() =>
+                reportFindings.forEach((f, idx) =>
+                  updateRetestStatus(getFindingKey(f, idx), "VERIFIED_FIXED")
+                )
+              }
+              onOpenFormalReportTab={() => setActiveLogTab("REPORT")}
+            />
+          ) : activeLogTab === "REPORT" ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               {/* Report Top Action & Verification Banner */}
               <div style={{
