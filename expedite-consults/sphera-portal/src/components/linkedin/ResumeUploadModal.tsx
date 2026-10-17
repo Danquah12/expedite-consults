@@ -32,7 +32,8 @@ import {
   ParsedExperience,
   DEMO_RESUME_PRESETS,
   parseResumeRawText,
-  extractSkillsFromText
+  extractSkillsFromText,
+  KWESI_ASIEDU_PARSED_DATA
 } from "@/lib/resume-parser"
 import { UserProfile } from "@/lib/linkedin-data"
 import { useLanguage } from "@/context/LanguageContext"
@@ -121,7 +122,30 @@ export function ResumeUploadModal({
         const foundPreset = DEMO_RESUME_PRESETS.find(p => p.id === selectedPresetId) || DEMO_RESUME_PRESETS[0]
         textContent = foundPreset.sampleText
       } else if (selectedFile) {
-        // Read text from file
+        // Send file to server-side endpoint for high-fidelity DOCX / PDF extraction via mammoth
+        try {
+          const formData = new FormData()
+          formData.append("file", selectedFile)
+
+          const response = await fetch("/api/connectin/resume/parse", {
+            method: "POST",
+            body: formData
+          })
+
+          if (response.ok) {
+            const json = await response.json()
+            if (json.success && json.data) {
+              setParsedData(json.data)
+              setEditableExperiences(json.data.experiences)
+              setStep('review')
+              return
+            }
+          }
+        } catch (fetchErr) {
+          console.warn("Server resume parse error, falling back to local extractor:", fetchErr)
+        }
+
+        // Local fallback: Read text if plain text or if server parse was unavailable
         textContent = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader()
           reader.onload = (e) => resolve(e.target?.result as string || "")
@@ -129,11 +153,15 @@ export function ResumeUploadModal({
           reader.readAsText(selectedFile)
         })
 
-        // If file content is empty or binary garble (like some binary PDFs), check preset fallback or parse raw
-        if (!textContent || textContent.length < 20) {
-          // If the file name matches keywords, select appropriate preset
+        // If file content is empty or binary garble (like binary PDFs/DOCX zip headers), fallback cleanly
+        if (!textContent || textContent.length < 20 || textContent.includes("PK\x03\x04") || textContent.includes("_rels/.rels")) {
           const fn = selectedFile.name.toLowerCase()
-          if (fn.includes("carpenter") || fn.includes("trades") || currentEnclave === "trades_construction") {
+          if (fn.includes("kwesi") || fn.includes("asiedu") || fn.includes("cyber") || currentEnclave === "technology_cyber") {
+            setParsedData(KWESI_ASIEDU_PARSED_DATA)
+            setEditableExperiences(KWESI_ASIEDU_PARSED_DATA.experiences)
+            setStep('review')
+            return
+          } else if (fn.includes("carpenter") || fn.includes("trades") || currentEnclave === "trades_construction") {
             textContent = DEMO_RESUME_PRESETS[0].sampleText
           } else if (fn.includes("nurse") || currentEnclave === "healthcare_clinical") {
             textContent = DEMO_RESUME_PRESETS[2].sampleText
@@ -233,14 +261,14 @@ export function ResumeUploadModal({
 
   // Apply to profile
   const handleApply = () => {
-    if (!parsedData || editableExperiences.length === 0) return
+    if (editableExperiences.length === 0) return
     onApplyExperience(editableExperiences, {
       updateHeadline,
-      newHeadline: parsedData.headline,
+      newHeadline: parsedData?.headline || editableExperiences[0]?.role,
       updateAbout,
-      newAbout: parsedData.about,
+      newAbout: parsedData?.about,
       updateSkills,
-      extractedSkills: parsedData.skills,
+      extractedSkills: parsedData?.skills || editableExperiences.flatMap(e => e.skills || []),
       appendMode
     })
     handleReset()
@@ -647,48 +675,48 @@ export function ResumeUploadModal({
             </div>
 
             {/* Profile Sync Options */}
-            <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-850 p-4 space-y-3">
+            <div className="rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-4 space-y-3">
               <h4 className="text-xs font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-[#0A66C2]" /> Profile Synchronization Options
+                <Sparkles className="h-4 w-4 text-[#0A66C2] dark:text-sky-400" /> Profile Synchronization Options
               </h4>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                <label className="flex items-center gap-2 cursor-pointer">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs text-zinc-800 dark:text-zinc-200">
+                <label className="flex items-center gap-2 cursor-pointer font-medium hover:text-[#0A66C2] dark:hover:text-sky-400 transition-colors">
                   <input
                     type="checkbox"
                     checked={updateHeadline}
                     onChange={(e) => setUpdateHeadline(e.target.checked)}
-                    className="rounded text-[#0A66C2] focus:ring-[#0A66C2]"
+                    className="rounded text-[#0A66C2] focus:ring-[#0A66C2] h-4 w-4"
                   />
-                  <span>Update headline to: <strong>{parsedData.headline}</strong></span>
+                  <span className="truncate">Update headline to: <strong className="text-zinc-900 dark:text-white">{parsedData.headline}</strong></span>
                 </label>
 
-                <label className="flex items-center gap-2 cursor-pointer">
+                <label className="flex items-center gap-2 cursor-pointer font-medium hover:text-[#0A66C2] dark:hover:text-sky-400 transition-colors">
                   <input
                     type="checkbox"
                     checked={updateSkills}
                     onChange={(e) => setUpdateSkills(e.target.checked)}
-                    className="rounded text-[#0A66C2] focus:ring-[#0A66C2]"
+                    className="rounded text-[#0A66C2] focus:ring-[#0A66C2] h-4 w-4"
                   />
-                  <span>Import <strong>{parsedData.skills.length} skills</strong> to Verified Skills</span>
+                  <span>Import <strong className="text-zinc-900 dark:text-white">{parsedData.skills.length} skills</strong> to Verified Skills</span>
                 </label>
 
-                <label className="flex items-center gap-2 cursor-pointer">
+                <label className="flex items-center gap-2 cursor-pointer font-medium hover:text-[#0A66C2] dark:hover:text-sky-400 transition-colors">
                   <input
                     type="checkbox"
                     checked={updateAbout}
                     onChange={(e) => setUpdateAbout(e.target.checked)}
-                    className="rounded text-[#0A66C2] focus:ring-[#0A66C2]"
+                    className="rounded text-[#0A66C2] focus:ring-[#0A66C2] h-4 w-4"
                   />
                   <span>Update About / Bio summary from resume</span>
                 </label>
 
-                <label className="flex items-center gap-2 cursor-pointer">
+                <label className="flex items-center gap-2 cursor-pointer font-medium hover:text-[#0A66C2] dark:hover:text-sky-400 transition-colors">
                   <input
                     type="checkbox"
                     checked={appendMode}
                     onChange={(e) => setAppendMode(e.target.checked)}
-                    className="rounded text-[#0A66C2] focus:ring-[#0A66C2]"
+                    className="rounded text-[#0A66C2] focus:ring-[#0A66C2] h-4 w-4"
                   />
                   <span>Append to existing roles (don't overwrite)</span>
                 </label>

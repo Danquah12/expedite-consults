@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import {
   Search,
   House,
@@ -93,6 +93,41 @@ export function LinkedInNavbar({
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [connectedIds, setConnectedIds] = useState<Set<string>>(new Set())
   const { t } = useLanguage()
+
+  const moreMenuRef = useRef<HTMLDivElement>(null)
+  const meMenuRef = useRef<HTMLDivElement>(null)
+
+  // Document-level click-outside and Escape key listener to close menus reliably
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Node
+      if (isMoreOpen && moreMenuRef.current && !moreMenuRef.current.contains(target)) {
+        setIsMoreOpen(false)
+      }
+      if (isMeOpen && meMenuRef.current && !meMenuRef.current.contains(target)) {
+        setIsMeOpen(false)
+      }
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsMoreOpen(false)
+        setIsMeOpen(false)
+      }
+    }
+
+    if (isMoreOpen || isMeOpen) {
+      document.addEventListener("mousedown", handleOutsideClick)
+      document.addEventListener("touchstart", handleOutsideClick)
+      document.addEventListener("keydown", handleKeyDown)
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick)
+      document.removeEventListener("touchstart", handleOutsideClick)
+      document.removeEventListener("keydown", handleKeyDown)
+    }
+  }, [isMoreOpen, isMeOpen])
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -488,7 +523,7 @@ export function LinkedInNavbar({
         {/* Right Side Controls (More Dropdown + AI Assistant + Notifications + Me Profile + Theme) */}
         <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 pl-1">
           {/* "More ▾" Dropdown Menu (Outside scroll container so never clipped!) */}
-          <div className="relative shrink-0">
+          <div ref={moreMenuRef} className="relative shrink-0">
             <button
               onClick={() => {
                 setIsMoreOpen(!isMoreOpen)
@@ -511,13 +546,24 @@ export function LinkedInNavbar({
               <>
                 <div className="fixed inset-0 z-50 bg-black/10" onClick={() => setIsMoreOpen(false)} />
                 <div className="absolute right-0 top-12 z-50 w-72 rounded-2xl border border-zinc-200 bg-white p-3 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 space-y-2">
-                  <div className="border-b border-zinc-100 pb-2 dark:border-zinc-800">
-                    <p className="font-bold text-xs text-zinc-900 dark:text-zinc-100">
-                      {t("connectin_modules_hubs", "ConnectIn Modules & Hubs")}
-                    </p>
-                    <p className="text-[10px] text-zinc-400">
-                      {t("enterprise_solutions_desc", "Enterprise Solutions, Company Pages & Trust Operations")}
-                    </p>
+                  <div className="flex items-center justify-between border-b border-zinc-100 pb-2 dark:border-zinc-800">
+                    <div>
+                      <p className="font-bold text-xs text-zinc-900 dark:text-zinc-100">
+                        {t("connectin_modules_hubs", "ConnectIn Modules & Hubs")}
+                      </p>
+                      <p className="text-[10px] text-zinc-400">
+                        {t("enterprise_solutions_desc", "Enterprise Solutions, Company Pages & Trust Operations")}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsMoreOpen(false)}
+                      className="rounded-full p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors shrink-0 cursor-pointer"
+                      title="Close"
+                      aria-label="Close menu"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
                   </div>
 
                   <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
@@ -602,7 +648,7 @@ export function LinkedInNavbar({
           </button>
 
           {/* "Me" Profile Menu Dropdown */}
-          <div className="relative">
+          <div ref={meMenuRef} className="relative">
             <button
               onClick={() => {
                 setIsMeOpen(!isMeOpen)
@@ -644,33 +690,44 @@ export function LinkedInNavbar({
                   onClick={() => setIsMeOpen(false)}
                 />
                 <div className="absolute right-0 top-12 z-50 w-72 rounded-2xl border border-zinc-200 bg-white p-3.5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95">
-                  <div className="flex items-start gap-3 border-b border-zinc-100 pb-3 dark:border-zinc-800">
-                    <img
-                      src={user.avatar}
-                      alt={user.name}
-                      className="h-12 w-12 rounded-full object-cover ring-2 ring-[#0A66C2]/20 shrink-0"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1">
-                        <p className="font-bold text-sm text-zinc-900 truncate dark:text-zinc-100">
-                          {user.name}
+                  <div className="flex items-start justify-between border-b border-zinc-100 pb-3 dark:border-zinc-800">
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <img
+                        src={user.avatar}
+                        alt={user.name}
+                        className="h-12 w-12 rounded-full object-cover ring-2 ring-[#0A66C2]/20 shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1">
+                          <p className="font-bold text-sm text-zinc-900 truncate dark:text-zinc-100">
+                            {user.name}
+                          </p>
+                          <ShieldCheck className="h-4 w-4 text-[#0A66C2] shrink-0" />
+                        </div>
+                        <p className="text-xs text-zinc-500 truncate dark:text-zinc-400">
+                          {user.headline}
                         </p>
-                        <ShieldCheck className="h-4 w-4 text-[#0A66C2] shrink-0" />
+                        {user.professionEnclave && (() => {
+                          const enc = findEnclaveById(user.professionEnclave)
+                          return (
+                            <div className="mt-1 flex items-center gap-1">
+                              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                                {enc?.icon || '🛡️'} {enc?.shortName || enc?.name || 'Verified Enclave'}
+                              </span>
+                            </div>
+                          )
+                        })()}
                       </div>
-                      <p className="text-xs text-zinc-500 truncate dark:text-zinc-400">
-                        {user.headline}
-                      </p>
-                      {user.professionEnclave && (() => {
-                        const enc = findEnclaveById(user.professionEnclave)
-                        return (
-                          <div className="mt-1 flex items-center gap-1">
-                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                              {enc?.icon || '🛡️'} {enc?.shortName || enc?.name || 'Verified Enclave'}
-                            </span>
-                          </div>
-                        )
-                      })()}
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsMeOpen(false)}
+                      className="rounded-full p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors ml-1 shrink-0 cursor-pointer"
+                      title="Close"
+                      aria-label="Close profile menu"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
                   </div>
 
                   <div className="pt-2 space-y-1.5">

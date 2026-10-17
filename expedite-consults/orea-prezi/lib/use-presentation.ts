@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ClusterData, SlideData, CameraState } from "./types";
 import { CLUSTERS, ALL_SLIDES, PRESENTATION_META } from "@/data/presentation-data";
 import { soundFX } from "./audio";

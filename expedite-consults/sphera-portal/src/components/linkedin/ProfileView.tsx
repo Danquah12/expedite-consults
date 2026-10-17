@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useRef } from "react"
 import {
   MapPin,
   Briefcase,
@@ -37,7 +37,10 @@ import {
   Tag,
   ArrowRight,
   Trash2,
-  Upload
+  Upload,
+  Camera,
+  Image as ImageIcon,
+  RefreshCw
 } from "lucide-react"
 import { useLanguage } from "@/context/LanguageContext"
 import { ResumeUploadModal } from "./ResumeUploadModal"
@@ -151,8 +154,22 @@ export function ProfileView({
       onUpdateUser(updatedUser)
     }
 
-    setResumeSuccessBanner(`🎉 Successfully imported ${newExperiences.length} career positions from your resume!`)
+    // Immediately close modal and switch to the Experience section of the workspace
+    setIsResumeModalOpen(false)
+    setWorkspaceSection('experience')
+
+    setResumeSuccessBanner(`🎉 Successfully saved ${newExperiences.length} career positions to your Workspace experience!`)
     setTimeout(() => setResumeSuccessBanner(null), 6000)
+
+    // Smooth scroll down to the experience section
+    if (typeof window !== "undefined") {
+      setTimeout(() => {
+        const el = document.getElementById("workspace-experience-section")
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" })
+        }
+      }, 100)
+    }
   }
 
   const handleSaveManualExperience = (exp: ParsedExperience) => {
@@ -237,13 +254,178 @@ export function ProfileView({
     })
   }
 
+  // Photo & Cover Attachment State
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false)
+  const [photoModalTab, setPhotoModalTab] = useState<'avatar' | 'cover'>('avatar')
+  const [customAvatarUrl, setCustomAvatarUrl] = useState("")
+  const [customCoverUrl, setCustomCoverUrl] = useState("")
+  const [photoSuccessMsg, setPhotoSuccessMsg] = useState<string | null>(null)
+
+  const avatarFileInputRef = useRef<HTMLInputElement>(null)
+  const coverFileInputRef = useRef<HTMLInputElement>(null)
+  const editAvatarFileInputRef = useRef<HTMLInputElement>(null)
+  const editCoverFileInputRef = useRef<HTMLInputElement>(null)
+
   // Edit Profile Modal State
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false)
   const [editName, setEditName] = useState(user.name)
   const [editHeadline, setEditHeadline] = useState(user.headline)
   const [editLocation, setEditLocation] = useState(user.location)
   const [editAbout, setEditAbout] = useState(user.about)
+  const [editAvatar, setEditAvatar] = useState(user.avatar)
+  const [editCover, setEditCover] = useState(user.coverImage || "")
   const [editSavedSuccess, setEditSavedSuccess] = useState(false)
+
+  const handleUpdateAvatar = (newAvatarUrl: string) => {
+    const updated: UserProfile = {
+      ...user,
+      avatar: newAvatarUrl
+    }
+    saveStoredUser(updated)
+    if (onUpdateUser) {
+      onUpdateUser(updated)
+    }
+    setEditAvatar(newAvatarUrl)
+    setPhotoSuccessMsg("Profile picture updated successfully!")
+    setTimeout(() => setPhotoSuccessMsg(null), 4000)
+    setIsPhotoModalOpen(false)
+  }
+
+  const handleUpdateCover = (newCoverUrl: string) => {
+    const updated: UserProfile = {
+      ...user,
+      coverImage: newCoverUrl
+    }
+    saveStoredUser(updated)
+    if (onUpdateUser) {
+      onUpdateUser(updated)
+    }
+    setEditCover(newCoverUrl)
+    setPhotoSuccessMsg("Cover photo updated successfully!")
+    setTimeout(() => setPhotoSuccessMsg(null), 4000)
+    setIsPhotoModalOpen(false)
+  }
+
+  const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string
+      if (dataUrl) {
+        handleUpdateAvatar(dataUrl)
+      }
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleCoverFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string
+      if (dataUrl) {
+        handleUpdateCover(dataUrl)
+      }
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleEditAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string
+      if (dataUrl) {
+        setEditAvatar(dataUrl)
+      }
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleEditCoverFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string
+      if (dataUrl) {
+        setEditCover(dataUrl)
+      }
+    }
+    reader.readAsDataURL(file)
+  }
+
+  // WhatsApp & Multi-Social Share State
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false)
+  const [shareCopied, setShareCopied] = useState(false)
+
+  const getProfileSharePayload = () => {
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://sphera-portal.vercel.app"
+    const profileUrl = `${origin}/connectin`
+    const headlineSnippet = user.headline || "ConnectIn Professional"
+    const shareText = `👋 Connect with ${user.name} on ConnectIn!\n\n🏛️ ${headlineSnippet}\n📍 ${user.location}\n\nView full verified portfolio & career experience:\n${profileUrl}`
+    return { origin, profileUrl, headlineSnippet, shareText }
+  }
+
+  const handleShareToWhatsApp = () => {
+    const { shareText } = getProfileSharePayload()
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(shareText).catch(() => {})
+    }
+    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`
+    window.open(whatsappUrl, "_blank")
+    setPhotoSuccessMsg("Opening WhatsApp & copied profile link to clipboard!")
+    setTimeout(() => setPhotoSuccessMsg(null), 4000)
+  }
+
+  const handleShareToFacebook = () => {
+    const { profileUrl, shareText } = getProfileSharePayload()
+    const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(profileUrl)}&quote=${encodeURIComponent(shareText)}`
+    window.open(fbUrl, "_blank", "width=600,height=500")
+  }
+
+  const handleShareToTwitter = () => {
+    const { profileUrl, headlineSnippet } = getProfileSharePayload()
+    const text = `Connect with ${user.name} on ConnectIn (${headlineSnippet}):`
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(profileUrl)}`
+    window.open(twitterUrl, "_blank", "width=600,height=500")
+  }
+
+  const handleShareToInstagram = async () => {
+    const { shareText } = getProfileSharePayload()
+    try {
+      if (typeof navigator !== "undefined" && navigator.clipboard) {
+        await navigator.clipboard.writeText(shareText)
+      }
+    } catch {}
+    setPhotoSuccessMsg("Profile info & link copied to clipboard! Opening Instagram...")
+    setTimeout(() => setPhotoSuccessMsg(null), 4000)
+    window.open("https://www.instagram.com/", "_blank")
+  }
+
+  const handleShareToLinkedIn = () => {
+    const { profileUrl } = getProfileSharePayload()
+    const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(profileUrl)}`
+    window.open(linkedinUrl, "_blank", "width=600,height=500")
+  }
+
+  const handleShareToEmail = () => {
+    const { profileUrl, shareText } = getProfileSharePayload()
+    const subject = `Connect with ${user.name} on ConnectIn`
+    window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(shareText)}`, "_blank")
+  }
+
+  const handleCopyProfileLink = async () => {
+    const { profileUrl } = getProfileSharePayload()
+    try {
+      await navigator.clipboard.writeText(profileUrl)
+      setShareCopied(true)
+      setTimeout(() => setShareCopied(false), 3000)
+    } catch {}
+  }
 
   // Developer / Company Products State
   const [myProducts, setMyProducts] = useState<VendorProductItem[]>(MY_PRODUCTS_DATA)
@@ -266,6 +448,12 @@ export function ProfileView({
       role: (user as any).role || 'personal'
     })
     updated.about = editAbout.trim()
+    if (editAvatar.trim()) {
+      updated.avatar = editAvatar.trim()
+    }
+    if (editCover.trim()) {
+      updated.coverImage = editCover.trim()
+    }
 
     saveStoredUser(updated)
     if (onUpdateUser) {
@@ -397,26 +585,79 @@ export function ProfileView({
       {/* ========================================================================= */}
       {workspaceSection === 'profile' && (
         <div className="space-y-5">
+          {photoSuccessMsg && (
+            <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 p-3 text-emerald-800 dark:text-emerald-200 text-xs font-semibold flex items-center justify-between shadow-xs animate-in fade-in">
+              <span className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                <span>{photoSuccessMsg}</span>
+              </span>
+              <button onClick={() => setPhotoSuccessMsg(null)} className="text-emerald-500 hover:text-emerald-700 cursor-pointer">✕</button>
+            </div>
+          )}
+
           <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
             {/* Banner Cover */}
-            <div className="relative h-44 w-full bg-gradient-to-r from-[#0A66C2] via-indigo-700 to-purple-800">
+            <div className="relative h-44 w-full bg-gradient-to-r from-[#0A66C2] via-indigo-700 to-purple-800 overflow-hidden group">
               <img
                 src={user.coverImage || "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1200&auto=format&fit=crop&q=80"}
                 alt="Banner"
-                className="h-full w-full object-cover opacity-60"
+                className="h-full w-full object-cover opacity-75"
               />
+              {/* Button to attach / change cover picture */}
+              <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPhotoModalTab('cover')
+                    setIsPhotoModalOpen(true)
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/60 hover:bg-black/85 text-white backdrop-blur-md border border-white/25 text-xs font-semibold shadow-lg transition-all cursor-pointer"
+                  title="Change Cover Banner Photo"
+                >
+                  <Camera className="h-3.5 w-3.5" />
+                  <span>Change Cover</span>
+                </button>
+              </div>
             </div>
 
             {/* Profile Avatar & Primary Details */}
             <div className="relative px-6 pb-6 pt-0">
               <div className="flex flex-col sm:flex-row sm:items-end justify-between -mt-16 gap-4">
                 <div className="flex items-end gap-4">
-                  <div className="relative h-28 w-28 rounded-2xl border-4 border-white bg-white shadow-xl overflow-hidden dark:border-zinc-900 shrink-0">
-                    <img
-                      src={user.avatar}
-                      alt={user.name}
-                      className="h-full w-full object-cover"
-                    />
+                  <div className="relative group shrink-0">
+                    <div className="relative h-28 w-28 rounded-2xl border-4 border-white bg-white shadow-xl overflow-hidden dark:border-zinc-900">
+                      <img
+                        src={user.avatar}
+                        alt={user.name}
+                        className="h-full w-full object-cover"
+                      />
+                      {/* Hover Overlay Button to Change Avatar */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPhotoModalTab('avatar')
+                          setIsPhotoModalOpen(true)
+                        }}
+                        className="absolute inset-0 bg-black/55 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-opacity cursor-pointer backdrop-blur-2xs"
+                        title="Attach or change profile photo"
+                      >
+                        <Camera className="h-6 w-6 mb-1 text-white" />
+                        <span className="text-[10px] font-bold">Change Photo</span>
+                      </button>
+                    </div>
+
+                    {/* Camera icon badge at bottom right */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPhotoModalTab('avatar')
+                        setIsPhotoModalOpen(true)
+                      }}
+                      className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white flex items-center justify-center shadow-md border-2 border-white dark:border-zinc-900 cursor-pointer transition-transform hover:scale-110"
+                      title="Upload or Change Profile Photo"
+                    >
+                      <Camera className="h-4 w-4" />
+                    </button>
                   </div>
 
                   <div className="space-y-1 mb-1">
@@ -445,23 +686,51 @@ export function ProfileView({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                  {/* Direct 1-Click WhatsApp Share Button */}
                   <button
+                    type="button"
+                    onClick={handleShareToWhatsApp}
+                    className="rounded-full bg-[#25D366] hover:bg-[#20ba5a] text-white px-3.5 py-2 text-xs font-bold shadow-md shadow-emerald-500/20 flex items-center gap-1.5 transition-all cursor-pointer hover:scale-105 active:scale-95"
+                    title="Share profile directly to WhatsApp friends"
+                  >
+                    <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
+                      <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.303-.058.116-.087.188-.173.289l-.26.303c-.087.087-.177.181-.076.354.101.173.449.741.964 1.201.662.591 1.221.774 1.394.86.173.086.275.072.376-.043.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.043.072.043.419-.101.824z" />
+                      <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2.348 21.652l4.636-1.04A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.25c-1.63 0-3.14-.492-4.404-1.336l-.315-.21-2.753.618.63-2.683-.231-.328A8.212 8.212 0 013.75 12c0-4.549 3.701-8.25 8.25-8.25s8.25 3.701 8.25 8.25-3.701 8.25-8.25 8.25z" />
+                    </svg>
+                    <span>Share on WhatsApp</span>
+                  </button>
+
+                  {/* Share Menu Trigger */}
+                  <button
+                    type="button"
+                    onClick={() => setIsShareModalOpen(true)}
+                    className="rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-3.5 py-2 text-xs font-bold border border-zinc-200 dark:border-zinc-700 shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer"
+                    title="Share Profile Link & Channels"
+                  >
+                    <Share2 className="h-3.5 w-3.5 text-zinc-500 dark:text-zinc-400" />
+                    <span>Share</span>
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => {
                       setEditName(user.name)
                       setEditHeadline(user.headline)
                       setEditLocation(user.location)
                       setEditAbout(user.about)
+                      setEditAvatar(user.avatar)
+                      setEditCover(user.coverImage || "")
                       setIsEditProfileOpen(true)
                     }}
                     className="rounded-full bg-sky-50 dark:bg-sky-950/40 border border-sky-300 dark:border-sky-800 hover:bg-sky-100 dark:hover:bg-sky-900/60 px-4 py-2 text-xs font-bold text-[#0A66C2] dark:text-sky-300 shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
                   >
                     <Edit3 className="h-3.5 w-3.5" />
-                    <span>Edit Profile &amp; Name</span>
+                    <span>Edit Profile</span>
                   </button>
                   <button
                     onClick={() => setWorkspaceSection('products')}
-                    className="rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 px-4 py-2 text-xs font-bold text-white shadow-md flex items-center gap-1.5"
+                    className="rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 px-4 py-2 text-xs font-bold text-white shadow-md flex items-center gap-1.5 cursor-pointer"
                   >
                     <Store className="h-3.5 w-3.5" />
                     <span>Manage My Products</span>
@@ -948,7 +1217,7 @@ export function ProfileView({
       {/* 5. EXPERIENCE */}
       {/* ========================================================================= */}
       {workspaceSection === 'experience' && (
-        <div className="space-y-4">
+        <div id="workspace-experience-section" className="space-y-4">
           {/* Header Toolbar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-zinc-200 dark:border-zinc-800">
             <div>
@@ -1444,6 +1713,77 @@ export function ProfileView({
             </div>
           ) : (
             <form onSubmit={handleSaveProfile} className="space-y-4 pt-2 text-xs">
+              {/* Profile Photo & Cover Attachment */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700">
+                <div className="space-y-1.5">
+                  <label className="font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
+                    <Camera className="h-3.5 w-3.5 text-[#0A66C2]" /> Profile Avatar Photo
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <img src={editAvatar || user.avatar} alt="Avatar" className="h-10 w-10 rounded-full object-cover border-2 border-[#0A66C2] shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <input
+                        type="text"
+                        value={editAvatar}
+                        onChange={(e) => setEditAvatar(e.target.value)}
+                        placeholder="https://... or choose file"
+                        className="w-full text-[11px] rounded-lg border border-zinc-300 p-1.5 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => editAvatarFileInputRef.current?.click()}
+                      className="px-2.5 py-1 text-[11px] font-semibold rounded-md bg-[#0A66C2] text-white hover:bg-[#004182] flex items-center gap-1 cursor-pointer"
+                    >
+                      <Upload className="h-3 w-3" /> Upload File
+                    </button>
+                    <input
+                      type="file"
+                      ref={editAvatarFileInputRef}
+                      onChange={handleEditAvatarFileChange}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
+                    <ImageIcon className="h-3.5 w-3.5 text-[#0A66C2]" /> Cover Banner Image
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <img src={editCover || user.coverImage || "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1200&auto=format&fit=crop&q=80"} alt="Cover" className="h-10 w-16 rounded-md object-cover border border-zinc-300 dark:border-zinc-700 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <input
+                        type="text"
+                        value={editCover}
+                        onChange={(e) => setEditCover(e.target.value)}
+                        placeholder="https://... or choose file"
+                        className="w-full text-[11px] rounded-lg border border-zinc-300 p-1.5 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => editCoverFileInputRef.current?.click()}
+                      className="px-2.5 py-1 text-[11px] font-semibold rounded-md bg-zinc-700 text-white hover:bg-zinc-900 flex items-center gap-1 cursor-pointer"
+                    >
+                      <Upload className="h-3 w-3" /> Upload File
+                    </button>
+                    <input
+                      type="file"
+                      ref={editCoverFileInputRef}
+                      onChange={handleEditCoverFileChange}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div className="space-y-1">
                 <label className="font-bold text-zinc-700 dark:text-zinc-300">Full Name</label>
                 <input
@@ -1495,18 +1835,223 @@ export function ProfileView({
                 <button
                   type="button"
                   onClick={() => setIsEditProfileOpen(false)}
-                  className="rounded-lg bg-zinc-200 px-4 py-2 font-semibold text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200"
+                  className="rounded-lg bg-zinc-200 px-4 py-2 font-semibold text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="rounded-lg bg-[#0A66C2] hover:bg-[#004182] px-5 py-2 font-bold text-white shadow-md transition-colors"
+                  className="rounded-lg bg-[#0A66C2] hover:bg-[#004182] px-5 py-2 font-bold text-white shadow-md transition-colors cursor-pointer"
                 >
                   Save Profile ✓
                 </button>
               </div>
             </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dedicated Profile & Cover Photo Attachment Dialog */}
+      <Dialog open={isPhotoModalOpen} onOpenChange={setIsPhotoModalOpen}>
+        <DialogContent className="max-w-md rounded-3xl bg-white p-5 sm:p-6 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+              <Camera className="h-5 w-5 text-[#0A66C2]" />
+              <span>{photoModalTab === 'avatar' ? 'Attach Profile Picture' : 'Attach Cover Banner Photo'}</span>
+            </DialogTitle>
+          </DialogHeader>
+
+          {/* Tab Switcher */}
+          <div className="flex rounded-xl bg-zinc-100 dark:bg-zinc-800 p-1 text-xs font-bold mt-2">
+            <button
+              type="button"
+              onClick={() => setPhotoModalTab('avatar')}
+              className={`flex-1 py-1.5 rounded-lg transition-all cursor-pointer ${
+                photoModalTab === 'avatar'
+                  ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
+                  : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900"
+              }`}
+            >
+              👤 Profile Photo
+            </button>
+            <button
+              type="button"
+              onClick={() => setPhotoModalTab('cover')}
+              className={`flex-1 py-1.5 rounded-lg transition-all cursor-pointer ${
+                photoModalTab === 'cover'
+                  ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
+                  : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900"
+              }`}
+            >
+              🖼️ Cover Banner
+            </button>
+          </div>
+
+          {photoModalTab === 'avatar' ? (
+            <div className="space-y-4 pt-2">
+              {/* Current Avatar Preview */}
+              <div className="flex flex-col items-center justify-center p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800">
+                <div className="relative h-24 w-24 rounded-full overflow-hidden border-4 border-[#0A66C2] shadow-lg">
+                  <img src={user.avatar} alt={user.name} className="h-full w-full object-cover" />
+                </div>
+                <p className="text-xs font-bold text-zinc-800 dark:text-zinc-200 mt-2">{user.name}</p>
+                <p className="text-[11px] text-zinc-500">Live ConnectIn Profile Picture</p>
+              </div>
+
+              {/* Option 1: Upload from device */}
+              <div>
+                <input
+                  type="file"
+                  ref={avatarFileInputRef}
+                  onChange={handleAvatarFileChange}
+                  accept="image/*"
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => avatarFileInputRef.current?.click()}
+                  className="w-full py-2.5 px-4 rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white font-bold text-xs shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 cursor-pointer transition-all"
+                >
+                  <Upload className="h-4 w-4" />
+                  <span>Upload Photo from Computer / Phone</span>
+                </button>
+              </div>
+
+              {/* Option 2: Enter direct image URL */}
+              <div className="space-y-1.5 pt-1">
+                <label className="text-[11px] font-bold text-zinc-600 dark:text-zinc-300">Or Paste Image URL:</label>
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={customAvatarUrl}
+                    onChange={(e) => setCustomAvatarUrl(e.target.value)}
+                    placeholder="https://images.unsplash.com/..."
+                    className="flex-1 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-1.5 text-xs text-zinc-900 dark:text-zinc-100"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (customAvatarUrl.trim()) {
+                        handleUpdateAvatar(customAvatarUrl.trim())
+                        setCustomAvatarUrl("")
+                      }
+                    }}
+                    disabled={!customAvatarUrl.trim()}
+                    className="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-black text-white text-xs font-bold cursor-pointer disabled:opacity-40"
+                  >
+                    Apply
+                  </button>
+                </div>
+              </div>
+
+              {/* Option 3: Executive Headshot Presets */}
+              <div className="space-y-2 pt-1 border-t border-zinc-100 dark:border-zinc-800">
+                <label className="text-[11px] font-bold text-zinc-600 dark:text-zinc-300">Choose Executive Preset:</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { name: "Cyber Arch", url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80" },
+                    { name: "Principal Eng", url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80" },
+                    { name: "Executive", url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80" },
+                    { name: "Craftsman", url: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&auto=format&fit=crop&q=80" },
+                    { name: "Clinical Lead", url: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80" },
+                    { name: "Initials Badge", url: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.name)}&backgroundColor=0a66c2` }
+                  ].map((preset) => (
+                    <button
+                      key={preset.name}
+                      type="button"
+                      onClick={() => handleUpdateAvatar(preset.url)}
+                      className="p-1.5 rounded-xl border border-zinc-200 dark:border-zinc-700 hover:border-[#0A66C2] flex flex-col items-center gap-1 transition-all cursor-pointer hover:bg-blue-50 dark:hover:bg-zinc-800"
+                    >
+                      <img src={preset.url} alt={preset.name} className="h-10 w-10 rounded-full object-cover" />
+                      <span className="text-[10px] font-semibold text-zinc-700 dark:text-zinc-300 truncate max-w-[80px]">{preset.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4 pt-2">
+              {/* Current Cover Preview */}
+              <div className="p-2 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800">
+                <div className="relative h-24 w-full rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-700">
+                  <img
+                    src={user.coverImage || "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1200&auto=format&fit=crop&q=80"}
+                    alt="Cover Banner"
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                <p className="text-[11px] text-zinc-500 text-center mt-1.5">Live Profile Cover Banner</p>
+              </div>
+
+              {/* Option 1: Upload from device */}
+              <div>
+                <input
+                  type="file"
+                  ref={coverFileInputRef}
+                  onChange={handleCoverFileChange}
+                  accept="image/*"
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => coverFileInputRef.current?.click()}
+                  className="w-full py-2.5 px-4 rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white font-bold text-xs shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 cursor-pointer transition-all"
+                >
+                  <Upload className="h-4 w-4" />
+                  <span>Upload Cover Banner from Computer / Phone</span>
+                </button>
+              </div>
+
+              {/* Option 2: Enter direct image URL */}
+              <div className="space-y-1.5 pt-1">
+                <label className="text-[11px] font-bold text-zinc-600 dark:text-zinc-300">Or Paste Banner URL:</label>
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={customCoverUrl}
+                    onChange={(e) => setCustomCoverUrl(e.target.value)}
+                    placeholder="https://images.unsplash.com/..."
+                    className="flex-1 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-1.5 text-xs text-zinc-900 dark:text-zinc-100"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (customCoverUrl.trim()) {
+                        handleUpdateCover(customCoverUrl.trim())
+                        setCustomCoverUrl("")
+                      }
+                    }}
+                    disabled={!customCoverUrl.trim()}
+                    className="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-black text-white text-xs font-bold cursor-pointer disabled:opacity-40"
+                  >
+                    Apply
+                  </button>
+                </div>
+              </div>
+
+              {/* Option 3: Executive Cover Presets */}
+              <div className="space-y-2 pt-1 border-t border-zinc-100 dark:border-zinc-800">
+                <label className="text-[11px] font-bold text-zinc-600 dark:text-zinc-300">Choose Professional Banner Preset:</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { name: "DoD Cyber Ops", url: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&auto=format&fit=crop&q=80" },
+                    { name: "LinkedIn Blue", url: "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1200&auto=format&fit=crop&q=80" },
+                    { name: "Blueprint Architecture", url: "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=1200&auto=format&fit=crop&q=80" },
+                    { name: "Enterprise Campus", url: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80" }
+                  ].map((preset) => (
+                    <button
+                      key={preset.name}
+                      type="button"
+                      onClick={() => handleUpdateCover(preset.url)}
+                      className="p-1.5 rounded-xl border border-zinc-200 dark:border-zinc-700 hover:border-[#0A66C2] flex flex-col items-center gap-1 transition-all cursor-pointer hover:bg-blue-50 dark:hover:bg-zinc-800"
+                    >
+                      <img src={preset.url} alt={preset.name} className="h-12 w-full rounded-lg object-cover" />
+                      <span className="text-[10px] font-semibold text-zinc-700 dark:text-zinc-300 truncate w-full text-center">{preset.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           )}
         </DialogContent>
       </Dialog>
@@ -1519,6 +2064,137 @@ export function ProfileView({
         currentHeadline={user.headline}
         currentEnclave={effectiveEnclaveId}
       />
+
+      {/* Share Profile Dialog (WhatsApp, LinkedIn, Copy, etc.) */}
+      <Dialog open={isShareModalOpen} onOpenChange={setIsShareModalOpen}>
+        <DialogContent className="max-w-md rounded-3xl bg-white p-5 sm:p-6 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+              <Share2 className="h-5 w-5 text-[#0A66C2]" />
+              <span>Share Profile &amp; Workspace</span>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 pt-2 text-xs">
+            {/* User Card Preview */}
+            <div className="flex items-center gap-3 p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800">
+              <img
+                src={user.avatar}
+                alt={user.name}
+                className="h-12 w-12 rounded-full object-cover border-2 border-[#0A66C2] shrink-0"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="font-bold text-xs text-zinc-900 dark:text-zinc-100 truncate">{user.name}</p>
+                <p className="text-[11px] text-zinc-500 truncate">{user.headline}</p>
+                <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">Verified ConnectIn Member</p>
+              </div>
+            </div>
+
+            {/* 1-Click Branded Social Networks Grid */}
+            <div className="space-y-1.5 pt-1">
+              <label className="text-[11px] font-bold text-zinc-600 dark:text-zinc-300">Choose Social Channel to Share:</label>
+              
+              <div className="grid grid-cols-2 gap-2">
+                {/* 1. WhatsApp */}
+                <button
+                  type="button"
+                  onClick={handleShareToWhatsApp}
+                  className="py-2.5 px-3 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold text-xs shadow-sm flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
+                    <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.303-.058.116-.087.188-.173.289l-.26.303c-.087.087-.177.181-.076.354.101.173.449.741.964 1.201.662.591 1.221.774 1.394.86.173.086.275.072.376-.043.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.043.072.043.419-.101.824z" />
+                    <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2.348 21.652l4.636-1.04A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.25c-1.63 0-3.14-.492-4.404-1.336l-.315-.21-2.753.618.63-2.683-.231-.328A8.212 8.212 0 013.75 12c0-4.549 3.701-8.25 8.25-8.25s8.25 3.701 8.25 8.25-3.701 8.25-8.25 8.25z" />
+                  </svg>
+                  <span>WhatsApp</span>
+                </button>
+
+                {/* 2. Facebook */}
+                <button
+                  type="button"
+                  onClick={handleShareToFacebook}
+                  className="py-2.5 px-3 rounded-xl bg-[#1877F2] hover:bg-[#166fe5] text-white font-bold text-xs shadow-sm flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                  </svg>
+                  <span>Facebook</span>
+                </button>
+
+                {/* 3. X (formerly Twitter) */}
+                <button
+                  type="button"
+                  onClick={handleShareToTwitter}
+                  className="py-2.5 px-3 rounded-xl bg-black hover:bg-zinc-800 text-white font-bold text-xs shadow-sm flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98] border border-zinc-800"
+                >
+                  <span className="font-black text-sm">𝕏</span>
+                  <span>Post on 𝕏</span>
+                </button>
+
+                {/* 4. Instagram */}
+                <button
+                  type="button"
+                  onClick={handleShareToInstagram}
+                  className="py-2.5 px-3 rounded-xl bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] hover:opacity-95 text-white font-bold text-xs shadow-sm flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                  </svg>
+                  <span>Instagram</span>
+                </button>
+
+                {/* 5. LinkedIn */}
+                <button
+                  type="button"
+                  onClick={handleShareToLinkedIn}
+                  className="py-2.5 px-3 rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white font-bold text-xs shadow-sm flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <span className="font-black text-sm">in</span>
+                  <span>LinkedIn</span>
+                </button>
+
+                {/* 6. Email */}
+                <button
+                  type="button"
+                  onClick={handleShareToEmail}
+                  className="py-2.5 px-3 rounded-xl bg-slate-700 hover:bg-slate-800 text-white font-bold text-xs shadow-sm flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <span>✉️</span>
+                  <span>Email / Mail</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Copy Link Box */}
+            <div className="space-y-1.5 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+              <label className="text-[11px] font-bold text-zinc-600 dark:text-zinc-300">Copy Direct Profile Link:</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={typeof window !== "undefined" ? `${window.location.origin}/connectin` : "https://sphera-portal.vercel.app/connectin"}
+                  className="flex-1 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-1.5 text-xs text-zinc-900 dark:text-zinc-100 font-mono"
+                />
+                <button
+                  type="button"
+                  onClick={handleCopyProfileLink}
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold text-white transition-all cursor-pointer flex items-center gap-1 ${
+                    shareCopied ? "bg-emerald-600" : "bg-[#0A66C2] hover:bg-[#004182]"
+                  }`}
+                >
+                  {shareCopied ? (
+                    <>
+                      <Check className="h-3.5 w-3.5" />
+                      <span>Copied!</span>
+                    </>
+                  ) : (
+                    <span>Copy</span>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Manual Add / Edit Experience Modal */}
       <ExperienceFormModal

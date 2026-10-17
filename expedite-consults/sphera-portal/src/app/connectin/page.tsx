@@ -134,7 +134,8 @@ export default function LinkedInPage() {
   const [activeFeedSubCategory, setActiveFeedSubCategory] = useState<string>('All')
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedTagFilter, setSelectedTagFilter] = useState<string | null>(null)
-  const [adminEnclaveOverride, setAdminEnclaveOverride] = useState<string | null>(null)
+  const [selectedEnclaves, setSelectedEnclaves] = useState<string[]>(['trades_construction'])
+  const [isMultiEnclaveMode, setIsMultiEnclaveMode] = useState<boolean>(true)
   const [hasHydrated, setHasHydrated] = useState(false)
 
   // Authentication Lifecycle — optimistic-first, never redirects, shows modal only if truly needed
@@ -380,8 +381,8 @@ export default function LinkedInPage() {
 
   // Handle Post Creation
   const handleAddPost = (newPostData: Omit<Post, 'id' | 'timestamp' | 'stats' | 'comments'>) => {
-    const effectiveEnclave = adminEnclaveOverride && adminEnclaveOverride !== 'all'
-      ? adminEnclaveOverride
+    const effectiveEnclave = selectedEnclaves[0] && selectedEnclaves[0] !== 'all'
+      ? selectedEnclaves[0]
       : (userData.professionEnclave || 'trades_construction')
 
     const newPost: Post = {
@@ -582,11 +583,11 @@ export default function LinkedInPage() {
   // Filter Posts based on Stream, Sub-category, Search Query, Feed Type, or Tag
   const filteredPosts = posts.filter(post => {
     // 0. Strict Need-to-Know Enclave Segregation
-    // Enforce least privilege: a developer never sees carpenter content, and a carpenter never sees developer content
-    const effectiveEnclave = adminEnclaveOverride || userData.professionEnclave || 'trades_construction'
-    if (effectiveEnclave !== 'all') {
+    // Enforce least privilege: user sees content matching their selected enclaves (multi-enclave federation support)
+    const isAllSelected = selectedEnclaves.length === 0 || selectedEnclaves.includes('all') || selectedEnclaves.length >= PROFESSION_ENCLAVES.length
+    if (!isAllSelected) {
       const postEnclave = post.professionEnclave || 'tech_software'
-      if (postEnclave !== 'all' && postEnclave !== effectiveEnclave) {
+      if (postEnclave !== 'all' && !selectedEnclaves.includes(postEnclave)) {
         return false
       }
     }
@@ -710,28 +711,86 @@ export default function LinkedInPage() {
               {/* Need-to-Know Enclave Segregation Banner */}
               {(() => {
                 const isAdmin = isSuperAdminUser(userData)
-                const activeEncId = adminEnclaveOverride || userData.professionEnclave || 'trades_construction'
-                const enc = findEnclaveById(activeEncId) || PROFESSION_ENCLAVES[0]
+                const isAllSelected = selectedEnclaves.length === 0 || selectedEnclaves.includes('all') || selectedEnclaves.length >= PROFESSION_ENCLAVES.length
+                const activeEncs = isAllSelected
+                  ? PROFESSION_ENCLAVES
+                  : (selectedEnclaves.map(id => findEnclaveById(id)).filter(Boolean) as typeof PROFESSION_ENCLAVES)
+                
+                const primaryEnc = activeEncs[0] || PROFESSION_ENCLAVES[0]
+
+                // Dynamic banner title and subtitle based on selection
+                let bannerTitle = primaryEnc.name
+                let bannerSubtitle = (userData.professionEnclave === primaryEnc.id && userData.profession)
+                  ? `${userData.profession} · ${primaryEnc.securityClearanceTier}`
+                  : `Verified Enclave Discipline · ${primaryEnc.securityClearanceTier}`
+                let bannerIcon = primaryEnc.icon
+
+                if (isAllSelected) {
+                  bannerTitle = "Universal Multi-Enclave Federation (All 12 Disciplines)"
+                  bannerSubtitle = "Auditing All 12 Profession Enclaves Simultaneously · Global Cross-Discipline Auditor View"
+                  bannerIcon = "🌐"
+                } else if (activeEncs.length > 1) {
+                  bannerTitle = `${activeEncs.map(e => e.shortName).join(' + ')} (${activeEncs.length} Enclaves Active)`
+                  bannerSubtitle = `Cross-Auditing: ${activeEncs.map(e => e.name).join(' · ')}`
+                  bannerIcon = "🛡️"
+                }
+
+                // Collect aggregated feed tags across active enclaves
+                const aggregatedFeedTags = Array.from(new Set(activeEncs.flatMap(e => e.feedTags))).slice(0, 12)
+
+                const handleToggleEnclave = (encId: string) => {
+                  if (encId === 'all') {
+                    if (isAllSelected) {
+                      // Reset to the user's primary enclave
+                      setSelectedEnclaves([userData.professionEnclave || 'trades_construction'])
+                    } else {
+                      // Select all enclaves
+                      setSelectedEnclaves(PROFESSION_ENCLAVES.map(e => e.id))
+                    }
+                    return
+                  }
+
+                  if (isAllSelected) {
+                    // Coming from "All", clicking an individual one focuses on just that one
+                    setSelectedEnclaves([encId])
+                    return
+                  }
+
+                  setSelectedEnclaves(prev => {
+                    if (prev.includes(encId)) {
+                      // Don't deselect if it's the only one selected
+                      if (prev.length <= 1) return prev
+                      return prev.filter(id => id !== encId)
+                    } else {
+                      return [...prev, encId]
+                    }
+                  })
+                }
 
                 return (
-                  <div className={`rounded-xl border p-3.5 space-y-2 shadow-xs transition-all ${enc.badgeBg}`}>
+                  <div className={`rounded-xl border p-3.5 space-y-2 shadow-xs transition-all ${primaryEnc.badgeBg}`}>
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <div className="flex items-center gap-2.5">
-                        <span className="text-2xl p-1.5 rounded-lg bg-white/80 dark:bg-zinc-800 shadow-2xs">
-                          {enc.icon}
+                        <span className="text-2xl p-1.5 rounded-lg bg-white/80 dark:bg-zinc-800 shadow-2xs shrink-0">
+                          {bannerIcon}
                         </span>
                         <div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <h2 className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100">
-                              {enc.name}
+                              {bannerTitle}
                             </h2>
                             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:text-emerald-300 border border-emerald-300/40">
                               <ShieldCheck className="h-3 w-3" />
                               Need-to-Know Enclave
                             </span>
+                            {activeEncs.length > 1 && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-indigo-100 dark:bg-indigo-950/80 px-2 py-0.5 text-[10px] font-bold text-indigo-800 dark:text-indigo-300 border border-indigo-300/40">
+                                {isAllSelected ? "12 of 12 Highlighted" : `${activeEncs.length} Enclaves Highlighted`}
+                              </span>
+                            )}
                           </div>
                           <p className="text-[11px] text-zinc-600 dark:text-zinc-300 font-medium">
-                            {userData.profession || 'Master Carpenter (Framing & Finish Joinery)'} · <span className="font-mono text-zinc-500">{enc.securityClearanceTier}</span>
+                            {bannerSubtitle}
                           </p>
                         </div>
                       </div>
@@ -751,7 +810,7 @@ export default function LinkedInPage() {
                     {/* Enclave Feed Tags */}
                     <div className="flex items-center gap-1.5 overflow-x-auto pt-0.5">
                       <span className="text-[10px] uppercase font-bold text-zinc-400 shrink-0">{t("enclave_tags", "Enclave Tags:")}</span>
-                      {enc.feedTags.map((tag) => (
+                      {aggregatedFeedTags.map((tag) => (
                         <button
                           key={tag}
                           onClick={() => setSelectedTagFilter(tag)}
@@ -762,35 +821,69 @@ export default function LinkedInPage() {
                       ))}
                     </div>
 
-                    {/* Super Admin Enclave Auditor Switcher */}
+                    {/* Super Admin Enclave Auditor Switcher with Multi-Select Highlighting */}
                     {isAdmin && (
-                      <div className="mt-2 pt-2 border-t border-zinc-200/70 dark:border-zinc-700/70 flex items-center justify-between gap-2 flex-wrap text-xs">
-                        <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-300 flex items-center gap-1">
-                          {t("super_admin_switcher", "🛡️ Super Admin Auditor Switcher:")}
-                        </span>
-                        <div className="flex items-center gap-1 overflow-x-auto">
-                          {PROFESSION_ENCLAVES.map(e => (
+                      <div className="mt-2 pt-2 border-t border-zinc-200/70 dark:border-zinc-700/70 space-y-1.5">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-300 flex items-center gap-1">
+                              {t("super_admin_switcher", "🛡️ Super Admin Auditor Switcher:")}
+                            </span>
+                            <span className="text-[9px] text-zinc-500 font-mono bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded border border-zinc-200 dark:border-zinc-700">
+                              Multi-Select: Click to toggle on/off
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
                             <button
-                              key={e.id}
-                              onClick={() => setAdminEnclaveOverride(e.id)}
-                              className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-colors cursor-pointer ${
-                                activeEncId === e.id
-                                  ? "bg-indigo-600 text-white font-bold"
-                                  : "bg-white/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-white"
-                              }`}
+                              type="button"
+                              onClick={() => setSelectedEnclaves(PROFESSION_ENCLAVES.map(e => e.id))}
+                              className="text-[9px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline px-1.5 py-0.5 cursor-pointer"
                             >
-                              {e.icon} {e.shortName}
+                              Highlight All 12
                             </button>
-                          ))}
+                            <span className="text-zinc-300">|</span>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedEnclaves([userData.professionEnclave || 'trades_construction'])}
+                              className="text-[9px] font-semibold text-zinc-600 dark:text-zinc-400 hover:underline px-1.5 py-0.5 cursor-pointer"
+                            >
+                              Reset
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                          {PROFESSION_ENCLAVES.map(e => {
+                            const isSelected = isAllSelected || selectedEnclaves.includes(e.id)
+                            return (
+                              <button
+                                key={e.id}
+                                onClick={() => handleToggleEnclave(e.id)}
+                                title={`Click to toggle ${e.name} in/out of view`}
+                                className={`px-2 py-1 rounded-md text-[10px] font-semibold transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
+                                  isSelected
+                                    ? "bg-indigo-600 ring-2 ring-indigo-400 text-white font-bold shadow-xs scale-102"
+                                    : "bg-white/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-white border border-zinc-200/60 dark:border-zinc-700/60 opacity-80 hover:opacity-100"
+                                }`}
+                              >
+                                <span>{e.icon}</span>
+                                <span>{e.shortName}</span>
+                                {isSelected && <span className="text-[9px] font-black">✓</span>}
+                              </button>
+                            )
+                          })}
                           <button
-                            onClick={() => setAdminEnclaveOverride('all')}
-                            className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-colors cursor-pointer ${
-                              activeEncId === 'all'
-                                ? "bg-indigo-600 text-white font-bold"
-                                : "bg-white/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-white"
+                            onClick={() => handleToggleEnclave('all')}
+                            title="Toggle all 12 enclaves"
+                            className={`px-2 py-1 rounded-md text-[10px] font-semibold transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
+                              isAllSelected
+                                ? "bg-indigo-600 ring-2 ring-indigo-400 text-white font-bold shadow-xs scale-102"
+                                : "bg-white/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-white border border-zinc-200/60 dark:border-zinc-700/60 opacity-80 hover:opacity-100"
                             }`}
                           >
-                            {t("all_enclaves", "🌐 All Enclaves")}
+                            <span>🌐</span>
+                            <span>{t("all_enclaves", "All Enclaves")}</span>
+                            {isAllSelected && <span className="text-[9px] font-black">✓</span>}
                           </button>
                         </div>
                       </div>

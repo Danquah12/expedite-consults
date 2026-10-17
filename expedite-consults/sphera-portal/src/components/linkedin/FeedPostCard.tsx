@@ -128,11 +128,63 @@ export function FeedPostCard({
     setReplyToId(null)
   }
 
+  const [showShareModal, setShowShareModal] = useState(false)
+
+  const getPostShareData = () => {
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://sphera-portal.vercel.app"
+    const postUrl = `${origin}/connectin`
+    const snippet = (post.content || "").slice(0, 100).replace(/\n/g, ' ').trim()
+    const text = `Check out this post by ${post.author.name} on ConnectIn:\n\n"${snippet}..."\n\n${postUrl}`
+    return { origin, postUrl, snippet, text }
+  }
+
   const handleCopyLink = () => {
     navigator.clipboard?.writeText(window.location.href)
     setCopiedLink(true)
     setTimeout(() => setCopiedLink(false), 2000)
     setShowMenu(false)
+    setShowShareModal(false)
+  }
+
+  const handleShareWhatsApp = () => {
+    const { text } = getPostShareData()
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank")
+    setShowMenu(false)
+    setShowShareModal(false)
+  }
+
+  const handleShareFacebook = () => {
+    const { postUrl, text } = getPostShareData()
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(postUrl)}&quote=${encodeURIComponent(text)}`, "_blank")
+    setShowMenu(false)
+    setShowShareModal(false)
+  }
+
+  const handleShareTwitter = () => {
+    const { postUrl, snippet } = getPostShareData()
+    const text = `Post by ${post.author.name} on ConnectIn: "${snippet}..."`
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(postUrl)}`, "_blank")
+    setShowMenu(false)
+    setShowShareModal(false)
+  }
+
+  const handleShareInstagram = async () => {
+    const { text } = getPostShareData()
+    try {
+      if (typeof navigator !== "undefined" && navigator.clipboard) {
+        await navigator.clipboard.writeText(text)
+      }
+    } catch {}
+    window.open("https://www.instagram.com/", "_blank")
+    setShowMenu(false)
+    setShowShareModal(false)
+  }
+
+  const handleShareLinkedIn = () => {
+    const { postUrl } = getPostShareData()
+    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(postUrl)}`, "_blank")
+    setShowMenu(false)
+    setShowShareModal(false)
   }
 
   const handleVote = (optionId: string) => {
@@ -238,13 +290,58 @@ export function FeedPostCard({
                   <Bookmark className={`h-4 w-4 ${post.isSaved ? "fill-zinc-700 dark:fill-zinc-200 text-transparent" : ""}`} />
                   <span>{post.isSaved ? t("unsave_post", "Unsave post") : t("save_post", "Save post")}</span>
                 </button>
-                <button
-                  onClick={handleCopyLink}
-                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
-                >
-                  <Share2 className="h-4 w-4" />
-                  <span>{copiedLink ? t("link_copied", "Link copied!") : t("copy_link", "Copy link to post")}</span>
-                </button>
+                <div className="my-1 border-t border-zinc-100 dark:border-zinc-800 pt-1">
+                  <span className="px-3 py-0.5 text-[10px] uppercase font-bold text-zinc-400 block">Share Post</span>
+                  <button
+                    onClick={handleShareWhatsApp}
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  >
+                    <svg className="h-3.5 w-3.5 fill-current text-[#25D366] shrink-0" viewBox="0 0 24 24">
+                      <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.303-.058.116-.087.188-.173.289l-.26.303c-.087.087-.177.181-.076.354.101.173.449.741.964 1.201.662.591 1.221.774 1.394.86.173.086.275.072.376-.043.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.043.072.043.419-.101.824z" />
+                      <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2.348 21.652l4.636-1.04A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.25c-1.63 0-3.14-.492-4.404-1.336l-.315-.21-2.753.618.63-2.683-.231-.328A8.212 8.212 0 013.75 12c0-4.549 3.701-8.25 8.25-8.25s8.25 3.701 8.25 8.25-3.701 8.25-8.25 8.25z" />
+                    </svg>
+                    <span>WhatsApp</span>
+                  </button>
+                  <button
+                    onClick={handleShareFacebook}
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  >
+                    <svg className="h-3.5 w-3.5 fill-current text-[#1877F2] shrink-0" viewBox="0 0 24 24">
+                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                    </svg>
+                    <span>Facebook</span>
+                  </button>
+                  <button
+                    onClick={handleShareTwitter}
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  >
+                    <span className="font-black text-xs">𝕏</span>
+                    <span>Post on 𝕏</span>
+                  </button>
+                  <button
+                    onClick={handleShareInstagram}
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  >
+                    <svg className="h-3.5 w-3.5 fill-current text-[#E1306C] shrink-0" viewBox="0 0 24 24">
+                      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                    </svg>
+                    <span>Instagram</span>
+                  </button>
+                  <button
+                    onClick={handleShareLinkedIn}
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  >
+                    <span className="text-[#0A66C2] font-black text-xs">in</span>
+                    <span>LinkedIn</span>
+                  </button>
+                  <button
+                    onClick={handleCopyLink}
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  >
+                    <Share2 className="h-3.5 w-3.5" />
+                    <span>{copiedLink ? t("link_copied", "Link copied!") : t("copy_link", "Copy link")}</span>
+                  </button>
+                </div>
               </div>
             </>
           )}
@@ -685,13 +782,100 @@ export function FeedPostCard({
           <span>{t("repost", "Repost")}</span>
         </button>
 
-        {/* Send Button */}
+        {/* Multi-Social Share Button & Popover */}
+        <div className="relative">
+          <button
+            onClick={() => setShowShareModal(!showShareModal)}
+            className="flex items-center gap-1.5 rounded-md px-3 py-2 text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+          >
+            <Share2 className="h-4 w-4" />
+            <span>Share</span>
+          </button>
+
+          {showShareModal && (
+            <>
+              <div className="fixed inset-0 z-20" onClick={() => setShowShareModal(false)} />
+              <div className="absolute left-0 bottom-full mb-2 z-30 w-56 rounded-xl border border-zinc-200 bg-white p-2 shadow-xl dark:border-zinc-800 dark:bg-zinc-900 text-xs space-y-1 animate-in fade-in zoom-in-95 duration-100">
+                <span className="px-2 py-1 text-[10px] uppercase font-bold text-zinc-400 block border-b border-zinc-100 dark:border-zinc-800 pb-1">
+                  Share this post to:
+                </span>
+                
+                {/* 1. WhatsApp */}
+                <button
+                  onClick={handleShareWhatsApp}
+                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-zinc-700 hover:bg-emerald-50 hover:text-emerald-700 dark:text-zinc-200 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer"
+                >
+                  <svg className="h-4 w-4 fill-current text-[#25D366] shrink-0" viewBox="0 0 24 24">
+                    <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.303-.058.116-.087.188-.173.289l-.26.303c-.087.087-.177.181-.076.354.101.173.449.741.964 1.201.662.591 1.221.774 1.394.86.173.086.275.072.376-.043.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.043.072.043.419-.101.824z" />
+                    <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2.348 21.652l4.636-1.04A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.25c-1.63 0-3.14-.492-4.404-1.336l-.315-.21-2.753.618.63-2.683-.231-.328A8.212 8.212 0 013.75 12c0-4.549 3.701-8.25 8.25-8.25s8.25 3.701 8.25 8.25-3.701 8.25-8.25 8.25z" />
+                  </svg>
+                  <span className="font-semibold">WhatsApp</span>
+                </button>
+
+                {/* 2. Facebook */}
+                <button
+                  onClick={handleShareFacebook}
+                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-zinc-700 hover:bg-blue-50 hover:text-blue-700 dark:text-zinc-200 dark:hover:bg-blue-950/40 transition-colors cursor-pointer"
+                >
+                  <svg className="h-4 w-4 fill-current text-[#1877F2] shrink-0" viewBox="0 0 24 24">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                  </svg>
+                  <span className="font-semibold">Facebook</span>
+                </button>
+
+                {/* 3. X (Twitter) */}
+                <button
+                  onClick={handleShareTwitter}
+                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-zinc-700 hover:bg-zinc-100 hover:text-black dark:text-zinc-200 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                >
+                  <span className="font-black text-xs w-4 text-center">𝕏</span>
+                  <span className="font-semibold">Post on 𝕏</span>
+                </button>
+
+                {/* 4. Instagram */}
+                <button
+                  onClick={handleShareInstagram}
+                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-zinc-700 hover:bg-pink-50 hover:text-[#E1306C] dark:text-zinc-200 dark:hover:bg-pink-950/40 transition-colors cursor-pointer"
+                >
+                  <svg className="h-4 w-4 fill-current text-[#E1306C] shrink-0" viewBox="0 0 24 24">
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                  </svg>
+                  <span className="font-semibold">Instagram</span>
+                </button>
+
+                {/* 5. LinkedIn */}
+                <button
+                  onClick={handleShareLinkedIn}
+                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-zinc-700 hover:bg-sky-50 hover:text-[#0A66C2] dark:text-zinc-200 dark:hover:bg-sky-950/40 transition-colors cursor-pointer"
+                >
+                  <span className="text-[#0A66C2] font-black text-xs w-4 text-center">in</span>
+                  <span className="font-semibold">LinkedIn</span>
+                </button>
+
+                {/* 6. Copy Link */}
+                <button
+                  onClick={handleCopyLink}
+                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800 transition-colors border-t border-zinc-100 dark:border-zinc-800 pt-1.5 cursor-pointer"
+                >
+                  {copiedLink ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4 text-zinc-500" />}
+                  <span className="font-semibold">{copiedLink ? "Link Copied!" : "Copy Link"}</span>
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Quick Direct WhatsApp Button */}
         <button
-          onClick={handleCopyLink}
-          className="flex items-center gap-1.5 rounded-md px-3 py-2 text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-colors"
+          onClick={handleShareWhatsApp}
+          className="flex items-center gap-1.5 rounded-md px-3 py-2 text-zinc-600 hover:text-[#25D366] hover:bg-emerald-50 dark:text-zinc-300 dark:hover:text-[#25D366] dark:hover:bg-emerald-950/40 transition-colors cursor-pointer"
+          title="Share to WhatsApp"
         >
-          {copiedLink ? <Check className="h-4 w-4 text-emerald-600" /> : <Send className="h-4 w-4" />}
-          <span>{copiedLink ? t("sent", "Sent") : t("send", "Send")}</span>
+          <svg className="w-4 h-4 fill-current shrink-0 text-[#25D366]" viewBox="0 0 24 24">
+            <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.303-.058.116-.087.188-.173.289l-.26.303c-.087.087-.177.181-.076.354.101.173.449.741.964 1.201.662.591 1.221.774 1.394.86.173.086.275.072.376-.043.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.043.072.043.419-.101.824z" />
+            <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2.348 21.652l4.636-1.04A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.25c-1.63 0-3.14-.492-4.404-1.336l-.315-.21-2.753.618.63-2.683-.231-.328A8.212 8.212 0 013.75 12c0-4.549 3.701-8.25 8.25-8.25s8.25 3.701 8.25 8.25-3.701 8.25-8.25 8.25z" />
+          </svg>
+          <span className="hidden sm:inline font-semibold">WhatsApp</span>
         </button>
       </div>
 

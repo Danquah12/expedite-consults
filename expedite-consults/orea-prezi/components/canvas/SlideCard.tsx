@@ -8,7 +8,7 @@ import { ComparisonMatrix } from "@/components/widgets/ComparisonMatrix";
 import { ArchitectureDiagram } from "@/components/widgets/ArchitectureDiagram";
 import { TimelineFlow } from "@/components/widgets/TimelineFlow";
 import { RoiCalculator } from "@/components/widgets/RoiCalculator";
-import { Sparkles, Quote, ArrowRight, CornerUpLeft } from "lucide-react";
+import { Quote, ArrowRight, CornerUpLeft } from "lucide-react";
 
 interface SlideCardProps {
   slide: SlideData;

@@ -2,7 +2,7 @@
 
 import React from "react";
 import { ComparisonItem } from "@/lib/types";
-import { Check, X, ShieldAlert, Sparkles } from "lucide-react";
+import { Check, X, Sparkles } from "lucide-react";
 
 interface ComparisonMatrixProps {
   comparisons: ComparisonItem[];

@@ -3,24 +3,18 @@
 import React from "react";
 import { ClusterData } from "@/lib/types";
 import { DynamicIcon } from "@/components/common/DynamicIcon";
-import { ArrowRight, Layers } from "lucide-react";
+import { Layers } from "lucide-react";
 
 interface ClusterNodeProps {
   cluster: ClusterData;
   isActive: boolean;
-  isZoomedOut: boolean;
   onSelectCluster: (cluster: ClusterData) => void;
-  onSelectSlide: (slideId: string) => void;
-  currentSlideId?: string;
 }
 
 export const ClusterNode: React.FC<ClusterNodeProps> = ({
   cluster,
   isActive,
-  isZoomedOut,
   onSelectCluster,
-  onSelectSlide,
-  currentSlideId,
 }) => {
   return (
     <div

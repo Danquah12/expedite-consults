@@ -15,7 +15,6 @@ import {
   FileText,
   Compass,
   PartyPopper,
-  Sparkles,
 } from "lucide-react";
 import { SlideData } from "@/lib/types";
 

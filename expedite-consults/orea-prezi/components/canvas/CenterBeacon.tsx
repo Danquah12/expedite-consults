@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Sparkles, Play, Shield, Globe, Award } from "lucide-react";
+import { Play, Shield, Globe, Award } from "lucide-react";
 
 interface CenterBeaconProps {
   onStartTour: () => void;

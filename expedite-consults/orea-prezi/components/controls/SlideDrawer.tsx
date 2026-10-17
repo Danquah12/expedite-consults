@@ -3,7 +3,6 @@
 import React from "react";
 import { ClusterData, SlideData } from "@/lib/types";
 import { X, Layers, Sparkles, ChevronRight } from "lucide-react";
-import { DynamicIcon } from "@/components/common/DynamicIcon";
 
 interface SlideDrawerProps {
   isOpen: boolean;

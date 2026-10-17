@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState } from "react";
 import { ClusterData, SlideData, CameraState } from "@/lib/types";
 import { ConstellationLines } from "./ConstellationLines";
 import { CenterBeacon } from "./CenterBeacon";
@@ -87,9 +87,6 @@ export const ZoomCanvas: React.FC<ZoomCanvasProps> = ({
     });
   };
 
-  // Find active cluster's accent color for slide card highlight
-  const activeCluster = clusters.find((c) => c.id === activeClusterId);
-
   return (
     <div
       ref={containerRef}
@@ -161,13 +158,7 @@ export const ZoomCanvas: React.FC<ZoomCanvasProps> = ({
             key={cluster.id}
             cluster={cluster}
             isActive={activeClusterId === cluster.id}
-            isZoomedOut={camera.zoom < 0.6}
             onSelectCluster={onSelectCluster}
-            onSelectSlide={(slideId) => {
-              const slide = cluster.slides.find((s) => s.id === slideId);
-              if (slide) onSelectSlide(slide);
-            }}
-            currentSlideId={activeSlideId}
           />
         ))}
 

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { TimelineStep } from "@/lib/types";
-import { CheckCircle2, Clock, Calendar, ChevronRight } from "lucide-react";
+import { CheckCircle2, Calendar } from "lucide-react";
 
 interface TimelineFlowProps {
   timeline: TimelineStep[];

@@ -6,11 +6,7 @@ export type Theme =
   | "classic"
   | "light"
   | "dark"
-  | "slate"
-  | "blue"
-  | "emerald"
-  | "sepia"
-  | "purple";
+  | "slate";
 
 export interface ThemeOption {
   id: Theme;
@@ -27,91 +23,47 @@ export interface ThemeOption {
 export const THEME_OPTIONS: ThemeOption[] = [
   {
     id: "classic",
-    label: "LinkedIn Classic Sand",
+    label: "LinkedIn Classic Light",
     shortLabel: "Classic Sand",
     icon: "🏛️",
-    bgHex: "#f3f2f0",
+    bgHex: "#f3f2ef",
     cardHex: "#ffffff",
     borderHex: "#e5e7eb",
     isDark: false,
-    description: "Official LinkedIn warm sand and clean white cards"
+    description: "Official LinkedIn warm sand canvas with clean white cards"
   },
   {
     id: "light",
-    label: "Solar Pure White",
+    label: "Pure Daylight White",
     shortLabel: "Pure White",
     icon: "☀️",
     bgHex: "#ffffff",
-    cardHex: "#f8fafc",
+    cardHex: "#ffffff",
     borderHex: "#e2e8f0",
     isDark: false,
-    description: "Ultra-crisp, high-contrast modern clean white"
+    description: "Clean daylight workspace with subtle slate borders"
   },
   {
     id: "dark",
-    label: "Obsidian OLED Dark",
-    shortLabel: "Obsidian",
+    label: "LinkedIn Executive Dark",
+    shortLabel: "Executive Dark",
     icon: "🌙",
-    bgHex: "#08090d",
-    cardHex: "#10121a",
-    borderHex: "#1c202e",
+    bgHex: "#121212",
+    cardHex: "#1b1f23",
+    borderHex: "#30363d",
     isDark: true,
-    description: "Pitch black OLED optimization for maximum battery & eye comfort"
+    description: "Official LinkedIn dark card architecture for low-light focus"
   },
   {
     id: "slate",
-    label: "Slate Charcoal",
+    label: "Corporate Slate",
     shortLabel: "Slate",
     icon: "🌑",
     bgHex: "#0f172a",
     cardHex: "#1e293b",
     borderHex: "#334155",
     isDark: true,
-    description: "Soft modern charcoal with blue-gray undertones"
-  },
-  {
-    id: "blue",
-    label: "Sapphire Cyber Navy",
-    shortLabel: "Sapphire Navy",
-    icon: "⚡",
-    bgHex: "#070d1e",
-    cardHex: "#0d1b3e",
-    borderHex: "#19316b",
-    isDark: true,
-    description: "Deep oceanic defense navy and electric cyan accents"
-  },
-  {
-    id: "emerald",
-    label: "Forest Emerald",
-    shortLabel: "Emerald Green",
-    icon: "🌲",
-    bgHex: "#031c14",
-    cardHex: "#083829",
-    borderHex: "#115e45",
-    isDark: true,
-    description: "Deep pine and mint green for agriculture, trades and nature"
-  },
-  {
-    id: "sepia",
-    label: "Warm Sepia Parchment",
-    shortLabel: "Sepia Warm",
-    icon: "📜",
-    bgHex: "#fcf8f2",
-    cardHex: "#ffffff",
-    borderHex: "#e8dcce",
-    isDark: false,
-    description: "Warm parchment paper tone reducing harsh blue light"
-  },
-  {
-    id: "purple",
-    label: "Royal Nebula Purple",
-    shortLabel: "Nebula Purple",
-    icon: "🌌",
-    bgHex: "#0e071c",
-    cardHex: "#20123d",
-    borderHex: "#3e226e",
-    isDark: true,
-    description: "Cosmic deep violet and purple glow for creative arts"
+    description: "Refined modern charcoal with cool blue-gray undertones"
   }
 ];
 
@@ -128,7 +80,7 @@ const ThemeContext = createContext<ThemeContextType>({
   theme: "classic",
   setTheme: () => {},
   toggleTheme: () => {},
-  themeLabel: "LinkedIn Classic Sand",
+  themeLabel: "LinkedIn Classic Light",
   isDark: false,
   themeOption: THEME_OPTIONS[0],
 });
@@ -137,11 +89,7 @@ const ALL_THEME_IDS: Theme[] = [
   "classic",
   "light",
   "dark",
-  "slate",
-  "blue",
-  "emerald",
-  "sepia",
-  "purple"
+  "slate"
 ];
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
@@ -150,11 +98,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setMounted(true);
-    const saved = localStorage.getItem("sphera-theme") as Theme | null;
-    if (saved && ALL_THEME_IDS.includes(saved)) {
-      applyTheme(saved);
+    const saved = localStorage.getItem("sphera-theme") as string | null;
+    if (saved && (saved === "classic" || saved === "light" || saved === "dark" || saved === "slate")) {
+      applyTheme(saved as Theme);
     } else {
-      // Default to LinkedIn Classic Sand
+      // Auto-migrate sepia/emerald/purple/blue or unset to official LinkedIn Classic
       applyTheme("classic");
     }
   }, []);

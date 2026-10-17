@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { X, Keyboard, Command } from "lucide-react";
+import { X, Keyboard } from "lucide-react";
 
 interface HelpModalProps {
   isOpen: boolean;
@@ -60,7 +60,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
             onClick={onClose}
             className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs transition-colors shadow-lg shadow-blue-600/30"
           >
-            Got it, Let's Present!
+            Got it, Let&apos;s Present!
           </button>
         </div>
       </div>

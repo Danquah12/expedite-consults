@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Server, Database, Cloud, Lock, Cpu, ArrowDown } from "lucide-react";
+import { Server, Database, Cloud, Cpu } from "lucide-react";
 
 interface LayerData {
   layer: string;
