@@ -657,7 +657,7 @@ export default function LinkedInPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-core,#f3f2f0)] text-[var(--text-pure,#18181b)] antialiased transition-colors duration-300 selection:bg-[#0A66C2] selection:text-white">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[var(--bg-core,#f3f2f0)] text-[var(--text-pure,#18181b)] antialiased transition-colors duration-300 selection:bg-[#0A66C2] selection:text-white">
       {/* Top Sticky Navigation */}
       <LinkedInNavbar
         activeTab={activeTab}

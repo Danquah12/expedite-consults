@@ -97,13 +97,19 @@ export function LinkedInNavbar({
   const { t } = useLanguage()
 
   const moreMenuRef = useRef<HTMLDivElement>(null)
+  const mobileMoreMenuRef = useRef<HTMLDivElement>(null)
   const meMenuRef = useRef<HTMLDivElement>(null)
 
   // Document-level click-outside and Escape key listener to close menus reliably
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
       const target = e.target as Node
-      if (isMoreOpen && moreMenuRef.current && !moreMenuRef.current.contains(target)) {
+      if (
+        isMoreOpen &&
+        moreMenuRef.current &&
+        !moreMenuRef.current.contains(target) &&
+        (!mobileMoreMenuRef.current || !mobileMoreMenuRef.current.contains(target))
+      ) {
         setIsMoreOpen(false)
       }
       if (isMeOpen && meMenuRef.current && !meMenuRef.current.contains(target)) {
@@ -151,16 +157,16 @@ export function LinkedInNavbar({
     }
   }
 
-  // Streamlined Clean Primary Navigation
+  // Streamlined Clean Primary Navigation with Responsive Short Labels
   const primaryNavItems = [
-    { id: "home", label: t("nav_home", "Home"), icon: House, badge: 2 },
-    { id: "network", label: t("nav_network", "Network"), icon: Users, badge: 0 },
-    { id: "jobs", label: t("nav_jobs", "Jobs"), icon: Briefcase, badge: 0 },
-    { id: "marketplace", label: t("nav_marketplace", "Marketplace 🛍️"), icon: ShoppingBag, badge: 0, isMarketplace: true },
-    { id: "media", label: t("nav_media", "Media 🎥"), icon: Tv, badge: 1 },
-    { id: "pulserooms", label: t("nav_pulse", "Pulse 📰"), icon: Radio, badge: 0 },
-    { id: "learning", label: t("nav_learning", "Learning 🎓"), icon: GraduationCap, badge: 1 },
-    { id: "messaging", label: t("nav_messages", "Messages 💬"), icon: MessageSquare, badge: unreadMessagesCount || 1 },
+    { id: "home", label: t("nav_home", "Home"), shortLabel: t("nav_home_short", "Home"), icon: House, badge: 2 },
+    { id: "network", label: t("nav_network", "Network"), shortLabel: t("nav_network_short", "Network"), icon: Users, badge: 0 },
+    { id: "jobs", label: t("nav_jobs", "Jobs"), shortLabel: t("nav_jobs_short", "Jobs"), icon: Briefcase, badge: 0 },
+    { id: "marketplace", label: t("nav_marketplace", "Marketplace 🛍️"), shortLabel: t("nav_marketplace_short", "Market"), icon: ShoppingBag, badge: 0, isMarketplace: true },
+    { id: "media", label: t("nav_media", "Media 🎥"), shortLabel: t("nav_media_short", "Media"), icon: Tv, badge: 1 },
+    { id: "pulserooms", label: t("nav_pulse", "Pulse 📰"), shortLabel: t("nav_pulse_short", "Pulse"), icon: Radio, badge: 0 },
+    { id: "learning", label: t("nav_learning", "Learning 🎓"), shortLabel: t("nav_learning_short", "Learn"), icon: GraduationCap, badge: 1 },
+    { id: "messaging", label: t("nav_messages", "Messages 💬"), shortLabel: t("nav_messages_short", "Msgs"), icon: MessageSquare, badge: unreadMessagesCount || 1 },
   ]
 
   const isAdminUser = isSuperAdminUser(user)
@@ -272,10 +278,11 @@ export function LinkedInNavbar({
   }
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-zinc-200 bg-white/95 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/95 shadow-xs">
-      <div className="mx-auto flex h-14 max-w-[1720px] items-center justify-between px-2 sm:px-4 lg:px-6 gap-2">
+    <header className="sticky top-0 z-40 w-full max-w-full border-b border-zinc-200 bg-white/95 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/95 shadow-xs">
+      {/* Tier 1: Brand Logo, Adaptive Search, and Quick Actions */}
+      <div className="mx-auto flex h-13 sm:h-14 max-w-[1720px] items-center justify-between px-2 sm:px-4 lg:px-6 gap-1.5 sm:gap-2">
         {/* Left Side: Brand Logo & Interactive Live Search */}
-        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 relative">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 flex-1 min-w-0 max-w-[260px] sm:max-w-xs md:max-w-md lg:max-w-none lg:flex-initial relative">
           <button
             onClick={() => onSelectTab('home')}
             className="flex items-center focus:outline-none group shrink-0"
@@ -284,14 +291,14 @@ export function LinkedInNavbar({
             <ConnectInLogo size="sm" showSubtitle={false} />
           </button>
 
-          {/* Interactive Search Box - Responsive Expanding Width */}
-          <div className="relative w-40 sm:w-52 md:w-60 lg:w-64 xl:w-72 2xl:w-80 focus-within:w-60 sm:focus-within:w-72 md:focus-within:w-80 lg:focus-within:w-96 transition-all duration-300">
+          {/* Interactive Search Box - Fluid on Mobile, Expanding on Desktop */}
+          <div className="relative flex-1 min-w-[100px] max-w-[180px] sm:max-w-[220px] md:max-w-[260px] lg:w-56 xl:w-64 2xl:w-72 transition-all duration-200">
             <div
-              className={`flex items-center gap-1.5 sm:gap-2 rounded-full bg-[#EDF3F8] px-2.5 sm:px-3.5 py-1.5 sm:py-2 transition-all dark:bg-zinc-800/90 border border-zinc-200/50 dark:border-zinc-700/50 ${
+              className={`flex items-center gap-1 sm:gap-2 rounded-full bg-[#EDF3F8] px-2 sm:px-3 py-1 sm:py-1.5 transition-all dark:bg-zinc-800/90 border border-zinc-200/50 dark:border-zinc-700/50 ${
                 isSearchFocused ? "ring-2 ring-[#0A66C2] bg-white border-[#0A66C2] shadow-md dark:bg-zinc-900" : "hover:bg-[#E2ECF3] dark:hover:bg-zinc-800"
               }`}
             >
-              <Search className="h-4 w-4 text-zinc-500 shrink-0" />
+              <Search className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-zinc-500 shrink-0" />
               <input
                 type="text"
                 placeholder={t("search_placeholder", getEnclaveSearchPlaceholder(user.professionEnclave))}
@@ -307,13 +314,13 @@ export function LinkedInNavbar({
                     setIsSearchFocused(false)
                   }
                 }}
-                className="w-full bg-transparent text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-500 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-400 font-medium"
+                className="w-full bg-transparent text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-500 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-400 font-medium truncate"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => onSearchChange("")}
-                  className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-0.5"
+                  className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-0.5 shrink-0"
                   title="Clear search"
                 >
                   <X className="h-3.5 w-3.5" />
@@ -326,11 +333,11 @@ export function LinkedInNavbar({
                   onOpenUniversalSearch && onOpenUniversalSearch()
                   setIsSearchFocused(false)
                 }}
-                className="rounded-full bg-[#0A66C2] text-white px-2.5 sm:px-3 py-1 text-xs font-bold hover:bg-[#004182] transition-all flex items-center gap-1 sm:gap-1.5 shrink-0 cursor-pointer shadow-xs hover:scale-105 active:scale-95"
+                className="hidden sm:flex rounded-full bg-[#0A66C2] text-white px-2 sm:px-2.5 py-0.5 sm:py-1 text-xs font-bold hover:bg-[#004182] transition-all items-center gap-1 shrink-0 cursor-pointer shadow-xs hover:scale-105 active:scale-95"
                 title="Search platform"
               >
                 <Search className="h-3 w-3" />
-                <span className="hidden sm:inline">{t("search_button", "Search")}</span>
+                <span className="hidden md:inline">{t("search_button", "Search")}</span>
               </button>
             </div>
 
@@ -341,7 +348,7 @@ export function LinkedInNavbar({
                   className="fixed inset-0 z-40 bg-black/10 backdrop-blur-2xs"
                   onClick={() => setIsSearchFocused(false)}
                 />
-                <div className="absolute left-0 top-11 sm:top-12 z-50 w-[calc(100vw-24px)] sm:w-[480px] lg:w-[540px] max-w-[92vw] rounded-2xl border border-zinc-200 bg-white p-3 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 space-y-2.5 max-h-[80vh] overflow-y-auto">
+                <div className="fixed sm:absolute left-2 right-2 sm:left-0 sm:right-auto top-14 sm:top-12 z-50 w-auto sm:w-[480px] lg:w-[540px] max-w-[calc(100vw-16px)] rounded-2xl border border-zinc-200 bg-white p-3 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 space-y-2.5 max-h-[80vh] overflow-y-auto">
                   {/* Header info */}
                   <div className="flex items-center justify-between border-b border-zinc-100 pb-2 dark:border-zinc-800">
                     <span className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1">
@@ -486,8 +493,8 @@ export function LinkedInNavbar({
           </div>
         </div>
 
-        {/* Center Primary Navigation Tabs */}
-        <nav className="flex items-center gap-0.5 sm:gap-1 shrink-0 py-1">
+        {/* Center Primary Navigation Tabs (Visible on lg: screens and above) */}
+        <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1 shrink-0 py-1">
           {primaryNavItems.map((item) => {
             const Icon = item.icon
             const isActive = activeTab === item.id
@@ -496,7 +503,7 @@ export function LinkedInNavbar({
               <button
                 key={item.id}
                 onClick={() => onSelectTab(item.id)}
-                className={`relative flex min-w-[42px] sm:min-w-[48px] lg:min-w-[56px] xl:min-w-[62px] flex-col items-center justify-center py-1 px-1 sm:px-1.5 text-xs transition-all group shrink-0 cursor-pointer ${
+                className={`relative flex min-w-[50px] xl:min-w-[62px] flex-col items-center justify-center py-1 px-1 sm:px-1.5 text-xs transition-all group shrink-0 cursor-pointer ${
                   isActive
                     ? "text-[#0A66C2] font-semibold border-b-2 border-[#0A66C2]"
                     : item.isMarketplace
@@ -506,7 +513,7 @@ export function LinkedInNavbar({
                 title={item.label}
               >
                 <div className="relative">
-                  <Icon className={`h-4.5 w-4.5 sm:h-5 sm:w-5 transition-transform group-hover:scale-110 ${
+                  <Icon className={`h-4.5 w-4.5 xl:h-5 xl:w-5 transition-transform group-hover:scale-110 ${
                     isActive ? "text-[#0A66C2]" : item.isMarketplace ? "text-purple-600 dark:text-purple-400" : ""
                   }`} />
                   {item.badge > 0 && (
@@ -515,7 +522,7 @@ export function LinkedInNavbar({
                     </span>
                   )}
                 </div>
-                <span className="hidden md:inline-block text-[10px] xl:text-[11px] mt-0.5 truncate max-w-[70px]">
+                <span className="hidden xl:inline-block text-[10px] xl:text-[11px] mt-0.5 truncate max-w-[72px]">
                   {item.label}
                 </span>
               </button>
@@ -525,8 +532,8 @@ export function LinkedInNavbar({
 
         {/* Right Side Controls (More Dropdown + AI Assistant + Notifications + Me Profile + Theme) */}
         <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 pl-1">
-          {/* "More ▾" Dropdown Menu (Outside scroll container so never clipped!) */}
-          <div ref={moreMenuRef} className="relative shrink-0">
+          {/* "More ▾" Dropdown Menu (On lg+ screens) */}
+          <div ref={moreMenuRef} className="hidden lg:block relative shrink-0">
             <button
               onClick={() => {
                 setIsMoreOpen(!isMoreOpen)
@@ -540,15 +547,15 @@ export function LinkedInNavbar({
               title="More Modules & Hubs"
             >
               <Grid3X3 className="h-4.5 w-4.5" />
-              <span className="flex items-center gap-0.5 text-[10px] lg:text-[11px] mt-0.5 font-medium">
+              <span className="flex items-center gap-0.5 text-[10px] xl:text-[11px] mt-0.5 font-medium">
                 {t("nav_more", "More")} <ChevronDown className="h-3 w-3" />
               </span>
             </button>
 
             {isMoreOpen && (
               <>
-                <div className="fixed inset-0 z-50 bg-black/10" onClick={() => setIsMoreOpen(false)} />
-                <div className="absolute right-0 top-12 z-50 w-72 rounded-2xl border border-zinc-200 bg-white p-3 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 space-y-2">
+                <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-2xs lg:bg-black/10" onClick={() => setIsMoreOpen(false)} />
+                <div className="fixed sm:absolute right-2 sm:right-0 top-24 lg:top-12 z-50 w-[calc(100vw-16px)] sm:w-80 max-w-[360px] rounded-2xl border border-zinc-200 bg-white p-3 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 space-y-2">
                   <div className="flex items-center justify-between border-b border-zinc-100 pb-2 dark:border-zinc-800">
                     <div>
                       <p className="font-bold text-xs text-zinc-900 dark:text-zinc-100">
@@ -618,12 +625,11 @@ export function LinkedInNavbar({
           {/* Vibe AI Global Assistant Launcher Button - LinkedIn Premium Styling */}
           <button
             onClick={onOpenAIAssistant}
-            className="group flex items-center gap-1 sm:gap-1.5 rounded-full bg-[#FBF5E9] hover:bg-[#F5EAD2] dark:bg-amber-950/30 dark:hover:bg-amber-950/50 text-[#7A4B00] dark:text-amber-200 border border-[#C88A24]/40 dark:border-amber-700/50 px-2.5 sm:px-3 py-1.5 text-xs font-semibold shadow-2xs transition-all shrink-0 cursor-pointer"
+            className="group flex items-center gap-1 sm:gap-1.5 rounded-full bg-[#FBF5E9] hover:bg-[#F5EAD2] dark:bg-amber-950/30 dark:hover:bg-amber-950/50 text-[#7A4B00] dark:text-amber-200 border border-[#C88A24]/40 dark:border-amber-700/50 px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs font-semibold shadow-2xs transition-all shrink-0 cursor-pointer"
             title="Ask Vibe AI — Interactive Q&A, Campus Intelligence & Answers"
           >
             <Sparkles className="h-3.5 w-3.5 text-[#C88A24] dark:text-amber-300 transition-transform group-hover:scale-110 shrink-0" />
-            <span className="hidden sm:inline">Vibe AI</span>
-            <span className="sm:hidden font-semibold">Vibe</span>
+            <span className="hidden min-[400px]:inline text-xs font-semibold">Vibe</span>
             <span className="hidden md:inline rounded bg-amber-200/60 dark:bg-amber-900/60 px-1.5 py-0.2 text-[9px] font-bold text-[#5C3800] dark:text-amber-100">
               Q&amp;A
             </span>
@@ -633,12 +639,12 @@ export function LinkedInNavbar({
           {onOpenVideoGuide && (
             <button
               onClick={onOpenVideoGuide}
-              className="group flex items-center gap-1 sm:gap-1.5 rounded-full bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-300/40 dark:border-indigo-700/50 px-2 sm:px-3 py-1.5 text-xs font-semibold shadow-2xs transition-all shrink-0 cursor-pointer"
+              className="hidden md:flex group items-center gap-1 sm:gap-1.5 rounded-full bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-300/40 dark:border-indigo-700/50 px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs font-semibold shadow-2xs transition-all shrink-0 cursor-pointer"
               title="Watch ConnectIn Interactive Video Guide & Masterclasses"
             >
               <GraduationCap className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400 transition-transform group-hover:scale-110 shrink-0" />
-              <span className="hidden sm:inline">Guide</span>
-              <span className="hidden md:inline rounded bg-indigo-200/60 dark:bg-indigo-900/60 px-1.5 py-0.2 text-[9px] font-bold text-indigo-800 dark:text-indigo-200">
+              <span className="hidden xl:inline">Guide</span>
+              <span className="hidden 2xl:inline rounded bg-indigo-200/60 dark:bg-indigo-900/60 px-1.5 py-0.2 text-[9px] font-bold text-indigo-800 dark:text-indigo-200">
                 Videos
               </span>
             </button>
@@ -647,7 +653,7 @@ export function LinkedInNavbar({
           {/* Notifications Tab Button */}
           <button
             onClick={() => onSelectTab('notifications')}
-            className={`relative flex min-w-[38px] sm:min-w-[42px] flex-col items-center justify-center py-1 text-xs transition-colors shrink-0 cursor-pointer ${
+            className={`relative flex min-w-[34px] sm:min-w-[40px] flex-col items-center justify-center py-1 text-xs transition-colors shrink-0 cursor-pointer ${
               activeTab === 'notifications'
                 ? "text-[#0A66C2] font-semibold"
                 : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
@@ -657,12 +663,12 @@ export function LinkedInNavbar({
             <div className="relative">
               <Bell className="h-4.5 w-4.5" />
               {unreadNotificationsCount > 0 && (
-                <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white shadow-xs">
+                <span className="absolute -right-2 -top-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-600 px-0.5 text-[9px] font-bold text-white shadow-xs">
                   {unreadNotificationsCount}
                 </span>
               )}
             </div>
-            <span className="hidden sm:inline text-[10px] mt-0.5">Alerts</span>
+            <span className="hidden xl:inline text-[10px] mt-0.5">Alerts</span>
           </button>
 
           {/* "Me" Profile Menu Dropdown */}
@@ -672,21 +678,21 @@ export function LinkedInNavbar({
                 setIsMeOpen(!isMeOpen)
                 setIsMoreOpen(false)
               }}
-              className={`flex min-w-[42px] sm:min-w-[48px] flex-col items-center justify-center py-1 text-xs transition-colors cursor-pointer shrink-0 ${
+              className={`flex min-w-[36px] sm:min-w-[44px] flex-col items-center justify-center py-1 text-xs transition-colors cursor-pointer shrink-0 ${
                 activeTab === 'profile'
                   ? "text-[#0A66C2] font-semibold border-b-2 border-[#0A66C2]"
                   : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
               }`}
               title={`${user.name} (Me)`}
             >
-              <div className="relative h-5 w-5 rounded-full overflow-hidden border border-zinc-300 dark:border-zinc-700 shrink-0">
+              <div className="relative h-5 w-5 sm:h-5.5 sm:w-5.5 rounded-full overflow-hidden border border-zinc-300 dark:border-zinc-700 shrink-0">
                 <img
                   src={user.avatar}
                   alt={user.name}
                   className="h-full w-full object-cover"
                 />
               </div>
-              <span className="hidden sm:flex items-center gap-0.5 text-[10px] mt-0.5">
+              <span className="hidden xl:flex items-center gap-0.5 text-[10px] mt-0.5">
                 Me <ChevronDown className="h-3 w-3" />
               </span>
             </button>
@@ -695,10 +701,10 @@ export function LinkedInNavbar({
             {isMeOpen && (
               <>
                 <div
-                  className="fixed inset-0 z-40"
+                  className="fixed inset-0 z-40 bg-black/20 backdrop-blur-2xs lg:bg-black/10"
                   onClick={() => setIsMeOpen(false)}
                 />
-                <div className="absolute right-0 top-12 z-50 w-72 rounded-2xl border border-zinc-200 bg-white p-3.5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95">
+                <div className="fixed sm:absolute right-2 sm:right-0 top-14 sm:top-12 z-50 w-[calc(100vw-16px)] sm:w-80 max-w-[360px] rounded-2xl border border-zinc-200 bg-white p-3.5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 max-h-[85vh] overflow-y-auto">
                   <div className="flex items-start justify-between border-b border-zinc-100 pb-3 dark:border-zinc-800">
                     <div className="flex items-start gap-3 flex-1 min-w-0">
                       <img
@@ -821,6 +827,21 @@ export function LinkedInNavbar({
                       {t("view_unified_profile", "View Unified Profile & Portfolio 📁")}
                     </button>
 
+                    {/* Quick Preferences: Theme & Language */}
+                    <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                      <p className="px-2 py-0.5 font-bold text-zinc-900 dark:text-zinc-100 text-[10px] uppercase tracking-wider font-mono">
+                        {t("preferences_label", "Preferences & Appearance")}
+                      </p>
+                      <div className="flex items-center justify-between gap-2 px-2 py-1.5">
+                        <span className="text-xs text-zinc-600 dark:text-zinc-300 font-medium">{t("theme_style", "Theme & Style")}</span>
+                        <ThemeColorSwitcher align="right" />
+                      </div>
+                      <div className="flex items-center justify-between gap-2 px-2 py-1.5">
+                        <span className="text-xs text-zinc-600 dark:text-zinc-300 font-medium">{t("language_label", "Language")}</span>
+                        <LanguageSwitcher align="right" />
+                      </div>
+                    </div>
+
                     {isAdminUser ? (
                       <div className="grid grid-cols-2 gap-1.5 pt-1">
                         <button
@@ -900,27 +921,89 @@ export function LinkedInNavbar({
             )}
           </div>
 
-          {/* Auth / Role Gate Button */}
+          {/* Desktop-only Auth / Role Gate Button */}
           {isAdminUser && onOpenAuthModal && (
             <button
               onClick={onOpenAuthModal}
-              className="flex items-center gap-1.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 px-2.5 sm:px-3 py-1.5 text-xs font-bold shadow-xs hover:opacity-90 transition-all shrink-0 cursor-pointer"
+              className="hidden xl:flex items-center gap-1.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 px-2.5 py-1 text-xs font-bold shadow-xs hover:opacity-90 transition-all shrink-0 cursor-pointer"
               title="Access Role Gate & Persona Switcher"
             >
               <Key className="h-3.5 w-3.5 text-amber-300 dark:text-amber-500 shrink-0" />
-              <span className="hidden sm:inline">Auth / Role Gate</span>
-              <span className="sm:hidden text-[10px]">Gate</span>
+              <span>Gate</span>
             </button>
           )}
 
-          {/* Theme & Background Color Switcher Popover */}
-          <div className="shrink-0">
+          {/* Desktop-only Theme & Background Color Switcher Popover */}
+          <div className="hidden lg:block shrink-0">
             <ThemeColorSwitcher align="right" />
           </div>
 
-          {/* Global Multi-Language Switcher Popover */}
-          <div className="shrink-0">
+          {/* Desktop-only Global Multi-Language Switcher Popover */}
+          <div className="hidden lg:block shrink-0">
             <LanguageSwitcher align="right" />
+          </div>
+        </div>
+      </div>
+
+      {/* Tier 2: Dedicated Menu Items Navigation Bar for Mobile & Tablet (< lg) */}
+      <div className="lg:hidden w-full border-t border-zinc-200/80 bg-white/95 backdrop-blur-md dark:border-zinc-800/80 dark:bg-zinc-950/95 px-1 py-1">
+        <div className="mx-auto flex items-center justify-between gap-0.5 max-w-lg">
+          {primaryNavItems.map((item) => {
+            const Icon = item.icon
+            const isActive = activeTab === item.id
+
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  onSelectTab(item.id)
+                  setIsMoreOpen(false)
+                }}
+                className={`relative flex flex-1 min-w-[34px] max-w-[50px] flex-col items-center justify-center py-1 px-0.5 text-center transition-all group shrink-0 cursor-pointer ${
+                  isActive
+                    ? "text-[#0A66C2] font-bold border-b-2 border-[#0A66C2]"
+                    : item.isMarketplace
+                    ? "text-purple-600 dark:text-purple-400 font-bold hover:text-purple-700"
+                    : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                }`}
+                title={item.label}
+              >
+                <div className="relative">
+                  <Icon className={`h-4 w-4 sm:h-4.5 sm:w-4.5 transition-transform group-hover:scale-110 ${
+                    isActive ? "text-[#0A66C2]" : item.isMarketplace ? "text-purple-600 dark:text-purple-400" : ""
+                  }`} />
+                  {item.badge > 0 && (
+                    <span className="absolute -right-2 -top-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-600 px-0.5 text-[9px] font-bold text-white shadow-xs">
+                      {item.badge}
+                    </span>
+                  )}
+                </div>
+                <span className="text-[9px] sm:text-[10px] leading-tight mt-0.5 truncate max-w-full font-medium">
+                  {item.shortLabel || item.label}
+                </span>
+              </button>
+            )
+          })}
+
+          {/* "More" Trigger in Mobile Bar */}
+          <div ref={mobileMoreMenuRef} className="relative flex-1 min-w-[34px] max-w-[50px] shrink-0">
+            <button
+              onClick={() => {
+                setIsMoreOpen(!isMoreOpen)
+                setIsMeOpen(false)
+              }}
+              className={`flex w-full flex-col items-center justify-center py-1 px-0.5 text-center transition-colors cursor-pointer ${
+                isMoreOpen
+                  ? "text-[#0A66C2] font-bold border-b-2 border-[#0A66C2]"
+                  : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+              }`}
+              title="More Modules & Hubs"
+            >
+              <Grid3X3 className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
+              <span className="flex items-center justify-center text-[9px] sm:text-[10px] leading-tight mt-0.5 font-medium">
+                {t("nav_more", "More")}
+              </span>
+            </button>
           </div>
         </div>
       </div>
