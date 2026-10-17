@@ -14,14 +14,18 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(db),
   session: { strategy: "jwt" },
   pages: {
-    signIn: "/sign-in",
-    error: "/sign-in",
+    signIn: "/connectin-login",
+    error: "/connectin-login",
   },
   providers: [
-    Google({
-      clientId: process.env.AUTH_GOOGLE_ID!,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET!,
-    }),
+    ...(process.env.AUTH_GOOGLE_ID || process.env.GOOGLE_CLIENT_ID
+      ? [
+          Google({
+            clientId: (process.env.AUTH_GOOGLE_ID || process.env.GOOGLE_CLIENT_ID)!,
+            clientSecret: (process.env.AUTH_GOOGLE_SECRET || process.env.GOOGLE_CLIENT_SECRET)!,
+          }),
+        ]
+      : []),
     Credentials({
       name: "credentials",
       credentials: {

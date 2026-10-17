@@ -21,6 +21,8 @@ import { ProfessionSearchPopout } from "@/components/linkedin/ProfessionSearchPo
 import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
 import { signIn } from "next-auth/react"
 import { useLanguage } from "@/context/LanguageContext"
+import { GoogleAuthModal } from "@/components/auth/GoogleAuthModal"
+import { MicrosoftAuthModal } from "@/components/auth/MicrosoftAuthModal"
 
 export interface AuthPersona {
   id: string
@@ -251,28 +253,19 @@ export function ConnectInAuthModal({
   // Demo Drawer
   const [isDemoDrawerOpen, setIsDemoDrawerOpen] = useState(false)
 
-  // Real Google OAuth 2.0 Redirect (accounts.google.com)
-  const handleGoogleSignIn = async () => {
-    setIsLoading(true)
+  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false)
+  const [isMicrosoftModalOpen, setIsMicrosoftModalOpen] = useState(false)
+
+  // Direct Google Identity Services Authentication (accounts.google.com)
+  const handleGoogleSignIn = () => {
     setErrorMessage(null)
-    setSuccessMessage("Redirecting to Google Identity Services...")
-    try {
-      await signIn("google", { callbackUrl: "/connectin" })
-    } catch (err: any) {
-      window.location.href = "/api/auth/signin/google?callbackUrl=/connectin"
-    }
+    setIsGoogleModalOpen(true)
   }
 
-  // Real Microsoft Entra ID (Azure AD) OAuth 2.0 Redirect (login.microsoftonline.com)
-  const handleMicrosoftSignIn = async () => {
-    setIsLoading(true)
+  // Direct Microsoft Entra ID (Azure AD) Authentication (login.microsoftonline.com)
+  const handleMicrosoftSignIn = () => {
     setErrorMessage(null)
-    setSuccessMessage("Redirecting to Microsoft Entra ID (Azure AD)...")
-    try {
-      await signIn("microsoft-entra-id", { callbackUrl: "/connectin" })
-    } catch (err: any) {
-      window.location.href = "/api/auth/signin/microsoft-entra-id?callbackUrl=/connectin"
-    }
+    setIsMicrosoftModalOpen(true)
   }
 
   // Web Speech API Voice Call Engine (Speaks 6-digit code for automated voice call simulation & verification)
@@ -1466,6 +1459,29 @@ export function ConnectInAuthModal({
         </div>
 
       </div>
+
+      {/* ─── Direct Google & Microsoft Identity Modals ─── */}
+      <GoogleAuthModal
+        isOpen={isGoogleModalOpen}
+        onClose={() => setIsGoogleModalOpen(false)}
+        initialEmail={signInEmail || joinEmail}
+        professionId={signInProfessionId !== "auto_detect" ? signInProfessionId : joinProfessionId}
+        onSuccess={(user) => {
+          onLoginSuccess(user, user.role === 'admin' ? 'adminiam' : 'home', 'personal')
+          onClose()
+        }}
+      />
+
+      <MicrosoftAuthModal
+        isOpen={isMicrosoftModalOpen}
+        onClose={() => setIsMicrosoftModalOpen(false)}
+        initialEmail={signInEmail || joinEmail}
+        professionId={signInProfessionId !== "auto_detect" ? signInProfessionId : joinProfessionId}
+        onSuccess={(user) => {
+          onLoginSuccess(user, user.role === 'admin' ? 'adminiam' : 'home', 'personal')
+          onClose()
+        }}
+      />
     </div>
   )
 }

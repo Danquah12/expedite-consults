@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
@@ -17,6 +17,9 @@ type SignInForm = z.infer<typeof signInSchema>;
 
 export default function SignInPage() {
   const router = useRouter();
+  useEffect(() => {
+    router.replace("/connectin-login");
+  }, [router]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 

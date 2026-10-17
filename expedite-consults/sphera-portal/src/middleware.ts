@@ -101,6 +101,13 @@ export async function middleware(request: NextRequest) {
   }
 
   // 2. Normal User Routing
+  // Redirect any legacy /sign-in, /sign-up, or /login routes straight to /connectin-login
+  if (pathname === "/sign-in" || pathname === "/sign-up" || pathname === "/login") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/connectin-login";
+    return NextResponse.redirect(url);
+  }
+
   // If visitor arrives at root from connectln.vercel.app or connectin domain, send straight to /connectin
   if (pathname === "/") {
     const url = request.nextUrl.clone();
