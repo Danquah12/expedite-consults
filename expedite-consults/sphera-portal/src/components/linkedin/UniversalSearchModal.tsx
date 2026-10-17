@@ -156,8 +156,8 @@ export function UniversalSearchModal({
               skills: ["Cyber Security", "Zero Trust", "Cloud Security"]
             }))
 
-            // Merge with BASE_PEOPLE, avoiding duplicate names
-            const merged = [...apiPeople, ...BASE_PEOPLE].filter((item, index, self) =>
+            // Merge with basePeople, avoiding duplicate names
+            const merged = [...apiPeople, ...basePeople].filter((item, index, self) =>
               index === self.findIndex(t => t.name.toLowerCase() === item.name.toLowerCase())
             )
             setLiveUsers(merged)

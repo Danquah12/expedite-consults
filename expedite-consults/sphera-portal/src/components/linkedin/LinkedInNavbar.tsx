@@ -275,7 +275,7 @@ export function LinkedInNavbar({
     <header className="sticky top-0 z-40 w-full border-b border-zinc-200 bg-white/95 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/95 shadow-xs">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-2 sm:px-4 lg:px-6 gap-2">
         {/* Left Side: Brand Logo & Interactive Live Search */}
-        <div className="flex items-center gap-2 flex-1 max-w-xs sm:max-w-md shrink-0 relative">
+        <div className="flex items-center gap-2.5 flex-1 max-w-sm sm:max-w-lg lg:max-w-xl transition-all duration-300 relative">
           <button
             onClick={() => onSelectTab('home')}
             className="flex items-center focus:outline-none group shrink-0"
@@ -287,11 +287,11 @@ export function LinkedInNavbar({
           {/* Interactive Search Box */}
           <div className="relative flex-1">
             <div
-              className={`flex items-center gap-1.5 rounded-lg bg-[#EDF3F8] px-2.5 py-1.5 transition-all dark:bg-zinc-800/90 border border-transparent ${
-                isSearchFocused ? "ring-2 ring-[#0A66C2] bg-white border-[#0A66C2]/30 shadow-md dark:bg-zinc-900" : ""
+              className={`flex items-center gap-2 rounded-full bg-[#EDF3F8] px-3.5 py-1.5 sm:py-2 transition-all dark:bg-zinc-800/90 border border-zinc-200/50 dark:border-zinc-700/50 ${
+                isSearchFocused ? "ring-2 ring-[#0A66C2] bg-white border-[#0A66C2] shadow-md dark:bg-zinc-900" : "hover:bg-[#E2ECF3] dark:hover:bg-zinc-800"
               }`}
             >
-              <Search className="h-3.5 w-3.5 text-zinc-500 shrink-0" />
+              <Search className="h-4 w-4 text-zinc-500 shrink-0" />
               <input
                 type="text"
                 placeholder={t("search_placeholder", getEnclaveSearchPlaceholder(user.professionEnclave))}
@@ -307,7 +307,7 @@ export function LinkedInNavbar({
                     setIsSearchFocused(false)
                   }
                 }}
-                className="w-full bg-transparent text-xs text-zinc-900 placeholder:text-zinc-500 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-400"
+                className="w-full bg-transparent text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-500 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-400 font-medium"
               />
               {searchQuery && (
                 <button
@@ -316,7 +316,7 @@ export function LinkedInNavbar({
                   className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-0.5"
                   title="Clear search"
                 >
-                  <X className="h-3 w-3" />
+                  <X className="h-3.5 w-3.5" />
                 </button>
               )}
               {/* Dedicated Search Action Button */}
@@ -326,10 +326,10 @@ export function LinkedInNavbar({
                   onOpenUniversalSearch && onOpenUniversalSearch()
                   setIsSearchFocused(false)
                 }}
-                className="rounded-md bg-[#0A66C2] text-white px-2 py-0.5 text-[10px] sm:text-[11px] font-bold hover:bg-[#004182] transition-colors flex items-center gap-1 shrink-0 cursor-pointer shadow-2xs"
+                className="rounded-full bg-[#0A66C2] text-white px-3 py-1 text-xs font-bold hover:bg-[#004182] transition-all flex items-center gap-1.5 shrink-0 cursor-pointer shadow-xs hover:scale-105 active:scale-95"
                 title="Search platform"
               >
-                <Search className="h-2.5 w-2.5" />
+                <Search className="h-3 w-3" />
                 <span className="hidden sm:inline">{t("search_button", "Search")}</span>
               </button>
             </div>
@@ -341,7 +341,7 @@ export function LinkedInNavbar({
                   className="fixed inset-0 z-40 bg-black/10 backdrop-blur-2xs"
                   onClick={() => setIsSearchFocused(false)}
                 />
-                <div className="absolute left-0 top-11 z-50 w-80 sm:w-96 rounded-2xl border border-zinc-200 bg-white p-3 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 space-y-2.5 max-h-[80vh] overflow-y-auto">
+                <div className="absolute left-0 top-11 sm:top-12 z-50 w-full min-w-[320px] sm:min-w-[480px] lg:min-w-[540px] rounded-2xl border border-zinc-200 bg-white p-3 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 space-y-2.5 max-h-[80vh] overflow-y-auto">
                   {/* Header info */}
                   <div className="flex items-center justify-between border-b border-zinc-100 pb-2 dark:border-zinc-800">
                     <span className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1">
