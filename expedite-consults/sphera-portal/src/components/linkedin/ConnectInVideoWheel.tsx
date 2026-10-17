@@ -20,7 +20,10 @@ import {
   Video,
   Film,
   Check,
-  AlertCircle
+  AlertCircle,
+  Copy,
+  Mail,
+  Send
 } from "lucide-react"
 import {
   EDUCATIONAL_WHEEL_TALKS,
@@ -66,6 +69,11 @@ export function ConnectInVideoWheel({
   const [copyFeedback, setCopyFeedback] = useState<boolean>(false)
   const trackRef = useRef<HTMLDivElement>(null)
 
+  // Multi-Social Sharing State
+  const [videoToShare, setVideoToShare] = useState<WheelVideoTalk | null>(null)
+  const [isShareModalOpen, setIsShareModalOpen] = useState<boolean>(false)
+  const [shareFeedback, setShareFeedback] = useState<string | null>(null)
+
   // Submit Video Modal State
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false)
   const [submitEnclaveId, setSubmitEnclaveId] = useState(effectiveEnclaveId)
@@ -90,7 +98,6 @@ export function ConnectInVideoWheel({
     if (selectedFilter === "my_enclave") {
       return allTalks.filter(t => t.enclaveId === effectiveEnclaveId)
     }
-    // Filter by specific enclave or category
     return allTalks.filter(t => t.enclaveId === selectedFilter || t.category === selectedFilter)
   }, [allTalks, selectedFilter, effectiveEnclaveId])
 
@@ -118,12 +125,77 @@ export function ConnectInVideoWheel({
     return () => clearInterval(interval)
   }, [isPlayingAuto])
 
-  const handleShareVideo = (video: WheelVideoTalk) => {
-    const url = `https://www.youtube.com/watch?v=${video.youtubeId}`
+  // Social Share Payload Generator
+  const getVideoSharePayload = (video: WheelVideoTalk) => {
+    const connectInUrl = `https://connectln.vercel.app/connectin`
+    const ytUrl = `https://www.youtube.com/watch?v=${video.youtubeId}`
+    const takeaways = video.takeaways.map(t => `• ${t}`).join('\n')
+    const hashtags = (video.tags || []).join(' ')
+    const shareText = `🎬 ConnectIn Masterclass: "${video.title}" (${video.serialPlate})\n👤 Speaker: ${video.speaker} (${video.speakerTitle})\n🔨 Discipline: ${video.categoryLabel}\n⏱ Duration: ${video.duration}\n\n💡 Key Takeaways:\n${takeaways}\n\nWatch free on ConnectIn The Wheel: ${connectInUrl}\nOr on YouTube: ${ytUrl}\n\n${hashtags}`
+
+    return { connectInUrl, ytUrl, shareText }
+  }
+
+  const handleShareToWhatsApp = (video: WheelVideoTalk) => {
+    const { shareText } = getVideoSharePayload(video)
     if (typeof navigator !== "undefined" && navigator.clipboard) {
-      navigator.clipboard.writeText(url)
+      navigator.clipboard.writeText(shareText).catch(() => {})
+    }
+    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`
+    window.open(whatsappUrl, "_blank")
+    setShareFeedback("Opening WhatsApp & copied briefing to clipboard!")
+    setTimeout(() => setShareFeedback(null), 3500)
+  }
+
+  const handleShareToLinkedIn = (video: WheelVideoTalk) => {
+    const { ytUrl } = getVideoSharePayload(video)
+    const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(ytUrl)}`
+    window.open(linkedinUrl, "_blank", "width=600,height=500")
+  }
+
+  const handleShareToFacebook = (video: WheelVideoTalk) => {
+    const { ytUrl, shareText } = getVideoSharePayload(video)
+    const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(ytUrl)}&quote=${encodeURIComponent(shareText)}`
+    window.open(fbUrl, "_blank", "width=600,height=500")
+  }
+
+  const handleShareToTwitter = (video: WheelVideoTalk) => {
+    const { ytUrl } = getVideoSharePayload(video)
+    const tweetText = `Check out this 5-min masterclass on ConnectIn The Wheel: "${video.title}" by ${video.speaker} (${video.serialPlate})`
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(ytUrl)}`
+    window.open(twitterUrl, "_blank", "width=600,height=500")
+  }
+
+  const handleShareToInstagram = async (video: WheelVideoTalk) => {
+    const { shareText } = getVideoSharePayload(video)
+    try {
+      if (typeof navigator !== "undefined" && navigator.clipboard) {
+        await navigator.clipboard.writeText(shareText)
+        setShareFeedback("Caption & takeaways copied! Paste into Instagram Story or DM.")
+        setTimeout(() => setShareFeedback(null), 3500)
+      }
+    } catch (e) {
+      // ignore
+    }
+    window.open("https://www.instagram.com", "_blank")
+  }
+
+  const handleShareToEmail = (video: WheelVideoTalk) => {
+    const { shareText } = getVideoSharePayload(video)
+    const subject = `[ConnectIn Masterclass] ${video.title} - ${video.speaker}`
+    window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(shareText)}`, "_blank")
+  }
+
+  const handleCopyLink = async (video: WheelVideoTalk) => {
+    const ytUrl = `https://www.youtube.com/watch?v=${video.youtubeId}`
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      await navigator.clipboard.writeText(ytUrl)
       setCopyFeedback(true)
-      setTimeout(() => setCopyFeedback(false), 2500)
+      setShareFeedback("YouTube video link copied to clipboard!")
+      setTimeout(() => {
+        setCopyFeedback(false)
+        setShareFeedback(null)
+      }, 2500)
     }
   }
 
@@ -356,9 +428,24 @@ export function ConnectInVideoWheel({
                       </span>
                     )}
                   </div>
-                  <span className="text-[10px] font-bold text-[#EFE8DC]/75 px-1.5 py-0.5 rounded bg-white/5">
-                    ⏱ {talk.duration}
-                  </span>
+
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setVideoToShare(talk)
+                        setIsShareModalOpen(true)
+                      }}
+                      className="p-1 rounded-md text-[#EFE8DC]/60 hover:text-white hover:bg-white/10 transition-colors"
+                      title="Share this masterclass"
+                    >
+                      <Share2 className="h-3 w-3" />
+                    </button>
+                    <span className="text-[10px] font-bold text-[#EFE8DC]/75 px-1.5 py-0.5 rounded bg-white/5">
+                      ⏱ {talk.duration}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Video Thumbnail with Play Button Overlay */}
@@ -443,19 +530,34 @@ export function ConnectInVideoWheel({
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
+                  {/* Direct 1-Click WhatsApp Share Pill */}
                   <button
                     type="button"
-                    onClick={() => handleShareVideo(activeVideo)}
-                    className="p-2 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors relative cursor-pointer"
-                    title="Copy video link"
+                    onClick={() => handleShareToWhatsApp(activeVideo)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#25D366] hover:bg-[#20ba5a] text-white text-xs font-bold shadow-md transition-all cursor-pointer hover:scale-105 active:scale-95"
+                    title="Share masterclass directly to WhatsApp"
                   >
-                    <Share2 className="h-4 w-4" />
-                    {copyFeedback && (
-                      <span className="absolute -top-7 -right-2 bg-emerald-600 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow">
-                        Copied!
-                      </span>
-                    )}
+                    <svg className="w-3.5 h-3.5 fill-current shrink-0" viewBox="0 0 24 24">
+                      <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.303-.058.116-.087.188-.173.289l-.26.303c-.087.087-.177.181-.076.354.101.173.449.741.964 1.201.662.591 1.221.774 1.394.86.173.086.275.072.376-.043.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.043.072.043.419-.101.824z" />
+                      <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2.348 21.652l4.636-1.04A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.25c-1.63 0-3.14-.492-4.404-1.336l-.315-.21-2.753.618.63-2.683-.231-.328A8.212 8.212 0 013.75 12c0-4.549 3.701-8.25 8.25-8.25s8.25 3.701 8.25 8.25-3.701 8.25-8.25 8.25z" />
+                    </svg>
+                    <span>WhatsApp</span>
                   </button>
+
+                  {/* Multi-Social Share Sheet Trigger */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setVideoToShare(activeVideo)
+                      setIsShareModalOpen(true)
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold border border-zinc-700 transition-all cursor-pointer"
+                    title="Share to LinkedIn, Facebook, X, Instagram, Email"
+                  >
+                    <Share2 className="h-3.5 w-3.5" />
+                    <span>Share...</span>
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => setActiveVideo(null)}
@@ -505,7 +607,7 @@ export function ConnectInVideoWheel({
                   </ul>
                 </div>
 
-                {/* Tags and Next Plate Action */}
+                {/* Tags and Action Bar */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-zinc-800">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     {activeVideo.tags.map(tag => (
@@ -515,7 +617,15 @@ export function ConnectInVideoWheel({
                     ))}
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => handleCopyLink(activeVideo)}
+                      className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-200 flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      {copyFeedback ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                      <span>{copyFeedback ? "Copied!" : "Copy Link"}</span>
+                    </button>
                     <button
                       type="button"
                       onClick={() => window.open(`https://www.youtube.com/watch?v=${activeVideo.youtubeId}`, '_blank', 'noopener,noreferrer')}
@@ -541,7 +651,192 @@ export function ConnectInVideoWheel({
       </Dialog>
 
       {/* ────────────────────────────────────────────────────────── */}
-      {/* 2. SUBMIT / ADD VIDEO TO THE WHEEL MODAL                    */}
+      {/* 2. MULTI-SOCIAL SHARE MODAL (WHATSAPP, LINKEDIN, FB, X...) */}
+      {/* ────────────────────────────────────────────────────────── */}
+      <Dialog open={isShareModalOpen} onOpenChange={setIsShareModalOpen}>
+        <DialogContent className="max-w-md p-0 border border-zinc-700 bg-zinc-950 text-white rounded-3xl overflow-hidden shadow-2xl">
+          <DialogHeader className="p-5 border-b border-zinc-800 bg-zinc-900/80">
+            <div className="flex items-center gap-2">
+              <span className="p-2 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 text-sm">
+                📢
+              </span>
+              <div>
+                <DialogTitle className="text-base font-bold text-white flex items-center gap-2">
+                  <span>Share Masterclass Video</span>
+                </DialogTitle>
+                <DialogDescription className="text-xs text-zinc-400 mt-0.5">
+                  Distribute this technical briefing, blueprint guide, or guild tutorial to your professional network.
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          {videoToShare && (
+            <div className="p-5 space-y-4">
+              {/* Video Preview Card */}
+              <div className="p-3 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center gap-3">
+                <img
+                  src={videoToShare.thumbnailUrl}
+                  alt={videoToShare.title}
+                  className="h-14 w-20 rounded-xl object-cover border border-zinc-700 shrink-0"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] font-mono font-bold bg-amber-950/80 text-amber-300 px-1.5 py-0.2 rounded border border-amber-500/30">
+                      {videoToShare.serialPlate}
+                    </span>
+                    <span className="text-[10px] text-zinc-400">⏱ {videoToShare.duration}</span>
+                  </div>
+                  <h4 className="text-xs font-bold text-white truncate mt-1">
+                    {videoToShare.title}
+                  </h4>
+                  <p className="text-[10px] text-zinc-400 truncate">
+                    {videoToShare.speaker} · {videoToShare.categoryLabel}
+                  </p>
+                </div>
+              </div>
+
+              {/* Feedback Alert Toast */}
+              {shareFeedback && (
+                <div className="p-3 rounded-xl bg-emerald-950/80 border border-emerald-600/50 text-emerald-200 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+                  <Check className="h-4 w-4 text-emerald-400 shrink-0" />
+                  <span>{shareFeedback}</span>
+                </div>
+              )}
+
+              {/* 6 Social Channels Grid */}
+              <div className="grid grid-cols-2 gap-2.5">
+                {/* 1. WhatsApp */}
+                <button
+                  type="button"
+                  onClick={() => handleShareToWhatsApp(videoToShare)}
+                  className="p-3 rounded-xl bg-[#25D366]/15 hover:bg-[#25D366]/25 border border-[#25D366]/40 text-emerald-200 flex items-center gap-2.5 transition-all cursor-pointer group text-left"
+                >
+                  <div className="h-8 w-8 rounded-full bg-[#25D366] text-white flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105">
+                    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                      <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.303-.058.116-.087.188-.173.289l-.26.303c-.087.087-.177.181-.076.354.101.173.449.741.964 1.201.662.591 1.221.774 1.394.86.173.086.275.072.376-.043.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.043.072.043.419-.101.824z" />
+                      <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2.348 21.652l4.636-1.04A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.25c-1.63 0-3.14-.492-4.404-1.336l-.315-.21-2.753.618.63-2.683-.231-.328A8.212 8.212 0 013.75 12c0-4.549 3.701-8.25 8.25-8.25s8.25 3.701 8.25 8.25-3.701 8.25-8.25 8.25z" />
+                    </svg>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-white">WhatsApp</p>
+                    <p className="text-[10px] text-zinc-400">Share to crew / chat</p>
+                  </div>
+                </button>
+
+                {/* 2. LinkedIn */}
+                <button
+                  type="button"
+                  onClick={() => handleShareToLinkedIn(videoToShare)}
+                  className="p-3 rounded-xl bg-[#0A66C2]/15 hover:bg-[#0A66C2]/25 border border-[#0A66C2]/40 text-sky-200 flex items-center gap-2.5 transition-all cursor-pointer group text-left"
+                >
+                  <div className="h-8 w-8 rounded-full bg-[#0A66C2] text-white flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105">
+                    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                      <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 8.76a1.64 1.64 0 1 0 0-3.28 1.64 1.64 0 0 0 0 3.28m1.39 9.74v-8.37H5.07v8.37h2.78z" />
+                    </svg>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-white">LinkedIn</p>
+                    <p className="text-[10px] text-zinc-400">Post to network</p>
+                  </div>
+                </button>
+
+                {/* 3. X (Twitter) */}
+                <button
+                  type="button"
+                  onClick={() => handleShareToTwitter(videoToShare)}
+                  className="p-3 rounded-xl bg-zinc-800/80 hover:bg-zinc-800 border border-zinc-700 text-zinc-200 flex items-center gap-2.5 transition-all cursor-pointer group text-left"
+                >
+                  <div className="h-8 w-8 rounded-full bg-black text-white flex items-center justify-center shrink-0 shadow-sm border border-zinc-700 group-hover:scale-105">
+                    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                    </svg>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-white">X (Twitter)</p>
+                    <p className="text-[10px] text-zinc-400">Tweet briefing</p>
+                  </div>
+                </button>
+
+                {/* 4. Facebook */}
+                <button
+                  type="button"
+                  onClick={() => handleShareToFacebook(videoToShare)}
+                  className="p-3 rounded-xl bg-[#1877F2]/15 hover:bg-[#1877F2]/25 border border-[#1877F2]/40 text-blue-200 flex items-center gap-2.5 transition-all cursor-pointer group text-left"
+                >
+                  <div className="h-8 w-8 rounded-full bg-[#1877F2] text-white flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105">
+                    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                    </svg>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-white">Facebook</p>
+                    <p className="text-[10px] text-zinc-400">Share to timeline</p>
+                  </div>
+                </button>
+
+                {/* 5. Instagram */}
+                <button
+                  type="button"
+                  onClick={() => handleShareToInstagram(videoToShare)}
+                  className="p-3 rounded-xl bg-pink-950/30 hover:bg-pink-950/50 border border-pink-700/40 text-pink-200 flex items-center gap-2.5 transition-all cursor-pointer group text-left"
+                >
+                  <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 text-white flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105">
+                    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                    </svg>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-white">Instagram</p>
+                    <p className="text-[10px] text-zinc-400">Copy caption & open</p>
+                  </div>
+                </button>
+
+                {/* 6. Email */}
+                <button
+                  type="button"
+                  onClick={() => handleShareToEmail(videoToShare)}
+                  className="p-3 rounded-xl bg-indigo-950/30 hover:bg-indigo-950/50 border border-indigo-700/40 text-indigo-200 flex items-center gap-2.5 transition-all cursor-pointer group text-left"
+                >
+                  <div className="h-8 w-8 rounded-full bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105">
+                    <Mail className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-white">Email</p>
+                    <p className="text-[10px] text-zinc-400">Send notes & link</p>
+                  </div>
+                </button>
+              </div>
+
+              {/* Direct Copy Video Link Bar */}
+              <div className="pt-2 border-t border-zinc-800 space-y-1.5">
+                <label className="text-[11px] font-bold text-zinc-300">
+                  Direct Video Link
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={`https://www.youtube.com/watch?v=${videoToShare.youtubeId}`}
+                    className="flex-1 rounded-xl bg-zinc-900 border border-zinc-700 px-3 py-2 text-xs text-zinc-300 font-mono focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleCopyLink(videoToShare)}
+                    className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm"
+                  >
+                    {copyFeedback ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                    <span>{copyFeedback ? "Copied" : "Copy"}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ────────────────────────────────────────────────────────── */}
+      {/* 3. SUBMIT / ADD VIDEO TO THE WHEEL MODAL                    */}
       {/* ────────────────────────────────────────────────────────── */}
       <Dialog open={isSubmitModalOpen} onOpenChange={setIsSubmitModalOpen}>
         <DialogContent className="max-w-xl p-0 border border-zinc-700 bg-zinc-950 text-white rounded-3xl overflow-hidden shadow-2xl">
