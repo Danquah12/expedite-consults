@@ -339,8 +339,23 @@ export interface SpheraMicroApp {
   status: 'Available' | 'Live' | 'Coming Soon'
 }
 
-// 16 FLAGSHIP PRODUCTS & SERVICES
+// 17 FLAGSHIP PRODUCTS & SERVICES
 export const flagshipProductsData: FlagshipProduct[] = [
+  {
+    id: 'prod_aegis_mission_control',
+    name: 'Ægis — Mission Control Launchpad',
+    tagline: 'Unified Fleet Gateway, 12-Service SOC Switcher & Real-Time CVE Intelligence',
+    description: 'Central command console and real-time fleet gateway for the entire Expedite Consults cybersecurity ecosystem. Monitors 12 standalone security platforms, 68+ operational modules, streams live CVE threat feeds, polls Neo4j graph databases, and orchestrates offense, defense, and governance operations from a single unified pane of glass.',
+    icon: '🚀',
+    coverImage: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&auto=format&fit=crop&q=80',
+    badge: '🚀 Vercel Live · Gateway',
+    category: 'Cyber & Security',
+    priceDisplay: 'Open Gateway',
+    url: 'https://ecosystem-launchpad.vercel.app/',
+    isOnline: true,
+    featured: true,
+    highlights: ['12-Service Autonomous Fleet Switcher', 'Real-Time Fleet Health Poller', 'Live CVE Threat Ticker', 'Neo4j Graph Database Poller']
+  },
   {
     id: 'prod_1',
     name: 'Expedite Strike & Fusion 2026',

@@ -93,13 +93,14 @@ export function MarketplaceView({
   onLaunchCareerSuite,
   onNavigateTab
 }: MarketplaceViewProps) {
-  // Master Category & Subcategory: Discover | Solutions | Software | Services | Cybersecurity | AI | Cloud | Training | Enterprise | Deals | Sphera
+  // Master Category & Subcategory: Discover | Launchpad | Solutions | Software | Services | Cybersecurity | AI | Cloud | Training | Enterprise | Deals | Sphera
   const [selectedMainCategory, setSelectedMainCategory] = useState<
-    'Discover' | 'Solutions' | 'Software' | 'Services' | 'Cybersecurity' | 'AI' | 'Cloud' | 'Training' | 'Enterprise' | 'Deals' | 'Sphera' | 'All'
+    'Discover' | 'Launchpad' | 'Solutions' | 'Software' | 'Services' | 'Cybersecurity' | 'AI' | 'Cloud' | 'Training' | 'Enterprise' | 'Deals' | 'Sphera' | 'All'
   >('Discover')
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>('All')
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [sortBy, setSortBy] = useState<'popular' | 'rating' | 'price_low' | 'price_high'>('popular')
+  const [showAllEcosystem, setShowAllEcosystem] = useState<boolean>(false)
 
   // Solutions Layer State
   const [solutions, setSolutions] = useState<SolutionPackage[]>(ENTERPRISE_SOLUTIONS_DATA)
@@ -122,8 +123,51 @@ export function MarketplaceView({
   const [newVendorPrice, setNewVendorPrice] = useState("$299 / mo")
   const [newVendorDesc, setNewVendorDesc] = useState("")
 
-  // Filter Products based on category selection
+  const userEnclave = currentUser?.professionEnclave || 'trades_construction'
+
+  // Filter Products strictly based on user enclave and category selection
   const filteredProducts = MASTER_MARKETPLACE_PRODUCTS.filter(p => {
+    // 0. If user is in Launchpad mode, show all deployed Launchpad apps directly!
+    if (selectedMainCategory === 'Launchpad') {
+      if (!p.isLaunchpadDeployed) return false
+      if (selectedSubCategory !== 'All' && !selectedSubCategory.startsWith('All')) {
+        const catMatch =
+          p.launchpadCategory === selectedSubCategory ||
+          p.subCategory.toLowerCase().includes(selectedSubCategory.toLowerCase()) ||
+          p.category.toLowerCase().includes(selectedSubCategory.toLowerCase())
+        if (!catMatch) return false
+      }
+      const matchSearch = !searchQuery || (
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.tagline.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.overview.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+      return matchSearch
+    }
+
+    // 1. Strict Enclave Least-Privilege Isolation (Bypassed if user toggled "showAllEcosystem" OR entered a search query)
+    if (!showAllEcosystem && !searchQuery.trim()) {
+      if (userEnclave === 'trades_construction') {
+        if (p.professionEnclave && p.professionEnclave !== 'trades_construction') return false
+        if (!p.professionEnclave && !['Tools & Joinery', 'CAD & Measurement', 'Lumber & Materials', 'Hardware', 'Trades & Vocational Network', 'Productivity & Field Notes', 'Trade Machinery & Commerce', 'Video Masterclasses & Tutorials'].includes(p.subCategory)) return false
+      } else if (userEnclave === 'healthcare_medicine') {
+        if (p.professionEnclave && p.professionEnclave !== 'healthcare_medicine') return false
+        if (!p.professionEnclave && !['Diagnostic Devices', 'Trauma & Resuscitation', 'Surgical Implants', 'Clinical Gear'].includes(p.subCategory)) return false
+      } else if (userEnclave === 'automotive_mechanics') {
+        if (p.professionEnclave && p.professionEnclave !== 'automotive_mechanics') return false
+        if (!p.professionEnclave && !['Scan Tools', 'Oscilloscopes', 'EV Safety Gear', 'OEM Repair Data', 'Productivity & Field Notes'].includes(p.subCategory)) return false
+      } else if (userEnclave === 'tech_software') {
+        if (p.professionEnclave && p.professionEnclave !== 'tech_software') return false
+      } else if (userEnclave === 'law_gov_defense') {
+        if (p.professionEnclave && p.professionEnclave !== 'law_gov_defense') return false
+      } else if (userEnclave === 'finance_accounting') {
+        if (p.professionEnclave && p.professionEnclave !== 'finance_accounting') return false
+      } else {
+        // Tech & Cyber (tech_cybersecurity or default)
+        if (p.professionEnclave && p.professionEnclave !== 'tech_cybersecurity') return false
+      }
+    }
+
     let matchCategory = true
     if (selectedMainCategory === 'Software') matchCategory = p.category === 'Software'
     else if (selectedMainCategory === 'Services') matchCategory = p.category === 'Services'
@@ -169,19 +213,54 @@ export function MarketplaceView({
     }, 2000)
   }
 
-  const marketplaceTabs = [
-    { id: 'Discover', label: '✨ Discover' },
-    { id: 'Solutions', label: '🎯 Solutions (Business Outcomes)', isSolutions: true },
-    { id: 'Software', label: '💻 Software' },
-    { id: 'Services', label: '🛠️ Services' },
-    { id: 'Cybersecurity', label: '🛡️ Cybersecurity' },
-    { id: 'AI', label: '🤖 AI' },
-    { id: 'Cloud', label: '☁️ Cloud' },
-    { id: 'Training', label: '🎓 Training' },
-    { id: 'Enterprise', label: '🏢 Enterprise' },
-    { id: 'Deals', label: '🏷️ Deals' },
-    { id: 'Sphera', label: '🪐 Sphera (137 Apps)' },
-  ]
+  const marketplaceTabs = (() => {
+    const launchpadTab = { id: 'Launchpad', label: '🚀 Launchpad Fleet (24+ Deployed)', isLaunchpad: true }
+
+    if (userEnclave === 'trades_construction') {
+      return [
+        launchpadTab,
+        { id: 'Discover', label: '✨ All Trade Tools & Lumber' },
+        { id: 'Software', label: '🧰 Power Tools & Joinery' },
+        { id: 'Services', label: '📐 CAD & Total Station Measure' },
+        { id: 'Enterprise', label: '🪵 Lumber & Materials Stock' },
+        { id: 'Deals', label: '🏷️ Subcontractor Deals' },
+      ]
+    }
+    if (userEnclave === 'healthcare_medicine') {
+      return [
+        launchpadTab,
+        { id: 'Discover', label: '✨ All Medical & Surgical' },
+        { id: 'Software', label: '🩺 Diagnostic Ultrasound & POCUS' },
+        { id: 'Enterprise', label: '🩸 Trauma & Rapid Infusion' },
+        { id: 'Services', label: '🔪 Surgical Hardware & Implants' },
+        { id: 'Deals', label: '🏷️ Hospital RFP Deals' },
+      ]
+    }
+    if (userEnclave === 'automotive_mechanics') {
+      return [
+        launchpadTab,
+        { id: 'Discover', label: '✨ All Diagnostic Gear' },
+        { id: 'Software', label: '🧰 Snap-on & Scan Tools' },
+        { id: 'Services', label: '⚡ PicoScope Oscilloscopes' },
+        { id: 'Enterprise', label: '🔋 EV Safety & NFPA 70E' },
+        { id: 'Deals', label: '🏷️ Shop Equipment Deals' },
+      ]
+    }
+    return [
+      launchpadTab,
+      { id: 'Discover', label: '✨ Discover' },
+      { id: 'Solutions', label: '🎯 Solutions (Business Outcomes)', isSolutions: true },
+      { id: 'Software', label: '💻 Software' },
+      { id: 'Services', label: '🛠️ Services' },
+      { id: 'Cybersecurity', label: '🛡️ Cybersecurity' },
+      { id: 'AI', label: '🤖 AI' },
+      { id: 'Cloud', label: '☁️ Cloud' },
+      { id: 'Training', label: '🎓 Training' },
+      { id: 'Enterprise', label: '🏢 Enterprise' },
+      { id: 'Deals', label: '🏷️ Deals' },
+      { id: 'Sphera', label: '🪐 Sphera (137 Apps)' },
+    ]
+  })()
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-24">
@@ -200,14 +279,37 @@ export function MarketplaceView({
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-              Discover Products &amp; Solve Business Outcomes
+              {userEnclave === 'trades_construction'
+                ? "Skilled Trades Tools, CAD Equipment & Timber Futures"
+                : userEnclave === 'healthcare_medicine'
+                ? "Clinical Diagnostic Devices, Surgical Implants & Hospital RFPs"
+                : userEnclave === 'automotive_mechanics'
+                ? "Professional Automotive Scan Tools, Lab Scopes & EV Safety"
+                : "Discover Products & Solve Business Outcomes"}
             </h1>
             <p className="text-xs sm:text-sm text-zinc-300 max-w-2xl leading-relaxed">
-              Find individual enterprise tools or select a business problem to receive a complete tailored package: Products + Consulting Services + Verified Experts + Hands-on Training.
+              {userEnclave === 'trades_construction'
+                ? "Acquire verified guild-grade timber joinery systems, laser total stations, Douglas Fir futures, and OSHA-compliant fall protection gear."
+                : userEnclave === 'healthcare_medicine'
+                ? "Procure FDA-cleared bedside ultrasound devices, rapid blood warmers, orthopedic trauma plating sets, and hospital equipment tenders."
+                : userEnclave === 'automotive_mechanics'
+                ? "Equip your bay with Snap-on ZEUS+ diagnostic stations, 4-channel PicoScopes, 1000V EV lineman PPE, and OEM repair data."
+                : "Find individual enterprise tools or select a business problem to receive a complete tailored package: Products + Consulting Services + Verified Experts + Hands-on Training."}
             </p>
           </div>
 
           <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <button
+              onClick={() => {
+                setSelectedMainCategory('Launchpad')
+                setSelectedSubCategory('All')
+              }}
+              className="rounded-xl bg-gradient-to-r from-purple-500 via-pink-500 to-indigo-500 hover:from-purple-400 hover:to-indigo-400 px-4 py-2.5 text-xs sm:text-sm font-black text-white shadow-lg flex items-center gap-1.5 transition-all border border-purple-300/40"
+            >
+              <Sparkles className="h-4 w-4 text-amber-300 animate-pulse" />
+              <span>🚀 Launchpad Fleet (24+ Apps)</span>
+            </button>
+
             <button
               onClick={() => setSelectedMainCategory('Solutions')}
               className="rounded-xl bg-amber-400 hover:bg-amber-300 px-4 py-2.5 text-xs sm:text-sm font-black text-zinc-950 shadow-md flex items-center gap-1.5 transition-all"
@@ -226,10 +328,10 @@ export function MarketplaceView({
           </div>
         </div>
 
-        {/* 10 MASTER CATEGORY TABS (DISCOVER | SOLUTIONS | SOFTWARE | SERVICES | CYBERSECURITY | AI | CLOUD | TRAINING | ENTERPRISE | DEALS | SPHERA) */}
+        {/* 11 MASTER CATEGORY TABS (LAUNCHPAD | DISCOVER | SOLUTIONS | SOFTWARE | SERVICES | CYBERSECURITY | AI | CLOUD | TRAINING | ENTERPRISE | DEALS | SPHERA) */}
         <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs scrollbar-none w-full">
-            {marketplaceTabs.map((cat) => {
+            {marketplaceTabs.map((cat: any) => {
               const isSelected = selectedMainCategory === cat.id
               return (
                 <button
@@ -240,9 +342,13 @@ export function MarketplaceView({
                   }}
                   className={`rounded-xl px-3.5 py-2 text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
                     isSelected
-                      ? cat.isSolutions
+                      ? cat.isLaunchpad
+                        ? "bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 text-white shadow-lg font-black border border-purple-300"
+                        : cat.isSolutions
                         ? "bg-amber-400 text-zinc-950 shadow-lg font-black"
                         : "bg-white text-zinc-950 shadow-md font-black"
+                      : cat.isLaunchpad
+                      ? "bg-gradient-to-r from-purple-900/60 to-indigo-900/60 text-purple-200 border border-purple-400/50 hover:from-purple-800/80 hover:to-indigo-800/80 font-bold"
                       : cat.isSolutions
                       ? "bg-amber-500/20 text-amber-300 border border-amber-400/40 hover:bg-amber-500/30"
                       : "bg-white/10 text-white/80 hover:bg-white/20 hover:text-white"
@@ -559,7 +665,7 @@ export function MarketplaceView({
                     {app.name}
                   </h4>
                   <p className="text-[11px] text-zinc-500 line-clamp-2 leading-relaxed">
-                    {app.description}
+                    {app.tagline}
                   </p>
                 </div>
 
@@ -576,8 +682,67 @@ export function MarketplaceView({
           </div>
         </div>
       ) : (
-        /* STANDARD PRODUCTS GRID */
+        /* STANDARD & LAUNCHPAD PRODUCTS GRID */
         <div className="space-y-4">
+          {/* DEDICATED LAUNCHPAD FLEET SHOWCASE SHELF */}
+          {selectedMainCategory === 'Launchpad' && (
+            <div className="rounded-2xl border border-purple-500/30 bg-gradient-to-r from-purple-950/40 via-indigo-950/30 to-slate-900/60 p-5 shadow-lg space-y-3 dark:border-purple-800/50">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-purple-500/20 border border-purple-400/40 flex items-center justify-center text-xl shadow-inner">
+                    🚀
+                  </div>
+                  <div>
+                    <h3 className="font-black text-base text-white flex items-center gap-2">
+                      <span>Launchpad Deployed Fleet (24+ Commercial Cards)</span>
+                      <span className="rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] px-2 py-0.5 font-bold uppercase tracking-wider">
+                        Production Ready
+                      </span>
+                    </h3>
+                    <p className="text-xs text-purple-200/80">
+                      Federated directly from Launchpad: Local Ports (9000, 9012, 9011, 9020), Vercel Live Cloud suites, autonomous ASPM, and trade field utilities.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs font-mono text-purple-300 shrink-0">
+                  <span className="rounded-lg bg-white/10 px-3 py-1 border border-white/15">
+                    {filteredProducts.length} Platforms Live
+                  </span>
+                </div>
+              </div>
+
+              {/* Sub-Category Filter Pills */}
+              <div className="pt-2 border-t border-white/10 flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
+                {[
+                  { id: 'All', label: '🚀 All Fleet (24+)' },
+                  { id: 'security', label: '🛡️ Cyber & PenTest' },
+                  { id: 'ai', label: '🤖 AI & Media Intelligence' },
+                  { id: 'marketplace', label: '🛍️ Escrow Commerce & Eats' },
+                  { id: 'career', label: '💼 Career & Skill Passport' },
+                  { id: 'trades', label: '🔧 Trade & Field Engineering' },
+                  { id: 'campus', label: '🎓 Campus OS & Video Academy' },
+                  { id: 'orchestration', label: '🌐 Cross-Platform SOAR' },
+                ].map((sub) => {
+                  const isSubSelected = selectedSubCategory === sub.id
+                  return (
+                    <button
+                      key={sub.id}
+                      onClick={() => setSelectedSubCategory(sub.id)}
+                      className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all shrink-0 ${
+                        isSubSelected
+                          ? "bg-purple-600 text-white shadow-md font-black ring-2 ring-purple-400/40"
+                          : "bg-white/10 text-white/80 hover:bg-white/20 hover:text-white border border-white/10"
+                      }`}
+                    >
+                      {sub.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           {/* SEARCH & SORT TOOLBAR */}
           <div className="rounded-xl border border-zinc-200 bg-white p-3.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="relative flex-1 flex items-center rounded-lg bg-zinc-50 px-3 py-2 border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800/80">
@@ -591,7 +756,21 @@ export function MarketplaceView({
               />
             </div>
 
-            <div className="flex items-center gap-3 text-xs text-zinc-500 shrink-0">
+            <div className="flex items-center gap-2 flex-wrap text-xs text-zinc-500 shrink-0">
+              {/* Guild vs All Ecosystem Toggle */}
+              <button
+                onClick={() => setShowAllEcosystem(!showAllEcosystem)}
+                className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all border flex items-center gap-1.5 ${
+                  showAllEcosystem
+                    ? "bg-purple-600 text-white border-purple-400 shadow-sm"
+                    : "bg-zinc-100 text-zinc-700 border-zinc-300 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700"
+                }`}
+                title="Toggle between strict profession enclave filter and all catalog apps"
+              >
+                <Globe className="h-3.5 w-3.5" />
+                <span>{showAllEcosystem ? "🌐 All Products Active" : "Filter by Guild Enclave"}</span>
+              </button>
+
               <span>Sort:</span>
               <select
                 value={sortBy}
@@ -610,34 +789,76 @@ export function MarketplaceView({
             {filteredProducts.map((product) => (
               <div
                 key={product.id}
-                className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs hover:border-[#0A66C2] hover:shadow-lg transition-all dark:border-zinc-800 dark:bg-zinc-900 flex flex-col justify-between space-y-4"
+                className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs hover:border-[#0A66C2] hover:shadow-lg transition-all dark:border-zinc-800 dark:bg-zinc-900 flex flex-col justify-between space-y-4 relative overflow-hidden"
               >
                 <div className="space-y-3">
+                  {/* Top Badges Strip */}
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {product.isLaunchpadDeployed && (
+                        <span className="rounded-md bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-indigo-500/20 text-purple-700 dark:text-purple-300 border border-purple-400/40 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                          <Sparkles className="h-3 w-3 text-amber-500" /> Launchpad Fleet
+                        </span>
+                      )}
+                      {product.livePort && (
+                        <span className="rounded-md bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/40 px-2 py-0.5 text-[10px] font-mono font-bold">
+                          ⚡ PORT {product.livePort}
+                        </span>
+                      )}
+                      {product.isVercelLive && (
+                        <span className="rounded-md bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-400/40 px-2 py-0.5 text-[10px] font-mono font-bold">
+                          ☁️ VERCEL LIVE
+                        </span>
+                      )}
+                    </div>
+
+                    {product.badge && (
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-950 dark:text-amber-300 shrink-0">
+                        {product.badge}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Header */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-3">
                       <span className="text-3xl">{product.icon}</span>
                       <div>
-                        <h4 className="font-bold text-base text-zinc-900 dark:text-zinc-100">
+                        <h4 className="font-bold text-base text-zinc-900 dark:text-zinc-100 leading-tight">
                           {product.name}
                         </h4>
-                        <p className="text-xs text-zinc-500">{product.vendor.name}</p>
+                        <p className="text-xs text-zinc-500 flex items-center gap-1 mt-0.5">
+                          <span>{product.vendor.name}</span>
+                          {product.vendor.isVerified && (
+                            <ShieldCheck className="h-3 w-3 text-[#0A66C2]" />
+                          )}
+                        </p>
                       </div>
                     </div>
-
-                    {product.badge && (
-                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-950 dark:text-amber-300">
-                        {product.badge}
-                      </span>
-                    )}
                   </div>
 
                   <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-relaxed">
                     {product.tagline}
                   </p>
 
+                  {/* Architecture & Compliance tags */}
+                  <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                    {product.architecture?.latency && (
+                      <span className="text-[10px] text-zinc-500 font-mono bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded border border-zinc-200 dark:border-zinc-750">
+                        ⚡ {product.architecture.latency}
+                      </span>
+                    )}
+                    {product.security?.compliance?.slice(0, 2).map((comp, idx) => (
+                      <span key={idx} className="text-[10px] text-zinc-600 dark:text-zinc-400 font-semibold bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded border border-zinc-200 dark:border-zinc-750">
+                        {comp}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Pricing and Rating */}
                   <div className="flex items-center justify-between text-xs pt-1">
                     <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                      {product.pricing.displayPrice}
+                      {product.pricing.displayPrice} <span className="text-[10px] font-normal text-zinc-400">{product.pricing.billingPeriod}</span>
                     </span>
                     <span className="text-amber-500 font-bold">
                       ★ {product.rating} ({product.reviewsCount})
@@ -645,7 +866,7 @@ export function MarketplaceView({
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+                <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2">
                   <button
                     onClick={() => {
                       setSelectedProduct(product)
@@ -656,12 +877,34 @@ export function MarketplaceView({
                     View Details →
                   </button>
 
-                  <button
-                    onClick={() => handleGenerateLicense(product, 'trial')}
-                    className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white px-4 py-1.5 text-xs font-bold shadow-xs transition-all"
-                  >
-                    {product.pricing.hasFreeTrial ? "Free Trial" : "Buy Now"}
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    {product.liveUrl && (
+                      <button
+                        onClick={() => {
+                          if (product.liveUrl?.startsWith('/')) {
+                            if (onNavigateTab && product.liveUrl === '/feed') onNavigateTab('home')
+                            else if (onNavigateTab && product.liveUrl === '/bazaar') onNavigateTab('marketplace')
+                            else if (onNavigateTab && product.liveUrl === '/career') onNavigateTab('careersuite')
+                            else window.open(product.liveUrl, '_blank', 'noopener,noreferrer')
+                          } else {
+                            window.open(product.liveUrl, '_blank', 'noopener,noreferrer')
+                          }
+                        }}
+                        className="rounded-full bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-xs font-bold shadow-xs transition-all flex items-center gap-1"
+                        title="Launch deployed application"
+                      >
+                        <Zap className="h-3 w-3 fill-amber-300 text-amber-300" />
+                        <span>Launch App</span>
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => handleGenerateLicense(product, 'trial')}
+                      className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white px-3.5 py-1.5 text-xs font-bold shadow-xs transition-all"
+                    >
+                      {product.pricing.hasFreeTrial ? "Free Trial" : "Buy Now"}
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -861,6 +1104,15 @@ export function MarketplaceView({
                 </button>
 
                 <div className="flex items-center gap-2">
+                  {selectedProduct.liveUrl && (
+                    <button
+                      onClick={() => window.open(selectedProduct.liveUrl, '_blank', 'noopener,noreferrer')}
+                      className="rounded-full bg-emerald-600 hover:bg-emerald-700 px-4 py-2 text-xs font-bold text-white shadow-md flex items-center gap-1.5 transition-all"
+                    >
+                      <Zap className="h-3.5 w-3.5 fill-amber-300 text-amber-300" />
+                      <span>Launch Live Application →</span>
+                    </button>
+                  )}
                   <button
                     onClick={() => handleGenerateLicense(selectedProduct, 'trial')}
                     className="rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 px-5 py-2 text-xs font-bold text-white shadow-md hover:from-purple-500 hover:to-indigo-500"

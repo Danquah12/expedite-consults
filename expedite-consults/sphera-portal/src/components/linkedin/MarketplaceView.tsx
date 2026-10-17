@@ -145,8 +145,11 @@ export function MarketplaceView({
       return matchSearch
     }
 
-    // 1. Strict Enclave Least-Privilege Isolation (Bypassed if user toggled "showAllEcosystem")
-    if (!showAllEcosystem) {
+    // 1. Strict Enclave Least-Privilege Isolation
+    // Only apply enclave restriction when in 'Discover' without search query and when showAllEcosystem is false
+    const isGlobalCategory = ['Cybersecurity', 'Launchpad', 'Software', 'AI', 'Cloud', 'Training', 'Enterprise', 'Solutions', 'Sphera', 'Deals'].includes(selectedMainCategory)
+
+    if (!showAllEcosystem && !searchQuery.trim() && !isGlobalCategory) {
       if (userEnclave === 'trades_construction') {
         if (p.professionEnclave && p.professionEnclave !== 'trades_construction') return false
         if (!p.professionEnclave && !['Tools & Joinery', 'CAD & Measurement', 'Lumber & Materials', 'Hardware', 'Trades & Vocational Network', 'Productivity & Field Notes', 'Trade Machinery & Commerce', 'Video Masterclasses & Tutorials'].includes(p.subCategory)) return false
@@ -169,11 +172,20 @@ export function MarketplaceView({
     }
 
     let matchCategory = true
-    if (selectedMainCategory === 'Software') matchCategory = p.category === 'Software'
+    if (selectedMainCategory === 'Software') matchCategory = p.category === 'Software' || p.subCategory.toLowerCase().includes('software')
     else if (selectedMainCategory === 'Services') matchCategory = p.category === 'Services'
     else if (selectedMainCategory === 'Training') matchCategory = p.category === 'Training'
     else if (selectedMainCategory === 'Enterprise') matchCategory = p.category === 'Enterprise Solutions'
-    else if (selectedMainCategory === 'Cybersecurity') matchCategory = p.subCategory.toLowerCase().includes('cyber') || p.overview.toLowerCase().includes('security') || p.name.toLowerCase().includes('strike')
+    else if (selectedMainCategory === 'Cybersecurity') {
+      matchCategory = p.subCategory.toLowerCase().includes('cyber') || 
+                      p.overview.toLowerCase().includes('security') || 
+                      p.name.toLowerCase().includes('strike') || 
+                      p.name.toLowerCase().includes('aegis') || 
+                      p.name.toLowerCase().includes('sast') || 
+                      p.name.toLowerCase().includes('axiom') ||
+                      p.launchpadCategory === 'security' ||
+                      p.launchpadCategory === 'orchestration'
+    }
     else if (selectedMainCategory === 'AI') matchCategory = p.subCategory.toLowerCase().includes('ai') || p.overview.toLowerCase().includes('ai')
     else if (selectedMainCategory === 'Cloud') matchCategory = p.subCategory.toLowerCase().includes('cloud') || p.overview.toLowerCase().includes('cloud')
     else if (selectedMainCategory === 'Deals') matchCategory = p.pricing.hasFreeTrial || p.badge?.includes('Featured') || false
@@ -214,11 +226,12 @@ export function MarketplaceView({
   }
 
   const marketplaceTabs = (() => {
-    const launchpadTab = { id: 'Launchpad', label: '🚀 Launchpad Fleet (18+ Deployed)', isLaunchpad: true }
+    const launchpadTab = { id: 'Launchpad', label: '🚀 Launchpad Fleet (24+ Deployed)', isLaunchpad: true }
 
     if (userEnclave === 'trades_construction') {
       return [
         launchpadTab,
+        { id: 'Cybersecurity', label: '🛡️ Cybersecurity & DevSecOps' },
         { id: 'Discover', label: '✨ All Trade Tools & Lumber' },
         { id: 'Software', label: '🧰 Power Tools & Joinery' },
         { id: 'Services', label: '📐 CAD & Total Station Measure' },
@@ -229,6 +242,7 @@ export function MarketplaceView({
     if (userEnclave === 'healthcare_medicine') {
       return [
         launchpadTab,
+        { id: 'Cybersecurity', label: '🛡️ Cybersecurity & HIPAA' },
         { id: 'Discover', label: '✨ All Medical & Surgical' },
         { id: 'Software', label: '🩺 Diagnostic Ultrasound & POCUS' },
         { id: 'Enterprise', label: '🩸 Trauma & Rapid Infusion' },
@@ -239,6 +253,7 @@ export function MarketplaceView({
     if (userEnclave === 'automotive_mechanics') {
       return [
         launchpadTab,
+        { id: 'Cybersecurity', label: '🛡️ Cybersecurity & CAN Bus' },
         { id: 'Discover', label: '✨ All Diagnostic Gear' },
         { id: 'Software', label: '🧰 Snap-on & Scan Tools' },
         { id: 'Services', label: '⚡ PicoScope Oscilloscopes' },
@@ -307,7 +322,7 @@ export function MarketplaceView({
               className="rounded-xl bg-gradient-to-r from-purple-500 via-pink-500 to-indigo-500 hover:from-purple-400 hover:to-indigo-400 px-4 py-2.5 text-xs sm:text-sm font-black text-white shadow-lg flex items-center gap-1.5 transition-all border border-purple-300/40"
             >
               <Sparkles className="h-4 w-4 text-amber-300 animate-pulse" />
-              <span>🚀 Launchpad Fleet (18+ Apps)</span>
+              <span>🚀 Launchpad Fleet (24+ Apps)</span>
             </button>
 
             <button
@@ -694,13 +709,13 @@ export function MarketplaceView({
                   </div>
                   <div>
                     <h3 className="font-black text-base text-white flex items-center gap-2">
-                      <span>Launchpad Deployed Fleet (18+ Commercial Cards)</span>
+                      <span>Launchpad Deployed Fleet (24+ Commercial Cards)</span>
                       <span className="rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] px-2 py-0.5 font-bold uppercase tracking-wider">
                         Production Ready
                       </span>
                     </h3>
                     <p className="text-xs text-purple-200/80">
-                      Federated directly from Launchpad: Local Ports (9012, 9011, 9020), Vercel Live Cloud suites, autonomous ASPM, and trade field utilities.
+                      Federated directly from Launchpad: Local Ports (9000, 9012, 9011, 9020), Vercel Live Cloud suites, autonomous ASPM, and trade field utilities.
                     </p>
                   </div>
                 </div>
@@ -715,7 +730,7 @@ export function MarketplaceView({
               {/* Sub-Category Filter Pills */}
               <div className="pt-2 border-t border-white/10 flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
                 {[
-                  { id: 'All', label: '🚀 All Fleet (18+)' },
+                  { id: 'All', label: '🚀 All Fleet (24+)' },
                   { id: 'security', label: '🛡️ Cyber & PenTest' },
                   { id: 'ai', label: '🤖 AI & Media Intelligence' },
                   { id: 'marketplace', label: '🛍️ Escrow Commerce & Eats' },
@@ -784,6 +799,52 @@ export function MarketplaceView({
               </select>
             </div>
           </div>
+
+          {/* PROMINENT ECOSYSTEM FLEET & MISSION CONTROL SPOTLIGHT BAR */}
+          {selectedMainCategory !== 'Launchpad' && (
+            <div className="rounded-2xl border border-purple-500/40 bg-gradient-to-r from-purple-950/70 via-slate-900/90 to-indigo-950/70 p-4 text-white shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-purple-500/20 border border-purple-400/40 flex items-center justify-center text-xl shrink-0">
+                  🚀
+                </div>
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-black text-sm text-white">
+                      Ecosystem Fleet &amp; Mission Control
+                    </span>
+                    <span className="rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 text-[10px] px-2 py-0.5 font-bold uppercase tracking-wider">
+                      24+ Live Platforms
+                    </span>
+                  </div>
+                  <p className="text-xs text-purple-200/80">
+                    Ægis Mission Control (:9000), AXIOM ASPM (:9012), SAST Proof Engine (:3005) &amp; Autonomous PenTest (:9011) are live and accessible across all enclaves.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                <a
+                  href="https://ecosystem-launchpad.vercel.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-xl bg-gradient-to-r from-teal-400 to-emerald-500 hover:from-teal-300 hover:to-emerald-400 text-zinc-950 font-black text-xs px-3.5 py-2 flex items-center gap-1.5 shadow-md transition-all hover:scale-105"
+                >
+                  <Zap className="h-3.5 w-3.5 fill-zinc-950 text-zinc-950" />
+                  <span>Launch Mission Control ↗</span>
+                </a>
+
+                <button
+                  onClick={() => {
+                    setSelectedMainCategory('Launchpad')
+                    setSelectedSubCategory('All')
+                  }}
+                  className="rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs px-3.5 py-2 font-bold transition-all border border-white/15"
+                >
+                  Open Launchpad Fleet (24+ Apps) →
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredProducts.map((product) => (

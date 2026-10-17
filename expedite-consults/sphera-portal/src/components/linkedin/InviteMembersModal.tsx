@@ -30,6 +30,7 @@ import {
   Info
 } from "lucide-react"
 import { UserProfile } from "@/lib/linkedin-data"
+import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
 
 interface InviteMembersModalProps {
   isOpen: boolean
@@ -63,22 +64,22 @@ export function InviteMembersModal({
   // Email form state
   const [emailsText, setEmailsText] = useState("")
   const [emailMessage, setEmailMessage] = useState(
-    `Hi there,\n\nI'd like to invite you to join my trusted network on ConnectIn — the zero-trust professional network for cloud, cybersecurity, trades & enterprise specialists.\n\nConnect with me here: ${inviteLink}`
+    `Hi there,\n\nI'd like to invite you to join my trusted network on ConnectLn — Tickets, vouches, and real work.\n\nConnect with me here: ${inviteLink}`
   )
 
   // Phone form state
   const [phoneNumbersText, setPhoneNumbersText] = useState("")
   const [phoneMessage, setPhoneMessage] = useState(
-    `ConnectIn: Hi! ${currentUser.name} has invited you to connect on ConnectIn Zero-Trust Network. Join here: ${loginLink}`
+    `ConnectLn: Hi! ${currentUser.name} invited you to connect on ConnectLn (Tickets, vouches, and real work). Join here: ${loginLink}`
   )
 
   // Keep messages in sync when origin changes
   useEffect(() => {
     setEmailMessage(
-      `Hi there,\n\nI'd like to invite you to join my trusted network on ConnectIn — the zero-trust professional network for cloud, cybersecurity, trades & enterprise specialists.\n\nConnect with me here: ${inviteLink}`
+      `Hi there,\n\nI'd like to invite you to join my trusted network on ConnectLn — Tickets, vouches, and real work.\n\nConnect with me here: ${inviteLink}`
     )
     setPhoneMessage(
-      `ConnectIn: Hi! ${currentUser.name} has invited you to connect on ConnectIn Zero-Trust Network. Join here: ${loginLink}`
+      `ConnectLn: Hi! ${currentUser.name} invited you to connect on ConnectLn (Tickets, vouches, and real work). Join here: ${loginLink}`
     )
   }, [origin, currentUser.name, inviteLink, loginLink])
 
@@ -347,27 +348,26 @@ export function InviteMembersModal({
   const nativeWhatsAppHref = `https://api.whatsapp.com/send?${cleanPhoneDigits ? `phone=${cleanPhoneDigits.replace(/[^\d]/g, "")}&` : ""}text=${encodeURIComponent(phoneMessage)}`
 
   const rawFirstEmail = emailsText.split(/[\n,;]+/)[0]?.trim() || ""
-  const nativeMailtoHref = `mailto:${rawFirstEmail}?subject=${encodeURIComponent(`${currentUser.name} invited you to ConnectIn`)}&body=${encodeURIComponent(emailMessage)}`
+  const nativeMailtoHref = `mailto:${rawFirstEmail}?subject=${encodeURIComponent(`${currentUser.name} invited you to ConnectLn`)}&body=${encodeURIComponent(emailMessage)}`
 
   if (!isOpen) return null
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-xl p-0 overflow-hidden rounded-3xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 shadow-2xl">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 p-6 text-white border-b border-white/10">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="rounded-full bg-sky-500/20 px-2.5 py-0.5 text-xs font-bold text-sky-300 border border-sky-400/30 flex items-center gap-1.5 w-fit">
-                <UserPlus className="h-3.5 w-3.5" />
-                Grow Your Professional Mesh
-              </span>
-              <h2 className="text-xl sm:text-2xl font-black text-white">
-                Invite Colleagues to ConnectIn
-              </h2>
-              <p className="text-xs text-zinc-300">
-                Guaranteed universal delivery across all phones, all carriers &amp; all email addresses.
-              </p>
+        {/* Header with Official ConnectLn Brand Lockup */}
+        <div className="bg-[#121110] p-6 text-white border-b border-[#262420]">
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-3">
+              <ConnectInLogo size="md" showSubtitle={true} className="text-white" />
+              <div>
+                <h2 className="text-xl sm:text-2xl font-black text-[#f2ede4] tracking-tight">
+                  Invite Colleagues to ConnectLn
+                </h2>
+                <p className="text-xs text-zinc-400 mt-0.5">
+                  Tickets, vouches, and real work · 100% universal delivery across all phones, all carriers &amp; all email inboxes.
+                </p>
+              </div>
             </div>
 
             <button

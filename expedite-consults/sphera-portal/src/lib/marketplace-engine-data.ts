@@ -541,6 +541,126 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
 
   // ================= CYBERSECURITY & TECH =================
   {
+    id: 'prod_aegis_mission_control',
+    name: 'Ægis — Mission Control Launchpad',
+    tagline: 'Unified Fleet Gateway, 12-Service SOC Switcher & Real-Time CVE Intelligence Matrix',
+    category: 'Software',
+    subCategory: 'Cybersecurity',
+    launchpadCategory: 'orchestration',
+    isLaunchpadDeployed: true,
+    isVercelLive: true,
+    livePort: 9000,
+    icon: '🚀',
+    badge: '🚀 VERCEL LIVE · FLEET GATEWAY',
+    rating: 4.99,
+    reviewsCount: 342,
+    activeUsersCount: '18,500+ Security Engineers & SOC Operators',
+    pricing: {
+      displayPrice: '$0',
+      billingPeriod: 'Open Ecosystem Gateway',
+      hasFreeTrial: true,
+      trialDays: 30
+    },
+    vendor: {
+      name: 'Expedite Consults Core Systems',
+      logo: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=100&auto=format&fit=crop&q=80',
+      isVerified: true,
+      isFellow: true
+    },
+    overview: 'Ægis Mission Control (https://ecosystem-launchpad.vercel.app/) is the central command console and real-time fleet gateway for the entire Expedite Consults cybersecurity ecosystem. It connects 12 standalone security platforms, monitors 68+ operational modules, streams real-time CVE threat intelligence, polls Neo4j graph databases, and orchestrates offense, defense, and governance operations from a single unified pane of glass.',
+    features: [
+      { title: '12-Service Autonomous Fleet Switcher', desc: 'Instant 1-click launchpad across SAST, DAST, ASPM, Red Team AD RedOps, Threat Intel, GRC, DFIR, and Executive SOC dashboards.' },
+      { title: 'Real-Time Fleet Health Poller', desc: 'Continuous heartbeat monitoring and live telemetry across local microservices (Ports 9000, 9011, 9012, 9014, 9015, 9020) and Vercel cloud deployments.' },
+      { title: 'Live CVE Threat Intelligence Ticker', desc: 'Continuous CVE streaming and automated attack surface correlation against Neo4j knowledge graphs.' },
+      { title: 'Unified Authentication & CORS Gateway', desc: 'Zero-trust gateway interconnecting Dash/Plotly, FastAPI, Next.js, and Python 3.14 analysis engines.' }
+    ],
+    screenshots: [
+      'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&auto=format&fit=crop&q=80'
+    ],
+    demoUrl: 'https://ecosystem-launchpad.vercel.app/',
+    liveUrl: 'https://ecosystem-launchpad.vercel.app/',
+    architecture: {
+      title: 'Distributed Fleet Event Gateway & Multiplexer',
+      summary: 'High-concurrency reverse proxy and health-polling matrix with sub-millisecond status dispatch.',
+      layers: ['Next.js / Vercel Edge Runtime', 'FastAPI / Python 3.14 Gateway Engine', 'Neo4j Graph Database Telemetry', 'Multi-Port CORS Multiplexer'],
+      latency: '< 5ms Gateway Dispatch',
+      dataPrivacy: 'Air-gapped SOC telemetry with TLS 1.3 encryption and zero payload retention.'
+    },
+    integrations: ['Ægis SOC (Port 8050)', 'SAST Proof Validation (Port 3005)', 'AXIOM ASPM (Port 9012)', 'Autonomous PenTest (Port 9011)', 'GRC Posture (Port 9017)', 'DFIR Suite (Port 9018)', 'Neo4j Enterprise'],
+    security: {
+      compliance: ['FedRAMP High', 'DoD IL5 / cATO Ready', 'NIST 800-53 Rev 5', 'PCI DSS 4.0', 'SOC 2 Type II'],
+      encryption: 'AES-256-GCM at rest · TLS 1.3 mTLS with hardware TPM keys',
+      isolation: 'Zero-trust tenant isolation with dedicated fleet routing'
+    },
+    pricingTiers: [
+      {
+        name: 'Community Gateway',
+        price: '$0',
+        period: 'Open Access',
+        description: 'Complete access to the public cloud launchpad, CVE threat ticker, and service directory.',
+        features: ['12-Service Fleet Switcher', 'Live CVE Ticker', 'Vercel Cloud Integration', 'Public SOC Telemetry'],
+        ctaText: 'Launch Mission Control'
+      },
+      {
+        name: 'Enterprise SOC Control',
+        price: '$599',
+        period: '/ month',
+        description: 'Full multi-cluster health polling, custom local port routing, and private Neo4j attack graph synchronization.',
+        recommended: true,
+        features: ['Unlimited Fleet Polling', 'Private Neo4j Attack Graph Sync', 'Automated CVE Webhook Alerts', 'Cross-Platform Incident Escalation', 'Priority 24/7 SLA Support'],
+        ctaText: 'Start Enterprise License'
+      },
+      {
+        name: 'Federal & Defense cATO',
+        price: 'Custom',
+        period: 'annual contract',
+        description: 'Dedicated air-gapped on-premises appliance with FIPS 140-3 hardware tokens and continuous ATO compliance.',
+        features: ['Air-Gapped Sovereign Deployment', 'DoD IL5 / IL6 Compliance Pack', 'Dedicated Hardware Gateway', '24/7 Red-Phone Mission Support'],
+        ctaText: 'Contact Defense Systems'
+      }
+    ],
+    reviews: [
+      {
+        author: 'Marcus Vance',
+        role: 'Chief Information Security Officer',
+        company: 'Apex Defense Technologies',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+        rating: 5,
+        text: 'Ægis Mission Control gives our SOC team instant situational awareness across every single scanner, dashboard, and attack graph with zero friction.',
+        date: 'October 12, 2026'
+      },
+      {
+        author: 'Elena Rostova',
+        role: 'Lead DevSecOps Architect',
+        company: 'Vanguard Cyber Systems',
+        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+        rating: 5,
+        text: 'The ability to switch between SAST proof validation, ASPM, and autonomous exploit queues from one high-performance dashboard is unprecedented.',
+        date: 'October 15, 2026'
+      }
+    ],
+    documentation: {
+      quickstart: 'Access the production deployment directly at https://ecosystem-launchpad.vercel.app/ or start local gateway via python launchpad/fleet_gateway.py --port 9000.',
+      apiEndpoints: ['GET /api/fleet/status', 'GET /api/cve/active', 'POST /api/fleet/poll'],
+      sdkSupport: ['TypeScript', 'Python 3.14', 'REST', 'WebSocket']
+    },
+    caseStudies: [
+      {
+        customer: 'Global Defense Consortium',
+        logo: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=100&auto=format&fit=crop&q=80',
+        headline: 'Unified 12 Cyber Platforms into a Single Screen with Zero Latency',
+        results: ['100% elimination of fragmented security portals', 'Sub-5ms status dispatch across 68+ modules', 'Immediate incident response acceleration']
+      }
+    ],
+    support: {
+      sla: '99.99% Availability Guarantee',
+      channel: 'Mission Control Operations Desk',
+      responseHours: '< 15 Minutes'
+    }
+  },
+  {
     id: 'prod_axiom',
     name: 'AXIOM AI-Powered Cyber Suite',
     tagline: 'Autonomous AI Threat Detection, Posture Correlation & Exploit Neutralization',
