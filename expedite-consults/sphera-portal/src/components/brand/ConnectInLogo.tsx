@@ -73,7 +73,7 @@ export function ConnectInLogo({
 
           {showSubtitle && (
             <span
-              className={`font-medium text-zinc-500 dark:text-zinc-400 mt-1.5 whitespace-nowrap tracking-normal ${subtitleSizes[size]}`}
+              className={`font-medium text-zinc-500 dark:text-zinc-400 mt-1.5 whitespace-nowrap tracking-normal hidden min-[440px]:inline ${subtitleSizes[size]}`}
             >
               Tickets, vouches, and real work
             </span>

@@ -120,12 +120,12 @@ export function MicrosoftAuthModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && !isLoading && onClose()}>
-      <DialogContent className="max-w-[420px] p-0 overflow-hidden rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl">
-        <div className="p-6 pb-4 border-b border-zinc-100 dark:border-zinc-800/80 text-center relative">
+      <DialogContent className="w-[calc(100vw-20px)] sm:w-full max-w-[420px] p-0 overflow-hidden rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl max-h-[90dvh] flex flex-col mx-auto my-auto">
+        <div className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-zinc-100 dark:border-zinc-800/80 text-center relative shrink-0">
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="absolute top-4 right-4 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 rounded-full p-1.5 transition-colors disabled:opacity-50"
+            className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 rounded-full p-2 transition-colors disabled:opacity-50 touch-manipulation"
           >
             <X className="h-4 w-4" />
           </button>
@@ -147,7 +147,7 @@ export function MicrosoftAuthModal({
           </p>
         </div>
 
-        <div className="px-6 pt-3">
+        <div className="px-4 sm:px-6 pt-2 sm:pt-3">
           {errorMessage && (
             <div className="rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 p-3 text-xs text-rose-700 dark:text-rose-300 flex items-center gap-2 mb-3">
               <AlertCircle className="h-4 w-4 shrink-0" />
@@ -163,7 +163,7 @@ export function MicrosoftAuthModal({
           )}
         </div>
 
-        <div className="p-6 pt-2 space-y-2 max-h-[360px] overflow-y-auto">
+        <div className="p-3.5 sm:p-6 pt-1 sm:pt-2 space-y-2 max-h-[55dvh] overflow-y-auto">
           {!isUsingCustom ? (
             <>
               {accounts.map((acc) => {
@@ -173,20 +173,20 @@ export function MicrosoftAuthModal({
                     key={acc.email}
                     onClick={() => handleSelectAccount(acc.email, acc.name)}
                     disabled={isLoading}
-                    className={`w-full text-left p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 cursor-pointer disabled:opacity-60 ${
+                    className={`w-full text-left p-3 sm:p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 cursor-pointer disabled:opacity-60 min-h-[56px] active:scale-[0.98] touch-manipulation ${
                       isSelected
                         ? "border-[#00a4ef] bg-sky-50/50 dark:bg-sky-950/30 ring-2 ring-[#00a4ef]/30"
                         : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-850"
                     }`}
                   >
-                    <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                       <img
                         src={acc.avatar}
                         alt={acc.name}
-                        className="h-10 w-10 rounded-full border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 object-cover shrink-0"
+                        className="h-9 w-9 sm:h-10 sm:w-10 rounded-full border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 object-cover shrink-0"
                       />
                       <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           <p className="font-semibold text-xs text-zinc-900 dark:text-zinc-100 truncate">
                             {acc.name}
                           </p>
@@ -223,9 +223,9 @@ export function MicrosoftAuthModal({
                   setErrorMessage(null)
                 }}
                 disabled={isLoading}
-                className="w-full text-left p-3.5 rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-700 hover:border-[#00a4ef] hover:bg-zinc-50 dark:hover:bg-zinc-850 transition-all flex items-center gap-3 cursor-pointer text-xs font-semibold text-zinc-700 dark:text-zinc-300"
+                className="w-full text-left p-3 sm:p-3.5 rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-700 hover:border-[#00a4ef] hover:bg-zinc-50 dark:hover:bg-zinc-850 transition-all flex items-center gap-3 cursor-pointer text-xs font-semibold text-zinc-700 dark:text-zinc-300 min-h-[50px] active:scale-[0.98] touch-manipulation"
               >
-                <div className="h-10 w-10 rounded-full border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500 shrink-0">
+                <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-full border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500 shrink-0">
                   <UserPlus className="h-4 w-4" />
                 </div>
                 <div>
@@ -247,7 +247,7 @@ export function MicrosoftAuthModal({
                   placeholder="you@company.com"
                   value={customEmail}
                   onChange={(e) => setCustomEmail(e.target.value)}
-                  className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-transparent p-3 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#00a4ef]"
+                  className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-transparent p-3 text-base sm:text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#00a4ef]"
                 />
               </div>
 
@@ -258,15 +258,15 @@ export function MicrosoftAuthModal({
                     setIsUsingCustom(false)
                     setErrorMessage(null)
                   }}
-                  className="text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 font-medium px-3 py-2 cursor-pointer"
+                  className="text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 font-medium px-2 sm:px-3 py-2 cursor-pointer touch-manipulation"
                 >
-                  ← Back to account list
+                  ← Back
                 </button>
 
                 <button
                   type="submit"
                   disabled={isLoading || !customEmail.trim()}
-                  className="rounded-full bg-[#00a4ef] hover:bg-[#0086c4] text-white px-5 py-2 text-xs font-bold shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all"
+                  className="rounded-full bg-[#00a4ef] hover:bg-[#0086c4] text-white px-5 py-2.5 text-xs font-bold shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all min-h-[44px] active:scale-[0.98] touch-manipulation"
                 >
                   {isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
                   <span>{isLoading ? "Signing in..." : "Continue"}</span>
@@ -276,7 +276,7 @@ export function MicrosoftAuthModal({
           )}
         </div>
 
-        <div className="p-4 bg-zinc-50 dark:bg-zinc-950 border-t border-zinc-100 dark:border-zinc-800/80 text-[10px] text-zinc-400 dark:text-zinc-500 text-center leading-relaxed">
+        <div className="p-3 sm:p-4 bg-zinc-50 dark:bg-zinc-950 border-t border-zinc-100 dark:border-zinc-800/80 text-[10px] text-zinc-400 dark:text-zinc-500 text-center leading-relaxed shrink-0">
           <p>
             Connected via Microsoft Entra ID SSO. Governed by zero-trust enclave policies.
           </p>

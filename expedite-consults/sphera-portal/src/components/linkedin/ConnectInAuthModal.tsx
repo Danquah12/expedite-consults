@@ -629,8 +629,8 @@ export function ConnectInAuthModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-in fade-in duration-200">
-      <div className="relative w-full max-w-[440px] bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-7 sm:p-8 text-zinc-900 dark:text-zinc-100 shadow-2xl space-y-5">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-3 sm:p-4 animate-in fade-in duration-200">
+      <div className="relative w-full max-w-[440px] max-h-[92dvh] overflow-y-auto bg-white dark:bg-zinc-900 rounded-2xl sm:rounded-3xl border border-zinc-200 dark:border-zinc-800 p-5 sm:p-8 text-zinc-900 dark:text-zinc-100 shadow-2xl space-y-4 sm:space-y-5">
         {/* Top Bar */}
         <div className="flex items-center justify-between">
           <ConnectInLogo size="sm" showSubtitle={true} />
@@ -712,7 +712,7 @@ export function ConnectInAuthModal({
                     value={signInEmail}
                     onChange={(e) => setSignInEmail(e.target.value)}
                     placeholder="e.g. asiedudanquah@gmail.com"
-                    className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                    className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
                   />
                 </div>
 
@@ -723,7 +723,7 @@ export function ConnectInAuthModal({
                     <button
                       type="button"
                       onClick={() => setSignInChannel('email')}
-                      className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                      className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation ${
                         signInChannel === 'email'
                           ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
                           : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
@@ -739,7 +739,7 @@ export function ConnectInAuthModal({
                           setSignInPhone('+1 (240) 260-7898')
                         }
                       }}
-                      className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                      className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation ${
                         signInChannel === 'sms'
                           ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
                           : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
@@ -755,7 +755,7 @@ export function ConnectInAuthModal({
                           setSignInPhone('+1 (240) 260-7898')
                         }
                       }}
-                      className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                      className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation ${
                         signInChannel === 'call'
                           ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
                           : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
@@ -777,7 +777,7 @@ export function ConnectInAuthModal({
                       value={signInPhone}
                       onChange={(e) => setSignInPhone(e.target.value)}
                       placeholder="+1 (240) 555-0192"
-                      className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                      className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
                     />
                   </div>
                 )}
@@ -788,7 +788,7 @@ export function ConnectInAuthModal({
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="text-xs font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline"
+                      className="text-xs font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline touch-manipulation"
                     >
                       {showPassword ? "Hide" : "Show"}
                     </button>
@@ -798,14 +798,14 @@ export function ConnectInAuthModal({
                     value={signInPassword}
                     onChange={(e) => setSignInPassword(e.target.value)}
                     placeholder="•••••••••••• (optional for passwordless OTP)"
-                    className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                    className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white font-bold py-2.5 text-sm shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer mt-2"
+                  className="w-full rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white font-bold py-2.5 min-h-[46px] text-sm shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer mt-2 touch-manipulation active:scale-[0.99]"
                 >
                   {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
                   <span>{t("sign_in_btn", "Sign in with 2FA")}</span>
@@ -823,9 +823,9 @@ export function ConnectInAuthModal({
                     type="button"
                     onClick={() => handleGoogleSignIn()}
                     disabled={isLoading}
-                    className="w-full rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 py-2 px-3 text-xs font-semibold text-zinc-700 dark:text-zinc-200 transition-colors flex items-center justify-center gap-2.5 cursor-pointer"
+                    className="w-full rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 py-2.5 px-3 min-h-[46px] text-xs font-semibold text-zinc-700 dark:text-zinc-200 transition-colors flex items-center justify-center gap-2.5 cursor-pointer touch-manipulation active:scale-[0.99]"
                   >
-                    <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24">
+                    <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24">
                       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                       <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
                       <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
@@ -838,9 +838,9 @@ export function ConnectInAuthModal({
                     type="button"
                     onClick={() => handleMicrosoftSignIn()}
                     disabled={isLoading}
-                    className="w-full rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 py-2 px-3 text-xs font-semibold text-zinc-700 dark:text-zinc-200 transition-colors flex items-center justify-center gap-2.5 cursor-pointer"
+                    className="w-full rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 py-2.5 px-3 min-h-[46px] text-xs font-semibold text-zinc-700 dark:text-zinc-200 transition-colors flex items-center justify-center gap-2.5 cursor-pointer touch-manipulation active:scale-[0.99]"
                   >
-                    <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 21 21">
+                    <svg className="h-4 w-4 shrink-0" viewBox="0 0 21 21">
                       <rect x="1" y="1" width="9" height="9" fill="#f25022" />
                       <rect x="11" y="1" width="9" height="9" fill="#7fba00" />
                       <rect x="1" y="11" width="9" height="9" fill="#00a4ef" />
@@ -947,7 +947,7 @@ export function ConnectInAuthModal({
                       }
                     }}
                     placeholder="000000"
-                    className="w-full text-center text-3xl font-mono font-bold tracking-[8px] rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 p-3 text-[#0A66C2] dark:text-sky-400 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                    className="w-full text-center text-2xl sm:text-3xl font-mono font-bold tracking-[4px] sm:tracking-[8px] rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 p-2.5 sm:p-3 text-[#0A66C2] dark:text-sky-400 focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
                   />
 
                   {/* Resend via Alternative Channels */}
@@ -1013,14 +1013,14 @@ export function ConnectInAuthModal({
                     <button
                       type="button"
                       onClick={() => setSignInStep('credentials')}
-                      className="flex-1 rounded-full border border-zinc-300 dark:border-zinc-700 py-2 text-xs font-semibold cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                      className="flex-1 rounded-full border border-zinc-300 dark:border-zinc-700 py-2.5 min-h-[44px] text-xs font-semibold cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 touch-manipulation active:scale-[0.98]"
                     >
                       {t("back", "Back")}
                     </button>
                     <button
                       type="submit"
                       disabled={isLoading || signIn2FACode.length < 6}
-                      className="flex-1 rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white py-2 text-xs font-bold cursor-pointer disabled:opacity-50"
+                      className="flex-1 rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white py-2.5 min-h-[44px] text-xs font-bold cursor-pointer disabled:opacity-50 touch-manipulation active:scale-[0.98]"
                     >
                       {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
                       <span>{t("verify_and_sign_in", "Verify & Sign in")}</span>
@@ -1062,9 +1062,9 @@ export function ConnectInAuthModal({
                     type="button"
                     onClick={() => handleGoogleSignIn()}
                     disabled={isLoading}
-                    className="w-full rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 py-2 px-3 text-xs font-semibold text-zinc-700 dark:text-zinc-200 transition-colors flex items-center justify-center gap-2.5 cursor-pointer"
+                    className="w-full rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 py-2.5 px-3 min-h-[46px] text-xs font-semibold text-zinc-700 dark:text-zinc-200 transition-colors flex items-center justify-center gap-2.5 cursor-pointer touch-manipulation active:scale-[0.99]"
                   >
-                    <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24">
+                    <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24">
                       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                       <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
                       <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
@@ -1077,9 +1077,9 @@ export function ConnectInAuthModal({
                     type="button"
                     onClick={() => handleMicrosoftSignIn()}
                     disabled={isLoading}
-                    className="w-full rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 py-2 px-3 text-xs font-semibold text-zinc-700 dark:text-zinc-200 transition-colors flex items-center justify-center gap-2.5 cursor-pointer"
+                    className="w-full rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 py-2.5 px-3 min-h-[46px] text-xs font-semibold text-zinc-700 dark:text-zinc-200 transition-colors flex items-center justify-center gap-2.5 cursor-pointer touch-manipulation active:scale-[0.99]"
                   >
-                    <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 21 21">
+                    <svg className="h-4 w-4 shrink-0" viewBox="0 0 21 21">
                       <rect x="1" y="1" width="9" height="9" fill="#f25022" />
                       <rect x="11" y="1" width="9" height="9" fill="#7fba00" />
                       <rect x="1" y="11" width="9" height="9" fill="#00a4ef" />
@@ -1106,7 +1106,7 @@ export function ConnectInAuthModal({
                         value={joinFirstName}
                         onChange={(e) => setJoinFirstName(e.target.value)}
                         placeholder="Kwesi"
-                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-base sm:text-xs focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
                       />
                     </div>
                     <div>
@@ -1117,7 +1117,7 @@ export function ConnectInAuthModal({
                         value={joinLastName}
                         onChange={(e) => setJoinLastName(e.target.value)}
                         placeholder="Asiedu"
-                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-base sm:text-xs focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
                       />
                     </div>
                   </div>
@@ -1130,7 +1130,7 @@ export function ConnectInAuthModal({
                       value={joinEmail}
                       onChange={(e) => setJoinEmail(e.target.value)}
                       placeholder="asiedudanquah@gmail.com"
-                      className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                      className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-base sm:text-xs focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
                     />
                   </div>
 
@@ -1141,7 +1141,7 @@ export function ConnectInAuthModal({
                       <button
                         type="button"
                         onClick={() => setJoinChannel('email')}
-                        className={`py-1 px-1 rounded-lg transition-all flex items-center justify-center gap-1 ${
+                        className={`py-1.5 px-1 rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer touch-manipulation ${
                           joinChannel === 'email'
                             ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
                             : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
@@ -1152,7 +1152,7 @@ export function ConnectInAuthModal({
                       <button
                         type="button"
                         onClick={() => setJoinChannel('sms')}
-                        className={`py-1 px-1 rounded-lg transition-all flex items-center justify-center gap-1 ${
+                        className={`py-1.5 px-1 rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer touch-manipulation ${
                           joinChannel === 'sms'
                             ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
                             : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
@@ -1163,7 +1163,7 @@ export function ConnectInAuthModal({
                       <button
                         type="button"
                         onClick={() => setJoinChannel('call')}
-                        className={`py-1 px-1 rounded-lg transition-all flex items-center justify-center gap-1 ${
+                        className={`py-1.5 px-1 rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer touch-manipulation ${
                           joinChannel === 'call'
                             ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
                             : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
@@ -1185,7 +1185,7 @@ export function ConnectInAuthModal({
                         value={joinPhone}
                         onChange={(e) => setJoinPhone(e.target.value)}
                         placeholder="+1 (240) 555-0192"
-                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-base sm:text-xs focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
                       />
                     </div>
                   )}
@@ -1199,7 +1199,7 @@ export function ConnectInAuthModal({
                       value={joinPassword}
                       onChange={(e) => setJoinPassword(e.target.value)}
                       placeholder="••••••••••••"
-                      className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                      className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-base sm:text-xs focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
                     />
                   </div>
 
@@ -1208,7 +1208,7 @@ export function ConnectInAuthModal({
                     <select
                       value={joinRole}
                       onChange={(e) => setJoinRole(e.target.value as any)}
-                      className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                      className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-base sm:text-xs focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
                     >
                       <option value="personal">👤 {t("workspace_individual", "Individual Professional (Feed & Skills)")}</option>
                       <option value="enterprise">🏢 {t("workspace_enterprise", "Enterprise Buyer (Procurement & RFPs)")}</option>
@@ -1221,7 +1221,7 @@ export function ConnectInAuthModal({
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white font-bold py-2.5 text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer mt-2"
+                    className="w-full rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white font-bold py-2.5 min-h-[46px] text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer mt-2 touch-manipulation active:scale-[0.99]"
                   >
                     {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                     <span>{t("agree_and_join", "Agree & Join")}</span>
@@ -1322,7 +1322,7 @@ export function ConnectInAuthModal({
                       }
                     }}
                     placeholder="000000"
-                    className="w-full text-center text-3xl font-mono font-bold tracking-[8px] rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 p-3 text-emerald-600 dark:text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full text-center text-2xl sm:text-3xl font-mono font-bold tracking-[4px] sm:tracking-[8px] rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 p-2.5 sm:p-3 text-emerald-600 dark:text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 touch-manipulation"
                   />
 
                   <div className="text-xs text-zinc-500 space-y-1.5 pt-1">
@@ -1332,7 +1332,7 @@ export function ConnectInAuthModal({
                         type="button"
                         onClick={() => handleJoinSubmit(undefined, 'email')}
                         disabled={isLoading}
-                        className="font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md"
+                        className="font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md touch-manipulation"
                       >
                         {t("send_code_via_email", "✉️ Email")}
                       </button>
@@ -1340,7 +1340,7 @@ export function ConnectInAuthModal({
                         type="button"
                         onClick={() => handleJoinSubmit(undefined, 'sms')}
                         disabled={isLoading}
-                        className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md"
+                        className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md touch-manipulation"
                       >
                         {t("send_code_via_sms", "💬 SMS Text")}
                       </button>
@@ -1348,7 +1348,7 @@ export function ConnectInAuthModal({
                         type="button"
                         onClick={() => handleJoinSubmit(undefined, 'call')}
                         disabled={isLoading}
-                        className="font-semibold text-purple-600 dark:text-purple-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md"
+                        className="font-semibold text-purple-600 dark:text-purple-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md touch-manipulation"
                       >
                         {t("send_code_via_call", "📞 Phone Call")}
                       </button>
@@ -1375,7 +1375,7 @@ export function ConnectInAuthModal({
                           setJoin2FACode(codeToFill)
                           handleVerifyJoin2FA(codeToFill)
                         }}
-                        className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] shadow-xs transition-colors flex items-center gap-1 cursor-pointer"
+                        className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] shadow-xs transition-colors flex items-center gap-1 cursor-pointer touch-manipulation active:scale-[0.98]"
                       >
                         <Sparkles className="h-3 w-3" />
                         <span>{t("instant_access_label", "Instant Auto-Fill")} ({dispatchedOtpCode || fallbackDemoCode || "123456"})</span>
@@ -1387,14 +1387,14 @@ export function ConnectInAuthModal({
                     <button
                       type="button"
                       onClick={() => setJoinStep('form')}
-                      className="flex-1 rounded-full border border-zinc-300 dark:border-zinc-700 py-2 text-xs font-semibold cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                      className="flex-1 rounded-full border border-zinc-300 dark:border-zinc-700 py-2.5 min-h-[44px] text-xs font-semibold cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 touch-manipulation active:scale-[0.98]"
                     >
                       {t("back", "Back")}
                     </button>
                     <button
                       type="submit"
                       disabled={isLoading || join2FACode.length < 6}
-                      className="flex-1 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white py-2 text-xs font-bold cursor-pointer disabled:opacity-50"
+                      className="flex-1 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 min-h-[44px] text-xs font-bold cursor-pointer disabled:opacity-50 touch-manipulation active:scale-[0.98]"
                     >
                       {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
                       <span>{t("confirm_and_join", "Confirm & Join")}</span>

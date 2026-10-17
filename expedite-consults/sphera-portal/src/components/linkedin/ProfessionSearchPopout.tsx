@@ -155,7 +155,7 @@ export function ProfessionSearchPopout({
                   ? `${t("selected_profession", "Selected")}: ${selectedProf.title} · ${t("type_first_letter_placeholder", "Type letter to search...")}`
                   : t("type_first_letter_placeholder", "Type first letter of profession (e.g. R, D, V, E, C, M)...")
               }
-              className="w-full pl-8 pr-7 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-medium text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#0A66C2] transition-all"
+              className="w-full pl-8 pr-7 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-base sm:text-xs font-medium text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#0A66C2] transition-all touch-manipulation"
             />
             {searchQuery && (
               <button
@@ -262,7 +262,7 @@ export function ProfessionSearchPopout({
       {/* THE POPOUT CONTAINER (Pops out when typing first letter or clicked) */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full mt-1.5 z-50 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-2xl p-2 animate-in fade-in slide-in-from-top-2 duration-150 max-h-80 flex flex-col">
+        <div className="absolute left-0 right-0 top-full mt-1.5 z-50 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-2xl p-2 animate-in fade-in slide-in-from-top-2 duration-150 max-h-[60vh] sm:max-h-80 flex flex-col">
           {/* Popout Header with live match count */}
           <div className="flex items-center justify-between px-2 py-1.5 border-b border-zinc-100 dark:border-zinc-800 text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
             <span>

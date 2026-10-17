@@ -10,16 +10,16 @@ export const metadata: Metadata = {
     siteName: "ConnectLn",
     images: [
       {
+        url: "https://connectln.vercel.app/brand/connectln-square-og.png",
+        width: 600,
+        height: 600,
+        alt: "ConnectLn Emblem — Tickets, vouches, and real work",
+      },
+      {
         url: "https://connectln.vercel.app/brand/connectln-og.png",
         width: 1200,
         height: 630,
         alt: "ConnectLn — Tickets, vouches, and real work",
-      },
-      {
-        url: "https://connectln.vercel.app/brand/connectln-square-og.png",
-        width: 600,
-        height: 600,
-        alt: "ConnectLn Emblem",
       }
     ],
   },

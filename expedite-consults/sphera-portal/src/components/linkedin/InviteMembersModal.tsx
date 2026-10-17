@@ -360,17 +360,17 @@ export function InviteMembersModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-xl p-0 overflow-hidden rounded-3xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 shadow-2xl">
+      <DialogContent className="w-[calc(100vw-20px)] sm:w-full max-w-xl p-0 overflow-hidden rounded-2xl sm:rounded-3xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 shadow-2xl max-h-[92dvh] flex flex-col mx-auto my-auto">
         {/* Header with Official ConnectLn Brand Lockup */}
-        <div className="bg-[#121110] p-6 text-white border-b border-[#262420]">
-          <div className="flex items-start justify-between gap-4">
-            <div className="space-y-3">
+        <div className="bg-[#121110] p-4 sm:p-6 text-white border-b border-[#262420] shrink-0">
+          <div className="flex items-start justify-between gap-3 sm:gap-4">
+            <div className="space-y-2 sm:space-y-3">
               <ConnectInLogo size="md" showSubtitle={true} className="text-white" />
               <div>
-                <h2 className="text-xl sm:text-2xl font-black text-[#f2ede4] tracking-tight">
+                <h2 className="text-lg sm:text-2xl font-black text-[#f2ede4] tracking-tight">
                   Invite Colleagues to ConnectLn
                 </h2>
-                <p className="text-xs text-zinc-400 mt-0.5">
+                <p className="text-[11px] sm:text-xs text-zinc-400 mt-0.5 leading-snug">
                   Tickets, vouches, and real work · 100% universal delivery across all phones, all carriers &amp; all email inboxes.
                 </p>
               </div>
@@ -378,27 +378,27 @@ export function InviteMembersModal({
 
             <button
               onClick={onClose}
-              className="rounded-full p-2 text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+              className="rounded-full p-1.5 sm:p-2 text-zinc-400 hover:text-white hover:bg-white/10 transition-colors touch-manipulation"
             >
               <X className="h-5 w-5" />
             </button>
           </div>
 
           {/* Invitation Method Tabs */}
-          <div className="mt-5 grid grid-cols-3 gap-2 bg-black/40 p-1.5 rounded-2xl border border-white/10 text-xs font-bold">
+          <div className="mt-3.5 sm:mt-5 grid grid-cols-3 gap-1 sm:gap-2 bg-black/40 p-1 sm:p-1.5 rounded-2xl border border-white/10 text-[10.5px] sm:text-xs font-bold">
             <button
               onClick={() => {
                 setActiveInviteTab('phone')
                 setDispatchNotice(null)
               }}
-              className={`py-2 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`py-1.5 sm:py-2 px-1 sm:px-3 rounded-xl transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer touch-manipulation ${
                 activeInviteTab === 'phone'
                   ? "bg-white text-zinc-900 shadow-md font-black"
                   : "text-zinc-300 hover:text-white hover:bg-white/10"
               }`}
             >
-              <Phone className="h-4 w-4 text-emerald-600" />
-              <span>By Phone / SMS</span>
+              <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-emerald-600 shrink-0" />
+              <span className="truncate">By Phone</span>
             </button>
 
             <button
@@ -406,14 +406,14 @@ export function InviteMembersModal({
                 setActiveInviteTab('email')
                 setDispatchNotice(null)
               }}
-              className={`py-2 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`py-1.5 sm:py-2 px-1 sm:px-3 rounded-xl transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer touch-manipulation ${
                 activeInviteTab === 'email'
                   ? "bg-white text-zinc-900 shadow-md font-black"
                   : "text-zinc-300 hover:text-white hover:bg-white/10"
               }`}
             >
-              <Mail className="h-4 w-4 text-[#0A66C2]" />
-              <span>By Email</span>
+              <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-[#0A66C2] shrink-0" />
+              <span className="truncate">By Email</span>
             </button>
 
             <button
@@ -421,20 +421,20 @@ export function InviteMembersModal({
                 setActiveInviteTab('link')
                 setDispatchNotice(null)
               }}
-              className={`py-2 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`py-1.5 sm:py-2 px-1 sm:px-3 rounded-xl transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer touch-manipulation ${
                 activeInviteTab === 'link'
                   ? "bg-white text-zinc-900 shadow-md font-black"
                   : "text-zinc-300 hover:text-white hover:bg-white/10"
               }`}
             >
-              <Link2 className="h-4 w-4 text-purple-600" />
-              <span>Referral Link</span>
+              <Link2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-purple-600 shrink-0" />
+              <span className="truncate">Referral Link</span>
             </button>
           </div>
         </div>
 
         {/* Content Area */}
-        <div className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+        <div className="p-4 sm:p-6 space-y-4 max-h-[65dvh] sm:max-h-[75dvh] overflow-y-auto">
           {successToast && (
             <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-4 text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-2 animate-in fade-in duration-200">
               <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
@@ -493,7 +493,7 @@ export function InviteMembersModal({
                   placeholder="+1 (240) 555-0192, +1 (703) 555-0144"
                   value={phoneNumbersText}
                   onChange={(e) => setPhoneNumbersText(e.target.value)}
-                  className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-transparent p-3 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                  className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-transparent p-3 text-base sm:text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-600 touch-manipulation"
                 />
               </div>
 
@@ -505,7 +505,7 @@ export function InviteMembersModal({
                   <button
                     type="button"
                     onClick={() => handleCopyLink(phoneMessage, "sms")}
-                    className="text-[11px] text-emerald-600 hover:text-emerald-700 font-bold flex items-center gap-1 cursor-pointer"
+                    className="text-[11px] text-emerald-600 hover:text-emerald-700 font-bold flex items-center gap-1 cursor-pointer touch-manipulation"
                   >
                     {isSmsCopied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                     <span>{isSmsCopied ? "Copied!" : "Copy Text"}</span>
@@ -515,7 +515,7 @@ export function InviteMembersModal({
                   rows={3}
                   value={phoneMessage}
                   onChange={(e) => setPhoneMessage(e.target.value)}
-                  className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 p-3 text-zinc-900 dark:text-zinc-100 font-mono text-[11px] focus:outline-none focus:ring-2 focus:ring-emerald-600 leading-relaxed"
+                  className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 p-3 text-zinc-900 dark:text-zinc-100 font-mono text-base sm:text-[11px] focus:outline-none focus:ring-2 focus:ring-emerald-600 leading-relaxed touch-manipulation"
                 />
               </div>
 
@@ -627,7 +627,7 @@ export function InviteMembersModal({
                   placeholder="e.g. colleague@gmail.com, partner@outlook.com, dev@company.com"
                   value={emailsText}
                   onChange={(e) => setEmailsText(e.target.value)}
-                  className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-transparent p-3 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                  className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-transparent p-3 text-base sm:text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
                 />
               </div>
 
@@ -639,7 +639,7 @@ export function InviteMembersModal({
                   <button
                     type="button"
                     onClick={() => handleCopyLink(emailMessage, "email")}
-                    className="text-[11px] text-[#0A66C2] hover:text-[#004182] font-bold flex items-center gap-1 cursor-pointer"
+                    className="text-[11px] text-[#0A66C2] hover:text-[#004182] font-bold flex items-center gap-1 cursor-pointer touch-manipulation"
                   >
                     {isEmailCopied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                     <span>{isEmailCopied ? "Copied!" : "Copy Text"}</span>
@@ -649,7 +649,7 @@ export function InviteMembersModal({
                   rows={4}
                   value={emailMessage}
                   onChange={(e) => setEmailMessage(e.target.value)}
-                  className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 p-3 text-zinc-900 dark:text-zinc-100 font-mono text-[11px] focus:outline-none focus:ring-2 focus:ring-[#0A66C2] leading-relaxed"
+                  className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 p-3 text-zinc-900 dark:text-zinc-100 font-mono text-base sm:text-[11px] focus:outline-none focus:ring-2 focus:ring-[#0A66C2] leading-relaxed touch-manipulation"
                 />
               </div>
 
@@ -712,12 +712,12 @@ export function InviteMembersModal({
                     type="text"
                     readOnly
                     value={referralLink}
-                    className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-3.5 py-2.5 text-xs font-mono text-zinc-800 dark:text-zinc-200 select-all"
+                    className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-3.5 py-2.5 text-base sm:text-xs font-mono text-zinc-800 dark:text-zinc-200 select-all"
                   />
                   <button
                     type="button"
                     onClick={() => handleCopyLink(referralLink, "link")}
-                    className={`rounded-xl px-4 py-2.5 font-bold text-xs shrink-0 flex items-center gap-1.5 transition-all cursor-pointer ${
+                    className={`rounded-xl px-4 py-2.5 font-bold text-xs shrink-0 flex items-center gap-1.5 transition-all cursor-pointer touch-manipulation ${
                       isCopied
                         ? "bg-emerald-600 text-white shadow-xs"
                         : "bg-purple-600 hover:bg-purple-700 text-white shadow-xs"

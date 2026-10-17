@@ -468,13 +468,13 @@ export default function ConnectInLoginPage() {
   return (
     <div className="min-h-screen bg-[var(--bg-core,#f3f2f0)] text-[var(--text-pure,#18181b)] flex flex-col justify-between font-sans transition-colors duration-300 selection:bg-[#0A66C2] selection:text-white">
       {/* ─── 1. TOP LINKEDIN-STYLE NAVBAR ─── */}
-      <header className="w-full bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 px-6 sm:px-12 py-3 flex items-center justify-between shadow-xs">
-        <Link href="/connectin" className="flex items-center gap-1.5 group">
+      <header className="w-full bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 px-3 sm:px-6 md:px-12 py-2.5 sm:py-3 flex items-center justify-between shadow-xs">
+        <Link href="/connectin" className="flex items-center gap-1.5 group shrink-0">
           <ConnectInLogo size="md" showSubtitle={true} />
         </Link>
 
         {/* Right Switch Button: If on sign in, show Join now; if on join, show Sign in */}
-        <div className="flex items-center gap-2 sm:gap-2.5">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
           {/* Theme & Background Color Switcher */}
           <ThemeColorSwitcher compact={true} align="right" />
 
@@ -482,8 +482,8 @@ export default function ConnectInLoginPage() {
           <LanguageSwitcher compact={true} align="right" />
 
           {activeView === 'signin' ? (
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-zinc-500 dark:text-zinc-400 hidden sm:inline">
+            <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+              <span className="text-zinc-500 dark:text-zinc-400 hidden md:inline">
                 {t("new_to_connectin", "New to ConnectIn?")}
               </span>
               <button
@@ -493,14 +493,14 @@ export default function ConnectInLoginPage() {
                   setErrorMessage(null)
                   setSuccessMessage(null)
                 }}
-                className="rounded-full border border-[#0A66C2] px-4 py-1.5 text-sm font-semibold text-[#0A66C2] dark:text-sky-400 hover:bg-[#0A66C2]/10 transition-colors"
+                className="rounded-full border border-[#0A66C2] px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold text-[#0A66C2] dark:text-sky-400 hover:bg-[#0A66C2]/10 transition-colors cursor-pointer touch-manipulation"
               >
                 {t("join_now_btn", "Join now")}
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-zinc-500 dark:text-zinc-400 hidden sm:inline">
+            <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+              <span className="text-zinc-500 dark:text-zinc-400 hidden md:inline">
                 {t("already_on_connectin", "Already on ConnectIn?")}
               </span>
               <button
@@ -510,7 +510,7 @@ export default function ConnectInLoginPage() {
                   setErrorMessage(null)
                   setSuccessMessage(null)
                 }}
-                className="rounded-full border border-[#0A66C2] px-4 py-1.5 text-sm font-semibold text-[#0A66C2] dark:text-sky-400 hover:bg-[#0A66C2]/10 transition-colors"
+                className="rounded-full border border-[#0A66C2] px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold text-[#0A66C2] dark:text-sky-400 hover:bg-[#0A66C2]/10 transition-colors cursor-pointer touch-manipulation"
               >
                 {t("sign_in_btn", "Sign in")}
               </button>
@@ -520,8 +520,8 @@ export default function ConnectInLoginPage() {
       </header>
 
       {/* ─── 2. MAIN CENTER CONTENT CARD ─── */}
-      <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 my-4">
-        <div className="w-full max-w-[420px] bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-7 sm:p-8 shadow-xl space-y-6">
+      <main className="flex-1 flex flex-col items-center justify-center p-3 sm:p-6 my-2 sm:my-4 w-full">
+        <div className="w-full max-w-[420px] bg-white dark:bg-zinc-900 rounded-2xl sm:rounded-3xl border border-zinc-200 dark:border-zinc-800 p-5 sm:p-8 shadow-xl space-y-5 sm:space-y-6">
 
           {/* Feedback Messages */}
           {errorMessage && (
@@ -574,7 +574,7 @@ export default function ConnectInLoginPage() {
                         value={signInEmail}
                         onChange={(e) => setSignInEmail(e.target.value)}
                         placeholder="e.g. asiedudanquah@gmail.com"
-                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3.5 py-2.5 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3.5 py-2.5 text-base sm:text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
                       />
                     </div>
 
@@ -587,7 +587,7 @@ export default function ConnectInLoginPage() {
                         <button
                           type="button"
                           onClick={() => setSignInChannel('email')}
-                          className={`py-2 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                          className={`py-2 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation ${
                             signInChannel === 'email'
                               ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
                               : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
@@ -603,7 +603,7 @@ export default function ConnectInLoginPage() {
                               setSignInPhone('+1 (240) 260-7898')
                             }
                           }}
-                          className={`py-2 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                          className={`py-2 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation ${
                             signInChannel === 'sms'
                               ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
                               : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
@@ -619,7 +619,7 @@ export default function ConnectInLoginPage() {
                               setSignInPhone('+1 (240) 260-7898')
                             }
                           }}
-                          className={`py-2 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                          className={`py-2 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation ${
                             signInChannel === 'call'
                               ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
                               : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
@@ -641,7 +641,7 @@ export default function ConnectInLoginPage() {
                           value={signInPhone}
                           onChange={(e) => setSignInPhone(e.target.value)}
                           placeholder="+1 (240) 555-0192"
-                          className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3.5 py-2.5 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                          className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3.5 py-2.5 text-base sm:text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
                         />
                       </div>
                     )}
@@ -655,7 +655,7 @@ export default function ConnectInLoginPage() {
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="text-xs font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline cursor-pointer"
+                          className="text-xs font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline cursor-pointer touch-manipulation"
                         >
                           {showPassword ? "Hide" : "Show"}
                         </button>
@@ -666,7 +666,7 @@ export default function ConnectInLoginPage() {
                           value={signInPassword}
                           onChange={(e) => setSignInPassword(e.target.value)}
                           placeholder="•••••••••••• (optional for passwordless OTP)"
-                          className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3.5 py-2.5 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                          className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3.5 py-2.5 text-base sm:text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
                         />
                       </div>
                     </div>
@@ -675,7 +675,7 @@ export default function ConnectInLoginPage() {
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="w-full rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white font-bold py-3 text-sm shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer mt-2"
+                      className="w-full rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white font-bold py-3 min-h-[48px] text-sm shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer mt-2 touch-manipulation active:scale-[0.99]"
                     >
                       {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
                       <span>{t("sign_in_btn", "Sign in with 2FA")}</span>
@@ -697,7 +697,7 @@ export default function ConnectInLoginPage() {
                       type="button"
                       onClick={() => handleGoogleSignIn()}
                       disabled={isLoading}
-                      className="w-full rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 py-2.5 px-4 text-xs font-semibold text-zinc-700 dark:text-zinc-200 transition-colors flex items-center justify-center gap-3 cursor-pointer shadow-xs"
+                      className="w-full rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 py-2.5 px-4 min-h-[46px] text-xs sm:text-sm font-semibold text-zinc-700 dark:text-zinc-200 transition-colors flex items-center justify-center gap-3 cursor-pointer shadow-xs touch-manipulation active:scale-[0.99]"
                     >
                       <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -713,7 +713,7 @@ export default function ConnectInLoginPage() {
                       type="button"
                       onClick={() => handleMicrosoftSignIn()}
                       disabled={isLoading}
-                      className="w-full rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 py-2.5 px-4 text-xs font-semibold text-zinc-700 dark:text-zinc-200 transition-colors flex items-center justify-center gap-3 cursor-pointer shadow-xs"
+                      className="w-full rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 py-2.5 px-4 min-h-[46px] text-xs sm:text-sm font-semibold text-zinc-700 dark:text-zinc-200 transition-colors flex items-center justify-center gap-3 cursor-pointer shadow-xs touch-manipulation active:scale-[0.99]"
                     >
                       <svg className="h-4 w-4 shrink-0" viewBox="0 0 21 21">
                         <rect x="1" y="1" width="9" height="9" fill="#f25022" />
@@ -822,7 +822,7 @@ export default function ConnectInLoginPage() {
                         }
                       }}
                       placeholder="000000"
-                      className="w-full text-center text-3xl font-mono font-bold tracking-[8px] rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 p-3.5 text-[#0A66C2] dark:text-sky-400 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                      className="w-full text-center text-2xl sm:text-3xl font-mono font-bold tracking-[4px] sm:tracking-[8px] rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 p-3 sm:p-3.5 text-[#0A66C2] dark:text-sky-400 focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
                     />
 
                     {/* Resend via Alternative Channels */}
@@ -833,7 +833,7 @@ export default function ConnectInLoginPage() {
                           type="button"
                           onClick={() => doSignIn('email')}
                           disabled={isLoading}
-                          className="font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-md"
+                          className="font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-3 py-1.5 rounded-md touch-manipulation"
                         >
                           {t("send_code_via_email", "✉️ Email")}
                         </button>
@@ -841,7 +841,7 @@ export default function ConnectInLoginPage() {
                           type="button"
                           onClick={() => doSignIn('sms')}
                           disabled={isLoading}
-                          className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-md"
+                          className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-3 py-1.5 rounded-md touch-manipulation"
                         >
                           {t("send_code_via_sms", "💬 SMS Text")}
                         </button>
@@ -849,7 +849,7 @@ export default function ConnectInLoginPage() {
                           type="button"
                           onClick={() => doSignIn('call')}
                           disabled={isLoading}
-                          className="font-semibold text-purple-600 dark:text-purple-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-md"
+                          className="font-semibold text-purple-600 dark:text-purple-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-3 py-1.5 rounded-md touch-manipulation"
                         >
                           {t("send_code_via_call", "📞 Phone Call")}
                         </button>
@@ -865,14 +865,14 @@ export default function ConnectInLoginPage() {
                       <button
                         type="button"
                         onClick={() => setSignInStep('credentials')}
-                        className="flex-1 rounded-full border border-zinc-300 dark:border-zinc-700 py-2.5 text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
+                        className="flex-1 rounded-full border border-zinc-300 dark:border-zinc-700 py-2.5 min-h-[44px] text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer touch-manipulation active:scale-[0.98]"
                       >
                         {t("back", "Back")}
                       </button>
                       <button
                         type="submit"
                         disabled={isLoading || signIn2FACode.length < 6}
-                        className="flex-1 rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white py-2.5 text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                        className="flex-1 rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white py-2.5 min-h-[44px] text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 touch-manipulation active:scale-[0.98]"
                       >
                         {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
                         <span>{t("verify_and_sign_in", "Verify & Sign in")}</span>
@@ -926,7 +926,7 @@ export default function ConnectInLoginPage() {
                       type="button"
                       onClick={() => handleGoogleSignIn()}
                       disabled={isLoading}
-                      className="w-full rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 py-2.5 px-4 text-xs font-semibold text-zinc-700 dark:text-zinc-200 transition-colors flex items-center justify-center gap-3 cursor-pointer shadow-xs"
+                      className="w-full rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 py-2.5 px-4 min-h-[46px] text-xs sm:text-sm font-semibold text-zinc-700 dark:text-zinc-200 transition-colors flex items-center justify-center gap-3 cursor-pointer shadow-xs touch-manipulation active:scale-[0.99]"
                     >
                       <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -941,7 +941,7 @@ export default function ConnectInLoginPage() {
                       type="button"
                       onClick={() => handleMicrosoftSignIn()}
                       disabled={isLoading}
-                      className="w-full rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 py-2.5 px-4 text-xs font-semibold text-zinc-700 dark:text-zinc-200 transition-colors flex items-center justify-center gap-3 cursor-pointer shadow-xs"
+                      className="w-full rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 py-2.5 px-4 min-h-[46px] text-xs sm:text-sm font-semibold text-zinc-700 dark:text-zinc-200 transition-colors flex items-center justify-center gap-3 cursor-pointer shadow-xs touch-manipulation active:scale-[0.99]"
                     >
                       <svg className="h-4 w-4 shrink-0" viewBox="0 0 21 21">
                         <rect x="1" y="1" width="9" height="9" fill="#f25022" />
@@ -971,7 +971,7 @@ export default function ConnectInLoginPage() {
                           value={joinFirstName}
                           onChange={(e) => setJoinFirstName(e.target.value)}
                           placeholder="Kwesi"
-                          className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                          className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2.5 text-base sm:text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
                         />
                       </div>
                       <div className="space-y-1">
@@ -982,7 +982,7 @@ export default function ConnectInLoginPage() {
                           value={joinLastName}
                           onChange={(e) => setJoinLastName(e.target.value)}
                           placeholder="Asiedu"
-                          className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                          className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2.5 text-base sm:text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
                         />
                       </div>
                     </div>
@@ -996,7 +996,7 @@ export default function ConnectInLoginPage() {
                         value={joinEmail}
                         onChange={(e) => setJoinEmail(e.target.value)}
                         placeholder="asiedudanquah@gmail.com"
-                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2.5 text-base sm:text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
                       />
                     </div>
 
@@ -1013,7 +1013,7 @@ export default function ConnectInLoginPage() {
                         value={joinPhone}
                         onChange={(e) => setJoinPhone(e.target.value)}
                         placeholder="+1 (240) 555-0192"
-                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2.5 text-base sm:text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
                       />
                     </div>
 
@@ -1024,7 +1024,7 @@ export default function ConnectInLoginPage() {
                         <button
                           type="button"
                           onClick={() => setJoinChannel('email')}
-                          className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                          className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation ${
                             joinChannel === 'email'
                               ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
                               : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
@@ -1035,7 +1035,7 @@ export default function ConnectInLoginPage() {
                         <button
                           type="button"
                           onClick={() => setJoinChannel('sms')}
-                          className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                          className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation ${
                             joinChannel === 'sms'
                               ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
                               : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
@@ -1046,7 +1046,7 @@ export default function ConnectInLoginPage() {
                         <button
                           type="button"
                           onClick={() => setJoinChannel('call')}
-                          className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                          className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation ${
                             joinChannel === 'call'
                               ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
                               : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
@@ -1067,7 +1067,7 @@ export default function ConnectInLoginPage() {
                         value={joinPassword}
                         onChange={(e) => setJoinPassword(e.target.value)}
                         placeholder="••••••••••••"
-                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2.5 text-base sm:text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
                       />
                     </div>
 
@@ -1091,7 +1091,7 @@ export default function ConnectInLoginPage() {
                             setJoinProfessionId(available[0].id)
                           }
                         }}
-                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-xs font-medium text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2.5 text-base sm:text-xs font-medium text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
                       >
                         {PROFESSION_ENCLAVES.map(enc => (
                           <option key={enc.id} value={enc.id}>
@@ -1152,7 +1152,7 @@ export default function ConnectInLoginPage() {
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="w-full rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white font-bold py-3 text-sm shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer mt-2"
+                      className="w-full rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white font-bold py-3 min-h-[48px] text-sm shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer mt-2 touch-manipulation active:scale-[0.99]"
                     >
                       {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
                       <span>{t("agree_and_join", "Agree & Join")}</span>
@@ -1262,7 +1262,7 @@ export default function ConnectInLoginPage() {
                         }
                       }}
                       placeholder="000000"
-                      className="w-full text-center text-3xl font-mono font-bold tracking-[8px] rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 p-3.5 text-emerald-600 dark:text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full text-center text-2xl sm:text-3xl font-mono font-bold tracking-[4px] sm:tracking-[8px] rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 p-3 sm:p-3.5 text-emerald-600 dark:text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 touch-manipulation"
                     />
 
                     {/* Resend via Alternative Channels */}
@@ -1273,7 +1273,7 @@ export default function ConnectInLoginPage() {
                           type="button"
                           onClick={() => handleJoinSubmit(undefined, 'email')}
                           disabled={isLoading}
-                          className="font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-md"
+                          className="font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-3 py-1.5 rounded-md touch-manipulation"
                         >
                           {t("send_code_via_email", "✉️ Email")}
                         </button>
@@ -1281,7 +1281,7 @@ export default function ConnectInLoginPage() {
                           type="button"
                           onClick={() => handleJoinSubmit(undefined, 'sms')}
                           disabled={isLoading}
-                          className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-md"
+                          className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-3 py-1.5 rounded-md touch-manipulation"
                         >
                           {t("send_code_via_sms", "💬 SMS Text")}
                         </button>
@@ -1289,7 +1289,7 @@ export default function ConnectInLoginPage() {
                           type="button"
                           onClick={() => handleJoinSubmit(undefined, 'call')}
                           disabled={isLoading}
-                          className="font-semibold text-purple-600 dark:text-purple-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-md"
+                          className="font-semibold text-purple-600 dark:text-purple-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-3 py-1.5 rounded-md touch-manipulation"
                         >
                           {t("send_code_via_call", "📞 Phone Call")}
                         </button>
@@ -1300,14 +1300,14 @@ export default function ConnectInLoginPage() {
                       <button
                         type="button"
                         onClick={() => setJoinStep('form')}
-                        className="flex-1 rounded-full border border-zinc-300 dark:border-zinc-700 py-2.5 text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
+                        className="flex-1 rounded-full border border-zinc-300 dark:border-zinc-700 py-2.5 min-h-[44px] text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer touch-manipulation active:scale-[0.98]"
                       >
                         {t("back", "Back")}
                       </button>
                       <button
                         type="submit"
                         disabled={isLoading || join2FACode.length < 6}
-                        className="flex-1 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                        className="flex-1 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 min-h-[44px] text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 touch-manipulation active:scale-[0.98]"
                       >
                         {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
                         <span>{t("confirm_and_join", "Confirm & Join")}</span>
