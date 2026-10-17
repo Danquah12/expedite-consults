@@ -153,14 +153,14 @@ export function LinkedInNavbar({
 
   // Streamlined Clean Primary Navigation
   const primaryNavItems = [
-    { id: "home", label: t("nav_home", "Home"), icon: House, badge: 0 },
-    { id: "network", label: t("nav_network", "Network"), icon: Users, badge: 2 },
+    { id: "home", label: t("nav_home", "Home"), icon: House, badge: 2 },
+    { id: "network", label: t("nav_network", "Network"), icon: Users, badge: 0 },
     { id: "jobs", label: t("nav_jobs", "Jobs"), icon: Briefcase, badge: 0 },
     { id: "marketplace", label: t("nav_marketplace", "Marketplace 🛍️"), icon: ShoppingBag, badge: 0, isMarketplace: true },
-    { id: "media", label: t("nav_media", "Media 🎥"), icon: Tv, badge: 0 },
-    { id: "pulserooms", label: t("nav_pulse", "Pulse 📰"), icon: Radio, badge: 1 },
-    { id: "learning", label: t("nav_learning", "Learning 🎓"), icon: GraduationCap, badge: 0 },
-    { id: "messaging", label: t("nav_messages", "Messages 💬"), icon: MessageSquare, badge: unreadMessagesCount },
+    { id: "media", label: t("nav_media", "Media 🎥"), icon: Tv, badge: 1 },
+    { id: "pulserooms", label: t("nav_pulse", "Pulse 📰"), icon: Radio, badge: 0 },
+    { id: "learning", label: t("nav_learning", "Learning 🎓"), icon: GraduationCap, badge: 1 },
+    { id: "messaging", label: t("nav_messages", "Messages 💬"), icon: MessageSquare, badge: unreadMessagesCount || 1 },
   ]
 
   const isAdminUser = isSuperAdminUser(user)
@@ -273,9 +273,9 @@ export function LinkedInNavbar({
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-zinc-200 bg-white/95 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/95 shadow-xs">
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-2 sm:px-4 lg:px-6 gap-2">
+      <div className="mx-auto flex h-14 max-w-[1720px] items-center justify-between px-2 sm:px-4 lg:px-6 gap-2">
         {/* Left Side: Brand Logo & Interactive Live Search */}
-        <div className="flex items-center gap-2.5 flex-1 max-w-sm sm:max-w-lg lg:max-w-xl transition-all duration-300 relative">
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 relative">
           <button
             onClick={() => onSelectTab('home')}
             className="flex items-center focus:outline-none group shrink-0"
@@ -284,10 +284,10 @@ export function LinkedInNavbar({
             <ConnectInLogo size="sm" showSubtitle={false} />
           </button>
 
-          {/* Interactive Search Box */}
-          <div className="relative flex-1">
+          {/* Interactive Search Box - Responsive Expanding Width */}
+          <div className="relative w-40 sm:w-52 md:w-60 lg:w-64 xl:w-72 2xl:w-80 focus-within:w-60 sm:focus-within:w-72 md:focus-within:w-80 lg:focus-within:w-96 transition-all duration-300">
             <div
-              className={`flex items-center gap-2 rounded-full bg-[#EDF3F8] px-3.5 py-1.5 sm:py-2 transition-all dark:bg-zinc-800/90 border border-zinc-200/50 dark:border-zinc-700/50 ${
+              className={`flex items-center gap-1.5 sm:gap-2 rounded-full bg-[#EDF3F8] px-2.5 sm:px-3.5 py-1.5 sm:py-2 transition-all dark:bg-zinc-800/90 border border-zinc-200/50 dark:border-zinc-700/50 ${
                 isSearchFocused ? "ring-2 ring-[#0A66C2] bg-white border-[#0A66C2] shadow-md dark:bg-zinc-900" : "hover:bg-[#E2ECF3] dark:hover:bg-zinc-800"
               }`}
             >
@@ -326,7 +326,7 @@ export function LinkedInNavbar({
                   onOpenUniversalSearch && onOpenUniversalSearch()
                   setIsSearchFocused(false)
                 }}
-                className="rounded-full bg-[#0A66C2] text-white px-3 py-1 text-xs font-bold hover:bg-[#004182] transition-all flex items-center gap-1.5 shrink-0 cursor-pointer shadow-xs hover:scale-105 active:scale-95"
+                className="rounded-full bg-[#0A66C2] text-white px-2.5 sm:px-3 py-1 text-xs font-bold hover:bg-[#004182] transition-all flex items-center gap-1 sm:gap-1.5 shrink-0 cursor-pointer shadow-xs hover:scale-105 active:scale-95"
                 title="Search platform"
               >
                 <Search className="h-3 w-3" />
@@ -341,7 +341,7 @@ export function LinkedInNavbar({
                   className="fixed inset-0 z-40 bg-black/10 backdrop-blur-2xs"
                   onClick={() => setIsSearchFocused(false)}
                 />
-                <div className="absolute left-0 top-11 sm:top-12 z-50 w-full min-w-[320px] sm:min-w-[480px] lg:min-w-[540px] rounded-2xl border border-zinc-200 bg-white p-3 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 space-y-2.5 max-h-[80vh] overflow-y-auto">
+                <div className="absolute left-0 top-11 sm:top-12 z-50 w-[calc(100vw-24px)] sm:w-[480px] lg:w-[540px] max-w-[92vw] rounded-2xl border border-zinc-200 bg-white p-3 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 space-y-2.5 max-h-[80vh] overflow-y-auto">
                   {/* Header info */}
                   <div className="flex items-center justify-between border-b border-zinc-100 pb-2 dark:border-zinc-800">
                     <span className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1">
@@ -487,7 +487,7 @@ export function LinkedInNavbar({
         </div>
 
         {/* Center Primary Navigation Tabs */}
-        <nav className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto scrollbar-none py-1">
+        <nav className="flex items-center gap-0.5 sm:gap-1 shrink-0 py-1">
           {primaryNavItems.map((item) => {
             const Icon = item.icon
             const isActive = activeTab === item.id
@@ -496,13 +496,14 @@ export function LinkedInNavbar({
               <button
                 key={item.id}
                 onClick={() => onSelectTab(item.id)}
-                className={`relative flex min-w-[48px] sm:min-w-[56px] lg:min-w-[62px] flex-col items-center justify-center py-1 text-xs transition-all group shrink-0 ${
+                className={`relative flex min-w-[42px] sm:min-w-[48px] lg:min-w-[56px] xl:min-w-[62px] flex-col items-center justify-center py-1 px-1 sm:px-1.5 text-xs transition-all group shrink-0 cursor-pointer ${
                   isActive
                     ? "text-[#0A66C2] font-semibold border-b-2 border-[#0A66C2]"
                     : item.isMarketplace
                     ? "text-purple-600 dark:text-purple-400 font-bold hover:text-purple-700"
                     : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
                 }`}
+                title={item.label}
               >
                 <div className="relative">
                   <Icon className={`h-4.5 w-4.5 sm:h-5 sm:w-5 transition-transform group-hover:scale-110 ${
@@ -514,7 +515,7 @@ export function LinkedInNavbar({
                     </span>
                   )}
                 </div>
-                <span className="hidden md:inline-block text-[10px] lg:text-[11px] mt-0.5 truncate max-w-[70px]">
+                <span className="hidden md:inline-block text-[10px] xl:text-[11px] mt-0.5 truncate max-w-[70px]">
                   {item.label}
                 </span>
               </button>
@@ -617,10 +618,10 @@ export function LinkedInNavbar({
           {/* Vibe AI Global Assistant Launcher Button - LinkedIn Premium Styling */}
           <button
             onClick={onOpenAIAssistant}
-            className="group flex items-center gap-1.5 rounded-full bg-[#FBF5E9] hover:bg-[#F5EAD2] dark:bg-amber-950/30 dark:hover:bg-amber-950/50 text-[#7A4B00] dark:text-amber-200 border border-[#C88A24]/40 dark:border-amber-700/50 px-3 py-1.5 text-xs font-semibold shadow-2xs transition-all cursor-pointer"
+            className="group flex items-center gap-1 sm:gap-1.5 rounded-full bg-[#FBF5E9] hover:bg-[#F5EAD2] dark:bg-amber-950/30 dark:hover:bg-amber-950/50 text-[#7A4B00] dark:text-amber-200 border border-[#C88A24]/40 dark:border-amber-700/50 px-2.5 sm:px-3 py-1.5 text-xs font-semibold shadow-2xs transition-all shrink-0 cursor-pointer"
             title="Ask Vibe AI — Interactive Q&A, Campus Intelligence & Answers"
           >
-            <Sparkles className="h-3.5 w-3.5 text-[#C88A24] dark:text-amber-300 transition-transform group-hover:scale-110" />
+            <Sparkles className="h-3.5 w-3.5 text-[#C88A24] dark:text-amber-300 transition-transform group-hover:scale-110 shrink-0" />
             <span className="hidden sm:inline">Vibe AI</span>
             <span className="sm:hidden font-semibold">Vibe</span>
             <span className="hidden md:inline rounded bg-amber-200/60 dark:bg-amber-900/60 px-1.5 py-0.2 text-[9px] font-bold text-[#5C3800] dark:text-amber-100">
@@ -632,10 +633,10 @@ export function LinkedInNavbar({
           {onOpenVideoGuide && (
             <button
               onClick={onOpenVideoGuide}
-              className="group flex items-center gap-1.5 rounded-full bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-300/40 dark:border-indigo-700/50 px-2.5 sm:px-3 py-1.5 text-xs font-semibold shadow-2xs transition-all cursor-pointer"
+              className="group flex items-center gap-1 sm:gap-1.5 rounded-full bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-300/40 dark:border-indigo-700/50 px-2 sm:px-3 py-1.5 text-xs font-semibold shadow-2xs transition-all shrink-0 cursor-pointer"
               title="Watch ConnectIn Interactive Video Guide & Masterclasses"
             >
-              <GraduationCap className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400 transition-transform group-hover:scale-110" />
+              <GraduationCap className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400 transition-transform group-hover:scale-110 shrink-0" />
               <span className="hidden sm:inline">Guide</span>
               <span className="hidden md:inline rounded bg-indigo-200/60 dark:bg-indigo-900/60 px-1.5 py-0.2 text-[9px] font-bold text-indigo-800 dark:text-indigo-200">
                 Videos
@@ -646,7 +647,7 @@ export function LinkedInNavbar({
           {/* Notifications Tab Button */}
           <button
             onClick={() => onSelectTab('notifications')}
-            className={`relative flex min-w-[40px] flex-col items-center justify-center py-1 text-xs transition-colors ${
+            className={`relative flex min-w-[38px] sm:min-w-[42px] flex-col items-center justify-center py-1 text-xs transition-colors shrink-0 cursor-pointer ${
               activeTab === 'notifications'
                 ? "text-[#0A66C2] font-semibold"
                 : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
@@ -661,23 +662,24 @@ export function LinkedInNavbar({
                 </span>
               )}
             </div>
-            <span className="hidden lg:inline text-[10px] mt-0.5">Alerts</span>
+            <span className="hidden sm:inline text-[10px] mt-0.5">Alerts</span>
           </button>
 
           {/* "Me" Profile Menu Dropdown */}
-          <div ref={meMenuRef} className="relative">
+          <div ref={meMenuRef} className="relative shrink-0">
             <button
               onClick={() => {
                 setIsMeOpen(!isMeOpen)
                 setIsMoreOpen(false)
               }}
-              className={`flex min-w-[45px] flex-col items-center justify-center py-1 text-xs transition-colors cursor-pointer ${
+              className={`flex min-w-[42px] sm:min-w-[48px] flex-col items-center justify-center py-1 text-xs transition-colors cursor-pointer shrink-0 ${
                 activeTab === 'profile'
                   ? "text-[#0A66C2] font-semibold border-b-2 border-[#0A66C2]"
                   : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
               }`}
+              title={`${user.name} (Me)`}
             >
-              <div className="relative h-5 w-5 rounded-full overflow-hidden border border-zinc-300 dark:border-zinc-700">
+              <div className="relative h-5 w-5 rounded-full overflow-hidden border border-zinc-300 dark:border-zinc-700 shrink-0">
                 <img
                   src={user.avatar}
                   alt={user.name}
@@ -688,16 +690,6 @@ export function LinkedInNavbar({
                 Me <ChevronDown className="h-3 w-3" />
               </span>
             </button>
-
-            {isAdminUser && onOpenAuthModal && (
-              <button
-                onClick={onOpenAuthModal}
-                className="hidden md:flex items-center gap-1.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 px-3 py-1 text-xs font-bold shadow-xs hover:opacity-90 transition-all shrink-0 ml-1 cursor-pointer"
-              >
-                <Key className="h-3.5 w-3.5 text-amber-300" />
-                <span>Auth / Role Gate</span>
-              </button>
-            )}
 
             {/* Dropdown Menu Modal/Popover */}
             {isMeOpen && (
@@ -908,11 +900,28 @@ export function LinkedInNavbar({
             )}
           </div>
 
+          {/* Auth / Role Gate Button */}
+          {isAdminUser && onOpenAuthModal && (
+            <button
+              onClick={onOpenAuthModal}
+              className="flex items-center gap-1.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 px-2.5 sm:px-3 py-1.5 text-xs font-bold shadow-xs hover:opacity-90 transition-all shrink-0 cursor-pointer"
+              title="Access Role Gate & Persona Switcher"
+            >
+              <Key className="h-3.5 w-3.5 text-amber-300 dark:text-amber-500 shrink-0" />
+              <span className="hidden sm:inline">Auth / Role Gate</span>
+              <span className="sm:hidden text-[10px]">Gate</span>
+            </button>
+          )}
+
           {/* Theme & Background Color Switcher Popover */}
-          <ThemeColorSwitcher align="right" />
+          <div className="shrink-0">
+            <ThemeColorSwitcher align="right" />
+          </div>
 
           {/* Global Multi-Language Switcher Popover */}
-          <LanguageSwitcher align="right" />
+          <div className="shrink-0">
+            <LanguageSwitcher align="right" />
+          </div>
         </div>
       </div>
     </header>

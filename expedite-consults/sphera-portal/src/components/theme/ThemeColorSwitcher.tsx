@@ -51,7 +51,7 @@ export function ThemeColorSwitcher({
         />
         <span className="text-xs shrink-0">{themeOption.icon}</span>
         {!compact && (
-          <span className="hidden xl:inline text-[11px] font-semibold truncate max-w-[85px]">
+          <span className="hidden lg:inline text-[11px] font-semibold truncate max-w-[85px]">
             {themeOption.shortLabel}
           </span>
         )}

@@ -261,42 +261,42 @@ export function UniversalSearchModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col p-0 overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-2xl">
+      <DialogContent className="max-w-5xl max-h-[88vh] flex flex-col p-0 overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-2xl">
         {/* Header Search Input */}
-        <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-purple-950 p-4 border-b border-white/10 shrink-0 text-white space-y-3">
+        <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-purple-950 p-4 sm:p-5 border-b border-white/10 shrink-0 text-white space-y-3.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="rounded-full bg-purple-500/30 px-2.5 py-0.5 text-[10px] font-bold text-purple-200 border border-purple-400/30 flex items-center gap-1">
-                <Globe className="h-3 w-3 text-amber-300" />
+              <span className="rounded-full bg-purple-500/30 px-3 py-1 text-xs font-bold text-purple-200 border border-purple-400/30 flex items-center gap-1.5">
+                <Globe className="h-3.5 w-3.5 text-amber-300" />
                 ConnectIn Universal Omnisearch
               </span>
-              <span className="text-[11px] text-zinc-400">
+              <span className="text-xs text-zinc-300">
                 {isLoadingUsers ? "Indexing platform members..." : `Indexed ${liveUsers.length} members & enterprise assets`}
               </span>
             </div>
             {isLoadingUsers && (
-              <RefreshCw className="h-3.5 w-3.5 text-zinc-400 animate-spin" />
+              <RefreshCw className="h-4 w-4 text-zinc-400 animate-spin" />
             )}
           </div>
 
           <div className="relative flex items-center">
-            <Search className="absolute left-3.5 top-3 h-4 w-4 text-zinc-400" />
+            <Search className="absolute left-4 top-3.5 h-5 w-5 text-zinc-400" />
             <input
               type="text"
               placeholder="Search members (Rhoda, Kwesi, Alex...), jobs, products, services, courses, research..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               autoFocus
-              className="w-full rounded-xl bg-white/10 border border-white/20 pl-10 pr-10 py-2.5 text-sm text-white placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-purple-400"
+              className="w-full rounded-2xl bg-white/10 border border-white/20 pl-12 pr-12 py-3 sm:py-3.5 text-sm sm:text-base text-white placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-purple-400 shadow-inner"
             />
             {query && (
               <button
                 type="button"
                 onClick={() => setQuery("")}
-                className="absolute right-3.5 top-3 text-zinc-400 hover:text-white cursor-pointer"
+                className="absolute right-4 top-3.5 text-zinc-400 hover:text-white cursor-pointer"
                 title="Clear query"
               >
-                <X className="h-4 w-4" />
+                <X className="h-5 w-5" />
               </button>
             )}
           </div>
