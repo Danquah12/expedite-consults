@@ -52,6 +52,7 @@ import {
   getEnclaveCertificationTracks
 } from "@/lib/learning-platform-data"
 import { UserProfile } from "@/lib/linkedin-data"
+import { ConnectInVideoWheel } from "@/components/linkedin/ConnectInVideoWheel"
 import {
   Dialog,
   DialogContent,
@@ -428,6 +429,12 @@ export function LearningView({
           </div>
         )}
       </div>
+
+      {/* Expedite Consults Educational Video Talk Wheel */}
+      <ConnectInVideoWheel
+        title="The Wheel — 5-Minute Masterclass Briefings"
+        subtitle="Expedite Consults curated trade apprenticeships, business finance, and safety compliance talks."
+      />
 
       {/* ========================================================================= */}
       {/* MODE 1: CAREER LEARNING PATHS (e.g. Become a Cloud Security Engineer) */}

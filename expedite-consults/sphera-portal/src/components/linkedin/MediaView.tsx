@@ -57,6 +57,7 @@ import {
   VideoTranscriptSegment
 } from "@/lib/connectin-media-data"
 import { UserProfile } from "@/lib/linkedin-data"
+import { ConnectInVideoWheel } from "@/components/linkedin/ConnectInVideoWheel"
 
 interface MediaViewProps {
   currentUser: UserProfile
@@ -269,6 +270,12 @@ export function MediaView({
           ))}
         </div>
       </div>
+
+      {/* Expedite Consults Educational Video Talk Wheel */}
+      <ConnectInVideoWheel
+        title="The Wheel — 5-Minute Masterclass Briefings"
+        subtitle="Expedite Consults curated trade apprenticeships, business finance, and safety compliance talks."
+      />
 
       {/* ========================================================================= */}
       {/* VIEW: FOR YOU & FOLLOWING (THE INTERACTIVE PROFESSIONAL WATCH EXPERIENCE) */}

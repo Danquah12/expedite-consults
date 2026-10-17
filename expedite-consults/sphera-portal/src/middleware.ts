@@ -3,11 +3,16 @@ import type { NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const host = request.headers.get("host") || "";
 
-  // Root redirect to feed
+  // If visitor arrives at root from connectln.vercel.app or connectin domain, send straight to /connectin
   if (pathname === "/") {
     const url = request.nextUrl.clone();
-    url.pathname = "/feed";
+    if (host.includes("connectln") || host.includes("connectin")) {
+      url.pathname = "/connectin";
+    } else {
+      url.pathname = "/feed";
+    }
     return NextResponse.redirect(url);
   }
 

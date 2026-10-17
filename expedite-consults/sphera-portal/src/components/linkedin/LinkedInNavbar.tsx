@@ -67,6 +67,7 @@ interface LinkedInNavbarProps {
   onSelectWorkspace?: (ws: 'personal' | 'enterprise' | 'creator' | 'seller') => void
   suggestedPeople?: SuggestedConnection[]
   onToggleConnect?: (personId: string) => void
+  onOpenVideoGuide?: () => void
 }
 
 export function LinkedInNavbar({
@@ -84,7 +85,8 @@ export function LinkedInNavbar({
   activeWorkspace = 'personal',
   onSelectWorkspace,
   suggestedPeople = [],
-  onToggleConnect
+  onToggleConnect,
+  onOpenVideoGuide
 }: LinkedInNavbarProps) {
   const [isMeOpen, setIsMeOpen] = useState(false)
   const [isMoreOpen, setIsMoreOpen] = useState(false)
@@ -625,6 +627,21 @@ export function LinkedInNavbar({
               Q&amp;A
             </span>
           </button>
+
+          {/* Interactive User Video Guide Launcher */}
+          {onOpenVideoGuide && (
+            <button
+              onClick={onOpenVideoGuide}
+              className="group flex items-center gap-1.5 rounded-full bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-300/40 dark:border-indigo-700/50 px-2.5 sm:px-3 py-1.5 text-xs font-semibold shadow-2xs transition-all cursor-pointer"
+              title="Watch ConnectIn Interactive Video Guide & Masterclasses"
+            >
+              <GraduationCap className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400 transition-transform group-hover:scale-110" />
+              <span className="hidden sm:inline">Guide</span>
+              <span className="hidden md:inline rounded bg-indigo-200/60 dark:bg-indigo-900/60 px-1.5 py-0.2 text-[9px] font-bold text-indigo-800 dark:text-indigo-200">
+                Videos
+              </span>
+            </button>
+          )}
 
           {/* Notifications Tab Button */}
           <button

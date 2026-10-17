@@ -48,6 +48,8 @@ import { AccountSecurityView } from "@/components/linkedin/AccountSecurityView"
 import { AdminIAMConsoleView } from "@/components/linkedin/AdminIAMConsoleView"
 import { ConnectInAuthModal } from "@/components/linkedin/ConnectInAuthModal"
 import { ConnectInAnalyticsModal } from "@/components/linkedin/ConnectInAnalyticsModal"
+import { ConnectInVideoWheel } from "@/components/linkedin/ConnectInVideoWheel"
+import { ConnectInVideoGuideModal } from "@/components/linkedin/ConnectInVideoGuideModal"
 import {
   currentUser as initialCurrentUser,
   initialPosts,
@@ -136,6 +138,8 @@ export default function LinkedInPage() {
   const [selectedTagFilter, setSelectedTagFilter] = useState<string | null>(null)
   const [selectedEnclaves, setSelectedEnclaves] = useState<string[]>(['trades_construction'])
   const [isMultiEnclaveMode, setIsMultiEnclaveMode] = useState<boolean>(true)
+  const [isVideoGuideOpen, setIsVideoGuideOpen] = useState(false)
+  const [showFeedWheel, setShowFeedWheel] = useState(true)
   const [hasHydrated, setHasHydrated] = useState(false)
 
   // Authentication Lifecycle — optimistic-first, never redirects, shows modal only if truly needed
@@ -670,6 +674,7 @@ export default function LinkedInPage() {
         onOpenAIAssistant={() => setIsAIAssistantOpen(true)}
         onOpenUniversalSearch={() => setIsUniversalSearchOpen(true)}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
+        onOpenVideoGuide={() => setIsVideoGuideOpen(true)}
         onSignOut={handleSignOut}
         activeWorkspace={activeWorkspace}
         onSelectWorkspace={(ws) => {
@@ -708,6 +713,41 @@ export default function LinkedInPage() {
 
             {/* Center Rail (Post Creator & Post Feed) */}
             <div className="md:col-span-8 lg:col-span-6 space-y-3">
+              {/* Educational Masterclass Wheel / ConnectIn Video Showcase */}
+              {showFeedWheel && (
+                <div className="space-y-1">
+                  <ConnectInVideoWheel
+                    title="The Wheel — 5-Minute Masterclasses & Briefings"
+                    subtitle="Expedite Consults educational talks, trade apprenticeship standards & business underwriting."
+                    onOpenVideoGuide={() => setIsVideoGuideOpen(true)}
+                  />
+                  <div className="flex items-center justify-between px-2 pt-0.5 text-[10px] text-zinc-500">
+                    <span className="flex items-center gap-1">
+                      <span>💡</span>
+                      <span>Tap any plate to watch 5-minute video briefing inline</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowFeedWheel(false)}
+                      className="hover:underline text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-pointer"
+                    >
+                      Hide The Wheel
+                    </button>
+                  </div>
+                </div>
+              )}
+              {!showFeedWheel && (
+                <div className="flex justify-end pb-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowFeedWheel(true)}
+                    className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 hover:underline flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 shadow-2xs cursor-pointer"
+                  >
+                    <span>🎡 Show "The Wheel" Video Talks</span>
+                  </button>
+                </div>
+              )}
+
               {/* Need-to-Know Enclave Segregation Banner */}
               {(() => {
                 const isAdmin = isSuperAdminUser(userData)
@@ -1438,6 +1478,32 @@ export default function LinkedInPage() {
           setActiveTab('messaging')
         }}
         onNavigateTab={(tab) => setActiveTab(tab as any)}
+      />
+
+      {/* Interactive Platform Video Guide & Masterclasses Modal */}
+      <ConnectInVideoGuideModal
+        isOpen={isVideoGuideOpen}
+        onClose={() => setIsVideoGuideOpen(false)}
+        onNavigateTab={(tab) => {
+          setActiveTab(tab as any)
+          setIsVideoGuideOpen(false)
+        }}
+        onOpenResumeBuilder={() => {
+          setIsVideoGuideOpen(false)
+          setActiveTab('profile')
+        }}
+        onOpenAIAssistant={() => {
+          setIsVideoGuideOpen(false)
+          setIsAIAssistantOpen(true)
+        }}
+        onSelectWorkspace={(ws) => {
+          setActiveWorkspace(ws)
+          if (ws === 'personal') setActiveTab('home')
+          else if (ws === 'enterprise') setActiveTab('procurement')
+          else if (ws === 'creator') setActiveTab('media')
+          else if (ws === 'seller') setActiveTab('sellercenter')
+          setIsVideoGuideOpen(false)
+        }}
       />
     </div>
   )
