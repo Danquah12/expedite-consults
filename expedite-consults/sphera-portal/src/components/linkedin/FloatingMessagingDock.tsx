@@ -74,7 +74,7 @@ export function FloatingMessagingDock({ currentUser }: FloatingMessagingDockProp
   )
 
   return (
-    <div className="fixed bottom-0 right-4 z-50 flex items-end gap-3 pointer-events-none">
+    <div className="hidden lg:flex fixed bottom-0 right-4 z-50 items-end gap-3 pointer-events-none">
       {/* 1. Mini Floating Chat Pop-up Window (if a conversation is clicked) */}
       {activeChatThread && (
         <div className="pointer-events-auto flex flex-col w-80 h-96 rounded-t-xl border border-zinc-300 bg-white shadow-2xl dark:border-zinc-700 dark:bg-zinc-900 overflow-hidden animate-in slide-in-from-bottom-5">

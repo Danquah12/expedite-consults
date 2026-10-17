@@ -158,16 +158,16 @@ export function LinkedInNavbar({
     }
   }
 
-  // Streamlined Clean Primary Navigation with Responsive Short Labels
+  // Streamlined Clean Primary Navigation with Responsive Priority Levels
   const primaryNavItems = [
-    { id: "home", label: t("nav_home", "Home"), shortLabel: t("nav_home_short", "Home"), icon: House, badge: 2 },
-    { id: "network", label: t("nav_network", "Network"), shortLabel: t("nav_network_short", "Network"), icon: Users, badge: 0 },
-    { id: "jobs", label: t("nav_jobs", "Jobs"), shortLabel: t("nav_jobs_short", "Jobs"), icon: Briefcase, badge: 0 },
-    { id: "marketplace", label: t("nav_marketplace", "Marketplace 🛍️"), shortLabel: t("nav_marketplace_short", "Market"), icon: ShoppingBag, badge: 0, isMarketplace: true },
-    { id: "media", label: t("nav_media", "Media 🎥"), shortLabel: t("nav_media_short", "Media"), icon: Tv, badge: 1 },
-    { id: "pulserooms", label: t("nav_pulse", "Pulse 📰"), shortLabel: t("nav_pulse_short", "Pulse"), icon: Radio, badge: 0 },
-    { id: "learning", label: t("nav_learning", "Learning 🎓"), shortLabel: t("nav_learning_short", "Learn"), icon: GraduationCap, badge: 1 },
-    { id: "messaging", label: t("nav_messages", "Messages 💬"), shortLabel: t("nav_messages_short", "Msgs"), icon: MessageSquare, badge: unreadMessagesCount || 1 },
+    { id: "home", label: t("nav_home", "Home"), shortLabel: t("nav_home_short", "Home"), icon: House, badge: 2, priority: "always" },
+    { id: "network", label: t("nav_network", "Network"), shortLabel: t("nav_network_short", "Network"), icon: Users, badge: 0, priority: "always" },
+    { id: "jobs", label: t("nav_jobs", "Jobs"), shortLabel: t("nav_jobs_short", "Jobs"), icon: Briefcase, badge: 0, priority: "always" },
+    { id: "marketplace", label: t("nav_marketplace", "Marketplace"), shortLabel: t("nav_marketplace_short", "Market"), icon: ShoppingBag, badge: 0, isMarketplace: true, priority: "always" },
+    { id: "media", label: t("nav_media", "Media"), shortLabel: t("nav_media_short", "Media"), icon: Tv, badge: 1, priority: "wide" },
+    { id: "pulserooms", label: t("nav_pulse", "Pulse"), shortLabel: t("nav_pulse_short", "Pulse"), icon: Radio, badge: 0, priority: "ultrawide" },
+    { id: "learning", label: t("nav_learning", "Learning"), shortLabel: t("nav_learning_short", "Learn"), icon: GraduationCap, badge: 1, priority: "wide" },
+    { id: "messaging", label: t("nav_messages", "Messages"), shortLabel: t("nav_messages_short", "Msgs"), icon: MessageSquare, badge: unreadMessagesCount || 1, priority: "always" },
   ]
 
   const isAdminUser = isSuperAdminUser(user)
@@ -280,10 +280,10 @@ export function LinkedInNavbar({
 
   return (
     <header className="sticky top-0 z-40 w-full max-w-full border-b border-zinc-200 bg-white/95 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/95 shadow-xs">
-      {/* Tier 1: Brand Logo, Adaptive Search, and Quick Actions */}
-      <div className="mx-auto flex h-13 sm:h-14 max-w-[1720px] items-center justify-between px-2 sm:px-4 lg:px-6 gap-1.5 sm:gap-2">
+      {/* Top Header: Brand Logo, Adaptive Search, and Quick Actions */}
+      <div className="mx-auto flex h-13 sm:h-14 max-w-[1720px] items-center justify-between px-2 sm:px-4 lg:px-6 gap-2 sm:gap-3">
         {/* Left Side: Brand Logo & Interactive Live Search */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 flex-1 min-w-0 max-w-[260px] sm:max-w-xs md:max-w-md lg:max-w-none lg:flex-initial relative">
+        <div className="flex items-center gap-2 sm:gap-2.5 flex-1 min-w-0 max-w-sm sm:max-w-md lg:max-w-xs xl:max-w-sm 2xl:max-w-md relative">
           <button
             onClick={() => onSelectTab('home')}
             className="flex items-center focus:outline-none group shrink-0"
@@ -293,13 +293,19 @@ export function LinkedInNavbar({
           </button>
 
           {/* Interactive Search Box - Fluid on Mobile, Expanding on Desktop */}
-          <div className="relative flex-1 min-w-[100px] max-w-[180px] sm:max-w-[220px] md:max-w-[260px] lg:w-56 xl:w-64 2xl:w-72 transition-all duration-200">
+          <div className="relative flex-1 min-w-[110px] max-w-full transition-all duration-200">
             <div
-              className={`flex items-center gap-1 sm:gap-2 rounded-full bg-[#EDF3F8] px-2 sm:px-3 py-1 sm:py-1.5 transition-all dark:bg-zinc-800/90 border border-zinc-200/50 dark:border-zinc-700/50 ${
+              className={`flex items-center gap-1.5 sm:gap-2 rounded-full bg-[#EDF3F8] px-2.5 sm:px-3 py-1 sm:py-1.5 transition-all dark:bg-zinc-800/90 border border-zinc-200/50 dark:border-zinc-700/50 ${
                 isSearchFocused ? "ring-2 ring-[#0A66C2] bg-white border-[#0A66C2] shadow-md dark:bg-zinc-900" : "hover:bg-[#E2ECF3] dark:hover:bg-zinc-800"
               }`}
             >
-              <Search className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-zinc-500 shrink-0" />
+              <Search
+                className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-zinc-500 shrink-0 cursor-pointer"
+                onClick={() => {
+                  onOpenUniversalSearch && onOpenUniversalSearch()
+                  setIsSearchFocused(false)
+                }}
+              />
               <input
                 type="text"
                 placeholder={t("search_placeholder", getEnclaveSearchPlaceholder(user.professionEnclave))}
@@ -321,25 +327,12 @@ export function LinkedInNavbar({
                 <button
                   type="button"
                   onClick={() => onSearchChange("")}
-                  className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-0.5 shrink-0"
+                  className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-0.5 shrink-0 cursor-pointer"
                   title="Clear search"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
               )}
-              {/* Dedicated Search Action Button */}
-              <button
-                type="button"
-                onClick={() => {
-                  onOpenUniversalSearch && onOpenUniversalSearch()
-                  setIsSearchFocused(false)
-                }}
-                className="hidden sm:flex rounded-full bg-[#0A66C2] text-white px-2 sm:px-2.5 py-0.5 sm:py-1 text-xs font-bold hover:bg-[#004182] transition-all items-center gap-1 shrink-0 cursor-pointer shadow-xs hover:scale-105 active:scale-95"
-                title="Search platform"
-              >
-                <Search className="h-3 w-3" />
-                <span className="hidden md:inline">{t("search_button", "Search")}</span>
-              </button>
             </div>
 
             {/* Live Autocomplete Popover Dropdown */}
@@ -495,16 +488,22 @@ export function LinkedInNavbar({
         </div>
 
         {/* Center Primary Navigation Tabs (Visible on lg: screens and above) */}
-        <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1 shrink-0 py-1">
+        <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1 2xl:gap-1.5 shrink-0 py-1">
           {primaryNavItems.map((item) => {
             const Icon = item.icon
             const isActive = activeTab === item.id
+            const isWideOnly = item.priority === 'wide'
+            const isUltrawideOnly = item.priority === 'ultrawide'
 
             return (
               <button
                 key={item.id}
                 onClick={() => onSelectTab(item.id)}
-                className={`relative flex min-w-[50px] xl:min-w-[62px] flex-col items-center justify-center py-1 px-1 sm:px-1.5 text-xs transition-all group shrink-0 cursor-pointer ${
+                className={`relative flex min-w-[48px] xl:min-w-[56px] flex-col items-center justify-center py-1 px-1 text-xs transition-all group shrink-0 cursor-pointer ${
+                  isWideOnly ? "hidden xl:flex" : ""
+                } ${
+                  isUltrawideOnly ? "hidden 2xl:flex" : ""
+                } ${
                   isActive
                     ? "text-[#0A66C2] font-semibold border-b-2 border-[#0A66C2]"
                     : item.isMarketplace
@@ -523,8 +522,8 @@ export function LinkedInNavbar({
                     </span>
                   )}
                 </div>
-                <span className="hidden xl:inline-block text-[10px] xl:text-[11px] mt-0.5 truncate max-w-[72px]">
-                  {item.label}
+                <span className="hidden xl:inline-block text-[10px] xl:text-[11px] mt-0.5 truncate max-w-[68px]">
+                  {item.shortLabel || item.label}
                 </span>
               </button>
             )
@@ -532,7 +531,7 @@ export function LinkedInNavbar({
         </nav>
 
         {/* Right Side Controls (More Dropdown + AI Assistant + Notifications + Me Profile + Theme) */}
-        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 pl-1">
+        <div className="flex items-center gap-1 sm:gap-1.5 lg:gap-2 shrink-0">
           {/* "More ▾" Dropdown Menu Trigger (On lg+ screens) */}
           <div ref={desktopMoreBtnRef} className="hidden lg:block relative shrink-0">
             <button
@@ -557,35 +556,38 @@ export function LinkedInNavbar({
           {/* Vibe AI Global Assistant Launcher Button - LinkedIn Premium Styling */}
           <button
             onClick={onOpenAIAssistant}
-            className="group flex items-center gap-1 sm:gap-1.5 rounded-full bg-[#FBF5E9] hover:bg-[#F5EAD2] dark:bg-amber-950/30 dark:hover:bg-amber-950/50 text-[#7A4B00] dark:text-amber-200 border border-[#C88A24]/40 dark:border-amber-700/50 px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs font-semibold shadow-2xs transition-all shrink-0 cursor-pointer"
+            className="group flex items-center gap-1 sm:gap-1.5 rounded-full bg-[#FBF5E9] hover:bg-[#F5EAD2] dark:bg-amber-950/30 dark:hover:bg-amber-950/50 text-[#7A4B00] dark:text-amber-200 border border-[#C88A24]/40 dark:border-amber-700/50 px-2 sm:px-2.5 py-1 text-xs font-semibold shadow-2xs transition-all shrink-0 cursor-pointer"
             title="Ask Vibe AI — Interactive Q&A, Campus Intelligence & Answers"
           >
             <Sparkles className="h-3.5 w-3.5 text-[#C88A24] dark:text-amber-300 transition-transform group-hover:scale-110 shrink-0" />
-            <span className="hidden min-[400px]:inline text-xs font-semibold">Vibe</span>
-            <span className="hidden md:inline rounded bg-amber-200/60 dark:bg-amber-900/60 px-1.5 py-0.2 text-[9px] font-bold text-[#5C3800] dark:text-amber-100">
+            <span className="text-xs font-semibold">Vibe</span>
+            <span className="hidden xl:inline rounded bg-amber-200/60 dark:bg-amber-900/60 px-1.5 py-0.2 text-[9px] font-bold text-[#5C3800] dark:text-amber-100">
               Q&amp;A
             </span>
           </button>
 
-          {/* Interactive User Video Guide Launcher */}
-          {onOpenVideoGuide && (
-            <button
-              onClick={onOpenVideoGuide}
-              className="hidden md:flex group items-center gap-1 sm:gap-1.5 rounded-full bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-300/40 dark:border-indigo-700/50 px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs font-semibold shadow-2xs transition-all shrink-0 cursor-pointer"
-              title="Watch ConnectIn Interactive Video Guide & Masterclasses"
-            >
-              <GraduationCap className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400 transition-transform group-hover:scale-110 shrink-0" />
-              <span className="hidden xl:inline">Guide</span>
-              <span className="hidden 2xl:inline rounded bg-indigo-200/60 dark:bg-indigo-900/60 px-1.5 py-0.2 text-[9px] font-bold text-indigo-800 dark:text-indigo-200">
-                Videos
+          {/* Mobile Direct Messaging Button (lg:hidden) */}
+          <button
+            onClick={() => onSelectTab('messaging')}
+            className={`lg:hidden relative p-1.5 rounded-full transition-colors cursor-pointer ${
+              activeTab === 'messaging'
+                ? "text-[#0A66C2]"
+                : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            }`}
+            title="Messages"
+          >
+            <MessageSquare className="h-5 w-5" />
+            {unreadMessagesCount > 0 && (
+              <span className="absolute top-0 right-0 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-600 px-0.5 text-[9px] font-bold text-white shadow-2xs">
+                {unreadMessagesCount}
               </span>
-            </button>
-          )}
+            )}
+          </button>
 
-          {/* Notifications Tab Button */}
+          {/* Notifications Tab Button (Desktop lg+ only) */}
           <button
             onClick={() => onSelectTab('notifications')}
-            className={`relative flex min-w-[34px] sm:min-w-[40px] flex-col items-center justify-center py-1 text-xs transition-colors shrink-0 cursor-pointer ${
+            className={`hidden lg:flex relative min-w-[38px] flex-col items-center justify-center py-1 text-xs transition-colors shrink-0 cursor-pointer ${
               activeTab === 'notifications'
                 ? "text-[#0A66C2] font-semibold"
                 : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
@@ -610,14 +612,14 @@ export function LinkedInNavbar({
                 setIsMeOpen(!isMeOpen)
                 setIsMoreOpen(false)
               }}
-              className={`flex min-w-[36px] sm:min-w-[44px] flex-col items-center justify-center py-1 text-xs transition-colors cursor-pointer shrink-0 ${
+              className={`flex min-w-[34px] sm:min-w-[42px] flex-col items-center justify-center py-1 text-xs transition-colors cursor-pointer shrink-0 ${
                 activeTab === 'profile'
                   ? "text-[#0A66C2] font-semibold border-b-2 border-[#0A66C2]"
                   : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
               }`}
               title={`${user.name} (Me)`}
             >
-              <div className="relative h-5 w-5 sm:h-5.5 sm:w-5.5 rounded-full overflow-hidden border border-zinc-300 dark:border-zinc-700 shrink-0">
+              <div className="relative h-6 w-6 sm:h-6 sm:w-6 rounded-full overflow-hidden border border-zinc-300 dark:border-zinc-700 shrink-0">
                 <img
                   src={user.avatar}
                   alt={user.name}
@@ -865,81 +867,127 @@ export function LinkedInNavbar({
             </button>
           )}
 
-          {/* Desktop-only Theme & Background Color Switcher Popover */}
-          <div className="hidden lg:block shrink-0">
+          {/* Desktop-only Theme & Background Color Switcher Popover (Visible on 2xl+ to avoid crowding; also inside Me menu) */}
+          <div className="hidden 2xl:block shrink-0">
             <ThemeColorSwitcher align="right" />
           </div>
 
-          {/* Desktop-only Global Multi-Language Switcher Popover */}
-          <div className="hidden lg:block shrink-0">
+          {/* Desktop-only Global Multi-Language Switcher Popover (Visible on 2xl+; also inside Me menu) */}
+          <div className="hidden 2xl:block shrink-0">
             <LanguageSwitcher align="right" />
           </div>
         </div>
       </div>
 
-      {/* Tier 2: Dedicated Menu Items Navigation Bar for Mobile & Tablet (< lg) */}
-      <div className="lg:hidden w-full border-t border-zinc-200/80 bg-white/95 backdrop-blur-md dark:border-zinc-800/80 dark:bg-zinc-950/95 px-1 sm:px-2 py-0.5">
-        <div className="mx-auto flex items-center justify-between gap-0 max-w-lg">
-          {primaryNavItems.map((item) => {
-            const Icon = item.icon
-            const isActive = activeTab === item.id
+      {/* Mobile & Tablet Bottom Navigation Bar (Fixed Native App Bar — 5 Thumb-Friendly Core Tabs) */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border-t border-zinc-200 dark:border-zinc-800 shadow-lg px-2 py-1 pb-[max(0.35rem,env(safe-area-inset-bottom))]">
+        <div className="flex items-center justify-around max-w-md mx-auto">
+          {/* 1. Home */}
+          <button
+            type="button"
+            onClick={() => {
+              onSelectTab('home')
+              setIsMoreOpen(false)
+            }}
+            className={`flex flex-col items-center justify-center py-1 px-2.5 min-w-[54px] text-center transition-colors cursor-pointer ${
+              activeTab === 'home'
+                ? "text-[#0A66C2] font-bold"
+                : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+            }`}
+          >
+            <div className="relative">
+              <House className="h-5 w-5" />
+              <span className="absolute -top-1 -right-2 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-600 px-0.5 text-[9px] font-bold text-white shadow-2xs">
+                2
+              </span>
+            </div>
+            <span className="text-[10px] mt-0.5 font-medium leading-none">{t("nav_home", "Home")}</span>
+          </button>
 
-            return (
-              <button
-                key={item.id}
-                onClick={() => {
-                  onSelectTab(item.id)
-                  setIsMoreOpen(false)
-                }}
-                className={`relative flex flex-1 min-w-0 max-w-[46px] flex-col items-center justify-center py-1 px-0.5 text-center transition-all group cursor-pointer ${
-                  isActive
-                    ? "text-[#0A66C2] font-bold border-b-2 border-[#0A66C2]"
-                    : item.isMarketplace
-                    ? "text-purple-600 dark:text-purple-400 font-bold hover:text-purple-700"
-                    : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-                }`}
-                title={item.label}
-              >
-                <div className="relative">
-                  <Icon className={`h-4 w-4 sm:h-4.5 sm:w-4.5 transition-transform group-hover:scale-110 ${
-                    isActive ? "text-[#0A66C2]" : item.isMarketplace ? "text-purple-600 dark:text-purple-400" : ""
-                  }`} />
-                  {item.badge > 0 && (
-                    <span className="absolute -right-2 -top-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-600 px-0.5 text-[9px] font-bold text-white shadow-xs">
-                      {item.badge}
-                    </span>
-                  )}
-                </div>
-                <span className="text-[9px] sm:text-[10px] leading-tight mt-0.5 truncate max-w-full font-medium">
-                  {item.shortLabel || item.label}
+          {/* 2. Network */}
+          <button
+            type="button"
+            onClick={() => {
+              onSelectTab('network')
+              setIsMoreOpen(false)
+            }}
+            className={`flex flex-col items-center justify-center py-1 px-2.5 min-w-[54px] text-center transition-colors cursor-pointer ${
+              activeTab === 'network'
+                ? "text-[#0A66C2] font-bold"
+                : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+            }`}
+          >
+            <div className="relative">
+              <Users className="h-5 w-5" />
+            </div>
+            <span className="text-[10px] mt-0.5 font-medium leading-none">{t("nav_network", "Network")}</span>
+          </button>
+
+          {/* 3. Jobs */}
+          <button
+            type="button"
+            onClick={() => {
+              onSelectTab('jobs')
+              setIsMoreOpen(false)
+            }}
+            className={`flex flex-col items-center justify-center py-1 px-2.5 min-w-[54px] text-center transition-colors cursor-pointer ${
+              activeTab === 'jobs'
+                ? "text-[#0A66C2] font-bold"
+                : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+            }`}
+          >
+            <div className="relative">
+              <Briefcase className="h-5 w-5" />
+            </div>
+            <span className="text-[10px] mt-0.5 font-medium leading-none">{t("nav_jobs", "Jobs")}</span>
+          </button>
+
+          {/* 4. Notifications / Alerts */}
+          <button
+            type="button"
+            onClick={() => {
+              onSelectTab('notifications')
+              setIsMoreOpen(false)
+            }}
+            className={`flex flex-col items-center justify-center py-1 px-2.5 min-w-[54px] text-center transition-colors cursor-pointer ${
+              activeTab === 'notifications'
+                ? "text-[#0A66C2] font-bold"
+                : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+            }`}
+          >
+            <div className="relative">
+              <Bell className="h-5 w-5" />
+              {unreadNotificationsCount > 0 && (
+                <span className="absolute -top-1 -right-2 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-600 px-0.5 text-[9px] font-bold text-white shadow-2xs">
+                  {unreadNotificationsCount}
                 </span>
-              </button>
-            )
-          })}
+              )}
+            </div>
+            <span className="text-[10px] mt-0.5 font-medium leading-none">{t("nav_alerts", "Alerts")}</span>
+          </button>
 
-          {/* "More" Trigger in Mobile Bar — fully visible and never clipped */}
-          <div ref={mobileMoreMenuRef} className="relative flex-1 min-w-0 max-w-[46px]">
+          {/* 5. Hubs (More) */}
+          <div ref={mobileMoreMenuRef} className="relative">
             <button
               type="button"
               onClick={() => {
                 setIsMoreOpen(!isMoreOpen)
                 setIsMeOpen(false)
               }}
-              className={`flex w-full flex-col items-center justify-center py-1 px-0.5 text-center transition-all cursor-pointer rounded-lg ${
+              className={`flex flex-col items-center justify-center py-1 px-2.5 min-w-[54px] text-center transition-colors cursor-pointer ${
                 isMoreOpen
-                  ? "text-[#0A66C2] font-bold border-b-2 border-[#0A66C2]"
+                  ? "text-[#0A66C2] font-bold"
                   : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
               }`}
-              title="More Modules & Hubs"
             >
-              <Grid3X3 className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
-              <span className="text-[9px] sm:text-[10px] leading-tight mt-0.5 font-bold truncate max-w-full">
-                {t("nav_more", "More")}
-              </span>
+              <div className="relative">
+                <Grid3X3 className="h-5 w-5" />
+              </div>
+              <span className="text-[10px] mt-0.5 font-bold leading-none">{t("nav_more", "Hubs")}</span>
             </button>
           </div>
         </div>
-      </div>
+      </nav>
 
       {/* ── Global "More Modules & Hubs" Modal Dropdown (Mobile, Tablet & Desktop) ── */}
       {isMoreOpen && (
@@ -950,7 +998,7 @@ export function LinkedInNavbar({
           />
           <div
             ref={moreDropdownRef}
-            className="fixed z-50 right-2 left-2 sm:left-auto sm:right-4 lg:right-6 top-24 lg:top-14 w-auto sm:w-96 max-w-[420px] max-h-[82vh] mx-auto lg:mx-0 rounded-2xl border border-zinc-200 bg-white p-3.5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 flex flex-col overflow-hidden"
+            className="fixed z-50 right-2 left-2 sm:left-auto sm:right-4 lg:right-6 top-16 sm:top-20 lg:top-14 bottom-16 sm:bottom-auto w-auto sm:w-96 max-w-[420px] max-h-[80vh] mx-auto lg:mx-0 rounded-2xl border border-zinc-200 bg-white p-3.5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 flex flex-col overflow-hidden"
           >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-zinc-100 pb-2.5 dark:border-zinc-800 shrink-0">

@@ -687,12 +687,12 @@ export default function LinkedInPage() {
       />
 
       {/* Main Content Area */}
-      <main className="mx-auto max-w-7xl px-3 sm:px-6 pt-5">
+      <main className="mx-auto max-w-7xl px-3 sm:px-6 pt-5 pb-24 lg:pb-12">
         {/* VIEW 1: HOME FEED */}
         {activeTab === 'home' && (
           <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
-            {/* Left Rail (Profile summary & communities) */}
-            <div className="md:col-span-4 lg:col-span-3">
+            {/* Left Rail (Profile summary & communities on desktop/tablet) */}
+            <div className="hidden md:block md:col-span-4 lg:col-span-3">
               <LeftSidebarProfile
                 user={userData}
                 onViewProfile={() => setActiveTab('profile')}
@@ -713,6 +713,32 @@ export default function LinkedInPage() {
 
             {/* Center Rail (Post Creator & Post Feed) */}
             <div className="md:col-span-8 lg:col-span-6 space-y-3">
+              {/* Mobile Quick Profile Header Card (< md) */}
+              <div className="md:hidden flex items-center justify-between rounded-2xl border border-zinc-200/90 bg-white p-3 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('profile')}
+                  className="flex items-center gap-2.5 min-w-0 text-left focus:outline-none flex-1 mr-2 cursor-pointer"
+                >
+                  <div className="relative h-10 w-10 shrink-0 rounded-full overflow-hidden border border-zinc-300 dark:border-zinc-700">
+                    <img src={userData.avatar} alt={userData.name} className="h-full w-full object-cover" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1">
+                      <p className="font-bold text-xs text-zinc-900 dark:text-zinc-100 truncate">{userData.name}</p>
+                      <ShieldCheck className="h-3.5 w-3.5 text-[#0A66C2] shrink-0" />
+                    </div>
+                    <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">{userData.headline}</p>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('profile')}
+                  className="rounded-full bg-blue-50 dark:bg-blue-900/30 text-[#0A66C2] dark:text-blue-300 border border-blue-200 dark:border-blue-800 px-3 py-1 text-xs font-semibold shrink-0 hover:bg-blue-100 transition-colors cursor-pointer"
+                >
+                  Profile →
+                </button>
+              </div>
               {/* Educational Masterclass Wheel / ConnectIn Video Showcase */}
               {showFeedWheel && (
                 <div className="space-y-1">

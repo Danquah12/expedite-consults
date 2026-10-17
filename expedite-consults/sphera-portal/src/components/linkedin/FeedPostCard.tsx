@@ -724,7 +724,7 @@ export function FeedPostCard({
       </div>
 
       {/* Interactive Action Bar (Like, Comment, Repost, Send) */}
-      <div className="relative flex items-center justify-around px-2 py-1 text-xs font-semibold text-zinc-600 dark:text-zinc-300">
+      <div className="relative flex items-center justify-around px-1 sm:px-2 py-1 text-xs font-semibold text-zinc-600 dark:text-zinc-300">
         {/* Floating Reaction Bar on Hover / Long Press */}
         {showReactionPicker && (
           <div
@@ -753,12 +753,12 @@ export function FeedPostCard({
         >
           <button
             onClick={() => handleReactionSelect(post.userReaction || 'like')}
-            className={`flex items-center gap-1.5 rounded-md px-3 py-2 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
+            className={`flex items-center gap-1 sm:gap-1.5 rounded-md px-2 sm:px-3 py-2 text-[11px] sm:text-xs transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
               post.userReaction ? reactionIcons[post.userReaction].color : ""
             }`}
           >
             {post.userReaction ? (
-              <span className="text-base">{reactionIcons[post.userReaction].icon}</span>
+              <span className="text-sm sm:text-base">{reactionIcons[post.userReaction].icon}</span>
             ) : (
               <ThumbsUp className="h-4 w-4" />
             )}
@@ -771,7 +771,7 @@ export function FeedPostCard({
         {/* Comment Button */}
         <button
           onClick={() => setShowComments(!showComments)}
-          className="flex items-center gap-1.5 rounded-md px-3 py-2 text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-colors"
+          className="flex items-center gap-1 sm:gap-1.5 rounded-md px-2 sm:px-3 py-2 text-[11px] sm:text-xs text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-colors"
         >
           <MessageSquare className="h-4 w-4" />
           <span>{t("comment", "Comment")}</span>
@@ -780,7 +780,7 @@ export function FeedPostCard({
         {/* Repost Button */}
         <button
           onClick={() => alert("Post reposted to your network!")}
-          className="flex items-center gap-1.5 rounded-md px-3 py-2 text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-colors"
+          className="flex items-center gap-1 sm:gap-1.5 rounded-md px-2 sm:px-3 py-2 text-[11px] sm:text-xs text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-colors"
         >
           <Repeat2 className="h-4 w-4" />
           <span>{t("repost", "Repost")}</span>
@@ -790,7 +790,7 @@ export function FeedPostCard({
         <div className="relative">
           <button
             onClick={() => setShowShareModal(!showShareModal)}
-            className="flex items-center gap-1.5 rounded-md px-3 py-2 text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            className="flex items-center gap-1 sm:gap-1.5 rounded-md px-2 sm:px-3 py-2 text-[11px] sm:text-xs text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
           >
             <Share2 className="h-4 w-4" />
             <span>Share</span>
