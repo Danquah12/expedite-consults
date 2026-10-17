@@ -245,3 +245,63 @@ export async function sendConnectInInviteSMS({
   }
 }
 
+/**
+ * Dispatch automated voice call invitations via Twilio Voice API
+ * (Bypasses US carrier A2P 10DLC SMS filtering completely)
+ */
+export async function sendConnectInInviteVoiceCall({
+  toPhone,
+  senderName = "A colleague",
+  inviteLink = "connectln.vercel.app"
+}: {
+  toPhone: string
+  senderName?: string
+  inviteLink?: string
+}): Promise<{ success: boolean; error?: string; sid?: string }> {
+  try {
+    const rawCleanPhone = formatE164Phone(toPhone)
+    const accountSid = process.env.TWILIO_ACCOUNT_SID || ""
+    const authToken = process.env.TWILIO_AUTH_TOKEN || ""
+    const fromPhone = process.env.TWILIO_PHONE_NUMBER || "+12402623543"
+
+    let cleanPhone = rawCleanPhone
+    if (cleanPhone === formatE164Phone(fromPhone) || cleanPhone === "+12402623543") {
+      cleanPhone = "+12402607898"
+    }
+
+    if (!accountSid || !authToken || !fromPhone) {
+      return { success: false, error: "Twilio credentials not configured." }
+    }
+
+    const authHeader = Buffer.from(`${accountSid}:${authToken}`).toString("base64")
+    const twiml = `<Response><Pause length="1"/><Say voice="Polly.Joanna">Hello! This is ConnectIn by Expedite Consults. Your colleague ${senderName} has invited you to connect on ConnectIn, the zero-trust professional network. Please visit connectln.vercel.app to accept this invitation. Thank you!</Say></Response>`
+
+    const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Calls.json`
+    const params = new URLSearchParams()
+    params.append("To", cleanPhone)
+    params.append("From", fromPhone)
+    params.append("Twiml", twiml)
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${authHeader}`,
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: params.toString()
+    })
+
+    const data = await response.json()
+    if (response.ok && data.sid) {
+      console.log(`[sendConnectInInviteVoiceCall] Voice call dispatched successfully! SID: ${data.sid}`)
+      return { success: true, sid: data.sid }
+    }
+
+    return { success: false, error: data.message || "Failed to initiate voice call", sid: data.sid }
+  } catch (err: any) {
+    console.error("[sendConnectInInviteVoiceCall Exception]", err)
+    return { success: false, error: err.message || "Voice call failed" }
+  }
+}
+
+

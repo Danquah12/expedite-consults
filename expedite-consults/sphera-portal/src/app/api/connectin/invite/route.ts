@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { sendConnectInInviteSMS, formatE164Phone } from "@/lib/connectin-sms"
+import { sendConnectInInviteSMS, sendConnectInInviteVoiceCall, formatE164Phone } from "@/lib/connectin-sms"
 import { sendConnectInInviteEmail } from "@/lib/connectin-email"
 
 export async function POST(req: NextRequest) {
@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
 
     if (!channel || !Array.isArray(recipients) || recipients.length === 0) {
       return NextResponse.json(
-        { error: "Invalid request. 'channel' ('sms' | 'email') and 'recipients' array are required." },
+        { error: "Invalid request. 'channel' ('sms' | 'call' | 'email') and 'recipients' array are required." },
         { status: 400 }
       )
     }
@@ -56,6 +56,40 @@ export async function POST(req: NextRequest) {
         dispatched: successCount,
         results
       })
+    } else if (channel === "call") {
+      const results: Array<{ phone: string; success: boolean; sid?: string; error?: string }> = []
+      let successCount = 0
+
+      for (const rawPhone of recipients) {
+        const cleanPhone = formatE164Phone(rawPhone)
+        if (!cleanPhone || cleanPhone.length < 10) {
+          results.push({ phone: rawPhone, success: false, error: "Invalid phone number format" })
+          continue
+        }
+
+        const res = await sendConnectInInviteVoiceCall({
+          toPhone: cleanPhone,
+          senderName,
+          inviteLink
+        })
+
+        if (res.success) {
+          successCount++
+          results.push({ phone: cleanPhone, success: true, sid: res.sid })
+        } else {
+          results.push({ phone: cleanPhone, success: false, error: res.error, sid: res.sid })
+        }
+      }
+
+      const allSucceeded = successCount === recipients.length
+      return NextResponse.json({
+        success: successCount > 0,
+        allSucceeded,
+        channel: "call",
+        total: recipients.length,
+        dispatched: successCount,
+        results
+      })
     } else if (channel === "email") {
       const results: Array<{ email: string; success: boolean; id?: string; error?: string }> = []
       let successCount = 0
@@ -92,7 +126,7 @@ export async function POST(req: NextRequest) {
         results
       })
     } else {
-      return NextResponse.json({ error: "Unsupported channel. Use 'sms' or 'email'." }, { status: 400 })
+      return NextResponse.json({ error: "Unsupported channel. Use 'sms', 'call', or 'email'." }, { status: 400 })
     }
   } catch (err: any) {
     console.error("[/api/connectin/invite POST Error]", err)

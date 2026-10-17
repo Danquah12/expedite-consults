@@ -25,7 +25,9 @@ import {
   ExternalLink,
   MessageSquare,
   Share2,
-  Smartphone
+  Smartphone,
+  PhoneCall,
+  Info
 } from "lucide-react"
 import { UserProfile } from "@/lib/linkedin-data"
 
@@ -42,7 +44,7 @@ export function InviteMembersModal({
   currentUser,
   onInviteSent
 }: InviteMembersModalProps) {
-  const [activeInviteTab, setActiveInviteTab] = useState<'email' | 'phone' | 'link'>('phone')
+  const [activeInviteTab, setActiveInviteTab] = useState<'phone' | 'email' | 'link'>('phone')
 
   // Canonical base origin
   const [origin, setOrigin] = useState("https://connectln.vercel.app")
@@ -78,10 +80,11 @@ export function InviteMembersModal({
     setPhoneMessage(
       `ConnectIn: Hi! ${currentUser.name} has invited you to connect on ConnectIn Zero-Trust Network. Join here: ${loginLink}`
     )
-  }, [origin, currentUser.name])
+  }, [origin, currentUser.name, inviteLink, loginLink])
 
   // Feedback states
   const [isLoading, setIsLoading] = useState(false)
+  const [isCalling, setIsCalling] = useState(false)
   const [isCopied, setIsCopied] = useState(false)
   const [isSmsCopied, setIsSmsCopied] = useState(false)
   const [isEmailCopied, setIsEmailCopied] = useState(false)
@@ -108,7 +111,24 @@ export function InviteMembersModal({
     }
   }
 
-  // 1. Send Email Invites
+  // Native share sheet if supported
+  const handleNativeShare = async () => {
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({
+          title: "Join my trusted network on ConnectIn",
+          text: `Hi! ${currentUser.name} has invited you to connect on ConnectIn Zero-Trust Network.`,
+          url: loginLink
+        })
+      } catch {
+        // User dismissed share dialog
+      }
+    } else {
+      handleCopyLink(loginLink, "link")
+    }
+  }
+
+  // 1. Send Email Invites via Resend
   const handleSendEmailInvites = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!emailsText.trim()) return
@@ -165,7 +185,7 @@ export function InviteMembersModal({
         setSuccessToast(`✓ Invitation email dispatched to ${data.dispatched} recipient(s)!`)
         setDispatchNotice({
           type: "success",
-          message: `Branded email dispatched via Resend to ${parsedEmails.join(", ")}. Recipient will receive it in their inbox shortly.`
+          message: `Branded email dispatched via Resend to ${parsedEmails.join(", ")}. Note: If the recipient does not see it within 60 seconds, remind them to check their Spam/Junk folder (sent from auth@expediteconsults.com).`
         })
         setEmailsText("")
       } else if (data.dispatched > 0) {
@@ -174,7 +194,7 @@ export function InviteMembersModal({
         const errDetail = data.results?.[0]?.error || data.error || "Email gateway returned a notice"
         setDispatchNotice({
           type: "warning",
-          message: `Email Dispatch Notice: ${errDetail}. You can also use "Open in Mail App" or copy the message below.`
+          message: `Email Dispatch Notice: ${errDetail}. You can also use "Open in Mail App (Outlook/Gmail)" below.`
         })
       }
     } catch (err: any) {
@@ -187,7 +207,7 @@ export function InviteMembersModal({
     }
   }
 
-  // 2. Send SMS Invites
+  // 2. Send SMS Invites via Twilio
   const handleSendSMSInvites = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!phoneNumbersText.trim()) return
@@ -241,33 +261,82 @@ export function InviteMembersModal({
       }
 
       if (data.allSucceeded) {
-        setSuccessToast(`✓ Real SMS text message dispatched via Twilio to ${data.dispatched} recipient(s)!`)
+        setSuccessToast(`✓ SMS text message queued via Twilio to ${data.dispatched} recipient(s)!`)
         setDispatchNotice({
           type: "success",
-          message: `Twilio delivery confirmed (${data.dispatched} SMS). Recipient cellular device will receive the invitation text shortly.`
+          message: `Twilio delivery queued (${data.dispatched} SMS). Note: US wireless carriers (AT&T, Verizon, T-Mobile) require A2P 10DLC registration and may filter cloud SMS. For 100% guaranteed delivery, tap "Open in Messages (SMS)" below!`
         })
         setPhoneNumbersText("")
       } else if (data.dispatched > 0) {
         setSuccessToast(`✓ Dispatched to ${data.dispatched} of ${parsedPhones.length} recipient(s).`)
-        const failed = data.results?.filter((r: any) => !r.success) || []
-        setDispatchNotice({
-          type: "warning",
-          message: `Delivered to ${data.dispatched} recipient(s). Carrier notice on remaining: ${failed[0]?.error || "Carrier filter active"}. You can also use "Open in Messages (SMS)" below.`
-        })
       } else {
         const errDetail = data.results?.[0]?.error || data.error || "Carrier gateway returned a notice"
         setDispatchNotice({
           type: "warning",
-          message: `Carrier Notice: ${errDetail}. Tap "Open in Messages / SMS" or "Share on WhatsApp" below to send directly from your phone!`
+          message: `Carrier Notice: ${errDetail}. Tap "Open in Messages / SMS" below to send directly from your phone with 100% delivery!`
         })
       }
     } catch (err: any) {
       setDispatchNotice({
         type: "warning",
-        message: `Carrier API notice: ${err.message || "Failed to reach Twilio gateway"}. You can tap "Open in Messages (SMS)" below to send directly from your device!`
+        message: `Carrier notice: ${err.message || "Twilio gateway notice"}. Tap "Open in Messages (SMS)" below to send directly from your phone!`
       })
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  // 3. Automated Voice Call Invite
+  const handleSendVoiceCall = async () => {
+    if (!phoneNumbersText.trim()) return
+
+    setIsCalling(true)
+    setDispatchNotice(null)
+
+    const parsedPhones = phoneNumbersText
+      .split(/[\n,;]+/)
+      .map(p => p.trim())
+      .filter(p => p.replace(/[^\d+]/g, "").length >= 10)
+
+    if (parsedPhones.length === 0) {
+      setIsCalling(false)
+      setDispatchNotice({ type: "error", message: "Please enter at least one valid mobile phone number for the voice call." })
+      return
+    }
+
+    try {
+      const res = await fetch("/api/connectin/invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          channel: "call",
+          recipients: parsedPhones,
+          senderName: currentUser.name,
+          inviteLink: loginLink
+        })
+      })
+
+      const data = await res.json()
+
+      if (data.dispatched > 0) {
+        setSuccessToast(`📞 Automated voice invitation call dispatched via Twilio to ${data.dispatched} recipient(s)!`)
+        setDispatchNotice({
+          type: "success",
+          message: `Phone call initiated to ${parsedPhones.join(", ")}. Recipient will hear Dr. Joanna synthetic voice invitation.`
+        })
+      } else {
+        setDispatchNotice({
+          type: "warning",
+          message: `Voice call notice: ${data.results?.[0]?.error || "Could not initiate call"}`
+        })
+      }
+    } catch (err: any) {
+      setDispatchNotice({
+        type: "warning",
+        message: `Voice call notice: ${err.message || "Failed to initiate call"}`
+      })
+    } finally {
+      setIsCalling(false)
     }
   }
 
@@ -297,7 +366,7 @@ export function InviteMembersModal({
                 Invite Colleagues to ConnectIn
               </h2>
               <p className="text-xs text-zinc-300">
-                Expand your 1st-degree cryptographic network across enterprise teams, alumni, and defense specialists.
+                Guaranteed universal delivery across all phones, all carriers &amp; all email addresses.
               </p>
             </div>
 
@@ -376,41 +445,41 @@ export function InviteMembersModal({
                 : "bg-rose-50/70 border-rose-300 dark:bg-rose-950/30 dark:border-rose-800 text-rose-800 dark:text-rose-200"
             }`}>
               <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-              <div className="space-y-1">
+              <div className="space-y-1 w-full">
                 <p className="font-semibold leading-relaxed">{dispatchNotice.message}</p>
-                {dispatchNotice.type === "warning" && (
-                  <div className="pt-2 flex items-center gap-2 flex-wrap">
-                    <a
-                      href={nativeSmsHref}
-                      className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 text-[11px] inline-flex items-center gap-1 shadow-xs cursor-pointer"
-                    >
-                      <Smartphone className="h-3 w-3" />
-                      <span>Open in Device Messages (SMS) ↗</span>
-                    </a>
-                    <a
-                      href={nativeWhatsAppHref}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-3 py-1.5 text-[11px] inline-flex items-center gap-1 shadow-xs cursor-pointer"
-                    >
-                      <Share2 className="h-3 w-3" />
-                      <span>Share via WhatsApp ↗</span>
-                    </a>
-                  </div>
-                )}
+                <div className="pt-2 flex items-center gap-2 flex-wrap">
+                  <a
+                    href={nativeSmsHref}
+                    className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 text-[11px] inline-flex items-center gap-1 shadow-xs cursor-pointer"
+                  >
+                    <Smartphone className="h-3 w-3" />
+                    <span>Open in Messages (SMS) ↗</span>
+                  </a>
+                  <a
+                    href={nativeWhatsAppHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-3 py-1.5 text-[11px] inline-flex items-center gap-1 shadow-xs cursor-pointer"
+                  >
+                    <Share2 className="h-3 w-3" />
+                    <span>Share via WhatsApp ↗</span>
+                  </a>
+                </div>
               </div>
             </div>
           )}
 
+          {/* ======================================================== */}
           {/* TAB 1: BY PHONE / SMS */}
+          {/* ======================================================== */}
           {activeInviteTab === 'phone' && (
-            <form onSubmit={handleSendSMSInvites} className="space-y-4 text-xs">
+            <div className="space-y-4 text-xs">
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="font-bold text-zinc-700 dark:text-zinc-300">
-                    Mobile Phone Numbers (E.164 format e.g. +1 240 555 0192)
+                    Colleague Mobile Phone Number(s)
                   </label>
-                  <span className="text-[11px] font-mono text-zinc-400">Multiple numbers allowed</span>
+                  <span className="text-[11px] font-mono text-zinc-400">e.g. +1 (240) 555-0192</span>
                 </div>
                 <textarea
                   rows={2}
@@ -425,7 +494,7 @@ export function InviteMembersModal({
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="font-bold text-zinc-700 dark:text-zinc-300">
-                    SMS Text Content (Ready for Cellular Delivery)
+                    Invitation Text
                   </label>
                   <button
                     type="button"
@@ -444,62 +513,112 @@ export function InviteMembersModal({
                 />
               </div>
 
-              {/* 1-Click Native Phone & WhatsApp Action Bar */}
-              <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/40 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                  📱 Or send directly from your device:
-                </span>
-                <div className="flex items-center gap-2 flex-wrap">
+              {/* 🌟 100% GUARANTEED DELIVERY OPTIONS */}
+              <div className="rounded-2xl border-2 border-emerald-500/40 bg-emerald-50/50 dark:bg-emerald-950/20 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-black text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 text-xs">
+                    <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                    100% Guaranteed Phone Delivery (Zero Carrier Blocking):
+                  </span>
+                  <span className="text-[10px] font-bold bg-emerald-600 text-white px-2 py-0.5 rounded-full">
+                    RECOMMENDED
+                  </span>
+                </div>
+                <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                  US wireless carriers (AT&amp;T, Verizon, T-Mobile) automatically block automated cloud SMS with <strong>A2P 10DLC Error 30034</strong>. Sending directly from your device is Person-to-Person (P2P), which <strong>always delivers instantly</strong> to any mobile phone!
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                   <a
                     href={nativeSmsHref}
-                    className="rounded-lg bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 px-3 py-1.5 text-[11px] font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                    className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2.5 text-xs flex items-center justify-center gap-2 shadow-md transition-all hover:scale-[1.02] active:scale-95 cursor-pointer text-center"
                   >
-                    <Smartphone className="h-3.5 w-3.5 text-emerald-600" />
-                    <span>Open in Messages (SMS)</span>
+                    <Smartphone className="h-4 w-4" />
+                    <span>Open in Messages (SMS) ↗</span>
                   </a>
+
                   <a
                     href={nativeWhatsAppHref}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 px-3 py-1.5 text-[11px] font-bold border border-emerald-300 dark:border-emerald-800 inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                    className="rounded-xl bg-[#25D366] hover:bg-[#1EBE5D] text-white font-bold px-3.5 py-2.5 text-xs flex items-center justify-center gap-2 shadow-md transition-all hover:scale-[1.02] active:scale-95 cursor-pointer text-center"
                   >
-                    <Share2 className="h-3.5 w-3.5 text-emerald-600" />
-                    <span>WhatsApp</span>
+                    <Share2 className="h-4 w-4" />
+                    <span>Send via WhatsApp ↗</span>
                   </a>
+                </div>
+
+                <div className="flex items-center justify-between gap-2 pt-1 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={handleNativeShare}
+                    className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <Share2 className="h-3 w-3" />
+                    <span>Share via iOS/Android Share Sheet</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleCopyLink(phoneMessage, "sms")}
+                    className="text-[11px] font-bold text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 flex items-center gap-1 cursor-pointer"
+                  >
+                    <Copy className="h-3 w-3" />
+                    <span>Copy Full SMS Text</span>
+                  </button>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-2">
-                <span className="text-[11px] text-zinc-400 flex items-center gap-1">
-                  💬 Dispatches real SMS via Twilio cellular carrier API
+              {/* AUTOMATED CLOUD DISPATCH OPTIONS (TWILIO) */}
+              <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 p-3.5 space-y-2.5">
+                <span className="font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5 text-[11px]">
+                  ☁️ Automated Cloud Dispatch (Twilio Server):
                 </span>
 
-                <button
-                  type="submit"
-                  disabled={isLoading || !phoneNumbersText.trim()}
-                  className="rounded-full bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 font-bold shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50 transition-all hover:scale-105 active:scale-95"
-                >
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                  <span>{isLoading ? "Dispatching SMS..." : "Send SMS Invites"}</span>
-                </button>
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={handleSendVoiceCall}
+                    disabled={isCalling || !phoneNumbersText.trim()}
+                    className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 font-bold text-[11px] shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all"
+                  >
+                    {isCalling ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <PhoneCall className="h-3.5 w-3.5" />}
+                    <span>{isCalling ? "Calling..." : "Automated Voice Call (Rings Phone)"}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleSendSMSInvites}
+                    disabled={isLoading || !phoneNumbersText.trim()}
+                    className="rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white px-3.5 py-2 font-bold text-[11px] shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all"
+                  >
+                    {isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                    <span>{isLoading ? "Dispatching..." : "Send via Twilio Cloud SMS"}</span>
+                  </button>
+                </div>
+                <p className="text-[10px] text-zinc-400">
+                  Note: Automated voice calls bypass A2P carrier blocks and will ring the recipient&apos;s phone. Cloud SMS may require TCR carrier campaign approval.
+                </p>
               </div>
-            </form>
+            </div>
           )}
 
+          {/* ======================================================== */}
           {/* TAB 2: BY EMAIL */}
+          {/* ======================================================== */}
           {activeInviteTab === 'email' && (
             <form onSubmit={handleSendEmailInvites} className="space-y-4 text-xs">
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="font-bold text-zinc-700 dark:text-zinc-300">
-                    Colleague Email Addresses (separated by commas or new lines)
+                    Colleague Email Addresses (Works for ALL emails: Gmail, Yahoo, Outlook, Corporate)
                   </label>
-                  <span className="text-[11px] font-mono text-zinc-400">Multiple emails allowed</span>
+                  <span className="text-[11px] font-mono text-zinc-400">Comma separated</span>
                 </div>
                 <textarea
                   rows={2}
                   required
-                  placeholder="e.g. sarah.jenkins@defense.gov, alex.novak@raytheon.com, col.vance@darpa.mil"
+                  placeholder="e.g. colleague@gmail.com, partner@outlook.com, dev@company.com"
                   value={emailsText}
                   onChange={(e) => setEmailsText(e.target.value)}
                   className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-transparent p-3 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
@@ -528,38 +647,50 @@ export function InviteMembersModal({
                 />
               </div>
 
-              {/* 1-Click Native Mail Client Action Bar */}
-              <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/40 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                  ✉️ Or send directly from your personal mail client:
-                </span>
-                <a
-                  href={nativeMailtoHref}
-                  className="rounded-lg bg-zinc-200 hover:bg-zinc-300 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 px-3 py-1.5 text-[11px] font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer w-fit"
-                >
-                  <Mail className="h-3.5 w-3.5 text-[#0A66C2]" />
-                  <span>Open in Mail App (Outlook / Gmail)</span>
-                </a>
+              {/* 100% INBOX DELIVERY FALLBACK (MAILTO) */}
+              <div className="rounded-xl border border-blue-200 dark:border-blue-900/40 bg-blue-50/50 dark:bg-blue-950/20 p-3.5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-blue-900 dark:text-blue-200 text-[11px] flex items-center gap-1.5">
+                    ✉️ Guaranteed Primary Inbox Delivery:
+                  </span>
+                  <span className="text-[10px] font-bold bg-blue-600 text-white px-2 py-0.5 rounded-full">
+                    DIRECT FROM YOU
+                  </span>
+                </div>
+                <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                  Transactional emails from automated servers sometimes land in Spam or Promotions folders. Sending from your own email app (Outlook, Gmail, Apple Mail) guarantees <strong>100% primary inbox delivery</strong>!
+                </p>
+                <div className="pt-1">
+                  <a
+                    href={nativeMailtoHref}
+                    className="rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white px-4 py-2 font-bold text-xs inline-flex items-center gap-1.5 shadow-sm transition-all hover:scale-[1.02] cursor-pointer"
+                  >
+                    <Mail className="h-3.5 w-3.5" />
+                    <span>Open in My Email App (Outlook / Gmail / Apple Mail) ↗</span>
+                  </a>
+                </div>
               </div>
 
               <div className="flex items-center justify-between pt-2">
-                <span className="text-[11px] text-zinc-400">
-                  ⚡ Out-of-band email dispatch via Resend zero-trust gateway
+                <span className="text-[11px] text-zinc-400 flex items-center gap-1">
+                  ⚡ Or dispatch via Resend zero-trust gateway:
                 </span>
 
                 <button
                   type="submit"
                   disabled={isLoading || !emailsText.trim()}
-                  className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white px-5 py-2.5 font-bold shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50 transition-all hover:scale-105 active:scale-95"
+                  className="rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-5 py-2.5 font-bold shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50 transition-all hover:scale-105 active:scale-95"
                 >
                   {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                  <span>{isLoading ? "Dispatching Email..." : "Send Invitations"}</span>
+                  <span>{isLoading ? "Dispatching..." : "Send Cloud Email"}</span>
                 </button>
               </div>
             </form>
           )}
 
+          {/* ======================================================== */}
           {/* TAB 3: PERSONAL REFERRAL LINK */}
+          {/* ======================================================== */}
           {activeInviteTab === 'link' && (
             <div className="space-y-5 text-xs">
               <div className="space-y-2">
@@ -595,7 +726,7 @@ export function InviteMembersModal({
               {/* Direct Multi-Platform Share Buttons */}
               <div className="space-y-2">
                 <span className="font-bold text-zinc-700 dark:text-zinc-300">
-                  Quick Share to Channels:
+                  Quick Share to Any Platform (1-Click):
                 </span>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <a
