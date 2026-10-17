@@ -55,10 +55,18 @@ export function ConnectInVideoWheel({
   subtitle = "Expedite Consults educational talks, trade apprenticeship standards, and verified professional briefings.",
   onOpenVideoGuide
 }: ConnectInVideoWheelProps) {
-  const [allTalks, setAllTalks] = useState<WheelVideoTalk[]>(() => {
-    const custom = getStoredCustomVideos()
-    return [...custom, ...EDUCATIONAL_WHEEL_TALKS]
-  })
+  const [allTalks, setAllTalks] = useState<WheelVideoTalk[]>(EDUCATIONAL_WHEEL_TALKS)
+
+  useEffect(() => {
+    try {
+      const custom = getStoredCustomVideos()
+      if (custom && custom.length > 0) {
+        setAllTalks([...custom, ...EDUCATIONAL_WHEEL_TALKS])
+      }
+    } catch (e) {
+      console.error("Failed to load custom wheel videos:", e)
+    }
+  }, [])
 
   const effectiveEnclaveId = activeEnclaveId || user?.professionEnclave || 'trades_construction'
   const activeEnclave = findEnclaveById(effectiveEnclaveId)

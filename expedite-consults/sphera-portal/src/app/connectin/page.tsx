@@ -717,8 +717,8 @@ export default function LinkedInPage() {
               {showFeedWheel && (
                 <div className="space-y-1">
                   <ConnectInVideoWheel
-                    activeEnclaveId={selectedEnclaves[0] || currentUser?.professionEnclave || 'trades_construction'}
-                    user={currentUser}
+                    activeEnclaveId={selectedEnclaves[0] || userData?.professionEnclave || 'trades_construction'}
+                    user={userData}
                     title="The Wheel — Multi-Profession Masterclasses & Briefings"
                     subtitle="Curated trade apprenticeship standards, software architecture, clinical medicine, and verified field briefings."
                     onOpenVideoGuide={() => setIsVideoGuideOpen(true)}
