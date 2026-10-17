@@ -500,23 +500,23 @@ export function LeftSidebarProfile({
             </div>
           )}
 
-          {/* Verified Need-to-Know Enclave Badge */}
+          {/* Verified Specialty Community Badge */}
           <div className="pt-2 text-left">
             <div className={`rounded-xl border p-2.5 space-y-1 ${enclaveInfo?.badgeBg || 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800'}`}>
               <div className="flex items-center justify-between">
                 <span className="font-bold flex items-center gap-1.5 text-xs text-zinc-900 dark:text-zinc-100">
                   <span>{enclaveInfo?.icon || '🔨'}</span>
-                  <span className="truncate">{enclaveInfo?.shortName || 'Trades'} {t("verified_enclave", "Enclave")}</span>
+                  <span className="truncate">{enclaveInfo?.shortName || 'Trades'} Community</span>
                 </span>
-                <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-white/80 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200/50 dark:border-zinc-700/50">
-                  {t("segregated_badge", "🔒 Segregated")}
+                <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-white/90 dark:bg-zinc-800 text-[#0A66C2] dark:text-sky-300 border border-zinc-200/50 dark:border-zinc-700/50 flex items-center gap-1">
+                  <ShieldCheck className="h-3 w-3" /> Verified
                 </span>
               </div>
               <p className="text-[11px] font-semibold text-zinc-800 dark:text-zinc-200 truncate">
                 {user.profession || 'Master Carpenter (Framing & Finish Joinery)'}
               </p>
-              <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-mono truncate">
-                {enclaveInfo?.securityClearanceTier || 'Level 2 Clearance'}
+              <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium truncate">
+                Verified Specialist
               </p>
             </div>
 

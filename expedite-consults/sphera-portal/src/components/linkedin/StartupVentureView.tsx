@@ -56,25 +56,25 @@ export function StartupVentureView({ currentUser }: StartupVentureViewProps) {
   return (
     <div className="mx-auto max-w-5xl space-y-6 pb-12">
       {/* Banner */}
-      <div className="rounded-2xl border border-zinc-200 bg-gradient-to-r from-violet-950 via-purple-950 to-slate-950 p-6 text-white shadow-md">
+      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <span className="rounded-full bg-purple-400/20 px-2.5 py-0.5 text-xs font-bold text-purple-300 border border-purple-400/40 flex items-center gap-1.5 w-fit">
-              <Rocket className="h-3.5 w-3.5 text-purple-300" /> ConnectIn Venture & Startup Matchmaker
+            <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-3 py-1 text-xs font-semibold text-[#0A66C2] dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center gap-1.5 w-fit">
+              <Rocket className="h-3.5 w-3.5 text-[#0A66C2]" /> ConnectIn Startups &amp; Ventures
             </span>
-            <h2 className="mt-2 text-xl sm:text-2xl font-bold tracking-tight">
-              High-Growth Startups, Equity Grants & Direct Founder InMail
+            <h2 className="mt-2 text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
+              High-Growth Ventures &amp; Direct Founder Connect
             </h2>
-            <p className="mt-1 text-xs sm:text-sm text-purple-200 max-w-xl">
-              Discover breakout VC-backed ventures, transparent equity ranges, and pitch directly to founders without recruiter gatekeepers.
+            <p className="mt-1 text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-xl">
+              Discover breakout ventures, explore transparent compensation and equity ranges, and connect directly with founding teams.
             </p>
           </div>
 
-          <div className="rounded-xl bg-white/10 p-4 backdrop-blur-xs text-center border border-white/10 min-w-[170px]">
-            <p className="text-[11px] text-purple-200 uppercase tracking-wider font-semibold">
+          <div className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 p-4 text-center border border-zinc-200 dark:border-zinc-700 min-w-[170px]">
+            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 uppercase tracking-wide font-semibold">
               Equity Transparency
             </p>
-            <p className="text-xl font-bold text-purple-300 mt-0.5">
+            <p className="text-xl font-bold text-[#0A66C2] mt-0.5">
               1.0% - 4.0% Ranges
             </p>
           </div>
@@ -87,10 +87,10 @@ export function StartupVentureView({ currentUser }: StartupVentureViewProps) {
           <button
             key={stg}
             onClick={() => setSelectedStage(stg)}
-            className={`rounded-full px-4 py-1.5 transition-all ${
+            className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
               selectedStage === stg
-                ? "bg-purple-600 text-white font-bold shadow-xs"
-                : "bg-white text-zinc-600 border border-zinc-200 hover:bg-zinc-50 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-300"
+                ? "bg-[#0A66C2] text-white shadow-xs"
+                : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
             }`}
           >
             {stg}

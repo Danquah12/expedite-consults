@@ -115,22 +115,22 @@ Experience:
   return (
     <div className="mx-auto max-w-5xl space-y-6 pb-12">
       {/* Header Banner */}
-      <div className="rounded-2xl border border-zinc-200 bg-gradient-to-r from-blue-950 via-indigo-950 to-slate-950 p-6 text-white shadow-md">
+      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="rounded-full bg-blue-400/20 px-2.5 py-0.5 text-xs font-bold text-sky-300 border border-blue-400/40 flex items-center gap-1.5 w-fit">
-                <Sparkles className="h-3.5 w-3.5 text-amber-300 animate-pulse" /> Expedite CareerSuite™
+              <span className="rounded-full bg-blue-50 dark:bg-blue-950/50 px-2.5 py-0.5 text-xs font-semibold text-[#0A66C2] dark:text-sky-300 border border-blue-200/60 dark:border-blue-800/60 flex items-center gap-1.5 w-fit">
+                <Sparkles className="h-3.5 w-3.5" /> CareerSuite™ Resume &amp; Profile Hub
               </span>
-              <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-300 border border-emerald-500/40">
-                Connected to tuhousing.vercel.app
+              <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
+                Connected App
               </span>
             </div>
-            <h2 className="mt-2 text-xl sm:text-2xl font-bold tracking-tight">
-              AI-Powered Resume Tailoring & Profile Maximizer
+            <h2 className="mt-2 text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+              Resume Tailoring &amp; Profile Optimization
             </h2>
-            <p className="mt-1 text-xs sm:text-sm text-sky-200 max-w-xl">
-              Instantly tailor your Master Resume and Cover Letter to any target job description. Optimize keywords to pass ATS screeners with 95%+ match scores.
+            <p className="mt-1 text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-xl">
+              Tailor your master resume and cover letter to target job descriptions. Highlight key competencies and skills to match employer expectations.
             </p>
           </div>
 
@@ -139,7 +139,7 @@ Experience:
               href="https://tuhousing.vercel.app/"
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-1.5 rounded-full bg-white/15 px-4 py-2 text-xs font-bold text-white backdrop-blur-xs border border-white/20 hover:bg-white/25 transition-all"
+              className="flex items-center gap-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 px-4 py-2 text-xs font-semibold transition-colors"
             >
               <span>Open Vercel App</span>
               <ExternalLink className="h-3.5 w-3.5" />

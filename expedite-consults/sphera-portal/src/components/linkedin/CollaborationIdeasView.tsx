@@ -52,36 +52,36 @@ export function CollaborationIdeasView({
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-24">
       {/* Hero Banner */}
-      <div className="rounded-2xl border border-purple-500/30 bg-gradient-to-r from-slate-900 via-indigo-950 to-purple-950 p-6 text-white shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
-          <span className="rounded-full bg-purple-500/30 px-3 py-0.5 text-xs font-bold text-purple-200 border border-purple-400/40 flex items-center gap-1.5 w-fit">
-            <Lightbulb className="h-3.5 w-3.5 text-amber-300" />
-            ConnectIn Collaboration &amp; Ideas Incubation Ecosystem
+          <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-3 py-1 text-xs font-semibold text-[#0A66C2] dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center gap-1.5 w-fit">
+            <Lightbulb className="h-3.5 w-3.5 text-[#0A66C2]" />
+            Collaboration &amp; Community Projects
           </span>
-          <h1 className="text-2xl font-black text-white">
-            Build, Fund &amp; Co-Found the Next Big Thing
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
+            Build, Collaborate &amp; Co-Found Projects
           </h1>
-          <p className="text-xs text-zinc-300 max-w-xl">
-            Crowdsource technical innovation, support breakout ideas, find co-founders and security researchers, and incubate startups.
+          <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-xl">
+            Crowdsource ideas, find collaborators and co-founders, and bring innovative projects to life with community feedback.
           </p>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => setActiveTab('ideas')}
-            className={`rounded-xl px-4 py-2 text-xs font-bold transition-all ${
-              activeTab === 'ideas' ? "bg-white text-zinc-950 shadow-md font-black" : "bg-white/10 text-white hover:bg-white/20"
+            className={`rounded-full px-4 py-2 text-xs font-semibold transition-all ${
+              activeTab === 'ideas' ? "bg-[#0A66C2] text-white shadow-xs" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
             }`}
           >
-            💡 Trending Ideas ({ideas.length})
+            Trending Ideas ({ideas.length})
           </button>
           <button
             onClick={() => setActiveTab('collaboration')}
-            className={`rounded-xl px-4 py-2 text-xs font-bold transition-all ${
-              activeTab === 'collaboration' ? "bg-white text-zinc-950 shadow-md font-black" : "bg-white/10 text-white hover:bg-white/20"
+            className={`rounded-full px-4 py-2 text-xs font-semibold transition-all ${
+              activeTab === 'collaboration' ? "bg-[#0A66C2] text-white shadow-xs" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
             }`}
           >
-            🤝 Co-Founder Match ({collabs.length})
+            Co-Founder Match ({collabs.length})
           </button>
         </div>
       </div>

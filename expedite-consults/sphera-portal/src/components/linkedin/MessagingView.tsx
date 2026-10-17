@@ -146,45 +146,46 @@ export function MessagingView({
 
   return (
     <div className="mx-auto max-w-6xl space-y-4 pb-20">
-      {/* 1. TOP B2B CHANNELS BAR */}
-      <div className="rounded-2xl border border-sky-500/30 bg-gradient-to-r from-slate-900 via-sky-950 to-indigo-950 p-5 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* 1. TOP MESSAGING BANNER */}
+      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="rounded-full bg-sky-500/20 px-3 py-0.5 text-xs font-bold text-sky-300 border border-sky-400/40 flex items-center gap-1.5">
-              <MessageSquare className="h-3.5 w-3.5 text-amber-300" />
-              ConnectIn Enterprise B2B Communications Hub
+            <span className="rounded-full bg-blue-50 dark:bg-blue-950/50 px-3 py-0.5 text-xs font-semibold text-[#0A66C2] dark:text-sky-300 border border-blue-200/60 dark:border-blue-800/60 flex items-center gap-1.5">
+              <MessageSquare className="h-3.5 w-3.5" />
+              ConnectIn Direct Messaging
             </span>
           </div>
-          <h2 className="text-xl sm:text-2xl font-black text-white mt-1">
-            People, Companies, Products &amp; Communities
+          <h2 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100 mt-1">
+            Conversations &amp; Professional Inboxes
           </h2>
-          <p className="text-xs text-zinc-300">
-            Communicate directly with colleagues, recruiters, enterprise product sellers, and specialized architectural guilds.
+          <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-0.5">
+            Direct messages with colleagues, recruiters, project partners, and specialty communities.
           </p>
         </div>
 
-        {/* 4 Master Channels Switcher */}
-        <div className="flex items-center gap-1.5 bg-black/40 p-1.5 rounded-xl border border-white/15 overflow-x-auto shrink-0">
+        {/* Channels Switcher */}
+        <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-full border border-zinc-200 dark:border-zinc-700 overflow-x-auto shrink-0">
           {[
-            { id: 'Products', label: '🛍️ Products & Vendors', count: 1 },
+            { id: 'People', label: '👥 Direct Messages', count: 1 },
             { id: 'Companies', label: '🏢 Companies & Recruiters', count: 1 },
-            { id: 'People', label: '👥 People (DMs)', count: 1 },
-            { id: 'Communities', label: '🌐 Communities (Guilds)', count: 1 },
+            { id: 'Products', label: '🛍️ Solutions & Vendors', count: 1 },
+            { id: 'Communities', label: '🌐 Guilds & Groups', count: 1 },
             { id: 'All', label: 'All Inboxes', count: 4 }
           ].map((ch) => {
             const isSelected = activeChannel === ch.id
             return (
               <button
                 key={ch.id}
+                type="button"
                 onClick={() => {
                   setActiveChannel(ch.id as any)
                   const firstMatch = threads.find(t => ch.id === 'All' || t.channelType === ch.id)
                   if (firstMatch) setActiveThreadId(firstMatch.id)
                 }}
-                className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
                   isSelected
-                    ? "bg-[#0A66C2] text-white shadow-md font-extrabold"
-                    : "text-zinc-300 hover:text-white hover:bg-white/10"
+                    ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
+                    : "text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white"
                 }`}
               >
                 <span>{ch.label}</span>

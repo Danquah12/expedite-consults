@@ -54,25 +54,25 @@ export function EventsView({
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-24">
       {/* Hero Banner */}
-      <div className="rounded-2xl border border-sky-500/30 bg-gradient-to-r from-slate-900 via-sky-950 to-indigo-950 p-6 text-white shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
-          <span className="rounded-full bg-sky-500/30 px-3 py-0.5 text-xs font-bold text-sky-200 border border-sky-400/40 flex items-center gap-1.5 w-fit">
-            <Calendar className="h-3.5 w-3.5 text-amber-300" />
-            ConnectIn Global Professional Events Hub
+          <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-3 py-1 text-xs font-semibold text-[#0A66C2] dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center gap-1.5 w-fit">
+            <Calendar className="h-3.5 w-3.5 text-[#0A66C2]" />
+            ConnectIn Events &amp; Professional Meetups
           </span>
-          <h1 className="text-2xl font-black text-white">
-            Conferences, Webinars &amp; Product Demos
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
+            Conferences, Webinars &amp; Interactive Workshops
           </h1>
-          <p className="text-xs text-zinc-300 max-w-xl">
-            Register for live technical masterclasses, continuous ATO briefings, and autonomous product teardowns with instant trial sandboxes.
+          <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-xl">
+            Join live industry roundtables, trade masterclasses, and hands-on workshops hosted by verified leaders.
           </p>
         </div>
 
         <button
           onClick={() => onNavigateTab('marketplace')}
-          className="rounded-xl bg-white text-zinc-950 font-black px-4 py-2.5 text-xs shadow-md hover:bg-zinc-100 shrink-0"
+          className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white font-semibold px-4 py-2.5 text-xs shadow-xs transition-colors shrink-0"
         >
-          Explore Featured Products →
+          Explore Solutions Hub →
         </button>
       </div>
 
@@ -82,10 +82,10 @@ export function EventsView({
           <button
             key={type}
             onClick={() => setSelectedType(type)}
-            className={`rounded-xl px-3.5 py-1.5 font-bold transition-all shrink-0 ${
+            className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all shrink-0 ${
               selectedType === type
                 ? "bg-[#0A66C2] text-white shadow-xs"
-                : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300"
+                : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
             }`}
           >
             {type}

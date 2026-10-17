@@ -147,161 +147,138 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-20">
-      {/* 1. TOP PULSE HERO BANNER */}
-      <div className={`rounded-2xl border p-6 text-white shadow-xl ${
-        enclaveId === 'trades_construction'
-          ? "border-amber-500/30 bg-gradient-to-r from-stone-900 via-amber-950 to-neutral-900"
-          : enclaveId === 'healthcare_medicine'
-          ? "border-rose-500/30 bg-gradient-to-r from-slate-900 via-rose-950 to-slate-950"
-          : enclaveId === 'automotive_mechanics'
-          ? "border-blue-500/30 bg-gradient-to-r from-zinc-900 via-blue-950 to-slate-900"
-          : "border-sky-500/30 bg-gradient-to-r from-slate-900 via-sky-950 to-indigo-950"
-      }`}>
+      {/* 1. TOP PULSE BANNER */}
+      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className={`rounded-full px-3 py-0.5 text-xs font-bold border flex items-center gap-1.5 ${
-                enclaveId === 'trades_construction'
-                  ? "bg-amber-500/20 text-amber-300 border-amber-400/40"
-                  : enclaveId === 'healthcare_medicine'
-                  ? "bg-rose-500/20 text-rose-300 border-rose-400/40"
-                  : enclaveId === 'automotive_mechanics'
-                  ? "bg-blue-500/20 text-blue-300 border-blue-400/40"
-                  : "bg-sky-500/20 text-sky-300 border-sky-400/40"
-              }`}>
-                <Newspaper className="h-3.5 w-3.5 text-amber-300" />
+              <span className="rounded-full bg-blue-50 dark:bg-blue-950/50 px-3 py-0.5 text-xs font-semibold text-[#0A66C2] dark:text-sky-300 border border-blue-200/60 dark:border-blue-800/60 flex items-center gap-1.5">
+                <Newspaper className="h-3.5 w-3.5" />
                 {enclaveId === 'trades_construction'
-                  ? "ConnectIn Pulse · Construction & Skilled Trades Intelligence"
+                  ? "ConnectIn Pulse · Construction & Skilled Trades"
                   : enclaveId === 'healthcare_medicine'
-                  ? "ConnectIn Pulse · Clinical & Medical Intelligence"
+                  ? "ConnectIn Pulse · Healthcare & Medicine"
                   : enclaveId === 'automotive_mechanics'
-                  ? "ConnectIn Pulse · Automotive & Master Diagnostics Intelligence"
-                  : "ConnectIn Pulse · Professional Media Layer"}
+                  ? "ConnectIn Pulse · Automotive & Diagnostics"
+                  : "ConnectIn Pulse · Industry Insights"}
               </span>
-              <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-xs font-bold text-emerald-300 border border-emerald-500/40">
-                {enclaveId === 'trades_construction'
-                  ? "OSHA Directives + Building Codes + Heavy Equipment"
-                  : enclaveId === 'healthcare_medicine'
-                  ? "FDA Advisories + NEJM Research + Trauma Standards"
-                  : enclaveId === 'automotive_mechanics'
-                  ? "NHTSA Recalls + ASE Diagnostics + 800V EV"
-                  : "LinkedIn + TechCrunch + Research Intelligence"}
+              <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
+                Daily Industry Updates
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
               {enclaveId === 'trades_construction'
-                ? "Trade News, Daily Safety Briefings & Code Advisories"
+                ? "Trade News, Daily Safety Briefings & Standards"
                 : enclaveId === 'healthcare_medicine'
-                ? "Clinical News, Daily Medical Briefings & FDA Directives"
+                ? "Clinical News, Daily Medical Briefings & Alerts"
                 : enclaveId === 'automotive_mechanics'
-                ? "Automotive News, Shop Briefings & NHTSA Safety Bulletins"
-                : "Professional News, AI Briefings & Threat Intelligence"}
+                ? "Automotive News, Shop Briefings & Safety Bulletins"
+                : "Professional News, Daily Briefings & Industry Signals"}
             </h1>
-            <p className="text-xs sm:text-sm text-zinc-300 max-w-2xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-2xl leading-relaxed">
               {enclaveId === 'trades_construction'
-                ? "Synthesizing mass timber engineering breakthroughs, OSHA job-site directives, commercial framing standards, and heavy tooling reviews with verified master-trade citations."
+                ? "Verified mass timber breakthroughs, OSHA job-site safety directives, commercial framing standards, and heavy tooling reviews."
                 : enclaveId === 'healthcare_medicine'
-                ? "Synthesizing peer-reviewed clinical trials, FDA drug and device alerts, emergency surgery protocols, and trauma resuscitation standards."
+                ? "Peer-reviewed clinical trials, FDA alerts, emergency surgery protocols, and trauma resuscitation standards."
                 : enclaveId === 'automotive_mechanics'
-                ? "Synthesizing EV powertrain breakthroughs, NHTSA safety recalls, oscilloscope diagnostic protocols, and commercial fleet maintenance standards."
-                : "Synthesizing breakthrough papers, CISA emergency security directives, enterprise cloud architectures, and venture rounds with source-grounded citations."}
+                ? "EV powertrain breakthroughs, NHTSA safety bulletins, oscilloscope diagnostic guides, and commercial fleet standards."
+                : "Key industry breakthroughs, verified whitepapers, architecture guides, and professional milestones with grounded citations."}
             </p>
           </div>
 
-          {/* 4-Mode Switcher */}
-          <div className="flex items-center gap-1.5 bg-black/40 p-1.5 rounded-xl border border-white/15 shrink-0 flex-wrap">
+          {/* Mode Switcher */}
+          <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-full border border-zinc-200 dark:border-zinc-700 shrink-0 flex-wrap">
             <button
+              type="button"
               onClick={() => setPulseMode('news')}
-              className={`px-3.5 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
                 pulseMode === 'news'
-                  ? "bg-[#0A66C2] text-white shadow-md font-extrabold"
-                  : "text-zinc-300 hover:text-white hover:bg-white/10"
+                  ? "bg-[#0A66C2] text-white shadow-xs"
+                  : "text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white"
               }`}
             >
               <Newspaper className="h-3.5 w-3.5" />
-              <span>Intelligence Feed</span>
+              <span>Articles Feed</span>
             </button>
 
             <button
+              type="button"
               onClick={() => setPulseMode('ai_brief')}
-              className={`px-3.5 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
                 pulseMode === 'ai_brief'
-                  ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md font-extrabold"
-                  : "text-purple-300 hover:text-white hover:bg-white/10"
+                  ? "bg-purple-600 text-white shadow-xs"
+                  : "text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white"
               }`}
             >
-              <Sparkles className="h-3.5 w-3.5 text-amber-300 animate-pulse" />
-              <span>⚡ AI Daily Brief</span>
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>AI Daily Brief</span>
             </button>
 
             <button
+              type="button"
               onClick={() => setPulseMode('cyber_threats')}
-              className={`px-3.5 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
                 pulseMode === 'cyber_threats'
-                  ? enclaveId === 'trades_construction'
-                    ? "bg-amber-600 text-white shadow-md font-extrabold"
-                    : enclaveId === 'healthcare_medicine'
-                    ? "bg-rose-600 text-white shadow-md font-extrabold"
-                    : enclaveId === 'automotive_mechanics'
-                    ? "bg-blue-600 text-white shadow-md font-extrabold"
-                    : "bg-red-600 text-white shadow-md font-extrabold"
-                  : "text-zinc-300 hover:text-white hover:bg-white/10"
+                  ? "bg-amber-600 text-white shadow-xs"
+                  : "text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white"
               }`}
             >
               {enclaveId === 'trades_construction' ? (
                 <>
-                  <AlertTriangle className="h-3.5 w-3.5 text-amber-300" />
-                  <span>OSHA & Code Radar</span>
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                  <span>Safety Radar</span>
                 </>
               ) : enclaveId === 'healthcare_medicine' ? (
                 <>
-                  <ShieldCheck className="h-3.5 w-3.5 text-rose-300" />
-                  <span>FDA & Clinical Radar</span>
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                  <span>Clinical Radar</span>
                 </>
               ) : enclaveId === 'automotive_mechanics' ? (
                 <>
-                  <Zap className="h-3.5 w-3.5 text-blue-300" />
-                  <span>NHTSA & OEM Radar</span>
+                  <Zap className="h-3.5 w-3.5" />
+                  <span>Safety Bulletins</span>
                 </>
               ) : (
                 <>
                   <Shield className="h-3.5 w-3.5" />
-                  <span>Cyber Threat Radar</span>
+                  <span>Threat Radar</span>
                 </>
               )}
             </button>
 
             <button
+              type="button"
               onClick={() => setPulseMode('audio_rooms')}
-              className={`px-3.5 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
                 pulseMode === 'audio_rooms'
-                  ? "bg-emerald-600 text-white shadow-md font-extrabold"
-                  : "text-emerald-300 hover:text-white hover:bg-white/10"
+                  ? "bg-emerald-600 text-white shadow-xs"
+                  : "text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white"
               }`}
             >
-              <Radio className="h-3.5 w-3.5 text-red-400 animate-pulse" />
-              <span>Live Audio ({rooms.length})</span>
+              <Radio className="h-3.5 w-3.5 text-red-500 animate-pulse" />
+              <span>Audio Rooms ({rooms.length})</span>
             </button>
           </div>
         </div>
 
         {/* Dynamic Category Filter Ribbon (Visible in News Feed) */}
         {pulseMode === 'news' && (
-          <div className="mt-5 pt-4 border-t border-white/10 flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-sky-300 shrink-0 mr-1 flex items-center gap-1">
-              <Filter className="h-3.5 w-3.5" /> Filter Feed:
+          <div className="mt-4 pt-3.5 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 shrink-0 mr-1 flex items-center gap-1">
+              <Filter className="h-3.5 w-3.5 text-[#0A66C2]" /> Topics:
             </span>
             {categories.map((cat) => {
               const isSelected = selectedCategory === cat.id
               return (
                 <button
                   key={cat.id}
+                  type="button"
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`rounded-full px-3 py-1 text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+                  className={`rounded-full px-3 py-1 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
                     isSelected
-                      ? "bg-gradient-to-r from-sky-400 to-blue-500 text-zinc-950 shadow-md font-extrabold"
-                      : "bg-white/10 text-white/80 hover:bg-white/20"
+                      ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
+                      : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700 border border-zinc-200/70 dark:border-zinc-700/70"
                   }`}
                 >
                   <span>{cat.icon}</span>

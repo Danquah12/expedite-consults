@@ -119,25 +119,25 @@ export function WatercoolerBlindView({ currentUser }: WatercoolerBlindViewProps)
   return (
     <div className="mx-auto max-w-5xl space-y-6 pb-12">
       {/* Header */}
-      <div className="rounded-2xl border border-zinc-200 bg-gradient-to-r from-slate-950 via-zinc-900 to-sky-950 p-6 text-white shadow-md">
+      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <span className="rounded-full bg-emerald-400/20 px-2.5 py-0.5 text-xs font-bold text-emerald-300 border border-emerald-400/40 flex items-center gap-1.5 w-fit">
-              <EyeOff className="h-3.5 w-3.5 text-emerald-400" /> ConnectIn Watercooler™ (Verified Anonymous)
+            <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-3 py-1 text-xs font-semibold text-[#0A66C2] dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center gap-1.5 w-fit">
+              <EyeOff className="h-3.5 w-3.5 text-[#0A66C2]" /> ConnectIn Watercooler (Anonymous Discussions)
             </span>
-            <h2 className="mt-2 text-xl sm:text-2xl font-bold tracking-tight">
-              Candid Workplace Channels & Real Compensation Intel
+            <h2 className="mt-2 text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
+              Candid Workplace Discussions &amp; Peer Advice
             </h2>
-            <p className="mt-1 text-xs sm:text-sm text-zinc-300 max-w-xl">
-              Discuss internal compensation bands, executive leadership, interview loops, and reorgs anonymously with verified company badges.
+            <p className="mt-1 text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-xl">
+              Discuss compensation ranges, company culture, interview experiences, and workplace tips anonymously with verified employer badges.
             </p>
           </div>
 
           <button
             onClick={() => setIsNewThreadOpen(true)}
-            className="flex items-center gap-1.5 rounded-full bg-emerald-600 px-6 py-2.5 text-xs font-bold text-white shadow-lg hover:bg-emerald-700 transition-all"
+            className="flex items-center gap-1.5 rounded-full bg-[#0A66C2] px-5 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-[#004182] transition-colors shrink-0"
           >
-            <Plus className="h-4 w-4" /> Post Anonymously
+            <Plus className="h-4 w-4" /> Start Discussion
           </button>
         </div>
       </div>

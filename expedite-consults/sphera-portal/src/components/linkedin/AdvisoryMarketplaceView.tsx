@@ -51,26 +51,26 @@ export function AdvisoryMarketplaceView({ currentUser }: AdvisoryMarketplaceView
   return (
     <div className="mx-auto max-w-5xl space-y-6 pb-12">
       {/* Banner */}
-      <div className="rounded-2xl border border-zinc-200 bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 p-6 text-white shadow-md">
+      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <span className="rounded-full bg-sky-400/20 px-2.5 py-0.5 text-xs font-bold text-sky-300 border border-sky-400/40 flex items-center gap-1.5 w-fit">
-              <Award className="h-3.5 w-3.5 text-amber-300" /> ConnectIn Executive Advisory (Fractional CISO/CTO)
+            <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-3 py-1 text-xs font-semibold text-[#0A66C2] dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center gap-1.5 w-fit">
+              <Award className="h-3.5 w-3.5 text-[#0A66C2]" /> ConnectIn Executive Advisory &amp; Mentorship
             </span>
-            <h2 className="mt-2 text-xl sm:text-2xl font-bold tracking-tight">
-              1:1 Executive Advisory & Fractional Leadership
+            <h2 className="mt-2 text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
+              1:1 Executive Advisory &amp; Fractional Leadership
             </h2>
-            <p className="mt-1 text-xs sm:text-sm text-sky-200 max-w-xl">
-              Book hourly advisory sessions, architecture audits, and fractional executive support directly with verified industry leaders.
+            <p className="mt-1 text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-xl">
+              Book focused advisory sessions, architecture audits, and fractional leadership directly with verified industry specialists.
             </p>
           </div>
 
-          <div className="rounded-xl bg-white/10 p-4 backdrop-blur-xs text-center border border-white/10 min-w-[170px]">
-            <p className="text-[11px] text-sky-200 uppercase tracking-wider font-semibold">
-              Advisory Guarantee
+          <div className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 p-4 text-center border border-zinc-200 dark:border-zinc-700 min-w-[170px]">
+            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 uppercase tracking-wide font-semibold">
+              Quality Guarantee
             </p>
-            <p className="text-xl font-bold text-white mt-0.5">
-              100% Verified CISSP/Fellows
+            <p className="text-xl font-bold text-[#0A66C2] mt-0.5">
+              100% Verified Leaders
             </p>
           </div>
         </div>

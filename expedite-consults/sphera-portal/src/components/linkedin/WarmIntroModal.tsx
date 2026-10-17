@@ -59,17 +59,17 @@ export function WarmIntroModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-xl p-0 overflow-hidden sm:rounded-xl">
-        <DialogHeader className="border-b border-zinc-200 bg-gradient-to-r from-blue-900 via-sky-950 to-indigo-950 px-6 py-4 text-white dark:border-zinc-800">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 backdrop-blur-xs">
-              <Share2 className="h-5 w-5 text-sky-300 animate-pulse" />
+        <DialogHeader className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-6 py-4 text-zinc-900 dark:text-zinc-100">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-950/60 text-[#0A66C2] dark:text-blue-400">
+              <Share2 className="h-4 w-4" />
             </div>
             <div>
-              <DialogTitle className="text-base font-bold text-white">
-                Warm Intro Graph Engine™
+              <DialogTitle className="text-base font-bold text-zinc-900 dark:text-white">
+                Request a Warm Introduction
               </DialogTitle>
-              <p className="text-xs text-sky-200">
-                Generate high-conviction forwardable introduction cards via mutual collaborators.
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                Connect via mutual colleagues and shared professional communities.
               </p>
             </div>
           </div>

@@ -328,35 +328,36 @@ export function JobsView({
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-20">
       {/* 1. TOP JOBS BANNER & 3-MODE SWITCHER */}
-      <div className="rounded-2xl border border-blue-500/30 bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 p-6 text-white shadow-xl">
+      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="rounded-full bg-blue-500/20 px-3 py-0.5 text-xs font-bold text-sky-300 border border-blue-400/40 flex items-center gap-1.5">
+              <span className="rounded-full bg-blue-50 dark:bg-blue-950/50 px-3 py-0.5 text-xs font-semibold text-[#0A66C2] dark:text-sky-300 border border-blue-200/60 dark:border-blue-800/60 flex items-center gap-1.5">
                 <Briefcase className="h-3.5 w-3.5" />
-                ConnectIn Careers & Talent Engine
+                ConnectIn Career &amp; Opportunities
               </span>
-              <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-xs font-bold text-emerald-300 border border-emerald-500/40">
-                Jobs + Marketplace + Learning Flywheel
+              <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
+                Verified Job &amp; Contractor Matches
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-              Smarter Career Opportunities & AI Candidate Matching
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+              Explore Career Opportunities &amp; Verified Roles
             </h1>
-            <p className="text-xs sm:text-sm text-zinc-300 max-w-2xl leading-relaxed">
-              Match jobs based on verified product experience, certifications, and security capabilities. Upskill directly via ConnectIn Masterclasses to qualify for elite enterprise roles.
+            <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-2xl leading-relaxed">
+              Find openings tailored to your verified experience, trade certifications, and capabilities. Connect directly with recruiters and hiring managers in your field.
             </p>
           </div>
 
           {/* Mode Switcher Buttons */}
-          <div className="flex items-center gap-2 bg-black/40 p-1.5 rounded-xl border border-white/15 shrink-0 flex-wrap">
+          <div className="flex items-center gap-1.5 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-full border border-zinc-200 dark:border-zinc-700 shrink-0 flex-wrap">
             <button
+              type="button"
               onClick={() => setMasterMode('find')}
-              className={`px-3.5 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
                 masterMode === 'find'
-                  ? "bg-[#0A66C2] text-white shadow-md"
-                  : "text-zinc-300 hover:text-white hover:bg-white/10"
+                  ? "bg-[#0A66C2] text-white shadow-xs"
+                  : "text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white"
               }`}
             >
               <Search className="h-3.5 w-3.5" />
@@ -364,11 +365,12 @@ export function JobsView({
             </button>
 
             <button
+              type="button"
               onClick={() => setMasterMode('applications')}
-              className={`px-3.5 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
                 masterMode === 'applications'
-                  ? "bg-[#0A66C2] text-white shadow-md"
-                  : "text-zinc-300 hover:text-white hover:bg-white/10"
+                  ? "bg-[#0A66C2] text-white shadow-xs"
+                  : "text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white"
               }`}
             >
               <FileText className="h-3.5 w-3.5" />
@@ -376,14 +378,15 @@ export function JobsView({
             </button>
 
             <button
+              type="button"
               onClick={() => setMasterMode('recruiting')}
-              className={`px-3.5 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
                 masterMode === 'recruiting'
-                  ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md font-extrabold"
-                  : "text-purple-300 hover:text-white hover:bg-white/10"
+                  ? "bg-purple-600 text-white shadow-xs"
+                  : "text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white"
               }`}
             >
-              <Users className="h-3.5 w-3.5 text-amber-300" />
+              <Users className="h-3.5 w-3.5" />
               <span>Recruiting Hub</span>
             </button>
           </div>
@@ -391,19 +394,20 @@ export function JobsView({
 
         {/* Dynamic Country Ribbon (Visible in Find Jobs Mode) */}
         {masterMode === 'find' && (
-          <div className="mt-5 pt-4 border-t border-white/10 flex items-center justify-between gap-4 flex-wrap">
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-              <span className="text-[11px] font-bold text-zinc-400 shrink-0">Country:</span>
+          <div className="mt-4 pt-3.5 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+              <span className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 shrink-0">Region:</span>
               {COUNTRIES_CONFIG.map((c) => {
                 const isSelected = selectedCountryCode === c.code
                 return (
                   <button
                     key={c.code}
+                    type="button"
                     onClick={() => handleCountryChange(c.code)}
-                    className={`rounded-full px-3 py-1 text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+                    className={`rounded-full px-3 py-1 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
                       isSelected
-                        ? "bg-gradient-to-r from-sky-400 to-blue-500 text-zinc-950 shadow-md font-extrabold"
-                        : "bg-white/10 text-white/80 hover:bg-white/20"
+                        ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
+                        : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700 border border-zinc-200/70 dark:border-zinc-700/70"
                     }`}
                   >
                     <span>{c.flag}</span>
@@ -413,8 +417,8 @@ export function JobsView({
               })}
             </div>
 
-            <span className="text-xs text-emerald-300 font-semibold flex items-center gap-1 shrink-0">
-              <Languages className="h-3.5 w-3.5 text-amber-300" />
+            <span className="text-xs text-zinc-600 dark:text-zinc-400 font-medium flex items-center gap-1.5 shrink-0">
+              <Languages className="h-3.5 w-3.5 text-[#0A66C2]" />
               {currentCountry.languages[0]} · {currentCountry.currency} ({currentCountry.currencySymbol})
             </span>
           </div>

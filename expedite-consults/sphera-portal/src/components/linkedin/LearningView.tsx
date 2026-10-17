@@ -344,45 +344,46 @@ export function LearningView({
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-20">
-      {/* 1. TOP LEARNING HERO BANNER */}
-      <div className="rounded-2xl border border-indigo-500/30 bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 p-6 text-white shadow-xl">
+      {/* 1. TOP LEARNING BANNER */}
+      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="rounded-full bg-indigo-500/20 px-3 py-0.5 text-xs font-bold text-indigo-300 border border-indigo-400/40 flex items-center gap-1.5">
-                <GraduationCap className="h-3.5 w-3.5 text-amber-300" />
-                ConnectIn Enterprise Learning & Skills Engine
+              <span className="rounded-full bg-blue-50 dark:bg-blue-950/50 px-3 py-0.5 text-xs font-semibold text-[#0A66C2] dark:text-sky-300 border border-blue-200/60 dark:border-blue-800/60 flex items-center gap-1.5">
+                <GraduationCap className="h-3.5 w-3.5" />
+                ConnectIn Learning &amp; Masterclasses
               </span>
-              <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-xs font-bold text-emerald-300 border border-emerald-500/40">
-                Courses · Interactive Labs · Certifications · Career Paths
+              <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
+                Courses · Labs · Certifications · Blueprints
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-              Hands-On Technical Mastery & Career Blueprints
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+              Professional Skills &amp; Career Blueprints
             </h1>
-            <p className="text-xs sm:text-sm text-zinc-300 max-w-2xl leading-relaxed">
-              Upskill through multi-stage learning paths, live ephemeral sandboxes, practice exams, and direct connections to professional ecosystem tools.
+            <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-2xl leading-relaxed">
+              Advance your career through structured learning paths, practical hands-on labs, practice tests, and industry-recognized certifications.
             </p>
 
             {/* Direct VibeTOK Learning Hub Integration Banner */}
             <div className="pt-2 flex items-center gap-2.5 flex-wrap">
               <button
+                type="button"
                 onClick={() => setLearningMode('vibetok')}
-                className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 via-purple-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 px-3.5 py-1.5 text-xs font-bold text-white shadow-md transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+                className="group inline-flex items-center gap-2 rounded-full bg-[#0A66C2] hover:bg-[#004182] px-4 py-2 text-xs font-semibold text-white shadow-xs transition-all cursor-pointer"
               >
-                <Sparkles className="h-3.5 w-3.5 text-amber-300 animate-pulse" />
-                <span>Explore VibeTOK Learning Hub</span>
-                <span className="rounded bg-white/20 px-1.5 py-0.2 text-[10px] font-mono">118,314 Assets</span>
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>Explore VibeTOK Video Hub</span>
+                <span className="rounded-full bg-white/20 px-2 py-0.2 text-[10px] font-mono">118,314 Assets</span>
                 <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
               </button>
               <a
                 href="https://vibetok-learning-hub.vercel.app"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 px-3.5 py-2 text-xs font-semibold text-zinc-700 dark:text-zinc-200 transition-colors"
               >
-                <span>Launch in New Tab</span>
+                <span>Open in New Tab</span>
                 <ExternalLink className="h-3 w-3 text-zinc-400" />
               </a>
             </div>
@@ -390,22 +391,22 @@ export function LearningView({
 
           {/* Quick Metrics */}
           <div className="flex items-center gap-3 shrink-0">
-            <div className="rounded-2xl bg-black/40 border border-white/15 p-4 text-center min-w-[170px]">
-              <span className="text-[10px] uppercase font-mono text-indigo-300">Your Learning Progress</span>
-              <p className="text-2xl font-black text-amber-300">65% Completed</p>
-              <p className="text-[11px] text-zinc-400 mt-0.5">Enclave Specialist Track</p>
+            <div className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 p-4 text-center min-w-[170px]">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 dark:text-zinc-400">Learning Progress</span>
+              <p className="text-2xl font-black text-[#0A66C2] dark:text-sky-400">65%</p>
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">Specialist Track Active</p>
             </div>
           </div>
         </div>
 
         {/* Live Ecosystem External Learning Platforms */}
         {liveEcosystemPlatforms.length > 0 && (
-          <div className="mt-5 pt-4 border-t border-white/10">
+          <div className="mt-5 pt-3.5 border-t border-zinc-100 dark:border-zinc-800">
             <div className="flex items-center justify-between mb-2.5">
               <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-amber-300" />
-                <span className="text-xs font-bold text-white tracking-wide uppercase">
-                  Connected Live Ecosystem Platforms
+                <Sparkles className="h-4 w-4 text-[#0A66C2]" />
+                <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200 tracking-wide uppercase">
+                  Connected Learning Academies
                 </span>
               </div>
               <span className="text-[10px] text-zinc-400 font-mono">1-Click External Launch ↗</span>
@@ -417,25 +418,25 @@ export function LearningView({
                   href={plat.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group rounded-xl bg-black/40 hover:bg-black/60 border border-white/15 hover:border-white/30 p-3 transition-all flex flex-col justify-between"
+                  className="group rounded-xl bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:hover:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-700/80 p-3 transition-all flex flex-col justify-between"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="rounded bg-indigo-500/20 px-1.5 py-0.5 text-[9px] font-mono font-bold text-amber-300 border border-indigo-400/30">
+                      <span className="rounded bg-blue-100 dark:bg-blue-950/60 px-1.5 py-0.5 text-[9px] font-mono font-bold text-blue-700 dark:text-sky-300 border border-blue-200 dark:border-blue-800">
                         {plat.badge}
                       </span>
-                      <ExternalLink className="h-3.5 w-3.5 text-zinc-400 group-hover:text-white transition-colors" />
+                      <ExternalLink className="h-3.5 w-3.5 text-zinc-400 group-hover:text-[#0A66C2] transition-colors" />
                     </div>
-                    <h4 className="font-bold text-xs text-white group-hover:text-amber-300 transition-colors line-clamp-1">
+                    <h4 className="font-bold text-xs text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2] transition-colors line-clamp-1">
                       {plat.title}
                     </h4>
-                    <p className="text-[11px] text-zinc-400 line-clamp-2 mt-0.5 leading-snug">
+                    <p className="text-[11px] text-zinc-500 dark:text-zinc-400 line-clamp-2 mt-0.5 leading-snug">
                       {plat.desc}
                     </p>
                   </div>
-                  <div className="mt-2 pt-2 border-t border-white/10 flex items-center justify-between text-[10px] text-zinc-400 group-hover:text-zinc-200">
+                  <div className="mt-2 pt-2 border-t border-zinc-200/60 dark:border-zinc-700/60 flex items-center justify-between text-[10px] text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-300">
                     <span className="font-mono truncate">{new URL(plat.url).hostname}</span>
-                    <span className="font-bold text-amber-300 group-hover:underline">Launch →</span>
+                    <span className="font-bold text-[#0A66C2] group-hover:underline">Launch →</span>
                   </div>
                 </a>
               ))}
@@ -443,74 +444,79 @@ export function LearningView({
           </div>
         )}
 
-        {/* 5 Master Modes Switcher */}
-        <div className="mt-5 pt-4 border-t border-white/10 flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+        {/* Master Modes Switcher */}
+        <div className="mt-5 pt-3.5 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
             <button
+              type="button"
               onClick={() => setLearningMode('vibetok')}
-              className={`rounded-xl px-4 py-2 text-xs font-bold transition-all shrink-0 flex items-center gap-2 ${
+              className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
                 learningMode === 'vibetok'
-                  ? "bg-gradient-to-r from-rose-600 to-purple-600 text-white shadow-md font-extrabold ring-2 ring-white/30"
-                  : "bg-rose-500/20 text-rose-200 hover:bg-rose-500/30 border border-rose-500/30"
+                  ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
+                  : "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:bg-rose-100 border border-rose-200 dark:border-rose-800"
               }`}
             >
-              <Sparkles className="h-3.5 w-3.5 text-amber-300 animate-pulse" />
-              <span>✨ VibeTOK Learning Hub (118K+)</span>
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>VibeTOK Video Hub (118K+)</span>
             </button>
             <button
+              type="button"
               onClick={() => setLearningMode('paths')}
-              className={`rounded-xl px-4 py-2 text-xs font-bold transition-all shrink-0 flex items-center gap-2 ${
+              className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
                 learningMode === 'paths'
-                  ? "bg-white text-zinc-950 shadow-md font-extrabold"
-                  : "bg-white/10 text-white/80 hover:bg-white/20"
+                  ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
+                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700 border border-zinc-200/70 dark:border-zinc-700/70"
               }`}
             >
-              <Compass className="h-3.5 w-3.5 text-indigo-600" />
-              <span>🗺️ Career Learning Paths</span>
+              <Compass className="h-3.5 w-3.5" />
+              <span>Learning Paths</span>
             </button>
 
             <button
+              type="button"
               onClick={() => setLearningMode('courses')}
-              className={`rounded-xl px-4 py-2 text-xs font-bold transition-all shrink-0 flex items-center gap-2 ${
+              className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
                 learningMode === 'courses'
-                  ? "bg-white text-zinc-950 shadow-md font-extrabold"
-                  : "bg-white/10 text-white/80 hover:bg-white/20"
+                  ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
+                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700 border border-zinc-200/70 dark:border-zinc-700/70"
               }`}
             >
-              <BookOpen className="h-3.5 w-3.5 text-[#0A66C2]" />
-              <span>🎓 Courses ({courses.length})</span>
+              <BookOpen className="h-3.5 w-3.5" />
+              <span>Courses ({courses.length})</span>
             </button>
 
             <button
+              type="button"
               onClick={() => setLearningMode('labs')}
-              className={`rounded-xl px-4 py-2 text-xs font-bold transition-all shrink-0 flex items-center gap-2 ${
+              className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
                 learningMode === 'labs'
-                  ? "bg-white text-zinc-950 shadow-md font-extrabold"
-                  : "bg-white/10 text-white/80 hover:bg-white/20"
+                  ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
+                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700 border border-zinc-200/70 dark:border-zinc-700/70"
               }`}
             >
-              <FlaskConical className="h-3.5 w-3.5 text-emerald-500" />
-              <span>🧪 Interactive Labs ({enclaveLabs.length})</span>
+              <FlaskConical className="h-3.5 w-3.5" />
+              <span>Interactive Labs ({enclaveLabs.length})</span>
             </button>
 
             <button
+              type="button"
               onClick={() => setLearningMode('certifications')}
-              className={`rounded-xl px-4 py-2 text-xs font-bold transition-all shrink-0 flex items-center gap-2 ${
+              className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
                 learningMode === 'certifications'
-                  ? "bg-white text-zinc-950 shadow-md font-extrabold"
-                  : "bg-white/10 text-white/80 hover:bg-white/20"
+                  ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
+                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700 border border-zinc-200/70 dark:border-zinc-700/70"
               }`}
             >
-              <Award className="h-3.5 w-3.5 text-amber-500" />
-              <span>📜 Certifications & Exams ({enclaveCertTracks.length})</span>
+              <Award className="h-3.5 w-3.5" />
+              <span>Certifications ({enclaveCertTracks.length})</span>
             </button>
           </div>
         </div>
 
-        {/* 5 Course Categories Ribbon (Visible in Courses Mode) */}
+        {/* Course Categories Ribbon (Visible in Courses Mode) */}
         {learningMode === 'courses' && (
-          <div className="mt-3 pt-3 border-t border-white/10 flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-300 shrink-0 mr-1">
+          <div className="mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 shrink-0 mr-1">
               Category:
             </span>
             {['All', 'Cybersecurity', 'AI', 'Cloud', 'Programming', 'Business'].map((cat) => {
@@ -518,11 +524,12 @@ export function LearningView({
               return (
                 <button
                   key={cat}
+                  type="button"
                   onClick={() => setSelectedCourseCat(cat)}
-                  className={`rounded-full px-3 py-1 text-xs font-semibold transition-all shrink-0 ${
+                  className={`rounded-full px-3 py-1 text-xs font-medium transition-all shrink-0 cursor-pointer ${
                     isSelected
-                      ? "bg-indigo-400 text-zinc-950 font-bold shadow-xs"
-                      : "bg-white/10 text-white/70 hover:bg-white/20 hover:text-white"
+                      ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
+                      : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700 border border-zinc-200/70 dark:border-zinc-700/70"
                   }`}
                 >
                   {cat}

@@ -76,53 +76,55 @@ export function NotificationsView({ onNavigateTab }: NotificationsViewProps) {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 pb-20">
-      {/* 1. TOP NOTIFICATIONS HERO BANNER */}
-      <div className="rounded-2xl border border-zinc-200 bg-gradient-to-r from-slate-900 via-indigo-950 to-purple-950 p-6 text-white shadow-xl">
+      {/* 1. TOP NOTIFICATIONS BANNER */}
+      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <span className="rounded-full bg-purple-500/20 px-3 py-0.5 text-xs font-bold text-purple-300 border border-purple-400/40 flex items-center gap-1.5 w-fit">
-              <Bell className="h-3.5 w-3.5 text-amber-300" />
-              ConnectIn Intelligent Notifications Hub
+            <span className="rounded-full bg-blue-50 dark:bg-blue-950/50 px-3 py-0.5 text-xs font-semibold text-[#0A66C2] dark:text-sky-300 border border-blue-200/60 dark:border-blue-800/60 flex items-center gap-1.5 w-fit">
+              <Bell className="h-3.5 w-3.5" />
+              Notifications &amp; Activity
             </span>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white mt-1.5">
-              Updates, Security Advisories &amp; Career Signals
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 mt-1.5">
+              Updates &amp; Career Signals
             </h1>
-            <p className="text-xs sm:text-sm text-zinc-300 max-w-xl">
-              Categorized intelligence across Social engagements, Career job matches, Marketplace updates, Learning milestones, and critical Security advisories.
+            <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-xl">
+              Stay informed on peer connections, career matches, community discussions, and account alerts.
             </p>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
             <button
+              type="button"
               onClick={handleMarkAllRead}
-              className="rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-2 text-xs font-bold text-white transition-all flex items-center gap-1.5 shadow-sm"
+              className="rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200/80 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 px-4 py-2 text-xs font-semibold text-zinc-700 dark:text-zinc-200 transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
             >
-              <Check className="h-4 w-4 text-emerald-300" />
+              <Check className="h-4 w-4 text-[#0A66C2]" />
               <span>Mark All as Read</span>
             </button>
           </div>
         </div>
 
-        {/* 5 Master Notification Categories Filter Ribbon */}
-        <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+        {/* Notification Categories Filter Ribbon */}
+        <div className="mt-5 pt-3.5 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
             {[
-              { id: 'All', label: '🌐 All', count: getCategoryCount('All'), unread: getUnreadCount('All') },
-              { id: 'Security', label: '🛡️ Security', count: getCategoryCount('Security'), unread: getUnreadCount('Security') },
+              { id: 'All', label: 'All', count: getCategoryCount('All'), unread: getUnreadCount('All') },
               { id: 'Career', label: '💼 Career', count: getCategoryCount('Career'), unread: getUnreadCount('Career') },
-              { id: 'Marketplace', label: '🛍️ Marketplace', count: getCategoryCount('Marketplace'), unread: getUnreadCount('Marketplace') },
+              { id: 'Social', label: '💬 Network & Community', count: getCategoryCount('Social'), unread: getUnreadCount('Social') },
               { id: 'Learning', label: '🎓 Learning', count: getCategoryCount('Learning'), unread: getUnreadCount('Learning') },
-              { id: 'Social', label: '💬 Social', count: getCategoryCount('Social'), unread: getUnreadCount('Social') }
+              { id: 'Marketplace', label: '🛍️ Solutions', count: getCategoryCount('Marketplace'), unread: getUnreadCount('Marketplace') },
+              { id: 'Security', label: '🛡️ Account & Safety', count: getCategoryCount('Security'), unread: getUnreadCount('Security') }
             ].map((cat) => {
               const isSelected = selectedCategory === cat.id
               return (
                 <button
                   key={cat.id}
+                  type="button"
                   onClick={() => setSelectedCategory(cat.id as any)}
-                  className={`rounded-xl px-3.5 py-2 text-xs font-bold transition-all shrink-0 flex items-center gap-2 ${
+                  className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all shrink-0 flex items-center gap-2 cursor-pointer ${
                     isSelected
-                      ? "bg-white text-zinc-950 shadow-md font-extrabold"
-                      : "bg-white/10 text-white/80 hover:bg-white/20 hover:text-white"
+                      ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
+                      : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700 border border-zinc-200/70 dark:border-zinc-700/70"
                   }`}
                 >
                   <span>{cat.label}</span>
@@ -131,7 +133,7 @@ export function NotificationsView({ onNavigateTab }: NotificationsViewProps) {
                       {cat.unread}
                     </span>
                   ) : (
-                    <span className={`text-[10px] rounded-full px-1.5 py-0.2 ${isSelected ? "bg-zinc-900 text-white" : "bg-white/20 text-white/90"}`}>
+                    <span className={`text-[10px] rounded-full px-1.5 py-0.2 ${isSelected ? "bg-white/20 text-white" : "bg-zinc-200/70 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300"}`}>
                       {cat.count}
                     </span>
                   )}
@@ -141,11 +143,12 @@ export function NotificationsView({ onNavigateTab }: NotificationsViewProps) {
           </div>
 
           <button
+            type="button"
             onClick={() => setUnreadOnly(!unreadOnly)}
-            className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1.5 ${
+            className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
               unreadOnly
-                ? "bg-amber-400 text-zinc-950 font-black shadow-xs"
-                : "bg-white/10 text-white/80 hover:bg-white/20"
+                ? "bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
+                : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/80 dark:hover:bg-zinc-700 border border-zinc-200/70 dark:border-zinc-700/70"
             }`}
           >
             <Filter className="h-3.5 w-3.5" />

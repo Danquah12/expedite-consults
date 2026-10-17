@@ -510,68 +510,65 @@ export function ProfileView({
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-20">
       {/* 1. TOP MY WORKSPACE COMMAND BAR */}
-      <div className="rounded-2xl border border-indigo-500/30 bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 p-6 text-white shadow-xl">
+      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className={`rounded-full px-3 py-0.5 text-xs font-bold border flex items-center gap-1.5 ${enclaveInfo?.badgeBg || 'bg-indigo-500/20 text-indigo-300 border-indigo-400/40'}`}>
+              <span className="rounded-full px-3 py-0.5 text-xs font-semibold border flex items-center gap-1.5 bg-blue-50 dark:bg-blue-950/50 text-[#0A66C2] dark:text-sky-300 border-blue-200/60 dark:border-blue-800/60">
                 <span>{enclaveInfo?.icon || '🛡️'}</span>
                 <span>{enclaveInfo?.name || 'ConnectIn Professional Workspace'}</span>
               </span>
-              <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-xs font-bold text-emerald-300 border border-emerald-500/40">
-                {enclaveInfo?.securityClearanceTier || 'Verified Professional Grade'}
+              <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
+                Verified Professional
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-black text-white">
-              My Workspace
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+              My Workspace &amp; Identity
             </h1>
-            <p className="text-xs sm:text-sm text-zinc-300 max-w-2xl leading-relaxed">
-              Manage your professional identity, completed technical portfolios, verified skills &amp; certifications, peer reviews, and your <strong>commercial products &amp; seller storefront</strong>.
+            <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-2xl leading-relaxed">
+              Manage your professional profile, work experience, verified skills, certifications, peer reviews, and your seller listings.
             </p>
           </div>
 
           {/* Quick Metrics */}
           <div className="flex items-center gap-3 shrink-0">
-            <div className="rounded-2xl bg-black/40 border border-white/15 p-3.5 text-center min-w-[140px]">
-              <span className="text-[10px] uppercase font-mono text-purple-300">Seller MRR</span>
-              <p className="text-xl font-black text-emerald-400">$122.7K</p>
+            <div className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 p-3.5 text-center min-w-[130px]">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 dark:text-zinc-400">Seller MRR</span>
+              <p className="text-xl font-black text-emerald-600 dark:text-emerald-400">$122.7K</p>
               <span className="text-[10px] text-zinc-400">4 Active Listings</span>
             </div>
-            <div className="rounded-2xl bg-black/40 border border-white/15 p-3.5 text-center min-w-[140px]">
-              <span className="text-[10px] uppercase font-mono text-indigo-300">Expert Reviewer</span>
-              <p className="text-xl font-black text-amber-300">4.98 ⭐</p>
-              <span className="text-[10px] text-zinc-400">127 Reviews Done</span>
+            <div className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 p-3.5 text-center min-w-[130px]">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 dark:text-zinc-400">Rating</span>
+              <p className="text-xl font-black text-amber-500">4.98 ⭐</p>
+              <span className="text-[10px] text-zinc-400">127 Reviews</span>
             </div>
           </div>
         </div>
 
-        {/* 9 Workspace Sections Switcher Ribbon */}
-        <div className="mt-6 pt-4 border-t border-white/10 flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+        {/* Workspace Sections Switcher Ribbon */}
+        <div className="mt-5 pt-3.5 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
           {[
-            { id: 'profile', label: '👤 Profile', icon: ShieldCheck },
-            { id: 'analytics', label: '📊 Analytics & Radar', icon: BarChart3 },
-            { id: 'portfolio', label: '💼 Portfolio', icon: FolderGit2 },
-            { id: 'skills', label: '🛡️ Verified Skills', icon: Zap },
-            { id: 'certifications', label: '📜 Certifications', icon: Award },
-            { id: 'experience', label: '🏛️ Experience', icon: Briefcase },
-            { id: 'publications', label: '📑 Publications', icon: FileText },
-            { id: 'reviews', label: '⭐ Peer Reviews', icon: Star },
-            { id: 'products', label: '🛍️ My Products (Seller Desk)', icon: Store, isHighlight: true }
+            { id: 'profile', label: '👤 Profile' },
+            { id: 'analytics', label: '📊 Analytics' },
+            { id: 'portfolio', label: '💼 Portfolio' },
+            { id: 'skills', label: '🛡️ Skills' },
+            { id: 'certifications', label: '📜 Certifications' },
+            { id: 'experience', label: '🏛️ Experience' },
+            { id: 'publications', label: '📑 Publications' },
+            { id: 'reviews', label: '⭐ Reviews' },
+            { id: 'products', label: '🛍️ My Products' }
           ].map((sec) => {
             const isSelected = workspaceSection === sec.id
             return (
               <button
                 key={sec.id}
+                type="button"
                 onClick={() => setWorkspaceSection(sec.id as any)}
-                className={`rounded-xl px-3.5 py-2 text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+                className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
                   isSelected
-                    ? sec.isHighlight
-                    : "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md font-extrabold"
-                    ? "bg-white text-zinc-950 shadow-md font-extrabold"
-                    : sec.isHighlight
-                    ? "bg-purple-500/20 text-purple-200 hover:bg-purple-500/30 border border-purple-400/40"
-                    : "bg-white/10 text-white/80 hover:bg-white/20 hover:text-white"
+                    ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
+                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700 border border-zinc-200/70 dark:border-zinc-700/70"
                 }`}
               >
                 <span>{sec.label}</span>

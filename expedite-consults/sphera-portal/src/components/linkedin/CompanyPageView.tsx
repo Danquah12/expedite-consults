@@ -99,10 +99,10 @@ export function CompanyPageView({
 
               <button
                 onClick={() => onNavigateTab('messaging')}
-                className="rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white px-5 py-2 text-xs font-bold shadow-md flex items-center gap-1.5"
+                className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white px-5 py-2 text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-colors"
               >
                 <MessageSquare className="h-3.5 w-3.5" />
-                <span>Contact RFP Desk</span>
+                <span>Message Team</span>
               </button>
             </div>
           </div>

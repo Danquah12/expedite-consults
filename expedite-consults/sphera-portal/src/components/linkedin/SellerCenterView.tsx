@@ -48,54 +48,54 @@ export function SellerCenterView({
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-24">
       {/* Hero Banner */}
-      <div className="rounded-2xl border border-purple-500/30 bg-gradient-to-r from-slate-900 via-indigo-950 to-purple-950 p-6 text-white shadow-xl">
+      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
-            <span className="rounded-full bg-purple-500/30 px-3 py-0.5 text-xs font-bold text-purple-200 border border-purple-400/40 flex items-center gap-1.5 w-fit">
-              <Store className="h-3.5 w-3.5 text-amber-300" />
-              ConnectIn Commercial Seller Center &amp; Revenue Operations
+            <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-3 py-1 text-xs font-semibold text-[#0A66C2] dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center gap-1.5 w-fit">
+              <Store className="h-3.5 w-3.5 text-[#0A66C2]" />
+              Seller Hub &amp; Revenue Operations
             </span>
-            <h1 className="text-2xl font-black text-white">
-              Expedite Consults Seller Command Center
+            <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
+              Seller Dashboard &amp; Solutions Catalog
             </h1>
-            <p className="text-xs text-zinc-300 max-w-xl">
-              Manage product listings, enterprise subscriptions, customer licenses, escrow milestone payments, and sales analytics.
+            <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-xl">
+              Manage product listings, subscriptions, active client licenses, and sales analytics.
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               onClick={() => onNavigateTab('marketplace')}
-              className="rounded-xl bg-purple-500 hover:bg-purple-400 text-zinc-950 px-4 py-2 text-xs font-black transition-all shadow-md"
+              className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white px-5 py-2.5 text-xs font-semibold transition-colors shadow-xs"
             >
-              ➕ List New Product
+              + List New Solution
             </button>
           </div>
         </div>
 
         {/* 4 Core Metrics Tiles */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-4 border-t border-white/10 text-xs">
-          <div className="rounded-xl bg-black/40 p-3 border border-white/10 space-y-1">
-            <span className="text-zinc-400 text-[10px] uppercase font-mono">Monthly Recurring (MRR)</span>
-            <p className="text-xl font-black text-emerald-400">{SELLER_CENTER_METRICS.mrr}</p>
-            <span className="text-[10px] text-emerald-300 font-mono flex items-center gap-0.5"><ArrowUpRight className="h-3 w-3" /> +14.2% MoM</span>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-4 border-t border-zinc-100 dark:border-zinc-800 text-xs">
+          <div className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 p-3.5 border border-zinc-200 dark:border-zinc-700 space-y-1">
+            <span className="text-zinc-500 text-[11px] font-semibold uppercase">Monthly Recurring</span>
+            <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{SELLER_CENTER_METRICS.mrr}</p>
+            <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-0.5"><ArrowUpRight className="h-3 w-3" /> +14.2% MoM</span>
           </div>
 
-          <div className="rounded-xl bg-black/40 p-3 border border-white/10 space-y-1">
-            <span className="text-zinc-400 text-[10px] uppercase font-mono">Active Licenses</span>
-            <p className="text-xl font-black text-white">{SELLER_CENTER_METRICS.activeLicenses}</p>
-            <span className="text-[10px] text-amber-300 font-mono">{SELLER_CENTER_METRICS.activeTrials} in Free Trial</span>
+          <div className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 p-3.5 border border-zinc-200 dark:border-zinc-700 space-y-1">
+            <span className="text-zinc-500 text-[11px] font-semibold uppercase">Active Licenses</span>
+            <p className="text-xl font-bold text-zinc-900 dark:text-white">{SELLER_CENTER_METRICS.activeLicenses}</p>
+            <span className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold">{SELLER_CENTER_METRICS.activeTrials} in Free Trial</span>
           </div>
 
-          <div className="rounded-xl bg-black/40 p-3 border border-white/10 space-y-1">
-            <span className="text-zinc-400 text-[10px] uppercase font-mono">ConnectIn Escrow Held</span>
-            <p className="text-xl font-black text-amber-400">{SELLER_CENTER_METRICS.escrowPending.split(' ')[0]}</p>
+          <div className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 p-3.5 border border-zinc-200 dark:border-zinc-700 space-y-1">
+            <span className="text-zinc-500 text-[11px] font-semibold uppercase">Escrow Payouts</span>
+            <p className="text-xl font-bold text-amber-600 dark:text-amber-400">{SELLER_CENTER_METRICS.escrowPending.split(' ')[0]}</p>
             <span className="text-[10px] text-zinc-400">Milestone protected</span>
           </div>
 
-          <div className="rounded-xl bg-black/40 p-3 border border-white/10 space-y-1">
-            <span className="text-zinc-400 text-[10px] uppercase font-mono">Trial Conversion</span>
-            <p className="text-xl font-black text-purple-300">{SELLER_CENTER_METRICS.conversionRate}</p>
+          <div className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 p-3.5 border border-zinc-200 dark:border-zinc-700 space-y-1">
+            <span className="text-zinc-500 text-[11px] font-semibold uppercase">Trial Conversion</span>
+            <p className="text-xl font-bold text-[#0A66C2]">{SELLER_CENTER_METRICS.conversionRate}</p>
             <span className="text-[10px] text-zinc-400">Industry Avg: 12%</span>
           </div>
         </div>

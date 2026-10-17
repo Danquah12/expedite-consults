@@ -40,36 +40,36 @@ export function MentorshipCreatorView({
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-24">
       {/* Hero Banner */}
-      <div className="rounded-2xl border border-indigo-500/30 bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 p-6 text-white shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
-          <span className="rounded-full bg-indigo-500/30 px-3 py-0.5 text-xs font-bold text-indigo-200 border border-indigo-400/40 flex items-center gap-1.5 w-fit">
-            <GraduationCap className="h-3.5 w-3.5 text-amber-300" />
-            ConnectIn Mentorship &amp; Creator Economy Hub
+          <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-3 py-1 text-xs font-semibold text-[#0A66C2] dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center gap-1.5 w-fit">
+            <GraduationCap className="h-3.5 w-3.5 text-[#0A66C2]" />
+            Mentorship &amp; Creator Opportunities
           </span>
-          <h1 className="text-2xl font-black text-white">
-            1:1 Leadership Mentorship &amp; B2B Technical Creator Briefs
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
+            1:1 Leadership Mentorship &amp; Creator Briefs
           </h1>
-          <p className="text-xs text-zinc-300 max-w-xl">
-            Book 1:1 sessions with verified CISOs and Fellows, or get paid by enterprise software brands to create technical teardowns and architecture whitepapers.
+          <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-xl">
+            Book 1:1 sessions with experienced mentors across disciplines, or partner with top brands to create educational guides and industry teardowns.
           </p>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => setActiveTab('mentorship')}
-            className={`rounded-xl px-4 py-2 text-xs font-bold transition-all ${
-              activeTab === 'mentorship' ? "bg-white text-zinc-950 shadow-md font-black" : "bg-white/10 text-white hover:bg-white/20"
+            className={`rounded-full px-4 py-2 text-xs font-semibold transition-all ${
+              activeTab === 'mentorship' ? "bg-[#0A66C2] text-white shadow-xs" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
             }`}
           >
-            👨‍🏫 Find a Mentor ({mentors.length})
+            Find a Mentor ({mentors.length})
           </button>
           <button
             onClick={() => setActiveTab('creator')}
-            className={`rounded-xl px-4 py-2 text-xs font-bold transition-all ${
-              activeTab === 'creator' ? "bg-white text-zinc-950 shadow-md font-black" : "bg-white/10 text-white hover:bg-white/20"
+            className={`rounded-full px-4 py-2 text-xs font-semibold transition-all ${
+              activeTab === 'creator' ? "bg-[#0A66C2] text-white shadow-xs" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
             }`}
           >
-            📢 Creator Campaigns ({campaigns.length})
+            Creator Campaigns ({campaigns.length})
           </button>
         </div>
       </div>

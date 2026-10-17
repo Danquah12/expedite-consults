@@ -52,26 +52,26 @@ export function WalletInvoicingView({
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-24">
       {/* Hero Banner */}
-      <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-950 p-6 text-white shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
-          <span className="rounded-full bg-emerald-500/20 px-3 py-0.5 text-xs font-bold text-emerald-300 border border-emerald-400/40 flex items-center gap-1.5 w-fit">
-            <CreditCard className="h-3.5 w-3.5 text-amber-300" />
-            ConnectIn Pay, Wallet &amp; Invoicing Operations
+          <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/40 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1.5 w-fit">
+            <CreditCard className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+            ConnectIn Payments &amp; Invoicing
           </span>
-          <h1 className="text-2xl font-black text-white">
-            Professional Wallet &amp; Institutional Escrow
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
+            Professional Payments, Invoicing &amp; Payouts
           </h1>
-          <p className="text-xs text-zinc-300 max-w-xl">
-            Collect marketplace revenue, advisory retainer payouts, creator brand briefs, and issue enterprise SOW invoices.
+          <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-xl">
+            Track marketplace sales, advisory sessions, client retainers, and issue professional invoices directly to clients.
           </p>
         </div>
 
         <button
           onClick={() => setIsCreatingInvoice(!isCreatingInvoice)}
-          className="rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-4 py-2.5 text-xs shadow-md transition-all flex items-center gap-1.5 shrink-0"
+          className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white font-semibold px-5 py-2.5 text-xs shadow-xs transition-colors flex items-center gap-1.5 shrink-0"
         >
           <Plus className="h-4 w-4" />
-          <span>Create &amp; Send Invoice</span>
+          <span>Create Invoice</span>
         </button>
       </div>
 

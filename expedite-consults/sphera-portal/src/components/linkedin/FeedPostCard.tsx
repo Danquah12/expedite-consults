@@ -539,33 +539,33 @@ export function FeedPostCard({
         </div>
       )}
 
-      {/* 4. EMBEDDED PRODUCT DISCOVERY CARD (6-ACTION COMMERCE ENGINE) */}
+      {/* 4. EMBEDDED PRODUCT DISCOVERY CARD */}
       {post.embeddedProduct && (
-        <div className="mx-4 my-3 overflow-hidden rounded-2xl border border-purple-500/30 bg-gradient-to-br from-slate-900 via-indigo-950/90 to-purple-950 p-4 sm:p-5 text-white shadow-lg">
+        <div className="mx-4 my-3 overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-800/40 p-4 sm:p-5 text-zinc-900 dark:text-zinc-100 shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
             <div className="flex items-start gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-tr from-purple-500 to-indigo-600 text-2xl shadow-md shrink-0">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-950/60 text-[#0A66C2] dark:text-sky-300 text-2xl shadow-xs shrink-0 border border-blue-200 dark:border-blue-800">
                 {post.embeddedProduct.icon}
               </div>
               <div className="space-y-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h4 className="font-black text-sm sm:text-base text-white">
+                  <h4 className="font-bold text-sm sm:text-base text-zinc-900 dark:text-zinc-100">
                     {post.embeddedProduct.name}
                   </h4>
-                  <span className="rounded-full bg-purple-500/30 px-2 py-0.5 text-[10px] font-bold text-purple-200 border border-purple-400/40">
+                  <span className="rounded-full bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 text-[10px] font-semibold text-[#0A66C2] dark:text-sky-300 border border-blue-200 dark:border-blue-800">
                     {post.embeddedProduct.badge}
                   </span>
                 </div>
-                <p className="text-xs font-semibold text-purple-200/90">
+                <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
                   {post.embeddedProduct.tagline}
                 </p>
-                <div className="flex items-center gap-3 text-xs text-purple-300/80 pt-0.5">
-                  <span className="font-bold text-emerald-400">
+                <div className="flex items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400 pt-0.5">
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">
                     {post.embeddedProduct.pricing}
                   </span>
                   {post.embeddedProduct.rating && (
-                    <span className="flex items-center gap-1 text-amber-300 font-bold">
-                      <Star className="h-3 w-3 fill-amber-300" />
+                    <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-semibold">
+                      <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
                       {post.embeddedProduct.rating} ({post.embeddedProduct.reviewsCount} reviews)
                     </span>
                   )}
@@ -574,16 +574,16 @@ export function FeedPostCard({
             </div>
           </div>
 
-          <p className="text-xs text-zinc-300 leading-relaxed mt-3">
+          <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed mt-3">
             {post.embeddedProduct.description}
           </p>
 
           {/* Key Features Checklist */}
           {post.embeddedProduct.keyFeatures && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-3 pb-1 border-t border-white/10 mt-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-3 pb-1 border-t border-zinc-200 dark:border-zinc-700/60 mt-3">
               {post.embeddedProduct.keyFeatures.map((feat, idx) => (
-                <div key={idx} className="flex items-center gap-1.5 text-[11px] text-zinc-300">
-                  <Check className="h-3 w-3 text-emerald-400 shrink-0" />
+                <div key={idx} className="flex items-center gap-1.5 text-[11px] text-zinc-700 dark:text-zinc-300">
+                  <Check className="h-3 w-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <span className="truncate">{feat}</span>
                 </div>
               ))}
@@ -591,14 +591,15 @@ export function FeedPostCard({
           )}
 
           {/* 6-ACTION PRODUCT DISCOVERY ENGINE BAR */}
-          <div className="mt-4 pt-3 border-t border-white/10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1.5">
+          <div className="mt-4 pt-3 border-t border-zinc-200 dark:border-zinc-700/60 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1.5">
             {/* 1. View Product */}
             <button
+              type="button"
               onClick={() => setActiveProductModal('view')}
-              className="rounded-lg bg-white/10 hover:bg-white/20 py-2 px-2 text-[11px] font-bold text-white transition-all flex items-center justify-center gap-1 border border-white/15 shadow-2xs"
+              className="rounded-lg bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 py-1.5 px-2 text-[11px] font-semibold text-zinc-800 dark:text-zinc-200 transition-colors flex items-center justify-center gap-1 border border-zinc-200 dark:border-zinc-700 shadow-2xs cursor-pointer"
               title="View Product Overview"
             >
-              <Eye className="h-3.5 w-3.5 text-sky-400" />
+              <Eye className="h-3.5 w-3.5 text-[#0A66C2]" />
               <span>View</span>
             </button>
 
@@ -608,18 +609,19 @@ export function FeedPostCard({
                 href={post.embeddedProduct.demoUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="rounded-lg bg-white/10 hover:bg-white/20 py-2 px-2 text-[11px] font-bold text-white transition-all flex items-center justify-center gap-1 border border-white/15 shadow-2xs"
+                className="rounded-lg bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 py-1.5 px-2 text-[11px] font-semibold text-zinc-800 dark:text-zinc-200 transition-colors flex items-center justify-center gap-1 border border-zinc-200 dark:border-zinc-700 shadow-2xs"
                 title="Live Sandbox Demo"
               >
-                <Play className="h-3.5 w-3.5 text-emerald-400" />
+                <Play className="h-3.5 w-3.5 text-emerald-600" />
                 <span>Demo</span>
               </a>
             ) : (
               <button
+                type="button"
                 onClick={() => setActiveProductModal('demo')}
-                className="rounded-lg bg-white/10 hover:bg-white/20 py-2 px-2 text-[11px] font-bold text-white transition-all flex items-center justify-center gap-1 border border-white/15"
+                className="rounded-lg bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 py-1.5 px-2 text-[11px] font-semibold text-zinc-800 dark:text-zinc-200 transition-colors flex items-center justify-center gap-1 border border-zinc-200 dark:border-zinc-700 shadow-2xs cursor-pointer"
               >
-                <Play className="h-3.5 w-3.5 text-emerald-400" />
+                <Play className="h-3.5 w-3.5 text-emerald-600" />
                 <span>Demo</span>
               </button>
             )}
@@ -629,34 +631,36 @@ export function FeedPostCard({
               href={post.embeddedProduct.docsUrl || "https://portal.expediteconsults.com"}
               target="_blank"
               rel="noreferrer"
-              className="rounded-lg bg-white/10 hover:bg-white/20 py-2 px-2 text-[11px] font-bold text-white transition-all flex items-center justify-center gap-1 border border-white/15 shadow-2xs"
+              className="rounded-lg bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 py-1.5 px-2 text-[11px] font-semibold text-zinc-800 dark:text-zinc-200 transition-colors flex items-center justify-center gap-1 border border-zinc-200 dark:border-zinc-700 shadow-2xs"
               title="Technical Docs & Architecture"
             >
-              <BookOpen className="h-3.5 w-3.5 text-amber-400" />
+              <BookOpen className="h-3.5 w-3.5 text-amber-600" />
               <span>Docs</span>
             </a>
 
             {/* 4. Pricing */}
             <button
+              type="button"
               onClick={() => setActiveProductModal('pricing')}
-              className="rounded-lg bg-white/10 hover:bg-white/20 py-2 px-2 text-[11px] font-bold text-white transition-all flex items-center justify-center gap-1 border border-white/15 shadow-2xs"
+              className="rounded-lg bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 py-1.5 px-2 text-[11px] font-semibold text-zinc-800 dark:text-zinc-200 transition-colors flex items-center justify-center gap-1 border border-zinc-200 dark:border-zinc-700 shadow-2xs cursor-pointer"
               title="View Pricing & Plans"
             >
-              <DollarSign className="h-3.5 w-3.5 text-teal-400" />
+              <DollarSign className="h-3.5 w-3.5 text-teal-600" />
               <span>Pricing</span>
             </button>
 
             {/* 5. Start Trial */}
             <button
+              type="button"
               onClick={() => {
                 const key = 'TRIAL-EXP-' + Math.random().toString(36).substring(2, 6).toUpperCase() + '-2026'
                 setTrialKey(key)
                 setActiveProductModal('trial')
               }}
-              className="rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 py-2 px-2 text-[11px] font-extrabold text-white transition-all flex items-center justify-center gap-1 shadow-md border border-purple-400/40"
+              className="rounded-lg bg-[#0A66C2] hover:bg-[#004182] py-1.5 px-2 text-[11px] font-semibold text-white transition-colors flex items-center justify-center gap-1 shadow-2xs cursor-pointer"
               title="Generate Instant 14-Day Trial License"
             >
-              <Zap className="h-3.5 w-3.5 text-amber-300 animate-pulse" />
+              <Zap className="h-3.5 w-3.5" />
               <span>Trial</span>
             </button>
 
@@ -665,7 +669,7 @@ export function FeedPostCard({
               href={post.embeddedProduct.buyUrl || "https://portal.expediteconsults.com"}
               target="_blank"
               rel="noreferrer"
-              className="rounded-lg bg-emerald-600 hover:bg-emerald-500 py-2 px-2 text-[11px] font-extrabold text-white transition-all flex items-center justify-center gap-1 shadow-md"
+              className="rounded-lg bg-emerald-600 hover:bg-emerald-700 py-1.5 px-2 text-[11px] font-semibold text-white transition-colors flex items-center justify-center gap-1 shadow-2xs"
               title="Buy Commercial License"
             >
               <ShoppingBag className="h-3.5 w-3.5" />

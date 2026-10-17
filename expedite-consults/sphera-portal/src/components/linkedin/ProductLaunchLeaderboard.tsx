@@ -91,17 +91,17 @@ export function ProductLaunchLeaderboard({
   return (
     <div className="mx-auto max-w-5xl space-y-6 pb-12">
       {/* Header Banner */}
-      <div className="rounded-2xl border border-zinc-200 bg-gradient-to-r from-orange-950 via-amber-950 to-slate-950 p-6 text-white shadow-md">
+      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <span className="rounded-full bg-orange-400/20 px-2.5 py-0.5 text-xs font-bold text-amber-300 border border-orange-400/40 flex items-center gap-1.5 w-fit">
-              <Flame className="h-3.5 w-3.5 text-orange-400 fill-orange-400" /> ConnectIn Launchpad (Daily Leaderboard)
+            <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-3 py-1 text-xs font-semibold text-[#0A66C2] dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center gap-1.5 w-fit">
+              <Flame className="h-3.5 w-3.5 text-[#0A66C2]" /> ConnectIn Launchpad (Community Showcase)
             </span>
-            <h2 className="mt-2 text-xl sm:text-2xl font-bold tracking-tight">
-              Member Product Launches & Open-Source Showcases
+            <h2 className="mt-2 text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
+              Member Product Launches &amp; Project Showcases
             </h2>
-            <p className="mt-1 text-xs sm:text-sm text-amber-200 max-w-xl">
-              Discover, upvote, and test ground-breaking tools, eBPF probes, and architectural blueprints crafted by the community.
+            <p className="mt-1 text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-xl">
+              Discover, upvote, and support innovative products, useful developer tools, and creative projects built by community members.
             </p>
           </div>
 
@@ -109,18 +109,18 @@ export function ProductLaunchLeaderboard({
             {onNavigateMarketplace && (
               <button
                 onClick={onNavigateMarketplace}
-                className="flex items-center gap-1.5 rounded-full bg-white/15 px-4 py-2.5 text-xs font-bold text-white backdrop-blur-xs border border-white/20 hover:bg-white/25 transition-all"
+                className="flex items-center gap-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 px-4 py-2.5 text-xs font-semibold text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
               >
-                <ShoppingBag className="h-4 w-4 text-amber-300" />
-                <span>Visit App Store 🛒</span>
+                <ShoppingBag className="h-4 w-4 text-[#0A66C2]" />
+                <span>Solutions Hub</span>
               </button>
             )}
 
             <button
               onClick={() => setIsSubmitOpen(true)}
-              className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-orange-500 to-amber-600 px-6 py-2.5 text-xs font-bold text-white shadow-lg hover:from-orange-600 hover:to-amber-700 transition-all"
+              className="flex items-center gap-1.5 rounded-full bg-[#0A66C2] px-5 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-[#004182] transition-colors"
             >
-              <Plus className="h-4 w-4" /> Launch Your Project
+              <Plus className="h-4 w-4" /> Launch Project
             </button>
           </div>
         </div>
@@ -132,10 +132,10 @@ export function ProductLaunchLeaderboard({
           <button
             key={cat}
             onClick={() => setActiveCategory(cat)}
-            className={`rounded-full px-4 py-1.5 transition-all ${
+            className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
               activeCategory === cat
-                ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 font-bold shadow-xs"
-                : "bg-white text-zinc-600 border border-zinc-200 hover:bg-zinc-50 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-300"
+                ? "bg-[#0A66C2] text-white shadow-xs"
+                : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
             }`}
           >
             {cat}

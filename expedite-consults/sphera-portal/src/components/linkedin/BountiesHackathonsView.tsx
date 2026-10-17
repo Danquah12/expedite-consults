@@ -47,23 +47,23 @@ export function BountiesHackathonsView({
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-24">
       {/* Hero Banner */}
-      <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-r from-slate-900 via-amber-950/60 to-slate-950 p-6 text-white shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
-          <span className="rounded-full bg-amber-500/20 px-3 py-0.5 text-xs font-bold text-amber-300 border border-amber-400/40 flex items-center gap-1.5 w-fit">
-            <Trophy className="h-3.5 w-3.5 text-amber-300" />
-            ConnectIn Enterprise Bounties &amp; Hackathon Escrow
+          <span className="rounded-full bg-amber-50 dark:bg-amber-950/40 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 flex items-center gap-1.5 w-fit">
+            <Trophy className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+            ConnectIn Challenges &amp; Hackathons
           </span>
-          <h1 className="text-2xl font-black text-white">
-            Solve Hard Problems &amp; Earn Direct Escrow Payouts
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
+            Solve Industry Challenges &amp; Earn Verified Rewards
           </h1>
-          <p className="text-xs text-zinc-300 max-w-xl leading-relaxed">
-            Enterprise sponsors deposit $15,000–$50,000 in escrow for zero-day mitigation, AI jailbreak defense, and automated OSCAL telemetry benchmarks.
+          <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-xl leading-relaxed">
+            Collaborate on sponsor challenges, contribute solutions, and receive guaranteed project payouts upon successful completion.
           </p>
         </div>
 
         <button
           onClick={() => onNavigateTab('wallet')}
-          className="rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-4 py-2.5 text-xs shadow-md transition-all shrink-0"
+          className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white font-semibold px-4 py-2.5 text-xs shadow-xs transition-colors shrink-0"
         >
           View My Wallet ($2,430) →
         </button>

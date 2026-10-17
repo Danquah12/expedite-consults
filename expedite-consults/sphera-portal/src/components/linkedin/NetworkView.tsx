@@ -403,70 +403,55 @@ export function NetworkView({
         </div>
       )}
 
-      {/* 1. TOP CAPABILITY-DRIVEN GRAPH BANNER */}
-      <div className={`rounded-2xl border p-6 text-white shadow-xl ${
-        enclaveId === 'trades_construction'
-          ? "border-amber-500/30 bg-gradient-to-r from-stone-900 via-amber-950 to-neutral-900"
-          : enclaveId === 'healthcare_medicine'
-          ? "border-rose-500/30 bg-gradient-to-r from-slate-900 via-rose-950 to-slate-950"
-          : enclaveId === 'automotive_mechanics'
-          ? "border-blue-500/30 bg-gradient-to-r from-zinc-900 via-blue-950 to-slate-900"
-          : "border-blue-500/30 bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950"
-      }`}>
+      {/* 1. TOP PROFESSIONAL NETWORK BANNER */}
+      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className={`rounded-full px-3 py-0.5 text-xs font-bold border flex items-center gap-1.5 ${
-                enclaveId === 'trades_construction'
-                  ? "bg-amber-500/20 text-amber-300 border-amber-400/40"
-                  : enclaveId === 'healthcare_medicine'
-                  ? "bg-rose-500/20 text-rose-300 border-rose-400/40"
-                  : enclaveId === 'automotive_mechanics'
-                  ? "bg-blue-500/20 text-blue-300 border-blue-400/40"
-                  : "bg-blue-500/20 text-sky-300 border-blue-400/40"
-              }`}>
+              <span className="rounded-full px-3 py-0.5 text-xs font-semibold border flex items-center gap-1.5 bg-blue-50 dark:bg-blue-950/50 text-[#0A66C2] dark:text-sky-300 border-blue-200/60 dark:border-blue-800/60">
                 <Users className="h-3.5 w-3.5" />
                 {enclaveId === 'trades_construction'
-                  ? "Skilled Trades Network Mesh"
+                  ? "Skilled Trades Community"
                   : enclaveId === 'healthcare_medicine'
-                  ? "Clinical & Surgical Mesh"
+                  ? "Clinical & Healthcare Community"
                   : enclaveId === 'automotive_mechanics'
-                  ? "Master Tech & Fleet Network"
-                  : "Network Intelligence Mesh"}
+                  ? "Automotive Technicians Network"
+                  : "Professional Community"}
               </span>
-              <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-xs font-bold text-emerald-300 border border-emerald-500/40">
-                Capability & Trade-Driven Graph
+              <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
+                Verified Members
               </span>
-              <span className="rounded-full bg-purple-500/20 px-2.5 py-0.5 text-xs font-bold text-purple-300 border border-purple-500/40">
-                {totalConnectionsDisplay.toLocaleString()}+ 1st Degree Peers
+              <span className="rounded-full bg-indigo-50 dark:bg-indigo-950/50 px-2.5 py-0.5 text-xs font-semibold text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/60">
+                {totalConnectionsDisplay.toLocaleString()}+ Connections
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
               {enclaveId === 'trades_construction'
                 ? "Manage & Expand Your Trade Network"
                 : enclaveId === 'healthcare_medicine'
                 ? "Manage & Expand Your Clinical Network"
                 : enclaveId === 'automotive_mechanics'
-                ? "Manage & Expand Your Automotive Diagnostics Network"
-                : "Manage & Expand Your Trusted Network"}
+                ? "Manage & Expand Your Automotive Network"
+                : "Manage & Expand Your Professional Network"}
             </h1>
-            <p className="text-xs sm:text-sm text-zinc-300 max-w-2xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-2xl leading-relaxed">
               {enclaveId === 'trades_construction'
-                ? "Invite colleagues, discover verified master craftsmen across Heavy Timber, Architectural Joinery, OSHA 30, Commercial Buildouts, and exchange direct job-site messages."
+                ? "Invite colleagues, connect with master carpenters, superintendents, and trade specialists, and exchange direct messages."
                 : enclaveId === 'healthcare_medicine'
-                ? "Invite colleagues, discover verified clinicians across Trauma Surgery, Emergency Nursing, Joint Reconstruction, Critical Care, and coordinate clinical care."
+                ? "Invite colleagues, discover verified clinicians and specialists across surgery, nursing, and critical care, and coordinate clinical practice."
                 : enclaveId === 'automotive_mechanics'
-                ? "Invite colleagues, discover verified master technicians across 800V EV Powertrains, PicoScope Diagnostics, Fleet Diesel, Engine Rebuilds, and collaborate on complex DTCs."
-                : "Invite colleagues, discover verified specialists across Cloud Security, Zero Trust, FedRAMP, AI Defense, and exchange direct encrypted messages."}
+                ? "Invite colleagues, connect with master technicians and specialists across diagnostics, EV powertrains, and fleet maintenance."
+                : "Invite colleagues, discover verified specialists and industry leaders in your discipline, and build your professional community."}
             </p>
           </div>
 
           {/* Quick Actions & Search Box */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0">
             <button
+              type="button"
               onClick={() => setIsInviteModalOpen(true)}
-              className="rounded-xl bg-gradient-to-r from-sky-400 to-blue-500 px-4 py-2.5 text-xs font-black text-zinc-950 hover:brightness-110 shadow-lg flex items-center justify-center gap-1.5 transition-all"
+              className="rounded-full bg-[#0A66C2] hover:bg-[#004182] px-4 py-2 text-xs font-semibold text-white shadow-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
             >
               <UserPlus className="h-4 w-4" />
               <span>+ Invite to ConnectIn</span>
@@ -479,27 +464,28 @@ export function NetworkView({
                 placeholder="Filter by name, skill, agency..."
                 value={searchFilter}
                 onChange={(e) => setSearchFilter(e.target.value)}
-                className="w-full rounded-xl bg-black/40 pl-10 pr-4 py-2 text-xs sm:text-sm text-white placeholder:text-zinc-400 border border-white/15 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                className="w-full rounded-full bg-zinc-50 dark:bg-zinc-800 pl-9 pr-4 py-2 text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 border border-zinc-200 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
               />
             </div>
           </div>
         </div>
 
         {/* Capability Selection Ribbon */}
-        <div className="mt-5 pt-4 border-t border-white/10 flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-sky-300 shrink-0 mr-1 flex items-center gap-1">
-            <Target className="h-3.5 w-3.5" /> Capabilities:
+        <div className="mt-4 pt-3.5 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 shrink-0 mr-1 flex items-center gap-1">
+            <Target className="h-3.5 w-3.5 text-[#0A66C2]" /> Specialties:
           </span>
           {capabilityFilters.map((cap) => {
             const isSelected = selectedCapability === cap.id
             return (
               <button
                 key={cap.id}
+                type="button"
                 onClick={() => setSelectedCapability(cap.id)}
-                className={`rounded-full px-3 py-1 text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+                className={`rounded-full px-3 py-1 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
                   isSelected
-                    ? "bg-gradient-to-r from-sky-400 to-blue-500 text-zinc-950 shadow-md font-extrabold"
-                    : "bg-white/10 text-white/80 hover:bg-white/20"
+                    ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
+                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700 border border-zinc-200/70 dark:border-zinc-700/70"
                 }`}
               >
                 <span>{cap.icon}</span>

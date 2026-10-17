@@ -31,24 +31,24 @@ export function TrustCenterView({ onNavigateTab }: TrustCenterViewProps) {
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-24">
       {/* Hero Banner */}
-      <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-slate-900 via-emerald-950 to-indigo-950 p-6 text-white shadow-xl">
+      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
-            <span className="rounded-full bg-emerald-500/30 px-3 py-0.5 text-xs font-bold text-emerald-200 border border-emerald-400/40 flex items-center gap-1.5 w-fit">
-              <ShieldCheck className="h-3.5 w-3.5 text-emerald-300" />
-              ConnectIn Enterprise Trust Center
+            <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-3 py-1 text-xs font-semibold text-[#0A66C2] dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center gap-1.5 w-fit">
+              <ShieldCheck className="h-3.5 w-3.5 text-[#0A66C2]" />
+              Trust, Security &amp; Compliance Center
             </span>
-            <h1 className="text-2xl font-black text-white">
-              Platform Security, Compliance &amp; Governance
+            <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
+              Platform Security &amp; Data Safeguards
             </h1>
-            <p className="text-xs text-zinc-300 max-w-xl">
-              Real-time security telemetry, continuous statutory audit logs, cryptographic standards, and vulnerability disclosure policies.
+            <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-xl">
+              Learn how ConnectIn protects member identity, enforces enterprise compliance standards, and safeguards professional privacy.
             </p>
           </div>
 
-          <div className="rounded-xl bg-black/40 p-3 border border-white/15 text-center min-w-[140px] shrink-0">
-            <span className="text-[10px] uppercase font-mono text-emerald-400">Platform Uptime</span>
-            <p className="text-xl font-black text-white">99.99%</p>
+          <div className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 p-3.5 border border-zinc-200 dark:border-zinc-700 text-center min-w-[140px] shrink-0">
+            <span className="text-[11px] font-semibold text-zinc-500 uppercase">Platform Status</span>
+            <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">99.99%</p>
             <span className="text-[10px] text-zinc-400">All Systems Operational</span>
           </div>
         </div>

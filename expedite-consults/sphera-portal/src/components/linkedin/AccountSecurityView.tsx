@@ -64,26 +64,26 @@ export function AccountSecurityView({
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-24">
       {/* Top Banner */}
-      <div className="rounded-2xl border border-sky-500/30 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-950 p-6 text-white shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
-          <span className="rounded-full bg-sky-500/20 px-3 py-0.5 text-xs font-bold text-sky-300 border border-sky-400/40 flex items-center gap-1.5 w-fit">
-            <Lock className="h-3.5 w-3.5 text-amber-300" />
-            ConnectIn Identity &amp; Account Security Center
+          <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-3 py-1 text-xs font-semibold text-[#0A66C2] dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center gap-1.5 w-fit">
+            <Lock className="h-3.5 w-3.5 text-[#0A66C2]" />
+            Account Security &amp; Privacy Settings
           </span>
-          <h1 className="text-2xl font-black text-white">
-            Security, Passkeys &amp; Privacy Controls
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
+            Security, Passkeys &amp; Login Controls
           </h1>
-          <p className="text-xs text-zinc-300 max-w-xl leading-relaxed">
-            Manage your cryptographic passkeys, active multi-device sessions, OAuth application grants, and account standing.
+          <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-xl leading-relaxed">
+            Manage your two-factor authentication, active login devices, connected applications, and account security preferences.
           </p>
         </div>
 
-        <div className="rounded-2xl bg-black/40 p-3.5 border border-white/15 text-center min-w-[170px] shrink-0 space-y-0.5">
-          <span className="text-[10px] uppercase font-mono text-zinc-400">Account Standing</span>
-          <p className="text-lg font-black text-emerald-400 flex items-center justify-center gap-1">
-            <CheckCircle2 className="h-4 w-4" /> 🟢 Good Standing
+        <div className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 p-3.5 border border-zinc-200 dark:border-zinc-700 text-center min-w-[170px] shrink-0 space-y-0.5">
+          <span className="text-[11px] font-semibold text-zinc-500 uppercase">Account Status</span>
+          <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1">
+            <CheckCircle2 className="h-4 w-4" /> Good Standing
           </p>
-          <span className="text-[10px] text-zinc-400 font-mono">Risk Score: {secData.riskScore}</span>
+          <span className="text-[10px] text-zinc-400 font-mono">Risk Level: Low</span>
         </div>
       </div>
 

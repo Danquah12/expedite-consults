@@ -227,18 +227,18 @@ export function MediaView({
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-24">
       {/* 1. MEDIA HUB BANNER & NAV */}
-      <div className="rounded-2xl border border-purple-500/30 bg-gradient-to-r from-slate-900 via-indigo-950 to-purple-950 p-5 sm:p-6 text-white shadow-xl">
+      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
-            <span className="rounded-full bg-purple-500/30 px-3 py-0.5 text-xs font-bold text-purple-200 border border-purple-400/40 flex items-center gap-1.5 w-fit">
-              <Tv className="h-3.5 w-3.5 text-amber-300" />
-              ConnectIn Media &amp; Professional Video Platform
+            <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-3 py-1 text-xs font-semibold text-[#0A66C2] dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center gap-1.5 w-fit">
+              <Tv className="h-3.5 w-3.5 text-[#0A66C2]" />
+              ConnectIn Media &amp; Video Platform
             </span>
-            <h1 className="text-2xl font-black text-white">
-              ConnectIn Video, Clips, Live &amp; Studio
+            <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
+              Professional Video, Live Streams &amp; Studio
             </h1>
-            <p className="text-xs text-zinc-300 max-w-2xl leading-relaxed">
-              Technical walkthroughs, product teardowns, vertical clips, and live webinars deeply connected to **Marketplace trials, jobs, labs, and B2B revenue operations**.
+            <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-2xl leading-relaxed">
+              Explore hands-on technical walkthroughs, field demonstrations, industry clips, and live interactive webinars.
             </p>
           </div>
 
@@ -247,14 +247,14 @@ export function MediaView({
               href="https://vibetok-learning-hub.vercel.app/reels"
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-xl bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-bold px-3.5 py-2 text-xs shadow-md flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95"
+              className="rounded-full bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/40 border border-rose-200 dark:border-rose-800 font-semibold px-4 py-2 text-xs shadow-xs flex items-center gap-1.5 transition-all"
             >
               <Film className="h-3.5 w-3.5" />
-              <span>🎬 9:16 Reels Studio ↗</span>
+              <span>Shorts &amp; Reels ↗</span>
             </a>
             <button
               onClick={() => setActiveMediaTab('studio')}
-              className="rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold px-4 py-2 text-xs shadow-md flex items-center gap-1.5"
+              className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white font-semibold px-4 py-2 text-xs shadow-xs flex items-center gap-1.5 transition-colors"
             >
               <BarChart3 className="h-3.5 w-3.5" />
               <span>ConnectIn Studio</span>
@@ -263,15 +263,15 @@ export function MediaView({
         </div>
 
         {/* Media Navigation Tabs */}
-        <div className="mt-5 pt-3 border-t border-white/10 flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+        <div className="mt-5 pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
           {mediaNavTabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveMediaTab(tab.id as any)}
-              className={`rounded-xl px-3.5 py-1.5 font-bold transition-all shrink-0 ${
+              className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all shrink-0 ${
                 activeMediaTab === tab.id
-                  ? "bg-white text-zinc-950 shadow-md font-extrabold"
-                  : "bg-white/10 text-white/80 hover:bg-white/20 hover:text-white"
+                  ? "bg-[#0A66C2] text-white shadow-xs"
+                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700"
               }`}
             >
               {tab.label}

@@ -57,25 +57,25 @@ export function AIAgentsStorefrontView({
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-24">
       {/* Hero Banner */}
-      <div className="rounded-2xl border border-purple-500/30 bg-gradient-to-r from-slate-900 via-indigo-950 to-purple-950 p-6 text-white shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
-          <span className="rounded-full bg-purple-500/30 px-3 py-0.5 text-xs font-bold text-purple-200 border border-purple-400/40 flex items-center gap-1.5 w-fit">
-            <Bot className="h-3.5 w-3.5 text-amber-300" />
-            ConnectIn Autonomous AI Agent Marketplace
+          <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-3 py-1 text-xs font-semibold text-[#0A66C2] dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center gap-1.5 w-fit">
+            <Bot className="h-3.5 w-3.5 text-[#0A66C2]" />
+            ConnectIn AI Assistants &amp; Agent Hub
           </span>
-          <h1 className="text-2xl font-black text-white">
-            Discover, Test, Subscribe &amp; Deploy AI Agents
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
+            Discover, Test &amp; Connect Professional AI Agents
           </h1>
-          <p className="text-xs text-zinc-300 max-w-xl">
-            Autonomous recruiting, pentesting, compliance, and coding agents with verified tool perimeters and 1-click cloud cluster deployment.
+          <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-xl">
+            Explore verified AI productivity agents for recruiting, research, workflow automation, and coding assistance.
           </p>
         </div>
 
         <button
           onClick={() => onNavigateTab('marketplace')}
-          className="rounded-xl bg-white text-zinc-950 font-black px-4 py-2.5 text-xs shadow-md hover:bg-zinc-100 shrink-0"
+          className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white font-semibold px-4 py-2.5 text-xs shadow-xs transition-colors shrink-0"
         >
-          View Full Software Store →
+          View Solutions Hub →
         </button>
       </div>
 

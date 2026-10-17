@@ -108,60 +108,60 @@ export function EcosystemView({
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-20">
       {/* 1. TOP ECOSYSTEM HERO BANNER */}
-      <div className="rounded-2xl border border-sky-500/30 bg-gradient-to-r from-slate-900 via-sky-950 to-indigo-950 p-6 text-white shadow-xl">
+      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="rounded-full bg-sky-500/20 px-3 py-0.5 text-xs font-bold text-sky-300 border border-sky-400/40 flex items-center gap-1.5">
-                <Grid3X3 className="h-3.5 w-3.5 text-amber-300" />
-                ConnectIn Global Ecosystem &amp; Developer Platform
+              <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-3 py-1 text-xs font-semibold text-[#0A66C2] dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center gap-1.5">
+                <Grid3X3 className="h-3.5 w-3.5 text-[#0A66C2]" />
+                ConnectIn Platform Ecosystem &amp; Developer Hub
               </span>
-              <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-xs font-bold text-emerald-300 border border-emerald-500/40">
-                Enterprise OS &middot; 137 Apps &middot; Multi-Cloud Mesh
+              <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                137 Apps &middot; Verified Partner Integrations
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              Ecosystem: Developers, Integrations, Partners &amp; Apps
+            <h1 className="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-white tracking-tight">
+              Ecosystem: Developers, Integrations &amp; Partner Apps
             </h1>
-            <p className="text-xs sm:text-sm text-zinc-300 max-w-2xl leading-relaxed">
-              ConnectIn is more than a social network—it is an enterprise operating system connecting cloud infrastructures, developer APIs &amp; SDKs, federal consulting partners, and third-party software.
+            <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-2xl leading-relaxed">
+              Connect your favorite tools, explore developer APIs &amp; SDKs, and discover specialized partner integrations across all disciplines.
             </p>
           </div>
 
           {/* Quick Metrics */}
           <div className="flex items-center gap-3 shrink-0">
-            <div className="rounded-2xl bg-black/40 border border-white/15 p-3.5 text-center min-w-[140px]">
-              <span className="text-[10px] uppercase font-mono text-sky-300">Active API Calls</span>
-              <p className="text-xl font-black text-emerald-400">2.4M / mo</p>
+            <div className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 p-3.5 text-center min-w-[140px]">
+              <span className="text-[11px] font-semibold text-zinc-500 uppercase">API Invocations</span>
+              <p className="text-xl font-bold text-[#0A66C2]">2.4M / mo</p>
               <span className="text-[10px] text-zinc-400">99.99% Uptime</span>
             </div>
-            <div className="rounded-2xl bg-black/40 border border-white/15 p-3.5 text-center min-w-[140px]">
-              <span className="text-[10px] uppercase font-mono text-purple-300">Ecosystem Apps</span>
-              <p className="text-xl font-black text-amber-300">137 Verified</p>
+            <div className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 p-3.5 text-center min-w-[140px]">
+              <span className="text-[11px] font-semibold text-zinc-500 uppercase">Verified Apps</span>
+              <p className="text-xl font-bold text-zinc-900 dark:text-white">137 Apps</p>
               <span className="text-[10px] text-zinc-400">Sphera Micro-Apps</span>
             </div>
           </div>
         </div>
 
         {/* 5 Master Ecosystem Pillars Switcher Ribbon */}
-        <div className="mt-6 pt-4 border-t border-white/10 flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+        <div className="mt-6 pt-4 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
           {[
             { id: 'developers', label: '💻 Developers (APIs & SDKs)', icon: Code2 },
-            { id: 'integrations', label: '🔌 Integrations (Cloud, SIEM, DevOps)', icon: Plug },
-            { id: 'partners', label: '🤝 Partners (Tech, Consulting, GSA)', icon: Handshake },
-            { id: 'communities', label: '🌐 Specialized Communities', icon: Users },
-            { id: 'apps', label: '📱 Third-Party Apps (137 Sphera Apps)', icon: Boxes }
+            { id: 'integrations', label: '🔌 Integrations', icon: Plug },
+            { id: 'partners', label: '🤝 Partners & Consulting', icon: Handshake },
+            { id: 'communities', label: '🌐 Specialty Communities', icon: Users },
+            { id: 'apps', label: '📱 Ecosystem Apps (137)', icon: Boxes }
           ].map((tab) => {
             const isSelected = ecosystemTab === tab.id
             return (
               <button
                 key={tab.id}
                 onClick={() => setEcosystemTab(tab.id as any)}
-                className={`rounded-xl px-4 py-2 text-xs font-bold transition-all shrink-0 flex items-center gap-2 ${
+                className={`rounded-full px-4 py-2 text-xs font-semibold transition-all shrink-0 flex items-center gap-2 ${
                   isSelected
-                    ? "bg-white text-zinc-950 shadow-md font-extrabold"
-                    : "bg-white/10 text-white/80 hover:bg-white/20 hover:text-white"
+                    ? "bg-[#0A66C2] text-white shadow-xs"
+                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700"
                 }`}
               >
                 <span>{tab.label}</span>

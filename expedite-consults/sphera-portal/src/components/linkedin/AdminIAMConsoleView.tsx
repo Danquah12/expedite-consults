@@ -418,46 +418,46 @@ export function AdminIAMConsoleView({
       )}
 
       {/* Master Top Control Strip Banner */}
-      <div className="rounded-3xl border border-blue-500/30 bg-gradient-to-r from-slate-950 via-blue-950 to-indigo-950 p-6 text-white shadow-2xl">
+      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="rounded-full bg-red-500/20 px-3 py-0.5 text-xs font-black text-red-300 border border-red-500/40 flex items-center gap-1.5">
-                <ShieldAlert className="h-3.5 w-3.5" />
-                ENTERPRISE CONTROL CENTER
+              <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-3 py-1 text-xs font-semibold text-[#0A66C2] dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center gap-1.5">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                Platform Administration
               </span>
-              <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-xs font-bold text-emerald-300 border border-emerald-500/40">
-                SOC 2 / FedRAMP High Enclave
+              <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                Audit Trail Active
               </span>
-              <span className="rounded-full bg-purple-500/20 px-2.5 py-0.5 text-xs font-bold text-purple-300 border border-purple-500/40">
-                Role: SUPER_ADMIN
+              <span className="rounded-full bg-purple-50 dark:bg-purple-950/40 px-2.5 py-1 text-xs font-semibold text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800">
+                Administrator
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-              ConnectIn Platform Administration & Governance
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">
+              Platform Administration &amp; Governance
             </h1>
-            <p className="text-xs sm:text-sm text-zinc-300 max-w-2xl leading-relaxed">
-              Full administrative authority over users, moderation queues, content enforcement, company verification, jobs, feature flags, RBAC matrices, and immutable audit ledgers.
+            <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-2xl leading-relaxed">
+              Administrative management over member directory, community moderation, company verification, jobs, system configurations, and audit logs.
             </p>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => onNavigateTab('home')}
-              className="rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-xs font-bold text-white hover:bg-white/20 transition-all flex items-center gap-1.5"
+              className="rounded-full border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-4 py-2 text-xs font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors flex items-center gap-1.5"
             >
               <span>← Back to Feed</span>
             </button>
             <button
               onClick={() => {
                 appendAudit('SETTINGS_UPDATED', 'Global Cache Purge', 'Triggered edge cache refresh')
-                showNotice(`✓ Edge CDN & memory caches purged successfully across all regions.`)
+                showNotice(`✓ Edge CDN & memory caches refreshed successfully across all regions.`)
               }}
-              className="rounded-xl bg-gradient-to-r from-sky-400 to-blue-500 px-4 py-2 text-xs font-black text-zinc-950 hover:brightness-110 transition-all flex items-center gap-1.5 shadow-lg"
+              className="rounded-full bg-[#0A66C2] hover:bg-[#004182] px-4 py-2 text-xs font-semibold text-white transition-colors flex items-center gap-1.5 shadow-xs"
             >
               <RefreshCw className="h-3.5 w-3.5" />
-              <span>Purge Edge Cache</span>
+              <span>Refresh Cache</span>
             </button>
           </div>
         </div>

@@ -242,10 +242,11 @@ export function PostCreator({ user, onAddPost }: PostCreatorProps) {
           </button>
 
           <button
+            type="button"
             onClick={() => setIsAIOpen(true)}
-            className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:from-purple-700 hover:to-indigo-700 transition-all"
+            className="flex items-center gap-1.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border border-amber-300/80 dark:border-amber-700/80 hover:bg-amber-100 dark:hover:bg-amber-900/50 px-3 py-1.5 text-xs font-semibold shadow-2xs transition-all cursor-pointer"
           >
-            <Sparkles className="h-3.5 w-3.5 text-amber-300 animate-pulse" />
+            <Sparkles className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
             <span>{t("action_ai", "Write with AI")}</span>
           </button>
 

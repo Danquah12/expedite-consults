@@ -279,94 +279,90 @@ export function MarketplaceView({
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-24">
-      {/* 1. TOP MARKETPLACE HERO BANNER */}
-      <div className="rounded-2xl border border-purple-500/30 bg-gradient-to-r from-slate-900 via-indigo-950 to-purple-950 p-6 text-white shadow-xl">
+      {/* 1. TOP MARKETPLACE BANNER */}
+      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="rounded-full bg-purple-500/30 px-3 py-0.5 text-xs font-bold text-purple-200 border border-purple-400/40 flex items-center gap-1.5">
-                <Store className="h-3.5 w-3.5 text-amber-300" />
-                ConnectIn Commercial Engine &amp; Solutions Layer
+              <span className="rounded-full bg-blue-50 dark:bg-blue-950/50 px-3 py-0.5 text-xs font-semibold text-[#0A66C2] dark:text-sky-300 border border-blue-200/60 dark:border-blue-800/60 flex items-center gap-1.5">
+                <Store className="h-3.5 w-3.5" />
+                ConnectIn Solutions &amp; Tools Marketplace
               </span>
-              <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-xs font-bold text-emerald-300 border border-emerald-500/40">
-                Products · Services · Experts · Learning · Jobs
+              <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
+                Verified Tools, Products &amp; Services
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
               {userEnclave === 'trades_construction'
-                ? "Skilled Trades Tools, CAD Equipment & Timber Futures"
+                ? "Skilled Trades Tools, CAD Equipment & Materials"
                 : userEnclave === 'healthcare_medicine'
-                ? "Clinical Diagnostic Devices, Surgical Implants & Hospital RFPs"
+                ? "Clinical Diagnostic Devices, Surgical Sets & Solutions"
                 : userEnclave === 'automotive_mechanics'
-                ? "Professional Automotive Scan Tools, Lab Scopes & EV Safety"
-                : "Discover Products & Solve Business Outcomes"}
+                ? "Diagnostic Scan Tools, Lab Scopes & Shop Equipment"
+                : "Discover Tools, Products & Enterprise Solutions"}
             </h1>
-            <p className="text-xs sm:text-sm text-zinc-300 max-w-2xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-2xl leading-relaxed">
               {userEnclave === 'trades_construction'
-                ? "Acquire verified guild-grade timber joinery systems, laser total stations, Douglas Fir futures, and OSHA-compliant fall protection gear."
+                ? "Procure verified trade tools, CAD equipment, lumber indices, joinery jigs, and OSHA-compliant safety gear."
                 : userEnclave === 'healthcare_medicine'
-                ? "Procure FDA-cleared bedside ultrasound devices, rapid blood warmers, orthopedic trauma plating sets, and hospital equipment tenders."
+                ? "Procure clinical ultrasound devices, rapid infusion systems, orthopedic hardware, and verified medical supplies."
                 : userEnclave === 'automotive_mechanics'
-                ? "Equip your bay with Snap-on ZEUS+ diagnostic stations, 4-channel PicoScopes, 1000V EV lineman PPE, and OEM repair data."
-                : "Find individual enterprise tools or select a business problem to receive a complete tailored package: Products + Consulting Services + Verified Experts + Hands-on Training."}
+                ? "Equip your shop with verified diagnostic stations, multi-channel oscilloscopes, EV lineman safety gear, and OEM repair data."
+                : "Find vetted software tools, consulting services, developer kits, and turnkey business solutions from verified industry providers."}
             </p>
           </div>
 
           <div className="flex items-center gap-2 shrink-0 flex-wrap">
             <button
+              type="button"
               onClick={() => {
                 setSelectedMainCategory('Launchpad')
                 setSelectedSubCategory('All')
               }}
-              className="rounded-xl bg-gradient-to-r from-purple-500 via-pink-500 to-indigo-500 hover:from-purple-400 hover:to-indigo-400 px-4 py-2.5 text-xs sm:text-sm font-black text-white shadow-lg flex items-center gap-1.5 transition-all border border-purple-300/40"
+              className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white px-4 py-2 text-xs font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer transition-colors"
             >
-              <Sparkles className="h-4 w-4 text-amber-300 animate-pulse" />
-              <span>🚀 Launchpad Fleet (24+ Apps)</span>
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>Launchpad Fleet (24+ Apps)</span>
             </button>
 
             <button
+              type="button"
               onClick={() => setSelectedMainCategory('Solutions')}
-              className="rounded-xl bg-amber-400 hover:bg-amber-300 px-4 py-2.5 text-xs sm:text-sm font-black text-zinc-950 shadow-md flex items-center gap-1.5 transition-all"
+              className="rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 px-4 py-2 text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
             >
-              <Zap className="h-4 w-4 text-zinc-950 fill-zinc-950" />
-              <span>Explore Solutions Hub</span>
+              <Zap className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
+              <span>Solutions Hub</span>
             </button>
 
             <button
+              type="button"
               onClick={() => setIsVendorModalOpen(true)}
-              className="rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md flex items-center gap-1.5 transition-all border border-purple-400/40"
+              className="rounded-full bg-purple-50 dark:bg-purple-950/50 hover:bg-purple-100 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 px-4 py-2 text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
             >
-              <PlusCircle className="h-4 w-4 text-amber-300" />
-              <span>➕ Sell Product / Service</span>
+              <PlusCircle className="h-3.5 w-3.5" />
+              <span>List Product / Service</span>
             </button>
           </div>
         </div>
 
-        {/* 11 MASTER CATEGORY TABS (LAUNCHPAD | DISCOVER | SOLUTIONS | SOFTWARE | SERVICES | CYBERSECURITY | AI | CLOUD | TRAINING | ENTERPRISE | DEALS | SPHERA) */}
-        <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between gap-3 flex-wrap">
+        {/* Master Category Tabs */}
+        <div className="mt-5 pt-3.5 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs scrollbar-none w-full">
             {marketplaceTabs.map((cat: any) => {
               const isSelected = selectedMainCategory === cat.id
               return (
                 <button
                   key={cat.id}
+                  type="button"
                   onClick={() => {
                     setSelectedMainCategory(cat.id as any)
                     setSelectedSubCategory('All')
                   }}
-                  className={`rounded-xl px-3.5 py-2 text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+                  className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
                     isSelected
-                      ? cat.isLaunchpad
-                        ? "bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 text-white shadow-lg font-black border border-purple-300"
-                        : cat.isSolutions
-                        ? "bg-amber-400 text-zinc-950 shadow-lg font-black"
-                        : "bg-white text-zinc-950 shadow-md font-black"
-                      : cat.isLaunchpad
-                      ? "bg-gradient-to-r from-purple-900/60 to-indigo-900/60 text-purple-200 border border-purple-400/50 hover:from-purple-800/80 hover:to-indigo-800/80 font-bold"
-                      : cat.isSolutions
-                      ? "bg-amber-500/20 text-amber-300 border border-amber-400/40 hover:bg-amber-500/30"
-                      : "bg-white/10 text-white/80 hover:bg-white/20 hover:text-white"
+                      ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
+                      : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700 border border-zinc-200/70 dark:border-zinc-700/70"
                   }`}
                 >
                   <span>{cat.label}</span>

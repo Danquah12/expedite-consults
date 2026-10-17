@@ -263,15 +263,15 @@ export function UniversalSearchModal({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-5xl max-h-[88vh] flex flex-col p-0 overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-2xl">
         {/* Header Search Input */}
-        <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-purple-950 p-4 sm:p-5 border-b border-white/10 shrink-0 text-white space-y-3.5">
+        <div className="bg-white dark:bg-zinc-900 p-4 sm:p-5 border-b border-zinc-200 dark:border-zinc-800 shrink-0 text-zinc-900 dark:text-zinc-100 space-y-3.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="rounded-full bg-purple-500/30 px-3 py-1 text-xs font-bold text-purple-200 border border-purple-400/30 flex items-center gap-1.5">
-                <Globe className="h-3.5 w-3.5 text-amber-300" />
-                ConnectIn Universal Omnisearch
+              <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-3 py-1 text-xs font-semibold text-[#0A66C2] dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center gap-1.5">
+                <Globe className="h-3.5 w-3.5 text-[#0A66C2]" />
+                ConnectIn Universal Search
               </span>
-              <span className="text-xs text-zinc-300">
-                {isLoadingUsers ? "Indexing platform members..." : `Indexed ${liveUsers.length} members & enterprise assets`}
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                {isLoadingUsers ? "Indexing members..." : `${liveUsers.length} members & assets indexed`}
               </span>
             </div>
             {isLoadingUsers && (
@@ -283,17 +283,17 @@ export function UniversalSearchModal({
             <Search className="absolute left-4 top-3.5 h-5 w-5 text-zinc-400" />
             <input
               type="text"
-              placeholder="Search members (Rhoda, Kwesi, Alex...), jobs, products, services, courses, research..."
+              placeholder="Search members (Rhoda, Kwesi, Alex...), jobs, solutions, courses..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               autoFocus
-              className="w-full rounded-2xl bg-white/10 border border-white/20 pl-12 pr-12 py-3 sm:py-3.5 text-sm sm:text-base text-white placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-purple-400 shadow-inner"
+              className="w-full rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 pl-12 pr-12 py-3 sm:py-3.5 text-sm sm:text-base text-zinc-900 dark:text-white placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#0A66C2] focus:bg-white dark:focus:bg-zinc-900 shadow-2xs transition-all"
             />
             {query && (
               <button
                 type="button"
                 onClick={() => setQuery("")}
-                className="absolute right-4 top-3.5 text-zinc-400 hover:text-white cursor-pointer"
+                className="absolute right-4 top-3.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
                 title="Clear query"
               >
                 <X className="h-5 w-5" />
@@ -307,10 +307,10 @@ export function UniversalSearchModal({
               <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`rounded-lg px-2.5 py-1 font-bold transition-all shrink-0 text-[11px] cursor-pointer ${
+                className={`rounded-full px-3 py-1 font-semibold transition-all shrink-0 text-xs cursor-pointer ${
                   selectedCategory === cat.id
-                    ? "bg-white text-zinc-950 shadow-xs"
-                    : "bg-white/10 text-white/80 hover:bg-white/20"
+                    ? "bg-[#0A66C2] text-white shadow-xs"
+                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700"
                 }`}
               >
                 {cat.label} <span className="opacity-70 text-[10px]">({cat.count})</span>

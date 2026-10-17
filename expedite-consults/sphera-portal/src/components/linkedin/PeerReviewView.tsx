@@ -163,71 +163,71 @@ export function PeerReviewView({ currentUser }: PeerReviewViewProps) {
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-20">
       {/* 1. TOP HERO BANNER */}
-      <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-r from-slate-900 via-indigo-950 to-amber-950 p-6 text-white shadow-xl">
+      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
           <div className="space-y-2">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="rounded-full bg-amber-500/20 px-3 py-0.5 text-xs font-bold text-amber-300 border border-amber-400/40 flex items-center gap-1.5">
-                <Award className="h-3.5 w-3.5" />
-                ConnectIn Peer Review & Professional Validation
+              <span className="rounded-full bg-amber-50 dark:bg-amber-950/40 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 flex items-center gap-1.5">
+                <Award className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                Peer Review &amp; Professional Validation
               </span>
-              <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-xs font-bold text-emerald-300 border border-emerald-500/40">
-                Architecture · Security · Code · Products · Research · Resumes
+              <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-2.5 py-1 text-xs font-semibold text-[#0A66C2] dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                Architecture · Security · Code · Products · Resumes
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-              Professional Validation & Expert Review Engine
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">
+              Professional Validation &amp; Expert Feedback
             </h1>
-            <p className="text-xs sm:text-sm text-zinc-300 max-w-2xl leading-relaxed">
-              Submit your cloud architectures, security postures, codebases, and research papers for formal evaluation by verified Principal Architects and CISOs.
+            <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-2xl leading-relaxed">
+              Submit architectures, codebases, and portfolios for constructive peer evaluation by verified industry leaders.
             </p>
           </div>
 
           {/* User Reputation & Mode Controls */}
           <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0">
-            <div className="rounded-xl bg-black/40 border border-white/15 px-4 py-2 text-center text-xs">
-              <span className="text-[10px] text-zinc-400 uppercase font-mono">Your Reputation Score</span>
-              <p className="text-lg font-black text-amber-300 flex items-center justify-center gap-1">
-                <Star className="h-4 w-4 fill-amber-300" />
+            <div className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 px-4 py-2 text-center text-xs">
+              <span className="text-[10px] text-zinc-500 uppercase font-semibold">Reputation Score</span>
+              <p className="text-lg font-bold text-amber-600 dark:text-amber-400 flex items-center justify-center gap-1">
+                <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
                 {userReputationPoints} PTS
               </p>
             </div>
 
             <button
               onClick={() => setIsNewSubmissionOpen(true)}
-              className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md flex items-center gap-1.5 transition-all"
+              className="rounded-full bg-[#0A66C2] hover:bg-[#004182] px-5 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-xs flex items-center gap-1.5 transition-colors"
             >
               <Plus className="h-4 w-4" />
-              <span>Submit for Validation</span>
+              <span>Submit for Review</span>
             </button>
           </div>
         </div>
 
         {/* 3 Master Modes Switcher */}
-        <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+        <div className="mt-6 pt-4 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
             <button
               onClick={() => setViewMode('submissions')}
-              className={`rounded-xl px-4 py-2 text-xs font-bold transition-all shrink-0 flex items-center gap-2 ${
+              className={`rounded-full px-4 py-2 text-xs font-semibold transition-all shrink-0 flex items-center gap-2 ${
                 viewMode === 'submissions'
-                  ? "bg-white text-zinc-950 shadow-md font-extrabold"
-                  : "bg-white/10 text-white/80 hover:bg-white/20"
+                  ? "bg-[#0A66C2] text-white shadow-xs"
+                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700"
               }`}
             >
-              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+              <CheckCircle2 className="h-3.5 w-3.5" />
               <span>Validation Queue ({submissions.length})</span>
             </button>
 
             <button
               onClick={() => setViewMode('experts')}
-              className={`rounded-xl px-4 py-2 text-xs font-bold transition-all shrink-0 flex items-center gap-2 ${
+              className={`rounded-full px-4 py-2 text-xs font-semibold transition-all shrink-0 flex items-center gap-2 ${
                 viewMode === 'experts'
-                  ? "bg-white text-zinc-950 shadow-md font-extrabold"
-                  : "bg-white/10 text-white/80 hover:bg-white/20"
+                  ? "bg-[#0A66C2] text-white shadow-xs"
+                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700"
               }`}
             >
-              <UserCheck className="h-3.5 w-3.5 text-purple-600" />
+              <UserCheck className="h-3.5 w-3.5" />
               <span>Verified Expert Reviewers ({experts.length})</span>
             </button>
           </div>
@@ -235,9 +235,9 @@ export function PeerReviewView({ currentUser }: PeerReviewViewProps) {
 
         {/* The 6 Validation Types Filter Ribbon */}
         {viewMode === 'submissions' && (
-          <div className="mt-3 pt-3 border-t border-white/10 flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 shrink-0 mr-1">
-              Review Type:
+          <div className="mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+            <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 shrink-0 mr-1">
+              Category:
             </span>
             {VALIDATION_TYPES.map((type) => {
               const isSelected = selectedType === type.id
@@ -247,8 +247,8 @@ export function PeerReviewView({ currentUser }: PeerReviewViewProps) {
                   onClick={() => setSelectedType(type.id)}
                   className={`rounded-full px-3 py-1 text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 ${
                     isSelected
-                      ? "bg-amber-400 text-zinc-950 font-bold shadow-xs"
-                      : "bg-white/10 text-white/70 hover:bg-white/20 hover:text-white"
+                      ? "bg-amber-600 text-white font-semibold shadow-xs"
+                      : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700"
                   }`}
                 >
                   <span>{type.icon}</span>

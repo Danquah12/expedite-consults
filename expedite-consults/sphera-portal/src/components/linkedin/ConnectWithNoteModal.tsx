@@ -63,20 +63,20 @@ export function ConnectWithNoteModal({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-lg p-0 overflow-hidden rounded-3xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 shadow-2xl">
         {/* Header */}
-        <div className="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 p-6 text-white border-b border-white/10">
+        <div className="bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 border-b border-zinc-200 dark:border-zinc-800">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <img
                 src={targetPerson.avatar}
                 alt={targetPerson.name}
-                className="h-12 w-12 rounded-full object-cover border-2 border-white/40 shadow-sm"
+                className="h-12 w-12 rounded-full object-cover border-2 border-zinc-200 dark:border-zinc-700 shadow-xs"
               />
               <div>
-                <h3 className="text-base font-bold text-white flex items-center gap-1.5">
+                <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
                   <span>Connect with {targetPerson.name}</span>
-                  <ShieldCheck className="h-4 w-4 text-sky-400" />
+                  <ShieldCheck className="h-4 w-4 text-[#0A66C2]" />
                 </h3>
-                <p className="text-xs text-zinc-300 line-clamp-1">
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-1">
                   {targetPerson.headline}
                 </p>
               </div>
@@ -84,7 +84,7 @@ export function ConnectWithNoteModal({
 
             <button
               onClick={onClose}
-              className="rounded-full p-1.5 text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+              className="rounded-full p-1.5 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
             >
               <X className="h-5 w-5" />
             </button>

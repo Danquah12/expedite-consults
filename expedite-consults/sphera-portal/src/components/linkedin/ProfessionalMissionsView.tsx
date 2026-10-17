@@ -55,29 +55,29 @@ export function ProfessionalMissionsView({
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-24">
       {/* Hero Banner */}
-      <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-r from-slate-900 via-indigo-950 to-amber-950 p-6 text-white shadow-xl">
+      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1.5">
-            <span className="rounded-full bg-amber-500/20 px-3 py-0.5 text-xs font-bold text-amber-200 border border-amber-400/40 flex items-center gap-1.5 w-fit">
-              <Flame className="h-3.5 w-3.5 text-amber-300 animate-pulse" />
-              ConnectIn Professional Missions &amp; Progression System
+            <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-3 py-1 text-xs font-semibold text-[#0A66C2] dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center gap-1.5 w-fit">
+              <Flame className="h-3.5 w-3.5 text-[#0A66C2]" />
+              Career Roadmap &amp; Milestones
             </span>
-            <h1 className="text-2xl font-black text-white">
+            <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
               {mission.title}
             </h1>
-            <p className="text-xs sm:text-sm text-zinc-300 max-w-xl leading-relaxed">
-              Targeting: <strong className="text-emerald-400">{mission.roleTarget}</strong>. Complete objective checkpoints to unlock verified credibility tiers and direct recruiter priority.
+            <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-xl leading-relaxed">
+              Target role: <strong className="text-zinc-900 dark:text-zinc-100 font-semibold">{mission.roleTarget}</strong>. Complete key milestones to showcase verified capabilities to employers and mentors.
             </p>
           </div>
 
           {/* Progress Gauge */}
-          <div className="rounded-2xl bg-black/40 p-4 border border-white/15 text-center min-w-[160px] shrink-0 space-y-1">
-            <span className="text-[10px] uppercase font-mono text-zinc-400">Mission Progress</span>
-            <p className="text-3xl font-black text-amber-400">{mission.currentProgress}%</p>
-            <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden mt-1">
-              <div className="h-full bg-gradient-to-r from-amber-500 to-emerald-400 transition-all duration-500" style={{ width: `${mission.currentProgress}%` }} />
+          <div className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 p-4 border border-zinc-200 dark:border-zinc-700 text-center min-w-[170px] shrink-0 space-y-1">
+            <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wide">Career Progress</span>
+            <p className="text-3xl font-black text-[#0A66C2]">{mission.currentProgress}%</p>
+            <div className="h-2 w-full bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden mt-1">
+              <div className="h-full bg-[#0A66C2] transition-all duration-500 rounded-full" style={{ width: `${mission.currentProgress}%` }} />
             </div>
-            <span className="text-[10px] text-zinc-400 block pt-0.5">{mission.completedTasks} of {mission.totalTasks} Tasks Done</span>
+            <span className="text-[11px] text-zinc-500 block pt-0.5">{mission.completedTasks} of {mission.totalTasks} Milestones Done</span>
           </div>
         </div>
       </div>

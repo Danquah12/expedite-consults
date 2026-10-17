@@ -763,18 +763,18 @@ export default function LinkedInPage() {
                 // Dynamic banner title and subtitle based on selection
                 let bannerTitle = primaryEnc.name
                 let bannerSubtitle = (userData.professionEnclave === primaryEnc.id && userData.profession)
-                  ? `${userData.profession} · ${primaryEnc.securityClearanceTier}`
-                  : `Verified Enclave Discipline · ${primaryEnc.securityClearanceTier}`
+                  ? `${userData.profession} · Verified Industry Community`
+                  : `Verified Professional Community · ${primaryEnc.shortName}`
                 let bannerIcon = primaryEnc.icon
 
                 if (isAllSelected) {
-                  bannerTitle = "Universal Multi-Enclave Federation (All 12 Disciplines)"
-                  bannerSubtitle = "Auditing All 12 Profession Enclaves Simultaneously · Global Cross-Discipline Auditor View"
+                  bannerTitle = "All Professional Communities (12 Disciplines)"
+                  bannerSubtitle = "Viewing verified discussions, standards, and opportunities across all 12 industries"
                   bannerIcon = "🌐"
                 } else if (activeEncs.length > 1) {
-                  bannerTitle = `${activeEncs.map(e => e.shortName).join(' + ')} (${activeEncs.length} Enclaves Active)`
-                  bannerSubtitle = `Cross-Auditing: ${activeEncs.map(e => e.name).join(' · ')}`
-                  bannerIcon = "🛡️"
+                  bannerTitle = `${activeEncs.map(e => e.shortName).join(' + ')} (${activeEncs.length} Communities)`
+                  bannerSubtitle = `Active Industries: ${activeEncs.map(e => e.name).join(' · ')}`
+                  bannerIcon = "🤝"
                 }
 
                 // Collect aggregated feed tags across active enclaves
@@ -810,84 +810,85 @@ export default function LinkedInPage() {
                 }
 
                 return (
-                  <div className={`rounded-xl border p-3.5 space-y-2 shadow-xs transition-all ${primaryEnc.badgeBg}`}>
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <div className="flex items-center gap-2.5">
-                        <span className="text-2xl p-1.5 rounded-lg bg-white/80 dark:bg-zinc-800 shadow-2xs shrink-0">
+                  <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-2.5 shadow-xs transition-all">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl p-2 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-[#0A66C2] dark:text-sky-300 border border-blue-100 dark:border-blue-900/50 shadow-2xs shrink-0">
                           {bannerIcon}
                         </span>
                         <div>
                           <div className="flex items-center gap-2 flex-wrap">
-                            <h2 className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                            <h2 className="text-sm sm:text-base font-bold text-zinc-900 dark:text-zinc-100">
                               {bannerTitle}
                             </h2>
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:text-emerald-300 border border-emerald-300/40">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 dark:bg-blue-950/60 px-2.5 py-0.5 text-[10px] font-semibold text-[#0A66C2] dark:text-sky-300 border border-blue-200/50 dark:border-blue-800/50">
                               <ShieldCheck className="h-3 w-3" />
-                              Need-to-Know Enclave
+                              Verified Community
                             </span>
                             {activeEncs.length > 1 && (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-indigo-100 dark:bg-indigo-950/80 px-2 py-0.5 text-[10px] font-bold text-indigo-800 dark:text-indigo-300 border border-indigo-300/40">
-                                {isAllSelected ? "12 of 12 Highlighted" : `${activeEncs.length} Enclaves Highlighted`}
+                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-800/50">
+                                {isAllSelected ? "All 12 Highlighted" : `${activeEncs.length} Highlighted`}
                               </span>
                             )}
                           </div>
-                          <p className="text-[11px] text-zinc-600 dark:text-zinc-300 font-medium">
+                          <p className="text-xs text-zinc-600 dark:text-zinc-400 font-medium">
                             {bannerSubtitle}
                           </p>
                         </div>
                       </div>
 
-                      {/* Enclave Verification Tag */}
+                      {/* Community Posts Count Tag */}
                       <div className="shrink-0 text-left sm:text-right">
-                        <span className="text-[10px] font-mono font-bold text-zinc-700 dark:text-zinc-300 bg-white/70 dark:bg-zinc-800/70 px-2 py-1 rounded-md border border-zinc-200/60 dark:border-zinc-700/60">
-                          {filteredPosts.length} {t("enclave_posts", "Enclave Posts")}
+                        <span className="text-[11px] font-semibold text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-full border border-zinc-200 dark:border-zinc-700">
+                          {filteredPosts.length} {t("enclave_posts", "Community Posts")}
                         </span>
                       </div>
                     </div>
 
-                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-tight">
-                      🔒 <strong>{t("least_privilege_enclave_tag", "Least-Privilege Isolation")}:</strong> {t("least_privilege_isolation", "Content is strictly segregated by verified profession. Software developers and healthcare personnel cannot view your trade specs, and trade members are shielded from code sandboxes.")}
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                      ✨ <strong>Community Focus:</strong> Discussions, trade updates, blueprints, and opportunities are tailored to your professional craft. Explore conversations across any industry anytime.
                     </p>
 
-                    {/* Enclave Feed Tags */}
+                    {/* Community Feed Tags */}
                     <div className="flex items-center gap-1.5 overflow-x-auto pt-0.5">
-                      <span className="text-[10px] uppercase font-bold text-zinc-400 shrink-0">{t("enclave_tags", "Enclave Tags:")}</span>
+                      <span className="text-[10px] uppercase font-bold text-zinc-400 shrink-0">Tags:</span>
                       {aggregatedFeedTags.map((tag) => (
                         <button
                           key={tag}
+                          type="button"
                           onClick={() => setSelectedTagFilter(tag)}
-                          className="text-[10px] font-medium bg-white/80 dark:bg-zinc-800 hover:bg-white dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 px-2 py-0.5 rounded-full border border-zinc-200/50 dark:border-zinc-700/50 shrink-0 cursor-pointer"
+                          className="text-[11px] font-medium bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 px-2.5 py-0.5 rounded-full border border-zinc-200/70 dark:border-zinc-700/70 shrink-0 cursor-pointer transition-colors"
                         >
                           {tag}
                         </button>
                       ))}
                     </div>
 
-                    {/* Super Admin Enclave Auditor Switcher with Multi-Select Highlighting */}
+                    {/* Community Switcher */}
                     {isAdmin && (
-                      <div className="mt-2 pt-2 border-t border-zinc-200/70 dark:border-zinc-700/70 space-y-1.5">
+                      <div className="mt-2 pt-2.5 border-t border-zinc-100 dark:border-zinc-800 space-y-2">
                         <div className="flex items-center justify-between gap-2 flex-wrap">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-300 flex items-center gap-1">
-                              {t("super_admin_switcher", "🛡️ Super Admin Auditor Switcher:")}
+                            <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-1">
+                              🌐 Switch Industry Community:
                             </span>
-                            <span className="text-[9px] text-zinc-500 font-mono bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded border border-zinc-200 dark:border-zinc-700">
-                              Multi-Select: Click to toggle on/off
+                            <span className="text-[10px] text-zinc-500 font-medium">
+                              (Tap to filter posts)
                             </span>
                           </div>
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1.5 text-xs">
                             <button
                               type="button"
                               onClick={() => setSelectedEnclaves(PROFESSION_ENCLAVES.map(e => e.id))}
-                              className="text-[9px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline px-1.5 py-0.5 cursor-pointer"
+                              className="font-semibold text-[#0A66C2] hover:underline cursor-pointer"
                             >
-                              Highlight All 12
+                              Show All 12
                             </button>
-                            <span className="text-zinc-300">|</span>
+                            <span className="text-zinc-300 dark:text-zinc-700">·</span>
                             <button
                               type="button"
                               onClick={() => setSelectedEnclaves([userData.professionEnclave || 'trades_construction'])}
-                              className="text-[9px] font-semibold text-zinc-600 dark:text-zinc-400 hover:underline px-1.5 py-0.5 cursor-pointer"
+                              className="text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 hover:underline cursor-pointer"
                             >
                               Reset
                             </button>
@@ -900,32 +901,34 @@ export default function LinkedInPage() {
                             return (
                               <button
                                 key={e.id}
+                                type="button"
                                 onClick={() => handleToggleEnclave(e.id)}
-                                title={`Click to toggle ${e.name} in/out of view`}
-                                className={`px-2 py-1 rounded-md text-[10px] font-semibold transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
+                                title={`Toggle ${e.name}`}
+                                className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
                                   isSelected
-                                    ? "bg-indigo-600 ring-2 ring-indigo-400 text-white font-bold shadow-xs scale-102"
-                                    : "bg-white/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-white border border-zinc-200/60 dark:border-zinc-700/60 opacity-80 hover:opacity-100"
+                                    ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
+                                    : "bg-zinc-100 hover:bg-zinc-200/80 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-200/70 dark:border-zinc-700/70"
                                 }`}
                               >
                                 <span>{e.icon}</span>
                                 <span>{e.shortName}</span>
-                                {isSelected && <span className="text-[9px] font-black">✓</span>}
+                                {isSelected && <span className="text-[10px]">✓</span>}
                               </button>
                             )
                           })}
                           <button
+                            type="button"
                             onClick={() => handleToggleEnclave('all')}
-                            title="Toggle all 12 enclaves"
-                            className={`px-2 py-1 rounded-md text-[10px] font-semibold transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
+                            title="View all 12 communities"
+                            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
                               isAllSelected
-                                ? "bg-indigo-600 ring-2 ring-indigo-400 text-white font-bold shadow-xs scale-102"
-                                : "bg-white/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-white border border-zinc-200/60 dark:border-zinc-700/60 opacity-80 hover:opacity-100"
+                                ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
+                                : "bg-zinc-100 hover:bg-zinc-200/80 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-200/70 dark:border-zinc-700/70"
                             }`}
                           >
                             <span>🌐</span>
-                            <span>{t("all_enclaves", "All Enclaves")}</span>
-                            {isAllSelected && <span className="text-[9px] font-black">✓</span>}
+                            <span>{t("all_enclaves", "All Communities")}</span>
+                            {isAllSelected && <span className="text-[10px]">✓</span>}
                           </button>
                         </div>
                       </div>
