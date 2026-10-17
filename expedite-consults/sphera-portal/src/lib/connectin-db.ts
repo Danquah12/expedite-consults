@@ -93,7 +93,7 @@ const INITIAL_USERS: UserRecord[] = [
   {
     id: "USR-89400",
     email: "kasiedu@expedite-consults.com",
-    phone: "+1 (240) 262-3543",
+    phone: "+1 (240) 260-7898",
     role: "admin",
     status: "Active",
     mfaEnabled: true,
@@ -104,7 +104,7 @@ const INITIAL_USERS: UserRecord[] = [
   {
     id: "USR-89401",
     email: "asiedudanquah@gmail.com",
-    phone: "+1 (240) 262-3543",
+    phone: "+1 (240) 260-7898",
     role: "admin",
     status: "Active",
     mfaEnabled: true,

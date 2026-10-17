@@ -25,8 +25,8 @@ export default function Remediation({ finding: f }: Props) {
               onClick={() => setActive(i)}
               className="px-4 py-1.5 rounded-lg text-sm font-medium transition-all"
               style={{
-                background: active === i ? "rgba(0,212,255,0.15)" : "var(--background)",
-                border: `1px solid ${active === i ? "rgba(0,212,255,0.4)" : "var(--border)"}`,
+                background: active === i ? "rgba(122, 162, 247, 0.15)" : "var(--background)",
+                border: `1px solid ${active === i ? "rgba(122, 162, 247, 0.4)" : "var(--border)"}`,
                 color: active === i ? "var(--primary)" : "var(--muted)",
               }}
             >
@@ -40,9 +40,9 @@ export default function Remediation({ finding: f }: Props) {
 
       <div className="terminal">
         <div className="terminal-header">
-          <div className="terminal-dot" style={{ background: "#ff5f57" }} />
-          <div className="terminal-dot" style={{ background: "#febc2e" }} />
-          <div className="terminal-dot" style={{ background: "#28c840" }} />
+          <div className="terminal-dot" style={{ background: "#e5484d" }} />
+          <div className="terminal-dot" style={{ background: "#d6a847" }} />
+          <div className="terminal-dot" style={{ background: "#46a36e" }} />
           <span className="ml-2 text-xs" style={{ color: "var(--muted)" }}>{current.platform.toLowerCase()}</span>
         </div>
         <pre className="p-5 text-xs overflow-x-auto" style={{ lineHeight: 1.8 }}>
@@ -55,7 +55,7 @@ export default function Remediation({ finding: f }: Props) {
                 style={{
                   display: "block",
                   color: isVulnerable ? "var(--critical)" : isFixed ? "var(--low)" : "var(--foreground)",
-                  background: isVulnerable ? "rgba(255,59,48,0.05)" : isFixed ? "rgba(52,199,89,0.05)" : "transparent",
+                  background: isVulnerable ? "rgba(229, 72, 77, 0.05)" : isFixed ? "rgba(70, 163, 110, 0.05)" : "transparent",
                   paddingLeft: "0.25rem",
                   marginLeft: "-0.25rem",
                 }}

@@ -4,10 +4,10 @@ import type { SASTFinding } from "@/types/sast";
 type Props = { finding: SASTFinding };
 
 const ENGINE_COLORS: Record<string, string> = {
-  CodeQL:   "#6e40c9",
-  Semgrep:  "#1f8dd6",
-  Joern:    "#00d4ff",
-  DataFlow: "#34d399",
+  CodeQL:   "#7aa2f7",
+  Semgrep:  "#7aa2f7",
+  Joern:    "#7aa2f7",
+  DataFlow: "#46a36e",
 };
 
 export default function ConfidenceBreakdown({ finding: f }: Props) {

@@ -2,7 +2,7 @@ export const COMPLIANCE_FRAMEWORKS = [
   {
     name: "OWASP Top 10",
     version: "2021",
-    color: "#e55c00",
+    color: "#e2853b",
     categories: [
       { ref: "A01:2021", name: "Broken Access Control",                covered: true,  cwes: ["CWE-639", "CWE-352", "CWE-601", "CWE-22", "CWE-284"] },
       { ref: "A02:2021", name: "Cryptographic Failures",               covered: true,  cwes: ["CWE-327", "CWE-798", "CWE-693"] },
@@ -19,7 +19,7 @@ export const COMPLIANCE_FRAMEWORKS = [
   {
     name: "PCI DSS",
     version: "4.0",
-    color: "#1a6e4a",
+    color: "#46a36e",
     categories: [
       { ref: "Req 6.2.4", name: "Prevent Injection Attacks",           covered: true,  cwes: ["CWE-89", "CWE-78"] },
       { ref: "Req 8.3.2", name: "Strong Authentication",               covered: true,  cwes: ["CWE-287", "CWE-798"] },
@@ -30,7 +30,7 @@ export const COMPLIANCE_FRAMEWORKS = [
   {
     name: "NIST 800-53",
     version: "Rev 5",
-    color: "#1c3d7a",
+    color: "#7aa2f7",
     categories: [
       { ref: "SI-10",   name: "Information Input Validation",          covered: true,  cwes: ["CWE-89", "CWE-22", "CWE-611"] },
       { ref: "SI-16",   name: "Memory Protection",                     covered: true,  cwes: ["CWE-502"] },
@@ -44,7 +44,7 @@ export const COMPLIANCE_FRAMEWORKS = [
   {
     name: "ISO 27001",
     version: "2022",
-    color: "#5b2d8e",
+    color: "#7aa2f7",
     categories: [
       { ref: "A.8.24", name: "Use of Cryptography",                   covered: true,  cwes: ["CWE-327", "CWE-798"] },
       { ref: "A.8.28", name: "Secure Coding",                         covered: true,  cwes: ["CWE-89", "CWE-502", "CWE-639"] },
@@ -54,7 +54,7 @@ export const COMPLIANCE_FRAMEWORKS = [
   {
     name: "CIS Controls",
     version: "v8",
-    color: "#7c3d00",
+    color: "#e2853b",
     categories: [
       { ref: "CIS-12", name: "Network Infrastructure Management",     covered: true,  cwes: ["CWE-918", "CWE-693"] },
       { ref: "CIS-14", name: "Security Awareness & Training",         covered: false, cwes: [] },

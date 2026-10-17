@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useMemo } from "react"
 import {
   ThumbsUp,
   MessageSquare,
@@ -43,6 +43,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { useLanguage } from "@/context/LanguageContext"
+import { translatePostText } from "@/lib/translations/post-translator"
 
 interface FeedPostCardProps {
   post: Post
@@ -72,8 +73,9 @@ export function FeedPostCard({
   onFollowToggle,
   onVotePoll
 }: FeedPostCardProps) {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const [isExpanded, setIsExpanded] = useState(false)
+  const [showTranslation, setShowTranslation] = useState(true)
   const [showComments, setShowComments] = useState(false)
   const [newCommentText, setNewCommentText] = useState("")
   const [replyToId, setReplyToId] = useState<string | null>(null)
@@ -94,8 +96,14 @@ export function FeedPostCard({
   // Poll state
   const [localPoll, setLocalPoll] = useState<PollData | undefined>(post.poll)
 
-  const isLongText = post.content.length > 240
-  const displayedContent = isExpanded || !isLongText ? post.content : post.content.slice(0, 240) + "..."
+  // Automatic translation support
+  const translationResult = useMemo(() => {
+    return translatePostText(post.content, language)
+  }, [post.content, language])
+
+  const activeContent = (showTranslation && translationResult.isTranslated) ? translationResult.text : post.content
+  const isLongText = activeContent.length > 240
+  const displayedContent = isExpanded || !isLongText ? activeContent : activeContent.slice(0, 240) + "..."
 
   const handleReactionSelect = (type: ReactionType) => {
     if (post.userReaction === type) {
@@ -253,6 +261,26 @@ export function FeedPostCard({
           >
             {t("see_more", "...see more")}
           </button>
+        )}
+
+        {/* LinkedIn-style Translation Toggle */}
+        {language !== "en" && translationResult.isTranslated && (
+          <div className="pt-1.5 flex items-center gap-1.5 text-[11px]">
+            <Globe className="h-3 w-3 text-[#0A66C2] dark:text-sky-400 shrink-0" />
+            <button
+              type="button"
+              onClick={() => setShowTranslation(!showTranslation)}
+              className="font-bold text-[#0A66C2] dark:text-sky-400 hover:underline cursor-pointer"
+            >
+              {showTranslation
+                ? t("see_original", "See original")
+                : t("see_translation", "See translation")}
+            </button>
+            <span className="text-zinc-400">·</span>
+            <span className="text-[10px] text-zinc-500 dark:text-zinc-400">
+              {showTranslation ? `${t("translated_by", "Translated")} (${language.toUpperCase()})` : "English"}
+            </span>
+          </div>
         )}
       </div>
 

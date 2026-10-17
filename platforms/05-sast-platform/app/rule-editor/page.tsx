@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
 import {
   Play, Sparkles, Terminal, Code, HelpCircle, FileText, CheckCircle, ShieldAlert, Layers, Download, Check, RefreshCw, Cpu, Brain, GitPullRequest, ArrowRight
 } from "lucide-react";
@@ -289,7 +287,7 @@ export default function RuleEditorPage() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "var(--bg)", color: "var(--fg)" }}>
-      <Navbar />
+      
       
       <main className="flex-1 pt-20 pb-12 flex flex-col" style={{ height: "calc(100vh - 80px)", overflow: "hidden" }}>
         
@@ -299,7 +297,7 @@ export default function RuleEditorPage() {
             
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
-                <Brain size={16} className="text-cyan-400" />
+                <Brain size={16} className="text-[#7aa2f7]" />
                 <span className="text-xs font-bold uppercase tracking-wider text-white">DeepSeek-Coder AST Engine</span>
               </div>
 
@@ -314,8 +312,8 @@ export default function RuleEditorPage() {
                       padding: "4px 10px",
                       borderRadius: 6,
                       border: selectedKey === key ? "1px solid var(--primary)" : "1px solid var(--border)",
-                      background: selectedKey === key ? "rgba(0, 212, 255, 0.15)" : "var(--bg)",
-                      color: selectedKey === key ? "#00d4ff" : "var(--muted)",
+                      background: selectedKey === key ? "rgba(122, 162, 247, 0.15)" : "var(--bg)",
+                      color: selectedKey === key ? "#7aa2f7" : "var(--muted)",
                       cursor: "pointer",
                       fontWeight: selectedKey === key ? 700 : 500
                     }}
@@ -339,8 +337,8 @@ export default function RuleEditorPage() {
                   fontSize: 11,
                   padding: "5px 12px",
                   borderRadius: 8,
-                  background: "rgba(232, 145, 45, 0.12)",
-                  border: "1px solid rgba(232, 145, 45, 0.3)",
+                  background: "rgba(226, 133, 59, 0.12)",
+                  border: "1px solid rgba(226, 133, 59, 0.3)",
                   color: "var(--primary)",
                   cursor: "pointer",
                   fontWeight: 700
@@ -361,9 +359,9 @@ export default function RuleEditorPage() {
                   fontSize: 11,
                   padding: "5px 14px",
                   borderRadius: 8,
-                  background: "linear-gradient(135deg, #00d4ff, #0070f3)",
+                  background: "#7aa2f7",
                   border: "none",
-                  color: "#0a0f1a",
+                  color: "#0f1115",
                   cursor: "pointer",
                   fontWeight: 800
                 }}
@@ -382,13 +380,13 @@ export default function RuleEditorPage() {
           <div className="w-[310px] flex flex-col border-r" style={{ borderColor: "var(--border)" }}>
             <div className="px-4 py-3 border-b flex items-center justify-between" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
               <div className="flex items-center gap-2">
-                <FileText size={14} className="text-cyan-400" />
+                <FileText size={14} className="text-[#7aa2f7]" />
                 <span className="text-xs font-bold text-white uppercase">Semgrep AST Rule</span>
               </div>
               <span style={{ fontSize: 9.5, color: "var(--muted)", fontFamily: "monospace" }}>YAML v2</span>
             </div>
             <textarea
-              className="flex-1 p-4 font-mono text-[11px] bg-slate-950 text-emerald-400 outline-none resize-none"
+              className="flex-1 p-4 font-mono text-[11px] bg-slate-950 text-[#46a36e] outline-none resize-none"
               value={ruleText}
               onChange={e => setRuleText(e.target.value)}
               spellCheck={false}
@@ -399,7 +397,7 @@ export default function RuleEditorPage() {
           <div className="flex-1 flex flex-col border-r" style={{ borderColor: "var(--border)" }}>
             <div className="px-4 py-3 border-b flex items-center justify-between" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
               <div className="flex items-center gap-2">
-                <Code size={14} className="text-cyan-400" />
+                <Code size={14} className="text-[#7aa2f7]" />
                 <span className="text-xs font-bold text-white uppercase">
                   Source Code Canvas ({activeTemplate.name})
                 </span>
@@ -421,17 +419,17 @@ export default function RuleEditorPage() {
           {/* Column 3: CWE & OWASP Diagnostics */}
           <div className="w-[320px] flex flex-col bg-slate-900/50">
             <div className="px-4 py-3 border-b flex items-center gap-2" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
-              <Layers size={14} className="text-cyan-400" />
+              <Layers size={14} className="text-[#7aa2f7]" />
               <span className="text-xs font-bold text-white uppercase">CWE & OWASP Diagnostics</span>
             </div>
             
             <div className="flex-1 p-4 overflow-y-auto space-y-4">
               {matches.map((match, i) => (
-                <div key={i} className="border border-red-500/30 rounded-xl p-4 bg-red-950/10 space-y-2">
+                <div key={i} className="border border-[#e5484d]/30 rounded-xl p-4 bg-[#e5484d]/10/10 space-y-2">
                   <div className="flex items-center gap-2">
-                    <ShieldAlert size={14} className="text-red-500" />
-                    <span className="text-xs font-bold text-red-500 uppercase">{match.cwe}</span>
-                    <span className="text-[10px] bg-red-950/40 text-red-400 px-2 py-0.5 rounded ml-auto">Line {match.line}</span>
+                    <ShieldAlert size={14} className="text-[#e5484d]" />
+                    <span className="text-xs font-bold text-[#e5484d] uppercase">{match.cwe}</span>
+                    <span className="text-[10px] bg-[#e5484d]/10/40 text-[#e5484d] px-2 py-0.5 rounded ml-auto">Line {match.line}</span>
                   </div>
                   <pre className="text-[10.5px] font-mono text-slate-300 bg-black/40 p-2 rounded overflow-x-auto">
                     {match.text}
@@ -447,10 +445,10 @@ export default function RuleEditorPage() {
               )}
 
               {patchApplied && (
-                <div className="border border-emerald-500/30 rounded-xl p-4 bg-emerald-950/10 space-y-2">
+                <div className="border border-[#46a36e]/30 rounded-xl p-4 bg-[#46a36e]/10/10 space-y-2">
                   <div className="flex items-center gap-2">
-                    <CheckCircle size={14} className="text-emerald-400" />
-                    <span className="text-xs font-bold text-emerald-400 uppercase">Remediation Confirmed</span>
+                    <CheckCircle size={14} className="text-[#46a36e]" />
+                    <span className="text-xs font-bold text-[#46a36e] uppercase">Remediation Confirmed</span>
                   </div>
                   <p className="text-[11px] text-slate-300 leading-normal">
                     {activeTemplate.fixExplanation}
@@ -470,7 +468,7 @@ export default function RuleEditorPage() {
               left: 0,
               right: 0,
               bottom: 0,
-              background: "rgba(0,0,0,0.85)",
+              background: "rgba(0, 0, 0, 0.85)",
               backdropFilter: "blur(6px)",
               display: "flex",
               alignItems: "center",
@@ -498,7 +496,7 @@ export default function RuleEditorPage() {
                   <span style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", color: "var(--primary)" }}>
                     DeepSeek-Coder AI Patch Generator
                   </span>
-                  <h3 style={{ fontSize: 18, fontWeight: 800, color: "#fff", marginTop: 4 }}>
+                  <h3 style={{ fontSize: 18, fontWeight: 800, color: "#ececef", marginTop: 4 }}>
                     Automated Code Diff & Fix Review ({activeTemplate.cwe})
                   </h3>
                 </div>
@@ -511,21 +509,21 @@ export default function RuleEditorPage() {
               </div>
 
               <div style={{ background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 10, padding: 14, marginBottom: 16, fontSize: 11.5, color: "var(--fg)" }}>
-                <strong style={{ color: "#00d4ff", display: "block", marginBottom: 4 }}>Remediation Rationale:</strong>
+                <strong style={{ color: "#7aa2f7", display: "block", marginBottom: 4 }}>Remediation Rationale:</strong>
                 {activeTemplate.fixExplanation}
               </div>
 
               {/* Side by side diff preview */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "#ef5350", marginBottom: 6 }}>❌ Before (Vulnerable)</div>
-                  <pre style={{ background: "#000", border: "1px solid rgba(239,83,80,0.3)", borderRadius: 8, padding: 12, fontSize: 10.5, fontFamily: "monospace", color: "#ef5350", overflowX: "auto", maxHeight: 240 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#e5484d", marginBottom: 6 }}>❌ Before (Vulnerable)</div>
+                  <pre style={{ background: "#0f1115", border: "1px solid rgba(229, 72, 77, 0.3)", borderRadius: 8, padding: 12, fontSize: 10.5, fontFamily: "monospace", color: "#e5484d", overflowX: "auto", maxHeight: 240 }}>
                     {activeTemplate.vulnCode}
                   </pre>
                 </div>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: "var(--green)", marginBottom: 6 }}>✅ After (AI Remediated)</div>
-                  <pre style={{ background: "#000", border: "1px solid rgba(52,199,89,0.3)", borderRadius: 8, padding: 12, fontSize: 10.5, fontFamily: "monospace", color: "var(--green)", overflowX: "auto", maxHeight: 240 }}>
+                  <pre style={{ background: "#0f1115", border: "1px solid rgba(70, 163, 110, 0.3)", borderRadius: 8, padding: 12, fontSize: 10.5, fontFamily: "monospace", color: "var(--green)", overflowX: "auto", maxHeight: 240 }}>
                     {activeTemplate.fixedCode}
                   </pre>
                 </div>
@@ -535,7 +533,7 @@ export default function RuleEditorPage() {
               {prStatus !== "idle" && (
                 <div style={{ background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 10, padding: 14, marginBottom: 16 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                    <span style={{ fontWeight: 800, color: "#fff", fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ fontWeight: 800, color: "#ececef", fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
                       <GitPullRequest size={14} color="var(--primary)" />
                       GitHub Pull Request #342: [DeepSeek-APR] {activeTemplate.cwe} Patch
                     </span>
@@ -544,9 +542,9 @@ export default function RuleEditorPage() {
                       fontWeight: 800,
                       padding: "2px 8px",
                       borderRadius: 10,
-                      background: prStatus === "merged" ? "rgba(52,199,89,0.15)" : "rgba(0,212,255,0.15)",
-                      color: prStatus === "merged" ? "var(--green)" : "#00d4ff",
-                      border: `1px solid ${prStatus === "merged" ? "var(--green)" : "#00d4ff"}`
+                      background: prStatus === "merged" ? "rgba(70, 163, 110, 0.15)" : "rgba(122, 162, 247, 0.15)",
+                      color: prStatus === "merged" ? "var(--green)" : "#7aa2f7",
+                      border: `1px solid ${prStatus === "merged" ? "var(--green)" : "#7aa2f7"}`
                     }}>
                       {prStatus === "creating" ? "Opening PR..." : prStatus === "testing" ? "CI/CD Tests Running..." : "✓ MERGED & RESOLVED"}
                     </span>
@@ -564,9 +562,9 @@ export default function RuleEditorPage() {
                   onClick={handleCreatePr}
                   disabled={prStatus !== "idle"}
                   style={{
-                    background: prStatus === "merged" ? "rgba(52,199,89,0.15)" : "linear-gradient(135deg, #e8912d, #f59e0b)",
+                    background: prStatus === "merged" ? "rgba(70, 163, 110, 0.15)" : "#7aa2f7",
                     border: prStatus === "merged" ? "1px solid var(--green)" : "none",
-                    color: prStatus === "merged" ? "var(--green)" : "#0a0f1a",
+                    color: prStatus === "merged" ? "var(--green)" : "#0f1115",
                     padding: "8px 18px",
                     borderRadius: 8,
                     fontSize: 11.5,
@@ -584,13 +582,13 @@ export default function RuleEditorPage() {
                 <div style={{ display: "flex", gap: 10 }}>
                   <button
                     onClick={() => setShowPatchDiff(false)}
-                    style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "#fff", padding: "8px 16px", borderRadius: 8, fontSize: 11.5, cursor: "pointer" }}
+                    style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "#ececef", padding: "8px 16px", borderRadius: 8, fontSize: 11.5, cursor: "pointer" }}
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleApplyPatch}
-                    style={{ background: "linear-gradient(135deg, #00d4ff, #0070f3)", border: "none", color: "#0a0f1a", padding: "8px 18px", borderRadius: 8, fontSize: 11.5, fontWeight: 800, cursor: "pointer" }}
+                    style={{ background: "#7aa2f7", border: "none", color: "#0f1115", padding: "8px 18px", borderRadius: 8, fontSize: 11.5, fontWeight: 800, cursor: "pointer" }}
                   >
                     Apply Patch to Canvas
                   </button>
@@ -604,13 +602,13 @@ export default function RuleEditorPage() {
         <div className="h-36 border-t flex flex-col bg-black" style={{ borderColor: "var(--border)" }}>
           <div className="px-4 py-2 border-b flex items-center justify-between" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
             <div className="flex items-center gap-2">
-              <Terminal size={12} className="text-emerald-400" />
-              <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">DeepSeek-AST & Semgrep Trace Stream</span>
+              <Terminal size={12} className="text-[#46a36e]" />
+              <span className="text-[10px] font-bold text-[#46a36e] uppercase tracking-wider">DeepSeek-AST & Semgrep Trace Stream</span>
             </div>
           </div>
           <div className="flex-1 p-3 overflow-y-auto font-mono text-[10.5px] space-y-1 text-slate-400 select-all">
             {consoleLogs.map((log, i) => (
-              <div key={i} className={log.includes("[!]") ? "text-red-500" : log.includes("[info]") || log.includes("[ready]") ? "text-cyan-400" : log.includes("✅") ? "text-emerald-400" : ""}>
+              <div key={i} className={log.includes("[!]") ? "text-[#e5484d]" : log.includes("[info]") || log.includes("[ready]") ? "text-[#7aa2f7]" : log.includes("✅") ? "text-[#46a36e]" : ""}>
                 $ {log}
               </div>
             ))}
@@ -618,7 +616,7 @@ export default function RuleEditorPage() {
         </div>
 
       </main>
-      <Footer />
+      
     </div>
   );
 }

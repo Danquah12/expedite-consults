@@ -106,7 +106,7 @@ export default function EvidencePanel({ finding: f }: Props) {
       
       <div className="flex items-center justify-between mb-4 border-b pb-3" style={{ borderColor: "var(--border)" }}>
         <h2 className="text-lg font-bold text-white flex items-center gap-2">
-          <Code2 className="w-5 h-5 text-cyan-400" />
+          <Code2 className="w-5 h-5 text-[#7aa2f7]" />
           Interactive Taint Flow Simulator
         </h2>
         <button
@@ -114,8 +114,8 @@ export default function EvidencePanel({ finding: f }: Props) {
           disabled={isPlaying}
           className="btn-primary flex items-center gap-1 text-xs py-1.5 px-3"
           style={{
-            background: isPlaying ? "var(--border)" : "linear-gradient(135deg, #00d4ff, #0098b8)",
-            color: isPlaying ? "var(--muted)" : "#0a0f1a",
+            background: isPlaying ? "var(--border)" : "#7aa2f7",
+            color: isPlaying ? "var(--muted)" : "#0f1115",
             border: "none",
             cursor: isPlaying ? "default" : "pointer"
           }}
@@ -142,8 +142,8 @@ export default function EvidencePanel({ finding: f }: Props) {
                   style={{
                     padding: 12,
                     borderRadius: 10,
-                    background: isSelected ? "rgba(0,212,255,0.08)" : "var(--bg)",
-                    border: isSelected ? "1px solid rgba(0,212,255,0.4)" : "1px solid var(--border)",
+                    background: isSelected ? "rgba(122, 162, 247, 0.08)" : "var(--bg)",
+                    border: isSelected ? "1px solid var(--border)" : "1px solid var(--border)",
                     cursor: isPlaying ? "default" : "pointer",
                     position: "relative",
                     transition: "all 0.2s"
@@ -156,8 +156,8 @@ export default function EvidencePanel({ finding: f }: Props) {
                       textTransform: "uppercase",
                       padding: "2px 6px",
                       borderRadius: 4,
-                      background: isSource ? "rgba(239,83,80,0.15)" : isSink ? "rgba(239,83,80,0.2)" : "rgba(255,255,255,0.06)",
-                      color: isSource || isSink ? "#ef5350" : "var(--muted)"
+                      background: isSource ? "rgba(229, 72, 77, 0.15)" : isSink ? "rgba(229, 72, 77, 0.2)" : "rgba(236, 236, 239, 0.06)",
+                      color: isSource || isSink ? "#e5484d" : "var(--muted)"
                     }}>
                       Hop {idx + 1}: {step.label}
                     </span>
@@ -165,7 +165,7 @@ export default function EvidencePanel({ finding: f }: Props) {
                       Line {step.line}
                     </span>
                   </div>
-                  <div style={{ fontSize: 10.5, fontFamily: "monospace", color: "#fff", margin: "4px 0", wordBreak: "break-all" }}>
+                  <div style={{ fontSize: 10.5, fontFamily: "monospace", color: "#ececef", margin: "4px 0", wordBreak: "break-all" }}>
                     {f.taintPath[idx]}
                   </div>
                   <div style={{ fontSize: 9.5, color: "var(--muted)", lineHeight: "1.3" }}>
@@ -192,9 +192,9 @@ export default function EvidencePanel({ finding: f }: Props) {
           <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: "var(--muted)" }}>Target Code View:</div>
           <div className="terminal" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
             <div className="terminal-header">
-              <div className="terminal-dot" style={{ background: "#ff5f57" }} />
-              <div className="terminal-dot" style={{ background: "#febc2e" }} />
-              <div className="terminal-dot" style={{ background: "#28c840" }} />
+              <div className="terminal-dot" style={{ background: "#e5484d" }} />
+              <div className="terminal-dot" style={{ background: "#d6a847" }} />
+              <div className="terminal-dot" style={{ background: "#46a36e" }} />
               <span className="ml-2 text-xs" style={{ color: "var(--muted)" }}>{f.file.split("/").pop()}</span>
             </div>
             <div style={{ padding: 12, fontFamily: "monospace", fontSize: 11, overflowY: "auto", flex: 1, background: "var(--bg)", maxHeight: 310 }}>
@@ -208,7 +208,7 @@ export default function EvidencePanel({ finding: f }: Props) {
                     key={i}
                     style={{
                       display: "flex",
-                      background: isSelected ? "rgba(0,212,255,0.08)" : "transparent",
+                      background: isSelected ? "rgba(122, 162, 247, 0.08)" : "transparent",
                       borderLeft: isSelected ? "3px solid var(--primary)" : "3px solid transparent",
                       padding: "1.5px 0",
                       marginRight: -12,
@@ -225,8 +225,8 @@ export default function EvidencePanel({ finding: f }: Props) {
                         : line.startsWith("import") || line.startsWith("package")
                         ? "var(--muted)"
                         : line.trim().startsWith("//")
-                        ? "#6a737d"
-                        : "#fff",
+                        ? "#6f7581"
+                        : "#ececef",
                       fontStyle: line.trim().startsWith("//") ? "italic" : "normal",
                       whiteSpace: "pre"
                     }}>
@@ -244,16 +244,16 @@ export default function EvidencePanel({ finding: f }: Props) {
       <div className="terminal" style={{ marginTop: 12 }}>
         <div className="terminal-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", gap: 3 }}>
-            <div className="terminal-dot" style={{ background: "#ff5f57" }} />
-            <div className="terminal-dot" style={{ background: "#febc2e" }} />
-            <div className="terminal-dot" style={{ background: "#28c840" }} />
-            <span className="ml-2 text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Taint Analyzer Output console</span>
+            <div className="terminal-dot" style={{ background: "#e5484d" }} />
+            <div className="terminal-dot" style={{ background: "#d6a847" }} />
+            <div className="terminal-dot" style={{ background: "#46a36e" }} />
+            <span className="ml-2 text-[10px] font-bold text-[#46a36e] uppercase tracking-wider">Taint Analyzer Output console</span>
           </div>
           <Terminal size={10} color="var(--muted)" />
         </div>
-        <div style={{ padding: "8px 12px", background: "#000", overflowY: "auto", fontFamily: "monospace", fontSize: 10, color: "var(--muted)", height: 80 }}>
+        <div style={{ padding: "8px 12px", background: "#0f1115", overflowY: "auto", fontFamily: "monospace", fontSize: 10, color: "var(--muted)", height: 80 }}>
           {simulationLogs.map((log, i) => (
-            <div key={i} className={log.includes("✅") ? "text-emerald-400" : log.includes("Step") ? "text-cyan-400" : ""}>
+            <div key={i} className={log.includes("✅") ? "text-[#46a36e]" : log.includes("Step") ? "text-[#7aa2f7]" : ""}>
               $ {log}
             </div>
           ))}

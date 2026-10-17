@@ -83,8 +83,8 @@ export default function DiffRemediation({ finding: f }: Props) {
                   onClick={() => setActive(i)}
                   className="px-3 py-1 rounded-lg text-xs font-medium transition-all"
                   style={{
-                    background: active === i ? "rgba(0,212,255,0.15)" : "var(--background)",
-                    border: `1px solid ${active === i ? "rgba(0,212,255,0.4)" : "var(--border)"}`,
+                    background: active === i ? "rgba(122, 162, 247, 0.15)" : "var(--background)",
+                    border: `1px solid ${active === i ? "rgba(122, 162, 247, 0.4)" : "var(--border)"}`,
                     color: active === i ? "var(--primary)" : "var(--muted)",
                     cursor: "pointer"
                   }}
@@ -99,8 +99,8 @@ export default function DiffRemediation({ finding: f }: Props) {
             onClick={() => setShowDiff(!showDiff)}
             className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-all"
             style={{
-              background: showDiff ? "rgba(52,199,89,0.1)" : "var(--background)",
-              border: `1px solid ${showDiff ? "rgba(52,199,89,0.3)" : "var(--border)"}`,
+              background: showDiff ? "rgba(70, 163, 110, 0.1)" : "var(--background)",
+              border: `1px solid ${showDiff ? "rgba(70, 163, 110, 0.3)" : "var(--border)"}`,
               color: showDiff ? "var(--low)" : "var(--muted)",
               cursor: "pointer"
             }}
@@ -115,8 +115,8 @@ export default function DiffRemediation({ finding: f }: Props) {
             disabled={sandboxRunning}
             className="btn-primary flex items-center gap-1.5 text-xs py-1.5 px-3"
             style={{
-              background: "linear-gradient(135deg, #00d4ff, #0098b8)",
-              color: "#0a0f1a",
+              background: "#7aa2f7",
+              color: "#0f1115",
               border: "none",
               cursor: sandboxRunning ? "default" : "pointer"
             }}
@@ -133,22 +133,22 @@ export default function DiffRemediation({ finding: f }: Props) {
         /* ── Side-by-side diff ── */
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
           {/* Vulnerable */}
-          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(255,59,48,0.3)" }}>
+          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(229, 72, 77, 0.3)" }}>
             <div
               className="flex items-center gap-2 px-4 py-2 text-xs font-semibold"
-              style={{ background: "rgba(255,59,48,0.1)", borderBottom: "1px solid rgba(255,59,48,0.3)" }}
+              style={{ background: "rgba(229, 72, 77, 0.1)", borderBottom: "1px solid rgba(229, 72, 77, 0.3)" }}
             >
-              <span className="w-2 h-2 rounded-full bg-red-500" />
+              <span className="w-2 h-2 rounded-full bg-[#e5484d]" />
               <span style={{ color: "var(--critical)" }}>Vulnerable Code Block</span>
             </div>
-            <pre className="p-4 text-xs overflow-x-auto" style={{ background: "#050a12", lineHeight: 1.8, minHeight: "200px", fontFamily: "monospace" }}>
+            <pre className="p-4 text-xs overflow-x-auto" style={{ background: "#0f1115", lineHeight: 1.8, minHeight: "200px", fontFamily: "monospace" }}>
               {vulnerable.map((line, i) => (
                 <span
                   key={i}
                   style={{
                     display: "block",
-                    background: line.type === "bad" ? "rgba(255,59,48,0.12)" : "transparent",
-                    color: line.type === "bad" ? "#f87171" : "var(--muted)",
+                    background: line.type === "bad" ? "rgba(229, 72, 77, 0.12)" : "transparent",
+                    color: line.type === "bad" ? "#e5484d" : "var(--muted)",
                     padding: "0 0.25rem",
                     margin: "0 -0.25rem",
                     borderLeft: line.type === "bad" ? "2px solid var(--critical)" : "2px solid transparent",
@@ -162,22 +162,22 @@ export default function DiffRemediation({ finding: f }: Props) {
           </div>
 
           {/* Fixed */}
-          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(52,199,89,0.3)" }}>
+          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(70, 163, 110, 0.3)" }}>
             <div
               className="flex items-center gap-2 px-4 py-2 text-xs font-semibold"
-              style={{ background: "rgba(52,199,89,0.1)", borderBottom: "1px solid rgba(52,199,89,0.3)" }}
+              style={{ background: "rgba(70, 163, 110, 0.1)", borderBottom: "1px solid rgba(70, 163, 110, 0.3)" }}
             >
-              <span className="w-2 h-2 rounded-full bg-green-500" />
+              <span className="w-2 h-2 rounded-full bg-[#46a36e]" />
               <span style={{ color: "var(--low)" }}>Remediated Code Block</span>
             </div>
-            <pre className="p-4 text-xs overflow-x-auto" style={{ background: "#050a12", lineHeight: 1.8, minHeight: "200px", fontFamily: "monospace" }}>
+            <pre className="p-4 text-xs overflow-x-auto" style={{ background: "#0f1115", lineHeight: 1.8, minHeight: "200px", fontFamily: "monospace" }}>
               {fixed.map((line, i) => (
                 <span
                   key={i}
                   style={{
                     display: "block",
-                    background: line.type === "good" ? "rgba(52,199,89,0.1)" : "transparent",
-                    color: line.type === "good" ? "#86efac" : "var(--muted)",
+                    background: line.type === "good" ? "rgba(70, 163, 110, 0.1)" : "transparent",
+                    color: line.type === "good" ? "#46a36e" : "var(--muted)",
                     padding: "0 0.25rem",
                     margin: "0 -0.25rem",
                     borderLeft: line.type === "good" ? "2px solid var(--low)" : "2px solid transparent",
@@ -194,9 +194,9 @@ export default function DiffRemediation({ finding: f }: Props) {
         /* ── Plain code view ── */
         <div className="terminal mb-4">
           <div className="terminal-header">
-            <div className="terminal-dot" style={{ background: "#ff5f57" }} />
-            <div className="terminal-dot" style={{ background: "#febc2e" }} />
-            <div className="terminal-dot" style={{ background: "#28c840" }} />
+            <div className="terminal-dot" style={{ background: "#e5484d" }} />
+            <div className="terminal-dot" style={{ background: "#d6a847" }} />
+            <div className="terminal-dot" style={{ background: "#46a36e" }} />
             <span className="ml-2 text-xs" style={{ color: "var(--muted)" }}>{current.platform.toLowerCase()}</span>
           </div>
           <pre className="p-5 text-xs overflow-x-auto" style={{ lineHeight: 1.8, fontFamily: "monospace" }}>
@@ -207,7 +207,7 @@ export default function DiffRemediation({ finding: f }: Props) {
                 <span key={i} style={{
                   display: "block",
                   color: isBad ? "var(--critical)" : isGood ? "var(--low)" : "var(--foreground)",
-                  background: isBad ? "rgba(255,59,48,0.05)" : isGood ? "rgba(52,199,89,0.05)" : "transparent",
+                  background: isBad ? "rgba(229, 72, 77, 0.05)" : isGood ? "rgba(70, 163, 110, 0.05)" : "transparent",
                 }}>
                   {line}
                 </span>
@@ -222,16 +222,16 @@ export default function DiffRemediation({ finding: f }: Props) {
         <div className="terminal mt-4">
           <div className="terminal-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div style={{ display: "flex", gap: 3 }}>
-              <div className="terminal-dot" style={{ background: "#ff5f57" }} />
-              <div className="terminal-dot" style={{ background: "#febc2e" }} />
-              <div className="terminal-dot" style={{ background: "#28c840" }} />
-              <span className="ml-2 text-[10px] font-bold text-cyan-400 uppercase tracking-wider">Compile Sandbox Daemon logs</span>
+              <div className="terminal-dot" style={{ background: "#e5484d" }} />
+              <div className="terminal-dot" style={{ background: "#d6a847" }} />
+              <div className="terminal-dot" style={{ background: "#46a36e" }} />
+              <span className="ml-2 text-[10px] font-bold text-[#7aa2f7] uppercase tracking-wider">Compile Sandbox Daemon logs</span>
             </div>
             <Terminal size={10} color="var(--muted)" />
           </div>
-          <div style={{ padding: "10px 14px", background: "#000", overflowY: "auto", fontFamily: "monospace", fontSize: 10.5, color: "var(--muted)", minHeight: 110, maxHeight: 150 }}>
+          <div style={{ padding: "10px 14px", background: "#0f1115", overflowY: "auto", fontFamily: "monospace", fontSize: 10.5, color: "var(--muted)", minHeight: 110, maxHeight: 150 }}>
             {sandboxLogs.map((log, i) => (
-              <div key={i} className={log.startsWith("[done]") ? "text-emerald-400 font-bold" : log.includes("SUCCESS") ? "text-emerald-400" : log.includes("PASS") ? "text-cyan-400" : ""}>
+              <div key={i} className={log.startsWith("[done]") ? "text-[#46a36e] font-bold" : log.includes("SUCCESS") ? "text-[#46a36e]" : log.includes("PASS") ? "text-[#7aa2f7]" : ""}>
                 $ {log}
               </div>
             ))}
@@ -244,17 +244,17 @@ export default function DiffRemediation({ finding: f }: Props) {
       {sandboxDone && (
         <div
           className="rounded-xl px-5 py-4 flex items-center justify-between mt-3 text-sm font-semibold flex-wrap gap-2 animate-fadeIn"
-          style={{ background: "rgba(52,199,89,0.08)", border: "1px solid rgba(52,199,89,0.3)" }}
+          style={{ background: "rgba(70, 163, 110, 0.08)", border: "1px solid rgba(70, 163, 110, 0.3)" }}
         >
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+            <CheckCircle2 className="w-5 h-5 text-[#46a36e]" />
             <span style={{ color: "var(--low)" }}>
               Compilation verified & mitigated. PR created successfully.
             </span>
           </div>
           <a
             href="#pr-view"
-            className="flex items-center gap-1 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-1.5 px-3 rounded-lg text-xs"
+            className="flex items-center gap-1 bg-[#46a36e] hover:bg-[#46a36e] text-slate-950 font-bold py-1.5 px-3 rounded-lg text-xs"
             onClick={(e) => { e.preventDefault(); alert("GitHub PR Opened! In a production deployment, this redirects you directly to the peer code review panel."); }}
             style={{ textDecoration: "none" }}
           >

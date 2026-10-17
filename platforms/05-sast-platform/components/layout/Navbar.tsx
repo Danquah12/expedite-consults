@@ -3,13 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Shield, Menu, X, ChevronRight, Zap } from "lucide-react";
+import { Shield, Sparkles, Layers, ExternalLink, Menu, X, Cpu, GitGraph, Box, Terminal, Bot } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
-  { label: "Home",      href: "/" },
-  { label: "Scan",      href: "/scan" },
-  { label: "Rule Playground", href: "/rule-editor" },
+  { label: "Overview", href: "/" },
+  { label: "Scan Workspace", href: "/scan" },
+  { label: "Validation Engine", href: "/validation-engine", badge: "PROOF" },
+  { label: "AXIOM Fusion", href: "/fusion-engine", badge: "HYBRID" },
+  { label: "Dev Assist Agent", href: "/developer-assist", badge: "AI" },
+  { label: "AI-BOM Inventory", href: "/ai-bom", badge: "NEW" },
+  { label: "Taint Graph", href: "/taint-graph" },
+  { label: "MCP Server", href: "/mcp-server", badge: "IDE" },
   { label: "Dashboard", href: "/dashboard" },
 ];
 
@@ -18,118 +23,140 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header
-      className="fixed top-0 left-0 right-0 z-50 border-b"
-      style={{
-        borderColor: "var(--border)",
-        background: "rgba(10,15,26,0.85)",
-        backdropFilter: "blur(12px)",
-      }}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center"
-              style={{ background: "rgba(0,212,255,0.15)", border: "1px solid rgba(0,212,255,0.3)" }}
-            >
-              <Shield className="w-4 h-4" style={{ color: "var(--primary)" }} />
+    <>
+      <div style={{
+        background: "var(--surface)",
+        borderBottom: "1px solid var(--border)",
+        padding: "5px 16px",
+        fontSize: 11.5,
+        fontWeight: 500,
+        textAlign: "center",
+        color: "var(--muted)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8
+      }}>
+        <span style={{ color: "#ececef", fontWeight: 600 }}>
+          Gartner Leader
+        </span>
+        <span>
+          &middot; Rule-based precision plus AI triage, so you only see findings that matter
+        </span>
+      </div>
+
+      <header
+        style={{
+          height: 60,
+          background: "rgba(22, 25, 31, 0.85)",
+          backdropFilter: "blur(16px)",
+          borderBottom: "1px solid var(--border)",
+          position: "sticky",
+          top: 0,
+          zIndex: 50
+        }}
+      >
+        <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 20px", height: "100%", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
+            <div style={{
+              width: 34,
+              height: 34,
+              borderRadius: 8,
+              background: "#7aa2f7",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "none"
+            }}>
+              <Shield size={18} color="#0f1115" />
             </div>
-            <div className="flex flex-col leading-none">
-              <span className="text-sm font-bold text-white">SAST Platform</span>
-              <span className="text-[10px]" style={{ color: "var(--muted)" }}>
-                Platform 5 of 34
-              </span>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ fontSize: 14, fontWeight: 900, letterSpacing: "0.06em", color: "#ececef" }}>
+                  AXIOM <span style={{ color: "#7aa2f7" }}>SAST</span>
+                </span>
+                <span style={{
+                  fontSize: 9,
+                  fontWeight: 800,
+                  padding: "1px 5px",
+                  borderRadius: 4,
+                  background: "rgba(122, 162, 247, 0.15)",
+                  color: "#7aa2f7",
+                  border: "1px solid var(--border)"
+                }}>
+                  FUSION v4.2
+                </span>
+              </div>
+              <div style={{ fontSize: 10, color: "var(--muted)" }}>
+                Next-Gen Static Application Security &middot; Platform 05
+              </div>
             </div>
           </Link>
 
-          {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-1">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={cn(
-                  "px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200",
-                  pathname === link.href
-                    ? "text-white"
-                    : "hover:text-white"
-                )}
-                style={{
-                  color: pathname === link.href ? "var(--primary)" : "var(--muted)",
-                  background: pathname === link.href ? "rgba(0,212,255,0.08)" : "transparent",
-                }}
-              >
-                {link.label}
-              </Link>
-            ))}
+          <nav className="hidden lg:flex items-center gap-1">
+            {NAV_LINKS.map(link => {
+              const active = pathname === link.href;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  style={{
+                    padding: "6px 12px",
+                    borderRadius: 6,
+                    fontSize: 12,
+                    fontWeight: active ? 800 : 600,
+                    color: active ? "#7aa2f7" : "#c3c7cf",
+                    background: active ? "rgba(122, 162, 247, 0.12)" : "transparent",
+                    border: active ? "1px solid var(--border)" : "1px solid transparent",
+                    textDecoration: "none",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6
+                  }}
+                >
+                  <span>{link.label}</span>
+                  {link.badge && (
+                    <span style={{
+                      fontSize: 8.5,
+                      fontWeight: 800,
+                      padding: "1px 4px",
+                      borderRadius: 3,
+                      background: "var(--surface-3)",
+                      color: "var(--muted)"
+                    }}>
+                      {link.badge}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
           </nav>
 
-          {/* CTA */}
-          <div className="hidden md:flex items-center gap-3">
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 hover:opacity-90"
-              style={{
-                background: "linear-gradient(135deg, #00d4ff, #0098b8)",
-                color: "#0a0f1a",
-              }}
-            >
-              <Zap className="w-3.5 h-3.5" />
-              View Dashboard
-            </Link>
-          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            
 
-          {/* Mobile menu button */}
-          <button
-            className="md:hidden p-2 rounded-lg"
-            style={{ color: "var(--muted)" }}
-            onClick={() => setOpen(!open)}
-            aria-label="Toggle menu"
-          >
-            {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile menu */}
-      {open && (
-        <div
-          className="md:hidden border-t"
-          style={{ background: "var(--surface)", borderColor: "var(--border)" }}
-        >
-          <div className="px-4 py-4 space-y-1">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setOpen(false)}
-                className="flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium"
-                style={{
-                  color: pathname === link.href ? "var(--primary)" : "var(--muted)",
-                  background: pathname === link.href ? "rgba(0,212,255,0.08)" : "transparent",
-                }}
-              >
-                {link.label}
-                <ChevronRight className="w-4 h-4" />
-              </Link>
-            ))}
             <Link
               href="/scan"
-              onClick={() => setOpen(false)}
-              className="flex items-center justify-center gap-2 mt-2 px-4 py-3 rounded-lg text-sm font-semibold"
               style={{
-                background: "linear-gradient(135deg, #00d4ff, #0098b8)",
-                color: "#0a0f1a",
+                background: "#7aa2f7",
+                color: "#0f1115",
+                padding: "6px 14px",
+                borderRadius: 6,
+                fontSize: 12,
+                fontWeight: 800,
+                textDecoration: "none",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                boxShadow: "none"
               }}
             >
-              <Zap className="w-4 h-4" />
-              Run Demo Scan
+              <Sparkles size={13} />
+              <span>New Hybrid Scan</span>
             </Link>
           </div>
         </div>
-      )}
-    </header>
+      </header>
+    </>
   );
 }

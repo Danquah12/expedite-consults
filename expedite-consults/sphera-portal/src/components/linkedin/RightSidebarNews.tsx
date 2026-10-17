@@ -44,33 +44,38 @@ export function RightSidebarNews({
 
   return (
     <aside className="space-y-3">
-      {/* 0. VIBE AI EMBEDDED Q&A ENGINE */}
-      <div className="rounded-xl border border-purple-500/40 bg-gradient-to-br from-slate-950 via-indigo-950 to-purple-950 p-3.5 text-white shadow-lg space-y-2.5">
+      {/* 0. VIBE AI EMBEDDED Q&A CARD */}
+      <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3.5 shadow-xs space-y-2.5">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <div className="h-6 w-6 rounded-full bg-gradient-to-tr from-purple-500 to-amber-400 flex items-center justify-center shadow-xs">
-              <Sparkles className="h-3.5 w-3.5 text-white animate-pulse" />
+          <div className="flex items-center gap-2">
+            <div className="h-7 w-7 rounded-lg bg-[#0A66C2]/10 dark:bg-[#0A66C2]/20 flex items-center justify-center text-[#0A66C2] dark:text-[#70B5F9]">
+              <Sparkles className="h-4 w-4" />
             </div>
             <div>
-              <h3 className="font-bold text-xs text-white">Ask Vibe AI</h3>
-              <p className="text-[10px] text-zinc-300">Live Campus &amp; Professional Q&amp;A</p>
+              <h3 className="font-bold text-xs text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
+                <span>{t("ask_vibe_ai", "Ask Vibe AI")}</span>
+                <span className="rounded bg-amber-100 dark:bg-amber-950/50 text-[#7A4B00] dark:text-amber-300 text-[9px] font-bold px-1.5 py-0.2 border border-amber-300/40">
+                  {t("qa_badge", "AI")}
+                </span>
+              </h3>
+              <p className="text-[10px] text-zinc-500 dark:text-zinc-400">{t("vibe_ai_desc", "Campus & Professional Intelligence")}</p>
             </div>
           </div>
-          <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[9px] font-mono font-bold text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            LIVE
+          <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 text-[9px] font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            {t("vibe_online", "Online")}
           </span>
         </div>
 
-        <p className="text-[11px] text-zinc-300 leading-snug">
-          Ask any question about cybersecurity, career growth, tools, certifications or code. Vibe is embedded to answer everything.
+        <p className="text-[11px] text-zinc-600 dark:text-zinc-300 leading-relaxed">
+          {t("vibe_question_help", "Ask questions about DoD Zero Trust, RMF ATO, career strategy, tools, certifications, or code.")}
         </p>
 
         {/* Query Input */}
-        <div className="flex items-center gap-1.5 bg-black/40 rounded-xl p-1 border border-white/15">
+        <div className="flex items-center gap-1.5 bg-zinc-50 dark:bg-zinc-800/80 rounded-lg p-1 border border-zinc-200 dark:border-zinc-700/80 focus-within:border-[#0A66C2] focus-within:ring-1 focus-within:ring-[#0A66C2]/20 transition-all">
           <input
             type="text"
-            placeholder="Ask Vibe anything..."
+            placeholder={t("ask_vibe_placeholder", "Ask Vibe a question...")}
             value={sidebarQuery}
             onChange={(e) => setSidebarQuery(e.target.value)}
             onKeyDown={(e) => {
@@ -79,7 +84,7 @@ export function RightSidebarNews({
                 setSidebarQuery("")
               }
             }}
-            className="flex-1 bg-transparent px-2.5 py-1 text-xs text-white placeholder:text-zinc-400 focus:outline-none"
+            className="flex-1 bg-transparent px-2.5 py-1 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none"
           />
           <button
             onClick={() => {
@@ -88,9 +93,9 @@ export function RightSidebarNews({
                 setSidebarQuery("")
               }
             }}
-            className="rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 px-2.5 py-1 text-xs font-bold text-white transition-all shrink-0 cursor-pointer shadow-xs flex items-center gap-1"
+            className="rounded-md bg-[#0A66C2] hover:bg-[#004182] px-2.5 py-1 text-xs font-semibold text-white transition-colors shrink-0 cursor-pointer shadow-2xs flex items-center gap-1"
           >
-            Ask <ArrowUpRight className="h-3 w-3" />
+            {t("search_button", "Ask")} <ArrowUpRight className="h-3 w-3" />
           </button>
         </div>
 
@@ -105,41 +110,42 @@ export function RightSidebarNews({
             <button
               key={idx}
               onClick={() => onOpenAIAssistant && onOpenAIAssistant(chip.q)}
-              className="text-[10px] rounded-md bg-white/10 hover:bg-white/20 text-zinc-300 hover:text-white px-2 py-0.5 transition-colors border border-white/10 cursor-pointer"
+              className="text-[10px] rounded-md bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 px-2 py-0.5 transition-colors border border-zinc-200 dark:border-zinc-700/60 cursor-pointer"
             >
               {chip.label}
             </button>
           ))}
         </div>
       </div>
+
       {/* 1. CONTEXTUAL COMMERCIAL RECOMMENDATION (POWERED BY CONNECTIN AI) */}
-      <div className="rounded-xl border border-purple-500/30 bg-gradient-to-br from-slate-900 via-indigo-950/90 to-purple-950 p-3.5 text-white shadow-md space-y-2.5">
+      <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3.5 shadow-xs space-y-2.5">
         <div className="flex items-center justify-between">
-          <span className="rounded-full bg-purple-500/30 px-2 py-0.5 text-[9px] font-bold text-purple-200 border border-purple-400/30 flex items-center gap-1">
-            <Sparkles className="h-3 w-3 text-amber-300" />
+          <span className="rounded bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-[9px] font-semibold text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 flex items-center gap-1">
+            <Sparkles className="h-3 w-3 text-amber-500" />
             {t("recommended_for_you", "Recommended for you")}
           </span>
-          <span className="text-[10px] font-mono font-bold text-emerald-400">92% {t("match_rate", "Match")}</span>
+          <span className="text-[10px] font-semibold text-[#0A66C2] dark:text-sky-400">92% {t("match_rate", "Match")}</span>
         </div>
 
-        <p className="text-[11px] text-zinc-300">
-          Because you follow <strong>Cloud Security &amp; Zero Trust</strong>:
+        <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+          Because you follow <strong className="text-zinc-800 dark:text-zinc-200">Cloud Security &amp; Zero Trust</strong>:
         </p>
 
-        <div className="rounded-lg bg-white/10 p-2.5 border border-white/10 space-y-1.5">
+        <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 p-2.5 border border-zinc-200 dark:border-zinc-700/80 space-y-1.5">
           <div className="flex items-center gap-2">
             <span className="text-xl">🛡️</span>
             <div>
-              <h4 className="font-bold text-xs text-white">AXIOM Cyber Suite</h4>
-              <p className="text-[10px] text-zinc-300">Autonomous Zero-Trust &amp; cATO</p>
+              <h4 className="font-bold text-xs text-zinc-900 dark:text-zinc-100">AXIOM Cyber Suite</h4>
+              <p className="text-[10px] text-zinc-500 dark:text-zinc-400">Autonomous Zero-Trust &amp; cATO</p>
             </div>
           </div>
-          <p className="text-[10px] text-zinc-300 leading-tight">
+          <p className="text-[10px] text-zinc-600 dark:text-zinc-300 leading-normal">
             Deploy identity perimeters and continuous OSCAL compliance across AWS GovCloud in 1 click.
           </p>
           <button
             onClick={() => onNavigateTab && onNavigateTab('marketplace')}
-            className="w-full rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-400 hover:to-indigo-400 py-1.5 text-center text-xs font-bold text-white shadow-xs transition-all cursor-pointer"
+            className="w-full rounded-md bg-[#0A66C2] hover:bg-[#004182] py-1.5 text-center text-xs font-semibold text-white shadow-2xs transition-colors cursor-pointer"
           >
             {t("start_trial", "Start 14-Day Free Trial →")}
           </button>

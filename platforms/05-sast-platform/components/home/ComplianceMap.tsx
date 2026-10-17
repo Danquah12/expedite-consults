@@ -7,7 +7,7 @@ export default function ComplianceMap() {
       <div className="text-center mb-16">
         <div
           className="inline-block px-4 py-1.5 rounded-full text-sm font-medium mb-4"
-          style={{ background: "rgba(167,139,250,0.1)", border: "1px solid rgba(167,139,250,0.25)", color: "#a78bfa" }}
+          style={{ background: "rgba(122, 162, 247, 0.1)", border: "1px solid var(--border)", color: "#7aa2f7" }}
         >
           Compliance Coverage
         </div>
@@ -24,7 +24,7 @@ export default function ComplianceMap() {
               className="flex items-center gap-3 px-6 py-4"
               style={{ background: `${fw.color}15`, borderBottom: "1px solid var(--border)" }}
             >
-              <div className="px-3 py-1 rounded-full text-xs font-bold" style={{ background: fw.color, color: "#fff" }}>
+              <div className="px-3 py-1 rounded-full text-xs font-bold" style={{ background: fw.color, color: "#ececef" }}>
                 {fw.name}
               </div>
               <span className="text-sm" style={{ color: "var(--muted)" }}>v{fw.version}</span>

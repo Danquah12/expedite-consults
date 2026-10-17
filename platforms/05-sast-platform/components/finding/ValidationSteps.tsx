@@ -15,7 +15,7 @@ export default function ValidationSteps({ finding: f }: Props) {
           <li key={i} className="flex items-start gap-3">
             <div
               className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5"
-              style={{ background: "rgba(0,212,255,0.1)", border: "1px solid rgba(0,212,255,0.3)", color: "var(--primary)" }}
+              style={{ background: "rgba(122, 162, 247, 0.1)", border: "1px solid var(--border)", color: "var(--primary)" }}
             >
               {i + 1}
             </div>
@@ -26,7 +26,7 @@ export default function ValidationSteps({ finding: f }: Props) {
 
       <div
         className="mt-6 rounded-xl p-4 flex items-start gap-3"
-        style={{ background: "rgba(52,199,89,0.06)", border: "1px solid rgba(52,199,89,0.25)" }}
+        style={{ background: "rgba(70, 163, 110, 0.06)", border: "1px solid rgba(70, 163, 110, 0.25)" }}
       >
         <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "var(--low)" }} />
         <div className="text-xs" style={{ color: "var(--muted)" }}>

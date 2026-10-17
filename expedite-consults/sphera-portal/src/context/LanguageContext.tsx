@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react";
 import {
   LanguageCode,
   LanguageMeta,
@@ -19,6 +19,28 @@ interface LanguageContextType {
 
 const DEFAULT_LANG: LanguageCode = "en";
 
+function getInitialLanguage(): LanguageCode {
+  if (typeof window === "undefined") return DEFAULT_LANG;
+  try {
+    const saved =
+      (localStorage.getItem("sphera-lang") as LanguageCode | null) ||
+      (localStorage.getItem("connectin_lang") as LanguageCode | null) ||
+      (localStorage.getItem("vibetok-lang") as LanguageCode | null);
+    if (saved && SUPPORTED_LANGUAGES.some((l) => l.code === saved)) {
+      return saved;
+    }
+    const match = document.cookie.match(/(?:^|;\s*)sphera-lang=([^;]+)/);
+    if (match && SUPPORTED_LANGUAGES.some((l) => l.code === match[1])) {
+      return match[1] as LanguageCode;
+    }
+    const browserLang = navigator.language?.slice(0, 2) as LanguageCode;
+    if (SUPPORTED_LANGUAGES.some((l) => l.code === browserLang)) {
+      return browserLang;
+    }
+  } catch {}
+  return DEFAULT_LANG;
+}
+
 const LanguageContext = createContext<LanguageContextType>({
   language: DEFAULT_LANG,
   setLanguage: () => {},
@@ -29,57 +51,88 @@ const LanguageContext = createContext<LanguageContextType>({
 });
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguageState] = useState<LanguageCode>(DEFAULT_LANG);
-  const [mounted, setMounted] = useState(false);
+  const [language, setLanguageState] = useState<LanguageCode>(getInitialLanguage);
 
-  useEffect(() => {
-    setMounted(true);
-    try {
-      const saved = localStorage.getItem("sphera-lang") as LanguageCode | null;
-      if (saved && SUPPORTED_LANGUAGES.some((l) => l.code === saved)) {
-        applyLanguage(saved);
-      } else {
-        // Check browser language or default to English
-        const browserLang = navigator.language?.slice(0, 2) as LanguageCode;
-        if (SUPPORTED_LANGUAGES.some((l) => l.code === browserLang)) {
-          applyLanguage(browserLang);
-        } else {
-          applyLanguage(DEFAULT_LANG);
-        }
-      }
-    } catch {
-      applyLanguage(DEFAULT_LANG);
+  const applyDomAttributes = useCallback((lang: LanguageCode) => {
+    if (typeof document === "undefined") return;
+    const langMeta =
+      SUPPORTED_LANGUAGES.find((l) => l.code === lang) || SUPPORTED_LANGUAGES[0];
+
+    document.documentElement.setAttribute("lang", lang);
+    document.documentElement.setAttribute("dir", langMeta.dir);
+    document.body?.setAttribute("dir", langMeta.dir);
+
+    if (langMeta.dir === "rtl") {
+      document.documentElement.classList.add("rtl");
+      document.body?.classList.add("rtl");
+    } else {
+      document.documentElement.classList.remove("rtl");
+      document.body?.classList.remove("rtl");
     }
   }, []);
 
-  const applyLanguage = (lang: LanguageCode) => {
+  const applyLanguage = useCallback((lang: LanguageCode) => {
     setLanguageState(lang);
     try {
       localStorage.setItem("sphera-lang", lang);
+      localStorage.setItem("connectin_lang", lang);
+      localStorage.setItem("vibetok-lang", lang);
+      document.cookie = `sphera-lang=${lang}; path=/; max-age=31536000; SameSite=Lax`;
     } catch {}
 
-    if (typeof document !== "undefined") {
-      const langMeta =
-        SUPPORTED_LANGUAGES.find((l) => l.code === lang) || SUPPORTED_LANGUAGES[0];
+    applyDomAttributes(lang);
 
-      document.documentElement.setAttribute("lang", lang);
-      document.documentElement.setAttribute("dir", langMeta.dir);
-
-      if (langMeta.dir === "rtl") {
-        document.documentElement.classList.add("rtl");
-        document.body.classList.add("rtl");
-      } else {
-        document.documentElement.classList.remove("rtl");
-        document.body.classList.remove("rtl");
-      }
+    // Notify other components & embedded iframes
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("sphera-lang-changed", { detail: lang }));
+      try {
+        window.postMessage({ type: "SPHERA_LANG_CHANGED", language: lang, locale: lang }, "*");
+      } catch {}
     }
-  };
+  }, [applyDomAttributes]);
 
-  const setLanguage = (newLang: LanguageCode) => {
+  // Initial sync on mount & sync across storage events / custom events
+  useEffect(() => {
+    const active = getInitialLanguage();
+    if (active !== language) {
+      applyLanguage(active);
+    } else {
+      applyDomAttributes(active);
+    }
+
+    const handleStorage = (e: StorageEvent) => {
+      if (
+        (e.key === "sphera-lang" || e.key === "connectin_lang" || e.key === "vibetok-lang") &&
+        e.newValue &&
+        SUPPORTED_LANGUAGES.some((l) => l.code === e.newValue)
+      ) {
+        const newCode = e.newValue as LanguageCode;
+        setLanguageState(newCode);
+        applyDomAttributes(newCode);
+      }
+    };
+
+    const handleCustomChange = (e: Event) => {
+      const custom = e as CustomEvent<LanguageCode>;
+      if (custom.detail && SUPPORTED_LANGUAGES.some((l) => l.code === custom.detail)) {
+        setLanguageState(custom.detail);
+        applyDomAttributes(custom.detail);
+      }
+    };
+
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener("sphera-lang-changed", handleCustomChange);
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("sphera-lang-changed", handleCustomChange);
+    };
+  }, [applyDomAttributes, applyLanguage, language]);
+
+  const setLanguage = useCallback((newLang: LanguageCode) => {
     applyLanguage(newLang);
-  };
+  }, [applyLanguage]);
 
-  const t = (key: string, fallback?: string): string => {
+  const t = useCallback((key: string, fallback?: string): string => {
     const langDict = TRANSLATIONS[language];
     if (langDict && langDict[key]) {
       return langDict[key];
@@ -90,10 +143,12 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       return enDict[key];
     }
     return fallback || key;
-  };
+  }, [language]);
 
-  const currentLanguage =
-    SUPPORTED_LANGUAGES.find((l) => l.code === language) || SUPPORTED_LANGUAGES[0];
+  const currentLanguage = useMemo(
+    () => SUPPORTED_LANGUAGES.find((l) => l.code === language) || SUPPORTED_LANGUAGES[0],
+    [language]
+  );
   const isRTL = currentLanguage.dir === "rtl";
 
   return (

@@ -6,11 +6,11 @@ import type { SASTFinding } from "@/types/sast";
 type Props = { finding: SASTFinding };
 
 const FW_COLORS: Record<string, string> = {
-  "PCI DSS":      "#1a6e4a",
-  "NIST 800-53":  "#1c3d7a",
-  "ISO 27001":    "#5b2d8e",
-  "CIS Controls": "#7c3d00",
-  "OWASP Top 10": "#e55c00",
+  "PCI DSS":      "#46a36e",
+  "NIST 800-53":  "#7aa2f7",
+  "ISO 27001":    "#7aa2f7",
+  "CIS Controls": "#e2853b",
+  "OWASP Top 10": "#e2853b",
 };
 
 // Map CodeQL/Joern queries based on finding ID
@@ -79,8 +79,8 @@ select call, "Matching invocation signature."`;
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <span className="text-xs font-semibold text-white">{c.framework}</span>
                     <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
-                      <span className="text-[10px] text-red-400 font-bold">NON-COMPLIANT</span>
-                      <ShieldAlert size={12} className="text-red-400" />
+                      <span className="text-[10px] text-[#e5484d] font-bold">NON-COMPLIANT</span>
+                      <ShieldAlert size={12} className="text-[#e5484d]" />
                     </span>
                   </div>
                   <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>{c.description}</div>
@@ -100,22 +100,22 @@ select call, "Matching invocation signature."`;
       {/* CodeQL Query Box */}
       <div className="rounded-2xl p-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
         <h2 className="text-base font-bold text-white mb-3 flex items-center gap-2">
-          <Code2 size={16} className="text-cyan-400" />
+          <Code2 size={16} className="text-[#7aa2f7]" />
           CodeQL Query Node Signature
         </h2>
         <div className="terminal">
           <div className="terminal-header">
-            <div className="terminal-dot" style={{ background: "#ff5f57" }} />
-            <div className="terminal-dot" style={{ background: "#febc2e" }} />
-            <div className="terminal-dot" style={{ background: "#28c840" }} />
+            <div className="terminal-dot" style={{ background: "#e5484d" }} />
+            <div className="terminal-dot" style={{ background: "#d6a847" }} />
+            <div className="terminal-dot" style={{ background: "#46a36e" }} />
             <span className="ml-2 text-xs" style={{ color: "var(--muted)" }}>java/query-detect.ql</span>
           </div>
           <pre style={{
             padding: 12,
-            background: "#000",
+            background: "#0f1115",
             fontFamily: "monospace",
             fontSize: 9.5,
-            color: "#a78bfa",
+            color: "#7aa2f7",
             overflowX: "auto",
             lineHeight: 1.4,
             maxHeight: 180

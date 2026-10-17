@@ -78,7 +78,7 @@ export default function ChallengeAgent({ finding: f }: Props) {
     <div className="rounded-2xl p-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <h2 className="text-lg font-bold text-white flex items-center gap-2">
-          <ShieldCheck className="w-5 h-5 text-cyan-400" />
+          <ShieldCheck className="w-5 h-5 text-[#7aa2f7]" />
           AI Challenge Agent (False-Positive Solver)
         </h2>
         <button
@@ -86,8 +86,8 @@ export default function ChallengeAgent({ finding: f }: Props) {
           disabled={running}
           className="btn-primary flex items-center gap-1.5 text-xs py-1.5 px-3.5"
           style={{
-            background: running ? "var(--border)" : "linear-gradient(135deg, #00d4ff, #0098b8)",
-            color: running ? "var(--muted)" : "#0a0f1a",
+            background: running ? "var(--border)" : "#7aa2f7",
+            color: running ? "var(--muted)" : "#0f1115",
             border: "none",
             cursor: running ? "default" : "pointer"
           }}
@@ -114,11 +114,11 @@ export default function ChallengeAgent({ finding: f }: Props) {
             className="rounded-xl p-3 flex items-center gap-2"
             style={{
               background: "var(--background)",
-              border: done ? "1px solid rgba(52,199,89,0.3)" : "1px solid var(--border)",
+              border: done ? "1px solid rgba(70, 163, 110, 0.3)" : "1px solid var(--border)",
               transition: "border 0.3s"
             }}
           >
-            <ShieldCheck size={14} className={done ? "text-emerald-400" : "text-slate-500"} />
+            <ShieldCheck size={14} className={done ? "text-[#46a36e]" : "text-slate-500"} />
             <span className="text-xs font-semibold text-slate-300">{item.label}</span>
           </div>
         ))}
@@ -128,14 +128,14 @@ export default function ChallengeAgent({ finding: f }: Props) {
       {(running || logs.length > 0) && (
         <div className="terminal">
           <div className="terminal-header">
-            <div className="terminal-dot" style={{ background: "#ff5f57" }} />
-            <div className="terminal-dot" style={{ background: "#febc2e" }} />
-            <div className="terminal-dot" style={{ background: "#28c840" }} />
+            <div className="terminal-dot" style={{ background: "#e5484d" }} />
+            <div className="terminal-dot" style={{ background: "#d6a847" }} />
+            <div className="terminal-dot" style={{ background: "#46a36e" }} />
             <span className="ml-2 text-xs" style={{ color: "var(--muted)" }}>adversarial-solver-daemon</span>
           </div>
-          <div style={{ padding: 12, background: "#000", fontFamily: "monospace", fontSize: 10.5, color: "var(--muted)", minHeight: 90, maxHeight: 150, overflowY: "auto" }}>
+          <div style={{ padding: 12, background: "#0f1115", fontFamily: "monospace", fontSize: 10.5, color: "var(--muted)", minHeight: 90, maxHeight: 150, overflowY: "auto" }}>
             {logs.map((log, i) => (
-              <div key={i} className={log.includes("Verdict") ? "text-emerald-400 font-bold" : log.includes("WARNING") ? "text-red-400" : log.includes("verified") ? "text-cyan-400" : ""}>
+              <div key={i} className={log.includes("Verdict") ? "text-[#46a36e] font-bold" : log.includes("WARNING") ? "text-[#e5484d]" : log.includes("verified") ? "text-[#7aa2f7]" : ""}>
                 $ {log}
               </div>
             ))}
@@ -147,11 +147,11 @@ export default function ChallengeAgent({ finding: f }: Props) {
       {done && (
         <div
           className="rounded-xl px-4 py-3 flex items-center gap-3 mt-3 text-xs font-semibold animate-fadeIn"
-          style={{ background: "rgba(52,199,89,0.08)", border: "1px solid rgba(52,199,89,0.3)" }}
+          style={{ background: "rgba(70, 163, 110, 0.08)", border: "1px solid rgba(70, 163, 110, 0.3)" }}
         >
-          <ShieldAlert className="w-4 h-4 text-red-500" />
+          <ShieldAlert className="w-4 h-4 text-[#e5484d]" />
           <span style={{ color: "var(--low)" }}>
-            Challenge Complete. Reachable: <strong className="text-red-400">Yes</strong> | Sanitized: <strong className="text-emerald-400">No</strong> | Verdict: <strong className="text-red-400">True Positive (Critical Risk)</strong>.
+            Challenge Complete. Reachable: <strong className="text-[#e5484d]">Yes</strong> | Sanitized: <strong className="text-[#46a36e]">No</strong> | Verdict: <strong className="text-[#e5484d]">True Positive (Critical Risk)</strong>.
           </span>
         </div>
       )}

@@ -4,11 +4,11 @@ import type { SASTFinding } from "@/types/sast";
 type Props = { finding: SASTFinding };
 
 const NODE_STYLES = {
-  entry:         { bg: "rgba(0,212,255,0.08)",   border: "rgba(0,212,255,0.3)",   color: "var(--primary)",  icon: "🌐" },
-  vulnerability: { bg: "rgba(255,59,48,0.1)",    border: "rgba(255,59,48,0.4)",   color: "var(--critical)", icon: "⚡" },
-  lateral:       { bg: "rgba(255,149,0,0.08)",   border: "rgba(255,149,0,0.3)",   color: "var(--high)",     icon: "→" },
-  asset:         { bg: "rgba(167,139,250,0.08)", border: "rgba(167,139,250,0.3)", color: "#a78bfa",         icon: "🗄" },
-  impact:        { bg: "rgba(255,59,48,0.15)",   border: "rgba(255,59,48,0.5)",   color: "var(--critical)", icon: "💥" },
+  entry:         { bg: "rgba(122, 162, 247, 0.08)",   border: "rgba(122, 162, 247, 0.3)",   color: "var(--primary)",  icon: "🌐" },
+  vulnerability: { bg: "rgba(229, 72, 77, 0.1)",    border: "rgba(229, 72, 77, 0.4)",   color: "var(--critical)", icon: "⚡" },
+  lateral:       { bg: "rgba(226, 133, 59, 0.08)",   border: "rgba(226, 133, 59, 0.3)",   color: "var(--high)",     icon: "→" },
+  asset:         { bg: "rgba(122, 162, 247, 0.08)", border: "rgba(122, 162, 247, 0.3)", color: "#7aa2f7",         icon: "🗄" },
+  impact:        { bg: "rgba(229, 72, 77, 0.15)",   border: "rgba(229, 72, 77, 0.5)",   color: "var(--critical)", icon: "💥" },
 } as const;
 
 export default function AttackPath({ finding: f }: Props) {

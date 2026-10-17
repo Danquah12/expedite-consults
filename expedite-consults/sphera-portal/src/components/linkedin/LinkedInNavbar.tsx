@@ -566,16 +566,16 @@ export function LinkedInNavbar({
               </>
             )}
           </div>
-          {/* Vibe AI Global Assistant Launcher Button */}
+          {/* Vibe AI Global Assistant Launcher Button - LinkedIn Premium Styling */}
           <button
             onClick={onOpenAIAssistant}
-            className="group flex items-center gap-1.5 rounded-full bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-700 hover:from-purple-500 hover:to-indigo-500 px-3 py-1.5 text-xs font-bold text-white shadow-md hover:shadow-purple-500/25 transition-all ring-1 ring-white/20 cursor-pointer"
+            className="group flex items-center gap-1.5 rounded-full bg-[#FBF5E9] hover:bg-[#F5EAD2] dark:bg-amber-950/30 dark:hover:bg-amber-950/50 text-[#7A4B00] dark:text-amber-200 border border-[#C88A24]/40 dark:border-amber-700/50 px-3 py-1.5 text-xs font-semibold shadow-2xs transition-all cursor-pointer"
             title="Ask Vibe AI — Interactive Q&A, Campus Intelligence & Answers"
           >
-            <Sparkles className="h-3.5 w-3.5 text-amber-300 animate-pulse group-hover:scale-110 transition-transform" />
-            <span className="hidden sm:inline">✨ Vibe AI</span>
-            <span className="sm:hidden font-bold">Vibe</span>
-            <span className="hidden md:inline rounded bg-white/20 px-1.5 py-0.2 text-[9px] font-mono text-amber-200">
+            <Sparkles className="h-3.5 w-3.5 text-[#C88A24] dark:text-amber-300 transition-transform group-hover:scale-110" />
+            <span className="hidden sm:inline">Vibe AI</span>
+            <span className="sm:hidden font-semibold">Vibe</span>
+            <span className="hidden md:inline rounded bg-amber-200/60 dark:bg-amber-900/60 px-1.5 py-0.2 text-[9px] font-bold text-[#5C3800] dark:text-amber-100">
               Q&amp;A
             </span>
           </button>

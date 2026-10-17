@@ -43,7 +43,7 @@ export default function Footer() {
             <div className="flex items-center gap-2.5">
               <div
                 className="w-8 h-8 rounded-lg flex items-center justify-center"
-                style={{ background: "rgba(0,212,255,0.15)", border: "1px solid rgba(0,212,255,0.3)" }}
+                style={{ background: "rgba(122, 162, 247, 0.15)", border: "1px solid var(--border)" }}
               >
                 <Shield className="w-4 h-4" style={{ color: "var(--primary)" }} />
               </div>

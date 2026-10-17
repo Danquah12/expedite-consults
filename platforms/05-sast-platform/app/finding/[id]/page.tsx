@@ -1,6 +1,4 @@
 import { notFound } from "next/navigation";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
 import FindingHeader      from "@/components/finding/FindingHeader";
 import ExecutiveSummary   from "@/components/finding/ExecutiveSummary";
 import EvidencePanel      from "@/components/finding/EvidencePanel";
@@ -35,7 +33,7 @@ export default async function FindingDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
+      
       <main className="flex-1 pt-24 pb-24">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="space-y-6">
@@ -68,7 +66,7 @@ export default async function FindingDetailPage({ params }: { params: Promise<{ 
           </div>
         </div>
       </main>
-      <Footer />
+      
     </div>
   );
 }

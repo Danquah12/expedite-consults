@@ -1225,15 +1225,15 @@ export default function LinkedInPage() {
         {/* VIEW 17: VIBE AI EMBEDDED IMMERSIVE HUB */}
         {activeTab === 'vibe' && (
           <div className="rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-md h-[88vh] flex flex-col">
-            <div className="bg-gradient-to-r from-slate-950 via-indigo-950 to-purple-950 px-4 py-3 text-white flex items-center justify-between border-b border-white/10 shrink-0">
+            <div className="bg-[#1B1F23] dark:bg-[#14181B] px-5 py-3.5 text-white flex items-center justify-between border-b border-zinc-800 shrink-0">
               <div className="flex items-center gap-2.5">
-                <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-purple-500 via-indigo-500 to-amber-400 flex items-center justify-center text-white shadow-md">
-                  <Sparkles className="h-4 w-4 animate-pulse text-amber-200" />
+                <div className="h-8 w-8 rounded-full bg-[#0A66C2]/20 border border-[#0A66C2]/40 flex items-center justify-center text-[#70B5F9] shadow-xs">
+                  <Sparkles className="h-4 w-4" />
                 </div>
                 <div>
                   <h2 className="font-bold text-sm text-white flex items-center gap-2">
                     <span>Vibe AI Q&amp;A Clinic &amp; Campus</span>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-2 py-0.5 text-[9px] font-mono text-emerald-300 border border-emerald-500/30">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[9px] font-mono text-emerald-300 border border-emerald-500/30">
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
                       Live Embedded
                     </span>
@@ -1246,7 +1246,7 @@ export default function LinkedInPage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setActiveTab('home')}
-                  className="px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition-colors cursor-pointer"
+                  className="rounded-full border border-zinc-700 bg-zinc-800/80 hover:bg-zinc-700 text-xs font-semibold px-3.5 py-1.5 text-zinc-200 transition-colors cursor-pointer"
                 >
                   ← Back to Feed
                 </button>
@@ -1254,7 +1254,7 @@ export default function LinkedInPage() {
                   href="https://vibe-tok-inky.vercel.app/vibe"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-3 py-1 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-xs font-bold text-white flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                  className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-xs font-semibold px-3.5 py-1.5 text-white flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer"
                 >
                   Open Fullscreen <ExternalLink className="h-3.5 w-3.5" />
                 </a>
@@ -1262,7 +1262,7 @@ export default function LinkedInPage() {
             </div>
             <iframe
               src="https://vibe-tok-inky.vercel.app/vibe"
-              className="w-full flex-1 border-0 bg-slate-950"
+              className="w-full flex-1 border-0 bg-white dark:bg-zinc-950"
               allow="camera; microphone; display-capture; autoplay; clipboard-write; fullscreen"
               title="Vibe AI Full Hub"
             />
@@ -1270,18 +1270,18 @@ export default function LinkedInPage() {
         )}
       </main>
 
-      {/* Floating "✨ Ask Vibe AI" Quick Launcher Pill */}
+      {/* Floating "Ask Vibe AI" Quick Launcher Pill - LinkedIn Human Floating Helper */}
       <div className="fixed bottom-4 left-4 z-40">
         <button
           onClick={() => setIsAIAssistantOpen(true)}
-          className="flex items-center gap-2 rounded-full bg-gradient-to-r from-purple-700 via-indigo-700 to-slate-900 hover:from-purple-600 hover:to-indigo-600 text-white px-4 py-2.5 shadow-2xl border border-purple-400/40 hover:scale-105 active:scale-95 transition-all cursor-pointer group"
+          className="flex items-center gap-2.5 rounded-full bg-white dark:bg-[#1B1F23] text-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700 shadow-lg hover:shadow-xl hover:border-[#0A66C2] px-4 py-2.5 text-xs font-semibold transition-all cursor-pointer group"
           title="Ask Vibe AI anything (Cyber, Engineering, Career, Tools)"
         >
-          <div className="h-5 w-5 rounded-full bg-amber-400/20 flex items-center justify-center text-amber-300">
-            <Sparkles className="h-3.5 w-3.5 animate-pulse" />
+          <div className="h-6 w-6 rounded-full bg-[#FBF5E9] dark:bg-amber-950/40 flex items-center justify-center text-[#C88A24] dark:text-amber-300 border border-[#C88A24]/30">
+            <Sparkles className="h-3.5 w-3.5" />
           </div>
-          <span className="text-xs font-bold tracking-tight">Ask Vibe AI</span>
-          <span className="hidden sm:inline text-[10px] font-mono bg-purple-500/40 px-1.5 py-0.5 rounded text-purple-200 border border-purple-400/30">
+          <span className="font-semibold tracking-tight">Ask Vibe AI</span>
+          <span className="hidden sm:inline text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
             Q&amp;A
           </span>
         </button>

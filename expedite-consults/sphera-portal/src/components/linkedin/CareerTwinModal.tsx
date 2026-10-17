@@ -74,17 +74,17 @@ export function CareerTwinModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl p-0 overflow-hidden sm:rounded-xl">
-        <DialogHeader className="border-b border-zinc-200 bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-900 px-6 py-4 text-white dark:border-zinc-800">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 backdrop-blur-xs">
-              <Bot className="h-5 w-5 text-sky-300 animate-pulse" />
+        <DialogHeader className="border-b border-zinc-200 dark:border-zinc-800 bg-[#1B1F23] dark:bg-[#14181B] px-6 py-4 text-white">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0A66C2]/20 border border-[#0A66C2]/40 text-[#70B5F9]">
+              <Bot className="h-4 w-4" />
             </div>
             <div>
-              <DialogTitle className="text-base font-bold text-white">
+              <DialogTitle className="text-sm font-bold text-white">
                 CareerTwin™ Autonomous Career Agent
               </DialogTitle>
-              <p className="text-xs text-sky-200">
-                AI Candidate-Job Matchmaking & Interactive 5-Minute Mock Interview Simulator
+              <p className="text-xs text-zinc-400">
+                AI Candidate-Job Matchmaking &amp; Interactive Mock Interview Simulator
               </p>
             </div>
           </div>
@@ -187,7 +187,7 @@ export function CareerTwinModal({
           {/* TAB 2: INTERACTIVE MOCK INTERVIEW */}
           {activeTab === 'interview' && (
             <div className="space-y-4">
-              <div className="rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 p-4 dark:from-zinc-800 dark:to-zinc-850 border border-blue-200 dark:border-zinc-700">
+              <div className="rounded-xl bg-zinc-50 dark:bg-zinc-800/80 p-4 border border-zinc-200 dark:border-zinc-700">
                 <div className="flex items-center justify-between text-[11px] text-zinc-500 mb-1">
                   <span>Question {currentQuestionIndex + 1} of {interviewQuestions.length}</span>
                   <span className="font-bold text-[#0A66C2]">AI Technical Screener</span>

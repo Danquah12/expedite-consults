@@ -68,9 +68,9 @@ export async function validateOTP(target: string, code: string, challengeToken?:
   const isPhone = !cleanTarget.includes("@") && /^[+\d\s().-]+$/.test(cleanTarget)
   if (isPhone) {
     try {
-      const accountSid = process.env.TWILIO_ACCOUNT_SID
-      const authToken = process.env.TWILIO_AUTH_TOKEN
-      const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID || "VA41cdc0ff263947ff803f53f7eb0ab57f"
+      const accountSid = process.env.TWILIO_ACCOUNT_SID || ""
+      const authToken = process.env.TWILIO_AUTH_TOKEN || ""
+      const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID || ""
 
       if (accountSid && authToken && verifyServiceSid) {
         let phoneFormatted = cleanTarget.replace(/[^\d+]/g, "")

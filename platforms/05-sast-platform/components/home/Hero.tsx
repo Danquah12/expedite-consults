@@ -9,11 +9,11 @@ export default function Hero() {
       {/* Background glows */}
       <div
         className="absolute top-1/4 left-1/4 w-[600px] h-[600px] rounded-full pointer-events-none pulse-glow"
-        style={{ background: "radial-gradient(circle, rgba(0,212,255,0.08) 0%, transparent 70%)" }}
+        style={{ background: "radial-gradient(circle, rgba(122, 162, 247, 0.08) 0%, transparent 70%)" }}
       />
       <div
         className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] rounded-full pointer-events-none"
-        style={{ background: "radial-gradient(circle, rgba(255,59,48,0.06) 0%, transparent 70%)" }}
+        style={{ background: "radial-gradient(circle, rgba(229, 72, 77, 0.06) 0%, transparent 70%)" }}
       />
       {/* Grid overlay */}
       <div
@@ -28,7 +28,7 @@ export default function Hero() {
         {/* Badge */}
         <div
           className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-8 text-sm font-medium"
-          style={{ background: "rgba(0,212,255,0.08)", border: "1px solid rgba(0,212,255,0.25)", color: "var(--primary)" }}
+          style={{ background: "rgba(122, 162, 247, 0.08)", border: "1px solid var(--border)", color: "var(--primary)" }}
         >
           <Shield className="w-3.5 h-3.5" />
           Platform 5 of 34 — Static Application Security Testing
@@ -56,7 +56,7 @@ export default function Hero() {
           <Link
             href="/scan"
             className="flex items-center gap-2 px-7 py-3.5 rounded-xl text-base font-semibold transition-all duration-200 hover:opacity-90 hover:scale-105"
-            style={{ background: "linear-gradient(135deg, #00d4ff, #0098b8)", color: "#0a0f1a" }}
+            style={{ background: "#7aa2f7", color: "#0f1115" }}
           >
             <Play className="w-4 h-4" />
             Run Demo Scan
@@ -64,7 +64,7 @@ export default function Hero() {
           <Link
             href="/dashboard"
             className="flex items-center gap-2 px-7 py-3.5 rounded-xl text-base font-semibold transition-all duration-200 hover:text-white"
-            style={{ border: "1px solid var(--border)", color: "var(--muted)", background: "rgba(255,255,255,0.02)" }}
+            style={{ border: "1px solid var(--border)", color: "var(--muted)", background: "rgba(236, 236, 239, 0.02)" }}
           >
             <Eye className="w-4 h-4" />
             View Dashboard

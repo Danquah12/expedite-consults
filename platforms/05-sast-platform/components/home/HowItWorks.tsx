@@ -15,7 +15,7 @@ const STEPS = [
     title: "Multi-Engine Analysis",
     description: "Four specialized engines run in parallel — CodeQL traces data flows, Semgrep matches patterns, Joern analyzes the code property graph, and DataFlow validates taint paths.",
     details: ["Parallel engine execution", "Hot path: < 2 seconds per file", "5-layer false positive reduction", "Confidence scoring per finding"],
-    color: "#a78bfa",
+    color: "#7aa2f7",
   },
   {
     number: "03",
@@ -33,7 +33,7 @@ export default function HowItWorks() {
       <div className="text-center mb-16">
         <div
           className="inline-block px-4 py-1.5 rounded-full text-sm font-medium mb-4"
-          style={{ background: "rgba(0,212,255,0.08)", border: "1px solid rgba(0,212,255,0.2)", color: "var(--primary)" }}
+          style={{ background: "rgba(122, 162, 247, 0.08)", border: "1px solid var(--border)", color: "var(--primary)" }}
         >
           How It Works
         </div>

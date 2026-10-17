@@ -65,17 +65,17 @@ export function AIPostModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-xl p-0 overflow-hidden sm:rounded-xl">
-        <DialogHeader className="border-b border-zinc-200 bg-gradient-to-r from-blue-900 to-indigo-900 px-6 py-4 text-white dark:border-zinc-800">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 backdrop-blur-xs">
-              <Sparkles className="h-5 w-5 text-amber-300 animate-pulse" />
+        <DialogHeader className="border-b border-zinc-200 dark:border-zinc-800 bg-[#1B1F23] dark:bg-[#14181B] px-6 py-4 text-white">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0A66C2]/20 border border-[#0A66C2]/40 text-[#70B5F9]">
+              <Sparkles className="h-4 w-4" />
             </div>
             <div>
-              <DialogTitle className="text-base font-bold text-white">
+              <DialogTitle className="text-sm font-bold text-white">
                 ConnectIn AI Post Assistant
               </DialogTitle>
-              <p className="text-xs text-sky-200">
-                Draft viral, professional LinkedIn posts in seconds with Google Gemini intelligence.
+              <p className="text-xs text-zinc-400">
+                Draft professional LinkedIn posts in seconds with Google Gemini intelligence.
               </p>
             </div>
           </div>
@@ -151,7 +151,7 @@ export function AIPostModal({
               type="button"
               onClick={() => handleGenerate()}
               disabled={isGenerating}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#0A66C2] to-indigo-600 py-2.5 text-xs font-bold text-white shadow-md hover:from-[#004182] hover:to-indigo-700 transition-all disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 rounded-full bg-[#0A66C2] hover:bg-[#004182] py-2.5 text-xs font-semibold text-white shadow-2xs transition-colors disabled:opacity-50 cursor-pointer"
             >
               {isGenerating ? (
                 <>

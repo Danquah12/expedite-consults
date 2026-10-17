@@ -2,13 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
 import RepoInput from "@/components/scan/RepoInput";
 import ScanProgress from "@/components/scan/ScanProgress";
-import { Shield } from "lucide-react";
+import PostScanValidation from "@/components/scan/PostScanValidation";
+import { Shield, CheckCircle2 } from "lucide-react";
 
-type Step = "input" | "scanning";
+type Step = "input" | "scanning" | "validating";
 
 export default function ScanPage() {
   const [step,     setStep]     = useState<Step>("input");
@@ -24,67 +23,135 @@ export default function ScanPage() {
     setStep("scanning");
   };
 
-  const handleComplete = () => {
-    setTimeout(() => router.push("/dashboard"), 1500);
+  const handleScanComplete = () => {
+    setTimeout(() => setStep("validating"), 900);
   };
 
-  const stepLabels = ["Repository", "Scanning", "Complete"];
-  const currentIdx = step === "input" ? 0 : 1;
+  const handleValidationComplete = () => {
+    router.push("/dashboard");
+  };
+
+  const stepLabels = [
+    { step: 1, title: "Repository & Scope", sub: "Target & commit lock" },
+    { step: 2, title: "Multi-Engine Static Scan", sub: "CodeQL · Semgrep · Snyk · Checkmarx" },
+    { step: 3, title: "Finding Validation (A–F)", sub: "6-Point Proof Contract" },
+    { step: 4, title: "Verified Dashboard", sub: "Triage & remediation" },
+  ];
+  const currentIdx = step === "input" ? 0 : step === "scanning" ? 1 : 2;
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-1 pt-24 pb-24 relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div
-            className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full pulse-glow"
-            style={{ background: "radial-gradient(circle, rgba(0,212,255,0.06) 0%, transparent 70%)" }}
-          />
-        </div>
-
-        <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
+    <div style={{ minHeight: "100vh", padding: "36px 24px 80px 24px" }}>
+      <div style={{ maxWidth: 1360, margin: "0 auto" }}>
+        {/* Top Workspace Header */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            flexWrap: "wrap",
+            gap: 20,
+            marginBottom: 24,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <div
-              className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-6"
-              style={{ background: "rgba(0,212,255,0.1)", border: "1px solid rgba(0,212,255,0.3)" }}
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: 12,
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
             >
-              <Shield className="w-7 h-7" style={{ color: "var(--primary)" }} />
+              <Shield size={24} color="#7aa2f7" />
             </div>
-            <h1 className="text-4xl font-bold text-white mb-3">Run a Security Scan</h1>
-            <p style={{ color: "var(--muted)" }}>Connect a repository and watch the multi-engine analysis in real time.</p>
+            <div>
+              <h1 style={{ fontSize: 28, fontWeight: 800, color: "var(--foreground)", lineHeight: 1.2 }}>
+                Scan &amp; Proof Validation Workspace
+              </h1>
+              <p style={{ fontSize: 13.5, color: "var(--muted)", marginTop: 4 }}>
+                Connect a repository, run multi-engine static analysis, and automatically verify findings against 6-point proof contracts.
+              </p>
+            </div>
           </div>
 
-          {/* Step indicator */}
-          <div className="flex items-center justify-center gap-3 mb-12">
-            {stepLabels.map((label, idx) => (
-              <div key={label} className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-                    style={{
-                      background: idx <= currentIdx ? "rgba(0,212,255,0.2)" : "var(--surface)",
-                      border: `1px solid ${idx <= currentIdx ? "var(--primary)" : "var(--border)"}`,
-                      color: idx <= currentIdx ? "var(--primary)" : "var(--muted)",
-                    }}
-                  >
-                    {idx + 1}
+          {/* 4-Step Pipeline Progress Bar */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(4, minmax(150px, 1fr))",
+              gap: 10,
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              borderRadius: 12,
+              padding: 10,
+              width: "100%",
+              maxWidth: 740,
+            }}
+          >
+            {stepLabels.map((item, idx) => {
+              const active = idx === currentIdx;
+              const completed = idx < currentIdx;
+              return (
+                <div
+                  key={item.step}
+                  style={{
+                    background: active ? "var(--surface-2)" : "var(--background)",
+                    border: `1px solid ${active ? "#7aa2f7" : completed ? "rgba(70, 163, 110, 0.4)" : "var(--border)"}`,
+                    borderRadius: 8,
+                    padding: "8px 10px",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 2 }}>
+                    <span
+                      style={{
+                        fontSize: 10.5,
+                        fontWeight: 800,
+                        color: active ? "#7aa2f7" : completed ? "#46a36e" : "var(--muted)",
+                      }}
+                    >
+                      STEP {item.step}
+                    </span>
+                    {completed && <CheckCircle2 size={13} color="#46a36e" />}
                   </div>
-                  <span className="text-sm hidden sm:block" style={{ color: idx <= currentIdx ? "var(--primary)" : "var(--muted)" }}>
-                    {label}
-                  </span>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--foreground)" }}>{item.title}</div>
+                  <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 1 }}>{item.sub}</div>
                 </div>
-                {idx < stepLabels.length - 1 && <div className="w-8 h-px" style={{ background: "var(--border)" }} />}
-              </div>
-            ))}
-          </div>
-
-          <div className="rounded-2xl p-8" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-            {step === "input"    && <RepoInput    onStart={handleStart} />}
-            {step === "scanning" && <ScanProgress repo={repo} language={language} engines={engines} onComplete={handleComplete} />}
+              );
+            })}
           </div>
         </div>
-      </main>
-      <Footer />
+
+        {/* Main Workspace Surface */}
+        <div
+          style={{
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
+            borderRadius: 16,
+            padding: 28,
+          }}
+        >
+          {step === "input" && <RepoInput onStart={handleStart} />}
+          {step === "scanning" && (
+            <ScanProgress
+              repo={repo}
+              language={language}
+              engines={engines}
+              onComplete={handleScanComplete}
+            />
+          )}
+          {step === "validating" && (
+            <PostScanValidation
+              repo={repo}
+              language={language}
+              onFinishToDashboard={handleValidationComplete}
+            />
+          )}
+        </div>
+      </div>
     </div>
   );
 }

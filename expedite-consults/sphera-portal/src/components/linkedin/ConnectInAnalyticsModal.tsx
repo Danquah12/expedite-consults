@@ -129,21 +129,21 @@ export function ConnectInAnalyticsModal({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-4xl p-0 overflow-hidden rounded-3xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 shadow-2xl">
-        {/* Modal Top Header */}
-        <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 p-6 text-white border-b border-white/10">
+        {/* Modal Top Header - LinkedIn Executive Slate */}
+        <div className="bg-[#1B1F23] dark:bg-[#14181B] p-6 text-white border-b border-zinc-800">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <span className="rounded-full bg-sky-500/20 px-2.5 py-0.5 text-xs font-bold text-sky-300 border border-sky-400/30 flex items-center gap-1.5">
+                <span className="rounded-full bg-[#0A66C2]/20 px-2.5 py-0.5 text-xs font-semibold text-[#70B5F9] border border-[#0A66C2]/40 flex items-center gap-1.5">
                   <Sparkles className="h-3.5 w-3.5 text-amber-300" />
                   ConnectIn Intelligence Radar
                 </span>
                 <span className="text-xs text-zinc-400 font-mono">Zero-Trust Analytics</span>
               </div>
-              <h2 className="text-2xl font-black tracking-tight text-white flex items-center gap-2">
+              <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
                 <span>Analytics &amp; Network Intelligence</span>
               </h2>
-              <p className="text-xs text-zinc-300 max-w-2xl leading-relaxed">
+              <p className="text-xs text-zinc-400 max-w-2xl leading-relaxed">
                 Inspect real-time member profile views with full identity visibility, monitor multi-channel broadcast reach, and track recruiting discovery queries.
               </p>
             </div>
@@ -157,7 +157,7 @@ export function ConnectInAnalyticsModal({
           </div>
 
           {/* 3 Analytics Category Navigation Tabs */}
-          <div className="mt-5 grid grid-cols-3 gap-2 bg-black/40 p-1.5 rounded-2xl border border-white/10 text-xs font-bold">
+          <div className="mt-5 grid grid-cols-3 gap-2 bg-zinc-900/90 p-1 rounded-xl border border-zinc-700/60 text-xs font-semibold">
             <button
               onClick={() => setActiveTab('viewers')}
               className={`py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-2 ${
@@ -288,7 +288,7 @@ export function ConnectInAnalyticsModal({
 
                 <button
                   onClick={handleSimulateNewViewer}
-                  className="rounded-xl bg-gradient-to-r from-sky-600 to-[#0A66C2] hover:from-sky-500 hover:to-blue-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs flex items-center gap-1.5 shrink-0 self-end"
+                  className="rounded-full bg-[#0A66C2] hover:bg-[#004182] px-3.5 py-1.5 text-xs font-semibold text-white shadow-2xs flex items-center gap-1.5 shrink-0 self-end transition-colors cursor-pointer"
                   title="Simulate a real-time incoming profile view"
                 >
                   <Sparkles className="h-3.5 w-3.5" />

@@ -3,7 +3,7 @@ export type Severity = "Critical" | "High" | "Medium" | "Low";
 export type Status = "Open" | "In Progress" | "Resolved" | "False Positive";
 
 export type EngineResult = {
-  name: "CodeQL" | "PatternGuard AST" | "Joern" | "DataFlow";
+  name: "CodeQL" | "Semgrep" | "Joern" | "DataFlow";
   confidence: number; // 0–1
   confirmed: boolean;
   details?: string;

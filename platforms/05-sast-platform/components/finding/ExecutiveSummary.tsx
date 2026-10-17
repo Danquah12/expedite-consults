@@ -42,8 +42,8 @@ export default function ExecutiveSummary({ finding: f }: Props) {
             key={item.label}
             className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs"
             style={{
-              background: item.danger ? "rgba(255,59,48,0.08)" : "var(--background)",
-              border: `1px solid ${item.danger ? "rgba(255,59,48,0.25)" : "var(--border)"}`,
+              background: item.danger ? "rgba(229, 72, 77, 0.08)" : "var(--background)",
+              border: `1px solid ${item.danger ? "rgba(229, 72, 77, 0.25)" : "var(--border)"}`,
             }}
           >
             <span style={{ color: "var(--muted)" }}>{item.label}:</span>

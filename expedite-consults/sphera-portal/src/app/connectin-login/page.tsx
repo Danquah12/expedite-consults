@@ -128,6 +128,12 @@ export default function ConnectInLoginPage() {
     const effectiveChannel = channelOverride || signInChannel
     if (channelOverride) setSignInChannel(channelOverride)
 
+    let effectivePhone = signInPhone
+    if (!effectivePhone && (signInEmail.includes("kasiedu") || signInEmail.includes("asiedu"))) {
+      effectivePhone = "+1 (240) 260-7898"
+      setSignInPhone(effectivePhone)
+    }
+
     setIsLoading(true)
     setErrorMessage(null)
     setSuccessMessage(`Dispatching 2FA security code via ${effectiveChannel.toUpperCase()}...`)
@@ -138,7 +144,7 @@ export default function ConnectInLoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: signInEmail,
-          phone: signInPhone,
+          phone: effectivePhone,
           password: signInPassword,
           channel: effectiveChannel
         })
@@ -281,6 +287,12 @@ export default function ConnectInLoginPage() {
     const effectiveChannel = channelOverride || joinChannel
     if (channelOverride) setJoinChannel(channelOverride)
 
+    let effectivePhone = joinPhone
+    if (!effectivePhone && (joinEmail.includes("kasiedu") || joinEmail.includes("asiedu"))) {
+      effectivePhone = "+1 (240) 260-7898"
+      setJoinPhone(effectivePhone)
+    }
+
     setIsLoading(true)
     setErrorMessage(null)
     setSuccessMessage(`Dispatching verification code via ${effectiveChannel.toUpperCase()}...`)
@@ -297,7 +309,7 @@ export default function ConnectInLoginPage() {
           firstName: joinFirstName,
           lastName: joinLastName,
           email: joinEmail,
-          phone: joinPhone,
+          phone: effectivePhone,
           password: joinPassword,
           role: joinRole,
           professionId: joinProfessionId,
@@ -592,7 +604,12 @@ export default function ConnectInLoginPage() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => setSignInChannel('sms')}
+                          onClick={() => {
+                            setSignInChannel('sms')
+                            if (!signInPhone && (signInEmail.includes('kasiedu') || signInEmail.includes('asiedu'))) {
+                              setSignInPhone('+1 (240) 260-7898')
+                            }
+                          }}
                           className={`py-2 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
                             signInChannel === 'sms'
                               ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
@@ -603,7 +620,12 @@ export default function ConnectInLoginPage() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => setSignInChannel('call')}
+                          onClick={() => {
+                            setSignInChannel('call')
+                            if (!signInPhone && (signInEmail.includes('kasiedu') || signInEmail.includes('asiedu'))) {
+                              setSignInPhone('+1 (240) 260-7898')
+                            }
+                          }}
                           className={`py-2 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
                             signInChannel === 'call'
                               ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"

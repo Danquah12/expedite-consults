@@ -40,7 +40,7 @@ export default function FindingHeader({ finding: f }: Props) {
         <span
           className="px-3 py-1 rounded-lg text-xs font-medium"
           style={{
-            background: f.status === "Open" ? "rgba(255,59,48,0.1)" : f.status === "In Progress" ? "rgba(255,149,0,0.1)" : "rgba(52,199,89,0.1)",
+            background: f.status === "Open" ? "rgba(229, 72, 77, 0.1)" : f.status === "In Progress" ? "rgba(226, 133, 59, 0.1)" : "rgba(70, 163, 110, 0.1)",
             color:      f.status === "Open" ? "var(--critical)"      : f.status === "In Progress" ? "var(--high)"        : "var(--low)",
           }}
         >
@@ -57,8 +57,8 @@ export default function FindingHeader({ finding: f }: Props) {
         {[
           { label: "CVSS",     value: f.cvss.toFixed(1),                    color: f.cvss >= 9 ? "var(--critical)" : f.cvss >= 7 ? "var(--high)" : "var(--medium)" },
           { label: "CWE",      value: f.cwe,                                 color: "var(--primary)" },
-          { label: "OWASP",    value: f.owasp,                               color: "#a78bfa" },
-          { label: "MITRE",    value: f.mitre,                               color: "#fbbf24" },
+          { label: "OWASP",    value: f.owasp,                               color: "#7aa2f7" },
+          { label: "MITRE",    value: f.mitre,                               color: "#d6a847" },
           { label: "EPSS",     value: `${(f.epss * 100).toFixed(1)}%`,      color: "var(--muted)" },
           { label: "Language", value: f.language,                            color: "var(--muted)" },
         ].map(m => (

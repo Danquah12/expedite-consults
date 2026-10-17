@@ -566,6 +566,14 @@
 // ── Fleet manifest ──────────────────────────────────────────────
 const APPS = [
   {
+    port: 3005, label: "SAST Proof Validation", icon: "🛡️",
+    cat: "defence", featured: true,
+    desc: "6-Stage Proof-Driven Finding Validation · Z3 Counterexample Engine · OWASP/CWE/NVD Python Catalog · Split Triage Dashboard",
+    chips: ["Proof Contracts","Z3 Solver","OWASP/CWE/NVD","1360px Workspace"],
+    color: "#7aa2f7",
+    cloudUrl: "https://05-sast-platform.vercel.app",
+  },
+  {
     port: 9001, label: "Ægis Home Screen", icon: "🏠",
     cat: "gateway", featured: true,
     desc: "CyberIntel TV · KPIs · AI Anchors · Fleet Intel Broadcast",
@@ -673,7 +681,7 @@ let activeFilter = "all";
 
 // ── Card builder ────────────────────────────────────────────────
 function buildCard(app) {
-  const url = app.adminPath
+  const url = app.cloudUrl ? app.cloudUrl : app.adminPath
     ? `http://${location.hostname}:${app.port}${app.adminPath}`
     : `http://${location.hostname}:${app.port}/`;
 

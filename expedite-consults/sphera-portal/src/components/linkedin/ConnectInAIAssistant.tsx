@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import {
   Sparkles,
   Bot,
@@ -23,7 +23,8 @@ import {
   Minimize2,
   ExternalLink,
   Copy,
-  Check
+  Check,
+  Globe
 } from "lucide-react"
 import {
   Dialog,
@@ -33,6 +34,9 @@ import {
 } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import { UserProfile } from "@/lib/linkedin-data"
+import { useLanguage } from "@/context/LanguageContext"
+import { LanguageSwitcher } from "@/components/language/LanguageSwitcher"
+import { getLocalizedInitialMessage, getLocalizedAIAnswer } from "@/lib/translations/ai-responses"
 
 interface ConnectInAIAssistantProps {
   isOpen: boolean
@@ -238,6 +242,50 @@ const VIBE_QUICK_CHIPS = [
   { emoji: "💻", label: "Code Assistant", prompt: "Write a Python script to parse Nessus XML scans and export open high-risk findings." },
 ]
 
+function getLocalizedChips(lang: string) {
+  if (lang === 'es') {
+    return [
+      { emoji: "🛡️", label: "DoD Zero Trust", prompt: "Explica los pilares clave de la arquitectura Zero Trust del DoD y cómo implementarlos." },
+      { emoji: "📄", label: "Optimizar CV", prompt: "¿Cómo optimizo mi currículum para puestos de liderazgo y contratos federales?" },
+      { emoji: "🔒", label: "NIST 800-53", prompt: "Resume los controles clave de NIST 800-53 Rev. 5 para la autorización RMF ATO." },
+      { emoji: "⚡", label: "Automatización SecOps", prompt: "¿Cuáles son las mejores prácticas para automatizar escaneos de vulnerabilidades y POA&M?" },
+      { emoji: "☁️", label: "AWS GovCloud", prompt: "¿Qué se requiere para alcanzar FedRAMP High en AWS GovCloud?" },
+      { emoji: "💻", label: "Script de Seguridad", prompt: "Escribe un script en Python para analizar reportes Nessus y extraer hallazgos críticos." },
+    ]
+  }
+  if (lang === 'fr') {
+    return [
+      { emoji: "🛡️", label: "DoD Zero Trust", prompt: "Expliquez les piliers de l'architecture Zero Trust et leur mise en œuvre." },
+      { emoji: "📄", label: "Optimisation de CV", prompt: "Comment optimiser mon CV pour des contrats fédéraux et postes de direction ?" },
+      { emoji: "🔒", label: "NIST 800-53", prompt: "Résumez les contrôles essentiels de NIST 800-53 pour l'autorisation RMF ATO." },
+      { emoji: "⚡", label: "Automatisation SecOps", prompt: "Quelles sont les meilleures pratiques pour automatiser les scans ACAS Nessus et le suivi POA&M ?" },
+      { emoji: "☁️", label: "AWS GovCloud", prompt: "Quelles sont les exigences pour FedRAMP High sur AWS GovCloud ?" },
+      { emoji: "💻", label: "Assistant Code", prompt: "Écrivez un script Python pour analyser les scans Nessus et exporter les failles critiques." },
+    ]
+  }
+  if (lang === 'de') {
+    return [
+      { emoji: "🛡️", label: "DoD Zero Trust", prompt: "Erläutern Sie die Kernsäulen der Zero Trust-Architektur und deren Implementierung." },
+      { emoji: "📄", label: "Lebenslauf-Tipps", prompt: "Wie optimiere ich meinen Lebenslauf für leitende Positionen im Sicherheitsbereich?" },
+      { emoji: "🔒", label: "NIST 800-53", prompt: "Fassen Sie wichtige NIST 800-53 Rev. 5-Kontrollen für RMF ATO zusammen." },
+      { emoji: "⚡", label: "SecOps-Automatisierung", prompt: "Best Practices für automatisierte Schwachstellenscans und POA&M-Tracking." },
+      { emoji: "☁️", label: "AWS GovCloud", prompt: "Anforderungen für FedRAMP High in AWS GovCloud." },
+      { emoji: "💻", label: "Code-Assistent", prompt: "Schreiben Sie ein Python-Skript zur Analyse von Nessus-Scans und Schwachstellen." },
+    ]
+  }
+  if (lang === 'ar') {
+    return [
+      { emoji: "🛡️", label: "DoD Zero Trust", prompt: "اشرح الركائز الأساسية لهندسة نموذج الثقة الصفرية Zero Trust وكيفية تطبيقها." },
+      { emoji: "📄", label: "تطوير السيرة الذاتية", prompt: "كيف أقوم بتحسين سيرتي الذاتية للحصول على عقود ومناصب قيادية في الأمن السيبراني؟" },
+      { emoji: "🔒", label: "NIST 800-53", prompt: "لخّص ضوابط إطار عمل NIST 800-53 المطلوبة لترخيص RMF ATO." },
+      { emoji: "⚡", label: "أتمتة العمليات الأمنية", prompt: "ما هي أفضل الممارسات لأتمتة فحص الثغرات وإدارة خطط العمل والمعالجة POA&M؟" },
+      { emoji: "☁️", label: "أمن السحابة GovCloud", prompt: "ما هي متطلبات تحقيق الامتثال لمعيار FedRAMP High في AWS GovCloud؟" },
+      { emoji: "💻", label: "مساعد البرمجة", prompt: "اكتب سكريبت بلغة بايثون لتحليل نتائج فحص Nessus واستخراج الثغرات عالية الخطورة." },
+    ]
+  }
+  return VIBE_QUICK_CHIPS
+}
+
 export function ConnectInAIAssistant({
   isOpen,
   onClose,
@@ -246,14 +294,28 @@ export function ConnectInAIAssistant({
   initialMode = 'vibe',
   initialQuery = ""
 }: ConnectInAIAssistantProps) {
+  const { language, t } = useLanguage()
+  const iframeRef = useRef<HTMLIFrameElement>(null)
   const [mode, setMode] = useState<'vibe' | 'chat'>('vibe')
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [iframeKey, setIframeKey] = useState(0)
   const [isIframeLoading, setIsIframeLoading] = useState(true)
   const [copiedPrompt, setCopiedPrompt] = useState<string | null>(null)
   const [query, setQuery] = useState(initialQuery || "")
-  const [messages, setMessages] = useState<ChatMessage[]>(() => [getInitialAIMessage(currentUser)])
+  const [messages, setMessages] = useState<ChatMessage[]>(() => [getLocalizedInitialMessage(currentUser, language) as ChatMessage])
   const [isTyping, setIsTyping] = useState(false)
+
+  // Sync active language to embedded Vibe iframe
+  useEffect(() => {
+    if (iframeRef.current?.contentWindow) {
+      try {
+        iframeRef.current.contentWindow.postMessage(
+          { type: 'SET_LANGUAGE', lang: language, locale: language },
+          '*'
+        )
+      } catch {}
+    }
+  }, [language, iframeKey])
 
   useEffect(() => {
     if (initialMode) {
@@ -268,8 +330,8 @@ export function ConnectInAIAssistant({
   }, [initialQuery])
 
   useEffect(() => {
-    setMessages([getInitialAIMessage(currentUser)])
-  }, [currentUser.name, currentUser.professionEnclave])
+    setMessages([getLocalizedInitialMessage(currentUser, language) as ChatMessage])
+  }, [currentUser.name, currentUser.professionEnclave, language])
 
   const handleSendPrompt = (promptText: string) => {
     if (!promptText.trim()) return
@@ -285,6 +347,14 @@ export function ConnectInAIAssistant({
     setIsTyping(true)
 
     setTimeout(() => {
+      // Check for localized responses first
+      const localized = getLocalizedAIAnswer(promptText, language, currentUser)
+      if (localized) {
+        setMessages(prev => [...prev, localized as ChatMessage])
+        setIsTyping(false)
+        return
+      }
+
       let reply: ChatMessage
       const lower = promptText.toLowerCase()
       const enclaveId = currentUser.professionEnclave || 'tech_cybersecurity'
@@ -1015,41 +1085,41 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         className={cn(
-          "p-0 overflow-hidden rounded-2xl flex flex-col transition-all duration-300 border border-zinc-700/60 bg-slate-950 text-white shadow-2xl",
+          "p-0 overflow-hidden rounded-2xl flex flex-col transition-all duration-300 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#1D2226] text-zinc-900 dark:text-zinc-100 shadow-2xl",
           isFullscreen
             ? "!max-w-[97vw] !w-[97vw] !h-[95vh] !max-h-[95vh]"
             : "!max-w-5xl !w-[94vw] !h-[86vh] !max-h-[86vh]"
         )}
       >
-        {/* Header */}
-        <div className="bg-gradient-to-r from-slate-950 via-indigo-950 to-purple-950 px-4 py-3 text-white flex items-center justify-between border-b border-white/10 shrink-0 gap-3">
+        {/* Header - LinkedIn Executive Slate */}
+        <div className="bg-[#1B1F23] dark:bg-[#14181B] px-5 py-3.5 text-white flex items-center justify-between border-b border-zinc-800 shrink-0 gap-3">
           {/* Brand & Title */}
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-purple-500 via-indigo-500 to-amber-400 flex items-center justify-center text-white shadow-md shrink-0">
-              <Sparkles className="h-4 w-4 animate-pulse text-amber-200" />
+            <div className="h-8 w-8 rounded-full bg-[#0A66C2]/20 border border-[#0A66C2]/40 flex items-center justify-center text-white shadow-xs shrink-0">
+              <Sparkles className="h-4 w-4 text-[#70B5F9]" />
             </div>
             <div className="min-w-0">
               <DialogTitle className="font-bold text-sm text-white flex items-center gap-2 truncate">
-                <span>Vibe AI Q&amp;A Clinic</span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-2 py-0.5 text-[9px] font-mono text-emerald-300 border border-emerald-500/30 shrink-0">
+                <span>Vibe AI Intelligence</span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[9px] font-mono text-emerald-300 border border-emerald-500/30 shrink-0">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   Live Embedded
                 </span>
               </DialogTitle>
               <p className="text-[11px] text-zinc-400 truncate">
-                Interactive intelligence answering all user questions across campus, career &amp; tech
+                Campus Q&amp;A, Career Intelligence &amp; Technical Analysis
               </p>
             </div>
           </div>
 
           {/* Mode Switcher Tabs */}
-          <div className="hidden sm:flex items-center bg-black/40 p-1 rounded-xl border border-white/10 shrink-0">
+          <div className="hidden sm:flex items-center bg-zinc-900/90 p-0.5 rounded-lg border border-zinc-700/60 shrink-0">
             <button
               onClick={() => setMode('vibe')}
               className={cn(
-                "px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer",
+                "px-3 py-1 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer",
                 mode === 'vibe'
-                  ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-sm"
+                  ? "bg-[#0A66C2] text-white shadow-xs"
                   : "text-zinc-400 hover:text-white"
               )}
             >
@@ -1059,9 +1129,9 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
             <button
               onClick={() => setMode('chat')}
               className={cn(
-                "px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer",
+                "px-3 py-1 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer",
                 mode === 'chat'
-                  ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-sm"
+                  ? "bg-[#0A66C2] text-white shadow-xs"
                   : "text-zinc-400 hover:text-white"
               )}
             >
@@ -1072,13 +1142,16 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
 
           {/* Action Toolbar */}
           <div className="flex items-center gap-1.5 shrink-0 pr-6">
+            {/* Global Multi-Language Switcher */}
+            <LanguageSwitcher compact={true} align="right" />
+
             {mode === 'vibe' && (
               <button
                 onClick={() => {
                   setIsIframeLoading(true)
                   setIframeKey(k => k + 1)
                 }}
-                className="h-8 w-8 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white flex items-center justify-center transition-colors border border-white/10 cursor-pointer"
+                className="h-8 w-8 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 hover:text-white flex items-center justify-center transition-colors border border-zinc-700/60 cursor-pointer"
                 title="Reload Vibe Session"
               >
                 <RefreshCw className="h-3.5 w-3.5" />
@@ -1086,7 +1159,7 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
             )}
             <button
               onClick={() => setIsFullscreen(!isFullscreen)}
-              className="h-8 w-8 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white flex items-center justify-center transition-colors border border-white/10 cursor-pointer"
+              className="h-8 w-8 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 hover:text-white flex items-center justify-center transition-colors border border-zinc-700/60 cursor-pointer"
               title={isFullscreen ? "Minimize" : "Maximize / Fullscreen"}
             >
               {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
@@ -1095,7 +1168,7 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
               href="https://vibe-tok-inky.vercel.app/vibe"
               target="_blank"
               rel="noopener noreferrer"
-              className="h-8 w-8 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white flex items-center justify-center transition-colors border border-white/10 cursor-pointer"
+              className="h-8 w-8 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 hover:text-white flex items-center justify-center transition-colors border border-zinc-700/60 cursor-pointer"
               title="Open Vibe in New Window"
             >
               <ExternalLink className="h-3.5 w-3.5" />
@@ -1105,32 +1178,32 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
 
         {/* Modal Body */}
         {mode === 'vibe' ? (
-          <div className="relative flex-1 w-full h-full bg-slate-950 flex flex-col min-h-0">
+          <div className="relative flex-1 w-full h-full bg-white dark:bg-zinc-950 flex flex-col min-h-0">
             {/* Mobile Tab switcher */}
-            <div className="sm:hidden flex items-center justify-around bg-black/60 p-1 border-b border-white/10 shrink-0">
+            <div className="sm:hidden flex items-center justify-around bg-zinc-100 dark:bg-zinc-900 p-1 border-b border-zinc-200 dark:border-zinc-800 shrink-0">
               <button
                 onClick={() => setMode('vibe')}
-                className="px-3 py-1 text-xs font-bold rounded-lg flex items-center gap-1 bg-purple-600 text-white"
+                className="px-3 py-1 text-xs font-semibold rounded-md flex items-center gap-1 bg-[#0A66C2] text-white"
               >
                 <Sparkles className="h-3 w-3 text-amber-300" />
                 Vibe AI (Live)
               </button>
               <button
                 onClick={() => setMode('chat')}
-                className="px-3 py-1 text-xs font-bold rounded-lg flex items-center gap-1 text-zinc-400"
+                className="px-3 py-1 text-xs font-semibold rounded-md flex items-center gap-1 text-zinc-600 dark:text-zinc-400"
               >
                 <Bot className="h-3 w-3" />
                 Copilot
               </button>
             </div>
 
-            {/* Quick Sparks Strip */}
-            <div className="bg-slate-900/90 border-b border-white/10 px-3 py-1.5 flex items-center gap-2 overflow-x-auto shrink-0">
-              <span className="text-[10px] uppercase font-mono font-bold text-amber-300 flex items-center gap-1 shrink-0">
-                <Zap className="h-3 w-3" /> Prompts:
+            {/* Quick Sparks Strip - LinkedIn Clean Pills */}
+            <div className="bg-zinc-50 dark:bg-zinc-900/80 border-b border-zinc-200 dark:border-zinc-800 px-4 py-2 flex items-center gap-2 overflow-x-auto shrink-0">
+              <span className="text-[10px] uppercase font-bold text-zinc-500 dark:text-zinc-400 flex items-center gap-1 shrink-0">
+                <Zap className="h-3 w-3 text-[#0A66C2]" /> Suggested Prompts:
               </span>
               <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-                {VIBE_QUICK_CHIPS.map((chip, idx) => (
+                {getLocalizedChips(language).map((chip, idx) => (
                   <button
                     key={idx}
                     onClick={() => {
@@ -1138,13 +1211,13 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
                       setCopiedPrompt(chip.label)
                       setTimeout(() => setCopiedPrompt(null), 2000)
                     }}
-                    className="rounded-full bg-white/5 hover:bg-white/15 text-zinc-300 hover:text-white px-2.5 py-0.5 whitespace-nowrap text-[10px] transition-all flex items-center gap-1 border border-white/10 cursor-pointer"
+                    className="rounded-full bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 px-3 py-1 whitespace-nowrap text-xs transition-colors flex items-center gap-1.5 border border-zinc-200 dark:border-zinc-700 cursor-pointer shadow-2xs"
                     title={`Click to copy prompt: "${chip.prompt}"`}
                   >
                     <span>{chip.emoji}</span>
-                    <span>{chip.label}</span>
+                    <span className="font-medium">{chip.label}</span>
                     {copiedPrompt === chip.label ? (
-                      <span className="text-emerald-400 font-bold ml-1">✓ Copied</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-bold ml-1">✓ Copied</span>
                     ) : null}
                   </button>
                 ))}
@@ -1152,45 +1225,54 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
             </div>
 
             {/* Vibe Iframe */}
-            <div className="relative flex-1 w-full h-full min-h-0 bg-slate-950">
+            <div className="relative flex-1 w-full h-full min-h-0 bg-white dark:bg-zinc-950">
               {isIframeLoading && (
-                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-950 text-white gap-3 p-4">
+                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/95 dark:bg-zinc-950/95 text-zinc-900 dark:text-zinc-100 gap-3 p-4">
                   <div className="relative h-12 w-12 flex items-center justify-center">
-                    <div className="absolute inset-0 rounded-full border-2 border-purple-500/20 border-t-purple-500 animate-spin" />
-                    <Sparkles className="h-5 w-5 text-amber-400 animate-pulse" />
+                    <div className="absolute inset-0 rounded-full border-2 border-zinc-200 dark:border-zinc-800 border-t-[#0A66C2] animate-spin" />
+                    <Sparkles className="h-5 w-5 text-[#0A66C2]" />
                   </div>
                   <div className="text-center space-y-1">
-                    <p className="text-sm font-bold text-white">Launching Vibe AI Q&amp;A Clinic...</p>
-                    <p className="text-xs text-zinc-400">Loading interactive questions &amp; campus intelligence</p>
-                    <span className="inline-block text-[10px] font-mono text-purple-400">https://vibe-tok-inky.vercel.app/vibe</span>
+                    <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">Connecting to Vibe AI...</p>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">Loading interactive campus intelligence &amp; Q&amp;A</p>
+                    <span className="inline-block text-[10px] font-mono text-[#0A66C2]">vibe-tok-inky.vercel.app/vibe?lang={language}</span>
                   </div>
                 </div>
               )}
 
               <iframe
-                key={iframeKey}
-                src="https://vibe-tok-inky.vercel.app/vibe"
-                className="w-full h-full border-0 bg-slate-950"
+                ref={iframeRef}
+                key={`${iframeKey}_${language}`}
+                src={`https://vibe-tok-inky.vercel.app/vibe?lang=${language}&locale=${language}&hl=${language}`}
+                className="w-full h-full border-0 bg-white dark:bg-zinc-950"
                 allow="camera; microphone; display-capture; autoplay; clipboard-write; fullscreen"
-                onLoad={() => setIsIframeLoading(false)}
+                onLoad={() => {
+                  setIsIframeLoading(false)
+                  try {
+                    iframeRef.current?.contentWindow?.postMessage(
+                      { type: 'SET_LANGUAGE', lang: language, locale: language },
+                      '*'
+                    )
+                  } catch {}
+                }}
                 title="Vibe AI Campus & Q&A Clinic"
               />
             </div>
           </div>
         ) : (
-          <div className="flex flex-col flex-1 min-h-0 bg-white dark:bg-zinc-900">
+          <div className="flex flex-col flex-1 min-h-0 bg-white dark:bg-[#1D2226]">
             {/* Mobile Tab switcher */}
             <div className="sm:hidden flex items-center justify-around bg-zinc-100 dark:bg-zinc-800 p-1 border-b border-zinc-200 dark:border-zinc-700 shrink-0">
               <button
                 onClick={() => setMode('vibe')}
-                className="px-3 py-1 text-xs font-bold rounded-lg flex items-center gap-1 text-zinc-600 dark:text-zinc-400"
+                className="px-3 py-1 text-xs font-semibold rounded-md flex items-center gap-1 text-zinc-600 dark:text-zinc-400"
               >
                 <Sparkles className="h-3 w-3 text-amber-300" />
                 Vibe AI (Live)
               </button>
               <button
                 onClick={() => setMode('chat')}
-                className="px-3 py-1 text-xs font-bold rounded-lg flex items-center gap-1 bg-purple-600 text-white"
+                className="px-3 py-1 text-xs font-semibold rounded-md flex items-center gap-1 bg-[#0A66C2] text-white"
               >
                 <Bot className="h-3 w-3" />
                 Copilot
@@ -1208,17 +1290,17 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
                     className={`max-w-[85%] rounded-2xl p-3.5 leading-relaxed ${
                       msg.sender === 'user'
                         ? "bg-[#0A66C2] text-white font-medium"
-                        : "bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700"
+                        : "bg-zinc-50 text-zinc-800 dark:bg-zinc-800/80 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700/80"
                     }`}
                   >
                     <div className="whitespace-pre-line">{msg.text}</div>
 
                     {/* Comparison Table View */}
                     {msg.comparisonTable && (
-                      <div className="mt-3 overflow-x-auto rounded-xl border border-zinc-300 dark:border-zinc-700">
+                      <div className="mt-3 overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-700">
                         <table className="w-full text-left text-[11px] border-collapse bg-white dark:bg-zinc-900">
                           <thead>
-                            <tr className="bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border-b border-zinc-300 dark:border-zinc-700 font-bold">
+                            <tr className="bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border-b border-zinc-200 dark:border-zinc-700 font-bold">
                               {msg.comparisonTable.headers.map((h, i) => (
                                 <th key={i} className="p-2">{h}</th>
                               ))}
@@ -1228,7 +1310,7 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
                             {msg.comparisonTable.rows.map((r, i) => (
                               <tr key={i} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
                                 <td className="p-2 font-sans font-semibold text-zinc-900 dark:text-zinc-100">{r.feature}</td>
-                                <td className="p-2 text-purple-600 dark:text-purple-400 font-bold">{r.val1}</td>
+                                <td className="p-2 text-[#0A66C2] dark:text-sky-400 font-bold">{r.val1}</td>
                                 <td className="p-2 text-indigo-600 dark:text-indigo-400 font-bold">{r.val2}</td>
                                 <td className="p-2 text-zinc-400">{r.val3}</td>
                               </tr>
@@ -1244,13 +1326,13 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
                         {msg.suggestedCards.map((c, i) => (
                           <div
                             key={i}
-                            className="rounded-xl bg-white dark:bg-zinc-900 p-2.5 border border-zinc-200 dark:border-zinc-700 space-y-1.5 flex flex-col justify-between"
+                            className="rounded-xl bg-white dark:bg-zinc-900 p-2.5 border border-zinc-200 dark:border-zinc-700 space-y-1.5 flex flex-col justify-between shadow-2xs"
                           >
                             <div>
                               <div className="flex items-center justify-between text-[10px] text-zinc-400">
                                 <span className="font-mono">{c.category}</span>
                                 {c.matchPercent && (
-                                  <span className="font-bold text-emerald-600">{c.matchPercent}</span>
+                                  <span className="font-bold text-emerald-600 dark:text-emerald-400">{c.matchPercent}</span>
                                 )}
                               </div>
                               <p className="font-bold text-zinc-900 dark:text-zinc-100 text-xs">
@@ -1262,7 +1344,7 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
                                 onClose()
                                 onNavigateTab(c.targetTab)
                               }}
-                              className="rounded-lg bg-[#0A66C2] hover:bg-[#004182] text-white py-1 px-2 text-center text-[10px] font-bold transition-colors cursor-pointer"
+                              className="rounded-md bg-[#0A66C2] hover:bg-[#004182] text-white py-1 px-2.5 text-center text-[10px] font-semibold transition-colors cursor-pointer"
                             >
                               {c.actionText} →
                             </button>
@@ -1275,15 +1357,15 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
               ))}
 
               {isTyping && (
-                <div className="flex items-center gap-1.5 text-zinc-400 text-xs italic">
-                  <Sparkles className="h-3.5 w-3.5 animate-spin text-purple-500" />
+                <div className="flex items-center gap-2 text-zinc-500 text-xs italic">
+                  <Sparkles className="h-3.5 w-3.5 animate-spin text-[#0A66C2]" />
                   <span>ConnectIn AI is synthesizing platform recommendations...</span>
                 </div>
               )}
             </div>
 
-            {/* Input Bar */}
-            <div className="p-3 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex items-center gap-2 shrink-0">
+            {/* Input Bar - LinkedIn Style */}
+            <div className="p-3 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#1D2226] flex items-center gap-2 shrink-0">
               <input
                 type="text"
                 placeholder={getEnclaveAIPlaceholder(currentUser.professionEnclave)}
@@ -1292,12 +1374,12 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handleSendPrompt(query)
                 }}
-                className="flex-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 px-3.5 py-2 text-xs text-zinc-900 placeholder:text-zinc-500 focus:outline-none dark:text-zinc-100"
+                className="flex-1 rounded-full bg-zinc-100 dark:bg-zinc-800 px-4 py-2 text-xs text-zinc-900 placeholder:text-zinc-500 focus:outline-none dark:text-zinc-100 border border-transparent focus:border-[#0A66C2] focus:bg-white dark:focus:bg-zinc-900 transition-all"
               />
               <button
                 onClick={() => handleSendPrompt(query)}
                 disabled={!query.trim()}
-                className="rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white p-2.5 transition-all disabled:opacity-40 shrink-0 cursor-pointer"
+                className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white p-2.5 transition-all disabled:opacity-40 shrink-0 cursor-pointer shadow-xs"
               >
                 <Send className="h-4 w-4" />
               </button>

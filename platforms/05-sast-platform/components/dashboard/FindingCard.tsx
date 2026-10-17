@@ -6,10 +6,10 @@ import type { SASTFinding } from "@/types/sast";
 type Props = { finding: SASTFinding };
 
 const SEVERITY_STYLES: Record<string, { bg: string; border: string; dot: string; glow: string }> = {
-  Critical: { bg: "rgba(255,59,48,0.06)",  border: "rgba(255,59,48,0.2)",  dot: "var(--critical)", glow: "rgba(255,59,48,0.15)" },
-  High:     { bg: "rgba(255,149,0,0.06)",  border: "rgba(255,149,0,0.2)",  dot: "var(--high)",     glow: "rgba(255,149,0,0.12)" },
-  Medium:   { bg: "rgba(255,204,0,0.06)",  border: "rgba(255,204,0,0.2)",  dot: "var(--medium)",   glow: "rgba(255,204,0,0.1)" },
-  Low:      { bg: "rgba(52,199,89,0.05)",  border: "rgba(52,199,89,0.15)", dot: "var(--low)",      glow: "rgba(52,199,89,0.08)" },
+  Critical: { bg: "rgba(229, 72, 77, 0.06)",  border: "rgba(229, 72, 77, 0.2)",  dot: "var(--critical)", glow: "rgba(229, 72, 77, 0.15)" },
+  High:     { bg: "rgba(226, 133, 59, 0.06)",  border: "rgba(226, 133, 59, 0.2)",  dot: "var(--high)",     glow: "rgba(226, 133, 59, 0.12)" },
+  Medium:   { bg: "rgba(214, 168, 71, 0.06)",  border: "rgba(214, 168, 71, 0.2)",  dot: "var(--medium)",   glow: "rgba(214, 168, 71, 0.1)" },
+  Low:      { bg: "rgba(70, 163, 110, 0.05)",  border: "rgba(70, 163, 110, 0.15)", dot: "var(--low)",      glow: "rgba(70, 163, 110, 0.08)" },
 };
 
 export default function FindingCard({ finding: f }: Props) {
@@ -28,7 +28,7 @@ export default function FindingCard({ finding: f }: Props) {
       onMouseEnter={e => {
         const el = e.currentTarget as HTMLElement;
         el.style.borderColor = sc.dot;
-        el.style.boxShadow   = `0 0 30px ${sc.glow}, 0 4px 20px rgba(0,0,0,0.3)`;
+        el.style.boxShadow   = `0 0 30px ${sc.glow}, 0 4px 20px rgba(0, 0, 0, 0.3)`;
         el.style.transform   = "translateY(-2px)";
       }}
       onMouseLeave={e => {
@@ -59,7 +59,7 @@ export default function FindingCard({ finding: f }: Props) {
       </div>
 
       {/* Title */}
-      <h3 className="text-sm font-semibold text-white mb-2 line-clamp-2 group-hover:text-cyan-400 transition-colors">
+      <h3 className="text-sm font-semibold text-white mb-2 line-clamp-2 group-hover:text-[#7aa2f7] transition-colors">
         {f.title}
       </h3>
 
@@ -75,8 +75,8 @@ export default function FindingCard({ finding: f }: Props) {
             key={e.name}
             className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium"
             style={{
-              background: e.confirmed ? "rgba(52,199,89,0.08)" : "var(--background)",
-              border: `1px solid ${e.confirmed ? "rgba(52,199,89,0.3)" : "var(--border)"}`,
+              background: e.confirmed ? "rgba(70, 163, 110, 0.08)" : "var(--background)",
+              border: `1px solid ${e.confirmed ? "rgba(70, 163, 110, 0.3)" : "var(--border)"}`,
               color: e.confirmed ? "var(--low)" : "var(--muted)",
             }}
           >
@@ -110,7 +110,7 @@ export default function FindingCard({ finding: f }: Props) {
         <span
           className="px-2 py-0.5 rounded-full text-[10px] font-medium"
           style={{
-            background: f.status === "Open" ? "rgba(255,59,48,0.1)" : f.status === "In Progress" ? "rgba(255,149,0,0.1)" : "rgba(52,199,89,0.1)",
+            background: f.status === "Open" ? "rgba(229, 72, 77, 0.1)" : f.status === "In Progress" ? "rgba(226, 133, 59, 0.1)" : "rgba(70, 163, 110, 0.1)",
             color:      f.status === "Open" ? "var(--critical)"      : f.status === "In Progress" ? "var(--high)"        : "var(--low)",
           }}
         >
