@@ -621,6 +621,55 @@ export default function EcosystemLaunchpad() {
                 </a>
               </div>
             </div>
+
+            {/* Card 7: API Proof-Driven Validation & Role-Differential Engine */}
+            <div className="p-4 rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950/90 border border-blue-500/40 hover:border-blue-400 transition-all duration-300 shadow-[0_0_25px_rgba(122,162,247,0.15)] flex flex-col justify-between group">
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="size-9 rounded-xl bg-blue-500/20 border border-blue-500/40 flex items-center justify-center text-blue-400 shrink-0">
+                    <Webhook className="size-4" />
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">
+                      <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      200 OK
+                    </span>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-950 text-blue-300 border border-blue-800">
+                      :3012
+                    </span>
+                  </div>
+                </div>
+                <h3 className="text-sm font-bold text-white group-hover:text-blue-300 transition-colors">
+                  API Proof Validation Engine
+                </h3>
+                <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                  Role-Differential BOLA/BFLA Replay, Z3 JWT/Tenancy Claims, OWASP API Top 10:2023 Catalog & 1360px Triage.
+                </p>
+              </div>
+
+              <div className="pt-3 border-t border-slate-800/80 mt-4 flex items-center gap-2">
+                <a
+                  href="https://12-api-security-platform.vercel.app/validation-engine"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-500 hover:bg-blue-400 text-slate-950 transition-all flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(122,162,247,0.3)]"
+                  title="Open API Proof-Driven Validation Studio"
+                >
+                  <ShieldCheck className="size-3" />
+                  <span>API Proof</span>
+                </a>
+                <a
+                  href="https://12-api-security-platform.vercel.app/dashboard"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all flex items-center gap-1"
+                  title="Open 1360px API Security Triage Dashboard"
+                >
+                  <Globe className="size-3 text-cyan-400" />
+                  <span>Triage</span>
+                </a>
+              </div>
+            </div>
           </div>
         </div>
 

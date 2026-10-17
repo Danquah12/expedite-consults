@@ -1,505 +1,992 @@
 "use client";
 
 import { useState } from "react";
-import Sidebar from "@/components/layout/Sidebar";
+import Link from "next/link";
 import {
-  Globe2, Shield, Play, Terminal, CheckCircle2, AlertTriangle, XCircle, Code, Lock, RefreshCw, Layers, FileText, Key, Zap, Check, ArrowRight
+  Play,
+  ShieldCheck,
+  CheckCircle2,
+  AlertTriangle,
+  Cpu,
+  KeyRound,
+  FileJson,
+  Lock,
+  ArrowRight,
+  RefreshCw,
+  Terminal,
+  Layers,
 } from "lucide-react";
+import { FINDINGS, SCAN_SUMMARY } from "@/data/findings";
+import { API_PIPELINE_FINDINGS } from "@/lib/validation-engine";
+import Footer from "@/components/layout/Footer";
 
-type OpenApiEndpoint = {
-  path: string;
-  method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
-  summary: string;
-  auth: string;
-  fuzzTarget: string;
-  owaspCategory: string;
-  risk: "Critical" | "High" | "Medium";
-};
+type WorkbenchTab =
+  | "post-scan-proof"
+  | "owasp-fuzzer"
+  | "jwt-lab"
+  | "openapi-schema"
+  | "request-replay";
 
-const SAMPLE_ENDPOINTS: OpenApiEndpoint[] = [
-  { path: "/api/v2/orders/{order_id}", method: "GET", summary: "Retrieve customer order details", auth: "Bearer JWT", fuzzTarget: "order_id (BOLA/IDOR)", owaspCategory: "API1:2023 BOLA", risk: "Critical" },
-  { path: "/api/v2/users/profile", method: "PUT", summary: "Update user profile data", auth: "Bearer JWT", fuzzTarget: "role, is_admin (Mass Assignment)", owaspCategory: "API3:2023 Mass Assignment", risk: "High" },
-  { path: "/api/v2/auth/login", method: "POST", summary: "Authenticate client credentials", auth: "None", fuzzTarget: "password, rate_limit", owaspCategory: "API2:2023 Broken Auth", risk: "High" },
-  { path: "/api/v2/webhooks/subscribe", method: "POST", summary: "Register external webhook callback", auth: "API Key", fuzzTarget: "callback_url (SSRF to AWS IMDS)", owaspCategory: "API7:2023 SSRF", risk: "Critical" },
-  { path: "/api/v2/admin/tenants", method: "DELETE", summary: "Purge tenant workspace", auth: "Bearer JWT", fuzzTarget: "role-check bypass (BFLA)", owaspCategory: "API5:2023 BFLA", risk: "Critical" }
+const ENDPOINT_INVENTORY = [
+  { method: "POST", path: "/api/v2/auth/login", auth: "Public", owasp: "API4:2023", status: "Likely (Rate Limit)" },
+  { method: "GET", path: "/api/v2/users/{id}", auth: "Bearer JWT", owasp: "API1:2023", status: "Confirmed (BOLA)" },
+  { method: "PUT", path: "/api/v2/users/{id}", auth: "Bearer JWT", owasp: "API3:2023", status: "Confirmed (BOPLA)" },
+  { method: "GET", path: "/api/v2/admin/users", auth: "Admin JWT", owasp: "API2:2023", status: "Confirmed (JWT alg:none)" },
+  { method: "GET", path: "/api/v2/admin/users/{id}", auth: "Admin JWT", owasp: "API3:2023", status: "Confirmed (Hash Leak)" },
+  { method: "POST", path: "/api/graphql", auth: "Optional JWT", owasp: "API8:2023", status: "Confirmed (Introspection)" },
+  { method: "GET", path: "/api/v2/users/me", auth: "Session/JWT", owasp: "API8:2023", status: "Confirmed (CORS)" },
+  { method: "GET", path: "/api/v2/products/search", auth: "Bearer JWT", owasp: "API8:2023", status: "False Positive (Safe Bind)" },
 ];
 
-export default function APIScanPage() {
-  const [activeTab, setActiveTab] = useState<"fuzzer" | "jwt_lab" | "openapi">("fuzzer");
-  const [endpoints] = useState<OpenApiEndpoint[]>(SAMPLE_ENDPOINTS);
-  const [selectedEndpoint, setSelectedEndpoint] = useState<OpenApiEndpoint>(SAMPLE_ENDPOINTS[0]);
-  const [fuzzing, setFuzzing] = useState(false);
-  const [fuzzResults, setFuzzResults] = useState<Record<string, { status: string; cvss: number; evidence: string }>>({});
-  const [consoleLogs, setConsoleLogs] = useState<string[]>([
-    "[init] Autonomous API Security Fuzzer v3.2 initialized.",
-    "[schema] OpenAPI 3.0.3 specification ingested: 5 active test endpoints.",
-    "[ready] Select an endpoint or run the automated OWASP API Top 10 Fuzzer."
-  ]);
+export default function ApiScanWorkspacePage() {
+  const [targetUrl, setTargetUrl] = useState("https://staging.api.acme.com/v2");
+  const [apiType, setApiType] = useState<"REST" | "GraphQL" | "gRPC">("REST");
+  const [authProfile, setAuthProfile] = useState("Multi-Role Differential (Tenant A vs. Tenant B + Admin)");
+  const [scanning, setScanning] = useState(false);
+  const [activeTab, setActiveTab] = useState<WorkbenchTab>("post-scan-proof");
+  const [selectedProofId, setSelectedProofId] = useState(API_PIPELINE_FINDINGS[0].id);
+  const [jwtTokenInput, setJwtTokenInput] = useState(
+    "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInRlbmFudF9pZCI6Im9yZ19hbHBoYSJ9."
+  );
+  const [replayPrincipal, setReplayPrincipal] = useState<"tenant_a" | "tenant_b" | "anonymous">("tenant_a");
 
-  // JWT Security Lab State
-  const [jwtToken, setJwtToken] = useState("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMDQ5MiIsIm5hbWUiOiJBbGV4IENoZW4iLCJyb2xlIjoidXNlciIsImlhdCI6MTcwMDAwMDAwMCwiZXhwIjoxODAwMDAwMDAwfQ.g-tK6x5cM3...mockSig");
-  const [jwtHeader, setJwtHeader] = useState('{\n  "alg": "HS256",\n  "typ": "JWT"\n}');
-  const [jwtPayload, setJwtPayload] = useState('{\n  "sub": "10492",\n  "name": "Alex Chen",\n  "role": "user",\n  "iat": 1700000000,\n  "exp": 1800000000\n}');
-  const [jwtAttackResult, setJwtAttackResult] = useState<string | null>(null);
+  const activeProof =
+    API_PIPELINE_FINDINGS.find((p) => p.id === selectedProofId) ||
+    API_PIPELINE_FINDINGS[0];
 
-  const runOwaspFuzzer = () => {
-    setFuzzing(true);
-    setFuzzResults({});
-    setConsoleLogs(c => [
-      ...c,
-      `[fuzz] Initiating automated OWASP API Top 10 fuzzing suite against ${endpoints.length} endpoints...`
-    ]);
-
-    endpoints.forEach((ep, index) => {
-      setTimeout(() => {
-        setConsoleLogs(c => [
-          ...c,
-          `[fuzz:${ep.method}] Probing ${ep.path} for ${ep.owaspCategory}...`,
-          `[fuzz:${ep.method}] Sending parameter mutation payload to ${ep.fuzzTarget}...`
-        ]);
-
-        if (ep.owaspCategory.includes("BOLA")) {
-          setFuzzResults(prev => ({
-            ...prev,
-            [ep.path]: {
-              status: "VULNERABLE (BOLA / IDOR)",
-              cvss: 9.1,
-              evidence: "GET /api/v2/orders/9992 returned 200 OK with Tenant B invoice data while authenticated as Tenant A user."
-            }
-          }));
-          setConsoleLogs(c => [...c, `[!] CRITICAL: BOLA vulnerability confirmed on ${ep.path} (CVSS: 9.1)`]);
-        } else if (ep.owaspCategory.includes("Mass Assignment")) {
-          setFuzzResults(prev => ({
-            ...prev,
-            [ep.path]: {
-              status: "VULNERABLE (Mass Assignment)",
-              cvss: 8.4,
-              evidence: "PUT payload with 'is_admin: true' was accepted and modified user object in database without schema filtering."
-            }
-          }));
-          setConsoleLogs(c => [...c, `[!] HIGH: Mass Assignment allowed unauthorized role escalation on ${ep.path}`]);
-        } else if (ep.owaspCategory.includes("SSRF")) {
-          setFuzzResults(prev => ({
-            ...prev,
-            [ep.path]: {
-              status: "VULNERABLE (SSRF)",
-              cvss: 9.6,
-              evidence: "Callback URL 'http://169.254.169.254/latest/meta-data/' responded with AWS IAM security credentials."
-            }
-          }));
-          setConsoleLogs(c => [...c, `[!] CRITICAL: SSRF to Cloud Metadata Service confirmed on ${ep.path}`]);
-        } else {
-          setFuzzResults(prev => ({
-            ...prev,
-            [ep.path]: {
-              status: "SECURE (Filtered)",
-              cvss: 0.0,
-              evidence: "Endpoint rejected anomalous authentication and rate-limited excessive requests (HTTP 429 Too Many Requests)."
-            }
-          }));
-          setConsoleLogs(c => [...c, `[+] PASSED: ${ep.path} enforced strict input typing and rate limiting.`]);
-        }
-
-        if (index === endpoints.length - 1) {
-          setFuzzing(false);
-          setConsoleLogs(c => [...c, `[done] OWASP API Top 10 Fuzzing completed. 3 critical vulnerabilities flagged.`]);
-        }
-      }, (index + 1) * 700);
-    });
-  };
-
-  const testAlgNoneJwt = () => {
-    setJwtAttackResult("Testing 'alg: none' JWT signature bypass...");
+  const handleRunScan = () => {
+    setScanning(true);
     setTimeout(() => {
-      setJwtHeader('{\n  "alg": "none",\n  "typ": "JWT"\n}');
-      setJwtPayload('{\n  "sub": "10492",\n  "name": "Alex Chen",\n  "role": "admin",\n  "iat": 1700000000,\n  "exp": 1800000000\n}');
-      setJwtAttackResult("❌ VULNERABLE: Server accepted unsigned JWT token with alg: none. Role elevated to 'admin'. (CVSS: 9.8)");
-      setConsoleLogs(c => [
-        ...c,
-        `[jwt] Fuzzing header: {"alg": "none"}`,
-        `[jwt] Stripped HMAC signature suffix...`,
-        `[!] CRITICAL: Server accepted 'alg: none' token with admin claim without signature validation!`
-      ]);
-    }, 600);
-  };
-
-  const testWeakHmacSecret = () => {
-    setJwtAttackResult("Running dictionary attack on HMAC SHA-256 signing secret...");
-    setTimeout(() => {
-      setJwtAttackResult("❌ CRACKED: Weak JWT signing secret found: 'secret123'. An attacker can forge arbitrary admin tokens. (CVSS: 8.9)");
-      setConsoleLogs(c => [
-        ...c,
-        `[jwt:hashcat] Ingesting JWT token for offline secret cracking...`,
-        `[jwt:hashcat] Tested top 100,000 common HMAC passphrases...`,
-        `[!] CRITICAL: Secret key cracked: 'secret123' in 0.04s.`
-      ]);
-    }, 700);
+      setScanning(false);
+      setActiveTab("post-scan-proof");
+    }, 650);
   };
 
   return (
-    <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: "var(--bg)", color: "var(--fg)" }}>
-      <Sidebar />
-
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        
-        {/* Top Header Bar */}
-        <div style={{ padding: "16px 24px", borderBottom: "1px solid var(--border)", background: "var(--surface)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
-          <div>
-            <h1 style={{ fontSize: 20, fontWeight: 900, color: "#fff", display: "flex", alignItems: "center", gap: 8 }}>
-              <Globe2 size={20} style={{ color: "var(--primary)" }} />
-              Autonomous API Security & OWASP API Top 10 Lab
+    <div className="min-h-screen flex flex-col">
+      <main className="flex-1 max-w-[1360px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        {/* Top Workspace Header */}
+        <section className="card-surface p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="space-y-1.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <span
+                className="text-xs font-medium px-2.5 py-0.5 rounded-md inline-flex items-center gap-1.5"
+                style={{
+                  background: "var(--accent-soft)",
+                  color: "var(--accent)",
+                  border: "1px solid rgba(122, 162, 247, 0.28)",
+                }}
+              >
+                <Terminal className="w-3.5 h-3.5" />
+                <span>API Scan &amp; Post-Scan Proof Workbench (1360px)</span>
+              </span>
+              <span
+                className="text-xs font-mono px-2.5 py-0.5 rounded"
+                style={{
+                  background: "var(--surface-2)",
+                  color: "var(--muted)",
+                  border: "1px solid var(--border)",
+                }}
+              >
+                Target: {SCAN_SUMMARY.target} &middot; {SCAN_SUMMARY.endpointsScanned} Endpoints
+              </span>
+            </div>
+            <h1
+              className="text-2xl font-bold tracking-tight"
+              style={{ color: "var(--foreground)" }}
+            >
+              API Security Scanner &amp; Role-Differential Proof Validator
             </h1>
-            <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
-              OpenAPI 3.0 Ingestion · BOLA (IDOR) Fuzzing · Mass Assignment · JWT Cryptographic Lab
-            </p>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <button
-              onClick={() => setActiveTab("fuzzer")}
+          <div className="flex flex-wrap items-center gap-2.5">
+            <Link
+              href="/validation-engine"
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-medium"
               style={{
-                fontSize: 11,
-                padding: "6px 14px",
-                borderRadius: 8,
-                border: activeTab === "fuzzer" ? "1px solid var(--primary)" : "1px solid var(--border)",
-                background: activeTab === "fuzzer" ? "rgba(13,148,136,0.2)" : "var(--bg)",
-                color: activeTab === "fuzzer" ? "#0d9488" : "var(--muted)",
-                cursor: "pointer",
-                fontWeight: 700
+                background: "var(--surface-2)",
+                color: "var(--foreground)",
+                border: "1px solid var(--border)",
               }}
             >
-              ⚡ OWASP API Fuzzer
-            </button>
-
-            <button
-              onClick={() => setActiveTab("jwt_lab")}
+              <Cpu className="w-3.5 h-3.5" style={{ color: "var(--accent)" }} />
+              <span>Open Full 6-Tab Validation Engine</span>
+            </Link>
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-medium"
               style={{
-                fontSize: 11,
-                padding: "6px 14px",
-                borderRadius: 8,
-                border: activeTab === "jwt_lab" ? "1px solid var(--primary)" : "1px solid var(--border)",
-                background: activeTab === "jwt_lab" ? "rgba(13,148,136,0.2)" : "var(--bg)",
-                color: activeTab === "jwt_lab" ? "#0d9488" : "var(--muted)",
-                cursor: "pointer",
-                fontWeight: 700
+                background: "var(--surface)",
+                color: "var(--muted)",
+                border: "1px solid var(--border)",
               }}
             >
-              🔑 JWT Security Lab
-            </button>
-
-            <button
-              onClick={() => setActiveTab("openapi")}
-              style={{
-                fontSize: 11,
-                padding: "6px 14px",
-                borderRadius: 8,
-                border: activeTab === "openapi" ? "1px solid var(--primary)" : "1px solid var(--border)",
-                background: activeTab === "openapi" ? "rgba(13,148,136,0.2)" : "var(--bg)",
-                color: activeTab === "openapi" ? "#0d9488" : "var(--muted)",
-                cursor: "pointer",
-                fontWeight: 700
-              }}
-            >
-              📄 OpenAPI 3.0 Schema
-            </button>
+              <span>Triage Dashboard</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
-        </div>
+        </section>
 
-        {/* Main Content Area */}
-        <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
-          
-          {/* TAB 1: OWASP API FUZZER */}
-          {activeTab === "fuzzer" && (
-            <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
-              {/* Left Endpoints List */}
-              <div style={{ width: 340, borderRight: "1px solid var(--border)", background: "var(--surface)", display: "flex", flexDirection: "column" }}>
-                <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", color: "var(--muted)" }}>
-                    OpenAPI Endpoints ({endpoints.length})
-                  </span>
-                  <button
-                    onClick={runOwaspFuzzer}
-                    disabled={fuzzing}
-                    style={{
-                      background: "linear-gradient(135deg, #0d9488, #0f766e)",
-                      color: "#fff",
-                      border: "none",
-                      padding: "6px 12px",
-                      borderRadius: 6,
-                      fontSize: 11,
-                      fontWeight: 800,
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 4
-                    }}
+        {/* Main 2-Column 1360px Workspace */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* LEFT COLUMN (lg:col-span-4): Scan Configuration & Endpoint Inventory */}
+          <div className="lg:col-span-4 space-y-5">
+            <div className="card-surface p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <h2
+                  className="text-sm font-bold"
+                  style={{ color: "var(--foreground)" }}
+                >
+                  1. Target &amp; Auth Matrix Setup
+                </h2>
+                <span
+                  className="text-[11px] font-mono"
+                  style={{ color: "var(--muted)" }}
+                >
+                  OpenAPI 3.1 + SARIF
+                </span>
+              </div>
+
+              <div className="space-y-3 text-xs">
+                <div>
+                  <label
+                    className="block mb-1 font-medium"
+                    style={{ color: "var(--muted)" }}
                   >
-                    <Play size={10} fill="currentColor" />
-                    {fuzzing ? "Fuzzing..." : "Run All Fuzzers"}
-                  </button>
+                    API Base URL / Gateway Endpoint
+                  </label>
+                  <input
+                    type="text"
+                    value={targetUrl}
+                    onChange={(e) => setTargetUrl(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg font-mono text-xs outline-none"
+                    style={{
+                      background: "var(--surface-2)",
+                      border: "1px solid var(--border)",
+                      color: "var(--foreground)",
+                    }}
+                  />
                 </div>
 
-                <div style={{ flex: 1, overflowY: "auto", padding: 8 }}>
-                  {endpoints.map((ep, i) => (
+                <div>
+                  <label
+                    className="block mb-1 font-medium"
+                    style={{ color: "var(--muted)" }}
+                  >
+                    Protocol &amp; Schema Contract
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(["REST", "GraphQL", "gRPC"] as const).map((proto) => (
+                      <button
+                        key={proto}
+                        onClick={() => setApiType(proto)}
+                        className="py-1.5 rounded-lg font-medium text-xs cursor-pointer"
+                        style={{
+                          background:
+                            apiType === proto
+                              ? "var(--accent-soft)"
+                              : "var(--surface-2)",
+                          color:
+                            apiType === proto
+                              ? "var(--accent)"
+                              : "var(--muted)",
+                          border:
+                            apiType === proto
+                              ? "1px solid var(--accent)"
+                              : "1px solid var(--border)",
+                        }}
+                      >
+                        {proto}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    className="block mb-1 font-medium"
+                    style={{ color: "var(--muted)" }}
+                  >
+                    Principal Validation Context
+                  </label>
+                  <select
+                    value={authProfile}
+                    onChange={(e) => setAuthProfile(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg text-xs outline-none"
+                    style={{
+                      background: "var(--surface-2)",
+                      border: "1px solid var(--border)",
+                      color: "var(--foreground)",
+                    }}
+                  >
+                    <option>
+                      Multi-Role Differential (Tenant A vs. Tenant B + Admin)
+                    </option>
+                    <option>JWT Cryptographic Guard (alg:none / Key Pinning)</option>
+                    <option>OpenAPI 3.1 Strict DTO &amp; Shadow Route Diff</option>
+                  </select>
+                </div>
+
+                <button
+                  onClick={handleRunScan}
+                  className="w-full py-2.5 px-4 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition-opacity hover:opacity-90"
+                  style={{ background: "var(--accent)", color: "#0f1115" }}
+                >
+                  {scanning ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Running Scan &amp; Stages A–F Proof...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-3.5 h-3.5" />
+                      <span>Run API Scan + Auto-Validate Findings</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Discovered Endpoint Inventory */}
+            <div className="card-surface p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <h2
+                  className="text-sm font-bold"
+                  style={{ color: "var(--foreground)" }}
+                >
+                  2. Audited API Routes ({ENDPOINT_INVENTORY.length} / 83)
+                </h2>
+                <span
+                  className="text-[11px] font-mono"
+                  style={{ color: "var(--success)" }}
+                >
+                  100% Mapped
+                </span>
+              </div>
+
+              <div className="space-y-2">
+                {ENDPOINT_INVENTORY.map((ep, idx) => (
+                  <div
+                    key={idx}
+                    className="p-2.5 rounded-lg text-xs space-y-1"
+                    style={{
+                      background: "var(--surface-2)",
+                      border: "1px solid var(--border)",
+                    }}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span
+                        className="font-mono font-semibold"
+                        style={{ color: "var(--foreground)" }}
+                      >
+                        <span style={{ color: "var(--accent)" }}>
+                          {ep.method}
+                        </span>{" "}
+                        {ep.path}
+                      </span>
+                      <span
+                        className="text-[10px] font-mono px-1.5 py-0.5 rounded"
+                        style={{
+                          background: "var(--background)",
+                          color: "var(--muted)",
+                          border: "1px solid var(--border)",
+                        }}
+                      >
+                        {ep.owasp}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px]" style={{ color: "var(--muted)" }}>
+                      <span>Auth: {ep.auth}</span>
+                      <span
+                        style={{
+                          color: ep.status.startsWith("False Positive")
+                            ? "var(--success)"
+                            : ep.status.startsWith("Likely")
+                            ? "var(--high)"
+                            : "#f27478",
+                        }}
+                      >
+                        {ep.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT COLUMN (lg:col-span-8): Interactive Scan & Post-Scan Proof Workbench */}
+          <div className="lg:col-span-8 space-y-5">
+            {/* KPI Bar */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+              {[
+                { label: "Endpoints Audited", value: "83", sub: "REST + GraphQL" },
+                { label: "Confirmed w/ Proof", value: "6", sub: "3/3 Replay Verified" },
+                { label: "Likely (Env Check)", value: "1", sub: "API-004 Rate Limit" },
+                { label: "False Positives Filtered", value: "1", sub: "API-009 Bound SQL" },
+              ].map((stat) => (
+                <div key={stat.label} className="card-surface p-4">
+                  <div className="text-xs" style={{ color: "var(--muted)" }}>
+                    {stat.label}
+                  </div>
+                  <div
+                    className="text-2xl font-bold mt-1"
+                    style={{ color: "var(--foreground)" }}
+                  >
+                    {stat.value}
+                  </div>
+                  <div
+                    className="text-[11px] mt-0.5"
+                    style={{ color: "var(--subtle)" }}
+                  >
+                    {stat.sub}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Workbench Mode Tabs */}
+            <div
+              className="flex items-center gap-1.5 p-1.5 rounded-xl overflow-x-auto"
+              style={{
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+              }}
+            >
+              {[
+                {
+                  id: "post-scan-proof",
+                  label: "Post-Scan Proof Validation (Stages A–F)",
+                  icon: ShieldCheck,
+                },
+                {
+                  id: "owasp-fuzzer",
+                  label: "OWASP API Top 10 Probe Matrix",
+                  icon: Layers,
+                },
+                {
+                  id: "jwt-lab",
+                  label: "JWT Token Guard & Decoder",
+                  icon: KeyRound,
+                },
+                {
+                  id: "openapi-schema",
+                  label: "OpenAPI 3.1 Contract Diff",
+                  icon: FileJson,
+                },
+                {
+                  id: "request-replay",
+                  label: "Role-Differential HTTP Replay",
+                  icon: Lock,
+                },
+              ].map((t) => {
+                const Icon = t.icon;
+                const active = activeTab === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => setActiveTab(t.id as WorkbenchTab)}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap cursor-pointer transition-colors"
+                    style={{
+                      background: active ? "var(--surface-2)" : "transparent",
+                      color: active ? "var(--foreground)" : "var(--muted)",
+                      border: active
+                        ? "1px solid var(--border)"
+                        : "1px solid transparent",
+                    }}
+                  >
+                    <Icon
+                      className="w-3.5 h-3.5"
+                      style={{ color: active ? "var(--accent)" : "var(--subtle)" }}
+                    />
+                    <span>{t.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* TAB CONTENT 1: POST-SCAN PROOF VALIDATION */}
+            {activeTab === "post-scan-proof" && (
+              <div className="card-surface p-6 space-y-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4" style={{ borderColor: "var(--border)" }}>
+                  <div>
+                    <h3
+                      className="text-base font-bold"
+                      style={{ color: "var(--foreground)" }}
+                    >
+                      Post-Scan Automated Proof Verification (PTES / NIST 800-115)
+                    </h3>
+                    <p className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>
+                      Select any scanner finding below to inspect its static controller AST verdict, role-differential runtime replay, and 6-Point Proof Contract.
+                    </p>
+                  </div>
+                  <Link
+                    href="/validation-engine"
+                    className="text-xs font-medium shrink-0"
+                    style={{ color: "var(--accent)" }}
+                  >
+                    View Z3 Claims &amp; Mutation Suite &rarr;
+                  </Link>
+                </div>
+
+                {/* Finding Selector Pills */}
+                <div className="flex flex-wrap gap-2">
+                  {API_PIPELINE_FINDINGS.map((f) => {
+                    const active = f.id === activeProof.id;
+                    return (
+                      <button
+                        key={f.id}
+                        onClick={() => setSelectedProofId(f.id)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-mono cursor-pointer transition-colors"
+                        style={{
+                          background: active
+                            ? "var(--accent-soft)"
+                            : "var(--surface-2)",
+                          color: active ? "var(--accent)" : "var(--muted)",
+                          border: active
+                            ? "1px solid var(--accent)"
+                            : "1px solid var(--border)",
+                        }}
+                      >
+                        {f.id} · {f.owaspApiId} ({f.status})
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Selected Finding Proof Card */}
+                <div
+                  className="p-5 rounded-xl space-y-4"
+                  style={{
+                    background: "var(--surface-2)",
+                    border: "1px solid var(--border)",
+                  }}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="text-xs font-mono font-bold"
+                          style={{ color: "var(--accent)" }}
+                        >
+                          {activeProof.id} · {activeProof.owaspApiId} (
+                          {activeProof.cweId})
+                        </span>
+                        <span
+                          className={`text-[11px] font-semibold px-2 py-0.5 rounded ${
+                            activeProof.status === "CONFIRMED"
+                              ? "badge-critical"
+                              : activeProof.status === "LIKELY"
+                              ? "badge-high"
+                              : "badge-resolved"
+                          }`}
+                        >
+                          {activeProof.status}
+                        </span>
+                      </div>
+                      <h4
+                        className="text-base font-bold mt-1"
+                        style={{ color: "var(--foreground)" }}
+                      >
+                        {activeProof.title}
+                      </h4>
+                    </div>
+                    <span
+                      className="text-xs font-mono"
+                      style={{ color: "var(--muted)" }}
+                    >
+                      {activeProof.endpoint.method} {activeProof.endpoint.path}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                     <div
-                      key={i}
-                      onClick={() => setSelectedEndpoint(ep)}
+                      className="p-3.5 rounded-lg space-y-1"
                       style={{
-                        padding: 12,
-                        borderRadius: 8,
-                        marginBottom: 6,
-                        border: selectedEndpoint.path === ep.path ? "1px solid var(--primary)" : "1px solid var(--border)",
-                        background: selectedEndpoint.path === ep.path ? "rgba(13,148,136,0.12)" : "var(--bg)",
-                        cursor: "pointer"
+                        background: "var(--background)",
+                        border: "1px solid var(--border)",
                       }}
                     >
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                        <span style={{
-                          fontSize: 9.5,
-                          fontWeight: 800,
-                          padding: "2px 6px",
-                          borderRadius: 4,
-                          background: ep.method === "GET" ? "rgba(0,212,255,0.15)" : ep.method === "POST" ? "rgba(52,199,89,0.15)" : ep.method === "PUT" ? "rgba(232,145,45,0.15)" : "rgba(239,83,80,0.15)",
-                          color: ep.method === "GET" ? "#00d4ff" : ep.method === "POST" ? "var(--green)" : ep.method === "PUT" ? "var(--primary)" : "#ef5350"
-                        }}>
-                          {ep.method}
-                        </span>
-                        <span style={{ fontSize: 11, fontFamily: "monospace", color: "#fff", fontWeight: 700 }}>
-                          {ep.path}
-                        </span>
+                      <div
+                        className="font-semibold"
+                        style={{ color: "var(--accent)" }}
+                      >
+                        Stage D1 · Static Route &amp; ORM Predicate Check
                       </div>
-                      <div style={{ fontSize: 10.5, color: "var(--muted)", marginBottom: 4 }}>
-                        {ep.summary}
+                      <div style={{ color: "var(--foreground)" }}>
+                        {activeProof.staticVerdict.missingPredicate}
                       </div>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 10 }}>
-                        <span style={{ color: "var(--primary)", fontWeight: 700 }}>{ep.owaspCategory}</span>
-                        {fuzzResults[ep.path] && (
-                          <span style={{
-                            fontWeight: 800,
-                            color: fuzzResults[ep.path].cvss > 0 ? "#ef5350" : "var(--green)"
-                          }}>
-                            {fuzzResults[ep.path].cvss > 0 ? `CVSS ${fuzzResults[ep.path].cvss}` : "PASSED"}
+                      <div
+                        className="font-mono text-[11px] pt-1"
+                        style={{ color: "var(--muted)" }}
+                      >
+                        File: {activeProof.endpoint.controllerFile}:
+                        {activeProof.endpoint.lineRange}
+                      </div>
+                    </div>
+
+                    <div
+                      className="p-3.5 rounded-lg space-y-1"
+                      style={{
+                        background: "var(--background)",
+                        border: "1px solid var(--border)",
+                      }}
+                    >
+                      <div
+                        className="font-semibold"
+                        style={{ color: "var(--accent)" }}
+                      >
+                        Stage D2 · Controlled Multi-Role Runtime Replay
+                      </div>
+                      <div style={{ color: "var(--foreground)" }}>
+                        {activeProof.runtimeDifferential.differentialResponse}
+                      </div>
+                      <div
+                        className="font-mono text-[11px] pt-1"
+                        style={{ color: "var(--success)" }}
+                      >
+                        {activeProof.runtimeDifferential.replaysMatched}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    className="p-3.5 rounded-lg text-xs space-y-1.5"
+                    style={{
+                      background: "var(--background)",
+                      border: "1px solid var(--border)",
+                    }}
+                  >
+                    <div
+                      className="font-semibold"
+                      style={{ color: "var(--success)" }}
+                    >
+                      Stage F · Verified Remediation &amp; Contract Test
+                    </div>
+                    <div
+                      className="font-mono"
+                      style={{ color: "var(--foreground)" }}
+                    >
+                      {activeProof.proofContract.point6RemediationAndContractTest}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB CONTENT 2: OWASP API TOP 10 PROBE MATRIX */}
+            {activeTab === "owasp-fuzzer" && (
+              <div className="card-surface p-6 space-y-4">
+                <h3
+                  className="text-base font-bold"
+                  style={{ color: "var(--foreground)" }}
+                >
+                  OWASP API Security Top 10:2023 Probe Results ({FINDINGS.length} Alerts)
+                </h3>
+                <div className="space-y-3">
+                  {FINDINGS.map((f) => (
+                    <div
+                      key={f.id}
+                      className="p-4 rounded-xl space-y-2"
+                      style={{
+                        background: "var(--surface-2)",
+                        border: "1px solid var(--border)",
+                      }}
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="text-xs font-mono font-bold"
+                            style={{ color: "var(--accent)" }}
+                          >
+                            {f.id}
                           </span>
-                        )}
+                          <span
+                            className="text-xs font-mono px-2 py-0.5 rounded"
+                            style={{
+                              background: "var(--background)",
+                              color: "var(--muted)",
+                              border: "1px solid var(--border)",
+                            }}
+                          >
+                            {f.owaspRef} · {f.cweId}
+                          </span>
+                          <span
+                            className="text-sm font-semibold"
+                            style={{ color: "var(--foreground)" }}
+                          >
+                            {f.title}
+                          </span>
+                        </div>
+                        <span
+                          className={`text-xs font-semibold px-2 py-0.5 rounded ${
+                            f.severity === "Critical"
+                              ? "badge-critical"
+                              : f.severity === "High"
+                              ? "badge-high"
+                              : "badge-medium"
+                          }`}
+                        >
+                          {f.severity}
+                        </span>
+                      </div>
+                      <p className="text-xs" style={{ color: "var(--muted)" }}>
+                        {f.description}
+                      </p>
+                      <div className="text-xs font-mono" style={{ color: "var(--foreground)" }}>
+                        Remediation: {f.remediation}
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
+            )}
 
-              {/* Right Detail & Audit Evidence */}
-              <div style={{ flex: 1, padding: 24, overflowY: "auto" }}>
-                <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: 20, marginBottom: 20 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                    <span style={{
-                      fontSize: 11,
-                      fontWeight: 800,
-                      padding: "4px 8px",
-                      borderRadius: 6,
-                      background: "rgba(13,148,136,0.15)",
-                      color: "var(--primary)"
-                    }}>
-                      {selectedEndpoint.method}
-                    </span>
-                    <h2 style={{ fontSize: 16, fontWeight: 800, color: "#fff", fontFamily: "monospace" }}>
-                      {selectedEndpoint.path}
-                    </h2>
+            {/* TAB CONTENT 3: JWT TOKEN GUARD & DECODER */}
+            {activeTab === "jwt-lab" && (
+              <div className="card-surface p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3
+                      className="text-base font-bold"
+                      style={{ color: "var(--foreground)" }}
+                    >
+                      JWT Cryptographic Guard &amp; Claim Verifier (`API2:2023` / `CWE-347`)
+                    </h3>
+                    <p className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>
+                      Inspects JWT header/payload invariants and checks whether the target verifier pins asymmetric `RS256`/`ES256` signatures.
+                    </p>
+                  </div>
+                  <Link
+                    href="/jwt-guard"
+                    className="text-xs font-medium"
+                    style={{ color: "var(--accent)" }}
+                  >
+                    Open Dedicated JWT Guard Studio &rarr;
+                  </Link>
+                </div>
+
+                <div>
+                  <label
+                    className="block text-xs font-medium mb-1"
+                    style={{ color: "var(--muted)" }}
+                  >
+                    Captured Bearer Token Fixture
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={jwtTokenInput}
+                    onChange={(e) => setJwtTokenInput(e.target.value)}
+                    className="w-full p-3 rounded-lg font-mono text-xs outline-none"
+                    style={{
+                      background: "var(--surface-2)",
+                      border: "1px solid var(--border)",
+                      color: "var(--foreground)",
+                    }}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                  <div
+                    className="p-4 rounded-lg space-y-2"
+                    style={{
+                      background: "var(--surface-2)",
+                      border: "1px solid var(--border)",
+                    }}
+                  >
+                    <div
+                      className="font-semibold"
+                      style={{ color: "var(--accent)" }}
+                    >
+                      Decoded Header &amp; Payload Claims
+                    </div>
+                    <pre
+                      className="p-3 rounded code-block overflow-x-auto"
+                      style={{
+                        background: "var(--background)",
+                        color: "var(--foreground)",
+                        border: "1px solid var(--border)",
+                      }}
+                    >
+{`// Header
+{ "alg": "none", "typ": "JWT" }
+
+// Payload
+{
+  "userId": 1,
+  "role": "admin",
+  "tenant_id": "org_alpha"
+}`}
+                    </pre>
                   </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 16 }}>
-                    <div style={{ background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 8, padding: 10 }}>
-                      <span style={{ fontSize: 10, color: "var(--muted)" }}>OWASP Threat Vector</span>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: "var(--primary)", marginTop: 2 }}>{selectedEndpoint.owaspCategory}</div>
+                  <div
+                    className="p-4 rounded-lg space-y-2.5"
+                    style={{
+                      background: "var(--surface-2)",
+                      border: "1px solid var(--border)",
+                    }}
+                  >
+                    <div
+                      className="font-semibold"
+                      style={{ color: "var(--foreground)" }}
+                    >
+                      Cryptographic Invariant Checks
                     </div>
-                    <div style={{ background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 8, padding: 10 }}>
-                      <span style={{ fontSize: 10, color: "var(--muted)" }}>Fuzzing Target Parameter</span>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: "#fff", marginTop: 2 }}>{selectedEndpoint.fuzzTarget}</div>
-                    </div>
-                    <div style={{ background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 8, padding: 10 }}>
-                      <span style={{ fontSize: 10, color: "var(--muted)" }}>Authentication Scope</span>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: "#00d4ff", marginTop: 2 }}>{selectedEndpoint.auth}</div>
-                    </div>
-                  </div>
-
-                  {fuzzResults[selectedEndpoint.path] ? (
-                    <div style={{
-                      padding: 16,
-                      borderRadius: 10,
-                      border: fuzzResults[selectedEndpoint.path].cvss > 0 ? "1px solid rgba(239,83,80,0.3)" : "1px solid rgba(52,199,89,0.3)",
-                      background: fuzzResults[selectedEndpoint.path].cvss > 0 ? "rgba(239,83,80,0.08)" : "rgba(52,199,89,0.08)"
-                    }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                        {fuzzResults[selectedEndpoint.path].cvss > 0 ? <AlertTriangle size={16} color="#ef5350" /> : <CheckCircle2 size={16} color="var(--green)" />}
-                        <strong style={{ color: fuzzResults[selectedEndpoint.path].cvss > 0 ? "#ef5350" : "var(--green)", fontSize: 13 }}>
-                          {fuzzResults[selectedEndpoint.path].status}
-                        </strong>
+                    {[
+                      {
+                        check: "Reject `alg: none` unsigned tokens",
+                        status: "FAIL (API-002 Confirmed)",
+                        ok: false,
+                      },
+                      {
+                        check: "Pin asymmetric `RS256` / `ES256` allowlist",
+                        status: "FAIL (Unpinned `jwt.decode`)",
+                        ok: false,
+                      },
+                      {
+                        check: "Require `exp`, `iss`, and `aud` claims",
+                        status: "WARN (`exp` missing on fixture)",
+                        ok: false,
+                      },
+                      {
+                        check: "JWKS key-id (`kid`) allowlist validation",
+                        status: "PASS (No SQL/path traversal in `kid`)",
+                        ok: true,
+                      },
+                    ].map((c) => (
+                      <div
+                        key={c.check}
+                        className="flex items-center justify-between gap-2 p-2 rounded"
+                        style={{
+                          background: "var(--background)",
+                          border: "1px solid var(--border)",
+                        }}
+                      >
+                        <span>{c.check}</span>
+                        <span
+                          className={`text-[11px] font-semibold px-2 py-0.5 rounded ${
+                            c.ok ? "badge-resolved" : "badge-critical"
+                          }`}
+                        >
+                          {c.status}
+                        </span>
                       </div>
-                      <p style={{ fontSize: 12, color: "var(--fg)", lineHeight: 1.5 }}>
-                        {fuzzResults[selectedEndpoint.path].evidence}
-                      </p>
-                    </div>
-                  ) : (
-                    <div style={{ textAlign: "center", padding: 24, color: "var(--muted)", fontSize: 12 }}>
-                      Click &quot;Run All Fuzzers&quot; to execute automated mutation fuzzing against this endpoint.
-                    </div>
-                  )}
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* TAB 2: JWT SECURITY LAB */}
-          {activeTab === "jwt_lab" && (
-            <div style={{ flex: 1, padding: 24, overflowY: "auto" }}>
-              <div style={{ maxWidth: 840, margin: "0 auto" }}>
-                <div style={{ marginBottom: 20 }}>
-                  <h2 style={{ fontSize: 18, fontWeight: 800, color: "#fff", display: "flex", alignItems: "center", gap: 8 }}>
-                    <Key size={18} style={{ color: "var(--primary)" }} />
-                    JWT Cryptographic Attack Lab
-                  </h2>
-                  <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>
-                    Test cryptographic validation against `alg: none` bypass, HMAC secret dictionary cracking, and claim tampering.
-                  </p>
-                </div>
-
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
+            {/* TAB CONTENT 4: OPENAPI 3.1 SCHEMA CONTRACT DIFF */}
+            {activeTab === "openapi-schema" && (
+              <div className="card-surface p-6 space-y-4">
+                <div className="flex items-center justify-between">
                   <div>
-                    <label style={{ fontSize: 11, fontWeight: 700, color: "#00d4ff", display: "block", marginBottom: 6 }}>
-                      JWT Header (JOSE)
-                    </label>
-                    <textarea
-                      value={jwtHeader}
-                      onChange={e => setJwtHeader(e.target.value)}
-                      style={{ width: "100%", height: 140, background: "#000", border: "1px solid var(--border)", borderRadius: 8, padding: 12, fontSize: 11, fontFamily: "monospace", color: "#00d4ff", outline: "none", resize: "none" }}
-                    />
+                    <h3
+                      className="text-base font-bold"
+                      style={{ color: "var(--foreground)" }}
+                    >
+                      OpenAPI 3.1 Contract vs. Live Router Drift (`API3:2023` &amp; `API9:2023`)
+                    </h3>
+                    <p className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>
+                      Detects undocumented shadow routes, unvalidated mass-assignment properties, and undeclared sensitive response fields.
+                    </p>
                   </div>
+                  <Link
+                    href="/openapi-ingest"
+                    className="text-xs font-medium"
+                    style={{ color: "var(--accent)" }}
+                  >
+                    Open OpenAPI 3.1 Studio &rarr;
+                  </Link>
+                </div>
 
+                <div className="space-y-3 text-xs">
+                  {[
+                    {
+                      route: "PUT /api/v2/users/{id}",
+                      issue:
+                        "Request schema allows additionalProperties; controller binds `is_admin` and `role` directly to ORM model (`API-006`).",
+                      severity: "High",
+                    },
+                    {
+                      route: "GET /api/v2/admin/users/{id}",
+                      issue:
+                        "Live HTTP 200 response emits `password_hash` not declared in OpenAPI `AdminUserResponse` schema (`API-005`).",
+                      severity: "High",
+                    },
+                    {
+                      route: "GET /api/swagger-ui & GET /api/v1/users/export-csv",
+                      issue:
+                        "Undocumented shadow/documentation routes exposed in production gateway (`API-008` / `API9:2023`).",
+                      severity: "Medium",
+                    },
+                  ].map((item) => (
+                    <div
+                      key={item.route}
+                      className="p-4 rounded-lg flex items-start justify-between gap-4"
+                      style={{
+                        background: "var(--surface-2)",
+                        border: "1px solid var(--border)",
+                      }}
+                    >
+                      <div className="space-y-1">
+                        <div
+                          className="font-mono font-semibold"
+                          style={{ color: "var(--accent)" }}
+                        >
+                          {item.route}
+                        </div>
+                        <div style={{ color: "var(--foreground)" }}>
+                          {item.issue}
+                        </div>
+                      </div>
+                      <span
+                        className={`px-2 py-0.5 rounded font-semibold shrink-0 ${
+                          item.severity === "High"
+                            ? "badge-high"
+                            : "badge-medium"
+                        }`}
+                      >
+                        {item.severity}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* TAB CONTENT 5: ROLE-DIFFERENTIAL HTTP REPLAY */}
+            {activeTab === "request-replay" && (
+              <div className="card-surface p-6 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <label style={{ fontSize: 11, fontWeight: 700, color: "var(--green)", display: "block", marginBottom: 6 }}>
-                      JWT Claims Payload
-                    </label>
-                    <textarea
-                      value={jwtPayload}
-                      onChange={e => setJwtPayload(e.target.value)}
-                      style={{ width: "100%", height: 140, background: "#000", border: "1px solid var(--border)", borderRadius: 8, padding: 12, fontSize: 11, fontFamily: "monospace", color: "var(--green)", outline: "none", resize: "none" }}
-                    />
+                    <h3
+                      className="text-base font-bold"
+                      style={{ color: "var(--foreground)" }}
+                    >
+                      Controlled Role-Differential Replay (`GET /api/v2/users/1001`)
+                    </h3>
+                    <p className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>
+                      Compare deterministic HTTP responses across Tenant A, Tenant B, and Anonymous principals to verify object-level authorization.
+                    </p>
+                  </div>
+                  <div className="flex gap-1.5">
+                    {[
+                      { id: "tenant_a", label: "Principal: Tenant A (user_1000)" },
+                      { id: "tenant_b", label: "Principal: Tenant B Owner (user_1001)" },
+                      { id: "anonymous", label: "Principal: Unauthenticated" },
+                    ].map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => setReplayPrincipal(p.id as typeof replayPrincipal)}
+                        className="px-2.5 py-1.5 rounded-lg text-xs font-medium cursor-pointer"
+                        style={{
+                          background:
+                            replayPrincipal === p.id
+                              ? "var(--accent-soft)"
+                              : "var(--surface-2)",
+                          color:
+                            replayPrincipal === p.id
+                              ? "var(--accent)"
+                              : "var(--muted)",
+                          border:
+                            replayPrincipal === p.id
+                              ? "1px solid var(--accent)"
+                              : "1px solid var(--border)",
+                        }}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
-                <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
-                  <button
-                    onClick={testAlgNoneJwt}
-                    style={{
-                      background: "rgba(232, 145, 45, 0.15)",
-                      border: "1px solid var(--primary)",
-                      color: "var(--primary)",
-                      padding: "8px 16px",
-                      borderRadius: 8,
-                      fontSize: 11.5,
-                      fontWeight: 700,
-                      cursor: "pointer"
-                    }}
-                  >
-                    ⚡ Test &apos;alg: none&apos; Bypass Attack
-                  </button>
-
-                  <button
-                    onClick={testWeakHmacSecret}
-                    style={{
-                      background: "rgba(239, 83, 80, 0.15)",
-                      border: "1px solid #ef5350",
-                      color: "#ef5350",
-                      padding: "8px 16px",
-                      borderRadius: 8,
-                      fontSize: 11.5,
-                      fontWeight: 700,
-                      cursor: "pointer"
-                    }}
-                  >
-                    🔥 Brute-Force HMAC Secret Key
-                  </button>
-                </div>
-
-                {jwtAttackResult && (
-                  <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: 16, fontSize: 12, color: "#fff" }}>
-                    <strong style={{ color: "var(--primary)", display: "block", marginBottom: 4 }}>Attack Verdict:</strong>
-                    {jwtAttackResult}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <div
+                      className="text-xs font-semibold"
+                      style={{ color: "var(--muted)" }}
+                    >
+                      HTTP Request Trace
+                    </div>
+                    <pre
+                      className="p-4 rounded-lg code-block overflow-x-auto"
+                      style={{
+                        background: "var(--background)",
+                        color: "var(--foreground)",
+                        border: "1px solid var(--border)",
+                      }}
+                    >
+{replayPrincipal === "tenant_a"
+  ? `GET /api/v2/users/1001 HTTP/1.1
+Host: staging.api.acme.com
+Authorization: Bearer <jwt_sub_1000_tenant_alpha>
+X-Validation-Probe: BOLA-Differential-Replay`
+  : replayPrincipal === "tenant_b"
+  ? `GET /api/v2/users/1001 HTTP/1.1
+Host: staging.api.acme.com
+Authorization: Bearer <jwt_sub_1001_tenant_beta>
+X-Validation-Probe: Baseline-Owner`
+  : `GET /api/v2/users/1001 HTTP/1.1
+Host: staging.api.acme.com
+X-Validation-Probe: Unauthenticated-Baseline`}
+                    </pre>
                   </div>
-                )}
-              </div>
-            </div>
-          )}
 
-          {/* TAB 3: OPENAPI SCHEMA VIEWER */}
-          {activeTab === "openapi" && (
-            <div style={{ flex: 1, padding: 24, overflowY: "auto" }}>
-              <div style={{ maxWidth: 840, margin: "0 auto" }}>
-                <h2 style={{ fontSize: 18, fontWeight: 800, color: "#fff", marginBottom: 12 }}>
-                  Ingested OpenAPI 3.0 Specification
-                </h2>
-                <pre style={{ background: "#000", border: "1px solid var(--border)", borderRadius: 12, padding: 16, fontSize: 11, fontFamily: "monospace", color: "#a5d6a7", overflowX: "auto", maxHeight: 400 }}>
-{`openapi: 3.0.3
-info:
-  title: Acme Banking & Orders API
-  version: 2.4.0
-paths:
-  /api/v2/orders/{order_id}:
-    get:
-      summary: Retrieve customer order
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: order_id
-          in: path
-          required: true
-          schema:
-            type: integer
-  /api/v2/users/profile:
-    put:
-      summary: Update profile
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name: { type: string }
-                role: { type: string }
-  /api/v2/webhooks/subscribe:
-    post:
-      summary: Subscribe webhook
-      requestBody:
-        content:
-          application/json:
-            schema:
-              properties:
-                callback_url: { type: string, format: uri }`}
-                </pre>
-              </div>
-            </div>
-          )}
+                  <div className="space-y-1.5">
+                    <div
+                      className="text-xs font-semibold"
+                      style={{ color: "var(--muted)" }}
+                    >
+                      Observed HTTP Response &amp; Verdict
+                    </div>
+                    <pre
+                      className="p-4 rounded-lg code-block overflow-x-auto"
+                      style={{
+                        background: "var(--background)",
+                        color: "var(--foreground)",
+                        border: "1px solid var(--border)",
+                      }}
+                    >
+{replayPrincipal === "tenant_a"
+  ? `HTTP/1.1 200 OK  [VIOLATION: Expected 403/404]
+Content-Type: application/json
 
-        </div>
+{
+  "id": 1001,
+  "tenant_id": "org_beta",
+  "name": "Jane Smith",
+  "email": "jane@corp.com",
+  "ssn_last4": "7821",
+  "salary": 94000
+}`
+  : replayPrincipal === "tenant_b"
+  ? `HTTP/1.1 200 OK  [Authorized Resource Owner]
+Content-Type: application/json
 
-        {/* Footer Live Fuzzing Stream */}
-        <div style={{ height: 130, borderTop: "1px solid var(--border)", background: "#000", display: "flex", flexDirection: "column" }}>
-          <div style={{ padding: "6px 16px", borderBottom: "1px solid var(--border)", background: "var(--surface)", display: "flex", alignItems: "center", gap: 8 }}>
-            <Terminal size={12} color="var(--primary)" />
-            <span style={{ fontSize: 10, fontWeight: 800, color: "var(--primary)", textTransform: "uppercase" }}>
-              OWASP API Mutation & Fuzzing Live Stream
-            </span>
-          </div>
-          <div style={{ flex: 1, padding: 8, overflowY: "auto", fontFamily: "monospace", fontSize: 10.5, color: "#8898a8" }}>
-            {consoleLogs.map((log, i) => (
-              <div key={i} style={{ color: log.includes("[!]") ? "#ef5350" : log.includes("[+]") ? "var(--green)" : log.includes("[schema]") ? "#00d4ff" : "#8898a8" }}>
-                $ {log}
+{
+  "id": 1001,
+  "tenant_id": "org_beta",
+  "name": "Jane Smith",
+  "email": "jane@corp.com"
+}`
+  : `HTTP/1.1 401 Unauthorized  [Authentication Enforced]
+Content-Type: application/json
+
+{
+  "error": "missing_bearer_token"
+}`}
+                    </pre>
+                  </div>
+                </div>
               </div>
-            ))}
+            )}
           </div>
         </div>
-
-      </div>
+      </main>
+      <Footer />
     </div>
   );
 }
-
