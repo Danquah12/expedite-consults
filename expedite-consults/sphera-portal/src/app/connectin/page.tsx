@@ -73,7 +73,7 @@ import {
 } from "@/lib/connectin-storage"
 import { isSuperAdminUser } from "@/lib/connectin-profile"
 import { PROFESSION_ENCLAVES, findEnclaveById, findProfessionById } from "@/lib/connectin-professions"
-import { SlidersHorizontal, Sparkles, Bell, CheckCircle2, ShieldCheck, Filter, Bookmark, Vote, BookOpen, ExternalLink } from "lucide-react"
+import { SlidersHorizontal, Sparkles, Bell, CheckCircle2, ShieldCheck, Filter, Bookmark, Vote, BookOpen, ExternalLink, ChevronDown, ChevronUp } from "lucide-react"
 import { useLanguage } from "@/context/LanguageContext"
 
 export default function LinkedInPage() {
@@ -140,6 +140,9 @@ export default function LinkedInPage() {
   const [isMultiEnclaveMode, setIsMultiEnclaveMode] = useState<boolean>(true)
   const [isVideoGuideOpen, setIsVideoGuideOpen] = useState(false)
   const [showFeedWheel, setShowFeedWheel] = useState(true)
+  const [showMobileWheel, setShowMobileWheel] = useState(false)
+  const [showMobileCommunityDrawer, setShowMobileCommunityDrawer] = useState(false)
+  const [showMobileSubFilters, setShowMobileSubFilters] = useState(false)
   const [hasHydrated, setHasHydrated] = useState(false)
 
   // Authentication Lifecycle — optimistic-first, never redirects, shows modal only if truly needed
@@ -739,42 +742,74 @@ export default function LinkedInPage() {
                   Profile →
                 </button>
               </div>
-              {/* Educational Masterclass Wheel / ConnectIn Video Showcase */}
-              {showFeedWheel && (
-                <div className="space-y-1">
-                  <ConnectInVideoWheel
-                    activeEnclaveId={selectedEnclaves[0] || userData?.professionEnclave || 'trades_construction'}
-                    user={userData}
-                    title="The Wheel — Multi-Profession Masterclasses & Briefings"
-                    subtitle="Curated trade apprenticeship standards, software architecture, clinical medicine, and verified field briefings."
-                    onOpenVideoGuide={() => setIsVideoGuideOpen(true)}
-                  />
-                  <div className="flex items-center justify-between px-2 pt-0.5 text-[10px] text-zinc-500">
-                    <span className="flex items-center gap-1">
-                      <span>💡</span>
-                      <span>Tap any plate to watch 5-minute video briefing inline</span>
-                    </span>
+              {/* Desktop Educational Masterclass Wheel */}
+              <div className="hidden sm:block">
+                {showFeedWheel ? (
+                  <div className="space-y-1">
+                    <ConnectInVideoWheel
+                      activeEnclaveId={selectedEnclaves[0] || userData?.professionEnclave || 'trades_construction'}
+                      user={userData}
+                      title="The Wheel — Multi-Profession Masterclasses & Briefings"
+                      subtitle="Curated trade apprenticeship standards, software architecture, clinical medicine, and verified field briefings."
+                      onOpenVideoGuide={() => setIsVideoGuideOpen(true)}
+                    />
+                    <div className="flex items-center justify-between px-2 pt-0.5 text-[10px] text-zinc-500">
+                      <span className="flex items-center gap-1">
+                        <span>💡</span>
+                        <span>Tap any plate to watch 5-minute video briefing inline</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowFeedWheel(false)}
+                        className="hover:underline text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-pointer"
+                      >
+                        Hide The Wheel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex justify-end pb-1">
                     <button
                       type="button"
-                      onClick={() => setShowFeedWheel(false)}
-                      className="hover:underline text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-pointer"
+                      onClick={() => setShowFeedWheel(true)}
+                      className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 hover:underline flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 shadow-2xs cursor-pointer"
                     >
-                      Hide The Wheel
+                      <span>🎡 Show "The Wheel" Video Talks</span>
                     </button>
                   </div>
-                </div>
-              )}
-              {!showFeedWheel && (
-                <div className="flex justify-end pb-1">
+                )}
+              </div>
+
+              {/* Mobile Collapsible Wheel Teaser Bar (< sm) */}
+              <div className="sm:hidden space-y-2">
+                <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20 border border-amber-200/80 dark:border-amber-900/40 shadow-2xs">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-base shrink-0">🎡</span>
+                    <div className="min-w-0">
+                      <p className="font-bold text-amber-950 dark:text-amber-200 text-xs truncate">The Wheel Masterclasses</p>
+                      <p className="text-[10px] text-amber-800/80 dark:text-amber-400/80 truncate">38 verified field briefings & talks</p>
+                    </div>
+                  </div>
                   <button
                     type="button"
-                    onClick={() => setShowFeedWheel(true)}
-                    className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 hover:underline flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 shadow-2xs cursor-pointer"
+                    onClick={() => setShowMobileWheel(!showMobileWheel)}
+                    className="shrink-0 ml-2 px-2.5 py-1 text-[11px] font-bold rounded-lg bg-amber-600 hover:bg-amber-700 text-white shadow-2xs transition-colors cursor-pointer"
                   >
-                    <span>🎡 Show "The Wheel" Video Talks</span>
+                    {showMobileWheel ? "Hide ▴" : "Watch ▾"}
                   </button>
                 </div>
-              )}
+                {showMobileWheel && (
+                  <div className="rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-xs">
+                    <ConnectInVideoWheel
+                      activeEnclaveId={selectedEnclaves[0] || userData?.professionEnclave || 'trades_construction'}
+                      user={userData}
+                      title="The Wheel — Masterclasses"
+                      subtitle="5-minute verified briefings & standards"
+                      onOpenVideoGuide={() => setIsVideoGuideOpen(true)}
+                    />
+                  </div>
+                )}
+              </div>
 
               {/* Need-to-Know Enclave Segregation Banner */}
               {(() => {
@@ -836,137 +871,251 @@ export default function LinkedInPage() {
                 }
 
                 return (
-                  <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-2.5 shadow-xs transition-all">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl p-2 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-[#0A66C2] dark:text-sky-300 border border-blue-100 dark:border-blue-900/50 shadow-2xs shrink-0">
-                          {bannerIcon}
-                        </span>
-                        <div>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h2 className="text-sm sm:text-base font-bold text-zinc-900 dark:text-zinc-100">
-                              {bannerTitle}
-                            </h2>
-                            <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 dark:bg-blue-950/60 px-2.5 py-0.5 text-[10px] font-semibold text-[#0A66C2] dark:text-sky-300 border border-blue-200/50 dark:border-blue-800/50">
-                              <ShieldCheck className="h-3 w-3" />
-                              Verified Community
-                            </span>
-                            {activeEncs.length > 1 && (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-800/50">
-                                {isAllSelected ? "All 12 Highlighted" : `${activeEncs.length} Highlighted`}
+                  <>
+                    {/* Desktop Need-to-Know Enclave Segregation Banner (sm+) */}
+                    <div className="hidden sm:block rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-2.5 shadow-xs transition-all">
+                      <div className="flex items-center justify-between gap-2.5">
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl p-2 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-[#0A66C2] dark:text-sky-300 border border-blue-100 dark:border-blue-900/50 shadow-2xs shrink-0">
+                            {bannerIcon}
+                          </span>
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h2 className="text-sm sm:text-base font-bold text-zinc-900 dark:text-zinc-100">
+                                {bannerTitle}
+                              </h2>
+                              <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 dark:bg-blue-950/60 px-2.5 py-0.5 text-[10px] font-semibold text-[#0A66C2] dark:text-sky-300 border border-blue-200/50 dark:border-blue-800/50">
+                                <ShieldCheck className="h-3 w-3" />
+                                Verified Community
                               </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-zinc-600 dark:text-zinc-400 font-medium">
-                            {bannerSubtitle}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Community Posts Count Tag */}
-                      <div className="shrink-0 text-left sm:text-right">
-                        <span className="text-[11px] font-semibold text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-full border border-zinc-200 dark:border-zinc-700">
-                          {filteredPosts.length} {t("enclave_posts", "Community Posts")}
-                        </span>
-                      </div>
-                    </div>
-
-                    <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                      ✨ <strong>Community Focus:</strong> Discussions, trade updates, blueprints, and opportunities are tailored to your professional craft. Explore conversations across any industry anytime.
-                    </p>
-
-                    {/* Community Feed Tags */}
-                    <div className="flex items-center gap-1.5 overflow-x-auto pt-0.5">
-                      <span className="text-[10px] uppercase font-bold text-zinc-400 shrink-0">Tags:</span>
-                      {aggregatedFeedTags.map((tag) => (
-                        <button
-                          key={tag}
-                          type="button"
-                          onClick={() => setSelectedTagFilter(tag)}
-                          className="text-[11px] font-medium bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 px-2.5 py-0.5 rounded-full border border-zinc-200/70 dark:border-zinc-700/70 shrink-0 cursor-pointer transition-colors"
-                        >
-                          {tag}
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* Community Switcher */}
-                    {isAdmin && (
-                      <div className="mt-2 pt-2.5 border-t border-zinc-100 dark:border-zinc-800 space-y-2">
-                        <div className="flex items-center justify-between gap-2 flex-wrap">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-1">
-                              🌐 Switch Industry Community:
-                            </span>
-                            <span className="text-[10px] text-zinc-500 font-medium">
-                              (Tap to filter posts)
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-1.5 text-xs">
-                            <button
-                              type="button"
-                              onClick={() => setSelectedEnclaves(PROFESSION_ENCLAVES.map(e => e.id))}
-                              className="font-semibold text-[#0A66C2] hover:underline cursor-pointer"
-                            >
-                              Show All 12
-                            </button>
-                            <span className="text-zinc-300 dark:text-zinc-700">·</span>
-                            <button
-                              type="button"
-                              onClick={() => setSelectedEnclaves([userData.professionEnclave || 'trades_construction'])}
-                              className="text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 hover:underline cursor-pointer"
-                            >
-                              Reset
-                            </button>
+                              {activeEncs.length > 1 && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-800/50">
+                                  {isAllSelected ? "All 12 Highlighted" : `${activeEncs.length} Highlighted`}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-zinc-600 dark:text-zinc-400 font-medium">
+                              {bannerSubtitle}
+                            </p>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-                          {PROFESSION_ENCLAVES.map(e => {
-                            const isSelected = isAllSelected || selectedEnclaves.includes(e.id)
-                            return (
-                              <button
-                                key={e.id}
-                                type="button"
-                                onClick={() => handleToggleEnclave(e.id)}
-                                title={`Toggle ${e.name}`}
-                                className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
-                                  isSelected
-                                    ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
-                                    : "bg-zinc-100 hover:bg-zinc-200/80 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-200/70 dark:border-zinc-700/70"
-                                }`}
-                              >
-                                <span>{e.icon}</span>
-                                <span>{e.shortName}</span>
-                                {isSelected && <span className="text-[10px]">✓</span>}
-                              </button>
-                            )
-                          })}
+                        {/* Community Posts Count Tag */}
+                        <div className="shrink-0 text-right">
+                          <span className="text-[11px] font-semibold text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-full border border-zinc-200 dark:border-zinc-700">
+                            {filteredPosts.length} {t("enclave_posts", "Community Posts")}
+                          </span>
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                        ✨ <strong>Community Focus:</strong> Discussions, trade updates, blueprints, and opportunities are tailored to your professional craft. Explore conversations across any industry anytime.
+                      </p>
+
+                      {/* Community Feed Tags */}
+                      <div className="flex items-center gap-1.5 overflow-x-auto pt-0.5">
+                        <span className="text-[10px] uppercase font-bold text-zinc-400 shrink-0">Tags:</span>
+                        {aggregatedFeedTags.map((tag) => (
                           <button
+                            key={tag}
                             type="button"
-                            onClick={() => handleToggleEnclave('all')}
-                            title="View all 12 communities"
-                            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
-                              isAllSelected
-                                ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
-                                : "bg-zinc-100 hover:bg-zinc-200/80 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-200/70 dark:border-zinc-700/70"
-                            }`}
+                            onClick={() => setSelectedTagFilter(tag)}
+                            className="text-[11px] font-medium bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 px-2.5 py-0.5 rounded-full border border-zinc-200/70 dark:border-zinc-700/70 shrink-0 cursor-pointer transition-colors"
                           >
-                            <span>🌐</span>
-                            <span>{t("all_enclaves", "All Communities")}</span>
-                            {isAllSelected && <span className="text-[10px]">✓</span>}
+                            {tag}
                           </button>
-                        </div>
+                        ))}
                       </div>
-                    )}
-                  </div>
+
+                      {/* Community Switcher */}
+                      {isAdmin && (
+                        <div className="mt-2 pt-2.5 border-t border-zinc-100 dark:border-zinc-800 space-y-2">
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-1">
+                                🌐 Switch Industry Community:
+                              </span>
+                              <span className="text-[10px] text-zinc-500 font-medium">
+                                (Tap to filter posts)
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5 text-xs">
+                              <button
+                                type="button"
+                                onClick={() => setSelectedEnclaves(PROFESSION_ENCLAVES.map(e => e.id))}
+                                className="font-semibold text-[#0A66C2] hover:underline cursor-pointer"
+                              >
+                                Show All 12
+                              </button>
+                              <span className="text-zinc-300 dark:text-zinc-700">·</span>
+                              <button
+                                type="button"
+                                onClick={() => setSelectedEnclaves([userData.professionEnclave || 'trades_construction'])}
+                                className="text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 hover:underline cursor-pointer"
+                              >
+                                Reset
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                            {PROFESSION_ENCLAVES.map(e => {
+                              const isSelected = isAllSelected || selectedEnclaves.includes(e.id)
+                              return (
+                                <button
+                                  key={e.id}
+                                  type="button"
+                                  onClick={() => handleToggleEnclave(e.id)}
+                                  title={`Toggle ${e.name}`}
+                                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                                    isSelected
+                                      ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
+                                      : "bg-zinc-100 hover:bg-zinc-200/80 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-200/70 dark:border-zinc-700/70"
+                                  }`}
+                                >
+                                  <span>{e.icon}</span>
+                                  <span>{e.shortName}</span>
+                                  {isSelected && <span className="text-[10px]">✓</span>}
+                                </button>
+                              )
+                            })}
+                            <button
+                              type="button"
+                              onClick={() => handleToggleEnclave('all')}
+                              title="View all 12 communities"
+                              className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                                isAllSelected
+                                  ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
+                                  : "bg-zinc-100 hover:bg-zinc-200/80 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-200/70 dark:border-zinc-700/70"
+                              }`}
+                            >
+                              <span>🌐</span>
+                              <span>{t("all_enclaves", "All Communities")}</span>
+                              {isAllSelected && <span className="text-[10px]">✓</span>}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Mobile Streamlined Community Bar (< sm) */}
+                    <div className="sm:hidden rounded-xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-2.5 shadow-xs">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <span className="text-xl p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-[#0A66C2] dark:text-sky-300 border border-blue-100 dark:border-blue-900/50 shrink-0">
+                            {bannerIcon}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1">
+                              <h2 className="text-xs font-bold text-zinc-900 dark:text-zinc-100 truncate">
+                                {bannerTitle}
+                              </h2>
+                              <ShieldCheck className="h-3.5 w-3.5 text-[#0A66C2] shrink-0" />
+                            </div>
+                            <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
+                              {filteredPosts.length} posts · {bannerSubtitle}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowMobileCommunityDrawer(!showMobileCommunityDrawer)}
+                          className={`shrink-0 flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold rounded-lg border transition-all cursor-pointer ${
+                            showMobileCommunityDrawer
+                              ? "bg-[#0A66C2] text-white border-[#0A66C2]"
+                              : "bg-zinc-50 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100"
+                          }`}
+                        >
+                          <span>Switch</span>
+                          <ChevronDown className={`h-3 w-3 transition-transform ${showMobileCommunityDrawer ? "rotate-180" : ""}`} />
+                        </button>
+                      </div>
+
+                      {/* Mobile Community Collapsible Drawer */}
+                      {showMobileCommunityDrawer && (
+                        <div className="mt-2.5 pt-2.5 border-t border-zinc-100 dark:border-zinc-800 space-y-2.5">
+                          {/* Mobile Feed Tags */}
+                          <div>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1">Focus Topics</p>
+                            <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                              {aggregatedFeedTags.map((tag) => (
+                                <button
+                                  key={tag}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedTagFilter(selectedTagFilter === tag ? null : tag)
+                                    setShowMobileCommunityDrawer(false)
+                                  }}
+                                  className={`text-[11px] font-medium px-2.5 py-0.5 rounded-full border shrink-0 transition-colors cursor-pointer ${
+                                    selectedTagFilter === tag
+                                      ? "bg-[#0A66C2] text-white border-[#0A66C2] font-semibold"
+                                      : "bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200/70 dark:border-zinc-700/70"
+                                  }`}
+                                >
+                                  {tag}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Mobile Community Switcher */}
+                          {isAdmin && (
+                            <div>
+                              <div className="flex items-center justify-between mb-1.5">
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Switch Industry</p>
+                                <div className="flex items-center gap-2 text-[10px]">
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedEnclaves(PROFESSION_ENCLAVES.map(e => e.id))}
+                                    className="font-bold text-[#0A66C2] hover:underline cursor-pointer"
+                                  >
+                                    All 12
+                                  </button>
+                                  <span className="text-zinc-300 dark:text-zinc-700">·</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedEnclaves([userData.professionEnclave || 'trades_construction'])}
+                                    className="text-zinc-500 hover:underline cursor-pointer"
+                                  >
+                                    Reset
+                                  </button>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-2 gap-1.5">
+                                {PROFESSION_ENCLAVES.map(e => {
+                                  const isSelected = isAllSelected || selectedEnclaves.includes(e.id)
+                                  return (
+                                    <button
+                                      key={e.id}
+                                      type="button"
+                                      onClick={() => handleToggleEnclave(e.id)}
+                                      className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[11px] font-medium transition-all text-left truncate cursor-pointer ${
+                                        isSelected
+                                          ? "bg-blue-50 text-[#0A66C2] border border-blue-200 dark:bg-blue-950/40 dark:text-sky-300 dark:border-blue-800 font-semibold"
+                                          : "bg-zinc-50 text-zinc-700 dark:bg-zinc-800/80 dark:text-zinc-300 border border-zinc-200/60 dark:border-zinc-700/60"
+                                      }`}
+                                    >
+                                      <span className="shrink-0">{e.icon}</span>
+                                      <span className="truncate flex-1">{e.shortName}</span>
+                                      {isSelected && <span className="text-[#0A66C2] dark:text-sky-300 text-[10px] font-bold">✓</span>}
+                                    </button>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </>
                 )
               })()}
 
               {/* 1. PRIMARY MULTI-STREAM FEED CATEGORY TABS */}
-              <div className="rounded-xl border border-zinc-200 bg-white p-2.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-2">
-                <div className="flex items-center justify-between gap-1 border-b border-zinc-100 dark:border-zinc-800 pb-2">
-                  <div className="flex items-center gap-1.5 overflow-x-auto w-full">
+              <div className="rounded-xl border border-zinc-200 bg-white p-2 sm:p-2.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+                <div className="flex items-center justify-between gap-1">
+                  {/* Category stream tabs */}
+                  <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto flex-1">
                     {FEED_CATEGORIES.map((cat) => {
                       const isSelected = activeFeedCategory === cat.id
                       return (
@@ -976,7 +1125,7 @@ export default function LinkedInPage() {
                             setActiveFeedCategory(cat.id)
                             setActiveFeedSubCategory('All')
                           }}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all shrink-0 ${
+                          className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs font-bold rounded-lg transition-all shrink-0 cursor-pointer ${
                             isSelected
                               ? "bg-[#0A66C2] text-white shadow-2xs"
                               : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
@@ -988,10 +1137,58 @@ export default function LinkedInPage() {
                       )
                     })}
                   </div>
+
+                  {/* Mobile Sub-Category Filter Toggle Button */}
+                  <div className="sm:hidden shrink-0 ml-1">
+                    <button
+                      type="button"
+                      onClick={() => setShowMobileSubFilters(!showMobileSubFilters)}
+                      className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold border transition-all cursor-pointer ${
+                        activeFeedSubCategory !== 'All'
+                          ? "bg-blue-50 text-[#0A66C2] border-blue-200 dark:bg-blue-950/40 dark:text-sky-300 dark:border-blue-800"
+                          : showMobileSubFilters
+                          ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 border-zinc-300 dark:border-zinc-700"
+                          : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 border-transparent"
+                      }`}
+                      title="Filter sub-topics"
+                    >
+                      <Filter className="h-3 w-3" />
+                      {activeFeedSubCategory !== 'All' ? (
+                        <span className="truncate max-w-[64px]">{activeFeedSubCategory}</span>
+                      ) : (
+                        <span>Filter</span>
+                      )}
+                    </button>
+                  </div>
                 </div>
 
-                {/* Dynamic Sub-Category Filter Ribbon */}
-                <div className="flex items-center gap-1.5 overflow-x-auto text-[11px] pt-0.5">
+                {/* Mobile Sub-Category Ribbon (Collapsible, shown when toggled or active filter) */}
+                {(showMobileSubFilters || activeFeedSubCategory !== 'All') && (
+                  <div className="sm:hidden pt-2 mt-1.5 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-1.5 overflow-x-auto text-[11px]">
+                    <span className="text-zinc-400 font-semibold text-[10px] uppercase tracking-wider shrink-0 mr-1">
+                      {t("filter_label", "Filter:")}
+                    </span>
+                    {activeCategoryConfig.subCategories.map((sub) => {
+                      const isSelected = activeFeedSubCategory === sub
+                      return (
+                        <button
+                          key={sub}
+                          onClick={() => setActiveFeedSubCategory(sub)}
+                          className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold transition-colors whitespace-nowrap cursor-pointer ${
+                            isSelected
+                              ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-bold"
+                              : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400"
+                          }`}
+                        >
+                          {sub}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+
+                {/* Desktop Sub-Category Ribbon (Always visible on sm+) */}
+                <div className="hidden sm:flex items-center gap-1.5 overflow-x-auto text-[11px] pt-2 mt-1.5 border-t border-zinc-100 dark:border-zinc-800">
                   <span className="text-zinc-400 font-semibold text-[10px] uppercase tracking-wider shrink-0 mr-1">
                     {t("filter_label", "Filter:")}
                   </span>
@@ -1001,7 +1198,7 @@ export default function LinkedInPage() {
                       <button
                         key={sub}
                         onClick={() => setActiveFeedSubCategory(sub)}
-                        className={`rounded-full px-2.5 py-0.5 font-semibold transition-colors whitespace-nowrap ${
+                        className={`rounded-full px-2.5 py-0.5 font-semibold transition-colors whitespace-nowrap cursor-pointer ${
                           isSelected
                             ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-bold"
                             : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400"
