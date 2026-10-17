@@ -717,8 +717,10 @@ export default function LinkedInPage() {
               {showFeedWheel && (
                 <div className="space-y-1">
                   <ConnectInVideoWheel
-                    title="The Wheel — 5-Minute Masterclasses & Briefings"
-                    subtitle="Expedite Consults educational talks, trade apprenticeship standards & business underwriting."
+                    activeEnclaveId={selectedEnclaves[0] || currentUser?.professionEnclave || 'trades_construction'}
+                    user={currentUser}
+                    title="The Wheel — Multi-Profession Masterclasses & Briefings"
+                    subtitle="Curated trade apprenticeship standards, software architecture, clinical medicine, and verified field briefings."
                     onOpenVideoGuide={() => setIsVideoGuideOpen(true)}
                   />
                   <div className="flex items-center justify-between px-2 pt-0.5 text-[10px] text-zinc-500">

@@ -273,8 +273,10 @@ export function MediaView({
 
       {/* Expedite Consults Educational Video Talk Wheel */}
       <ConnectInVideoWheel
-        title="The Wheel — 5-Minute Masterclass Briefings"
-        subtitle="Expedite Consults curated trade apprenticeships, business finance, and safety compliance talks."
+        activeEnclaveId={enclaveId}
+        user={currentUser}
+        title="The Wheel — Multi-Profession Masterclasses & Briefings"
+        subtitle="Curated trade apprenticeships, software architecture, healthcare, and verified field briefings across all disciplines."
       />
 
       {/* ========================================================================= */}
