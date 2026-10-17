@@ -848,6 +848,7 @@ export function getEnclaveModules(enclaveId?: string, isAdminUser: boolean = fal
     case 'creative_media_arts':
       return [
         { id: "careerorbit_creative", label: "CareerOrbit Creative Passport", desc: "Verified portfolios, acting reels & credits", icon: "🪐", url: "https://careerorbit-standalone.vercel.app", isExternal: true, badge: "LIVE ORBIT" },
+        { id: "vibetok_reels", label: "VibeTok 9:16 Reels Studio", desc: "Vertical HD studio, HTML5 player & 1-click MP4 export", icon: "🎬", url: "https://vibetok-learning-hub.vercel.app/reels", isExternal: true, badge: "REELS HD" },
         { id: "vibetok_creative", label: "VibeTok Media Masterclasses", desc: "Filmmaking, lighting & audio mixing videos", icon: "🎥", url: "https://vibetok-learning-hub.vercel.app", isExternal: true, badge: "LIVE HUB" },
         { id: "jobs", label: "Creative & Audition Roles", desc: "Commercial photo, voiceover & scoring gigs", icon: "🎭" },
         { id: "marketplace", label: "Audio Splits & Proof Galleries", desc: "Copyright split sheets & photo licenses", icon: "🎵" },

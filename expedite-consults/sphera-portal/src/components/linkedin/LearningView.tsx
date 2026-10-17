@@ -60,6 +60,73 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 
+export interface VibetokProductionRoute {
+  id: string
+  label: string
+  shortLabel: string
+  badge: string
+  url: string
+  description: string
+  icon: string
+}
+
+export const VIBETOK_PRODUCTION_ROUTES: VibetokProductionRoute[] = [
+  {
+    id: "hub_core",
+    label: "Core Learning Hub",
+    shortLabel: "🎓 Hub Core",
+    badge: "CANONICAL",
+    url: "https://vibetok-learning-hub.vercel.app",
+    description: "22 spatial academies, 44 expert playlists & live interactive events",
+    icon: "🎓",
+  },
+  {
+    id: "reels_studio",
+    label: "9:16 Reels Studio (HD)",
+    shortLabel: "🎬 Reels Studio",
+    badge: "VERTICAL VIDEO",
+    url: "https://vibetok-learning-hub.vercel.app/reels",
+    description: "Embedded HTML5 video player, sound scrub bar, loop & 1-click MP4 download",
+    icon: "🎬",
+  },
+  {
+    id: "mitre_attack",
+    label: "MITRE ATT&CK Sandbox",
+    shortLabel: "🛡️ MITRE ATT&CK",
+    badge: "CYBER DEFENSE",
+    url: "https://vibetok-learning-hub.vercel.app/platform/security_courses_player",
+    description: "Hands-on browser terminal sandbox for cyber threat defense & attack vectors",
+    icon: "🛡️",
+  },
+  {
+    id: "genai_swarm",
+    label: "Agentic Swarm & GenAI Flywheel",
+    shortLabel: "🤖 GenAI Swarm",
+    badge: "AI FLYWHEEL",
+    url: "https://vibetok-learning-hub.vercel.app/platform/generative_ai_player",
+    description: "Autonomous multi-agent swarm orchestration & generative intelligence flywheel",
+    icon: "🤖",
+  },
+  {
+    id: "whitepaper",
+    label: "Doctoral Dissertation & White Paper",
+    shortLabel: "📄 White Paper",
+    badge: "DOCTORAL",
+    url: "https://vibetok-learning-hub.vercel.app/#whitepaper",
+    description: "Kwesi Asiedu's doctoral dissertation, peer citations & architecture white paper",
+    icon: "📄",
+  },
+  {
+    id: "social_inky",
+    label: "VibeTok App (In-App Feed)",
+    shortLabel: "📱 Social Feed",
+    badge: "LIVE APP",
+    url: "https://vibe-tok-inky.vercel.app/reels",
+    description: "Mobile-first social feed, community comments & native in-app vertical reels",
+    icon: "📱",
+  },
+]
+
 interface LearningViewProps {
   user: UserProfile
   onAddCertificateToProfile?: (certificate: any) => void
@@ -75,6 +142,7 @@ export function LearningView({
   const [learningMode, setLearningMode] = useState<'courses' | 'labs' | 'certifications' | 'paths' | 'vibetok'>('paths')
   const [vibetokExpanded, setVibetokExpanded] = useState(false)
   const [vibetokKey, setVibetokKey] = useState(0)
+  const [vibetokRoute, setVibetokRoute] = useState<string>("https://vibetok-learning-hub.vercel.app")
 
   const learningPath = getEnclaveLearningPath(user.professionEnclave)
   const enclaveLabs = getEnclaveInteractiveLabs(user.professionEnclave)
@@ -896,21 +964,21 @@ export function LearningView({
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="rounded-full bg-rose-500/20 px-3 py-0.5 text-xs font-bold text-rose-300 border border-rose-500/30 flex items-center gap-1.5">
                   <Sparkles className="h-3.5 w-3.5 text-amber-300" />
-                  VibeTOK Learning Hub
+                  VibeTOK Enterprise Learning &amp; Defense Hub
                 </span>
                 <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-mono text-zinc-300 border border-white/10">
                   118,314 Catalog Items
                 </span>
                 <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[11px] font-bold text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  Live Embedded Sync
+                  Multi-Route Dynamic Engine
                 </span>
               </div>
               <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                Academies, Curated Expert Playlists &amp; Live Interactive Events
+                Spatial Academies, 9:16 Vertical Reels Studio &amp; MITRE Sandbox
               </h2>
               <p className="text-xs text-zinc-300 max-w-2xl">
-                Browse 22 progressive spatial academies, 44 expert-curated playlists, video masterclasses across all professions, and verified skill passport stamps directly inside ConnectIn.
+                Browse 22 progressive spatial academies, vertical 9:16 HD Reels Studio with 1-click MP4 export, MITRE ATT&amp;CK terminal sandboxes, and Dr. Kwesi Asiedu&apos;s Doctoral White Paper directly inside ConnectIn.
               </p>
             </div>
 
@@ -919,7 +987,7 @@ export function LearningView({
               <button
                 onClick={() => setVibetokKey(k => k + 1)}
                 className="inline-flex items-center gap-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-2 text-xs font-semibold text-zinc-200 transition-colors cursor-pointer"
-                title="Reload Frame"
+                title="Reload Current Route"
               >
                 <span>⟳ Reload</span>
               </button>
@@ -931,85 +999,184 @@ export function LearningView({
                 <span>{vibetokExpanded ? "⊟ Standard Height" : "⛶ Full Height"}</span>
               </button>
               <a
-                href="https://vibetok-learning-hub.vercel.app"
+                href={vibetokRoute}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 px-3.5 py-2 text-xs font-bold text-white shadow-md transition-all cursor-pointer hover:scale-105 active:scale-95"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-purple-600 hover:from-rose-500 hover:to-purple-500 px-3.5 py-2 text-xs font-bold text-white shadow-md transition-all cursor-pointer hover:scale-105 active:scale-95"
               >
-                <span>Open in New Tab</span>
+                <span>Open Current Route ↗</span>
                 <ExternalLink className="h-3.5 w-3.5" />
               </a>
             </div>
           </div>
 
-          {/* Quick Pillar Jump Cards */}
+          {/* Interactive Multi-Route Navigation Ribbon */}
+          <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/90 p-3 shadow-md">
+            <div className="flex items-center justify-between gap-2 mb-2 px-1">
+              <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+                <Layers className="h-3.5 w-3.5 text-rose-500" />
+                Select VibeTok Production App / Route:
+              </span>
+              <span className="text-[11px] font-mono text-zinc-400 truncate max-w-xs hidden sm:inline">
+                {vibetokRoute}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+              {VIBETOK_PRODUCTION_ROUTES.map((route) => {
+                const isActive = vibetokRoute === route.url
+                return (
+                  <button
+                    key={route.id}
+                    onClick={() => {
+                      setVibetokRoute(route.url)
+                      setVibetokKey(k => k + 1)
+                    }}
+                    className={`flex flex-col items-start p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      isActive
+                        ? "border-rose-500 bg-rose-50/70 dark:bg-rose-950/40 dark:border-rose-500 shadow-xs ring-2 ring-rose-500/20"
+                        : "border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/40 hover:border-zinc-400 dark:hover:border-zinc-600"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between w-full mb-1">
+                      <span className="text-base">{route.icon}</span>
+                      <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-md ${
+                        isActive
+                          ? "bg-rose-600 text-white"
+                          : "bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300"
+                      }`}>
+                        {route.badge}
+                      </span>
+                    </div>
+                    <span className="font-bold text-xs text-zinc-900 dark:text-zinc-100 truncate w-full">
+                      {route.shortLabel}
+                    </span>
+                    <span className="text-[10px] text-zinc-500 dark:text-zinc-400 line-clamp-1 mt-0.5">
+                      {route.description}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* 🎬 Dedicated 9:16 Reels Studio Feature Banner (Appears when Reels Route is active) */}
+          {vibetokRoute.includes('/reels') && (
+            <div className="rounded-2xl border border-pink-500/40 bg-gradient-to-r from-pink-950/60 via-purple-950/50 to-slate-950 p-4 text-white shadow-lg animate-in slide-in-from-top duration-300">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-pink-500/20 border border-pink-500/40 flex items-center justify-center shrink-0 text-xl">
+                    🎬
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm text-pink-200 flex items-center gap-2">
+                      <span>9:16 Vertical HD Reels Studio &amp; HTML5 Video Engine</span>
+                      <span className="rounded-md bg-pink-500/30 text-pink-300 text-[10px] font-mono px-2 py-0.5 font-bold border border-pink-500/40">VERTICAL HD</span>
+                    </h3>
+                    <p className="text-xs text-zinc-300">
+                      HTML5 &lt;video&gt; player with sound, scrub bar, loop mode, 1-Click MP4 downloads &amp; caption copy.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0 flex-wrap text-xs">
+                  <span className="rounded-lg bg-black/40 border border-white/10 px-2.5 py-1 text-[11px] text-zinc-300">
+                    🔊 Sound &amp; Scrub
+                  </span>
+                  <span className="rounded-lg bg-black/40 border border-white/10 px-2.5 py-1 text-[11px] text-zinc-300">
+                    🔁 Auto-Loop
+                  </span>
+                  <span className="rounded-lg bg-black/40 border border-white/10 px-2.5 py-1 text-[11px] text-pink-300 font-semibold">
+                    📥 1-Click MP4
+                  </span>
+                  <span className="rounded-lg bg-black/40 border border-white/10 px-2.5 py-1 text-[11px] text-purple-300 font-semibold">
+                    📋 Copy Tags
+                  </span>
+                  <a
+                    href="https://vibetok-learning-hub.vercel.app/reels"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-xl bg-pink-600 hover:bg-pink-500 text-white font-bold px-3 py-1.5 text-xs shadow-md transition-all inline-flex items-center gap-1"
+                  >
+                    <span>Full Reels Studio</span>
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Quick Deep Jump Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-            <a
-              href="https://vibetok-learning-hub.vercel.app"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-purple-500 hover:shadow-md transition-all group"
+            <button
+              onClick={() => {
+                setVibetokRoute("https://vibetok-learning-hub.vercel.app")
+                setVibetokKey(k => k + 1)
+              }}
+              className="p-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-purple-500 hover:shadow-md transition-all text-left group cursor-pointer"
             >
               <p className="font-bold text-zinc-900 dark:text-zinc-100 group-hover:text-purple-600 flex items-center justify-between">
                 <span>🏛️ Spatial Academies</span>
-                <span className="text-[10px] font-mono bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300 px-1.5 py-0.5 rounded font-bold">22</span>
+                <span className="text-[10px] font-mono bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300 px-1.5 py-0.5 rounded font-bold">22 Academies</span>
               </p>
-              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">Foundational literacy &amp; structured multi-tiered spatial curricula.</p>
-            </a>
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">Multi-tiered spatial curricula across trades, tech &amp; defense.</p>
+            </button>
 
-            <a
-              href="https://vibetok-learning-hub.vercel.app"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-blue-500 hover:shadow-md transition-all group"
-            >
-              <p className="font-bold text-zinc-900 dark:text-zinc-100 group-hover:text-blue-600 flex items-center justify-between">
-                <span>📋 Expert Playlists</span>
-                <span className="text-[10px] font-mono bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300 px-1.5 py-0.5 rounded font-bold">44</span>
-              </p>
-              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">Deep teardowns, practical workflows &amp; field briefings by masters.</p>
-            </a>
-
-            <a
-              href="https://vibetok-learning-hub.vercel.app"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-emerald-500 hover:shadow-md transition-all group"
+            <button
+              onClick={() => {
+                setVibetokRoute("https://vibetok-learning-hub.vercel.app/platform/security_courses_player")
+                setVibetokKey(k => k + 1)
+              }}
+              className="p-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-emerald-500 hover:shadow-md transition-all text-left group cursor-pointer"
             >
               <p className="font-bold text-zinc-900 dark:text-zinc-100 group-hover:text-emerald-600 flex items-center justify-between">
-                <span>🔴 Live Events &amp; Streams</span>
-                <span className="text-[10px] font-mono bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 px-1.5 py-0.5 rounded font-bold">205</span>
+                <span>🛡️ MITRE ATT&amp;CK Terminal</span>
+                <span className="text-[10px] font-mono bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 px-1.5 py-0.5 rounded font-bold">Interactive</span>
               </p>
-              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">Interactive webinars, lab teardowns &amp; on-demand symposium recordings.</p>
-            </a>
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">Browser terminal sandbox simulating cyber adversary tactics.</p>
+            </button>
 
-            <a
-              href="https://vibetok-learning-hub.vercel.app"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-rose-500 hover:shadow-md transition-all group"
+            <button
+              onClick={() => {
+                setVibetokRoute("https://vibetok-learning-hub.vercel.app/platform/generative_ai_player")
+                setVibetokKey(k => k + 1)
+              }}
+              className="p-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-blue-500 hover:shadow-md transition-all text-left group cursor-pointer"
+            >
+              <p className="font-bold text-zinc-900 dark:text-zinc-100 group-hover:text-blue-600 flex items-center justify-between">
+                <span>🤖 Agentic Swarm &amp; GenAI</span>
+                <span className="text-[10px] font-mono bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300 px-1.5 py-0.5 rounded font-bold">Swarm Lab</span>
+              </p>
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">Multi-agent generative flywheel &amp; dynamic reasoning models.</p>
+            </button>
+
+            <button
+              onClick={() => {
+                setVibetokRoute("https://vibetok-learning-hub.vercel.app/#whitepaper")
+                setVibetokKey(k => k + 1)
+              }}
+              className="p-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-rose-500 hover:shadow-md transition-all text-left group cursor-pointer"
             >
               <p className="font-bold text-zinc-900 dark:text-zinc-100 group-hover:text-rose-600 flex items-center justify-between">
-                <span>🎖️ Skill Passport &amp; Stamps</span>
-                <span className="text-[10px] font-mono bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 px-1.5 py-0.5 rounded font-bold">22 Stamps</span>
+                <span>📄 Doctoral White Paper</span>
+                <span className="text-[10px] font-mono bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 px-1.5 py-0.5 rounded font-bold">Doctoral</span>
               </p>
-              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">Earn digital credential stamps and export verified skill certificates.</p>
-            </a>
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">Peer-reviewed dissertation &amp; defense architecture blueprints.</p>
+            </button>
           </div>
 
           {/* Embedded Interactive Iframe */}
           <div className="relative rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-900 shadow-2xl transition-all">
-            <div className="bg-zinc-800/90 px-4 py-2 flex items-center justify-between border-b border-zinc-700 text-xs text-zinc-300">
-              <div className="flex items-center gap-2">
-                <span className="h-3 w-3 rounded-full bg-red-500 inline-block" />
-                <span className="h-3 w-3 rounded-full bg-amber-500 inline-block" />
-                <span className="h-3 w-3 rounded-full bg-emerald-500 inline-block" />
-                <span className="font-mono text-[11px] text-zinc-400 ml-2">https://vibetok-learning-hub.vercel.app</span>
+            <div className="bg-zinc-800/90 px-4 py-2.5 flex items-center justify-between border-b border-zinc-700 text-xs text-zinc-300">
+              <div className="flex items-center gap-2 overflow-hidden mr-2">
+                <span className="h-3 w-3 rounded-full bg-red-500 inline-block shrink-0" />
+                <span className="h-3 w-3 rounded-full bg-amber-500 inline-block shrink-0" />
+                <span className="h-3 w-3 rounded-full bg-emerald-500 inline-block shrink-0" />
+                <span className="font-mono text-[11px] text-zinc-400 ml-2 truncate">{vibetokRoute}</span>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 shrink-0">
                 <span className="hidden sm:inline text-[11px] text-emerald-400 font-mono">● LIVE EMBED</span>
                 <a
-                  href="https://vibetok-learning-hub.vercel.app"
+                  href={vibetokRoute}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-white transition-colors flex items-center gap-1 font-semibold"
@@ -1021,10 +1188,10 @@ export function LearningView({
             </div>
 
             <iframe
-              key={vibetokKey}
-              src="https://vibetok-learning-hub.vercel.app"
-              title="VibeTOK Learning Hub"
-              className={`w-full ${vibetokExpanded ? "h-[1100px]" : "h-[820px]"} border-0 transition-all bg-white`}
+              key={`${vibetokKey}-${vibetokRoute}`}
+              src={vibetokRoute}
+              title="VibeTOK Learning &amp; Defense Platform"
+              className={`w-full ${vibetokExpanded ? "h-[1100px]" : "h-[850px]"} border-0 transition-all bg-white`}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-modals"
             />

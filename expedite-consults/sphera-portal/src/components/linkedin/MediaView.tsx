@@ -242,7 +242,16 @@ export function MediaView({
             </p>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <a
+              href="https://vibetok-learning-hub.vercel.app/reels"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-xl bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-bold px-3.5 py-2 text-xs shadow-md flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95"
+            >
+              <Film className="h-3.5 w-3.5" />
+              <span>🎬 9:16 Reels Studio ↗</span>
+            </a>
             <button
               onClick={() => setActiveMediaTab('studio')}
               className="rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold px-4 py-2 text-xs shadow-md flex items-center gap-1.5"
@@ -857,7 +866,77 @@ export function MediaView({
       {/* VIEW: CLIPS (SHORT-FORM VERTICAL PROFESSIONAL VIDEOS) */}
       {/* ========================================================================= */}
       {activeMediaTab === 'clips' && (
-        <div className="space-y-4">
+        <div className="space-y-6">
+          {/* VIBETOK 9:16 REELS STUDIO PRO PROMOTION BANNER */}
+          <div className="rounded-2xl border border-pink-500/40 bg-gradient-to-r from-slate-950 via-purple-950/70 to-pink-950/60 p-5 text-white shadow-xl">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="rounded-full bg-pink-500/20 px-3 py-0.5 text-xs font-bold text-pink-300 border border-pink-500/40 flex items-center gap-1.5">
+                    <Film className="h-3.5 w-3.5 text-pink-400" />
+                    🎬 VibeTok Reels Studio &amp; Video Player
+                  </span>
+                  <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-mono text-zinc-300 border border-white/10">
+                    9:16 Vertical HD
+                  </span>
+                  <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[11px] font-bold text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Live Production Ready
+                  </span>
+                </div>
+                <h3 className="text-lg sm:text-xl font-black text-white">
+                  Vertical HTML5 Video Engine, Social MP4 Exporter &amp; Direct Caption Copy
+                </h3>
+                <p className="text-xs text-zinc-300 max-w-2xl leading-relaxed">
+                  Embedded HTML5 &lt;video&gt; player with sound, scrub bar, and continuous loop. Download 1080p MP4 clips in 1 click for Instagram, TikTok, Shorts, and LinkedIn, or toggle between Video Mode and Frame Slides.
+                </p>
+                <div className="flex items-center gap-2 flex-wrap pt-1 text-[11px]">
+                  <span className="rounded-lg bg-black/40 border border-white/10 px-2.5 py-1 text-zinc-300">
+                    🔊 Volume &amp; Scrub Bar
+                  </span>
+                  <span className="rounded-lg bg-black/40 border border-white/10 px-2.5 py-1 text-zinc-300">
+                    🔁 Seamless Loop Engine
+                  </span>
+                  <span className="rounded-lg bg-black/40 border border-white/10 px-2.5 py-1 text-pink-300 font-semibold">
+                    📥 1-Click MP4 Download (IG, TikTok, Shorts, LinkedIn)
+                  </span>
+                  <span className="rounded-lg bg-black/40 border border-white/10 px-2.5 py-1 text-purple-300 font-semibold">
+                    ▶️ Video Mode vs 🖼️ Frame Slides
+                  </span>
+                  <span className="rounded-lg bg-black/40 border border-white/10 px-2.5 py-1 text-amber-300 font-semibold">
+                    📋 Direct Copy Caption &amp; Tags
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row lg:flex-col gap-2 shrink-0">
+                <a
+                  href="https://vibetok-learning-hub.vercel.app/reels"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-xl bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-bold px-4 py-2 text-xs shadow-md flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95"
+                >
+                  <Play className="h-3.5 w-3.5 fill-current" />
+                  <span>Launch 9:16 Reels Studio ↗</span>
+                </a>
+                <a
+                  href="https://vibe-tok-inky.vercel.app/reels"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold px-4 py-2 text-xs border border-white/20 flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  <span>📱 Open VibeTok Inky App ↗</span>
+                </a>
+                <button
+                  onClick={() => onNavigateTab('learning')}
+                  className="rounded-xl bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 font-semibold px-4 py-1.5 text-xs border border-purple-500/30 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <span>🎓 Open in Learning View</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {MEDIA_CLIPS_DATA.map((clip) => (
               <div

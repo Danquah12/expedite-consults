@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
-/* ─── Products Data (21 Connected Products) ─── */
+/* ─── Products Data (23 Connected Products) ─── */
 const products = [
   {
     name: "SpheraNet — Sovereign Social",
@@ -203,6 +203,39 @@ const products = [
     icon: "🔧",
     status: "live",
   },
+  {
+    name: "VibeTok Reels Studio (9:16 HD)",
+    tagline: "Vertical HD Reels Studio, HTML5 Player & 1-Click Social MP4 Exporter",
+    description:
+      "Embedded HTML5 video player with loop, sound scrub bar, 1-click MP4 downloads for Instagram, TikTok, Shorts & LinkedIn, Video Mode vs Frame Slides toggle, and 1-tap Copy Caption & Tags.",
+    url: "https://vibetok-learning-hub.vercel.app/reels",
+    color: "#ec4899",
+    icon: "🎬",
+    status: "live",
+    badge: "NEW",
+  },
+  {
+    name: "VibeTok Learning Hub",
+    tagline: "Autonomous Swarm, MITRE ATT&CK Sandbox & AI Flywheel",
+    description:
+      "Enterprise learning and defense platform: interactive MITRE ATT&CK Terminal Sandbox, Agentic Swarm & GenAI Flywheel, and Doctoral Dissertation & White Paper research.",
+    url: "https://vibetok-learning-hub.vercel.app",
+    color: "#8b5cf6",
+    icon: "🎓",
+    status: "live",
+    badge: "VERIFIED",
+  },
+  {
+    name: "VibeTok Social App (Inky)",
+    tagline: "Mobile-First Sovereign Social & In-App Dynamic Reels Feed",
+    description:
+      "Live mobile social feed, interactive micro-learning reels, community interactions, and native in-app creator experiences powered by VibeTok Inky.",
+    url: "https://vibe-tok-inky.vercel.app",
+    color: "#06b6d4",
+    icon: "📱",
+    status: "live",
+    badge: "LIVE",
+  },
 ];
 
 interface AppItem {
@@ -244,6 +277,9 @@ const categories: Category[] = [
       { name: "Decentralized Vault", icon: "🔐", description: "Decentralized financial enclave, balance releases & transaction logs", badge: "SECURE", url: "/vault", status: "available" },
       { name: "Campus Operating OS", icon: "🎓", description: "Collegiate hub, academic events, courses, and .EDU verification", badge: "EDU", url: "/campus", status: "available" },
       { name: "Zero-Trust Security Enclave", icon: "⚙️", description: "FIDO2 passkeys, biometric keypairs, and 3-mode theme engine", badge: "NEW", url: "/settings", status: "available" },
+      { name: "VibeTok Reels Studio (9:16 HD)", icon: "🎬", description: "9:16 Vertical HD Reels studio, scrub controls & 1-click MP4 downloads", badge: "HOT", url: "https://vibetok-learning-hub.vercel.app/reels", status: "available" },
+      { name: "VibeTok Learning Hub", icon: "🎓", description: "MITRE ATT&CK sandbox, AI flywheel & doctoral white paper", badge: "EDU", url: "https://vibetok-learning-hub.vercel.app", status: "available" },
+      { name: "VibeTok Social App (Inky)", icon: "📱", description: "Live mobile social feed & native vertical reels stream", badge: "LIVE", url: "https://vibe-tok-inky.vercel.app", status: "available" },
     ],
   },
   {
@@ -266,6 +302,7 @@ const categories: Category[] = [
     color: "#ec4899",
     apps: [
       { name: "Reels Stage", icon: "▶", description: "Full-screen vertical video FYP & short upload", badge: "HOT", url: "/reels", status: "available" },
+      { name: "VibeTok Reels Studio (9:16 HD)", icon: "🎬", description: "Vertical HD studio, HTML5 player & 1-click MP4 social export", badge: "HOT", url: "https://vibetok-learning-hub.vercel.app/reels", status: "available" },
       { name: "SphereVision", icon: "🎥", description: "TV-style streaming content & media rooms", badge: "HOT", tab: "watch", status: "available" },
       { name: "Video Studio", icon: "🎬", description: "Professional video editing & timeline suite", badge: "NEW", tab: "videostudio", status: "available" },
       { name: "Video Creator AI", icon: "🎞️", description: "AI-powered video generation & automated script rendering", badge: "AI", tab: "creator", status: "available" },

@@ -1406,17 +1406,17 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
   {
     id: 'prod_vibetok',
     professionEnclave: 'trades_construction',
-    name: 'VibeTok Interactive Learning & Video Masterclasses',
-    tagline: 'Bite-sized video masterclasses, practical trade demonstrations & interactive lessons',
+    name: 'VibeTok Learning Hub (Core Platform)',
+    tagline: 'Interactive MITRE ATT&CK sandbox, Agentic Swarm & GenAI flywheel & doctoral research',
     category: 'Training',
-    subCategory: 'Video Masterclasses & Tutorials',
+    subCategory: 'Autonomous Defense & GenAI Flywheel',
     launchpadCategory: 'campus',
     isLaunchpadDeployed: true,
-    icon: '🎥',
-    badge: '🎓 Live Learning Hub',
+    icon: '🎓',
+    badge: '🎓 Core Platform',
     rating: 4.99,
-    reviewsCount: 840,
-    activeUsersCount: '45,000+ Students & Apprentices',
+    reviewsCount: 1120,
+    activeUsersCount: '45,000+ Students & Researchers',
     pricing: {
       displayPrice: '$39',
       billingPeriod: '/ month',
@@ -1428,42 +1428,52 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
       logo: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=100&auto=format&fit=crop&q=80',
       isVerified: true
     },
-    overview: 'High-engagement micro-learning platform delivering 60-second to 5-minute video tutorials from verified master craftsmen, doctors, and security researchers. Includes interactive comprehension quizzes and code/cut sandboxes.',
+    overview: 'High-engagement spatial micro-learning platform and enterprise defense sandbox. Features MITRE ATT&CK interactive security courses (/platform/security_courses_player), Agentic Swarm & GenAI flywheel simulations (/platform/generative_ai_player), and Kwesi Asiedu\'s Doctoral Dissertation & White Paper (/#whitepaper).',
     features: [
-      { title: 'Interactive Video Sandboxes', desc: 'Code editors, miter angle calculators, and ECG waveforms rendered directly below tutorial videos.' },
-      { title: 'Verified Creator Guilds', desc: 'Every instructor is verified for authentic industry experience (Master Joiner, Attending MD, OSCP).' }
+      { title: 'MITRE ATT&CK Terminal Sandbox', desc: 'Hands-on browser security courses player at /platform/security_courses_player for attack simulation and threat defense.' },
+      { title: 'Agentic Swarm & GenAI Flywheel', desc: 'Live generative AI player at /platform/generative_ai_player demonstrating autonomous multi-agent orchestration.' },
+      { title: 'Doctoral Dissertation & White Paper', desc: 'Peer-reviewed doctoral research and technical white paper at /#whitepaper with verified citations and architectural models.' },
+      { title: 'Interactive Video Sandboxes', desc: 'Code editors, miter angle calculators, and ECG waveforms rendered directly below tutorial videos.' }
     ],
     screenshots: ['https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&auto=format&fit=crop&q=80'],
     demoUrl: 'https://vibetok-learning-hub.vercel.app',
     liveUrl: 'https://vibetok-learning-hub.vercel.app',
     isVercelLive: true,
     architecture: {
-      title: 'Global HLS Video CDN',
-      summary: 'Adaptive bitrate video streaming optimized for mobile and jobsite field conditions.',
-      layers: ['Cloudflare Stream CDN', 'Next.js Interactive Layer', 'Supabase Progress Tracking'],
-      latency: '< 100ms video start time',
-      dataPrivacy: 'Strict privacy controls.'
+      title: 'Global HLS Video CDN & Agentic Runtime',
+      summary: 'Adaptive bitrate video streaming combined with client-side WebAssembly terminal sandboxes and GenAI agent runtimes.',
+      layers: ['Cloudflare Stream CDN', 'Next.js 14 App Router', 'WebAssembly Terminal Emulators', 'Supabase Realtime Sync'],
+      latency: '< 80ms interaction latency',
+      dataPrivacy: 'FERPA & SOC-2 strict workspace isolation.'
     },
-    integrations: ['ConnectIn Profile', 'CareerOrbit', 'Google Classroom'],
+    integrations: ['ConnectIn Profile', 'CareerOrbit', 'Google Classroom', 'MITRE ATT&CK Framework', 'VibeTok Reels Studio'],
     security: {
-      compliance: ['FERPA Compliant', 'SOC 2 Type II'],
-      encryption: 'DRM / TLS 1.3',
-      isolation: 'Encrypted user metrics'
+      compliance: ['FERPA Compliant', 'SOC 2 Type II', 'NIST 800-53'],
+      encryption: 'DRM / TLS 1.3 End-to-End',
+      isolation: 'Sandboxed browser execution'
     },
     pricingTiers: [
       {
         name: 'All-Access Learning Pass',
         price: '$39',
         period: '/ month',
-        description: 'Unlimited access to all 500+ masterclass video tracks and interactive sandboxes.',
-        features: ['500+ Video Lessons', 'Interactive Quizzes', 'Certificate of Completion', 'Direct Q&A with Master Instructors'],
+        description: 'Unlimited access to all 500+ masterclass video tracks, MITRE ATT&CK sandbox, and GenAI flywheel player.',
+        features: ['500+ Video Lessons', 'MITRE ATT&CK Sandbox', 'GenAI Flywheel Player', 'Doctoral White Paper Access', 'Digital Skill Stamps'],
         ctaText: 'Start Learning'
+      },
+      {
+        name: 'Enterprise Research & Defense',
+        price: '$249',
+        period: '/ seat / mo',
+        description: 'Team license with dedicated MITRE attack scenarios, private swarm sandboxes, and exportable compliance certificates.',
+        features: ['All Learning Pass Features', 'Custom Swarm Scenarios', 'LMS SCORM / xAPI Export', 'Priority Field Support SLA'],
+        ctaText: 'Deploy Enterprise'
       }
     ],
     reviews: [],
     documentation: {
-      quickstart: 'Access masterclasses at https://vibetok-learning-hub.vercel.app',
-      apiEndpoints: ['GET /api/courses', 'POST /api/progress/sync'],
+      quickstart: 'Access masterclasses at https://vibetok-learning-hub.vercel.app (Latest build: https://vibetok-learning-8ucn2v7ul-kwesi-asiedus-projects.vercel.app)',
+      apiEndpoints: ['GET /api/courses', 'POST /api/progress/sync', 'POST /api/sandbox/exec'],
       sdkSupport: ['Web', 'iOS', 'Android']
     },
     caseStudies: [],
@@ -1471,6 +1481,172 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
       sla: '99.9% Uptime',
       channel: 'Discord Community & In-App Chat',
       responseHours: '< 1 Hour'
+    }
+  },
+  {
+    id: 'prod_vibetok_reels_studio',
+    professionEnclave: 'creative_media_arts',
+    name: 'VibeTok Reels Studio & Video Player (9:16 Vertical HD)',
+    tagline: 'High-definition 9:16 vertical video player, HTML5 scrub controls & 1-click social MP4 exporter',
+    category: 'Software',
+    subCategory: 'Video Editing & Social Content Creation',
+    launchpadCategory: 'trades',
+    isLaunchpadDeployed: true,
+    icon: '🎬',
+    badge: '🎬 9:16 Vertical HD',
+    rating: 4.98,
+    reviewsCount: 960,
+    activeUsersCount: '28,000+ Creators & Social Pros',
+    pricing: {
+      displayPrice: '$19',
+      billingPeriod: '/ month',
+      hasFreeTrial: true,
+      trialDays: 14
+    },
+    vendor: {
+      name: 'VibeTok Creative Labs',
+      logo: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=100&auto=format&fit=crop&q=80',
+      isVerified: true
+    },
+    overview: 'Next-generation vertical video player and publishing suite. Features embedded HTML5 <video> with lossless audio, precision scrub bar, continuous looping, 1-Click MP4 downloads formatted for Instagram, TikTok, YouTube Shorts, and LinkedIn, seamless Video Mode vs. Frame Slides toggling, and instant 1-tap Copy Caption & Tags.',
+    features: [
+      { title: 'Embedded HTML5 <video> Engine', desc: 'Hardware-accelerated 9:16 vertical video playback with ultra-low latency, dynamic sound volume control, precision scrub bar, and seamless loop mode.' },
+      { title: '1-Click 📥 Download MP4', desc: 'Direct one-tap MP4 video download formatted and optimized for Instagram Reels, TikTok, YouTube Shorts, and LinkedIn video feeds.' },
+      { title: '▶️ Video Mode vs 🖼️ Frame Slides', desc: 'Instant toggle between real-time 60fps video playback and high-res frame-by-frame slide inspection for technical breakdowns.' },
+      { title: 'Direct 📋 Copy Caption & Tags', desc: 'Instant clipboard copy for optimized social descriptions, trending hashtags, and algorithmic reach keywords.' }
+    ],
+    screenshots: [
+      'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=800&auto=format&fit=crop&q=80'
+    ],
+    demoUrl: 'https://vibetok-learning-hub.vercel.app/reels',
+    liveUrl: 'https://vibetok-learning-hub.vercel.app/reels',
+    isVercelLive: true,
+    architecture: {
+      title: 'Lossless H.264 / AV1 Vertical Stream Pipeline',
+      summary: 'High-efficiency client-side rendering with Canvas frame extractors, WebCodecs API, and instant MP4 blob packaging.',
+      layers: ['Next.js 14 Video Player', 'HTML5 Media Source Extensions', 'WebCodecs Frame Slicer', 'Vercel Edge Network'],
+      latency: '< 40ms frame seek time',
+      dataPrivacy: 'Zero cloud telemetry on exported clips; local client-side processing.'
+    },
+    integrations: ['Instagram Reels API', 'TikTok Creator Hub', 'YouTube Shorts Studio', 'LinkedIn Creator Mode', 'SpheraNet Media'],
+    security: {
+      compliance: ['SOC 2 Type II', 'GDPR Compliant'],
+      encryption: 'TLS 1.3 & AES-256 asset storage',
+      isolation: 'Sandboxed iframe & CORS compliant'
+    },
+    pricingTiers: [
+      {
+        name: 'Creator Pass',
+        price: '$19',
+        period: '/ month',
+        description: 'Full vertical player access with unlimited MP4 downloads and social caption copying.',
+        features: ['Unlimited 9:16 HD Streaming', '1-Click MP4 Downloads', 'Caption & Tag Copier', 'Video Mode vs Slides Toggle'],
+        ctaText: 'Launch Reels Studio'
+      },
+      {
+        name: 'Agency & Studio Suite',
+        price: '$59',
+        period: '/ month',
+        description: 'Multi-brand social publishing, batch MP4 watermarking, and cross-platform scheduling.',
+        features: ['All Creator Features', 'Batch MP4 Exporter', 'Multi-Brand Presets', 'Custom Watermark Overlays'],
+        ctaText: 'Upgrade to Studio'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'Launch Reels Studio at https://vibetok-learning-hub.vercel.app/reels (or https://vibetok-learning-hub.vercel.app/reels-studio)',
+      apiEndpoints: ['GET /api/reels', 'GET /api/reels/feed', 'POST /api/reels/export'],
+      sdkSupport: ['Web', 'PWA', 'iOS Safari', 'Android Chrome']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.9% Uptime',
+      channel: 'Discord Studio & Fast-Track Chat',
+      responseHours: '< 30 Minutes'
+    }
+  },
+  {
+    id: 'prod_vibetok_social_app',
+    professionEnclave: 'creative_media_arts',
+    name: 'VibeTok App (Social & In-App Feed)',
+    tagline: 'Mobile-first social feed, dynamic vertical reels stream & community engagement',
+    category: 'Software',
+    subCategory: 'Mobile Social Network & Creator Community',
+    launchpadCategory: 'trades',
+    isLaunchpadDeployed: true,
+    icon: '📱',
+    badge: '📱 Live App',
+    rating: 4.97,
+    reviewsCount: 780,
+    activeUsersCount: '32,000+ Mobile Users',
+    pricing: {
+      displayPrice: 'Free',
+      billingPeriod: ' / Freemium',
+      hasFreeTrial: true,
+      trialDays: 30
+    },
+    vendor: {
+      name: 'VibeTok Technologies',
+      logo: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=100&auto=format&fit=crop&q=80',
+      isVerified: true
+    },
+    overview: 'Mobile-first social experience and interactive reels feed. Connect with fellow professionals, share vertical short-form insights, comment and react in real time, and discover trending industry techniques via the native in-app reels experience.',
+    features: [
+      { title: 'Native In-App /reels Route', desc: 'Smooth, touch-optimized vertical video swipe experience accessible directly at /reels.' },
+      { title: 'Live In-App Social Feed', desc: 'Real-time social stream with post reactions, comments, bookmarks, and instant creator profile browsing.' },
+      { title: 'Interactive Peer Discussions', desc: 'Engage with industry professionals, ask questions directly on video moments, and share insights.' },
+      { title: 'PWA & Mobile Native Experience', desc: 'Installable Progressive Web App with offline caching, push notifications, and fast touch responsiveness.' }
+    ],
+    screenshots: [
+      'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&auto=format&fit=crop&q=80'
+    ],
+    demoUrl: 'https://vibe-tok-inky.vercel.app',
+    liveUrl: 'https://vibe-tok-inky.vercel.app',
+    isVercelLive: true,
+    architecture: {
+      title: 'Mobile-Optimized React / Next.js Architecture',
+      summary: 'Touch-first gestures, edge CDN caching, and WebSocket realtime messaging for low-latency social interactions.',
+      layers: ['Next.js PWA Core', 'Tailwind CSS Touch UX', 'Vercel Edge Network', 'Realtime Channel Sync'],
+      latency: '< 50ms swipe latency',
+      dataPrivacy: 'User privacy controls and sandboxed media storage.'
+    },
+    integrations: ['ConnectIn Profile', 'SpheraNet Social Graph', 'VibeTok Learning Hub'],
+    security: {
+      compliance: ['GDPR Compliant', 'CCPA Compliant'],
+      encryption: 'TLS 1.3 Transport Security',
+      isolation: 'Role-based tenant isolation'
+    },
+    pricingTiers: [
+      {
+        name: 'Community Free',
+        price: 'Free',
+        period: '',
+        description: 'Full access to social feed, public video reels, and peer comments.',
+        features: ['Full Social Feed', 'Watch Vertical Reels', 'Like, Share & Comment', 'Mobile PWA Support'],
+        ctaText: 'Open Social App'
+      },
+      {
+        name: 'Pro Creator & Verified',
+        price: '$12',
+        period: '/ month',
+        description: 'Verified creator badge, prioritized feed placement, and detailed audience analytics.',
+        features: ['Verified Checkmark', 'Priority Feed Delivery', 'Deep Audience Analytics', 'Ad-Free Experience'],
+        ctaText: 'Get Verified'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'Launch the live web app at https://vibe-tok-inky.vercel.app (Native reels feed: https://vibe-tok-inky.vercel.app/reels)',
+      apiEndpoints: ['GET /api/feed', 'GET /api/reels', 'POST /api/interactions'],
+      sdkSupport: ['iOS Safari PWA', 'Android Chrome PWA', 'Desktop Web']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.9% Uptime',
+      channel: 'Community Chat & Feedback Desk',
+      responseHours: '< 2 Hours'
     }
   },
   {
