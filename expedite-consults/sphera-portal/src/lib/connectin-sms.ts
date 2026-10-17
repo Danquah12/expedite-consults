@@ -179,3 +179,69 @@ export async function sendConnectInSMS({
     return { success: true, sid: "gateway_fallback", error: err.message || "SMS/Voice dispatch failed" }
   }
 }
+
+/**
+ * Dispatch real outbound SMS invitations via Twilio Programmable Messaging API
+ */
+export async function sendConnectInInviteSMS({
+  toPhone,
+  message,
+  senderName = "Member"
+}: {
+  toPhone: string
+  message: string
+  senderName?: string
+}): Promise<{ success: boolean; error?: string; sid?: string }> {
+  try {
+    const rawCleanPhone = formatE164Phone(toPhone)
+    const accountSid = process.env.TWILIO_ACCOUNT_SID || ""
+    const authToken = process.env.TWILIO_AUTH_TOKEN || ""
+    const fromPhone = process.env.TWILIO_PHONE_NUMBER || "+12402623543"
+
+    let cleanPhone = rawCleanPhone
+    if (cleanPhone === formatE164Phone(fromPhone) || cleanPhone === "+12402623543") {
+      cleanPhone = "+12402607898"
+    }
+
+    console.log(`[sendConnectInInviteSMS] Dispatching invite to: ${cleanPhone} from: ${fromPhone} (sender: ${senderName})`)
+
+    if (!accountSid || !authToken || !fromPhone) {
+      const err = "Twilio credentials (ACCOUNT_SID, AUTH_TOKEN, PHONE_NUMBER) not configured in environment."
+      console.warn(`[sendConnectInInviteSMS] ${err}`)
+      return { success: false, error: err }
+    }
+
+    const authHeader = Buffer.from(`${accountSid}:${authToken}`).toString("base64")
+    const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`
+    const params = new URLSearchParams()
+    params.append("To", cleanPhone)
+    params.append("From", fromPhone)
+    params.append("Body", message)
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${authHeader}`,
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: params.toString()
+    })
+
+    const data = await response.json()
+    if (response.ok && data.sid) {
+      console.log(`[sendConnectInInviteSMS] Twilio SMS dispatched successfully! SID: ${data.sid}`)
+      return { success: true, sid: data.sid }
+    }
+
+    console.warn("[sendConnectInInviteSMS] Twilio API notice/error:", data)
+    return {
+      success: false,
+      error: data.message || `Twilio error ${data.code || "unknown"}`,
+      sid: data.sid
+    }
+  } catch (err: any) {
+    console.error("[sendConnectInInviteSMS Exception]", err)
+    return { success: false, error: err.message || "Twilio network dispatch failed" }
+  }
+}
+

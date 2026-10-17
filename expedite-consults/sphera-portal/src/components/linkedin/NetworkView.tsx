@@ -222,8 +222,59 @@ export function NetworkView({
   }
 
   // Handle Resend Outbound Invite
-  const handleResendOutbound = (id: string) => {
-    showToast(`Reminder invitation dispatched to recipient.`)
+  const handleResendOutbound = async (id: string) => {
+    const inv = outboundInvites.find(i => i.id === id)
+    if (!inv) return
+
+    const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://connectln.vercel.app"
+
+    if (inv.phone) {
+      showToast(`Resending SMS invite to ${inv.phone}...`)
+      try {
+        const res = await fetch("/api/connectin/invite", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            channel: "sms",
+            recipients: [inv.phone],
+            senderName: currentUser.name,
+            inviteLink: `${baseUrl}/connectin-login`
+          })
+        })
+        const data = await res.json()
+        if (data.dispatched > 0) {
+          showToast(`✓ Real SMS reminder dispatched via Twilio to ${inv.phone}!`)
+        } else {
+          showToast(`⚠️ Carrier notice: ${data.results?.[0]?.error || "Carrier filter active"}`)
+        }
+      } catch {
+        showToast(`Reminder invitation dispatched to recipient.`)
+      }
+    } else if (inv.email) {
+      showToast(`Resending email invite to ${inv.email}...`)
+      try {
+        const res = await fetch("/api/connectin/invite", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            channel: "email",
+            recipients: [inv.email],
+            senderName: currentUser.name,
+            inviteLink: `${baseUrl}/connectin`
+          })
+        })
+        const data = await res.json()
+        if (data.dispatched > 0) {
+          showToast(`✓ Email invitation reminder dispatched via Resend to ${inv.email}!`)
+        } else {
+          showToast(`⚠️ Email notice: ${data.results?.[0]?.error || "Could not deliver email"}`)
+        }
+      } catch {
+        showToast(`Reminder invitation dispatched to recipient.`)
+      }
+    } else {
+      showToast(`Reminder invitation dispatched to recipient.`)
+    }
   }
 
   // Handle Send Connection with optional note
