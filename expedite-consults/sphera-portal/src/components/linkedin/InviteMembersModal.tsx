@@ -58,8 +58,13 @@ export function InviteMembersModal({
     }
   }, [])
 
-  const inviteLink = `${origin}/connectin?ref=${encodeURIComponent(currentUser.name.toLowerCase().replace(/\s+/g, '-'))}&cid=cin_${Date.now().toString(36)}`
-  const loginLink = `${origin}/connectin-login?ref=${encodeURIComponent(currentUser.name.toLowerCase().replace(/\s+/g, '-'))}`
+  const [inviteCid, setInviteCid] = useState("")
+  useEffect(() => {
+    setInviteCid(`cin_${Date.now().toString(36)}`)
+  }, [])
+
+  const inviteLink = `${origin}/connectin?ref=${encodeURIComponent(currentUser.name.toLowerCase().replace(/\s+/g, '-'))}&cid=${inviteCid || 'live'}`
+  const loginLink = `${origin}/connectin-login?ref=${encodeURIComponent(currentUser.name.toLowerCase().replace(/\s+/g, '-'))}&cid=${inviteCid || 'live'}`
   const referralLink = loginLink
 
   // Email form state
@@ -118,8 +123,8 @@ export function InviteMembersModal({
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
         await navigator.share({
-          title: "Join my trusted network on ConnectIn",
-          text: `Hi! ${currentUser.name} has invited you to connect on ConnectIn Zero-Trust Network.`,
+          title: "Join my trusted network on ConnectLn",
+          text: `Hi! ${currentUser.name} has invited you to connect on ConnectLn (Tickets, vouches, and real work).`,
           url: loginLink
         })
       } catch {
@@ -696,7 +701,7 @@ export function InviteMembersModal({
             <div className="space-y-5 text-xs">
               <div className="space-y-2">
                 <label className="font-bold text-zinc-700 dark:text-zinc-300">
-                  Your Personal ConnectIn Network Link
+                  Your Personal ConnectLn Network Link
                 </label>
                 <p className="text-zinc-500">
                   Share this secure cryptographic invite link in Slack, Teams, Discord, email signatures, or technical blogs. Anyone who joins will automatically receive an invitation to your 1st-degree mesh.
@@ -731,14 +736,14 @@ export function InviteMembersModal({
                 </span>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <a
-                    href={`sms:?&body=${encodeURIComponent(`Join my trusted professional network on ConnectIn: ${referralLink}`)}`}
+                    href={`sms:?&body=${encodeURIComponent(`Join my trusted professional network on ConnectLn: ${referralLink}`)}`}
                     className="p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:border-emerald-500 bg-white dark:bg-zinc-900 text-center flex flex-col items-center justify-center gap-1 transition-all cursor-pointer font-bold"
                   >
                     <Smartphone className="h-4 w-4 text-emerald-600" />
                     <span>SMS Messages</span>
                   </a>
                   <a
-                    href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Join my trusted network on ConnectIn: ${referralLink}`)}`}
+                    href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Join my trusted network on ConnectLn: ${referralLink}`)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:border-emerald-500 bg-white dark:bg-zinc-900 text-center flex flex-col items-center justify-center gap-1 transition-all cursor-pointer font-bold"
@@ -756,7 +761,7 @@ export function InviteMembersModal({
                     <span>LinkedIn</span>
                   </a>
                   <a
-                    href={`mailto:?subject=${encodeURIComponent(`${currentUser.name} invited you to ConnectIn`)}&body=${encodeURIComponent(`Join my trusted professional network on ConnectIn: ${referralLink}`)}`}
+                    href={`mailto:?subject=${encodeURIComponent(`${currentUser.name} invited you to ConnectLn`)}&body=${encodeURIComponent(`Join my trusted professional network on ConnectLn: ${referralLink}`)}`}
                     className="p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:border-purple-500 bg-white dark:bg-zinc-900 text-center flex flex-col items-center justify-center gap-1 transition-all cursor-pointer font-bold"
                   >
                     <Mail className="h-4 w-4 text-purple-600" />
