@@ -96,21 +96,22 @@ export function LinkedInNavbar({
   const [connectedIds, setConnectedIds] = useState<Set<string>>(new Set())
   const { t } = useLanguage()
 
-  const moreMenuRef = useRef<HTMLDivElement>(null)
+  const desktopMoreBtnRef = useRef<HTMLDivElement>(null)
   const mobileMoreMenuRef = useRef<HTMLDivElement>(null)
+  const moreDropdownRef = useRef<HTMLDivElement>(null)
   const meMenuRef = useRef<HTMLDivElement>(null)
 
   // Document-level click-outside and Escape key listener to close menus reliably
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
       const target = e.target as Node
-      if (
-        isMoreOpen &&
-        moreMenuRef.current &&
-        !moreMenuRef.current.contains(target) &&
-        (!mobileMoreMenuRef.current || !mobileMoreMenuRef.current.contains(target))
-      ) {
-        setIsMoreOpen(false)
+      if (isMoreOpen) {
+        const clickedInsideDropdown = moreDropdownRef.current?.contains(target)
+        const clickedDesktopTrigger = desktopMoreBtnRef.current?.contains(target)
+        const clickedMobileTrigger = mobileMoreMenuRef.current?.contains(target)
+        if (!clickedInsideDropdown && !clickedDesktopTrigger && !clickedMobileTrigger) {
+          setIsMoreOpen(false)
+        }
       }
       if (isMeOpen && meMenuRef.current && !meMenuRef.current.contains(target)) {
         setIsMeOpen(false)
@@ -532,9 +533,10 @@ export function LinkedInNavbar({
 
         {/* Right Side Controls (More Dropdown + AI Assistant + Notifications + Me Profile + Theme) */}
         <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 pl-1">
-          {/* "More ▾" Dropdown Menu (On lg+ screens) */}
-          <div ref={moreMenuRef} className="hidden lg:block relative shrink-0">
+          {/* "More ▾" Dropdown Menu Trigger (On lg+ screens) */}
+          <div ref={desktopMoreBtnRef} className="hidden lg:block relative shrink-0">
             <button
+              type="button"
               onClick={() => {
                 setIsMoreOpen(!isMoreOpen)
                 setIsMeOpen(false)
@@ -551,76 +553,6 @@ export function LinkedInNavbar({
                 {t("nav_more", "More")} <ChevronDown className="h-3 w-3" />
               </span>
             </button>
-
-            {isMoreOpen && (
-              <>
-                <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-2xs lg:bg-black/10" onClick={() => setIsMoreOpen(false)} />
-                <div className="fixed sm:absolute right-2 sm:right-0 top-24 lg:top-12 z-50 w-[calc(100vw-16px)] sm:w-80 max-w-[360px] rounded-2xl border border-zinc-200 bg-white p-3 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 space-y-2">
-                  <div className="flex items-center justify-between border-b border-zinc-100 pb-2 dark:border-zinc-800">
-                    <div>
-                      <p className="font-bold text-xs text-zinc-900 dark:text-zinc-100">
-                        {t("connectin_modules_hubs", "ConnectIn Modules & Hubs")}
-                      </p>
-                      <p className="text-[10px] text-zinc-400">
-                        {t("enterprise_solutions_desc", "Enterprise Solutions, Company Pages & Trust Operations")}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setIsMoreOpen(false)}
-                      className="rounded-full p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors shrink-0 cursor-pointer"
-                      title="Close"
-                      aria-label="Close menu"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-
-                  <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
-                    {categorizedMoreMenu.map((group) => (
-                      <div key={group.category} className="space-y-1">
-                        <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 px-2">
-                          {group.category}
-                        </p>
-                        <div className="space-y-0.5">
-                          {group.items.map((menu) => (
-                            <button
-                              key={menu.id + menu.label}
-                              onClick={() => {
-                                if (menu.url) {
-                                  window.open(menu.url, '_blank', 'noopener,noreferrer')
-                                } else {
-                                  onSelectTab(menu.id)
-                                }
-                                setIsMoreOpen(false)
-                              }}
-                              className="w-full rounded-xl p-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors flex items-center justify-between group cursor-pointer"
-                            >
-                              <div className="min-w-0 flex-1 pr-2">
-                                <div className="flex items-center gap-1.5">
-                                  <p className="font-bold text-xs text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2] truncate">
-                                    {menu.label}
-                                  </p>
-                                  {menu.badge && (
-                                    <span className="text-[8px] font-mono font-bold px-1.5 py-0.2 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300 shrink-0">
-                                      {menu.badge}
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-[10px] text-zinc-400 truncate">{menu.desc}</p>
-                              </div>
-                              {menu.url && (
-                                <ExternalLink className="h-3.5 w-3.5 text-zinc-400 group-hover:text-[#0A66C2] shrink-0" />
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
           </div>
           {/* Vibe AI Global Assistant Launcher Button - LinkedIn Premium Styling */}
           <button
@@ -946,8 +878,8 @@ export function LinkedInNavbar({
       </div>
 
       {/* Tier 2: Dedicated Menu Items Navigation Bar for Mobile & Tablet (< lg) */}
-      <div className="lg:hidden w-full border-t border-zinc-200/80 bg-white/95 backdrop-blur-md dark:border-zinc-800/80 dark:bg-zinc-950/95 px-1 py-1">
-        <div className="mx-auto flex items-center justify-between gap-0.5 max-w-lg">
+      <div className="lg:hidden w-full border-t border-zinc-200/80 bg-white/95 backdrop-blur-md dark:border-zinc-800/80 dark:bg-zinc-950/95 px-1 sm:px-2 py-0.5">
+        <div className="mx-auto flex items-center justify-between gap-0 max-w-lg">
           {primaryNavItems.map((item) => {
             const Icon = item.icon
             const isActive = activeTab === item.id
@@ -959,7 +891,7 @@ export function LinkedInNavbar({
                   onSelectTab(item.id)
                   setIsMoreOpen(false)
                 }}
-                className={`relative flex flex-1 min-w-[34px] max-w-[50px] flex-col items-center justify-center py-1 px-0.5 text-center transition-all group shrink-0 cursor-pointer ${
+                className={`relative flex flex-1 min-w-0 max-w-[46px] flex-col items-center justify-center py-1 px-0.5 text-center transition-all group cursor-pointer ${
                   isActive
                     ? "text-[#0A66C2] font-bold border-b-2 border-[#0A66C2]"
                     : item.isMarketplace
@@ -985,14 +917,15 @@ export function LinkedInNavbar({
             )
           })}
 
-          {/* "More" Trigger in Mobile Bar */}
-          <div ref={mobileMoreMenuRef} className="relative flex-1 min-w-[34px] max-w-[50px] shrink-0">
+          {/* "More" Trigger in Mobile Bar — fully visible and never clipped */}
+          <div ref={mobileMoreMenuRef} className="relative flex-1 min-w-0 max-w-[46px]">
             <button
+              type="button"
               onClick={() => {
                 setIsMoreOpen(!isMoreOpen)
                 setIsMeOpen(false)
               }}
-              className={`flex w-full flex-col items-center justify-center py-1 px-0.5 text-center transition-colors cursor-pointer ${
+              className={`flex w-full flex-col items-center justify-center py-1 px-0.5 text-center transition-all cursor-pointer rounded-lg ${
                 isMoreOpen
                   ? "text-[#0A66C2] font-bold border-b-2 border-[#0A66C2]"
                   : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
@@ -1000,13 +933,94 @@ export function LinkedInNavbar({
               title="More Modules & Hubs"
             >
               <Grid3X3 className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
-              <span className="flex items-center justify-center text-[9px] sm:text-[10px] leading-tight mt-0.5 font-medium">
+              <span className="text-[9px] sm:text-[10px] leading-tight mt-0.5 font-bold truncate max-w-full">
                 {t("nav_more", "More")}
               </span>
             </button>
           </div>
         </div>
       </div>
+
+      {/* ── Global "More Modules & Hubs" Modal Dropdown (Mobile, Tablet & Desktop) ── */}
+      {isMoreOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-2xs transition-opacity"
+            onClick={() => setIsMoreOpen(false)}
+          />
+          <div
+            ref={moreDropdownRef}
+            className="fixed z-50 right-2 left-2 sm:left-auto sm:right-4 lg:right-6 top-24 lg:top-14 w-auto sm:w-96 max-w-[420px] max-h-[82vh] mx-auto lg:mx-0 rounded-2xl border border-zinc-200 bg-white p-3.5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 flex flex-col overflow-hidden"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-zinc-100 pb-2.5 dark:border-zinc-800 shrink-0">
+              <div>
+                <p className="font-bold text-sm text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
+                  <Grid3X3 className="h-4 w-4 text-[#0A66C2]" />
+                  <span>{t("connectin_modules_hubs", "ConnectIn Modules & Hubs")}</span>
+                </p>
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                  {t("enterprise_solutions_desc", "Enterprise Solutions, Company Pages & Trust Operations")}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMoreOpen(false)}
+                className="rounded-full p-1.5 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors shrink-0 cursor-pointer"
+                title="Close"
+                aria-label="Close menu"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Scrollable Categories List */}
+            <div className="flex-1 overflow-y-auto space-y-3 pt-2 pr-1">
+              {categorizedMoreMenu.map((group) => (
+                <div key={group.category} className="space-y-1">
+                  <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 px-2">
+                    {group.category}
+                  </p>
+                  <div className="space-y-0.5">
+                    {group.items.map((menu) => (
+                      <button
+                        key={menu.id + menu.label}
+                        type="button"
+                        onClick={() => {
+                          if (menu.url) {
+                            window.open(menu.url, '_blank', 'noopener,noreferrer')
+                          } else {
+                            onSelectTab(menu.id)
+                          }
+                          setIsMoreOpen(false)
+                        }}
+                        className="w-full rounded-xl p-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors flex items-center justify-between group cursor-pointer"
+                      >
+                        <div className="min-w-0 flex-1 pr-2">
+                          <div className="flex items-center gap-1.5">
+                            <p className="font-bold text-xs text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2] truncate">
+                              {menu.label}
+                            </p>
+                            {menu.badge && (
+                              <span className="text-[8px] font-mono font-bold px-1.5 py-0.2 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300 shrink-0">
+                                {menu.badge}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-zinc-400 truncate">{menu.desc}</p>
+                        </div>
+                        {menu.url && (
+                          <ExternalLink className="h-3.5 w-3.5 text-zinc-400 group-hover:text-[#0A66C2] shrink-0" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </header>
   )
 }
