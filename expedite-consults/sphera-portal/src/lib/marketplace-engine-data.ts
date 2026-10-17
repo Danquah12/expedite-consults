@@ -28,6 +28,9 @@ export interface MarketplaceProduct {
   demoUrl?: string
   liveUrl?: string
   isVercelLive?: boolean
+  isLaunchpadDeployed?: boolean
+  launchpadCategory?: 'security' | 'ai' | 'marketplace' | 'career' | 'campus' | 'trades' | 'orchestration'
+  livePort?: number
   architecture: {
     title: string
     summary: string
@@ -543,8 +546,11 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
     tagline: 'Autonomous AI Threat Detection, Posture Correlation & Exploit Neutralization',
     category: 'Software',
     subCategory: 'Cybersecurity',
+    launchpadCategory: 'security',
+    isLaunchpadDeployed: true,
+    livePort: 9012,
     icon: '⚡',
-    badge: '🔥 Flagship AI Platform',
+    badge: '⚡ PORT 9012 · ASPM Flagship',
     rating: 4.98,
     reviewsCount: 218,
     activeUsersCount: '14,800+ Active Nodes',
@@ -573,6 +579,7 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
       'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&auto=format&fit=crop&q=80'
     ],
     demoUrl: 'http://localhost:9012/',
+    liveUrl: 'http://localhost:9012',
     architecture: {
       title: 'Decentralized MicroVM Agent Mesh',
       summary: 'Runs telemetry collectors in lightweight WebAssembly enclaves while aggregating cryptographic attack graphs via Rust distributed workers.',
@@ -659,6 +666,8 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
     tagline: 'Autonomous dynamic vulnerability scanner, API fuzzing engine & attack surface analyzer',
     category: 'Software',
     subCategory: 'Cybersecurity',
+    launchpadCategory: 'security',
+    isLaunchpadDeployed: true,
     icon: '🎯',
     badge: '⚡ Live Vercel Pentest',
     rating: 4.97,
@@ -751,6 +760,8 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
     tagline: 'Automated bare-metal detonation sandbox, Ghidra reverse engineering & YARA generator',
     category: 'Software',
     subCategory: 'Cybersecurity',
+    launchpadCategory: 'security',
+    isLaunchpadDeployed: true,
     icon: '🔬',
     badge: '☣️ Live Sandboxing',
     rating: 4.96,
@@ -822,6 +833,8 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
     tagline: 'Automated lateral blast radius isolation, shadow copy decryption & recovery orchestration',
     category: 'Software',
     subCategory: 'Cybersecurity',
+    launchpadCategory: 'security',
+    isLaunchpadDeployed: true,
     icon: '☣️',
     badge: '⚡ Live Recovery',
     rating: 4.98,
@@ -1177,6 +1190,8 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
     tagline: 'AI-guided career trajectory, cryptographic skill passport & job role competency matrix',
     category: 'Training',
     subCategory: 'Career Navigation & Skill Passports',
+    launchpadCategory: 'career',
+    isLaunchpadDeployed: true,
     icon: '🪐',
     badge: '⚡ Live Career Passport',
     rating: 4.98,
@@ -1245,6 +1260,8 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
     tagline: 'Hands-on trade task platform, verified craftsman matching & vocational apprenticeships',
     category: 'Services',
     subCategory: 'Trades & Vocational Network',
+    launchpadCategory: 'trades',
+    isLaunchpadDeployed: true,
     icon: '🛠️',
     badge: '🔨 Live Trade Hub',
     rating: 4.97,
@@ -1323,6 +1340,8 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
     tagline: 'Jobsite cut-lists, structural takeoff notes, daily foreman logs & diagnostic records',
     category: 'Software',
     subCategory: 'Productivity & Field Notes',
+    launchpadCategory: 'trades',
+    isLaunchpadDeployed: true,
     icon: '📓',
     badge: '📝 Live Field App',
     rating: 4.95,
@@ -1391,6 +1410,8 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
     tagline: 'Bite-sized video masterclasses, practical trade demonstrations & interactive lessons',
     category: 'Training',
     subCategory: 'Video Masterclasses & Tutorials',
+    launchpadCategory: 'campus',
+    isLaunchpadDeployed: true,
     icon: '🎥',
     badge: '🎓 Live Learning Hub',
     rating: 4.99,
@@ -1459,6 +1480,8 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
     tagline: 'Decentralized trade machinery marketplace, heavy timber tools & industrial equipment',
     category: 'Enterprise Solutions',
     subCategory: 'Trade Machinery & Commerce',
+    launchpadCategory: 'marketplace',
+    isLaunchpadDeployed: true,
     icon: '🛍️',
     badge: '📦 Live B2B Commerce',
     rating: 4.94,
@@ -1710,6 +1733,8 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
     tagline: 'Clustered Media Bias, Blindspot Intelligence & Statutory Fact Verification',
     category: 'Enterprise Solutions',
     subCategory: 'SaaS',
+    launchpadCategory: 'ai',
+    isLaunchpadDeployed: true,
     icon: '🔍',
     badge: '🌐 Global Newsroom Suite',
     rating: 4.96,
@@ -1735,7 +1760,8 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
     screenshots: [
       'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&auto=format&fit=crop&q=80'
     ],
-    demoUrl: 'https://expedite-consults.vercel.app/veritaslens',
+    demoUrl: '/veritaslens',
+    liveUrl: '/veritaslens',
     architecture: {
       title: 'Semantic Vector Clustering Pipeline',
       summary: 'Processes 40,000+ articles daily using cosine similarity clustering and automated bias extraction.',
@@ -1804,8 +1830,11 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
     tagline: 'Autonomous Pentest, ASPM & Hybrid AI Offensive Security Suite',
     category: 'Software',
     subCategory: 'Cybersecurity',
+    launchpadCategory: 'security',
+    isLaunchpadDeployed: true,
+    livePort: 9012,
     icon: '⚡',
-    badge: '🏆 Enterprise Flagship',
+    badge: '⚡ PORT 9012 · ASPM Flagship',
     rating: 4.99,
     reviewsCount: 284,
     activeUsersCount: '22,400+ Repos Secured',
@@ -1831,6 +1860,7 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
       'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&auto=format&fit=crop&q=80'
     ],
     demoUrl: 'http://localhost:9012/',
+    liveUrl: 'http://localhost:9012',
     architecture: {
       title: 'Hybrid Offensive Orchestrator',
       summary: 'Connects DAST, SAST, and real-time eBPF sensors into a unified event bus with automated PR mitigation.',
@@ -1892,6 +1922,742 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
       channel: 'Dedicated Slack Connect & Encrypted Ticket Terminal',
       responseHours: '< 15 Minutes'
     }
+  },
+  {
+    id: 'prod_aegis_soc_pentest',
+    name: 'ÆGIS · SOC Autonomous PenTest',
+    tagline: 'Autonomous Agentic AI Penetration Testing & Weaponized Exploit Hub',
+    category: 'Software',
+    subCategory: 'Autonomous Red Teaming',
+    launchpadCategory: 'security',
+    isLaunchpadDeployed: true,
+    livePort: 9011,
+    liveUrl: 'http://localhost:9011/app/?standalone=1',
+    demoUrl: 'http://localhost:9011/app/?standalone=1',
+    icon: '🎯',
+    badge: '🎯 PORT 9011 · SOC Red Team',
+    rating: 4.98,
+    reviewsCount: 210,
+    activeUsersCount: '1,450+ Automated Campaigns',
+    pricing: {
+      displayPrice: '$850',
+      billingPeriod: '/ month',
+      hasFreeTrial: true,
+      trialDays: 7
+    },
+    vendor: {
+      name: 'ÆGIS Autonomous Security Labs',
+      logo: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=100&auto=format&fit=crop&q=80',
+      isVerified: true,
+      isFellow: true
+    },
+    overview: 'Full-featured SOC Autonomous PenTest console featuring multi-target asset discovery, weaponized auto-exploit queue, PoC interactive evidence terminal, and Neo4j blast radius attack graphs.',
+    features: [
+      { title: 'Autonomous Multi-Target Discovery', desc: 'Scan and fingerprint enterprise domains, subnets, and Kubernetes clusters in parallel.' },
+      { title: 'Interactive PoC Terminal', desc: 'Execute and observe sandboxed exploits with live terminal feedback and replayable traces.' },
+      { title: 'Neo4j Blast Radius Graphs', desc: 'Map transitive domain compromises and active directory privilege escalation paths.' }
+    ],
+    screenshots: [
+      'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80'
+    ],
+    architecture: {
+      title: 'Decentralized Exploit Dispatcher',
+      summary: 'Isolated Docker execution runners controlled via gRPC worker pool with live output streaming.',
+      layers: ['Next.js Tactical UI', 'gRPC Exploit Orchestrator', 'Neo4j Attack Graph', 'Isolated MicroVM Sandbox'],
+      latency: '< 12ms command execution',
+      dataPrivacy: 'Target payloads encrypted in isolated memory buffers.'
+    },
+    integrations: ['Metasploit RPC', 'Nuclei Fleet', 'Burp Suite Pro', 'Nmap Scripting Engine'],
+    security: {
+      compliance: ['SOC 2 Type II', 'NIST SP 800-115', 'DoD 8570'],
+      encryption: 'mTLS 1.3 / AES-256 GCM',
+      isolation: 'Ephemeral execution sandboxes'
+    },
+    pricingTiers: [
+      {
+        name: 'SOC Team License',
+        price: '$850',
+        period: '/ month',
+        description: 'Autonomous Red Team campaigns with up to 5 concurrent target ranges.',
+        features: ['5 Concurrent Ranges', 'Full PoC Terminal', 'Neo4j Attack Graphs', 'Continuous Target Discovery'],
+        recommended: true,
+        ctaText: 'Start 7-Day Trial'
+      }
+    ],
+    reviews: [
+      {
+        author: 'Julian Cross',
+        role: 'Lead Penetration Tester',
+        company: 'Vanguard Cyber Defense',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+        rating: 5,
+        text: 'ÆGIS SOC cuts discovery and weaponized proof generation from days to under 45 minutes.',
+        date: 'September 2026'
+      }
+    ],
+    documentation: {
+      quickstart: 'Launch standalone at http://localhost:9011/app/?standalone=1 or connect via REST API.',
+      apiEndpoints: ['POST /api/v1/targets/discover', 'POST /api/v1/exploit/queue'],
+      sdkSupport: ['Python', 'Node.js', 'Go']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.9% Uptime SLA',
+      channel: 'Dedicated SOC Red Team Channel',
+      responseHours: '< 30 Minutes'
+    }
+  },
+  {
+    id: 'prod_strike_console_9020',
+    name: 'Expedite Strike Console (Port 9020)',
+    tagline: 'Autonomous 5-Stage Attack Pipeline & Multi-Scanner Execution Engine',
+    category: 'Software',
+    subCategory: 'Attack Orchestration',
+    launchpadCategory: 'security',
+    isLaunchpadDeployed: true,
+    livePort: 9020,
+    liveUrl: 'http://localhost:9020',
+    demoUrl: 'http://localhost:9020',
+    icon: '⚡',
+    badge: '⚡ PORT 9020 · 5-Stage Pipeline',
+    rating: 4.97,
+    reviewsCount: 176,
+    activeUsersCount: '3,800+ Targets Enumerated',
+    pricing: {
+      displayPrice: '$650',
+      billingPeriod: '/ month',
+      hasFreeTrial: true,
+      trialDays: 14
+    },
+    vendor: {
+      name: 'Expedite Offensive Red Team',
+      logo: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=100&auto=format&fit=crop&q=80',
+      isVerified: true
+    },
+    overview: 'Autonomous offensive security testing workstation chaining Assessment → Enumeration → Exploitation → Post-Ex → Reporting, with concurrent multi-scanner execution (Nmap, Nuclei, ZAP, AegisProbe, Burp, SCAP).',
+    features: [
+      { title: 'Autonomous 5-Stage Attack Chaining', desc: 'Seamlessly pipes port scan findings into exploit engines and post-exploitation reporting.' },
+      { title: 'Concurrent Multi-Scanner Execution', desc: 'Runs Nmap, Nuclei, ZAP, and AegisProbe in parallel with unified deduplication.' }
+    ],
+    screenshots: [
+      'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80'
+    ],
+    architecture: {
+      title: 'Stage Chaining DAG Pipeline',
+      summary: 'Directed Acyclic Graph orchestrator dispatching scanners and correlating findings into structured dossiers.',
+      layers: ['Web Console', 'Pipeline Orchestrator', 'Unified Vulnerability DB'],
+      latency: '< 10ms pipeline dispatch',
+      dataPrivacy: 'Target credentials zero-retention.'
+    },
+    integrations: ['Nmap', 'Nuclei', 'ZAP', 'Burp Suite', 'AegisProbe'],
+    security: {
+      compliance: ['FedRAMP High Ready', 'NIST SP 800-115'],
+      encryption: 'AES-256 GCM',
+      isolation: 'Ephemeral container isolation'
+    },
+    pricingTiers: [
+      {
+        name: 'Strike Workstation',
+        price: '$650',
+        period: '/ month',
+        description: 'Complete 5-stage attack pipeline with unlimited scans.',
+        features: ['5-Stage Chained Pipeline', 'Multi-Scanner Deduplication', 'Executive PDF Dossiers', 'Local Port 9020 Web Console'],
+        ctaText: 'Start Free Trial'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'Access http://localhost:9020 to begin assessment pipeline.',
+      apiEndpoints: ['POST /api/pipeline/start', 'GET /api/pipeline/status'],
+      sdkSupport: ['REST', 'CLI']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.9% Uptime',
+      channel: 'Red Team Portal',
+      responseHours: '< 1 Hour'
+    }
+  },
+  {
+    id: 'prod_axiom_cloud_paths',
+    name: 'AXIOM Cloud Security (Product 4)',
+    tagline: 'Multi-Cloud Attack Path Analysis, IAM Privesc & Authorized PenTest Engine',
+    category: 'Software',
+    subCategory: 'Cloud Security & IAM',
+    launchpadCategory: 'security',
+    isLaunchpadDeployed: true,
+    liveUrl: 'https://19-cloud-security-platform.vercel.app',
+    demoUrl: 'https://19-cloud-security-platform.vercel.app/attack-paths',
+    isVercelLive: true,
+    icon: '☁️',
+    badge: '☁️ Vercel Live · Multi-Cloud Paths',
+    rating: 4.98,
+    reviewsCount: 342,
+    activeUsersCount: '48,000+ Cloud Resources',
+    pricing: {
+      displayPrice: '$599',
+      billingPeriod: '/ month',
+      hasFreeTrial: true,
+      trialDays: 14
+    },
+    vendor: {
+      name: 'Expedite Cloud Defense Labs',
+      logo: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=100&auto=format&fit=crop&q=80',
+      isVerified: true,
+      isFellow: true
+    },
+    overview: 'Enterprise multi-cloud security assessment, IAM privilege escalation graphing, and authorized penetration testing across AWS, Azure, GCP, and Kubernetes clusters with automated remediation.',
+    features: [
+      { title: 'Chained Exploit Paths', desc: 'Identifies lateral movement across AWS STS, Azure RBAC roles, and GCP service accounts.' },
+      { title: '28+ Cloud IAM Privesc Vectors', desc: 'Detects PassRole, AssumeRole, and actAs escalation vulnerabilities before attackers exploit them.' },
+      { title: 'Multi-Cloud CSPM Engine', desc: 'Real-time compliance checks against CIS AWS/Azure/GCP v3.0, NIST 800-53, and ISO 27001.' }
+    ],
+    screenshots: [
+      'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&auto=format&fit=crop&q=80'
+    ],
+    architecture: {
+      title: 'Multi-Cloud Graph Evaluator',
+      summary: 'High-throughput cloud asset ingestion evaluating graph paths across 10,000s of cloud IAM nodes in real time.',
+      layers: ['Next.js Cloud Portal', 'IAM Privesc Graph Engine', 'Cloud Provider API Connectors'],
+      latency: '< 25ms graph traversal',
+      dataPrivacy: 'Read-only least-privilege cloud IAM audit roles.'
+    },
+    integrations: ['AWS Organizations', 'Azure Tenant Graph', 'Google Cloud Resource Manager', 'Kubernetes RBAC'],
+    security: {
+      compliance: ['CIS Cloud Benchmarks v3.0', 'SOC 2 Type II', 'FedRAMP High'],
+      encryption: 'AWS KMS / TLS 1.3',
+      isolation: 'Zero-knowledge cross-tenant isolation'
+    },
+    pricingTiers: [
+      {
+        name: 'Multi-Cloud Professional',
+        price: '$599',
+        period: '/ month',
+        description: 'Complete cloud security and attack path analysis for up to 50 cloud accounts.',
+        features: ['50 Cloud Accounts', 'IAM Privesc Analyzer', 'Attack Path Graphing', 'Continuous CIS Benchmarks'],
+        recommended: true,
+        ctaText: 'Deploy Cloud Defense'
+      }
+    ],
+    reviews: [
+      {
+        author: 'Elena Gomez',
+        role: 'Head of Cloud Infrastructure',
+        company: 'Apex Cloud Solutions',
+        avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
+        rating: 5,
+        text: 'Product 4 caught a multi-cloud STS AssumeRole bypass that would have allowed cross-tenant access between AWS and Azure.',
+        date: 'October 2026'
+      }
+    ],
+    documentation: {
+      quickstart: 'Connect AWS / Azure credentials at https://19-cloud-security-platform.vercel.app',
+      apiEndpoints: ['GET /api/attack-paths', 'POST /api/iam/audit'],
+      sdkSupport: ['Terraform', 'Python', 'Go']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.99% Uptime',
+      channel: 'Cloud Security Slack Channel',
+      responseHours: '< 15 Minutes'
+    }
+  },
+  {
+    id: 'prod_18_unified_nexus',
+    name: 'Unified Integration Layer & SOAR Nexus (Product 3)',
+    tagline: 'Cross-Platform Ecosystem Hub Federating CERBERUS-RE, Aegis & AXIOM with 24.5k Evt/s',
+    category: 'Enterprise Solutions',
+    subCategory: 'Cross-Platform SOAR',
+    launchpadCategory: 'orchestration',
+    isLaunchpadDeployed: true,
+    liveUrl: 'https://18-unified-integration-layer.vercel.app',
+    demoUrl: 'https://18-unified-integration-layer.vercel.app/cross-platform-playbooks',
+    isVercelLive: true,
+    icon: '🌐',
+    badge: '🌐 Vercel Live · 24.5k Evt/s',
+    rating: 4.99,
+    reviewsCount: 195,
+    activeUsersCount: '18 Global Clusters',
+    pricing: {
+      displayPrice: '$1,200',
+      billingPeriod: '/ month',
+      hasFreeTrial: true,
+      trialDays: 14
+    },
+    vendor: {
+      name: 'Expedite Enterprise Nexus',
+      logo: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=100&auto=format&fit=crop&q=80',
+      isVerified: true,
+      isFellow: true
+    },
+    overview: 'Enterprise orchestration layer federating CERBERUS-RE, Aegis Recovery, and AXIOM DAST with 24,500 evt/s streaming telemetry, STIX 2.1 bi-directional threat intel, and automated SOAR playbooks.',
+    features: [
+      { title: 'Cross-Platform SOAR Engine', desc: 'Execute automated workflow DAGs across incident response, reverse engineering, and threat containment.' },
+      { title: 'Federated Telemetry Bus', desc: 'Streams gRPC and Kafka telemetry at 24.5k events/second with sub-millisecond serialization.' },
+      { title: 'STIX 2.1 / TAXII 2.1 Intel Sync', desc: 'Automates threat actor and IOC synchronization across enterprise SIEMs and firewalls.' }
+    ],
+    screenshots: [
+      'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&auto=format&fit=crop&q=80'
+    ],
+    architecture: {
+      title: 'High-Throughput gRPC/Kafka Bus',
+      summary: 'Distributed pub/sub messaging layer federating security signals and dispatching mitigation playbooks.',
+      layers: ['Web Nexus Console', 'Kafka Streaming Engine', 'gRPC Microservice Mesh'],
+      latency: '< 4ms message dispatch',
+      dataPrivacy: 'Cryptographic payload hashing with zero-knowledge verification.'
+    },
+    integrations: ['Kafka', 'gRPC', 'Splunk', 'CrowdStrike', 'Microsoft Sentinel', 'Palo Alto Cortex'],
+    security: {
+      compliance: ['SOC 2 Type II', 'ISO 27001', 'STIX 2.1 Spec'],
+      encryption: 'mTLS 1.3 / Hardware HSM',
+      isolation: 'Dedicated enterprise partition'
+    },
+    pricingTiers: [
+      {
+        name: 'Enterprise Orchestration Hub',
+        price: '$1,200',
+        period: '/ month',
+        description: 'Complete cross-platform SOAR hub with 24.5k evt/s telemetry stream.',
+        features: ['Full SOAR Playbook DAG', 'Kafka & gRPC Event Bus', 'STIX 2.1 Intel Sync', 'Unlimited Microservice Connectors'],
+        recommended: true,
+        ctaText: 'Deploy Nexus Hub'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'Access orchestration playbooks at https://18-unified-integration-layer.vercel.app',
+      apiEndpoints: ['POST /api/soar/playbook/run', 'GET /api/telemetry/stream'],
+      sdkSupport: ['gRPC', 'Kafka', 'Python', 'Go']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.999% Bus Uptime SLA',
+      channel: 'Enterprise Nexus Hotline',
+      responseHours: '< 10 Minutes'
+    }
+  },
+  {
+    id: 'prod_veritaslens_shield',
+    name: 'VeritasLens Media Credibility & Fact Shield',
+    tagline: 'AI Deepfake Optical Frequency Detection, BERT Claim Classifier & Reuters Lineage',
+    category: 'Software',
+    subCategory: 'AI & Media Integrity',
+    launchpadCategory: 'ai',
+    isLaunchpadDeployed: true,
+    liveUrl: '/veritaslens',
+    demoUrl: '/veritaslens',
+    icon: '🛡️',
+    badge: '🛡️ In-App Live · AI Deepfake Shield',
+    rating: 4.98,
+    reviewsCount: 310,
+    activeUsersCount: '52,000+ Verified Claims',
+    pricing: {
+      displayPrice: '$149',
+      billingPeriod: '/ month',
+      hasFreeTrial: true,
+      trialDays: 14
+    },
+    vendor: {
+      name: 'VeritasLens Media Intelligence',
+      logo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+      isVerified: true
+    },
+    overview: 'Bloomberg Terminal + Ground News + Reuters + Knowledge Graph. Real-time Kafka stream ingestion, DeBERTa sentence claim classification, 7-Day TV scorecard & B2B Brand Safety ad-shield with OpenLineage provenance.',
+    features: [
+      { title: 'Deepfake Optical Frequency Detection', desc: 'Analyzes synthetic frame anomalies, eye reflections, and audio spectrogram artifacts.' },
+      { title: 'BERT Claim Classifier', desc: 'DeBERTa neural inference extracting and validating factual assertions in real time.' },
+      { title: 'VeritasGraph Lineage', desc: 'OpenLineage provenance graph tracking origin story Reuters wires and citation trees.' }
+    ],
+    screenshots: [
+      'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&auto=format&fit=crop&q=80'
+    ],
+    architecture: {
+      title: 'OpenLineage & BERT Scoring Core',
+      summary: 'Kafka-driven newsroom ingest pipeline evaluating text, audio, and video payloads.',
+      layers: ['VeritasLens Web Terminal', 'DeBERTa NLP Engine', 'Neo4j Provenance Graph'],
+      latency: '< 180ms claim analysis',
+      dataPrivacy: 'Public newsroom syndication with zero user tracking.'
+    },
+    integrations: ['Reuters News API', 'Slack', 'Bloomberg Terminal', 'Chrome Extension'],
+    security: {
+      compliance: ['GDPR Compliant', 'Fact Checking Standards'],
+      encryption: 'TLS 1.3 Streaming',
+      isolation: 'Multi-Tenant Enclave'
+    },
+    pricingTiers: [
+      {
+        name: 'Newsroom Terminal',
+        price: '$149',
+        period: '/ month',
+        description: 'Complete access to Deepfake Shield, Claim Classifier, and Bias Radar.',
+        features: ['Real-Time Claim Verification', 'Deepfake Video Scanner', 'Brand Safety Shield', 'Lineage Provenance Graph'],
+        ctaText: 'Activate VeritasLens'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'Launch /veritaslens or query the verification API directly.',
+      apiEndpoints: ['POST /api/verify/claim', 'POST /api/scan/deepfake'],
+      sdkSupport: ['REST', 'Python', 'Node.js']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.9% Uptime',
+      channel: 'Editorial Support Desk',
+      responseHours: '< 1 Hour'
+    }
+  },
+  {
+    id: 'prod_spheracut_ai',
+    name: 'SpheraCut Creative AI Suite',
+    tagline: 'AI-Powered Video, Character Generator, Motion Sync & Broadcast Studio',
+    category: 'Software',
+    subCategory: 'Generative AI Studio',
+    launchpadCategory: 'ai',
+    isLaunchpadDeployed: true,
+    liveUrl: 'https://spheracut.expediteconsults.com',
+    demoUrl: 'https://spheracut.expediteconsults.com',
+    icon: '✂️',
+    badge: '✂️ Live Cloud · AI Video & Voice',
+    rating: 4.95,
+    reviewsCount: 420,
+    activeUsersCount: '8,400+ Creators',
+    pricing: {
+      displayPrice: '$49',
+      billingPeriod: '/ month',
+      hasFreeTrial: true,
+      trialDays: 7
+    },
+    vendor: {
+      name: 'SPHERA Creative Studios',
+      logo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+      isVerified: true
+    },
+    overview: 'All-in-one AI creative powerhouse for filmmakers, creators, and marketers: Text-to-Video generation, 3D Character Builder, Voice Cloning, and automated Motion Sync editing.',
+    features: [
+      { title: 'Text-to-Video Engine', desc: 'Render cinematic 4K video clips from text prompts in seconds with multi-camera perspective.' },
+      { title: 'Character Builder & Motion Sync', desc: 'Create persistent digital avatars with automatic lip-sync and expressive gestures.' }
+    ],
+    screenshots: [
+      'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80'
+    ],
+    architecture: {
+      title: 'GPU Video Rendering Mesh',
+      summary: 'Distributed GPU worker pool processing parallel diffusion and NeRF video rendering tasks.',
+      layers: ['SpheraCut Studio Web', 'Diffusion Video Pipeline', 'Audio Lip-Sync Model'],
+      latency: '< 2 minutes per 4K scene',
+      dataPrivacy: 'Private cloud render instances.'
+    },
+    integrations: ['Adobe Premiere', 'Final Cut Pro', 'YouTube', 'TikTok'],
+    security: {
+      compliance: ['SOC 2 Type II', 'Content Authenticity Initiative (C2PA)'],
+      encryption: 'AES-256 Cloud Storage',
+      isolation: 'Private creative workspace'
+    },
+    pricingTiers: [
+      {
+        name: 'Creator Studio Pro',
+        price: '$49',
+        period: '/ month',
+        description: 'Unlimited 4K renders, voice cloning, and custom character models.',
+        features: ['4K Video Generation', 'Custom 3D Avatars', 'Voice Cloning Engine', 'Commercial Rights Included'],
+        ctaText: 'Start Free Trial'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'Launch https://spheracut.expediteconsults.com to begin generating clips.',
+      apiEndpoints: ['POST /api/video/render', 'POST /api/avatar/sync'],
+      sdkSupport: ['Web', 'REST']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.9% Uptime',
+      channel: 'Creator Community Discord',
+      responseHours: '< 2 Hours'
+    }
+  },
+  {
+    id: 'prod_sphera_sovereign_social',
+    name: 'SpheraNet Sovereign Social Network',
+    tagline: 'Flagship Sovereign Campus Graph, 4K Reels FYP, SpheraChat & Creator Channels',
+    category: 'Software',
+    subCategory: 'Social & Campus Graph',
+    launchpadCategory: 'campus',
+    isLaunchpadDeployed: true,
+    liveUrl: '/feed',
+    demoUrl: '/feed',
+    icon: '🌐',
+    badge: '🌐 Sovereign Social Flagship',
+    rating: 4.99,
+    reviewsCount: 1240,
+    activeUsersCount: '100k+ Active Orbits',
+    pricing: {
+      displayPrice: '$0',
+      billingPeriod: 'Free Community Access',
+      hasFreeTrial: true
+    },
+    vendor: {
+      name: 'SpheraNet Sovereign Core',
+      logo: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=100&auto=format&fit=crop&q=80',
+      isVerified: true
+    },
+    overview: 'Next-generation sovereign social network: Feed & Stories, 4K Reels video player, SpheraChat WebSockets, Multi-Channel Spaces, P2P Bazaar Escrow, VeritasLens Deepfake Shield, Careers Matrix, Esports Arena, and Financial Vault.',
+    features: [
+      { title: 'Sovereign Home Feed & Reels', desc: 'Algorithmic freedom FYP, 4K vertical streaming, and interactive polls.' },
+      { title: 'End-to-End SpheraChat', desc: 'Real-time WebSockets direct messages, voice notes, and collaborative channels.' }
+    ],
+    screenshots: [
+      'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80'
+    ],
+    architecture: {
+      title: 'Decentralized Social Graph',
+      summary: 'Edge-rendered graph with real-time WebSocket messaging and decentralized identity passkeys.',
+      layers: ['Next.js 16 Edge UI', 'Pusher WebSockets', 'Prisma Edge Database'],
+      latency: '< 15ms messaging latency',
+      dataPrivacy: 'User-owned data enclaves with FIDO2 passkeys.'
+    },
+    integrations: ['FIDO2 Passkeys', 'ConnectIn Matrix', 'Bazaar Escrow', 'VeritasLens'],
+    security: {
+      compliance: ['GDPR Compliant', 'FIDO2 Certified'],
+      encryption: 'AES-256-GCM / TLS 1.3',
+      isolation: 'User Data Enclaves'
+    },
+    pricingTiers: [
+      {
+        name: 'Community Access',
+        price: '$0',
+        period: 'free forever',
+        description: 'Full access to feeds, reels, spaces, messaging, and career network.',
+        features: ['Unlimited Messaging', '4K Reels Uploads', 'Community Spaces Access', 'Decentralized Vault'],
+        ctaText: 'Enter SpheraNet'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'Navigate to /feed to start exploring SpheraNet.',
+      apiEndpoints: ['GET /api/feed', 'POST /api/chat/send'],
+      sdkSupport: ['Web', 'PWA']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.99% Uptime',
+      channel: 'Sphera Community Hub',
+      responseHours: '< 15 Minutes'
+    }
+  },
+  {
+    id: 'prod_14_ai_security',
+    name: 'AXIOM AI/LLM Security Sandbox & Red Teaming (Product 14)',
+    tagline: 'Meta Llama Guard 3, NeMo Guardrail Defense & Autonomous Adversary Simulation',
+    category: 'Software',
+    subCategory: 'AI Security & LLM Guardrails',
+    launchpadCategory: 'ai',
+    isLaunchpadDeployed: true,
+    liveUrl: 'https://14-exploitability-platform.vercel.app/ai-security',
+    demoUrl: 'https://14-exploitability-platform.vercel.app/ai-security',
+    isVercelLive: true,
+    icon: '🧠',
+    badge: '🧠 Product 14 · AI Red Teaming',
+    rating: 4.97,
+    reviewsCount: 164,
+    activeUsersCount: '1,200+ Prompt Injections Blocked',
+    pricing: {
+      displayPrice: '$690',
+      billingPeriod: '/ month',
+      hasFreeTrial: true,
+      trialDays: 14
+    },
+    vendor: {
+      name: 'AXIOM AI Safety Labs',
+      logo: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=100&auto=format&fit=crop&q=80',
+      isVerified: true,
+      isFellow: true
+    },
+    overview: 'Evaluates production LLMs, multi-agent LangGraph swarms, and MCP tool servers against prompt injections, system prompt extraction, jailbreaks, and data exfiltration using Meta Llama Guard 3 and NVIDIA NeMo guardrails.',
+    features: [
+      { title: 'Automated AI Red Teaming', desc: 'Autonomous adversary agents simulate multi-turn social engineering against your AI models.' },
+      { title: 'Llama Guard 3 & NeMo Evaluator', desc: 'Real-time safety scoring for input prompts and generated output responses.' }
+    ],
+    screenshots: [
+      'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&auto=format&fit=crop&q=80'
+    ],
+    architecture: {
+      title: 'Inference Interceptor Proxy',
+      summary: 'Low-latency reverse proxy inspecting prompts and completions with microsecond tensor inference.',
+      layers: ['AI Security Gateway', 'Llama Guard MicroVM', 'Adversary Simulation Swarm'],
+      latency: '< 14ms inference overhead',
+      dataPrivacy: 'Zero prompt data retention.'
+    },
+    integrations: ['OpenAI', 'Anthropic Claude', 'Google Gemini', 'LangChain', 'LangGraph', 'MCP Servers'],
+    security: {
+      compliance: ['EU AI Act Aligned', 'ISO 42001', 'NIST AI RMF'],
+      encryption: 'TLS 1.3 Transport',
+      isolation: 'Air-gapped evaluation microVMs'
+    },
+    pricingTiers: [
+      {
+        name: 'LLM Defense Gateway',
+        price: '$690',
+        period: '/ month',
+        description: 'Complete guardrails and automated red-teaming for enterprise AI swarms.',
+        features: ['Real-time Prompt Inspection', 'Automated Red Teaming Swarm', 'EU AI Act Compliance Reports', 'MCP Tool Security'],
+        ctaText: 'Start Free Trial'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'Test guardrails live at https://14-exploitability-platform.vercel.app/ai-security',
+      apiEndpoints: ['POST /api/ai/inspect', 'POST /api/redteam/run'],
+      sdkSupport: ['Python', 'TypeScript', 'LangChain']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.9% Uptime',
+      channel: 'AI Defense Hotline',
+      responseHours: '< 30 Minutes'
+    }
+  },
+  {
+    id: 'prod_15_threat_modeler',
+    name: 'AXIOM Threat Modeler & Attack Chain Visualizer (Product 15)',
+    tagline: 'PyTorch GraphSAGE Blast Radius Visualizer & LLM-Synthesized STRIDE Threat Modeling',
+    category: 'Software',
+    subCategory: 'Threat Modeling',
+    launchpadCategory: 'security',
+    isLaunchpadDeployed: true,
+    liveUrl: 'https://15-threat-modeling-platform.vercel.app',
+    demoUrl: 'https://15-threat-modeling-platform.vercel.app/attack-chain',
+    isVercelLive: true,
+    icon: '🗺️',
+    badge: '🗺️ Product 15 · GraphSAGE Core',
+    rating: 4.96,
+    reviewsCount: 145,
+    activeUsersCount: '5,600+ Threat Models Generated',
+    pricing: {
+      displayPrice: '$550',
+      billingPeriod: '/ month',
+      hasFreeTrial: true,
+      trialDays: 14
+    },
+    vendor: {
+      name: 'AXIOM Threat Architecture',
+      logo: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=100&auto=format&fit=crop&q=80',
+      isVerified: true
+    },
+    overview: 'Automated architecture threat analysis combining PyTorch GNN GraphSAGE blast radius modeling with LLM-synthesized STRIDE threat mapping and instant SOC2 / ISO 27001 export.',
+    features: [
+      { title: 'Attack Chain Visualizer', desc: 'Interactive 3D graph visualizer tracing adversary movement across systems.' },
+      { title: 'Automated STRIDE Modeler', desc: 'Parses architecture diagrams and code repos into full STRIDE risk matrices.' }
+    ],
+    screenshots: [
+      'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&auto=format&fit=crop&q=80'
+    ],
+    architecture: {
+      title: 'Graph Neural Network Engine',
+      summary: 'PyTorch GraphSAGE predicting unobserved attack choke points across complex microservice graphs.',
+      layers: ['Graph Visualizer Canvas', 'PyTorch GNN Core', 'STRIDE LLM Generator'],
+      latency: '< 50ms graph inference',
+      dataPrivacy: 'Encrypted topology models.'
+    },
+    integrations: ['Terraform', 'AWS CloudFormation', 'GitHub Architecture Diagrams', 'Lucidchart'],
+    security: {
+      compliance: ['SOC 2 Type II', 'NIST SP 800-53', 'ISO 27001'],
+      encryption: 'AES-256 Storage',
+      isolation: 'Tenant Graph Enclave'
+    },
+    pricingTiers: [
+      {
+        name: 'Threat Modeler Pro',
+        price: '$550',
+        period: '/ month',
+        description: 'Unlimited automated STRIDE threat models and GraphSAGE blast radius predictions.',
+        features: ['Interactive 3D Attack Chain Graph', 'Automated STRIDE Reports', 'Architecture Ingestion', 'Compliance PDF Export'],
+        ctaText: 'Model Your Architecture'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'Explore threat models at https://15-threat-modeling-platform.vercel.app',
+      apiEndpoints: ['POST /api/model/generate', 'GET /api/graph/attack-chain'],
+      sdkSupport: ['REST', 'Python']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.9% Uptime',
+      channel: 'Threat Modeling Desk',
+      responseHours: '< 1 Hour'
+    }
+  },
+  {
+    id: 'prod_salisbury_campus_os',
+    name: 'Salisbury Campus Operating OS',
+    tagline: 'Decoupled Student OS, Collegiate Hackathons, Academic Calendars & .EDU Verification',
+    category: 'Software',
+    subCategory: 'Campus OS',
+    launchpadCategory: 'campus',
+    isLaunchpadDeployed: true,
+    liveUrl: '/campus',
+    demoUrl: '/campus',
+    icon: '🎓',
+    badge: '🎓 Collegiate Campus OS',
+    rating: 4.94,
+    reviewsCount: 520,
+    activeUsersCount: '12,000+ Salisbury Students',
+    pricing: {
+      displayPrice: '$0',
+      billingPeriod: 'Free for .EDU Students',
+      hasFreeTrial: true
+    },
+    vendor: {
+      name: 'Salisbury University Collegiate Enclave',
+      logo: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=100&auto=format&fit=crop&q=80',
+      isVerified: true
+    },
+    overview: 'Decoupled collegiate student OS providing university event schedules, hackathon team formation, authenticated .EDU verification, GPA verified badges, and campus dining marketplace.',
+    features: [
+      { title: 'Campus Hackathons & RSVPs', desc: 'Register for student hackathons, career workshops, and technical seminars with 1-click.' },
+      { title: 'Verified .EDU Credential Badge', desc: 'Validates active student enrollment and academic honors directly on ConnectIn.' }
+    ],
+    screenshots: [
+      'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80'
+    ],
+    architecture: {
+      title: 'Collegiate Identity Enclave',
+      summary: 'SAML / OAuth2 federation with university single-sign-on and student directory sync.',
+      layers: ['Campus OS Portal', 'SAML SSO Connector', 'Collegiate Event Bus'],
+      latency: '< 20ms page load',
+      dataPrivacy: 'Strict FERPA privacy compliance.'
+    },
+    integrations: ['Canvas LMS', 'Blackboard', 'ConnectIn Profile', 'Google Calendar'],
+    security: {
+      compliance: ['FERPA Compliant', 'SOC 2 Type II'],
+      encryption: 'TLS 1.3 / AES-256',
+      isolation: 'Student Privacy Enclave'
+    },
+    pricingTiers: [
+      {
+        name: 'Student & Faculty Access',
+        price: '$0',
+        period: 'free forever',
+        description: 'Free for all verified .EDU students, researchers, and campus faculty.',
+        features: ['Campus Event RSVPs', 'Hackathon Team Builder', 'Verified Student Badge', 'Dining Marketplace'],
+        ctaText: 'Access Campus OS'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'Access collegiate hub at /campus with your student login.',
+      apiEndpoints: ['GET /api/campus/events', 'POST /api/campus/rsvp'],
+      sdkSupport: ['Web', 'Mobile']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.9% Uptime',
+      channel: 'Campus IT Helpdesk',
+      responseHours: '< 2 Hours'
+    }
   }
 ]
 
@@ -1929,3 +2695,7 @@ export function getEnclaveMarketplaceProducts(enclaveId?: string): MarketplacePr
     return p.professionEnclave === userEnclave || (!p.professionEnclave && !['Tools & Joinery', 'Diagnostic Devices', 'Scan Tools', 'Trades & Vocational Network'].includes(p.subCategory))
   })
 }
+
+export const LAUNCHPAD_DEPLOYED_PRODUCTS: MarketplaceProduct[] = MASTER_MARKETPLACE_PRODUCTS.filter(
+  (p) => p.isLaunchpadDeployed === true
+)
