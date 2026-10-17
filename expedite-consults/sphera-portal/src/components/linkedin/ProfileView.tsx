@@ -59,6 +59,7 @@ import {
   getWorkspaceDataForEnclave
 } from "@/lib/my-workspace-data"
 import { findEnclaveById } from "@/lib/connectin-professions"
+import { TradeEnclaveWidgets } from "./TradeEnclaveWidgets"
 import {
   Dialog,
   DialogContent,
@@ -858,6 +859,21 @@ export function ProfileView({
               </div>
             </div>
           </div>
+
+          {/* Reconciled Trade Dispatch, Expiration Desk & Hall Invites for Trades Enclave */}
+          {effectiveEnclaveId === 'trades_construction' && (
+            <div className="pt-2">
+              <TradeEnclaveWidgets
+                user={user}
+                onNavigateTab={(tab) => {
+                  if (tab === 'wallet' || tab === 'certifications') {
+                    setWorkspaceSection('certifications')
+                  }
+                }}
+                variant="profile"
+              />
+            </div>
+          )}
         </div>
       )}
 
@@ -1176,6 +1192,15 @@ export function ProfileView({
       {/* ========================================================================= */}
       {workspaceSection === 'certifications' && (
         <div className="space-y-5">
+          {/* Reconciled Trade Tickets & License Expiration Desk */}
+          {effectiveEnclaveId === 'trades_construction' && (
+            <TradeEnclaveWidgets
+              user={user}
+              onNavigateTab={() => setWorkspaceSection('certifications')}
+              variant="tickets_only"
+            />
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {((user.certifications && user.certifications.length > 0)
               ? user.certifications.map((cert) => ({
@@ -1257,6 +1282,17 @@ export function ProfileView({
               </button>
             </div>
           </div>
+
+          {/* Reconciled Hall Invites & Peer Vouches (Trades Enclave) */}
+          {effectiveEnclaveId === 'trades_construction' && (
+            <div className="pt-1">
+              <TradeEnclaveWidgets
+                user={user}
+                onNavigateTab={() => setWorkspaceSection('experience')}
+                variant="invites_only"
+              />
+            </div>
+          )}
 
           {/* Success Banner */}
           {resumeSuccessBanner && (

@@ -27,6 +27,7 @@ import { UserProfile } from "@/lib/linkedin-data"
 import { isSuperAdminUser } from "@/lib/connectin-profile"
 import { findEnclaveById } from "@/lib/connectin-professions"
 import { useLanguage } from "@/context/LanguageContext"
+import { TradeEnclaveWidgets } from "@/components/linkedin/TradeEnclaveWidgets"
 
 interface LeftSidebarProfileProps {
   user: UserProfile
@@ -518,6 +519,13 @@ export function LeftSidebarProfile({
                 {enclaveInfo?.securityClearanceTier || 'Level 2 Clearance'}
               </p>
             </div>
+
+            {/* Reconciled Trade Dispatch Status & Rate Badge (When Trades Enclave Active) */}
+            {effectiveEnclaveId === 'trades_construction' && (
+              <div className="pt-2 text-left">
+                <TradeEnclaveWidgets user={user} onNavigateTab={onNavigateTab} variant="badge_only" />
+              </div>
+            )}
           </div>
         </div>
 
@@ -613,6 +621,11 @@ export function LeftSidebarProfile({
           ))}
         </div>
       </div>
+
+      {/* Reconciled Trade Enclave Modules (Tickets Desk, Hall Invites, Bench Shops) */}
+      {effectiveEnclaveId === 'trades_construction' && (
+        <TradeEnclaveWidgets user={user} onNavigateTab={onNavigateTab} variant="sidebar" />
+      )}
 
       {/* Discover & Recent Groups */}
       <div className="hidden md:block sticky top-18 rounded-xl border border-zinc-200 bg-white p-3 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
