@@ -60,6 +60,7 @@ export function InviteMembersModal({
 
   const inviteLink = `${origin}/connectin?ref=${encodeURIComponent(currentUser.name.toLowerCase().replace(/\s+/g, '-'))}&cid=cin_${Date.now().toString(36)}`
   const loginLink = `${origin}/connectin-login?ref=${encodeURIComponent(currentUser.name.toLowerCase().replace(/\s+/g, '-'))}`
+  const referralLink = loginLink
 
   // Email form state
   const [emailsText, setEmailsText] = useState("")
