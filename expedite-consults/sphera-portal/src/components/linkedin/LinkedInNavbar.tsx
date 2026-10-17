@@ -998,7 +998,7 @@ export function LinkedInNavbar({
           />
           <div
             ref={moreDropdownRef}
-            className="fixed z-50 right-2 left-2 sm:left-auto sm:right-4 lg:right-6 top-16 sm:top-20 lg:top-14 bottom-16 sm:bottom-auto w-auto sm:w-96 max-w-[420px] max-h-[80vh] mx-auto lg:mx-0 rounded-2xl border border-zinc-200 bg-white p-3.5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 flex flex-col overflow-hidden"
+            className="fixed z-[60] right-2 left-2 sm:left-auto sm:right-4 lg:right-6 top-16 sm:top-20 lg:top-14 w-auto sm:w-96 max-w-[420px] h-[min(620px,calc(100vh-5rem))] min-h-[340px] rounded-2xl border border-zinc-200 bg-white p-3.5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 flex flex-col overflow-hidden"
           >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-zinc-100 pb-2.5 dark:border-zinc-800 shrink-0">
@@ -1023,7 +1023,7 @@ export function LinkedInNavbar({
             </div>
 
             {/* Scrollable Categories List */}
-            <div className="flex-1 overflow-y-auto space-y-3 pt-2 pr-1">
+            <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pt-2 pr-1">
               {categorizedMoreMenu.map((group) => (
                 <div key={group.category} className="space-y-1">
                   <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 px-2">
