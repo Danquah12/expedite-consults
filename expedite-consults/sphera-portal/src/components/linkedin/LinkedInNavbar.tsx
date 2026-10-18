@@ -985,7 +985,6 @@ export function LinkedInNavbar({
               { id: 'procurement', label: 'RFPs', icon: FileCheck, badge: 0, kind: 'teal' },
               { id: 'launchpad', label: 'Launchpad', icon: Rocket, badge: 0, kind: 'purple' },
               { id: 'careersuite', label: 'CareerAI', icon: Award, badge: 0, kind: 'cyan' },
-              { id: '__more', label: 'More', icon: Grid3X3, badge: 0, kind: 'default' },
             ].map((item) => {
               const Icon = item.icon
               const isMore = item.id === '__more'

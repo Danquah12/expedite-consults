@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *, [data-theme="slate"], [data-theme="slate"] *, .dark, .dark *));
+@custom-variant dark (&:where([data-theme="vibe"], [data-theme="vibe"] *, [data-theme="dark"], [data-theme="dark"] *, [data-theme="slate"], [data-theme="slate"] *, .dark, .dark *));
 
 /* ── Prevent horizontal viewport blowout across mobile devices ── */
 html,
@@ -169,6 +169,101 @@ body {
   --color-text-secondary: #94a3b8;
   --color-text-muted: #64748b;
 }
+
+/* ── 0. VIBE GOLD NIGHT (default): navy canvas, warm brown cards, gold accents ── */
+[data-theme="vibe"], body[data-theme="vibe"], html.vibe {
+  --bg-core: #0e0d17;
+  --bg-sidebar: #110e0a;
+  --bg-surface: #1b140d;
+  --bg-card: #1b140d;
+  --bg-card-hover: #251b11;
+  --bg-input: #1f1710;
+
+  --border-subtle: #3d2f16;
+  --border-hover: #5a4420;
+  --border-active: #d9a441;
+
+  --text-pure: #f5ecd6;
+  --text-primary: #f3e9d2;
+  --text-secondary: #c4ad7a;
+  --text-muted: #a58a55;
+
+  --accent-cyan: #d9a441;
+  --accent-indigo: #b9862a;
+  --ambient-mesh-1: rgba(217, 164, 65, 0.06);
+  --ambient-mesh-2: rgba(120, 90, 200, 0.04);
+
+  --color-bg-primary: #0e0d17;
+  --color-bg-secondary: #1b140d;
+  --color-bg-card: #1b140d;
+  --color-bg-card-hover: #251b11;
+  --color-border-glass: rgba(217, 164, 65, 0.22);
+  --color-border-glow: rgba(217, 164, 65, 0.45);
+  --color-accent-cyan: #d9a441;
+  --color-accent-purple: #b79cff;
+  --color-accent-pink: #f0a0c0;
+  --color-accent-green: #7fcf9a;
+  --color-accent-orange: #e8933a;
+  --color-accent-red: #f07a6a;
+  --color-text-primary: #f3e9d2;
+  --color-text-secondary: #c4ad7a;
+  --color-text-muted: #a58a55;
+
+  /* Re-map Tailwind's neutral + blue palettes so every existing component picks up the new look */
+  --color-zinc-50: #fbf6ea;
+  --color-zinc-100: #f5ecd6;
+  --color-zinc-200: #eadcb8;
+  --color-zinc-300: #dccaa0;
+  --color-zinc-400: #c4ad7a;
+  --color-zinc-500: #a58a55;
+  --color-zinc-600: #7a6030;
+  --color-zinc-700: #5a4420;
+  --color-zinc-800: #3d2f16;
+  --color-zinc-900: #1b140d;
+  --color-zinc-950: #0e0d17;
+  --color-slate-800: #3d2f16;
+  --color-slate-900: #1b140d;
+  --color-slate-950: #0e0d17;
+  --color-blue-50: #fbf1d8;
+  --color-blue-100: #f5e2b0;
+  --color-blue-200: #ecd08a;
+  --color-blue-300: #e6c070;
+  --color-blue-400: #e6b95a;
+  --color-blue-500: #d9a441;
+  --color-blue-600: #d9a441;
+  --color-blue-700: #b9862a;
+  --color-blue-800: #8a6420;
+  --color-blue-900: #4a3510;
+  --color-blue-950: #2a1c08;
+  --color-sky-400: #e6b95a;
+  --color-sky-500: #d9a441;
+  --color-sky-600: #d9a441;
+  --color-sky-950: #2a1c08;
+}
+
+/* Cards: warm gradient + thin gold border, like the Vibe 'Start here' cards */
+[data-theme="vibe"] .dark\:bg-zinc-900 {
+  background-image: linear-gradient(145deg, #211710, #140f0a);
+}
+[data-theme="vibe"] .dark\:border-zinc-800,
+[data-theme="vibe"] .dark\:border-zinc-700 {
+  border-color: rgba(217, 164, 65, 0.28);
+}
+
+/* ConnectIn's hardcoded blue (#0A66C2 / #004182) becomes gold */
+[data-theme="vibe"] [class~="bg-[#0A66C2]"] { background-color: #d9a441 !important; color: #1a1208 !important; }
+[data-theme="vibe"] [class~="bg-[#0A66C2]"] * { color: inherit !important; }
+[data-theme="vibe"] [class~="hover:bg-[#004182]"]:hover { background-color: #e6b95a !important; }
+[data-theme="vibe"] [class~="text-[#0A66C2]"],
+[data-theme="vibe"] [class~="hover:text-[#0A66C2]"]:hover,
+[data-theme="vibe"] [class~="group-hover:text-[#0A66C2]"] { color: #e6b95a !important; }
+[data-theme="vibe"] [class~="border-[#0A66C2]"] { border-color: #d9a441 !important; }
+[data-theme="vibe"] [class~="ring-[#0A66C2]"] { --tw-ring-color: #d9a441 !important; }
+[data-theme="vibe"] [class~="bg-[#EDF3F8]"] { background-color: #1f1710 !important; }
+[data-theme="vibe"] [class~="bg-[#FBF5E9]"] { background-color: #2a1f0e !important; }
+
+/* Marquee tab strip + header stay on the dark canvas */
+[data-theme="vibe"] header { background-color: #0e0d17 !important; border-color: rgba(217, 164, 65, 0.28) !important; }
 
 * {
   box-sizing: border-box;

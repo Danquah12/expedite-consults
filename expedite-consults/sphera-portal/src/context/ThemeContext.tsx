@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 export type Theme =
+  | "vibe"
   | "classic"
   | "light"
   | "dark"
@@ -21,6 +22,17 @@ export interface ThemeOption {
 }
 
 export const THEME_OPTIONS: ThemeOption[] = [
+  {
+    id: "vibe",
+    label: "Vibe Gold Night",
+    shortLabel: "Vibe Gold",
+    icon: "✨",
+    bgHex: "#0e0d17",
+    cardHex: "#1b140d",
+    borderHex: "#3d2f16",
+    isDark: true,
+    description: "Deep navy canvas with warm brown cards and gold accents"
+  },
   {
     id: "classic",
     label: "LinkedIn Classic Light",
@@ -77,40 +89,43 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType>({
-  theme: "classic",
+  theme: "vibe",
   setTheme: () => {},
   toggleTheme: () => {},
-  themeLabel: "LinkedIn Classic Light",
-  isDark: false,
+  themeLabel: "Vibe Gold Night",
+  isDark: true,
   themeOption: THEME_OPTIONS[0],
 });
 
 const ALL_THEME_IDS: Theme[] = [
+  "vibe",
   "classic",
   "light",
   "dark",
   "slate"
 ];
 
+// v2 key: resets everyone to the new Vibe Gold default once; later choices are remembered
+const THEME_STORAGE_KEY = "sphera-theme-v2";
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("classic");
+  const [theme, setThemeState] = useState<Theme>("vibe");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const saved = localStorage.getItem("sphera-theme") as string | null;
-    if (saved && (saved === "classic" || saved === "light" || saved === "dark" || saved === "slate")) {
+    const saved = localStorage.getItem(THEME_STORAGE_KEY) as string | null;
+    if (saved && ALL_THEME_IDS.includes(saved as Theme)) {
       applyTheme(saved as Theme);
     } else {
-      // Auto-migrate sepia/emerald/purple/blue or unset to official LinkedIn Classic
-      applyTheme("classic");
+      applyTheme("vibe");
     }
   }, []);
 
   const applyTheme = (t: Theme) => {
     setThemeState(t);
     try {
-      localStorage.setItem("sphera-theme", t);
+      localStorage.setItem(THEME_STORAGE_KEY, t);
     } catch {}
 
     if (typeof document !== "undefined") {

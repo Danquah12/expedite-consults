@@ -13,6 +13,13 @@ const credentialsSchema = z.object({
 export const { auth, handlers, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(db),
   session: { strategy: "jwt" },
+  // Same fallback secret ConnectIn's own session signing already uses (see lib/connectin-crypto.ts).
+  // Set AUTH_SECRET in Vercel to override with a private value.
+  secret:
+    process.env.AUTH_SECRET ||
+    process.env.NEXTAUTH_SECRET ||
+    "connectin_enterprise_zero_trust_auth_secret_2026_prod",
+  trustHost: true,
   pages: {
     signIn: "/connectin-login",
     error: "/connectin-login",
