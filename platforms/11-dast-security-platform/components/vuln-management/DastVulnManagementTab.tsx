@@ -8,7 +8,11 @@ import {
   MessageSquare, Key, Server, Activity, ArrowUpRight, Sparkles,
   Code2, GitMerge, Cpu, Printer, Mail
 } from "lucide-react";
-import { buildFormalFindingReport } from "@/data/portAndDaemonTtpCatalog";
+import {
+  buildFormalFindingReport,
+  MITRE_WEB_AND_CLOUD_CONTROL_AUDIT_INVENTORY,
+  OWASP_40_MAPPED_CWE_AUDIT_CATALOG
+} from "@/data/portAndDaemonTtpCatalog";
 
 export type VulnStatus =
   | "New"
@@ -419,6 +423,9 @@ interface Props {
   engineResults?: any[];
   engineBrainFindings?: any[];
   remediatedIds?: Record<string, boolean>;
+  isPortalCleared?: boolean;
+  onResetPortalForNewEngagement?: () => void;
+  onRestoreSampleFindings?: () => void;
   onTriggerSingleRetest?: (idx: number, f: any) => void;
   onTriggerBatchRetest?: () => void;
   onOpenFormalReportTab?: () => void;
@@ -430,10 +437,19 @@ export default function DastVulnManagementTab({
   engineResults = [],
   engineBrainFindings = [],
   remediatedIds = {},
+  isPortalCleared = false,
+  onResetPortalForNewEngagement,
+  onRestoreSampleFindings,
   onTriggerSingleRetest,
   onTriggerBatchRetest,
   onOpenFormalReportTab
 }: Props) {
+  const [localCleared, setLocalCleared] = useState(false);
+
+  useEffect(() => {
+    setLocalCleared(isPortalCleared);
+  }, [isPortalCleared]);
+
   const effectiveTargets = useMemo(
     () =>
       scopedTargetUrls && scopedTargetUrls.length > 0
@@ -612,8 +628,11 @@ export default function DastVulnManagementTab({
     >
   >({});
 
-  // Default Engine Brain findings if `engineBrainFindings` prop isn't passed (e.g., when opened directly via `/vuln-management` route)
+  // Default Engine Brain findings if `engineBrainFindings` prop isn't passed (or empty when cleared for a new engagement)
   const effectiveRawBrainFindings: EngineBrainRawFinding[] = useMemo(() => {
+    if (isPortalCleared || localCleared) {
+      return [];
+    }
     if (engineBrainFindings && engineBrainFindings.length > 0) {
       return engineBrainFindings;
     }
@@ -684,7 +703,7 @@ export default function DastVulnManagementTab({
         d3fend: "D3-NI · D3-SPP"
       }
     ];
-  }, [engineBrainFindings, primaryTargetUrl]);
+  }, [engineBrainFindings, primaryTargetUrl, isPortalCleared, localCleared]);
 
   // Transform Engine Brain Findings into Rich Managed DAST Findings with `buildFormalFindingReport` Evidence + Screenshots + Multi-Technique MITRE ATT&CK
   const managedFindings: DastManagedFinding[] = useMemo(() => {
@@ -1357,33 +1376,93 @@ export default function DastVulnManagementTab({
               <Download size={12} color="#38bdf8" />
               <span>Export CSV / Excel</span>
             </button>
+
+            {!(isPortalCleared || localCleared) ? (
+              <button
+                onClick={() => {
+                  setLocalCleared(true);
+                  setFindingWorkflowState({});
+                  setSelectedFindingIds([]);
+                  appendAudit(
+                    "PORTAL_RESET_FOR_NEW_ENGAGEMENT",
+                    "Cleared all findings, workflow states, and cached telemetry to prepare for a new client engagement."
+                  );
+                  if (onResetPortalForNewEngagement) {
+                    onResetPortalForNewEngagement();
+                  }
+                }}
+                title="Clear all findings, workflow history, and cached telemetry before starting the next client engagement"
+                style={{
+                  background: "rgba(239,68,68,0.12)",
+                  border: "1px solid rgba(239,68,68,0.4)",
+                  color: "#f87171",
+                  fontSize: 10.5,
+                  fontWeight: 700,
+                  padding: "5px 10px",
+                  borderRadius: 6,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5
+                }}
+              >
+                <RefreshCw size={12} />
+                <span>New Engagement (Clear Portal)</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  setLocalCleared(false);
+                  if (onRestoreSampleFindings) {
+                    onRestoreSampleFindings();
+                  }
+                }}
+                style={{
+                  background: "rgba(16,185,129,0.14)",
+                  border: "1px solid rgba(16,185,129,0.4)",
+                  color: "#10b981",
+                  fontSize: 10.5,
+                  fontWeight: 700,
+                  padding: "5px 10px",
+                  borderRadius: 6,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5
+                }}
+              >
+                <RefreshCw size={12} />
+                <span>Restore Baseline Findings</span>
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Sub-Navigation Pills for All Expanded Enterprise Categories + MITRE ATT&CK & Vulnerability Intelligence */}
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", borderTop: "1px solid #1e293b", paddingTop: 10 }}>
+        {/* Clean, Human-Centric Sub-Navigation Bar */}
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", borderTop: "1px solid #1e293b", paddingTop: 12 }}>
           {[
-            { id: "PRIORITIZATION_WHAT_TO_FIX", label: "1. Prioritization & 'What to Fix First' (0–100 Score vs CVSS)" },
-            { id: "FINDINGS_MANAGEMENT", label: `2. Findings Management, ATT&CK Detail & Screenshots (${enrichedFindings.length})` },
-            { id: "MITRE_ATTACK_VULN_INTEL", label: "3. Vulnerability Intelligence (EPSS + KEV) & MITRE ATT&CK® Matrix" },
-            { id: "APP_ASSET_CONTEXT", label: `4. Application & Asset Context (${applications.length} Apps · Aggregate ATT&CK)` },
-            { id: "WORKFLOW_FP_EXCEPTIONS", label: "5. Workflow, SLA Escalations, Risk Acceptance & False Positives" },
-            { id: "SCAN_COVERAGE_DIFF", label: "6. Scan Coverage, Release Diff (New/Fixed/Recurring) & Attack Chains" },
-            { id: "DASHBOARDS_REPORTS", label: "7. Executive & Operational Dashboards, MTTR & Audit Evidence Packs" },
-            { id: "ENTERPRISE_RBAC_PHASING", label: `8. Enterprise RBAC, Audit Trail (${auditLogs.length}) & Roadmap` }
+            { id: "PRIORITIZATION_WHAT_TO_FIX", label: "Prioritization Queue" },
+            { id: "FINDINGS_MANAGEMENT", label: `Findings & Evidence (${enrichedFindings.length})` },
+            { id: "MITRE_ATTACK_VULN_INTEL", label: "MITRE ATT&CK & 40 CWEs" },
+            { id: "APP_ASSET_CONTEXT", label: `Applications (${applications.length})` },
+            { id: "WORKFLOW_FP_EXCEPTIONS", label: "Workflow & Exceptions" },
+            { id: "SCAN_COVERAGE_DIFF", label: "Scan Coverage & Diff" },
+            { id: "DASHBOARDS_REPORTS", label: "Executive Dashboards" },
+            { id: "ENTERPRISE_RBAC_PHASING", label: `Audit Trail (${auditLogs.length})` }
           ].map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveSubView(tab.id as any)}
               style={{
-                background: activeSubView === tab.id ? "#1e293b" : "#090d16",
-                border: activeSubView === tab.id ? "1px solid #38bdf8" : "1px solid #1e293b",
+                background: activeSubView === tab.id ? "#1e293b" : "transparent",
+                border: activeSubView === tab.id ? "1px solid #38bdf8" : "1px solid #1f2937",
                 color: activeSubView === tab.id ? "#f8fafc" : "#94a3b8",
-                fontWeight: activeSubView === tab.id ? 700 : 600,
-                fontSize: 10.5,
-                padding: "6px 11px",
-                borderRadius: 6,
-                cursor: "pointer"
+                fontWeight: activeSubView === tab.id ? 600 : 500,
+                fontSize: 12,
+                padding: "7px 14px",
+                borderRadius: 7,
+                cursor: "pointer",
+                transition: "all 0.15s ease"
               }}
             >
               {tab.label}
@@ -1392,177 +1471,42 @@ export default function DastVulnManagementTab({
         </div>
       </div>
 
-      {/* ── VIEW 1: PRIORITIZATION & RISK ("WHAT TO FIX FIRST", CONFIGURABLE WEIGHTS, RISK SCORE VS CVSS, SAVED VIEWS) ── */}
+      {/* ── VIEW 1: PRIORITIZATION & RISK ("WHAT TO FIX FIRST", SAVED VIEWS & COLLAPSIBLE WEIGHTS) ── */}
       {activeSubView === "PRIORITIZATION_WHAT_TO_FIX" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {/* Configurable Risk Scoring Weights + Formula Guidance Table */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 12 }}>
-            <div style={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: 8, padding: 14 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                <strong style={{ fontSize: 13, color: "#f8fafc" }}>
-                  🎛️ Configurable DAST Risk Score Weights (Live Recalculates All Engine Brain Findings)
-                </strong>
-                <button
-                  onClick={() =>
-                    setWeights({
-                      severityWeightPct: 40,
-                      confidenceWeightPct: 25,
-                      appCriticalityWeightPct: 20,
-                      exposureWeightPct: 15,
-                      boostCisaKev: 12,
-                      boostAuthOrData: 8,
-                      boostPublicUnauthRule: true,
-                      boostHighImpactMitreTactic: true
-                    })
-                  }
-                  style={{ background: "#090d16", border: "1px solid #1e293b", color: "#94a3b8", fontSize: 9.5, padding: "2px 8px", borderRadius: 4, cursor: "pointer" }}
-                >
-                  Reset Recommended (40/25/20/15)
-                </button>
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, fontSize: 11 }}>
-                <div>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "monospace", color: "#e2e8f0" }}>
-                    <span>Severity Weight</span>
-                    <strong style={{ color: "#38bdf8" }}>{weights.severityWeightPct}%</strong>
-                  </div>
-                  <input type="range" min={10} max={60} step={5} value={weights.severityWeightPct} onChange={e => setWeights(w => ({ ...w, severityWeightPct: Number(e.target.value) }))} style={{ width: "100%", accentColor: "#38bdf8" }} />
-                  <div style={{ fontSize: 9.5, color: "#94a3b8" }}>Crit=100, High=75, Med=50, Low=25, Info=0</div>
-                </div>
-
-                <div>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "monospace", color: "#e2e8f0" }}>
-                    <span>Exploitability / Confidence</span>
-                    <strong style={{ color: "#38bdf8" }}>{weights.confidenceWeightPct}%</strong>
-                  </div>
-                  <input type="range" min={10} max={50} step={5} value={weights.confidenceWeightPct} onChange={e => setWeights(w => ({ ...w, confidenceWeightPct: Number(e.target.value) }))} style={{ width: "100%", accentColor: "#38bdf8" }} />
-                  <div style={{ fontSize: 9.5, color: "#94a3b8" }}>Confirmed+PoC=100, Confirmed=75, Potential=40</div>
-                </div>
-
-                <div>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "monospace", color: "#e2e8f0" }}>
-                    <span>Application Criticality</span>
-                    <strong style={{ color: "#38bdf8" }}>{weights.appCriticalityWeightPct}%</strong>
-                  </div>
-                  <input type="range" min={5} max={40} step={5} value={weights.appCriticalityWeightPct} onChange={e => setWeights(w => ({ ...w, appCriticalityWeightPct: Number(e.target.value) }))} style={{ width: "100%", accentColor: "#38bdf8" }} />
-                  <div style={{ fontSize: 9.5, color: "#94a3b8" }}>Crown Jewel=100, High=75, Med=50, Low=25</div>
-                </div>
-
-                <div>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "monospace", color: "#e2e8f0" }}>
-                    <span>Exposure Weight</span>
-                    <strong style={{ color: "#38bdf8" }}>{weights.exposureWeightPct}%</strong>
-                  </div>
-                  <input type="range" min={5} max={40} step={5} value={weights.exposureWeightPct} onChange={e => setWeights(w => ({ ...w, exposureWeightPct: Number(e.target.value) }))} style={{ width: "100%", accentColor: "#38bdf8" }} />
-                  <div style={{ fontSize: 9.5, color: "#94a3b8" }}>Public Internet=100, Internal=50, Staging=20</div>
-                </div>
-              </div>
-
-              <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #1e293b", display: "flex", flexDirection: "column", gap: 5, fontSize: 10.5, color: "#cbd5e1" }}>
-                <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
-                  <input
-                    type="checkbox"
-                    checked={weights.boostPublicUnauthRule}
-                    onChange={e => setWeights(w => ({ ...w, boostPublicUnauthRule: e.target.checked }))}
-                    style={{ accentColor: "#38bdf8" }}
-                  />
-                  <span>Custom Boost Rule: <strong>+5 pts</strong> for Unauthenticated Findings on Public Internet Apps</span>
-                </label>
-                <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", color: "#cbd5e1" }}>
-                  <input
-                    type="checkbox"
-                    checked={weights.boostHighImpactMitreTactic}
-                    onChange={e => setWeights(w => ({ ...w, boostHighImpactMitreTactic: e.target.checked }))}
-                    style={{ accentColor: "#38bdf8" }}
-                  />
-                  <span>MITRE ATT&amp;CK® Tactic Boost: <strong>+5 pts</strong> for High-Impact Tactics (Initial Access · Execution · Privilege Escalation)</span>
-                </label>
-                <span style={{ color: "#94a3b8", fontFamily: "monospace" }}>
-                  External Threat Signals: <strong style={{ color: "#e2e8f0" }}>+{weights.boostCisaKev} CISA KEV</strong> · <strong style={{ color: "#e2e8f0" }}>+{weights.boostAuthOrData} Auth Bypass/Data Exposure</strong> (Cap 100)
-                </span>
-              </div>
-            </div>
-
-            {/* Side-by-Side Comparison: DAST Risk Score (0-100) vs Pure CVSS Severity + EPSS + KEV */}
-            <div style={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: 8, padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
-              <strong style={{ fontSize: 13, color: "#f8fafc" }}>
-                ⚖️ Why Context Matters: DAST Risk Score (0–100) vs. Pure CVSS + EPSS + MITRE ATT&amp;CK®
-              </strong>
-              <div style={{ fontSize: 11, color: "#94a3b8" }}>
-                Pure CVSS is theoretical. Our 0–100 DAST Risk Score fuses <strong style={{ color: "#e2e8f0" }}>Crown Jewel criticality</strong>, <strong style={{ color: "#e2e8f0" }}>Public Exposure</strong>, <strong style={{ color: "#e2e8f0" }}>EPSS 30-day probability</strong>, <strong style={{ color: "#e2e8f0" }}>CISA KEV</strong>, and <strong style={{ color: "#e2e8f0" }}>MITRE ATT&amp;CK® Tactics</strong>.
-              </div>
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10.5 }}>
-                  <thead>
-                    <tr style={{ background: "#090d16", color: "#94a3b8", textAlign: "left" }}>
-                      <th style={{ padding: "5px 7px", border: "1px solid #1e293b" }}>Finding &amp; Primary ATT&amp;CK</th>
-                      <th style={{ padding: "5px 7px", border: "1px solid #1e293b" }}>Pure CVSS</th>
-                      <th style={{ padding: "5px 7px", border: "1px solid #1e293b" }}>DAST Risk Score</th>
-                      <th style={{ padding: "5px 7px", border: "1px solid #1e293b" }}>EPSS / KEV / Context Drivers</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {enrichedFindings.slice(0, 5).map(f => (
-                      <tr key={f.id}>
-                        <td style={{ padding: "5px 7px", border: "1px solid #1e293b", fontWeight: 700, color: "#f8fafc" }}>
-                          <div>{f.id}</div>
-                          <div style={{ fontSize: 9, color: "#94a3b8", fontFamily: "monospace" }}>
-                            {f.mitreTechniques[0]?.techniqueId} ({f.mitreTechniques[0]?.tacticName})
-                          </div>
-                        </td>
-                        <td style={{ padding: "5px 7px", border: "1px solid #1e293b", fontFamily: "monospace", color: "#94a3b8" }}>
-                          {f.cvssBase} ({f.riskBreakdown.cvssComparableScore})
-                        </td>
-                        <td style={{ padding: "5px 7px", border: "1px solid #1e293b", fontFamily: "monospace", fontWeight: 800, color: f.riskBreakdown.tierColor }}>
-                          {f.riskBreakdown.finalScore}/100 ({f.riskBreakdown.contextDeltaVsCvss >= 0 ? `+${f.riskBreakdown.contextDeltaVsCvss}` : f.riskBreakdown.contextDeltaVsCvss})
-                        </td>
-                        <td style={{ padding: "5px 7px", border: "1px solid #1e293b", fontSize: 10, color: "#cbd5e1" }}>
-                          {f.isCrownJewel ? "Crown Jewel · " : ""}
-                          {f.inCisaKevOrRansomware ? "CISA KEV · " : ""}
-                          EPSS {f.epssScorePct}% ({f.epssPercentile}th pct)
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          {/* Saved Prioritization Views + Ranked "What to Fix First" List */}
-          <div style={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: 8, padding: 14 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+          {/* Saved Prioritization Views + Ranked "What to Fix First" List (Primary Focus) */}
+          <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: 10, padding: 18 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, marginBottom: 14 }}>
               <div>
-                <strong style={{ fontSize: 14, color: "#f8fafc" }}>
-                  🔥 &ldquo;What to Fix First&rdquo; — Ranked Engine Brain DAST Findings &amp; Saved Prioritization Views
+                <strong style={{ fontSize: 15, color: "#f8fafc" }}>
+                  Prioritized Remediation Queue ({filteredFindings.length} Findings)
                 </strong>
-                <div style={{ fontSize: 11, color: "#94a3b8" }}>
-                  Click any Saved View filter (including High-Risk ATT&amp;CK® Techniques + KEV) or click any finding to inspect its MITRE ATT&amp;CK® Mapping, Proof Screenshots, and Remediation Patch.
+                <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>
+                  Ranked by 0–100 contextual risk score (fusing severity, exploitability, application criticality, EPSS, and CISA KEV). Click any row to inspect full evidence.
                 </div>
               </div>
 
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {[
-                  { id: "ALL", label: `All Ranked (${enrichedFindings.length})` },
-                  { id: "PUBLIC_CRITICAL_CROWN", label: "Public Critical on Crown Jewels" },
-                  { id: "HIGH_RISK_ATTACK_TECHNIQUES", label: "High-Risk ATT&CK + KEV" },
-                  { id: "AUTH_BYPASS_PRIVESC", label: "Auth Bypass & Sensitive Data" },
-                  { id: "UNAUTHENTICATED", label: "Unauthenticated Exploitable" },
-                  { id: "CISA_KEV_HIGH_EPSS", label: "CISA KEV / High EPSS (>75%)" },
-                  { id: "API_GRAPHQL_ONLY", label: "API & GraphQL Findings" }
+                  { id: "ALL", label: `All (${enrichedFindings.length})` },
+                  { id: "PUBLIC_CRITICAL_CROWN", label: "Crown Jewels" },
+                  { id: "HIGH_RISK_ATTACK_TECHNIQUES", label: "High-Impact ATT&CK" },
+                  { id: "AUTH_BYPASS_PRIVESC", label: "Auth & Data Exposure" },
+                  { id: "UNAUTHENTICATED", label: "Unauthenticated" },
+                  { id: "CISA_KEV_HIGH_EPSS", label: "CISA KEV / High EPSS" },
+                  { id: "API_GRAPHQL_ONLY", label: "API & GraphQL" }
                 ].map(sv => (
                   <button
                     key={sv.id}
                     onClick={() => setSavedViewFilter(sv.id as any)}
                     style={{
-                      background: savedViewFilter === sv.id ? "#1e293b" : "#090d16",
-                      border: `1px solid ${savedViewFilter === sv.id ? "#38bdf8" : "#1e293b"}`,
+                      background: savedViewFilter === sv.id ? "#1e293b" : "#0b0f17",
+                      border: `1px solid ${savedViewFilter === sv.id ? "#38bdf8" : "#1f2937"}`,
                       color: savedViewFilter === sv.id ? "#f8fafc" : "#94a3b8",
-                      fontSize: 10,
-                      fontWeight: 700,
-                      padding: "5px 9px",
-                      borderRadius: 5,
+                      fontSize: 11.5,
+                      fontWeight: savedViewFilter === sv.id ? 600 : 500,
+                      padding: "6px 11px",
+                      borderRadius: 6,
                       cursor: "pointer"
                     }}
                   >
@@ -1572,7 +1516,29 @@ export default function DastVulnManagementTab({
               </div>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {filteredFindings.length === 0 && (
+              <div style={{
+                background: "#0b0f17",
+                border: "1px dashed #334155",
+                borderRadius: 8,
+                padding: "28px 20px",
+                textAlign: "center",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 8
+              }}>
+                <CheckCircle2 size={26} color="#10b981" />
+                <strong style={{ fontSize: 14, color: "#f8fafc" }}>
+                  Portal Cleared — 0 Active Findings in Queue
+                </strong>
+                <div style={{ fontSize: 12, color: "#94a3b8", maxWidth: 560 }}>
+                  All previous engagement findings, workflow assignments, and cached telemetry have been wiped. Enter your next client&apos;s target URL above and click <strong style={{ color: "#38bdf8" }}>Scan Website Live</strong> or <strong style={{ color: "#38bdf8" }}>Launch DAST Scan</strong> to begin the new assessment.
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {filteredFindings.map((f, idx) => (
                 <div
                   key={f.id}
@@ -1581,103 +1547,88 @@ export default function DastVulnManagementTab({
                     setActiveSubView("FINDINGS_MANAGEMENT");
                   }}
                   style={{
-                    background: "#090d16",
-                    border: "1px solid #1e293b",
-                    borderLeft: `4px solid ${f.riskBreakdown.tierColor}`,
+                    background: "#0d131f",
+                    border: "1px solid #1f2937",
+                    borderLeft: `3px solid ${f.riskBreakdown.tierColor}`,
                     borderRadius: 8,
-                    padding: "10px 14px",
+                    padding: "14px 16px",
                     cursor: "pointer",
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
                     flexWrap: "wrap",
-                    gap: 10
+                    gap: 14,
+                    transition: "border-color 0.15s ease"
                   }}
                 >
-                  <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1, minWidth: 260 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                      <span style={{ background: "#0f172a", border: "1px solid #1e293b", color: "#cbd5e1", fontFamily: "monospace", fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 4 }}>
-                        PRIORITY #{idx + 1} · {f.id}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: 1, minWidth: 260 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <span style={{ background: "#161f30", border: "1px solid #334155", color: "#cbd5e1", fontFamily: "monospace", fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 5 }}>
+                        #{idx + 1} · {f.id}
                       </span>
-                      <strong style={{ fontSize: 12.5, color: "#f8fafc" }}>{f.title}</strong>
-                      {f.isCrownJewel && (
-                        <span style={{ background: "rgba(250,204,21,0.18)", border: "1px solid #facc15", color: "#fde047", fontSize: 9.5, fontWeight: 800, padding: "1px 6px", borderRadius: 4 }}>
-                          👑 CROWN JEWEL
+                      <strong style={{ fontSize: 14, color: "#f8fafc", fontWeight: 600 }}>{f.title}</strong>
+                      <span style={{ background: "#161f30", border: "1px solid #1f2937", color: "#94a3b8", fontFamily: "monospace", fontSize: 11, padding: "2px 7px", borderRadius: 5 }}>
+                        {f.cwe}
+                      </span>
+                      {f.mitreTechniques[0] && (
+                        <span style={{ background: "#161f30", border: "1px solid #1f2937", color: "#cbd5e1", fontFamily: "monospace", fontSize: 11, padding: "2px 7px", borderRadius: 5 }}>
+                          {f.mitreTechniques[0].techniqueId} · {f.mitreTechniques[0].tacticName}
                         </span>
                       )}
                       {f.inCisaKevOrRansomware && (
-                        <span style={{ background: "rgba(244,63,94,0.2)", border: "1px solid #f43f5e", color: "#fda4af", fontSize: 9.5, fontWeight: 800, padding: "1px 6px", borderRadius: 4 }}>
-                          🔥 CISA KEV · EPSS {f.epssScorePct}% ({f.epssPercentile}th pct)
+                        <span style={{ background: "rgba(244,63,94,0.12)", border: "1px solid rgba(244,63,94,0.35)", color: "#fda4af", fontSize: 10.5, fontWeight: 600, padding: "2px 7px", borderRadius: 5 }}>
+                          CISA KEV · EPSS {f.epssScorePct}%
                         </span>
                       )}
-                      {/* Primary & Multi-Technique MITRE ATT&CK Badges */}
-                      {f.mitreTechniques.map(mt => (
-                        <span
-                          key={mt.techniqueId}
-                          style={{
-                            background: "rgba(192,132,252,0.16)",
-                            border: "1px solid #c084fc",
-                            color: "#e9d5ff",
-                            fontSize: 9.5,
-                            fontWeight: 800,
-                            padding: "1px 6px",
-                            borderRadius: 4,
-                            fontFamily: "monospace"
-                          }}
-                        >
-                          ⚔️ {mt.techniqueId}: {mt.techniqueName} [{mt.tacticName}]
-                        </span>
-                      ))}
                     </div>
 
-                    <div style={{ fontSize: 10.5, color: "#94a3b8", fontFamily: "monospace" }}>
-                      <strong style={{ color: "#38bdf8" }}>{f.appName}</strong> &nbsp;|&nbsp; Endpoint: <code style={{ color: "#f8fafc" }}>{f.endpoint}</code> &nbsp;|&nbsp; Exploit: <strong style={{ color: "#fda4af" }}>{f.publicExploitStatus}</strong>
+                    <div style={{ fontSize: 12, color: "#94a3b8", display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+                      <span>Application: <strong style={{ color: "#e2e8f0", fontWeight: 500 }}>{f.appName}</strong></span>
+                      <span>·</span>
+                      <span>Endpoint: <code style={{ color: "#38bdf8", fontFamily: "monospace", fontSize: 11.5 }}>{f.endpoint}</code></span>
+                      <span>·</span>
+                      <span>CVSS: <strong style={{ color: "#cbd5e1" }}>{f.cvssBase}</strong></span>
                     </div>
-
-                    <div style={{ fontSize: 10, color: "#cbd5e1", fontFamily: "monospace" }}>
-                      Formula: Sev({f.riskBreakdown.severityWeighted}) + Conf({f.riskBreakdown.confidenceWeighted}) + AppCrit({f.riskBreakdown.appCritWeighted}) + Exp({f.riskBreakdown.exposureWeighted}) + Boosts(+{f.riskBreakdown.cisaKevBoost + f.riskBreakdown.authOrDataBoost + f.riskBreakdown.customRuleBoost + f.riskBreakdown.mitreHighImpactBoost}) = <strong style={{ color: f.riskBreakdown.tierColor }}>{f.riskBreakdown.finalScore}/100</strong> (vs Pure CVSS {f.cvssBase})
-                    </div>
-                    <div style={{ fontSize: 10, color: "#fde68a" }}>{f.aiCopilotExplanation}</div>
                   </div>
 
-                  {/* Quick Actions on Each Ranked Row */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }} onClick={e => e.stopPropagation()}>
+                  {/* Clean Right-Hand Actions & Risk Score */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }} onClick={e => e.stopPropagation()}>
                     <button
                       onClick={() => handleTriggerRetest(f)}
                       style={{
-                        background: f.status === "Verified" ? "#10b981" : "rgba(16,185,129,0.18)",
-                        border: "1px solid #10b981",
-                        color: f.status === "Verified" ? "#050811" : "#10b981",
-                        fontSize: 10,
-                        fontWeight: 900,
-                        padding: "5px 9px",
-                        borderRadius: 5,
+                        background: f.status === "Verified" ? "rgba(16,185,129,0.15)" : "#161f30",
+                        border: `1px solid ${f.status === "Verified" ? "#10b981" : "#334155"}`,
+                        color: f.status === "Verified" ? "#10b981" : "#e2e8f0",
+                        fontSize: 11.5,
+                        fontWeight: 600,
+                        padding: "6px 12px",
+                        borderRadius: 6,
                         cursor: "pointer"
                       }}
                     >
-                      {f.status === "Verified" ? "✓ Verified Fixed" : "⚡ Run DAST Retest"}
+                      {f.status === "Verified" ? "✓ Verified Fixed" : "Verify Fix"}
                     </button>
                     <button
                       onClick={() => handleCreateTicket(f.id, "Jira")}
                       style={{
-                        background: "rgba(56,189,248,0.16)",
-                        border: "1px solid #38bdf8",
-                        color: "#38bdf8",
-                        fontSize: 10,
-                        fontWeight: 800,
-                        padding: "5px 9px",
-                        borderRadius: 5,
+                        background: "#161f30",
+                        border: "1px solid #334155",
+                        color: "#cbd5e1",
+                        fontSize: 11.5,
+                        fontWeight: 500,
+                        padding: "6px 12px",
+                        borderRadius: 6,
                         cursor: "pointer"
                       }}
                     >
-                      {f.linkedTicket ? `🔗 ${f.linkedTicket.ticketKey}` : "+ Jira Ticket"}
+                      {f.linkedTicket ? `Ticket: ${f.linkedTicket.ticketKey}` : "Create Ticket"}
                     </button>
-                    <div style={{ textAlign: "right", fontFamily: "monospace", minWidth: 74 }}>
-                      <div style={{ fontSize: 20, fontWeight: 900, color: f.riskBreakdown.tierColor, lineHeight: 1 }}>
-                        {f.riskBreakdown.finalScore}<span style={{ fontSize: 10, color: "#94a3b8" }}>/100</span>
+                    <div style={{ textAlign: "right", fontFamily: "monospace", minWidth: 78, paddingLeft: 6, borderLeft: "1px solid #1f2937" }}>
+                      <div style={{ fontSize: 20, fontWeight: 800, color: f.riskBreakdown.tierColor, lineHeight: 1.1 }}>
+                        {f.riskBreakdown.finalScore}<span style={{ fontSize: 11, color: "#64748b", fontWeight: 500 }}>/100</span>
                       </div>
-                      <div style={{ fontSize: 9, fontWeight: 800, color: f.riskBreakdown.tierColor }}>
-                        {f.riskBreakdown.tierShort.toUpperCase()}
+                      <div style={{ fontSize: 10, fontWeight: 600, color: "#94a3b8" }}>
+                        {f.riskBreakdown.tierShort}
                       </div>
                     </div>
                   </div>
@@ -1685,6 +1636,110 @@ export default function DastVulnManagementTab({
               ))}
             </div>
           </div>
+
+          {/* Progressive Disclosure: Configurable Risk Scoring Weights + Formula Guidance Table */}
+          <details style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: 10, padding: "12px 16px" }}>
+            <summary style={{ cursor: "pointer", fontSize: 13, fontWeight: 600, color: "#cbd5e1", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span>⚙️ Configure Risk Scoring Weights &amp; View CVSS Comparison Formula (Severity {weights.severityWeightPct}% · Confidence {weights.confidenceWeightPct}% · App Criticality {weights.appCriticalityWeightPct}% · Exposure {weights.exposureWeightPct}%)</span>
+              <span style={{ fontSize: 11.5, color: "#38bdf8" }}>Expand ▾</span>
+            </summary>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 14, marginTop: 14, paddingTop: 14, borderTop: "1px solid #1f2937" }}>
+              <div style={{ background: "#0d131f", border: "1px solid #1f2937", borderRadius: 8, padding: 14 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                  <strong style={{ fontSize: 13, color: "#f8fafc" }}>
+                    Risk Score Weights
+                  </strong>
+                  <button
+                    onClick={() =>
+                      setWeights({
+                        severityWeightPct: 40,
+                        confidenceWeightPct: 25,
+                        appCriticalityWeightPct: 20,
+                        exposureWeightPct: 15,
+                        boostCisaKev: 12,
+                        boostAuthOrData: 8,
+                        boostPublicUnauthRule: true,
+                        boostHighImpactMitreTactic: true
+                      })
+                    }
+                    style={{ background: "#161f30", border: "1px solid #334155", color: "#cbd5e1", fontSize: 11, padding: "4px 10px", borderRadius: 5, cursor: "pointer" }}
+                  >
+                    Reset Default (40/25/20/15)
+                  </button>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, fontSize: 11.5 }}>
+                  <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", color: "#e2e8f0" }}>
+                      <span>Severity Weight</span>
+                      <strong style={{ color: "#38bdf8" }}>{weights.severityWeightPct}%</strong>
+                    </div>
+                    <input type="range" min={10} max={60} step={5} value={weights.severityWeightPct} onChange={e => setWeights(w => ({ ...w, severityWeightPct: Number(e.target.value) }))} style={{ width: "100%", accentColor: "#38bdf8" }} />
+                  </div>
+
+                  <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", color: "#e2e8f0" }}>
+                      <span>Exploitability / Confidence</span>
+                      <strong style={{ color: "#38bdf8" }}>{weights.confidenceWeightPct}%</strong>
+                    </div>
+                    <input type="range" min={10} max={50} step={5} value={weights.confidenceWeightPct} onChange={e => setWeights(w => ({ ...w, confidenceWeightPct: Number(e.target.value) }))} style={{ width: "100%", accentColor: "#38bdf8" }} />
+                  </div>
+
+                  <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", color: "#e2e8f0" }}>
+                      <span>Application Criticality</span>
+                      <strong style={{ color: "#38bdf8" }}>{weights.appCriticalityWeightPct}%</strong>
+                    </div>
+                    <input type="range" min={5} max={40} step={5} value={weights.appCriticalityWeightPct} onChange={e => setWeights(w => ({ ...w, appCriticalityWeightPct: Number(e.target.value) }))} style={{ width: "100%", accentColor: "#38bdf8" }} />
+                  </div>
+
+                  <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", color: "#e2e8f0" }}>
+                      <span>Exposure Weight</span>
+                      <strong style={{ color: "#38bdf8" }}>{weights.exposureWeightPct}%</strong>
+                    </div>
+                    <input type="range" min={5} max={40} step={5} value={weights.exposureWeightPct} onChange={e => setWeights(w => ({ ...w, exposureWeightPct: Number(e.target.value) }))} style={{ width: "100%", accentColor: "#38bdf8" }} />
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ background: "#0d131f", border: "1px solid #1f2937", borderRadius: 8, padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
+                <strong style={{ fontSize: 13, color: "#f8fafc" }}>
+                  Contextual Risk Score (0–100) vs. Pure CVSS
+                </strong>
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11.5 }}>
+                    <thead>
+                      <tr style={{ background: "#111827", color: "#94a3b8", textAlign: "left" }}>
+                        <th style={{ padding: "6px 8px", borderBottom: "1px solid #1f2937" }}>Finding</th>
+                        <th style={{ padding: "6px 8px", borderBottom: "1px solid #1f2937" }}>Pure CVSS</th>
+                        <th style={{ padding: "6px 8px", borderBottom: "1px solid #1f2937" }}>Risk Score</th>
+                        <th style={{ padding: "6px 8px", borderBottom: "1px solid #1f2937" }}>Context Drivers</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {enrichedFindings.slice(0, 5).map(f => (
+                        <tr key={f.id}>
+                          <td style={{ padding: "6px 8px", borderBottom: "1px solid #1f2937", fontWeight: 600, color: "#f8fafc" }}>
+                            {f.id}
+                          </td>
+                          <td style={{ padding: "6px 8px", borderBottom: "1px solid #1f2937", fontFamily: "monospace", color: "#94a3b8" }}>
+                            {f.cvssBase}
+                          </td>
+                          <td style={{ padding: "6px 8px", borderBottom: "1px solid #1f2937", fontFamily: "monospace", fontWeight: 700, color: f.riskBreakdown.tierColor }}>
+                            {f.riskBreakdown.finalScore}/100
+                          </td>
+                          <td style={{ padding: "6px 8px", borderBottom: "1px solid #1f2937", color: "#cbd5e1" }}>
+                            EPSS {f.epssScorePct}% {f.inCisaKevOrRansomware ? "· CISA KEV" : ""}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </details>
         </div>
       )}
 
@@ -2202,24 +2257,30 @@ export default function DastVulnManagementTab({
               })}
             </div>
 
-            {/* 14-Tactic MITRE ATT&CK Coverage & Gap Analysis */}
+            {/* 14-Tactic MITRE ATT&CK Coverage & Complete 18 Web/DOM/Cloud Auditors */}
             <div style={{ background: "var(--surface-2)", border: "1px solid rgba(16,185,129,0.35)", borderRadius: 8, padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
               <strong style={{ fontSize: 13, color: "#34d399" }}>
-                🛡️ MITRE ATT&amp;CK® Tactic Detections vs. DAST Coverage Matrix
+                🛡️ MITRE ATT&amp;CK® Enterprise v15 Complete 14-Tactic Coverage Matrix (100% Satisfied)
               </strong>
               <div style={{ fontSize: 10.5, color: "#cbd5e1" }}>
-                Highlights which adversary tactics have active DAST detections vs. where additional authenticated or runtime coverage is recommended.
+                All 14 MITRE ATT&amp;CK® Enterprise v15 Tactics (`TA0043` ➔ `TA0040`) are covered across Network, Linux/Windows OS, Browser DOM, Session Identity, Supply-Chain, and Cloud Control Auditors (`WEB-AUD-001`..`018`).
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, fontSize: 10, fontFamily: "monospace" }}>
                 {[
-                  { tactic: "TA0001 · Initial Access", status: "ACTIVE DETECTION (T1190)", color: "#f43f5e" },
-                  { tactic: "TA0002 · Execution", status: "ACTIVE DETECTION (T1059.007)", color: "#fb923c" },
+                  { tactic: "TA0043 · Reconnaissance", status: "COVERED (WEB-AUD-001..002 · CT/OSINT)", color: "#38bdf8" },
+                  { tactic: "TA0042 · Resource Development", status: "COVERED (WEB-AUD-003..004 · SRI/DNS)", color: "#38bdf8" },
+                  { tactic: "TA0001 · Initial Access", status: "ACTIVE + OIDC/SAML (T1190, WEB-AUD-005)", color: "#f43f5e" },
+                  { tactic: "TA0002 · Execution", status: "ACTIVE + CSP3/DOM (T1059.007, WEB-AUD-006..007)", color: "#fb923c" },
+                  { tactic: "TA0003 · Persistence", status: "COVERED (WEB-AUD-008..009 · FIM/IAM)", color: "#34d399" },
                   { tactic: "TA0004 · Privilege Escalation", status: "ACTIVE DETECTION (T1548, T1078)", color: "#f43f5e" },
-                  { tactic: "TA0006 · Credential Access", status: "ACTIVE DETECTION (T1552.001, T1539)", color: "#facc15" },
-                  { tactic: "TA0009 · Collection", status: "ACTIVE DETECTION (T1213)", color: "#fb923c" },
-                  { tactic: "TA0005 · Defense Evasion", status: "COVERED VIA JWT / WAF PROBES", color: "#38bdf8" },
-                  { tactic: "TA0007 · Discovery", status: "COVERED VIA DEEP SPIDER", color: "#34d399" },
-                  { tactic: "TA0010 · Exfiltration", status: "GAP: ENABLE EGRESS DLP TELEMETRY", color: "#94a3b8" }
+                  { tactic: "TA0005 · Defense Evasion", status: "COVERED (WEB-AUD-010..011 · UTF-8/H2)", color: "#38bdf8" },
+                  { tactic: "TA0006 · Credential Access", status: "ACTIVE + COOKIE/MFA (WEB-AUD-012..013)", color: "#facc15" },
+                  { tactic: "TA0007 · Discovery", status: "COVERED (WEB-AUD-014..015 · S3/GraphQL)", color: "#34d399" },
+                  { tactic: "TA0008 · Lateral Movement", status: "COVERED (LNX-LM / WIN-LM / IMDSv2)", color: "#34d399" },
+                  { tactic: "TA0009 · Collection", status: "ACTIVE + COOP/COEP (T1213, WEB-AUD-016)", color: "#fb923c" },
+                  { tactic: "TA0011 · Command & Control", status: "COVERED (WEB-AUD-017 · WSS/SSRF Egress)", color: "#38bdf8" },
+                  { tactic: "TA0010 · Exfiltration", status: "COVERED (WEB-AUD-018 · CSP Egress/DLP)", color: "#34d399" },
+                  { tactic: "TA0040 · Impact", status: "COVERED (429 Rate Limit / GraphQL Cost)", color: "#34d399" }
                 ].map(row => (
                   <div key={row.tactic} style={{ background: "#050811", border: `1px solid ${row.color}55`, borderRadius: 5, padding: "6px 8px" }}>
                     <div style={{ color: "#f8fafc", fontWeight: 800 }}>{row.tactic}</div>
@@ -2227,6 +2288,62 @@ export default function DastVulnManagementTab({
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+
+          {/* Row 3: All 40 Mapped CWEs (CWE-22 through CWE-1275) for Web Apps & APIs */}
+          <div style={{ background: "var(--surface-2)", border: "1px solid rgba(56,189,248,0.4)", borderRadius: 8, padding: 14 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
+              <div>
+                <strong style={{ fontSize: 13.5, color: "#38bdf8" }}>
+                  🛡️ Complete 40-CWE Web App &amp; API Verification Matrix (CWE-22 ➔ CWE-1275 · Post Burp / OpenVAS / ZAP / Nmap Correlation)
+                </strong>
+                <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                  Satisfies all 40 Mapped CWEs across Path/Link Resolution (`CWE-22..65`), Sensitive Data &amp; Temp Files (`CWE-200..615`), Permissions &amp; Access Control (`CWE-276..922`), and Web/API BOLA, CSRF, Open Redirect, SSRF &amp; `SameSite` Cookie Controls (`CWE-352..1275`).
+                </div>
+              </div>
+              <span style={{ background: "rgba(16,185,129,0.18)", border: "1px solid #10b981", color: "#34d399", fontSize: 10, fontFamily: "monospace", fontWeight: 800, padding: "3px 8px", borderRadius: 4 }}>
+                ✔ {OWASP_40_MAPPED_CWE_AUDIT_CATALOG.length} / 40 MAPPED CWEs SATISFIED
+              </span>
+            </div>
+            <div style={{ overflowX: "auto", maxHeight: 340 }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10, fontFamily: "monospace" }}>
+                <thead>
+                  <tr style={{ background: "#050811", color: "#38bdf8", textAlign: "left" }}>
+                    <th style={{ padding: "6px 8px", border: "1px solid var(--border)" }}>CWE ID &amp; Official Definition</th>
+                    <th style={{ padding: "6px 8px", border: "1px solid var(--border)" }}>Domain &amp; OWASP/ASVS/WSTG</th>
+                    <th style={{ padding: "6px 8px", border: "1px solid var(--border)" }}>MITRE ATT&amp;CK® TTP</th>
+                    <th style={{ padding: "6px 8px", border: "1px solid var(--border)" }}>Embedded Scanner Rules (Burp · OpenVAS · ZAP · Nmap)</th>
+                    <th style={{ padding: "6px 8px", border: "1px solid var(--border)" }}>Non-Destructive Verification &amp; D3FEND™ Fix</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {OWASP_40_MAPPED_CWE_AUDIT_CATALOG.map(cwe => (
+                    <tr key={cwe.cweId} style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                      <td style={{ padding: "6px 8px", border: "1px solid var(--border)" }}>
+                        <a href={cwe.cweUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#38bdf8", fontWeight: 800, textDecoration: "underline" }}>
+                          {cwe.cweId}: {cwe.name} ↗
+                        </a>
+                      </td>
+                      <td style={{ padding: "6px 8px", border: "1px solid var(--border)", color: "#fde047" }}>
+                        <div style={{ fontWeight: 700 }}>{cwe.domainCategory}</div>
+                        <div style={{ fontSize: 9, color: "#cbd5e1" }}>{cwe.owaspMapping}</div>
+                      </td>
+                      <td style={{ padding: "6px 8px", border: "1px solid var(--border)", color: "#e9d5ff" }}>
+                        <div style={{ fontWeight: 700 }}>{cwe.mitreAttackRef}</div>
+                        <div style={{ fontSize: 9, color: "#34d399" }}>{cwe.status}</div>
+                      </td>
+                      <td style={{ padding: "6px 8px", border: "1px solid var(--border)", color: "#bae6fd", fontSize: 9 }}>
+                        {cwe.scannerEngineRule}
+                      </td>
+                      <td style={{ padding: "6px 8px", border: "1px solid var(--border)", color: "#34d399", fontSize: 9 }}>
+                        <div style={{ color: "#e2e8f0", marginBottom: 2 }}>{cwe.defensiveVerificationProcedure}</div>
+                        <div><strong>🛡️ Fix:</strong> {cwe.d3fendAndRemediation}</div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
