@@ -174,14 +174,37 @@ const products = [
     status: "live",
   },
   {
-    name: "AXIOM DAST",
-    tagline: "Dynamic Application Security Testing Platform",
+    name: "XTRIKE SAST DESK",
+    tagline: "Proof-Driven SAST Validation & Hybrid AST Engine",
     description:
-      "Enterprise DAST security platform with OWASP Top 10 fuzzing, post-exploitation engine, and live ZAP/Wapiti scan automation.",
-    url: "https://11-dast-security-platform.vercel.app",
-    color: "#e8912d",
+      "Multi-engine static code analysis (CodeQL, Semgrep, Joern) paired with a 6-Stage Proof-Driven Finding Validation Engine, Z3 Counterexample Solver, and OWASP/CWE/NVD Reference Catalog.",
+    url: "https://05-sast-platform.vercel.app",
+    color: "#8b4528",
+    icon: "📜",
+    status: "live",
+    badge: "LIVE",
+  },
+  {
+    name: "XTRIKE API DESK",
+    tagline: "Proof-Driven API Security & Role-Differential Studio",
+    description:
+      "Enterprise REST, GraphQL & gRPC API security platform with 6-Stage Proof Validation, BOLA/BFLA Role-Differential Replay, and OWASP API Top 10:2023 Reference Catalog.",
+    url: "https://12-api-security-platform.vercel.app",
+    color: "#8b4528",
+    icon: "🔌",
+    status: "live",
+    badge: "LIVE",
+  },
+  {
+    name: "EXPEDITE STRIKE™ DAST",
+    tagline: "8-Stage Autonomous DAST Brain & Live Website Scanner",
+    description:
+      "Enterprise DAST & Web Interface Security Platform with 8-Stage Autonomous Brain (32 Commercial Plugins), Live External Website HTTP/TLS/DNS/DOM Scanner, and 5 Switchable Themes.",
+    url: "https://11-dast-security-platform.vercel.app/engine",
+    color: "#8b4528",
     icon: "⚡",
     status: "live",
+    badge: "LIVE",
   },
   {
     name: "Expedite Consults",
