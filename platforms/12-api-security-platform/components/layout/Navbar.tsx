@@ -53,12 +53,12 @@ export default function Navbar() {
               <Globe2 className="w-4 h-4" />
             </div>
             <div>
-              <div className="desk-kicker">API SECURITY DESK &middot; PLATFORM 12</div>
+              <div className="desk-kicker">XTRIKE API SECURITY &middot; PLATFORM 12</div>
               <div
                 className="text-lg font-bold leading-tight font-editorial"
                 style={{ color: "var(--foreground)" }}
               >
-                Desk Note &mdash; Proof-Driven API Security
+                XTRIKE API DESK &mdash; Proof-Driven API Security
               </div>
             </div>
           </Link>

@@ -9,7 +9,7 @@ export function DeveloperAssistAgent() {
   const [messages, setMessages] = useState([
     {
       sender: "agent",
-      text: "Desk Note Briefing: Ask me to verify BOLA/IDOR tenant boundaries, review JWT signature pinning, or generate a 6-point Proof Contract for an OpenAPI 3.1 endpoint.",
+      text: "XTRIKE API DESK Briefing: Ask me to verify BOLA/IDOR tenant boundaries, review JWT signature pinning, or generate a 6-point Proof Contract for an OpenAPI 3.1 endpoint.",
       time: "Just now",
     },
   ]);
@@ -55,7 +55,7 @@ export function DeveloperAssistAgent() {
         }}
       >
         <ShieldCheck className="w-4 h-4" />
-        <span>Desk Note &middot; API Proof Copilot</span>
+        <span>XTRIKE API DESK &middot; Proof Copilot</span>
       </button>
     );
   }
@@ -89,7 +89,7 @@ export function DeveloperAssistAgent() {
               className="text-xs font-bold font-editorial"
               style={{ color: "var(--foreground)" }}
             >
-              Desk Note &middot; API Validation Copilot
+              XTRIKE API DESK &middot; Validation Copilot
             </div>
             <div
               className="text-[10px] flex items-center gap-1.5"

@@ -27,7 +27,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "API Security Desk | Proof-Driven API Validation & OWASP API Top 10:2023",
+  title: "XTRIKE API DESK | Proof-Driven API Validation & OWASP API Top 10:2023",
   description:
     "Deterministic API security validation, role-differential BOLA/BFLA replay, Z3 security claims, and OWASP API Top 10:2023 reference catalog.",
 };

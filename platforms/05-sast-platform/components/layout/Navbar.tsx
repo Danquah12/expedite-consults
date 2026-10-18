@@ -41,12 +41,12 @@ export default function Navbar() {
               <Shield className="w-4 h-4" />
             </div>
             <div>
-              <div className="desk-kicker">SAST SECURITY DESK &middot; PLATFORM 05</div>
+              <div className="desk-kicker">XTRIKE SAST SECURITY &middot; PLATFORM 05</div>
               <div
                 className="text-lg font-bold leading-tight font-editorial"
                 style={{ color: "var(--foreground)" }}
               >
-                Desk Note &mdash; Proof-Driven SAST Validation
+                XTRIKE SAST DESK &mdash; Proof-Driven SAST Validation
               </div>
             </div>
           </Link>

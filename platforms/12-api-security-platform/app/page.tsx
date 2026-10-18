@@ -111,15 +111,15 @@ export default function HomePage() {
 
   return (
     <div className="max-w-[1360px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
-      {/* Desk Note Editorial Masthead Section */}
+      {/* XTRIKE API DESK Editorial Masthead Section */}
       <section className="space-y-6">
         <div className="space-y-2 max-w-3xl">
-          <div className="desk-kicker">SECURITY DESK &middot; PLATFORM 12</div>
+          <div className="desk-kicker">XTRIKE SECURITY DESK &middot; PLATFORM 12</div>
           <h1
             className="text-4xl sm:text-5xl font-bold tracking-tight font-editorial"
             style={{ color: "var(--foreground)" }}
           >
-            Desk Note
+            XTRIKE API DESK
           </h1>
           <p className="text-sm sm:text-base leading-relaxed" style={{ color: "var(--muted)" }}>
             Live API telemetry and OpenAPI 3.1 contracts stay current. The six verification studios below are the deterministic validation desk. The proof engine scores reachability and role-differential replay—it is an evidence verifier, not an unverified guess.
