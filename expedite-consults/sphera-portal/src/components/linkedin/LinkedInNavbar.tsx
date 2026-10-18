@@ -91,6 +91,7 @@ export function LinkedInNavbar({
 }: LinkedInNavbarProps) {
   const [isMeOpen, setIsMeOpen] = useState(false)
   const [isMoreOpen, setIsMoreOpen] = useState(false)
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false)
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false)
   const [isWorkspaceMenuOpen, setIsWorkspaceMenuOpen] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(false)
@@ -105,7 +106,7 @@ export function LinkedInNavbar({
 
   // Document-level click-outside and Escape key listener to close menus reliably
   useEffect(() => {
-    const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
+    const handleOutsideClick = (e: MouseEvent) => {
       const target = e.target as Node
       if (isMoreOpen) {
         const clickedInsideDropdown = moreDropdownRef.current?.contains(target)
@@ -124,22 +125,21 @@ export function LinkedInNavbar({
       if (e.key === "Escape") {
         setIsMoreOpen(false)
         setIsMeOpen(false)
+        setIsMobileSearchOpen(false)
         setIsMobileDrawerOpen(false)
       }
     }
 
-    if (isMoreOpen || isMeOpen || isMobileDrawerOpen) {
+    if (isMoreOpen || isMeOpen) {
       document.addEventListener("mousedown", handleOutsideClick)
-      document.addEventListener("touchstart", handleOutsideClick)
       document.addEventListener("keydown", handleKeyDown)
     }
 
     return () => {
       document.removeEventListener("mousedown", handleOutsideClick)
-      document.removeEventListener("touchstart", handleOutsideClick)
       document.removeEventListener("keydown", handleKeyDown)
     }
-  }, [isMoreOpen, isMeOpen, isMobileDrawerOpen])
+  }, [isMoreOpen, isMeOpen])
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -284,10 +284,57 @@ export function LinkedInNavbar({
 
   return (
     <header className="sticky top-0 z-40 w-full max-w-full border-b border-zinc-200 bg-white/95 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/95 shadow-xs">
+      {/* Mobile Expandable Search Bar Overlay (when search icon tapped on mobile) */}
+      {isMobileSearchOpen && (
+        <div className="lg:hidden absolute inset-x-0 top-0 z-50 bg-white dark:bg-zinc-900 px-3 py-2 border-b border-zinc-200 dark:border-zinc-800 shadow-md flex items-center gap-2">
+          <div className="flex-1 flex items-center gap-2 rounded-full bg-[#EDF3F8] dark:bg-zinc-800 px-3 py-1.5 border border-zinc-200/50 dark:border-zinc-700/50">
+            <Search className="h-4 w-4 text-zinc-500 shrink-0" />
+            <input
+              autoFocus
+              type="text"
+              placeholder={t("search_placeholder", "Search members, skills, hubs...")}
+              value={searchQuery}
+              onChange={(e) => {
+                onSearchChange(e.target.value)
+                setIsSearchFocused(true)
+              }}
+              onFocus={() => setIsSearchFocused(true)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  onOpenUniversalSearch && onOpenUniversalSearch()
+                  setIsSearchFocused(false)
+                  setIsMobileSearchOpen(false)
+                }
+              }}
+              className="w-full bg-transparent text-xs text-zinc-900 placeholder:text-zinc-500 focus:outline-none dark:text-zinc-100"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => onSearchChange("")}
+                className="text-zinc-400 hover:text-zinc-600 p-0.5 shrink-0"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setIsMobileSearchOpen(false)
+              setIsSearchFocused(false)
+            }}
+            className="text-xs font-semibold text-[#0A66C2] px-2 py-1 shrink-0"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
       {/* Top Header: Brand Logo, Adaptive Search, and Quick Actions */}
       <div className="mx-auto flex h-13 sm:h-14 max-w-[1720px] items-center justify-between px-2 sm:px-4 lg:px-6 gap-2 sm:gap-3">
         {/* Left Side: Brand Logo & Interactive Live Search */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5 flex-1 min-w-0 max-w-sm sm:max-w-md lg:max-w-xs xl:max-w-sm 2xl:max-w-md relative">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 lg:flex-1 lg:min-w-0 max-w-sm sm:max-w-md lg:max-w-xs xl:max-w-sm 2xl:max-w-md relative">
           <button
             onClick={() => onSelectTab('home')}
             className="flex items-center focus:outline-none group shrink-0"
@@ -296,8 +343,8 @@ export function LinkedInNavbar({
             <ConnectInLogo size="sm" showSubtitle={false} className="shrink-0" />
           </button>
 
-          {/* Interactive Search Box - Fluid on Mobile, Expanding on Desktop */}
-          <div className="relative flex-1 min-w-[60px] sm:min-w-[110px] max-w-full transition-all duration-200">
+          {/* Interactive Search Box - Fluid on Desktop, Hidden on Mobile */}
+          <div className="hidden lg:block relative flex-1 min-w-[140px] max-w-full transition-all duration-200">
             <div
               className={`flex items-center gap-1.5 sm:gap-2 rounded-full bg-[#EDF3F8] px-2.5 sm:px-3 py-1 sm:py-1.5 transition-all dark:bg-zinc-800/90 border border-zinc-200/50 dark:border-zinc-700/50 ${
                 isSearchFocused ? "ring-2 ring-[#0A66C2] bg-white border-[#0A66C2] shadow-md dark:bg-zinc-900" : "hover:bg-[#E2ECF3] dark:hover:bg-zinc-800"
@@ -544,8 +591,25 @@ export function LinkedInNavbar({
           })}
         </nav>
 
-        {/* Right Side Controls (AI Assistant + Me Profile + More Hubs + Theme) */}
+        {/* Right Side Controls (Mobile Search + AI Assistant + Me Profile + More Hubs + Theme) */}
         <div className="flex items-center gap-1 sm:gap-1.5 lg:gap-2 shrink-0">
+          {/* Mobile Search Button (Compact icon, opens search overlay) */}
+          <button
+            type="button"
+            onClick={() => {
+              if (onOpenUniversalSearch) {
+                onOpenUniversalSearch()
+              } else {
+                setIsMobileSearchOpen(true)
+              }
+            }}
+            className="lg:hidden p-1.5 rounded-full text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors shrink-0 cursor-pointer"
+            title={t("search_placeholder", "Search...")}
+            aria-label="Search"
+          >
+            <Search className="h-4 w-4" />
+          </button>
+
           {/* Subtle Divider for desktop */}
           <div className="hidden lg:block h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-0.5" />
 
@@ -592,11 +656,11 @@ export function LinkedInNavbar({
             {isMeOpen && (
               <>
                 <div
-                  className="fixed inset-0 z-40 bg-black/20 backdrop-blur-2xs lg:bg-black/10"
+                  className="fixed inset-0 z-[55] bg-black/40 backdrop-blur-2xs lg:bg-black/20"
                   onClick={() => setIsMeOpen(false)}
                 />
-                <div className="fixed sm:absolute right-2 sm:right-0 top-14 sm:top-12 z-50 w-[calc(100vw-16px)] sm:w-80 max-w-[360px] rounded-2xl border border-zinc-200 bg-white p-3.5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 max-h-[85vh] overflow-y-auto">
-                  <div className="flex items-start justify-between border-b border-zinc-100 pb-3 dark:border-zinc-800">
+                <div className="fixed sm:absolute inset-x-2 sm:inset-x-auto sm:right-0 top-14 sm:top-12 bottom-20 sm:bottom-auto sm:max-h-[85vh] sm:w-80 max-w-[360px] rounded-2xl border border-zinc-200 bg-white p-3.5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 flex flex-col overflow-hidden z-[60]">
+                  <div className="flex items-start justify-between border-b border-zinc-100 pb-3 dark:border-zinc-800 shrink-0">
                     <div className="flex items-start gap-3 flex-1 min-w-0">
                       <img
                         src={user.avatar}
@@ -636,7 +700,7 @@ export function LinkedInNavbar({
                     </button>
                   </div>
 
-                  <div className="pt-2 space-y-1.5">
+                  <div className="flex-1 min-h-0 overflow-y-auto pt-2 space-y-2 pr-1">
                     <p className="px-2 py-0.5 font-bold text-zinc-900 dark:text-zinc-100 text-[10px] uppercase tracking-wider font-mono">
                       {t("active_workspace_switcher", "Active Workspace Switcher")}
                     </p>
@@ -792,6 +856,18 @@ export function LinkedInNavbar({
                       </button>
                     )}
 
+                    {/* Mobile Theme & Language quick controls */}
+                    <div className="lg:hidden space-y-1.5 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                      <div className="flex items-center justify-between px-1">
+                        <span className="text-[11px] font-medium text-zinc-600 dark:text-zinc-400">Appearance</span>
+                        <ThemeColorSwitcher align="right" />
+                      </div>
+                      <div className="flex items-center justify-between px-1">
+                        <span className="text-[11px] font-medium text-zinc-600 dark:text-zinc-400">Language</span>
+                        <LanguageSwitcher align="right" />
+                      </div>
+                    </div>
+
                     <button
                       onClick={() => {
                         setIsMeOpen(false)
@@ -859,9 +935,9 @@ export function LinkedInNavbar({
         </div>
       </div>
 
-      {/* Mobile & Tablet Bottom Navigation Bar (Fixed Native App Bar — 8 Core Pillars) */}
+      {/* Mobile & Tablet Bottom Navigation Bar (Fixed Native App Bar — 10 Pillars Mirroring Desktop) */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border-t border-zinc-200 dark:border-zinc-800 shadow-lg px-1 py-1 pb-[max(0.35rem,env(safe-area-inset-bottom))]">
-        <div className="flex items-center justify-between max-w-lg mx-auto overflow-x-auto no-scrollbar gap-0.5">
+        <div className="flex items-center justify-start sm:justify-center max-w-lg mx-auto overflow-x-auto no-scrollbar gap-0.5 scroll-smooth px-1">
           {/* 1. Home */}
           <button
             type="button"
@@ -869,7 +945,7 @@ export function LinkedInNavbar({
               onSelectTab('home')
               setIsMoreOpen(false)
             }}
-            className={`flex-1 min-w-[38px] max-w-[54px] flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
+            className={`shrink-0 min-w-[44px] max-w-[56px] flex-1 flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
               activeTab === 'home'
                 ? "text-[#0A66C2] font-bold"
                 : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
@@ -891,7 +967,7 @@ export function LinkedInNavbar({
               onSelectTab('network')
               setIsMoreOpen(false)
             }}
-            className={`flex-1 min-w-[38px] max-w-[54px] flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
+            className={`shrink-0 min-w-[44px] max-w-[56px] flex-1 flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
               activeTab === 'network'
                 ? "text-[#0A66C2] font-bold"
                 : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
@@ -910,7 +986,7 @@ export function LinkedInNavbar({
               onSelectTab('jobs')
               setIsMoreOpen(false)
             }}
-            className={`flex-1 min-w-[38px] max-w-[54px] flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
+            className={`shrink-0 min-w-[44px] max-w-[56px] flex-1 flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
               activeTab === 'jobs'
                 ? "text-[#0A66C2] font-bold"
                 : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
@@ -929,7 +1005,7 @@ export function LinkedInNavbar({
               onSelectTab('messaging')
               setIsMoreOpen(false)
             }}
-            className={`flex-1 min-w-[38px] max-w-[54px] flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
+            className={`shrink-0 min-w-[44px] max-w-[56px] flex-1 flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
               activeTab === 'messaging'
                 ? "text-[#0A66C2] font-bold"
                 : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
@@ -953,7 +1029,7 @@ export function LinkedInNavbar({
               onSelectTab('notifications')
               setIsMoreOpen(false)
             }}
-            className={`flex-1 min-w-[38px] max-w-[54px] flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
+            className={`shrink-0 min-w-[44px] max-w-[56px] flex-1 flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
               activeTab === 'notifications'
                 ? "text-[#0A66C2] font-bold"
                 : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
@@ -977,7 +1053,7 @@ export function LinkedInNavbar({
               onSelectTab('marketplace')
               setIsMoreOpen(false)
             }}
-            className={`flex-1 min-w-[38px] max-w-[54px] flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
+            className={`shrink-0 min-w-[44px] max-w-[56px] flex-1 flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
               activeTab === 'marketplace'
                 ? "text-purple-600 dark:text-purple-400 font-bold"
                 : "text-zinc-500 hover:text-purple-600 dark:text-zinc-400 dark:hover:text-purple-400"
@@ -996,7 +1072,7 @@ export function LinkedInNavbar({
               onSelectTab('learning')
               setIsMoreOpen(false)
             }}
-            className={`flex-1 min-w-[38px] max-w-[54px] flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
+            className={`shrink-0 min-w-[44px] max-w-[56px] flex-1 flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
               activeTab === 'learning'
                 ? "text-[#0A66C2] font-bold"
                 : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
@@ -1018,7 +1094,7 @@ export function LinkedInNavbar({
               onSelectTab('media')
               setIsMoreOpen(false)
             }}
-            className={`flex-1 min-w-[38px] max-w-[54px] flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer shrink-0 ${
+            className={`shrink-0 min-w-[44px] max-w-[56px] flex-1 flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
               activeTab === 'media'
                 ? "text-rose-600 dark:text-rose-400 font-bold"
                 : "text-zinc-500 hover:text-rose-600 dark:text-zinc-400 dark:hover:text-rose-400"
@@ -1040,7 +1116,7 @@ export function LinkedInNavbar({
               onSelectTab('pulserooms')
               setIsMoreOpen(false)
             }}
-            className={`flex-1 min-w-[38px] max-w-[54px] flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer shrink-0 ${
+            className={`shrink-0 min-w-[44px] max-w-[56px] flex-1 flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
               activeTab === 'pulserooms'
                 ? "text-emerald-600 dark:text-emerald-400 font-bold"
                 : "text-zinc-500 hover:text-emerald-600 dark:text-zinc-400 dark:hover:text-emerald-400"
@@ -1053,7 +1129,7 @@ export function LinkedInNavbar({
           </button>
 
           {/* 10. More (Modules & Hubs Dropdown) */}
-          <div ref={mobileMoreMenuRef} className="flex-1 min-w-[38px] max-w-[54px] shrink-0">
+          <div ref={mobileMoreMenuRef} className="shrink-0 min-w-[44px] max-w-[56px] flex-1">
             <button
               type="button"
               onClick={() => {
@@ -1084,7 +1160,7 @@ export function LinkedInNavbar({
           />
           <div
             ref={moreDropdownRef}
-            className="fixed z-[60] right-2 left-2 sm:left-auto sm:right-4 lg:right-6 top-14 sm:top-14 w-auto sm:w-[420px] max-w-[440px] max-h-[85vh] rounded-2xl border border-zinc-200 bg-white p-3.5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 flex flex-col overflow-hidden"
+            className="fixed z-[60] inset-x-2 sm:inset-x-auto sm:right-4 lg:right-6 top-14 bottom-20 sm:bottom-auto sm:max-h-[85vh] sm:w-[440px] max-w-[460px] rounded-2xl border border-zinc-200 bg-white p-3.5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 flex flex-col overflow-hidden"
           >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-zinc-100 pb-2.5 dark:border-zinc-800 shrink-0">
