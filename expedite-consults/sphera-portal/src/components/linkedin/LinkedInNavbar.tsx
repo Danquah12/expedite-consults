@@ -620,7 +620,7 @@ export function LinkedInNavbar({
             title="Ask Vibe AI — Interactive Q&A, Campus Intelligence & Answers"
           >
             <Sparkles className="h-3.5 w-3.5 text-[#C88A24] dark:text-amber-300 transition-transform group-hover:scale-110 shrink-0" />
-            <span className="text-xs font-semibold">Vibe</span>
+            <span className="hidden sm:inline text-xs font-semibold">Vibe</span>
             <span className="hidden xl:inline rounded bg-amber-200/60 dark:bg-amber-900/60 px-1.5 py-0.2 text-[9px] font-bold text-[#5C3800] dark:text-amber-100">
               Q&amp;A
             </span>
@@ -923,9 +923,9 @@ export function LinkedInNavbar({
             </button>
           )}
 
-          {/* Desktop-only Theme & Background Color Switcher Popover (Visible on 2xl+ to avoid crowding; also inside Me menu) */}
-          <div className="hidden 2xl:block shrink-0">
-            <ThemeColorSwitcher align="right" />
+          {/* Theme & Background Color Switcher — visible on all screen sizes (compact on mobile) */}
+          <div className="block shrink-0">
+            <ThemeColorSwitcher align="right" compact />
           </div>
 
           {/* Desktop-only Global Multi-Language Switcher Popover (Visible on 2xl+; also inside Me menu) */}
