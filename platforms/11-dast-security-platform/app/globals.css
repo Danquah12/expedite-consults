@@ -359,8 +359,85 @@ html[data-theme="daylight-slate"] {
 :is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) .btn-primary,
 :is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) .btn-primary *,
 :is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) .theme-solid-pill,
-:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) .theme-solid-pill * {
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) .theme-solid-pill *,
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) button[class*="bg-sky-600"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) button[class*="bg-sky-600"] *,
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) button[class*="bg-cyan-600"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) button[class*="bg-cyan-600"] *,
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) button[class*="bg-emerald-600"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) button[class*="bg-emerald-600"] *,
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) a[class*="bg-sky-600"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) a[class*="bg-sky-600"] * {
   color: #fffaf5 !important;
+}
+
+/* Convert Tailwind dark utility classes (used in /app AEGIS SOC Portal & other studios) to Warm Parchment & Ivory surfaces */
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="bg-slate-950"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="bg-gray-950"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="bg-zinc-950"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="bg-neutral-950"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="bg-black"] {
+  background-color: var(--bg) !important;
+}
+
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="bg-slate-900"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="bg-gray-900"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="bg-zinc-900"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="bg-neutral-900"] {
+  background-color: var(--surface) !important;
+}
+
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="bg-slate-800"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="bg-gray-800"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="bg-zinc-800"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="bg-neutral-800"] {
+  background-color: var(--surface-2) !important;
+}
+
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="bg-slate-700"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="bg-gray-700"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="bg-zinc-700"] {
+  background-color: var(--surface-3) !important;
+}
+
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="bg-sky-950"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="bg-cyan-950"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="bg-emerald-950"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="bg-rose-950"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="bg-amber-950"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="bg-purple-950"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="bg-indigo-950"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="bg-sky-500/"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="bg-cyan-500/"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="bg-emerald-500/"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="bg-rose-500/"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="bg-amber-500/"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="bg-purple-500/"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="bg-indigo-500/"] {
+  background-color: var(--pill-tint) !important;
+  border-color: var(--pill-border) !important;
+}
+
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) button[class*="bg-sky-600"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) button[class*="bg-cyan-600"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) button[class*="bg-emerald-600"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) a[class*="bg-sky-600"] {
+  background-color: var(--primary) !important;
+  border-color: var(--primary-2) !important;
+  color: #fffaf5 !important;
+}
+
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="border-slate-"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="border-gray-"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="border-zinc-"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="border-neutral-"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="divide-slate-"] > * + * {
+  border-color: var(--border) !important;
+}
+
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="border-sky-400"],
+:is(html:not([data-theme]), html[data-theme="parchment"], html[data-theme="daylight-slate"]) [class*="border-sky-500"] {
+  border-color: var(--primary) !important;
 }
 
 /* Ensure all inputs, selects, textareas, and code/pre blocks in light mode have warm parchment/ivory backgrounds */
