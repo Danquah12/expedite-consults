@@ -9,6 +9,7 @@ import {
   MessageSquare,
   Bell,
   Grid3X3,
+  Menu,
   Award,
   Radio,
   SlidersHorizontal,
@@ -90,6 +91,7 @@ export function LinkedInNavbar({
 }: LinkedInNavbarProps) {
   const [isMeOpen, setIsMeOpen] = useState(false)
   const [isMoreOpen, setIsMoreOpen] = useState(false)
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false)
   const [isWorkspaceMenuOpen, setIsWorkspaceMenuOpen] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [isSearchFocused, setIsSearchFocused] = useState(false)
@@ -122,10 +124,11 @@ export function LinkedInNavbar({
       if (e.key === "Escape") {
         setIsMoreOpen(false)
         setIsMeOpen(false)
+        setIsMobileDrawerOpen(false)
       }
     }
 
-    if (isMoreOpen || isMeOpen) {
+    if (isMoreOpen || isMeOpen || isMobileDrawerOpen) {
       document.addEventListener("mousedown", handleOutsideClick)
       document.addEventListener("touchstart", handleOutsideClick)
       document.addEventListener("keydown", handleKeyDown)
@@ -136,7 +139,7 @@ export function LinkedInNavbar({
       document.removeEventListener("touchstart", handleOutsideClick)
       document.removeEventListener("keydown", handleKeyDown)
     }
-  }, [isMoreOpen, isMeOpen])
+  }, [isMoreOpen, isMeOpen, isMobileDrawerOpen])
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -283,7 +286,18 @@ export function LinkedInNavbar({
       {/* Top Header: Brand Logo, Adaptive Search, and Quick Actions */}
       <div className="mx-auto flex h-13 sm:h-14 max-w-[1720px] items-center justify-between px-2 sm:px-4 lg:px-6 gap-2 sm:gap-3">
         {/* Left Side: Brand Logo & Interactive Live Search */}
-        <div className="flex items-center gap-2 sm:gap-2.5 flex-1 min-w-0 max-w-sm sm:max-w-md lg:max-w-xs xl:max-w-sm 2xl:max-w-md relative">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 flex-1 min-w-0 max-w-sm sm:max-w-md lg:max-w-xs xl:max-w-sm 2xl:max-w-md relative">
+          {/* Mobile All-Hubs Hamburger Trigger (< lg) */}
+          <button
+            type="button"
+            onClick={() => setIsMobileDrawerOpen(true)}
+            className="lg:hidden p-1.5 rounded-lg text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors shrink-0 cursor-pointer"
+            title="All Hubs & Navigation Menu"
+            aria-label="Open Mobile Navigation Menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+
           <button
             onClick={() => onSelectTab('home')}
             className="flex items-center focus:outline-none group shrink-0"
@@ -571,10 +585,11 @@ export function LinkedInNavbar({
             onClick={() => onSelectTab('messaging')}
             className={`lg:hidden relative p-1.5 rounded-full transition-colors cursor-pointer ${
               activeTab === 'messaging'
-                ? "text-[#0A66C2]"
+                ? "text-[#0A66C2] bg-blue-50 dark:bg-blue-950/40"
                 : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
             }`}
             title="Messages"
+            aria-label="Direct Messages"
           >
             <MessageSquare className="h-5 w-5" />
             {unreadMessagesCount > 0 && (
@@ -584,20 +599,21 @@ export function LinkedInNavbar({
             )}
           </button>
 
-          {/* Notifications Tab Button (Desktop lg+ only) */}
+          {/* Notifications Button (Mobile & Desktop) */}
           <button
             onClick={() => onSelectTab('notifications')}
-            className={`hidden lg:flex relative min-w-[38px] flex-col items-center justify-center py-1 text-xs transition-colors shrink-0 cursor-pointer ${
+            className={`relative p-1.5 lg:py-1 lg:px-1 flex min-w-[34px] lg:min-w-[38px] flex-col items-center justify-center text-xs transition-colors shrink-0 cursor-pointer rounded-full lg:rounded-none ${
               activeTab === 'notifications'
-                ? "text-[#0A66C2] font-semibold"
-                : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                ? "text-[#0A66C2] font-semibold bg-blue-50 dark:bg-blue-950/40 lg:bg-transparent"
+                : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 lg:hover:bg-transparent"
             }`}
             title="Notifications"
+            aria-label="Notifications"
           >
             <div className="relative">
-              <Bell className="h-4.5 w-4.5" />
+              <Bell className="h-4.5 w-4.5 lg:h-4.5 lg:w-4.5" />
               {unreadNotificationsCount > 0 && (
-                <span className="absolute -right-2 -top-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-600 px-0.5 text-[9px] font-bold text-white shadow-xs">
+                <span className="absolute -right-1 -top-1 lg:-right-2 lg:-top-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-600 px-0.5 text-[9px] font-bold text-white shadow-xs">
                   {unreadNotificationsCount}
                 </span>
               )}
@@ -879,9 +895,9 @@ export function LinkedInNavbar({
         </div>
       </div>
 
-      {/* Mobile & Tablet Bottom Navigation Bar (Fixed Native App Bar — 5 Thumb-Friendly Core Tabs) */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border-t border-zinc-200 dark:border-zinc-800 shadow-lg px-2 py-1 pb-[max(0.35rem,env(safe-area-inset-bottom))]">
-        <div className="flex items-center justify-around max-w-md mx-auto">
+      {/* Mobile & Tablet Bottom Navigation Bar (Fixed Native App Bar — 8 Core Pillars) */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border-t border-zinc-200 dark:border-zinc-800 shadow-lg px-1 py-1 pb-[max(0.35rem,env(safe-area-inset-bottom))]">
+        <div className="flex items-center justify-between max-w-lg mx-auto overflow-x-auto no-scrollbar gap-0.5">
           {/* 1. Home */}
           <button
             type="button"
@@ -889,101 +905,164 @@ export function LinkedInNavbar({
               onSelectTab('home')
               setIsMoreOpen(false)
             }}
-            className={`flex flex-col items-center justify-center py-1 px-2.5 min-w-[54px] text-center transition-colors cursor-pointer ${
+            className={`flex-1 min-w-[40px] max-w-[54px] flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
               activeTab === 'home'
                 ? "text-[#0A66C2] font-bold"
                 : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
             }`}
           >
             <div className="relative">
-              <House className="h-5 w-5" />
-              <span className="absolute -top-1 -right-2 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-600 px-0.5 text-[9px] font-bold text-white shadow-2xs">
+              <House className="h-4.5 w-4.5" />
+              <span className="absolute -top-1 -right-1.5 flex h-3 min-w-3 items-center justify-center rounded-full bg-red-600 px-0.5 text-[8px] font-bold text-white shadow-2xs">
                 2
               </span>
             </div>
-            <span className="text-[10px] mt-0.5 font-medium leading-none">{t("nav_home", "Home")}</span>
+            <span className="text-[9px] mt-0.5 font-medium leading-none">{t("nav_home_short", "Home")}</span>
           </button>
 
-          {/* 2. Network */}
+          {/* 2. Market (Marketplace) */}
           <button
             type="button"
             onClick={() => {
-              onSelectTab('network')
+              onSelectTab('marketplace')
               setIsMoreOpen(false)
             }}
-            className={`flex flex-col items-center justify-center py-1 px-2.5 min-w-[54px] text-center transition-colors cursor-pointer ${
-              activeTab === 'network'
+            className={`flex-1 min-w-[40px] max-w-[54px] flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
+              activeTab === 'marketplace'
+                ? "text-purple-600 dark:text-purple-400 font-bold"
+                : "text-zinc-500 hover:text-purple-600 dark:text-zinc-400 dark:hover:text-purple-400"
+            }`}
+          >
+            <div className="relative">
+              <ShoppingBag className={`h-4.5 w-4.5 ${activeTab === 'marketplace' ? "text-purple-600 dark:text-purple-400" : ""}`} />
+            </div>
+            <span className="text-[9px] mt-0.5 font-semibold text-purple-600 dark:text-purple-400 leading-none">{t("nav_marketplace_short", "Market")}</span>
+          </button>
+
+          {/* 3. Learn (Learning) */}
+          <button
+            type="button"
+            onClick={() => {
+              onSelectTab('learning')
+              setIsMoreOpen(false)
+            }}
+            className={`flex-1 min-w-[40px] max-w-[54px] flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
+              activeTab === 'learning'
                 ? "text-[#0A66C2] font-bold"
                 : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
             }`}
           >
             <div className="relative">
-              <Users className="h-5 w-5" />
+              <GraduationCap className="h-4.5 w-4.5" />
+              <span className="absolute -top-1 -right-1.5 flex h-3 min-w-3 items-center justify-center rounded-full bg-blue-600 px-0.5 text-[8px] font-bold text-white shadow-2xs">
+                1
+              </span>
             </div>
-            <span className="text-[10px] mt-0.5 font-medium leading-none">{t("nav_network", "Network")}</span>
+            <span className="text-[9px] mt-0.5 font-medium leading-none">{t("nav_learning_short", "Learn")}</span>
           </button>
 
-          {/* 3. Jobs */}
+          {/* 4. Media */}
+          <button
+            type="button"
+            onClick={() => {
+              onSelectTab('media')
+              setIsMoreOpen(false)
+            }}
+            className={`flex-1 min-w-[40px] max-w-[54px] flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
+              activeTab === 'media'
+                ? "text-rose-600 dark:text-rose-400 font-bold"
+                : "text-zinc-500 hover:text-rose-600 dark:text-zinc-400 dark:hover:text-rose-400"
+            }`}
+          >
+            <div className="relative">
+              <Tv className={`h-4.5 w-4.5 ${activeTab === 'media' ? "text-rose-600 dark:text-rose-400" : ""}`} />
+              <span className="absolute -top-1 -right-1.5 flex h-3 min-w-3 items-center justify-center rounded-full bg-rose-600 px-0.5 text-[8px] font-bold text-white shadow-2xs">
+                1
+              </span>
+            </div>
+            <span className="text-[9px] mt-0.5 font-medium leading-none">{t("nav_media_short", "Media")}</span>
+          </button>
+
+          {/* 5. Messages */}
+          <button
+            type="button"
+            onClick={() => {
+              onSelectTab('messaging')
+              setIsMoreOpen(false)
+            }}
+            className={`flex-1 min-w-[40px] max-w-[54px] flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
+              activeTab === 'messaging'
+                ? "text-[#0A66C2] font-bold"
+                : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+            }`}
+          >
+            <div className="relative">
+              <MessageSquare className="h-4.5 w-4.5" />
+              {unreadMessagesCount > 0 && (
+                <span className="absolute -top-1 -right-1.5 flex h-3 min-w-3 items-center justify-center rounded-full bg-red-600 px-0.5 text-[8px] font-bold text-white shadow-2xs">
+                  {unreadMessagesCount}
+                </span>
+              )}
+            </div>
+            <span className="text-[9px] mt-0.5 font-medium leading-none">{t("nav_messages_short", "Msgs")}</span>
+          </button>
+
+          {/* 6. Jobs */}
           <button
             type="button"
             onClick={() => {
               onSelectTab('jobs')
               setIsMoreOpen(false)
             }}
-            className={`flex flex-col items-center justify-center py-1 px-2.5 min-w-[54px] text-center transition-colors cursor-pointer ${
+            className={`flex-1 min-w-[40px] max-w-[54px] flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
               activeTab === 'jobs'
                 ? "text-[#0A66C2] font-bold"
                 : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
             }`}
           >
             <div className="relative">
-              <Briefcase className="h-5 w-5" />
+              <Briefcase className="h-4.5 w-4.5" />
             </div>
-            <span className="text-[10px] mt-0.5 font-medium leading-none">{t("nav_jobs", "Jobs")}</span>
+            <span className="text-[9px] mt-0.5 font-medium leading-none">{t("nav_jobs_short", "Jobs")}</span>
           </button>
 
-          {/* 4. Notifications / Alerts */}
+          {/* 7. Network */}
           <button
             type="button"
             onClick={() => {
-              onSelectTab('notifications')
+              onSelectTab('network')
               setIsMoreOpen(false)
             }}
-            className={`flex flex-col items-center justify-center py-1 px-2.5 min-w-[54px] text-center transition-colors cursor-pointer ${
-              activeTab === 'notifications'
+            className={`flex-1 min-w-[40px] max-w-[54px] flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
+              activeTab === 'network'
                 ? "text-[#0A66C2] font-bold"
                 : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
             }`}
           >
             <div className="relative">
-              <Bell className="h-5 w-5" />
-              {unreadNotificationsCount > 0 && (
-                <span className="absolute -top-1 -right-2 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-600 px-0.5 text-[9px] font-bold text-white shadow-2xs">
-                  {unreadNotificationsCount}
-                </span>
-              )}
+              <Users className="h-4.5 w-4.5" />
             </div>
-            <span className="text-[10px] mt-0.5 font-medium leading-none">{t("nav_alerts", "Alerts")}</span>
+            <span className="text-[9px] mt-0.5 font-medium leading-none">{t("nav_network_short", "Network")}</span>
           </button>
 
-          {/* 5. Hubs (More) */}
-          <div ref={mobileMoreMenuRef} className="relative">
+          {/* 8. Hubs (Mobile All-in-One Drawer) */}
+          <div className="flex-1 min-w-[40px] max-w-[54px]">
             <button
               type="button"
               onClick={() => {
-                setIsMoreOpen(!isMoreOpen)
+                setIsMobileDrawerOpen(true)
                 setIsMeOpen(false)
               }}
-              className={`flex flex-col items-center justify-center py-1 px-2.5 min-w-[54px] text-center transition-colors cursor-pointer ${
-                isMoreOpen
+              className={`w-full flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
+                isMobileDrawerOpen
                   ? "text-[#0A66C2] font-bold"
                   : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
               }`}
             >
               <div className="relative">
-                <Grid3X3 className="h-5 w-5" />
+                <Grid3X3 className="h-4.5 w-4.5" />
               </div>
-              <span className="text-[10px] mt-0.5 font-bold leading-none">{t("nav_more", "Hubs")}</span>
+              <span className="text-[9px] mt-0.5 font-bold leading-none">{t("nav_more", "Hubs")}</span>
             </button>
           </div>
         </div>
@@ -1024,6 +1103,78 @@ export function LinkedInNavbar({
 
             {/* Scrollable Categories List */}
             <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pt-2 pr-1">
+              {/* Quick Primary Apps / Shortcuts Grid */}
+              <div className="rounded-xl bg-gradient-to-r from-blue-50/70 to-purple-50/70 dark:from-blue-950/30 dark:to-purple-950/20 p-2.5 border border-blue-100 dark:border-blue-900/50">
+                <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-2 px-0.5">
+                  Core ConnectIn Hubs
+                </p>
+                <div className="grid grid-cols-4 gap-1.5 text-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('marketplace')
+                      setIsMoreOpen(false)
+                    }}
+                    className={`p-2 rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
+                      activeTab === 'marketplace'
+                        ? "bg-purple-600 text-white shadow-xs"
+                        : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-700 hover:border-purple-300"
+                    }`}
+                  >
+                    <ShoppingBag className={`h-5 w-5 mb-1 ${activeTab === 'marketplace' ? "text-white" : "text-purple-600 dark:text-purple-400"}`} />
+                    <span className="text-[10px] font-bold">Market</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('learning')
+                      setIsMoreOpen(false)
+                    }}
+                    className={`p-2 rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
+                      activeTab === 'learning'
+                        ? "bg-blue-600 text-white shadow-xs"
+                        : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-700 hover:border-blue-300"
+                    }`}
+                  >
+                    <GraduationCap className={`h-5 w-5 mb-1 ${activeTab === 'learning' ? "text-white" : "text-blue-600 dark:text-blue-400"}`} />
+                    <span className="text-[10px] font-bold">Learn</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('media')
+                      setIsMoreOpen(false)
+                    }}
+                    className={`p-2 rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
+                      activeTab === 'media'
+                        ? "bg-rose-600 text-white shadow-xs"
+                        : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-700 hover:border-rose-300"
+                    }`}
+                  >
+                    <Tv className={`h-5 w-5 mb-1 ${activeTab === 'media' ? "text-white" : "text-rose-600 dark:text-rose-400"}`} />
+                    <span className="text-[10px] font-bold">Media</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('messaging')
+                      setIsMoreOpen(false)
+                    }}
+                    className={`p-2 rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
+                      activeTab === 'messaging'
+                        ? "bg-emerald-600 text-white shadow-xs"
+                        : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-700 hover:border-emerald-300"
+                    }`}
+                  >
+                    <MessageSquare className={`h-5 w-5 mb-1 ${activeTab === 'messaging' ? "text-white" : "text-emerald-600 dark:text-emerald-400"}`} />
+                    <span className="text-[10px] font-bold">Messages</span>
+                  </button>
+                </div>
+              </div>
+
               {categorizedMoreMenu.map((group) => (
                 <div key={group.category} className="space-y-1">
                   <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 px-2">
@@ -1065,6 +1216,372 @@ export function LinkedInNavbar({
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ── Mobile All-in-One Slide-Over Navigation Drawer (lg:hidden) ── */}
+      {isMobileDrawerOpen && (
+        <>
+          <div
+            className="lg:hidden fixed inset-0 z-[65] bg-black/50 backdrop-blur-xs transition-opacity"
+            onClick={() => setIsMobileDrawerOpen(false)}
+          />
+          <div
+            className="lg:hidden fixed z-[70] inset-y-0 left-0 w-[min(380px,88vw)] bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-left duration-200"
+          >
+            {/* Drawer Header: User Profile Summary */}
+            <div className="p-3.5 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-3 bg-zinc-50/90 dark:bg-zinc-800/40 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  onSelectTab('profile')
+                  setIsMobileDrawerOpen(false)
+                }}
+                className="flex items-center gap-2.5 min-w-0 flex-1 text-left cursor-pointer group"
+              >
+                <div className="relative h-11 w-11 rounded-full overflow-hidden border-2 border-[#0A66C2]/40 shrink-0">
+                  <img src={user.avatar} alt={user.name} className="h-full w-full object-cover" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1">
+                    <p className="font-bold text-sm text-zinc-900 dark:text-zinc-100 truncate group-hover:text-[#0A66C2]">
+                      {user.name}
+                    </p>
+                    <ShieldCheck className="h-3.5 w-3.5 text-[#0A66C2] shrink-0" />
+                  </div>
+                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                    {user.headline}
+                  </p>
+                  <span className="text-[10px] font-semibold text-[#0A66C2] hover:underline">
+                    View Profile →
+                  </span>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsMobileDrawerOpen(false)}
+                className="p-1.5 rounded-full text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors shrink-0 cursor-pointer"
+                title="Close navigation"
+                aria-label="Close navigation"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Drawer Content: Scrollable Body */}
+            <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-4 pb-20">
+              {/* 1. PRIMARY CONNECTIN HUBS */}
+              <div>
+                <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-2 px-1">
+                  Core Navigation &amp; Hubs
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {/* Home */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('home')
+                      setIsMobileDrawerOpen(false)
+                    }}
+                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      activeTab === 'home'
+                        ? "bg-blue-50 border-[#0A66C2] text-[#0A66C2] font-bold dark:bg-blue-950/40"
+                        : "bg-white dark:bg-zinc-800/80 border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50"
+                    }`}
+                  >
+                    <House className="h-5 w-5 text-[#0A66C2] shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold truncate">Home Feed</p>
+                      <p className="text-[10px] text-zinc-400 truncate">Main Stream</p>
+                    </div>
+                  </button>
+
+                  {/* Marketplace */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('marketplace')
+                      setIsMobileDrawerOpen(false)
+                    }}
+                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      activeTab === 'marketplace'
+                        ? "bg-purple-50 border-purple-600 text-purple-700 font-bold dark:bg-purple-950/40 dark:text-purple-300"
+                        : "bg-white dark:bg-zinc-800/80 border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50"
+                    }`}
+                  >
+                    <ShoppingBag className="h-5 w-5 text-purple-600 dark:text-purple-400 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold truncate text-purple-700 dark:text-purple-300">Marketplace</p>
+                      <p className="text-[10px] text-zinc-400 truncate">Tools &amp; Blueprints</p>
+                    </div>
+                  </button>
+
+                  {/* Learning */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('learning')
+                      setIsMobileDrawerOpen(false)
+                    }}
+                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      activeTab === 'learning'
+                        ? "bg-blue-50 border-[#0A66C2] text-[#0A66C2] font-bold dark:bg-blue-950/40"
+                        : "bg-white dark:bg-zinc-800/80 border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50"
+                    }`}
+                  >
+                    <GraduationCap className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold truncate">Learning Hub</p>
+                      <p className="text-[10px] text-zinc-400 truncate">Certs &amp; Sandboxes</p>
+                    </div>
+                  </button>
+
+                  {/* Media */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('media')
+                      setIsMobileDrawerOpen(false)
+                    }}
+                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      activeTab === 'media'
+                        ? "bg-rose-50 border-rose-600 text-rose-700 font-bold dark:bg-rose-950/40 dark:text-rose-300"
+                        : "bg-white dark:bg-zinc-800/80 border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50"
+                    }`}
+                  >
+                    <Tv className="h-5 w-5 text-rose-600 dark:text-rose-400 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold truncate text-rose-700 dark:text-rose-300">Media Studio</p>
+                      <p className="text-[10px] text-zinc-400 truncate">Talks &amp; Briefings</p>
+                    </div>
+                  </button>
+
+                  {/* Messages */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('messaging')
+                      setIsMobileDrawerOpen(false)
+                    }}
+                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      activeTab === 'messaging'
+                        ? "bg-emerald-50 border-emerald-600 text-emerald-700 font-bold dark:bg-emerald-950/40 dark:text-emerald-300"
+                        : "bg-white dark:bg-zinc-800/80 border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50"
+                    }`}
+                  >
+                    <MessageSquare className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1">
+                        <p className="text-xs font-bold truncate">Messaging</p>
+                        {unreadMessagesCount > 0 && (
+                          <span className="h-3.5 min-w-3.5 px-1 rounded-full bg-red-600 text-[9px] font-bold text-white flex items-center justify-center">
+                            {unreadMessagesCount}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-zinc-400 truncate">Direct Threads</p>
+                    </div>
+                  </button>
+
+                  {/* Jobs */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('jobs')
+                      setIsMobileDrawerOpen(false)
+                    }}
+                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      activeTab === 'jobs'
+                        ? "bg-blue-50 border-[#0A66C2] text-[#0A66C2] font-bold dark:bg-blue-950/40"
+                        : "bg-white dark:bg-zinc-800/80 border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50"
+                    }`}
+                  >
+                    <Briefcase className="h-5 w-5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold truncate">Jobs &amp; RFPs</p>
+                      <p className="text-[10px] text-zinc-400 truncate">Bids &amp; Openings</p>
+                    </div>
+                  </button>
+
+                  {/* Network */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('network')
+                      setIsMobileDrawerOpen(false)
+                    }}
+                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      activeTab === 'network'
+                        ? "bg-blue-50 border-[#0A66C2] text-[#0A66C2] font-bold dark:bg-blue-950/40"
+                        : "bg-white dark:bg-zinc-800/80 border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50"
+                    }`}
+                  >
+                    <Users className="h-5 w-5 text-sky-600 dark:text-sky-400 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold truncate">My Network</p>
+                      <p className="text-[10px] text-zinc-400 truncate">Peers &amp; Guilds</p>
+                    </div>
+                  </button>
+
+                  {/* Notifications / Alerts */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('notifications')
+                      setIsMobileDrawerOpen(false)
+                    }}
+                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      activeTab === 'notifications'
+                        ? "bg-blue-50 border-[#0A66C2] text-[#0A66C2] font-bold dark:bg-blue-950/40"
+                        : "bg-white dark:bg-zinc-800/80 border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50"
+                    }`}
+                  >
+                    <Bell className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0" />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1">
+                        <p className="text-xs font-bold truncate">Alerts</p>
+                        {unreadNotificationsCount > 0 && (
+                          <span className="h-3.5 min-w-3.5 px-1 rounded-full bg-red-600 text-[9px] font-bold text-white flex items-center justify-center">
+                            {unreadNotificationsCount}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-zinc-400 truncate">Activity &amp; Invites</p>
+                    </div>
+                  </button>
+
+                  {/* Pulse Rooms */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('pulserooms')
+                      setIsMobileDrawerOpen(false)
+                    }}
+                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      activeTab === 'pulserooms'
+                        ? "bg-blue-50 border-[#0A66C2] text-[#0A66C2] font-bold dark:bg-blue-950/40"
+                        : "bg-white dark:bg-zinc-800/80 border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50"
+                    }`}
+                  >
+                    <Radio className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold truncate">Pulse Rooms</p>
+                      <p className="text-[10px] text-zinc-400 truncate">Live Audio Stages</p>
+                    </div>
+                  </button>
+
+                  {/* Wallet & Escrow */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('wallet')
+                      setIsMobileDrawerOpen(false)
+                    }}
+                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      activeTab === 'wallet'
+                        ? "bg-blue-50 border-[#0A66C2] text-[#0A66C2] font-bold dark:bg-blue-950/40"
+                        : "bg-white dark:bg-zinc-800/80 border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50"
+                    }`}
+                  >
+                    <DollarSign className="h-5 w-5 text-emerald-600 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold truncate">Wallet &amp; Escrow</p>
+                      <p className="text-[10px] text-zinc-400 truncate">Draws &amp; Invoices</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* 2. ENCLAVE INDUSTRY MODULES */}
+              <div className="border-t border-zinc-100 dark:border-zinc-800 pt-3">
+                <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-2 px-1">
+                  Enclave Industry Tools &amp; Apps
+                </p>
+                <div className="space-y-3">
+                  {categorizedMoreMenu.map((group) => (
+                    <div key={group.category} className="space-y-1">
+                      <p className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 px-1">
+                        {group.category}
+                      </p>
+                      <div className="space-y-1">
+                        {group.items.map((menu) => (
+                          <button
+                            key={menu.id + menu.label}
+                            type="button"
+                            onClick={() => {
+                              if (menu.url) {
+                                window.open(menu.url, '_blank', 'noopener,noreferrer')
+                              } else {
+                                onSelectTab(menu.id)
+                              }
+                              setIsMobileDrawerOpen(false)
+                            }}
+                            className="w-full rounded-xl p-2 text-left bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors flex items-center justify-between group cursor-pointer border border-zinc-200/50 dark:border-zinc-700/50"
+                          >
+                            <div className="min-w-0 flex-1 pr-2">
+                              <div className="flex items-center gap-1.5">
+                                <p className="font-bold text-xs text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2] truncate">
+                                  {menu.label}
+                                </p>
+                                {menu.badge && (
+                                  <span className="text-[8px] font-mono font-bold px-1.5 py-0.2 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300 shrink-0">
+                                    {menu.badge}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-zinc-400 truncate">{menu.desc}</p>
+                            </div>
+                            {menu.url && (
+                              <ExternalLink className="h-3.5 w-3.5 text-zinc-400 group-hover:text-[#0A66C2] shrink-0" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 3. QUICK PREFERENCES & SETTINGS */}
+              <div className="border-t border-zinc-100 dark:border-zinc-800 pt-3 space-y-2">
+                <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 px-1">
+                  Preferences &amp; Security
+                </p>
+                <div className="flex items-center justify-between gap-2 px-2 py-1 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-zinc-200/50 dark:border-zinc-700/50">
+                  <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">Theme Mode</span>
+                  <ThemeColorSwitcher align="right" />
+                </div>
+                <div className="flex items-center justify-between gap-2 px-2 py-1 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-zinc-200/50 dark:border-zinc-700/50">
+                  <span className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">Language</span>
+                  <LanguageSwitcher align="right" />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onSelectTab('accountsecurity')
+                    setIsMobileDrawerOpen(false)
+                  }}
+                  className="w-full flex items-center justify-between p-2 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-xs font-bold text-zinc-700 dark:text-zinc-200 border border-zinc-200/50 dark:border-zinc-700/50 cursor-pointer"
+                >
+                  <span className="flex items-center gap-1.5">🔐 Passkeys &amp; Security</span>
+                  <span className="text-zinc-400">→</span>
+                </button>
+                {isAdminUser && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('adminiam')
+                      setIsMobileDrawerOpen(false)
+                    }}
+                    className="w-full flex items-center justify-between p-2 rounded-xl bg-red-50/70 dark:bg-red-950/40 hover:bg-red-100 text-xs font-bold text-red-700 dark:text-red-300 border border-red-200/60 dark:border-red-900/60 cursor-pointer"
+                  >
+                    <span className="flex items-center gap-1.5">🛡️ Admin &amp; IAM Console</span>
+                    <span className="text-red-400">→</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </>
