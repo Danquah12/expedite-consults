@@ -935,8 +935,51 @@ export function LinkedInNavbar({
         </div>
       </div>
 
-      {/* Mobile & Tablet Bottom Navigation Bar (Fixed Native App Bar — 10 Pillars Mirroring Desktop) */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border-t border-zinc-200 dark:border-zinc-800 shadow-lg px-1 py-1 pb-[max(0.35rem,env(safe-area-inset-bottom))]">
+      {/* Mobile & Tablet: desktop-format tab strip under the top bar (same order, icons, colors, badges) */}
+      <nav className="lg:hidden border-t border-zinc-100 dark:border-zinc-800 bg-white/95 dark:bg-zinc-950/95">
+        <div className="flex items-center overflow-x-auto no-scrollbar px-1">
+          {primaryNavItems.map((item) => {
+            const Icon = item.icon
+            const isActive = activeTab === item.id
+            const accent = item.isMarketplace
+              ? "text-purple-600 dark:text-purple-400"
+              : item.id === 'learning'
+              ? "text-blue-600 dark:text-blue-400"
+              : item.id === 'media'
+              ? "text-rose-600 dark:text-rose-400"
+              : item.id === 'pulserooms'
+              ? "text-emerald-600 dark:text-emerald-400"
+              : "text-zinc-500 dark:text-zinc-400"
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  onSelectTab(item.id)
+                  setIsMoreOpen(false)
+                  setIsMeOpen(false)
+                }}
+                className={`relative shrink-0 min-w-[58px] flex flex-col items-center justify-center py-1.5 px-1.5 cursor-pointer border-b-2 ${
+                  isActive ? "text-[#0A66C2] font-semibold border-[#0A66C2]" : `${accent} border-transparent`
+                }`}
+              >
+                <div className="relative">
+                  <Icon className="h-5 w-5" />
+                  {item.badge > 0 && (
+                    <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
+                      {item.badge}
+                    </span>
+                  )}
+                </div>
+                <span className="text-[10px] mt-0.5 leading-none">{item.shortLabel || item.label}</span>
+              </button>
+            )
+          })}
+        </div>
+      </nav>
+
+      {/* Legacy bottom bar — hidden; tabs now live at the top like desktop */}
+      <nav className="hidden">
         <div className="flex items-center justify-start sm:justify-center max-w-lg mx-auto overflow-x-auto no-scrollbar gap-0.5 scroll-smooth px-1">
           {/* 1. Home */}
           <button
