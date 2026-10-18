@@ -1466,7 +1466,7 @@ export function ConnectInAuthModal({
         isOpen={isGoogleModalOpen}
         onClose={() => setIsGoogleModalOpen(false)}
         initialEmail={signInEmail || joinEmail}
-        professionId={signInProfessionId !== "auto_detect" ? signInProfessionId : joinProfessionId}
+        professionId={signInProfessionId !== "auto_detect" ? signInProfessionId : undefined}
         onSuccess={(user) => {
           onLoginSuccess(user, user.role === 'admin' ? 'adminiam' : 'home', 'personal')
           onClose()
@@ -1477,7 +1477,7 @@ export function ConnectInAuthModal({
         isOpen={isMicrosoftModalOpen}
         onClose={() => setIsMicrosoftModalOpen(false)}
         initialEmail={signInEmail || joinEmail}
-        professionId={signInProfessionId !== "auto_detect" ? signInProfessionId : joinProfessionId}
+        professionId={signInProfessionId !== "auto_detect" ? signInProfessionId : undefined}
         onSuccess={(user) => {
           onLoginSuccess(user, user.role === 'admin' ? 'adminiam' : 'home', 'personal')
           onClose()
