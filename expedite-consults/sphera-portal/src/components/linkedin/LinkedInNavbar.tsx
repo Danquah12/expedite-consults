@@ -283,7 +283,7 @@ export function LinkedInNavbar({
   }
 
   return (
-    <header className="sticky top-0 z-40 w-full max-w-full border-b border-zinc-200 bg-white/95 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/95 shadow-xs">
+    <header className="sticky top-0 z-40 w-full max-w-full border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 shadow-xs">
       {/* Mobile Expandable Search Bar Overlay (when search icon tapped on mobile) */}
       {isMobileSearchOpen && (
         <div className="lg:hidden absolute inset-x-0 top-0 z-50 bg-white dark:bg-zinc-900 px-3 py-2 border-b border-zinc-200 dark:border-zinc-800 shadow-md flex items-center gap-2">
@@ -659,7 +659,7 @@ export function LinkedInNavbar({
                   className="fixed inset-0 z-[55] bg-black/40 backdrop-blur-2xs lg:bg-black/20"
                   onClick={() => setIsMeOpen(false)}
                 />
-                <div className="fixed sm:absolute inset-x-2 sm:inset-x-auto sm:right-0 top-14 sm:top-12 bottom-20 sm:bottom-auto sm:max-h-[85vh] sm:w-80 max-w-[360px] rounded-2xl border border-zinc-200 bg-white p-3.5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 flex flex-col overflow-hidden z-[60]">
+                <div className="fixed lg:absolute inset-x-2 lg:inset-x-auto lg:right-0 top-[6.75rem] bottom-4 lg:top-12 lg:bottom-auto lg:max-h-[85vh] lg:w-80 max-w-[360px] sm:left-auto sm:right-2 sm:w-80 rounded-2xl border border-zinc-200 bg-white p-3.5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 flex flex-col overflow-hidden z-[60]">
                   <div className="flex items-start justify-between border-b border-zinc-100 pb-3 dark:border-zinc-800 shrink-0">
                     <div className="flex items-start gap-3 flex-1 min-w-0">
                       <img
@@ -1203,7 +1203,7 @@ export function LinkedInNavbar({
           />
           <div
             ref={moreDropdownRef}
-            className="fixed z-[60] inset-x-2 sm:inset-x-auto sm:right-4 lg:right-6 top-14 bottom-20 sm:bottom-auto sm:max-h-[85vh] sm:w-[440px] max-w-[460px] rounded-2xl border border-zinc-200 bg-white p-3.5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 flex flex-col overflow-hidden"
+            className="fixed z-[60] inset-x-2 sm:inset-x-auto sm:right-4 lg:right-6 top-[6.75rem] bottom-4 lg:top-14 lg:bottom-auto sm:max-h-[85vh] sm:w-[440px] max-w-[460px] rounded-2xl border border-zinc-200 bg-white p-3.5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 flex flex-col overflow-hidden"
           >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-zinc-100 pb-2.5 dark:border-zinc-800 shrink-0">
