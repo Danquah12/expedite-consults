@@ -699,7 +699,7 @@ export function LinkedInNavbar({
                   className="fixed inset-0 z-[55] bg-black/40 backdrop-blur-2xs lg:bg-black/20"
                   onClick={() => setIsMeOpen(false)}
                 />
-                <div className="fixed lg:absolute inset-x-2 lg:inset-x-auto lg:right-0 top-[6.75rem] bottom-4 lg:top-12 lg:bottom-auto lg:max-h-[85vh] lg:w-80 max-w-[360px] sm:left-auto sm:right-2 sm:w-80 rounded-2xl border border-zinc-200 bg-white p-3.5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 flex flex-col overflow-hidden z-[60]">
+                <div className="fixed lg:absolute inset-x-2 lg:inset-x-auto lg:right-0 top-[6.75rem] bottom-24 lg:top-12 lg:bottom-auto lg:max-h-[85vh] lg:w-80 max-w-[360px] sm:left-auto sm:right-2 sm:w-80 rounded-2xl border border-zinc-200 bg-white p-3.5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 flex flex-col overflow-hidden z-[60]">
                   <div className="flex items-start justify-between border-b border-zinc-100 pb-3 dark:border-zinc-800 shrink-0">
                     <div className="flex items-start gap-3 flex-1 min-w-0">
                       <img
@@ -895,18 +895,6 @@ export function LinkedInNavbar({
                         <span>{t("switch_persona_gate", "Switch Persona / Auth Gate 🔑")}</span>
                       </button>
                     )}
-
-                    {/* Mobile Theme & Language quick controls */}
-                    <div className="lg:hidden space-y-1.5 pt-2 border-t border-zinc-100 dark:border-zinc-800">
-                      <div className="flex items-center justify-between px-1">
-                        <span className="text-[11px] font-medium text-zinc-600 dark:text-zinc-400">Appearance</span>
-                        <ThemeColorSwitcher align="right" />
-                      </div>
-                      <div className="flex items-center justify-between px-1">
-                        <span className="text-[11px] font-medium text-zinc-600 dark:text-zinc-400">Language</span>
-                        <LanguageSwitcher align="right" />
-                      </div>
-                    </div>
 
                     <button
                       onClick={() => {
@@ -1273,7 +1261,7 @@ export function LinkedInNavbar({
           />
           <div
             ref={moreDropdownRef}
-            className="fixed z-[60] inset-x-2 sm:inset-x-auto sm:right-4 lg:right-6 top-[6.75rem] bottom-4 lg:top-14 lg:bottom-auto sm:max-h-[85vh] sm:w-[440px] max-w-[460px] rounded-2xl border border-zinc-200 bg-white p-3.5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 flex flex-col overflow-hidden"
+            className="fixed z-[60] inset-x-2 sm:inset-x-auto sm:right-4 lg:right-6 top-[6.75rem] bottom-24 lg:top-14 lg:bottom-auto sm:max-h-[85vh] sm:w-[440px] max-w-[460px] rounded-2xl border border-zinc-200 bg-white p-3.5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 flex flex-col overflow-hidden"
           >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-zinc-100 pb-2.5 dark:border-zinc-800 shrink-0">
