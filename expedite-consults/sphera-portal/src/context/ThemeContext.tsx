@@ -24,14 +24,14 @@ export interface ThemeOption {
 export const THEME_OPTIONS: ThemeOption[] = [
   {
     id: "vibe",
-    label: "Vibe Gold Night",
-    shortLabel: "Vibe Gold",
-    icon: "✨",
-    bgHex: "#0e0d17",
-    cardHex: "#1b140d",
-    borderHex: "#3d2f16",
-    isDark: true,
-    description: "Deep navy canvas with warm brown cards and gold accents"
+    label: "Editorial Desk Note",
+    shortLabel: "Desk Note",
+    icon: "📜",
+    bgHex: "#f5efe6",
+    cardHex: "#fbf8f3",
+    borderHex: "#e2d9c8",
+    isDark: false,
+    description: "Warm editorial parchment canvas with ivory cards and espresso accents"
   },
   {
     id: "classic",
@@ -92,8 +92,8 @@ const ThemeContext = createContext<ThemeContextType>({
   theme: "vibe",
   setTheme: () => {},
   toggleTheme: () => {},
-  themeLabel: "Vibe Gold Night",
-  isDark: true,
+  themeLabel: "Editorial Desk Note",
+  isDark: false,
   themeOption: THEME_OPTIONS[0],
 });
 
@@ -105,8 +105,8 @@ const ALL_THEME_IDS: Theme[] = [
   "slate"
 ];
 
-// v2 key: resets everyone to the new Vibe Gold default once; later choices are remembered
-const THEME_STORAGE_KEY = "sphera-theme-v2";
+// v4 key: resets everyone to Editorial Desk Note once; later choices are remembered
+const THEME_STORAGE_KEY = "sphera-theme-v4";
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("vibe");

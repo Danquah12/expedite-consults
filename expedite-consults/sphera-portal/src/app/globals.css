@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where([data-theme="vibe"], [data-theme="vibe"] *, [data-theme="dark"], [data-theme="dark"] *, [data-theme="slate"], [data-theme="slate"] *, .dark, .dark *));
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *, [data-theme="slate"], [data-theme="slate"] *, .dark, .dark *));
 
 /* ── Prevent horizontal viewport blowout across mobile devices ── */
 html,
@@ -170,100 +170,219 @@ body {
   --color-text-muted: #64748b;
 }
 
-/* ── 0. VIBE GOLD NIGHT (default): navy canvas, warm brown cards, gold accents ── */
+/* ── 0. EDITORIAL DESK NOTE (default): warm parchment canvas, ivory cards, espresso & calm stone accents ── */
 [data-theme="vibe"], body[data-theme="vibe"], html.vibe {
-  --bg-core: #0e0d17;
-  --bg-sidebar: #110e0a;
-  --bg-surface: #1b140d;
-  --bg-card: #1b140d;
-  --bg-card-hover: #251b11;
-  --bg-input: #1f1710;
+  --bg-core: #f3ede2;
+  --bg-sidebar: #fbf8f3;
+  --bg-surface: #fbf8f3;
+  --bg-card: #fbf8f3;
+  --bg-card-hover: #f6f1e7;
+  --bg-input: #f8f4ec;
 
-  --border-subtle: #3d2f16;
-  --border-hover: #5a4420;
-  --border-active: #d9a441;
+  --border-subtle: #e0d6c5;
+  --border-hover: #cbbca4;
+  --border-active: #7c4225;
 
-  --text-pure: #f5ecd6;
-  --text-primary: #f3e9d2;
-  --text-secondary: #c4ad7a;
-  --text-muted: #a58a55;
+  --text-pure: #1c1917;
+  --text-primary: #292524;
+  --text-secondary: #57534e;
+  --text-muted: #78716c;
 
-  --accent-cyan: #d9a441;
-  --accent-indigo: #b9862a;
-  --ambient-mesh-1: rgba(217, 164, 65, 0.06);
-  --ambient-mesh-2: rgba(120, 90, 200, 0.04);
+  --accent-cyan: #7c4225;
+  --accent-indigo: #5e3119;
+  --ambient-mesh-1: rgba(124, 66, 37, 0.03);
+  --ambient-mesh-2: rgba(120, 113, 108, 0.02);
 
-  --color-bg-primary: #0e0d17;
-  --color-bg-secondary: #1b140d;
-  --color-bg-card: #1b140d;
-  --color-bg-card-hover: #251b11;
-  --color-border-glass: rgba(217, 164, 65, 0.22);
-  --color-border-glow: rgba(217, 164, 65, 0.45);
-  --color-accent-cyan: #d9a441;
-  --color-accent-purple: #b79cff;
-  --color-accent-pink: #f0a0c0;
-  --color-accent-green: #7fcf9a;
-  --color-accent-orange: #e8933a;
-  --color-accent-red: #f07a6a;
-  --color-text-primary: #f3e9d2;
-  --color-text-secondary: #c4ad7a;
-  --color-text-muted: #a58a55;
+  --color-bg-primary: #f3ede2;
+  --color-bg-secondary: #fbf8f3;
+  --color-bg-card: #fbf8f3;
+  --color-bg-card-hover: #f6f1e7;
+  --color-border-glass: rgba(120, 95, 65, 0.16);
+  --color-border-glow: rgba(124, 66, 37, 0.28);
+  --color-accent-cyan: #7c4225;
+  --color-accent-purple: #6b584c;
+  --color-accent-pink: #7c4225;
+  --color-accent-green: #4d6b53;
+  --color-accent-orange: #8a4b29;
+  --color-accent-red: #8c3b32;
+  --color-text-primary: #1c1917;
+  --color-text-secondary: #57534e;
+  --color-text-muted: #78716c;
 
-  /* Re-map Tailwind's neutral + blue palettes so every existing component picks up the new look */
-  --color-zinc-50: #fbf6ea;
-  --color-zinc-100: #f5ecd6;
-  --color-zinc-200: #eadcb8;
-  --color-zinc-300: #dccaa0;
-  --color-zinc-400: #c4ad7a;
-  --color-zinc-500: #a58a55;
-  --color-zinc-600: #7a6030;
-  --color-zinc-700: #5a4420;
-  --color-zinc-800: #3d2f16;
-  --color-zinc-900: #1b140d;
-  --color-zinc-950: #0e0d17;
-  --color-slate-800: #3d2f16;
-  --color-slate-900: #1b140d;
-  --color-slate-950: #0e0d17;
-  --color-blue-50: #fbf1d8;
-  --color-blue-100: #f5e2b0;
-  --color-blue-200: #ecd08a;
-  --color-blue-300: #e6c070;
-  --color-blue-400: #e6b95a;
-  --color-blue-500: #d9a441;
-  --color-blue-600: #d9a441;
-  --color-blue-700: #b9862a;
-  --color-blue-800: #8a6420;
-  --color-blue-900: #4a3510;
-  --color-blue-950: #2a1c08;
-  --color-sky-400: #e6b95a;
-  --color-sky-500: #d9a441;
-  --color-sky-600: #d9a441;
-  --color-sky-950: #2a1c08;
+  /* Re-map Tailwind's neutral + rainbow palettes into calm warm stone & espresso tones */
+  --color-white: #fbf8f3;
+  --color-zinc-50: #f7f2e8;
+  --color-zinc-100: #efe8da;
+  --color-zinc-200: #e2d9c8;
+  --color-zinc-300: #d0c4ae;
+  --color-zinc-400: #9c8f7a;
+  --color-zinc-500: #6e6559;
+  --color-zinc-600: #524b42;
+  --color-zinc-700: #3d3730;
+  --color-zinc-800: #292521;
+  --color-zinc-900: #1c1917;
+  --color-zinc-950: #141210;
+
+  --color-slate-50: #f7f2e8;
+  --color-slate-100: #efe8da;
+  --color-slate-200: #e2d9c8;
+  --color-slate-300: #d0c4ae;
+  --color-slate-400: #9c8f7a;
+  --color-slate-500: #6e6559;
+  --color-slate-600: #524b42;
+  --color-slate-700: #3d3730;
+  --color-slate-800: #292521;
+  --color-slate-900: #1c1917;
+  --color-slate-950: #141210;
+
+  /* Map bright blue/indigo/violet/purple/amber/orange/emerald/cyan/pink into warm espresso & calm stone */
+  --color-blue-50: #f3eae1;
+  --color-blue-100: #e8d8c8;
+  --color-blue-200: #d5bba3;
+  --color-blue-300: #bc9675;
+  --color-blue-400: #9e6b47;
+  --color-blue-500: #8a4b29;
+  --color-blue-600: #7c4225;
+  --color-blue-700: #63331b;
+  --color-blue-800: #4f2815;
+  --color-blue-900: #3b1e10;
+  --color-blue-950: #261209;
+
+  --color-sky-50: #f3eae1;
+  --color-sky-100: #e8d8c8;
+  --color-sky-400: #9e6b47;
+  --color-sky-500: #8a4b29;
+  --color-sky-600: #7c4225;
+  --color-sky-700: #63331b;
+
+  --color-cyan-50: #f3eae1;
+  --color-cyan-100: #e8d8c8;
+  --color-cyan-400: #9e6b47;
+  --color-cyan-500: #8a4b29;
+  --color-cyan-600: #7c4225;
+  --color-cyan-700: #63331b;
+
+  --color-indigo-50: #f2ece6;
+  --color-indigo-100: #e5dbd1;
+  --color-indigo-400: #8c7867;
+  --color-indigo-500: #736051;
+  --color-indigo-600: #5c4b3e;
+  --color-indigo-700: #47392f;
+
+  --color-violet-50: #f2ece6;
+  --color-violet-100: #e5dbd1;
+  --color-violet-400: #8c7867;
+  --color-violet-500: #736051;
+  --color-violet-600: #5c4b3e;
+  --color-violet-700: #47392f;
+
+  --color-purple-50: #f2ece6;
+  --color-purple-100: #e5dbd1;
+  --color-purple-200: #d4c5b6;
+  --color-purple-400: #8c7867;
+  --color-purple-500: #736051;
+  --color-purple-600: #634835;
+  --color-purple-700: #4d3728;
+
+  --color-amber-50: #f5ece0;
+  --color-amber-100: #eadbc6;
+  --color-amber-200: #dac19e;
+  --color-amber-400: #a66c38;
+  --color-amber-500: #8c5627;
+  --color-amber-600: #7c4225;
+  --color-amber-700: #63331b;
+  --color-amber-800: #4f2815;
+
+  --color-orange-50: #f5ece0;
+  --color-orange-100: #eadbc6;
+  --color-orange-200: #dac19e;
+  --color-orange-400: #a66c38;
+  --color-orange-500: #8c5627;
+  --color-orange-600: #7c4225;
+  --color-orange-700: #63331b;
+
+  --color-emerald-50: #ebf0ec;
+  --color-emerald-100: #dae3dc;
+  --color-emerald-200: #bccbc0;
+  --color-emerald-500: #4d6b53;
+  --color-emerald-600: #3d5742;
+  --color-emerald-700: #2f4533;
+
+  --color-teal-50: #ebf0ec;
+  --color-teal-100: #dae3dc;
+  --color-teal-500: #4d6b53;
+  --color-teal-600: #3d5742;
+
+  --color-pink-50: #f3eae1;
+  --color-pink-500: #7c4225;
+  --color-pink-600: #63331b;
+  --color-rose-50: #f5ebe8;
+  --color-rose-500: #8c3b32;
+  --color-red-50: #f5ebe8;
+  --color-red-500: #8c3b32;
+  --color-red-600: #752f27;
 }
 
-/* Cards: warm gradient + thin gold border, like the Vibe 'Start here' cards */
-[data-theme="vibe"] .dark\:bg-zinc-900 {
-  background-image: linear-gradient(145deg, #211710, #140f0a);
+/* Desk Note editorial card appearance: crisp warm ivory cards on parchment canvas */
+[data-theme="vibe"] .bg-white {
+  background-color: #fbf8f3 !important;
 }
-[data-theme="vibe"] .dark\:border-zinc-800,
-[data-theme="vibe"] .dark\:border-zinc-700 {
-  border-color: rgba(217, 164, 65, 0.28);
+[data-theme="vibe"] .border-zinc-200,
+[data-theme="vibe"] .border-zinc-300,
+[data-theme="vibe"] .border-slate-200 {
+  border-color: #e2d9c8 !important;
 }
 
-/* ConnectIn's hardcoded blue (#0A66C2 / #004182) becomes gold */
-[data-theme="vibe"] [class~="bg-[#0A66C2]"] { background-color: #d9a441 !important; color: #1a1208 !important; }
-[data-theme="vibe"] [class~="bg-[#0A66C2]"] * { color: inherit !important; }
-[data-theme="vibe"] [class~="hover:bg-[#004182]"]:hover { background-color: #e6b95a !important; }
+/* ConnectIn's hardcoded blue (#0A66C2 / #004182) becomes warm Desk Note espresso (#7c4225) with cream text */
+[data-theme="vibe"] [class~="bg-[#0A66C2]"],
+[data-theme="vibe"] [class~="bg-blue-600"],
+[data-theme="vibe"] [class~="bg-amber-600"],
+[data-theme="vibe"] [class~="bg-orange-600"],
+[data-theme="vibe"] [class~="bg-purple-600"],
+[data-theme="vibe"] [class~="bg-indigo-600"] {
+  background-color: #7c4225 !important;
+  color: #fbf8f3 !important;
+}
+[data-theme="vibe"] [class~="bg-[#0A66C2]"] *,
+[data-theme="vibe"] [class~="bg-blue-600"] *,
+[data-theme="vibe"] [class~="bg-amber-600"] *,
+[data-theme="vibe"] [class~="bg-orange-600"] *,
+[data-theme="vibe"] [class~="bg-purple-600"] *,
+[data-theme="vibe"] [class~="bg-indigo-600"] * {
+  color: #fbf8f3 !important;
+}
+[data-theme="vibe"] [class~="hover:bg-[#004182]"]:hover,
+[data-theme="vibe"] [class~="hover:bg-blue-700"]:hover,
+[data-theme="vibe"] [class~="hover:bg-amber-700"]:hover,
+[data-theme="vibe"] [class~="hover:bg-orange-700"]:hover {
+  background-color: #63331b !important;
+}
 [data-theme="vibe"] [class~="text-[#0A66C2]"],
 [data-theme="vibe"] [class~="hover:text-[#0A66C2]"]:hover,
-[data-theme="vibe"] [class~="group-hover:text-[#0A66C2]"] { color: #e6b95a !important; }
-[data-theme="vibe"] [class~="border-[#0A66C2]"] { border-color: #d9a441 !important; }
-[data-theme="vibe"] [class~="ring-[#0A66C2]"] { --tw-ring-color: #d9a441 !important; }
-[data-theme="vibe"] [class~="bg-[#EDF3F8]"] { background-color: #1f1710 !important; }
-[data-theme="vibe"] [class~="bg-[#FBF5E9]"] { background-color: #2a1f0e !important; }
+[data-theme="vibe"] [class~="group-hover:text-[#0A66C2]"] {
+  color: #7c4225 !important;
+}
+[data-theme="vibe"] [class~="border-[#0A66C2]"] { border-color: #7c4225 !important; }
+[data-theme="vibe"] [class~="ring-[#0A66C2]"] { --tw-ring-color: #7c4225 !important; }
+[data-theme="vibe"] [class~="bg-[#EDF3F8]"] { background-color: #f3ede2 !important; }
+[data-theme="vibe"] [class~="bg-[#FBF5E9]"] { background-color: #f5efe6 !important; }
+[data-theme="vibe"] [class~="bg-[#F3F2EF]"] { background-color: #f3ede2 !important; }
 
-/* Marquee tab strip + header stay on the dark canvas */
-[data-theme="vibe"] header { background-color: #0e0d17 !important; border-color: rgba(217, 164, 65, 0.28) !important; }
+/* Header & top strip match warm editorial parchment with clean stone border */
+[data-theme="vibe"] header { background-color: #fbf8f3 !important; border-color: #e2d9c8 !important; }
+
+/* Neutralize loud dark-only gradient banners inside light Desk Note mode */
+[data-theme="vibe"] [class*="from-zinc-900"],
+[data-theme="vibe"] [class*="from-slate-900"],
+[data-theme="vibe"] [class*="from-indigo-950"],
+[data-theme="vibe"] [class*="from-purple-950"],
+[data-theme="vibe"] [class*="from-blue-950"],
+[data-theme="vibe"] [class*="bg-zinc-900"]:not(button) {
+  background-image: linear-gradient(145deg, #fbf8f3, #f3ede2) !important;
+  background-color: #fbf8f3 !important;
+  color: #1c1917 !important;
+  border-color: #e2d9c8 !important;
+}
 
 * {
   box-sizing: border-box;
