@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Brain, LayoutDashboard, Radio, Flame, GitMerge,
   Globe, Shield, Bot, SearchCode, Crosshair,
@@ -11,6 +11,64 @@ import {
   FolderOpen, Server, GitBranch, CheckSquare, TrendingUp, Workflow,
   ShieldAlert, Swords, Waypoints, Sparkles, Search, Menu, X
 } from "lucide-react";
+
+export type UiThemeId = "parchment" | "slate-dark" | "obsidian-cyber" | "emerald-soc" | "daylight-slate";
+
+export const UI_THEMES: Array<{
+  id: UiThemeId;
+  name: string;
+  shortLabel: string;
+  swatchBg: string;
+  swatchAccent: string;
+  swatchText: string;
+  description: string;
+}> = [
+  {
+    id: "parchment",
+    name: "Warm Parchment (Black Ink)",
+    shortLabel: "Parchment",
+    swatchBg: "#f2ede4",
+    swatchAccent: "#8b4528",
+    swatchText: "#111111",
+    description: "Warm editorial linen background, ivory cards, terracotta buttons & crisp black font"
+  },
+  {
+    id: "slate-dark",
+    name: "Classic Slate Dark (Previous)",
+    shortLabel: "Classic Dark",
+    swatchBg: "#0b0f17",
+    swatchAccent: "#38bdf8",
+    swatchText: "#f8fafc",
+    description: "Our previous calm deep-slate background (#0b0f17) with sky-blue accents"
+  },
+  {
+    id: "obsidian-cyber",
+    name: "Obsidian Cyber (Tactical)",
+    shortLabel: "Obsidian",
+    swatchBg: "#050811",
+    swatchAccent: "#06b6d4",
+    swatchText: "#f8fafc",
+    description: "Deep midnight obsidian (#050811) with high-contrast cyan & violet telemetry"
+  },
+  {
+    id: "emerald-soc",
+    name: "Aegis Emerald SOC (Dark)",
+    shortLabel: "Emerald SOC",
+    swatchBg: "#06100c",
+    swatchAccent: "#10b981",
+    swatchText: "#ecfdf5",
+    description: "Dark forest carbon (#06100c) with emerald green SOC accents"
+  },
+  {
+    id: "daylight-slate",
+    name: "Crisp Daylight (Black Ink)",
+    shortLabel: "Daylight",
+    swatchBg: "#f1f5f9",
+    swatchAccent: "#0284c7",
+    swatchText: "#111111",
+    description: "Cool alabaster light background, pure white cards, cobalt buttons & black font"
+  }
+];
 
 const SECTIONS = [
   {
@@ -95,10 +153,43 @@ export default function Sidebar() {
   const path = usePathname();
   const [filter, setFilter] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [uiTheme, setUiTheme] = useState<UiThemeId>("parchment");
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     "Command Center": true,
     "Active Attack & Probe": true
   });
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("xtrike_dast_ui_theme") as UiThemeId | null;
+      const validIds: UiThemeId[] = ["parchment", "slate-dark", "obsidian-cyber", "emerald-soc", "daylight-slate"];
+      const initialTheme: UiThemeId = saved && validIds.includes(saved) ? saved : "parchment";
+      setUiTheme(initialTheme);
+      document.documentElement.setAttribute("data-theme", initialTheme);
+    } catch {
+      document.documentElement.setAttribute("data-theme", "parchment");
+    }
+
+    const handleExternalThemeChange = (e: Event) => {
+      const customEvt = e as CustomEvent<UiThemeId>;
+      if (customEvt.detail) {
+        setUiTheme(customEvt.detail);
+      }
+    };
+    window.addEventListener("xtrike-theme-change", handleExternalThemeChange);
+    return () => window.removeEventListener("xtrike-theme-change", handleExternalThemeChange);
+  }, []);
+
+  const applyTheme = (nextTheme: UiThemeId) => {
+    setUiTheme(nextTheme);
+    document.documentElement.setAttribute("data-theme", nextTheme);
+    try {
+      localStorage.setItem("xtrike_dast_ui_theme", nextTheme);
+      window.dispatchEvent(new CustomEvent("xtrike-theme-change", { detail: nextTheme }));
+    } catch {
+      // ignore storage errors
+    }
+  };
 
   const toggleSection = (title: string) => {
     setExpandedSections(prev => ({ ...prev, [title]: !prev[title] }));
@@ -122,11 +213,12 @@ export default function Sidebar() {
             type="button"
             onClick={() => setMobileMenuOpen(prev => !prev)}
             aria-label="Toggle navigation menu"
+            className={mobileMenuOpen ? "theme-solid-pill" : ""}
             style={{
-              background: mobileMenuOpen ? "#1e293b" : "#0f172a",
-              border: "1px solid #334155",
-              color: "#f8fafc",
-              borderRadius: 6,
+              background: mobileMenuOpen ? "var(--primary)" : "var(--surface)",
+              border: `1px solid ${mobileMenuOpen ? "var(--primary)" : "var(--border)"}`,
+              color: mobileMenuOpen ? "var(--btn-fg)" : "var(--fg)",
+              borderRadius: 8,
               padding: "6px 10px",
               display: "flex",
               alignItems: "center",
@@ -136,25 +228,25 @@ export default function Sidebar() {
               cursor: "pointer"
             }}
           >
-            {mobileMenuOpen ? <X size={15} color="#94a3b8" /> : <Menu size={15} color="#38bdf8" />}
+            {mobileMenuOpen ? <X size={15} /> : <Menu size={15} />}
             <span>{mobileMenuOpen ? "Close" : "Studios"}</span>
           </button>
 
           <Link href="/engine" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 7, flexShrink: 0 }}>
             <div style={{
-              width: 26, height: 26, borderRadius: 6,
-              background: "#1e293b",
-              border: "1px solid #334155",
+              width: 26, height: 26, borderRadius: 7,
+              background: "var(--pill-tint)",
+              border: "1px solid var(--pill-border)",
               display: "flex", alignItems: "center", justifyContent: "center",
               flexShrink: 0
             }}>
-              <Globe size={14} color="#38bdf8" />
+              <Globe size={14} color="var(--primary)" />
             </div>
             <div>
-              <div style={{ fontSize: 11.5, fontWeight: 800, color: "#f8fafc", lineHeight: 1.1, whiteSpace: "nowrap" }}>
+              <div style={{ fontSize: 11.5, fontWeight: 800, color: "var(--fg)", lineHeight: 1.1, whiteSpace: "nowrap" }}>
                 XTRIKE™ · DAST
               </div>
-              <div style={{ fontSize: 8.5, color: "#94a3b8", fontWeight: 600, fontFamily: "monospace", whiteSpace: "nowrap" }}>
+              <div style={{ fontSize: 8.5, color: "var(--muted)", fontWeight: 600, fontFamily: "monospace", whiteSpace: "nowrap" }}>
                 WEB &amp; API SECURITY
               </div>
             </div>
@@ -162,6 +254,29 @@ export default function Sidebar() {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 5, overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+          <select
+            value={uiTheme}
+            onChange={e => applyTheme(e.target.value as UiThemeId)}
+            aria-label="Switch color theme"
+            style={{
+              background: "var(--surface)",
+              color: "var(--fg)",
+              border: "1px solid var(--border-2)",
+              borderRadius: 999,
+              padding: "4px 8px",
+              fontSize: 10,
+              fontWeight: 700,
+              cursor: "pointer",
+              flexShrink: 0
+            }}
+          >
+            {UI_THEMES.map(t => (
+              <option key={t.id} value={t.id}>
+                🎨 {t.shortLabel}
+              </option>
+            ))}
+          </select>
+
           {[
             { href: "/vuln-management", label: "Vuln Mgmt" },
             { href: "/engine", label: "Engine Brain" },
@@ -173,17 +288,18 @@ export default function Sidebar() {
               <Link
                 key={nav.href}
                 href={nav.href}
+                className={isAct ? "theme-solid-pill" : ""}
                 style={{
                   textDecoration: "none",
                   fontSize: 10.5,
-                  fontWeight: isAct ? 700 : 500,
-                  padding: "5px 9px",
-                  borderRadius: 6,
+                  fontWeight: isAct ? 700 : 600,
+                  padding: "5px 10px",
+                  borderRadius: 999,
                   whiteSpace: "nowrap",
                   flexShrink: 0,
-                  background: isAct ? "rgba(56, 189, 248, 0.12)" : "#0f172a",
-                  border: `1px solid ${isAct ? "rgba(56, 189, 248, 0.4)" : "#1e293b"}`,
-                  color: isAct ? "#f8fafc" : "#94a3b8"
+                  background: isAct ? "var(--primary)" : "var(--surface)",
+                  border: `1px solid ${isAct ? "var(--primary)" : "var(--border)"}`,
+                  color: isAct ? "var(--btn-fg)" : "var(--fg)"
                 }}
               >
                 {nav.label}
@@ -204,34 +320,34 @@ export default function Sidebar() {
       <aside
         className={`app-sidebar ${mobileMenuOpen ? "mobile-open" : ""}`}
         style={{
-          width: 220, flexShrink: 0, 
-          background: "#090d16",
-          borderRight: "1px solid #1e293b", 
+          width: 230, flexShrink: 0, 
+          background: "var(--sidebar-bg)",
+          borderRight: "1px solid var(--border)", 
           overflowY: "auto",
           display: "flex", flexDirection: "column",
           zIndex: 50
         }}
       >
         {/* Brand Header */}
-        <div style={{ padding: "14px 14px 10px", borderBottom: "1px solid #1e293b" }}>
+        <div style={{ padding: "14px 12px 10px", borderBottom: "1px solid var(--border)" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
             <Link href="/engine" onClick={() => setMobileMenuOpen(false)} style={{ textDecoration: "none" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <div style={{
                   width: 30, height: 30, borderRadius: 8,
-                  background: "#0f172a",
+                  background: "var(--surface)",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  border: "1px solid #1e293b",
+                  border: "1px solid var(--border)",
                   flexShrink: 0
                 }}>
-                  <Globe size={15} color="#38bdf8" />
+                  <Globe size={15} color="var(--primary)" />
                 </div>
                 <div>
-                  <div style={{ fontSize: 12.5, fontWeight: 800, color: "#f8fafc", letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: 5 }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 800, color: "var(--fg)", letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: 5 }}>
                     XTRIKE™ · DAST
-                    <span style={{ fontSize: 8.5, background: "#1e293b", color: "#cbd5e1", border: "1px solid #334155", borderRadius: 4, padding: "0 4px", fontWeight: 700 }}>WEB</span>
+                    <span style={{ fontSize: 8.5, background: "var(--pill-tint)", color: "var(--fg)", border: "1px solid var(--pill-border)", borderRadius: 4, padding: "0 4px", fontWeight: 700 }}>WEB</span>
                   </div>
-                  <div style={{ fontSize: 9, color: "#64748b", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>ENTERPRISE DAST PLATFORM</div>
+                  <div style={{ fontSize: 9, color: "var(--muted)", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>ENTERPRISE DAST PLATFORM</div>
                 </div>
               </div>
             </Link>
@@ -242,9 +358,9 @@ export default function Sidebar() {
               onClick={() => setMobileMenuOpen(false)}
               aria-label="Close drawer"
               style={{
-                background: "#0f172a",
-                border: "1px solid #1e293b",
-                color: "#94a3b8",
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+                color: "var(--fg)",
                 borderRadius: 6,
                 padding: 4,
                 cursor: "pointer"
@@ -254,8 +370,83 @@ export default function Sidebar() {
             </button>
           </div>
 
+          {/* ── Interactive 5-Theme Background & Color Switcher ── */}
+          <div style={{
+            marginTop: 10,
+            padding: "8px 9px",
+            borderRadius: 8,
+            background: "var(--surface)",
+            border: "1px solid var(--border)"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+              <span style={{ fontSize: 9, fontWeight: 800, color: "var(--fg)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                🎨 Workspace Theme
+              </span>
+              <span style={{ fontSize: 8.5, fontWeight: 700, color: "var(--muted)" }}>
+                {UI_THEMES.find(t => t.id === uiTheme)?.shortLabel}
+              </span>
+            </div>
+
+            {/* 5 Quick Swatch Pills */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 4, marginBottom: 6 }}>
+              {UI_THEMES.map((t) => {
+                const isSelected = uiTheme === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => applyTheme(t.id)}
+                    title={`${t.name} — ${t.description}`}
+                    style={{
+                      height: 22,
+                      borderRadius: 6,
+                      background: t.swatchBg,
+                      border: isSelected ? `2px solid ${t.swatchAccent}` : "1px solid rgba(120,120,120,0.35)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: "pointer",
+                      boxShadow: isSelected ? "0 1px 4px rgba(0,0,0,0.2)" : "none"
+                    }}
+                  >
+                    <span style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      background: t.swatchAccent,
+                      display: "inline-block"
+                    }} />
+                  </button>
+                );
+              })}
+            </div>
+
+            <select
+              value={uiTheme}
+              onChange={(e) => applyTheme(e.target.value as UiThemeId)}
+              style={{
+                width: "100%",
+                background: "var(--surface-2)",
+                color: "var(--fg)",
+                border: "1px solid var(--border)",
+                borderRadius: 6,
+                padding: "4px 6px",
+                fontSize: 10.5,
+                fontWeight: 700,
+                cursor: "pointer",
+                outline: "none"
+              }}
+            >
+              {UI_THEMES.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Quick Filter */}
-          <div style={{ marginTop: 10, position: "relative" }}>
+          <div style={{ marginTop: 8, position: "relative" }}>
             <Search size={12} style={{ position: "absolute", left: 8, top: 8, color: "var(--muted)" }} />
             <input
               type="text"
@@ -263,26 +454,27 @@ export default function Sidebar() {
               value={filter}
               onChange={e => setFilter(e.target.value)}
               style={{
-                width: "100%", background: "rgba(6, 8, 13, 0.8)", border: "1px solid var(--border)",
-                borderRadius: 6, padding: "5px 8px 5px 26px", fontSize: 11, color: "var(--fg)",
+                width: "100%", background: "var(--surface)", border: "1px solid var(--border)",
+                borderRadius: 8, padding: "5px 8px 5px 26px", fontSize: 11, color: "var(--fg)",
                 outline: "none"
               }}
             />
           </div>
 
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6 }}>
-            <span style={{ fontSize: 9, color: "var(--muted)", fontWeight: 700 }}>7 STUDIO GROUPS</span>
+            <span style={{ fontSize: 9, color: "var(--muted)", fontWeight: 700, letterSpacing: "0.05em" }}>7 STUDIO GROUPS</span>
             <button
               type="button"
               onClick={toggleAllSections}
               style={{
                 background: "none",
                 border: "none",
-                color: "#38bdf8",
+                color: "var(--fg)",
                 fontSize: 9.5,
                 fontWeight: 700,
                 cursor: "pointer",
-                padding: 0
+                padding: 0,
+                textDecoration: "underline"
               }}
             >
               {allExpanded ? "Collapse Groups" : "Expand All (36)"}
@@ -310,13 +502,13 @@ export default function Sidebar() {
                   onClick={() => toggleSection(section.title)}
                   style={{
                     width: "100%",
-                    background: "rgba(255,255,255,0.02)",
+                    background: "transparent",
                     border: "none",
-                    borderRadius: 5,
+                    borderRadius: 6,
                     padding: "6px 10px",
                     fontSize: 9.5,
                     fontWeight: 800,
-                    color: hasActiveChild ? "#38bdf8" : "#94a3b8",
+                    color: "var(--fg)",
                     textTransform: "uppercase",
                     letterSpacing: "0.08em",
                     display: "flex",
@@ -335,17 +527,20 @@ export default function Sidebar() {
                   const active = path === item.href || (item.href !== "/" && item.href !== "/app" && path.startsWith(item.href)) || (item.href === "/app" && path === "/app");
                   return (
                     <Link key={item.href} href={item.href} onClick={() => setMobileMenuOpen(false)} style={{ textDecoration: "none" }}>
-                      <div style={{
-                        display: "flex", alignItems: "center", gap: 8,
-                        padding: "6px 10px", margin: "1px 0", borderRadius: 6,
-                        background: active ? "rgba(56, 189, 248, 0.14)" : "transparent",
-                        border: active ? "1px solid rgba(56, 189, 248, 0.35)" : "1px solid transparent",
-                        cursor: "pointer", transition: "all 0.15s ease-out"
-                      }}>
-                        <Icon size={13.5} color={active ? "#38bdf8" : "var(--muted)"} />
+                      <div
+                        className={active ? "theme-solid-pill" : ""}
+                        style={{
+                          display: "flex", alignItems: "center", gap: 8,
+                          padding: "6px 10px", margin: "2px 0", borderRadius: 8,
+                          background: active ? "var(--primary)" : "transparent",
+                          border: active ? "1px solid var(--primary-2)" : "1px solid transparent",
+                          cursor: "pointer", transition: "all 0.15s ease-out"
+                        }}
+                      >
+                        <Icon size={13.5} color={active ? "var(--btn-fg)" : "var(--fg)"} />
                         <span style={{
                           fontSize: 11.5,
-                          color: active ? "#fff" : "var(--fg-2)",
+                          color: active ? "var(--btn-fg)" : "var(--fg)",
                           fontWeight: active ? 700 : 500,
                           flex: 1
                         }}>
@@ -354,9 +549,9 @@ export default function Sidebar() {
                         {item.badge && (
                           <span style={{
                             fontSize: 8.5, padding: "1px 5px", borderRadius: 4, fontWeight: 700,
-                            background: active ? "rgba(56, 189, 248, 0.2)" : "rgba(255,255,255,0.04)",
-                            color: active ? "#38bdf8" : "var(--muted)",
-                            border: "1px solid rgba(255,255,255,0.08)",
+                            background: active ? "rgba(255, 255, 255, 0.22)" : "var(--surface-3)",
+                            color: active ? "var(--btn-fg)" : "var(--fg)",
+                            border: active ? "1px solid rgba(255, 255, 255, 0.35)" : "1px solid var(--border)",
                           }}>
                             {item.badge}
                           </span>
@@ -372,16 +567,16 @@ export default function Sidebar() {
 
         {/* Footer Telemetry */}
         <div style={{
-          padding: "10px 12px", borderTop: "1px solid #1e293b",
-          background: "#090d16", fontSize: 9.5, color: "#64748b"
+          padding: "10px 12px", borderTop: "1px solid var(--border)",
+          background: "var(--sidebar-footer)", fontSize: 9.5, color: "var(--muted)"
         }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-            <span style={{ fontWeight: 700, color: "#e2e8f0", display: "flex", alignItems: "center", gap: 5 }}>
+            <span style={{ fontWeight: 700, color: "var(--fg)", display: "flex", alignItems: "center", gap: 5 }}>
               <span className="beacon-green" /> ENGINE BRAIN ONLINE
             </span>
-            <span style={{ color: "#94a3b8", fontWeight: 600 }}>4 DAEMONS</span>
+            <span style={{ color: "var(--fg)", fontWeight: 700 }}>4 DAEMONS</span>
           </div>
-          <div style={{ color: "#64748b", fontSize: 9 }}>ZAP · Burp · OpenVAS · Nmap</div>
+          <div style={{ color: "var(--muted)", fontSize: 9 }}>ZAP · Burp · OpenVAS · Nmap</div>
         </div>
       </aside>
     </>

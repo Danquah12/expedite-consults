@@ -4891,8 +4891,8 @@ ${f.remediation}
             width: 36,
             height: 36,
             borderRadius: 8,
-            background: "#0f172a",
-            border: "1px solid #1e293b",
+            background: "var(--surface)",
+            border: "1px solid var(--surface-3)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center"
@@ -4920,8 +4920,8 @@ ${f.remediation}
               <span style={{
                 fontSize: 10,
                 fontWeight: 700,
-                background: "#0f172a",
-                border: "1px solid #1e293b",
+                background: "var(--surface)",
+                border: "1px solid var(--surface-3)",
                 color: running ? "#10b981" : done ? "#38bdf8" : "#94a3b8",
                 padding: "2px 8px",
                 borderRadius: 4,
@@ -4938,7 +4938,7 @@ ${f.remediation}
 
         {/* Action Buttons */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          <div style={{ display: "flex", background: "#090d16", padding: 2, borderRadius: 6, border: "1px solid #1e293b", flexWrap: "wrap", gap: 2 }}>
+          <div style={{ display: "flex", background: "var(--surface-2)", padding: 2, borderRadius: 6, border: "1px solid var(--surface-3)", flexWrap: "wrap", gap: 2 }}>
             {[
               { id: "FAST", label: "Fast (~2m)" },
               { id: "BALANCED", label: "Standard (~5m)" },
@@ -4954,7 +4954,7 @@ ${f.remediation}
                   padding: "4px 8px",
                   borderRadius: 4,
                   border: scanSpeed === s.id ? "1px solid #334155" : "1px solid transparent",
-                  background: scanSpeed === s.id ? "#1e293b" : "transparent",
+                  background: scanSpeed === s.id ? "var(--surface-3)" : "transparent",
                   color: scanSpeed === s.id ? "#f8fafc" : "#94a3b8",
                   cursor: "pointer"
                 }}
@@ -4979,7 +4979,7 @@ ${f.remediation}
                 onClick={fastForwardToReport}
                 title="Complete all remaining DAST / MITRE ATT&CK / OWASP WSTG phases immediately and open the DAST & Web Interface Security Report"
                 style={{
-                  background: "#1e293b",
+                  background: "var(--surface-3)",
                   border: "1px solid #38bdf8",
                   color: "#f8fafc",
                   fontWeight: 700,
@@ -5020,7 +5020,7 @@ ${f.remediation}
           <button
             onClick={printFormattedReport}
             className="btn-secondary"
-            style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, padding: "7px 11px", background: "#0f172a", border: "1px solid #1e293b", color: "#e2e8f0" }}
+            style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, padding: "7px 11px", background: "var(--surface)", border: "1px solid var(--surface-3)", color: "#e2e8f0" }}
           >
             <Printer size={13} color="#94a3b8" />
             <span>Print DAST Web Report</span>
@@ -5035,8 +5035,8 @@ ${f.remediation}
               gap: 6,
               fontSize: 11.5,
               padding: "7px 11px",
-              border: autoEmailOnComplete ? "1px solid rgba(16,185,129,0.4)" : "1px solid #1e293b",
-              background: "#0f172a",
+              border: autoEmailOnComplete ? "1px solid rgba(16,185,129,0.4)" : "1px solid var(--surface-3)",
+              background: "var(--surface)",
               color: "#e2e8f0"
             }}
             title="Configure Automated DAST Web Report Email Dispatch & Recipients"
@@ -5062,11 +5062,43 @@ ${f.remediation}
           <button
             onClick={() => setShowConfigModal(true)}
             className="btn-secondary"
-            style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, padding: "7px 11px", background: "#0f172a", border: "1px solid #1e293b", color: "#e2e8f0" }}
+            style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, padding: "7px 11px", background: "var(--surface)", border: "1px solid var(--surface-3)", color: "#e2e8f0" }}
           >
             <Settings size={13} color="#94a3b8" />
             <span>Daemons</span>
           </button>
+
+          <select
+            aria-label="Switch workspace color theme"
+            defaultValue="parchment"
+            onChange={(e) => {
+              const nextTheme = e.target.value;
+              document.documentElement.setAttribute("data-theme", nextTheme);
+              try {
+                localStorage.setItem("xtrike_dast_ui_theme", nextTheme);
+                window.dispatchEvent(new CustomEvent("xtrike-theme-change", { detail: nextTheme }));
+              } catch {
+                // ignore storage errors
+              }
+            }}
+            style={{
+              background: "var(--surface)",
+              border: "1px solid var(--border-2)",
+              color: "var(--fg)",
+              fontSize: 11.5,
+              fontWeight: 700,
+              padding: "6px 10px",
+              borderRadius: 6,
+              cursor: "pointer"
+            }}
+            title="Switch workspace background & font theme"
+          >
+            <option value="parchment">🎨 Theme: Warm Parchment (Black Font)</option>
+            <option value="slate-dark">🎨 Theme: Classic Slate Dark (Previous)</option>
+            <option value="obsidian-cyber">🎨 Theme: Obsidian Cyber (Dark)</option>
+            <option value="emerald-soc">🎨 Theme: Emerald SOC (Dark)</option>
+            <option value="daylight-slate">🎨 Theme: Crisp Daylight (Black Font)</option>
+          </select>
 
           <button
             onClick={openNewEngagementResetModal}
@@ -5095,7 +5127,7 @@ ${f.remediation}
       {/* Clean-Slate Engagement Banner when Portal is Reset */}
       {isPortalClearedForNewEngagement && verifiedFindings.length === 0 && !running && (
         <div style={{
-          background: "#111827",
+          background: "var(--surface)",
           border: "1px solid #10b981",
           borderRadius: 10,
           padding: "12px 18px",
@@ -5120,7 +5152,7 @@ ${f.remediation}
             <button
               onClick={() => setIsPortalClearedForNewEngagement(false)}
               style={{
-                background: "#161f30",
+                background: "var(--surface-3)",
                 border: "1px solid #334155",
                 color: "#cbd5e1",
                 fontSize: 11.5,
@@ -5162,8 +5194,8 @@ ${f.remediation}
                       gap: 5,
                       padding: "5px 9px",
                       borderRadius: 6,
-                      border: `1px solid ${isCurrent || isTabSelected ? "#38bdf8" : "#1e293b"}`,
-                      background: isCurrent || isTabSelected ? "#1e293b" : "#090d16",
+                      border: `1px solid ${isCurrent || isTabSelected ? "#38bdf8" : "var(--surface-3)"}`,
+                      background: isCurrent || isTabSelected ? "var(--surface-3)" : "var(--surface-2)",
                       color: isCurrent || isTabSelected ? "#f8fafc" : isCompleted ? "#cbd5e1" : "#94a3b8",
                       fontSize: 10.5,
                       fontWeight: isCurrent || isTabSelected ? 700 : 600,
@@ -5173,7 +5205,7 @@ ${f.remediation}
                   >
                     <span>{item.label}</span>
                     {isCurrent && (
-                      <span style={{ fontSize: 8.5, background: "#38bdf8", color: "#090d16", padding: "1px 4px", borderRadius: 3, fontWeight: 800 }}>
+                      <span style={{ fontSize: 8.5, background: "#38bdf8", color: "var(--surface-2)", padding: "1px 4px", borderRadius: 3, fontWeight: 800 }}>
                         ACTIVE
                       </span>
                     )}
@@ -5203,8 +5235,8 @@ ${f.remediation}
             <button
               onClick={() => setShowPipelineDetails(prev => !prev)}
               style={{
-                background: showPipelineDetails ? "#1e293b" : "#090d16",
-                border: `1px solid ${showPipelineDetails ? "#38bdf8" : "#1e293b"}`,
+                background: showPipelineDetails ? "var(--surface-3)" : "var(--surface-2)",
+                border: `1px solid ${showPipelineDetails ? "#38bdf8" : "var(--surface-3)"}`,
                 color: showPipelineDetails ? "#f8fafc" : "#94a3b8",
                 fontSize: 10.5,
                 fontWeight: 600,
@@ -5354,7 +5386,7 @@ ${f.remediation}
                       <span>{wfActive ? "⚡" : wfDone ? "✓" : "○"}</span>
                       <span>{wf.name} · {wf.title.split(" ")[0]}</span>
                       {wfActive && (
-                        <span style={{ fontSize: 8, background: "#f59e0b", color: "#050811", padding: "1px 4px", borderRadius: 3, fontWeight: 900 }}>
+                        <span style={{ fontSize: 8, background: "#f59e0b", color: "var(--surface-2)", padding: "1px 4px", borderRadius: 3, fontWeight: 900 }}>
                           ACTIVE
                         </span>
                       )}
@@ -5400,7 +5432,7 @@ ${f.remediation}
                           fontWeight: 900,
                           fontSize: 9.5,
                           background: isStageRunning ? "#f59e0b" : isStageDone ? "#10b981" : "#38bdf8",
-                          color: "#050811"
+                          color: "var(--surface-2)"
                         }}>
                           {isStageRunning ? `⚡ EXECUTING STAGE ${activeWf.stageNum}/8` : isStageDone ? `✓ VERIFIED STAGE ${activeWf.stageNum}/8` : `🧠 STAGE ${activeWf.stageNum}/8`} · {activeWf.name}
                         </span>
@@ -5487,7 +5519,7 @@ ${f.remediation}
                 style={{
                   flex: "1 1 200px",
                   minWidth: 0,
-                  background: "#050811",
+                  background: "var(--surface-2)",
                   border: "1px solid rgba(56,189,248,0.35)",
                   borderRadius: 5,
                   padding: "5px 10px",
@@ -5592,7 +5624,7 @@ ${f.remediation}
                   placeholder="Bearer eyJhbGci... or X-API-Key: ak_live_..."
                   style={{
                     flex: 1,
-                    background: "#050811",
+                    background: "var(--surface-2)",
                     border: "1px solid rgba(245,158,11,0.4)",
                     borderRadius: 4,
                     padding: "4px 8px",
@@ -5615,7 +5647,7 @@ ${f.remediation}
                   placeholder="session_id=xyz987; cf_clearance=..."
                   style={{
                     flex: 1,
-                    background: "#050811",
+                    background: "var(--surface-2)",
                     border: "1px solid rgba(245,158,11,0.4)",
                     borderRadius: 4,
                     padding: "4px 8px",
@@ -5669,7 +5701,7 @@ ${f.remediation}
                   onChange={e => setScanExecutionMode(e.target.value as any)}
                   disabled={running}
                   style={{
-                    background: "#050811",
+                    background: "var(--surface-2)",
                     color: scanExecutionMode === "LIVE_EXTERNAL_ONLY" ? "#10b981" : "#38bdf8",
                     border: `1px solid ${scanExecutionMode === "LIVE_EXTERNAL_ONLY" ? "#10b981" : "rgba(56,189,248,0.4)"}`,
                     borderRadius: 5,
@@ -5847,7 +5879,7 @@ ${f.remediation}
         {/* Live External Telemetry Summary Strip (renders when engineResults has live HTTP/DOM/WSTG/DNS telemetry) */}
         {engineResults.length > 0 && (
           <div style={{
-            background: "#050811",
+            background: "var(--surface-2)",
             border: "1px solid rgba(56,189,248,0.3)",
             borderRadius: 7,
             padding: 10,
@@ -5955,8 +5987,8 @@ ${f.remediation}
               key={sc.id}
               onClick={() => setActiveLogTab(sc.tabId)}
               style={{
-                background: isSelected ? "#1e293b" : "#0f172a",
-                border: `1px solid ${isRunning || isSelected ? "#38bdf8" : "#1e293b"}`,
+                background: isSelected ? "var(--surface-3)" : "var(--surface)",
+                border: `1px solid ${isRunning || isSelected ? "#38bdf8" : "var(--surface-3)"}`,
                 borderRadius: 8,
                 padding: "7px 11px",
                 display: "flex",
@@ -5987,8 +6019,8 @@ ${f.remediation}
                 )}
                 <strong style={{
                   color: isRunning ? "#10b981" : isDone ? "#38bdf8" : "#94a3b8",
-                  background: "#090d16",
-                  border: "1px solid #1e293b",
+                  background: "var(--surface-2)",
+                  border: "1px solid var(--surface-3)",
                   padding: "2px 6px",
                   borderRadius: 4
                 }}>
@@ -6006,7 +6038,7 @@ ${f.remediation}
         {/* Left: Engine Tabs + Built-In Package Suites + Live Terminal Stream */}
         <div className="card-tactical" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 12, minWidth: 0, width: "100%", overflowX: "hidden" }}>
 
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #1f2937", paddingBottom: 10, flexWrap: "wrap", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid var(--surface-3)", paddingBottom: 10, flexWrap: "wrap", gap: 8 }}>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {[
                 { id: "VULN_MGMT",    label: `Vuln Management (${reportFindings.length})` },
@@ -6030,11 +6062,10 @@ ${f.remediation}
                     border:
                       activeLogTab === tab.id
                         ? "1px solid #38bdf8"
-                        : "1px solid #1f2937",
+                        : "1px solid var(--surface-3)",
                     background:
                       activeLogTab === tab.id
-                        ? "#1e293b"
-                        : "transparent",
+                        ? "var(--surface-3)" : "transparent",
                     color:
                       activeLogTab === tab.id
                         ? "#f8fafc"
@@ -6102,8 +6133,8 @@ ${f.remediation}
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               {/* Clean Report Top Action & Verification Banner */}
               <div style={{
-                background: "#111827",
-                border: "1px solid #1f2937",
+                background: "var(--surface)",
+                border: "1px solid var(--surface-3)",
                 borderRadius: 10,
                 padding: "16px 20px",
                 display: "flex",
@@ -6118,7 +6149,7 @@ ${f.remediation}
                     <strong style={{ fontSize: 15.5, color: "#f8fafc" }}>
                       Security Assessment Report — {clientOrgName} ({engagementId})
                     </strong>
-                    <span style={{ fontSize: 11, fontWeight: 600, background: "#1e293b", color: "#cbd5e1", padding: "2px 8px", borderRadius: 5, border: "1px solid #334155" }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, background: "var(--surface-3)", color: "#cbd5e1", padding: "2px 8px", borderRadius: 5, border: "1px solid #334155" }}>
                       OWASP WSTG · MITRE ATT&amp;CK® · 40 CWEs
                     </span>
                   </div>
@@ -6172,8 +6203,8 @@ ${f.remediation}
 
               {/* Progressive Disclosure: White-Label Dossier & Header Customizer */}
               <details style={{
-                background: "#111827",
-                border: "1px solid #1f2937",
+                background: "var(--surface)",
+                border: "1px solid var(--surface-3)",
                 borderRadius: 8,
                 padding: "10px 14px"
               }}>
@@ -6181,14 +6212,14 @@ ${f.remediation}
                   <span>⚙️ Customize Client Organization, Assessor &amp; Classification Header ({clientOrgName} · {engagementId})</span>
                   <span style={{ fontSize: 11.5, color: "#38bdf8" }}>Expand ▾</span>
                 </summary>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 10, marginTop: 12, paddingTop: 12, borderTop: "1px solid #1f2937" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 10, marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--surface-3)" }}>
                   <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                     <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)" }}>Client Organization</label>
                     <input
                       type="text"
                       value={clientOrgName}
                       onChange={e => setClientOrgName(e.target.value)}
-                      style={{ background: "#0b0f17", border: "1px solid var(--border)", borderRadius: 6, padding: "6px 10px", color: "#f8fafc", fontSize: 12 }}
+                      style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 6, padding: "6px 10px", color: "#f8fafc", fontSize: 12 }}
                     />
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -6197,7 +6228,7 @@ ${f.remediation}
                       type="text"
                       value={leadAssessorName}
                       onChange={e => setLeadAssessorName(e.target.value)}
-                      style={{ background: "#0b0f17", border: "1px solid var(--border)", borderRadius: 6, padding: "6px 10px", color: "#f8fafc", fontSize: 12 }}
+                      style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 6, padding: "6px 10px", color: "#f8fafc", fontSize: 12 }}
                     />
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -6206,7 +6237,7 @@ ${f.remediation}
                       type="text"
                       value={engagementId}
                       onChange={e => setEngagementId(e.target.value)}
-                      style={{ background: "#0b0f17", border: "1px solid var(--border)", borderRadius: 6, padding: "6px 10px", color: "#38bdf8", fontSize: 12, fontFamily: "monospace" }}
+                      style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 6, padding: "6px 10px", color: "#38bdf8", fontSize: 12, fontFamily: "monospace" }}
                     />
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -6214,7 +6245,7 @@ ${f.remediation}
                     <select
                       value={classificationLevel}
                       onChange={e => setClassificationLevel(e.target.value)}
-                      style={{ background: "#0b0f17", border: "1px solid var(--border)", borderRadius: 6, padding: "6px 10px", color: "#cbd5e1", fontSize: 12 }}
+                      style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 6, padding: "6px 10px", color: "#cbd5e1", fontSize: 12 }}
                     >
                       <option value="CONFIDENTIAL — CLIENT EXECUTIVE & SOC2 / PCI-DSS v4.0">CONFIDENTIAL — CLIENT EXECUTIVE &amp; SOC2 / PCI-DSS v4.0</option>
                       <option value="RESTRICTED — ISO/IEC 27001:2022 & NIST SP 800-53 REV5">RESTRICTED — ISO/IEC 27001:2022 &amp; NIST SP 800-53 REV5</option>
@@ -6227,8 +6258,8 @@ ${f.remediation}
 
               {/* 8-Stage Autonomous Brain Assessment Lifecycle & Deep Spider Inventory (Collapsible Disclosure) */}
               <details style={{
-                background: "#111827",
-                border: "1px solid #1f2937",
+                background: "var(--surface)",
+                border: "1px solid var(--surface-3)",
                 borderRadius: 8,
                 padding: "10px 16px"
               }}>
@@ -6236,7 +6267,7 @@ ${f.remediation}
                   <span>🧠 8-Stage Autonomous Brain Ledger &amp; Deep Spider Inventory ({allScopedUrlsStr})</span>
                   <span style={{ fontSize: 11, color: "#10b981", fontFamily: "monospace" }}>✓ 8/8 Stages · 32/32 Plugins Executed (Click to expand)</span>
                 </summary>
-                <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12, paddingTop: 12, borderTop: "1px solid #1f2937" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--surface-3)" }}>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 8 }}>
                     {AUTONOMOUS_8_STAGE_WORKFLOW.map((wf) => {
                       const isHighlighted = selectedBrainStage === wf.stageNum || currentBrainStage === wf.stageNum;
@@ -6245,8 +6276,8 @@ ${f.remediation}
                           key={wf.stageNum}
                           onClick={() => setSelectedBrainStage(wf.stageNum)}
                           style={{
-                            background: isHighlighted ? "rgba(56,189,248,0.12)" : "#0b0f17",
-                            border: isHighlighted ? "1.5px solid #38bdf8" : "1px solid #1f2937",
+                            background: isHighlighted ? "rgba(56,189,248,0.12)" : "var(--surface-2)",
+                            border: isHighlighted ? "1.5px solid #38bdf8" : "1px solid var(--surface-3)",
                             borderRadius: 6,
                             padding: "8px 10px",
                             cursor: "pointer",
@@ -6264,7 +6295,7 @@ ${f.remediation}
                               padding: "1px 5px",
                               borderRadius: 3,
                               background: isHighlighted ? "#38bdf8" : "rgba(16,185,129,0.15)",
-                              color: isHighlighted ? "#0b0f17" : "#10b981"
+                              color: isHighlighted ? "var(--surface-2)" : "#10b981"
                             }}>
                               {isHighlighted ? "★ ACTIVE" : `✓ ${wf.status}`}
                             </span>
@@ -6290,8 +6321,8 @@ ${f.remediation}
                     const jsRoutes: string[] = primaryResult?.deepSpider?.jsRoutesExtracted || ["/api/v1/auth", "/api/v1/users", "/graphql", "/admin", "/oauth/token"];
                     return (
                       <div style={{
-                        background: "#0b0f17",
-                        border: "1px solid #1f2937",
+                        background: "var(--surface-2)",
+                        border: "1px solid var(--surface-3)",
                         borderRadius: 8,
                         padding: 12,
                         display: "flex",
@@ -6314,8 +6345,8 @@ ${f.remediation}
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 6 }}>
                           {spideredPages.map((sp: any, sIdx: number) => (
                             <div key={sIdx} style={{
-                              background: "#111827",
-                              border: "1px solid #1f2937",
+                              background: "var(--surface)",
+                              border: "1px solid var(--surface-3)",
                               borderRadius: 6,
                               padding: "7px 9px",
                               fontFamily: "monospace",
@@ -6348,11 +6379,11 @@ ${f.remediation}
 
                         {/* Extracted Parameters & JS Bundle Routes */}
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, fontSize: 10, fontFamily: "monospace" }}>
-                          <div style={{ flex: "1 1 280px", background: "#111827", border: "1px solid #1f2937", borderRadius: 6, padding: "6px 9px" }}>
+                          <div style={{ flex: "1 1 280px", background: "var(--surface)", border: "1px solid var(--surface-3)", borderRadius: 6, padding: "6px 9px" }}>
                             <strong style={{ color: "#cbd5e1" }}>Form &amp; URL Parameters ({discoveredParams.length}): </strong>
                             <span style={{ color: "#94a3b8" }}>{discoveredParams.join(", ")}</span>
                           </div>
-                          <div style={{ flex: "1 1 280px", background: "#111827", border: "1px solid #1f2937", borderRadius: 6, padding: "6px 9px" }}>
+                          <div style={{ flex: "1 1 280px", background: "var(--surface)", border: "1px solid var(--surface-3)", borderRadius: 6, padding: "6px 9px" }}>
                             <strong style={{ color: "#cbd5e1" }}>JS Bundle &amp; API Routes ({jsRoutes.length}): </strong>
                             <span style={{ color: "#94a3b8" }}>{jsRoutes.join(", ")}</span>
                           </div>
@@ -6407,8 +6438,8 @@ ${f.remediation}
 
                 return (
                   <div style={{
-                    background: "#111827",
-                    border: "1px solid #1f2937",
+                    background: "var(--surface)",
+                    border: "1px solid var(--surface-3)",
                     borderRadius: 8,
                     padding: "12px 16px",
                     display: "grid",
@@ -6417,7 +6448,7 @@ ${f.remediation}
                     alignItems: "center"
                   }}>
                     <div style={{
-                      background: "#0b0f17",
+                      background: "var(--surface-2)",
                       border: `2px solid ${overallScore >= 85 ? "#10b981" : overallScore >= 65 ? "#f59e0b" : "#ef4444"}`,
                       borderRadius: 10,
                       padding: "10px 18px",
@@ -6435,7 +6466,7 @@ ${f.remediation}
 
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(175px, 1fr))", gap: 10 }}>
                       {pillars.map((p, pIdx) => (
-                        <div key={pIdx} style={{ background: "#0b0f17", border: "1px solid #1f2937", borderRadius: 6, padding: "8px 10px" }}>
+                        <div key={pIdx} style={{ background: "var(--surface-2)", border: "1px solid var(--surface-3)", borderRadius: 6, padding: "8px 10px" }}>
                           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10.5, fontWeight: 700, marginBottom: 4 }}>
                             <span style={{ color: "#f8fafc" }}>{p.name}</span>
                             <span style={{ color: p.pct >= 80 ? "#10b981" : p.pct >= 60 ? "#f59e0b" : "#ef4444", fontFamily: "monospace" }}>{p.pct}%</span>
@@ -6453,8 +6484,8 @@ ${f.remediation}
 
               {/* Post-Remediation Retest & Certificate of Validation Control Bar */}
               <div style={{
-                background: "#111827",
-                border: remediatedCount === reportFindings.length ? "1px solid #10b981" : "1px solid #1f2937",
+                background: "var(--surface)",
+                border: remediatedCount === reportFindings.length ? "1px solid #10b981" : "1px solid var(--surface-3)",
                 borderRadius: 8,
                 padding: "12px 16px",
                 display: "flex",
@@ -6476,7 +6507,7 @@ ${f.remediation}
                         fontFamily: "monospace",
                         padding: "2px 8px",
                         borderRadius: 4,
-                        background: remediatedCount === reportFindings.length ? "rgba(16,185,129,0.18)" : "#161f30",
+                        background: remediatedCount === reportFindings.length ? "rgba(16,185,129,0.18)" : "var(--surface-3)",
                         color: remediatedCount === reportFindings.length ? "#10b981" : "#cbd5e1"
                       }}>
                         {remediatedCount} / {reportFindings.length} FINDINGS REMEDIATED
@@ -6515,8 +6546,8 @@ ${f.remediation}
                     <button
                       onClick={resetRetestAll}
                       style={{
-                        background: "#161f30",
-                        border: "1px solid #1f2937",
+                        background: "var(--surface-3)",
+                        border: "1px solid var(--surface-3)",
                         color: "#94a3b8",
                         fontSize: 11,
                         fontWeight: 600,
@@ -6533,8 +6564,8 @@ ${f.remediation}
 
               {/* ── 📧 Automated Assessment Report Email Dispatch & SMTP Relay (Collapsible Disclosure) ── */}
               <details style={{
-                background: "#111827",
-                border: "1px solid #1f2937",
+                background: "var(--surface)",
+                border: "1px solid var(--surface-3)",
                 borderRadius: 8,
                 padding: "10px 16px"
               }}>
@@ -6544,13 +6575,13 @@ ${f.remediation}
                     {autoEmailOnComplete ? "Auto-Dispatch Enabled" : "Manual Dispatch"} · {emailProvider} (Click to expand)
                   </span>
                 </summary>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12, paddingTop: 12, borderTop: "1px solid #1f2937" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--surface-3)" }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
                     <div style={{ fontSize: 11.5, color: "#94a3b8" }}>
                       Compiles and emails the full security assessment dossier (.PDF and .HTML attachments) to configured recipients.
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                      <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#e2e8f0", cursor: "pointer", background: "#0b0f17", padding: "5px 10px", borderRadius: 6, border: "1px solid #1f2937" }}>
+                      <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#e2e8f0", cursor: "pointer", background: "var(--surface-2)", padding: "5px 10px", borderRadius: 6, border: "1px solid var(--surface-3)" }}>
                         <input
                           type="checkbox"
                           checked={autoEmailOnComplete}
@@ -6565,7 +6596,7 @@ ${f.remediation}
                         style={{
                           background: "#38bdf8",
                           border: "1px solid #38bdf8",
-                          color: "#0b0f17",
+                          color: "var(--surface-2)",
                           fontSize: 11,
                           fontWeight: 800,
                           padding: "6px 14px",
@@ -6578,7 +6609,7 @@ ${f.remediation}
                       <button
                         onClick={() => setShowEmailModal(true)}
                         style={{
-                          background: "#161f30",
+                          background: "var(--surface-3)",
                           border: "1px solid #334155",
                           color: "#f8fafc",
                           fontSize: 11,
@@ -6594,7 +6625,7 @@ ${f.remediation}
                   </div>
 
                   {/* Quick Recipient Pills + Inline Add Input */}
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, paddingTop: 6, borderTop: "1px solid #1f2937" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, paddingTop: 6, borderTop: "1px solid var(--surface-3)" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                       <span style={{ fontSize: 10.5, fontWeight: 700, color: "#94a3b8" }}>Recipients:</span>
                       {emailRecipients.map((email) => (
@@ -6606,8 +6637,8 @@ ${f.remediation}
                             gap: 6,
                             fontSize: 10.5,
                             fontFamily: "monospace",
-                            background: "#0b0f17",
-                            border: "1px solid #1f2937",
+                            background: "var(--surface-2)",
+                            border: "1px solid var(--surface-3)",
                             color: "#cbd5e1",
                             padding: "3px 8px",
                             borderRadius: 999
@@ -6638,8 +6669,8 @@ ${f.remediation}
                         }}
                         placeholder="Add recipient (e.g. ciso@org.local)..."
                         style={{
-                          background: "#0b0f17",
-                          border: "1px solid #1f2937",
+                          background: "var(--surface-2)",
+                          border: "1px solid var(--surface-3)",
                           borderRadius: 6,
                           padding: "4px 10px",
                           fontSize: 11,
@@ -6651,7 +6682,7 @@ ${f.remediation}
                       <button
                         onClick={() => addEmailRecipient(newRecipientInput)}
                         style={{
-                          background: "#161f30",
+                          background: "var(--surface-3)",
                           border: "1px solid #334155",
                           color: "#38bdf8",
                           fontSize: 10.5,
@@ -6669,8 +6700,8 @@ ${f.remediation}
                   {/* Latest Dispatch Receipt Banner if available */}
                   {emailDispatchHistory.length > 0 && (
                     <div style={{
-                      background: "#0b0f17",
-                      border: "1px solid #1f2937",
+                      background: "var(--surface-2)",
+                      border: "1px solid var(--surface-3)",
                       borderRadius: 6,
                       padding: "8px 12px",
                       display: "flex",
@@ -6690,19 +6721,19 @@ ${f.remediation}
                       <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                         <button
                           onClick={() => downloadDispatchedPdf(emailDispatchHistory[0])}
-                          style={{ background: "#161f30", border: "1px solid #334155", color: "#f8fafc", fontSize: 10.5, fontWeight: 600, padding: "3px 9px", borderRadius: 4, cursor: "pointer" }}
+                          style={{ background: "var(--surface-3)", border: "1px solid #334155", color: "#f8fafc", fontSize: 10.5, fontWeight: 600, padding: "3px 9px", borderRadius: 4, cursor: "pointer" }}
                         >
                           Download .PDF
                         </button>
                         <button
                           onClick={() => downloadDispatchedHtml(emailDispatchHistory[0])}
-                          style={{ background: "#161f30", border: "1px solid #334155", color: "#f8fafc", fontSize: 10.5, fontWeight: 600, padding: "3px 9px", borderRadius: 4, cursor: "pointer" }}
+                          style={{ background: "var(--surface-3)", border: "1px solid #334155", color: "#f8fafc", fontSize: 10.5, fontWeight: 600, padding: "3px 9px", borderRadius: 4, cursor: "pointer" }}
                         >
                           Download .HTML
                         </button>
                         <button
                           onClick={() => downloadDispatchedEml(emailDispatchHistory[0])}
-                          style={{ background: "#161f30", border: "1px solid #334155", color: "#f8fafc", fontSize: 10.5, fontWeight: 600, padding: "3px 9px", borderRadius: 4, cursor: "pointer" }}
+                          style={{ background: "var(--surface-3)", border: "1px solid #334155", color: "#f8fafc", fontSize: 10.5, fontWeight: 600, padding: "3px 9px", borderRadius: 4, cursor: "pointer" }}
                         >
                           Download .EML
                         </button>
@@ -6717,8 +6748,8 @@ ${f.remediation}
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                background: "#111827",
-                border: "1px solid #1f2937",
+                background: "var(--surface)",
+                border: "1px solid var(--surface-3)",
                 borderRadius: 8,
                 padding: "10px 14px",
                 flexWrap: "wrap",
@@ -6734,7 +6765,7 @@ ${f.remediation}
                       fontSize: 11.5,
                       fontWeight: 700,
                       cursor: "pointer",
-                      border: reportFormat === "STANDARD_PENTEST" ? "1px solid #38bdf8" : "1px solid #1f2937",
+                      border: reportFormat === "STANDARD_PENTEST" ? "1px solid #38bdf8" : "1px solid var(--surface-3)",
                       background: reportFormat === "STANDARD_PENTEST" ? "rgba(56,189,248,0.12)" : "transparent",
                       color: reportFormat === "STANDARD_PENTEST" ? "#f8fafc" : "#94a3b8"
                     }}
@@ -6749,7 +6780,7 @@ ${f.remediation}
                       fontSize: 11.5,
                       fontWeight: 700,
                       cursor: "pointer",
-                      border: reportFormat === "EXECUTIVE_MATRIX" ? "1px solid #38bdf8" : "1px solid #1f2937",
+                      border: reportFormat === "EXECUTIVE_MATRIX" ? "1px solid #38bdf8" : "1px solid var(--surface-3)",
                       background: reportFormat === "EXECUTIVE_MATRIX" ? "rgba(56,189,248,0.12)" : "transparent",
                       color: reportFormat === "EXECUTIVE_MATRIX" ? "#f8fafc" : "#94a3b8"
                     }}
@@ -6854,7 +6885,7 @@ ${f.remediation}
 
                     {/* 1. Engagement Overview & 2. Overall Risk Rating */}
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 12, minWidth: 0 }}>
-                      <div style={{ background: "#050811", border: "1px solid rgba(56,189,248,0.25)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+                      <div style={{ background: "var(--surface-2)", border: "1px solid rgba(56,189,248,0.25)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 6 }}>
                         <strong style={{ fontSize: 12, color: "#38bdf8" }}>1. Engagement Overview</strong>
                         <div style={{ fontSize: 11.5, color: "#e2e8f0", lineHeight: 1.55 }}>
                           {execSum.engagementOverview.narrativeParagraph}
@@ -6877,7 +6908,7 @@ ${f.remediation}
                           </div>
                         </div>
 
-                        <div style={{ background: "#050811", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: 12 }}>
+                        <div style={{ background: "var(--surface-2)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: 12 }}>
                           <strong style={{ fontSize: 12, color: "#38bdf8", display: "block", marginBottom: 6 }}>
                             3. Findings Summary ({execSum.findingsSummary.totalFindings} Confirmed · 0 False Positives)
                           </strong>
@@ -6906,7 +6937,7 @@ ${f.remediation}
                     </div>
 
                     {/* 3A. Executive Visual Analytics, Multi-Quarter Posture Trends & Benchmark Graphs */}
-                    <div style={{ background: "#050811", border: "1px solid rgba(56,189,248,0.35)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 10 }}>
+                    <div style={{ background: "var(--surface-2)", border: "1px solid rgba(56,189,248,0.35)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 10 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6 }}>
                         <strong style={{ fontSize: 12.5, color: "#38bdf8" }}>
                           📊 Executive Visual Analytics, Multi-Quarter Posture Trajectory &amp; 5-Pillar Benchmark Graphs
@@ -6949,7 +6980,7 @@ ${f.remediation}
 
                     {/* 3B. Executive Findings & SLA Breakdown Table + Multi-Quarter Security Posture Trend Table */}
                     <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 10, minWidth: 0 }}>
-                      <div style={{ background: "#050811", border: "1px solid rgba(244,63,94,0.3)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+                      <div style={{ background: "var(--surface-2)", border: "1px solid rgba(244,63,94,0.3)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 6 }}>
                         <strong style={{ fontSize: 12, color: "#fda4af" }}>
                           📋 Table 1 — Executive Findings Severity, Risk Share &amp; SLA Remediation Breakdown
                         </strong>
@@ -6985,7 +7016,7 @@ ${f.remediation}
                         </div>
                       </div>
 
-                      <div style={{ background: "#050811", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+                      <div style={{ background: "var(--surface-2)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 6 }}>
                         <strong style={{ fontSize: 12, color: "#34d399" }}>
                           📈 Table 2 — Multi-Quarter Security Posture &amp; Remediation Velocity Trend Table
                         </strong>
@@ -7032,7 +7063,7 @@ ${f.remediation}
                     </div>
 
                     {/* 4. Key Findings Highlights (Plain-Language Business Summary) */}
-                    <div style={{ background: "#050811", border: "1px solid rgba(244,63,94,0.3)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+                    <div style={{ background: "var(--surface-2)", border: "1px solid rgba(244,63,94,0.3)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 8 }}>
                       <strong style={{ fontSize: 12, color: "#fda4af" }}>
                         4. Key Findings Highlights (Plain-Language Summary for Leadership &amp; Risk Owners)
                       </strong>
@@ -7078,7 +7109,7 @@ ${f.remediation}
 
                     {/* 5. Business Impact, 6. Positive Observations & 7. High-Level Recommendations */}
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 10 }}>
-                      <div style={{ background: "#050811", border: "1px solid rgba(251,146,60,0.3)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+                      <div style={{ background: "var(--surface-2)", border: "1px solid rgba(251,146,60,0.3)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 6 }}>
                         <strong style={{ fontSize: 12, color: "#fdba74" }}>5. Business Impact</strong>
                         <div style={{ fontSize: 11, color: "#e2e8f0", lineHeight: 1.5 }}>
                           {execSum.businessImpact.narrativeParagraph}
@@ -7092,7 +7123,7 @@ ${f.remediation}
                         </div>
                       </div>
 
-                      <div style={{ background: "#050811", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+                      <div style={{ background: "var(--surface-2)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 6 }}>
                         <strong style={{ fontSize: 12, color: "#34d399" }}>6. Positive Security Observations</strong>
                         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                           {execSum.positiveObservations.map((po, idx) => (
@@ -7114,7 +7145,7 @@ ${f.remediation}
                     </div>
 
                     {/* 7B. Table 3 — Prioritized Executive Action Plan & Risk Reduction Roadmap Table */}
-                    <div style={{ background: "#050811", border: "1px solid rgba(56,189,248,0.3)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+                    <div style={{ background: "var(--surface-2)", border: "1px solid rgba(56,189,248,0.3)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 6 }}>
                       <strong style={{ fontSize: 12, color: "#38bdf8" }}>
                         🗺️ Table 3 — Prioritized Executive Action Plan &amp; Risk Reduction Roadmap
                       </strong>
@@ -7154,7 +7185,7 @@ ${f.remediation}
                       </div>
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 6, fontFamily: "monospace", fontSize: 10, color: "#bae6fd" }}>
                         {execSum.conclusionAndNextSteps.nextStepsChecklist.map((ns, idx) => (
-                          <div key={idx} style={{ background: "#050811", border: "1px solid rgba(56,189,248,0.22)", borderRadius: 4, padding: "5px 8px" }}>
+                          <div key={idx} style={{ background: "var(--surface-2)", border: "1px solid rgba(56,189,248,0.22)", borderRadius: 4, padding: "5px 8px" }}>
                             ☑️ {ns}
                           </div>
                         ))}
@@ -7295,7 +7326,7 @@ ${f.remediation}
                         </div>
 
                         <div style={{ display: "grid", gridTemplateColumns: "1.15fr 1fr", gap: 12 }}>
-                          <div style={{ background: "#050811", border: "1px solid var(--border)", borderRadius: 6, padding: 10 }}>
+                          <div style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 6, padding: 10 }}>
                             <div style={{ fontSize: 10.5, fontWeight: 800, color: "#10b981", marginBottom: 6 }}>
                               📋 Step-by-Step Exploitation &amp; Validation Procedure:
                             </div>
@@ -7308,7 +7339,7 @@ ${f.remediation}
                             </div>
                           </div>
 
-                          <div style={{ background: "#050811", border: "1px solid rgba(56,189,248,0.35)", borderRadius: 6, padding: 10 }}>
+                          <div style={{ background: "var(--surface-2)", border: "1px solid rgba(56,189,248,0.35)", borderRadius: 6, padding: 10 }}>
                             <div style={{ fontSize: 10.5, fontWeight: 800, color: "#38bdf8", marginBottom: 6 }}>
                               💻 How to Mimic / Reproduce This Process Against {primaryHost}:
                             </div>
@@ -7407,7 +7438,7 @@ ${f.remediation}
                                   value={rt.status}
                                   onChange={e => updateRetestStatus(fKey, e.target.value as RetestState)}
                                   style={{
-                                    background: "#050811",
+                                    background: "var(--surface-2)",
                                     color: isFixed ? "#10b981" : rt.status === "IN_REMEDIATION" ? "#fbbf24" : "#f43f5e",
                                     border: `1px solid ${isFixed ? "#10b981" : "var(--border)"}`,
                                     borderRadius: 4,
@@ -7511,7 +7542,7 @@ ${f.remediation}
 
                             {/* ── Formal Penetration Testing Metadata Header + Affected Assets + Impact + Remediation + Retest Criteria ── */}
                             <div style={{
-                              background: "#050811",
+                              background: "var(--surface-2)",
                               border: "1px solid rgba(56,189,248,0.28)",
                               borderRadius: 6,
                               padding: "10px 12px",
@@ -7595,14 +7626,14 @@ ${f.remediation}
                               </div>
                             </div>
 
-                            <div style={{ fontSize: 11, fontFamily: "monospace", color: isFixed ? "#10b981" : "#fbbf24", background: "#050811", padding: "5px 8px", borderRadius: 4, border: "1px solid rgba(255,255,255,0.06)" }}>
+                            <div style={{ fontSize: 11, fontFamily: "monospace", color: isFixed ? "#10b981" : "#fbbf24", background: "var(--surface-2)", padding: "5px 8px", borderRadius: 4, border: "1px solid rgba(255,255,255,0.06)" }}>
                               <strong>Retest Verification Ledger:</strong> {rt.retestNote}
                               {rt.verifiedAt && ` · Verified At: ${new Date(rt.verifiedAt).toLocaleTimeString()} · Hash: ${rt.verificationHash}`}
                             </div>
 
                             <div style={{ display: "grid", gridTemplateColumns: "1.08fr 1fr", gap: 10 }}>
                               {/* Left Column: Step-by-Step Way of Mimicking the Attack */}
-                              <div style={{ background: "#050811", border: "1px solid rgba(56,189,248,0.35)", borderRadius: 6, padding: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+                              <div style={{ background: "var(--surface-2)", border: "1px solid rgba(56,189,248,0.35)", borderRadius: 6, padding: 10, display: "flex", flexDirection: "column", gap: 8 }}>
                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6 }}>
                                   <div style={{ fontSize: 10.5, fontWeight: 800, color: "#38bdf8" }}>
                                     📋 Step-by-Step Way of Mimicking the Attack (Customer URL Verification):
@@ -7693,7 +7724,7 @@ ${f.remediation}
                               </div>
 
                               {/* Right Column: Sample Collected Exploitation Evidence */}
-                              <div style={{ background: "#050811", border: "1px solid rgba(244,63,94,0.35)", borderRadius: 6, padding: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+                              <div style={{ background: "var(--surface-2)", border: "1px solid rgba(244,63,94,0.35)", borderRadius: 6, padding: 10, display: "flex", flexDirection: "column", gap: 8 }}>
                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                                   <div style={{ fontSize: 10.5, fontWeight: 800, color: "#f43f5e" }}>
                                     🔬 Sample Collected Evidence of Exploitation ({fr.findingId}):
@@ -7750,7 +7781,7 @@ ${f.remediation}
 
                             {/* 📸 Visual Pictures of How It Was Exploited (Customer CI Forensic Screenshots) */}
                             <div style={{
-                              background: "#050811",
+                              background: "var(--surface-2)",
                               border: "1px solid rgba(56,189,248,0.42)",
                               borderRadius: 6,
                               padding: 10,
@@ -7853,7 +7884,7 @@ ${f.remediation}
                                   </div>
 
                                   {/* Daemon Port-to-Assessment-Script Mapping & Evidence of TTP Banner */}
-                                  <div style={{ background: "#050811", border: "1px solid rgba(16,185,129,0.35)", borderRadius: 5, padding: "7px 9px", fontSize: 9.5, display: "flex", flexDirection: "column", gap: 4 }}>
+                                  <div style={{ background: "var(--surface-2)", border: "1px solid rgba(16,185,129,0.35)", borderRadius: 5, padding: "7px 9px", fontSize: 9.5, display: "flex", flexDirection: "column", gap: 4 }}>
                                     <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 6 }}>
                                       <span style={{ color: "#10b981", fontWeight: 900 }}>
                                         📡 Detecting Daemon: {daemonDossier.daemonLabel} ({daemonDossier.staticAuditIdentifier})
@@ -7878,7 +7909,7 @@ ${f.remediation}
 
                                   {/* Triggered Linux & Windows PrivEsc, Lateral Movement & Post-Exploitation Script Inventory for this Finding */}
                                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(235px, 1fr))", gap: 6, fontSize: 9 }}>
-                                    <div style={{ background: "#050811", border: "1px solid rgba(232,121,249,0.35)", borderRadius: 5, padding: "6px 8px", display: "flex", flexDirection: "column", gap: 3 }}>
+                                    <div style={{ background: "var(--surface-2)", border: "1px solid rgba(232,121,249,0.35)", borderRadius: 5, padding: "6px 8px", display: "flex", flexDirection: "column", gap: 3 }}>
                                       <div style={{ color: "#e879f9", fontWeight: 900 }}>⬆️ Triggered PrivEsc Scripts (TA0004 · Linux &amp; Windows)</div>
                                       {[...daemonDossier.triggeredLinuxPrivEscScripts, ...daemonDossier.triggeredWindowsPrivEscScripts].map(sc => (
                                         <div key={sc.scriptId} style={{ borderTop: "1px dashed rgba(255,255,255,0.06)", paddingTop: 2 }}>
@@ -7889,7 +7920,7 @@ ${f.remediation}
                                       ))}
                                     </div>
 
-                                    <div style={{ background: "#050811", border: "1px solid rgba(251,146,60,0.35)", borderRadius: 5, padding: "6px 8px", display: "flex", flexDirection: "column", gap: 3 }}>
+                                    <div style={{ background: "var(--surface-2)", border: "1px solid rgba(251,146,60,0.35)", borderRadius: 5, padding: "6px 8px", display: "flex", flexDirection: "column", gap: 3 }}>
                                       <div style={{ color: "#fb923c", fontWeight: 900 }}>🔀 Triggered Lateral Movement Scripts (TA0008 · Linux &amp; Windows)</div>
                                       {[...daemonDossier.triggeredLinuxLateralScripts, ...daemonDossier.triggeredWindowsLateralScripts].map(sc => (
                                         <div key={sc.scriptId} style={{ borderTop: "1px dashed rgba(255,255,255,0.06)", paddingTop: 2 }}>
@@ -7900,7 +7931,7 @@ ${f.remediation}
                                       ))}
                                     </div>
 
-                                    <div style={{ background: "#050811", border: "1px solid rgba(16,185,129,0.35)", borderRadius: 5, padding: "6px 8px", display: "flex", flexDirection: "column", gap: 3 }}>
+                                    <div style={{ background: "var(--surface-2)", border: "1px solid rgba(16,185,129,0.35)", borderRadius: 5, padding: "6px 8px", display: "flex", flexDirection: "column", gap: 3 }}>
                                       <div style={{ color: "#10b981", fontWeight: 900 }}>🧹 Triggered Post-Exploitation &amp; Cleanup Scripts (TA0003–TA0040)</div>
                                       {[...daemonDossier.triggeredLinuxPostExploitScripts, ...daemonDossier.triggeredWindowsPostExploitScripts].map(sc => (
                                         <div key={sc.scriptId} style={{ borderTop: "1px dashed rgba(255,255,255,0.06)", paddingTop: 2 }}>
@@ -7915,7 +7946,7 @@ ${f.remediation}
                                   {/* SearchSploit / Exploit-DB / GitHub / Nuclei Strip */}
                                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 6, fontSize: 9.5 }}>
                                     {intel.searchSploitRefs.map((sr) => (
-                                      <div key={sr.edbId} style={{ background: "#050811", border: "1px solid rgba(245,158,11,0.3)", borderRadius: 5, padding: "6px 8px" }}>
+                                      <div key={sr.edbId} style={{ background: "var(--surface-2)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: 5, padding: "6px 8px" }}>
                                         <div style={{ display: "flex", justifyContent: "space-between", color: "#fbbf24", fontWeight: 900 }}>
                                           <span>📚 Exploit-DB {sr.edbId} ({sr.type})</span>
                                           <span>{sr.cveRef}</span>
@@ -7925,7 +7956,7 @@ ${f.remediation}
                                         <div style={{ color: "#94a3b8", fontSize: 8.5 }}>Path: {sr.exploitDbPath}</div>
                                       </div>
                                     ))}
-                                    <div style={{ background: "#050811", border: "1px solid rgba(56,189,248,0.3)", borderRadius: 5, padding: "6px 8px" }}>
+                                    <div style={{ background: "var(--surface-2)", border: "1px solid rgba(56,189,248,0.3)", borderRadius: 5, padding: "6px 8px" }}>
                                       <div style={{ display: "flex", justifyContent: "space-between", color: "#38bdf8", fontWeight: 900 }}>
                                         <span>🐙 GitHub / Nuclei / NSE</span>
                                         <span>{intel.githubAndNuclei.ghsaId}</span>
@@ -7939,7 +7970,7 @@ ${f.remediation}
                                   {/* 4-Stage Kill-Chain Progression for this Finding */}
                                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(205px, 1fr))", gap: 6, fontSize: 9 }}>
                                     {intel.killChainStages.map((kc) => (
-                                      <div key={kc.stageName} style={{ background: "#050811", border: "1px solid rgba(192,132,252,0.25)", borderRadius: 5, padding: "6px 8px", display: "flex", flexDirection: "column", gap: 3 }}>
+                                      <div key={kc.stageName} style={{ background: "var(--surface-2)", border: "1px solid rgba(192,132,252,0.25)", borderRadius: 5, padding: "6px 8px", display: "flex", flexDirection: "column", gap: 3 }}>
                                         <div style={{ color: "#c084fc", fontWeight: 900 }}>{kc.stageName}</div>
                                         <div style={{ color: "#38bdf8", fontWeight: 800 }}>{kc.mitreTechniqueId}: {kc.mitreTechniqueName}</div>
                                         <div style={{ color: "#cbd5e1", lineHeight: 1.35 }}>{kc.deepDiveMechanism}</div>
@@ -8054,7 +8085,7 @@ ${f.remediation}
                                 <div style={{ color: "var(--muted)", fontSize: 8.5 }}>{sc.triggeredWhen}</div>
                               </td>
                               <td style={{ padding: "5px 6px" }}>
-                                <pre style={{ margin: 0, fontSize: 8.8, color: "#a5f3fc", whiteSpace: "pre-wrap", wordBreak: "break-all", background: "#050811", padding: 5, borderRadius: 4 }}>
+                                <pre style={{ margin: 0, fontSize: 8.8, color: "#a5f3fc", whiteSpace: "pre-wrap", wordBreak: "break-all", background: "var(--surface-2)", padding: 5, borderRadius: 4 }}>
                                   {sc.readOnlyAuditCommands}
                                 </pre>
                               </td>
@@ -8087,7 +8118,7 @@ ${f.remediation}
 
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                       {contextualAppendices.map(ap => (
-                        <div key={ap.appendixId} style={{ background: "#050811", border: "1px solid var(--border)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+                        <div key={ap.appendixId} style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 6 }}>
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6 }}>
                             <strong style={{ fontSize: 11.5, color: "#dce775" }}>{ap.appendixId}: {ap.title}</strong>
                             <span style={{ fontSize: 9, fontFamily: "monospace", color: "#10b981", background: "rgba(16,185,129,0.12)", padding: "2px 6px", borderRadius: 4 }}>
@@ -8304,7 +8335,7 @@ ${f.remediation}
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 10, fontFamily: "monospace" }}>
                     {ROOT_CAUSE_CLUSTERS.map(rc => (
-                      <div key={rc.clusterId} style={{ background: "#050811", padding: "6px 8px", borderRadius: 6, border: "1px solid var(--border)" }}>
+                      <div key={rc.clusterId} style={{ background: "var(--surface-2)", padding: "6px 8px", borderRadius: 6, border: "1px solid var(--border)" }}>
                         <div style={{ display: "flex", justifyContent: "space-between" }}>
                           <strong style={{ color: "#e879f9" }}>{rc.clusterId}: {rc.rootCause} ({rc.cwe})</strong>
                           <span style={{ color: "#fbbf24", fontWeight: 800 }}>{rc.findingsGrouped} Findings</span>
@@ -8420,7 +8451,7 @@ ${f.remediation}
                         { script: "dns-nsid, ntp-info & snmp-info (UDP 53/123/161 · T1046)", out: `UDP [1-65535] Sweep: Audited 53/udp DNS (SPF/DMARC/CAA), 123/udp NTP stratum, and 161/udp SNMPv2c on ${primaryHost}` },
                         { script: "mysql-info & vulners (TCP 3306 & Full Stack · T1595.002)", out: "Matched CVE-2023-25690 (CVSS 9.8), CVE-2022-42889 (CVSS 7.5), and MySQL 5.7.42 protocol handshake (OWASP A06)" },
                       ].map(s => (
-                        <div key={s.script} style={{ background: "#050811", border: "1px solid var(--border)", borderRadius: 6, padding: 8 }}>
+                        <div key={s.script} style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 6, padding: 8 }}>
                           <div style={{ color: "#a5d6a7", fontWeight: 700 }}>--script={s.script}</div>
                           <div style={{ color: "var(--muted)", marginTop: 2 }}>{s.out}</div>
                         </div>
@@ -8429,7 +8460,7 @@ ${f.remediation}
                   )}
 
                   {nmapSubTab === "TOPOLOGY" && (
-                    <div style={{ fontSize: 10.5, fontFamily: "monospace", color: "var(--fg-2)", background: "#050811", padding: 10, borderRadius: 6, border: "1px solid var(--border)" }}>
+                    <div style={{ fontSize: 10.5, fontFamily: "monospace", color: "var(--fg-2)", background: "var(--surface-2)", padding: 10, borderRadius: 6, border: "1px solid var(--border)" }}>
                       <div>Target Fingerprint (MITRE T1592.002): {getHostRowTelemetry(targets[0] || { id: "t0", url: primaryTargetUrl, status: "idle", progress: 0, findings: 0, phase: "" }).stack}</div>
                       <div style={{ color: "#a5d6a7", marginTop: 4 }}>Port Coverage (MITRE T1046): All 65,535 TCP Ports (-sS -p T:1-65535) + All 65,535 UDP Ports (-sU -p U:1-65535) = 131,070 Transport Sockets Audited</div>
                       <div style={{ color: "#38bdf8", marginTop: 4 }}>Topology Scope (MITRE T1590): {allScopedUrlsStr} ➔ Feeds OpenVAS, OWASP ZAP &amp; Multi-Framework Brain</div>
@@ -8515,15 +8546,15 @@ ${f.remediation}
 
                   {openvasSubTab === "FEED" && (
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, fontSize: 10.5, fontFamily: "monospace" }}>
-                      <div style={{ background: "#050811", padding: 8, borderRadius: 6, border: "1px solid var(--border)" }}>
+                      <div style={{ background: "var(--surface-2)", padding: 8, borderRadius: 6, border: "1px solid var(--border)" }}>
                         <div style={{ color: "#80cbc4", fontWeight: 700 }}>Greenbone NVT Feed</div>
                         <div style={{ color: "#f8fafc", marginTop: 2 }}>94,218 NVTs Synced</div>
                       </div>
-                      <div style={{ background: "#050811", padding: 8, borderRadius: 6, border: "1px solid var(--border)" }}>
+                      <div style={{ background: "var(--surface-2)", padding: 8, borderRadius: 6, border: "1px solid var(--border)" }}>
                         <div style={{ color: "#80cbc4", fontWeight: 700 }}>SCAP / CVE Data</div>
                         <div style={{ color: "#f8fafc", marginTop: 2 }}>241,900 CVEs Indexed</div>
                       </div>
-                      <div style={{ background: "#050811", padding: 8, borderRadius: 6, border: "1px solid var(--border)" }}>
+                      <div style={{ background: "var(--surface-2)", padding: 8, borderRadius: 6, border: "1px solid var(--border)" }}>
                         <div style={{ color: "#80cbc4", fontWeight: 700 }}>CERT-Bund Advisories</div>
                         <div style={{ color: "#10b981", marginTop: 2 }}>Up-to-date (2026-10)</div>
                       </div>
@@ -8531,7 +8562,7 @@ ${f.remediation}
                   )}
 
                   {openvasSubTab === "CONFIG" && (
-                    <div style={{ fontSize: 10.5, fontFamily: "monospace", color: "var(--fg-2)", background: "#050811", padding: 10, borderRadius: 6, border: "1px solid var(--border)" }}>
+                    <div style={{ fontSize: 10.5, fontFamily: "monospace", color: "var(--fg-2)", background: "var(--surface-2)", padding: 10, borderRadius: 6, border: "1px solid var(--border)" }}>
                       <div>Scan Config: <strong>Full and fast (daba56c8-73ec-11df-a475-002264764cea)</strong></div>
                       <div style={{ color: "#80cbc4", marginTop: 4 }}>Port List: All IANA assigned TCP and UDP · Alive Test: ICMP, TCP-ACK Service &amp; ARP Ping</div>
                     </div>
@@ -8554,7 +8585,7 @@ ${f.remediation}
                       <select
                         value={zapPolicy}
                         onChange={e => setZapPolicy(e.target.value)}
-                        style={{ background: "#050811", color: "#38bdf8", border: "1px solid var(--border)", borderRadius: 4, padding: "3px 6px", fontSize: 10, fontFamily: "monospace" }}
+                        style={{ background: "var(--surface-2)", color: "#38bdf8", border: "1px solid var(--border)", borderRadius: 4, padding: "3px 6px", fontSize: 10, fontFamily: "monospace" }}
                       >
                         <option value="OWASP Top 10 2021 Full">Policy: OWASP Top 10 2021 Full (A01–A10)</option>
                         <option value="PTES Exploitation Intensive">Policy: PTES Exploitation Intensive</option>
@@ -8765,13 +8796,13 @@ ${f.remediation}
 
                   {zapSubTab === "FUZZER" && (
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, fontSize: 10.5, fontFamily: "monospace" }}>
-                      <div style={{ background: "#050811", padding: 10, borderRadius: 6, border: "1px solid var(--border)" }}>
+                      <div style={{ background: "var(--surface-2)", padding: 10, borderRadius: 6, border: "1px solid var(--border)" }}>
                         <div style={{ color: "#38bdf8", fontWeight: 700, marginBottom: 4 }}>🎯 ZAP Adv Fuzzer Wordlists Active (MITRE T1190)</div>
                         <div style={{ color: "var(--fg-2)" }}>• SQLi-Polyglots-v4.txt (1,240 payloads)</div>
                         <div style={{ color: "var(--fg-2)" }}>• XSS-DOM-EventHandlers.txt (860 payloads)</div>
                         <div style={{ color: "var(--fg-2)" }}>• LFI-PathTraversal-Nix-Win.txt (420 payloads)</div>
                       </div>
-                      <div style={{ background: "#050811", padding: 10, borderRadius: 6, border: "1px solid var(--border)" }}>
+                      <div style={{ background: "var(--surface-2)", padding: 10, borderRadius: 6, border: "1px solid var(--border)" }}>
                         <div style={{ color: "#f59e0b", fontWeight: 700, marginBottom: 4 }}>📂 Forced Browse Hits on {primaryHost} (MITRE TA0006 T1552.001)</div>
                         <div style={{ color: "#10b981" }}>• /.env.backup (200 OK — DB_PASSWORD &amp; JWT_SECRET)</div>
                         <div style={{ color: "#10b981" }}>• /swagger.json (200 OK — 18.2 KB)</div>
@@ -8783,7 +8814,7 @@ ${f.remediation}
                   {zapSubTab === "ADDONS" && (
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, maxHeight: 175, overflowY: "auto", fontSize: 10, fontFamily: "monospace" }}>
                       {ZAP_ADDONS.map(a => (
-                        <div key={a.id} style={{ background: "#050811", padding: "6px 8px", borderRadius: 6, border: "1px solid var(--border)" }}>
+                        <div key={a.id} style={{ background: "var(--surface-2)", padding: "6px 8px", borderRadius: 6, border: "1px solid var(--border)" }}>
                           <div style={{ display: "flex", justifyContent: "space-between" }}>
                             <strong style={{ color: "#38bdf8" }}>{a.name}</strong>
                             <span style={{ color: "#10b981", fontWeight: 700 }}>● ACTIVE</span>
@@ -8824,7 +8855,7 @@ ${f.remediation}
                   </div>
 
                   {/* Sub-Navigation for PrivEsc / Lateral / Per-Finding SearchSploit & Kill-Chain / MITRE 14 Tactics / Post-Assessment / PTES-NIST */}
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", borderBottom: "1px solid #1f2937", paddingBottom: 8 }}>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", borderBottom: "1px solid var(--surface-3)", paddingBottom: 8 }}>
                     {[
                       { id: "PRIVESC",                 label: "Privilege Escalation (TA0004)" },
                       { id: "LATERAL",                 label: "Lateral Movement (TA0008)" },
@@ -8842,8 +8873,8 @@ ${f.remediation}
                           fontWeight: postAssessSubTab === st.id ? 700 : 500,
                           padding: "6px 12px",
                           borderRadius: 6,
-                          border: postAssessSubTab === st.id ? "1px solid #38bdf8" : "1px solid #1f2937",
-                          background: postAssessSubTab === st.id ? "rgba(56,189,248,0.12)" : "#0b0f17",
+                          border: postAssessSubTab === st.id ? "1px solid #38bdf8" : "1px solid var(--surface-3)",
+                          background: postAssessSubTab === st.id ? "rgba(56,189,248,0.12)" : "var(--surface-2)",
                           color: postAssessSubTab === st.id ? "#f8fafc" : "#94a3b8",
                           cursor: "pointer"
                         }}
@@ -8881,7 +8912,7 @@ ${f.remediation}
                       </div>
 
                       {/* Complete Linux & Windows Privilege Escalation Script Inventory (16 Scripts) */}
-                      <div style={{ background: "#050811", border: "1px solid rgba(232,121,249,0.35)", borderRadius: 6, padding: 8 }}>
+                      <div style={{ background: "var(--surface-2)", border: "1px solid rgba(232,121,249,0.35)", borderRadius: 6, padding: 8 }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6, flexWrap: "wrap", gap: 6 }}>
                           <strong style={{ fontSize: 10.5, color: "#e879f9", fontFamily: "monospace" }}>
                             🐧🪟 Linux (LNX-PE-001..008) &amp; Windows (WIN-PE-001..008) Privilege Escalation Script Inventory (16 Service/Feature Scripts)
@@ -8953,7 +8984,7 @@ ${f.remediation}
                       </div>
 
                       {/* Complete Linux & Windows Lateral Movement Script Inventory (12 Scripts) */}
-                      <div style={{ background: "#050811", border: "1px solid rgba(251,146,60,0.35)", borderRadius: 6, padding: 8 }}>
+                      <div style={{ background: "var(--surface-2)", border: "1px solid rgba(251,146,60,0.35)", borderRadius: 6, padding: 8 }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6, flexWrap: "wrap", gap: 6 }}>
                           <strong style={{ fontSize: 10.5, color: "#fb923c", fontFamily: "monospace" }}>
                             🐧🪟 Linux (LNX-LM-001..006) &amp; Windows (WIN-LM-001..006) Lateral Movement Script Inventory (12 East-West Boundary Scripts)
@@ -9091,7 +9122,7 @@ ${f.remediation}
                       </div>
 
                       {/* Complete 18 Web, Browser DOM, Session, Supply-Chain & Cloud MITRE ATT&CK® v15 Control Auditors */}
-                      <div style={{ background: "#050811", border: "1px solid rgba(56,189,248,0.35)", borderRadius: 6, padding: 8 }}>
+                      <div style={{ background: "var(--surface-2)", border: "1px solid rgba(56,189,248,0.35)", borderRadius: 6, padding: 8 }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6, flexWrap: "wrap", gap: 6 }}>
                           <strong style={{ fontSize: 10.5, color: "#38bdf8", fontFamily: "monospace" }}>
                             🌐☁️ MITRE ATT&amp;CK® v15 Web, Browser DOM, Identity, Supply-Chain &amp; Cloud Control Auditors (WEB-AUD-001..018)
@@ -9142,7 +9173,7 @@ ${f.remediation}
                   )}
 
                   {postAssessSubTab === "CWE40" && (
-                    <div style={{ background: "#050811", border: "1px solid rgba(56,189,248,0.35)", borderRadius: 6, padding: 8 }}>
+                    <div style={{ background: "var(--surface-2)", border: "1px solid rgba(56,189,248,0.35)", borderRadius: 6, padding: 8 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6, flexWrap: "wrap", gap: 6 }}>
                         <strong style={{ fontSize: 10.5, color: "#38bdf8", fontFamily: "monospace" }}>
                           🛡️ Complete 40-CWE Web App &amp; API Security Verification Matrix (CWE-22 ➔ CWE-1275 · Post Burp / OpenVAS / ZAP / Nmap Correlation)
@@ -9196,7 +9227,7 @@ ${f.remediation}
                     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, fontSize: 10.5, fontFamily: "monospace" }}>
                         {contextualPostChecks.map((c, idx) => (
-                          <div key={idx} style={{ background: "#050811", padding: 8, borderRadius: 6, border: "1px solid var(--border)" }}>
+                          <div key={idx} style={{ background: "var(--surface-2)", padding: 8, borderRadius: 6, border: "1px solid var(--border)" }}>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                               <strong style={{ color: "#c084fc" }}>{c.check}</strong>
                               <span style={{ color: "#10b981", fontWeight: 800, fontSize: 9.5 }}>✓ {c.result}</span>
@@ -9207,7 +9238,7 @@ ${f.remediation}
                       </div>
 
                       {/* Complete Linux & Windows Post-Exploitation, Persistence, SIEM Telemetry & Cleanup Script Inventory (12 Scripts) */}
-                      <div style={{ background: "#050811", border: "1px solid rgba(16,185,129,0.35)", borderRadius: 6, padding: 8 }}>
+                      <div style={{ background: "var(--surface-2)", border: "1px solid rgba(16,185,129,0.35)", borderRadius: 6, padding: 8 }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6, flexWrap: "wrap", gap: 6 }}>
                           <strong style={{ fontSize: 10.5, color: "#10b981", fontFamily: "monospace" }}>
                             🐧🪟 Linux (LNX-POST-001..006) &amp; Windows (WIN-POST-001..006) Post-Exploitation, Telemetry &amp; Cleanup Script Inventory (12 Scripts)
@@ -9339,7 +9370,7 @@ ${f.remediation}
                                 ? "linear-gradient(135deg, rgba(245,158,11,0.22), rgba(56,189,248,0.16))"
                                 : wfSelected
                                 ? "linear-gradient(135deg, rgba(56,189,248,0.18), rgba(15,23,42,0.95))"
-                                : "#050811",
+                                : "var(--surface-2)",
                               padding: 10,
                               borderRadius: 6,
                               border: wfActive
@@ -9363,7 +9394,7 @@ ${f.remediation}
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                               <strong style={{ color: wfActive ? "#fde68a" : "#38bdf8", fontSize: 10.5 }}>{wf.name}</strong>
                               <span style={{
-                                color: wfActive ? "#050811" : wfDone ? "#10b981" : "#38bdf8",
+                                color: wfActive ? "var(--surface-2)" : wfDone ? "#10b981" : "#38bdf8",
                                 background: wfActive ? "#f59e0b" : wfSelected ? "rgba(56,189,248,0.2)" : "transparent",
                                 padding: wfActive || wfSelected ? "1px 5px" : 0,
                                 borderRadius: 3,
@@ -9496,7 +9527,7 @@ ${f.remediation}
 
                   {aiSubTab === "UNCERTAINTY_RC" && (
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1.15fr", gap: 10, fontSize: 10, fontFamily: "monospace" }}>
-                      <div style={{ background: "#050811", padding: 8, borderRadius: 6, border: "1px solid var(--border)" }}>
+                      <div style={{ background: "var(--surface-2)", padding: 8, borderRadius: 6, border: "1px solid var(--border)" }}>
                         <div style={{ color: "#38bdf8", fontWeight: 800, marginBottom: 6 }}>📊 Uncertainty Management &amp; Coverage Accounting</div>
                         {UNCERTAINTY_ACCOUNTING_LEDGER.map(u => (
                           <div key={u.state} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "4px 0" }}>
@@ -9508,7 +9539,7 @@ ${f.remediation}
                           </div>
                         ))}
                       </div>
-                      <div style={{ background: "#050811", padding: 8, borderRadius: 6, border: "1px solid var(--border)" }}>
+                      <div style={{ background: "var(--surface-2)", padding: 8, borderRadius: 6, border: "1px solid var(--border)" }}>
                         <div style={{ color: "#10b981", fontWeight: 800, marginBottom: 6 }}>🧬 Systemic Root-Cause Grouping (CWE / NIST SSDF)</div>
                         {ROOT_CAUSE_CLUSTERS.map(rc => (
                           <div key={rc.clusterId} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "4px 0" }}>
@@ -9529,7 +9560,7 @@ ${f.remediation}
               <div
                 ref={logRef}
                 style={{
-                  background: "#050811",
+                  background: "var(--surface-2)",
                   border: "1px solid var(--border)",
                   borderRadius: 8,
                   padding: 12,
@@ -9768,7 +9799,7 @@ ${f.remediation}
                         </div>
                       </div>
 
-                      <div style={{ fontSize: 9.5, fontFamily: "monospace", color: "#94a3b8", background: "#050811", padding: "4px 6px", borderRadius: 4, borderLeft: "2px solid #38bdf8" }}>
+                      <div style={{ fontSize: 9.5, fontFamily: "monospace", color: "#94a3b8", background: "var(--surface-2)", padding: "4px 6px", borderRadius: 4, borderLeft: "2px solid #38bdf8" }}>
                         <span style={{ color: "#38bdf8", fontWeight: 700 }}>Mimic Step 1:</span> {(f.evidence?.reproductionSteps?.[0] || "Capture HTTP baseline and replay payload").slice(0, 95)}...
                       </div>
                     </div>
@@ -9905,7 +9936,7 @@ http://192.168.195.140/peruggia`}
                   padding: 12,
                   fontFamily: "monospace",
                   fontSize: 11,
-                  background: "#050811",
+                  background: "var(--surface-2)",
                   border: "1px solid var(--border)",
                   borderRadius: 8,
                   color: "#38bdf8",
@@ -9964,7 +9995,7 @@ http://192.168.195.140/peruggia`}
               </button>
             </div>
 
-            <div style={{ display: "flex", background: "#050811", borderBottom: "1px solid var(--border)", padding: "0 16px", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", background: "var(--surface-2)", borderBottom: "1px solid var(--border)", padding: "0 16px", flexWrap: "wrap" }}>
               {[
                 { id: "POC", label: "📋 Step-by-Step Mimic & PoC" },
                 { id: "INTEL_SCRIPTS", label: "📚 SearchSploit · Exploit-DB · GitHub · Nuclei Scripts" },
@@ -10009,7 +10040,7 @@ http://192.168.195.140/peruggia`}
                           "Step 2 (Payload Injection): Replay request with targeted security payload.",
                           "Step 3 (Evidence Verification): Confirm vulnerability via response differential."
                         ]).map((stepStr, idx) => (
-                          <div key={idx} style={{ fontSize: 11.5, color: "#f8fafc", padding: "6px 10px", background: "#050811", borderLeft: "3px solid #38bdf8", borderRadius: "0 6px 6px 0", lineHeight: 1.45 }}>
+                          <div key={idx} style={{ fontSize: 11.5, color: "#f8fafc", padding: "6px 10px", background: "var(--surface-2)", borderLeft: "3px solid #38bdf8", borderRadius: "0 6px 6px 0", lineHeight: 1.45 }}>
                             {stepStr}
                           </div>
                         ))}
@@ -10018,7 +10049,7 @@ http://192.168.195.140/peruggia`}
 
                     <div>
                       <strong style={{ fontSize: 13, color: "#f8fafc" }}>💻 Multi-Step cURL / CLI Commands to Mimic Attack:</strong>
-                      <pre style={{ background: "#050811", border: "1px solid var(--border)", borderRadius: 8, padding: 12, fontFamily: "monospace", fontSize: 11, color: "#38bdf8", margin: "6px 0 0 0", overflowX: "auto", whiteSpace: "pre-wrap" }}>
+                      <pre style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 8, padding: 12, fontFamily: "monospace", fontSize: 11, color: "#38bdf8", margin: "6px 0 0 0", overflowX: "auto", whiteSpace: "pre-wrap" }}>
                         {selectedFinding.poc?.curlCommand || `curl -s "${selectedFinding.url}?${selectedFinding.parameter || "q"}=test_payload" -H "Authorization: Bearer <token>"`}
                       </pre>
                       <div style={{ fontSize: 11, fontWeight: 800, color: "#34d399", marginTop: 6 }}>
@@ -10034,7 +10065,7 @@ http://192.168.195.140/peruggia`}
                     {selectedFinding.poc?.pythonScript && (
                       <div>
                         <strong style={{ fontSize: 13, color: "#f8fafc" }}>🐍 Automated Python Mimic &amp; Verification Script:</strong>
-                        <pre style={{ background: "#050811", border: "1px solid var(--border)", borderRadius: 8, padding: 12, fontFamily: "monospace", fontSize: 11, color: "#34d399", margin: "6px 0 0 0", overflowX: "auto", maxHeight: 220, whiteSpace: "pre-wrap" }}>
+                        <pre style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 8, padding: 12, fontFamily: "monospace", fontSize: 11, color: "#34d399", margin: "6px 0 0 0", overflowX: "auto", maxHeight: 220, whiteSpace: "pre-wrap" }}>
                           {selectedFinding.poc.pythonScript}
                         </pre>
                         <div style={{ fontSize: 11, fontWeight: 800, color: "#34d399", marginTop: 6 }}>
@@ -10064,7 +10095,7 @@ http://192.168.195.140/peruggia`}
                       </strong>
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                         {intel.searchSploitRefs.map((sr) => (
-                          <div key={sr.edbId} style={{ background: "#050811", border: "1px solid rgba(245,158,11,0.3)", borderRadius: 6, padding: 10, display: "flex", flexDirection: "column", gap: 4 }}>
+                          <div key={sr.edbId} style={{ background: "var(--surface-2)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: 6, padding: 10, display: "flex", flexDirection: "column", gap: 4 }}>
                             <div style={{ display: "flex", justifyContent: "space-between", color: "#fbbf24", fontWeight: 900, fontSize: 11 }}>
                               <span>{sr.edbId} ({sr.platform})</span>
                               <span>{sr.cveRef}</span>
@@ -10088,7 +10119,7 @@ http://192.168.195.140/peruggia`}
                         <div><strong>Nmap NSE Scripts:</strong> <span style={{ color: "#10b981" }}>{intel.githubAndNuclei.nmapNseScript}</span></div>
                         <div><strong>OWASP ZAP Active/Passive Plugin:</strong> <span style={{ color: "#c084fc" }}>{intel.githubAndNuclei.zapPluginId}</span></div>
                       </div>
-                      <pre style={{ margin: 0, background: "#050811", border: "1px solid var(--border)", borderRadius: 6, padding: 12, fontSize: 10.5, color: "#38bdf8", whiteSpace: "pre-wrap", overflowX: "auto" }}>
+                      <pre style={{ margin: 0, background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 6, padding: 12, fontSize: 10.5, color: "#38bdf8", whiteSpace: "pre-wrap", overflowX: "auto" }}>
                         {intel.githubAndNuclei.verificationScript}
                       </pre>
                       <div style={{ fontSize: 11, fontWeight: 800, color: "#34d399", marginTop: 4 }}>
@@ -10126,7 +10157,7 @@ http://192.168.195.140/peruggia`}
                         <div style={{ fontSize: 11, color: "#f8fafc", lineHeight: 1.45 }}>
                           {kc.deepDiveMechanism}
                         </div>
-                        <pre style={{ margin: 0, background: "#050811", border: "1px solid var(--border)", borderRadius: 6, padding: 8, fontSize: 10, color: "#38bdf8", whiteSpace: "pre-wrap" }}>
+                        <pre style={{ margin: 0, background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 6, padding: 8, fontSize: 10, color: "#38bdf8", whiteSpace: "pre-wrap" }}>
                           $ {kc.verificationCommand}
                         </pre>
                         <div style={{ fontSize: 10, color: "#10b981", fontWeight: 800 }}>
@@ -10159,7 +10190,7 @@ http://192.168.195.140/peruggia`}
                     ))}
 
                     {/* Mapped CWE Verification Entries (from the 40-CWE Web & API Matrix) */}
-                    <div style={{ background: "#050811", border: "1px solid rgba(56,189,248,0.35)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 8, fontFamily: "monospace" }}>
+                    <div style={{ background: "var(--surface-2)", border: "1px solid rgba(56,189,248,0.35)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 8, fontFamily: "monospace" }}>
                       <strong style={{ fontSize: 12, color: "#38bdf8" }}>
                         🛡️ Mapped OWASP / MITRE CWE Verification Controls ({dossier.matchedCweAuditEntries.length} Matched from 40-CWE Matrix)
                       </strong>
@@ -10183,7 +10214,7 @@ http://192.168.195.140/peruggia`}
                     </div>
 
                     {/* Triggered MITRE ATT&CK® v15 Web, DOM, Session & Cloud Control Auditors */}
-                    <div style={{ background: "#050811", border: "1px solid rgba(192,132,252,0.35)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 8, fontFamily: "monospace" }}>
+                    <div style={{ background: "var(--surface-2)", border: "1px solid rgba(192,132,252,0.35)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 8, fontFamily: "monospace" }}>
                       <strong style={{ fontSize: 12, color: "#e879f9" }}>
                         🌐☁️ Triggered MITRE ATT&amp;CK® v15 Web, Browser DOM &amp; Cloud Control Auditors ({dossier.triggeredWebAndCloudControlAudits.length})
                       </strong>
@@ -10193,7 +10224,7 @@ http://192.168.195.140/peruggia`}
                             <strong style={{ fontSize: 11, color: "#e879f9" }}>[{aud.auditId}] {aud.name}</strong>
                             <span style={{ fontSize: 9.5, color: "#38bdf8", fontWeight: 800 }}>{aud.mitreTacticId} · {aud.mitreTechniqueId}</span>
                           </div>
-                          <pre style={{ margin: 0, background: "#020617", border: "1px solid var(--border)", borderRadius: 4, padding: 8, fontSize: 9.5, color: "#a5f3fc", whiteSpace: "pre-wrap" }}>
+                          <pre style={{ margin: 0, background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 4, padding: 8, fontSize: 9.5, color: "#a5f3fc", whiteSpace: "pre-wrap" }}>
                             {aud.readOnlyVerificationCheck}
                           </pre>
                           <div style={{ fontSize: 10, color: "#10b981" }}>
@@ -10229,7 +10260,7 @@ http://192.168.195.140/peruggia`}
                             </span>
                           </div>
                           <div style={{ fontSize: 10, color: "#94a3b8", fontWeight: 700 }}>Executed DAST Web Exploit Request / Command:</div>
-                          <pre style={{ margin: 0, background: "#050811", border: "1px solid var(--border)", padding: 10, borderRadius: 6, fontFamily: "monospace", fontSize: 10.5, color: "#38bdf8", whiteSpace: "pre-wrap", overflowX: "auto" }}>
+                          <pre style={{ margin: 0, background: "var(--surface-2)", border: "1px solid var(--border)", padding: 10, borderRadius: 6, fontFamily: "monospace", fontSize: 10.5, color: "#38bdf8", whiteSpace: "pre-wrap", overflowX: "auto" }}>
                             {ev.capturedCommandOrRequest}
                           </pre>
                           <div style={{ fontSize: 10, color: "#34d399", fontWeight: 700 }}>Collected Exploitation Output / Sample Loot Proof:</div>
@@ -10247,7 +10278,7 @@ http://192.168.195.140/peruggia`}
                     </div>
 
                     {/* Visual Pictures of How It Was Exploited */}
-                    <div style={{ background: "#050811", border: "1px solid rgba(56,189,248,0.4)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 10 }}>
+                    <div style={{ background: "var(--surface-2)", border: "1px solid rgba(56,189,248,0.4)", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 10 }}>
                       <strong style={{ fontSize: 12.5, color: "#38bdf8" }}>
                         📸 Visual Pictures of How {modalFormalReport.findingId} Was Exploited (Customer CI Screenshots):
                       </strong>
@@ -10270,13 +10301,13 @@ http://192.168.195.140/peruggia`}
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                       <div>
                         <strong style={{ fontSize: 12, color: "#10b981" }}>Baseline Normal Request/Response:</strong>
-                        <pre style={{ background: "#050811", border: "1px solid var(--border)", padding: 10, fontFamily: "monospace", fontSize: 10.5, color: "var(--muted)", marginTop: 4, maxHeight: 160, overflowX: "auto", whiteSpace: "pre-wrap" }}>
+                        <pre style={{ background: "var(--surface-2)", border: "1px solid var(--border)", padding: 10, fontFamily: "monospace", fontSize: 10.5, color: "var(--muted)", marginTop: 4, maxHeight: 160, overflowX: "auto", whiteSpace: "pre-wrap" }}>
                           {selectedFinding.evidence?.originalRequest || "GET /api/search?q=test HTTP/1.1"}
                         </pre>
                       </div>
                       <div>
                         <strong style={{ fontSize: 12, color: "#f43f5e" }}>Exploit Injected Request &amp; Response Proof:</strong>
-                        <pre style={{ background: "#050811", border: "1px solid rgba(244,63,94,0.4)", padding: 10, fontFamily: "monospace", fontSize: 10.5, color: "#f87171", marginTop: 4, maxHeight: 160, overflowX: "auto", whiteSpace: "pre-wrap" }}>
+                        <pre style={{ background: "var(--surface-2)", border: "1px solid rgba(244,63,94,0.4)", padding: 10, fontFamily: "monospace", fontSize: 10.5, color: "#f87171", marginTop: 4, maxHeight: 160, overflowX: "auto", whiteSpace: "pre-wrap" }}>
                           {selectedFinding.evidence?.testRequest || "GET /api/search?q=' UNION SELECT 1,2,3-- HTTP/1.1"}
                           {selectedFinding.evidence?.testResponse ? `\n\n${selectedFinding.evidence.testResponse}` : ""}
                         </pre>
@@ -10429,7 +10460,7 @@ http://192.168.195.140/peruggia`}
                       placeholder="Enter email (e.g. soc-lead@enterprise.io)"
                       style={{
                         flex: 1,
-                        background: "#050811",
+                        background: "var(--surface-2)",
                         border: "1px solid rgba(56,189,248,0.35)",
                         borderRadius: 6,
                         padding: "7px 10px",
@@ -10465,7 +10496,7 @@ http://192.168.195.140/peruggia`}
                           gap: 6,
                           fontSize: 11,
                           fontFamily: "monospace",
-                          background: "#050811",
+                          background: "var(--surface-2)",
                           border: "1px solid rgba(56,189,248,0.35)",
                           color: "#bae6fd",
                           padding: "4px 10px",
@@ -10494,7 +10525,7 @@ http://192.168.195.140/peruggia`}
                       placeholder="audit-archive@enterprise.local, compliance@enterprise.local"
                       style={{
                         width: "100%",
-                        background: "#050811",
+                        background: "var(--surface-2)",
                         border: "1px solid var(--border)",
                         borderRadius: 6,
                         padding: "6px 10px",
@@ -10529,7 +10560,7 @@ http://192.168.195.140/peruggia`}
                       onChange={(e) => setEmailProvider(e.target.value as "RESEND" | "SENDGRID" | "SMTP_WEBHOOK" | "SANDBOX_RELAY")}
                       style={{
                         width: "100%",
-                        background: "#050811",
+                        background: "var(--surface-2)",
                         border: "1px solid rgba(16,185,129,0.4)",
                         borderRadius: 6,
                         padding: "7px 10px",
@@ -10557,7 +10588,7 @@ http://192.168.195.140/peruggia`}
                         placeholder={emailProvider === "RESEND" ? "re_123456789..." : "SG.123456789..."}
                         style={{
                           width: "100%",
-                          background: "#050811",
+                          background: "var(--surface-2)",
                           border: "1px solid var(--border)",
                           borderRadius: 6,
                           padding: "6px 10px",
@@ -10581,7 +10612,7 @@ http://192.168.195.140/peruggia`}
                         placeholder="https://soar.enterprise.local/api/v1/smtp-relay"
                         style={{
                           width: "100%",
-                          background: "#050811",
+                          background: "var(--surface-2)",
                           border: "1px solid var(--border)",
                           borderRadius: 6,
                           padding: "6px 10px",
@@ -10604,7 +10635,7 @@ http://192.168.195.140/peruggia`}
                       placeholder="smtp-relay.expedite-strike.vmware.local"
                       style={{
                         width: "100%",
-                        background: "#050811",
+                        background: "var(--surface-2)",
                         border: "1px solid var(--border)",
                         borderRadius: 6,
                         padding: "6px 10px",
@@ -10658,7 +10689,7 @@ http://192.168.195.140/peruggia`}
 
                 {emailDispatchHistory.length === 0 ? (
                   <div style={{
-                    background: "#050811",
+                    background: "var(--surface-2)",
                     border: "1px dashed rgba(148,163,184,0.3)",
                     borderRadius: 8,
                     padding: 20,
@@ -10673,7 +10704,7 @@ http://192.168.195.140/peruggia`}
                     <div
                       key={item.queueId || hIdx}
                       style={{
-                        background: "#050811",
+                        background: "var(--surface-2)",
                         border: "1px solid rgba(16,185,129,0.4)",
                         borderRadius: 8,
                         padding: 14,
@@ -10788,7 +10819,7 @@ http://192.168.195.140/peruggia`}
                           marginTop: 8,
                           marginBottom: 0,
                           padding: 10,
-                          background: "#020617",
+                          background: "var(--surface-2)",
                           borderRadius: 6,
                           fontSize: 10.5,
                           fontFamily: "monospace",
@@ -10826,7 +10857,7 @@ http://192.168.195.140/peruggia`}
         >
           <div
             style={{
-              background: "#111827",
+              background: "var(--surface)",
               border: "1px solid #334155",
               borderRadius: 12,
               width: "100%",
@@ -10861,8 +10892,8 @@ http://192.168.195.140/peruggia`}
 
             {/* Optional Next Engagement Details */}
             <div style={{
-              background: "#0b0f17",
-              border: "1px solid #1f2937",
+              background: "var(--surface-2)",
+              border: "1px solid var(--surface-3)",
               borderRadius: 8,
               padding: 16,
               display: "flex",
@@ -10885,7 +10916,7 @@ http://192.168.195.140/peruggia`}
                     placeholder="e.g. Acme Financial Corp"
                     style={{
                       width: "100%",
-                      background: "#111827",
+                      background: "var(--surface)",
                       border: "1px solid #334155",
                       borderRadius: 6,
                       padding: "7px 10px",
@@ -10905,7 +10936,7 @@ http://192.168.195.140/peruggia`}
                     placeholder="e.g. ROE-2026-EXT-905"
                     style={{
                       width: "100%",
-                      background: "#111827",
+                      background: "var(--surface)",
                       border: "1px solid #334155",
                       borderRadius: 6,
                       padding: "7px 10px",
@@ -10928,7 +10959,7 @@ http://192.168.195.140/peruggia`}
                   placeholder="https://next-client-portal.com, https://api.next-client-portal.com"
                   style={{
                     width: "100%",
-                    background: "#111827",
+                    background: "var(--surface)",
                     border: "1px solid #334155",
                     borderRadius: 6,
                     padding: "7px 10px",
@@ -10941,7 +10972,7 @@ http://192.168.195.140/peruggia`}
             </div>
 
             {/* What gets cleared checklist */}
-            <div style={{ fontSize: 11.5, color: "#94a3b8", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, background: "#0b0f17", padding: "10px 14px", borderRadius: 8, border: "1px solid #1f2937" }}>
+            <div style={{ fontSize: 11.5, color: "#94a3b8", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, background: "var(--surface-2)", padding: "10px 14px", borderRadius: 8, border: "1px solid var(--surface-3)" }}>
               <div>✓ Active &amp; Demo Findings → <strong style={{ color: "#f8fafc" }}>0</strong></div>
               <div>✓ Nmap / OpenVAS / ZAP / Burp Logs → <strong style={{ color: "#f8fafc" }}>Cleared</strong></div>
               <div>✓ Auth Headers &amp; Session Cookies → <strong style={{ color: "#f8fafc" }}>Wiped</strong></div>
@@ -11002,7 +11033,7 @@ http://192.168.195.140/peruggia`}
                     style={{
                       background: "#38bdf8",
                       border: "1px solid #38bdf8",
-                      color: "#0b0f17",
+                      color: "var(--surface-2)",
                       fontSize: 12,
                       fontWeight: 800,
                       padding: "8px 16px",

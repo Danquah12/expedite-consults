@@ -126,7 +126,7 @@ function DonutChart({
                 gap: 8,
                 padding: "4px 8px",
                 borderRadius: 6,
-                background: isSel ? "#1e293b" : "transparent",
+                background: isSel ? "var(--surface-3)" : "transparent",
                 border: isSel ? "1px solid #38bdf8" : "1px solid transparent",
                 cursor: "pointer",
                 width: "100%",
@@ -502,7 +502,7 @@ export default function SecurityOverviewPage() {
       {/* Top Cross-Portal Synchronized Banner */}
       <div className="cyber-card" style={{ padding: "14px 16px", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", flex: "1 1 260px" }}>
-          <div style={{ width: 36, height: 36, borderRadius: 8, background: "#0f172a", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #1e293b", flexShrink: 0 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 8, background: "var(--surface)", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--surface-3)", flexShrink: 0 }}>
             <Brain size={17} color="#38bdf8" />
           </div>
           <div style={{ minWidth: 0, flex: 1 }}>
@@ -572,7 +572,7 @@ export default function SecurityOverviewPage() {
                 fontSize: 10,
                 padding: "2px 8px",
                 borderRadius: 4,
-                background: "#1e293b",
+                background: "var(--surface-3)",
                 border: "1px solid #334155",
                 color: "#cbd5e1",
                 fontWeight: 600,
@@ -598,8 +598,8 @@ export default function SecurityOverviewPage() {
             onKeyDown={e => { if (e.key === "Enter") runLiveEngineBrainScan(); }}
             placeholder="https://demo.testfire.net"
             style={{
-              background: "#090d16",
-              border: "1px solid #1e293b",
+              background: "var(--surface-2)",
+              border: "1px solid var(--surface-3)",
               borderRadius: 6,
               padding: "7px 11px",
               fontSize: 11.5,
@@ -636,7 +636,7 @@ export default function SecurityOverviewPage() {
               textAlign: "left",
               cursor: "pointer",
               transition: "all 0.15s ease",
-              border: drillDownModal?.type === "KPI" && drillDownModal.kpiId === s.id ? "1px solid #38bdf8" : "1px solid #1e293b"
+              border: drillDownModal?.type === "KPI" && drillDownModal.kpiId === s.id ? "1px solid #38bdf8" : "1px solid var(--surface-3)"
             }}
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, marginBottom: 8 }}>
@@ -694,8 +694,8 @@ export default function SecurityOverviewPage() {
                 key={chart.chartId}
                 onClick={() => setDrillDownModal({ type: "CHART", chart })}
                 style={{
-                  background: "#090d16",
-                  border: "1px solid #1e293b",
+                  background: "var(--surface-2)",
+                  border: "1px solid var(--surface-3)",
                   borderRadius: 8,
                   padding: 10,
                   cursor: "pointer",
@@ -709,7 +709,7 @@ export default function SecurityOverviewPage() {
                 <img
                   src={chart.svgDataUri}
                   alt={chart.title}
-                  style={{ width: "100%", height: "auto", borderRadius: 6, border: "1px solid #1e293b", display: "block", marginBottom: 6 }}
+                  style={{ width: "100%", height: "auto", borderRadius: 6, border: "1px solid var(--surface-3)", display: "block", marginBottom: 6 }}
                 />
                 <div style={{ fontSize: 10.5, color: "#64748b", lineHeight: 1.4 }}>{chart.subtitle}</div>
               </div>
@@ -724,7 +724,7 @@ export default function SecurityOverviewPage() {
           marginBottom: 14,
           padding: "8px 14px",
           borderRadius: 8,
-          background: "#0f172a",
+          background: "var(--surface)",
           border: "1px solid #38bdf8",
           display: "flex",
           alignItems: "center",
@@ -749,7 +749,7 @@ export default function SecurityOverviewPage() {
               setActiveOwaspFilter("ALL");
             }}
             style={{
-              background: "#1e293b",
+              background: "var(--surface-3)",
               border: "1px solid #334155",
               color: "#e2e8f0",
               fontSize: 10.5,
@@ -788,7 +788,7 @@ export default function SecurityOverviewPage() {
                   onClick={() => setSelectedScreenshotFindingIdx(i)}
                   style={{
                     padding: "11px 13px",
-                    borderBottom: "1px solid #1e293b",
+                    borderBottom: "1px solid var(--surface-3)",
                     display: "flex",
                     gap: 10,
                     alignItems: "flex-start",
@@ -854,7 +854,7 @@ export default function SecurityOverviewPage() {
                               fontWeight: 600,
                               padding: "1px 5px",
                               borderRadius: 3,
-                              background: "#1e293b",
+                              background: "var(--surface-3)",
                               color: "#e2e8f0",
                               border: "1px solid #334155",
                               cursor: "pointer"
@@ -875,8 +875,8 @@ export default function SecurityOverviewPage() {
                           openFindingDrillDown(f, "OVERVIEW");
                         }}
                         style={{
-                          background: "#0f172a",
-                          border: "1px solid #1e293b",
+                          background: "var(--surface)",
+                          border: "1px solid var(--surface-3)",
                           color: "#38bdf8",
                           fontSize: 10,
                           fontWeight: 600,
@@ -916,9 +916,9 @@ export default function SecurityOverviewPage() {
                             fontFamily: "var(--font-geist-mono)",
                             padding: "1px 6px",
                             borderRadius: 4,
-                            background: "#0f172a",
+                            background: "var(--surface)",
                             color: "#cbd5e1",
-                            border: "1px solid #1e293b",
+                            border: "1px solid var(--surface-3)",
                             cursor: "pointer"
                           }}
                         >
@@ -965,8 +965,8 @@ export default function SecurityOverviewPage() {
                   type="button"
                   onClick={() => activeScreenshotFinding && openFindingDrillDown(activeScreenshotFinding, "HTTP_PROOF")}
                   style={{
-                    background: "#0f172a",
-                    border: "1px solid #1e293b",
+                    background: "var(--surface)",
+                    border: "1px solid var(--surface-3)",
                     color: "#cbd5e1",
                     fontSize: 10,
                     fontWeight: 600,
@@ -981,7 +981,7 @@ export default function SecurityOverviewPage() {
                   type="button"
                   onClick={() => activeScreenshotFinding && openFindingDrillDown(activeScreenshotFinding, "REMEDIATION")}
                   style={{
-                    background: "#1e293b",
+                    background: "var(--surface-3)",
                     border: "1px solid #38bdf8",
                     color: "#f8fafc",
                     fontSize: 10,
@@ -1006,8 +1006,8 @@ export default function SecurityOverviewPage() {
                     key={pic.figureId}
                     onClick={() => openFindingDrillDown(activeScreenshotFinding, "SCREENSHOTS")}
                     style={{
-                      background: "#090d16",
-                      border: "1px solid #1e293b",
+                      background: "var(--surface-2)",
+                      border: "1px solid var(--surface-3)",
                       borderRadius: 6,
                       padding: 8,
                       cursor: "pointer"
@@ -1022,7 +1022,7 @@ export default function SecurityOverviewPage() {
                     <img
                       src={pic.svgDataUri}
                       alt={pic.title}
-                      style={{ width: "100%", height: "auto", borderRadius: 4, border: "1px solid #1e293b", display: "block", marginBottom: 4 }}
+                      style={{ width: "100%", height: "auto", borderRadius: 4, border: "1px solid var(--surface-3)", display: "block", marginBottom: 4 }}
                     />
                     <div style={{ fontSize: 9.5, color: "#64748b", lineHeight: 1.35 }}>
                       {pic.caption}
@@ -1034,7 +1034,7 @@ export default function SecurityOverviewPage() {
 
             <div
               onClick={() => activeScreenshotFinding && openFindingDrillDown(activeScreenshotFinding, "HTTP_PROOF")}
-              style={{ background: "#090d16", border: "1px solid #1e293b", borderRadius: 6, padding: 8, cursor: "pointer" }}
+              style={{ background: "var(--surface-2)", border: "1px solid var(--surface-3)", borderRadius: 6, padding: 8, cursor: "pointer" }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
                 <span style={{ fontSize: 9.5, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.04em" }}>
@@ -1109,13 +1109,13 @@ export default function SecurityOverviewPage() {
                     padding: "4px 6px",
                     borderRadius: 6,
                     cursor: "pointer",
-                    background: isSel ? "#1e293b" : "transparent",
+                    background: isSel ? "var(--surface-3)" : "transparent",
                     border: isSel ? "1px solid #38bdf8" : "1px solid transparent"
                   }}
                 >
                   <span style={{ fontSize: 10.5, fontFamily: "var(--font-geist-mono)", color: "#38bdf8", width: 32, flexShrink: 0, fontWeight: 700 }}>{cat.id}</span>
                   <span style={{ fontSize: 11.5, color: "#e2e8f0", flex: 1 }}>{cat.name}</span>
-                  <div style={{ width: 90, height: 6, background: "#1e293b", borderRadius: 3 }}>
+                  <div style={{ width: 90, height: 6, background: "var(--surface-3)", borderRadius: 3 }}>
                     <div style={{ width: `${(cnt / maxBar) * 100}%`, height: "100%", background: "#38bdf8", borderRadius: 3, minWidth: cnt > 0 ? 4 : 0 }} />
                   </div>
                   <span style={{ fontSize: 11.5, fontWeight: 700, color: "#f8fafc", width: 18, textAlign: "right" }}>{cnt}</span>
@@ -1211,7 +1211,7 @@ export default function SecurityOverviewPage() {
           <div
             onClick={e => e.stopPropagation()}
             style={{
-              background: "#0f172a",
+              background: "var(--surface)",
               border: "1px solid #334155",
               borderRadius: 12,
               maxWidth: 960,
@@ -1226,8 +1226,8 @@ export default function SecurityOverviewPage() {
             {/* Modal Top Header */}
             <div style={{
               padding: "14px 18px",
-              background: "#090d16",
-              borderBottom: "1px solid #1e293b",
+              background: "var(--surface-2)",
+              borderBottom: "1px solid var(--surface-3)",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
@@ -1263,7 +1263,7 @@ export default function SecurityOverviewPage() {
                 type="button"
                 onClick={() => setDrillDownModal(null)}
                 style={{
-                  background: "#1e293b",
+                  background: "var(--surface-3)",
                   border: "1px solid #334155",
                   color: "#cbd5e1",
                   borderRadius: 6,
@@ -1285,7 +1285,7 @@ export default function SecurityOverviewPage() {
               {/* 1. KPI: DAST RISK SCORE FORMULA BREAKDOWN */}
               {drillDownModal.type === "KPI" && drillDownModal.kpiId === "RISK_SCORE" && (
                 <>
-                  <div style={{ background: "#090d16", border: "1px solid #1e293b", borderRadius: 8, padding: 14 }}>
+                  <div style={{ background: "var(--surface-2)", border: "1px solid var(--surface-3)", borderRadius: 8, padding: 14 }}>
                     <div style={{ fontSize: 12, fontWeight: 700, color: "#f8fafc", marginBottom: 6 }}>
                       Transparent 0–100 DAST Risk Score Formula (Recommended Enterprise Standard)
                     </div>
@@ -1337,7 +1337,7 @@ export default function SecurityOverviewPage() {
                                 type="button"
                                 onClick={() => openFindingDrillDown(f, "OVERVIEW")}
                                 style={{
-                                  background: "#1e293b",
+                                  background: "var(--surface-3)",
                                   border: "1px solid #334155",
                                   color: "#38bdf8",
                                   fontSize: 10.5,
@@ -1411,7 +1411,7 @@ export default function SecurityOverviewPage() {
                                 type="button"
                                 onClick={() => openFindingDrillDown(f, "OVERVIEW")}
                                 style={{
-                                  background: "#1e293b",
+                                  background: "var(--surface-3)",
                                   border: "1px solid #38bdf8",
                                   color: "#f8fafc",
                                   fontSize: 10,
@@ -1441,8 +1441,8 @@ export default function SecurityOverviewPage() {
                         key={pic.figureId}
                         onClick={() => openFindingDrillDown(f, "SCREENSHOTS")}
                         style={{
-                          background: "#090d16",
-                          border: "1px solid #1e293b",
+                          background: "var(--surface-2)",
+                          border: "1px solid var(--surface-3)",
                           borderRadius: 8,
                           padding: 10,
                           cursor: "pointer"
@@ -1457,7 +1457,7 @@ export default function SecurityOverviewPage() {
                         <img
                           src={pic.svgDataUri}
                           alt={pic.title}
-                          style={{ width: "100%", height: "auto", borderRadius: 6, border: "1px solid #1e293b", marginBottom: 6 }}
+                          style={{ width: "100%", height: "auto", borderRadius: 6, border: "1px solid var(--surface-3)", marginBottom: 6 }}
                         />
                         <div style={{ fontSize: 10, color: "#94a3b8", lineHeight: 1.4 }}>{pic.caption}</div>
                       </div>
@@ -1470,19 +1470,19 @@ export default function SecurityOverviewPage() {
               {drillDownModal.type === "KPI" && drillDownModal.kpiId === "RECON_GRADE" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10 }}>
-                    <div style={{ background: "#090d16", border: "1px solid #1e293b", borderRadius: 8, padding: 12 }}>
+                    <div style={{ background: "var(--surface-2)", border: "1px solid var(--surface-3)", borderRadius: 8, padding: 12 }}>
                       <div style={{ fontSize: 10, color: "#94a3b8" }}>Scoped Target URL</div>
                       <div style={{ fontSize: 13, fontWeight: 700, color: "#38bdf8", fontFamily: "var(--font-geist-mono)", marginTop: 4, wordBreak: "break-all" }}>
                         {scopedTargetUrl}
                       </div>
                     </div>
-                    <div style={{ background: "#090d16", border: "1px solid #1e293b", borderRadius: 8, padding: 12 }}>
+                    <div style={{ background: "var(--surface-2)", border: "1px solid var(--surface-3)", borderRadius: 8, padding: 12 }}>
                       <div style={{ fontSize: 10, color: "#94a3b8" }}>Server & TLS Fingerprint</div>
                       <div style={{ fontSize: 13, fontWeight: 700, color: "#f8fafc", fontFamily: "var(--font-geist-mono)", marginTop: 4 }}>
                         {primaryLiveResult?.serverHeader || "Apache-Coyote/1.1"} · {primaryLiveResult?.tlsVersion || "TLSv1.3"}
                       </div>
                     </div>
-                    <div style={{ background: "#090d16", border: "1px solid #1e293b", borderRadius: 8, padding: 12 }}>
+                    <div style={{ background: "var(--surface-2)", border: "1px solid var(--surface-3)", borderRadius: 8, padding: 12 }}>
                       <div style={{ fontSize: 10, color: "#94a3b8" }}>Header & Surface Grade</div>
                       <div style={{ fontSize: 13, fontWeight: 700, color: "#f8fafc", fontFamily: "var(--font-geist-mono)", marginTop: 4 }}>
                         Grade {primaryLiveResult?.securityGrade || "B"} ({primaryLiveResult?.securityScore || 68}/100)
@@ -1490,21 +1490,21 @@ export default function SecurityOverviewPage() {
                     </div>
                   </div>
 
-                  <div style={{ background: "#090d16", border: "1px solid #1e293b", borderRadius: 8, padding: 14 }}>
+                  <div style={{ background: "var(--surface-2)", border: "1px solid var(--surface-3)", borderRadius: 8, padding: 14 }}>
                     <div style={{ fontSize: 12, fontWeight: 700, color: "#f8fafc", marginBottom: 8 }}>
                       HTTP Security Headers, CORS & DNS Posture Matrix
                     </div>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 8, fontFamily: "var(--font-geist-mono)", fontSize: 11 }}>
-                      <div style={{ padding: 8, background: "#0f172a", borderRadius: 6, border: "1px solid #1e293b" }}>
+                      <div style={{ padding: 8, background: "var(--surface)", borderRadius: 6, border: "1px solid var(--surface-3)" }}>
                         HSTS: <strong style={{ color: primaryLiveResult?.securityHeaders?.hsts ? "#10b981" : "#f43f5e" }}>{primaryLiveResult?.securityHeaders?.hsts ? "PRESENT" : "MISSING"}</strong>
                       </div>
-                      <div style={{ padding: 8, background: "#0f172a", borderRadius: 6, border: "1px solid #1e293b" }}>
+                      <div style={{ padding: 8, background: "var(--surface)", borderRadius: 6, border: "1px solid var(--surface-3)" }}>
                         Content-Security-Policy: <strong style={{ color: primaryLiveResult?.securityHeaders?.csp ? "#10b981" : "#f43f5e" }}>{primaryLiveResult?.securityHeaders?.csp ? "ENFORCED" : "MISSING"}</strong>
                       </div>
-                      <div style={{ padding: 8, background: "#0f172a", borderRadius: 6, border: "1px solid #1e293b" }}>
+                      <div style={{ padding: 8, background: "var(--surface)", borderRadius: 6, border: "1px solid var(--surface-3)" }}>
                         X-Frame-Options: <strong style={{ color: primaryLiveResult?.securityHeaders?.xFrameOptions ? "#10b981" : "#f43f5e" }}>{primaryLiveResult?.securityHeaders?.xFrameOptions ? "SAMEORIGIN" : "MISSING"}</strong>
                       </div>
-                      <div style={{ padding: 8, background: "#0f172a", borderRadius: 6, border: "1px solid #1e293b" }}>
+                      <div style={{ padding: 8, background: "var(--surface)", borderRadius: 6, border: "1px solid var(--surface-3)" }}>
                         DNS SPF / DMARC: <strong style={{ color: primaryLiveResult?.dnsSecurity?.dmarcPresent ? "#10b981" : "#f59e0b" }}>{primaryLiveResult?.dnsSecurity?.dmarcPresent ? "VERIFIED" : "SOFTFAIL / MONITOR"}</strong>
                       </div>
                     </div>
@@ -1554,11 +1554,11 @@ export default function SecurityOverviewPage() {
               {/* 6. CHART DRILL-DOWN */}
               {drillDownModal.type === "CHART" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  <div style={{ background: "#090d16", border: "1px solid #1e293b", borderRadius: 8, padding: 12 }}>
+                  <div style={{ background: "var(--surface-2)", border: "1px solid var(--surface-3)", borderRadius: 8, padding: 12 }}>
                     <img
                       src={drillDownModal.chart.svgDataUri}
                       alt={drillDownModal.chart.title}
-                      style={{ width: "100%", height: "auto", borderRadius: 6, border: "1px solid #1e293b", display: "block" }}
+                      style={{ width: "100%", height: "auto", borderRadius: 6, border: "1px solid var(--surface-3)", display: "block" }}
                     />
                   </div>
                   <div style={{ fontSize: 12, color: "#cbd5e1", lineHeight: 1.6 }}>
@@ -1570,7 +1570,7 @@ export default function SecurityOverviewPage() {
               {/* 7. SINGLE MITRE TECHNIQUE DRILL-DOWN */}
               {drillDownModal.type === "MITRE" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  <div style={{ background: "#090d16", border: "1px solid #1e293b", borderRadius: 8, padding: 14 }}>
+                  <div style={{ background: "var(--surface-2)", border: "1px solid var(--surface-3)", borderRadius: 8, padding: 14 }}>
                     <div style={{ fontSize: 11, fontFamily: "var(--font-geist-mono)", color: "#38bdf8", fontWeight: 700 }}>
                       {drillDownModal.technique.tacticId} · {drillDownModal.technique.tacticName}
                     </div>
@@ -1591,8 +1591,8 @@ export default function SecurityOverviewPage() {
                         key={f.id}
                         onClick={() => openFindingDrillDown(f, "OVERVIEW")}
                         style={{
-                          background: "#090d16",
-                          border: "1px solid #1e293b",
+                          background: "var(--surface-2)",
+                          border: "1px solid var(--surface-3)",
                           borderRadius: 8,
                           padding: 12,
                           cursor: "pointer",
@@ -1628,7 +1628,7 @@ export default function SecurityOverviewPage() {
                         setDrillDownModal(null);
                       }}
                       style={{
-                        background: "#1e293b",
+                        background: "var(--surface-3)",
                         border: "1px solid #38bdf8",
                         color: "#f8fafc",
                         fontSize: 11,
@@ -1648,8 +1648,8 @@ export default function SecurityOverviewPage() {
                         key={f.id}
                         onClick={() => openFindingDrillDown(f, "OVERVIEW")}
                         style={{
-                          background: "#090d16",
-                          border: "1px solid #1e293b",
+                          background: "var(--surface-2)",
+                          border: "1px solid var(--surface-3)",
                           borderRadius: 8,
                           padding: 12,
                           cursor: "pointer",
@@ -1677,7 +1677,7 @@ export default function SecurityOverviewPage() {
                 return (
                   <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                     {/* Sub-tab navigation */}
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", borderBottom: "1px solid #1e293b", paddingBottom: 10 }}>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", borderBottom: "1px solid var(--surface-3)", paddingBottom: 10 }}>
                       {[
                         { id: "OVERVIEW", label: "1. Risk Breakdown & Business Impact" },
                         { id: "SCREENSHOTS", label: "2. Visual Exploitation Screenshots (2)" },
@@ -1689,8 +1689,8 @@ export default function SecurityOverviewPage() {
                           type="button"
                           onClick={() => setFindingModalTab(t.id as any)}
                           style={{
-                            background: findingModalTab === t.id ? "#1e293b" : "#090d16",
-                            border: `1px solid ${findingModalTab === t.id ? "#38bdf8" : "#1e293b"}`,
+                            background: findingModalTab === t.id ? "var(--surface-3)" : "var(--surface-2)",
+                            border: `1px solid ${findingModalTab === t.id ? "#38bdf8" : "var(--surface-3)"}`,
                             color: findingModalTab === t.id ? "#f8fafc" : "#94a3b8",
                             fontSize: 11,
                             fontWeight: 600,
@@ -1707,19 +1707,19 @@ export default function SecurityOverviewPage() {
                     {findingModalTab === "OVERVIEW" && (
                       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8 }}>
-                          <div style={{ background: "#090d16", border: "1px solid #1e293b", borderRadius: 6, padding: 10 }}>
+                          <div style={{ background: "var(--surface-2)", border: "1px solid var(--surface-3)", borderRadius: 6, padding: 10 }}>
                             <div style={{ fontSize: 10, color: "#94a3b8" }}>0–100 DAST Risk Score</div>
                             <div style={{ fontSize: 18, fontWeight: 800, color: f.riskBreakdown.tierColor, fontFamily: "var(--font-geist-mono)" }}>
                               {f.riskBreakdown.finalScore}/100 ({f.riskBreakdown.tierShort})
                             </div>
                           </div>
-                          <div style={{ background: "#090d16", border: "1px solid #1e293b", borderRadius: 6, padding: 10 }}>
+                          <div style={{ background: "var(--surface-2)", border: "1px solid var(--surface-3)", borderRadius: 6, padding: 10 }}>
                             <div style={{ fontSize: 10, color: "#94a3b8" }}>CVSS v3.1 & EPSS (30d)</div>
                             <div style={{ fontSize: 15, fontWeight: 700, color: "#f8fafc", fontFamily: "var(--font-geist-mono)", marginTop: 2 }}>
                               CVSS {f.cvss} · EPSS {f.epssScorePct}%
                             </div>
                           </div>
-                          <div style={{ background: "#090d16", border: "1px solid #1e293b", borderRadius: 6, padding: 10 }}>
+                          <div style={{ background: "var(--surface-2)", border: "1px solid var(--surface-3)", borderRadius: 6, padding: 10 }}>
                             <div style={{ fontSize: 10, color: "#94a3b8" }}>CWE & OWASP Top 10</div>
                             <div style={{ fontSize: 14, fontWeight: 700, color: "#cbd5e1", fontFamily: "var(--font-geist-mono)", marginTop: 2 }}>
                               {f.cweId} · {f.owaspRef}
@@ -1727,12 +1727,12 @@ export default function SecurityOverviewPage() {
                           </div>
                         </div>
 
-                        <div style={{ background: "#090d16", border: "1px solid #1e293b", borderRadius: 8, padding: 12 }}>
+                        <div style={{ background: "var(--surface-2)", border: "1px solid var(--surface-3)", borderRadius: 8, padding: 12 }}>
                           <div style={{ fontSize: 11, fontWeight: 700, color: "#f8fafc", marginBottom: 4 }}>Executive Summary & Technical Root Cause</div>
                           <div style={{ fontSize: 12, color: "#cbd5e1", lineHeight: 1.6 }}>{f.description}</div>
                         </div>
 
-                        <div style={{ background: "#090d16", border: "1px solid #1e293b", borderRadius: 8, padding: 12 }}>
+                        <div style={{ background: "var(--surface-2)", border: "1px solid var(--surface-3)", borderRadius: 8, padding: 12 }}>
                           <div style={{ fontSize: 11, fontWeight: 700, color: "#f8fafc", marginBottom: 4 }}>Business Impact & Attack Scenario</div>
                           <div style={{ fontSize: 12, color: "#cbd5e1", lineHeight: 1.6 }}>
                             {contextualizeForTarget(f.formalReport?.impact?.businessImpact, scopedTargetUrl, targetHost)}
@@ -1744,14 +1744,14 @@ export default function SecurityOverviewPage() {
                     {findingModalTab === "SCREENSHOTS" && (
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 12 }}>
                         {(f.formalReport?.evidence?.exploitationPictures || []).map((pic: any) => (
-                          <div key={pic.figureId} style={{ background: "#090d16", border: "1px solid #1e293b", borderRadius: 8, padding: 12 }}>
+                          <div key={pic.figureId} style={{ background: "var(--surface-2)", border: "1px solid var(--surface-3)", borderRadius: 8, padding: 12 }}>
                             <div style={{ fontSize: 11.5, fontWeight: 700, color: "#f8fafc", marginBottom: 6 }}>
                               [{pic.figureId}] {pic.title}
                             </div>
                             <img
                               src={pic.svgDataUri}
                               alt={pic.title}
-                              style={{ width: "100%", height: "auto", borderRadius: 6, border: "1px solid #1e293b", marginBottom: 8 }}
+                              style={{ width: "100%", height: "auto", borderRadius: 6, border: "1px solid var(--surface-3)", marginBottom: 8 }}
                             />
                             <div style={{ fontSize: 11, color: "#94a3b8", lineHeight: 1.5 }}>{pic.caption}</div>
                           </div>
@@ -1761,13 +1761,13 @@ export default function SecurityOverviewPage() {
 
                     {findingModalTab === "HTTP_PROOF" && (
                       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                        <div style={{ background: "#090d16", border: "1px solid #1e293b", borderRadius: 8, padding: 12 }}>
+                        <div style={{ background: "var(--surface-2)", border: "1px solid var(--surface-3)", borderRadius: 8, padding: 12 }}>
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
                             <span style={{ fontSize: 11, fontWeight: 700, color: "#f8fafc" }}>Captured Exploited HTTP Request / CLI Payload</span>
                             <button
                               type="button"
                               onClick={() => handleCopyText(f.httpRequestProof, "req")}
-                              style={{ background: "#1e293b", border: "1px solid #334155", color: "#38bdf8", fontSize: 10.5, padding: "3px 8px", borderRadius: 4, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}
+                              style={{ background: "var(--surface-3)", border: "1px solid #334155", color: "#38bdf8", fontSize: 10.5, padding: "3px 8px", borderRadius: 4, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}
                             >
                               {copiedTextId === "req" ? <Check size={12} /> : <Copy size={12} />}
                               <span>{copiedTextId === "req" ? "Copied" : "Copy Request"}</span>
@@ -1778,7 +1778,7 @@ export default function SecurityOverviewPage() {
                           </pre>
                         </div>
 
-                        <div style={{ background: "#090d16", border: "1px solid #1e293b", borderRadius: 8, padding: 12 }}>
+                        <div style={{ background: "var(--surface-2)", border: "1px solid var(--surface-3)", borderRadius: 8, padding: 12 }}>
                           <div style={{ fontSize: 11, fontWeight: 700, color: "#f8fafc", marginBottom: 6 }}>Captured Server Response & Extracted Forensic Proof</div>
                           <pre style={{ margin: 0, fontSize: 11, fontFamily: "var(--font-geist-mono)", color: "#cbd5e1", overflowX: "auto", whiteSpace: "pre-wrap" }}>
                             {f.httpResponseProof}
@@ -1789,7 +1789,7 @@ export default function SecurityOverviewPage() {
 
                     {findingModalTab === "REMEDIATION" && (
                       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                        <div style={{ background: "#090d16", border: "1px solid #1e293b", borderRadius: 8, padding: 12 }}>
+                        <div style={{ background: "var(--surface-2)", border: "1px solid var(--surface-3)", borderRadius: 8, padding: 12 }}>
                           <div style={{ fontSize: 11.5, fontWeight: 700, color: "#f8fafc", marginBottom: 6 }}>
                             Recommended Engineering Fix & MITRE D3FEND™ Hardening
                           </div>
@@ -1798,7 +1798,7 @@ export default function SecurityOverviewPage() {
                           </div>
                         </div>
                         {Array.isArray(f.formalReport?.remediation?.stepByStepActions) && (
-                          <div style={{ background: "#090d16", border: "1px solid #1e293b", borderRadius: 8, padding: 12 }}>
+                          <div style={{ background: "var(--surface-2)", border: "1px solid var(--surface-3)", borderRadius: 8, padding: 12 }}>
                             <div style={{ fontSize: 11, fontWeight: 700, color: "#38bdf8", marginBottom: 6 }}>
                               Step-by-Step Engineering Remediation Actions
                             </div>
@@ -1822,8 +1822,8 @@ export default function SecurityOverviewPage() {
             {/* Modal Footer with Cross-Tab Deep Links */}
             <div style={{
               padding: "12px 18px",
-              background: "#090d16",
-              borderTop: "1px solid #1e293b",
+              background: "var(--surface-2)",
+              borderTop: "1px solid var(--surface-3)",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",

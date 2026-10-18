@@ -356,7 +356,7 @@ function OverviewTab({ plugin }: { plugin: InstalledPlugin }) {
           padding: "16px",
           background: "var(--bg, #0a0f1e)",
           borderRadius: 10,
-          border: "1px solid var(--border, #1f2937)",
+          border: "1px solid var(--border, var(--surface-3))",
         }}
       >
         <div
@@ -454,7 +454,7 @@ function OverviewTab({ plugin }: { plugin: InstalledPlugin }) {
                 padding: "7px 12px",
                 background: "var(--bg, #0a0f1e)",
                 borderRadius: 7,
-                border: "1px solid var(--border, #1f2937)",
+                border: "1px solid var(--border, var(--surface-3))",
               }}
             >
               <span
@@ -507,7 +507,7 @@ function CapabilitiesTab({ selectedId }: { selectedId: string }) {
 
       <div
         style={{
-          border: "1px solid var(--border, #1f2937)",
+          border: "1px solid var(--border, var(--surface-3))",
           borderRadius: 10,
           overflow: "hidden",
         }}
@@ -520,7 +520,7 @@ function CapabilitiesTab({ selectedId }: { selectedId: string }) {
             gap: 0,
             padding: "10px 16px",
             background: "var(--bg, #0a0f1e)",
-            borderBottom: "1px solid var(--border, #1f2937)",
+            borderBottom: "1px solid var(--border, var(--surface-3))",
           }}
         >
           {["Capability", "Plugin", "Version", "Status", "Tools Exposed"].map(
@@ -552,7 +552,7 @@ function CapabilitiesTab({ selectedId }: { selectedId: string }) {
               padding: "12px 16px",
               borderBottom:
                 i < CAPABILITIES.length - 1
-                  ? "1px solid var(--border, #1f2937)"
+                  ? "1px solid var(--border, var(--surface-3))"
                   : "none",
               background:
                 cap.pluginId === selectedId ? "#e8912d08" : "transparent",
@@ -599,7 +599,7 @@ function CapabilitiesTab({ selectedId }: { selectedId: string }) {
                     padding: "2px 6px",
                     borderRadius: 4,
                     background: "var(--bg, #0a0f1e)",
-                    border: "1px solid var(--border, #1f2937)",
+                    border: "1px solid var(--border, var(--surface-3))",
                     color: "var(--muted)",
                     fontFamily: "monospace",
                   }}
@@ -648,7 +648,7 @@ function VerificationTab({ plugin }: { plugin: InstalledPlugin }) {
               gap: 12,
               padding: "12px 16px",
               borderRadius: 10,
-              border: "1px solid var(--border, #1f2937)",
+              border: "1px solid var(--border, var(--surface-3))",
               background: "var(--bg, #0a0f1e)",
             }}
           >
@@ -809,7 +809,7 @@ function ActivityTab({ plugin }: { plugin: InstalledPlugin }) {
             style={{
               flex: 1,
               background: "var(--bg, #0a0f1e)",
-              border: "1px solid var(--border, #1f2937)",
+              border: "1px solid var(--border, var(--surface-3))",
               borderRadius: 8,
               padding: "12px 14px",
             }}
@@ -837,7 +837,7 @@ function ActivityTab({ plugin }: { plugin: InstalledPlugin }) {
       <div
         style={{
           background: "var(--bg, #0a0f1e)",
-          border: "1px solid var(--border, #1f2937)",
+          border: "1px solid var(--border, var(--surface-3))",
           borderRadius: 10,
           padding: "16px 20px",
         }}
@@ -906,7 +906,7 @@ function ActivityTab({ plugin }: { plugin: InstalledPlugin }) {
         </div>
         <div
           style={{
-            border: "1px solid var(--border, #1f2937)",
+            border: "1px solid var(--border, var(--surface-3))",
             borderRadius: 10,
             overflow: "hidden",
           }}
@@ -918,7 +918,7 @@ function ActivityTab({ plugin }: { plugin: InstalledPlugin }) {
               gap: 0,
               padding: "8px 14px",
               background: "var(--bg, #0a0f1e)",
-              borderBottom: "1px solid var(--border, #1f2937)",
+              borderBottom: "1px solid var(--border, var(--surface-3))",
             }}
           >
             {["Time", "User", "Action", "Result"].map((h) => (
@@ -946,7 +946,7 @@ function ActivityTab({ plugin }: { plugin: InstalledPlugin }) {
                 padding: "9px 14px",
                 borderBottom:
                   i < AUDIT_ACTIONS.length - 1
-                    ? "1px solid var(--border, #1f2937)"
+                    ? "1px solid var(--border, var(--surface-3))"
                     : "none",
                 alignItems: "center",
               }}
@@ -1003,7 +1003,7 @@ function ActivityTab({ plugin }: { plugin: InstalledPlugin }) {
         <div
           style={{
             background: "var(--bg, #0a0f1e)",
-            border: "1px solid var(--border, #1f2937)",
+            border: "1px solid var(--border, var(--surface-3))",
             borderRadius: 10,
             padding: "16px 20px",
             overflowX: "auto",
@@ -1076,8 +1076,8 @@ export default function PluginsPage() {
       {/* ── Top Bar ── */}
       <div
         style={{
-          borderBottom: "1px solid var(--border, #1f2937)",
-          background: "var(--surface, #111827)",
+          borderBottom: "1px solid var(--border, var(--surface-3))",
+          background: "var(--surface, var(--surface))",
           padding: "0 32px",
           height: 56,
           display: "flex",
@@ -1109,8 +1109,8 @@ export default function PluginsPage() {
           style={{
             width: 240,
             flexShrink: 0,
-            borderRight: "1px solid var(--border, #1f2937)",
-            background: "var(--surface, #111827)",
+            borderRight: "1px solid var(--border, var(--surface-3))",
+            background: "var(--surface, var(--surface))",
             display: "flex",
             flexDirection: "column",
             overflowY: "auto",
@@ -1120,7 +1120,7 @@ export default function PluginsPage() {
           <div
             style={{
               padding: "16px 16px 10px",
-              borderBottom: "1px solid var(--border, #1f2937)",
+              borderBottom: "1px solid var(--border, var(--surface-3))",
             }}
           >
             <div
@@ -1215,7 +1215,7 @@ export default function PluginsPage() {
           <div
             style={{
               padding: "12px 16px",
-              borderTop: "1px solid var(--border, #1f2937)",
+              borderTop: "1px solid var(--border, var(--surface-3))",
               fontSize: 11,
               color: "var(--muted)",
             }}
@@ -1253,12 +1253,12 @@ export default function PluginsPage() {
           {/* Tab bar */}
           <div
             style={{
-              borderBottom: "1px solid var(--border, #1f2937)",
+              borderBottom: "1px solid var(--border, var(--surface-3))",
               padding: "0 32px",
               display: "flex",
               gap: 0,
               flexShrink: 0,
-              background: "var(--surface, #111827)",
+              background: "var(--surface, var(--surface))",
             }}
           >
             {TABS.map((tab) => (

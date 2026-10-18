@@ -1286,8 +1286,8 @@ export default function DastVulnManagementTab({
       {/* ── TOP ENTERPRISE BANNER: SOURCE DATA = LIVE ENGINE BRAIN & DAST PENETRATION TESTING RESULTS ── */}
       <div
         style={{
-          background: "#0f172a",
-          border: "1px solid #1e293b",
+          background: "var(--surface)",
+          border: "1px solid var(--surface-3)",
           borderRadius: 10,
           padding: "14px 18px",
           display: "flex",
@@ -1301,10 +1301,10 @@ export default function DastVulnManagementTab({
               <span style={{ background: "rgba(56,189,248,0.12)", border: "1px solid rgba(56,189,248,0.35)", color: "#38bdf8", fontWeight: 800, fontSize: 10, padding: "2px 8px", borderRadius: 4, fontFamily: "monospace" }}>
                 🎯 ENTERPRISE DAST VULNERABILITY MANAGEMENT
               </span>
-              <span style={{ background: "#090d16", border: "1px solid #1e293b", color: "#cbd5e1", fontWeight: 700, fontSize: 10, padding: "2px 8px", borderRadius: 4, fontFamily: "monospace" }}>
+              <span style={{ background: "var(--surface-2)", border: "1px solid var(--surface-3)", color: "#cbd5e1", fontWeight: 700, fontSize: 10, padding: "2px 8px", borderRadius: 4, fontFamily: "monospace" }}>
                 ● LIVE SOURCE: ENGINE BRAIN DAST ({enrichedFindings.length} FINDINGS)
               </span>
-              <span style={{ background: "#090d16", border: "1px solid #1e293b", color: "#94a3b8", fontWeight: 700, fontSize: 10, padding: "2px 8px", borderRadius: 4, fontFamily: "monospace" }}>
+              <span style={{ background: "var(--surface-2)", border: "1px solid var(--surface-3)", color: "#94a3b8", fontWeight: 700, fontSize: 10, padding: "2px 8px", borderRadius: 4, fontFamily: "monospace" }}>
                 0–100 DAST RISK SCORE + CISA KEV + EPSS
               </span>
             </div>
@@ -1321,8 +1321,8 @@ export default function DastVulnManagementTab({
             <button
               onClick={() => setDeveloperFriendlyMode(prev => !prev)}
               style={{
-                background: developerFriendlyMode ? "#1e293b" : "#090d16",
-                border: `1px solid ${developerFriendlyMode ? "#38bdf8" : "#1e293b"}`,
+                background: developerFriendlyMode ? "var(--surface-3)" : "var(--surface-2)",
+                border: `1px solid ${developerFriendlyMode ? "#38bdf8" : "var(--surface-3)"}`,
                 color: developerFriendlyMode ? "#38bdf8" : "#cbd5e1",
                 fontSize: 10.5,
                 fontWeight: 700,
@@ -1337,7 +1337,7 @@ export default function DastVulnManagementTab({
             <select
               value={scopedBusinessUnit}
               onChange={e => setScopedBusinessUnit(e.target.value)}
-              style={{ background: "#090d16", border: "1px solid #1e293b", borderRadius: 6, padding: "5px 8px", color: "#cbd5e1", fontSize: 10.5, fontFamily: "monospace", fontWeight: 600 }}
+              style={{ background: "var(--surface-2)", border: "1px solid var(--surface-3)", borderRadius: 6, padding: "5px 8px", color: "#cbd5e1", fontSize: 10.5, fontFamily: "monospace", fontWeight: 600 }}
             >
               <option value="ALL_UNITS">Scope: All Business Units</option>
               <option value="Digital Channels & Core Web">BU: Digital Channels &amp; Core Web</option>
@@ -1347,7 +1347,7 @@ export default function DastVulnManagementTab({
             <select
               value={activeRole}
               onChange={e => setActiveRole(e.target.value as any)}
-              style={{ background: "#090d16", border: "1px solid #1e293b", borderRadius: 6, padding: "5px 8px", color: "#cbd5e1", fontSize: 10.5, fontFamily: "monospace", fontWeight: 600 }}
+              style={{ background: "var(--surface-2)", border: "1px solid var(--surface-3)", borderRadius: 6, padding: "5px 8px", color: "#cbd5e1", fontSize: 10.5, fontFamily: "monospace", fontWeight: 600 }}
             >
               <option value="Security Analyst">RBAC: Security Analyst</option>
               <option value="App Owner">RBAC: App Owner</option>
@@ -1360,7 +1360,7 @@ export default function DastVulnManagementTab({
             <button
               onClick={exportCsvPack}
               style={{
-                background: "#1e293b",
+                background: "var(--surface-3)",
                 border: "1px solid #334155",
                 color: "#f8fafc",
                 fontSize: 10.5,
@@ -1439,7 +1439,7 @@ export default function DastVulnManagementTab({
         </div>
 
         {/* Clean, Human-Centric Sub-Navigation Bar */}
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", borderTop: "1px solid #1e293b", paddingTop: 12 }}>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", borderTop: "1px solid var(--surface-3)", paddingTop: 12 }}>
           {[
             { id: "PRIORITIZATION_WHAT_TO_FIX", label: "Prioritization Queue" },
             { id: "FINDINGS_MANAGEMENT", label: `Findings & Evidence (${enrichedFindings.length})` },
@@ -1454,8 +1454,8 @@ export default function DastVulnManagementTab({
               key={tab.id}
               onClick={() => setActiveSubView(tab.id as any)}
               style={{
-                background: activeSubView === tab.id ? "#1e293b" : "transparent",
-                border: activeSubView === tab.id ? "1px solid #38bdf8" : "1px solid #1f2937",
+                background: activeSubView === tab.id ? "var(--surface-3)" : "transparent",
+                border: activeSubView === tab.id ? "1px solid #38bdf8" : "1px solid var(--surface-3)",
                 color: activeSubView === tab.id ? "#f8fafc" : "#94a3b8",
                 fontWeight: activeSubView === tab.id ? 600 : 500,
                 fontSize: 12,
@@ -1475,7 +1475,7 @@ export default function DastVulnManagementTab({
       {activeSubView === "PRIORITIZATION_WHAT_TO_FIX" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {/* Saved Prioritization Views + Ranked "What to Fix First" List (Primary Focus) */}
-          <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: 10, padding: 18 }}>
+          <div style={{ background: "var(--surface)", border: "1px solid var(--surface-3)", borderRadius: 10, padding: 18 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, marginBottom: 14 }}>
               <div>
                 <strong style={{ fontSize: 15, color: "#f8fafc" }}>
@@ -1500,8 +1500,8 @@ export default function DastVulnManagementTab({
                     key={sv.id}
                     onClick={() => setSavedViewFilter(sv.id as any)}
                     style={{
-                      background: savedViewFilter === sv.id ? "#1e293b" : "#0b0f17",
-                      border: `1px solid ${savedViewFilter === sv.id ? "#38bdf8" : "#1f2937"}`,
+                      background: savedViewFilter === sv.id ? "var(--surface-3)" : "var(--surface-2)",
+                      border: `1px solid ${savedViewFilter === sv.id ? "#38bdf8" : "var(--surface-3)"}`,
                       color: savedViewFilter === sv.id ? "#f8fafc" : "#94a3b8",
                       fontSize: 11.5,
                       fontWeight: savedViewFilter === sv.id ? 600 : 500,
@@ -1518,7 +1518,7 @@ export default function DastVulnManagementTab({
 
             {filteredFindings.length === 0 && (
               <div style={{
-                background: "#0b0f17",
+                background: "var(--surface-2)",
                 border: "1px dashed #334155",
                 borderRadius: 8,
                 padding: "28px 20px",
@@ -1547,8 +1547,8 @@ export default function DastVulnManagementTab({
                     setActiveSubView("FINDINGS_MANAGEMENT");
                   }}
                   style={{
-                    background: "#0d131f",
-                    border: "1px solid #1f2937",
+                    background: "var(--surface-2)",
+                    border: "1px solid var(--surface-3)",
                     borderLeft: `3px solid ${f.riskBreakdown.tierColor}`,
                     borderRadius: 8,
                     padding: "14px 16px",
@@ -1563,15 +1563,15 @@ export default function DastVulnManagementTab({
                 >
                   <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: 1, minWidth: 260 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                      <span style={{ background: "#161f30", border: "1px solid #334155", color: "#cbd5e1", fontFamily: "monospace", fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 5 }}>
+                      <span style={{ background: "var(--surface-3)", border: "1px solid #334155", color: "#cbd5e1", fontFamily: "monospace", fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 5 }}>
                         #{idx + 1} · {f.id}
                       </span>
                       <strong style={{ fontSize: 14, color: "#f8fafc", fontWeight: 600 }}>{f.title}</strong>
-                      <span style={{ background: "#161f30", border: "1px solid #1f2937", color: "#94a3b8", fontFamily: "monospace", fontSize: 11, padding: "2px 7px", borderRadius: 5 }}>
+                      <span style={{ background: "var(--surface-3)", border: "1px solid var(--surface-3)", color: "#94a3b8", fontFamily: "monospace", fontSize: 11, padding: "2px 7px", borderRadius: 5 }}>
                         {f.cwe}
                       </span>
                       {f.mitreTechniques[0] && (
-                        <span style={{ background: "#161f30", border: "1px solid #1f2937", color: "#cbd5e1", fontFamily: "monospace", fontSize: 11, padding: "2px 7px", borderRadius: 5 }}>
+                        <span style={{ background: "var(--surface-3)", border: "1px solid var(--surface-3)", color: "#cbd5e1", fontFamily: "monospace", fontSize: 11, padding: "2px 7px", borderRadius: 5 }}>
                           {f.mitreTechniques[0].techniqueId} · {f.mitreTechniques[0].tacticName}
                         </span>
                       )}
@@ -1596,7 +1596,7 @@ export default function DastVulnManagementTab({
                     <button
                       onClick={() => handleTriggerRetest(f)}
                       style={{
-                        background: f.status === "Verified" ? "rgba(16,185,129,0.15)" : "#161f30",
+                        background: f.status === "Verified" ? "rgba(16,185,129,0.15)" : "var(--surface-3)",
                         border: `1px solid ${f.status === "Verified" ? "#10b981" : "#334155"}`,
                         color: f.status === "Verified" ? "#10b981" : "#e2e8f0",
                         fontSize: 11.5,
@@ -1611,7 +1611,7 @@ export default function DastVulnManagementTab({
                     <button
                       onClick={() => handleCreateTicket(f.id, "Jira")}
                       style={{
-                        background: "#161f30",
+                        background: "var(--surface-3)",
                         border: "1px solid #334155",
                         color: "#cbd5e1",
                         fontSize: 11.5,
@@ -1623,7 +1623,7 @@ export default function DastVulnManagementTab({
                     >
                       {f.linkedTicket ? `Ticket: ${f.linkedTicket.ticketKey}` : "Create Ticket"}
                     </button>
-                    <div style={{ textAlign: "right", fontFamily: "monospace", minWidth: 78, paddingLeft: 6, borderLeft: "1px solid #1f2937" }}>
+                    <div style={{ textAlign: "right", fontFamily: "monospace", minWidth: 78, paddingLeft: 6, borderLeft: "1px solid var(--surface-3)" }}>
                       <div style={{ fontSize: 20, fontWeight: 800, color: f.riskBreakdown.tierColor, lineHeight: 1.1 }}>
                         {f.riskBreakdown.finalScore}<span style={{ fontSize: 11, color: "#64748b", fontWeight: 500 }}>/100</span>
                       </div>
@@ -1638,13 +1638,13 @@ export default function DastVulnManagementTab({
           </div>
 
           {/* Progressive Disclosure: Configurable Risk Scoring Weights + Formula Guidance Table */}
-          <details style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: 10, padding: "12px 16px" }}>
+          <details style={{ background: "var(--surface)", border: "1px solid var(--surface-3)", borderRadius: 10, padding: "12px 16px" }}>
             <summary style={{ cursor: "pointer", fontSize: 13, fontWeight: 600, color: "#cbd5e1", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <span>⚙️ Configure Risk Scoring Weights &amp; View CVSS Comparison Formula (Severity {weights.severityWeightPct}% · Confidence {weights.confidenceWeightPct}% · App Criticality {weights.appCriticalityWeightPct}% · Exposure {weights.exposureWeightPct}%)</span>
               <span style={{ fontSize: 11.5, color: "#38bdf8" }}>Expand ▾</span>
             </summary>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 14, marginTop: 14, paddingTop: 14, borderTop: "1px solid #1f2937" }}>
-              <div style={{ background: "#0d131f", border: "1px solid #1f2937", borderRadius: 8, padding: 14 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 14, marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--surface-3)" }}>
+              <div style={{ background: "var(--surface-2)", border: "1px solid var(--surface-3)", borderRadius: 8, padding: 14 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                   <strong style={{ fontSize: 13, color: "#f8fafc" }}>
                     Risk Score Weights
@@ -1662,7 +1662,7 @@ export default function DastVulnManagementTab({
                         boostHighImpactMitreTactic: true
                       })
                     }
-                    style={{ background: "#161f30", border: "1px solid #334155", color: "#cbd5e1", fontSize: 11, padding: "4px 10px", borderRadius: 5, cursor: "pointer" }}
+                    style={{ background: "var(--surface-3)", border: "1px solid #334155", color: "#cbd5e1", fontSize: 11, padding: "4px 10px", borderRadius: 5, cursor: "pointer" }}
                   >
                     Reset Default (40/25/20/15)
                   </button>
@@ -1703,33 +1703,33 @@ export default function DastVulnManagementTab({
                 </div>
               </div>
 
-              <div style={{ background: "#0d131f", border: "1px solid #1f2937", borderRadius: 8, padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ background: "var(--surface-2)", border: "1px solid var(--surface-3)", borderRadius: 8, padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
                 <strong style={{ fontSize: 13, color: "#f8fafc" }}>
                   Contextual Risk Score (0–100) vs. Pure CVSS
                 </strong>
                 <div style={{ overflowX: "auto" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11.5 }}>
                     <thead>
-                      <tr style={{ background: "#111827", color: "#94a3b8", textAlign: "left" }}>
-                        <th style={{ padding: "6px 8px", borderBottom: "1px solid #1f2937" }}>Finding</th>
-                        <th style={{ padding: "6px 8px", borderBottom: "1px solid #1f2937" }}>Pure CVSS</th>
-                        <th style={{ padding: "6px 8px", borderBottom: "1px solid #1f2937" }}>Risk Score</th>
-                        <th style={{ padding: "6px 8px", borderBottom: "1px solid #1f2937" }}>Context Drivers</th>
+                      <tr style={{ background: "var(--surface)", color: "#94a3b8", textAlign: "left" }}>
+                        <th style={{ padding: "6px 8px", borderBottom: "1px solid var(--surface-3)" }}>Finding</th>
+                        <th style={{ padding: "6px 8px", borderBottom: "1px solid var(--surface-3)" }}>Pure CVSS</th>
+                        <th style={{ padding: "6px 8px", borderBottom: "1px solid var(--surface-3)" }}>Risk Score</th>
+                        <th style={{ padding: "6px 8px", borderBottom: "1px solid var(--surface-3)" }}>Context Drivers</th>
                       </tr>
                     </thead>
                     <tbody>
                       {enrichedFindings.slice(0, 5).map(f => (
                         <tr key={f.id}>
-                          <td style={{ padding: "6px 8px", borderBottom: "1px solid #1f2937", fontWeight: 600, color: "#f8fafc" }}>
+                          <td style={{ padding: "6px 8px", borderBottom: "1px solid var(--surface-3)", fontWeight: 600, color: "#f8fafc" }}>
                             {f.id}
                           </td>
-                          <td style={{ padding: "6px 8px", borderBottom: "1px solid #1f2937", fontFamily: "monospace", color: "#94a3b8" }}>
+                          <td style={{ padding: "6px 8px", borderBottom: "1px solid var(--surface-3)", fontFamily: "monospace", color: "#94a3b8" }}>
                             {f.cvssBase}
                           </td>
-                          <td style={{ padding: "6px 8px", borderBottom: "1px solid #1f2937", fontFamily: "monospace", fontWeight: 700, color: f.riskBreakdown.tierColor }}>
+                          <td style={{ padding: "6px 8px", borderBottom: "1px solid var(--surface-3)", fontFamily: "monospace", fontWeight: 700, color: f.riskBreakdown.tierColor }}>
                             {f.riskBreakdown.finalScore}/100
                           </td>
-                          <td style={{ padding: "6px 8px", borderBottom: "1px solid #1f2937", color: "#cbd5e1" }}>
+                          <td style={{ padding: "6px 8px", borderBottom: "1px solid var(--surface-3)", color: "#cbd5e1" }}>
                             EPSS {f.epssScorePct}% {f.inCisaKevOrRansomware ? "· CISA KEV" : ""}
                           </td>
                         </tr>
@@ -1754,15 +1754,15 @@ export default function DastVulnManagementTab({
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Search by ID, CWE, MITRE Technique (T1190, T1548), endpoint, parameter..."
-                style={{ flex: 1, minWidth: 200, background: "#050811", border: "1px solid var(--border)", borderRadius: 6, padding: "6px 10px", color: "#f8fafc", fontSize: 11 }}
+                style={{ flex: 1, minWidth: 200, background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 6, padding: "6px 10px", color: "#f8fafc", fontSize: 11 }}
               />
-              <select value={groupByMode} onChange={e => setGroupByMode(e.target.value as any)} style={{ background: "#050811", border: "1px solid #38bdf8", borderRadius: 6, padding: "6px 8px", color: "#38bdf8", fontSize: 10.5, fontWeight: 800 }}>
+              <select value={groupByMode} onChange={e => setGroupByMode(e.target.value as any)} style={{ background: "var(--surface-2)", border: "1px solid #38bdf8", borderRadius: 6, padding: "6px 8px", color: "#38bdf8", fontSize: 10.5, fontWeight: 800 }}>
                 <option value="FLAT">View: Master Ranked List</option>
                 <option value="ATTACK_TECHNIQUE">⚔️ Attack Technique View (Group by ATT&amp;CK)</option>
                 <option value="APPLICATION">Group By: Application Inventory</option>
                 <option value="RELATED_ENDPOINT">Group Related: Endpoint + Vuln Type</option>
               </select>
-              <select value={filterMitreTactic} onChange={e => setFilterMitreTactic(e.target.value)} style={{ background: "#050811", border: "1px solid #c084fc", borderRadius: 6, padding: "6px 8px", color: "#e9d5ff", fontSize: 10.5, fontWeight: 800 }}>
+              <select value={filterMitreTactic} onChange={e => setFilterMitreTactic(e.target.value)} style={{ background: "var(--surface-2)", border: "1px solid #c084fc", borderRadius: 6, padding: "6px 8px", color: "#e9d5ff", fontSize: 10.5, fontWeight: 800 }}>
                 <option value="ALL">MITRE Tactic: All Tactics</option>
                 <option value="Initial Access">TA0001 · Initial Access</option>
                 <option value="Execution">TA0002 · Execution</option>
@@ -1770,7 +1770,7 @@ export default function DastVulnManagementTab({
                 <option value="Credential Access">TA0006 · Credential Access</option>
                 <option value="Collection">TA0009 · Collection</option>
               </select>
-              <select value={filterMitreTechnique} onChange={e => setFilterMitreTechnique(e.target.value)} style={{ background: "#050811", border: "1px solid rgba(192,132,252,0.5)", borderRadius: 6, padding: "6px 8px", color: "#e9d5ff", fontSize: 10.5 }}>
+              <select value={filterMitreTechnique} onChange={e => setFilterMitreTechnique(e.target.value)} style={{ background: "var(--surface-2)", border: "1px solid rgba(192,132,252,0.5)", borderRadius: 6, padding: "6px 8px", color: "#e9d5ff", fontSize: 10.5 }}>
                 <option value="ALL">MITRE Technique: All IDs</option>
                 {MITRE_TECHNIQUE_LIBRARY.map(t => (
                   <option key={t.techniqueId} value={t.techniqueId}>
@@ -1778,7 +1778,7 @@ export default function DastVulnManagementTab({
                   </option>
                 ))}
               </select>
-              <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ background: "#050811", border: "1px solid var(--border)", borderRadius: 6, padding: "6px 8px", color: "#f8fafc", fontSize: 10.5 }}>
+              <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 6, padding: "6px 8px", color: "#f8fafc", fontSize: 10.5 }}>
                 <option value="ALL">All Statuses</option>
                 <option value="New">New</option>
                 <option value="Triaged">Triaged</option>
@@ -1796,7 +1796,7 @@ export default function DastVulnManagementTab({
                 <span style={{ color: "#38bdf8", fontFamily: "monospace", fontWeight: 800 }}>
                   ☑️ {selectedFindingIds.length} Selected
                 </span>
-                <select value={bulkStatusTarget} onChange={e => setBulkStatusTarget(e.target.value as VulnStatus)} style={{ background: "#050811", border: "1px solid var(--border)", borderRadius: 4, padding: "4px 8px", color: "#f8fafc", fontSize: 10.5 }}>
+                <select value={bulkStatusTarget} onChange={e => setBulkStatusTarget(e.target.value as VulnStatus)} style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 4, padding: "4px 8px", color: "#f8fafc", fontSize: 10.5 }}>
                   <option value="Triaged">Bulk Status → Triaged</option>
                   <option value="In Progress">Bulk Status → In Progress</option>
                   <option value="Fixed">Bulk Status → Fixed</option>
@@ -1809,7 +1809,7 @@ export default function DastVulnManagementTab({
                   type="text"
                   value={bulkAssigneeTarget}
                   onChange={e => setBulkAssigneeTarget(e.target.value)}
-                  style={{ background: "#050811", border: "1px solid var(--border)", borderRadius: 4, padding: "4px 8px", color: "#f8fafc", fontSize: 10.5 }}
+                  style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 4, padding: "4px 8px", color: "#f8fafc", fontSize: 10.5 }}
                 />
                 <button
                   onClick={handleBulkApply}
@@ -1835,7 +1835,7 @@ export default function DastVulnManagementTab({
             <div style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 8, overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10.5 }}>
                 <thead>
-                  <tr style={{ background: "#050811", color: "#94a3b8", textAlign: "left" }}>
+                  <tr style={{ background: "var(--surface-2)", color: "#94a3b8", textAlign: "left" }}>
                     <th style={{ padding: "7px 6px" }}>
                       <input
                         type="checkbox"
@@ -1931,7 +1931,7 @@ export default function DastVulnManagementTab({
 
             {/* Right Detail Drawer with Dedicated MITRE ATT&CK® Mapping + Vulnerability Intelligence + Engine Brain Evidence + Screenshots */}
             {activeFinding && (
-              <div style={{ background: "#050811", border: `1.5px solid ${activeFinding.riskBreakdown.tierColor}`, borderRadius: 8, padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ background: "var(--surface-2)", border: `1.5px solid ${activeFinding.riskBreakdown.tierColor}`, borderRadius: 8, padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: 8 }}>
                   <div>
                     <div style={{ fontSize: 10, fontFamily: "monospace", color: "#38bdf8", fontWeight: 800 }}>
@@ -1974,7 +1974,7 @@ export default function DastVulnManagementTab({
                   {/* Mapped MITRE ATT&CK Techniques List */}
                   <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                     {activeFinding.mitreTechniques.map(mt => (
-                      <div key={mt.techniqueId} style={{ background: "#090d16", border: "1px solid rgba(192,132,252,0.3)", borderRadius: 5, padding: "6px 8px", fontSize: 10 }}>
+                      <div key={mt.techniqueId} style={{ background: "var(--surface-2)", border: "1px solid rgba(192,132,252,0.3)", borderRadius: 5, padding: "6px 8px", fontSize: 10 }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6 }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                             <span style={{ background: "#7e22ce", color: "#fff", fontFamily: "monospace", fontWeight: 900, fontSize: 9.5, padding: "1px 6px", borderRadius: 3 }}>
@@ -2022,7 +2022,7 @@ export default function DastVulnManagementTab({
                     <select
                       value={selectedMitreTechniqueToAdd}
                       onChange={e => setSelectedMitreTechniqueToAdd(e.target.value)}
-                      style={{ background: "#050811", border: "1px solid rgba(192,132,252,0.5)", borderRadius: 4, padding: "3px 6px", color: "#e9d5ff", fontSize: 9.5, fontFamily: "monospace" }}
+                      style={{ background: "var(--surface-2)", border: "1px solid rgba(192,132,252,0.5)", borderRadius: 4, padding: "3px 6px", color: "#e9d5ff", fontSize: 9.5, fontFamily: "monospace" }}
                     >
                       {MITRE_TECHNIQUE_LIBRARY.map(t => (
                         <option key={t.techniqueId} value={t.techniqueId}>
@@ -2045,10 +2045,10 @@ export default function DastVulnManagementTab({
                 </div>
 
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap", fontSize: 10, fontFamily: "monospace" }}>
-                  <span style={{ background: "#0f172a", border: "1px solid var(--border)", padding: "2px 7px", borderRadius: 4, color: "#cbd5e1" }}>
+                  <span style={{ background: "var(--surface)", border: "1px solid var(--border)", padding: "2px 7px", borderRadius: 4, color: "#cbd5e1" }}>
                     Compliance: {activeFinding.customFields.complianceFramework}
                   </span>
-                  <span style={{ background: "#0f172a", border: "1px solid var(--border)", padding: "2px 7px", borderRadius: 4, color: "#38bdf8" }}>
+                  <span style={{ background: "var(--surface)", border: "1px solid var(--border)", padding: "2px 7px", borderRadius: 4, color: "#38bdf8" }}>
                     Tracking ID: {activeFinding.customFields.internalTrackingId}
                   </span>
                   {activeFinding.customFields.releaseBlocker && (
@@ -2082,7 +2082,7 @@ export default function DastVulnManagementTab({
                   <strong style={{ fontSize: 11, color: "#38bdf8", display: "block", marginBottom: 4 }}>
                     🔬 Engine Brain Captured HTTP Request / Response &amp; Proof:
                   </strong>
-                  <pre style={{ margin: 0, background: "#090d16", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: 8, fontSize: 9.5, color: "#bae6fd", overflowX: "auto", whiteSpace: "pre-wrap" }}>
+                  <pre style={{ margin: 0, background: "var(--surface-2)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: 8, fontSize: 9.5, color: "#bae6fd", overflowX: "auto", whiteSpace: "pre-wrap" }}>
 {activeFinding.evidenceRequest}
 
 --- RESPONSE ---
@@ -2098,7 +2098,7 @@ export default function DastVulnManagementTab({
                     </strong>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 6 }}>
                       {activeFinding.screenshots.slice(0, 1).map(sc => (
-                        <div key={sc.figureId} style={{ background: "#090d16", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 6, padding: 6 }}>
+                        <div key={sc.figureId} style={{ background: "var(--surface-2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 6, padding: 6 }}>
                           <div style={{ fontSize: 9.5, fontFamily: "monospace", color: "#38bdf8", marginBottom: 4 }}>
                             [{sc.figureId}] {sc.title}
                           </div>
@@ -2117,7 +2117,7 @@ export default function DastVulnManagementTab({
                   <div style={{ fontSize: 10.5, color: "#e2e8f0", marginBottom: 6, lineHeight: 1.45 }}>
                     {developerFriendlyMode ? activeFinding.howToFixDeveloperFriendly : activeFinding.howToFixTechnical}
                   </div>
-                  <pre style={{ margin: 0, background: "#090d16", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 6, padding: 8, fontSize: 9.5, color: "#a7f3d0", overflowX: "auto", whiteSpace: "pre-wrap" }}>
+                  <pre style={{ margin: 0, background: "var(--surface-2)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 6, padding: 8, fontSize: 9.5, color: "#a7f3d0", overflowX: "auto", whiteSpace: "pre-wrap" }}>
 {activeFinding.codeRemediationSnippet}
                   </pre>
                 </div>
@@ -2144,7 +2144,7 @@ export default function DastVulnManagementTab({
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10.5 }}>
                 <thead>
-                  <tr style={{ background: "#050811", color: "#e9d5ff", textAlign: "left" }}>
+                  <tr style={{ background: "var(--surface-2)", color: "#e9d5ff", textAlign: "left" }}>
                     <th style={{ padding: "7px 8px", border: "1px solid var(--border)" }}>Finding &amp; CWE</th>
                     <th style={{ padding: "7px 8px", border: "1px solid var(--border)" }}>CVSS v3.1</th>
                     <th style={{ padding: "7px 8px", border: "1px solid var(--border)" }}>EPSS (30-Day Prob &amp; Pct)</th>
@@ -2222,7 +2222,7 @@ export default function DastVulnManagementTab({
                 );
                 if (matching.length === 0) return null;
                 return (
-                  <div key={tech.techniqueId} style={{ background: "#050811", border: "1px solid rgba(192,132,252,0.3)", borderRadius: 6, padding: "8px 10px", fontSize: 10.5 }}>
+                  <div key={tech.techniqueId} style={{ background: "var(--surface-2)", border: "1px solid rgba(192,132,252,0.3)", borderRadius: 6, padding: "8px 10px", fontSize: 10.5 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6 }}>
                       <div>
                         <span style={{ background: "#7e22ce", color: "#fff", fontFamily: "monospace", fontWeight: 900, fontSize: 9.5, padding: "1px 6px", borderRadius: 3, marginRight: 6 }}>
@@ -2282,7 +2282,7 @@ export default function DastVulnManagementTab({
                   { tactic: "TA0010 · Exfiltration", status: "COVERED (WEB-AUD-018 · CSP Egress/DLP)", color: "#34d399" },
                   { tactic: "TA0040 · Impact", status: "COVERED (429 Rate Limit / GraphQL Cost)", color: "#34d399" }
                 ].map(row => (
-                  <div key={row.tactic} style={{ background: "#050811", border: `1px solid ${row.color}55`, borderRadius: 5, padding: "6px 8px" }}>
+                  <div key={row.tactic} style={{ background: "var(--surface-2)", border: `1px solid ${row.color}55`, borderRadius: 5, padding: "6px 8px" }}>
                     <div style={{ color: "#f8fafc", fontWeight: 800 }}>{row.tactic}</div>
                     <div style={{ color: row.color, fontSize: 9, marginTop: 2 }}>{row.status}</div>
                   </div>
@@ -2309,7 +2309,7 @@ export default function DastVulnManagementTab({
             <div style={{ overflowX: "auto", maxHeight: 340 }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10, fontFamily: "monospace" }}>
                 <thead>
-                  <tr style={{ background: "#050811", color: "#38bdf8", textAlign: "left" }}>
+                  <tr style={{ background: "var(--surface-2)", color: "#38bdf8", textAlign: "left" }}>
                     <th style={{ padding: "6px 8px", border: "1px solid var(--border)" }}>CWE ID &amp; Official Definition</th>
                     <th style={{ padding: "6px 8px", border: "1px solid var(--border)" }}>Domain &amp; OWASP/ASVS/WSTG</th>
                     <th style={{ padding: "6px 8px", border: "1px solid var(--border)" }}>MITRE ATT&amp;CK® TTP</th>
@@ -2364,7 +2364,7 @@ export default function DastVulnManagementTab({
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10.5 }}>
               <thead>
-                <tr style={{ background: "#050811", color: "#38bdf8", textAlign: "left" }}>
+                <tr style={{ background: "var(--surface-2)", color: "#38bdf8", textAlign: "left" }}>
                   <th style={{ padding: "8px", border: "1px solid var(--border)" }}>Application, Portfolio &amp; Multi-URLs</th>
                   <th style={{ padding: "8px", border: "1px solid var(--border)" }}>Criticality &amp; Crown Jewel</th>
                   <th style={{ padding: "8px", border: "1px solid var(--border)" }}>Detected Tech Stack (Engine Brain)</th>
@@ -2415,7 +2415,7 @@ export default function DastVulnManagementTab({
                     <td style={{ padding: "8px", border: "1px solid var(--border)" }}>
                       <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 3 }}>
                         {app.detectedTechStack.map(t => (
-                          <span key={t} style={{ background: "#050811", border: "1px solid rgba(56,189,248,0.3)", color: "#bae6fd", fontSize: 9, padding: "1px 5px", borderRadius: 3, fontFamily: "monospace" }}>
+                          <span key={t} style={{ background: "var(--surface-2)", border: "1px solid rgba(56,189,248,0.3)", color: "#bae6fd", fontSize: 9, padding: "1px 5px", borderRadius: 3, fontFamily: "monospace" }}>
                             {t}
                           </span>
                         ))}
@@ -2481,7 +2481,7 @@ export default function DastVulnManagementTab({
             <select
               value={activeFinding?.id || ""}
               onChange={e => setActiveFindingId(e.target.value)}
-              style={{ background: "#050811", border: "1px solid var(--border)", borderRadius: 5, padding: "6px 8px", color: "#f8fafc", fontSize: 11 }}
+              style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 5, padding: "6px 8px", color: "#f8fafc", fontSize: 11 }}
             >
               {enrichedFindings.map(f => (
                 <option key={f.id} value={f.id}>
@@ -2490,13 +2490,13 @@ export default function DastVulnManagementTab({
               ))}
             </select>
 
-            <div style={{ background: "#050811", border: "1px solid rgba(56,189,248,0.3)", borderRadius: 6, padding: 10, display: "flex", flexDirection: "column", gap: 6 }}>
+            <div style={{ background: "var(--surface-2)", border: "1px solid rgba(56,189,248,0.3)", borderRadius: 6, padding: 10, display: "flex", flexDirection: "column", gap: 6 }}>
               <strong style={{ fontSize: 11.5, color: "#38bdf8" }}>1. False Positive Management + Future Scan Suppression</strong>
               <input
                 type="text"
                 value={fpReasonInput}
                 onChange={e => setFpReasonInput(e.target.value)}
-                style={{ background: "#090d16", border: "1px solid var(--border)", borderRadius: 4, padding: "5px 8px", color: "#f8fafc", fontSize: 10.5 }}
+                style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 4, padding: "5px 8px", color: "#f8fafc", fontSize: 10.5 }}
               />
               <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10.5, color: "#cbd5e1" }}>
                 <input type="checkbox" checked={suppressFutureToggle} onChange={e => setSuppressFutureToggle(e.target.checked)} />
@@ -2522,26 +2522,26 @@ export default function DastVulnManagementTab({
               </button>
             </div>
 
-            <div style={{ background: "#050811", border: "1px solid rgba(250,204,21,0.3)", borderRadius: 6, padding: 10, display: "flex", flexDirection: "column", gap: 6 }}>
+            <div style={{ background: "var(--surface-2)", border: "1px solid rgba(250,204,21,0.3)", borderRadius: 6, padding: 10, display: "flex", flexDirection: "column", gap: 6 }}>
               <strong style={{ fontSize: 11.5, color: "#fde047" }}>2. Accept Risk / Won&apos;t Fix (Justification + Expiry + CISO Approver)</strong>
               <input
                 type="text"
                 value={raJustificationInput}
                 onChange={e => setRaJustificationInput(e.target.value)}
-                style={{ background: "#090d16", border: "1px solid var(--border)", borderRadius: 4, padding: "5px 8px", color: "#f8fafc", fontSize: 10.5 }}
+                style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 4, padding: "5px 8px", color: "#f8fafc", fontSize: 10.5 }}
               />
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                 <input
                   type="date"
                   value={raExpiryInput}
                   onChange={e => setRaExpiryInput(e.target.value)}
-                  style={{ background: "#090d16", border: "1px solid var(--border)", borderRadius: 4, padding: "5px 8px", color: "#fde047", fontSize: 10.5 }}
+                  style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 4, padding: "5px 8px", color: "#fde047", fontSize: 10.5 }}
                 />
                 <input
                   type="text"
                   value={raApproverInput}
                   onChange={e => setRaApproverInput(e.target.value)}
-                  style={{ background: "#090d16", border: "1px solid var(--border)", borderRadius: 4, padding: "5px 8px", color: "#f8fafc", fontSize: 10.5 }}
+                  style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 4, padding: "5px 8px", color: "#f8fafc", fontSize: 10.5 }}
                 />
               </div>
               <div style={{ display: "flex", gap: 8 }}>
@@ -2590,14 +2590,14 @@ export default function DastVulnManagementTab({
             <strong style={{ fontSize: 13.5, color: "#fda4af" }}>
               ⏰ SLA Timers, Automated Escalation Rules &amp; Team Workload
             </strong>
-            <div style={{ background: "#050811", border: "1px solid rgba(244,63,94,0.3)", borderRadius: 6, padding: 10, fontSize: 11, color: "#e2e8f0" }}>
+            <div style={{ background: "var(--surface-2)", border: "1px solid rgba(244,63,94,0.3)", borderRadius: 6, padding: 10, fontSize: 11, color: "#e2e8f0" }}>
               <div>• <strong>Critical Tier (80–100):</strong> 7-Day SLA → Auto-escalates to CISO &amp; VP Engineering at Day 5.</div>
               <div>• <strong>High Tier (60–79):</strong> 14-Day SLA → Auto-escalates to App Owner Lead at Day 10.</div>
               <div>• <strong>Medium Tier (40–59):</strong> 30-Day SLA → Included in weekly SecOps digest.</div>
             </div>
             <strong style={{ fontSize: 12, color: "#38bdf8", marginTop: 4 }}>👥 Active Assignee Workload &amp; Watchers</strong>
             {enrichedFindings.map(f => (
-              <div key={f.id} style={{ background: "#050811", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, padding: "7px 10px", fontSize: 10.5, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div key={f.id} style={{ background: "var(--surface-2)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, padding: "7px 10px", fontSize: 10.5, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
                   <strong style={{ color: "#f8fafc" }}>{f.id}</strong> · {f.assignee}
                   <div style={{ fontSize: 9.5, color: "#94a3b8", fontFamily: "monospace" }}>
@@ -2625,7 +2625,7 @@ export default function DastVulnManagementTab({
               { scanId: "SCAN-BRAIN-PREV-02", release: "v4.12.0 (Pre-Hotfix Release)", newCount: 2, recurringCount: 3, fixedCount: 2, authMode: "Authenticated JWT Session" },
               { scanId: "SCAN-BRAIN-PREV-01", release: "v4.11.4 (Q3 Baseline)", newCount: 5, recurringCount: 0, fixedCount: 0, authMode: "Unauthenticated Surface" }
             ].map(sc => (
-              <div key={sc.scanId} style={{ background: "#050811", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, padding: 10, fontSize: 10.5 }}>
+              <div key={sc.scanId} style={{ background: "var(--surface-2)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, padding: 10, fontSize: 10.5 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, color: "#f8fafc" }}>
                   <span>{sc.scanId} — {sc.release}</span>
                   <span style={{ color: "#38bdf8", fontFamily: "monospace" }}>{sc.authMode}</span>
@@ -2644,7 +2644,7 @@ export default function DastVulnManagementTab({
               ⛓️ Multi-Finding Attack Path &amp; Chaining Analysis (Engine Brain Graph)
             </strong>
             {enrichedFindings.map(f => (
-              <div key={f.id} style={{ background: "#050811", border: "1px solid rgba(244,63,94,0.28)", borderRadius: 6, padding: 9, fontSize: 10.5 }}>
+              <div key={f.id} style={{ background: "var(--surface-2)", border: "1px solid rgba(244,63,94,0.28)", borderRadius: 6, padding: 9, fontSize: 10.5 }}>
                 <div style={{ fontWeight: 800, color: "#f8fafc" }}>{f.id} · {f.title}</div>
                 <div style={{ color: "#fda4af", marginTop: 3, fontFamily: "monospace" }}>{f.attackChainHint}</div>
               </div>
@@ -2666,7 +2666,7 @@ export default function DastVulnManagementTab({
               { period: "Current Engine Brain Run", newF: 1, fixedF: 2 + Object.keys(remediatedIds).length, netRisk: 62 },
               { period: "Post-7d SLA Target", newF: 0, fixedF: 5, netRisk: 18 }
             ].map(r => (
-              <div key={r.period} style={{ background: "#050811", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, padding: "8px 10px", display: "flex", justifyContent: "space-between", fontSize: 10.5, fontFamily: "monospace" }}>
+              <div key={r.period} style={{ background: "var(--surface-2)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, padding: "8px 10px", display: "flex", justifyContent: "space-between", fontSize: 10.5, fontFamily: "monospace" }}>
                 <span style={{ color: "#f8fafc", fontWeight: 800 }}>{r.period}</span>
                 <span style={{ color: "#fda4af" }}>New: {r.newF}</span>
                 <span style={{ color: "#34d399" }}>Fixed: {r.fixedF}</span>
@@ -2705,7 +2705,7 @@ export default function DastVulnManagementTab({
             </strong>
             <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 290, overflowY: "auto" }}>
               {auditLogs.map(a => (
-                <div key={a.id} style={{ background: "#050811", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, padding: "7px 10px", fontSize: 10, fontFamily: "monospace" }}>
+                <div key={a.id} style={{ background: "var(--surface-2)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, padding: "7px 10px", fontSize: 10, fontFamily: "monospace" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", color: "#38bdf8", fontWeight: 800 }}>
                     <span>[{a.id}] {a.action}</span>
                     <span style={{ color: "#94a3b8" }}>{a.timestamp}</span>
@@ -2723,7 +2723,7 @@ export default function DastVulnManagementTab({
             </strong>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10.5 }}>
               <thead>
-                <tr style={{ background: "#050811", color: "#c084fc", textAlign: "left" }}>
+                <tr style={{ background: "var(--surface-2)", color: "#c084fc", textAlign: "left" }}>
                   <th style={{ padding: "6px 8px", border: "1px solid var(--border)" }}>Phase</th>
                   <th style={{ padding: "6px 8px", border: "1px solid var(--border)" }}>Focus</th>
                   <th style={{ padding: "6px 8px", border: "1px solid var(--border)" }}>Key Features Implemented</th>

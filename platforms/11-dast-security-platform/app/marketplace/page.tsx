@@ -360,8 +360,8 @@ function PluginModal({
     >
       <div
         style={{
-          background: "var(--surface, #111827)",
-          border: "1px solid var(--border, #1f2937)",
+          background: "var(--surface, var(--surface))",
+          border: "1px solid var(--border, var(--surface-3))",
           borderRadius: 16,
           width: "min(700px, 95vw)",
           maxHeight: "90vh",
@@ -542,9 +542,9 @@ function PluginModal({
                   alignItems: "flex-start",
                   gap: 10,
                   padding: "8px 12px",
-                  background: "var(--bg, #0f172a)",
+                  background: "var(--bg, var(--surface))",
                   borderRadius: 8,
-                  border: "1px solid var(--border, #1f2937)",
+                  border: "1px solid var(--border, var(--surface-3))",
                 }}
               >
                 <span
@@ -587,8 +587,8 @@ function PluginModal({
                   fontSize: 12,
                   padding: "3px 10px",
                   borderRadius: 6,
-                  background: "var(--bg, #0f172a)",
-                  border: "1px solid var(--border, #1f2937)",
+                  background: "var(--bg, var(--surface))",
+                  border: "1px solid var(--border, var(--surface-3))",
                   color: "var(--fg, #d1d5db)",
                 }}
               >
@@ -622,12 +622,12 @@ function PluginModal({
                   background:
                     v.version === plugin.version
                       ? "#e8912d0d"
-                      : "var(--bg, #0f172a)",
+                      : "var(--bg, var(--surface))",
                   borderRadius: 8,
                   border: `1px solid ${
                     v.version === plugin.version
                       ? "#e8912d33"
-                      : "var(--border, #1f2937)"
+                      : "var(--border, var(--surface-3))"
                   }`,
                   alignItems: "center",
                 }}
@@ -766,8 +766,8 @@ function PluginCard({
     <div
       onClick={onClick}
       style={{
-        background: "var(--surface, #111827)",
-        border: "1px solid var(--border, #1f2937)",
+        background: "var(--surface, var(--surface))",
+        border: "1px solid var(--border, var(--surface-3))",
         borderRadius: 12,
         padding: "20px",
         cursor: "pointer",
@@ -784,7 +784,7 @@ function PluginCard({
       }}
       onMouseLeave={(e) => {
         (e.currentTarget as HTMLDivElement).style.borderColor =
-          "var(--border, #1f2937)";
+          "var(--border, var(--surface-3))";
         (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
       }}
     >
@@ -827,7 +827,7 @@ function PluginCard({
               fontSize: 11,
               padding: "1px 7px",
               borderRadius: 4,
-              background: "var(--bg, #0f172a)",
+              background: "var(--bg, var(--surface))",
               color: "var(--muted)",
               border: "1px solid var(--border)",
             }}
@@ -1017,8 +1017,8 @@ export default function MarketplacePage() {
       {/* ── Top Bar ── */}
       <div
         style={{
-          borderBottom: "1px solid var(--border, #1f2937)",
-          background: "var(--surface, #111827)",
+          borderBottom: "1px solid var(--border, var(--surface-3))",
+          background: "var(--surface, var(--surface))",
           padding: "0 32px",
           height: 56,
           display: "flex",
@@ -1092,8 +1092,8 @@ export default function MarketplacePage() {
             <div
               key={s.label}
               style={{
-                background: "var(--surface, #111827)",
-                border: "1px solid var(--border, #1f2937)",
+                background: "var(--surface, var(--surface))",
+                border: "1px solid var(--border, var(--surface-3))",
                 borderRadius: 10,
                 padding: "16px 20px",
               }}
@@ -1147,8 +1147,8 @@ export default function MarketplacePage() {
                 width: "100%",
                 padding: "10px 14px 10px 36px",
                 borderRadius: 8,
-                background: "var(--surface, #111827)",
-                border: "1px solid var(--border, #1f2937)",
+                background: "var(--surface, var(--surface))",
+                border: "1px solid var(--border, var(--surface-3))",
                 color: "var(--fg, #f9fafb)",
                 fontSize: 14,
                 outline: "none",
@@ -1168,7 +1168,7 @@ export default function MarketplacePage() {
                   borderRadius: 7,
                   border: "1px solid",
                   borderColor:
-                    activeCategory === cat ? "#e8912d" : "var(--border, #1f2937)",
+                    activeCategory === cat ? "#e8912d" : "var(--border, var(--surface-3))",
                   background: activeCategory === cat ? "#e8912d18" : "none",
                   color:
                     activeCategory === cat ? "#e8912d" : "var(--muted)",
@@ -1225,7 +1225,7 @@ export default function MarketplacePage() {
               gap: 10,
               marginBottom: 16,
               paddingBottom: 12,
-              borderBottom: "1px solid var(--border, #1f2937)",
+              borderBottom: "1px solid var(--border, var(--surface-3))",
             }}
           >
             <h2
@@ -1264,8 +1264,8 @@ export default function MarketplacePage() {
                 key={plugin.id}
                 onClick={() => setSelectedPlugin(plugin)}
                 style={{
-                  background: "var(--surface, #111827)",
-                  border: "1px solid var(--border, #1f2937)",
+                  background: "var(--surface, var(--surface))",
+                  border: "1px solid var(--border, var(--surface-3))",
                   borderRadius: 10,
                   padding: "14px 16px",
                   display: "flex",

@@ -308,7 +308,7 @@ export default function LiveScanPage() {
 
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
-          <div style={{ width: 36, height: 36, borderRadius: 8, background: "#0f172a", border: "1px solid #1e293b", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 8, background: "var(--surface)", border: "1px solid var(--surface-3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <Activity size={17} color="#38bdf8" />
           </div>
           <div style={{ flex: "1 1 180px" }}>
@@ -322,8 +322,8 @@ export default function LiveScanPage() {
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
             <div style={{
               display: "flex", alignItems: "center", gap: 5, padding: "4px 9px", borderRadius: 5,
-              background: "#0f172a",
-              border: "1px solid #1e293b"
+              background: "var(--surface)",
+              border: "1px solid var(--surface-3)"
             }}>
               <div style={{ width: 6, height: 6, borderRadius: "50%", background: backendOk ? "#10b981" : "#f59e0b" }} />
               <span style={{ fontSize: 10, fontWeight: 700, color: "#cbd5e1", fontFamily: "var(--font-geist-mono)" }}>
@@ -341,7 +341,7 @@ export default function LiveScanPage() {
         </div>
 
         {/* 8-Stage Autonomous Brain Highlight Matrix (Clickable Stages for Drill-Down) */}
-        <div style={{ marginBottom: 12, padding: "12px 14px", borderRadius: 10, background: "#0f172a", border: "1px solid #1e293b" }}>
+        <div style={{ marginBottom: 12, padding: "12px 14px", borderRadius: 10, background: "var(--surface)", border: "1px solid var(--surface-3)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, flexWrap: "wrap", gap: 6 }}>
             <span style={{ fontSize: 10.5, fontWeight: 800, color: "#38bdf8", fontFamily: "var(--font-geist-mono)" }}>
               🧠 8-STAGE AUTONOMOUS BRAIN PROGRESSION (CLICK ANY STAGE TO DRILL DOWN):
@@ -368,15 +368,15 @@ export default function LiveScanPage() {
                     cursor: "pointer",
                     border: isSelected || isCurrent
                       ? "1px solid #38bdf8"
-                      : "1px solid #1e293b",
+                      : "1px solid var(--surface-3)",
                     background: isSelected || isCurrent
-                      ? "#1e293b"
-                      : "#090d16"
+                      ? "var(--surface-3)"
+                      : "var(--surface-2)"
                   }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 9.5, fontWeight: 800 }}>
                     <span style={{ color: isSelected || isCurrent ? "#38bdf8" : "#e2e8f0" }}>{st.key}</span>
-                    {isCurrent && <span style={{ background: "#38bdf8", color: "#090d16", padding: "0 4px", borderRadius: 3, fontSize: 8 }}>ACTIVE</span>}
+                    {isCurrent && <span style={{ background: "#38bdf8", color: "var(--surface-2)", padding: "0 4px", borderRadius: 3, fontSize: 8 }}>ACTIVE</span>}
                     {isDone && !isCurrent && <span style={{ color: "#10b981", fontSize: 9 }}>✓</span>}
                   </div>
                   <div style={{ fontSize: 9, color: "#94a3b8", marginTop: 3 }}>{st.title}</div>
@@ -390,8 +390,8 @@ export default function LiveScanPage() {
             marginTop: 10,
             padding: "8px 12px",
             borderRadius: 6,
-            background: "#090d16",
-            border: "1px solid #1e293b",
+            background: "var(--surface-2)",
+            border: "1px solid var(--surface-3)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -424,8 +424,8 @@ export default function LiveScanPage() {
                 style={{
                   padding: "10px 12px",
                   borderRadius: 8,
-                  border: `1px solid ${isSel || activeEngine === e.id ? "#38bdf8" : "#1e293b"}`,
-                  background: isSel ? "#1e293b" : "#0f172a",
+                  border: `1px solid ${isSel || activeEngine === e.id ? "#38bdf8" : "var(--surface-3)"}`,
+                  background: isSel ? "var(--surface-3)" : "var(--surface)",
                   textAlign: "left",
                   cursor: "pointer",
                   transition: "all 0.2s"
@@ -453,7 +453,7 @@ export default function LiveScanPage() {
               </span>
               <span style={{ fontSize: 10, fontWeight: 700, color: status === "complete" ? "#10b981" : "#38bdf8" }}>{progress}%</span>
             </div>
-            <div style={{ height: 4, background: "#1e293b", borderRadius: 2 }}>
+            <div style={{ height: 4, background: "var(--surface-3)", borderRadius: 2 }}>
               <div style={{
                 height: "100%",
                 width: `${progress}%`,
@@ -486,8 +486,8 @@ export default function LiveScanPage() {
                     type="button"
                     onClick={() => setSelectedSevFilter(selectedSevFilter === s.sev ? "ALL" : s.sev)}
                     style={{
-                      background: isSel && s.sev !== "ALL" ? "#1e293b" : "#0f172a",
-                      border: `1px solid ${isSel && s.sev !== "ALL" ? "#38bdf8" : "#1e293b"}`,
+                      background: isSel && s.sev !== "ALL" ? "var(--surface-3)" : "var(--surface)",
+                      border: `1px solid ${isSel && s.sev !== "ALL" ? "#38bdf8" : "var(--surface-3)"}`,
                       borderRadius: 8,
                       padding: "10px 12px",
                       textAlign: "left",
@@ -531,7 +531,7 @@ export default function LiveScanPage() {
                     setSelectedEngineFilter("ALL");
                   }}
                   style={{
-                    background: "#1e293b",
+                    background: "var(--surface-3)",
                     border: "1px solid #38bdf8",
                     color: "#f8fafc",
                     fontSize: 9.5,
@@ -560,7 +560,7 @@ export default function LiveScanPage() {
                     <div
                       key={f.id ?? i}
                       style={{
-                        borderBottom: "1px solid #1e293b",
+                        borderBottom: "1px solid var(--surface-3)",
                         background: isExpanded ? "rgba(56,189,248,0.04)" : "transparent"
                       }}
                     >
@@ -586,9 +586,9 @@ export default function LiveScanPage() {
                             fontWeight: 700,
                             padding: "1px 6px",
                             borderRadius: 4,
-                            background: "#090d16",
+                            background: "var(--surface-2)",
                             color: "#f8fafc",
-                            border: "1px solid #1e293b"
+                            border: "1px solid var(--surface-3)"
                           }}>
                             DAST Risk: {f.riskBreakdown.finalScore}/100
                           </span>
@@ -603,9 +603,9 @@ export default function LiveScanPage() {
                                 fontFamily: "var(--font-geist-mono)",
                                 padding: "1px 6px",
                                 borderRadius: 4,
-                                background: "#090d16",
+                                background: "var(--surface-2)",
                                 color: "#cbd5e1",
-                                border: "1px solid #1e293b"
+                                border: "1px solid var(--surface-3)"
                               }}
                             >
                               {m.techniqueId} · {m.tacticName}
@@ -632,8 +632,8 @@ export default function LiveScanPage() {
                           gap: 10
                         }}>
                           <div style={{
-                            background: "#090d16",
-                            border: "1px solid #1e293b",
+                            background: "var(--surface-2)",
+                            border: "1px solid var(--surface-3)",
                             borderRadius: 8,
                             padding: 12,
                             display: "flex",
@@ -648,14 +648,14 @@ export default function LiveScanPage() {
                             {f.formalReport?.evidence?.exploitationPictures && (
                               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 10 }}>
                                 {f.formalReport.evidence.exploitationPictures.map((pic: any) => (
-                                  <div key={pic.figureId} style={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: 6, padding: 8 }}>
+                                  <div key={pic.figureId} style={{ background: "var(--surface)", border: "1px solid var(--surface-3)", borderRadius: 6, padding: 8 }}>
                                     <div style={{ fontSize: 10, fontWeight: 700, color: "#f8fafc", marginBottom: 4 }}>
                                       [{pic.figureId}] {pic.title}
                                     </div>
                                     <img
                                       src={pic.svgDataUri}
                                       alt={pic.title}
-                                      style={{ width: "100%", height: "auto", borderRadius: 4, border: "1px solid #1e293b", marginBottom: 4 }}
+                                      style={{ width: "100%", height: "auto", borderRadius: 4, border: "1px solid var(--surface-3)", marginBottom: 4 }}
                                     />
                                     <div style={{ fontSize: 9.5, color: "#94a3b8" }}>{pic.caption}</div>
                                   </div>
@@ -668,7 +668,7 @@ export default function LiveScanPage() {
                               <div style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", marginBottom: 4, textTransform: "uppercase" }}>
                                 Captured Exploited HTTP Request Proof
                               </div>
-                              <pre style={{ margin: 0, padding: 8, background: "#0f172a", border: "1px solid #1e293b", borderRadius: 6, fontSize: 10, fontFamily: "var(--font-geist-mono)", color: "#e2e8f0", overflowX: "auto", whiteSpace: "pre-wrap" }}>
+                              <pre style={{ margin: 0, padding: 8, background: "var(--surface)", border: "1px solid var(--surface-3)", borderRadius: 6, fontSize: 10, fontFamily: "var(--font-geist-mono)", color: "#e2e8f0", overflowX: "auto", whiteSpace: "pre-wrap" }}>
                                 {f.httpRequestProof}
                               </pre>
                             </div>

@@ -31,8 +31,8 @@ export default function VulnManagementPage() {
             href="/engine"
             style={{
               textDecoration: "none",
-              background: "#0f172a",
-              border: "1px solid #1e293b",
+              background: "var(--surface)",
+              border: "1px solid var(--surface-3)",
               color: "#e2e8f0",
               padding: "6px 12px",
               borderRadius: 6,
