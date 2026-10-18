@@ -288,27 +288,16 @@ export function LinkedInNavbar({
       <div className="mx-auto flex h-13 sm:h-14 max-w-[1720px] items-center justify-between px-2 sm:px-4 lg:px-6 gap-2 sm:gap-3">
         {/* Left Side: Brand Logo & Interactive Live Search */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 flex-1 min-w-0 max-w-sm sm:max-w-md lg:max-w-xs xl:max-w-sm 2xl:max-w-md relative">
-          {/* Mobile All-Hubs Hamburger Trigger (< lg) */}
-          <button
-            type="button"
-            onClick={() => setIsMobileDrawerOpen(true)}
-            className="lg:hidden p-1.5 rounded-lg text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors shrink-0 cursor-pointer"
-            title="All Hubs & Navigation Menu"
-            aria-label="Open Mobile Navigation Menu"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
-
           <button
             onClick={() => onSelectTab('home')}
             className="flex items-center focus:outline-none group shrink-0"
             title="ConnectIn Home"
           >
-            <ConnectInLogo size="sm" showSubtitle={false} />
+            <ConnectInLogo size="sm" showSubtitle={false} className="shrink-0" />
           </button>
 
           {/* Interactive Search Box - Fluid on Mobile, Expanding on Desktop */}
-          <div className="relative flex-1 min-w-[110px] max-w-full transition-all duration-200">
+          <div className="relative flex-1 min-w-[60px] sm:min-w-[110px] max-w-full transition-all duration-200">
             <div
               className={`flex items-center gap-1.5 sm:gap-2 rounded-full bg-[#EDF3F8] px-2.5 sm:px-3 py-1 sm:py-1.5 transition-all dark:bg-zinc-800/90 border border-zinc-200/50 dark:border-zinc-700/50 ${
                 isSearchFocused ? "ring-2 ring-[#0A66C2] bg-white border-[#0A66C2] shadow-md dark:bg-zinc-900" : "hover:bg-[#E2ECF3] dark:hover:bg-zinc-800"
@@ -323,7 +312,7 @@ export function LinkedInNavbar({
               />
               <input
                 type="text"
-                placeholder={t("search_placeholder", getEnclaveSearchPlaceholder(user.professionEnclave))}
+                placeholder={t("search_placeholder", "Search...")}
                 value={searchQuery}
                 onChange={(e) => {
                   onSearchChange(e.target.value)
@@ -573,47 +562,7 @@ export function LinkedInNavbar({
             </span>
           </button>
 
-          {/* Mobile Direct Messaging Button (lg:hidden) */}
-          <button
-            onClick={() => onSelectTab('messaging')}
-            className={`lg:hidden relative p-1.5 rounded-full transition-colors cursor-pointer ${
-              activeTab === 'messaging'
-                ? "text-[#0A66C2] bg-blue-50 dark:bg-blue-950/40"
-                : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            }`}
-            title="Messages"
-            aria-label="Direct Messages"
-          >
-            <MessageSquare className="h-5 w-5" />
-            {unreadMessagesCount > 0 && (
-              <span className="absolute top-0 right-0 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-600 px-0.5 text-[9px] font-bold text-white shadow-2xs">
-                {unreadMessagesCount}
-              </span>
-            )}
-          </button>
-
-          {/* Mobile Notifications Button (lg:hidden - desktop has it in primaryNavItems) */}
-          <button
-            onClick={() => onSelectTab('notifications')}
-            className={`lg:hidden relative p-1.5 rounded-full transition-colors cursor-pointer ${
-              activeTab === 'notifications'
-                ? "text-[#0A66C2] bg-blue-50 dark:bg-blue-950/40"
-                : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            }`}
-            title="Notifications"
-            aria-label="Notifications"
-          >
-            <div className="relative">
-              <Bell className="h-5 w-5" />
-              {unreadNotificationsCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-600 px-0.5 text-[9px] font-bold text-white shadow-xs">
-                  {unreadNotificationsCount}
-                </span>
-              )}
-            </div>
-          </button>
-
-          {/* "Me" Profile Menu Dropdown */}
+          {/* "Me" Profile Menu Dropdown — Always Visible with Label */}
           <div ref={meMenuRef} className="relative shrink-0">
             <button
               onClick={() => {
@@ -621,20 +570,20 @@ export function LinkedInNavbar({
                 setIsMoreOpen(false)
               }}
               className={`flex min-w-[34px] sm:min-w-[42px] flex-col items-center justify-center py-1 text-xs transition-colors cursor-pointer shrink-0 ${
-                activeTab === 'profile'
-                  ? "text-[#0A66C2] font-semibold border-b-2 border-[#0A66C2]"
+                activeTab === 'profile' || isMeOpen
+                  ? "text-[#0A66C2] font-semibold"
                   : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
               }`}
               title={`${user.name} (Me)`}
             >
-              <div className="relative h-6 w-6 sm:h-6 sm:w-6 rounded-full overflow-hidden border border-zinc-300 dark:border-zinc-700 shrink-0">
+              <div className="relative h-6 w-6 sm:h-6 sm:w-6 rounded-full overflow-hidden border border-zinc-300 dark:border-zinc-700 shrink-0 ring-1 ring-[#0A66C2]/30">
                 <img
                   src={user.avatar}
                   alt={user.name}
                   className="h-full w-full object-cover"
                 />
               </div>
-              <span className="hidden xl:flex items-center gap-0.5 text-[10px] mt-0.5">
+              <span className="flex items-center gap-0.5 text-[10px] mt-0.5 font-medium">
                 Me <ChevronDown className="h-3 w-3" />
               </span>
             </button>
@@ -863,18 +812,18 @@ export function LinkedInNavbar({
             )}
           </div>
 
-          {/* Subtle Divider before More / Hubs */}
-          <div className="hidden lg:block h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-0.5" />
+          {/* Subtle Divider before More */}
+          <div className="h-5 w-px bg-zinc-200 dark:bg-zinc-800 mx-0.5 shrink-0" />
 
-          {/* "More ▾" Dropdown Menu Trigger (On lg+ screens, placed on far right next to Me ▾) */}
-          <div ref={desktopMoreBtnRef} className="hidden lg:block relative shrink-0">
+          {/* "More ▾" Dropdown Menu Trigger — Always Visible on Mobile and Desktop */}
+          <div ref={desktopMoreBtnRef} className="relative shrink-0">
             <button
               type="button"
               onClick={() => {
                 setIsMoreOpen(!isMoreOpen)
                 setIsMeOpen(false)
               }}
-              className={`flex min-w-[44px] flex-col items-center justify-center py-1 text-xs transition-colors cursor-pointer ${
+              className={`flex min-w-[36px] sm:min-w-[44px] flex-col items-center justify-center py-1 text-xs transition-colors cursor-pointer shrink-0 ${
                 isMoreOpen
                   ? "text-[#0A66C2] font-bold"
                   : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
@@ -1062,16 +1011,57 @@ export function LinkedInNavbar({
             <span className="text-[9px] mt-0.5 font-medium leading-none">{t("nav_learning_short", "Learn")}</span>
           </button>
 
-          {/* 8. Hubs (Mobile All-in-One Drawer) */}
-          <div className="flex-1 min-w-[38px] max-w-[54px]">
+          {/* 8. Media */}
+          <button
+            type="button"
+            onClick={() => {
+              onSelectTab('media')
+              setIsMoreOpen(false)
+            }}
+            className={`flex-1 min-w-[38px] max-w-[54px] flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer shrink-0 ${
+              activeTab === 'media'
+                ? "text-rose-600 dark:text-rose-400 font-bold"
+                : "text-zinc-500 hover:text-rose-600 dark:text-zinc-400 dark:hover:text-rose-400"
+            }`}
+          >
+            <div className="relative">
+              <Tv className={`h-4.5 w-4.5 ${activeTab === 'media' ? "text-rose-600 dark:text-rose-400" : ""}`} />
+              <span className="absolute -top-1 -right-1.5 flex h-3 min-w-3 items-center justify-center rounded-full bg-rose-600 px-0.5 text-[8px] font-bold text-white shadow-2xs">
+                1
+              </span>
+            </div>
+            <span className="text-[9px] mt-0.5 font-medium leading-none">{t("nav_media_short", "Media")}</span>
+          </button>
+
+          {/* 9. Pulse */}
+          <button
+            type="button"
+            onClick={() => {
+              onSelectTab('pulserooms')
+              setIsMoreOpen(false)
+            }}
+            className={`flex-1 min-w-[38px] max-w-[54px] flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer shrink-0 ${
+              activeTab === 'pulserooms'
+                ? "text-emerald-600 dark:text-emerald-400 font-bold"
+                : "text-zinc-500 hover:text-emerald-600 dark:text-zinc-400 dark:hover:text-emerald-400"
+            }`}
+          >
+            <div className="relative">
+              <Radio className={`h-4.5 w-4.5 ${activeTab === 'pulserooms' ? "text-emerald-600 dark:text-emerald-400" : ""}`} />
+            </div>
+            <span className="text-[9px] mt-0.5 font-medium leading-none">{t("nav_pulse_short", "Pulse")}</span>
+          </button>
+
+          {/* 10. More (Modules & Hubs Dropdown) */}
+          <div ref={mobileMoreMenuRef} className="flex-1 min-w-[38px] max-w-[54px] shrink-0">
             <button
               type="button"
               onClick={() => {
-                setIsMobileDrawerOpen(true)
+                setIsMoreOpen(!isMoreOpen)
                 setIsMeOpen(false)
               }}
               className={`w-full flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
-                isMobileDrawerOpen
+                isMoreOpen
                   ? "text-[#0A66C2] font-bold"
                   : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
               }`}
@@ -1079,7 +1069,7 @@ export function LinkedInNavbar({
               <div className="relative">
                 <Grid3X3 className="h-4.5 w-4.5" />
               </div>
-              <span className="text-[9px] mt-0.5 font-bold leading-none">{t("nav_more", "Hubs")}</span>
+              <span className="text-[9px] mt-0.5 font-bold leading-none">{t("nav_more", "More")}</span>
             </button>
           </div>
         </div>

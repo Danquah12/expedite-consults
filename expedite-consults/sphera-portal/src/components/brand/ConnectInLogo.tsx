@@ -40,7 +40,7 @@ export function ConnectInLogo({
   }
 
   return (
-    <div className={`flex items-center gap-2.5 select-none ${className}`}>
+    <div className={`flex items-center gap-2 select-none shrink-0 ${className}`}>
       {/* ─── Official ConnectLn Squircle Emblem ─── */}
       <div
         className={`relative flex ${iconSizes[size]} shrink-0 items-center justify-center rounded-xl overflow-hidden shadow-sm transition-transform group-hover:scale-105 bg-[#1a1917] border border-white/10`}
@@ -55,8 +55,8 @@ export function ConnectInLogo({
 
       {/* ─── Typography & Subtitle ─── */}
       {variant !== "icon-only" && (
-        <div className="flex flex-col leading-none">
-          <div className="relative flex items-center">
+        <div className="flex flex-col leading-none shrink-0">
+          <div className="relative flex items-center shrink-0">
             <span
               className={`font-black tracking-tight text-zinc-900 dark:text-zinc-100 font-sans ${titleSizes[size]}`}
               style={{ letterSpacing: "-0.02em" }}
