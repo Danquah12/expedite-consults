@@ -111,7 +111,7 @@ export function LinkedInNavbar({
       if (isMoreOpen) {
         const clickedInsideDropdown = moreDropdownRef.current?.contains(target)
         const clickedDesktopTrigger = desktopMoreBtnRef.current?.contains(target)
-        const clickedMobileTrigger = mobileMoreMenuRef.current?.contains(target)
+        const clickedMobileTrigger = mobileMoreMenuRef.current?.contains(target) || tabStripRef.current?.contains(target)
         if (!clickedInsideDropdown && !clickedDesktopTrigger && !clickedMobileTrigger) {
           setIsMoreOpen(false)
         }
@@ -159,6 +159,46 @@ export function LinkedInNavbar({
         setIsDarkMode(true)
       }
     }
+  }
+
+  // Mobile tab strip: slow continuous auto-scroll (left → right), pauses while the user touches/hovers
+  const tabStripRef = useRef<HTMLDivElement>(null)
+  const tabStripPausedRef = useRef(false)
+  const tabStripResumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    const el = tabStripRef.current
+    if (!el) return
+    let raf = 0
+    let pos = el.scrollWidth / 2
+    el.scrollLeft = pos
+    const step = () => {
+      const node = tabStripRef.current
+      if (node) {
+        const half = node.scrollWidth / 2
+        if (tabStripPausedRef.current) {
+          pos = node.scrollLeft
+        } else if (half > 0) {
+          pos -= 0.35 // slow drift: content moves left → right
+          if (pos <= 0) pos += half
+          node.scrollLeft = pos
+        }
+      }
+      raf = requestAnimationFrame(step)
+    }
+    raf = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(raf)
+  }, [])
+
+  const pauseTabStrip = () => {
+    tabStripPausedRef.current = true
+    if (tabStripResumeTimer.current) clearTimeout(tabStripResumeTimer.current)
+  }
+  const resumeTabStrip = (delay = 2500) => {
+    if (tabStripResumeTimer.current) clearTimeout(tabStripResumeTimer.current)
+    tabStripResumeTimer.current = setTimeout(() => {
+      tabStripPausedRef.current = false
+    }, delay)
   }
 
   // Streamlined Clean Primary Navigation with Responsive Priority Levels
@@ -935,46 +975,76 @@ export function LinkedInNavbar({
         </div>
       </div>
 
-      {/* Mobile & Tablet: desktop-format tab strip under the top bar (same order, icons, colors, badges) */}
-      <nav className="lg:hidden border-t border-zinc-100 dark:border-zinc-800 bg-white/95 dark:bg-zinc-950/95">
-        <div className="flex items-center overflow-x-auto no-scrollbar px-1">
-          {primaryNavItems.map((item) => {
-            const Icon = item.icon
-            const isActive = activeTab === item.id
-            const accent = item.isMarketplace
-              ? "text-purple-600 dark:text-purple-400"
-              : item.id === 'learning'
-              ? "text-blue-600 dark:text-blue-400"
-              : item.id === 'media'
-              ? "text-rose-600 dark:text-rose-400"
-              : item.id === 'pulserooms'
-              ? "text-emerald-600 dark:text-emerald-400"
-              : "text-zinc-500 dark:text-zinc-400"
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => {
-                  onSelectTab(item.id)
-                  setIsMoreOpen(false)
-                  setIsMeOpen(false)
-                }}
-                className={`relative shrink-0 min-w-[58px] flex flex-col items-center justify-center py-1.5 px-1.5 cursor-pointer border-b-2 ${
-                  isActive ? "text-[#0A66C2] font-semibold border-[#0A66C2]" : `${accent} border-transparent`
-                }`}
-              >
-                <div className="relative">
-                  <Icon className="h-5 w-5" />
-                  {item.badge > 0 && (
-                    <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
-                      {item.badge}
-                    </span>
-                  )}
-                </div>
-                <span className="text-[10px] mt-0.5 leading-none">{item.shortLabel || item.label}</span>
-              </button>
-            )
-          })}
+      {/* Mobile & Tablet: one-line, slowly auto-scrolling strip of ALL menu items (pauses on touch; swipe or tap any) */}
+      <nav className="lg:hidden border-t border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-950">
+        <div
+          ref={tabStripRef}
+          onTouchStart={pauseTabStrip}
+          onTouchEnd={() => resumeTabStrip()}
+          onMouseEnter={pauseTabStrip}
+          onMouseLeave={() => resumeTabStrip(800)}
+          onWheel={() => { pauseTabStrip(); resumeTabStrip() }}
+          className="flex items-center overflow-x-auto no-scrollbar px-1 whitespace-nowrap"
+        >
+          {[0, 1].map((copy) =>
+            [
+              ...primaryNavItems.map((i) => ({ id: i.id, label: i.shortLabel || i.label, icon: i.icon, badge: i.badge, kind: i.isMarketplace ? 'purple' : i.id === 'learning' ? 'blue' : i.id === 'media' ? 'rose' : i.id === 'pulserooms' ? 'emerald' : 'default' })),
+              { id: 'wallet', label: 'Wallet', icon: DollarSign, badge: 0, kind: 'emerald' },
+              { id: 'company', label: 'Companies', icon: Building2, badge: 0, kind: 'blue' },
+              { id: 'guilds', label: 'Guilds', icon: Shield, badge: 0, kind: 'amber' },
+              { id: 'bounties', label: 'Bounties', icon: Flame, badge: 0, kind: 'orange' },
+              { id: 'events', label: 'Events', icon: Calendar, badge: 0, kind: 'indigo' },
+              { id: 'procurement', label: 'RFPs', icon: FileCheck, badge: 0, kind: 'teal' },
+              { id: 'launchpad', label: 'Launchpad', icon: Rocket, badge: 0, kind: 'purple' },
+              { id: 'careersuite', label: 'CareerAI', icon: Award, badge: 0, kind: 'cyan' },
+              { id: '__more', label: 'More', icon: Grid3X3, badge: 0, kind: 'default' },
+            ].map((item) => {
+              const Icon = item.icon
+              const isMore = item.id === '__more'
+              const isActive = !isMore && activeTab === item.id
+              const colors: Record<string, string> = {
+                default: "text-zinc-500 dark:text-zinc-400",
+                purple: "text-purple-600 dark:text-purple-400",
+                blue: "text-blue-600 dark:text-blue-400",
+                rose: "text-rose-600 dark:text-rose-400",
+                emerald: "text-emerald-600 dark:text-emerald-400",
+                amber: "text-amber-600 dark:text-amber-400",
+                orange: "text-orange-500",
+                indigo: "text-indigo-600 dark:text-indigo-400",
+                teal: "text-teal-600 dark:text-teal-400",
+                cyan: "text-cyan-600 dark:text-cyan-400",
+              }
+              return (
+                <button
+                  key={`${copy}-${item.id}`}
+                  type="button"
+                  onClick={() => {
+                    if (isMore) {
+                      setIsMoreOpen(!isMoreOpen)
+                      setIsMeOpen(false)
+                    } else {
+                      onSelectTab(item.id)
+                      setIsMoreOpen(false)
+                      setIsMeOpen(false)
+                    }
+                  }}
+                  className={`relative shrink-0 min-w-[64px] flex flex-col items-center justify-center py-1.5 px-2 cursor-pointer border-b-2 ${
+                    isActive ? "text-[#0A66C2] font-semibold border-[#0A66C2]" : `${colors[item.kind]} border-transparent`
+                  }`}
+                >
+                  <div className="relative">
+                    <Icon className="h-5 w-5" />
+                    {item.badge > 0 && (
+                      <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
+                        {item.badge}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[10px] mt-0.5 leading-none">{item.label}</span>
+                </button>
+              )
+            })
+          )}
         </div>
       </nav>
 
