@@ -377,11 +377,28 @@ body {
 [data-theme="vibe"] [class*="from-indigo-950"],
 [data-theme="vibe"] [class*="from-purple-950"],
 [data-theme="vibe"] [class*="from-blue-950"],
-[data-theme="vibe"] [class*="bg-zinc-900"]:not(button) {
+[data-theme="vibe"] [class*="bg-zinc-900"]:not(button),
+[data-theme="vibe"] [class*="bg-slate-900"]:not(button) {
   background-image: linear-gradient(145deg, #fbf8f3, #f3ede2) !important;
   background-color: #fbf8f3 !important;
   color: #1c1917 !important;
   border-color: #e2d9c8 !important;
+}
+[data-theme="vibe"] [class*="from-zinc-900"] [class~="text-white"],
+[data-theme="vibe"] [class*="from-slate-900"] [class~="text-white"],
+[data-theme="vibe"] [class*="from-indigo-950"] [class~="text-white"],
+[data-theme="vibe"] [class*="from-purple-950"] [class~="text-white"],
+[data-theme="vibe"] [class*="from-blue-950"] [class~="text-white"],
+[data-theme="vibe"] [class*="bg-zinc-900"]:not(button) [class~="text-white"],
+[data-theme="vibe"] [class*="bg-slate-900"]:not(button) [class~="text-white"] {
+  color: #1c1917 !important;
+}
+[data-theme="vibe"] [class*="from-zinc-900"] [class*="text-zinc-"],
+[data-theme="vibe"] [class*="from-slate-900"] [class*="text-slate-"],
+[data-theme="vibe"] [class*="from-indigo-950"] [class*="text-indigo-"],
+[data-theme="vibe"] [class*="from-purple-950"] [class*="text-purple-"],
+[data-theme="vibe"] [class*="bg-zinc-900"]:not(button) [class*="text-zinc-"] {
+  color: #57534e !important;
 }
 
 * {
