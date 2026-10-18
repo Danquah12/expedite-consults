@@ -34,7 +34,7 @@ export default function RiskTrendChart({ currentScore }: Props) {
     <div className="rounded-2xl p-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-sm font-semibold text-white">Risk Score Trend</h3>
+          <h3 className="text-sm font-semibold text-[#1f1b18]">Risk Score Trend</h3>
           <p className="text-xs" style={{ color: "var(--muted)" }}>Last 30 days</p>
         </div>
         <div className="text-right">

@@ -70,7 +70,7 @@ export default function DiffRemediation({ finding: f }: Props) {
     <div className="rounded-2xl p-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
       {/* Header */}
       <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
-        <h2 className="text-lg font-bold text-white flex items-center gap-2">
+        <h2 className="text-lg font-bold text-[#1f1b18] flex items-center gap-2">
           <span>🔧 Remediation Cockpit</span>
         </h2>
         <div className="flex items-center gap-2">
@@ -83,8 +83,8 @@ export default function DiffRemediation({ finding: f }: Props) {
                   onClick={() => setActive(i)}
                   className="px-3 py-1 rounded-lg text-xs font-medium transition-all"
                   style={{
-                    background: active === i ? "rgba(122, 162, 247, 0.15)" : "var(--background)",
-                    border: `1px solid ${active === i ? "rgba(122, 162, 247, 0.4)" : "var(--border)"}`,
+                    background: active === i ? "#f4e5dc" : "var(--background)",
+                    border: `1px solid ${active === i ? "#f4e5dc" : "var(--border)"}`,
                     color: active === i ? "var(--primary)" : "var(--muted)",
                     cursor: "pointer"
                   }}
@@ -115,8 +115,8 @@ export default function DiffRemediation({ finding: f }: Props) {
             disabled={sandboxRunning}
             className="btn-primary flex items-center gap-1.5 text-xs py-1.5 px-3"
             style={{
-              background: "#7aa2f7",
-              color: "#0f1115",
+              background: "#8b4528",
+              color: "#f3eee4",
               border: "none",
               cursor: sandboxRunning ? "default" : "pointer"
             }}
@@ -141,7 +141,7 @@ export default function DiffRemediation({ finding: f }: Props) {
               <span className="w-2 h-2 rounded-full bg-[#e5484d]" />
               <span style={{ color: "var(--critical)" }}>Vulnerable Code Block</span>
             </div>
-            <pre className="p-4 text-xs overflow-x-auto" style={{ background: "#0f1115", lineHeight: 1.8, minHeight: "200px", fontFamily: "monospace" }}>
+            <pre className="p-4 text-xs overflow-x-auto" style={{ background: "#f3eee4", lineHeight: 1.8, minHeight: "200px", fontFamily: "monospace" }}>
               {vulnerable.map((line, i) => (
                 <span
                   key={i}
@@ -170,7 +170,7 @@ export default function DiffRemediation({ finding: f }: Props) {
               <span className="w-2 h-2 rounded-full bg-[#46a36e]" />
               <span style={{ color: "var(--low)" }}>Remediated Code Block</span>
             </div>
-            <pre className="p-4 text-xs overflow-x-auto" style={{ background: "#0f1115", lineHeight: 1.8, minHeight: "200px", fontFamily: "monospace" }}>
+            <pre className="p-4 text-xs overflow-x-auto" style={{ background: "#f3eee4", lineHeight: 1.8, minHeight: "200px", fontFamily: "monospace" }}>
               {fixed.map((line, i) => (
                 <span
                   key={i}
@@ -225,13 +225,13 @@ export default function DiffRemediation({ finding: f }: Props) {
               <div className="terminal-dot" style={{ background: "#e5484d" }} />
               <div className="terminal-dot" style={{ background: "#d6a847" }} />
               <div className="terminal-dot" style={{ background: "#46a36e" }} />
-              <span className="ml-2 text-[10px] font-bold text-[#7aa2f7] uppercase tracking-wider">Compile Sandbox Daemon logs</span>
+              <span className="ml-2 text-[10px] font-bold text-[#8b4528] uppercase tracking-wider">Compile Sandbox Daemon logs</span>
             </div>
             <Terminal size={10} color="var(--muted)" />
           </div>
-          <div style={{ padding: "10px 14px", background: "#0f1115", overflowY: "auto", fontFamily: "monospace", fontSize: 10.5, color: "var(--muted)", minHeight: 110, maxHeight: 150 }}>
+          <div style={{ padding: "10px 14px", background: "#f3eee4", overflowY: "auto", fontFamily: "monospace", fontSize: 10.5, color: "var(--muted)", minHeight: 110, maxHeight: 150 }}>
             {sandboxLogs.map((log, i) => (
-              <div key={i} className={log.startsWith("[done]") ? "text-[#46a36e] font-bold" : log.includes("SUCCESS") ? "text-[#46a36e]" : log.includes("PASS") ? "text-[#7aa2f7]" : ""}>
+              <div key={i} className={log.startsWith("[done]") ? "text-[#46a36e] font-bold" : log.includes("SUCCESS") ? "text-[#46a36e]" : log.includes("PASS") ? "text-[#8b4528]" : ""}>
                 $ {log}
               </div>
             ))}

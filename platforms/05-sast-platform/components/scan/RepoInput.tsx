@@ -88,8 +88,8 @@ export default function RepoInput({ onStart }: Props) {
                     }}
                     style={{
                       textAlign: "left",
-                      background: isSelected ? "rgba(122, 162, 247, 0.12)" : "var(--background)",
-                      border: `1px solid ${isSelected ? "#7aa2f7" : "var(--border)"}`,
+                      background: isSelected ? "#f4e5dc" : "var(--background)",
+                      border: `1px solid ${isSelected ? "#8b4528" : "var(--border)"}`,
                       borderRadius: 12,
                       padding: 16,
                       cursor: "pointer",
@@ -104,7 +104,7 @@ export default function RepoInput({ onStart }: Props) {
                         <span style={{ fontSize: 14, fontWeight: 800, color: "var(--foreground)" }}>
                           {repo.name}
                         </span>
-                        <FolderGit2 size={15} color={isSelected ? "#7aa2f7" : "#9aa0ab"} />
+                        <FolderGit2 size={15} color={isSelected ? "#8b4528" : "#5c5349"} />
                       </div>
                       <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.4 }}>
                         {repo.description}
@@ -124,7 +124,7 @@ export default function RepoInput({ onStart }: Props) {
                       >
                         {repo.language}
                       </span>
-                      <span style={{ fontSize: 11.5, fontWeight: 700, color: "#7aa2f7" }}>
+                      <span style={{ fontSize: 11.5, fontWeight: 700, color: "#8b4528" }}>
                         ~{repo.expectedFindings} findings
                       </span>
                     </div>
@@ -143,7 +143,7 @@ export default function RepoInput({ onStart }: Props) {
               <div style={{ position: "relative" }}>
                 <GitBranch
                   size={15}
-                  color="#9aa0ab"
+                  color="#5c5349"
                   style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)" }}
                 />
                 <input
@@ -194,7 +194,7 @@ export default function RepoInput({ onStart }: Props) {
               <div style={{ position: "relative" }}>
                 <GitCommit
                   size={14}
-                  color="#7aa2f7"
+                  color="#8b4528"
                   style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)" }}
                 />
                 <input
@@ -235,9 +235,9 @@ export default function RepoInput({ onStart }: Props) {
                       borderRadius: 8,
                       fontSize: 12.5,
                       fontWeight: 700,
-                      background: active ? "rgba(122, 162, 247, 0.15)" : "var(--background)",
-                      border: `1px solid ${active ? "#7aa2f7" : "var(--border)"}`,
-                      color: active ? "#7aa2f7" : "var(--muted)",
+                      background: active ? "#f4e5dc" : "var(--background)",
+                      border: `1px solid ${active ? "#8b4528" : "var(--border)"}`,
+                      color: active ? "#8b4528" : "var(--muted)",
                       cursor: "pointer",
                     }}
                   >
@@ -252,7 +252,7 @@ export default function RepoInput({ onStart }: Props) {
           <div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                <Settings size={15} color="#7aa2f7" />
+                <Settings size={15} color="#8b4528" />
                 <span style={{ fontSize: 13, fontWeight: 700, color: "var(--foreground)" }}>
                   3. Static &amp; SCA Analysis Engines ({selectedEngines.length} of 4 Active)
                 </span>
@@ -272,7 +272,7 @@ export default function RepoInput({ onStart }: Props) {
                       alignItems: "flex-start",
                       gap: 12,
                       background: isSelected ? "var(--surface-2)" : "var(--background)",
-                      border: `1px solid ${isSelected ? "#7aa2f7" : "var(--border)"}`,
+                      border: `1px solid ${isSelected ? "#8b4528" : "var(--border)"}`,
                       borderRadius: 12,
                       padding: "14px 16px",
                       cursor: "pointer",
@@ -280,9 +280,9 @@ export default function RepoInput({ onStart }: Props) {
                   >
                     <div style={{ marginTop: 2 }}>
                       {isSelected ? (
-                        <CheckSquare size={17} color="#7aa2f7" />
+                        <CheckSquare size={17} color="#8b4528" />
                       ) : (
-                        <Square size={17} color="#9aa0ab" />
+                        <Square size={17} color="#5c5349" />
                       )}
                     </div>
                     <div style={{ flex: 1 }}>
@@ -330,7 +330,7 @@ export default function RepoInput({ onStart }: Props) {
           <div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <ShieldCheck size={18} color="#7aa2f7" />
+                <ShieldCheck size={18} color="#8b4528" />
                 <span style={{ fontSize: 14.5, fontWeight: 800, color: "var(--foreground)" }}>
                   Automated Post-Scan Validation Pipeline
                 </span>
@@ -373,7 +373,7 @@ export default function RepoInput({ onStart }: Props) {
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: 700, color: "var(--foreground)" }}>
                     <span>
-                      <span style={{ color: "#7aa2f7", marginRight: 6 }}>{s.code}:</span>
+                      <span style={{ color: "#8b4528", marginRight: 6 }}>{s.code}:</span>
                       {s.title}
                     </span>
                     <CheckCircle2 size={14} color="#46a36e" />
@@ -430,8 +430,8 @@ export default function RepoInput({ onStart }: Props) {
               width: "100%",
               padding: "15px 22px",
               borderRadius: 12,
-              background: "#7aa2f7",
-              color: "#0f1115",
+              background: "#8b4528",
+              color: "#f3eee4",
               border: "none",
               fontSize: 14.5,
               fontWeight: 800,

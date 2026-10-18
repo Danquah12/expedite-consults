@@ -49,7 +49,7 @@ const STATUS_STYLE: Record<
   },
   not_applicable: {
     label: "NOT APPLICABLE",
-    color: "#9aa0ab",
+    color: "#5c5349",
     bg: "rgba(154, 160, 171, 0.12)",
   },
 };
@@ -116,8 +116,8 @@ export default function PostScanValidation({
         <div
           className="text-xs font-semibold px-3 py-1.5 rounded-lg"
           style={{
-            background: validationDone ? "rgba(70, 163, 110, 0.14)" : "rgba(122, 162, 247, 0.14)",
-            color: validationDone ? "#46a36e" : "#7aa2f7",
+            background: validationDone ? "rgba(70, 163, 110, 0.14)" : "#f4e5dc",
+            color: validationDone ? "#46a36e" : "#8b4528",
             border: "1px solid var(--border)",
           }}
         >
@@ -331,8 +331,8 @@ export default function PostScanValidation({
           onClick={onFinishToDashboard}
           className="px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2"
           style={{
-            background: "#7aa2f7",
-            color: "#0f1115",
+            background: "#8b4528",
+            color: "#f3eee4",
             border: "none",
             cursor: "pointer",
           }}

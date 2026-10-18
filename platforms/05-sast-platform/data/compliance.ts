@@ -30,7 +30,7 @@ export const COMPLIANCE_FRAMEWORKS = [
   {
     name: "NIST 800-53",
     version: "Rev 5",
-    color: "#7aa2f7",
+    color: "#8b4528",
     categories: [
       { ref: "SI-10",   name: "Information Input Validation",          covered: true,  cwes: ["CWE-89", "CWE-22", "CWE-611"] },
       { ref: "SI-16",   name: "Memory Protection",                     covered: true,  cwes: ["CWE-502"] },
@@ -44,7 +44,7 @@ export const COMPLIANCE_FRAMEWORKS = [
   {
     name: "ISO 27001",
     version: "2022",
-    color: "#7aa2f7",
+    color: "#8b4528",
     categories: [
       { ref: "A.8.24", name: "Use of Cryptography",                   covered: true,  cwes: ["CWE-327", "CWE-798"] },
       { ref: "A.8.28", name: "Secure Coding",                         covered: true,  cwes: ["CWE-89", "CWE-502", "CWE-639"] },

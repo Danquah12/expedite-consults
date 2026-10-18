@@ -6,7 +6,7 @@ type Props = { finding: SASTFinding };
 export default function ValidationSteps({ finding: f }: Props) {
   return (
     <div className="rounded-2xl p-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-      <h2 className="text-lg font-bold text-white mb-4">✅ Validation Steps</h2>
+      <h2 className="text-lg font-bold text-[#1f1b18] mb-4">✅ Validation Steps</h2>
       <p className="text-sm mb-5" style={{ color: "var(--muted)" }}>
         After applying the fix, confirm it is effective using these verification steps:
       </p>
@@ -15,7 +15,7 @@ export default function ValidationSteps({ finding: f }: Props) {
           <li key={i} className="flex items-start gap-3">
             <div
               className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5"
-              style={{ background: "rgba(122, 162, 247, 0.1)", border: "1px solid var(--border)", color: "var(--primary)" }}
+              style={{ background: "#f4e5dc", border: "1px solid var(--border)", color: "var(--primary)" }}
             >
               {i + 1}
             </div>
@@ -30,11 +30,11 @@ export default function ValidationSteps({ finding: f }: Props) {
       >
         <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "var(--low)" }} />
         <div className="text-xs" style={{ color: "var(--muted)" }}>
-          SLA Deadline: <span className="text-white font-semibold">{f.slaDeadline}</span>
+          SLA Deadline: <span className="text-[#1f1b18] font-semibold">{f.slaDeadline}</span>
           {" · "}
-          Owner: <span className="text-white font-semibold">{f.owner}</span>
+          Owner: <span className="text-[#1f1b18] font-semibold">{f.owner}</span>
           {" · "}
-          Application: <span className="text-white font-semibold">{f.application}</span>
+          Application: <span className="text-[#1f1b18] font-semibold">{f.application}</span>
         </div>
       </div>
     </div>

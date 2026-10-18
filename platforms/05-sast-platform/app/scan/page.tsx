@@ -66,7 +66,7 @@ export default function ScanPage() {
                 justifyContent: "center",
               }}
             >
-              <Shield size={24} color="#7aa2f7" />
+              <Shield size={24} color="#8b4528" />
             </div>
             <div>
               <h1 style={{ fontSize: 28, fontWeight: 800, color: "var(--foreground)", lineHeight: 1.2 }}>
@@ -100,7 +100,7 @@ export default function ScanPage() {
                   key={item.step}
                   style={{
                     background: active ? "var(--surface-2)" : "var(--background)",
-                    border: `1px solid ${active ? "#7aa2f7" : completed ? "rgba(70, 163, 110, 0.4)" : "var(--border)"}`,
+                    border: `1px solid ${active ? "#8b4528" : completed ? "rgba(70, 163, 110, 0.4)" : "var(--border)"}`,
                     borderRadius: 8,
                     padding: "8px 10px",
                   }}
@@ -110,7 +110,7 @@ export default function ScanPage() {
                       style={{
                         fontSize: 10.5,
                         fontWeight: 800,
-                        color: active ? "#7aa2f7" : completed ? "#46a36e" : "var(--muted)",
+                        color: active ? "#8b4528" : completed ? "#46a36e" : "var(--muted)",
                       }}
                     >
                       STEP {item.step}

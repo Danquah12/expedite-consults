@@ -9,7 +9,7 @@ export function DeveloperAssistAgent() {
   const [messages, setMessages] = useState([
     {
       sender: "agent",
-      text: "Hi! I am your API Security & Proof Validation Copilot. Ask me to verify BOLA/IDOR tenant boundaries, review JWT signature pinning, or generate a 6-point Proof Contract for an OpenAPI 3.1 endpoint.",
+      text: "Desk Note Briefing: Ask me to verify BOLA/IDOR tenant boundaries, review JWT signature pinning, or generate a 6-point Proof Contract for an OpenAPI 3.1 endpoint.",
       time: "Just now",
     },
   ]);
@@ -47,27 +47,22 @@ export function DeveloperAssistAgent() {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-2.5 rounded-full text-xs font-semibold shadow-lg transition-colors"
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-2.5 rounded-full text-xs font-semibold shadow-md transition-colors cursor-pointer"
         style={{
-          background: "var(--surface-2)",
-          color: "var(--foreground)",
-          border: "1px solid var(--border)",
+          background: "var(--accent)",
+          color: "#fbf8f3",
+          border: "1px solid #72361d",
         }}
       >
-        <span
-          className="w-5 h-5 rounded-full flex items-center justify-center"
-          style={{ background: "var(--accent-soft)", color: "var(--accent)" }}
-        >
-          <ShieldCheck className="w-3.5 h-3.5" />
-        </span>
-        <span>API Proof Copilot</span>
+        <ShieldCheck className="w-4 h-4" />
+        <span>Desk Note &middot; API Proof Copilot</span>
       </button>
     );
   }
 
   return (
     <div
-      className="fixed bottom-6 right-6 z-50 flex flex-col overflow-hidden rounded-xl shadow-2xl transition-all"
+      className="fixed bottom-6 right-6 z-50 flex flex-col overflow-hidden rounded-xl shadow-xl transition-all"
       style={{
         width: isMinimized ? 300 : 380,
         height: isMinimized ? 52 : 480,
@@ -81,20 +76,20 @@ export function DeveloperAssistAgent() {
       >
         <div className="flex items-center gap-2.5">
           <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center"
+            className="w-7 h-7 rounded-full flex items-center justify-center"
             style={{
-              background: "var(--accent-soft)",
-              border: "1px solid rgba(122, 162, 247, 0.25)",
+              background: "var(--accent)",
+              color: "#fbf8f3",
             }}
           >
-            <Bot className="w-4 h-4" style={{ color: "var(--accent)" }} />
+            <Bot className="w-4 h-4" />
           </div>
           <div>
             <div
-              className="text-xs font-semibold"
+              className="text-xs font-bold font-editorial"
               style={{ color: "var(--foreground)" }}
             >
-              API Validation Copilot
+              Desk Note &middot; API Validation Copilot
             </div>
             <div
               className="text-[10px] flex items-center gap-1.5"
@@ -112,14 +107,14 @@ export function DeveloperAssistAgent() {
         <div className="flex items-center gap-1">
           <button
             onClick={() => setIsMinimized(!isMinimized)}
-            className="p-1 rounded hover:bg-white/5"
+            className="p-1 rounded cursor-pointer"
             style={{ color: "var(--muted)" }}
           >
             {isMinimized ? <Maximize2 className="w-3.5 h-3.5" /> : <Minimize2 className="w-3.5 h-3.5" />}
           </button>
           <button
             onClick={() => setIsOpen(false)}
-            className="p-1 rounded hover:bg-white/5"
+            className="p-1 rounded cursor-pointer"
             style={{ color: "var(--muted)" }}
           >
             <X className="w-3.5 h-3.5" />
@@ -138,7 +133,7 @@ export function DeveloperAssistAgent() {
                   alignSelf: m.sender === "user" ? "flex-end" : "flex-start",
                   background:
                     m.sender === "user" ? "var(--accent)" : "var(--surface-2)",
-                  color: m.sender === "user" ? "#0f1115" : "var(--foreground)",
+                  color: m.sender === "user" ? "#fbf8f3" : "var(--foreground)",
                   border:
                     m.sender === "user" ? "none" : "1px solid var(--border)",
                 }}
@@ -157,11 +152,11 @@ export function DeveloperAssistAgent() {
               <button
                 key={chip.label}
                 onClick={() => setInput(chip.prompt)}
-                className="text-[11px] px-2.5 py-1 rounded-md whitespace-nowrap transition-colors"
+                className="text-[11px] px-2.5 py-1 rounded-md whitespace-nowrap transition-colors cursor-pointer"
                 style={{
                   background: "var(--surface-2)",
                   border: "1px solid var(--border)",
-                  color: "var(--muted)",
+                  color: "var(--foreground)",
                 }}
               >
                 {chip.label}
@@ -188,10 +183,10 @@ export function DeveloperAssistAgent() {
             />
             <button
               onClick={handleSend}
-              className="p-2 rounded-lg transition-opacity hover:opacity-90"
+              className="p-2 rounded-lg transition-opacity hover:opacity-90 cursor-pointer"
               style={{
                 background: "var(--accent)",
-                color: "#0f1115",
+                color: "#fbf8f3",
               }}
             >
               <Send className="w-3.5 h-3.5" />

@@ -7,12 +7,12 @@ export default function CTASection() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <div
           className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-8"
-          style={{ background: "rgba(122, 162, 247, 0.1)", border: "1px solid var(--border)" }}
+          style={{ background: "#f4e5dc", border: "1px solid var(--border)" }}
         >
           <ShieldCheck className="w-8 h-8" style={{ color: "var(--primary)" }} />
         </div>
 
-        <h2 className="text-4xl sm:text-5xl font-extrabold text-white mb-6">
+        <h2 className="text-4xl sm:text-5xl font-extrabold text-[#1f1b18] mb-6">
           Start Finding Real Vulnerabilities{" "}
           <span style={{ color: "var(--primary)" }}>Today</span>
         </h2>
@@ -25,14 +25,14 @@ export default function CTASection() {
           <Link
             href="/scan"
             className="flex items-center gap-2 px-8 py-4 rounded-xl text-base font-bold transition-all hover:opacity-90 hover:scale-105"
-            style={{ background: "#7aa2f7", color: "#0f1115" }}
+            style={{ background: "#8b4528", color: "#f3eee4" }}
           >
             <Play className="w-5 h-5" />
             Run Demo Scan
           </Link>
           <Link
             href="/dashboard"
-            className="flex items-center gap-2 px-8 py-4 rounded-xl text-base font-semibold transition-all hover:text-white"
+            className="flex items-center gap-2 px-8 py-4 rounded-xl text-base font-semibold transition-all hover:text-[#1f1b18]"
             style={{ border: "1px solid var(--border)", color: "var(--muted)" }}
           >
             View Dashboard

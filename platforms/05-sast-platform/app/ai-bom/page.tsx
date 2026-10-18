@@ -54,40 +54,40 @@ export default function AIBomPage() {
           <Box size={13} />
           <span>CHECKMARX AI SUPPLY CHAIN &amp; AI-BOM</span>
         </div>
-        <h1 style={{ fontSize: 28, fontWeight: 900, color: "#ececef" }}>AI Inventory &amp; AI-BOM Security Hub</h1>
-        <p style={{ fontSize: 14, color: "#9aa0ab" }}>
+        <h1 style={{ fontSize: 28, fontWeight: 900, color: "#1f1b18" }}>AI Inventory &amp; AI-BOM Security Hub</h1>
+        <p style={{ fontSize: 14, color: "#5c5349" }}>
           Inventory, verify, and monitor LLM model weights, LangChain/LlamaIndex pipelines, prompt injection vectors, and MCP server endpoints.
         </p>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16, marginBottom: 28 }}>
-        <div style={{ background: "rgba(22, 25, 31, 0.8)", border: "1px solid var(--border)", borderRadius: 12, padding: 16 }}>
+        <div style={{ background: "#fbf8f3", border: "1px solid var(--border)", borderRadius: 12, padding: 16 }}>
           <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase" }}>Discovered AI Assets</div>
-          <div style={{ fontSize: 24, fontWeight: 900, color: "#ececef", marginTop: 4 }}>1,420 Models</div>
+          <div style={{ fontSize: 24, fontWeight: 900, color: "#1f1b18", marginTop: 4 }}>1,420 Models</div>
         </div>
-        <div style={{ background: "rgba(22, 25, 31, 0.8)", border: "1px solid var(--border)", borderRadius: 12, padding: 16 }}>
+        <div style={{ background: "#fbf8f3", border: "1px solid var(--border)", borderRadius: 12, padding: 16 }}>
           <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase" }}>MCP Server Endpoints</div>
-          <div style={{ fontSize: 24, fontWeight: 900, color: "#7aa2f7", marginTop: 4 }}>38 Active Tools</div>
+          <div style={{ fontSize: 24, fontWeight: 900, color: "#8b4528", marginTop: 4 }}>38 Active Tools</div>
         </div>
-        <div style={{ background: "rgba(22, 25, 31, 0.8)", border: "1px solid rgba(229, 72, 77, 0.3)", borderRadius: 12, padding: 16 }}>
+        <div style={{ background: "#fbf8f3", border: "1px solid rgba(229, 72, 77, 0.3)", borderRadius: 12, padding: 16 }}>
           <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase" }}>Prompt Injection Risks</div>
           <div style={{ fontSize: 24, fontWeight: 900, color: "#e5484d", marginTop: 4 }}>2 Critical</div>
         </div>
       </div>
 
-      <div style={{ background: "rgba(22, 25, 31, 0.8)", border: "1px solid var(--border)", borderRadius: 14, overflow: "hidden" }}>
+      <div style={{ background: "#fbf8f3", border: "1px solid var(--border)", borderRadius: 14, overflow: "hidden" }}>
         <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h2 style={{ fontSize: 16, fontWeight: 800, color: "#ececef" }}>AI-BOM Components &amp; Model Lineage</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 800, color: "#1f1b18" }}>AI-BOM Components &amp; Model Lineage</h2>
           <span style={{ fontSize: 12, color: "#e2853b", fontWeight: 700 }}>CycloneDX AI-BOM 1.6</span>
         </div>
 
         <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
           {models.map(m => (
-            <div key={m.id} style={{ background: "rgba(28, 32, 40, 0.7)", border: "1px solid var(--border)", borderRadius: 10, padding: 16 }}>
+            <div key={m.id} style={{ background: "#ece5d8", border: "1px solid var(--border)", borderRadius: 10, padding: 16 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, flexWrap: "wrap", gap: 8 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 11, fontWeight: 800, padding: "2px 6px", borderRadius: 4, background: "rgba(122, 162, 247, 0.2)", color: "#7aa2f7" }}>{m.id}</span>
-                  <span style={{ fontSize: 14, fontWeight: 800, color: "#ececef" }}>{m.name}</span>
+                  <span style={{ fontSize: 11, fontWeight: 800, padding: "2px 6px", borderRadius: 4, background: "#f4e5dc", color: "#8b4528" }}>{m.id}</span>
+                  <span style={{ fontSize: 14, fontWeight: 800, color: "#1f1b18" }}>{m.name}</span>
                 </div>
                 <span style={{
                   fontSize: 10.5,
@@ -101,10 +101,10 @@ export default function AIBomPage() {
                 </span>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 8, fontSize: 12, color: "#9aa0ab" }}>
-                <div>Source: <span style={{ color: "#c3c7cf" }}>{m.source}</span></div>
-                <div>Format: <span style={{ color: "#c3c7cf" }}>{m.format}</span></div>
-                <div>Injection Risk: <span style={{ color: "#7aa2f7" }}>{m.promptInjectionRisk}</span></div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 8, fontSize: 12, color: "#5c5349" }}>
+                <div>Source: <span style={{ color: "#4a4239" }}>{m.source}</span></div>
+                <div>Format: <span style={{ color: "#4a4239" }}>{m.format}</span></div>
+                <div>Injection Risk: <span style={{ color: "#8b4528" }}>{m.promptInjectionRisk}</span></div>
                 <div>Vulnerabilities: <span style={{ color: m.risk === "LOW" ? "#46a36e" : "#e5484d" }}>{m.vulnerabilities}</span></div>
               </div>
             </div>

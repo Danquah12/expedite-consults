@@ -4,16 +4,16 @@ import type { SASTFinding } from "@/types/sast";
 type Props = { finding: SASTFinding };
 
 const ENGINE_COLORS: Record<string, string> = {
-  CodeQL:   "#7aa2f7",
-  Semgrep:  "#7aa2f7",
-  Joern:    "#7aa2f7",
+  CodeQL:   "#8b4528",
+  Semgrep:  "#8b4528",
+  Joern:    "#8b4528",
   DataFlow: "#46a36e",
 };
 
 export default function ConfidenceBreakdown({ finding: f }: Props) {
   return (
     <div className="rounded-2xl p-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-      <h2 className="text-lg font-bold text-white mb-5">🎯 Confidence Breakdown</h2>
+      <h2 className="text-lg font-bold text-[#1f1b18] mb-5">🎯 Confidence Breakdown</h2>
 
       <div className="space-y-4 mb-5">
         {f.engines.map((engine) => {
@@ -25,7 +25,7 @@ export default function ConfidenceBreakdown({ finding: f }: Props) {
                   {engine.confirmed
                     ? <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: "var(--low)" }} />
                     : <XCircle      className="w-4 h-4 flex-shrink-0" style={{ color: "var(--muted)" }} />}
-                  <span className="text-sm font-semibold text-white">{engine.name}</span>
+                  <span className="text-sm font-semibold text-[#1f1b18]">{engine.name}</span>
                 </div>
                 <span className="text-sm font-bold flex-shrink-0" style={{ color }}>{Math.round(engine.confidence * 100)}%</span>
               </div>
@@ -48,7 +48,7 @@ export default function ConfidenceBreakdown({ finding: f }: Props) {
         style={{ background: "var(--background)", border: "1px solid var(--border)" }}
       >
         <div>
-          <div className="text-xs font-semibold text-white mb-0.5">Aggregate Score</div>
+          <div className="text-xs font-semibold text-[#1f1b18] mb-0.5">Aggregate Score</div>
           <div className="text-xs" style={{ color: "var(--muted)" }}>
             {f.engines.filter(e => e.confirmed).length}/{f.engines.length} engines confirmed
           </div>

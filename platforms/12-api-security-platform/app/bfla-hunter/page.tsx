@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { Shield, Cpu } from "lucide-react";
-import Footer from "@/components/layout/Footer";
 
 const BFLA_MATRIX = [
   { path: "/api/v2/admin/users", get: "200 OK (JWT alg:none)", post: "403 Forbidden", put: "403 Forbidden", del: "403 Forbidden", issue: "API-002: Accepts unsigned alg:none JWT on GET" },
@@ -18,7 +17,7 @@ export default function BflaHunterPage() {
         <section className="card-surface p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-medium"
-              style={{ background: "var(--accent-soft)", color: "var(--accent)", border: "1px solid rgba(122,162,247,0.28)" }}>
+              style={{ background: "var(--accent-soft)", color: "var(--accent)", border: "1px solid rgba(139, 69, 40, 0.25)" }}>
               <Shield className="w-3.5 h-3.5" />
               <span>OWASP API5:2023 &middot; CWE-285 &middot; Function-Level RBAC Hunter</span>
             </div>
@@ -68,7 +67,6 @@ export default function BflaHunterPage() {
           </div>
         </section>
       </main>
-      <Footer />
     </div>
   );
 }

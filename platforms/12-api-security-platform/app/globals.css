@@ -1,31 +1,31 @@
 @import "tailwindcss";
 
 :root {
-  /* Core Neutral Surface Palette (4 tokens) */
-  --background: #0f1115;
-  --surface:    #16191f;
-  --surface-2:  #1c2028;
-  --border:     #2a2f39;
+  /* "Desk Note" Warm Editorial Parchment & Paper Palette */
+  --background: #f3eee4;
+  --surface:    #fbf8f3;
+  --surface-2:  #ece5d8;
+  --border:     #ddd3c2;
 
-  /* Typography Hierarchy (3 tokens) */
-  --foreground: #ececef;
-  --muted:      #9aa0ab;
-  --subtle:     #636975;
+  /* Editorial Ink Typography Hierarchy */
+  --foreground: #1f1b18;
+  --muted:      #5c5349;
+  --subtle:     #867b6e;
 
-  /* Single Primary Accent — Calm Slate Blue (1 token) */
-  --accent:      #7aa2f7;
-  --accent-soft: rgba(122, 162, 247, 0.12);
+  /* Primary Accent — Rich Terracotta / Burnt Sienna */
+  --accent:      #8b4528;
+  --accent-soft: #f4e5dc;
 
-  /* Semantic Severity / Status (4 tokens) */
-  --critical: #e5484d;
-  --high:     #e2853b;
-  --medium:   #d6a847;
-  --low:      #7aa2f7;
-  --success:  #46a36e;
+  /* Semantic Severity / Status (Editorial Warm-Paper Tuned) */
+  --critical: #9e2a2b;
+  --high:     #8b4528;
+  --medium:   #996b1f;
+  --low:      #5c5349;
+  --success:  #2d6a4f;
 
-  /* Legacy compatibility aliases mapped to the calm 12-token system */
+  /* Legacy compatibility aliases mapped to the warm Desk Note system */
   --primary:      var(--accent);
-  --primary-dark: #5b82d6;
+  --primary-dark: #72361d;
   --primary-glow: var(--accent-soft);
   --secondary:    var(--muted);
   --cyan:         var(--accent);
@@ -50,78 +50,96 @@
   body {
     background-color: var(--background);
     color: var(--foreground);
-    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+    font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
     min-height: 100vh;
     overflow-x: hidden;
-    line-height: 1.5;
+    line-height: 1.55;
     -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, .font-editorial {
+    font-family: var(--font-serif), Georgia, Cambria, "Times New Roman", Times, serif;
+    letter-spacing: -0.02em;
+    color: var(--foreground);
   }
 }
 
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--background); }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: #cbbca6; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--subtle); }
 
-/* Clean, flat utility surfaces */
+/* Editorial Paper Cards & Controls */
 .card-surface {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 0.75rem;
+  border-radius: 0.875rem;
+  box-shadow: 0 1px 2px rgba(31, 27, 24, 0.04);
 }
 
 .card-hover {
-  transition: border-color 0.15s ease, background-color 0.15s ease;
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
 }
 .card-hover:hover {
-  border-color: #3a414e;
-  background-color: var(--surface-2);
+  border-color: #c5b69e;
+  background-color: #fdfbf8;
+  box-shadow: 0 4px 12px rgba(31, 27, 24, 0.06);
 }
 
-/* Status & Severity Badges */
+/* Desk Note Kicker / Eyebrow Label */
+.desk-kicker {
+  font-family: var(--font-sans), sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+
+/* Status & Severity Badges — High Contrast on Warm Ivory Paper */
 .badge-critical {
-  background: rgba(229, 72, 77, 0.12);
-  color: #f27478;
-  border: 1px solid rgba(229, 72, 77, 0.28);
+  background: #f9e6e6;
+  color: #8c2022;
+  border: 1px solid #e3b8b9;
 }
 .badge-high {
-  background: rgba(226, 133, 59, 0.12);
-  color: #eba066;
-  border: 1px solid rgba(226, 133, 59, 0.28);
+  background: #f4e5dc;
+  color: #7c3b20;
+  border: 1px solid #debdae;
 }
 .badge-medium {
-  background: rgba(214, 168, 71, 0.12);
-  color: #e2be6f;
-  border: 1px solid rgba(214, 168, 71, 0.28);
+  background: #f6ecda;
+  color: #7d5413;
+  border: 1px solid #dfd8b8;
 }
 .badge-low {
-  background: rgba(122, 162, 247, 0.12);
-  color: #9bb8f9;
-  border: 1px solid rgba(122, 162, 247, 0.28);
+  background: #ece5d8;
+  color: #4a4239;
+  border: 1px solid #d5cab8;
 }
 .badge-info {
-  background: rgba(154, 160, 171, 0.12);
+  background: #ece5d8;
   color: var(--muted);
-  border: 1px solid rgba(154, 160, 171, 0.24);
+  border: 1px solid var(--border);
 }
 .badge-open {
-  background: rgba(229, 72, 77, 0.12);
-  color: #f27478;
-  border: 1px solid rgba(229, 72, 77, 0.28);
+  background: #f9e6e6;
+  color: #8c2022;
+  border: 1px solid #e3b8b9;
 }
 .badge-resolved {
-  background: rgba(70, 163, 110, 0.12);
-  color: #6bc492;
-  border: 1px solid rgba(70, 163, 110, 0.28);
+  background: #e3f0e9;
+  color: #21573e;
+  border: 1px solid #b8d8c7;
 }
 .badge-suppressed {
-  background: rgba(154, 160, 171, 0.12);
+  background: #ece5d8;
   color: var(--muted);
-  border: 1px solid rgba(154, 160, 171, 0.24);
+  border: 1px solid var(--border);
 }
 
 .code-block {
-  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
+  font-family: var(--font-mono), "JetBrains Mono", "Fira Code", monospace;
   font-size: 0.8rem;
   line-height: 1.6;
 }

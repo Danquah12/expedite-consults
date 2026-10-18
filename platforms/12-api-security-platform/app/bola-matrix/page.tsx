@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Lock, CheckCircle2, AlertTriangle, Play, Cpu } from "lucide-react";
-import Footer from "@/components/layout/Footer";
 
 const BOLA_ROUTES = [
   {
@@ -62,7 +61,7 @@ export default function BolaMatrixPage() {
         <section className="card-surface p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-medium"
-              style={{ background: "var(--accent-soft)", color: "var(--accent)", border: "1px solid rgba(122,162,247,0.28)" }}>
+              style={{ background: "var(--accent-soft)", color: "var(--accent)", border: "1px solid rgba(139, 69, 40, 0.25)" }}>
               <Lock className="w-3.5 h-3.5" />
               <span>OWASP API1:2023 &middot; CWE-639 &middot; Cross-Tenant BOLA Matrix</span>
             </div>
@@ -109,7 +108,7 @@ export default function BolaMatrixPage() {
                   >
                     <td className="py-3.5 px-4 font-mono font-semibold" style={{ color: "var(--accent)" }}>{r.route}</td>
                     <td className="py-3.5 px-4 font-mono" style={{ color: "var(--foreground)" }}>{r.ownerStatus}</td>
-                    <td className="py-3.5 px-4 font-mono" style={{ color: r.vulnerable ? "#f27478" : "var(--success)" }}>{r.crossTenantStatus}</td>
+                    <td className="py-3.5 px-4 font-mono" style={{ color: r.vulnerable ? "var(--critical)" : "var(--success)" }}>{r.crossTenantStatus}</td>
                     <td className="py-3.5 px-4 font-mono" style={{ color: "var(--muted)" }}>{r.anonymousStatus}</td>
                     <td className="py-3.5 px-4 font-mono" style={{ color: "var(--foreground)" }}>{r.adminStatus}</td>
                     <td className="py-3.5 px-4">
@@ -144,7 +143,6 @@ export default function BolaMatrixPage() {
           </div>
         </section>
       </main>
-      <Footer />
     </div>
   );
 }

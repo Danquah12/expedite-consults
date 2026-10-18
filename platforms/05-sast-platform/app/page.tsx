@@ -24,7 +24,7 @@ export default function Home() {
               <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#3a404c" }} />
               <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#3a404c" }} />
               <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#3a404c" }} />
-              <span style={{ fontSize: 11, fontWeight: 800, color: "#c3c7cf", marginLeft: 6, letterSpacing: "0.05em" }}>
+              <span style={{ fontSize: 11, fontWeight: 800, color: "#4a4239", marginLeft: 6, letterSpacing: "0.05em" }}>
                 SAST RISK POSTURE
               </span>
             </div>
@@ -35,7 +35,7 @@ export default function Home() {
           </div>
 
           <div style={{
-            background: "rgba(28, 32, 40, 0.9)",
+            background: "#ece5d8",
             border: "1px solid var(--border)",
             borderRadius: 8,
             padding: "6px 12px",
@@ -45,8 +45,8 @@ export default function Home() {
             marginBottom: 16
           }}>
             <div style={{
-              background: "#7aa2f7",
-              color: "#0f1115",
+              background: "#8b4528",
+              color: "#f3eee4",
               padding: "2px 8px",
               borderRadius: 4,
               fontSize: 10,
@@ -57,12 +57,12 @@ export default function Home() {
             <div style={{ display: "flex", gap: 10, fontSize: 10.5, fontWeight: 800 }}>
               <span style={{ color: "#e5484d" }}>37 Critical</span>
               <span style={{ color: "#e2853b" }}>45 Urgent</span>
-              <span style={{ color: "#9aa0ab" }}>13 Pending</span>
+              <span style={{ color: "#5c5349" }}>13 Pending</span>
             </div>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 12 }}>
-            <div style={{ background: "rgba(15, 17, 21, 0.6)", padding: 10, borderRadius: 10, border: "1px solid var(--border)" }}>
+            <div style={{ background: "#f3eee4", padding: 10, borderRadius: 10, border: "1px solid var(--border)" }}>
               <div style={{ fontSize: 9.5, fontWeight: 800, color: "var(--muted)", textTransform: "uppercase", marginBottom: 8 }}>
                 Vulnerabilities By Risk
               </div>
@@ -83,19 +83,19 @@ export default function Home() {
                   <div style={{ fontSize: 8.5, color: "var(--muted)", marginTop: 2 }}>MED</div>
                 </div>
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 9, fontWeight: 800, color: "#7aa2f7" }}>28</div>
-                  <div style={{ width: 14, height: 35, background: "#7aa2f7", borderRadius: "3px 3px 0 0" }} />
+                  <div style={{ fontSize: 9, fontWeight: 800, color: "#8b4528" }}>28</div>
+                  <div style={{ width: 14, height: 35, background: "#8b4528", borderRadius: "3px 3px 0 0" }} />
                   <div style={{ fontSize: 8.5, color: "var(--muted)", marginTop: 2 }}>LOW</div>
                 </div>
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 9, fontWeight: 800, color: "#7aa2f7" }}>22</div>
-                  <div style={{ width: 14, height: 26, background: "#7aa2f7", borderRadius: "3px 3px 0 0" }} />
+                  <div style={{ fontSize: 9, fontWeight: 800, color: "#8b4528" }}>22</div>
+                  <div style={{ width: 14, height: 26, background: "#8b4528", borderRadius: "3px 3px 0 0" }} />
                   <div style={{ fontSize: 8.5, color: "var(--muted)", marginTop: 2 }}>INFO</div>
                 </div>
               </div>
             </div>
 
-            <div style={{ background: "rgba(15, 17, 21, 0.6)", padding: 10, borderRadius: 10, border: "1px solid var(--border)", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+            <div style={{ background: "#f3eee4", padding: 10, borderRadius: 10, border: "1px solid var(--border)", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
               <div style={{ fontSize: 9.5, fontWeight: 800, color: "var(--muted)", textTransform: "uppercase" }}>Fixability</div>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <div style={{
@@ -110,13 +110,13 @@ export default function Home() {
                   alignItems: "center",
                   justifyContent: "center"
                 }}>
-                  <div style={{ fontSize: 13, fontWeight: 900, color: "#ececef" }}>1,218</div>
+                  <div style={{ fontSize: 13, fontWeight: 900, color: "#1f1b18" }}>1,218</div>
                   <div style={{ fontSize: 7.5, color: "var(--muted)" }}>TOTAL</div>
                 </div>
               </div>
               <div style={{ fontSize: 9, display: "flex", flexDirection: "column", gap: 2 }}>
-                <div style={{ color: "#c3c7cf" }}>&bull; Requires attention: <span style={{ color: "#e5484d" }}>24%</span></div>
-                <div style={{ color: "#c3c7cf" }}>&bull; 1-Click Easy Fix: <span style={{ color: "#46a36e" }}>76%</span></div>
+                <div style={{ color: "#4a4239" }}>&bull; Requires attention: <span style={{ color: "#e5484d" }}>24%</span></div>
+                <div style={{ color: "#4a4239" }}>&bull; 1-Click Easy Fix: <span style={{ color: "#46a36e" }}>76%</span></div>
               </div>
             </div>
           </div>
@@ -130,29 +130,29 @@ export default function Home() {
       content: (
         <div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-            <div style={{ fontSize: 12, fontWeight: 800, color: "#7aa2f7" }}>Real-time Hybrid Scan</div>
+            <div style={{ fontSize: 12, fontWeight: 800, color: "#8b4528" }}>Real-time Hybrid Scan</div>
             <span style={{ fontSize: 10, color: "#46a36e", fontWeight: 800, background: "rgba(70, 163, 110, 0.15)", padding: "2px 6px", borderRadius: 4 }}>
               94.2% False Positives Eliminated
             </span>
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <div style={{ background: "rgba(15, 17, 21, 0.7)", padding: 10, borderRadius: 8, border: "1px solid rgba(70, 163, 110, 0.3)" }}>
+            <div style={{ background: "#f3eee4", padding: 10, borderRadius: 8, border: "1px solid rgba(70, 163, 110, 0.3)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, fontWeight: 800 }}>
-                <span style={{ color: "#ececef" }}>FUS-02 &middot; SSRF in WebhookDispatcher</span>
+                <span style={{ color: "#1f1b18" }}>FUS-02 &middot; SSRF in WebhookDispatcher</span>
                 <span style={{ color: "#46a36e" }}>FALSE POSITIVE CUT</span>
               </div>
-              <div style={{ fontSize: 10, color: "#9aa0ab", marginTop: 4 }}>
+              <div style={{ fontSize: 10, color: "#5c5349", marginTop: 4 }}>
                 Claude 3.7 verified private subnet filter at L82 blocks AWS IMDS 169.254.169.254.
               </div>
             </div>
 
-            <div style={{ background: "rgba(15, 17, 21, 0.7)", padding: 10, borderRadius: 8, border: "1px solid rgba(229, 72, 77, 0.3)" }}>
+            <div style={{ background: "#f3eee4", padding: 10, borderRadius: 8, border: "1px solid rgba(229, 72, 77, 0.3)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, fontWeight: 800 }}>
-                <span style={{ color: "#ececef" }}>FUS-01 &middot; SQL Injection in Profile</span>
+                <span style={{ color: "#1f1b18" }}>FUS-01 &middot; SQL Injection in Profile</span>
                 <span style={{ color: "#e5484d" }}>CONFIRMED EXPLOITABLE</span>
               </div>
-              <div style={{ fontSize: 10, color: "#9aa0ab", marginTop: 4 }}>
+              <div style={{ fontSize: 10, color: "#5c5349", marginTop: 4 }}>
                 Direct parameter concatenation without parameterized query. 1-Click PR Fix generated.
               </div>
             </div>
@@ -167,20 +167,20 @@ export default function Home() {
       content: (
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-            <div style={{ fontSize: 12, fontWeight: 800, color: "#ececef" }}>authController.ts &middot; CWE-89 Patch</div>
-            <span style={{ fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 4, background: "rgba(122, 162, 247, 0.2)", color: "#7aa2f7" }}>
+            <div style={{ fontSize: 12, fontWeight: 800, color: "#1f1b18" }}>authController.ts &middot; CWE-89 Patch</div>
+            <span style={{ fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 4, background: "#f4e5dc", color: "#8b4528" }}>
               PR #104 READY
             </span>
           </div>
 
           <pre style={{
-            background: "#0f1115",
+            background: "#f3eee4",
             border: "1px solid var(--border)",
             borderRadius: 8,
             padding: 10,
             fontSize: 10.5,
             fontFamily: "monospace",
-            color: "#ececef",
+            color: "#1f1b18",
             lineHeight: 1.4,
             marginBottom: 8
           }}>
@@ -191,7 +191,7 @@ export default function Home() {
 
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div style={{ fontSize: 10, color: "#46a36e" }}>&check; Jest regression test generated</div>
-            <button style={{ background: "#7aa2f7", border: "none", color: "#0f1115", fontSize: 10.5, fontWeight: 900, padding: "4px 10px", borderRadius: 4 }}>
+            <button style={{ background: "#8b4528", border: "none", color: "#f3eee4", fontSize: 10.5, fontWeight: 900, padding: "4px 10px", borderRadius: 4 }}>
               Merge to GitHub
             </button>
           </div>
@@ -205,21 +205,21 @@ export default function Home() {
       content: (
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-            <div style={{ fontSize: 12, fontWeight: 800, color: "#ececef" }}>Model Lineage &amp; Tool Protection</div>
-            <span style={{ fontSize: 10, fontWeight: 800, color: "#7aa2f7" }}>1,420 Assets Scanned</span>
+            <div style={{ fontSize: 12, fontWeight: 800, color: "#1f1b18" }}>Model Lineage &amp; Tool Protection</div>
+            <span style={{ fontSize: 10, fontWeight: 800, color: "#8b4528" }}>1,420 Assets Scanned</span>
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", background: "rgba(15, 17, 21, 0.6)", padding: "8px 10px", borderRadius: 6, fontSize: 10.5 }}>
-              <span style={{ color: "#ececef", fontWeight: 700 }}>meta-llama/Llama-3-8B-Instruct</span>
+            <div style={{ display: "flex", justifyContent: "space-between", background: "#f3eee4", padding: "8px 10px", borderRadius: 6, fontSize: 10.5 }}>
+              <span style={{ color: "#1f1b18", fontWeight: 700 }}>meta-llama/Llama-3-8B-Instruct</span>
               <span style={{ color: "#46a36e", fontWeight: 800 }}>Safetensors (Clean)</span>
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between", background: "rgba(15, 17, 21, 0.6)", padding: "8px 10px", borderRadius: 6, fontSize: 10.5 }}>
-              <span style={{ color: "#ececef", fontWeight: 700 }}>langchain-rag-agent-v2</span>
+            <div style={{ display: "flex", justifyContent: "space-between", background: "#f3eee4", padding: "8px 10px", borderRadius: 6, fontSize: 10.5 }}>
+              <span style={{ color: "#1f1b18", fontWeight: 700 }}>langchain-rag-agent-v2</span>
               <span style={{ color: "#e5484d", fontWeight: 800 }}>Indirect Prompt Injection</span>
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between", background: "rgba(15, 17, 21, 0.6)", padding: "8px 10px", borderRadius: 6, fontSize: 10.5 }}>
-              <span style={{ color: "#ececef", fontWeight: 700 }}>mcp-filesystem-server-v1</span>
+            <div style={{ display: "flex", justifyContent: "space-between", background: "#f3eee4", padding: "8px 10px", borderRadius: 6, fontSize: 10.5 }}>
+              <span style={{ color: "#1f1b18", fontWeight: 700 }}>mcp-filesystem-server-v1</span>
               <span style={{ color: "#e2853b", fontWeight: 800 }}>Tool Path Traversal Guard</span>
             </div>
           </div>
@@ -233,18 +233,18 @@ export default function Home() {
       content: (
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-            <div style={{ fontSize: 12, fontWeight: 800, color: "#7aa2f7" }}>Cursor &amp; Claude Desktop Endpoint</div>
+            <div style={{ fontSize: 12, fontWeight: 800, color: "#8b4528" }}>Cursor &amp; Claude Desktop Endpoint</div>
             <span style={{ fontSize: 10, color: "#46a36e", fontWeight: 800 }}>CONNECTED</span>
           </div>
 
           <pre style={{
-            background: "#0f1115",
+            background: "#f3eee4",
             border: "1px solid var(--border)",
             borderRadius: 8,
             padding: 10,
             fontSize: 10.5,
             fontFamily: "monospace",
-            color: "#7aa2f7",
+            color: "#8b4528",
             lineHeight: 1.4
           }}>
 {`{
@@ -278,17 +278,17 @@ export default function Home() {
           
           {/* Left Column: Headlines & CTAs */}
           <div>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "4px 14px", borderRadius: 50, background: "rgba(122, 162, 247, 0.15)", border: "1px solid var(--border)", marginBottom: 18 }}>
-              <Sparkles size={13} color="#7aa2f7" />
-              <span style={{ fontSize: 11.5, fontWeight: 800, color: "#7aa2f7", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "4px 14px", borderRadius: 50, background: "#f4e5dc", border: "1px solid var(--border)", marginBottom: 18 }}>
+              <Sparkles size={13} color="#8b4528" />
+              <span style={{ fontSize: 11.5, fontWeight: 800, color: "#8b4528", letterSpacing: "0.06em", textTransform: "uppercase" }}>
                 THE AGENTIC CODE SECURITY PLATFORM
               </span>
             </div>
 
-            <h1 style={{ fontSize: "clamp(34px, 4.2vw, 56px)", fontWeight: 900, lineHeight: 1.08, letterSpacing: "-0.03em", marginBottom: 18, color: "#ececef" }}>
+            <h1 style={{ fontSize: "clamp(34px, 4.2vw, 56px)", fontWeight: 900, lineHeight: 1.08, letterSpacing: "-0.03em", marginBottom: 18, color: "#1f1b18" }}>
               AI Generates Code. <br />
               <span style={{
-                background: "#7aa2f7",
+                background: "#8b4528",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent"
               }}>
@@ -296,7 +296,7 @@ export default function Home() {
               </span>
             </h1>
 
-            <p style={{ fontSize: 16, color: "#9aa0ab", lineHeight: 1.6, marginBottom: 28, maxWidth: 580 }}>
+            <p style={{ fontSize: 16, color: "#5c5349", lineHeight: 1.6, marginBottom: 28, maxWidth: 580 }}>
               The Agentic Application Security Platform combining hybrid AST scanning, AI triage agents, and unified risk intelligence across every code repository.
             </p>
 
@@ -304,8 +304,8 @@ export default function Home() {
               <Link
                 href="/fusion-engine"
                 style={{
-                  background: "#7aa2f7",
-                  color: "#0f1115",
+                  background: "#8b4528",
+                  color: "#f3eee4",
                   padding: "13px 26px",
                   borderRadius: 10,
                   fontSize: 14,
@@ -324,8 +324,8 @@ export default function Home() {
               <Link
                 href="/developer-assist"
                 style={{
-                  background: "rgba(22, 25, 31, 0.8)",
-                  color: "#7aa2f7",
+                  background: "#fbf8f3",
+                  color: "#8b4528",
                   border: "1px solid var(--border)",
                   padding: "13px 24px",
                   borderRadius: 10,
@@ -348,7 +348,7 @@ export default function Home() {
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
             style={{
-              background: "rgba(22, 25, 31, 0.92)",
+              background: "#fbf8f3",
               border: "1px solid var(--border)",
               borderRadius: 20,
               padding: 24,
@@ -368,9 +368,9 @@ export default function Home() {
                     key={s.id}
                     onClick={() => setCurrentSlide(idx)}
                     style={{
-                      background: currentSlide === idx ? "rgba(122, 162, 247, 0.3)" : "rgba(28, 32, 40, 0.5)",
-                      border: currentSlide === idx ? "1px solid #7aa2f7" : "1px solid var(--border)",
-                      color: currentSlide === idx ? "#7aa2f7" : "#9aa0ab",
+                      background: currentSlide === idx ? "#f4e5dc" : "#ece5d8",
+                      border: currentSlide === idx ? "1px solid #8b4528" : "1px solid var(--border)",
+                      color: currentSlide === idx ? "#8b4528" : "#5c5349",
                       padding: "3px 8px",
                       borderRadius: 4,
                       fontSize: 10,
@@ -385,7 +385,7 @@ export default function Home() {
 
               <button
                 onClick={() => setIsPaused(!isPaused)}
-                style={{ background: "transparent", border: "none", color: "#9aa0ab", cursor: "pointer", display: "flex", alignItems: "center" }}
+                style={{ background: "transparent", border: "none", color: "#5c5349", cursor: "pointer", display: "flex", alignItems: "center" }}
                 title={isPaused ? "Resume Auto-Slide" : "Pause Auto-Slide"}
               >
                 {isPaused ? <Play size={12} /> : <Pause size={12} />}
@@ -401,7 +401,7 @@ export default function Home() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 14, paddingTop: 10, borderTop: "1px solid var(--border)" }}>
               <button
                 onClick={() => setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1))}
-                style={{ background: "transparent", border: "none", color: "#9aa0ab", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, fontSize: 11 }}
+                style={{ background: "transparent", border: "none", color: "#5c5349", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, fontSize: 11 }}
               >
                 <ChevronLeft size={14} />
                 <span>Prev</span>
@@ -416,7 +416,7 @@ export default function Home() {
                       width: currentSlide === idx ? 20 : 6,
                       height: 6,
                       borderRadius: 3,
-                      background: currentSlide === idx ? "#7aa2f7" : "rgba(122, 162, 247, 0.4)",
+                      background: currentSlide === idx ? "#8b4528" : "#f4e5dc",
                       cursor: "pointer",
                       transition: "all 0.3s ease"
                     }}
@@ -426,7 +426,7 @@ export default function Home() {
 
               <button
                 onClick={() => setCurrentSlide((prev) => (prev + 1) % slides.length)}
-                style={{ background: "transparent", border: "none", color: "#9aa0ab", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, fontSize: 11 }}
+                style={{ background: "transparent", border: "none", color: "#5c5349", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, fontSize: 11 }}
               >
                 <span>Next</span>
                 <ChevronRight size={14} />
@@ -442,7 +442,7 @@ export default function Home() {
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
           gap: 16,
-          background: "rgba(22, 25, 31, 0.7)",
+          background: "#fbf8f3",
           border: "1px solid var(--border)",
           borderRadius: 16,
           padding: "20px 24px",
@@ -450,23 +450,23 @@ export default function Home() {
         }}>
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase" }}>False-Positive Cut</div>
-            <div style={{ fontSize: 26, fontWeight: 900, color: "#ececef", marginTop: 4 }}>94.2%</div>
-            <div style={{ fontSize: 11, color: "#6f7581" }}>Validated across 120k repos</div>
+            <div style={{ fontSize: 26, fontWeight: 900, color: "#1f1b18", marginTop: 4 }}>94.2%</div>
+            <div style={{ fontSize: 11, color: "#867b6e" }}>Validated across 120k repos</div>
           </div>
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase" }}>Hybrid Scan Latency</div>
-            <div style={{ fontSize: 26, fontWeight: 900, color: "#ececef", marginTop: 4 }}>1.4s / 10k LoC</div>
-            <div style={{ fontSize: 11, color: "#6f7581" }}>AST + Claude 3.7</div>
+            <div style={{ fontSize: 26, fontWeight: 900, color: "#1f1b18", marginTop: 4 }}>1.4s / 10k LoC</div>
+            <div style={{ fontSize: 11, color: "#867b6e" }}>AST + Claude 3.7</div>
           </div>
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase" }}>AI-BOM Inventory</div>
-            <div style={{ fontSize: 26, fontWeight: 900, color: "#ececef", marginTop: 4 }}>1,420 Models</div>
-            <div style={{ fontSize: 11, color: "#6f7581" }}>Weights &amp; MCP Endpoints</div>
+            <div style={{ fontSize: 26, fontWeight: 900, color: "#1f1b18", marginTop: 4 }}>1,420 Models</div>
+            <div style={{ fontSize: 11, color: "#867b6e" }}>Weights &amp; MCP Endpoints</div>
           </div>
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase" }}>Auto-Fix Pull Requests</div>
-            <div style={{ fontSize: 26, fontWeight: 900, color: "#ececef", marginTop: 4 }}>98.6% Merged</div>
-            <div style={{ fontSize: 11, color: "#6f7581" }}>AST &amp; Unit Test Verified</div>
+            <div style={{ fontSize: 26, fontWeight: 900, color: "#1f1b18", marginTop: 4 }}>98.6% Merged</div>
+            <div style={{ fontSize: 11, color: "#867b6e" }}>AST &amp; Unit Test Verified</div>
           </div>
         </div>
       </section>
@@ -474,24 +474,24 @@ export default function Home() {
       {/* 6 Flagship Studios Catalog */}
       <section style={{ maxWidth: 1360, margin: "0 auto", padding: "0 20px" }}>
         <div style={{ marginBottom: 24 }}>
-          <h2 style={{ fontSize: 24, fontWeight: 900, color: "#ececef" }}>Flagship SAST Studios &amp; Modules</h2>
-          <p style={{ fontSize: 13.5, color: "#9aa0ab" }}>Explore the next-generation static security ecosystem inspired by Checkmarx One and Black Duck Polaris.</p>
+          <h2 style={{ fontSize: 24, fontWeight: 900, color: "#1f1b18" }}>Flagship SAST Studios &amp; Modules</h2>
+          <p style={{ fontSize: 13.5, color: "#5c5349" }}>Explore the next-generation static security ecosystem inspired by Checkmarx One and Black Duck Polaris.</p>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 20 }}>
           <Link href="/validation-engine" style={{ textDecoration: "none" }}>
-            <div style={{ background: "rgba(28, 32, 40, 0.6)", border: "1px solid var(--border)", borderRadius: 14, padding: 22, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+            <div style={{ background: "#ece5d8", border: "1px solid var(--border)", borderRadius: 14, padding: 22, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
               <div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
                   <div style={{ width: 38, height: 38, borderRadius: 10, background: "var(--surface-3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <CheckCircle2 size={20} color="#7aa2f7" />
+                    <CheckCircle2 size={20} color="#8b4528" />
                   </div>
                   <span style={{ fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 4, background: "var(--surface-3)", color: "var(--muted)" }}>PROOF ENGINE</span>
                 </div>
-                <h3 style={{ fontSize: 17, fontWeight: 800, color: "#ececef", marginBottom: 8 }}>Finding Validation &amp; Proof Engine</h3>
-                <p style={{ fontSize: 12.5, color: "#9aa0ab", lineHeight: 1.5 }}>6-stage A–F validation pipeline, 6-point Proof Contracts, Z3 counterexample minimization, security invariants, and OWASP/CWE/NVD catalog.</p>
+                <h3 style={{ fontSize: 17, fontWeight: 800, color: "#1f1b18", marginBottom: 8 }}>Finding Validation &amp; Proof Engine</h3>
+                <p style={{ fontSize: 12.5, color: "#5c5349", lineHeight: 1.5 }}>6-stage A–F validation pipeline, 6-point Proof Contracts, Z3 counterexample minimization, security invariants, and OWASP/CWE/NVD catalog.</p>
               </div>
-              <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "#7aa2f7" }}>
+              <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "#8b4528" }}>
                 <span>Open Validation Engine</span>
                 <ArrowRight size={13} />
               </div>
@@ -499,18 +499,18 @@ export default function Home() {
           </Link>
 
           <Link href="/fusion-engine" style={{ textDecoration: "none" }}>
-            <div style={{ background: "rgba(28, 32, 40, 0.6)", border: "1px solid var(--border)", borderRadius: 14, padding: 22, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+            <div style={{ background: "#ece5d8", border: "1px solid var(--border)", borderRadius: 14, padding: 22, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
               <div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
                   <div style={{ width: 38, height: 38, borderRadius: 10, background: "var(--surface-3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <Sparkles size={20} color="#7aa2f7" />
+                    <Sparkles size={20} color="#8b4528" />
                   </div>
                   <span style={{ fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 4, background: "var(--surface-3)", color: "var(--muted)" }}>FLAGSHIP</span>
                 </div>
-                <h3 style={{ fontSize: 17, fontWeight: 800, color: "#ececef", marginBottom: 8 }}>AXIOM Fusion Engine</h3>
-                <p style={{ fontSize: 12.5, color: "#9aa0ab", lineHeight: 1.5 }}>Hybrid scanning combining deterministic AST rules with Frontier AI triage to eliminate false positives in SQLi, SSRF, RCE, and XSS.</p>
+                <h3 style={{ fontSize: 17, fontWeight: 800, color: "#1f1b18", marginBottom: 8 }}>AXIOM Fusion Engine</h3>
+                <p style={{ fontSize: 12.5, color: "#5c5349", lineHeight: 1.5 }}>Hybrid scanning combining deterministic AST rules with Frontier AI triage to eliminate false positives in SQLi, SSRF, RCE, and XSS.</p>
               </div>
-              <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "#7aa2f7" }}>
+              <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "#8b4528" }}>
                 <span>Launch Fusion Studio</span>
                 <ArrowRight size={13} />
               </div>
@@ -518,18 +518,18 @@ export default function Home() {
           </Link>
 
           <Link href="/developer-assist" style={{ textDecoration: "none" }}>
-            <div style={{ background: "rgba(28, 32, 40, 0.6)", border: "1px solid var(--border)", borderRadius: 14, padding: 22, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+            <div style={{ background: "#ece5d8", border: "1px solid var(--border)", borderRadius: 14, padding: 22, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
               <div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
                   <div style={{ width: 38, height: 38, borderRadius: 10, background: "var(--surface-3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <Bot size={20} color="#7aa2f7" />
+                    <Bot size={20} color="#8b4528" />
                   </div>
                   <span style={{ fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 4, background: "var(--surface-3)", color: "var(--muted)" }}>AI AGENT</span>
                 </div>
-                <h3 style={{ fontSize: 17, fontWeight: 800, color: "#ececef", marginBottom: 8 }}>Developer Assist Agent</h3>
-                <p style={{ fontSize: 12.5, color: "#9aa0ab", lineHeight: 1.5 }}>Interactive AI copilot generating 1-click AST-validated pull request diffs, secure coding explanations, and real-time triage.</p>
+                <h3 style={{ fontSize: 17, fontWeight: 800, color: "#1f1b18", marginBottom: 8 }}>Developer Assist Agent</h3>
+                <p style={{ fontSize: 12.5, color: "#5c5349", lineHeight: 1.5 }}>Interactive AI copilot generating 1-click AST-validated pull request diffs, secure coding explanations, and real-time triage.</p>
               </div>
-              <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "#7aa2f7" }}>
+              <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "#8b4528" }}>
                 <span>Open Agent Workbench</span>
                 <ArrowRight size={13} />
               </div>
@@ -537,18 +537,18 @@ export default function Home() {
           </Link>
 
           <Link href="/ai-bom" style={{ textDecoration: "none" }}>
-            <div style={{ background: "rgba(28, 32, 40, 0.6)", border: "1px solid var(--border)", borderRadius: 14, padding: 22, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+            <div style={{ background: "#ece5d8", border: "1px solid var(--border)", borderRadius: 14, padding: 22, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
               <div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
                   <div style={{ width: 38, height: 38, borderRadius: 10, background: "var(--surface-3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <Box size={20} color="#7aa2f7" />
+                    <Box size={20} color="#8b4528" />
                   </div>
                   <span style={{ fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 4, background: "var(--surface-3)", color: "var(--muted)" }}>AI SUPPLY CHAIN</span>
                 </div>
-                <h3 style={{ fontSize: 17, fontWeight: 800, color: "#ececef", marginBottom: 8 }}>AI-BOM &amp; Model Inventory</h3>
-                <p style={{ fontSize: 12.5, color: "#9aa0ab", lineHeight: 1.5 }}>Bill of Materials scanner for LLM model weights, LangChain prompt pipelines, vector stores, and MCP tools.</p>
+                <h3 style={{ fontSize: 17, fontWeight: 800, color: "#1f1b18", marginBottom: 8 }}>AI-BOM &amp; Model Inventory</h3>
+                <p style={{ fontSize: 12.5, color: "#5c5349", lineHeight: 1.5 }}>Bill of Materials scanner for LLM model weights, LangChain prompt pipelines, vector stores, and MCP tools.</p>
               </div>
-              <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "#7aa2f7" }}>
+              <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "#8b4528" }}>
                 <span>Inspect AI Inventory</span>
                 <ArrowRight size={13} />
               </div>
@@ -556,18 +556,18 @@ export default function Home() {
           </Link>
 
           <Link href="/taint-graph" style={{ textDecoration: "none" }}>
-            <div style={{ background: "rgba(28, 32, 40, 0.6)", border: "1px solid var(--border)", borderRadius: 14, padding: 22, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+            <div style={{ background: "#ece5d8", border: "1px solid var(--border)", borderRadius: 14, padding: 22, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
               <div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
                   <div style={{ width: 38, height: 38, borderRadius: 10, background: "var(--surface-3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <GitGraph size={20} color="#7aa2f7" />
+                    <GitGraph size={20} color="#8b4528" />
                   </div>
                   <span style={{ fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 4, background: "var(--surface-3)", color: "var(--muted)" }}>GRAPH DAG</span>
                 </div>
-                <h3 style={{ fontSize: 17, fontWeight: 800, color: "#ececef", marginBottom: 8 }}>Inter-Procedural Taint Graph</h3>
-                <p style={{ fontSize: 12.5, color: "#9aa0ab", lineHeight: 1.5 }}>Interactive multi-file data flow visualization tracking untrusted HTTP sources through sanitizers into dangerous sinks.</p>
+                <h3 style={{ fontSize: 17, fontWeight: 800, color: "#1f1b18", marginBottom: 8 }}>Inter-Procedural Taint Graph</h3>
+                <p style={{ fontSize: 12.5, color: "#5c5349", lineHeight: 1.5 }}>Interactive multi-file data flow visualization tracking untrusted HTTP sources through sanitizers into dangerous sinks.</p>
               </div>
-              <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "#7aa2f7" }}>
+              <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "#8b4528" }}>
                 <span>View Taint Graph</span>
                 <ArrowRight size={13} />
               </div>
@@ -575,18 +575,18 @@ export default function Home() {
           </Link>
 
           <Link href="/mcp-server" style={{ textDecoration: "none" }}>
-            <div style={{ background: "rgba(28, 32, 40, 0.6)", border: "1px solid var(--border)", borderRadius: 14, padding: 22, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+            <div style={{ background: "#ece5d8", border: "1px solid var(--border)", borderRadius: 14, padding: 22, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
               <div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
                   <div style={{ width: 38, height: 38, borderRadius: 10, background: "var(--surface-3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <Terminal size={20} color="#7aa2f7" />
+                    <Terminal size={20} color="#8b4528" />
                   </div>
                   <span style={{ fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 4, background: "var(--surface-3)", color: "var(--muted)" }}>IDE PROTOCOL</span>
                 </div>
-                <h3 style={{ fontSize: 17, fontWeight: 800, color: "#ececef", marginBottom: 8 }}>AXIOM MCP Server Hub</h3>
-                <p style={{ fontSize: 12.5, color: "#9aa0ab", lineHeight: 1.5 }}>Model Context Protocol (MCP) server endpoints enabling Cursor, VS Code, and Claude Desktop to run SAST scans directly.</p>
+                <h3 style={{ fontSize: 17, fontWeight: 800, color: "#1f1b18", marginBottom: 8 }}>AXIOM MCP Server Hub</h3>
+                <p style={{ fontSize: 12.5, color: "#5c5349", lineHeight: 1.5 }}>Model Context Protocol (MCP) server endpoints enabling Cursor, VS Code, and Claude Desktop to run SAST scans directly.</p>
               </div>
-              <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "#7aa2f7" }}>
+              <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "#8b4528" }}>
                 <span>Configure MCP Hub</span>
                 <ArrowRight size={13} />
               </div>
@@ -594,18 +594,18 @@ export default function Home() {
           </Link>
 
           <Link href="/scan" style={{ textDecoration: "none" }}>
-            <div style={{ background: "rgba(28, 32, 40, 0.6)", border: "1px solid var(--border)", borderRadius: 14, padding: 22, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+            <div style={{ background: "#ece5d8", border: "1px solid var(--border)", borderRadius: 14, padding: 22, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
               <div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
                   <div style={{ width: 38, height: 38, borderRadius: 10, background: "var(--surface-3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <Code2 size={20} color="#7aa2f7" />
+                    <Code2 size={20} color="#8b4528" />
                   </div>
                   <span style={{ fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 4, background: "var(--surface-3)", color: "var(--muted)" }}>INTERACTIVE</span>
                 </div>
-                <h3 style={{ fontSize: 17, fontWeight: 800, color: "#ececef", marginBottom: 8 }}>Multi-Language Scanner</h3>
-                <p style={{ fontSize: 12.5, color: "#9aa0ab", lineHeight: 1.5 }}>Scan TypeScript, Python, Java, Go, C++, Rust, and PHP files with instant CWE categorization and AI-verified remediation diffs.</p>
+                <h3 style={{ fontSize: 17, fontWeight: 800, color: "#1f1b18", marginBottom: 8 }}>Multi-Language Scanner</h3>
+                <p style={{ fontSize: 12.5, color: "#5c5349", lineHeight: 1.5 }}>Scan TypeScript, Python, Java, Go, C++, Rust, and PHP files with instant CWE categorization and AI-verified remediation diffs.</p>
               </div>
-              <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "#7aa2f7" }}>
+              <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "#8b4528" }}>
                 <span>Start Multi-Language Scan</span>
                 <ArrowRight size={13} />
               </div>

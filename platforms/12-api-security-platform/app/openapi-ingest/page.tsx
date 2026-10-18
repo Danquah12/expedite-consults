@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { FileJson, Cpu } from "lucide-react";
-import Footer from "@/components/layout/Footer";
 
 const SCHEMA_DRIFT = [
   {
@@ -38,7 +37,7 @@ export default function OpenApiIngestPage() {
         <section className="card-surface p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-medium"
-              style={{ background: "var(--accent-soft)", color: "var(--accent)", border: "1px solid rgba(122,162,247,0.28)" }}>
+              style={{ background: "var(--accent-soft)", color: "var(--accent)", border: "1px solid rgba(139, 69, 40, 0.25)" }}>
               <FileJson className="w-3.5 h-3.5" />
               <span>OpenAPI 3.1 &amp; GraphQL Schema Drift Auditor</span>
             </div>
@@ -72,7 +71,6 @@ export default function OpenApiIngestPage() {
           ))}
         </div>
       </main>
-      <Footer />
     </div>
   );
 }

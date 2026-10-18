@@ -24,7 +24,7 @@ export default function EngineBar() {
           >
             <span className="text-xl">{item.icon}</span>
             <div>
-              <div className="text-sm font-semibold text-white whitespace-nowrap">{item.label}</div>
+              <div className="text-sm font-semibold text-[#1f1b18] whitespace-nowrap">{item.label}</div>
               <div className="text-[10px] whitespace-nowrap" style={{ color: "var(--muted)" }}>{item.sub}</div>
             </div>
           </div>

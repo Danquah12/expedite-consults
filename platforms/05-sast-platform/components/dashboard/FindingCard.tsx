@@ -59,7 +59,7 @@ export default function FindingCard({ finding: f }: Props) {
       </div>
 
       {/* Title */}
-      <h3 className="text-sm font-semibold text-white mb-2 line-clamp-2 group-hover:text-[#7aa2f7] transition-colors">
+      <h3 className="text-sm font-semibold text-[#1f1b18] mb-2 line-clamp-2 group-hover:text-[#8b4528] transition-colors">
         {f.title}
       </h3>
 

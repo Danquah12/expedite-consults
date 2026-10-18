@@ -6,7 +6,7 @@ type Props = { finding: SASTFinding };
 export default function ExecutiveSummary({ finding: f }: Props) {
   return (
     <div className="rounded-2xl p-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-      <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+      <h2 className="text-lg font-bold text-[#1f1b18] mb-4 flex items-center gap-2">
         <AlertTriangle className="w-5 h-5" style={{ color: "var(--critical)" }} />
         Executive Summary
       </h2>
@@ -18,14 +18,14 @@ export default function ExecutiveSummary({ finding: f }: Props) {
         <div className="rounded-xl p-4" style={{ background: "var(--background)", border: "1px solid var(--border)" }}>
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp className="w-4 h-4" style={{ color: "var(--critical)" }} />
-            <span className="text-xs font-semibold text-white">Business Impact</span>
+            <span className="text-xs font-semibold text-[#1f1b18]">Business Impact</span>
           </div>
           <p className="text-xs leading-relaxed" style={{ color: "var(--muted)" }}>{f.businessImpact}</p>
         </div>
         <div className="rounded-xl p-4" style={{ background: "var(--background)", border: "1px solid var(--border)" }}>
           <div className="flex items-center gap-2 mb-2">
             <Target className="w-4 h-4" style={{ color: "var(--high)" }} />
-            <span className="text-xs font-semibold text-white">Root Cause</span>
+            <span className="text-xs font-semibold text-[#1f1b18]">Root Cause</span>
           </div>
           <p className="text-xs leading-relaxed" style={{ color: "var(--muted)" }}>{f.rootCause}</p>
         </div>

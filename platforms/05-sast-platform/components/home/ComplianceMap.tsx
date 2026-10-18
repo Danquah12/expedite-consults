@@ -7,11 +7,11 @@ export default function ComplianceMap() {
       <div className="text-center mb-16">
         <div
           className="inline-block px-4 py-1.5 rounded-full text-sm font-medium mb-4"
-          style={{ background: "rgba(122, 162, 247, 0.1)", border: "1px solid var(--border)", color: "#7aa2f7" }}
+          style={{ background: "#f4e5dc", border: "1px solid var(--border)", color: "#8b4528" }}
         >
           Compliance Coverage
         </div>
-        <h2 className="text-4xl font-bold text-white mb-4">Every Major Framework. Automated.</h2>
+        <h2 className="text-4xl font-bold text-[#1f1b18] mb-4">Every Major Framework. Automated.</h2>
         <p className="text-lg max-w-2xl mx-auto" style={{ color: "var(--muted)" }}>
           Every finding is automatically mapped to the relevant compliance controls, turning vulnerability reports into audit-ready evidence packages.
         </p>
@@ -24,7 +24,7 @@ export default function ComplianceMap() {
               className="flex items-center gap-3 px-6 py-4"
               style={{ background: `${fw.color}15`, borderBottom: "1px solid var(--border)" }}
             >
-              <div className="px-3 py-1 rounded-full text-xs font-bold" style={{ background: fw.color, color: "#ececef" }}>
+              <div className="px-3 py-1 rounded-full text-xs font-bold" style={{ background: fw.color, color: "#1f1b18" }}>
                 {fw.name}
               </div>
               <span className="text-sm" style={{ color: "var(--muted)" }}>v{fw.version}</span>
@@ -40,7 +40,7 @@ export default function ComplianceMap() {
                     : <MinusCircle  className="w-4 h-4 flex-shrink-0" style={{ color: "var(--muted)" }} />}
                   <div className="min-w-0">
                     <div className="text-xs font-mono" style={{ color: cat.covered ? "var(--primary)" : "var(--muted)" }}>{cat.ref}</div>
-                    <div className="text-xs truncate text-white">{cat.name}</div>
+                    <div className="text-xs truncate text-[#1f1b18]">{cat.name}</div>
                   </div>
                 </div>
               ))}

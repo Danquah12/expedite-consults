@@ -43,11 +43,11 @@ export default function Footer() {
             <div className="flex items-center gap-2.5">
               <div
                 className="w-8 h-8 rounded-lg flex items-center justify-center"
-                style={{ background: "rgba(122, 162, 247, 0.15)", border: "1px solid var(--border)" }}
+                style={{ background: "#f4e5dc", border: "1px solid var(--border)" }}
               >
                 <Shield className="w-4 h-4" style={{ color: "var(--primary)" }} />
               </div>
-              <span className="text-sm font-bold text-white">SAST Platform</span>
+              <span className="text-sm font-bold text-[#1f1b18]">SAST Platform</span>
             </div>
             <p className="text-sm leading-relaxed" style={{ color: "var(--muted)" }}>
               Enterprise static application security testing. Multi-engine analysis
@@ -58,7 +58,7 @@ export default function Footer() {
                 href="https://github.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 rounded-lg transition-colors hover:text-white"
+                className="p-2 rounded-lg transition-colors hover:text-[#1f1b18]"
                 style={{
                   color: "var(--muted)",
                   border: "1px solid var(--border)",
@@ -68,7 +68,7 @@ export default function Footer() {
               </a>
               <a
                 href="mailto:security@example.com"
-                className="p-2 rounded-lg transition-colors hover:text-white"
+                className="p-2 rounded-lg transition-colors hover:text-[#1f1b18]"
                 style={{
                   color: "var(--muted)",
                   border: "1px solid var(--border)",
@@ -78,7 +78,7 @@ export default function Footer() {
               </a>
               <a
                 href="#"
-                className="p-2 rounded-lg transition-colors hover:text-white"
+                className="p-2 rounded-lg transition-colors hover:text-[#1f1b18]"
                 style={{
                   color: "var(--muted)",
                   border: "1px solid var(--border)",
@@ -92,13 +92,13 @@ export default function Footer() {
           {/* Links */}
           {LINKS.map((group) => (
             <div key={group.title} className="space-y-4">
-              <h3 className="text-sm font-semibold text-white">{group.title}</h3>
+              <h3 className="text-sm font-semibold text-[#1f1b18]">{group.title}</h3>
               <ul className="space-y-2.5">
                 {group.items.map((item) => (
                   <li key={item.label}>
                     <Link
                       href={item.href}
-                      className="text-sm transition-colors hover:text-white"
+                      className="text-sm transition-colors hover:text-[#1f1b18]"
                       style={{ color: "var(--muted)" }}
                     >
                       {item.label}

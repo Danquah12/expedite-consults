@@ -15,7 +15,7 @@ export default function Remediation({ finding: f }: Props) {
 
   return (
     <div className="rounded-2xl p-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-      <h2 className="text-lg font-bold text-white mb-5">🔧 Remediation Guide</h2>
+      <h2 className="text-lg font-bold text-[#1f1b18] mb-5">🔧 Remediation Guide</h2>
 
       {f.remediation.length > 1 && (
         <div className="flex flex-wrap gap-2 mb-5">
@@ -25,8 +25,8 @@ export default function Remediation({ finding: f }: Props) {
               onClick={() => setActive(i)}
               className="px-4 py-1.5 rounded-lg text-sm font-medium transition-all"
               style={{
-                background: active === i ? "rgba(122, 162, 247, 0.15)" : "var(--background)",
-                border: `1px solid ${active === i ? "rgba(122, 162, 247, 0.4)" : "var(--border)"}`,
+                background: active === i ? "#f4e5dc" : "var(--background)",
+                border: `1px solid ${active === i ? "#f4e5dc" : "var(--border)"}`,
                 color: active === i ? "var(--primary)" : "var(--muted)",
               }}
             >

@@ -15,7 +15,7 @@ const STEPS = [
     title: "Multi-Engine Analysis",
     description: "Four specialized engines run in parallel — CodeQL traces data flows, Semgrep matches patterns, Joern analyzes the code property graph, and DataFlow validates taint paths.",
     details: ["Parallel engine execution", "Hot path: < 2 seconds per file", "5-layer false positive reduction", "Confidence scoring per finding"],
-    color: "#7aa2f7",
+    color: "#8b4528",
   },
   {
     number: "03",
@@ -33,11 +33,11 @@ export default function HowItWorks() {
       <div className="text-center mb-16">
         <div
           className="inline-block px-4 py-1.5 rounded-full text-sm font-medium mb-4"
-          style={{ background: "rgba(122, 162, 247, 0.08)", border: "1px solid var(--border)", color: "var(--primary)" }}
+          style={{ background: "#f4e5dc", border: "1px solid var(--border)", color: "var(--primary)" }}
         >
           How It Works
         </div>
-        <h2 className="text-4xl font-bold text-white mb-4">From Commit to Risk Report in Minutes</h2>
+        <h2 className="text-4xl font-bold text-[#1f1b18] mb-4">From Commit to Risk Report in Minutes</h2>
         <p className="text-lg max-w-2xl mx-auto" style={{ color: "var(--muted)" }}>
           Three steps transform raw source code into a prioritized, actionable security risk report your entire team can act on.
         </p>
@@ -61,7 +61,7 @@ export default function HowItWorks() {
               >
                 <Icon className="w-6 h-6" style={{ color: step.color }} />
               </div>
-              <h3 className="text-xl font-bold text-white mb-3">{step.title}</h3>
+              <h3 className="text-xl font-bold text-[#1f1b18] mb-3">{step.title}</h3>
               <p className="text-sm leading-relaxed mb-6" style={{ color: "var(--muted)" }}>{step.description}</p>
               <ul className="space-y-2">
                 {step.details.map((d) => (

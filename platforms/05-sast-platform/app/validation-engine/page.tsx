@@ -72,7 +72,7 @@ const STATUS_BADGE: Record<
   },
   not_applicable: {
     label: "NOT APPLICABLE",
-    color: "#9aa0ab",
+    color: "#5c5349",
     bg: "rgba(154, 160, 171, 0.14)",
   },
 };
@@ -131,7 +131,7 @@ export default function ValidationEnginePage() {
               marginBottom: 8,
             }}
           >
-            <ShieldCheck size={13} color="#7aa2f7" />
+            <ShieldCheck size={13} color="#8b4528" />
             <span>PROOF-DRIVEN SAST VALIDATION &amp; CLAIM VERIFICATION ENGINE</span>
           </div>
           <h1 style={{ fontSize: 28, fontWeight: 800, color: "var(--foreground)" }}>
@@ -236,7 +236,7 @@ export default function ValidationEnginePage() {
 
           <div style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 10, padding: 14 }}>
             <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 600 }}>Independent Discoveries</div>
-            <div style={{ fontSize: 26, fontWeight: 800, color: "#7aa2f7", marginTop: 2 }}>
+            <div style={{ fontSize: 26, fontWeight: 800, color: "#8b4528", marginTop: 2 }}>
               +{VALIDATION_SCORECARD.independentDiscoveries}
             </div>
             <div style={{ fontSize: 11, color: "var(--subtle)" }}>Found via Security Invariants</div>
@@ -283,7 +283,7 @@ export default function ValidationEnginePage() {
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-              <span style={{ fontSize: 10.5, fontWeight: 800, color: "#7aa2f7" }}>
+              <span style={{ fontSize: 10.5, fontWeight: 800, color: "#8b4528" }}>
                 TECHNIQUE {tech.step}
               </span>
               <span style={{ fontSize: 10, color: "var(--muted)", fontFamily: "monospace" }}>
@@ -327,9 +327,9 @@ export default function ValidationEnginePage() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id as StudioTab)}
               style={{
-                background: active ? "rgba(122, 162, 247, 0.14)" : "var(--surface)",
-                border: `1px solid ${active ? "#7aa2f7" : "var(--border)"}`,
-                color: active ? "#7aa2f7" : "var(--foreground-muted)",
+                background: active ? "#f4e5dc" : "var(--surface)",
+                border: `1px solid ${active ? "#8b4528" : "var(--border)"}`,
+                color: active ? "#8b4528" : "var(--foreground-muted)",
                 padding: "8px 14px",
                 borderRadius: 8,
                 fontSize: 12,
@@ -365,13 +365,13 @@ export default function ValidationEnginePage() {
                     style={{
                       textAlign: "left",
                       background: isSelected ? "var(--surface-2)" : "var(--background)",
-                      border: `1px solid ${isSelected ? "#7aa2f7" : "var(--border)"}`,
+                      border: `1px solid ${isSelected ? "#8b4528" : "var(--border)"}`,
                       borderRadius: 10,
                       padding: 10,
                       cursor: "pointer",
                     }}
                   >
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, fontWeight: 800, color: "#7aa2f7" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, fontWeight: 800, color: "#8b4528" }}>
                       <span>STAGE {stg.code}</span>
                       <span style={{ color: stg.deterministic ? "#46a36e" : "var(--muted)", fontSize: 9.5 }}>
                         {stg.deterministic ? "DETERMINISTIC" : "AI-ASSISTED"}
@@ -386,7 +386,7 @@ export default function ValidationEnginePage() {
               })}
             </div>
             <div style={{ background: "var(--background)", border: "1px solid var(--border)", borderRadius: 10, padding: 12, fontSize: 12.5 }}>
-              <strong style={{ color: "#7aa2f7" }}>Stage {activeStageObj.code} — {activeStageObj.title}: </strong>
+              <strong style={{ color: "#8b4528" }}>Stage {activeStageObj.code} — {activeStageObj.title}: </strong>
               <span style={{ color: "var(--foreground-muted)" }}>{activeStageObj.description}</span>
             </div>
           </div>
@@ -402,9 +402,9 @@ export default function ValidationEnginePage() {
                   key={lang}
                   onClick={() => setLangFilter(lang)}
                   style={{
-                    background: langFilter === lang ? "rgba(122, 162, 247, 0.14)" : "var(--surface)",
-                    border: `1px solid ${langFilter === lang ? "#7aa2f7" : "var(--border)"}`,
-                    color: langFilter === lang ? "#7aa2f7" : "var(--muted)",
+                    background: langFilter === lang ? "#f4e5dc" : "var(--surface)",
+                    border: `1px solid ${langFilter === lang ? "#8b4528" : "var(--border)"}`,
+                    color: langFilter === lang ? "#8b4528" : "var(--muted)",
                     padding: "4px 10px",
                     borderRadius: 6,
                     fontSize: 11.5,
@@ -432,14 +432,14 @@ export default function ValidationEnginePage() {
                     style={{
                       textAlign: "left",
                       background: isSelected ? "var(--surface-2)" : "var(--surface)",
-                      border: `1px solid ${isSelected ? "#7aa2f7" : "var(--border)"}`,
+                      border: `1px solid ${isSelected ? "#8b4528" : "var(--border)"}`,
                       borderRadius: 12,
                       padding: 14,
                       cursor: "pointer",
                     }}
                   >
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                      <span style={{ fontSize: 11, fontWeight: 800, color: "#7aa2f7", fontFamily: "monospace" }}>
+                      <span style={{ fontSize: 11, fontWeight: 800, color: "#8b4528", fontFamily: "monospace" }}>
                         {f.findingId} &middot; P{f.validatorPriority} &middot; {f.cwe}
                       </span>
                       <span
@@ -485,7 +485,7 @@ export default function ValidationEnginePage() {
               {/* Top identity & commit_sha lock */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10, borderBottom: "1px solid var(--border)", paddingBottom: 12 }}>
                 <div>
-                  <div style={{ fontSize: 11, color: "#7aa2f7", fontWeight: 700 }}>
+                  <div style={{ fontSize: 11, color: "#8b4528", fontWeight: 700 }}>
                     {selectedFinding.validatorName} (Priority {selectedFinding.validatorPriority})
                   </div>
                   <h2 style={{ fontSize: 18, fontWeight: 800, color: "var(--foreground)", marginTop: 2 }}>
@@ -575,7 +575,7 @@ export default function ValidationEnginePage() {
                     >
                       <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, color: "var(--foreground)" }}>
                         <span>
-                          {st.label} — <span style={{ color: "#7aa2f7" }}>{st.summary}</span>
+                          {st.label} — <span style={{ color: "#8b4528" }}>{st.summary}</span>
                         </span>
                         <span style={{ fontFamily: "monospace", color: "var(--muted)" }}>{st.durationMs} ms</span>
                       </div>
@@ -690,7 +690,7 @@ export default function ValidationEnginePage() {
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 6 }}>
                     <div>
-                      <span style={{ fontSize: 11, fontWeight: 800, color: "#7aa2f7", marginRight: 8 }}>
+                      <span style={{ fontSize: 11, fontWeight: 800, color: "#8b4528", marginRight: 8 }}>
                         {clm.claimId} &middot; {clm.findingRef}
                       </span>
                       <span style={{ fontSize: 13.5, fontWeight: 700, color: "var(--foreground)" }}>
@@ -706,8 +706,8 @@ export default function ValidationEnginePage() {
                         background:
                           clm.verdict === "ESTABLISHED"
                             ? "rgba(70, 163, 110, 0.14)"
-                            : "rgba(122, 162, 247, 0.14)",
-                        color: clm.verdict === "ESTABLISHED" ? "#46a36e" : "#7aa2f7",
+                            : "#f4e5dc",
+                        color: clm.verdict === "ESTABLISHED" ? "#46a36e" : "#8b4528",
                       }}
                     >
                       {clm.verdict}
@@ -751,7 +751,7 @@ export default function ValidationEnginePage() {
                     <span style={{ fontSize: 13.5, fontWeight: 700, color: "var(--foreground)" }}>
                       {cx.findingId} ({cx.cwe}) — {cx.title}
                     </span>
-                    <span style={{ fontSize: 10.5, fontWeight: 800, color: "#7aa2f7" }}>
+                    <span style={{ fontSize: 10.5, fontWeight: 800, color: "#8b4528" }}>
                       {cx.proofLevel} &middot; Minimized {cx.unminimizedLength}B &rarr; {cx.minimizedLength}B
                     </span>
                   </div>
@@ -763,7 +763,7 @@ export default function ValidationEnginePage() {
                     </div>
                     <div style={{ background: "var(--surface)", padding: 10, borderRadius: 8, border: "1px solid var(--border)" }}>
                       <div style={{ fontWeight: 700, color: "var(--foreground-muted)" }}>3. Z3 Path Constraint &amp; 4. Minimized Proof</div>
-                      <div style={{ fontFamily: "monospace", fontSize: 10.5, color: "#7aa2f7", marginTop: 2 }}>
+                      <div style={{ fontFamily: "monospace", fontSize: 10.5, color: "#8b4528", marginTop: 2 }}>
                         {cx.pathConstraintZ3}
                       </div>
                       <div style={{ color: "var(--foreground)", marginTop: 4 }}>{cx.minimizedCounterexample}</div>
@@ -828,7 +828,7 @@ export default function ValidationEnginePage() {
                   <div style={{ color: "var(--muted)", marginBottom: 6 }}>
                     <strong style={{ color: "var(--foreground-muted)" }}>Evidence Required:</strong> {ctr.evidenceRequired}
                   </div>
-                  <div style={{ fontFamily: "monospace", fontSize: 10.5, color: "#7aa2f7" }}>
+                  <div style={{ fontFamily: "monospace", fontSize: 10.5, color: "#8b4528" }}>
                     Generated: {ctr.generatedTestName} &rarr; {ctr.observedOutcome}
                   </div>
                 </div>
@@ -857,7 +857,7 @@ export default function ValidationEnginePage() {
                   }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                    <span style={{ fontWeight: 800, color: "#7aa2f7" }}>
+                    <span style={{ fontWeight: 800, color: "#8b4528" }}>
                       {inv.id} &middot; {inv.category}
                     </span>
                     <span
@@ -896,7 +896,7 @@ export default function ValidationEnginePage() {
                     <div style={{ fontSize: 13, fontWeight: 700, color: "var(--foreground)", marginBottom: 6 }}>{ch.title}</div>
                     {ch.steps.map((s) => (
                       <div key={s.step} style={{ fontSize: 11, color: "var(--muted)", marginTop: 3 }}>
-                        <strong style={{ color: "#7aa2f7" }}>Step {s.step} ({s.findingRef}):</strong> {s.label}
+                        <strong style={{ color: "#8b4528" }}>Step {s.step} ({s.findingRef}):</strong> {s.label}
                       </div>
                     ))}
                   </div>
@@ -970,7 +970,7 @@ export default function ValidationEnginePage() {
                   <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 4 }}>
                     <span style={{ fontWeight: 800, color: "var(--foreground)" }}>
                       Rank #{item.rank}: {item.findingRef} &rarr;{" "}
-                      <span style={{ color: "#7aa2f7" }}>{item.selectedAction}</span>
+                      <span style={{ color: "#8b4528" }}>{item.selectedAction}</span>
                     </span>
                     <span style={{ fontFamily: "monospace", color: "var(--muted)" }}>
                       Prob: {item.applicabilityProb} &middot; InfoGain: {item.infoGain} &middot; Cost: {item.costMs}
@@ -991,7 +991,7 @@ export default function ValidationEnginePage() {
               {TEN_SPECIALIZED_MODULES.map((mod) => (
                 <div key={mod.id} style={{ background: "var(--background)", border: "1px solid var(--border)", borderRadius: 10, padding: 12, fontSize: 11.5 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                    <span style={{ fontWeight: 800, color: "#7aa2f7" }}>{mod.id}</span>
+                    <span style={{ fontWeight: 800, color: "#8b4528" }}>{mod.id}</span>
                     <span style={{ fontSize: 10, color: "#46a36e", fontWeight: 700 }}>{mod.status}</span>
                   </div>
                   <div style={{ fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>{mod.name}</div>
@@ -1017,7 +1017,7 @@ export default function ValidationEnginePage() {
                     <span style={{ color: "#46a36e" }}>{m.status}</span>
                   </div>
                   <div style={{ color: "var(--muted)", marginTop: 2 }}>{m.description}</div>
-                  <div style={{ color: "#7aa2f7", marginTop: 2 }}>Caught by: {m.detectedBy}</div>
+                  <div style={{ color: "#8b4528", marginTop: 2 }}>Caught by: {m.detectedBy}</div>
                 </div>
               ))}
             </div>
@@ -1070,9 +1070,9 @@ export default function ValidationEnginePage() {
                       borderRadius: 8,
                       fontSize: 12,
                       fontWeight: 600,
-                      background: primaryObjective === obj ? "rgba(122, 162, 247, 0.14)" : "var(--background)",
-                      border: `1px solid ${primaryObjective === obj ? "#7aa2f7" : "var(--border)"}`,
-                      color: primaryObjective === obj ? "#7aa2f7" : "var(--foreground-muted)",
+                      background: primaryObjective === obj ? "#f4e5dc" : "var(--background)",
+                      border: `1px solid ${primaryObjective === obj ? "#8b4528" : "var(--border)"}`,
+                      color: primaryObjective === obj ? "#8b4528" : "var(--foreground-muted)",
                       cursor: "pointer",
                     }}
                   >
@@ -1102,9 +1102,9 @@ export default function ValidationEnginePage() {
                       borderRadius: 8,
                       fontSize: 12,
                       fontWeight: 600,
-                      background: targetEnv === env ? "rgba(122, 162, 247, 0.14)" : "var(--background)",
-                      border: `1px solid ${targetEnv === env ? "#7aa2f7" : "var(--border)"}`,
-                      color: targetEnv === env ? "#7aa2f7" : "var(--foreground-muted)",
+                      background: targetEnv === env ? "#f4e5dc" : "var(--background)",
+                      border: `1px solid ${targetEnv === env ? "#8b4528" : "var(--border)"}`,
+                      color: targetEnv === env ? "#8b4528" : "var(--foreground-muted)",
                       cursor: "pointer",
                     }}
                   >
@@ -1116,7 +1116,7 @@ export default function ValidationEnginePage() {
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
               <div style={{ background: "var(--background)", border: "1px solid var(--border)", borderRadius: 10, padding: 14 }}>
-                <div style={{ fontSize: 11, fontWeight: 800, color: "#7aa2f7" }}>DAYS 1–30 · FOUNDATION</div>
+                <div style={{ fontSize: 11, fontWeight: 800, color: "#8b4528" }}>DAYS 1–30 · FOUNDATION</div>
                 <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--foreground)", margin: "4px 0 6px" }}>
                   Canonical Schema, Commit Lock &amp; Static Reachability
                 </div>
@@ -1125,7 +1125,7 @@ export default function ValidationEnginePage() {
                 </p>
               </div>
               <div style={{ background: "var(--background)", border: "1px solid var(--border)", borderRadius: 10, padding: 14 }}>
-                <div style={{ fontSize: 11, fontWeight: 800, color: "#7aa2f7" }}>DAYS 31–60 · VALIDATION</div>
+                <div style={{ fontSize: 11, fontWeight: 800, color: "#8b4528" }}>DAYS 31–60 · VALIDATION</div>
                 <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--foreground)", margin: "4px 0 6px" }}>
                   Priority 1–5 Validators &amp; Claim Verifier
                 </div>
@@ -1134,7 +1134,7 @@ export default function ValidationEnginePage() {
                 </p>
               </div>
               <div style={{ background: "var(--background)", border: "1px solid var(--border)", borderRadius: 10, padding: 14 }}>
-                <div style={{ fontSize: 11, fontWeight: 800, color: "#7aa2f7" }}>DAYS 61–90 · INTELLIGENCE</div>
+                <div style={{ fontSize: 11, fontWeight: 800, color: "#8b4528" }}>DAYS 61–90 · INTELLIGENCE</div>
                 <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--foreground)", margin: "4px 0 6px" }}>
                   Invariants, Differential Retest &amp; CI/CD Gates
                 </div>
@@ -1160,7 +1160,7 @@ export default function ValidationEnginePage() {
             </div>
 
             <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: 18 }}>
-              <h3 style={{ fontSize: 15, fontWeight: 800, color: "#7aa2f7", marginBottom: 10 }}>
+              <h3 style={{ fontSize: 15, fontWeight: 800, color: "#8b4528", marginBottom: 10 }}>
                 AI-Assisted Synthesis (Policy-Gated, Untrusted Input Isolated)
               </h3>
               {DETERMINISTIC_VS_AI_MATRIX.aiAssisted.map((a) => (
@@ -1197,7 +1197,7 @@ export default function ValidationEnginePage() {
                   }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                    <span style={{ fontWeight: 800, color: "#7aa2f7" }}>
+                    <span style={{ fontWeight: 800, color: "#8b4528" }}>
                       {entry.code} &mdash; {entry.title}
                     </span>
                     <span style={{ fontSize: 10, color: "var(--muted)", fontFamily: "monospace" }}>
@@ -1249,7 +1249,7 @@ export default function ValidationEnginePage() {
                       CVSS {adv.cvss} ({adv.severity})
                     </span>
                   </div>
-                  <div style={{ fontFamily: "monospace", fontSize: 11, color: "#7aa2f7", marginBottom: 4 }}>
+                  <div style={{ fontFamily: "monospace", fontSize: 11, color: "#8b4528", marginBottom: 4 }}>
                     {adv.ecosystem}: {adv.packageName} ({adv.affectedRange} &rarr; Fix: {adv.patchedVersion})
                   </div>
                   <div style={{ color: "var(--muted)", marginBottom: 4 }}>

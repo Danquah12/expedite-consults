@@ -42,8 +42,8 @@ export function DeveloperAssistAgent() {
           bottom: 24,
           right: 24,
           zIndex: 9999,
-          background: "#7aa2f7",
-          color: "#0f1115",
+          background: "#8b4528",
+          color: "#f3eee4",
           padding: "12px 20px",
           borderRadius: 50,
           border: "1px solid rgba(236, 236, 239, 0.3)",
@@ -61,12 +61,12 @@ export function DeveloperAssistAgent() {
           width: 24,
           height: 24,
           borderRadius: "50%",
-          background: "#0f1115",
+          background: "#f3eee4",
           display: "flex",
           alignItems: "center",
           justifyContent: "center"
         }}>
-          <Sparkles size={14} color="#7aa2f7" />
+          <Sparkles size={14} color="#8b4528" />
         </div>
         <span>Ask Max &middot; AI AppSec Agent</span>
       </button>
@@ -82,7 +82,7 @@ export function DeveloperAssistAgent() {
         width: isMinimized ? 320 : 390,
         height: isMinimized ? 56 : 540,
         zIndex: 9999,
-        background: "rgba(22, 25, 31, 0.95)",
+        background: "#fbf8f3",
         backdropFilter: "blur(20px)",
         border: "1px solid var(--border)",
         borderRadius: 16,
@@ -106,17 +106,17 @@ export function DeveloperAssistAgent() {
             width: 32,
             height: 32,
             borderRadius: "50%",
-            background: "#7aa2f7",
+            background: "#8b4528",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             boxShadow: "none"
           }}>
-            <Bot size={18} color="#0f1115" />
+            <Bot size={18} color="#f3eee4" />
           </div>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 800, color: "#ececef" }}>Max &middot; AI AppSec Agent</div>
-            <div style={{ fontSize: 10, color: "#7aa2f7", display: "flex", alignItems: "center", gap: 4 }}>
+            <div style={{ fontSize: 13, fontWeight: 800, color: "#1f1b18" }}>Max &middot; AI AppSec Agent</div>
+            <div style={{ fontSize: 10, color: "#8b4528", display: "flex", alignItems: "center", gap: 4 }}>
               <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#46a36e", display: "inline-block" }} />
               Frontier Hybrid Triage Ready
             </div>
@@ -126,13 +126,13 @@ export function DeveloperAssistAgent() {
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <button
             onClick={() => setIsMinimized(!isMinimized)}
-            style={{ background: "transparent", border: "none", color: "#9aa0ab", cursor: "pointer", padding: 4 }}
+            style={{ background: "transparent", border: "none", color: "#5c5349", cursor: "pointer", padding: 4 }}
           >
             {isMinimized ? <Maximize2 size={15} /> : <Minimize2 size={15} />}
           </button>
           <button
             onClick={() => setIsOpen(false)}
-            style={{ background: "transparent", border: "none", color: "#9aa0ab", cursor: "pointer", padding: 4 }}
+            style={{ background: "transparent", border: "none", color: "#5c5349", cursor: "pointer", padding: 4 }}
           >
             <X size={16} />
           </button>
@@ -148,12 +148,12 @@ export function DeveloperAssistAgent() {
                 style={{
                   alignSelf: m.sender === "user" ? "flex-end" : "flex-start",
                   maxWidth: "85%",
-                  background: m.sender === "user" ? "#7aa2f7" : "rgba(28, 32, 40, 0.8)",
+                  background: m.sender === "user" ? "#8b4528" : "#ece5d8",
                   border: m.sender === "user" ? "none" : "1px solid var(--border)",
                   borderRadius: 12,
                   padding: "10px 14px",
                   fontSize: 12,
-                  color: "#ececef",
+                  color: "#1f1b18",
                   lineHeight: 1.4
                 }}
               >
@@ -167,9 +167,9 @@ export function DeveloperAssistAgent() {
               onClick={() => setInput("Explain this taint flow in plain English")}
               style={{
                 fontSize: 10.5,
-                background: "rgba(122, 162, 247, 0.15)",
+                background: "#f4e5dc",
                 border: "1px solid var(--border)",
-                color: "#7aa2f7",
+                color: "#8b4528",
                 padding: "4px 8px",
                 borderRadius: 6,
                 whiteSpace: "nowrap",
@@ -182,9 +182,9 @@ export function DeveloperAssistAgent() {
               onClick={() => setInput("Generate 1-Click Pull Request Fix")}
               style={{
                 fontSize: 10.5,
-                background: "rgba(122, 162, 247, 0.15)",
+                background: "#f4e5dc",
                 border: "1px solid var(--border)",
-                color: "#7aa2f7",
+                color: "#8b4528",
                 padding: "4px 8px",
                 borderRadius: 6,
                 whiteSpace: "nowrap",
@@ -198,7 +198,7 @@ export function DeveloperAssistAgent() {
           <div style={{
             padding: 10,
             borderTop: "1px solid var(--border)",
-            background: "rgba(15, 17, 21, 0.9)",
+            background: "#f3eee4",
             display: "flex",
             alignItems: "center",
             gap: 8
@@ -211,9 +211,9 @@ export function DeveloperAssistAgent() {
               onKeyDown={e => e.key === "Enter" && handleSend()}
               style={{
                 flex: 1,
-                background: "rgba(28, 32, 40, 0.9)",
+                background: "#ece5d8",
                 border: "1px solid var(--border)",
-                color: "#ececef",
+                color: "#1f1b18",
                 fontSize: 12,
                 borderRadius: 8,
                 padding: "8px 12px",
@@ -223,11 +223,11 @@ export function DeveloperAssistAgent() {
             <button
               onClick={handleSend}
               style={{
-                background: "#7aa2f7",
+                background: "#8b4528",
                 border: "none",
                 borderRadius: 8,
                 padding: "8px 12px",
-                color: "#0f1115",
+                color: "#f3eee4",
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",

@@ -2,161 +2,127 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
-import { Shield, Sparkles, Layers, ExternalLink, Menu, X, Cpu, GitGraph, Box, Terminal, Bot } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Shield, Cpu, CheckCircle2, Play, BarChart3, Layers, GitGraph, Bot, Box } from "lucide-react";
 
 const NAV_LINKS = [
-  { label: "Overview", href: "/" },
-  { label: "Scan Workspace", href: "/scan" },
-  { label: "Validation Engine", href: "/validation-engine", badge: "PROOF" },
-  { label: "AXIOM Fusion", href: "/fusion-engine", badge: "HYBRID" },
-  { label: "Dev Assist Agent", href: "/developer-assist", badge: "AI" },
-  { label: "AI-BOM Inventory", href: "/ai-bom", badge: "NEW" },
-  { label: "Taint Graph", href: "/taint-graph" },
-  { label: "MCP Server", href: "/mcp-server", badge: "IDE" },
-  { label: "Dashboard", href: "/dashboard" },
+  { label: "Front Desk", href: "/", badge: "P05", icon: Shield },
+  { label: "Scan Workspace", href: "/scan", badge: "1360px", icon: Play },
+  { label: "Proof Engine", href: "/validation-engine", badge: "6 Stages", icon: Cpu },
+  { label: "Triage Desk", href: "/dashboard", badge: "Split", icon: BarChart3 },
+  { label: "AXIOM Fusion", href: "/fusion-engine", icon: Layers },
+  { label: "Taint Graph", href: "/taint-graph", icon: GitGraph },
+  { label: "AI-BOM", href: "/ai-bom", icon: Box },
+  { label: "Dev Assist", href: "/developer-assist", icon: Bot },
 ];
 
 export default function Navbar() {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
 
   return (
-    <>
-      <div style={{
-        background: "var(--surface)",
-        borderBottom: "1px solid var(--border)",
-        padding: "5px 16px",
-        fontSize: 11.5,
-        fontWeight: 500,
-        textAlign: "center",
-        color: "var(--muted)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 8
-      }}>
-        <span style={{ color: "#ececef", fontWeight: 600 }}>
-          Gartner Leader
-        </span>
-        <span>
-          &middot; Rule-based precision plus AI triage, so you only see findings that matter
-        </span>
-      </div>
-
-      <header
-        style={{
-          height: 60,
-          background: "rgba(22, 25, 31, 0.85)",
-          backdropFilter: "blur(16px)",
-          borderBottom: "1px solid var(--border)",
-          position: "sticky",
-          top: 0,
-          zIndex: 50
-        }}
-      >
-        <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 20px", height: "100%", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-            <div style={{
-              width: 34,
-              height: 34,
-              borderRadius: 8,
-              background: "#7aa2f7",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "none"
-            }}>
-              <Shield size={18} color="#0f1115" />
+    <header
+      className="sticky top-0 z-50 border-b"
+      style={{
+        background: "rgba(243, 238, 228, 0.94)",
+        backdropFilter: "blur(10px)",
+        borderColor: "var(--border)",
+      }}
+    >
+      <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col gap-3">
+        {/* Top Masthead Row */}
+        <div className="flex items-center justify-between gap-4">
+          <Link href="/" className="flex items-center gap-3 shrink-0" style={{ textDecoration: "none" }}>
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center"
+              style={{
+                background: "var(--accent)",
+                color: "#fbf8f3",
+              }}
+            >
+              <Shield className="w-4 h-4" />
             </div>
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span style={{ fontSize: 14, fontWeight: 900, letterSpacing: "0.06em", color: "#ececef" }}>
-                  AXIOM <span style={{ color: "#7aa2f7" }}>SAST</span>
-                </span>
-                <span style={{
-                  fontSize: 9,
-                  fontWeight: 800,
-                  padding: "1px 5px",
-                  borderRadius: 4,
-                  background: "rgba(122, 162, 247, 0.15)",
-                  color: "#7aa2f7",
-                  border: "1px solid var(--border)"
-                }}>
-                  FUSION v4.2
-                </span>
-              </div>
-              <div style={{ fontSize: 10, color: "var(--muted)" }}>
-                Next-Gen Static Application Security &middot; Platform 05
+              <div className="desk-kicker">SAST SECURITY DESK &middot; PLATFORM 05</div>
+              <div
+                className="text-lg font-bold leading-tight font-editorial"
+                style={{ color: "var(--foreground)" }}
+              >
+                Desk Note &mdash; Proof-Driven SAST Validation
               </div>
             </div>
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-1">
-            {NAV_LINKS.map(link => {
-              const active = pathname === link.href;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  style={{
-                    padding: "6px 12px",
-                    borderRadius: 6,
-                    fontSize: 12,
-                    fontWeight: active ? 800 : 600,
-                    color: active ? "#7aa2f7" : "#c3c7cf",
-                    background: active ? "rgba(122, 162, 247, 0.12)" : "transparent",
-                    border: active ? "1px solid var(--border)" : "1px solid transparent",
-                    textDecoration: "none",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6
-                  }}
-                >
-                  <span>{link.label}</span>
-                  {link.badge && (
-                    <span style={{
-                      fontSize: 8.5,
-                      fontWeight: 800,
-                      padding: "1px 4px",
-                      borderRadius: 3,
-                      background: "var(--surface-3)",
-                      color: "var(--muted)"
-                    }}>
-                      {link.badge}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-          </nav>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            
+          <div className="flex items-center gap-2.5 shrink-0">
+            <div
+              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
+              style={{
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+                color: "var(--muted)",
+              }}
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" style={{ color: "var(--success)" }} />
+              <span>PTES &amp; NIST 800-115 &middot; 6-Stage Proof Pipeline</span>
+            </div>
 
             <Link
               href="/scan"
+              className="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-opacity hover:opacity-90"
               style={{
-                background: "#7aa2f7",
-                color: "#0f1115",
-                padding: "6px 14px",
-                borderRadius: 6,
-                fontSize: 12,
-                fontWeight: 800,
+                background: "var(--accent)",
+                color: "#fbf8f3",
+                border: "1px solid #72361d",
                 textDecoration: "none",
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                boxShadow: "none"
               }}
             >
-              <Sparkles size={13} />
-              <span>New Hybrid Scan</span>
+              New Hybrid Scan
             </Link>
           </div>
         </div>
-      </header>
-    </>
+
+        {/* Desk Note Pill Navigation Row */}
+        <nav className="flex items-center gap-2 overflow-x-auto pb-0.5">
+          {NAV_LINKS.map(({ href, label, badge, icon: Icon }) => {
+            const active =
+              pathname === href ||
+              (href !== "/" && pathname?.startsWith(href));
+            return (
+              <Link
+                key={href}
+                href={href}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all"
+                style={{
+                  background: active ? "var(--accent)" : "var(--surface)",
+                  color: active ? "#fbf8f3" : "var(--foreground)",
+                  border: active
+                    ? "1px solid #72361d"
+                    : "1px solid var(--border)",
+                  boxShadow: "0 1px 2px rgba(31, 27, 24, 0.04)",
+                  textDecoration: "none",
+                }}
+              >
+                <Icon
+                  className="w-3.5 h-3.5"
+                  style={{
+                    color: active ? "#fbf8f3" : "var(--muted)",
+                  }}
+                />
+                <span>{label}</span>
+                {badge && (
+                  <span
+                    className="px-1.5 py-0.5 rounded-full text-[10px] font-bold"
+                    style={{
+                      background: active ? "#fbf8f3" : "var(--accent-soft)",
+                      color: "var(--accent)",
+                    }}
+                  >
+                    {badge}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+    </header>
   );
 }

@@ -9,7 +9,7 @@ export default function Hero() {
       {/* Background glows */}
       <div
         className="absolute top-1/4 left-1/4 w-[600px] h-[600px] rounded-full pointer-events-none pulse-glow"
-        style={{ background: "radial-gradient(circle, rgba(122, 162, 247, 0.08) 0%, transparent 70%)" }}
+        style={{ background: "radial-gradient(circle, #f4e5dc 0%, transparent 70%)" }}
       />
       <div
         className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] rounded-full pointer-events-none"
@@ -28,14 +28,14 @@ export default function Hero() {
         {/* Badge */}
         <div
           className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-8 text-sm font-medium"
-          style={{ background: "rgba(122, 162, 247, 0.08)", border: "1px solid var(--border)", color: "var(--primary)" }}
+          style={{ background: "#f4e5dc", border: "1px solid var(--border)", color: "var(--primary)" }}
         >
           <Shield className="w-3.5 h-3.5" />
           Platform 5 of 34 — Static Application Security Testing
         </div>
 
         {/* Headline */}
-        <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-white mb-6 leading-tight tracking-tight">
+        <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-[#1f1b18] mb-6 leading-tight tracking-tight">
           Find Vulnerabilities{" "}
           <span style={{ color: "var(--primary)" }}>Before</span>
           <br />
@@ -45,9 +45,9 @@ export default function Hero() {
         {/* Subheading */}
         <p className="text-xl sm:text-2xl max-w-3xl mx-auto mb-10 leading-relaxed" style={{ color: "var(--muted)" }}>
           Multi-engine static analysis using{" "}
-          <span className="text-white font-semibold">CodeQL</span>,{" "}
-          <span className="text-white font-semibold">Semgrep</span>,{" "}
-          <span className="text-white font-semibold">Joern</span>, and AI-driven validation
+          <span className="text-[#1f1b18] font-semibold">CodeQL</span>,{" "}
+          <span className="text-[#1f1b18] font-semibold">Semgrep</span>,{" "}
+          <span className="text-[#1f1b18] font-semibold">Joern</span>, and AI-driven validation
           that eliminates false positives and surfaces only real, exploitable risks.
         </p>
 
@@ -56,14 +56,14 @@ export default function Hero() {
           <Link
             href="/scan"
             className="flex items-center gap-2 px-7 py-3.5 rounded-xl text-base font-semibold transition-all duration-200 hover:opacity-90 hover:scale-105"
-            style={{ background: "#7aa2f7", color: "#0f1115" }}
+            style={{ background: "#8b4528", color: "#f3eee4" }}
           >
             <Play className="w-4 h-4" />
             Run Demo Scan
           </Link>
           <Link
             href="/dashboard"
-            className="flex items-center gap-2 px-7 py-3.5 rounded-xl text-base font-semibold transition-all duration-200 hover:text-white"
+            className="flex items-center gap-2 px-7 py-3.5 rounded-xl text-base font-semibold transition-all duration-200 hover:text-[#1f1b18]"
             style={{ border: "1px solid var(--border)", color: "var(--muted)", background: "rgba(236, 236, 239, 0.02)" }}
           >
             <Eye className="w-4 h-4" />

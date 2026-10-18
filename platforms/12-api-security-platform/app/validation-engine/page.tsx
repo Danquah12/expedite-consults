@@ -27,7 +27,6 @@ import {
   API_RELEASE_GATES,
   OWASP_API_CATALOG,
 } from "@/lib/validation-engine";
-import Footer from "@/components/layout/Footer";
 
 type StudioTab =
   | "pipeline"
@@ -100,7 +99,7 @@ export default function ApiValidationEnginePage() {
                 style={{
                   background: "var(--accent-soft)",
                   color: "var(--accent)",
-                  border: "1px solid rgba(122, 162, 247, 0.28)",
+                  border: "1px solid rgba(139, 69, 40, 0.25)",
                 }}
               >
                 <Cpu className="w-3.5 h-3.5" />
@@ -132,7 +131,7 @@ export default function ApiValidationEnginePage() {
             <button
               onClick={handleRunVerification}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold transition-opacity hover:opacity-90 cursor-pointer"
-              style={{ background: "var(--accent)", color: "#0f1115" }}
+              style={{ background: "var(--accent)", color: "#fbf8f3" }}
             >
               <Play className="w-3.5 h-3.5" />
               <span>
@@ -760,13 +759,13 @@ export default function ApiValidationEnginePage() {
                     <div
                       className="p-4 rounded-lg space-y-2 text-xs"
                       style={{
-                        background: "rgba(229, 72, 77, 0.06)",
-                        border: "1px solid rgba(229, 72, 77, 0.25)",
+                        background: "#f9e6e6",
+                        border: "1px solid #e3b8b9",
                       }}
                     >
                       <div
                         className="font-semibold flex items-center gap-1.5"
-                        style={{ color: "#f27478" }}
+                        style={{ color: "var(--critical)" }}
                       >
                         <AlertTriangle className="w-3.5 h-3.5" />
                         <span>Z3 Counterexample Witness Isolated</span>
@@ -914,9 +913,9 @@ export default function ApiValidationEnginePage() {
               <div
                 className="px-3.5 py-2 rounded-lg text-xs font-semibold"
                 style={{
-                  background: "rgba(70, 163, 110, 0.12)",
-                  color: "#6bc492",
-                  border: "1px solid rgba(70, 163, 110, 0.28)",
+                  background: "#e3f0e9",
+                  color: "var(--success)",
+                  border: "1px solid #b8d8c7",
                 }}
               >
                 Catch Rate: 95.0% (Target &ge; 90.0%)
@@ -1306,7 +1305,6 @@ export default function ApiValidationEnginePage() {
           </div>
         )}
       </main>
-      <Footer />
     </div>
   );
 }

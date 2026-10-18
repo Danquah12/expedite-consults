@@ -364,7 +364,7 @@ export default function DashboardContent() {
               fontSize: 12.5,
               fontWeight: 600,
               background: "var(--primary)",
-              color: "#0f1115",
+              color: "#f3eee4",
               textDecoration: "none",
             }}
           >
@@ -582,7 +582,7 @@ export default function DashboardContent() {
                   borderRadius: 8,
                   fontSize: 12.5,
                   fontWeight: 600,
-                  background: active ? "rgba(122, 162, 247, 0.12)" : "transparent",
+                  background: active ? "#f4e5dc" : "transparent",
                   border: `1px solid ${active ? "var(--primary)" : "transparent"}`,
                   color: active ? "var(--primary)" : "var(--muted)",
                   cursor: "pointer",
@@ -1123,7 +1123,7 @@ export default function DashboardContent() {
                   textTransform: "uppercase",
                   padding: "3px 8px",
                   borderRadius: 4,
-                  background: "rgba(122, 162, 247, 0.12)",
+                  background: "#f4e5dc",
                   color: "var(--primary)",
                 }}
               >

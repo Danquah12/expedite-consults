@@ -19,7 +19,6 @@ import {
 import { FINDINGS, SCAN_SUMMARY } from "@/data/findings";
 import { API_RELEASE_GATES, API_PIPELINE_FINDINGS } from "@/lib/validation-engine";
 import type { APIFinding, APISeverity } from "@/types/api";
-import Footer from "@/components/layout/Footer";
 
 type WorkspaceLayout = "split" | "findings" | "analytics";
 type TriageViewMode = "cards" | "table";
@@ -90,7 +89,7 @@ export default function ApiSecurityDashboardPage() {
                 style={{
                   background: "var(--accent-soft)",
                   color: "var(--accent)",
-                  border: "1px solid rgba(122, 162, 247, 0.28)",
+                  border: "1px solid rgba(139, 69, 40, 0.25)",
                 }}
               >
                 <BarChart3 className="w-3.5 h-3.5" />
@@ -170,7 +169,7 @@ export default function ApiSecurityDashboardPage() {
             <Link
               href="/scan"
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold"
-              style={{ background: "var(--accent)", color: "#0f1115" }}
+              style={{ background: "var(--accent)", color: "#fbf8f3" }}
             >
               <Play className="w-3.5 h-3.5" />
               <span>New API Scan</span>
@@ -191,7 +190,7 @@ export default function ApiSecurityDashboardPage() {
               label: "Confirmed w/ 6-Point Proof",
               value: "6",
               sub: "100% Replay Reproducible",
-              tone: "#f27478",
+              tone: "var(--critical)",
             },
             {
               label: "Open / Resolved Triage",
@@ -203,13 +202,13 @@ export default function ApiSecurityDashboardPage() {
               label: "API Mutation Catch Rate",
               value: "95.0%",
               sub: "19/20 Seeded Mutants Caught",
-              tone: "#6bc492",
+              tone: "var(--success)",
             },
             {
               label: "Release Quality Gates",
               value: "6 / 6 PASS",
               sub: "Zero Unverified Confirmations",
-              tone: "#6bc492",
+              tone: "var(--success)",
             },
           ].map((kpi) => (
             <div key={kpi.label} className="card-surface p-4">
@@ -781,7 +780,6 @@ export default function ApiSecurityDashboardPage() {
           )}
         </div>
       </main>
-      <Footer />
     </div>
   );
 }

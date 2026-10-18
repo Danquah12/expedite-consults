@@ -52,18 +52,18 @@ export default function DeveloperAssistPage() {
   return (
     <div style={{ maxWidth: 1300, margin: "0 auto", padding: "40px 20px" }}>
       <div style={{ marginBottom: 26 }}>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px", borderRadius: 4, background: "rgba(122, 162, 247, 0.15)", border: "1px solid var(--border)", color: "#7aa2f7", fontSize: 11, fontWeight: 800, marginBottom: 8 }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px", borderRadius: 4, background: "#f4e5dc", border: "1px solid var(--border)", color: "#8b4528", fontSize: 11, fontWeight: 800, marginBottom: 8 }}>
           <Bot size={13} />
           <span>DEVELOPER ASSIST &amp; TRIAGE AGENT</span>
         </div>
-        <h1 style={{ fontSize: 28, fontWeight: 900, color: "#ececef" }}>1-Click Automated Remediation &amp; PR Generator</h1>
-        <p style={{ fontSize: 14, color: "#9aa0ab" }}>
+        <h1 style={{ fontSize: 28, fontWeight: 900, color: "#1f1b18" }}>1-Click Automated Remediation &amp; PR Generator</h1>
+        <p style={{ fontSize: 14, color: "#5c5349" }}>
           AI-generated, AST-validated secure code patches and unit tests ready to merge directly into GitHub/GitLab.
         </p>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 20 }}>
-        <div style={{ background: "rgba(22, 25, 31, 0.8)", border: "1px solid var(--border)", borderRadius: 14, padding: 16 }}>
+        <div style={{ background: "#fbf8f3", border: "1px solid var(--border)", borderRadius: 14, padding: 16 }}>
           <div style={{ fontSize: 12, fontWeight: 800, color: "var(--muted)", textTransform: "uppercase", marginBottom: 12 }}>
             Actionable Findings
           </div>
@@ -75,9 +75,9 @@ export default function DeveloperAssistPage() {
                 textAlign: "left",
                 padding: 12,
                 borderRadius: 8,
-                background: selectedFinding === "sqli" ? "rgba(122, 162, 247, 0.2)" : "rgba(28, 32, 40, 0.5)",
-                border: selectedFinding === "sqli" ? "1px solid #7aa2f7" : "1px solid var(--border)",
-                color: "#ececef",
+                background: selectedFinding === "sqli" ? "#f4e5dc" : "#ece5d8",
+                border: selectedFinding === "sqli" ? "1px solid #8b4528" : "1px solid var(--border)",
+                color: "#1f1b18",
                 cursor: "pointer"
               }}
             >
@@ -91,9 +91,9 @@ export default function DeveloperAssistPage() {
                 textAlign: "left",
                 padding: 12,
                 borderRadius: 8,
-                background: selectedFinding === "ssrf" ? "rgba(122, 162, 247, 0.2)" : "rgba(28, 32, 40, 0.5)",
-                border: selectedFinding === "ssrf" ? "1px solid #7aa2f7" : "1px solid var(--border)",
-                color: "#ececef",
+                background: selectedFinding === "ssrf" ? "#f4e5dc" : "#ece5d8",
+                border: selectedFinding === "ssrf" ? "1px solid #8b4528" : "1px solid var(--border)",
+                color: "#1f1b18",
                 cursor: "pointer"
               }}
             >
@@ -103,18 +103,18 @@ export default function DeveloperAssistPage() {
           </div>
         </div>
 
-        <div style={{ background: "rgba(22, 25, 31, 0.8)", border: "1px solid var(--border)", borderRadius: 14, padding: 22 }}>
+        <div style={{ background: "#fbf8f3", border: "1px solid var(--border)", borderRadius: 14, padding: 22 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
             <div>
-              <h2 style={{ fontSize: 17, fontWeight: 900, color: "#ececef" }}>{current.title}</h2>
-              <div style={{ fontSize: 12, color: "#7aa2f7", fontFamily: "monospace", marginTop: 2 }}>{current.file} &middot; {current.cwe}</div>
+              <h2 style={{ fontSize: 17, fontWeight: 900, color: "#1f1b18" }}>{current.title}</h2>
+              <div style={{ fontSize: 12, color: "#8b4528", fontFamily: "monospace", marginTop: 2 }}>{current.file} &middot; {current.cwe}</div>
             </div>
 
             <button
               onClick={() => setPrCreated(true)}
               style={{
-                background: prCreated ? "#46a36e" : "#7aa2f7",
-                color: "#0f1115",
+                background: prCreated ? "#46a36e" : "#8b4528",
+                color: "#f3eee4",
                 padding: "8px 18px",
                 borderRadius: 6,
                 border: "none",
@@ -132,15 +132,15 @@ export default function DeveloperAssistPage() {
           </div>
 
           <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "#c3c7cf", marginBottom: 6 }}>AST-Verified Git Diff</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#4a4239", marginBottom: 6 }}>AST-Verified Git Diff</div>
             <pre style={{
-              background: "#0f1115",
+              background: "#f3eee4",
               border: "1px solid var(--border)",
               borderRadius: 8,
               padding: 14,
               fontSize: 12,
               fontFamily: "monospace",
-              color: "#ececef",
+              color: "#1f1b18",
               overflowX: "auto",
               lineHeight: 1.5
             }}>
@@ -149,15 +149,15 @@ export default function DeveloperAssistPage() {
           </div>
 
           <div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "#c3c7cf", marginBottom: 6 }}>Generated Jest Security Regression Test</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#4a4239", marginBottom: 6 }}>Generated Jest Security Regression Test</div>
             <pre style={{
-              background: "#0f1115",
+              background: "#f3eee4",
               border: "1px solid var(--border)",
               borderRadius: 8,
               padding: 14,
               fontSize: 12,
               fontFamily: "monospace",
-              color: "#7aa2f7",
+              color: "#8b4528",
               overflowX: "auto",
               lineHeight: 1.5
             }}>

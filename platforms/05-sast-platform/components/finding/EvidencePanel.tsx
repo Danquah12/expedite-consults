@@ -105,8 +105,8 @@ export default function EvidencePanel({ finding: f }: Props) {
     <div className="rounded-2xl p-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
       
       <div className="flex items-center justify-between mb-4 border-b pb-3" style={{ borderColor: "var(--border)" }}>
-        <h2 className="text-lg font-bold text-white flex items-center gap-2">
-          <Code2 className="w-5 h-5 text-[#7aa2f7]" />
+        <h2 className="text-lg font-bold text-[#1f1b18] flex items-center gap-2">
+          <Code2 className="w-5 h-5 text-[#8b4528]" />
           Interactive Taint Flow Simulator
         </h2>
         <button
@@ -114,8 +114,8 @@ export default function EvidencePanel({ finding: f }: Props) {
           disabled={isPlaying}
           className="btn-primary flex items-center gap-1 text-xs py-1.5 px-3"
           style={{
-            background: isPlaying ? "var(--border)" : "#7aa2f7",
-            color: isPlaying ? "var(--muted)" : "#0f1115",
+            background: isPlaying ? "var(--border)" : "#8b4528",
+            color: isPlaying ? "var(--muted)" : "#f3eee4",
             border: "none",
             cursor: isPlaying ? "default" : "pointer"
           }}
@@ -142,7 +142,7 @@ export default function EvidencePanel({ finding: f }: Props) {
                   style={{
                     padding: 12,
                     borderRadius: 10,
-                    background: isSelected ? "rgba(122, 162, 247, 0.08)" : "var(--bg)",
+                    background: isSelected ? "#f4e5dc" : "var(--bg)",
                     border: isSelected ? "1px solid var(--border)" : "1px solid var(--border)",
                     cursor: isPlaying ? "default" : "pointer",
                     position: "relative",
@@ -165,7 +165,7 @@ export default function EvidencePanel({ finding: f }: Props) {
                       Line {step.line}
                     </span>
                   </div>
-                  <div style={{ fontSize: 10.5, fontFamily: "monospace", color: "#ececef", margin: "4px 0", wordBreak: "break-all" }}>
+                  <div style={{ fontSize: 10.5, fontFamily: "monospace", color: "#1f1b18", margin: "4px 0", wordBreak: "break-all" }}>
                     {f.taintPath[idx]}
                   </div>
                   <div style={{ fontSize: 9.5, color: "var(--muted)", lineHeight: "1.3" }}>
@@ -208,7 +208,7 @@ export default function EvidencePanel({ finding: f }: Props) {
                     key={i}
                     style={{
                       display: "flex",
-                      background: isSelected ? "rgba(122, 162, 247, 0.08)" : "transparent",
+                      background: isSelected ? "#f4e5dc" : "transparent",
                       borderLeft: isSelected ? "3px solid var(--primary)" : "3px solid transparent",
                       padding: "1.5px 0",
                       marginRight: -12,
@@ -225,8 +225,8 @@ export default function EvidencePanel({ finding: f }: Props) {
                         : line.startsWith("import") || line.startsWith("package")
                         ? "var(--muted)"
                         : line.trim().startsWith("//")
-                        ? "#6f7581"
-                        : "#ececef",
+                        ? "#867b6e"
+                        : "#1f1b18",
                       fontStyle: line.trim().startsWith("//") ? "italic" : "normal",
                       whiteSpace: "pre"
                     }}>
@@ -251,9 +251,9 @@ export default function EvidencePanel({ finding: f }: Props) {
           </div>
           <Terminal size={10} color="var(--muted)" />
         </div>
-        <div style={{ padding: "8px 12px", background: "#0f1115", overflowY: "auto", fontFamily: "monospace", fontSize: 10, color: "var(--muted)", height: 80 }}>
+        <div style={{ padding: "8px 12px", background: "#f3eee4", overflowY: "auto", fontFamily: "monospace", fontSize: 10, color: "var(--muted)", height: 80 }}>
           {simulationLogs.map((log, i) => (
-            <div key={i} className={log.includes("✅") ? "text-[#46a36e]" : log.includes("Step") ? "text-[#7aa2f7]" : ""}>
+            <div key={i} className={log.includes("✅") ? "text-[#46a36e]" : log.includes("Step") ? "text-[#8b4528]" : ""}>
               $ {log}
             </div>
           ))}

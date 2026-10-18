@@ -74,7 +74,7 @@ export default function AIExplanation({ finding: f }: Props) {
   return (
     <div
       className="rounded-2xl overflow-hidden"
-      style={{ border: "1px solid var(--border)", background: "rgba(122, 162, 247, 0.04)" }}
+      style={{ border: "1px solid var(--border)", background: "#f4e5dc" }}
     >
       <button
         onClick={() => setOpen(!open)}
@@ -83,12 +83,12 @@ export default function AIExplanation({ finding: f }: Props) {
         <div className="flex items-center gap-3">
           <div
             className="w-8 h-8 rounded-lg flex items-center justify-center"
-            style={{ background: "rgba(122, 162, 247, 0.15)", border: "1px solid var(--border)" }}
+            style={{ background: "#f4e5dc", border: "1px solid var(--border)" }}
           >
-            <Sparkles className="w-4 h-4" style={{ color: "#7aa2f7" }} />
+            <Sparkles className="w-4 h-4" style={{ color: "#8b4528" }} />
           </div>
           <div className="text-left">
-            <div className="text-sm font-semibold text-white">AI Explanation</div>
+            <div className="text-sm font-semibold text-[#1f1b18]">AI Explanation</div>
             <div className="text-xs" style={{ color: "var(--muted)" }}>Plain English · Analogy · Dev Tip</div>
           </div>
         </div>
@@ -107,9 +107,9 @@ export default function AIExplanation({ finding: f }: Props) {
                 onClick={() => setTab(t.key)}
                 className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
                 style={{
-                  background: tab === t.key ? "rgba(122, 162, 247, 0.2)" : "transparent",
-                  border: `1px solid ${tab === t.key ? "rgba(122, 162, 247, 0.5)" : "var(--border)"}`,
-                  color: tab === t.key ? "#7aa2f7" : "var(--muted)",
+                  background: tab === t.key ? "#f4e5dc" : "transparent",
+                  border: `1px solid ${tab === t.key ? "#f4e5dc" : "var(--border)"}`,
+                  color: tab === t.key ? "#8b4528" : "var(--muted)",
                 }}
               >
                 {t.label}
@@ -121,13 +121,13 @@ export default function AIExplanation({ finding: f }: Props) {
             className="rounded-xl p-4 text-sm leading-relaxed"
             style={{ background: "var(--background)", border: "1px solid var(--border)", color: "var(--muted)" }}
           >
-            {tab === "plain"   && <><span className="text-white font-semibold">What's happening: </span>{expl.plain}</>}
-            {tab === "analogy" && <><span className="text-white font-semibold">Think of it like this: </span>{expl.analogy}</>}
-            {tab === "devTip"  && <><span className="text-white font-semibold">How to fix it: </span>{expl.devTip}</>}
+            {tab === "plain"   && <><span className="text-[#1f1b18] font-semibold">What's happening: </span>{expl.plain}</>}
+            {tab === "analogy" && <><span className="text-[#1f1b18] font-semibold">Think of it like this: </span>{expl.analogy}</>}
+            {tab === "devTip"  && <><span className="text-[#1f1b18] font-semibold">How to fix it: </span>{expl.devTip}</>}
           </div>
 
           <div className="mt-3 flex items-center gap-2 text-xs" style={{ color: "var(--muted)" }}>
-            <Sparkles className="w-3 h-3" style={{ color: "#7aa2f7" }} />
+            <Sparkles className="w-3 h-3" style={{ color: "#8b4528" }} />
             AI-generated explanation for {f.cwe} · Always verify with your security team
           </div>
         </div>

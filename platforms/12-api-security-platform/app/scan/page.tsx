@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { FINDINGS, SCAN_SUMMARY } from "@/data/findings";
 import { API_PIPELINE_FINDINGS } from "@/lib/validation-engine";
-import Footer from "@/components/layout/Footer";
 
 type WorkbenchTab =
   | "post-scan-proof"
@@ -74,7 +73,7 @@ export default function ApiScanWorkspacePage() {
                 style={{
                   background: "var(--accent-soft)",
                   color: "var(--accent)",
-                  border: "1px solid rgba(122, 162, 247, 0.28)",
+                  border: "1px solid rgba(139, 69, 40, 0.25)",
                 }}
               >
                 <Terminal className="w-3.5 h-3.5" />
@@ -230,7 +229,7 @@ export default function ApiScanWorkspacePage() {
                 <button
                   onClick={handleRunScan}
                   className="w-full py-2.5 px-4 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition-opacity hover:opacity-90"
-                  style={{ background: "var(--accent)", color: "#0f1115" }}
+                  style={{ background: "var(--accent)", color: "#fbf8f3" }}
                 >
                   {scanning ? (
                     <>
@@ -303,7 +302,7 @@ export default function ApiScanWorkspacePage() {
                             ? "var(--success)"
                             : ep.status.startsWith("Likely")
                             ? "var(--high)"
-                            : "#f27478",
+                            : "var(--critical)",
                         }}
                       >
                         {ep.status}
@@ -986,7 +985,6 @@ Content-Type: application/json
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 }

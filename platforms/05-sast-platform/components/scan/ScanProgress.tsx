@@ -4,10 +4,10 @@ import { useEffect, useState, useRef } from "react";
 import { CheckCircle2, Circle, FileCode2, GitCommit, ShieldAlert } from "lucide-react";
 
 const ENGINE_DETAILS_MAP: Record<string, { color: string; label: string }> = {
-  CodeQL:    { color: "#7aa2f7", label: "Tracing inter-procedural dataflows & taint paths..." },
-  Semgrep:   { color: "#7aa2f7", label: "Matching structural AST rule queries..." },
+  CodeQL:    { color: "#8b4528", label: "Tracing inter-procedural dataflows & taint paths..." },
+  Semgrep:   { color: "#8b4528", label: "Matching structural AST rule queries..." },
   Snyk:      { color: "#e2853b", label: "Evaluating NVD CVE dependency call-graph reachability..." },
-  Checkmarx: { color: "#7aa2f7", label: "Auditing OWASP Top 10, NIST 800-53 & PCI-DSS controls..." },
+  Checkmarx: { color: "#8b4528", label: "Auditing OWASP Top 10, NIST 800-53 & PCI-DSS controls..." },
 };
 
 const ALL_LOGS = [
@@ -140,7 +140,7 @@ export default function ScanProgress({ repo, language, engines, onComplete }: Pr
         >
           <div style={{ fontFamily: "monospace", fontSize: 13 }}>
             <span style={{ color: "var(--muted)" }}>Target: </span>
-            <span style={{ color: "#7aa2f7", fontWeight: 700 }}>{repo}</span>
+            <span style={{ color: "#8b4528", fontWeight: 700 }}>{repo}</span>
             <span style={{ color: "var(--muted)" }}> ({language})</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, color: "#46a36e", fontFamily: "monospace" }}>
@@ -177,14 +177,14 @@ export default function ScanProgress({ repo, language, engines, onComplete }: Pr
         <div style={{ background: "var(--background)", border: "1px solid var(--border)", borderRadius: 12, padding: 16 }}>
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 8 }}>
             <span style={{ color: "var(--foreground)", fontWeight: 700 }}>Overall Multi-Engine Progress</span>
-            <span style={{ color: "#7aa2f7", fontWeight: 700 }}>{overallProgress}%</span>
+            <span style={{ color: "#8b4528", fontWeight: 700 }}>{overallProgress}%</span>
           </div>
           <div style={{ height: 8, borderRadius: 999, background: "var(--surface-2)", overflow: "hidden" }}>
             <div
               style={{
                 height: "100%",
                 width: `${overallProgress}%`,
-                background: "#7aa2f7",
+                background: "#8b4528",
                 transition: "width 0.2s ease",
               }}
             />
@@ -194,7 +194,7 @@ export default function ScanProgress({ repo, language, engines, onComplete }: Pr
         {/* Per-Engine Progress */}
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {activeEngines.map((engineName, idx) => {
-            const cfg = ENGINE_DETAILS_MAP[engineName] || { color: "#7aa2f7", label: "Running analysis..." };
+            const cfg = ENGINE_DETAILS_MAP[engineName] || { color: "#8b4528", label: "Running analysis..." };
             const isEngineDone = done[idx];
             return (
               <div
@@ -266,7 +266,7 @@ export default function ScanProgress({ repo, language, engines, onComplete }: Pr
                 style={{
                   fontSize: 12,
                   color: log.startsWith("[VALIDATOR]")
-                    ? "#7aa2f7"
+                    ? "#8b4528"
                     : log.startsWith("[DONE]")
                     ? "#46a36e"
                     : log.startsWith("[Snyk]")

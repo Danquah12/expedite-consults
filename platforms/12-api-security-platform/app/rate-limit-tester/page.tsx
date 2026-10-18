@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { Activity, Cpu } from "lucide-react";
-import Footer from "@/components/layout/Footer";
 
 const QUOTA_POLICIES = [
   {
@@ -38,7 +37,7 @@ export default function RateLimitTesterPage() {
         <section className="card-surface p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-medium"
-              style={{ background: "var(--accent-soft)", color: "var(--accent)", border: "1px solid rgba(122,162,247,0.28)" }}>
+              style={{ background: "var(--accent-soft)", color: "var(--accent)", border: "1px solid rgba(139, 69, 40, 0.25)" }}>
               <Activity className="w-3.5 h-3.5" />
               <span>OWASP API4:2023 &middot; CWE-770 / CWE-307 &middot; Resource Quota Verifier</span>
             </div>
@@ -75,7 +74,6 @@ export default function RateLimitTesterPage() {
           ))}
         </div>
       </main>
-      <Footer />
     </div>
   );
 }

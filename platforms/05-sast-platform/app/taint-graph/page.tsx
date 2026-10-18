@@ -13,14 +13,14 @@ export default function TaintGraphPage() {
           <GitGraph size={13} />
           <span>INTER-PROCEDURAL TAINT GRAPH</span>
         </div>
-        <h1 style={{ fontSize: 28, fontWeight: 900, color: "#ececef" }}>Inter-Procedural Data Flow DAG</h1>
-        <p style={{ fontSize: 14, color: "#9aa0ab" }}>
+        <h1 style={{ fontSize: 28, fontWeight: 900, color: "#1f1b18" }}>Inter-Procedural Data Flow DAG</h1>
+        <p style={{ fontSize: 14, color: "#5c5349" }}>
           Track untrusted input propagation across controllers, services, and queries to identify the exact sanitizer bypass.
         </p>
       </div>
 
       <div style={{
-        background: "rgba(22, 25, 31, 0.9)",
+        background: "#fbf8f3",
         border: "1px solid var(--border)",
         borderRadius: 16,
         padding: 24,
@@ -40,29 +40,29 @@ export default function TaintGraphPage() {
             }}
           >
             <div style={{ fontSize: 10, fontWeight: 800, color: "#e5484d", textTransform: "uppercase" }}>TAINT SOURCE</div>
-            <div style={{ fontSize: 13, fontWeight: 900, color: "#ececef", marginTop: 4 }}>req.body.searchQuery</div>
-            <div style={{ fontSize: 10.5, color: "#c3c7cf", marginTop: 2 }}>routes/api.ts:L14</div>
+            <div style={{ fontSize: 13, fontWeight: 900, color: "#1f1b18", marginTop: 4 }}>req.body.searchQuery</div>
+            <div style={{ fontSize: 10.5, color: "#4a4239", marginTop: 2 }}>routes/api.ts:L14</div>
           </div>
 
-          <div style={{ color: "#7aa2f7", fontSize: 20, fontWeight: 900 }}>&rarr;</div>
+          <div style={{ color: "#8b4528", fontSize: 20, fontWeight: 900 }}>&rarr;</div>
 
           <div
             onClick={() => setSelectedNode("controller")}
             style={{
               padding: "16px 20px",
               borderRadius: 12,
-              background: "rgba(122, 162, 247, 0.15)",
-              border: selectedNode === "controller" ? "2px solid #7aa2f7" : "1px solid var(--border)",
+              background: "#f4e5dc",
+              border: selectedNode === "controller" ? "2px solid #8b4528" : "1px solid var(--border)",
               cursor: "pointer",
               textAlign: "center"
             }}
           >
-            <div style={{ fontSize: 10, fontWeight: 800, color: "#7aa2f7", textTransform: "uppercase" }}>CONTROLLER</div>
-            <div style={{ fontSize: 13, fontWeight: 900, color: "#ececef", marginTop: 4 }}>searchController.handle()</div>
-            <div style={{ fontSize: 10.5, color: "#c3c7cf", marginTop: 2 }}>controllers/search.ts:L28</div>
+            <div style={{ fontSize: 10, fontWeight: 800, color: "#8b4528", textTransform: "uppercase" }}>CONTROLLER</div>
+            <div style={{ fontSize: 13, fontWeight: 900, color: "#1f1b18", marginTop: 4 }}>searchController.handle()</div>
+            <div style={{ fontSize: 10.5, color: "#4a4239", marginTop: 2 }}>controllers/search.ts:L28</div>
           </div>
 
-          <div style={{ color: "#7aa2f7", fontSize: 20, fontWeight: 900 }}>&rarr;</div>
+          <div style={{ color: "#8b4528", fontSize: 20, fontWeight: 900 }}>&rarr;</div>
 
           <div
             onClick={() => setSelectedNode("sanitizer")}
@@ -76,11 +76,11 @@ export default function TaintGraphPage() {
             }}
           >
             <div style={{ fontSize: 10, fontWeight: 800, color: "#e2853b", textTransform: "uppercase" }}>SANITIZER GAP</div>
-            <div style={{ fontSize: 13, fontWeight: 900, color: "#ececef", marginTop: 4 }}>No Escaping Applied</div>
-            <div style={{ fontSize: 10.5, color: "#c3c7cf", marginTop: 2 }}>Bypassed Validation</div>
+            <div style={{ fontSize: 13, fontWeight: 900, color: "#1f1b18", marginTop: 4 }}>No Escaping Applied</div>
+            <div style={{ fontSize: 10.5, color: "#4a4239", marginTop: 2 }}>Bypassed Validation</div>
           </div>
 
-          <div style={{ color: "#7aa2f7", fontSize: 20, fontWeight: 900 }}>&rarr;</div>
+          <div style={{ color: "#8b4528", fontSize: 20, fontWeight: 900 }}>&rarr;</div>
 
           <div
             onClick={() => setSelectedNode("sink")}
@@ -94,15 +94,15 @@ export default function TaintGraphPage() {
             }}
           >
             <div style={{ fontSize: 10, fontWeight: 800, color: "#e5484d", textTransform: "uppercase" }}>DANGEROUS SINK</div>
-            <div style={{ fontSize: 13, fontWeight: 900, color: "#ececef", marginTop: 4 }}>db.queryRaw(sql)</div>
-            <div style={{ fontSize: 10.5, color: "#c3c7cf", marginTop: 2 }}>db/postgres.ts:L92</div>
+            <div style={{ fontSize: 13, fontWeight: 900, color: "#1f1b18", marginTop: 4 }}>db.queryRaw(sql)</div>
+            <div style={{ fontSize: 10.5, color: "#4a4239", marginTop: 2 }}>db/postgres.ts:L92</div>
           </div>
         </div>
       </div>
 
-      <div style={{ background: "rgba(22, 25, 31, 0.8)", border: "1px solid var(--border)", borderRadius: 14, padding: 20 }}>
-        <h3 style={{ fontSize: 15, fontWeight: 800, color: "#ececef", marginBottom: 6 }}>Taint Flow Analysis: {selectedNode.toUpperCase()}</h3>
-        <p style={{ fontSize: 13, color: "#9aa0ab", lineHeight: 1.5 }}>
+      <div style={{ background: "#fbf8f3", border: "1px solid var(--border)", borderRadius: 14, padding: 20 }}>
+        <h3 style={{ fontSize: 15, fontWeight: 800, color: "#1f1b18", marginBottom: 6 }}>Taint Flow Analysis: {selectedNode.toUpperCase()}</h3>
+        <p style={{ fontSize: 13, color: "#5c5349", lineHeight: 1.5 }}>
           The user parameter is passed across 3 stack frames without input sanitization or parameterized bindings, resulting in direct execution at PostgreSQL sink.
         </p>
       </div>

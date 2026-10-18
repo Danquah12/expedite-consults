@@ -19,7 +19,7 @@ export default function FindingHeader({ finding: f }: Props) {
     <div>
       <Link
         href="/dashboard"
-        className="inline-flex items-center gap-2 text-sm mb-6 transition-colors hover:text-white"
+        className="inline-flex items-center gap-2 text-sm mb-6 transition-colors hover:text-[#1f1b18]"
         style={{ color: "var(--muted)" }}
       >
         <ArrowLeft className="w-4 h-4" />
@@ -51,13 +51,13 @@ export default function FindingHeader({ finding: f }: Props) {
         </span>
       </div>
 
-      <h1 className="text-3xl font-bold text-white mb-5">{f.title}</h1>
+      <h1 className="text-3xl font-bold text-[#1f1b18] mb-5">{f.title}</h1>
 
       <div className="flex flex-wrap gap-3">
         {[
           { label: "CVSS",     value: f.cvss.toFixed(1),                    color: f.cvss >= 9 ? "var(--critical)" : f.cvss >= 7 ? "var(--high)" : "var(--medium)" },
           { label: "CWE",      value: f.cwe,                                 color: "var(--primary)" },
-          { label: "OWASP",    value: f.owasp,                               color: "#7aa2f7" },
+          { label: "OWASP",    value: f.owasp,                               color: "#8b4528" },
           { label: "MITRE",    value: f.mitre,                               color: "#d6a847" },
           { label: "EPSS",     value: `${(f.epss * 100).toFixed(1)}%`,      color: "var(--muted)" },
           { label: "Language", value: f.language,                            color: "var(--muted)" },

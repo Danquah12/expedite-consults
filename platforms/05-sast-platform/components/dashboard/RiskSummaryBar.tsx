@@ -50,9 +50,9 @@ export default function RiskSummaryBar({ findings, onCardClick }: Props) {
       suffix: "%",
       sub: "Engine consensus score",
       icon: CheckCircle2,
-      color: "text-[#7aa2f7]",
-      bg: "rgba(122, 162, 247, 0.06)",
-      border: "rgba(122, 162, 247, 0.2)",
+      color: "text-[#8b4528]",
+      bg: "#f4e5dc",
+      border: "#f4e5dc",
     },
   ];
 

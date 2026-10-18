@@ -77,8 +77,8 @@ export default function ChallengeAgent({ finding: f }: Props) {
   return (
     <div className="rounded-2xl p-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-        <h2 className="text-lg font-bold text-white flex items-center gap-2">
-          <ShieldCheck className="w-5 h-5 text-[#7aa2f7]" />
+        <h2 className="text-lg font-bold text-[#1f1b18] flex items-center gap-2">
+          <ShieldCheck className="w-5 h-5 text-[#8b4528]" />
           AI Challenge Agent (False-Positive Solver)
         </h2>
         <button
@@ -86,8 +86,8 @@ export default function ChallengeAgent({ finding: f }: Props) {
           disabled={running}
           className="btn-primary flex items-center gap-1.5 text-xs py-1.5 px-3.5"
           style={{
-            background: running ? "var(--border)" : "#7aa2f7",
-            color: running ? "var(--muted)" : "#0f1115",
+            background: running ? "var(--border)" : "#8b4528",
+            color: running ? "var(--muted)" : "#f3eee4",
             border: "none",
             cursor: running ? "default" : "pointer"
           }}
@@ -133,9 +133,9 @@ export default function ChallengeAgent({ finding: f }: Props) {
             <div className="terminal-dot" style={{ background: "#46a36e" }} />
             <span className="ml-2 text-xs" style={{ color: "var(--muted)" }}>adversarial-solver-daemon</span>
           </div>
-          <div style={{ padding: 12, background: "#0f1115", fontFamily: "monospace", fontSize: 10.5, color: "var(--muted)", minHeight: 90, maxHeight: 150, overflowY: "auto" }}>
+          <div style={{ padding: 12, background: "#f3eee4", fontFamily: "monospace", fontSize: 10.5, color: "var(--muted)", minHeight: 90, maxHeight: 150, overflowY: "auto" }}>
             {logs.map((log, i) => (
-              <div key={i} className={log.includes("Verdict") ? "text-[#46a36e] font-bold" : log.includes("WARNING") ? "text-[#e5484d]" : log.includes("verified") ? "text-[#7aa2f7]" : ""}>
+              <div key={i} className={log.includes("Verdict") ? "text-[#46a36e] font-bold" : log.includes("WARNING") ? "text-[#e5484d]" : log.includes("verified") ? "text-[#8b4528]" : ""}>
                 $ {log}
               </div>
             ))}
