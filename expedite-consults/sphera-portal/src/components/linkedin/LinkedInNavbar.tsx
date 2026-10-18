@@ -166,11 +166,12 @@ export function LinkedInNavbar({
     { id: "home", label: t("nav_home", "Home"), shortLabel: t("nav_home_short", "Home"), icon: House, badge: 2, priority: "always" },
     { id: "network", label: t("nav_network", "Network"), shortLabel: t("nav_network_short", "Network"), icon: Users, badge: 0, priority: "always" },
     { id: "jobs", label: t("nav_jobs", "Jobs"), shortLabel: t("nav_jobs_short", "Jobs"), icon: Briefcase, badge: 0, priority: "always" },
+    { id: "messaging", label: t("nav_messages", "Messaging"), shortLabel: t("nav_messages_short", "Msgs"), icon: MessageSquare, badge: unreadMessagesCount || 1, priority: "always" },
+    { id: "notifications", label: t("nav_alerts", "Notifications"), shortLabel: t("nav_alerts_short", "Alerts"), icon: Bell, badge: unreadNotificationsCount || 3, priority: "always" },
     { id: "marketplace", label: t("nav_marketplace", "Marketplace"), shortLabel: t("nav_marketplace_short", "Market"), icon: ShoppingBag, badge: 0, isMarketplace: true, priority: "always" },
-    { id: "media", label: t("nav_media", "Media"), shortLabel: t("nav_media_short", "Media"), icon: Tv, badge: 1, priority: "wide" },
-    { id: "pulserooms", label: t("nav_pulse", "Pulse"), shortLabel: t("nav_pulse_short", "Pulse"), icon: Radio, badge: 0, priority: "ultrawide" },
-    { id: "learning", label: t("nav_learning", "Learning"), shortLabel: t("nav_learning_short", "Learn"), icon: GraduationCap, badge: 1, priority: "wide" },
-    { id: "messaging", label: t("nav_messages", "Messages"), shortLabel: t("nav_messages_short", "Msgs"), icon: MessageSquare, badge: unreadMessagesCount || 1, priority: "always" },
+    { id: "learning", label: t("nav_learning", "Learning"), shortLabel: t("nav_learning_short", "Learn"), icon: GraduationCap, badge: 1, priority: "always" },
+    { id: "media", label: t("nav_media", "Media"), shortLabel: t("nav_media_short", "Media"), icon: Tv, badge: 1, priority: "always" },
+    { id: "pulserooms", label: t("nav_pulse", "Pulse"), shortLabel: t("nav_pulse_short", "Pulse"), icon: Radio, badge: 0, priority: "always" },
   ]
 
   const isAdminUser = isSuperAdminUser(user)
@@ -506,29 +507,39 @@ export function LinkedInNavbar({
           {primaryNavItems.map((item) => {
             const Icon = item.icon
             const isActive = activeTab === item.id
-            const isWideOnly = item.priority === 'wide'
-            const isUltrawideOnly = item.priority === 'ultrawide'
 
             return (
               <button
                 key={item.id}
                 onClick={() => onSelectTab(item.id)}
-                className={`relative flex min-w-[48px] xl:min-w-[56px] flex-col items-center justify-center py-1 px-1 text-xs transition-all group shrink-0 cursor-pointer ${
-                  isWideOnly ? "hidden xl:flex" : ""
-                } ${
-                  isUltrawideOnly ? "hidden 2xl:flex" : ""
-                } ${
+                className={`relative flex min-w-[44px] xl:min-w-[52px] 2xl:min-w-[58px] flex-col items-center justify-center py-1 px-1 text-xs transition-all group shrink-0 cursor-pointer ${
                   isActive
                     ? "text-[#0A66C2] font-semibold border-b-2 border-[#0A66C2]"
                     : item.isMarketplace
                     ? "text-purple-600 dark:text-purple-400 font-bold hover:text-purple-700"
+                    : item.id === 'learning'
+                    ? "text-blue-600 dark:text-blue-400 hover:text-blue-700"
+                    : item.id === 'media'
+                    ? "text-rose-600 dark:text-rose-400 hover:text-rose-700"
+                    : item.id === 'pulserooms'
+                    ? "text-emerald-600 dark:text-emerald-400 hover:text-emerald-700"
                     : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
                 }`}
                 title={item.label}
               >
                 <div className="relative">
                   <Icon className={`h-4.5 w-4.5 xl:h-5 xl:w-5 transition-transform group-hover:scale-110 ${
-                    isActive ? "text-[#0A66C2]" : item.isMarketplace ? "text-purple-600 dark:text-purple-400" : ""
+                    isActive
+                      ? "text-[#0A66C2]"
+                      : item.isMarketplace
+                      ? "text-purple-600 dark:text-purple-400"
+                      : item.id === 'learning'
+                      ? "text-blue-600 dark:text-blue-400"
+                      : item.id === 'media'
+                      ? "text-rose-600 dark:text-rose-400"
+                      : item.id === 'pulserooms'
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : ""
                   }`} />
                   {item.badge > 0 && (
                     <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white shadow-xs">
@@ -544,29 +555,11 @@ export function LinkedInNavbar({
           })}
         </nav>
 
-        {/* Right Side Controls (More Dropdown + AI Assistant + Notifications + Me Profile + Theme) */}
+        {/* Right Side Controls (AI Assistant + Me Profile + More Hubs + Theme) */}
         <div className="flex items-center gap-1 sm:gap-1.5 lg:gap-2 shrink-0">
-          {/* "More ▾" Dropdown Menu Trigger (On lg+ screens) */}
-          <div ref={desktopMoreBtnRef} className="hidden lg:block relative shrink-0">
-            <button
-              type="button"
-              onClick={() => {
-                setIsMoreOpen(!isMoreOpen)
-                setIsMeOpen(false)
-              }}
-              className={`flex min-w-[44px] flex-col items-center justify-center py-1 text-xs transition-colors cursor-pointer ${
-                isMoreOpen
-                  ? "text-[#0A66C2] font-bold"
-                  : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-              }`}
-              title="More Modules & Hubs"
-            >
-              <Grid3X3 className="h-4.5 w-4.5" />
-              <span className="flex items-center gap-0.5 text-[10px] xl:text-[11px] mt-0.5 font-medium">
-                {t("nav_more", "More")} <ChevronDown className="h-3 w-3" />
-              </span>
-            </button>
-          </div>
+          {/* Subtle Divider for desktop */}
+          <div className="hidden lg:block h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-0.5" />
+
           {/* Vibe AI Global Assistant Launcher Button - LinkedIn Premium Styling */}
           <button
             onClick={onOpenAIAssistant}
@@ -599,26 +592,25 @@ export function LinkedInNavbar({
             )}
           </button>
 
-          {/* Notifications Button (Mobile & Desktop) */}
+          {/* Mobile Notifications Button (lg:hidden - desktop has it in primaryNavItems) */}
           <button
             onClick={() => onSelectTab('notifications')}
-            className={`relative p-1.5 lg:py-1 lg:px-1 flex min-w-[34px] lg:min-w-[38px] flex-col items-center justify-center text-xs transition-colors shrink-0 cursor-pointer rounded-full lg:rounded-none ${
+            className={`lg:hidden relative p-1.5 rounded-full transition-colors cursor-pointer ${
               activeTab === 'notifications'
-                ? "text-[#0A66C2] font-semibold bg-blue-50 dark:bg-blue-950/40 lg:bg-transparent"
-                : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 lg:hover:bg-transparent"
+                ? "text-[#0A66C2] bg-blue-50 dark:bg-blue-950/40"
+                : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
             }`}
             title="Notifications"
             aria-label="Notifications"
           >
             <div className="relative">
-              <Bell className="h-4.5 w-4.5 lg:h-4.5 lg:w-4.5" />
+              <Bell className="h-5 w-5" />
               {unreadNotificationsCount > 0 && (
-                <span className="absolute -right-1 -top-1 lg:-right-2 lg:-top-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-600 px-0.5 text-[9px] font-bold text-white shadow-xs">
+                <span className="absolute -right-1 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-600 px-0.5 text-[9px] font-bold text-white shadow-xs">
                   {unreadNotificationsCount}
                 </span>
               )}
             </div>
-            <span className="hidden xl:inline text-[10px] mt-0.5">Alerts</span>
           </button>
 
           {/* "Me" Profile Menu Dropdown */}
@@ -871,7 +863,30 @@ export function LinkedInNavbar({
             )}
           </div>
 
-          {/* Desktop-only Auth / Role Gate Button */}
+          {/* Subtle Divider before More / Hubs */}
+          <div className="hidden lg:block h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-0.5" />
+
+          {/* "More ▾" Dropdown Menu Trigger (On lg+ screens, placed on far right next to Me ▾) */}
+          <div ref={desktopMoreBtnRef} className="hidden lg:block relative shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                setIsMoreOpen(!isMoreOpen)
+                setIsMeOpen(false)
+              }}
+              className={`flex min-w-[44px] flex-col items-center justify-center py-1 text-xs transition-colors cursor-pointer ${
+                isMoreOpen
+                  ? "text-[#0A66C2] font-bold"
+                  : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+              }`}
+              title="More Modules & Hubs"
+            >
+              <Grid3X3 className="h-4.5 w-4.5" />
+              <span className="flex items-center gap-0.5 text-[10px] xl:text-[11px] mt-0.5 font-medium">
+                {t("nav_more", "More")} <ChevronDown className="h-3 w-3" />
+              </span>
+            </button>
+          </div>
           {isAdminUser && onOpenAuthModal && (
             <button
               onClick={onOpenAuthModal}
@@ -905,7 +920,7 @@ export function LinkedInNavbar({
               onSelectTab('home')
               setIsMoreOpen(false)
             }}
-            className={`flex-1 min-w-[40px] max-w-[54px] flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
+            className={`flex-1 min-w-[38px] max-w-[54px] flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
               activeTab === 'home'
                 ? "text-[#0A66C2] font-bold"
                 : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
@@ -920,77 +935,52 @@ export function LinkedInNavbar({
             <span className="text-[9px] mt-0.5 font-medium leading-none">{t("nav_home_short", "Home")}</span>
           </button>
 
-          {/* 2. Market (Marketplace) */}
+          {/* 2. Network */}
           <button
             type="button"
             onClick={() => {
-              onSelectTab('marketplace')
+              onSelectTab('network')
               setIsMoreOpen(false)
             }}
-            className={`flex-1 min-w-[40px] max-w-[54px] flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
-              activeTab === 'marketplace'
-                ? "text-purple-600 dark:text-purple-400 font-bold"
-                : "text-zinc-500 hover:text-purple-600 dark:text-zinc-400 dark:hover:text-purple-400"
-            }`}
-          >
-            <div className="relative">
-              <ShoppingBag className={`h-4.5 w-4.5 ${activeTab === 'marketplace' ? "text-purple-600 dark:text-purple-400" : ""}`} />
-            </div>
-            <span className="text-[9px] mt-0.5 font-semibold text-purple-600 dark:text-purple-400 leading-none">{t("nav_marketplace_short", "Market")}</span>
-          </button>
-
-          {/* 3. Learn (Learning) */}
-          <button
-            type="button"
-            onClick={() => {
-              onSelectTab('learning')
-              setIsMoreOpen(false)
-            }}
-            className={`flex-1 min-w-[40px] max-w-[54px] flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
-              activeTab === 'learning'
+            className={`flex-1 min-w-[38px] max-w-[54px] flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
+              activeTab === 'network'
                 ? "text-[#0A66C2] font-bold"
                 : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
             }`}
           >
             <div className="relative">
-              <GraduationCap className="h-4.5 w-4.5" />
-              <span className="absolute -top-1 -right-1.5 flex h-3 min-w-3 items-center justify-center rounded-full bg-blue-600 px-0.5 text-[8px] font-bold text-white shadow-2xs">
-                1
-              </span>
+              <Users className="h-4.5 w-4.5" />
             </div>
-            <span className="text-[9px] mt-0.5 font-medium leading-none">{t("nav_learning_short", "Learn")}</span>
+            <span className="text-[9px] mt-0.5 font-medium leading-none">{t("nav_network_short", "Network")}</span>
           </button>
 
-          {/* 4. Media */}
+          {/* 3. Jobs */}
           <button
             type="button"
             onClick={() => {
-              onSelectTab('media')
+              onSelectTab('jobs')
               setIsMoreOpen(false)
             }}
-            className={`flex-1 min-w-[40px] max-w-[54px] flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
-              activeTab === 'media'
-                ? "text-rose-600 dark:text-rose-400 font-bold"
-                : "text-zinc-500 hover:text-rose-600 dark:text-zinc-400 dark:hover:text-rose-400"
+            className={`flex-1 min-w-[38px] max-w-[54px] flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
+              activeTab === 'jobs'
+                ? "text-[#0A66C2] font-bold"
+                : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
             }`}
           >
             <div className="relative">
-              <Tv className={`h-4.5 w-4.5 ${activeTab === 'media' ? "text-rose-600 dark:text-rose-400" : ""}`} />
-              <span className="absolute -top-1 -right-1.5 flex h-3 min-w-3 items-center justify-center rounded-full bg-rose-600 px-0.5 text-[8px] font-bold text-white shadow-2xs">
-                1
-              </span>
+              <Briefcase className="h-4.5 w-4.5" />
             </div>
-            <span className="text-[9px] mt-0.5 font-medium leading-none">{t("nav_media_short", "Media")}</span>
+            <span className="text-[9px] mt-0.5 font-medium leading-none">{t("nav_jobs_short", "Jobs")}</span>
           </button>
 
-          {/* 5. Messages */}
+          {/* 4. Messages */}
           <button
             type="button"
             onClick={() => {
               onSelectTab('messaging')
               setIsMoreOpen(false)
             }}
-            className={`flex-1 min-w-[40px] max-w-[54px] flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
+            className={`flex-1 min-w-[38px] max-w-[54px] flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
               activeTab === 'messaging'
                 ? "text-[#0A66C2] font-bold"
                 : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
@@ -1007,46 +997,73 @@ export function LinkedInNavbar({
             <span className="text-[9px] mt-0.5 font-medium leading-none">{t("nav_messages_short", "Msgs")}</span>
           </button>
 
-          {/* 6. Jobs */}
+          {/* 5. Alerts (Notifications) */}
           <button
             type="button"
             onClick={() => {
-              onSelectTab('jobs')
+              onSelectTab('notifications')
               setIsMoreOpen(false)
             }}
-            className={`flex-1 min-w-[40px] max-w-[54px] flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
-              activeTab === 'jobs'
+            className={`flex-1 min-w-[38px] max-w-[54px] flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
+              activeTab === 'notifications'
                 ? "text-[#0A66C2] font-bold"
                 : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
             }`}
           >
             <div className="relative">
-              <Briefcase className="h-4.5 w-4.5" />
+              <Bell className="h-4.5 w-4.5" />
+              {unreadNotificationsCount > 0 && (
+                <span className="absolute -top-1 -right-1.5 flex h-3 min-w-3 items-center justify-center rounded-full bg-red-600 px-0.5 text-[8px] font-bold text-white shadow-2xs">
+                  {unreadNotificationsCount}
+                </span>
+              )}
             </div>
-            <span className="text-[9px] mt-0.5 font-medium leading-none">{t("nav_jobs_short", "Jobs")}</span>
+            <span className="text-[9px] mt-0.5 font-medium leading-none">{t("nav_alerts_short", "Alerts")}</span>
           </button>
 
-          {/* 7. Network */}
+          {/* 6. Market (Marketplace) */}
           <button
             type="button"
             onClick={() => {
-              onSelectTab('network')
+              onSelectTab('marketplace')
               setIsMoreOpen(false)
             }}
-            className={`flex-1 min-w-[40px] max-w-[54px] flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
-              activeTab === 'network'
+            className={`flex-1 min-w-[38px] max-w-[54px] flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
+              activeTab === 'marketplace'
+                ? "text-purple-600 dark:text-purple-400 font-bold"
+                : "text-zinc-500 hover:text-purple-600 dark:text-zinc-400 dark:hover:text-purple-400"
+            }`}
+          >
+            <div className="relative">
+              <ShoppingBag className={`h-4.5 w-4.5 ${activeTab === 'marketplace' ? "text-purple-600 dark:text-purple-400" : ""}`} />
+            </div>
+            <span className="text-[9px] mt-0.5 font-semibold text-purple-600 dark:text-purple-400 leading-none">{t("nav_marketplace_short", "Market")}</span>
+          </button>
+
+          {/* 7. Learn (Learning) */}
+          <button
+            type="button"
+            onClick={() => {
+              onSelectTab('learning')
+              setIsMoreOpen(false)
+            }}
+            className={`flex-1 min-w-[38px] max-w-[54px] flex flex-col items-center justify-center py-1 text-center transition-colors cursor-pointer ${
+              activeTab === 'learning'
                 ? "text-[#0A66C2] font-bold"
                 : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
             }`}
           >
             <div className="relative">
-              <Users className="h-4.5 w-4.5" />
+              <GraduationCap className="h-4.5 w-4.5" />
+              <span className="absolute -top-1 -right-1.5 flex h-3 min-w-3 items-center justify-center rounded-full bg-blue-600 px-0.5 text-[8px] font-bold text-white shadow-2xs">
+                1
+              </span>
             </div>
-            <span className="text-[9px] mt-0.5 font-medium leading-none">{t("nav_network_short", "Network")}</span>
+            <span className="text-[9px] mt-0.5 font-medium leading-none">{t("nav_learning_short", "Learn")}</span>
           </button>
 
           {/* 8. Hubs (Mobile All-in-One Drawer) */}
-          <div className="flex-1 min-w-[40px] max-w-[54px]">
+          <div className="flex-1 min-w-[38px] max-w-[54px]">
             <button
               type="button"
               onClick={() => {
@@ -1077,7 +1094,7 @@ export function LinkedInNavbar({
           />
           <div
             ref={moreDropdownRef}
-            className="fixed z-[60] right-2 left-2 sm:left-auto sm:right-4 lg:right-6 top-16 sm:top-20 lg:top-14 w-auto sm:w-96 max-w-[420px] h-[min(620px,calc(100vh-5rem))] min-h-[340px] rounded-2xl border border-zinc-200 bg-white p-3.5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 flex flex-col overflow-hidden"
+            className="fixed z-[60] right-2 left-2 sm:left-auto sm:right-4 lg:right-6 top-14 sm:top-14 w-auto sm:w-[420px] max-w-[440px] max-h-[85vh] rounded-2xl border border-zinc-200 bg-white p-3.5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 flex flex-col overflow-hidden"
           >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-zinc-100 pb-2.5 dark:border-zinc-800 shrink-0">
@@ -1102,75 +1119,150 @@ export function LinkedInNavbar({
             </div>
 
             {/* Scrollable Categories List */}
-            <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pt-2 pr-1">
-              {/* Quick Primary Apps / Shortcuts Grid */}
-              <div className="rounded-xl bg-gradient-to-r from-blue-50/70 to-purple-50/70 dark:from-blue-950/30 dark:to-purple-950/20 p-2.5 border border-blue-100 dark:border-blue-900/50">
-                <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-2 px-0.5">
-                  Core ConnectIn Hubs
-                </p>
+            <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pt-2.5 pr-1">
+              {/* Enterprise & Platform Hubs 8-Card Grid */}
+              <div className="rounded-xl bg-gradient-to-r from-blue-50/70 via-indigo-50/50 to-purple-50/70 dark:from-blue-950/30 dark:via-indigo-950/20 dark:to-purple-950/20 p-2.5 border border-blue-100 dark:border-blue-900/50">
+                <div className="flex items-center justify-between mb-2 px-0.5">
+                  <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                    Enterprise &amp; Specialized Hubs
+                  </p>
+                  <span className="text-[9px] font-semibold text-[#0A66C2]">8 Direct Hubs</span>
+                </div>
                 <div className="grid grid-cols-4 gap-1.5 text-center">
+                  {/* 1. Wallet & Escrow */}
                   <button
                     type="button"
                     onClick={() => {
-                      onSelectTab('marketplace')
+                      onSelectTab('wallet')
                       setIsMoreOpen(false)
                     }}
                     className={`p-2 rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
-                      activeTab === 'marketplace'
-                        ? "bg-purple-600 text-white shadow-xs"
-                        : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-700 hover:border-purple-300"
-                    }`}
-                  >
-                    <ShoppingBag className={`h-5 w-5 mb-1 ${activeTab === 'marketplace' ? "text-white" : "text-purple-600 dark:text-purple-400"}`} />
-                    <span className="text-[10px] font-bold">Market</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onSelectTab('learning')
-                      setIsMoreOpen(false)
-                    }}
-                    className={`p-2 rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
-                      activeTab === 'learning'
-                        ? "bg-blue-600 text-white shadow-xs"
-                        : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-700 hover:border-blue-300"
-                    }`}
-                  >
-                    <GraduationCap className={`h-5 w-5 mb-1 ${activeTab === 'learning' ? "text-white" : "text-blue-600 dark:text-blue-400"}`} />
-                    <span className="text-[10px] font-bold">Learn</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onSelectTab('media')
-                      setIsMoreOpen(false)
-                    }}
-                    className={`p-2 rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
-                      activeTab === 'media'
-                        ? "bg-rose-600 text-white shadow-xs"
-                        : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-700 hover:border-rose-300"
-                    }`}
-                  >
-                    <Tv className={`h-5 w-5 mb-1 ${activeTab === 'media' ? "text-white" : "text-rose-600 dark:text-rose-400"}`} />
-                    <span className="text-[10px] font-bold">Media</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onSelectTab('messaging')
-                      setIsMoreOpen(false)
-                    }}
-                    className={`p-2 rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
-                      activeTab === 'messaging'
+                      activeTab === 'wallet'
                         ? "bg-emerald-600 text-white shadow-xs"
                         : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-700 hover:border-emerald-300"
                     }`}
                   >
-                    <MessageSquare className={`h-5 w-5 mb-1 ${activeTab === 'messaging' ? "text-white" : "text-emerald-600 dark:text-emerald-400"}`} />
-                    <span className="text-[10px] font-bold">Messages</span>
+                    <DollarSign className={`h-5 w-5 mb-1 ${activeTab === 'wallet' ? "text-white" : "text-emerald-600 dark:text-emerald-400"}`} />
+                    <span className="text-[10px] font-bold truncate w-full">Wallet</span>
+                  </button>
+
+                  {/* 2. Company Directory */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('company')
+                      setIsMoreOpen(false)
+                    }}
+                    className={`p-2 rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
+                      activeTab === 'company'
+                        ? "bg-blue-600 text-white shadow-xs"
+                        : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-700 hover:border-blue-300"
+                    }`}
+                  >
+                    <Building2 className={`h-5 w-5 mb-1 ${activeTab === 'company' ? "text-white" : "text-blue-600 dark:text-blue-400"}`} />
+                    <span className="text-[10px] font-bold truncate w-full">Companies</span>
+                  </button>
+
+                  {/* 3. Guilds & Ecosystem */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('guilds')
+                      setIsMoreOpen(false)
+                    }}
+                    className={`p-2 rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
+                      activeTab === 'guilds'
+                        ? "bg-amber-600 text-white shadow-xs"
+                        : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-700 hover:border-amber-300"
+                    }`}
+                  >
+                    <Shield className={`h-5 w-5 mb-1 ${activeTab === 'guilds' ? "text-white" : "text-amber-600 dark:text-amber-400"}`} />
+                    <span className="text-[10px] font-bold truncate w-full">Guilds</span>
+                  </button>
+
+                  {/* 4. Bounties & Hackathons */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('bounties')
+                      setIsMoreOpen(false)
+                    }}
+                    className={`p-2 rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
+                      activeTab === 'bounties'
+                        ? "bg-orange-600 text-white shadow-xs"
+                        : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-700 hover:border-orange-300"
+                    }`}
+                  >
+                    <Flame className={`h-5 w-5 mb-1 ${activeTab === 'bounties' ? "text-white" : "text-orange-500"}`} />
+                    <span className="text-[10px] font-bold truncate w-full">Bounties</span>
+                  </button>
+
+                  {/* 5. Events & Live */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('events')
+                      setIsMoreOpen(false)
+                    }}
+                    className={`p-2 rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
+                      activeTab === 'events'
+                        ? "bg-indigo-600 text-white shadow-xs"
+                        : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-700 hover:border-indigo-300"
+                    }`}
+                  >
+                    <Calendar className={`h-5 w-5 mb-1 ${activeTab === 'events' ? "text-white" : "text-indigo-600 dark:text-indigo-400"}`} />
+                    <span className="text-[10px] font-bold truncate w-full">Events</span>
+                  </button>
+
+                  {/* 6. Procurement & RFPs */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('procurement')
+                      setIsMoreOpen(false)
+                    }}
+                    className={`p-2 rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
+                      activeTab === 'procurement'
+                        ? "bg-teal-600 text-white shadow-xs"
+                        : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-700 hover:border-teal-300"
+                    }`}
+                  >
+                    <FileCheck className={`h-5 w-5 mb-1 ${activeTab === 'procurement' ? "text-white" : "text-teal-600 dark:text-teal-400"}`} />
+                    <span className="text-[10px] font-bold truncate w-full">RFPs</span>
+                  </button>
+
+                  {/* 7. Launchpad */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('launchpad')
+                      setIsMoreOpen(false)
+                    }}
+                    className={`p-2 rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
+                      activeTab === 'launchpad'
+                        ? "bg-purple-600 text-white shadow-xs"
+                        : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-700 hover:border-purple-300"
+                    }`}
+                  >
+                    <Rocket className={`h-5 w-5 mb-1 ${activeTab === 'launchpad' ? "text-white" : "text-purple-600 dark:text-purple-400"}`} />
+                    <span className="text-[10px] font-bold truncate w-full">Launchpad</span>
+                  </button>
+
+                  {/* 8. CareerSuite AI */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('careersuite')
+                      setIsMoreOpen(false)
+                    }}
+                    className={`p-2 rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
+                      activeTab === 'careersuite'
+                        ? "bg-cyan-600 text-white shadow-xs"
+                        : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-700 hover:border-cyan-300"
+                    }`}
+                  >
+                    <Award className={`h-5 w-5 mb-1 ${activeTab === 'careersuite' ? "text-white" : "text-cyan-600 dark:text-cyan-400"}`} />
+                    <span className="text-[10px] font-bold truncate w-full">CareerAI</span>
                   </button>
                 </div>
               </div>
@@ -1489,6 +1581,146 @@ export function LinkedInNavbar({
                     <div className="min-w-0">
                       <p className="text-xs font-bold truncate">Wallet &amp; Escrow</p>
                       <p className="text-[10px] text-zinc-400 truncate">Draws &amp; Invoices</p>
+                    </div>
+                  </button>
+
+                  {/* Company Directory */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('company')
+                      setIsMobileDrawerOpen(false)
+                    }}
+                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      activeTab === 'company'
+                        ? "bg-blue-50 border-[#0A66C2] text-[#0A66C2] font-bold dark:bg-blue-950/40"
+                        : "bg-white dark:bg-zinc-800/80 border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50"
+                    }`}
+                  >
+                    <Building2 className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold truncate">Company Directory</p>
+                      <p className="text-[10px] text-zinc-400 truncate">GC &amp; Enterprise Registry</p>
+                    </div>
+                  </button>
+
+                  {/* Guilds & Ecosystem */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('guilds')
+                      setIsMobileDrawerOpen(false)
+                    }}
+                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      activeTab === 'guilds'
+                        ? "bg-amber-50 border-amber-600 text-amber-700 font-bold dark:bg-amber-950/40"
+                        : "bg-white dark:bg-zinc-800/80 border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50"
+                    }`}
+                  >
+                    <Shield className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold truncate">Guilds &amp; Enclaves</p>
+                      <p className="text-[10px] text-zinc-400 truncate">Master Societies</p>
+                    </div>
+                  </button>
+
+                  {/* Bounties & Hackathons */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('bounties')
+                      setIsMobileDrawerOpen(false)
+                    }}
+                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      activeTab === 'bounties'
+                        ? "bg-orange-50 border-orange-600 text-orange-700 font-bold dark:bg-orange-950/40"
+                        : "bg-white dark:bg-zinc-800/80 border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50"
+                    }`}
+                  >
+                    <Flame className="h-5 w-5 text-orange-500 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold truncate">Bounties &amp; Prizes</p>
+                      <p className="text-[10px] text-zinc-400 truncate">Open Challenges</p>
+                    </div>
+                  </button>
+
+                  {/* Events & Live Demos */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('events')
+                      setIsMobileDrawerOpen(false)
+                    }}
+                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      activeTab === 'events'
+                        ? "bg-indigo-50 border-indigo-600 text-indigo-700 font-bold dark:bg-indigo-950/40"
+                        : "bg-white dark:bg-zinc-800/80 border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50"
+                    }`}
+                  >
+                    <Calendar className="h-5 w-5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold truncate">Events &amp; Demos</p>
+                      <p className="text-[10px] text-zinc-400 truncate">Live Sessions</p>
+                    </div>
+                  </button>
+
+                  {/* Procurement & RFPs */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('procurement')
+                      setIsMobileDrawerOpen(false)
+                    }}
+                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      activeTab === 'procurement'
+                        ? "bg-teal-50 border-teal-600 text-teal-700 font-bold dark:bg-teal-950/40"
+                        : "bg-white dark:bg-zinc-800/80 border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50"
+                    }`}
+                  >
+                    <FileCheck className="h-5 w-5 text-teal-600 dark:text-teal-400 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold truncate">Procurement &amp; RFPs</p>
+                      <p className="text-[10px] text-zinc-400 truncate">Spend &amp; Solicitations</p>
+                    </div>
+                  </button>
+
+                  {/* Launchpad */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('launchpad')
+                      setIsMobileDrawerOpen(false)
+                    }}
+                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      activeTab === 'launchpad'
+                        ? "bg-purple-50 border-purple-600 text-purple-700 font-bold dark:bg-purple-950/40"
+                        : "bg-white dark:bg-zinc-800/80 border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50"
+                    }`}
+                  >
+                    <Rocket className="h-5 w-5 text-purple-600 dark:text-purple-400 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold truncate">Launchpad</p>
+                      <p className="text-[10px] text-zinc-400 truncate">Startups &amp; Projects</p>
+                    </div>
+                  </button>
+
+                  {/* CareerSuite AI */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('careersuite')
+                      setIsMobileDrawerOpen(false)
+                    }}
+                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      activeTab === 'careersuite'
+                        ? "bg-cyan-50 border-cyan-600 text-cyan-700 font-bold dark:bg-cyan-950/40"
+                        : "bg-white dark:bg-zinc-800/80 border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50"
+                    }`}
+                  >
+                    <Award className="h-5 w-5 text-cyan-600 dark:text-cyan-400 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold truncate">CareerSuite AI</p>
+                      <p className="text-[10px] text-zinc-400 truncate">Interview &amp; Resumes</p>
                     </div>
                   </button>
                 </div>
