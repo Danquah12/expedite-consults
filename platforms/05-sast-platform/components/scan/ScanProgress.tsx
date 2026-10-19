@@ -1,39 +1,33 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { CheckCircle2, Circle, FileCode2, GitCommit, ShieldAlert } from "lucide-react";
+import { CheckCircle2, Circle, GitCommit } from "lucide-react";
+import type { ActiveScanSession } from "@/lib/live-sast-scanner";
 
 const ENGINE_DETAILS_MAP: Record<string, { color: string; label: string }> = {
-  CodeQL:    { color: "#8b4528", label: "Tracing inter-procedural dataflows & taint paths..." },
-  Semgrep:   { color: "#8b4528", label: "Matching structural AST rule queries..." },
-  Snyk:      { color: "#e2853b", label: "Evaluating NVD CVE dependency call-graph reachability..." },
-  Checkmarx: { color: "#8b4528", label: "Auditing OWASP Top 10, NIST 800-53 & PCI-DSS controls..." },
+  CodeQL:    { color: "#8b4528", label: "Tracing inter-procedural dataflows & GHSA CodeQL queries..." },
+  Semgrep:   { color: "#8b4528", label: "Matching structural AST rule queries & CWE sinks..." },
+  Snyk:      { color: "#e2853b", label: "Correlating GHSA / NVD CVE & SearchSploit EDB-ID reachability..." },
+  Checkmarx: { color: "#8b4528", label: "Evaluating MITRE ATT&CK TTPs, OWASP ASVS, CVSS v3.1/v4.0 & NIST 800-53..." },
 };
 
-const ALL_LOGS = [
-  "[INIT]      Cloning repository and verifying commit lock a4f92c81...",
-  "[INIT]      Extracting source tree (1,247 files, 89,342 LOC)...",
-  "[PARSE]     Building language AST and inter-procedural call graph...",
-  "[ENGINES]   Starting parallel static & SCA analysis",
-  "[CodeQL]    Taint flow: UserController.java:142 -> jdbcTemplate.query()",
-  "[Semgrep]   MATCH: java.sql-injection rule at OrderDao.java:118 (CWE-89)",
-  "[Checkmarx] Compliance check: CWE-89 maps to OWASP A03:2021 & NIST SI-10",
-  "[CodeQL]    Missing tenant_id predicate: invoices.py:74 (CWE-862)",
-  "[Semgrep]   MATCH: ts.express.ssrf-fetch-sink at webhookDispatcher.ts:94",
-  "[Snyk]      NVD REACHABILITY: CVE-2024-1597 checked against PGSimpleDataSource",
-  "[Checkmarx] Path boundary check queued: download.go:55 (CWE-22)",
-  "[VALIDATOR] Normalizing 27 findings into CanonicalFinding schema...",
-  "[VALIDATOR] Queueing Stages A-F Proof Contract Validation pipeline...",
-  "[DONE]      Static scan complete — launching Finding Validation Engine...",
-];
+type Props = {
+  repo: string;
+  language: string;
+  engines: string[];
+  session: ActiveScanSession | null;
+  onComplete: () => void;
+};
 
-const TOTAL_FILES = 1247;
-const TOTAL_FINDINGS = 27;
-
-type Props = { repo: string; language: string; engines: string[]; onComplete: () => void };
-
-export default function ScanProgress({ repo, language, engines, onComplete }: Props) {
+export default function ScanProgress({ repo, language, engines, session, onComplete }: Props) {
   const activeEngines = engines.length > 0 ? engines : ["CodeQL", "Semgrep", "Snyk", "Checkmarx"];
+  const totalFiles = session?.filesScanned || 142;
+  const totalFindings = session?.sastFindings.length || 5;
+  const dynamicLogs = session?.scanLogs || [
+    `[INIT]        Target locked: ${repo} (${language})`,
+    `[AST]         Parsing AST & running 9 Python Security Standards Plugins...`,
+    `[DONE]        Normalized findings ready for Stage 3 validation.`,
+  ];
 
   const [progress, setProgress] = useState<number[]>(() => activeEngines.map(() => 0));
   const [done, setDone] = useState<boolean[]>(() => activeEngines.map(() => false));
@@ -58,7 +52,7 @@ export default function ScanProgress({ repo, language, engines, onComplete }: Pr
           setProgress((prev) => {
             const next = [...prev];
             if (next[idx] < 100) {
-              next[idx] = Math.min(100, next[idx] + Math.random() * 9 + 4);
+              next[idx] = Math.min(100, next[idx] + Math.random() * 14 + 7);
             } else {
               setDone((d) => {
                 const nd = [...d];
@@ -69,48 +63,50 @@ export default function ScanProgress({ repo, language, engines, onComplete }: Pr
             }
             return next;
           });
-        }, 85);
+        }, 75);
         intervals.push(iv);
-      }, idx * 380);
+      }, idx * 240);
       timers.push(t);
     });
 
+    const stepFiles = Math.max(1, Math.ceil(totalFiles / 18));
     const fileIv = setInterval(() => {
-      setFilesScanned((prev) => Math.min(TOTAL_FILES, prev + Math.floor(Math.random() * 45 + 18)));
-    }, 65);
+      setFilesScanned((prev) => Math.min(totalFiles, prev + stepFiles));
+    }, 80);
     intervals.push(fileIv);
 
     const findingTimer = setTimeout(() => {
       const findingIv = setInterval(() => {
         setFindingsSoFar((prev) => {
-          const next = Math.min(TOTAL_FINDINGS, prev + 1);
-          if (next === TOTAL_FINDINGS) clearInterval(findingIv);
+          const next = Math.min(totalFindings, prev + 1);
+          if (next === totalFindings) clearInterval(findingIv);
           return next;
         });
-      }, 140);
+      }, 220);
       intervals.push(findingIv);
-    }, 1400);
+    }, 600);
     timers.push(findingTimer);
 
     let logIdx = 0;
     const logIv = setInterval(() => {
-      if (logIdx < ALL_LOGS.length) {
-        setLogs((l) => [...l, ALL_LOGS[logIdx]]);
+      if (logIdx < dynamicLogs.length) {
+        const entry = dynamicLogs[logIdx];
+        setLogs((l) => [...l, entry]);
         logIdx++;
       } else {
         clearInterval(logIv);
       }
-    }, 300);
+    }, 180);
     intervals.push(logIv);
 
-    const completeTimer = setTimeout(() => onCompleteRef.current(), 5600);
+    const completeTimer = setTimeout(() => onCompleteRef.current(), 4200);
     timers.push(completeTimer);
 
     return () => {
       timers.forEach(clearTimeout);
       intervals.forEach(clearInterval);
     };
-  }, [activeEngines]);
+  }, [activeEngines, dynamicLogs, totalFiles, totalFindings]);
 
   useEffect(() => {
     if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
@@ -145,7 +141,7 @@ export default function ScanProgress({ repo, language, engines, onComplete }: Pr
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, color: "#46a36e", fontFamily: "monospace" }}>
             <GitCommit size={14} />
-            <span>commit: a4f92c81</span>
+            <span>commit: {session?.commitSha?.slice(0, 8) || "a4f92c81"}</span>
           </div>
         </div>
 
@@ -154,19 +150,19 @@ export default function ScanProgress({ repo, language, engines, onComplete }: Pr
           <div style={{ background: "var(--background)", border: "1px solid var(--border)", borderRadius: 12, padding: 16 }}>
             <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 600 }}>Files Analyzed</div>
             <div style={{ fontSize: 24, fontWeight: 800, color: "var(--foreground)", marginTop: 4 }}>
-              {filesScanned.toLocaleString()} <span style={{ fontSize: 13, color: "var(--muted)" }}>/ {TOTAL_FILES.toLocaleString()}</span>
+              {filesScanned.toLocaleString()} <span style={{ fontSize: 13, color: "var(--muted)" }}>/ {totalFiles.toLocaleString()}</span>
             </div>
           </div>
 
           <div style={{ background: "var(--background)", border: "1px solid var(--border)", borderRadius: 12, padding: 16 }}>
-            <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 600 }}>Candidate Findings</div>
+            <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 600 }}>Multi-Standard Findings</div>
             <div style={{ fontSize: 24, fontWeight: 800, color: findingsSoFar > 0 ? "#e5484d" : "var(--foreground)", marginTop: 4 }}>
               {findingsSoFar}
             </div>
           </div>
 
           <div style={{ background: "var(--background)", border: "1px solid var(--border)", borderRadius: 12, padding: 16 }}>
-            <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 600 }}>Static Progress</div>
+            <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 600 }}>Plugin Evaluation</div>
             <div style={{ fontSize: 24, fontWeight: 800, color: "#46a36e", marginTop: 4 }}>
               {overallProgress}%
             </div>
@@ -176,7 +172,9 @@ export default function ScanProgress({ repo, language, engines, onComplete }: Pr
         {/* Overall Progress Bar */}
         <div style={{ background: "var(--background)", border: "1px solid var(--border)", borderRadius: 12, padding: 16 }}>
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 8 }}>
-            <span style={{ color: "var(--foreground)", fontWeight: 700 }}>Overall Multi-Engine Progress</span>
+            <span style={{ color: "var(--foreground)", fontWeight: 700 }}>
+              Multi-Engine AST + 9 Python Standards Plugins Progress
+            </span>
             <span style={{ color: "#8b4528", fontWeight: 700 }}>{overallProgress}%</span>
           </div>
           <div style={{ height: 8, borderRadius: 999, background: "var(--surface-2)", overflow: "hidden" }}>
@@ -215,7 +213,7 @@ export default function ScanProgress({ repo, language, engines, onComplete }: Pr
                     )}
                     <span style={{ fontSize: 13, fontWeight: 700, color: "var(--foreground)" }}>{engineName}</span>
                     <span style={{ fontSize: 11.5, color: isEngineDone ? "#46a36e" : "var(--muted)" }}>
-                      {isEngineDone ? "SARIF stream normalized" : cfg.label}
+                      {isEngineDone ? "SARIF + Plugin Verdicts Normalized" : cfg.label}
                     </span>
                   </div>
                   <span style={{ fontSize: 12, fontFamily: "monospace", color: cfg.color }}>
@@ -246,7 +244,7 @@ export default function ScanProgress({ repo, language, engines, onComplete }: Pr
             <div className="terminal-dot" style={{ background: "#3a404c" }} />
             <div className="terminal-dot" style={{ background: "#3a404c" }} />
             <span style={{ marginLeft: 8, fontSize: 12, color: "var(--muted)" }}>
-              sast-sarif-stream &mdash; {language} AST &amp; NVD Reachability
+              StandardsPluginRunner &mdash; MITRE ATT&amp;CK · OWASP · CWE · CVSS · NIST · GHSA · PTES · SearchSploit · MSF
             </span>
           </div>
           <div
@@ -264,13 +262,16 @@ export default function ScanProgress({ repo, language, engines, onComplete }: Pr
               <div
                 key={i}
                 style={{
-                  fontSize: 12,
-                  color: log.startsWith("[VALIDATOR]")
+                  fontSize: 11.5,
+                  fontFamily: "var(--font-mono), monospace",
+                  color: log.startsWith("[MITRE-TTP]")
                     ? "#8b4528"
                     : log.startsWith("[DONE]")
                     ? "#46a36e"
-                    : log.startsWith("[Snyk]")
-                    ? "#e2853b"
+                    : log.startsWith("[THREAT-INT]")
+                    ? "#b8322f"
+                    : log.startsWith("[STANDARDS]")
+                    ? "#2f6f4e"
                     : "var(--foreground-muted)",
                 }}
               >
@@ -297,7 +298,7 @@ export default function ScanProgress({ repo, language, engines, onComplete }: Pr
           >
             <CheckCircle2 size={18} />
             <span>
-              Static scan complete ({TOTAL_FINDINGS} candidate findings). Advancing to Stage 3 Proof Validation...
+              Scan complete ({totalFindings} code findings evaluated across 9 Python Standards Plugins). Advancing to Stage 3...
             </span>
           </div>
         )}

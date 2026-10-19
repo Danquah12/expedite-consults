@@ -2,29 +2,37 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import RepoInput from "@/components/scan/RepoInput";
+import RepoInput, { type ScanStartPayload } from "@/components/scan/RepoInput";
 import ScanProgress from "@/components/scan/ScanProgress";
 import PostScanValidation from "@/components/scan/PostScanValidation";
-import { Shield, CheckCircle2 } from "lucide-react";
+import {
+  runDynamicRepoOrCodeScan,
+  type ActiveScanSession,
+} from "@/lib/live-sast-scanner";
+import { Shield, CheckCircle2, RotateCcw } from "lucide-react";
 
 type Step = "input" | "scanning" | "validating";
 
 export default function ScanPage() {
-  const [step,     setStep]     = useState<Step>("input");
-  const [repo,     setRepo]     = useState("");
+  const [step, setStep] = useState<Step>("input");
+  const [repo, setRepo] = useState("");
   const [language, setLanguage] = useState("Java");
-  const [engines,  setEngines]  = useState<string[]>([]);
-  const router                  = useRouter();
+  const [engines, setEngines] = useState<string[]>([]);
+  const [session, setSession] = useState<ActiveScanSession | null>(null);
+  const router = useRouter();
 
-  const handleStart = (repoUrl: string, lang: string, selectedEngines: string[]) => {
-    setRepo(repoUrl);
-    setLanguage(lang);
-    setEngines(selectedEngines);
+  const handleStart = async (payload: ScanStartPayload) => {
+    setRepo(payload.repoUrl);
+    setLanguage(payload.language);
+    setEngines(payload.engines);
+
+    const activeSession = await runDynamicRepoOrCodeScan(payload);
+    setSession(activeSession);
     setStep("scanning");
   };
 
   const handleScanComplete = () => {
-    setTimeout(() => setStep("validating"), 900);
+    setTimeout(() => setStep("validating"), 600);
   };
 
   const handleValidationComplete = () => {
@@ -32,10 +40,10 @@ export default function ScanPage() {
   };
 
   const stepLabels = [
-    { step: 1, title: "Repository & Scope", sub: "Target & commit lock" },
-    { step: 2, title: "Multi-Engine Static Scan", sub: "CodeQL · Semgrep · Snyk · Checkmarx" },
-    { step: 3, title: "Finding Validation (A–F)", sub: "6-Point Proof Contract" },
-    { step: 4, title: "Verified Dashboard", sub: "Triage & remediation" },
+    { step: 1, title: "Repository / Code & Plugins", sub: "GitHub URL or Live Code + 9 Plugins" },
+    { step: 2, title: "AST & Standards Scan", sub: "CodeQL · Semgrep · Snyk · Checkmarx" },
+    { step: 3, title: "TTP & 9-Standard Validation", sub: "MITRE · OWASP · CWE · CVSS · NIST · PTES" },
+    { step: 4, title: "Verified Dashboard", sub: "Dynamic Triage & Remediation" },
   ];
   const currentIdx = step === "input" ? 0 : step === "scanning" ? 1 : 2;
 
@@ -70,10 +78,10 @@ export default function ScanPage() {
             </div>
             <div>
               <h1 style={{ fontSize: 28, fontWeight: 800, color: "var(--foreground)", lineHeight: 1.2 }}>
-                Scan &amp; Proof Validation Workspace
+                Multi-Standard Code Scan &amp; TTP Validation Workspace
               </h1>
               <p style={{ fontSize: 13.5, color: "var(--muted)", marginTop: 4 }}>
-                Connect a repository, run multi-engine static analysis, and automatically verify findings against 6-point proof contracts.
+                Scan any GitHub repository or live source code across MITRE ATT&amp;CK TTPs, OWASP Top 10 + ASVS, MITRE CWE, CVSS v3.1/v4.0, NIST 800-53/SSDF, GitHub GHSA, PTES, SearchSploit &amp; Metasploit CheckCode.
               </p>
             </div>
           </div>
@@ -89,7 +97,7 @@ export default function ScanPage() {
               borderRadius: 12,
               padding: 10,
               width: "100%",
-              maxWidth: 740,
+              maxWidth: 760,
             }}
           >
             {stepLabels.map((item, idx) => {
@@ -125,6 +133,31 @@ export default function ScanPage() {
           </div>
         </div>
 
+        {step !== "input" && (
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+            <button
+              type="button"
+              onClick={() => setStep("input")}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "7px 13px",
+                borderRadius: 8,
+                fontSize: 12,
+                fontWeight: 700,
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+                color: "var(--foreground)",
+                cursor: "pointer",
+              }}
+            >
+              <RotateCcw size={13} color="#8b4528" />
+              <span>Scan Another Repository or Code Snippet</span>
+            </button>
+          </div>
+        )}
+
         {/* Main Workspace Surface */}
         <div
           style={{
@@ -140,6 +173,7 @@ export default function ScanPage() {
               repo={repo}
               language={language}
               engines={engines}
+              session={session}
               onComplete={handleScanComplete}
             />
           )}
@@ -147,6 +181,7 @@ export default function ScanPage() {
             <PostScanValidation
               repo={repo}
               language={language}
+              session={session}
               onFinishToDashboard={handleValidationComplete}
             />
           )}

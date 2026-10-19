@@ -8,6 +8,16 @@ from .owasp_top10_sast_plugin import OwaspTop10SastPlugin, OWASP_SAST_MAP
 from .cwe_ast_plugin import CweAstPlugin, CWE_AST_SPECS
 from .cvss_calculator_plugin import CvssCalculatorPlugin, CWE_IMPACT_PROFILE
 from .nist_standards_plugin import NistStandardsPlugin, NIST_STANDARDS_MAP
+from .ptes_exploitdb_msf_plugin import (
+    GitHubGhsaPlugin,
+    PtesMethodologyPlugin,
+    SearchSploitExploitDbPlugin,
+    MetasploitCheckReferencePlugin,
+    GITHUB_GHSA_MAP,
+    PTES_7PHASE_MAP,
+    SEARCHSPLOIT_EXPLOITDB_MAP,
+    METASPLOIT_CHECK_MAP,
+)
 from .plugin_runner import MultiStandardFindingReport, StandardsPluginRunner
 
 __all__ = [
@@ -24,6 +34,14 @@ __all__ = [
     "CWE_IMPACT_PROFILE",
     "NistStandardsPlugin",
     "NIST_STANDARDS_MAP",
+    "GitHubGhsaPlugin",
+    "PtesMethodologyPlugin",
+    "SearchSploitExploitDbPlugin",
+    "MetasploitCheckReferencePlugin",
+    "GITHUB_GHSA_MAP",
+    "PTES_7PHASE_MAP",
+    "SEARCHSPLOIT_EXPLOITDB_MAP",
+    "METASPLOIT_CHECK_MAP",
     "MultiStandardFindingReport",
     "StandardsPluginRunner",
 ]

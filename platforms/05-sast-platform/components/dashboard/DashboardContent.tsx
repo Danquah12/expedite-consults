@@ -9,6 +9,11 @@ import RiskTrendChart from "@/components/dashboard/RiskTrendChart";
 import RiskGauge from "@/components/dashboard/RiskGauge";
 import FINDINGS from "@/data/findings";
 import { calculateRiskScore, severityCounts, averageConfidence } from "@/lib/risk";
+import {
+  loadActiveScanSession,
+  ACTIVE_SCAN_STORAGE_KEY,
+  type ActiveScanSession,
+} from "@/lib/live-sast-scanner";
 import type { Severity } from "@/types/sast";
 import {
   CheckCircle2,
@@ -23,6 +28,8 @@ import {
   Terminal,
   GitBranch,
   AlertTriangle,
+  Crosshair,
+  RotateCcw,
 } from "lucide-react";
 
 const SEVERITY_ORDER: Record<string, number> = { Critical: 0, High: 1, Medium: 2, Low: 3 };
@@ -219,6 +226,13 @@ export default function DashboardContent() {
   const [selectedDetail, setSelectedDetail] = useState<DetailInfo | null>(null);
   const [workspaceView, setWorkspaceView] = useState<WorkspaceView>("split");
   const [displayMode, setDisplayMode] = useState<"grid" | "table">("grid");
+  const [activeSession, setActiveSession] = useState<ActiveScanSession | null>(null);
+  const [useBenchmarkDataset, setUseBenchmarkDataset] = useState(false);
+
+  useEffect(() => {
+    const loaded = loadActiveScanSession();
+    if (loaded) setActiveSession(loaded);
+  }, []);
 
   const update = useCallback(
     (key: string, value: string) => {
@@ -249,7 +263,12 @@ export default function DashboardContent() {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  let results = [...FINDINGS];
+  const activeFindingsSource =
+    activeSession && !useBenchmarkDataset && activeSession.sastFindings.length > 0
+      ? activeSession.sastFindings
+      : FINDINGS;
+
+  let results = [...activeFindingsSource];
   if (filter !== "All") results = results.filter((f) => f.severity === filter);
   if (search.trim()) {
     const q = search.toLowerCase();
@@ -258,7 +277,8 @@ export default function DashboardContent() {
         f.title.toLowerCase().includes(q) ||
         f.cwe.toLowerCase().includes(q) ||
         f.file.toLowerCase().includes(q) ||
-        f.owasp.toLowerCase().includes(q)
+        f.owasp.toLowerCase().includes(q) ||
+        f.mitre.toLowerCase().includes(q)
     );
   }
   if (sortBy === "Severity") results.sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]);
@@ -266,9 +286,9 @@ export default function DashboardContent() {
   else if (sortBy === "Confidence") results.sort((a, b) => b.confidence - a.confidence);
   else if (sortBy === "File") results.sort((a, b) => a.file.localeCompare(b.file));
 
-  const counts = severityCounts(FINDINGS);
-  const riskScore = calculateRiskScore(FINDINGS);
-  const avgConf = Math.round(averageConfidence(FINDINGS) * 100);
+  const counts = severityCounts(activeFindingsSource);
+  const riskScore = calculateRiskScore(activeFindingsSource);
+  const avgConf = Math.round(averageConfidence(activeFindingsSource) * 100);
   const hasFilter = filter !== "All" || search || sortBy !== "Severity";
 
   const openDetail = (key: string) => {
@@ -308,7 +328,9 @@ export default function DashboardContent() {
               }}
             >
               <GitBranch className="w-3.5 h-3.5" style={{ color: "var(--primary)" }} />
-              customer-api / main @ a94f21c
+              {activeSession && !useBenchmarkDataset
+                ? `${activeSession.repoUrl.replace("https://github.com/", "")} / ${activeSession.branch} @ ${activeSession.commitSha.slice(0, 8)} (${activeSession.language})`
+                : "customer-api / main @ a94f21c"}
             </span>
             <span
               style={{
@@ -321,19 +343,51 @@ export default function DashboardContent() {
                 color: "var(--low)",
               }}
             >
-              ✓ CodeQL · Semgrep · Joern · Proof Engine
+              ✓ 9 Python Standards Plugins · MITRE ATT&amp;CK · OWASP · CWE · CVSS · NIST · GHSA · PTES · SearchSploit · MSF
             </span>
           </div>
           <h1 style={{ fontSize: 28, fontWeight: 700, color: "var(--foreground)", letterSpacing: "-0.02em" }}>
-            Security Posture & Triage Dashboard
+            Security Posture &amp; Multi-Standard Triage Dashboard
           </h1>
           <p style={{ fontSize: 13.5, color: "var(--muted)", marginTop: 4 }}>
-            Unified multi-scanner triage, release gate governance, and OWASP / NIST compliance telemetry across{" "}
-            <strong style={{ color: "var(--foreground)" }}>{FINDINGS.length} normalized findings</strong>.
+            {activeSession && !useBenchmarkDataset ? (
+              <>
+                Displaying live scan results for{" "}
+                <strong style={{ color: "#8b4528" }}>{activeSession.repoUrl}</strong> (
+                <strong style={{ color: "var(--foreground)" }}>{activeFindingsSource.length} findings</strong> evaluated across MITRE ATT&amp;CK TTPs, OWASP ASVS, CVSS v3.1/v4.0, NIST 800-53, GitHub GHSA, PTES, SearchSploit &amp; Metasploit CheckCode).
+              </>
+            ) : (
+              <>
+                Unified multi-scanner triage, release gate governance, and OWASP / NIST / MITRE ATT&amp;CK / PTES / SearchSploit telemetry across{" "}
+                <strong style={{ color: "var(--foreground)" }}>{activeFindingsSource.length} normalized findings</strong>.
+              </>
+            )}
           </p>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          {activeSession && (
+            <button
+              type="button"
+              onClick={() => setUseBenchmarkDataset((prev) => !prev)}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "9px 14px",
+                borderRadius: 10,
+                fontSize: 12,
+                fontWeight: 700,
+                background: "var(--surface-2)",
+                border: "1px solid var(--border)",
+                color: "#8b4528",
+                cursor: "pointer",
+              }}
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              {useBenchmarkDataset ? "Switch to Active Scan Results" : "Switch to 27-Finding Benchmark"}
+            </button>
+          )}
           <Link
             href="/scan"
             style={{
@@ -351,7 +405,7 @@ export default function DashboardContent() {
             }}
           >
             <Terminal className="w-3.5 h-3.5" style={{ color: "var(--primary)" }} />
-            Scan Workspace
+            Scan New Repo / Code
           </Link>
           <Link
             href="/validation-engine"
@@ -369,10 +423,96 @@ export default function DashboardContent() {
             }}
           >
             <ShieldCheck className="w-3.5 h-3.5" />
-            Proof Validation Studio
+            Python Plugins &amp; Proof Studio
           </Link>
         </div>
       </div>
+
+      {/* Active Scan Multi-Standard & Threat-Intel Matrix Banner */}
+      {activeSession && !useBenchmarkDataset && activeSession.pluginEvaluations.length > 0 && (
+        <div
+          style={{
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
+            borderRadius: 14,
+            padding: 18,
+            marginBottom: 20,
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <Crosshair className="w-4 h-4" style={{ color: "#8b4528" }} />
+              <span style={{ fontSize: 13.5, fontWeight: 800, color: "var(--foreground)" }}>
+                Active Scan Multi-Standard &amp; Threat-Intel Matrix ({activeSession.repoUrl})
+              </span>
+            </div>
+            <span style={{ fontSize: 11.5, fontFamily: "var(--font-mono)", color: "var(--muted)" }}>
+              Session {activeSession.sessionId} &middot; Scanned at {activeSession.scannedAt}
+            </span>
+          </div>
+
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11.5, textAlign: "left" }}>
+              <thead>
+                <tr style={{ background: "var(--background)", borderBottom: "1px solid var(--border)", color: "var(--muted)" }}>
+                  <th style={{ padding: "8px 10px" }}>Finding &amp; File:Line</th>
+                  <th style={{ padding: "8px 10px" }}>MITRE ATT&amp;CK TTP + D3FEND</th>
+                  <th style={{ padding: "8px 10px" }}>OWASP + ASVS</th>
+                  <th style={{ padding: "8px 10px" }}>CVSS v3.1 / v4.0</th>
+                  <th style={{ padding: "8px 10px" }}>NIST 800-53 / SSDF</th>
+                  <th style={{ padding: "8px 10px" }}>GHSA · SearchSploit · Metasploit Check</th>
+                </tr>
+              </thead>
+              <tbody>
+                {activeSession.pluginEvaluations.map((ev) => (
+                  <tr key={ev.findingId} style={{ borderBottom: "1px solid var(--border)" }}>
+                    <td style={{ padding: "9px 10px" }}>
+                      <div style={{ fontWeight: 800, color: "var(--foreground)" }}>
+                        {ev.findingId} &middot; {ev.cwe}
+                      </div>
+                      <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "#8b4528" }}>
+                        {ev.filePath}:{ev.lineNumber}
+                      </div>
+                    </td>
+                    <td style={{ padding: "9px 10px" }}>
+                      <div style={{ fontWeight: 700, color: "var(--foreground)" }}>
+                        {ev.mitre.tacticId} &rarr; {ev.mitre.subTechniqueId}
+                      </div>
+                      <div style={{ fontSize: 11, color: "#2f6f4e" }}>
+                        D3FEND: {ev.mitre.d3fendId} ({ev.mitre.d3fendTechnique})
+                      </div>
+                    </td>
+                    <td style={{ padding: "9px 10px" }}>
+                      <div style={{ fontWeight: 700, color: "var(--foreground)" }}>{ev.owasp.owasp2021}</div>
+                      <div style={{ fontSize: 11, color: "var(--muted)" }}>
+                        {ev.owasp.asvsRequirementId} ({ev.owasp.asvsLevel})
+                      </div>
+                    </td>
+                    <td style={{ padding: "9px 10px", fontFamily: "var(--font-mono)" }}>
+                      <div style={{ fontWeight: 800, color: ev.cvss.cvssV31Score >= 9 ? "var(--critical)" : "var(--high)" }}>
+                        v3.1: {ev.cvss.cvssV31Score} | v4.0: {ev.cvss.cvssV40Score}
+                      </div>
+                      <div style={{ fontSize: 10.5, color: "var(--muted)" }}>{ev.cvss.cvssV31Vector}</div>
+                    </td>
+                    <td style={{ padding: "9px 10px" }}>
+                      <div style={{ fontWeight: 700, color: "var(--foreground)" }}>{ev.nist.sp80053Controls[0]}</div>
+                      <div style={{ fontSize: 11, color: "var(--muted)" }}>SSDF {ev.nist.sp800218SsdfPractices[0]}</div>
+                    </td>
+                    <td style={{ padding: "9px 10px" }}>
+                      <div style={{ fontWeight: 700, color: "var(--foreground)" }}>
+                        {ev.githubGhsa.ghsaId} &middot; {ev.searchsploit.edbId}
+                      </div>
+                      <div style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: "var(--muted)" }}>
+                        {ev.metasploitCheck.msfModule}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* 2. Unified Executive KPI Strip (5 Organized Cards) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5" style={{ marginBottom: 20 }}>

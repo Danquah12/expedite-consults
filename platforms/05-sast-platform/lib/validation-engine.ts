@@ -44,7 +44,7 @@ export type EvidenceArtifact = {
 export type CanonicalValidationFinding = {
   // 1. Identity
   findingId: string;
-  scanner: "CodeQL" | "Semgrep" | "Joern" | "Checkmarx";
+  scanner: "Checkmarx" | "IBM Code Scan" | "Fortify SCA" | "CodeQL" | "Semgrep" | "Snyk" | "Joern";
   ruleId: string;
   cwe: string;
   cweTitle: string;
@@ -60,7 +60,7 @@ export type CanonicalValidationFinding = {
   startLine: number;
   endLine: number;
   functionName: string;
-  language: "Java" | "Python" | "TypeScript" | "Go" | "C#";
+  language: string;
   framework: string;
 
   // 3. Data flow

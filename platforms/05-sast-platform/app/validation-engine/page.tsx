@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ShieldCheck,
   CheckCircle2,
@@ -13,6 +13,7 @@ import {
   Network,
   FileCheck2,
   Play,
+  Crosshair,
 } from "lucide-react";
 import {
   ATTACK_SURFACE_COMPLETENESS,
@@ -37,6 +38,13 @@ import {
   OWASP_CWE_NVD_CATALOG,
   ValidationStatus,
 } from "@/lib/validation-engine";
+import {
+  PYTHON_STANDARD_PLUGINS,
+  CWE_MULTI_STANDARD_KNOWLEDGE,
+  loadActiveScanSession,
+  type ActiveScanSession,
+  type StandardPluginId,
+} from "@/lib/live-sast-scanner";
 
 type StudioTab =
   | "pipeline"
@@ -82,6 +90,9 @@ export default function ValidationEnginePage() {
   const [langFilter, setLangFilter] = useState<string>("All");
   const [selectedFindingId, setSelectedFindingId] = useState<string>("VAL-101");
   const [selectedStage, setSelectedStage] = useState<string>("E");
+  const [selectedPluginId, setSelectedPluginId] = useState<StandardPluginId>("PY-PLUGIN-MITRE-TTP");
+  const [selectedCweKey, setSelectedCweKey] = useState<string>("CWE-89");
+  const [activeSession, setActiveSession] = useState<ActiveScanSession | null>(null);
   const [primaryObjective, setPrimaryObjective] = useState<string>(
     "Prove exploitability with reliable, reproducible evidence"
   );
@@ -89,18 +100,41 @@ export default function ValidationEnginePage() {
     "Multiple languages and application types"
   );
 
-  const filteredFindings = CANONICAL_VALIDATION_FINDINGS.filter(
+  useEffect(() => {
+    const loaded = loadActiveScanSession();
+    if (loaded) {
+      setActiveSession(loaded);
+      if (loaded.validationFindings.length > 0) {
+        setSelectedFindingId(loaded.validationFindings[0].findingId);
+      }
+    }
+  }, []);
+
+  const allValidationFindings =
+    activeSession && activeSession.validationFindings.length > 0
+      ? activeSession.validationFindings
+      : CANONICAL_VALIDATION_FINDINGS;
+
+  const filteredFindings = allValidationFindings.filter(
     (f) => langFilter === "All" || f.language === langFilter
   );
 
   const selectedFinding =
     filteredFindings.find((f) => f.findingId === selectedFindingId) ||
     filteredFindings[0] ||
-    CANONICAL_VALIDATION_FINDINGS[0];
+    allValidationFindings[0];
 
   const activeStageObj =
     PIPELINE_ARCHITECTURE_STAGES.find((s) => s.code === selectedStage) ||
     PIPELINE_ARCHITECTURE_STAGES[5];
+
+  const activePluginSpec =
+    PYTHON_STANDARD_PLUGINS.find((p) => p.pluginId === selectedPluginId) ||
+    PYTHON_STANDARD_PLUGINS[0];
+
+  const activeCweEntry =
+    CWE_MULTI_STANDARD_KNOWLEDGE[selectedCweKey] ||
+    CWE_MULTI_STANDARD_KNOWLEDGE["CWE-89"];
 
   return (
     <div style={{ maxWidth: 1380, margin: "0 auto", padding: "36px 20px 80px 20px" }}>
@@ -317,7 +351,7 @@ export default function ValidationEnginePage() {
           { id: "claims", label: "2. Claim Verifier & Counterexamples (Z3)", icon: FileCheck2 },
           { id: "invariants", label: "3. Security Invariants, Contracts & Chains", icon: Network },
           { id: "optimizer", label: "4. Test Optimizer, 10 Modules & Quality Gates", icon: Sliders },
-          { id: "catalog", label: "5. OWASP Top 10 · CWE · NVD Catalog", icon: ShieldCheck },
+          { id: "catalog", label: "5. 9 Python Standards Plugins (MITRE · OWASP · CWE · CVSS · NIST · PTES · SearchSploit · MSF)", icon: Crosshair },
           { id: "roadmap", label: "6. Prioritized Plan Builder & Governance", icon: Terminal },
         ].map((tab) => {
           const Icon = tab.icon;
@@ -1174,9 +1208,219 @@ export default function ValidationEnginePage() {
         </div>
       )}
 
-      {/* TAB 6: OWASP TOP 10 · CWE · NVD / NIST CATALOG */}
+      {/* TAB 5: 9 PYTHON STANDARDS PLUGINS & MULTI-STANDARD KNOWLEDGE REPOSITORY */}
       {activeTab === "catalog" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          {/* 1. 9 Python Security Standards Plugins Inspector */}
+          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: 20 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
+              <div>
+                <h2 style={{ fontSize: 17, fontWeight: 800, color: "var(--foreground)" }}>
+                  Python Security Standards &amp; Threat-Intel Plugin Repository (validation_engine/plugins/*.py)
+                </h2>
+                <p style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 2 }}>
+                  Select any of the 9 Python plugins below to inspect its module path, standard specification, and Python implementation.
+                </p>
+              </div>
+              <span
+                style={{
+                  fontSize: 11,
+                  fontFamily: "var(--font-mono)",
+                  padding: "4px 10px",
+                  borderRadius: 6,
+                  background: "var(--surface-2)",
+                  color: "#8b4528",
+                  fontWeight: 700,
+                }}
+              >
+                StandardsPluginRunner (9 Active Plugins)
+              </span>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 10, marginBottom: 16 }}>
+              {PYTHON_STANDARD_PLUGINS.map((plugin) => {
+                const isSelected = plugin.pluginId === activePluginSpec.pluginId;
+                return (
+                  <button
+                    key={plugin.pluginId}
+                    type="button"
+                    onClick={() => setSelectedPluginId(plugin.pluginId)}
+                    style={{
+                      textAlign: "left",
+                      padding: 12,
+                      borderRadius: 10,
+                      cursor: "pointer",
+                      background: isSelected ? "#f4e5dc" : "var(--background)",
+                      border: `1px solid ${isSelected ? "#8b4528" : "var(--border)"}`,
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                      <span style={{ fontSize: 11, fontWeight: 800, color: "#8b4528", fontFamily: "monospace" }}>
+                        {plugin.shortBadge}
+                      </span>
+                      <span style={{ fontSize: 10, color: "var(--muted)", fontFamily: "monospace" }}>
+                        {plugin.className}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>
+                      {plugin.name}
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--muted)", lineHeight: 1.35 }}>
+                      {plugin.description}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Selected Python Plugin Code & Metadata Box */}
+            <div style={{ background: "var(--background)", border: "1px solid var(--border)", borderRadius: 12, padding: 16 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
+                <div>
+                  <span style={{ fontSize: 12, fontWeight: 800, color: "#8b4528", fontFamily: "monospace" }}>
+                    {activePluginSpec.modulePath}
+                  </span>
+                  <span style={{ fontSize: 12, color: "var(--muted)", marginLeft: 10 }}>
+                    ({activePluginSpec.standardVersion})
+                  </span>
+                </div>
+                <span style={{ fontSize: 11, fontWeight: 700, color: "#46a36e" }}>
+                  &check; Registered in StandardsPluginRunner
+                </span>
+              </div>
+              <pre
+                style={{
+                  margin: 0,
+                  padding: 12,
+                  borderRadius: 8,
+                  background: "var(--surface)",
+                  border: "1px solid var(--border)",
+                  fontSize: 11.5,
+                  fontFamily: "var(--font-mono), monospace",
+                  color: "var(--foreground)",
+                  overflowX: "auto",
+                }}
+              >
+                {activePluginSpec.pythonCodePreview}
+              </pre>
+            </div>
+          </div>
+
+          {/* 2. Interactive CWE Multi-Standard TTP / OWASP / CVSS / NIST / GHSA / PTES / SearchSploit / Metasploit Explorer */}
+          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: 20 }}>
+            <h2 style={{ fontSize: 17, fontWeight: 800, color: "var(--foreground)", marginBottom: 4 }}>
+              Interactive CWE Multi-Standard Correlation Explorer (MITRE ATT&amp;CK · OWASP ASVS · CVSS v3.1/v4.0 · NIST · GHSA · PTES · SearchSploit · Metasploit)
+            </h2>
+            <p style={{ fontSize: 12.5, color: "var(--muted)", marginBottom: 12 }}>
+              Select any vulnerability class below to inspect the exact TTP procedure, CVSS v3.1/v4.0 vector, NIST 800-53r5/SSDF controls, GitHub GHSA advisory, PTES 7-phase trace, SearchSploit EDB-ID, and Metasploit CheckCode module.
+            </p>
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+              {Object.values(CWE_MULTI_STANDARD_KNOWLEDGE).map((item) => {
+                const active = item.cweId === activeCweEntry.cweId;
+                return (
+                  <button
+                    key={item.cweId}
+                    type="button"
+                    onClick={() => setSelectedCweKey(item.cweId)}
+                    style={{
+                      padding: "7px 13px",
+                      borderRadius: 8,
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      background: active ? "#8b4528" : "var(--background)",
+                      color: active ? "#f3eee4" : "var(--foreground)",
+                      border: `1px solid ${active ? "#8b4528" : "var(--border)"}`,
+                    }}
+                  >
+                    {item.cweId}: {item.defaultTitle.split(" via ")[0]}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 12 }}>
+              {/* Card A: MITRE ATT&CK TTPs + D3FEND */}
+              <div style={{ background: "var(--background)", border: "1px solid var(--border)", borderRadius: 10, padding: 14, fontSize: 11.5 }}>
+                <div style={{ fontWeight: 800, color: "#8b4528", marginBottom: 4 }}>
+                  1. MITRE ATT&amp;CK® v15 TTPs &amp; D3FEND™ Countermeasure
+                </div>
+                <div style={{ fontWeight: 700, color: "var(--foreground)" }}>
+                  {activeCweEntry.mitre.tacticId} ({activeCweEntry.mitre.tacticName}) &rarr; {activeCweEntry.mitre.techniqueId} / {activeCweEntry.mitre.subTechniqueId}
+                </div>
+                <div style={{ color: "#2f6f4e", fontWeight: 700, marginTop: 4 }}>
+                  D3FEND: {activeCweEntry.mitre.d3fendId} &mdash; {activeCweEntry.mitre.d3fendTechnique}
+                </div>
+                <div style={{ color: "var(--muted)", marginTop: 6 }}>
+                  {activeCweEntry.mitre.procedureTemplate.map((s, idx) => (
+                    <div key={idx} style={{ marginTop: 2 }}>{s}</div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Card B: OWASP Top 10 + ASVS + CWE AST */}
+              <div style={{ background: "var(--background)", border: "1px solid var(--border)", borderRadius: 10, padding: 14, fontSize: 11.5 }}>
+                <div style={{ fontWeight: 800, color: "#8b4528", marginBottom: 4 }}>
+                  2. OWASP Top 10 SAST · ASVS v4.0.3 · CWE AST Guard
+                </div>
+                <div style={{ fontWeight: 700, color: "var(--foreground)" }}>
+                  {activeCweEntry.owasp.owasp2021} &middot; {activeCweEntry.owasp.asvsRequirementId} ({activeCweEntry.owasp.asvsLevel})
+                </div>
+                <div style={{ color: "var(--muted)", marginTop: 4 }}>{activeCweEntry.owasp.asvsRuleSummary}</div>
+                <div style={{ marginTop: 6, color: "var(--foreground)" }}>
+                  <strong>CWE Rank:</strong> {activeCweEntry.cweTop25Rank}
+                </div>
+                <div style={{ marginTop: 4, color: "#2f6f4e", fontWeight: 700 }}>
+                  Required AST Guard: {activeCweEntry.requiredSanitizerGuard}
+                </div>
+              </div>
+
+              {/* Card C: FIRST CVSS v3.1 & v4.0 + NIST Suite */}
+              <div style={{ background: "var(--background)", border: "1px solid var(--border)", borderRadius: 10, padding: 14, fontSize: 11.5 }}>
+                <div style={{ fontWeight: 800, color: "#8b4528", marginBottom: 4 }}>
+                  3. FIRST CVSS v3.1 / v4.0 &amp; NIST SP 800-53r5 / SSDF / CSF 2.0
+                </div>
+                <div style={{ fontWeight: 700, color: "var(--foreground)", fontFamily: "monospace" }}>
+                  CVSS v3.1: {activeCweEntry.cvss.cvssV31Score} ({activeCweEntry.cvss.cvssV31Severity}) | CVSS v4.0: {activeCweEntry.cvss.cvssV40Score}
+                </div>
+                <div style={{ fontSize: 10.5, fontFamily: "monospace", color: "var(--muted)", marginTop: 2 }}>
+                  {activeCweEntry.cvss.cvssV31Vector}
+                </div>
+                <div style={{ fontSize: 10.5, fontFamily: "monospace", color: "var(--muted)", marginTop: 2 }}>
+                  {activeCweEntry.cvss.cvssV40Vector}
+                </div>
+                <div style={{ marginTop: 6, color: "var(--foreground)" }}>
+                  <strong>NIST 800-53r5:</strong> {activeCweEntry.nist.sp80053Controls.join(" · ")}
+                </div>
+                <div style={{ marginTop: 2, color: "var(--muted)" }}>
+                  <strong>NIST SSDF 800-218:</strong> {activeCweEntry.nist.sp800218SsdfPractices.join(" · ")}
+                </div>
+              </div>
+
+              {/* Card D: GitHub GHSA · PTES 7-Phase · SearchSploit · Metasploit CheckCode */}
+              <div style={{ background: "var(--background)", border: "1px solid var(--border)", borderRadius: 10, padding: 14, fontSize: 11.5 }}>
+                <div style={{ fontWeight: 800, color: "#8b4528", marginBottom: 4 }}>
+                  4. GitHub GHSA · PTES 7-Phase · SearchSploit · Metasploit Check
+                </div>
+                <div style={{ color: "var(--foreground)" }}>
+                  <strong>GitHub GHSA:</strong> {activeCweEntry.githubGhsa.ghsaId} ({activeCweEntry.githubGhsa.cveId}) &mdash;{" "}
+                  <span style={{ fontFamily: "monospace", fontSize: 10.5 }}>{activeCweEntry.githubGhsa.codeqlQueryId}</span>
+                </div>
+                <div style={{ color: "var(--foreground)", marginTop: 4 }}>
+                  <strong>SearchSploit / Exploit-DB:</strong> {activeCweEntry.searchsploit.edbId} &middot; EPSS {activeCweEntry.searchsploit.epssPercentile}
+                </div>
+                <div style={{ color: "var(--foreground)", marginTop: 4 }}>
+                  <strong>Metasploit Check Module:</strong>{" "}
+                  <span style={{ fontFamily: "monospace" }}>{activeCweEntry.metasploitCheck.msfModule}</span> ({activeCweEntry.metasploitCheck.msfCheckMethod})
+                </div>
+                <div style={{ color: "var(--muted)", marginTop: 4 }}>
+                  <strong>PTES Phase 5 Verification:</strong> {activeCweEntry.ptes.phase5Verification}
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: 20 }}>
             <h2 style={{ fontSize: 17, fontWeight: 800, color: "var(--foreground)", marginBottom: 4 }}>
               Python Standards Catalog (validation_engine/catalog.py) &middot; OWASP Top 10, CWE &amp; NIST SP 800-53

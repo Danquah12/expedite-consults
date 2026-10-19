@@ -2,8 +2,18 @@ export type Severity = "Critical" | "High" | "Medium" | "Low";
 
 export type Status = "Open" | "In Progress" | "Resolved" | "False Positive";
 
+export type EngineName =
+  | "Checkmarx"
+  | "IBM Code Scan"
+  | "Fortify SCA"
+  | "CodeQL"
+  | "Semgrep"
+  | "Snyk"
+  | "Joern"
+  | "DataFlow";
+
 export type EngineResult = {
-  name: "CodeQL" | "Semgrep" | "Joern" | "DataFlow";
+  name: EngineName;
   confidence: number; // 0–1
   confirmed: boolean;
   details?: string;
@@ -46,11 +56,21 @@ export type SASTFinding = {
   file: string;
   line: number;
   language: string;
+  codeSnippet?: string;
+  snippetStartLine?: number;
 
   // Taint analysis
   source: string;
   sink: string;
   taintPath: string[];
+
+  // Enterprise Engine Telemetry (Checkmarx / IBM Code Scan / Fortify SCA)
+  checkmarxQuery?: string;
+  checkmarxBfl?: string;
+  ibmRuleId?: string;
+  ibmTraceSummary?: string;
+  fortifyKingdom?: string;
+  fortifyAnalyzer?: "Dataflow" | "Control Flow" | "Structural" | "Configuration" | "Semantic";
 
   // Engine results
   engines: EngineResult[];
