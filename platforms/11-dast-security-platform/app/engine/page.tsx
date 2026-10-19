@@ -5438,8 +5438,7 @@ ${f.remediation}
                 const isStageDone = done || currentBrainStage > activeWf.stageNum || progress >= Math.round((activeWf.stageNum / 8) * 100);
                 const stagePlugins = COMMERCIAL_DEEP_DIVE_PLUGINS.filter(p => p.brainStage === activeWf.stageNum);
                 const stageThousandPlugins = THOUSAND_VULN_PLUGINS.filter(p => p.brainStage === activeWf.stageNum);
-                const remediatedCount = activeScopedFindings.filter(f => retestLedger[f.id]?.status === "REMEDIATED_VERIFIED").length;
-                const persistingCount = activeScopedFindings.length - remediatedCount;
+                const persistingCount = Math.max(0, reportFindings.length - remediatedCount);
                 return (
                   <div style={{
                     background: isStageRunning
@@ -5510,12 +5509,12 @@ ${f.remediation}
                         <button
                           type="button"
                           onClick={() => {
-                            const jsonStr = JSON.stringify(buildMitreNavigatorLayerJson(targetName), null, 2);
+                            const jsonStr = JSON.stringify(buildMitreNavigatorLayerJson(reportFindings, primaryHost), null, 2);
                             const blob = new Blob([jsonStr], { type: "application/json" });
                             const url = URL.createObjectURL(blob);
                             const a = document.createElement("a");
                             a.href = url;
-                            a.download = `mitre-attack-navigator-${targetHost}.json`;
+                            a.download = `mitre-attack-navigator-${primaryHost}.json`;
                             a.click();
                             URL.revokeObjectURL(url);
                           }}
@@ -5535,12 +5534,12 @@ ${f.remediation}
                         <button
                           type="button"
                           onClick={() => {
-                            const mdStr = buildBlueTeamSiemAndWafPack(targetName);
+                            const mdStr = buildBlueTeamSiemAndWafPack(reportFindings, primaryHost);
                             const blob = new Blob([mdStr], { type: "text/markdown" });
                             const url = URL.createObjectURL(blob);
                             const a = document.createElement("a");
                             a.href = url;
-                            a.download = `blue-team-siem-waf-pack-${targetHost}.md`;
+                            a.download = `blue-team-siem-waf-pack-${primaryHost}.md`;
                             a.click();
                             URL.revokeObjectURL(url);
                           }}
