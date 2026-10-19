@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { FINDINGS } from "@/data/findings";
-import { COMMERCIAL_DEEP_DIVE_PLUGINS } from "@/data/deepDivePlugins";
+import { COMMERCIAL_DEEP_DIVE_PLUGINS, THOUSAND_VULN_PLUGINS, THOUSAND_PLUGINS_SUMMARY } from "@/data/deepDivePlugins";
 import { getFindingDeepDiveIntel } from "@/data/findingKillChainIntel";
 import {
   PORT_ASSESSMENT_SCRIPT_CATALOG,
@@ -5325,7 +5325,7 @@ ${f.remediation}
                 flexWrap: "wrap"
               }}>
                 <span style={{ fontSize: 10, fontWeight: 900, color: "#38bdf8", whiteSpace: "nowrap", marginRight: 2, fontFamily: "monospace", display: "inline-flex", alignItems: "center", gap: 4 }}>
-                  🧠 8-STAGE AUTONOMOUS BRAIN (32 COMMERCIAL PLUGINS):
+                  🧠 8-STAGE BRAIN (1,000 VULN PLUGINS [250 OPENVAS · 250 ZAP · 250 NUCLEI · 250 BURP] + 32 CORE · MITRE TTP & BT D3FEND™):
                 </span>
                 {AUTONOMOUS_8_STAGE_WORKFLOW.map((wf) => {
                   const wfThreshold = Math.round((wf.stageNum / 8) * 100);
@@ -5395,7 +5395,7 @@ ${f.remediation}
                 })}
               </div>
 
-              {/* Highlighted Active / Selected Brain Stage Live Telemetry Banner + 4 Stage Commercial Deep-Dive Plugins */}
+              {/* Highlighted Active / Selected Brain Stage Live Telemetry Banner + 4 Stage Commercial Deep-Dive Plugins + 1,000-Plugin TTP/BT Strip */}
               {(() => {
                 const activeStageNum = (running || liveExternalProbing) && currentBrainStage > 0
                   ? currentBrainStage
@@ -5404,18 +5404,19 @@ ${f.remediation}
                 const isStageRunning = (running || liveExternalProbing) && currentBrainStage === activeWf.stageNum;
                 const isStageDone = done || currentBrainStage > activeWf.stageNum || progress >= Math.round((activeWf.stageNum / 8) * 100);
                 const stagePlugins = COMMERCIAL_DEEP_DIVE_PLUGINS.filter(p => p.brainStage === activeWf.stageNum);
+                const stageThousandPlugins = THOUSAND_VULN_PLUGINS.filter(p => p.brainStage === activeWf.stageNum);
                 return (
                   <div style={{
                     background: isStageRunning
                       ? "linear-gradient(90deg, rgba(245,158,11,0.16), rgba(56,189,248,0.12))"
                       : isStageDone
                       ? "linear-gradient(90deg, rgba(16,185,129,0.12), rgba(56,189,248,0.08))"
-                      : "rgba(15,23,42,0.75)",
+                      : "var(--surface-2)",
                     border: isStageRunning
                       ? "1px solid rgba(245,158,11,0.55)"
                       : isStageDone
                       ? "1px solid rgba(16,185,129,0.4)"
-                      : "1px solid rgba(56,189,248,0.25)",
+                      : "1px solid var(--border)",
                     borderRadius: 6,
                     padding: "8px 10px",
                     display: "flex",
@@ -5436,12 +5437,49 @@ ${f.remediation}
                         }}>
                           {isStageRunning ? `⚡ EXECUTING STAGE ${activeWf.stageNum}/8` : isStageDone ? `✓ VERIFIED STAGE ${activeWf.stageNum}/8` : `🧠 STAGE ${activeWf.stageNum}/8`} · {activeWf.name}
                         </span>
-                        <strong style={{ color: "#f8fafc", fontSize: 10.5 }}>{activeWf.title}:</strong>
-                        <span style={{ color: "#cbd5e1" }}>{contextualizeText(activeWf.detail)}</span>
+                        <strong style={{ fontSize: 10.5 }}>{activeWf.title}:</strong>
+                        <span>{contextualizeText(activeWf.detail)}</span>
                       </div>
-                      <span style={{ color: "#c084fc", fontWeight: 800, fontSize: 9.5 }}>
+                      <span style={{ fontWeight: 800, fontSize: 9.5 }}>
                         [{activeWf.standards}]
                       </span>
+                    </div>
+
+                    {/* 1,000-Plugin Multi-Scanner TTP & Blue Team (BT) D3FEND Summary Bar */}
+                    <div style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      flexWrap: "wrap",
+                      gap: 6,
+                      padding: "5px 8px",
+                      borderRadius: 5,
+                      background: "var(--surface)",
+                      border: "1px solid var(--border)",
+                      fontSize: 9.5
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                        <strong>🔌 1,000-PLUGIN ENGINE ({THOUSAND_PLUGINS_SUMMARY.totalPlugins} ACTIVE):</strong>
+                        <span>OpenVAS: <strong>{THOUSAND_PLUGINS_SUMMARY.byScanner.OPENVAS} NVTs</strong></span>
+                        <span>· OWASP ZAP: <strong>{THOUSAND_PLUGINS_SUMMARY.byScanner.ZAP} Rules</strong></span>
+                        <span>· Nuclei: <strong>{THOUSAND_PLUGINS_SUMMARY.byScanner.NUCLEI} Templates</strong></span>
+                        <span>· Burp Suite: <strong>{THOUSAND_PLUGINS_SUMMARY.byScanner.BURP} BChecks</strong></span>
+                        <span>· Stage {activeWf.stageNum} Checks: <strong>{stageThousandPlugins.length}</strong></span>
+                      </div>
+                      <a
+                        href="/plugins"
+                        style={{
+                          padding: "2px 8px",
+                          borderRadius: 4,
+                          background: "#8b4528",
+                          color: "#ffffff",
+                          textDecoration: "none",
+                          fontWeight: 800,
+                          fontSize: 9
+                        }}
+                      >
+                        Open 1,000-Plugin MITRE TTP & BT Matrix ↗
+                      </a>
                     </div>
 
                     {/* 4 Commercial Deep-Dive Plugins for this Brain Stage */}
@@ -5449,7 +5487,7 @@ ${f.remediation}
                       display: "grid",
                       gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
                       gap: 6,
-                      borderTop: "1px solid rgba(255,255,255,0.08)",
+                      borderTop: "1px solid var(--border)",
                       paddingTop: 6
                     }}>
                       {stagePlugins.map((plg) => {
@@ -5458,8 +5496,8 @@ ${f.remediation}
                           <div
                             key={plg.code}
                             style={{
-                              background: isActivePlg ? "rgba(245,158,11,0.18)" : "rgba(5,8,17,0.7)",
-                              border: isActivePlg ? "1px solid #fbbf24" : "1px solid rgba(56,189,248,0.22)",
+                              background: isActivePlg ? "rgba(245,158,11,0.18)" : "var(--surface)",
+                              border: isActivePlg ? "1px solid #fbbf24" : "1px solid var(--border)",
                               borderRadius: 5,
                               padding: "5px 8px",
                               display: "flex",
@@ -5468,15 +5506,15 @@ ${f.remediation}
                             }}
                           >
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4 }}>
-                              <span style={{ fontSize: 9, fontWeight: 900, color: isActivePlg ? "#fde68a" : "#38bdf8" }}>
+                              <span style={{ fontSize: 9, fontWeight: 900 }}>
                                 🔌 {plg.code} · {plg.engineModule}
                               </span>
-                              <span style={{ fontSize: 8.5, color: "#10b981", fontWeight: 800 }}>
+                              <span style={{ fontSize: 8.5, fontWeight: 800 }}>
                                 ~{plg.estimatedMinutes1HrMode}m (1-Hr Mode)
                               </span>
                             </div>
-                            <div style={{ fontSize: 9.5, fontWeight: 800, color: "#f8fafc" }}>{plg.name}</div>
-                            <div style={{ fontSize: 8.5, color: "#94a3b8", lineHeight: 1.3 }}>
+                            <div style={{ fontSize: 9.5, fontWeight: 800 }}>{plg.name}</div>
+                            <div style={{ fontSize: 8.5, lineHeight: 1.3 }}>
                               🕷️ {contextualizeText(plg.deepDiveActions[0] || plg.description)}
                             </div>
                           </div>

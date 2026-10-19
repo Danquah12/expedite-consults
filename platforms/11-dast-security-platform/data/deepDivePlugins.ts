@@ -785,3 +785,12 @@ export const COMMERCIAL_DEEP_DIVE_PLUGINS: DeepDivePlugin[] = [
     status: "VERIFIED"
   }
 ];
+
+export {
+  THOUSAND_VULN_PLUGINS,
+  THOUSAND_PLUGINS_SUMMARY,
+  type ThousandVulnPlugin,
+  type MitreTtpMapping,
+  type BlueTeamDefenseMapping
+} from "./thousandPluginsCatalog";
+

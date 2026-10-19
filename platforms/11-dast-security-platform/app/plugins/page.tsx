@@ -1,11 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { COMMERCIAL_DEEP_DIVE_PLUGINS } from "@/data/deepDivePlugins";
+import { useState, useMemo } from "react";
+import {
+  COMMERCIAL_DEEP_DIVE_PLUGINS,
+  THOUSAND_VULN_PLUGINS,
+  THOUSAND_PLUGINS_SUMMARY,
+  type MitreTtpMapping,
+  type BlueTeamDefenseMapping
+} from "@/data/deepDivePlugins";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Tab = "overview" | "capabilities" | "verification" | "activity";
+type Tab = "mitre_bt_matrix" | "overview" | "capabilities" | "verification" | "activity";
 
 interface InstalledPlugin {
   id: string;
@@ -24,12 +30,47 @@ interface InstalledPlugin {
   standards?: string;
   deepDiveActions?: string[];
   estimatedMinutes1HrMode?: number;
+  scannerFamily?: "OPENVAS" | "ZAP" | "NUCLEI" | "BURP" | "CORE";
+  scannerRefId?: string;
+  cwe?: string;
+  owasp?: string;
+  cvssBase?: number;
+  severity?: "Critical" | "High" | "Medium" | "Low" | "Info";
+  mitreTtp?: MitreTtpMapping;
+  blueTeamDefense?: BlueTeamDefenseMapping;
 }
 
-// ─── Data ─────────────────────────────────────────────────────────────────────
+// ─── Data (1,000 Vulnerability Plugins + 32 Core Stage Orchestrators) ────────
 
-const DEEP_DIVE_INSTALLED: InstalledPlugin[] = COMMERCIAL_DEEP_DIVE_PLUGINS.map(p => ({
+const THOUSAND_INSTALLED: InstalledPlugin[] = THOUSAND_VULN_PLUGINS.map((p) => ({
   id: p.id,
+  code: p.code,
+  name: p.name,
+  author: p.author,
+  version: p.version,
+  category: p.category,
+  status: "healthy" as const,
+  installedDate: "2026-09-01",
+  lastUpdated: "2026-10-19",
+  description: p.description,
+  permissions: p.permissions,
+  brainStage: p.brainStage,
+  brainStageName: p.brainStageName,
+  standards: p.standards,
+  deepDiveActions: p.deepDiveActions,
+  estimatedMinutes1HrMode: p.estimatedMinutes1HrMode,
+  scannerFamily: p.scannerFamily,
+  scannerRefId: p.scannerRefId,
+  cwe: p.cwe,
+  owasp: p.owasp,
+  cvssBase: p.cvssBase,
+  severity: p.severity,
+  mitreTtp: p.mitreTtp,
+  blueTeamDefense: p.blueTeamDefense
+}));
+
+const CORE_32_INSTALLED: InstalledPlugin[] = COMMERCIAL_DEEP_DIVE_PLUGINS.map((p) => ({
+  id: `core-${p.id}`,
   code: p.code,
   name: `[${p.brainStageName}] ${p.name}`,
   author: p.author,
@@ -37,206 +78,89 @@ const DEEP_DIVE_INSTALLED: InstalledPlugin[] = COMMERCIAL_DEEP_DIVE_PLUGINS.map(
   category: p.category,
   status: "healthy" as const,
   installedDate: "2026-09-01",
-  lastUpdated: "2026-10-15",
+  lastUpdated: "2026-10-19",
   description: `${p.description} (Standards: ${p.standards} · 1-Hr Mode Budget: ~${p.estimatedMinutes1HrMode}m)`,
   permissions: p.permissions,
   brainStage: p.brainStage,
   brainStageName: p.brainStageName,
   standards: p.standards,
   deepDiveActions: p.deepDiveActions,
-  estimatedMinutes1HrMode: p.estimatedMinutes1HrMode
+  estimatedMinutes1HrMode: p.estimatedMinutes1HrMode,
+  scannerFamily: "CORE" as const,
+  scannerRefId: p.code,
+  cwe: "CWE-693",
+  owasp: p.standards,
+  cvssBase: 7.5,
+  severity: "High" as const,
+  mitreTtp: {
+    tacticId: "TA0043",
+    tacticName: "Reconnaissance & Execution",
+    techniqueId: "T1595",
+    techniqueName: "Active Scanning & Verification",
+    procedureSummary: p.description
+  },
+  blueTeamDefense: {
+    d3fendId: "D3-ACH",
+    d3fendCategory: "Harden",
+    d3fendTechnique: "Application & Infrastructure Hardening",
+    btLogSource: "SIEM / WAF / Reverse Proxy Telemetry",
+    sigmaRuleHint: `stage_${p.brainStage}_${p.code.toLowerCase()}`,
+    virtualPatchWafRule: p.deepDiveActions[0] || "Enforce defense-in-depth policy"
+  }
 }));
 
-const INSTALLED: InstalledPlugin[] = [
-  ...DEEP_DIVE_INSTALLED,
-  {
-    id: "jira-enterprise",
-    name: "Jira Enterprise Connector",
-    author: "AXIOM",
-    version: "2.1.0",
-    category: "Ticketing",
-    status: "healthy",
-    installedDate: "2026-05-14",
-    lastUpdated: "2026-07-12",
-    description:
-      "Full Jira Cloud & Server integration with auto-ticket creation on findings. Supports OAuth2, bulk sync, and custom field mapping.",
-    permissions: ["tickets.create", "tickets.update", "tickets.close"],
-  },
-  {
-    id: "sqli-validator",
-    name: "Advanced SQL Injection Validator",
-    author: "AXIOM Labs",
-    version: "1.4.2",
-    category: "Validation",
-    status: "healthy",
-    installedDate: "2026-06-01",
-    lastUpdated: "2026-07-25",
-    description:
-      "Deep SQLi validation with time-based blind and UNION detection. Reduces false positives by 85% with contextual payload analysis.",
-    permissions: ["findings.read", "findings.write"],
-  },
-  {
-    id: "teams-notify",
-    name: "Microsoft Teams Notifications",
-    author: "AXIOM",
-    version: "1.5.2",
-    category: "Notification",
-    status: "healthy",
-    installedDate: "2026-05-20",
-    lastUpdated: "2026-08-01",
-    description:
-      "Real-time alerts to Teams channels on Critical/High findings. Supports adaptive cards, channel routing, and @mentions.",
-    permissions: ["notifications.send"],
-  },
-  {
-    id: "evidence-validator",
-    name: "Evidence Integrity Validator",
-    author: "AXIOM",
-    version: "1.0.1",
-    category: "Evidence",
-    status: "healthy",
-    installedDate: "2026-07-02",
-    lastUpdated: "2026-07-30",
-    description:
-      "SHA256 hashing, digital signatures, chain of custody verification. Ensures tamper-proof evidence for compliance audits.",
-    permissions: ["evidence.read", "evidence.write"],
-  },
-  {
-    id: "github-issues",
-    name: "GitHub Issues Connector",
-    author: "AXIOM",
-    version: "1.1.0",
-    category: "Ticketing",
-    status: "warning",
-    installedDate: "2026-06-15",
-    lastUpdated: "2026-07-01",
-    description:
-      "Auto-create GitHub Issues from findings with labels and assignees. Supports milestone tracking and project board integration.",
-    permissions: ["tickets.create"],
-  },
-];
-
-const CAPABILITIES = [
-  ...COMMERCIAL_DEEP_DIVE_PLUGINS.map(p => ({
-    capability: p.code.toLowerCase().replace(/-/g, "_"),
-    plugin: `[${p.brainStageName}] ${p.name}`,
-    pluginId: p.id,
-    version: p.version,
-    status: "active",
-    tools: p.permissions
-  })),
-  {
-    capability: "create_ticket",
-    plugin: "Jira Enterprise Connector",
-    pluginId: "jira-enterprise",
-    version: "2.1.0",
-    status: "active",
-    tools: ["create_ticket", "update_ticket", "close_ticket", "search_tickets"],
-  },
-  {
-    capability: "validate_sqli",
-    plugin: "Advanced SQL Injection Validator",
-    pluginId: "sqli-validator",
-    version: "1.4.2",
-    status: "active",
-    tools: ["validate_sqli", "detect_injection"],
-  },
-  {
-    capability: "send_notification",
-    plugin: "Microsoft Teams Notifications",
-    pluginId: "teams-notify",
-    version: "1.5.2",
-    status: "active",
-    tools: ["send_alert", "send_report"],
-  },
-  {
-    capability: "verify_integrity",
-    plugin: "Evidence Integrity Validator",
-    pluginId: "evidence-validator",
-    version: "1.0.1",
-    status: "active",
-    tools: ["verify_hash", "sign_artifact"],
-  },
-  {
-    capability: "create_issue",
-    plugin: "GitHub Issues Connector",
-    pluginId: "github-issues",
-    version: "1.1.0",
-    status: "update",
-    tools: ["create_issue", "close_issue"],
-  },
-];
+const INSTALLED: InstalledPlugin[] = [...THOUSAND_INSTALLED, ...CORE_32_INSTALLED];
 
 const VERIFICATION_ITEMS = [
-  { key: "signature", label: "Signature Verified (AXIOM CA signed)", ok: true },
-  { key: "deps", label: "Dependencies Valid", ok: true },
-  { key: "perms", label: "Permissions Approved by Admin", ok: true },
-  { key: "sandbox", label: "Sandbox Healthy", ok: true },
-  { key: "audit", label: "Audit Logging Enabled", ok: true },
-  { key: "version", label: "Version Compatible (SDK ≥ 1.0)", ok: true },
+  { key: "signature", label: "Signature Verified (EXPEDITE STRIKE™ CA signed)", ok: true },
+  { key: "mitre_ttp", label: "MITRE ATT&CK® v15 TTP Mapping Verified", ok: true },
+  { key: "bt_d3fend", label: "Blue Team (BT) MITRE D3FEND™ Countermeasure Linked", ok: true },
+  { key: "sandbox", label: "Safe Non-Destructive Sandbox Healthy", ok: true },
+  { key: "audit", label: "SIEM & Sigma Audit Logging Enabled", ok: true },
+  { key: "version", label: "Multi-Scanner Engine SDK v6.0 Compatible", ok: true }
 ];
 
 const AUDIT_ACTIONS = [
-  { time: "19:12:04", user: "scanner-agent", action: "validate_sqli", result: "success" },
-  { time: "19:08:41", user: "copilot", action: "create_ticket", result: "success" },
-  { time: "19:03:17", user: "scanner-agent", action: "validate_sqli", result: "success" },
-  { time: "18:55:29", user: "system", action: "send_alert", result: "success" },
-  { time: "18:50:11", user: "copilot", action: "create_ticket", result: "success" },
-  { time: "18:44:03", user: "scanner-agent", action: "validate_sqli", result: "success" },
-  { time: "18:39:57", user: "system", action: "verify_hash", result: "success" },
-  { time: "18:33:22", user: "copilot", action: "create_issue", result: "success" },
-  { time: "18:27:46", user: "scanner-agent", action: "validate_sqli", result: "success" },
-  { time: "18:21:05", user: "system", action: "send_alert", result: "success" },
+  { time: "19:12:04", user: "openvas-nvt-engine", action: "EXP-PLG-0001..0250 (250 NVTs)", result: "success" },
+  { time: "19:10:41", user: "owasp-zap-engine", action: "EXP-PLG-0251..0500 (250 Rules)", result: "success" },
+  { time: "19:08:17", user: "nuclei-template-engine", action: "EXP-PLG-0501..0750 (250 Templates)", result: "success" },
+  { time: "19:05:29", user: "burp-bcheck-engine", action: "EXP-PLG-0751..1000 (250 BChecks)", result: "success" },
+  { time: "19:02:11", user: "mitre-ttp-correlator", action: "map_attck_tactics_TA0043_TA0006", result: "success" },
+  { time: "18:58:03", user: "bt-d3fend-verifier", action: "synthesize_sigma_and_waf_rules", result: "success" }
 ];
 
-const BAR_DATA = [8, 14, 11, 17, 13, 20, 16, 22, 18, 25, 21, 19];
-const BAR_LABELS = ["09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"];
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const CATEGORY_COLORS: Record<string, string> = {
-  Scanner: "#3b82f6",
-  Validation: "#8b5cf6",
-  Verification: "#06b6d4",
-  Ticketing: "#f97316",
-  Reporting: "#ec4899",
-  Evidence: "#10b981",
-  AI: "#e8912d",
-  Notification: "#6366f1",
+const SCANNER_COLORS: Record<string, string> = {
+  OPENVAS: "#10b981",
+  ZAP: "#2563eb",
+  NUCLEI: "#9333ea",
+  BURP: "#ea580c",
+  CORE: "#8b4528"
 };
 
-function CategoryBadge({ category }: { category: string }) {
-  const color = CATEGORY_COLORS[category] ?? "#6b7280";
+function ScannerBadge({ family }: { family?: string }) {
+  const fam = family || "CORE";
+  const color = SCANNER_COLORS[fam] ?? "#6b7280";
   return (
     <span
       style={{
-        fontSize: 10,
-        fontWeight: 600,
-        padding: "2px 7px",
+        fontSize: 9.5,
+        fontWeight: 800,
+        padding: "2px 6px",
         borderRadius: 4,
-        background: color + "22",
+        background: `${color}18`,
         color,
-        border: `1px solid ${color}44`,
+        border: `1px solid ${color}45`,
         letterSpacing: "0.04em",
-        textTransform: "uppercase",
+        fontFamily: "monospace"
       }}
     >
-      {category}
+      {fam}
     </span>
   );
 }
 
-function StatusDot({
-  status,
-}: {
-  status: "healthy" | "warning" | "error";
-}) {
-  const color =
-    status === "healthy"
-      ? "#10b981"
-      : status === "warning"
-      ? "#f59e0b"
-      : "#ef4444";
+function StatusDot({ status }: { status: "healthy" | "warning" | "error" }) {
+  const color = status === "healthy" ? "#10b981" : status === "warning" ? "#f59e0b" : "#ef4444";
   return (
     <span
       style={{
@@ -245,802 +169,410 @@ function StatusDot({
         height: 8,
         borderRadius: "50%",
         background: color,
-        flexShrink: 0,
-        boxShadow: `0 0 6px ${color}88`,
+        flexShrink: 0
       }}
     />
   );
 }
 
-// ─── Tab: Overview ────────────────────────────────────────────────────────────
+// ─── Tab 1: 1,000-Plugin MITRE TTP & Blue Team (BT) Matrix ────────────────────
 
-function OverviewTab({ plugin }: { plugin: InstalledPlugin }) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-      {/* Header */}
-      <div>
-        <div
-          style={{
-            display: "flex",
-            gap: 12,
-            alignItems: "flex-start",
-            marginBottom: 12,
-          }}
-        >
-          <div>
-            <div
-              style={{
-                display: "flex",
-                gap: 8,
-                alignItems: "center",
-                flexWrap: "wrap",
-                marginBottom: 4,
-              }}
-            >
-              <h2
-                style={{
-                  margin: 0,
-                  fontSize: 18,
-                  fontWeight: 700,
-                  color: "var(--fg, #f9fafb)",
-                }}
-              >
-                {plugin.name}
-              </h2>
-              <CategoryBadge category={plugin.category} />
-            </div>
-            <div
-              style={{
-                display: "flex",
-                gap: 12,
-                alignItems: "center",
-                flexWrap: "wrap",
-              }}
-            >
-              <span style={{ fontSize: 13, color: "var(--muted)" }}>
-                by {plugin.author}
-              </span>
-              <span style={{ fontSize: 13, color: "var(--muted)" }}>
-                v{plugin.version}
-              </span>
-              <span
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 5,
-                  fontSize: 13,
-                  color:
-                    plugin.status === "healthy"
-                      ? "#10b981"
-                      : plugin.status === "warning"
-                      ? "#f59e0b"
-                      : "#ef4444",
-                  fontWeight: 600,
-                }}
-              >
-                <StatusDot status={plugin.status} />
-                {plugin.status === "healthy"
-                  ? "Healthy"
-                  : plugin.status === "warning"
-                  ? "Update Required"
-                  : "Error"}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Dates */}
-        <div style={{ display: "flex", gap: 24 }}>
-          <div>
-            <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 2 }}>
-              Installed
-            </div>
-            <div style={{ fontSize: 13, color: "var(--fg)" }}>
-              {plugin.installedDate}
-            </div>
-          </div>
-          <div>
-            <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 2 }}>
-              Last Updated
-            </div>
-            <div style={{ fontSize: 13, color: "var(--fg)" }}>
-              {plugin.lastUpdated}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Controls */}
-      <div
-        style={{
-          padding: "16px",
-          background: "var(--bg, #0a0f1e)",
-          borderRadius: 10,
-          border: "1px solid var(--border, var(--surface-3))",
-        }}
-      >
-        <div
-          style={{
-            fontSize: 12,
-            fontWeight: 600,
-            color: "var(--muted)",
-            marginBottom: 12,
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-          }}
-        >
-          Plugin Controls
-        </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {[
-            { label: "Enable", color: "#10b981", bg: "#10b98122", border: "#10b98133" },
-            { label: "Disable", color: "var(--fg)", bg: "none", border: "var(--border)" },
-            {
-              label: plugin.status === "warning" ? "Update" : "Update",
-              color: plugin.status === "warning" ? "#000" : "var(--fg)",
-              bg: plugin.status === "warning" ? "#f59e0b" : "none",
-              border: plugin.status === "warning" ? "#f59e0b" : "var(--border)",
-            },
-            { label: "Rollback", color: "var(--fg)", bg: "none", border: "var(--border)" },
-            { label: "Uninstall", color: "#ef4444", bg: "none", border: "#ef444433" },
-          ].map((btn) => (
-            <button
-              key={btn.label}
-              style={{
-                padding: "8px 18px",
-                borderRadius: 7,
-                background: btn.bg,
-                color: btn.color,
-                border: `1px solid ${btn.border}`,
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              {btn.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Description */}
-      <div>
-        <div
-          style={{
-            fontSize: 12,
-            fontWeight: 600,
-            color: "var(--muted)",
-            marginBottom: 8,
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-          }}
-        >
-          Description
-        </div>
-        <p
-          style={{
-            margin: 0,
-            fontSize: 14,
-            color: "var(--fg, #d1d5db)",
-            lineHeight: 1.7,
-          }}
-        >
-          {plugin.description}
-        </p>
-      </div>
-
-      {/* Permissions */}
-      <div>
-        <div
-          style={{
-            fontSize: 12,
-            fontWeight: 600,
-            color: "var(--muted)",
-            marginBottom: 10,
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-          }}
-        >
-          Permissions Granted
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          {plugin.permissions.map((perm) => (
-            <div
-              key={perm}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "7px 12px",
-                background: "var(--bg, #0a0f1e)",
-                borderRadius: 7,
-                border: "1px solid var(--border, var(--surface-3))",
-              }}
-            >
-              <span
-                style={{
-                  fontSize: 14,
-                  color: "#10b981",
-                }}
-              >
-                ✓
-              </span>
-              <span
-                style={{
-                  fontSize: 12,
-                  fontFamily: "monospace",
-                  color: "#e8912d",
-                  fontWeight: 600,
-                }}
-              >
-                {perm}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Tab: Capabilities ────────────────────────────────────────────────────────
-
-function CapabilitiesTab({ selectedId }: { selectedId: string }) {
-  return (
-    <div>
-      <div style={{ marginBottom: 16 }}>
-        <h3
-          style={{
-            margin: "0 0 4px",
-            fontSize: 15,
-            fontWeight: 700,
-            color: "var(--fg, #f9fafb)",
-          }}
-        >
-          Capability Registry
-        </h3>
-        <p style={{ margin: 0, fontSize: 13, color: "var(--muted)" }}>
-          All capabilities registered across installed plugins. Used by the
-          Copilot Orchestrator for tool resolution.
-        </p>
-      </div>
-
-      <div
-        style={{
-          border: "1px solid var(--border, var(--surface-3))",
-          borderRadius: 10,
-          overflow: "hidden",
-        }}
-      >
-        {/* Table header */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "160px 200px 80px 100px 1fr",
-            gap: 0,
-            padding: "10px 16px",
-            background: "var(--bg, #0a0f1e)",
-            borderBottom: "1px solid var(--border, var(--surface-3))",
-          }}
-        >
-          {["Capability", "Plugin", "Version", "Status", "Tools Exposed"].map(
-            (h) => (
-              <div
-                key={h}
-                style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: "var(--muted)",
-                  letterSpacing: "0.06em",
-                  textTransform: "uppercase",
-                }}
-              >
-                {h}
-              </div>
-            )
-          )}
-        </div>
-
-        {/* Rows */}
-        {CAPABILITIES.map((cap, i) => (
-          <div
-            key={cap.capability}
-            style={{
-              display: "grid",
-              gridTemplateColumns: "160px 200px 80px 100px 1fr",
-              gap: 0,
-              padding: "12px 16px",
-              borderBottom:
-                i < CAPABILITIES.length - 1
-                  ? "1px solid var(--border, var(--surface-3))"
-                  : "none",
-              background:
-                cap.pluginId === selectedId ? "#e8912d08" : "transparent",
-              alignItems: "center",
-            }}
-          >
-            <span
-              style={{
-                fontSize: 13,
-                fontFamily: "monospace",
-                fontWeight: 600,
-                color: "#e8912d",
-              }}
-            >
-              {cap.capability}
-            </span>
-            <span style={{ fontSize: 13, color: "var(--fg)" }}>
-              {cap.plugin}
-            </span>
-            <span
-              style={{
-                fontSize: 12,
-                fontFamily: "monospace",
-                color: "var(--muted)",
-              }}
-            >
-              {cap.version}
-            </span>
-            <span
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                color: cap.status === "active" ? "#10b981" : "#f59e0b",
-              }}
-            >
-              {cap.status === "active" ? "✓ Active" : "⚠ Update"}
-            </span>
-            <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-              {cap.tools.map((t) => (
-                <span
-                  key={t}
-                  style={{
-                    fontSize: 10,
-                    padding: "2px 6px",
-                    borderRadius: 4,
-                    background: "var(--bg, #0a0f1e)",
-                    border: "1px solid var(--border, var(--surface-3))",
-                    color: "var(--muted)",
-                    fontFamily: "monospace",
-                  }}
-                >
-                  {t}
-                </span>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─── Tab: Verification ────────────────────────────────────────────────────────
-
-function VerificationTab({ plugin }: { plugin: InstalledPlugin }) {
-  const isGitHub = plugin.id === "github-issues";
+function MitreBtMatrixTab({
+  filteredPlugins,
+  selectedId,
+  onSelectPlugin
+}: {
+  filteredPlugins: InstalledPlugin[];
+  selectedId: string;
+  onSelectPlugin: (id: string) => void;
+}) {
+  const [page, setPage] = useState(1);
+  const pageSize = 50;
+  const totalPages = Math.max(1, Math.ceil(filteredPlugins.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const slice = filteredPlugins.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      <div>
-        <h3
+      {/* MITRE ATT&CK TTP + Blue Team D3FEND Coverage Cards */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+          gap: 12
+        }}
+      >
+        <div
           style={{
-            margin: "0 0 4px",
-            fontSize: 15,
-            fontWeight: 700,
-            color: "var(--fg, #f9fafb)",
+            padding: 14,
+            borderRadius: 8,
+            background: "var(--surface)",
+            border: "1px solid var(--border)"
           }}
         >
-          Plugin Verification Checklist
-        </h3>
-        <p style={{ margin: 0, fontSize: 13, color: "var(--muted)" }}>
-          Security and compatibility status for {plugin.name}
-        </p>
+          <div style={{ fontSize: 10, fontWeight: 800, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+            MITRE ATT&CK® TTP Coverage (Offensive / Red-Purple Team)
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
+            {THOUSAND_PLUGINS_SUMMARY.mitreTacticsCovered.map((t) => (
+              <span
+                key={t.tacticId}
+                style={{
+                  fontSize: 10,
+                  padding: "3px 7px",
+                  borderRadius: 4,
+                  background: "var(--surface-2)",
+                  border: "1px solid var(--border)",
+                  fontFamily: "monospace",
+                  fontWeight: 700
+                }}
+              >
+                {t.tacticId} · {t.tacticName} ({t.techniques.join(", ")})
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div
+          style={{
+            padding: 14,
+            borderRadius: 8,
+            background: "var(--surface)",
+            border: "1px solid var(--border)"
+          }}
+        >
+          <div style={{ fontSize: 10, fontWeight: 800, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+            Blue Team (BT) MITRE D3FEND™ Countermeasures & SIEM Telemetry
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
+            {THOUSAND_PLUGINS_SUMMARY.blueTeamD3fendCovered.map((d) => (
+              <span
+                key={d.d3fendId}
+                style={{
+                  fontSize: 10,
+                  padding: "3px 7px",
+                  borderRadius: 4,
+                  background: "var(--surface-2)",
+                  border: "1px solid var(--border)",
+                  fontFamily: "monospace",
+                  fontWeight: 700
+                }}
+              >
+                🛡️ {d.d3fendId} [{d.category}] · {d.technique}
+              </span>
+            ))}
+          </div>
+        </div>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {VERIFICATION_ITEMS.map((item) => (
-          <div
-            key={item.key}
+      {/* Pagination Controls */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 10,
+          padding: "10px 14px",
+          background: "var(--surface)",
+          border: "1px solid var(--border)",
+          borderRadius: 8
+        }}
+      >
+        <div style={{ fontSize: 12, fontWeight: 700 }}>
+          Showing {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filteredPlugins.length)} of{" "}
+          <strong>{filteredPlugins.length}</strong> Matching Plugins (Total Registry: 1,000 Vulnerability Checks + 32 Core Orchestrators)
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <button
+            disabled={currentPage <= 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
             style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              padding: "12px 16px",
-              borderRadius: 10,
-              border: "1px solid var(--border, var(--surface-3))",
-              background: "var(--bg, #0a0f1e)",
+              padding: "5px 12px",
+              borderRadius: 5,
+              border: "1px solid var(--border)",
+              background: "var(--surface-2)",
+              fontSize: 11,
+              fontWeight: 700,
+              cursor: currentPage <= 1 ? "not-allowed" : "pointer"
             }}
           >
-            <span
+            ← Prev 50
+          </button>
+          <span style={{ fontSize: 11, fontFamily: "monospace", fontWeight: 700 }}>
+            Page {currentPage} / {totalPages}
+          </span>
+          <button
+            disabled={currentPage >= totalPages}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            style={{
+              padding: "5px 12px",
+              borderRadius: 5,
+              border: "1px solid var(--border)",
+              background: "var(--surface-2)",
+              fontSize: 11,
+              fontWeight: 700,
+              cursor: currentPage >= totalPages ? "not-allowed" : "pointer"
+            }}
+          >
+            Next 50 →
+          </button>
+        </div>
+      </div>
+
+      {/* 1,000-Plugin Table */}
+      <div
+        style={{
+          border: "1px solid var(--border)",
+          borderRadius: 10,
+          overflow: "hidden",
+          background: "var(--surface)"
+        }}
+      >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "110px 85px 1.5fr 170px 190px 110px",
+            gap: 10,
+            padding: "10px 14px",
+            background: "var(--surface-2)",
+            borderBottom: "1px solid var(--border)",
+            fontSize: 10,
+            fontWeight: 800,
+            textTransform: "uppercase",
+            letterSpacing: "0.05em"
+          }}
+        >
+          <div>Plugin Code</div>
+          <div>Scanner</div>
+          <div>Vulnerability Check & Rule ID</div>
+          <div>MITRE ATT&CK® TTP</div>
+          <div>Blue Team (BT) D3FEND™</div>
+          <div>Stage / CWE</div>
+        </div>
+
+        {slice.map((p) => {
+          const isSelected = p.id === selectedId;
+          return (
+            <div
+              key={p.id}
+              onClick={() => onSelectPlugin(p.id)}
               style={{
-                fontSize: 16,
-                color: item.ok ? "#10b981" : "#ef4444",
-                flexShrink: 0,
+                display: "grid",
+                gridTemplateColumns: "110px 85px 1.5fr 170px 190px 110px",
+                gap: 10,
+                padding: "10px 14px",
+                borderBottom: "1px solid var(--border)",
+                background: isSelected ? "var(--surface-2)" : "transparent",
+                cursor: "pointer",
+                alignItems: "center",
+                fontSize: 11.5
               }}
             >
-              {item.ok ? "✓" : "✗"}
-            </span>
-            <span
-              style={{ fontSize: 14, color: "var(--fg)", flex: 1 }}
-            >
-              {item.label}
-            </span>
-          </div>
-        ))}
-
-        {/* GitHub-specific warning */}
-        {isGitHub && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              padding: "12px 16px",
-              borderRadius: 10,
-              border: "1px solid #f59e0b44",
-              background: "#f59e0b0a",
-            }}
-          >
-            <span style={{ fontSize: 16, color: "#f59e0b", flexShrink: 0 }}>
-              ⚠
-            </span>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 14, color: "#f59e0b", fontWeight: 600 }}>
-                Update Available
+              <div style={{ fontFamily: "monospace", fontWeight: 800 }}>{p.code}</div>
+              <div>
+                <ScannerBadge family={p.scannerFamily} />
               </div>
-              <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
-                v1.1.0 → v1.2.0 — Patch includes security fixes for token
-                handling
+              <div>
+                <div style={{ fontWeight: 700 }}>{p.name}</div>
+                <div style={{ fontSize: 10, color: "var(--muted)", fontFamily: "monospace", marginTop: 2 }}>
+                  Ref: {p.scannerRefId} · {p.owasp}
+                </div>
+              </div>
+              <div style={{ fontFamily: "monospace", fontSize: 10.5 }}>
+                <div style={{ fontWeight: 700 }}>
+                  {p.mitreTtp?.tacticId} · {p.mitreTtp?.subTechniqueId || p.mitreTtp?.techniqueId}
+                </div>
+                <div style={{ fontSize: 9.5, color: "var(--muted)" }}>{p.mitreTtp?.tacticName}</div>
+              </div>
+              <div style={{ fontFamily: "monospace", fontSize: 10.5 }}>
+                <div style={{ fontWeight: 700 }}>
+                  🛡️ {p.blueTeamDefense?.d3fendId} ({p.blueTeamDefense?.d3fendCategory})
+                </div>
+                <div style={{ fontSize: 9.5, color: "var(--muted)" }}>{p.blueTeamDefense?.btLogSource}</div>
+              </div>
+              <div style={{ fontFamily: "monospace", fontSize: 10 }}>
+                <div style={{ fontWeight: 700 }}>Stage {p.brainStage}/8</div>
+                <div style={{ color: "var(--muted)" }}>
+                  {p.cwe} · CVSS {p.cvssBase?.toFixed(1)}
+                </div>
               </div>
             </div>
-            <button
-              style={{
-                padding: "6px 14px",
-                borderRadius: 6,
-                background: "#f59e0b",
-                color: "#000",
-                border: "none",
-                fontWeight: 700,
-                fontSize: 12,
-                cursor: "pointer",
-              }}
-            >
-              Update Now
-            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── Tab 2: Overview (Selected Plugin Deep-Dive + TTP & BT D3FEND) ───────────
+
+function OverviewTab({ plugin }: { plugin: InstalledPlugin }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div
+        style={{
+          padding: 18,
+          borderRadius: 10,
+          background: "var(--surface)",
+          border: "1px solid var(--border)"
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
+          <span
+            style={{
+              fontFamily: "monospace",
+              fontSize: 12,
+              fontWeight: 800,
+              padding: "3px 8px",
+              borderRadius: 4,
+              background: "var(--surface-2)",
+              border: "1px solid var(--border)"
+            }}
+          >
+            {plugin.code}
+          </span>
+          <ScannerBadge family={plugin.scannerFamily} />
+          <span style={{ fontSize: 11, fontFamily: "monospace", fontWeight: 700 }}>
+            Rule ID: {plugin.scannerRefId}
+          </span>
+          <span style={{ fontSize: 11, fontFamily: "monospace", fontWeight: 700 }}>
+            {plugin.cwe} · CVSS {plugin.cvssBase?.toFixed(1)} ({plugin.severity})
+          </span>
+        </div>
+
+        <h2 style={{ margin: "0 0 8px", fontSize: 18, fontWeight: 800 }}>{plugin.name}</h2>
+        <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.65 }}>{plugin.description}</p>
+      </div>
+
+      {/* MITRE ATT&CK TTP + Blue Team D3FEND Split Cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 14 }}>
+        {plugin.mitreTtp && (
+          <div
+            style={{
+              padding: 16,
+              borderRadius: 10,
+              background: "var(--surface)",
+              border: "1px solid var(--border)"
+            }}
+          >
+            <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>
+              🎯 MITRE ATT&CK® TTP Mapping (Offensive Vector)
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 12.5 }}>
+              <div>
+                <strong>Tactic:</strong> {plugin.mitreTtp.tacticId} — {plugin.mitreTtp.tacticName}
+              </div>
+              <div>
+                <strong>Technique / Sub-Technique:</strong> {plugin.mitreTtp.techniqueId}
+                {plugin.mitreTtp.subTechniqueId ? ` / ${plugin.mitreTtp.subTechniqueId}` : ""} — {plugin.mitreTtp.techniqueName}
+              </div>
+              <div>
+                <strong>Procedure Summary:</strong> {plugin.mitreTtp.procedureSummary}
+              </div>
+              <div>
+                <strong>OWASP Standard:</strong> {plugin.owasp}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {plugin.blueTeamDefense && (
+          <div
+            style={{
+              padding: 16,
+              borderRadius: 10,
+              background: "var(--surface)",
+              border: "1px solid var(--border)"
+            }}
+          >
+            <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>
+              🛡️ Blue Team (BT) MITRE D3FEND™ Countermeasure
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 12.5 }}>
+              <div>
+                <strong>D3FEND ID & Category:</strong> {plugin.blueTeamDefense.d3fendId} [{plugin.blueTeamDefense.d3fendCategory}]
+              </div>
+              <div>
+                <strong>Defensive Technique:</strong> {plugin.blueTeamDefense.d3fendTechnique}
+              </div>
+              <div>
+                <strong>SOC / BT Log Source:</strong> {plugin.blueTeamDefense.btLogSource}
+              </div>
+              <div>
+                <strong>Sigma Detection Hint:</strong>{" "}
+                <code style={{ fontFamily: "monospace", fontSize: 11.5 }}>{plugin.blueTeamDefense.sigmaRuleHint}</code>
+              </div>
+              <div>
+                <strong>Virtual Patch / WAF Remediation:</strong> {plugin.blueTeamDefense.virtualPatchWafRule}
+              </div>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Signature block */}
-      <div
-        style={{
-          padding: "16px",
-          background: "#10b98108",
-          border: "1px solid #10b98133",
-          borderRadius: 10,
-        }}
-      >
+      {/* Deep-Dive Execution Actions */}
+      {plugin.deepDiveActions && plugin.deepDiveActions.length > 0 && (
         <div
           style={{
-            fontSize: 12,
-            fontWeight: 600,
-            color: "var(--muted)",
-            marginBottom: 10,
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-          }}
-        >
-          Cryptographic Signature
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          {[
-            ["Signed By", "AXIOM Certificate Authority"],
-            ["Algorithm", "SHA-256 with RSA-2048"],
-            ["Fingerprint", "a1:b2:c3:d4:e5:f6:a7:b8:c9:d0:e1:f2:a3:b4:c5:d6"],
-            ["Valid Until", "2027-12-31"],
-          ].map(([k, v]) => (
-            <div key={k} style={{ display: "flex", gap: 16 }}>
-              <span
-                style={{
-                  fontSize: 12,
-                  color: "var(--muted)",
-                  width: 100,
-                  flexShrink: 0,
-                }}
-              >
-                {k}
-              </span>
-              <span
-                style={{
-                  fontSize: 12,
-                  color: "#10b981",
-                  fontFamily: "monospace",
-                }}
-              >
-                {v}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Tab: Activity ────────────────────────────────────────────────────────────
-
-const MANIFEST_DATA = {
-  pluginId: "jira-enterprise",
-  name: "Jira Enterprise Connector",
-  version: "2.1.0",
-  type: "ticketing",
-  sdkVersion: "1.0",
-  author: "AXIOM",
-  permissions: ["tickets.create", "tickets.update"],
-  capabilities: [
-    "create_ticket",
-    "update_ticket",
-    "close_ticket",
-    "search_ticket",
-  ],
-  signature: "SHA256:a1b2c3d4e5f6...",
-  signedBy: "AXIOM Certificate Authority",
-};
-
-function ActivityTab({ plugin }: { plugin: InstalledPlugin }) {
-  const maxBar = Math.max(...BAR_DATA);
-  const barHeight = 60;
-
-  const manifest = { ...MANIFEST_DATA, pluginId: plugin.id, name: plugin.name, version: plugin.version };
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-      {/* Stats row */}
-      <div style={{ display: "flex", gap: 12 }}>
-        {[
-          { label: "Total Calls Today", value: "204", color: "#e8912d" },
-          { label: "Success Rate", value: "100%", color: "#10b981" },
-          { label: "Avg Latency", value: "42ms", color: "#6366f1" },
-          { label: "Last Invoked", value: "2m ago", color: "var(--fg)" },
-        ].map((s) => (
-          <div
-            key={s.label}
-            style={{
-              flex: 1,
-              background: "var(--bg, #0a0f1e)",
-              border: "1px solid var(--border, var(--surface-3))",
-              borderRadius: 8,
-              padding: "12px 14px",
-            }}
-          >
-            <div
-              style={{
-                fontSize: 20,
-                fontWeight: 800,
-                color: s.color,
-                lineHeight: 1,
-              }}
-            >
-              {s.value}
-            </div>
-            <div
-              style={{ fontSize: 11, color: "var(--muted)", marginTop: 5 }}
-            >
-              {s.label}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* SVG bar chart */}
-      <div
-        style={{
-          background: "var(--bg, #0a0f1e)",
-          border: "1px solid var(--border, var(--surface-3))",
-          borderRadius: 10,
-          padding: "16px 20px",
-        }}
-      >
-        <div
-          style={{
-            fontSize: 12,
-            fontWeight: 600,
-            color: "var(--muted)",
-            marginBottom: 14,
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-          }}
-        >
-          Invocations by Hour
-        </div>
-        <svg
-          width="100%"
-          height={barHeight + 24}
-          viewBox={`0 0 ${BAR_DATA.length * 40} ${barHeight + 24}`}
-          preserveAspectRatio="none"
-        >
-          {BAR_DATA.map((val, i) => {
-            const h = (val / maxBar) * barHeight;
-            const x = i * 40 + 4;
-            const y = barHeight - h;
-            return (
-              <g key={i}>
-                <rect
-                  x={x}
-                  y={y}
-                  width={30}
-                  height={h}
-                  rx={4}
-                  fill="#e8912d"
-                  opacity={0.75}
-                />
-                <text
-                  x={x + 15}
-                  y={barHeight + 16}
-                  textAnchor="middle"
-                  fontSize={9}
-                  fill="#6b7280"
-                >
-                  {BAR_LABELS[i]}h
-                </text>
-              </g>
-            );
-          })}
-        </svg>
-      </div>
-
-      {/* Audit trail */}
-      <div>
-        <div
-          style={{
-            fontSize: 12,
-            fontWeight: 600,
-            color: "var(--muted)",
-            marginBottom: 10,
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-          }}
-        >
-          Recent Invocations
-        </div>
-        <div
-          style={{
-            border: "1px solid var(--border, var(--surface-3))",
+            padding: 16,
             borderRadius: 10,
-            overflow: "hidden",
+            background: "var(--surface)",
+            border: "1px solid var(--border)"
           }}
         >
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "70px 140px 1fr 80px",
-              gap: 0,
-              padding: "8px 14px",
-              background: "var(--bg, #0a0f1e)",
-              borderBottom: "1px solid var(--border, var(--surface-3))",
-            }}
-          >
-            {["Time", "User", "Action", "Result"].map((h) => (
+          <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>
+            ⚡ Automated Execution & Verification Steps (Stage {plugin.brainStage}/8 · {plugin.brainStageName})
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {plugin.deepDiveActions.map((act, idx) => (
               <div
-                key={h}
+                key={idx}
                 style={{
-                  fontSize: 10,
-                  fontWeight: 700,
-                  color: "var(--muted)",
-                  letterSpacing: "0.06em",
-                  textTransform: "uppercase",
+                  padding: "8px 12px",
+                  borderRadius: 6,
+                  background: "var(--surface-2)",
+                  border: "1px solid var(--border)",
+                  fontSize: 12.5,
+                  fontFamily: "monospace"
                 }}
               >
-                {h}
+                {idx + 1}. {act}
               </div>
             ))}
           </div>
-          {AUDIT_ACTIONS.map((row, i) => (
-            <div
-              key={i}
+        </div>
+      )}
+
+      {/* Permissions */}
+      <div
+        style={{
+          padding: 16,
+          borderRadius: 10,
+          background: "var(--surface)",
+          border: "1px solid var(--border)"
+        }}
+      >
+        <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>
+          🔐 Sandboxed Plugin Permissions
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {plugin.permissions.map((perm) => (
+            <span
+              key={perm}
               style={{
-                display: "grid",
-                gridTemplateColumns: "70px 140px 1fr 80px",
-                gap: 0,
-                padding: "9px 14px",
-                borderBottom:
-                  i < AUDIT_ACTIONS.length - 1
-                    ? "1px solid var(--border, var(--surface-3))"
-                    : "none",
-                alignItems: "center",
+                padding: "5px 10px",
+                borderRadius: 6,
+                background: "var(--surface-2)",
+                border: "1px solid var(--border)",
+                fontFamily: "monospace",
+                fontSize: 11.5,
+                fontWeight: 700
               }}
             >
-              <span
-                style={{
-                  fontSize: 11,
-                  fontFamily: "monospace",
-                  color: "var(--muted)",
-                }}
-              >
-                {row.time}
-              </span>
-              <span style={{ fontSize: 12, color: "var(--fg)" }}>
-                {row.user}
-              </span>
-              <span
-                style={{
-                  fontSize: 12,
-                  fontFamily: "monospace",
-                  color: "#e8912d",
-                }}
-              >
-                {row.action}
-              </span>
-              <span
-                style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: row.result === "success" ? "#10b981" : "#ef4444",
-                }}
-              >
-                {row.result === "success" ? "✓ ok" : "✗ fail"}
-              </span>
-            </div>
+              ✓ {perm}
+            </span>
           ))}
-        </div>
-      </div>
-
-      {/* Plugin Manifest */}
-      <div>
-        <div
-          style={{
-            fontSize: 12,
-            fontWeight: 600,
-            color: "var(--muted)",
-            marginBottom: 10,
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-          }}
-        >
-          Plugin Manifest
-        </div>
-        <div
-          style={{
-            background: "var(--bg, #0a0f1e)",
-            border: "1px solid var(--border, var(--surface-3))",
-            borderRadius: 10,
-            padding: "16px 20px",
-            overflowX: "auto",
-          }}
-        >
-          <pre
-            style={{
-              margin: 0,
-              fontSize: 12,
-              fontFamily: "monospace",
-              color: "var(--fg, #d1d5db)",
-              lineHeight: 1.7,
-              whiteSpace: "pre",
-            }}
-          >
-            {JSON.stringify(manifest, null, 2)
-              .replace(/"([^"]+)":/g, '"<span style="color:#e8912d">$1</span>":')
-              .split("\n")
-              .map((line, i) => (
-                <span key={i}>
-                  {line
-                    .split(/("([^"]+)")/g)
-                    .map((chunk, j) => {
-                      return chunk;
-                    })
-                    .join("")}
-                  {"\n"}
-                </span>
-              ))}
-          </pre>
-          {/* Plain pre with colored keys via dangerouslySetInnerHTML */}
-          <div
-            style={{ display: "none" }}
-            dangerouslySetInnerHTML={{
-              __html: JSON.stringify(manifest, null, 2),
-            }}
-          />
         </div>
       </div>
     </div>
@@ -1050,236 +582,303 @@ function ActivityTab({ plugin }: { plugin: InstalledPlugin }) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function PluginsPage() {
+  const [scannerFilter, setScannerFilter] = useState<string>("ALL");
+  const [tacticFilter, setTacticFilter] = useState<string>("ALL");
+  const [d3fendFilter, setD3fendFilter] = useState<string>("ALL");
+  const [stageFilter, setStageFilter] = useState<number>(0);
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedId, setSelectedId] = useState<string>(INSTALLED[0].id);
-  const [activeTab, setActiveTab] = useState<Tab>("overview");
+  const [activeTab, setActiveTab] = useState<Tab>("mitre_bt_matrix");
 
-  const selected = INSTALLED.find((p) => p.id === selectedId) ?? INSTALLED[0];
+  const filteredPlugins = useMemo(() => {
+    return INSTALLED.filter((p) => {
+      if (scannerFilter !== "ALL" && p.scannerFamily !== scannerFilter) return false;
+      if (tacticFilter !== "ALL" && p.mitreTtp?.tacticId !== tacticFilter) return false;
+      if (d3fendFilter !== "ALL" && p.blueTeamDefense?.d3fendId !== d3fendFilter) return false;
+      if (stageFilter !== 0 && p.brainStage !== stageFilter) return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const match =
+          p.name.toLowerCase().includes(q) ||
+          (p.code && p.code.toLowerCase().includes(q)) ||
+          (p.scannerRefId && p.scannerRefId.toLowerCase().includes(q)) ||
+          (p.cwe && p.cwe.toLowerCase().includes(q)) ||
+          (p.mitreTtp?.techniqueId && p.mitreTtp.techniqueId.toLowerCase().includes(q)) ||
+          (p.blueTeamDefense?.d3fendId && p.blueTeamDefense.d3fendId.toLowerCase().includes(q)) ||
+          p.description.toLowerCase().includes(q);
+        if (!match) return false;
+      }
+      return true;
+    });
+  }, [scannerFilter, tacticFilter, d3fendFilter, stageFilter, searchQuery]);
 
-  const TABS: { id: Tab; label: string }[] = [
-    { id: "overview", label: "Overview" },
-    { id: "capabilities", label: "Capabilities" },
-    { id: "verification", label: "Verification" },
-    { id: "activity", label: "Activity" },
-  ];
+  const selected = useMemo(
+    () => INSTALLED.find((p) => p.id === selectedId) ?? filteredPlugins[0] ?? INSTALLED[0],
+    [selectedId, filteredPlugins]
+  );
+
+  const sidebarList = useMemo(() => filteredPlugins.slice(0, 120), [filteredPlugins]);
 
   return (
     <div
       style={{
         minHeight: "100vh",
-        background: "var(--bg, #0a0f1e)",
-        color: "var(--fg, #f9fafb)",
+        background: "var(--bg)",
+        color: "var(--fg)",
         fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif",
         display: "flex",
-        flexDirection: "column",
+        flexDirection: "column"
       }}
     >
-      {/* ── Top Bar ── */}
+      {/* ── Top Summary Header ── */}
       <div
         style={{
-          borderBottom: "1px solid var(--border, var(--surface-3))",
-          background: "var(--surface, var(--surface))",
-          padding: "0 32px",
-          height: 56,
+          borderBottom: "1px solid var(--border)",
+          background: "var(--surface)",
+          padding: "14px 24px",
           display: "flex",
-          alignItems: "center",
-          gap: 12,
-          flexShrink: 0,
+          flexDirection: "column",
+          gap: 12
         }}
       >
-        <span
-          style={{
-            fontSize: 13,
-            fontWeight: 700,
-            letterSpacing: "0.08em",
-            color: "#e8912d",
-          }}
-        >
-          AXIOM
-        </span>
-        <span style={{ color: "var(--border)", margin: "0 4px" }}>·</span>
-        <span style={{ fontSize: 13, color: "var(--muted)" }}>
-          Plugin Manager
-        </span>
-      </div>
-
-      {/* ── Main Layout ── */}
-      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-        {/* ── Left Sidebar ── */}
-        <div
-          style={{
-            width: 240,
-            flexShrink: 0,
-            borderRight: "1px solid var(--border, var(--surface-3))",
-            background: "var(--surface, var(--surface))",
-            display: "flex",
-            flexDirection: "column",
-            overflowY: "auto",
-          }}
-        >
-          {/* Sidebar header */}
-          <div
-            style={{
-              padding: "16px 16px 10px",
-              borderBottom: "1px solid var(--border, var(--surface-3))",
-            }}
-          >
-            <div
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                color: "var(--muted)",
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-              }}
-            >
-              Installed Plugins
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: 15, fontWeight: 900, letterSpacing: "0.04em" }}>
+                🔌 1,000-PLUGIN MULTI-SCANNER VULNERABILITY & MITRE TTP / BLUE TEAM (BT) REGISTRY
+              </span>
+              <span
+                style={{
+                  fontSize: 10.5,
+                  fontWeight: 800,
+                  padding: "3px 8px",
+                  borderRadius: 4,
+                  background: "var(--surface-2)",
+                  border: "1px solid var(--border)",
+                  fontFamily: "monospace"
+                }}
+              >
+                1,000 VULN PLUGINS + 32 CORE ORCHESTRATORS ACTIVE
+              </span>
             </div>
-            <div
-              style={{
-                fontSize: 11,
-                color: "var(--muted)",
-                marginTop: 2,
-              }}
-            >
-              {INSTALLED.length} plugins active
+            <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>
+              Unified detection rules across <strong>OpenVAS (250 NVTs)</strong> · <strong>OWASP ZAP (250 Rules)</strong> ·{" "}
+              <strong>ProjectDiscovery Nuclei (250 Templates)</strong> · <strong>Burp Suite (250 BChecks)</strong> mapped to{" "}
+              <strong>MITRE ATT&CK® v15 TTPs</strong> & <strong>Blue Team (BT) MITRE D3FEND™</strong> countermeasures.
             </div>
           </div>
 
-          {/* Plugin list */}
-          <div style={{ flex: 1, padding: "8px 0" }}>
-            {INSTALLED.map((plugin) => {
-              const isActive = plugin.id === selectedId;
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search 1,000 plugins (EXP-PLG-0501, CVE, CWE, OID, T1190, D3-ACH)..."
+            style={{
+              width: 340,
+              padding: "8px 12px",
+              borderRadius: 6,
+              border: "1px solid var(--border)",
+              background: "var(--surface-2)",
+              color: "var(--fg)",
+              fontSize: 12,
+              fontFamily: "monospace"
+            }}
+          />
+        </div>
+
+        {/* Filter Bar: Scanner Engine + MITRE Tactic + BT D3FEND + Brain Stage */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+          {[
+            { id: "ALL", label: `All Scanners (${INSTALLED.length})` },
+            { id: "OPENVAS", label: `OpenVAS NVT (${THOUSAND_PLUGINS_SUMMARY.byScanner.OPENVAS})` },
+            { id: "ZAP", label: `OWASP ZAP (${THOUSAND_PLUGINS_SUMMARY.byScanner.ZAP})` },
+            { id: "NUCLEI", label: `Nuclei Templates (${THOUSAND_PLUGINS_SUMMARY.byScanner.NUCLEI})` },
+            { id: "BURP", label: `Burp Suite BCheck (${THOUSAND_PLUGINS_SUMMARY.byScanner.BURP})` },
+            { id: "CORE", label: `Core 32 Orchestrators (32)` }
+          ].map((btn) => {
+            const active = scannerFilter === btn.id;
+            return (
+              <button
+                key={btn.id}
+                onClick={() => setScannerFilter(btn.id)}
+                style={{
+                  padding: "5px 11px",
+                  borderRadius: 6,
+                  border: "1px solid var(--border)",
+                  background: active ? "#8b4528" : "var(--surface-2)",
+                  color: active ? "#ffffff" : "var(--fg)",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  cursor: "pointer"
+                }}
+              >
+                {btn.label}
+              </button>
+            );
+          })}
+
+          <select
+            value={tacticFilter}
+            onChange={(e) => setTacticFilter(e.target.value)}
+            style={{
+              padding: "5px 10px",
+              borderRadius: 6,
+              border: "1px solid var(--border)",
+              background: "var(--surface-2)",
+              color: "var(--fg)",
+              fontSize: 11,
+              fontWeight: 700
+            }}
+          >
+            <option value="ALL">All MITRE ATT&CK Tactics</option>
+            {THOUSAND_PLUGINS_SUMMARY.mitreTacticsCovered.map((t) => (
+              <option key={t.tacticId} value={t.tacticId}>
+                {t.tacticId} · {t.tacticName}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={d3fendFilter}
+            onChange={(e) => setD3fendFilter(e.target.value)}
+            style={{
+              padding: "5px 10px",
+              borderRadius: 6,
+              border: "1px solid var(--border)",
+              background: "var(--surface-2)",
+              color: "var(--fg)",
+              fontSize: 11,
+              fontWeight: 700
+            }}
+          >
+            <option value="ALL">All Blue Team (BT) D3FEND</option>
+            {THOUSAND_PLUGINS_SUMMARY.blueTeamD3fendCovered.map((d) => (
+              <option key={d.d3fendId} value={d.d3fendId}>
+                {d.d3fendId} · {d.technique}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={stageFilter}
+            onChange={(e) => setStageFilter(Number(e.target.value))}
+            style={{
+              padding: "5px 10px",
+              borderRadius: 6,
+              border: "1px solid var(--border)",
+              background: "var(--surface-2)",
+              color: "var(--fg)",
+              fontSize: 11,
+              fontWeight: 700
+            }}
+          >
+            <option value={0}>All 8 Brain Stages</option>
+            <option value={1}>Stage 1 · DISCOVER</option>
+            <option value={2}>Stage 2 · UNDERSTAND</option>
+            <option value={3}>Stage 3 · PLAN</option>
+            <option value={4}>Stage 4 · EXECUTE</option>
+            <option value={5}>Stage 5 · VALIDATE</option>
+            <option value={6}>Stage 6 · CORRELATE</option>
+            <option value={7}>Stage 7 · REPORT</option>
+            <option value={8}>Stage 8 · RETEST (BT D3FEND)</option>
+          </select>
+        </div>
+      </div>
+
+      {/* ── Main Content Layout ── */}
+      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+        {/* Left Sidebar Quick Selector */}
+        <div
+          style={{
+            width: 280,
+            flexShrink: 0,
+            borderRight: "1px solid var(--border)",
+            background: "var(--surface)",
+            display: "flex",
+            flexDirection: "column",
+            maxHeight: "calc(100vh - 140px)",
+            overflowY: "auto"
+          }}
+        >
+          <div style={{ padding: "12px 14px", borderBottom: "1px solid var(--border)", fontSize: 11, fontWeight: 800 }}>
+            MATCHING PLUGINS ({filteredPlugins.length})
+          </div>
+          <div style={{ flex: 1, overflowY: "auto" }}>
+            {sidebarList.map((plugin) => {
+              const isActive = plugin.id === selected.id;
               return (
                 <button
                   key={plugin.id}
-                  onClick={() => setSelectedId(plugin.id)}
+                  onClick={() => {
+                    setSelectedId(plugin.id);
+                    setActiveTab("overview");
+                  }}
                   style={{
                     width: "100%",
-                    padding: "10px 16px",
-                    background: isActive ? "#e8912d12" : "none",
+                    padding: "9px 12px",
+                    background: isActive ? "var(--surface-2)" : "transparent",
                     border: "none",
-                    borderLeft: isActive
-                      ? "3px solid #e8912d"
-                      : "3px solid transparent",
+                    borderBottom: "1px solid var(--border)",
+                    borderLeft: isActive ? "3px solid #8b4528" : "3px solid transparent",
                     cursor: "pointer",
                     textAlign: "left",
                     display: "flex",
-                    gap: 10,
-                    alignItems: "flex-start",
+                    flexDirection: "column",
+                    gap: 4
                   }}
                 >
-                  <div style={{ marginTop: 5 }}>
-                    <StatusDot status={plugin.status} />
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontFamily: "monospace", fontSize: 10.5, fontWeight: 800 }}>{plugin.code}</span>
+                    <ScannerBadge family={plugin.scannerFamily} />
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 600,
-                        color: isActive ? "#e8912d" : "var(--fg, #f9fafb)",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                        lineHeight: 1.3,
-                        marginBottom: 4,
-                      }}
-                    >
-                      {plugin.name}
-                    </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: 4,
-                        alignItems: "center",
-                        flexWrap: "wrap",
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontSize: 10,
-                          color: "var(--muted)",
-                          fontFamily: "monospace",
-                        }}
-                      >
-                        v{plugin.version}
-                      </span>
-                      <CategoryBadge category={plugin.category} />
-                    </div>
+                  <div
+                    style={{
+                      fontSize: 11.5,
+                      fontWeight: 700,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap"
+                    }}
+                  >
+                    {plugin.name}
+                  </div>
+                  <div style={{ fontSize: 9.5, color: "var(--muted)", fontFamily: "monospace" }}>
+                    {plugin.mitreTtp?.tacticId} {plugin.mitreTtp?.techniqueId} · BT {plugin.blueTeamDefense?.d3fendId}
                   </div>
                 </button>
               );
             })}
           </div>
-
-          {/* Sidebar footer */}
-          <div
-            style={{
-              padding: "12px 16px",
-              borderTop: "1px solid var(--border, var(--surface-3))",
-              fontSize: 11,
-              color: "var(--muted)",
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-              <span>Healthy</span>
-              <span style={{ color: "#10b981", fontWeight: 700 }}>
-                {INSTALLED.filter((p) => p.status === "healthy").length}
-              </span>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-              <span>Needs Update</span>
-              <span style={{ color: "#f59e0b", fontWeight: 700 }}>
-                {INSTALLED.filter((p) => p.status === "warning").length}
-              </span>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span>Error</span>
-              <span style={{ color: "#ef4444", fontWeight: 700 }}>
-                {INSTALLED.filter((p) => p.status === "error").length}
-              </span>
-            </div>
-          </div>
         </div>
 
-        {/* ── Right Panel ── */}
-        <div
-          style={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-          }}
-        >
-          {/* Tab bar */}
+        {/* Right Panel */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
           <div
             style={{
-              borderBottom: "1px solid var(--border, var(--surface-3))",
-              padding: "0 32px",
+              borderBottom: "1px solid var(--border)",
+              padding: "0 24px",
               display: "flex",
-              gap: 0,
-              flexShrink: 0,
-              background: "var(--surface, var(--surface))",
+              gap: 8,
+              background: "var(--surface)"
             }}
           >
-            {TABS.map((tab) => (
+            {[
+              { id: "mitre_bt_matrix" as Tab, label: `1,000-Plugin MITRE TTP & BT Matrix (${filteredPlugins.length})` },
+              { id: "overview" as Tab, label: `Selected Plugin Deep-Dive (${selected.code})` },
+              { id: "verification" as Tab, label: "CA Signature & Sandbox Verification" },
+              { id: "activity" as Tab, label: "Multi-Engine Execution Telemetry" }
+            ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 style={{
-                  padding: "14px 20px",
+                  padding: "12px 16px",
                   background: "none",
                   border: "none",
-                  borderBottom:
-                    activeTab === tab.id
-                      ? "2px solid #e8912d"
-                      : "2px solid transparent",
-                  color:
-                    activeTab === tab.id ? "#e8912d" : "var(--muted)",
-                  fontSize: 13,
-                  fontWeight: activeTab === tab.id ? 700 : 400,
-                  cursor: "pointer",
-                  marginBottom: -1,
-                  transition: "color 0.15s",
+                  borderBottom: activeTab === tab.id ? "3px solid #8b4528" : "3px solid transparent",
+                  fontWeight: activeTab === tab.id ? 800 : 600,
+                  fontSize: 12.5,
+                  cursor: "pointer"
                 }}
               >
                 {tab.label}
@@ -1287,22 +886,65 @@ export default function PluginsPage() {
             ))}
           </div>
 
-          {/* Tab content */}
-          <div
-            style={{
-              flex: 1,
-              overflowY: "auto",
-              padding: "28px 32px",
-            }}
-          >
+          <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px" }}>
+            {activeTab === "mitre_bt_matrix" && (
+              <MitreBtMatrixTab
+                filteredPlugins={filteredPlugins}
+                selectedId={selected.id}
+                onSelectPlugin={(id) => {
+                  setSelectedId(id);
+                  setActiveTab("overview");
+                }}
+              />
+            )}
             {activeTab === "overview" && <OverviewTab plugin={selected} />}
-            {activeTab === "capabilities" && (
-              <CapabilitiesTab selectedId={selectedId} />
-            )}
             {activeTab === "verification" && (
-              <VerificationTab plugin={selected} />
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {VERIFICATION_ITEMS.map((item) => (
+                  <div
+                    key={item.key}
+                    style={{
+                      padding: "12px 16px",
+                      borderRadius: 8,
+                      background: "var(--surface)",
+                      border: "1px solid var(--border)",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center"
+                    }}
+                  >
+                    <span style={{ fontWeight: 700, fontSize: 13 }}>✓ {item.label}</span>
+                    <span style={{ fontFamily: "monospace", fontSize: 11, fontWeight: 800, color: "#10b981" }}>
+                      VERIFIED
+                    </span>
+                  </div>
+                ))}
+              </div>
             )}
-            {activeTab === "activity" && <ActivityTab plugin={selected} />}
+            {activeTab === "activity" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {AUDIT_ACTIONS.map((row, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      padding: "10px 14px",
+                      borderRadius: 8,
+                      background: "var(--surface)",
+                      border: "1px solid var(--border)",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      fontFamily: "monospace",
+                      fontSize: 12
+                    }}
+                  >
+                    <span>{row.time}</span>
+                    <strong>{row.user}</strong>
+                    <span>{row.action}</span>
+                    <span style={{ color: "#10b981", fontWeight: 800 }}>✓ {row.result}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
