@@ -3,14 +3,14 @@ export type Severity = "Critical" | "High" | "Medium" | "Low";
 export type Status = "Open" | "In Progress" | "Resolved" | "False Positive";
 
 export type EngineName =
-  | "Checkmarx"
-  | "IBM Code Scan"
-  | "Fortify SCA"
-  | "CodeQL"
-  | "Semgrep"
-  | "Snyk"
-  | "Joern"
-  | "DataFlow";
+  | "XTRIKE XQL"
+  | "XTRIKE DeepFlow"
+  | "XTRIKE StructSCA"
+  | "XTRIKE AST-Query"
+  | "XTRIKE PatternGuard"
+  | "XTRIKE DepGuard"
+  | "XTRIKE GraphCPG"
+  | "XTRIKE TaintFlow";
 
 export type EngineResult = {
   name: EngineName;
@@ -64,7 +64,7 @@ export type SASTFinding = {
   sink: string;
   taintPath: string[];
 
-  // Enterprise Engine Telemetry (Checkmarx / IBM Code Scan / Fortify SCA)
+  // XTRIKE Enterprise Engine Telemetry (XTRIKE XQL / XTRIKE DeepFlow / XTRIKE StructSCA)
   checkmarxQuery?: string;
   checkmarxBfl?: string;
   ibmRuleId?: string;

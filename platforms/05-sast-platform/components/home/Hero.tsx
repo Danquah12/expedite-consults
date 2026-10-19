@@ -45,9 +45,9 @@ export default function Hero() {
         {/* Subheading */}
         <p className="text-xl sm:text-2xl max-w-3xl mx-auto mb-10 leading-relaxed" style={{ color: "var(--muted)" }}>
           Multi-engine static analysis using{" "}
-          <span className="text-[#1f1b18] font-semibold">CodeQL</span>,{" "}
-          <span className="text-[#1f1b18] font-semibold">Semgrep</span>,{" "}
-          <span className="text-[#1f1b18] font-semibold">Joern</span>, and AI-driven validation
+          <span className="text-[#1f1b18] font-semibold">XTRIKE AST-Query</span>,{" "}
+          <span className="text-[#1f1b18] font-semibold">XTRIKE PatternGuard</span>,{" "}
+          <span className="text-[#1f1b18] font-semibold">XTRIKE GraphCPG</span>, and AI-driven validation
           that eliminates false positives and surfaces only real, exploitable risks.
         </p>
 

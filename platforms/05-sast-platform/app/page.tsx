@@ -16,7 +16,7 @@ export default function Home() {
     {
       id: "risk-posture",
       badge: "LIVE RISK POSTURE",
-      title: "Checkmarx One Risk & Fixability",
+      title: "XTRIKE One Risk & Fixability",
       content: (
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
@@ -25,7 +25,7 @@ export default function Home() {
               <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#3a404c" }} />
               <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#3a404c" }} />
               <span style={{ fontSize: 11, fontWeight: 800, color: "#4a4239", marginLeft: 6, letterSpacing: "0.05em" }}>
-                SAST RISK POSTURE
+                XTRIKE SAST RISK POSTURE
               </span>
             </div>
             <span style={{ fontSize: 10, fontWeight: 800, color: "#46a36e", display: "flex", alignItems: "center", gap: 4 }}>
@@ -126,7 +126,7 @@ export default function Home() {
     {
       id: "fusion-engine",
       badge: "HYBRID FUSION ENGINE",
-      title: "Deterministic AST + Frontier AI Triage",
+      title: "Deterministic AST + XTRIKE Neural-Triage",
       content: (
         <div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
@@ -143,7 +143,7 @@ export default function Home() {
                 <span style={{ color: "#46a36e" }}>FALSE POSITIVE CUT</span>
               </div>
               <div style={{ fontSize: 10, color: "#5c5349", marginTop: 4 }}>
-                Claude 3.7 verified private subnet filter at L82 blocks AWS IMDS 169.254.169.254.
+                XTRIKE Neural-Triage v4 verified private subnet filter at L82 blocks cloud metadata 169.254.169.254.
               </div>
             </div>
 
@@ -190,9 +190,9 @@ export default function Home() {
           </pre>
 
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div style={{ fontSize: 10, color: "#46a36e" }}>&check; Jest regression test generated</div>
+            <div style={{ fontSize: 10, color: "#46a36e" }}>&check; XTRIKE regression test generated</div>
             <button style={{ background: "#8b4528", border: "none", color: "#f3eee4", fontSize: 10.5, fontWeight: 900, padding: "4px 10px", borderRadius: 4 }}>
-              Merge to GitHub
+              Merge Pull Request
             </button>
           </div>
         </div>
@@ -201,7 +201,7 @@ export default function Home() {
     {
       id: "ai-bom",
       badge: "AI SUPPLY CHAIN",
-      title: "AI-BOM & LLM Model Weight Inventory",
+      title: "AI-BOM & Model Weight Inventory",
       content: (
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
@@ -211,11 +211,11 @@ export default function Home() {
 
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <div style={{ display: "flex", justifyContent: "space-between", background: "#f3eee4", padding: "8px 10px", borderRadius: 6, fontSize: 10.5 }}>
-              <span style={{ color: "#1f1b18", fontWeight: 700 }}>meta-llama/Llama-3-8B-Instruct</span>
+              <span style={{ color: "#1f1b18", fontWeight: 700 }}>xtrike-llm/Core-8B-Instruct</span>
               <span style={{ color: "#46a36e", fontWeight: 800 }}>Safetensors (Clean)</span>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", background: "#f3eee4", padding: "8px 10px", borderRadius: 6, fontSize: 10.5 }}>
-              <span style={{ color: "#1f1b18", fontWeight: 700 }}>langchain-rag-agent-v2</span>
+              <span style={{ color: "#1f1b18", fontWeight: 700 }}>xtrike-rag-agent-v2</span>
               <span style={{ color: "#e5484d", fontWeight: 800 }}>Indirect Prompt Injection</span>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", background: "#f3eee4", padding: "8px 10px", borderRadius: 6, fontSize: 10.5 }}>
@@ -233,7 +233,7 @@ export default function Home() {
       content: (
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-            <div style={{ fontSize: 12, fontWeight: 800, color: "#8b4528" }}>Cursor &amp; Claude Desktop Endpoint</div>
+            <div style={{ fontSize: 12, fontWeight: 800, color: "#8b4528" }}>XTRIKE IDE &amp; Desktop Endpoint</div>
             <span style={{ fontSize: 10, color: "#46a36e", fontWeight: 800 }}>CONNECTED</span>
           </div>
 
@@ -249,8 +249,8 @@ export default function Home() {
           }}>
 {`{
   "mcpServers": {
-    "axiom-sast": {
-      "command": "npx @axiom/mcp-sast",
+    "xtrike-sast": {
+      "command": "npx @xtrike/mcp-sast",
       "tools": ["scan_buffer", "apply_patch"]
     }
   }
@@ -292,12 +292,12 @@ export default function Home() {
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent"
               }}>
-                AXIOM SAST Secures It.
+                XTRIKE SAST Secures It.
               </span>
             </h1>
 
             <p style={{ fontSize: 16, color: "#5c5349", lineHeight: 1.6, marginBottom: 28, maxWidth: 580 }}>
-              The Agentic Application Security Platform combining hybrid AST scanning, AI triage agents, and unified risk intelligence across every code repository.
+              The Agentic Application Security Platform combining hybrid AST scanning, XTRIKE AI triage agents, and unified risk intelligence across every code repository.
             </p>
 
             <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
@@ -456,7 +456,7 @@ export default function Home() {
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase" }}>Hybrid Scan Latency</div>
             <div style={{ fontSize: 26, fontWeight: 900, color: "#1f1b18", marginTop: 4 }}>1.4s / 10k LoC</div>
-            <div style={{ fontSize: 11, color: "#867b6e" }}>AST + Claude 3.7</div>
+            <div style={{ fontSize: 11, color: "#867b6e" }}>AST + XTRIKE Neural-Triage</div>
           </div>
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase" }}>AI-BOM Inventory</div>
@@ -474,8 +474,8 @@ export default function Home() {
       {/* 6 Flagship Studios Catalog */}
       <section style={{ maxWidth: 1360, margin: "0 auto", padding: "0 20px" }}>
         <div style={{ marginBottom: 24 }}>
-          <h2 style={{ fontSize: 24, fontWeight: 900, color: "#1f1b18" }}>Flagship SAST Studios &amp; Modules</h2>
-          <p style={{ fontSize: 13.5, color: "#5c5349" }}>Explore the next-generation static security ecosystem inspired by Checkmarx One and Black Duck Polaris.</p>
+          <h2 style={{ fontSize: 24, fontWeight: 900, color: "#1f1b18" }}>Flagship XTRIKE SAST Studios &amp; Modules</h2>
+          <p style={{ fontSize: 13.5, color: "#5c5349" }}>Explore the next-generation static security ecosystem built natively into the XTRIKE SAST Desk.</p>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 20 }}>
@@ -489,7 +489,7 @@ export default function Home() {
                   <span style={{ fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 4, background: "var(--surface-3)", color: "var(--muted)" }}>PROOF ENGINE</span>
                 </div>
                 <h3 style={{ fontSize: 17, fontWeight: 800, color: "#1f1b18", marginBottom: 8 }}>Finding Validation &amp; Proof Engine</h3>
-                <p style={{ fontSize: 12.5, color: "#5c5349", lineHeight: 1.5 }}>6-stage A–F validation pipeline, 6-point Proof Contracts, Z3 counterexample minimization, security invariants, and OWASP/CWE/NVD catalog.</p>
+                <p style={{ fontSize: 12.5, color: "#5c5349", lineHeight: 1.5 }}>6-stage A–F validation pipeline, 6-point Proof Contracts, XTRIKE-Solver counterexample minimization, security invariants, and OWASP/CWE/NVD catalog.</p>
               </div>
               <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "#8b4528" }}>
                 <span>Open Validation Engine</span>
@@ -507,8 +507,8 @@ export default function Home() {
                   </div>
                   <span style={{ fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 4, background: "var(--surface-3)", color: "var(--muted)" }}>FLAGSHIP</span>
                 </div>
-                <h3 style={{ fontSize: 17, fontWeight: 800, color: "#1f1b18", marginBottom: 8 }}>AXIOM Fusion Engine</h3>
-                <p style={{ fontSize: 12.5, color: "#5c5349", lineHeight: 1.5 }}>Hybrid scanning combining deterministic AST rules with Frontier AI triage to eliminate false positives in SQLi, SSRF, RCE, and XSS.</p>
+                <h3 style={{ fontSize: 17, fontWeight: 800, color: "#1f1b18", marginBottom: 8 }}>XTRIKE Fusion Engine</h3>
+                <p style={{ fontSize: 12.5, color: "#5c5349", lineHeight: 1.5 }}>Hybrid scanning combining deterministic AST rules with XTRIKE Neural-Triage to eliminate false positives in SQLi, SSRF, RCE, and XSS.</p>
               </div>
               <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "#8b4528" }}>
                 <span>Launch Fusion Studio</span>
@@ -546,7 +546,7 @@ export default function Home() {
                   <span style={{ fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 4, background: "var(--surface-3)", color: "var(--muted)" }}>AI SUPPLY CHAIN</span>
                 </div>
                 <h3 style={{ fontSize: 17, fontWeight: 800, color: "#1f1b18", marginBottom: 8 }}>AI-BOM &amp; Model Inventory</h3>
-                <p style={{ fontSize: 12.5, color: "#5c5349", lineHeight: 1.5 }}>Bill of Materials scanner for LLM model weights, LangChain prompt pipelines, vector stores, and MCP tools.</p>
+                <p style={{ fontSize: 12.5, color: "#5c5349", lineHeight: 1.5 }}>Bill of Materials scanner for AI model weights, RAG prompt pipelines, vector stores, and MCP tools.</p>
               </div>
               <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "#8b4528" }}>
                 <span>Inspect AI Inventory</span>
@@ -583,8 +583,8 @@ export default function Home() {
                   </div>
                   <span style={{ fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 4, background: "var(--surface-3)", color: "var(--muted)" }}>IDE PROTOCOL</span>
                 </div>
-                <h3 style={{ fontSize: 17, fontWeight: 800, color: "#1f1b18", marginBottom: 8 }}>AXIOM MCP Server Hub</h3>
-                <p style={{ fontSize: 12.5, color: "#5c5349", lineHeight: 1.5 }}>Model Context Protocol (MCP) server endpoints enabling Cursor, VS Code, and Claude Desktop to run SAST scans directly.</p>
+                <h3 style={{ fontSize: 17, fontWeight: 800, color: "#1f1b18", marginBottom: 8 }}>XTRIKE MCP Server Hub</h3>
+                <p style={{ fontSize: 12.5, color: "#5c5349", lineHeight: 1.5 }}>Model Context Protocol (MCP) server endpoints enabling developer IDEs and desktop agents to run XTRIKE SAST scans directly.</p>
               </div>
               <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "#8b4528" }}>
                 <span>Configure MCP Hub</span>

@@ -868,40 +868,49 @@ async function probeTarget(
 
   if (reachable) {
     // Finding 1: Missing or Weak Content-Security-Policy (CSP)
-    const hasUnsafeInline = Boolean(securityHeaders.cspValue && /unsafe-inline|unsafe-eval/i.test(securityHeaders.cspValue));
-    if (!securityHeaders.csp || hasUnsafeInline) {
+    const cspRaw = securityHeaders.cspValue || "";
+    const hasUnsafeInline = Boolean(cspRaw && /unsafe-inline/i.test(cspRaw));
+    const hasUnsafeEval = Boolean(cspRaw && /unsafe-eval/i.test(cspRaw));
+    const hasCdnGadgetWildcards = Boolean(cspRaw && /\*\.(jsdelivr\.net|cloudflare\.com|google\.com|gstatic\.com|googleapis\.com|unpkg\.com|cdnjs\.cloudflare\.com)/i.test(cspRaw));
+    if (!securityHeaders.csp || hasUnsafeInline || hasUnsafeEval) {
+      const weaknessParts = [
+        hasUnsafeInline ? "'unsafe-inline'" : null,
+        hasUnsafeEval ? "'unsafe-eval'" : null,
+        hasCdnGadgetWildcards ? "Wildcard CDN Script Gadgets (*.jsdelivr.net / *.cloudflare.com / *.google.com)" : null
+      ].filter(Boolean);
+      const isHighRiskCsp = (hasUnsafeInline && hasUnsafeEval) || (hasUnsafeInline && hasCdnGadgetWildcards);
       liveFindings.push({
         id: `LIVE-${host}-CSP`,
         title: !securityHeaders.csp
           ? `[LIVE EXTERNAL AUDIT] Content-Security-Policy (CSP) Header Missing on ${host}`
-          : `[LIVE EXTERNAL AUDIT] Permissive Content-Security-Policy ('unsafe-inline' / 'unsafe-eval') on ${host}`,
-        severity: "Medium",
+          : `[LIVE EXTERNAL AUDIT] Permissive Content-Security-Policy (${weaknessParts.join(" + ")}) on ${host}`,
+        severity: isHighRiskCsp ? "High" : "Medium",
         confidence: "Confirmed",
         plugin: "Header",
         url: finalUrl,
-        parameter: "Content-Security-Policy (HTTP Response Header)",
+        parameter: "Content-Security-Policy (script-src / style-src)",
         method: "GET",
         owaspRef: "A05:2021 · WSTG-CONF-07 · ASVS V14.4.3",
         cweId: "CWE-693",
         description: !securityHeaders.csp
           ? `Live HTTP response inspection of ${finalUrl} (HTTP ${statusCode}, ${responseTimeMs}ms) confirmed that the server does not return a 'Content-Security-Policy' header. Without CSP, browsers execute any inline scripts or third-party script inclusions if an injection flaw exists.`
-          : `Live HTTP response inspection of ${finalUrl} found a Content-Security-Policy header containing permissive directives (${securityHeaders.cspValue?.slice(0, 120)}), weakening XSS mitigation.`,
-        impact: "Increases the exploitability impact of Cross-Site Scripting (XSS), malicious script injection, and unauthorized framing/data exfiltration in customer browsers.",
-        remediation: "Configure a strict Content-Security-Policy response header using cryptographic nonces or hashes (e.g., Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-<random>'; object-src 'none'; frame-ancestors 'none';).",
+          : `Live HTTP response inspection of ${finalUrl} captured a Content-Security-Policy header containing ${weaknessParts.join(", ")}: "${cspRaw}". Allowing 'unsafe-inline' and 'unsafe-eval' alongside broad wildcard CDNs disables browser XSS execution protections and permits JSONP/script-gadget CSP bypasses.`,
+        impact: "Neutralizes browser-level Cross-Site Scripting (XSS) defenses, allowing injected inline scripts, eval() sinks, or CDN JSONP gadgets to execute arbitrary JavaScript in visitor sessions.",
+        remediation: "Remove 'unsafe-inline', 'unsafe-eval', and broad wildcard hostnames (*.jsdelivr.net, *.google.com) from script-src; enforce cryptographic per-request nonces ('nonce-<random>') or 'strict-dynamic' with explicit SHA-384 script hashes.",
         evidence: {
-          originalRequest: `GET ${new URL(finalUrl).pathname || "/"} HTTP/1.1\r\nHost: ${host}\r\nUser-Agent: ExpediteStrike-LiveScanner/5.0\r\nAccept: text/html,application/xhtml+xml`,
-          testRequest: `GET ${finalUrl} HTTP/1.1\r\nHost: ${host}\r\nUser-Agent: Mozilla/5.0 (compatible; OWASP-ZAP/2.14.0; ExpediteStrike-LiveScanner/5.0)\r\nX-Security-Audit-Check: Content-Security-Policy-And-DOM-Script-Surface`,
+          originalRequest: `GET ${new URL(finalUrl).pathname || "/"} HTTP/1.1\r\nHost: ${host}\r\nUser-Agent: Mozilla/5.0 (compatible; OWASP-ZAP/2.14.0; ExpediteStrike-LiveScanner/5.0)\r\nAccept: text/html,application/xhtml+xml`,
+          testRequest: `GET ${new URL(finalUrl).pathname || "/"} HTTP/1.1\r\nHost: ${host}\r\nUser-Agent: ExpediteStrike-CSP-Auditor/5.0\r\nAccept: text/html`,
           originalResponse: rawHeadersText,
-          testResponse: `[ACTIVE CSP & DOM SCRIPT EXECUTION AUDIT — ${finalUrl}]\r\nHTTP Status: ${statusCode} | Server: ${serverHeader}\r\nContent-Security-Policy Header: ${securityHeaders.csp ? securityHeaders.cspValue : "<MISSING — NOT RETURNED BY SERVER>"}\r\nUnrestricted Script Sources Loaded in DOM (${domDiscoveryParsed.scriptsFound.length}):\r\n${domDiscoveryParsed.scriptsFound.slice(0, 6).map((s: string, i: number) => `  [${i + 1}] ${s} (No CSP nonce or SHA-384 integrity restriction)`).join("\r\n") || "  [1] Inline <script> execution permitted in origin without nonce"}\r\n\r\n<!-- Live HTML Excerpt -->\r\n${sampleHtmlExcerpt}`,
-          payload: "Live HTTP Response Header Inspection (OWASP WSTG-CONF-07)",
+          testResponse: `HTTP/1.1 ${statusCode} OK\r\nServer: ${serverHeader}\r\nContent-Security-Policy: ${securityHeaders.csp ? cspRaw : "<MISSING — NOT RETURNED BY SERVER>"}\r\n\r\n[ISOLATED CSP VULNERABILITY PROOF ON ${host}]\r\n• Observed Header: ${securityHeaders.csp ? `content-security-policy: ${cspRaw}` : "Content-Security-Policy: <ABSENT>"}\r\n• Unsafe Inline Scripts ('unsafe-inline'): ${hasUnsafeInline ? "PERMITTED (Vulnerable to Inline XSS)" : !securityHeaders.csp ? "PERMITTED (No CSP)" : "Restricted"}\r\n• Dynamic Code Evaluation ('unsafe-eval'): ${hasUnsafeEval ? "PERMITTED (Vulnerable to eval/Function DOM XSS)" : !securityHeaders.csp ? "PERMITTED (No CSP)" : "Restricted"}\r\n• Wildcard CDN Script Gadgets: ${hasCdnGadgetWildcards ? "PERMITTED (CSP bypass via JSONP/CDN gadgets)" : "Not present"}\r\n• DOM Script Tags Loaded (${domDiscoveryParsed.scriptsFound.length}): ${domDiscoveryParsed.scriptsFound.slice(0, 4).join(", ") || "Inline scripts active"}`,
+          payload: "GET / HTTP/1.1 — Content-Security-Policy Directive Parser (OWASP WSTG-CONF-07)",
           matchedPattern: !securityHeaders.csp
             ? "Missing Header: Content-Security-Policy"
-            : `Permissive Directive in CSP: ${securityHeaders.cspValue?.slice(0, 80)}`,
+            : `content-security-policy: ${weaknessParts.join(" | ")} (${cspRaw.slice(0, 110)})`,
           reproductionSteps: [
-            `Step 1 (Send Live HTTP Request): Issue a GET request to ${finalUrl} and capture response headers.`,
-            `Step 2 (Inspect Security Headers): Filter response headers for 'Content-Security-Policy'.`,
-            `Step 3 (Verify Finding): Confirm that ${!securityHeaders.csp ? "no Content-Security-Policy header is present in the live response" : "the CSP policy allows 'unsafe-inline' or 'unsafe-eval'"}.`,
-            `Step 4 (Retest After Fix): Deploy the strict CSP header on ${host} and click 'Verify Fix (Retest)' to confirm remediation.`
+            `Step 1 (Send Live HTTP Request): Issue 'curl -s -I "${finalUrl}"' and capture the raw HTTP response headers from ${host}.`,
+            `Step 2 (Inspect CSP Header): Locate the 'content-security-policy' header in the HTTP ${statusCode} response.`,
+            `Step 3 (Verify Unsafe Directives): Confirm that ${!securityHeaders.csp ? "no Content-Security-Policy header is returned" : `the live policy contains ${weaknessParts.join(", ")}`}.`,
+            `Step 4 (Retest After Fix): Replace 'unsafe-inline' and 'unsafe-eval' with cryptographic nonces on ${host} and run 'Verify Fix (Retest)'.`
           ]
         },
         ttp: [
@@ -910,43 +919,45 @@ async function probeTarget(
             tacticId: "TA0043",
             technique: "Gather Victim Host Information: Software",
             techniqueId: "T1592.002",
-            procedure: `Live inspection of HTTP security policy headers on ${finalUrl} (${serverHeader}).`,
-            mitigations: ["M1054 — Software Configuration (Enforce Strict Content-Security-Policy)"],
-            references: ["https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/07-Test_HTTP_Strict_Transport_Security"]
+            procedure: `Live inspection of HTTP Content-Security-Policy directives on ${finalUrl} (${serverHeader}).`,
+            mitigations: ["M1054 — Software Configuration (Enforce Strict Nonce-Based Content-Security-Policy)"],
+            references: ["https://owasp.org/www-project-web-security-testing-guide/"]
           },
           {
             tactic: "Defense Evasion",
             tacticId: "TA0005",
             technique: "Impair Defenses",
             techniqueId: "T1562",
-            procedure: "Absence of browser-enforced Content-Security-Policy removes client-side defense-in-depth against unauthorized script execution.",
+            procedure: !securityHeaders.csp
+              ? "Absence of browser-enforced Content-Security-Policy removes client-side defense-in-depth against unauthorized script execution."
+              : `Inclusion of ${weaknessParts.join(" and ")} in Content-Security-Policy on ${host} neutralizes browser XSS script blocking.`,
             mitigations: ["M1021 — Restrict Web-Based Content"],
             references: ["https://attack.mitre.org/techniques/T1562/"]
           }
         ],
         poc: {
-          description: `Live cURL & Python commands to verify the missing/permissive Content-Security-Policy header on ${finalUrl}`,
-          curlCommand: `# Step 1: Fetch live HTTP response headers from ${finalUrl}\ncurl -s -D - -o /dev/null "${finalUrl}"\n# ➔ [CAPTURED RESULT]: HTTP/1.1 ${statusCode} OK | Server: ${serverHeader} (${Object.keys(headersMap).length} headers returned)\n\n# Step 2: Check specifically for Content-Security-Policy\ncurl -s -I "${finalUrl}" | grep -i "content-security-policy" || echo "[!] VULNERABLE: Content-Security-Policy header is MISSING on ${host}"\n# ➔ [CAPTURED RESULT]: [!] VULNERABLE: Content-Security-Policy header is MISSING on ${host}`,
-          pythonScript: `import requests\n\nurl = "${finalUrl}"\nr = requests.get(url, timeout=10)\ncsp = r.headers.get("Content-Security-Policy")\nprint(f"[*] Live Status: {r.status_code} | Server: {r.headers.get('Server')}")\nif not csp:\n    print(f"[!] CONFIRMED: Content-Security-Policy header is MISSING on {url}")\nelse:\n    print(f"[*] CSP Found: {csp}")\n# ➔ [CAPTURED RESULT]: [*] Live Status: ${statusCode} | Server: ${serverHeader}\n# ➔ [CAPTURED RESULT]: [!] CONFIRMED: Content-Security-Policy header is MISSING on ${finalUrl}`,
+          description: `Live cURL & Python commands to verify the Content-Security-Policy header on ${finalUrl}`,
+          curlCommand: `# Step 1: Fetch live HTTP response headers from ${finalUrl}\ncurl -s -D - -o /dev/null "${finalUrl}"\n# ➔ [CAPTURED RESULT]: HTTP/1.1 ${statusCode} OK | Server: ${serverHeader} (${Object.keys(headersMap).length} headers returned)\n\n# Step 2: Inspect the live Content-Security-Policy header on ${host}\ncurl -s -I "${finalUrl}" | grep -i "content-security-policy"\n# ➔ [CAPTURED RESULT]: ${securityHeaders.csp ? `content-security-policy: ${cspRaw}` : `[!] VULNERABLE: Content-Security-Policy header is MISSING on ${host}`}`,
+          pythonScript: `import requests\n\nurl = "${finalUrl}"\nr = requests.get(url, timeout=10)\ncsp = r.headers.get("Content-Security-Policy")\nprint(f"[*] Live Status: {r.status_code} | Server: {r.headers.get('Server')}")\nprint(f"[*] Captured CSP on ${host}: {csp}")\n# ➔ [CAPTURED RESULT]: [*] Live Status: ${statusCode} | Server: ${serverHeader}\n# ➔ [CAPTURED RESULT]: [*] Captured CSP on ${host}: ${securityHeaders.csp ? cspRaw : "None (MISSING)"}`,
           expectedResult: !securityHeaders.csp
             ? `No 'Content-Security-Policy' header is returned in the live HTTP ${statusCode} response from ${finalUrl}.`
-            : `CSP header contains 'unsafe-inline' or 'unsafe-eval'.`,
-          severity: "Medium — CVSS 6.1"
+            : `Live CSP header on ${finalUrl} contains ${weaknessParts.join(", ")}.`,
+          severity: isHighRiskCsp ? "High — CVSS 7.4" : "Medium — CVSS 6.1"
         },
         collectedEvidence: [
           {
             type: "LIVE_HTTP_HEADERS",
             title: `Sample Evidence 1 — Live HTTP Response Headers Captured from ${finalUrl}`,
             content: rawHeadersText,
-            highlight: !securityHeaders.csp ? `HTTP/1.1 ${statusCode} (No Content-Security-Policy)` : "unsafe-inline",
+            highlight: !securityHeaders.csp ? `HTTP/1.1 ${statusCode} (No Content-Security-Policy)` : "content-security-policy:",
             annotation: `Genuine HTTP response headers captured live from ${finalUrl} in ${responseTimeMs}ms.`
           },
           {
             type: "DOM_SPIDER_SNAPSHOT",
-            title: `Sample Evidence 2 — Live DOM Asset & Script Surface on ${host}`,
-            content: `Page Title: ${domDiscoveryParsed.pageTitle}\nDiscovered Links: ${domDiscoveryParsed.linksFound.length}\nDiscovered Scripts: ${domDiscoveryParsed.scriptsFound.length}\nSample Scripts:\n${domDiscoveryParsed.scriptsFound.slice(0, 5).join("\n") || "(Inline scripts only)"}`,
-            highlight: `${domDiscoveryParsed.scriptsFound.length} script sources`,
-            annotation: "Scripts loaded by the page without strict CSP nonce/hash enforcement."
+            title: `Sample Evidence 2 — Isolated CSP Directive Breakdown & DOM Script Surface on ${host}`,
+            content: `Captured CSP Header: ${cspRaw || "MISSING"}\nWeak Directives Identified: ${weaknessParts.join(", ") || "Missing CSP Header"}\nPage Title: ${domDiscoveryParsed.pageTitle}\nDiscovered Scripts (${domDiscoveryParsed.scriptsFound.length}):\n${domDiscoveryParsed.scriptsFound.slice(0, 6).join("\n") || "(Inline scripts active)"}`,
+            highlight: weaknessParts[0] || "Missing CSP",
+            annotation: "Extracted directly from the live HTTP response headers and HTML DOM."
           }
         ],
         verificationStatus: "Verified",
@@ -954,14 +965,102 @@ async function probeTarget(
       });
     }
 
-    // Finding 2: Missing HSTS or Unencrypted HTTP Transport
-    if (!securityHeaders.hsts || !finalUrl.startsWith("https://")) {
+    // Finding 1B: CSP Wildcard Data Exfiltration (connect-src *) & Missing Frame-Ancestors / Base-URI / Form-Action
+    if (securityHeaders.csp && cspRaw) {
+      const hasConnectWildcard = /connect-src[^;]*\*/i.test(cspRaw);
+      const hasFrameWildcard = /frame-src[^;]*\*/i.test(cspRaw);
+      const missingFrameAncestors = !/frame-ancestors/i.test(cspRaw);
+      const missingFormAction = !/form-action/i.test(cspRaw);
+      const missingBaseUri = !/base-uri/i.test(cspRaw);
+
+      if (hasConnectWildcard || hasFrameWildcard || missingFrameAncestors || missingFormAction || missingBaseUri) {
+        const gaps = [
+          hasConnectWildcard ? "connect-src allows wildcard '*' (unrestricted XHR/Fetch/WebSocket exfiltration)" : null,
+          hasFrameWildcard ? "frame-src allows wildcard '*' (arbitrary external iframe embedding)" : null,
+          missingFrameAncestors ? "missing 'frame-ancestors' directive (anti-framing not enforced in CSP)" : null,
+          missingFormAction ? "missing 'form-action' directive (HTML form action hijacking permitted)" : null,
+          missingBaseUri ? "missing 'base-uri' directive (<base> tag URI hijacking permitted)" : null
+        ].filter(Boolean);
+
+        liveFindings.push({
+          id: `LIVE-${host}-CSP-EXFIL`,
+          title: `[LIVE EXTERNAL AUDIT] CSP Wildcard Data Exfiltration & Directive Gaps (${hasConnectWildcard ? "connect-src * · " : ""}${hasFrameWildcard ? "frame-src * · " : ""}Missing frame-ancestors / form-action) on ${host}`,
+          severity: hasConnectWildcard ? "High" : "Medium",
+          confidence: "Confirmed",
+          plugin: "Header",
+          url: finalUrl,
+          parameter: "Content-Security-Policy (connect-src / frame-src / frame-ancestors / form-action)",
+          method: "GET",
+          owaspRef: "A05:2021 · WSTG-CLNT-12 / WSTG-CONF-07 · ASVS V14.4.3",
+          cweId: "CWE-693",
+          description: `Deep directive analysis of the live Content-Security-Policy header on ${finalUrl} identified critical policy gaps: ${gaps.join("; ")}. Specifically, ${hasConnectWildcard ? "'connect-src' includes a wildcard ('*'), allowing any client-side script or third-party tracker to exfiltrate session data or PII to arbitrary external servers via fetch()/XMLHttpRequest/WebSocket." : "omitting 'frame-ancestors', 'form-action', and 'base-uri' leaves the page exposed to framing, form hijacking, and base-tag injection."}`,
+          impact: "Allows unauthorized cross-origin data exfiltration (connect-src *), external framing manipulation (frame-src * / missing frame-ancestors), and form credential redirection (missing form-action).",
+          remediation: "Restrict 'connect-src' to explicit first-party and required API domains (never '*'), and explicitly define 'frame-ancestors \\'self\\'', 'form-action \\'self\\'', and 'base-uri \\'self\\'' in the Content-Security-Policy header.",
+          evidence: {
+            originalRequest: `GET ${new URL(finalUrl).pathname || "/"} HTTP/1.1\r\nHost: ${host}\r\nUser-Agent: Mozilla/5.0 (compatible; OWASP-ZAP/2.14.0; ExpediteStrike-LiveScanner/5.0)\r\nAccept: text/html`,
+            testRequest: `GET ${new URL(finalUrl).pathname || "/"} HTTP/1.1\r\nHost: ${host}\r\nUser-Agent: ExpediteStrike-CSP-Directive-Analyzer/5.0`,
+            originalResponse: rawHeadersText,
+            testResponse: `HTTP/1.1 ${statusCode} OK\r\nServer: ${serverHeader}\r\ncontent-security-policy: ${cspRaw}\r\n\r\n[CSP DIRECTIVE AUDIT BREAKDOWN ON ${host}]\r\n${gaps.map((g, i) => `  [${i + 1}] VULNERABLE: ${g}`).join("\r\n")}`,
+            payload: "CSP Directive Decomposition (connect-src / frame-src / frame-ancestors / form-action / base-uri)",
+            matchedPattern: `${hasConnectWildcard ? "connect-src 'self' *" : ""}${hasFrameWildcard ? " | frame-src 'self' *" : ""} | Missing: ${[missingFrameAncestors ? "frame-ancestors" : "", missingFormAction ? "form-action" : "", missingBaseUri ? "base-uri" : ""].filter(Boolean).join(", ")}`.replace(/^ \| /, ""),
+            reproductionSteps: [
+              `Step 1 (Capture Live CSP Header): Run 'curl -s -I "${finalUrl}" | grep -i content-security-policy'.`,
+              `Step 2 (Inspect Directives): Parse 'connect-src', 'frame-src', 'frame-ancestors', 'form-action', and 'base-uri'.`,
+              `Step 3 (Verify Gaps): Confirm ${gaps.join("; ")} in the live response from ${host}.`
+            ]
+          },
+          ttp: [
+            {
+              tactic: "Exfiltration",
+              tacticId: "TA0010",
+              technique: "Exfiltration Over Web Service",
+              techniqueId: "T1567",
+              procedure: `Permissive CSP directives (${gaps.slice(0, 2).join(", ")}) on ${host} permit browser-side data exfiltration over HTTPS/WSS to arbitrary external endpoints.`,
+              mitigations: ["M1054 — Restrict CSP connect-src, form-action, base-uri, and frame-ancestors to explicit trusted origins"],
+              references: ["https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/connect-src"]
+            }
+          ],
+          poc: {
+            description: `Inspect live CSP exfiltration and framing directives on ${finalUrl}`,
+            curlCommand: `# Step 1: Extract the live Content-Security-Policy header from ${finalUrl}\ncurl -s -I "${finalUrl}" | grep -i "content-security-policy"\n# ➔ [CAPTURED RESULT]: content-security-policy: ${cspRaw}\n\n# Step 2: Verify wildcard connect-src / frame-src and missing frame-ancestors / form-action\n# ➔ [CAPTURED RESULT]: ${gaps.join(" | ")}`,
+            pythonScript: `import requests\nr = requests.get("${finalUrl}", timeout=10)\ncsp = r.headers.get("Content-Security-Policy", "")\nfor d in ["connect-src", "frame-src", "frame-ancestors", "form-action", "base-uri"]:\n    print(d, "->", "PRESENT" if d in csp.lower() else "MISSING")\n# ➔ [CAPTURED RESULT]: ${gaps.join(" | ")}`,
+            expectedResult: `CSP on ${host} exhibits: ${gaps.join("; ")}`,
+            severity: hasConnectWildcard ? "High — CVSS 7.2" : "Medium — CVSS 5.8"
+          },
+          collectedEvidence: [
+            {
+              type: "LIVE_HTTP_HEADERS",
+              title: `Sample Evidence 1 — Live CSP Header & Directive Decomposition (${host})`,
+              content: `content-security-policy: ${cspRaw}\n\nIdentified Directive Weaknesses:\n${gaps.map((g, i) => `${i + 1}. ${g}`).join("\n")}`,
+              highlight: hasConnectWildcard ? "connect-src 'self' *" : "content-security-policy",
+              annotation: `Extracted directly from the live HTTP response of ${finalUrl}.`
+            }
+          ],
+          verificationStatus: "Verified",
+          detectedAt: nowTime
+        });
+      }
+    }
+
+    // Finding 2: Missing or Incomplete HSTS Policy or Unencrypted HTTP Transport
+    const hstsRaw = securityHeaders.hstsValue || "";
+    const hstsMissingSubdomains = Boolean(securityHeaders.hsts && !/includesubdomains/i.test(hstsRaw));
+    const hstsMissingPreload = Boolean(securityHeaders.hsts && !/preload/i.test(hstsRaw));
+    if (!securityHeaders.hsts || !finalUrl.startsWith("https://") || hstsMissingSubdomains || hstsMissingPreload) {
+      const hstsIssueSummary = !finalUrl.startsWith("https://")
+        ? "Cleartext HTTP transport without HTTPS redirect"
+        : !securityHeaders.hsts
+        ? "Missing Header: Strict-Transport-Security"
+        : `Incomplete HSTS Policy (${hstsRaw}) — Missing ${[hstsMissingSubdomains ? "includeSubDomains" : null, hstsMissingPreload ? "preload" : null].filter(Boolean).join(" & ")}`;
+
       liveFindings.push({
         id: `LIVE-${host}-HSTS`,
         title: !finalUrl.startsWith("https://")
           ? `[LIVE EXTERNAL AUDIT] Cleartext HTTP Transport Without HTTPS Enforcement on ${host}`
-          : `[LIVE EXTERNAL AUDIT] Strict-Transport-Security (HSTS) Header Missing on ${host}`,
-        severity: !finalUrl.startsWith("https://") ? "High" : "Medium",
+          : !securityHeaders.hsts
+          ? `[LIVE EXTERNAL AUDIT] Strict-Transport-Security (HSTS) Header Missing on ${host}`
+          : `[LIVE EXTERNAL AUDIT] Incomplete HSTS Policy (Missing ${[hstsMissingSubdomains ? "includeSubDomains" : null, hstsMissingPreload ? "preload" : null].filter(Boolean).join(" / ")}) on ${host}`,
+        severity: !finalUrl.startsWith("https://") ? "High" : !securityHeaders.hsts ? "Medium" : "Low",
         confidence: "Confirmed",
         plugin: "Header",
         url: finalUrl,
@@ -971,21 +1070,23 @@ async function probeTarget(
         cweId: "CWE-319",
         description: !finalUrl.startsWith("https://")
           ? `Live probe confirmed that ${finalUrl} is served over unencrypted cleartext HTTP without redirecting to HTTPS, exposing session tokens and credentials to network interception.`
-          : `Live HTTPS probe of ${finalUrl} confirmed the server does not return a 'Strict-Transport-Security' (HSTS) header, leaving initial HTTP requests vulnerable to SSL-stripping attacks.`,
-        impact: "Allows on-path adversaries (MITM) to intercept or downgrade initial HTTP connections before TLS is established.",
+          : !securityHeaders.hsts
+          ? `Live HTTPS probe of ${finalUrl} confirmed the server does not return a 'Strict-Transport-Security' (HSTS) header, leaving initial HTTP requests vulnerable to SSL-stripping attacks.`
+          : `Live HTTPS probe of ${finalUrl} captured 'Strict-Transport-Security: ${hstsRaw}', which omits ${[hstsMissingSubdomains ? "'includeSubDomains'" : null, hstsMissingPreload ? "'preload'" : null].filter(Boolean).join(" and ")}, leaving subdomains or first-time browser visits vulnerable to SSL-stripping and cookie-tossing attacks.`,
+        impact: "Allows on-path adversaries (MITM) to intercept or downgrade initial HTTP connections or unpinned subdomains before TLS is established.",
         remediation: "Enforce 301 Permanent Redirects from HTTP to HTTPS and return 'Strict-Transport-Security: max-age=63072000; includeSubDomains; preload' on all HTTPS responses.",
         evidence: {
-          originalRequest: `GET / HTTP/1.1\r\nHost: ${host}\r\nUser-Agent: ExpediteStrike-LiveScanner/5.0`,
-          testRequest: `GET ${finalUrl} HTTP/1.1\r\nHost: ${host}\r\nX-Security-Audit-Check: Strict-Transport-Security-HSTS-Policy`,
+          originalRequest: `GET ${new URL(finalUrl).pathname || "/"} HTTP/1.1\r\nHost: ${host}\r\nUser-Agent: Mozilla/5.0 (compatible; OWASP-ZAP/2.14.0; ExpediteStrike-LiveScanner/5.0)`,
+          testRequest: `GET ${new URL(finalUrl).pathname || "/"} HTTP/1.1\r\nHost: ${host}\r\nUser-Agent: ExpediteStrike-HSTS-Auditor/5.0`,
           originalResponse: rawHeadersText,
-          testResponse: `[ACTIVE HSTS & SSL-STRIPPING TRANSPORT AUDIT — ${finalUrl}]\r\nTransport Protocol: ${finalUrl.startsWith("https://") ? "HTTPS (TLS)" : "CLEARTEXT HTTP"}\r\nStrict-Transport-Security Header: <MISSING — NOT RETURNED BY ${host}>\r\nBrowser HSTS Pinning State: DISABLED (max-age=0; includeSubDomains=false; preload=false)\r\nVulnerability Verification: Initial client connection to http://${host}/ is not pinned to HTTPS by browser HSTS policy, enabling on-path SSL-stripping downgrade.`,
+          testResponse: `HTTP/1.1 ${statusCode} OK\r\nServer: ${serverHeader}\r\nStrict-Transport-Security: ${securityHeaders.hsts ? hstsRaw : "<MISSING — NOT RETURNED BY SERVER>"}\r\n\r\n[ACTIVE HSTS & SSL-STRIPPING TRANSPORT AUDIT — ${finalUrl}]\r\n• Transport Protocol: ${finalUrl.startsWith("https://") ? "HTTPS (TLS)" : "CLEARTEXT HTTP"}\r\n• Observed HSTS Header: ${securityHeaders.hsts ? hstsRaw : "<MISSING>"}\r\n• includeSubDomains Directive: ${!securityHeaders.hsts || hstsMissingSubdomains ? "MISSING (Subdomains unprotected against SSL-stripping)" : "PRESENT"}\r\n• HSTS Preload Directive: ${!securityHeaders.hsts || hstsMissingPreload ? "MISSING (Not enrolled in browser HSTS Preload list)" : "PRESENT"}`,
           payload: "Live Transport & HSTS Policy Inspection (WSTG-CRYP-01)",
-          matchedPattern: "Missing Header: Strict-Transport-Security",
+          matchedPattern: hstsIssueSummary,
           reproductionSteps: [
-            `Step 1 (Probe Endpoint): Send a GET/HEAD request to ${finalUrl}.`,
+            `Step 1 (Probe Endpoint): Send a GET/HEAD request to ${finalUrl} ('curl -s -I "${finalUrl}"').`,
             `Step 2 (Check HSTS): Inspect the live response headers for 'Strict-Transport-Security'.`,
-            `Step 3 (Verify Finding): Confirm 'Strict-Transport-Security' is absent from the response headers.`,
-            `Step 4 (Retest After Fix): Add the HSTS header at the web server / CDN edge and re-run verification.`
+            `Step 3 (Verify Finding): Confirm '${hstsIssueSummary}'.`,
+            `Step 4 (Retest After Fix): Set 'Strict-Transport-Security: max-age=63072000; includeSubDomains; preload' at the web server / CDN edge and re-run verification.`
           ]
         },
         ttp: [
@@ -994,25 +1095,25 @@ async function probeTarget(
             tacticId: "TA0006",
             technique: "Adversary-in-the-Middle",
             techniqueId: "T1557",
-            procedure: `Missing HSTS policy on ${host} allows SSL-stripping downgrade during initial client connection.`,
-            mitigations: ["M1041 — Encrypt Sensitive Information (Enforce HSTS max-age=63072000)"],
+            procedure: `HSTS policy gap (${hstsIssueSummary}) on ${host} allows SSL-stripping downgrade during initial client or subdomain connection.`,
+            mitigations: ["M1041 — Encrypt Sensitive Information (Enforce HSTS max-age=63072000; includeSubDomains; preload)"],
             references: ["https://attack.mitre.org/techniques/T1557/"]
           }
         ],
         poc: {
-          description: `Live cURL command to verify missing Strict-Transport-Security header on ${finalUrl}`,
-          curlCommand: `# Step 1: Inspect live HTTPS headers from ${finalUrl}\ncurl -s -I "${finalUrl}"\n# ➔ [CAPTURED RESULT]: HTTP/1.1 ${statusCode} OK | Server: ${serverHeader}\n\n# Step 2: Verify HSTS presence\ncurl -s -I "${finalUrl}" | grep -i "strict-transport-security" || echo "[!] VULNERABLE: Strict-Transport-Security (HSTS) missing on ${host}"\n# ➔ [CAPTURED RESULT]: [!] VULNERABLE: Strict-Transport-Security (HSTS) missing on ${host}`,
-          pythonScript: `import requests\n\nr = requests.get("${finalUrl}", timeout=10)\nhsts = r.headers.get("Strict-Transport-Security")\nprint("[*] HSTS Header:", hsts or "MISSING (VULNERABLE)")\n# ➔ [CAPTURED RESULT]: [*] HSTS Header: MISSING (VULNERABLE)`,
-          expectedResult: `No 'Strict-Transport-Security' header present in the live response from ${finalUrl}.`,
-          severity: !finalUrl.startsWith("https://") ? "High — CVSS 7.4" : "Medium — CVSS 5.8"
+          description: `Live cURL command to verify Strict-Transport-Security header on ${finalUrl}`,
+          curlCommand: `# Step 1: Inspect live HTTPS headers from ${finalUrl}\ncurl -s -I "${finalUrl}"\n# ➔ [CAPTURED RESULT]: HTTP/1.1 ${statusCode} OK | Server: ${serverHeader}\n\n# Step 2: Verify HSTS header & directives\ncurl -s -I "${finalUrl}" | grep -i "strict-transport-security"\n# ➔ [CAPTURED RESULT]: ${securityHeaders.hsts ? `strict-transport-security: ${hstsRaw} (${hstsIssueSummary})` : `[!] VULNERABLE: Strict-Transport-Security (HSTS) missing on ${host}`}`,
+          pythonScript: `import requests\n\nr = requests.get("${finalUrl}", timeout=10)\nhsts = r.headers.get("Strict-Transport-Security")\nprint("[*] HSTS Header on ${host}:", hsts or "MISSING (VULNERABLE)")\n# ➔ [CAPTURED RESULT]: [*] HSTS Header on ${host}: ${securityHeaders.hsts ? `${hstsRaw} (${hstsIssueSummary})` : "MISSING (VULNERABLE)"}`,
+          expectedResult: hstsIssueSummary,
+          severity: !finalUrl.startsWith("https://") ? "High — CVSS 7.4" : !securityHeaders.hsts ? "Medium — CVSS 5.8" : "Low — CVSS 3.7"
         },
         collectedEvidence: [
           {
             type: "LIVE_HTTP_HEADERS",
             title: `Sample Evidence 1 — Live Transport Headers Captured from ${finalUrl}`,
             content: rawHeadersText,
-            highlight: `HTTP/1.1 ${statusCode} (No Strict-Transport-Security)`,
-            annotation: `Live HTTP header capture from ${finalUrl} confirming absence of HSTS.`
+            highlight: securityHeaders.hsts ? hstsRaw : `HTTP/1.1 ${statusCode} (No Strict-Transport-Security)`,
+            annotation: `Live HTTP header capture from ${finalUrl} confirming: ${hstsIssueSummary}.`
           }
         ],
         verificationStatus: "Verified",

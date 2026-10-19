@@ -116,10 +116,10 @@ export default function Footer() {
           style={{ borderColor: "var(--border)" }}
         >
           <p className="text-xs" style={{ color: "var(--muted)" }}>
-            © 2026 SAST Platform · Platform 5 of 34 · Agentic Security Suite
+            © 2026 XTRIKE SAST Desk · Platform 5 of 34 · Agentic Security Suite
           </p>
           <div className="flex items-center gap-4 text-xs" style={{ color: "var(--muted)" }}>
-            <span>Powered by CodeQL · Semgrep · Joern · AI Reasoning</span>
+            <span>Powered by XTRIKE XQL · XTRIKE DeepFlow · XTRIKE StructSCA · XTRIKE Neural-Triage</span>
           </div>
         </div>
       </div>

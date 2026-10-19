@@ -27,9 +27,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SAST Security Desk | Proof-Driven Finding Validation & Hybrid AST Engine",
+  title: "XTRIKE SAST Desk | Proof-Driven Finding Validation & Hybrid AST Engine",
   description:
-    "Deterministic SAST finding validation combining AST taint analysis, controlled runtime verification, Z3 security claims, and OWASP/CWE/NVD reference catalog.",
+    "Deterministic XTRIKE SAST finding validation combining AST taint analysis, controlled runtime verification, XTRIKE-Solver security claims, and OWASP/CWE/NVD reference catalog.",
 };
 
 export default function RootLayout({
