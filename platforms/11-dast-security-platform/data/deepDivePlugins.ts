@@ -789,6 +789,8 @@ export const COMMERCIAL_DEEP_DIVE_PLUGINS: DeepDivePlugin[] = [
 export {
   THOUSAND_VULN_PLUGINS,
   THOUSAND_PLUGINS_SUMMARY,
+  matchPluginsForFinding,
+  type FindingPluginCorrelation,
   type ThousandVulnPlugin,
   type MitreTtpMapping,
   type BlueTeamDefenseMapping

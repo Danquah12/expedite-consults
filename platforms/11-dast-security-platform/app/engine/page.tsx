@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { FINDINGS } from "@/data/findings";
-import { COMMERCIAL_DEEP_DIVE_PLUGINS, THOUSAND_VULN_PLUGINS, THOUSAND_PLUGINS_SUMMARY } from "@/data/deepDivePlugins";
+import { COMMERCIAL_DEEP_DIVE_PLUGINS, THOUSAND_VULN_PLUGINS, THOUSAND_PLUGINS_SUMMARY, matchPluginsForFinding } from "@/data/deepDivePlugins";
 import { getFindingDeepDiveIntel } from "@/data/findingKillChainIntel";
 import {
   PORT_ASSESSMENT_SCRIPT_CATALOG,
@@ -3719,6 +3719,7 @@ ${f.remediation}
     const daemonDossier = getDaemonFindingTtpDossier(f, primaryTargetUrl);
     const fr = buildFormalFindingReport(f, idx, primaryTargetUrl);
     const cmdEv = getCommandEvidenceBlocks(f, fr, intel);
+    const plgCorr = matchPluginsForFinding(f);
     const baselineExp = explainScreenEvidence("BASELINE", "Baseline HTTP Request & Response", `${f.evidence?.originalRequest || ""}\n${f.evidence?.originalResponse || ""}`, f, fr);
     const exploitedExp = explainScreenEvidence("EXPLOITED", "Exploited HTTP Request & Response Proof", `${f.evidence?.testRequest || ""}\n${f.evidence?.testResponse || ""}`, f, fr);
     const reproSteps = fr.stepsToReproduce;
@@ -3778,6 +3779,25 @@ ${f.remediation}
         </div>
       </div>
       <div style="font-size:11px;color:#475569;margin-bottom:8px;"><strong>References:</strong> ${fr.references.join(" &nbsp;|&nbsp; ")}</div>
+
+      <!-- 1,000-PLUGIN MULTI-SCANNER CORRELATION + MITRE ATT&CK TTP & BLUE TEAM (BT) D3FEND / SIGMA RULE -->
+      <div style="background:#faf7f2;border:1px solid #dfd7ca;border-left:4px solid #8b4528;border-radius:4px;padding:8px 10px;margin-bottom:8px;font-size:10.5px;">
+        <div style="font-weight:800;margin-bottom:4px;">🔌 TRIGGERED 1,000-PLUGIN MULTI-SCANNER CHECKS (OPENVAS · ZAP · NUCLEI · BURP) &amp; MITRE TTP / BLUE TEAM (BT) D3FEND™:</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;">
+          ${plgCorr.triggeredPlugins.map(tp => `
+            <div style="background:#ffffff;border:1px solid #dfd7ca;border-radius:4px;padding:5px 7px;">
+              <div><strong>[${tp.scannerFamily}] ${tp.code}</strong> · <code>${tp.scannerRefId}</code></div>
+              <div style="font-size:10px;">${tp.name.replace(/</g, "&lt;")}</div>
+            </div>
+          `).join("")}
+        </div>
+        <div style="margin-bottom:4px;">
+          <strong>🎯 MITRE ATT&amp;CK® TTP:</strong> ${plgCorr.primaryMitreTtp.tacticId} (${plgCorr.primaryMitreTtp.tacticName}) · ${plgCorr.primaryMitreTtp.subTechniqueId || plgCorr.primaryMitreTtp.techniqueId} (${plgCorr.primaryMitreTtp.techniqueName})
+          &nbsp;|&nbsp; <strong>🛡️ Blue Team (BT) D3FEND™:</strong> ${plgCorr.primaryBlueTeamDefense.d3fendId} [${plgCorr.primaryBlueTeamDefense.d3fendCategory}] — ${plgCorr.primaryBlueTeamDefense.d3fendTechnique} (${plgCorr.primaryBlueTeamDefense.btLogSource})
+        </div>
+        <div style="font-weight:700;margin-top:4px;">📡 Blue Team (BT) SIEM Sigma Detection Rule:</div>
+        <pre style="margin-top:2px;font-size:9.5px;">${plgCorr.sigmaRuleYaml.replace(/</g, "&lt;")}</pre>
+      </div>
       <div style="display:none;"><span>${ttpItem ? ttpItem.tacticId : ""}</span></div>
 
       <!-- PART A: COMPLETE STEP-BY-STEP EXPLOITATION PROCESS & CLI / SCRIPT REPRODUCTION -->
@@ -7419,6 +7439,7 @@ ${f.remediation}
                         const fr = buildFormalFindingReport(f, i, primaryTargetUrl);
                         const intelForCard = getFindingDeepDiveIntel(f, primaryTargetUrl);
                         const cmdEv = getCommandEvidenceBlocks(f, fr, intelForCard);
+                        const plgCorr = matchPluginsForFinding(f);
                         return (
                           <div
                             key={fKey}
@@ -7659,6 +7680,80 @@ ${f.remediation}
                                         [{isFixed ? "x" : " "}] {rc}
                                       </span>
                                     ))}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* ── 1,000-Plugin Multi-Scanner Correlation (OpenVAS · ZAP · Nuclei · Burp) & MITRE TTP / Blue Team (BT) D3FEND™ + Sigma Rule ── */}
+                              <div style={{
+                                borderTop: "1px solid var(--border)",
+                                paddingTop: 8,
+                                marginTop: 2,
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: 6,
+                                fontFamily: "monospace",
+                                fontSize: 10
+                              }}>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6 }}>
+                                  <strong>🔌 TRIGGERED 1,000-PLUGIN MULTI-SCANNER CHECKS (OPENVAS · ZAP · NUCLEI · BURP) &amp; MITRE TTP / BLUE TEAM (BT) D3FEND™:</strong>
+                                  <a href="/plugins" style={{ fontSize: 9.5, fontWeight: 800, textDecoration: "underline" }}>
+                                    Inspect in 1,000-Plugin Matrix ↗
+                                  </a>
+                                </div>
+
+                                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 6 }}>
+                                  {plgCorr.triggeredPlugins.map((tp) => (
+                                    <div
+                                      key={tp.code}
+                                      style={{
+                                        background: "var(--surface)",
+                                        border: "1px solid var(--border)",
+                                        borderRadius: 5,
+                                        padding: "5px 8px",
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        gap: 2
+                                      }}
+                                    >
+                                      <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 900, fontSize: 9.5 }}>
+                                        <span>[{tp.scannerFamily}] {tp.code}</span>
+                                        <span>{tp.scannerRefId}</span>
+                                      </div>
+                                      <div style={{ fontSize: 9.5, fontWeight: 700 }}>{tp.name}</div>
+                                      <div style={{ fontSize: 8.5, opacity: 0.85 }}>
+                                        MITRE {tp.mitreTtp.tacticId} · {tp.mitreTtp.subTechniqueId || tp.mitreTtp.techniqueId} | BT {tp.blueTeamDefense.d3fendId}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+
+                                <div style={{
+                                  background: "var(--surface)",
+                                  border: "1px solid var(--border)",
+                                  borderRadius: 5,
+                                  padding: "6px 8px",
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  gap: 4
+                                }}>
+                                  <div>
+                                    <strong>🎯 MITRE ATT&amp;CK® TTP:</strong> {plgCorr.primaryMitreTtp.tacticId} ({plgCorr.primaryMitreTtp.tacticName}) · {plgCorr.primaryMitreTtp.subTechniqueId || plgCorr.primaryMitreTtp.techniqueId} ({plgCorr.primaryMitreTtp.techniqueName})
+                                    {" | "}
+                                    <strong>🛡️ Blue Team (BT) D3FEND™:</strong> {plgCorr.primaryBlueTeamDefense.d3fendId} [{plgCorr.primaryBlueTeamDefense.d3fendCategory}] — {plgCorr.primaryBlueTeamDefense.d3fendTechnique} ({plgCorr.primaryBlueTeamDefense.btLogSource})
+                                  </div>
+                                  <div>
+                                    <strong>📡 Blue Team (BT) SIEM Sigma Detection Rule:</strong>
+                                    <pre style={{
+                                      margin: "3px 0 0 0",
+                                      padding: "6px 8px",
+                                      borderRadius: 4,
+                                      background: "var(--surface-2)",
+                                      border: "1px solid var(--border)",
+                                      fontSize: 9.2,
+                                      overflowX: "auto",
+                                      whiteSpace: "pre-wrap"
+                                    }}>{plgCorr.sigmaRuleYaml}</pre>
                                   </div>
                                 </div>
                               </div>

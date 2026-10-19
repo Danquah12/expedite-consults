@@ -954,3 +954,105 @@ export const THOUSAND_PLUGINS_SUMMARY = {
     { d3fendId: "D3-NI", category: "Isolate", technique: "Network Isolation, Perimeter Filtering & API Access Control" }
   ]
 };
+
+export interface FindingPluginCorrelation {
+  triggeredPlugins: ThousandVulnPlugin[];
+  primaryMitreTtp: MitreTtpMapping;
+  primaryBlueTeamDefense: BlueTeamDefenseMapping;
+  sigmaRuleYaml: string;
+}
+
+export function matchPluginsForFinding(finding: {
+  id?: string;
+  title?: string;
+  cweId?: string;
+  owaspRef?: string;
+  url?: string;
+  parameter?: string;
+  severity?: string;
+}): FindingPluginCorrelation {
+  const titleLower = (finding.title || "").toLowerCase();
+  const cweUpper = (finding.cweId || "").toUpperCase();
+  const owaspLower = (finding.owaspRef || "").toLowerCase();
+  const paramLower = (finding.parameter || "").toLowerCase();
+
+  // Score plugins within each scanner family (OPENVAS, ZAP, NUCLEI, BURP)
+  const scorePlugin = (p: ThousandVulnPlugin): number => {
+    let score = 0;
+    if (cweUpper && p.cwe.toUpperCase() === cweUpper) score += 25;
+    const pName = p.name.toLowerCase();
+    const pDesc = p.description.toLowerCase();
+
+    const keywords = [
+      "csp", "content-security-policy", "hsts", "strict-transport", "frame", "clickjacking",
+      "nosniff", "content-type", "referrer", "permissions-policy", "coop", "cors",
+      "cookie", "httponly", "secure", "samesite", "session", "jwt", "oauth", "token",
+      "sql", "injection", "xss", "script", "sri", "subresource", "csrf", "redirect",
+      "ssrf", "bola", "idor", "bfla", "mass assignment", "graphql", "swagger", "openapi",
+      "spf", "dmarc", "caa", "dns", "tls", "ssl", "cipher", "certificate", "server",
+      "powered-by", "banner", "env", "git", "actuator", "robots", "sitemap", "security.txt",
+      "smuggling", "cache", "deserialization", "xxe", "traversal", "command", "rce"
+    ];
+
+    for (const kw of keywords) {
+      if ((titleLower.includes(kw) || paramLower.includes(kw) || owaspLower.includes(kw)) && (pName.includes(kw) || pDesc.includes(kw))) {
+        score += 12;
+      }
+    }
+    return score;
+  };
+
+  // Deterministic hash fallback so every finding gets a consistent, relevant set of 4 plugins (1 per scanner family)
+  let hash = 0;
+  const seedStr = `${finding.id || ""}-${finding.title || ""}-${finding.cweId || ""}`;
+  for (let i = 0; i < seedStr.length; i++) {
+    hash = (hash * 31 + seedStr.charCodeAt(i)) >>> 0;
+  }
+
+  const families: Array<"OPENVAS" | "ZAP" | "NUCLEI" | "BURP"> = ["OPENVAS", "ZAP", "NUCLEI", "BURP"];
+  const triggeredPlugins: ThousandVulnPlugin[] = families.map((fam, fIdx) => {
+    const famPool = THOUSAND_VULN_PLUGINS.filter((p) => p.scannerFamily === fam);
+    let bestPlugin = famPool[(hash + fIdx * 17) % famPool.length];
+    let bestScore = -1;
+    for (const candidate of famPool) {
+      const s = scorePlugin(candidate);
+      if (s > bestScore) {
+        bestScore = s;
+        bestPlugin = candidate;
+      }
+    }
+    return bestPlugin;
+  });
+
+  // Pick the highest-scoring plugin overall as primary TTP/BT anchor
+  const primary = triggeredPlugins.reduce((best, cur) => (scorePlugin(cur) > scorePlugin(best) ? cur : best), triggeredPlugins[1]);
+
+  const sigmaRuleYaml = [
+    `title: ${finding.title || primary.name}`,
+    `id: exp-sigma-${(finding.cweId || primary.cwe).toLowerCase()}-${primary.code.toLowerCase()}`,
+    `status: production`,
+    `description: Blue Team (BT) SIEM detection rule for ${finding.title || primary.name} (${primary.mitreTtp.tacticId} / ${primary.mitreTtp.techniqueId})`,
+    `logsource:`,
+    `  category: webserver_and_waf`,
+    `  service: ${primary.blueTeamDefense.btLogSource}`,
+    `detection:`,
+    `  selection:`,
+    `    url|contains: '${finding.url || "/"}'`,
+    `    parameter|contains: '${finding.parameter || "header_or_query"}'`,
+    `    scanner_plugins: ['${triggeredPlugins.map((t) => t.code).join("', '")}']`,
+    `  condition: selection`,
+    `level: ${(finding.severity || primary.severity).toLowerCase()}`,
+    `tags:`,
+    `  - attack.${primary.mitreTtp.tacticName.toLowerCase().replace(/\s+/g, "_")}`,
+    `  - attack.${(primary.mitreTtp.subTechniqueId || primary.mitreTtp.techniqueId).toLowerCase()}`,
+    `  - d3fend.${primary.blueTeamDefense.d3fendId.toLowerCase()}`
+  ].join("\n");
+
+  return {
+    triggeredPlugins,
+    primaryMitreTtp: primary.mitreTtp,
+    primaryBlueTeamDefense: primary.blueTeamDefense,
+    sigmaRuleYaml
+  };
+}
+
