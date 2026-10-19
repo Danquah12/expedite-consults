@@ -191,9 +191,15 @@ export async function POST(req: NextRequest) {
     const engines: string[] = Array.isArray(body.engines) && body.engines.length > 0
       ? body.engines
       : ["Checkmarx", "IBM Code Scan", "Fortify SCA", "CodeQL", "Semgrep", "Snyk"];
-    const attachedFiles: { path: string; language?: string; content: string }[] = Array.isArray(body.attachedFiles)
-      ? body.attachedFiles.filter((f: { path?: string; language?: string; content?: string }) => f && typeof f.content === "string" && f.content.trim().length > 0)
+    const rawAttached = Array.isArray(body.attachedFiles)
+      ? body.attachedFiles
+      : Array.isArray(body.files)
+      ? body.files
       : [];
+    const attachedFiles: { path: string; language?: string; content: string }[] = rawAttached.filter(
+      (f: { path?: string; language?: string; content?: string }) =>
+        f && typeof f.content === "string" && f.content.trim().length > 0
+    );
 
     const initialLogs: string[] = [
       `[INIT]      Initializing Enterprise SAST Engine (Checkmarx CxQL · IBM Code Scan · Fortify SCA · 400-Plugin Dispatcher)...`,
@@ -328,14 +334,16 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 3. Ensure we always include rich code files for the selected language / benchmark repo if needed
+    // 3. Ensure we always include rich code files for the selected language / benchmark repo when no attached files were uploaded
     const lowerUrl = repoUrl.toLowerCase();
-    if (lowerUrl.includes("webgoat")) {
-      filesToScan.push(...BENCHMARK_REPO_FILES.webgoat);
-    } else if (lowerUrl.includes("dvwa")) {
-      filesToScan.push(...BENCHMARK_REPO_FILES.dvwa);
-    } else if (lowerUrl.includes("juice-shop")) {
-      filesToScan.push(...BENCHMARK_REPO_FILES["juice-shop"]);
+    if (attachedFiles.length === 0) {
+      if (lowerUrl.includes("webgoat")) {
+        filesToScan.push(...BENCHMARK_REPO_FILES.webgoat);
+      } else if (lowerUrl.includes("dvwa")) {
+        filesToScan.push(...BENCHMARK_REPO_FILES.dvwa);
+      } else if (lowerUrl.includes("juice-shop")) {
+        filesToScan.push(...BENCHMARK_REPO_FILES["juice-shop"]);
+      }
     }
 
     // If user selected one of the 10 languages (e.g., Go, C#, Ruby, Kotlin, Swift, Python, TypeScript, etc.) and we have no findings or files for that language yet, include its starter codebase so the selected language adapter is always exercised!
