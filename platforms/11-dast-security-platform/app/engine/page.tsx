@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { FINDINGS } from "@/data/findings";
-import { COMMERCIAL_DEEP_DIVE_PLUGINS, THOUSAND_VULN_PLUGINS, THOUSAND_PLUGINS_SUMMARY, matchPluginsForFinding } from "@/data/deepDivePlugins";
+import { COMMERCIAL_DEEP_DIVE_PLUGINS, THOUSAND_VULN_PLUGINS, THOUSAND_PLUGINS_SUMMARY, matchPluginsForFinding, buildMitreNavigatorLayerJson, buildBlueTeamSiemAndWafPack } from "@/data/deepDivePlugins";
 import { getFindingDeepDiveIntel } from "@/data/findingKillChainIntel";
 import {
   PORT_ASSESSMENT_SCRIPT_CATALOG,
@@ -3780,9 +3780,9 @@ ${f.remediation}
       </div>
       <div style="font-size:11px;color:#475569;margin-bottom:8px;"><strong>References:</strong> ${fr.references.join(" &nbsp;|&nbsp; ")}</div>
 
-      <!-- 1,000-PLUGIN MULTI-SCANNER CORRELATION + MITRE ATT&CK TTP & BLUE TEAM (BT) D3FEND / SIGMA RULE -->
+      <!-- 1,500-PLUGIN MULTI-SCANNER CORRELATION + MITRE ATT&CK TTP, BLUE TEAM (BT) D3FEND, SIGMA, SPLUNK SPL, SENTINEL KQL & COMPLIANCE -->
       <div style="background:#faf7f2;border:1px solid #dfd7ca;border-left:4px solid #8b4528;border-radius:4px;padding:8px 10px;margin-bottom:8px;font-size:10.5px;">
-        <div style="font-weight:800;margin-bottom:4px;">🔌 TRIGGERED 1,000-PLUGIN MULTI-SCANNER CHECKS (OPENVAS · ZAP · NUCLEI · BURP) &amp; MITRE TTP / BLUE TEAM (BT) D3FEND™:</div>
+        <div style="font-weight:800;margin-bottom:4px;">🔌 TRIGGERED 1,500-PLUGIN MULTI-SCANNER &amp; SPECIALIZED CHECKS (OPENVAS · ZAP · NUCLEI · BURP · AI/LLM · SECRETS/SBOM · CLOUD/K8S · COMPLIANCE):</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;">
           ${plgCorr.triggeredPlugins.map(tp => `
             <div style="background:#ffffff;border:1px solid #dfd7ca;border-radius:4px;padding:5px 7px;">
@@ -3795,8 +3795,21 @@ ${f.remediation}
           <strong>🎯 MITRE ATT&amp;CK® TTP:</strong> ${plgCorr.primaryMitreTtp.tacticId} (${plgCorr.primaryMitreTtp.tacticName}) · ${plgCorr.primaryMitreTtp.subTechniqueId || plgCorr.primaryMitreTtp.techniqueId} (${plgCorr.primaryMitreTtp.techniqueName})
           &nbsp;|&nbsp; <strong>🛡️ Blue Team (BT) D3FEND™:</strong> ${plgCorr.primaryBlueTeamDefense.d3fendId} [${plgCorr.primaryBlueTeamDefense.d3fendCategory}] — ${plgCorr.primaryBlueTeamDefense.d3fendTechnique} (${plgCorr.primaryBlueTeamDefense.btLogSource})
         </div>
+        <div style="margin-bottom:4px;">
+          <strong>📋 Automated Compliance Control Mapping:</strong> ${(plgCorr.complianceControls || []).join(" &nbsp;·&nbsp; ")}
+        </div>
         <div style="font-weight:700;margin-top:4px;">📡 Blue Team (BT) SIEM Sigma Detection Rule:</div>
         <pre style="margin-top:2px;font-size:9.5px;">${plgCorr.sigmaRuleYaml.replace(/</g, "&lt;")}</pre>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;">
+          <div>
+            <div style="font-weight:700;">🔎 Splunk SPL Query:</div>
+            <pre style="margin-top:2px;font-size:9px;">${(plgCorr.splunkSplQuery || "").replace(/</g, "&lt;")}</pre>
+          </div>
+          <div>
+            <div style="font-weight:700;">🔎 Microsoft Sentinel KQL Query:</div>
+            <pre style="margin-top:2px;font-size:9px;">${(plgCorr.sentinelKqlQuery || "").replace(/</g, "&lt;")}</pre>
+          </div>
+        </div>
       </div>
       <div style="display:none;"><span>${ttpItem ? ttpItem.tacticId : ""}</span></div>
 
@@ -5345,7 +5358,7 @@ ${f.remediation}
                 flexWrap: "wrap"
               }}>
                 <span style={{ fontSize: 10, fontWeight: 900, color: "#38bdf8", whiteSpace: "nowrap", marginRight: 2, fontFamily: "monospace", display: "inline-flex", alignItems: "center", gap: 4 }}>
-                  🧠 8-STAGE BRAIN (1,000 VULN PLUGINS [250 OPENVAS · 250 ZAP · 250 NUCLEI · 250 BURP] + 32 CORE · MITRE TTP & BT D3FEND™):
+                  🧠 8-STAGE BRAIN (1,500 PLUGINS [OPENVAS · ZAP · NUCLEI · BURP · AI/LLM · SECRETS/SBOM · CLOUD/K8S · COMPLIANCE] + 32 CORE · MITRE TTP & BT D3FEND™):
                 </span>
                 {AUTONOMOUS_8_STAGE_WORKFLOW.map((wf) => {
                   const wfThreshold = Math.round((wf.stageNum / 8) * 100);
@@ -5415,7 +5428,7 @@ ${f.remediation}
                 })}
               </div>
 
-              {/* Highlighted Active / Selected Brain Stage Live Telemetry Banner + 4 Stage Commercial Deep-Dive Plugins + 1,000-Plugin TTP/BT Strip */}
+              {/* Highlighted Active / Selected Brain Stage Live Telemetry Banner + 4 Stage Commercial Deep-Dive Plugins + 1,500-Plugin TTP/BT Strip */}
               {(() => {
                 const activeStageNum = (running || liveExternalProbing) && currentBrainStage > 0
                   ? currentBrainStage
@@ -5425,6 +5438,8 @@ ${f.remediation}
                 const isStageDone = done || currentBrainStage > activeWf.stageNum || progress >= Math.round((activeWf.stageNum / 8) * 100);
                 const stagePlugins = COMMERCIAL_DEEP_DIVE_PLUGINS.filter(p => p.brainStage === activeWf.stageNum);
                 const stageThousandPlugins = THOUSAND_VULN_PLUGINS.filter(p => p.brainStage === activeWf.stageNum);
+                const remediatedCount = activeScopedFindings.filter(f => retestLedger[f.id]?.status === "REMEDIATED_VERIFIED").length;
+                const persistingCount = activeScopedFindings.length - remediatedCount;
                 return (
                   <div style={{
                     background: isStageRunning
@@ -5465,41 +5480,98 @@ ${f.remediation}
                       </span>
                     </div>
 
-                    {/* 1,000-Plugin Multi-Scanner TTP & Blue Team (BT) D3FEND Summary Bar */}
+                    {/* 1,500-Plugin Multi-Scanner TTP, Blue Team (BT) D3FEND, AI/LLM, Secrets/SBOM, Cloud/K8s & Compliance Summary Bar */}
                     <div style={{
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
                       flexWrap: "wrap",
                       gap: 6,
-                      padding: "5px 8px",
+                      padding: "6px 8px",
                       borderRadius: 5,
                       background: "var(--surface)",
                       border: "1px solid var(--border)",
                       fontSize: 9.5
                     }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                        <strong>🔌 1,000-PLUGIN ENGINE ({THOUSAND_PLUGINS_SUMMARY.totalPlugins} ACTIVE):</strong>
-                        <span>OpenVAS: <strong>{THOUSAND_PLUGINS_SUMMARY.byScanner.OPENVAS} NVTs</strong></span>
-                        <span>· OWASP ZAP: <strong>{THOUSAND_PLUGINS_SUMMARY.byScanner.ZAP} Rules</strong></span>
-                        <span>· Nuclei: <strong>{THOUSAND_PLUGINS_SUMMARY.byScanner.NUCLEI} Templates</strong></span>
-                        <span>· Burp Suite: <strong>{THOUSAND_PLUGINS_SUMMARY.byScanner.BURP} BChecks</strong></span>
-                        <span>· Stage {activeWf.stageNum} Checks: <strong>{stageThousandPlugins.length}</strong></span>
+                      <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
+                        <strong>🔌 1,500-PLUGIN ENGINE ({THOUSAND_PLUGINS_SUMMARY.totalPlugins} ACTIVE):</strong>
+                        <span>OpenVAS: <strong>{THOUSAND_PLUGINS_SUMMARY.byScanner.OPENVAS}</strong></span>
+                        <span>· ZAP: <strong>{THOUSAND_PLUGINS_SUMMARY.byScanner.ZAP}</strong></span>
+                        <span>· Nuclei: <strong>{THOUSAND_PLUGINS_SUMMARY.byScanner.NUCLEI}</strong></span>
+                        <span>· Burp: <strong>{THOUSAND_PLUGINS_SUMMARY.byScanner.BURP}</strong></span>
+                        <span>· 🤖 AI/LLM: <strong>{THOUSAND_PLUGINS_SUMMARY.byScanner.AI_LLM}</strong></span>
+                        <span>· 🔑 Secrets/SBOM: <strong>{THOUSAND_PLUGINS_SUMMARY.byScanner.SECRETS_SBOM}</strong></span>
+                        <span>· ☁️ Cloud/K8s: <strong>{THOUSAND_PLUGINS_SUMMARY.byScanner.CLOUD_K8S}</strong></span>
+                        <span>· 📋 Compliance: <strong>{THOUSAND_PLUGINS_SUMMARY.byScanner.COMPLIANCE}</strong></span>
+                        <span>· Stage {activeWf.stageNum}: <strong>{stageThousandPlugins.length} Checks</strong></span>
+                        <span>· 🔄 Drift: <strong>{remediatedCount} Fixed / {persistingCount} Open</strong></span>
                       </div>
-                      <a
-                        href="/plugins"
-                        style={{
-                          padding: "2px 8px",
-                          borderRadius: 4,
-                          background: "#8b4528",
-                          color: "#ffffff",
-                          textDecoration: "none",
-                          fontWeight: 800,
-                          fontSize: 9
-                        }}
-                      >
-                        Open 1,000-Plugin MITRE TTP & BT Matrix ↗
-                      </a>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const jsonStr = JSON.stringify(buildMitreNavigatorLayerJson(targetName), null, 2);
+                            const blob = new Blob([jsonStr], { type: "application/json" });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement("a");
+                            a.href = url;
+                            a.download = `mitre-attack-navigator-${targetHost}.json`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                          }}
+                          style={{
+                            padding: "2px 8px",
+                            borderRadius: 4,
+                            background: "#f2ece1",
+                            color: "#111111",
+                            border: "1px solid #c9bfae",
+                            fontWeight: 800,
+                            fontSize: 9,
+                            cursor: "pointer"
+                          }}
+                        >
+                          🗺️ MITRE Navigator (.json)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const mdStr = buildBlueTeamSiemAndWafPack(targetName);
+                            const blob = new Blob([mdStr], { type: "text/markdown" });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement("a");
+                            a.href = url;
+                            a.download = `blue-team-siem-waf-pack-${targetHost}.md`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                          }}
+                          style={{
+                            padding: "2px 8px",
+                            borderRadius: 4,
+                            background: "#f2ece1",
+                            color: "#111111",
+                            border: "1px solid #c9bfae",
+                            fontWeight: 800,
+                            fontSize: 9,
+                            cursor: "pointer"
+                          }}
+                        >
+                          📡 Blue Team SIEM & WAF Pack (.md)
+                        </button>
+                        <a
+                          href="/plugins"
+                          style={{
+                            padding: "2px 8px",
+                            borderRadius: 4,
+                            background: "#8b4528",
+                            color: "#ffffff",
+                            textDecoration: "none",
+                            fontWeight: 800,
+                            fontSize: 9
+                          }}
+                        >
+                          Open 1,500-Plugin Matrix ↗
+                        </a>
+                      </div>
                     </div>
 
                     {/* 4 Commercial Deep-Dive Plugins for this Brain Stage */}
@@ -7684,7 +7756,7 @@ ${f.remediation}
                                 </div>
                               </div>
 
-                              {/* ── 1,000-Plugin Multi-Scanner Correlation (OpenVAS · ZAP · Nuclei · Burp) & MITRE TTP / Blue Team (BT) D3FEND™ + Sigma Rule ── */}
+                              {/* ── 1,500-Plugin Multi-Scanner & Specialized Correlation (OpenVAS · ZAP · Nuclei · Burp · AI/LLM · Secrets/SBOM · Cloud/K8s · Compliance) + Sigma / SPL / KQL ── */}
                               <div style={{
                                 borderTop: "1px solid var(--border)",
                                 paddingTop: 8,
@@ -7696,9 +7768,9 @@ ${f.remediation}
                                 fontSize: 10
                               }}>
                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6 }}>
-                                  <strong>🔌 TRIGGERED 1,000-PLUGIN MULTI-SCANNER CHECKS (OPENVAS · ZAP · NUCLEI · BURP) &amp; MITRE TTP / BLUE TEAM (BT) D3FEND™:</strong>
+                                  <strong>🔌 TRIGGERED 1,500-PLUGIN CHECKS (OPENVAS · ZAP · NUCLEI · BURP · AI/LLM · SECRETS/SBOM · CLOUD/K8S · COMPLIANCE) &amp; MITRE TTP / BT D3FEND™:</strong>
                                   <a href="/plugins" style={{ fontSize: 9.5, fontWeight: 800, textDecoration: "underline" }}>
-                                    Inspect in 1,000-Plugin Matrix ↗
+                                    Inspect in 1,500-Plugin Matrix ↗
                                   </a>
                                 </div>
 
@@ -7735,12 +7807,15 @@ ${f.remediation}
                                   padding: "6px 8px",
                                   display: "flex",
                                   flexDirection: "column",
-                                  gap: 4
+                                  gap: 5
                                 }}>
                                   <div>
                                     <strong>🎯 MITRE ATT&amp;CK® TTP:</strong> {plgCorr.primaryMitreTtp.tacticId} ({plgCorr.primaryMitreTtp.tacticName}) · {plgCorr.primaryMitreTtp.subTechniqueId || plgCorr.primaryMitreTtp.techniqueId} ({plgCorr.primaryMitreTtp.techniqueName})
                                     {" | "}
                                     <strong>🛡️ Blue Team (BT) D3FEND™:</strong> {plgCorr.primaryBlueTeamDefense.d3fendId} [{plgCorr.primaryBlueTeamDefense.d3fendCategory}] — {plgCorr.primaryBlueTeamDefense.d3fendTechnique} ({plgCorr.primaryBlueTeamDefense.btLogSource})
+                                  </div>
+                                  <div>
+                                    <strong>📋 Automated Compliance Control Mapping:</strong> {(plgCorr.complianceControls || []).join(" · ")}
                                   </div>
                                   <div>
                                     <strong>📡 Blue Team (BT) SIEM Sigma Detection Rule:</strong>
@@ -7754,6 +7829,34 @@ ${f.remediation}
                                       overflowX: "auto",
                                       whiteSpace: "pre-wrap"
                                     }}>{plgCorr.sigmaRuleYaml}</pre>
+                                  </div>
+                                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 6 }}>
+                                    <div>
+                                      <strong>🔎 Splunk SPL Query:</strong>
+                                      <pre style={{
+                                        margin: "3px 0 0 0",
+                                        padding: "5px 7px",
+                                        borderRadius: 4,
+                                        background: "var(--surface-2)",
+                                        border: "1px solid var(--border)",
+                                        fontSize: 8.8,
+                                        overflowX: "auto",
+                                        whiteSpace: "pre-wrap"
+                                      }}>{plgCorr.splunkSplQuery}</pre>
+                                    </div>
+                                    <div>
+                                      <strong>🔎 Microsoft Sentinel KQL Query:</strong>
+                                      <pre style={{
+                                        margin: "3px 0 0 0",
+                                        padding: "5px 7px",
+                                        borderRadius: 4,
+                                        background: "var(--surface-2)",
+                                        border: "1px solid var(--border)",
+                                        fontSize: 8.8,
+                                        overflowX: "auto",
+                                        whiteSpace: "pre-wrap"
+                                      }}>{plgCorr.sentinelKqlQuery}</pre>
+                                    </div>
                                   </div>
                                 </div>
                               </div>

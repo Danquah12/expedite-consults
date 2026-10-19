@@ -59,9 +59,13 @@ public class SessionManager {
 
 export default function EvidencePanel({ finding: f }: Props) {
   const sample = FINDING_CODE_SAMPLES[f.id] || {
-    code: f.taintPath.join("\n"),
-    lineStart: f.line - 1,
-    steps: f.taintPath.map((t, idx) => ({ line: f.line + idx, label: idx === 0 ? "Source Input" : idx === f.taintPath.length - 1 ? "Sink Node" : "Propagation Path", details: t }))
+    code: f.codeSnippet || f.taintPath.join("\n"),
+    lineStart: f.snippetStartLine || Math.max(1, f.line - 1),
+    steps: f.taintPath.map((t, idx) => ({
+      line: idx === f.taintPath.length - 1 ? f.line : Math.max(1, f.line - (f.taintPath.length - 1 - idx)),
+      label: idx === 0 ? "Source Input" : idx === f.taintPath.length - 1 ? "Sink Node" : "Propagation Path",
+      details: t,
+    })),
   };
 
   const [activeStep, setActiveStep] = useState(0);
@@ -107,7 +111,7 @@ export default function EvidencePanel({ finding: f }: Props) {
       <div className="flex items-center justify-between mb-4 border-b pb-3" style={{ borderColor: "var(--border)" }}>
         <h2 className="text-lg font-bold text-[#1f1b18] flex items-center gap-2">
           <Code2 className="w-5 h-5 text-[#8b4528]" />
-          Interactive Taint Flow Simulator
+          Interactive Taint Flow Simulator ({f.language})
         </h2>
         <button
           onClick={triggerPlay}
@@ -124,6 +128,43 @@ export default function EvidencePanel({ finding: f }: Props) {
           {isPlaying ? "Simulating..." : "Simulate Trace"}
         </button>
       </div>
+
+      {(f.checkmarxQuery || f.ibmRuleId || f.fortifyKingdom) && (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+            gap: 10,
+            marginBottom: 14,
+            padding: 12,
+            borderRadius: 10,
+            background: "var(--background)",
+            border: "1px solid var(--border)",
+            fontSize: 11,
+          }}
+        >
+          {f.checkmarxQuery && (
+            <div>
+              <div style={{ fontWeight: 800, color: "#8b4528" }}>Checkmarx CxSAST / BFL</div>
+              <div style={{ fontFamily: "monospace", color: "var(--foreground)", marginTop: 2 }}>{f.checkmarxQuery}</div>
+              {f.checkmarxBfl && <div style={{ color: "var(--muted)" }}>BFL: {f.checkmarxBfl}</div>}
+            </div>
+          )}
+          {f.ibmRuleId && (
+            <div>
+              <div style={{ fontWeight: 800, color: "#8b4528" }}>IBM Code Scan (AppScan)</div>
+              <div style={{ fontFamily: "monospace", color: "var(--foreground)", marginTop: 2 }}>{f.ibmRuleId}</div>
+              {f.ibmTraceSummary && <div style={{ color: "var(--muted)" }}>{f.ibmTraceSummary}</div>}
+            </div>
+          )}
+          {f.fortifyKingdom && (
+            <div>
+              <div style={{ fontWeight: 800, color: "#8b4528" }}>Fortify SCA ({f.fortifyAnalyzer || "Dataflow"})</div>
+              <div style={{ color: "var(--foreground)", marginTop: 2 }}>Kingdom: {f.fortifyKingdom}</div>
+            </div>
+          )}
+        </div>
+      )}
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
         

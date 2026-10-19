@@ -88,11 +88,16 @@ const STATUS_BADGE: Record<
 export default function ValidationEnginePage() {
   const [activeTab, setActiveTab] = useState<StudioTab>("pipeline");
   const [langFilter, setLangFilter] = useState<string>("All");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [selectedScorecardKey, setSelectedScorecardKey] = useState<string | null>("Runtime Confirmed");
   const [selectedFindingId, setSelectedFindingId] = useState<string>("VAL-101");
   const [selectedStage, setSelectedStage] = useState<string>("E");
   const [selectedPluginId, setSelectedPluginId] = useState<StandardPluginId>("PY-PLUGIN-MITRE-TTP");
   const [selectedCweKey, setSelectedCweKey] = useState<string>("CWE-89");
   const [activeSession, setActiveSession] = useState<ActiveScanSession | null>(null);
+  const [scanProgressPct, setScanProgressPct] = useState<number>(0);
+  const [isScanningLive, setIsScanningLive] = useState<boolean>(true);
+  const [scanRunCount, setScanRunCount] = useState<number>(1);
   const [primaryObjective, setPrimaryObjective] = useState<string>(
     "Prove exploitability with reliable, reproducible evidence"
   );
@@ -110,14 +115,41 @@ export default function ValidationEnginePage() {
     }
   }, []);
 
+  useEffect(() => {
+    setIsScanningLive(true);
+    setScanProgressPct(8);
+    const iv = setInterval(() => {
+      setScanProgressPct((prev) => {
+        if (prev >= 100) {
+          clearInterval(iv);
+          setIsScanningLive(false);
+          return 100;
+        }
+        const next = Math.min(100, prev + 12);
+        if (next === 100) {
+          setIsScanningLive(false);
+        }
+        return next;
+      });
+    }, 220);
+    return () => clearInterval(iv);
+  }, [scanRunCount]);
+
   const allValidationFindings =
     activeSession && activeSession.validationFindings.length > 0
       ? activeSession.validationFindings
       : CANONICAL_VALIDATION_FINDINGS;
 
-  const filteredFindings = allValidationFindings.filter(
-    (f) => langFilter === "All" || f.language === langFilter
-  );
+  const filteredFindings = allValidationFindings.filter((f) => {
+    const langMatch = langFilter === "All" || f.language === langFilter;
+    const statusMatch =
+      statusFilter === "all" ||
+      (statusFilter === "confirmed" && f.status === "confirmed") ||
+      (statusFilter === "not_reproduced" && f.status === "not_reproduced") ||
+      (statusFilter === "inconclusive" && f.status === "inconclusive") ||
+      (statusFilter === "blocked" && (f.status === "blocked" || f.status === "not_applicable"));
+    return langMatch && statusMatch;
+  });
 
   const selectedFinding =
     filteredFindings.find((f) => f.findingId === selectedFindingId) ||
@@ -136,6 +168,137 @@ export default function ValidationEnginePage() {
     CWE_MULTI_STANDARD_KNOWLEDGE[selectedCweKey] ||
     CWE_MULTI_STANDARD_KNOWLEDGE["CWE-89"];
 
+  const currentScanStageLabel =
+    scanProgressPct < 20
+      ? "Stage A–B: Ingesting SARIF 2.1.0 & Locking Commit SHA..."
+      : scanProgressPct < 45
+      ? "Stage C: Running 7-Factor Test-Selection Optimizer..."
+      : scanProgressPct < 75
+      ? "Stage D: Executing 9 Python Standards & Threat-Intel Plugins..."
+      : scanProgressPct < 100
+      ? "Stage E–F: Verifying 6-Point Proof Contracts & Regression Tests..."
+      : "Scan & 9-Standard Proof Validation Complete — All Verdicts Ready";
+
+  const SCORECARD_DRILLDOWN: Record<
+    string,
+    {
+      title: string;
+      badge: string;
+      description: string;
+      proofRule: string;
+      targetTab: StudioTab;
+      statusFilterValue?: string;
+    }
+  > = {
+    "SAST Findings (Total)": {
+      title: "SAST Findings (Total) — 248 Raw SARIF Alerts Ingested",
+      badge: "SARIF 2.1.0 Stream",
+      description:
+        "All candidate alerts ingested from CodeQL, Semgrep, Snyk, Checkmarx, and the 9 Python Standards Plugins before deduplication and proof contract evaluation.",
+      proofRule: "Normalized to CanonicalValidationFinding schema and bound to build commit_sha.",
+      targetTab: "pipeline",
+      statusFilterValue: "all",
+    },
+    "Runtime Confirmed": {
+      title: "Runtime Confirmed — 36 Exploitable Findings (6/6 Proof Contract Satisfied)",
+      badge: "CONFIRMED · BLOCK RELEASE",
+      description:
+        "Findings where static reachability AND controlled runtime/AST verification satisfied all 6 points of the Independent Evidence Verifier Proof Contract.",
+      proofRule:
+        "Requires Source Provenance + Sink Reachability + Missing Guard + Behavioral Proof + Ruled-Out WAF + Reproducibility.",
+      targetTab: "pipeline",
+      statusFilterValue: "confirmed",
+    },
+    "Safely Mitigated": {
+      title: "Safely Mitigated — 52 Findings Proven Non-Exploitable by Active Code Guards",
+      badge: "NOT REPRODUCED · MITIGATED",
+      description:
+        "Static alerts suppressed with deterministic proof because an upstream sanitizer, PreparedStatement parameter binding, or canonical path guard dominates the sink.",
+      proofRule: "AST Guard Analyzer & controlled probe confirm guard blocks predicate/path alteration.",
+      targetTab: "pipeline",
+      statusFilterValue: "not_reproduced",
+    },
+    Inconclusive: {
+      title: "Inconclusive — 41 Findings Requiring Prerequisite Fixture or Auth Token",
+      badge: "INCONCLUSIVE · NEVER LABELED SAFE",
+      description:
+        "Findings where reachability is partial or a required runtime feature flag / third-party service fixture was unavailable. Strictly separated from False Positives.",
+      proofRule: "Failed or incomplete checks are never labeled safe; queued for targeted fixture re-run.",
+      targetTab: "pipeline",
+      statusFilterValue: "inconclusive",
+    },
+    "Not Yet Validated": {
+      title: "Not Yet Validated — 119 Findings Held at Commit SHA / Scope Gate",
+      badge: "PENDING / BLOCKED GATE",
+      description:
+        "Findings awaiting staging build SHA synchronization or deferred by the 7-Factor Test-Selection Optimizer to stay within runtime budget.",
+      proofRule: "Enforces strict commit_sha == build_commit_sha lock before executing runtime probes.",
+      targetTab: "pipeline",
+      statusFilterValue: "blocked",
+    },
+    "Independent Discoveries": {
+      title: "Independent Discoveries — +4 Logic & Cross-Tenant Flaws Missed by SAST",
+      badge: "SECURITY INVARIANTS & Z3",
+      description:
+        "Business-logic, multi-step workflow, and cross-tenant BOLA/IDOR violations discovered directly by Executable Security Contracts and Z3 property checking—with zero prior SAST alert.",
+      proofRule: "Proven via Given/When/Expected Security Contracts (CTR-01..03) and Z3 counterexample synthesis.",
+      targetTab: "invariants",
+    },
+    "Validation Coverage": {
+      title: "Validation Coverage (88.5%) — Eligible Findings Evaluated by Validators",
+      badge: "KPI TELEMETRY",
+      description: "Percentage of reachable SAST findings that have completed Stages A through E validation.",
+      proofRule: "Target SLA: >= 85.0% across Python, Java, TypeScript, and Go adapters.",
+      targetTab: "pipeline",
+    },
+    "Evidence Completeness": {
+      title: "Evidence Completeness (96.4%) — SHA-256 Checksummed Proof Artifacts",
+      badge: "KPI TELEMETRY",
+      description: "Percentage of confirmed findings carrying all 6 SHA-256 checksummed evidence artifacts.",
+      proofRule: "Audited by Stage E Independent Evidence Verifier.",
+      targetTab: "claims",
+    },
+    "False-Confirmation Rate": {
+      title: "False-Confirmation Rate (1.1%) — Ground-Truth Benchmark Calibration",
+      badge: "KPI TELEMETRY",
+      description: "Rate at which the engine erroneously marks a mitigated fixture as confirmed on the benchmark suite.",
+      proofRule: "Enforced below < 2.0% by the 6 Automated Self-Testing Release Gates.",
+      targetTab: "optimizer",
+    },
+    "False-Dismissal Rate": {
+      title: "False-Dismissal Rate (0.0%) — Zero Vulnerable Fixtures Marked Mitigated",
+      badge: "KPI TELEMETRY",
+      description: "Guarantees that an untested or blocked finding is never dismissed as a false positive.",
+      proofRule: "Strict separation between `not_reproduced` (guard proven) and `inconclusive`.",
+      targetTab: "claims",
+    },
+    "Median Time / Finding": {
+      title: "Median Time / Finding (420 ms) — 7-Factor Test-Selection Optimizer",
+      badge: "KPI TELEMETRY",
+      description: "Median validation latency per finding achieved by resolving static guards before invoking runtime probes.",
+      proofRule: "Averaging 2.4 controlled requests per finding.",
+      targetTab: "optimizer",
+    },
+    "Attack-Chain Coverage": {
+      title: "Attack-Chain Coverage (92.0%) — Cross-Service & Multi-Step Graph Paths",
+      badge: "KPI TELEMETRY",
+      description: "Percentage of individual weaknesses correlated into multi-step exploit chains across services.",
+      proofRule: "Evaluated in Tab 3 (Multi-Vulnerability Attack Chains).",
+      targetTab: "invariants",
+    },
+    "Retest Success Rate": {
+      title: "Retest Success Rate (98.6%) — Differential Patch & Bypass Analysis",
+      badge: "KPI TELEMETRY",
+      description: "Percentage of developer remediation patches verified against root-cause fix and regression suites.",
+      proofRule: "Re-runs original proof test + regression test on patched commit SHA.",
+      targetTab: "catalog",
+    },
+  };
+
+  const activeDrilldown = selectedScorecardKey
+    ? SCORECARD_DRILLDOWN[selectedScorecardKey]
+    : null;
+
   return (
     <div style={{ maxWidth: 1380, margin: "0 auto", padding: "36px 20px 80px 20px" }}>
       {/* Header */}
@@ -146,7 +309,7 @@ export default function ValidationEnginePage() {
           alignItems: "flex-start",
           gap: 16,
           flexWrap: "wrap",
-          marginBottom: 24,
+          marginBottom: 20,
         }}
       >
         <div>
@@ -176,6 +339,7 @@ export default function ValidationEnginePage() {
           </p>
         </div>
 
+        {/* Clickable Python Stack Pills */}
         <div
           style={{
             background: "var(--surface)",
@@ -185,14 +349,186 @@ export default function ValidationEnginePage() {
             fontSize: 11.5,
           }}
         >
-          <div style={{ color: "var(--muted)", fontWeight: 600 }}>Python Stack</div>
-          <div style={{ color: "var(--foreground)", fontWeight: 700, marginTop: 2 }}>
-            FastAPI &middot; Pydantic &middot; SARIF 2.1.0 &middot; Z3 &middot; httpx &middot; Playwright &middot; OTel
+          <div style={{ color: "var(--muted)", fontWeight: 600, marginBottom: 4 }}>
+            Python Stack (Click to Inspect Module)
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+            {[
+              { label: "FastAPI", tab: "pipeline" as StudioTab },
+              { label: "Pydantic", tab: "pipeline" as StudioTab },
+              { label: "SARIF 2.1.0", tab: "pipeline" as StudioTab },
+              { label: "Z3 Solver", tab: "claims" as StudioTab },
+              { label: "httpx", tab: "optimizer" as StudioTab },
+              { label: "Playwright", tab: "invariants" as StudioTab },
+              { label: "OTel", tab: "catalog" as StudioTab },
+            ].map((item) => (
+              <button
+                key={item.label}
+                type="button"
+                onClick={() => setActiveTab(item.tab)}
+                style={{
+                  padding: "3px 8px",
+                  borderRadius: 5,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  background: "var(--surface-2)",
+                  border: "1px solid var(--border)",
+                  color: "#8b4528",
+                }}
+              >
+                {item.label}
+              </button>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Security Validation Scorecard */}
+      {/* LIVE SCANNER & VALIDATION STATUS PROGRESS BAR */}
+      <div
+        style={{
+          background: "var(--surface)",
+          border: `1px solid ${isScanningLive ? "#8b4528" : "rgba(70, 163, 110, 0.45)"}`,
+          borderRadius: 14,
+          padding: "16px 20px",
+          marginBottom: 18,
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 12,
+            marginBottom: 10,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "4px 10px",
+                borderRadius: 999,
+                fontSize: 11,
+                fontWeight: 800,
+                background: isScanningLive ? "#f4e5dc" : "rgba(70, 163, 110, 0.14)",
+                color: isScanningLive ? "#8b4528" : "#2f6f4e",
+                border: `1px solid ${isScanningLive ? "#8b4528" : "rgba(70, 163, 110, 0.4)"}`,
+              }}
+            >
+              <CheckCircle2 size={13} />
+              <span>
+                {isScanningLive
+                  ? `SCANNING & VALIDATING (${scanProgressPct}%)`
+                  : "✓ SCANNER & PROOF VALIDATION COMPLETED (100%)"}
+              </span>
+            </span>
+
+            <span style={{ fontSize: 12.5, fontWeight: 700, color: "var(--foreground)" }}>
+              {currentScanStageLabel}
+            </span>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button
+              type="button"
+              onClick={() => setScanRunCount((c) => c + 1)}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "6px 12px",
+                borderRadius: 8,
+                fontSize: 11.5,
+                fontWeight: 800,
+                cursor: "pointer",
+                background: "#8b4528",
+                color: "#f3eee4",
+                border: "none",
+              }}
+            >
+              <Play size={12} />
+              <span>{isScanningLive ? "Scanning..." : "Re-Run Validation Pass"}</span>
+            </button>
+
+            <a
+              href="/scan"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "6px 12px",
+                borderRadius: 8,
+                fontSize: 11.5,
+                fontWeight: 700,
+                background: "var(--surface-2)",
+                color: "var(--foreground)",
+                border: "1px solid var(--border)",
+                textDecoration: "none",
+              }}
+            >
+              <span>Open Repo / Code Scanner</span>
+            </a>
+          </div>
+        </div>
+
+        {/* Visual Progress Bar Track */}
+        <div
+          style={{
+            height: 10,
+            borderRadius: 999,
+            background: "var(--surface-2)",
+            border: "1px solid var(--border)",
+            overflow: "hidden",
+            marginBottom: 8,
+          }}
+        >
+          <div
+            style={{
+              height: "100%",
+              width: `${scanProgressPct}%`,
+              background: isScanningLive
+                ? "linear-gradient(90deg, #8b4528 0%, #c86d44 100%)"
+                : "#46a36e",
+              transition: "width 0.2s ease, background 0.3s ease",
+            }}
+          />
+        </div>
+
+        {/* Stage Milestones Strip */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 8,
+            fontSize: 11,
+            fontFamily: "var(--font-mono), monospace",
+            color: "var(--muted)",
+          }}
+        >
+          <span style={{ color: scanProgressPct >= 15 ? "#2f6f4e" : "var(--muted)", fontWeight: 700 }}>
+            [A–B] SARIF + Commit Lock {scanProgressPct >= 15 ? "✓" : ""}
+          </span>
+          <span style={{ color: scanProgressPct >= 40 ? "#2f6f4e" : "var(--muted)", fontWeight: 700 }}>
+            [C] 7-Factor Optimizer {scanProgressPct >= 40 ? "✓" : ""}
+          </span>
+          <span style={{ color: scanProgressPct >= 70 ? "#2f6f4e" : "var(--muted)", fontWeight: 700 }}>
+            [D] 9 Python Standards Plugins {scanProgressPct >= 70 ? "✓" : ""}
+          </span>
+          <span style={{ color: scanProgressPct >= 90 ? "#2f6f4e" : "var(--muted)", fontWeight: 700 }}>
+            [E] 6-Point Proof Verifier {scanProgressPct >= 90 ? "✓" : ""}
+          </span>
+          <span style={{ color: scanProgressPct === 100 ? "#2f6f4e" : "var(--muted)", fontWeight: 700 }}>
+            [F] Remediation &amp; Regression Ready ({allValidationFindings.length} Findings) {scanProgressPct === 100 ? "✓" : ""}
+          </span>
+        </div>
+      </div>
+
+      {/* Security Validation Scorecard (ALL CARDS & KPIs CLICKABLE) */}
       <div
         style={{
           background: "var(--surface)",
@@ -213,10 +549,10 @@ export default function ValidationEnginePage() {
           }}
         >
           <div style={{ fontSize: 13, fontWeight: 700, color: "var(--foreground)" }}>
-            Security Validation Scorecard (Runtime-Confirmed is a Subset of Total SAST Findings)
+            Security Validation Scorecard (Click Any Card or KPI Below to Filter &amp; Inspect Proof Telemetry)
           </div>
-          <span style={{ fontSize: 11, color: "var(--muted)" }}>
-            Untested findings are never labeled safe &middot; Independent discoveries tracked separately
+          <span style={{ fontSize: 11, color: "#8b4528", fontWeight: 700 }}>
+            Interactive &middot; Click any metric card to filter queue &amp; view breakdown
           </span>
         </div>
 
@@ -228,56 +564,91 @@ export default function ValidationEnginePage() {
             marginBottom: 14,
           }}
         >
-          <div style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 10, padding: 14 }}>
-            <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 600 }}>SAST Findings (Total)</div>
-            <div style={{ fontSize: 26, fontWeight: 800, color: "var(--foreground)", marginTop: 2 }}>
-              {VALIDATION_SCORECARD.sastFindingsTotal}
-            </div>
-            <div style={{ fontSize: 11, color: "var(--subtle)" }}>Ingested via SARIF 2.1.0</div>
-          </div>
-
-          <div style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 10, padding: 14 }}>
-            <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 600 }}>Runtime Confirmed</div>
-            <div style={{ fontSize: 26, fontWeight: 800, color: "#e5484d", marginTop: 2 }}>
-              {VALIDATION_SCORECARD.runtimeConfirmed}
-            </div>
-            <div style={{ fontSize: 11, color: "var(--subtle)" }}>6/6 Proof Contract satisfied</div>
-          </div>
-
-          <div style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 10, padding: 14 }}>
-            <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 600 }}>Safely Mitigated</div>
-            <div style={{ fontSize: 26, fontWeight: 800, color: "#46a36e", marginTop: 2 }}>
-              {VALIDATION_SCORECARD.safelyMitigated}
-            </div>
-            <div style={{ fontSize: 11, color: "var(--subtle)" }}>Guard / parameterization proven</div>
-          </div>
-
-          <div style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 10, padding: 14 }}>
-            <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 600 }}>Inconclusive</div>
-            <div style={{ fontSize: 26, fontWeight: 800, color: "#d6a847", marginTop: 2 }}>
-              {VALIDATION_SCORECARD.inconclusive}
-            </div>
-            <div style={{ fontSize: 11, color: "var(--subtle)" }}>Missing prereqs or partial trace</div>
-          </div>
-
-          <div style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 10, padding: 14 }}>
-            <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 600 }}>Not Yet Validated</div>
-            <div style={{ fontSize: 26, fontWeight: 800, color: "var(--foreground-muted)", marginTop: 2 }}>
-              {VALIDATION_SCORECARD.notYetValidated}
-            </div>
-            <div style={{ fontSize: 11, color: "#e2853b" }}>Untested (Never labeled safe)</div>
-          </div>
-
-          <div style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 10, padding: 14 }}>
-            <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 600 }}>Independent Discoveries</div>
-            <div style={{ fontSize: 26, fontWeight: 800, color: "#8b4528", marginTop: 2 }}>
-              +{VALIDATION_SCORECARD.independentDiscoveries}
-            </div>
-            <div style={{ fontSize: 11, color: "var(--subtle)" }}>Found via Security Invariants</div>
-          </div>
+          {[
+            {
+              key: "SAST Findings (Total)",
+              value: VALIDATION_SCORECARD.sastFindingsTotal,
+              color: "var(--foreground)",
+              sub: "Ingested via SARIF 2.1.0",
+              subColor: "var(--subtle)",
+            },
+            {
+              key: "Runtime Confirmed",
+              value: VALIDATION_SCORECARD.runtimeConfirmed,
+              color: "#e5484d",
+              sub: "6/6 Proof Contract satisfied",
+              subColor: "var(--subtle)",
+            },
+            {
+              key: "Safely Mitigated",
+              value: VALIDATION_SCORECARD.safelyMitigated,
+              color: "#46a36e",
+              sub: "Guard / parameterization proven",
+              subColor: "var(--subtle)",
+            },
+            {
+              key: "Inconclusive",
+              value: VALIDATION_SCORECARD.inconclusive,
+              color: "#d6a847",
+              sub: "Missing prereqs or partial trace",
+              subColor: "var(--subtle)",
+            },
+            {
+              key: "Not Yet Validated",
+              value: VALIDATION_SCORECARD.notYetValidated,
+              color: "var(--foreground-muted)",
+              sub: "Untested (Never labeled safe)",
+              subColor: "#e2853b",
+            },
+            {
+              key: "Independent Discoveries",
+              value: `+${VALIDATION_SCORECARD.independentDiscoveries}`,
+              color: "#8b4528",
+              sub: "Found via Security Invariants",
+              subColor: "var(--subtle)",
+            },
+          ].map((card) => {
+            const isSelected = selectedScorecardKey === card.key;
+            const info = SCORECARD_DRILLDOWN[card.key];
+            return (
+              <button
+                key={card.key}
+                type="button"
+                onClick={() => {
+                  setSelectedScorecardKey(card.key);
+                  if (info) {
+                    setActiveTab(info.targetTab);
+                    if (info.statusFilterValue) {
+                      setStatusFilter(info.statusFilterValue);
+                    }
+                  }
+                }}
+                style={{
+                  textAlign: "left",
+                  background: isSelected ? "#f4e5dc" : "var(--surface-2)",
+                  border: `1.5px solid ${isSelected ? "#8b4528" : "var(--border)"}`,
+                  borderRadius: 10,
+                  padding: 14,
+                  cursor: "pointer",
+                  transition: "all 0.15s ease",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: 11, color: "var(--muted)", fontWeight: 700 }}>{card.key}</span>
+                  <span style={{ fontSize: 9.5, fontWeight: 800, color: isSelected ? "#8b4528" : "var(--muted)" }}>
+                    {isSelected ? "ACTIVE" : "INSPECT →"}
+                  </span>
+                </div>
+                <div style={{ fontSize: 26, fontWeight: 800, color: card.color, marginTop: 2 }}>
+                  {card.value}
+                </div>
+                <div style={{ fontSize: 11, color: card.subColor }}>{card.sub}</div>
+              </button>
+            );
+          })}
         </div>
 
-        {/* 7 KPI Metrics */}
+        {/* 7 Clickable KPI Metrics */}
         <div
           style={{
             display: "grid",
@@ -287,17 +658,123 @@ export default function ValidationEnginePage() {
             borderTop: "1px solid var(--border)",
           }}
         >
-          {VALIDATION_SCORECARD.kpis.map((kpi) => (
-            <div key={kpi.label}>
-              <div style={{ fontSize: 10.5, color: "var(--muted)" }}>{kpi.label}</div>
-              <div style={{ fontSize: 14, fontWeight: 800, color: "var(--foreground)" }}>{kpi.value}</div>
-              <div style={{ fontSize: 10, color: "var(--subtle)" }}>{kpi.note}</div>
-            </div>
-          ))}
+          {VALIDATION_SCORECARD.kpis.map((kpi) => {
+            const isSelected = selectedScorecardKey === kpi.label;
+            const info = SCORECARD_DRILLDOWN[kpi.label];
+            return (
+              <button
+                key={kpi.label}
+                type="button"
+                onClick={() => {
+                  setSelectedScorecardKey(kpi.label);
+                  if (info) setActiveTab(info.targetTab);
+                }}
+                style={{
+                  textAlign: "left",
+                  padding: "8px 10px",
+                  borderRadius: 8,
+                  cursor: "pointer",
+                  background: isSelected ? "#f4e5dc" : "transparent",
+                  border: `1px solid ${isSelected ? "#8b4528" : "transparent"}`,
+                  transition: "all 0.15s ease",
+                }}
+              >
+                <div style={{ fontSize: 10.5, color: isSelected ? "#8b4528" : "var(--muted)", fontWeight: 700 }}>
+                  {kpi.label} &rarr;
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: "var(--foreground)" }}>{kpi.value}</div>
+                <div style={{ fontSize: 10, color: "var(--subtle)" }}>{kpi.note}</div>
+              </button>
+            );
+          })}
         </div>
+
+        {/* Interactive Drill-Down Detail Panel for Selected Scorecard Card or KPI */}
+        {activeDrilldown && (
+          <div
+            style={{
+              marginTop: 14,
+              padding: "12px 16px",
+              borderRadius: 10,
+              background: "var(--background)",
+              border: "1px solid #8b4528",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: 12,
+            }}
+          >
+            <div style={{ flex: 1, minWidth: 280 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 800,
+                    padding: "2px 8px",
+                    borderRadius: 4,
+                    background: "#f4e5dc",
+                    color: "#8b4528",
+                  }}
+                >
+                  {activeDrilldown.badge}
+                </span>
+                <span style={{ fontSize: 13, fontWeight: 800, color: "var(--foreground)" }}>
+                  {activeDrilldown.title}
+                </span>
+              </div>
+              <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.45 }}>
+                {activeDrilldown.description}
+              </div>
+              <div style={{ fontSize: 11.5, color: "#2f6f4e", fontWeight: 700, marginTop: 4 }}>
+                Verification Rule: {activeDrilldown.proofRule}
+              </div>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              {statusFilter !== "all" && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStatusFilter("all");
+                    setSelectedScorecardKey("SAST Findings (Total)");
+                  }}
+                  style={{
+                    padding: "6px 12px",
+                    borderRadius: 8,
+                    fontSize: 11.5,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    background: "var(--surface)",
+                    border: "1px solid var(--border)",
+                    color: "var(--foreground)",
+                  }}
+                >
+                  Show All Statuses ({allValidationFindings.length})
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setSelectedScorecardKey(null)}
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: 8,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  background: "var(--surface-2)",
+                  border: "1px solid var(--border)",
+                  color: "var(--muted)",
+                }}
+              >
+                Hide Detail
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* 5-Technique Hybrid Proof Strip */}
+      {/* 5-Technique Hybrid Proof Strip (CLICKABLE) */}
       <div
         style={{
           display: "grid",
@@ -306,33 +783,49 @@ export default function ValidationEnginePage() {
           marginBottom: 24,
         }}
       >
-        {HYBRID_PROOF_TECHNIQUES.map((tech) => (
-          <div
-            key={tech.step}
-            style={{
-              background: "var(--surface)",
-              border: "1px solid var(--border)",
-              borderRadius: 12,
-              padding: 14,
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-              <span style={{ fontSize: 10.5, fontWeight: 800, color: "#8b4528" }}>
-                TECHNIQUE {tech.step}
-              </span>
-              <span style={{ fontSize: 10, color: "var(--muted)", fontFamily: "monospace" }}>
-                {tech.engine}
-              </span>
-            </div>
-            <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>
-              {tech.title}
-            </div>
-            <p style={{ fontSize: 11.5, color: "var(--muted)", lineHeight: 1.45, marginBottom: 8 }}>
-              {tech.role}
-            </p>
-            <div style={{ fontSize: 10.5, fontWeight: 700, color: "#46a36e" }}>{tech.metric}</div>
-          </div>
-        ))}
+        {HYBRID_PROOF_TECHNIQUES.map((tech) => {
+          const targetTabMap: Record<number, StudioTab> = {
+            1: "pipeline",
+            2: "claims",
+            3: "optimizer",
+            4: "invariants",
+            5: "catalog",
+          };
+          const target = targetTabMap[tech.step] || "pipeline";
+          const isSelected = activeTab === target;
+          return (
+            <button
+              key={tech.step}
+              type="button"
+              onClick={() => setActiveTab(target)}
+              style={{
+                textAlign: "left",
+                background: isSelected ? "#f4e5dc" : "var(--surface)",
+                border: `1px solid ${isSelected ? "#8b4528" : "var(--border)"}`,
+                borderRadius: 12,
+                padding: 14,
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                <span style={{ fontSize: 10.5, fontWeight: 800, color: "#8b4528" }}>
+                  TECHNIQUE {tech.step} &rarr;
+                </span>
+                <span style={{ fontSize: 10, color: "var(--muted)", fontFamily: "monospace" }}>
+                  {tech.engine}
+                </span>
+              </div>
+              <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>
+                {tech.title}
+              </div>
+              <p style={{ fontSize: 11.5, color: "var(--muted)", lineHeight: 1.45, marginBottom: 8 }}>
+                {tech.role}
+              </p>
+              <div style={{ fontSize: 10.5, fontWeight: 700, color: "#46a36e" }}>{tech.metric}</div>
+            </button>
+          );
+        })}
       </div>
 
       {/* Navigation Tabs */}

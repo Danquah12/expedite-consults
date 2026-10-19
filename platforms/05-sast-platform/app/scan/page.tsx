@@ -2,37 +2,47 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import RepoInput, { type ScanStartPayload } from "@/components/scan/RepoInput";
+import RepoInput, { type AttachedSourceFile } from "@/components/scan/RepoInput";
 import ScanProgress from "@/components/scan/ScanProgress";
 import PostScanValidation from "@/components/scan/PostScanValidation";
-import {
-  runDynamicRepoOrCodeScan,
-  type ActiveScanSession,
-} from "@/lib/live-sast-scanner";
-import { Shield, CheckCircle2, RotateCcw } from "lucide-react";
+import type { LiveScanTelemetry } from "@/lib/enterprise-sast-engine";
+import { Shield, CheckCircle2 } from "lucide-react";
 
 type Step = "input" | "scanning" | "validating";
 
 export default function ScanPage() {
   const [step, setStep] = useState<Step>("input");
   const [repo, setRepo] = useState("");
+  const [branch, setBranch] = useState("main");
+  const [commitSha, setCommitSha] = useState("a4f92c81e03b4d12");
   const [language, setLanguage] = useState("Java");
   const [engines, setEngines] = useState<string[]>([]);
-  const [session, setSession] = useState<ActiveScanSession | null>(null);
+  const [attachedFiles, setAttachedFiles] = useState<AttachedSourceFile[]>([]);
+  const [telemetry, setTelemetry] = useState<LiveScanTelemetry | null>(null);
   const router = useRouter();
 
-  const handleStart = async (payload: ScanStartPayload) => {
-    setRepo(payload.repoUrl);
-    setLanguage(payload.language);
-    setEngines(payload.engines);
-
-    const activeSession = await runDynamicRepoOrCodeScan(payload);
-    setSession(activeSession);
+  const handleStart = (params: {
+    repoUrl: string;
+    branch: string;
+    commitSha: string;
+    language: string;
+    engines: string[];
+    attachedFiles: AttachedSourceFile[];
+  }) => {
+    setRepo(params.repoUrl);
+    setBranch(params.branch);
+    setCommitSha(params.commitSha);
+    setLanguage(params.language);
+    setEngines(params.engines);
+    setAttachedFiles(params.attachedFiles);
     setStep("scanning");
   };
 
-  const handleScanComplete = () => {
-    setTimeout(() => setStep("validating"), 600);
+  const handleScanComplete = (scanTelemetry?: LiveScanTelemetry) => {
+    if (scanTelemetry) {
+      setTelemetry(scanTelemetry);
+    }
+    setTimeout(() => setStep("validating"), 700);
   };
 
   const handleValidationComplete = () => {
@@ -40,10 +50,10 @@ export default function ScanPage() {
   };
 
   const stepLabels = [
-    { step: 1, title: "Repository / Code & Plugins", sub: "GitHub URL or Live Code + 9 Plugins" },
-    { step: 2, title: "AST & Standards Scan", sub: "CodeQL · Semgrep · Snyk · Checkmarx" },
-    { step: 3, title: "TTP & 9-Standard Validation", sub: "MITRE · OWASP · CWE · CVSS · NIST · PTES" },
-    { step: 4, title: "Verified Dashboard", sub: "Dynamic Triage & Remediation" },
+    { step: 1, title: "Repository & 10-Lang AST", sub: "GitHub URL or Attached Codebase" },
+    { step: 2, title: "400-Plugin Multi-Engine Scan", sub: "Checkmarx · IBM · Fortify · CodeQL · OSV" },
+    { step: 3, title: "Finding Validation (A–F)", sub: "6-Point Proof Contract" },
+    { step: 4, title: "Verified Dashboard", sub: "Triage & remediation" },
   ];
   const currentIdx = step === "input" ? 0 : step === "scanning" ? 1 : 2;
 
@@ -78,10 +88,10 @@ export default function ScanPage() {
             </div>
             <div>
               <h1 style={{ fontSize: 28, fontWeight: 800, color: "var(--foreground)", lineHeight: 1.2 }}>
-                Multi-Standard Code Scan &amp; TTP Validation Workspace
+                Scan &amp; Proof Validation Workspace
               </h1>
               <p style={{ fontSize: 13.5, color: "var(--muted)", marginTop: 4 }}>
-                Scan any GitHub repository or live source code across MITRE ATT&amp;CK TTPs, OWASP Top 10 + ASVS, MITRE CWE, CVSS v3.1/v4.0, NIST 800-53/SSDF, GitHub GHSA, PTES, SearchSploit &amp; Metasploit CheckCode.
+                Connect a GitHub repository or attach source code across 10 languages, execute Checkmarx / IBM Code Scan / Fortify SCA + 400 OWASP/NIST plugins, and verify 6-point proof contracts.
               </p>
             </div>
           </div>
@@ -133,31 +143,6 @@ export default function ScanPage() {
           </div>
         </div>
 
-        {step !== "input" && (
-          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
-            <button
-              type="button"
-              onClick={() => setStep("input")}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                padding: "7px 13px",
-                borderRadius: 8,
-                fontSize: 12,
-                fontWeight: 700,
-                background: "var(--surface)",
-                border: "1px solid var(--border)",
-                color: "var(--foreground)",
-                cursor: "pointer",
-              }}
-            >
-              <RotateCcw size={13} color="#8b4528" />
-              <span>Scan Another Repository or Code Snippet</span>
-            </button>
-          </div>
-        )}
-
         {/* Main Workspace Surface */}
         <div
           style={{
@@ -171,9 +156,11 @@ export default function ScanPage() {
           {step === "scanning" && (
             <ScanProgress
               repo={repo}
+              branch={branch}
+              commitSha={commitSha}
               language={language}
               engines={engines}
-              session={session}
+              attachedFiles={attachedFiles}
               onComplete={handleScanComplete}
             />
           )}
@@ -181,7 +168,7 @@ export default function ScanPage() {
             <PostScanValidation
               repo={repo}
               language={language}
-              session={session}
+              telemetry={telemetry}
               onFinishToDashboard={handleValidationComplete}
             />
           )}

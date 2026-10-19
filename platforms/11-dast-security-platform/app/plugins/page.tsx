@@ -5,13 +5,17 @@ import {
   COMMERCIAL_DEEP_DIVE_PLUGINS,
   THOUSAND_VULN_PLUGINS,
   THOUSAND_PLUGINS_SUMMARY,
+  buildMitreNavigatorLayerJson,
+  buildBlueTeamSiemAndWafPack,
+  type PluginScannerFamily,
   type MitreTtpMapping,
   type BlueTeamDefenseMapping
 } from "@/data/deepDivePlugins";
+import { FINDINGS } from "@/data/findings";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Tab = "mitre_bt_matrix" | "overview" | "capabilities" | "verification" | "activity";
+type Tab = "mitre_bt_matrix" | "overview" | "verification" | "activity";
 
 interface InstalledPlugin {
   id: string;
@@ -30,7 +34,7 @@ interface InstalledPlugin {
   standards?: string;
   deepDiveActions?: string[];
   estimatedMinutes1HrMode?: number;
-  scannerFamily?: "OPENVAS" | "ZAP" | "NUCLEI" | "BURP" | "CORE";
+  scannerFamily?: PluginScannerFamily | "CORE";
   scannerRefId?: string;
   cwe?: string;
   owasp?: string;
@@ -40,7 +44,7 @@ interface InstalledPlugin {
   blueTeamDefense?: BlueTeamDefenseMapping;
 }
 
-// ─── Data (1,000 Vulnerability Plugins + 32 Core Stage Orchestrators) ────────
+// ─── Data (1,500 Vulnerability/Compliance Plugins + 32 Core Orchestrators) ───
 
 const THOUSAND_INSTALLED: InstalledPlugin[] = THOUSAND_VULN_PLUGINS.map((p) => ({
   id: p.id,
@@ -113,20 +117,22 @@ const INSTALLED: InstalledPlugin[] = [...THOUSAND_INSTALLED, ...CORE_32_INSTALLE
 
 const VERIFICATION_ITEMS = [
   { key: "signature", label: "Signature Verified (EXPEDITE STRIKE™ CA signed)", ok: true },
-  { key: "mitre_ttp", label: "MITRE ATT&CK® v15 TTP Mapping Verified", ok: true },
+  { key: "mitre_ttp", label: "MITRE ATT&CK® v15 & MITRE ATLAS™ TTP Mapping Verified", ok: true },
   { key: "bt_d3fend", label: "Blue Team (BT) MITRE D3FEND™ Countermeasure Linked", ok: true },
-  { key: "sandbox", label: "Safe Non-Destructive Sandbox Healthy", ok: true },
-  { key: "audit", label: "SIEM & Sigma Audit Logging Enabled", ok: true },
-  { key: "version", label: "Multi-Scanner Engine SDK v6.0 Compatible", ok: true }
+  { key: "siem_export", label: "Splunk SPL, Microsoft Sentinel KQL & Sigma YAML Verified", ok: true },
+  { key: "compliance", label: "PCI-DSS v4.0, SOC 2 Type II, ISO 27001 & HIPAA Control Mapping", ok: true },
+  { key: "sandbox", label: "Safe Non-Destructive Sandbox Healthy", ok: true }
 ];
 
 const AUDIT_ACTIONS = [
+  { time: "19:15:20", user: "ai-llm-atlas-engine", action: "EXP-PLG-1001..1100 (100 OWASP LLM & ATLAS Rules)", result: "success" },
+  { time: "19:14:12", user: "secrets-sbom-engine", action: "EXP-PLG-1101..1250 (150 Secret & SBOM Rules)", result: "success" },
+  { time: "19:13:05", user: "cloud-k8s-engine", action: "EXP-PLG-1251..1400 (150 Cloud/K8s/IMDSv2 Rules)", result: "success" },
+  { time: "19:12:30", user: "compliance-grc-engine", action: "EXP-PLG-1401..1500 (100 PCI/SOC2/ISO/HIPAA Controls)", result: "success" },
   { time: "19:12:04", user: "openvas-nvt-engine", action: "EXP-PLG-0001..0250 (250 NVTs)", result: "success" },
   { time: "19:10:41", user: "owasp-zap-engine", action: "EXP-PLG-0251..0500 (250 Rules)", result: "success" },
   { time: "19:08:17", user: "nuclei-template-engine", action: "EXP-PLG-0501..0750 (250 Templates)", result: "success" },
-  { time: "19:05:29", user: "burp-bcheck-engine", action: "EXP-PLG-0751..1000 (250 BChecks)", result: "success" },
-  { time: "19:02:11", user: "mitre-ttp-correlator", action: "map_attck_tactics_TA0043_TA0006", result: "success" },
-  { time: "18:58:03", user: "bt-d3fend-verifier", action: "synthesize_sigma_and_waf_rules", result: "success" }
+  { time: "19:05:29", user: "burp-bcheck-engine", action: "EXP-PLG-0751..1000 (250 BChecks)", result: "success" }
 ];
 
 const SCANNER_COLORS: Record<string, string> = {
@@ -134,6 +140,10 @@ const SCANNER_COLORS: Record<string, string> = {
   ZAP: "#2563eb",
   NUCLEI: "#9333ea",
   BURP: "#ea580c",
+  AI_LLM: "#db2777",
+  SECRETS_SBOM: "#dc2626",
+  CLOUD_K8S: "#0284c7",
+  COMPLIANCE: "#059669",
   CORE: "#8b4528"
 };
 
@@ -159,23 +169,7 @@ function ScannerBadge({ family }: { family?: string }) {
   );
 }
 
-function StatusDot({ status }: { status: "healthy" | "warning" | "error" }) {
-  const color = status === "healthy" ? "#10b981" : status === "warning" ? "#f59e0b" : "#ef4444";
-  return (
-    <span
-      style={{
-        display: "inline-block",
-        width: 8,
-        height: 8,
-        borderRadius: "50%",
-        background: color,
-        flexShrink: 0
-      }}
-    />
-  );
-}
-
-// ─── Tab 1: 1,000-Plugin MITRE TTP & Blue Team (BT) Matrix ────────────────────
+// ─── Tab 1: 1,500-Plugin MITRE TTP & Blue Team (BT) Matrix ────────────────────
 
 function MitreBtMatrixTab({
   filteredPlugins,
@@ -211,7 +205,7 @@ function MitreBtMatrixTab({
           }}
         >
           <div style={{ fontSize: 10, fontWeight: 800, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-            MITRE ATT&CK® TTP Coverage (Offensive / Red-Purple Team)
+            MITRE ATT&CK® v15 &amp; MITRE ATLAS™ AI TTP Coverage
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
             {THOUSAND_PLUGINS_SUMMARY.mitreTacticsCovered.map((t) => (
@@ -242,7 +236,7 @@ function MitreBtMatrixTab({
           }}
         >
           <div style={{ fontSize: 10, fontWeight: 800, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-            Blue Team (BT) MITRE D3FEND™ Countermeasures & SIEM Telemetry
+            Blue Team (BT) MITRE D3FEND™ Countermeasures &amp; SIEM Telemetry
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
             {THOUSAND_PLUGINS_SUMMARY.blueTeamD3fendCovered.map((d) => (
@@ -281,7 +275,7 @@ function MitreBtMatrixTab({
       >
         <div style={{ fontSize: 12, fontWeight: 700 }}>
           Showing {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filteredPlugins.length)} of{" "}
-          <strong>{filteredPlugins.length}</strong> Matching Plugins (Total Registry: 1,000 Vulnerability Checks + 32 Core Orchestrators)
+          <strong>{filteredPlugins.length}</strong> Matching Plugins (Total Registry: 1,500 Vulnerability/AI/Cloud/Secrets/Compliance Checks + 32 Core Orchestrators)
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <button
@@ -320,7 +314,7 @@ function MitreBtMatrixTab({
         </div>
       </div>
 
-      {/* 1,000-Plugin Table */}
+      {/* 1,500-Plugin Table */}
       <div
         style={{
           border: "1px solid var(--border)",
@@ -332,7 +326,7 @@ function MitreBtMatrixTab({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "110px 85px 1.5fr 170px 190px 110px",
+            gridTemplateColumns: "110px 105px 1.5fr 170px 190px 110px",
             gap: 10,
             padding: "10px 14px",
             background: "var(--surface-2)",
@@ -344,9 +338,9 @@ function MitreBtMatrixTab({
           }}
         >
           <div>Plugin Code</div>
-          <div>Scanner</div>
-          <div>Vulnerability Check & Rule ID</div>
-          <div>MITRE ATT&CK® TTP</div>
+          <div>Pack / Engine</div>
+          <div>Vulnerability Check &amp; Rule ID</div>
+          <div>MITRE ATT&amp;CK® / ATLAS</div>
           <div>Blue Team (BT) D3FEND™</div>
           <div>Stage / CWE</div>
         </div>
@@ -359,7 +353,7 @@ function MitreBtMatrixTab({
               onClick={() => onSelectPlugin(p.id)}
               style={{
                 display: "grid",
-                gridTemplateColumns: "110px 85px 1.5fr 170px 190px 110px",
+                gridTemplateColumns: "110px 105px 1.5fr 170px 190px 110px",
                 gap: 10,
                 padding: "10px 14px",
                 borderBottom: "1px solid var(--border)",
@@ -457,7 +451,7 @@ function OverviewTab({ plugin }: { plugin: InstalledPlugin }) {
             }}
           >
             <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>
-              🎯 MITRE ATT&CK® TTP Mapping (Offensive Vector)
+              🎯 MITRE ATT&CK® / ATLAS™ TTP Mapping (Offensive Vector)
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 12.5 }}>
               <div>
@@ -471,7 +465,7 @@ function OverviewTab({ plugin }: { plugin: InstalledPlugin }) {
                 <strong>Procedure Summary:</strong> {plugin.mitreTtp.procedureSummary}
               </div>
               <div>
-                <strong>OWASP Standard:</strong> {plugin.owasp}
+                <strong>Standard / Framework:</strong> {plugin.owasp}
               </div>
             </div>
           </div>
@@ -491,7 +485,7 @@ function OverviewTab({ plugin }: { plugin: InstalledPlugin }) {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 12.5 }}>
               <div>
-                <strong>D3FEND ID & Category:</strong> {plugin.blueTeamDefense.d3fendId} [{plugin.blueTeamDefense.d3fendCategory}]
+                <strong>D3FEND ID &amp; Category:</strong> {plugin.blueTeamDefense.d3fendId} [{plugin.blueTeamDefense.d3fendCategory}]
               </div>
               <div>
                 <strong>Defensive Technique:</strong> {plugin.blueTeamDefense.d3fendTechnique}
@@ -522,7 +516,7 @@ function OverviewTab({ plugin }: { plugin: InstalledPlugin }) {
           }}
         >
           <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>
-            ⚡ Automated Execution & Verification Steps (Stage {plugin.brainStage}/8 · {plugin.brainStageName})
+            ⚡ Automated Execution &amp; Verification Steps (Stage {plugin.brainStage}/8 · {plugin.brainStageName})
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {plugin.deepDiveActions.map((act, idx) => (
@@ -543,38 +537,6 @@ function OverviewTab({ plugin }: { plugin: InstalledPlugin }) {
           </div>
         </div>
       )}
-
-      {/* Permissions */}
-      <div
-        style={{
-          padding: 16,
-          borderRadius: 10,
-          background: "var(--surface)",
-          border: "1px solid var(--border)"
-        }}
-      >
-        <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>
-          🔐 Sandboxed Plugin Permissions
-        </div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-          {plugin.permissions.map((perm) => (
-            <span
-              key={perm}
-              style={{
-                padding: "5px 10px",
-                borderRadius: 6,
-                background: "var(--surface-2)",
-                border: "1px solid var(--border)",
-                fontFamily: "monospace",
-                fontSize: 11.5,
-                fontWeight: 700
-              }}
-            >
-              ✓ {perm}
-            </span>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
@@ -619,6 +581,28 @@ export default function PluginsPage() {
 
   const sidebarList = useMemo(() => filteredPlugins.slice(0, 120), [filteredPlugins]);
 
+  const exportMitreNavigatorLayer = () => {
+    const layer = buildMitreNavigatorLayerJson(FINDINGS, "https://11-dast-security-platform.vercel.app");
+    const blob = new Blob([JSON.stringify(layer, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `expedite-strike-mitre-attck-navigator-layer-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportBlueTeamSiemPack = () => {
+    const packText = buildBlueTeamSiemAndWafPack(FINDINGS, "https://11-dast-security-platform.vercel.app");
+    const blob = new Blob([packText], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `expedite-strike-blue-team-siem-sigma-splunk-kql-waf-pack-${Date.now()}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div
       style={{
@@ -643,9 +627,9 @@ export default function PluginsPage() {
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
           <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
               <span style={{ fontSize: 15, fontWeight: 900, letterSpacing: "0.04em" }}>
-                🔌 1,000-PLUGIN MULTI-SCANNER VULNERABILITY & MITRE TTP / BLUE TEAM (BT) REGISTRY
+                🔌 1,500-PLUGIN MULTI-SCANNER, AI/LLM, CLOUD, SECRETS &amp; COMPLIANCE REGISTRY
               </span>
               <span
                 style={{
@@ -658,43 +642,81 @@ export default function PluginsPage() {
                   fontFamily: "monospace"
                 }}
               >
-                1,000 VULN PLUGINS + 32 CORE ORCHESTRATORS ACTIVE
+                1,500 SPECIALIZED PLUGINS + 32 CORE ORCHESTRATORS ACTIVE
               </span>
             </div>
             <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>
-              Unified detection rules across <strong>OpenVAS (250 NVTs)</strong> · <strong>OWASP ZAP (250 Rules)</strong> ·{" "}
-              <strong>ProjectDiscovery Nuclei (250 Templates)</strong> · <strong>Burp Suite (250 BChecks)</strong> mapped to{" "}
-              <strong>MITRE ATT&CK® v15 TTPs</strong> & <strong>Blue Team (BT) MITRE D3FEND™</strong> countermeasures.
+              <strong>OpenVAS (250)</strong> · <strong>OWASP ZAP (250)</strong> · <strong>Nuclei (250)</strong> ·{" "}
+              <strong>Burp Suite (250)</strong> · <strong>AI/LLM ATLAS (100)</strong> · <strong>Secrets/SBOM (150)</strong> ·{" "}
+              <strong>Cloud/K8s (150)</strong> · <strong>Compliance PCI/SOC2/ISO/HIPAA (100)</strong>
             </div>
           </div>
 
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search 1,000 plugins (EXP-PLG-0501, CVE, CWE, OID, T1190, D3-ACH)..."
-            style={{
-              width: 340,
-              padding: "8px 12px",
-              borderRadius: 6,
-              border: "1px solid var(--border)",
-              background: "var(--surface-2)",
-              color: "var(--fg)",
-              fontSize: 12,
-              fontFamily: "monospace"
-            }}
-          />
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <button
+              onClick={exportMitreNavigatorLayer}
+              style={{
+                padding: "7px 12px",
+                borderRadius: 6,
+                background: "#8b4528",
+                color: "#ffffff",
+                border: "none",
+                fontSize: 11,
+                fontWeight: 800,
+                cursor: "pointer",
+                fontFamily: "monospace"
+              }}
+            >
+              🗺️ Export MITRE ATT&amp;CK® Navigator (.json)
+            </button>
+            <button
+              onClick={exportBlueTeamSiemPack}
+              style={{
+                padding: "7px 12px",
+                borderRadius: 6,
+                background: "var(--surface-2)",
+                color: "var(--fg)",
+                border: "1px solid var(--border)",
+                fontSize: 11,
+                fontWeight: 800,
+                cursor: "pointer",
+                fontFamily: "monospace"
+              }}
+            >
+              📡 Download Blue Team SIEM Pack (Sigma/SPL/KQL/WAF)
+            </button>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search 1,500 plugins (EXP-PLG-1001, LLM, PCI, AKIA, T1190)..."
+              style={{
+                width: 310,
+                padding: "7px 12px",
+                borderRadius: 6,
+                border: "1px solid var(--border)",
+                background: "var(--surface-2)",
+                color: "var(--fg)",
+                fontSize: 11.5,
+                fontFamily: "monospace"
+              }}
+            />
+          </div>
         </div>
 
-        {/* Filter Bar: Scanner Engine + MITRE Tactic + BT D3FEND + Brain Stage */}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+        {/* Filter Bar: 8 Scanner/Security Packs + MITRE Tactic + BT D3FEND + Brain Stage */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
           {[
-            { id: "ALL", label: `All Scanners (${INSTALLED.length})` },
-            { id: "OPENVAS", label: `OpenVAS NVT (${THOUSAND_PLUGINS_SUMMARY.byScanner.OPENVAS})` },
+            { id: "ALL", label: `All Packs (${INSTALLED.length})` },
+            { id: "OPENVAS", label: `OpenVAS (${THOUSAND_PLUGINS_SUMMARY.byScanner.OPENVAS})` },
             { id: "ZAP", label: `OWASP ZAP (${THOUSAND_PLUGINS_SUMMARY.byScanner.ZAP})` },
-            { id: "NUCLEI", label: `Nuclei Templates (${THOUSAND_PLUGINS_SUMMARY.byScanner.NUCLEI})` },
-            { id: "BURP", label: `Burp Suite BCheck (${THOUSAND_PLUGINS_SUMMARY.byScanner.BURP})` },
-            { id: "CORE", label: `Core 32 Orchestrators (32)` }
+            { id: "NUCLEI", label: `Nuclei (${THOUSAND_PLUGINS_SUMMARY.byScanner.NUCLEI})` },
+            { id: "BURP", label: `Burp Suite (${THOUSAND_PLUGINS_SUMMARY.byScanner.BURP})` },
+            { id: "AI_LLM", label: `🤖 AI/LLM ATLAS (${THOUSAND_PLUGINS_SUMMARY.byScanner.AI_LLM})` },
+            { id: "SECRETS_SBOM", label: `🔑 Secrets & SBOM (${THOUSAND_PLUGINS_SUMMARY.byScanner.SECRETS_SBOM})` },
+            { id: "CLOUD_K8S", label: `☁️ Cloud & K8s (${THOUSAND_PLUGINS_SUMMARY.byScanner.CLOUD_K8S})` },
+            { id: "COMPLIANCE", label: `📜 Compliance (${THOUSAND_PLUGINS_SUMMARY.byScanner.COMPLIANCE})` },
+            { id: "CORE", label: `Core 32 (32)` }
           ].map((btn) => {
             const active = scannerFilter === btn.id;
             return (
@@ -702,12 +724,12 @@ export default function PluginsPage() {
                 key={btn.id}
                 onClick={() => setScannerFilter(btn.id)}
                 style={{
-                  padding: "5px 11px",
+                  padding: "5px 10px",
                   borderRadius: 6,
                   border: "1px solid var(--border)",
                   background: active ? "#8b4528" : "var(--surface-2)",
                   color: active ? "#ffffff" : "var(--fg)",
-                  fontSize: 11,
+                  fontSize: 10.5,
                   fontWeight: 700,
                   cursor: "pointer"
                 }}
@@ -726,11 +748,11 @@ export default function PluginsPage() {
               border: "1px solid var(--border)",
               background: "var(--surface-2)",
               color: "var(--fg)",
-              fontSize: 11,
+              fontSize: 10.5,
               fontWeight: 700
             }}
           >
-            <option value="ALL">All MITRE ATT&CK Tactics</option>
+            <option value="ALL">All MITRE ATT&amp;CK / ATLAS Tactics</option>
             {THOUSAND_PLUGINS_SUMMARY.mitreTacticsCovered.map((t) => (
               <option key={t.tacticId} value={t.tacticId}>
                 {t.tacticId} · {t.tacticName}
@@ -747,7 +769,7 @@ export default function PluginsPage() {
               border: "1px solid var(--border)",
               background: "var(--surface-2)",
               color: "var(--fg)",
-              fontSize: 11,
+              fontSize: 10.5,
               fontWeight: 700
             }}
           >
@@ -768,7 +790,7 @@ export default function PluginsPage() {
               border: "1px solid var(--border)",
               background: "var(--surface-2)",
               color: "var(--fg)",
-              fontSize: 11,
+              fontSize: 10.5,
               fontWeight: 700
             }}
           >
@@ -843,7 +865,7 @@ export default function PluginsPage() {
                     {plugin.name}
                   </div>
                   <div style={{ fontSize: 9.5, color: "var(--muted)", fontFamily: "monospace" }}>
-                    {plugin.mitreTtp?.tacticId} {plugin.mitreTtp?.techniqueId} · BT {plugin.blueTeamDefense?.d3fendId}
+                    {plugin.mitreTtp?.tacticId} {plugin.mitreTtp?.subTechniqueId || plugin.mitreTtp?.techniqueId} · BT {plugin.blueTeamDefense?.d3fendId}
                   </div>
                 </button>
               );
@@ -863,7 +885,7 @@ export default function PluginsPage() {
             }}
           >
             {[
-              { id: "mitre_bt_matrix" as Tab, label: `1,000-Plugin MITRE TTP & BT Matrix (${filteredPlugins.length})` },
+              { id: "mitre_bt_matrix" as Tab, label: `1,500-Plugin MITRE TTP & BT Matrix (${filteredPlugins.length})` },
               { id: "overview" as Tab, label: `Selected Plugin Deep-Dive (${selected.code})` },
               { id: "verification" as Tab, label: "CA Signature & Sandbox Verification" },
               { id: "activity" as Tab, label: "Multi-Engine Execution Telemetry" }

@@ -131,7 +131,7 @@ const SECTIONS = [
       { href: "/risk-engine",     icon: TrendingUp,       label: "Risk Engine",       hot: true },
       { href: "/workflow",        icon: Workflow,         label: "Workflow Engine",   hot: true },
       { href: "/marketplace",     icon: Store,            label: "Marketplace",       badge: "HUB", hot: true },
-      { href: "/plugins",         icon: Package,          label: "Plugin Manager",    badge: "5" },
+      { href: "/plugins",         icon: Package,          label: "1,500 Plugins & MITRE", badge: "1532", hot: true },
       { href: "/rbac",            icon: Lock,             label: "Access Control",    hot: true },
       { href: "/audit",           icon: ClipboardList,    label: "Audit Log",         badge: "SOC2",hot: true },
     ],

@@ -14,9 +14,9 @@ export const CenterBeacon: React.FC<CenterBeaconProps> = ({ onStartTour, isOverv
       style={{
         position: "absolute",
         left: 0,
-        top: -80,
+        top: 0,
         transform: "translate(-50%, -50%)",
-        width: 680,
+        width: 720,
       }}
       className={`text-center pointer-events-auto transition-all duration-700 ${
         isOverview ? "opacity-100 scale-100" : "opacity-25 scale-90"

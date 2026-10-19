@@ -76,10 +76,9 @@ export const ZoomCanvas: React.FC<ZoomCanvasProps> = ({
 
   // Wheel Zoom support
   const handleWheel = (e: React.WheelEvent) => {
-    // Prevent default zoom page behavior
     e.preventDefault();
     const zoomFactor = e.deltaY < 0 ? 1.12 : 0.89;
-    const newZoom = Math.min(Math.max(camera.zoom * zoomFactor, 0.22), 2.8);
+    const newZoom = Math.min(Math.max(camera.zoom * zoomFactor, 0.15), 2.8);
 
     onUpdateCamera({
       ...camera,
@@ -113,20 +112,20 @@ export const ZoomCanvas: React.FC<ZoomCanvasProps> = ({
 
       {/* Ambient Nebula Blobs */}
       <div
-        className="absolute w-[900px] h-[900px] rounded-full blur-[140px] pointer-events-none opacity-20"
+        className="absolute w-[1100px] h-[1100px] rounded-full blur-[160px] pointer-events-none opacity-20"
         style={{
           background: "radial-gradient(circle, #3b82f6 0%, transparent 70%)",
-          left: "25%",
-          top: "15%",
+          left: "20%",
+          top: "10%",
           transform: `translate3d(${-camera.x * 0.05}px, ${-camera.y * 0.05}px, 0)`,
         }}
       />
       <div
-        className="absolute w-[800px] h-[800px] rounded-full blur-[140px] pointer-events-none opacity-15"
+        className="absolute w-[1000px] h-[1000px] rounded-full blur-[160px] pointer-events-none opacity-15"
         style={{
           background: "radial-gradient(circle, #06b6d4 0%, transparent 70%)",
-          right: "20%",
-          bottom: "15%",
+          right: "15%",
+          bottom: "10%",
           transform: `translate3d(${-camera.x * 0.05}px, ${-camera.y * 0.05}px, 0)`,
         }}
       />
@@ -152,30 +151,37 @@ export const ZoomCanvas: React.FC<ZoomCanvasProps> = ({
         {/* Center Nexus / Master Beacon */}
         <CenterBeacon onStartTour={onNextSlide} isOverview={isOverview} />
 
-        {/* Cluster Constellation Bubbles */}
+        {/* Cluster Constellation Planets with Interactive Capsules */}
         {clusters.map((cluster) => (
           <ClusterNode
             key={cluster.id}
             cluster={cluster}
             isActive={activeClusterId === cluster.id}
             onSelectCluster={onSelectCluster}
+            onSelectSlide={onSelectSlide}
           />
         ))}
 
-        {/* Individual Slide Cards */}
-        {clusters.flatMap((cluster) =>
-          cluster.slides.map((slide) => (
-            <SlideCard
-              key={slide.id}
-              slide={slide}
-              isActive={activeSlideId === slide.id}
-              onFocus={() => onSelectSlide(slide)}
-              onNext={onNextSlide}
-              onOverview={onOverview}
-              accentColor={cluster.accentColor}
-            />
-          ))
-        )}
+        {/* Individual Slide Cards - Rendered only when zoomed into a topic */}
+        {!isOverview &&
+          clusters.flatMap((cluster) =>
+            cluster.slides.map((slide) => {
+              const isActive = activeSlideId === slide.id;
+              const isSibling = activeClusterId === cluster.id;
+              return (
+                <SlideCard
+                  key={slide.id}
+                  slide={slide}
+                  isActive={isActive}
+                  isVisible={isActive || isSibling}
+                  onFocus={() => onSelectSlide(slide)}
+                  onNext={onNextSlide}
+                  onOverview={onOverview}
+                  accentColor={cluster.accentColor}
+                />
+              );
+            })
+          )}
       </div>
     </div>
   );

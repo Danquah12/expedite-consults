@@ -1,568 +1,457 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import { 
-  GitBranch, Sparkles, Cpu, Layers, Box, ShieldAlert, Bot, ArrowRight, 
-  CheckCircle2, AlertTriangle, Zap, Code2, Lock, Flame, RefreshCw, FileText,
-  Play, Pause, ChevronLeft, ChevronRight, ShieldCheck, Terminal, Compass
+import {
+  GitBranch,
+  Shield,
+  Layers,
+  Network,
+  Target,
+  FileCode2,
+  ClipboardList,
+  Compass,
+  ArrowRight,
+  CheckCircle2,
+  Search,
+  RefreshCw,
 } from "lucide-react";
 
-export default function Home() {
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
+const studios = [
+  {
+    href: "/threat-model",
+    kicker: "STRIDE COMPLIANCE MATRIX",
+    badge: "10 Controls",
+    title: "Interactive STRIDE Checklist & Compliance Desk",
+    desc: "Audit Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, and Elevation of Privilege controls mapped directly to SOC 2, ISO 27001, NIST CSF, and PCI-DSS.",
+    icon: ClipboardList,
+    metrics: ["SOC 2 & ISO 27001", "Live Control Toggle", "Audit Export"],
+    category: "stride",
+  },
+  {
+    href: "/attack-chain",
+    kicker: "GRAPH BLAST RADIUS",
+    badge: "4 Pivot Nodes",
+    title: "Cross-Platform Attack Chain & RAG Correlator",
+    desc: "Interactive multi-hop architecture graph connecting Client Portal, API Gateway, Auth Service, and PostgreSQL Crown Jewels with cross-platform SAST/API/Container telemetry.",
+    icon: Network,
+    metrics: ["4 Architecture Nodes", "Cross-Platform RAG", "Kill-Chain Replay"],
+    category: "trees",
+  },
+  {
+    href: "/stride-analyzer",
+    kicker: "TAXONOMY ENGINE",
+    badge: "42 Threats",
+    title: "STRIDE Risk Identification & Taxonomy Studio",
+    desc: "Automated decomposition of microservices, trust boundaries, and data stores into categorized STRIDE threat vectors with severity scoring and mitigation SLAs.",
+    icon: Shield,
+    metrics: ["6 STRIDE Vectors", "Trust Boundaries", "Risk Scoring"],
+    category: "stride",
+  },
+  {
+    href: "/dfd-studio",
+    kicker: "ARCHITECTURE CANVAS",
+    badge: "DFD v4.2",
+    title: "Interactive Data Flow Diagram (DFD) Studio",
+    desc: "Inspect external entities, processes, data stores, and trust boundaries. Automatically flags unencrypted cross-boundary flows and missing mTLS sidecar policies.",
+    icon: Layers,
+    metrics: ["mTLS Verification", "Boundary Audit", "Data Store Tagging"],
+    category: "dfd",
+  },
+  {
+    href: "/attack-trees",
+    kicker: "ADVERSARY SIMULATION",
+    badge: "3 Paths",
+    title: "Attack Tree Decision Simulator & Choke-Points",
+    desc: "Calculates minimum-cost adversary paths from initial phishing or public endpoint exploitation to crown-jewel database exfiltration, highlighting high-leverage choke-points.",
+    icon: Target,
+    metrics: ["Attacker Cost Model", "Choke-Point Finder", "Path Pruning"],
+    category: "trees",
+  },
+  {
+    href: "/mitre-capec-bridge",
+    kicker: "THREAT INTEL MAPPING",
+    badge: "14 Actors",
+    title: "MITRE ATT&CK & CAPEC Adversary Pattern Bridge",
+    desc: "Aligns architectural weaknesses with MITRE CAPEC attack patterns (CAPEC-66, CAPEC-122) and ATT&CK techniques (T1190, T1078) with exportable SIEM detection rules.",
+    icon: Compass,
+    metrics: ["CAPEC-66 / T1190", "14 Threat Actors", "SIEM Sigma Rules"],
+    category: "mitre",
+  },
+];
 
-  const slides = [
-    {
-      id: "risk-posture",
-      badge: "THREAT MODEL POSTURE",
-      title: "Expedite Core Threat Modeling Posture",
-      content: (
-        <div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#ef4444" }} />
-              <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#f59e0b" }} />
-              <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#10b981" }} />
-              <span style={{ fontSize: 11, fontWeight: 800, color: "#cbd5e1", marginLeft: 6, letterSpacing: "0.05em" }}>
-                THREAT POSTURE &middot; STRIDE MATRIX
-              </span>
-            </div>
-            <span style={{ fontSize: 10, fontWeight: 800, color: "#10b981", display: "flex", alignItems: "center", gap: 4 }}>
-              <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#10b981", display: "inline-block" }} />
-              DFD SYNC
-            </span>
-          </div>
+const strideCatalog = [
+  { id: "STRIDE-S", name: "Spoofing Identity (OAuth 2.0 / SAML / mTLS Pinning)", ref: "CAPEC-151 · SOC 2 CC6.1", status: "Verified Control" },
+  { id: "STRIDE-T", name: "Tampering with Data (Prepared Statements & KMS AES-GCM)", ref: "CAPEC-66 · PCI-DSS 6.4", status: "1 Drift Alert" },
+  { id: "STRIDE-R", name: "Repudiation (Immutable WORM CloudTrail & Signed Audit Ledger)", ref: "CAPEC-93 · SOC 2 CC7.2", status: "1 Drift Alert" },
+  { id: "STRIDE-I", name: "Information Disclosure (HashiCorp Vault & Strict CORS / IMDSv2)", ref: "CAPEC-116 · NIST PR.DS-5", status: "1 Drift Alert" },
+  { id: "STRIDE-D", name: "Denial of Service (Gateway Token-Bucket & Socket Quotas)", ref: "CAPEC-125 · ISO A.12.1.3", status: "Active Guardrail" },
+  { id: "STRIDE-E", name: "Elevation of Privilege (RBAC Tenancy & K8s ClusterRole Audit)", ref: "CAPEC-122 · SOC 2 CC6.3", status: "Verified Control" },
+];
 
-          <div style={{
-            background: "rgba(21, 13, 56, 0.9)",
-            border: "1px solid rgba(139, 92, 246, 0.3)",
-            borderRadius: 8,
-            padding: "6px 12px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: 16
-          }}>
-            <div style={{
-              background: "linear-gradient(135deg, #8b5cf6, #ec4899)",
-              color: "#ffffff",
-              padding: "2px 8px",
-              borderRadius: 4,
-              fontSize: 10,
-              fontWeight: 900
-            }}>
-              TACKLE TODAY &rarr;
-            </div>
-            <div style={{ display: "flex", gap: 10, fontSize: 10.5, fontWeight: 800 }}>
-              <span style={{ color: "#f43f5e" }}>5 Spoofing Threats</span>
-              <span style={{ color: "#ff6b00" }}>8 Tampering Flows</span>
-              <span style={{ color: "#94a3b8" }}>12 Elevation of Privilege</span>
-            </div>
-          </div>
+export default function HomePage() {
+  const [deskQuery, setDeskQuery] = useState("");
+  const [selectedFilter, setSelectedFilter] = useState<string>("all");
 
-          <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 12 }}>
-            <div style={{ background: "rgba(7, 4, 20, 0.6)", padding: 10, borderRadius: 10, border: "1px solid rgba(139, 92, 246, 0.15)" }}>
-              <div style={{ fontSize: 9.5, fontWeight: 800, color: "var(--muted)", textTransform: "uppercase", marginBottom: 8 }}>
-                Threats by STRIDE Category
-              </div>
-              <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", height: 85, padding: "0 6px" }}>
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 9, fontWeight: 800, color: "#f43f5e" }}>5</div>
-                  <div style={{ width: 12, height: 45, background: "#f43f5e", borderRadius: "3px 3px 0 0" }} />
-                  <div style={{ fontSize: 7.5, color: "var(--muted)", marginTop: 2 }}>S</div>
-                </div>
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 9, fontWeight: 800, color: "#ff6b00" }}>8</div>
-                  <div style={{ width: 12, height: 60, background: "#ff6b00", borderRadius: "3px 3px 0 0" }} />
-                  <div style={{ fontSize: 7.5, color: "var(--muted)", marginTop: 2 }}>T</div>
-                </div>
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 9, fontWeight: 800, color: "#f59e0b" }}>4</div>
-                  <div style={{ width: 12, height: 35, background: "#f59e0b", borderRadius: "3px 3px 0 0" }} />
-                  <div style={{ fontSize: 7.5, color: "var(--muted)", marginTop: 2 }}>R</div>
-                </div>
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 9, fontWeight: 800, color: "#00f0ff" }}>7</div>
-                  <div style={{ width: 12, height: 50, background: "#00f0ff", borderRadius: "3px 3px 0 0" }} />
-                  <div style={{ fontSize: 7.5, color: "var(--muted)", marginTop: 2 }}>I</div>
-                </div>
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 9, fontWeight: 800, color: "#8b5cf6" }}>6</div>
-                  <div style={{ width: 12, height: 42, background: "#8b5cf6", borderRadius: "3px 3px 0 0" }} />
-                  <div style={{ fontSize: 7.5, color: "var(--muted)", marginTop: 2 }}>D</div>
-                </div>
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 9, fontWeight: 800, color: "#ec4899" }}>12</div>
-                  <div style={{ width: 12, height: 75, background: "#ec4899", borderRadius: "3px 3px 0 0" }} />
-                  <div style={{ fontSize: 7.5, color: "var(--muted)", marginTop: 2 }}>E</div>
-                </div>
-              </div>
-            </div>
-
-            <div style={{ background: "rgba(7, 4, 20, 0.6)", padding: 10, borderRadius: 10, border: "1px solid rgba(139, 92, 246, 0.15)", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-              <div style={{ fontSize: 9.5, fontWeight: 800, color: "var(--muted)", textTransform: "uppercase" }}>Mitigation Coverage</div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <div style={{
-                  width: 75,
-                  height: 75,
-                  borderRadius: "50%",
-                  border: "6px solid #00f0ff",
-                  borderTopColor: "#f43f5e",
-                  borderRightColor: "#10b981",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center"
-                }}>
-                  <div style={{ fontSize: 13, fontWeight: 900, color: "#ffffff" }}>91%</div>
-                  <div style={{ fontSize: 7.5, color: "var(--muted)" }}>MITIGATED</div>
-                </div>
-              </div>
-              <div style={{ fontSize: 9, display: "flex", flexDirection: "column", gap: 2 }}>
-                <div style={{ color: "#cbd5e1" }}>&bull; Controls Verified: <span style={{ color: "#10b981" }}>42 Controls</span></div>
-                <div style={{ color: "#cbd5e1" }}>&bull; Unmitigated Sinks: <span style={{ color: "#f43f5e" }}>3 Left</span></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )
-    },
-    {
-      id: "dfd-canvas",
-      badge: "DFD CANVAS",
-      title: "Interactive Data Flow Diagram Canvas",
-      content: (
-        <div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <div style={{ fontSize: 12, fontWeight: 800, color: "#00f0ff" }}>Trust Boundary: Public Web &rarr; Internal VPC</div>
-            <span style={{ fontSize: 10, color: "#f43f5e", fontWeight: 800 }}>UNENCRYPTED FLOW</span>
-          </div>
-
-          <div style={{ background: "rgba(7, 4, 20, 0.7)", padding: 12, borderRadius: 8, border: "1px solid rgba(0, 240, 255, 0.3)" }}>
-            <div style={{ fontSize: 10.5, fontWeight: 800, color: "#ffffff" }}>
-              Data Store 'Customer_PII_DB' accessed without mTLS mutual authentication across trust boundary.
-            </div>
-            <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 4 }}>
-              Automatic compensating control generated: Envoy mTLS Sidecar Proxy.
-            </div>
-          </div>
-        </div>
-      )
-    },
-    {
-      id: "attack-trees",
-      badge: "ATTACK TREES",
-      title: "Automated Multi-Stage Attack Tree Simulator",
-      content: (
-        <div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-            <div style={{ fontSize: 12, fontWeight: 800, color: "#ff6b00" }}>Goal: Exfiltrate Credit Card Token DB</div>
-            <span style={{ fontSize: 10, fontWeight: 800, color: "#f43f5e" }}>ATTACK PATH FOUND</span>
-          </div>
-
-          <pre style={{
-            background: "#070414",
-            border: "1px solid rgba(255, 107, 0, 0.3)",
-            borderRadius: 8,
-            padding: 10,
-            fontSize: 10.5,
-            fontFamily: "monospace",
-            color: "#f8fafc",
-            lineHeight: 1.4,
-            marginBottom: 8
-          }}>
-{`PATH 1: Phishing -> Steal AWS Key -> AssumeRole -> Dump S3 Bucket
-Estimated Attacker Cost: $200 | Time: 45 min
-Recommended Choke-Point: Enforce MFA Condition on S3 KMS Key`}
-          </pre>
-        </div>
-      )
-    },
-    {
-      id: "mitre-capec",
-      badge: "MITRE & CAPEC",
-      title: "MITRE ATT&CK & CAPEC Adversary Pattern Matrix",
-      content: (
-        <div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-            <div style={{ fontSize: 12, fontWeight: 800, color: "#c4b5fd" }}>CAPEC-66: SQL Injection &middot; T1190 Exploit Public App</div>
-            <span style={{ fontSize: 10, color: "#10b981", fontWeight: 800 }}>MAPPED</span>
-          </div>
-
-          <div style={{ background: "rgba(7, 4, 20, 0.7)", padding: 12, borderRadius: 8, border: "1px solid rgba(139, 92, 246, 0.3)" }}>
-            <div style={{ fontSize: 10.5, fontWeight: 800, color: "#ffffff" }}>
-              Adversary pattern matched against 14 known nation-state threat actors targeting financial services.
-            </div>
-            <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 4 }}>
-              Automated SIEM detection rules and WAF signatures exported.
-            </div>
-          </div>
-        </div>
-      )
-    },
-    {
-      id: "countermeasure-planner",
-      badge: "COUNTERMEASURES",
-      title: "Automated Guardrail & Control Recommendations",
-      content: (
-        <div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-            <div style={{ fontSize: 12, fontWeight: 800, color: "#10b981" }}>NIST SP 800-53 &middot; ISO 27001 &middot; CIS Controls</div>
-            <span style={{ fontSize: 10, color: "#00f0ff", fontWeight: 800 }}>42 ENFORCED</span>
-          </div>
-
-          <pre style={{
-            background: "#070414",
-            border: "1px solid rgba(16, 185, 129, 0.3)",
-            borderRadius: 8,
-            padding: 10,
-            fontSize: 10.5,
-            fontFamily: "monospace",
-            color: "#10b981",
-            lineHeight: 1.4
-          }}>
-{`Generated Policy:
-- OPA Rego: Deny S3 Public Read/Write
-- Terraform: Enforce KMS Customer Managed Keys
-- Spring Security: Enable OAuth2 Resource Server Token Filter`}
-          </pre>
-        </div>
-      )
-    }
-  ];
-
-  // Auto-advance carousel every 5 seconds unless paused
-  useEffect(() => {
-    if (isPaused) return;
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [isPaused, slides.length]);
+  const filteredStudios = studios.filter((s) => {
+    const matchFilter = selectedFilter === "all" || s.category === selectedFilter;
+    const matchQuery =
+      !deskQuery ||
+      s.title.toLowerCase().includes(deskQuery.toLowerCase()) ||
+      s.desc.toLowerCase().includes(deskQuery.toLowerCase()) ||
+      s.kicker.toLowerCase().includes(deskQuery.toLowerCase());
+    return matchFilter && matchQuery;
+  });
 
   return (
-    <div style={{ minHeight: "100vh", paddingBottom: 80 }}>
-      {/* Hero Section with Dynamic Feature Carousel */}
-      <section style={{ position: "relative", overflow: "hidden", padding: "60px 20px 60px 20px" }}>
-        <div style={{ maxWidth: 1360, margin: "0 auto", display: "grid", gridTemplateColumns: "1.1fr 0.9fr", gap: 36, alignItems: "center" }}>
-          
-          {/* Left Column: Headlines & CTAs */}
-          <div>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "4px 14px", borderRadius: 50, background: "rgba(0, 240, 255, 0.15)", border: "1px solid rgba(0, 240, 255, 0.4)", marginBottom: 18 }}>
-              <Sparkles size={13} color="#00f0ff" />
-              <span style={{ fontSize: 11.5, fontWeight: 800, color: "#00f0ff", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-                THE AGENTIC THREAT MODELING PLATFORM
-              </span>
-            </div>
+    <div className="max-w-[1360px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
+      {/* XTRIKE Desk Note Editorial Masthead Section */}
+      <section className="space-y-6">
+        <div className="space-y-2 max-w-3xl">
+          <div className="desk-kicker">XTRIKE SECURITY DESK &middot; PLATFORM 15</div>
+          <h1
+            className="text-4xl sm:text-5xl font-bold tracking-tight font-editorial"
+            style={{ color: "var(--foreground)" }}
+          >
+            XTRIKE Desk Note
+          </h1>
+          <p className="text-sm sm:text-base leading-relaxed" style={{ color: "var(--muted)" }}>
+            Live Data Flow Diagrams and STRIDE architecture invariants stay current. The six threat modeling studios below form the deterministic design verification desk. A STRIDE score measures boundary controls—it is an architectural proof, not a speculative checklist.
+          </p>
+        </div>
 
-            <h1 style={{ fontSize: "clamp(34px, 4.2vw, 56px)", fontWeight: 900, lineHeight: 1.08, letterSpacing: "-0.03em", marginBottom: 18, color: "#ffffff" }}>
-              Architects Design. <br />
-              <span style={{
-                background: "linear-gradient(135deg, #00f0ff 0%, #8b5cf6 50%, #10b981 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent"
-              }}>
-                AXIOM Threat Models Flaws.
-              </span>
-            </h1>
-
-            <p style={{ fontSize: 16, color: "#94a3b8", lineHeight: 1.6, marginBottom: 28, maxWidth: 580 }}>
-              The Agentic Threat Modeling Platform combining automated STRIDE risk identification, interactive DFD generation, Attack Tree simulations, and MITRE ATT&CK / CAPEC alignment.
-            </p>
-
-            <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-              <Link
-                href="/stride-analyzer"
-                style={{
-                  background: "linear-gradient(135deg, #00f0ff 0%, #8b5cf6 100%)",
-                  color: "#070414",
-                  padding: "13px 26px",
-                  borderRadius: 10,
-                  fontSize: 14,
-                  fontWeight: 900,
-                  textDecoration: "none",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  boxShadow: "0 0 25px rgba(0, 240, 255, 0.4)"
-                }}
-              >
-                <span>Launch STRIDE Studio</span>
-                <ArrowRight size={15} />
-              </Link>
-
-              <Link
-                href="/dfd-studio"
-                style={{
-                  background: "rgba(14, 8, 38, 0.8)",
-                  color: "#00f0ff",
-                  border: "1px solid rgba(0, 240, 255, 0.4)",
-                  padding: "13px 24px",
-                  borderRadius: 10,
-                  fontSize: 14,
-                  fontWeight: 800,
-                  textDecoration: "none",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8
-                }}
-              >
-                <Compass size={16} />
-                <span>DFD Canvas</span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Right Column: Dynamic Auto-Advancing Feature Carousel */}
-          <div
-            onMouseEnter={() => setIsPaused(true)}
-            onMouseLeave={() => setIsPaused(false)}
+        {/* Action Strip (Matching "Turn off notifications" / "Run API Scan" in the reference design) */}
+        <div className="flex flex-wrap items-center gap-4">
+          <Link
+            href="/threat-model"
+            className="px-4 py-2.5 rounded-xl text-xs font-bold transition-colors"
             style={{
-              background: "rgba(14, 8, 38, 0.92)",
-              border: "1px solid rgba(139, 92, 246, 0.35)",
-              borderRadius: 20,
-              padding: 24,
-              boxShadow: "0 20px 50px rgba(0, 0, 0, 0.6), 0 0 35px rgba(139, 92, 246, 0.15)",
-              backdropFilter: "blur(20px)",
-              minHeight: 330,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between"
+              background: "var(--surface)",
+              color: "var(--foreground)",
+              border: "1px solid var(--border)",
+              boxShadow: "0 1px 2px rgba(31, 27, 24, 0.05)",
             }}
           >
-            {/* Top Slide Tab Bar */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <div style={{ display: "flex", gap: 6, overflowX: "auto" }}>
-                {slides.map((s, idx) => (
-                  <button
-                    key={s.id}
-                    onClick={() => setCurrentSlide(idx)}
-                    style={{
-                      background: currentSlide === idx ? "rgba(139, 92, 246, 0.3)" : "rgba(21, 13, 56, 0.5)",
-                      border: currentSlide === idx ? "1px solid #8b5cf6" : "1px solid rgba(139, 92, 246, 0.15)",
-                      color: currentSlide === idx ? "#00f0ff" : "#94a3b8",
-                      padding: "3px 8px",
-                      borderRadius: 4,
-                      fontSize: 10,
-                      fontWeight: 800,
-                      cursor: "pointer"
-                    }}
-                  >
-                    {s.badge}
-                  </button>
-                ))}
-              </div>
+            Launch STRIDE Checklist &amp; DFD Desk
+          </Link>
+          <p className="text-xs max-w-xl leading-relaxed" style={{ color: "var(--muted)" }}>
+            Each architectural data flow is evaluated against all six STRIDE categories. Open the STRIDE Checklist or inspect the multi-hop Attack Chain to bind compensating controls to `DFD v4.2`.
+          </p>
+        </div>
 
-              <button
-                onClick={() => setIsPaused(!isPaused)}
-                style={{ background: "transparent", border: "none", color: "#94a3b8", cursor: "pointer", display: "flex", alignItems: "center" }}
-                title={isPaused ? "Resume Auto-Slide" : "Pause Auto-Slide"}
-              >
-                {isPaused ? <Play size={12} /> : <Pause size={12} />}
-              </button>
+        {/* Search the desk */}
+        <div className="space-y-2 pt-2">
+          <label
+            className="block text-xs font-bold"
+            style={{ color: "var(--foreground)" }}
+          >
+            Search the desk
+          </label>
+          <div className="relative">
+            <Search
+              className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2"
+              style={{ color: "var(--subtle)" }}
+            />
+            <input
+              type="text"
+              value={deskQuery}
+              onChange={(e) => setDeskQuery(e.target.value)}
+              placeholder="STRIDE category, trust boundary, DFD node, CAPEC-66, MITRE T1190, or SOC 2 control..."
+              className="w-full pl-11 pr-4 py-3.5 rounded-xl text-sm outline-none"
+              style={{
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+                color: "var(--foreground)",
+                boxShadow: "0 1px 2px rgba(31, 27, 24, 0.03)",
+              }}
+            />
+          </div>
+          <div className="text-xs" style={{ color: "var(--muted)" }}>
+            Last model &middot; Architecture `DFD v4.2` (42 threats mapped, 91% mitigated). Open a studio, or inspect an attack tree choke-point.
+          </div>
+        </div>
+
+        {/* Filter Pill Strip + Breaking Ticker (Matching the Desk Note reference image) */}
+        <div
+          className="pt-4 border-t space-y-3"
+          style={{ borderColor: "var(--border)" }}
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            {[
+              { id: "all", label: "Front page", count: "6 hot" },
+              { id: "stride", label: "STRIDE Studios", count: "42" },
+              { id: "dfd", label: "DFD Canvas", count: "v4.2" },
+              { id: "trees", label: "Attack Trees & Chains", count: "4 Nodes" },
+              { id: "mitre", label: "MITRE & CAPEC", count: "14 Actors" },
+            ].map((pill) => {
+              const active = selectedFilter === pill.id;
+              return (
+                <button
+                  key={pill.id}
+                  onClick={() => setSelectedFilter(pill.id)}
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all"
+                  style={{
+                    background: active ? "var(--accent)" : "var(--surface)",
+                    color: active ? "#fbf8f3" : "var(--foreground)",
+                    border: active
+                      ? "1px solid #72361d"
+                      : "1px solid var(--border)",
+                    boxShadow: "0 1px 2px rgba(31, 27, 24, 0.04)",
+                  }}
+                >
+                  <span>{pill.label}</span>
+                  {pill.count && (
+                    <span
+                      className="px-2 py-0.5 rounded-full text-[11px] font-bold"
+                      style={{
+                        background: active ? "#fbf8f3" : "var(--accent-soft)",
+                        color: "var(--accent)",
+                      }}
+                    >
+                      {pill.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+
+            <Link
+              href="/countermeasure-planner"
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold"
+              style={{
+                background: "var(--surface)",
+                color: "var(--foreground)",
+                border: "1px solid var(--border)",
+              }}
+            >
+              <span>Policy Guardrails</span>
+            </Link>
+          </div>
+
+          {/* Breaking / Verified Threat Model Ticker Strip */}
+          <div
+            className="flex items-center rounded-lg overflow-hidden border text-xs"
+            style={{
+              background: "var(--surface)",
+              borderColor: "var(--border)",
+            }}
+          >
+            <span
+              className="px-3 py-2 font-bold uppercase tracking-wider shrink-0"
+              style={{
+                background: "var(--accent)",
+                color: "#fbf8f3",
+                fontSize: "0.68rem",
+              }}
+            >
+              BREAKING
+            </span>
+            <div
+              className="px-3.5 py-2 flex items-center gap-6 overflow-x-auto whitespace-nowrap"
+              style={{ color: "var(--muted)" }}
+            >
+              <span>
+                <strong style={{ color: "var(--foreground)" }}>STRIDE-T2 (Tampering)</strong> &middot; Unencrypted local config keys detected on `API Gateway &rarr; Postgres` flow
+              </span>
+              <span>
+                <strong style={{ color: "var(--foreground)" }}>STRIDE-I2 (Disclosure)</strong> &middot; Wildcard `Access-Control-Allow-Origin: *` flagged across Public VPC boundary
+              </span>
+              <span>
+                <strong style={{ color: "var(--foreground)" }}>CAPEC-66 (Choke-Point)</strong> &middot; Envoy mTLS + KMS MFA condition prunes 3 downstream attack paths
+              </span>
             </div>
+          </div>
+        </div>
+      </section>
 
-            {/* Slide Body */}
-            <div style={{ minHeight: 200 }}>
-              {slides[currentSlide].content}
+      {/* The Reading / Main Editorial Container Card */}
+      <section className="card-surface p-6 sm:p-8 space-y-8">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div className="space-y-2 max-w-3xl">
+            <div className="desk-kicker">THE READING &middot; STRIDE &amp; NIST SP 800-53 REV. 5</div>
+            <h2
+              className="text-2xl sm:text-3xl font-bold font-editorial"
+              style={{ color: "var(--foreground)" }}
+            >
+              The architecture first: STRIDE studios &amp; attack trees
+            </h2>
+            <p className="text-xs sm:text-sm leading-relaxed" style={{ color: "var(--muted)" }}>
+              Data Flow Diagram boundary checks, multi-hop exploit chain simulations, MITRE CAPEC adversary mappings, and OPA/Terraform policy guardrails. Each studio below opens a dedicated verification desk.
+            </p>
+            <div className="flex items-center gap-2 pt-1 text-xs" style={{ color: "var(--muted)" }}>
+              <span
+                className="w-2 h-2 rounded-full inline-block"
+                style={{ background: "var(--foreground)" }}
+              />
+              <strong style={{ color: "var(--foreground)" }}>Live</strong>
+              <span>42 STRIDE threats indexed &middot; 4 architecture nodes linked &middot; 91.0% mitigation coverage.</span>
             </div>
+          </div>
 
-            {/* Carousel Pagination Dots & Nav Controls */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 14, paddingTop: 10, borderTop: "1px solid rgba(139, 92, 246, 0.2)" }}>
-              <button
-                onClick={() => setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1))}
-                style={{ background: "transparent", border: "none", color: "#94a3b8", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, fontSize: 11 }}
+          <Link
+            href="/attack-chain"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold shrink-0"
+            style={{
+              background: "var(--surface)",
+              color: "var(--foreground)",
+              border: "1px solid var(--border)",
+              boxShadow: "0 1px 2px rgba(31, 27, 24, 0.04)",
+            }}
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Open Attack Chain Simulator</span>
+          </Link>
+        </div>
+
+        {/* 3-Column Editorial Workbench Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredStudios.map((s) => {
+            const Icon = s.icon;
+            return (
+              <Link
+                key={s.href}
+                href={s.href}
+                className="flex flex-col justify-between p-5 rounded-xl transition-all card-hover"
+                style={{
+                  background: "var(--background)",
+                  border: "1px solid var(--border)",
+                }}
               >
-                <ChevronLeft size={14} />
-                <span>Prev</span>
-              </button>
-
-              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                {slides.map((_, idx) => (
+                <div className="space-y-3">
                   <div
-                    key={idx}
-                    onClick={() => setCurrentSlide(idx)}
-                    style={{
-                      width: currentSlide === idx ? 20 : 6,
-                      height: 6,
-                      borderRadius: 3,
-                      background: currentSlide === idx ? "#00f0ff" : "rgba(139, 92, 246, 0.4)",
-                      cursor: "pointer",
-                      transition: "all 0.3s ease"
-                    }}
-                  />
-                ))}
-              </div>
+                    className="flex items-center justify-between gap-2 border-b pb-2.5"
+                    style={{ borderColor: "var(--border)" }}
+                  >
+                    <span className="desk-kicker">{s.kicker}</span>
+                    <span
+                      className="px-2 py-0.5 rounded-full text-[11px] font-bold"
+                      style={{
+                        background: "var(--accent-soft)",
+                        color: "var(--accent)",
+                      }}
+                    >
+                      {s.badge}
+                    </span>
+                  </div>
 
-              <button
-                onClick={() => setCurrentSlide((prev) => (prev + 1) % slides.length)}
-                style={{ background: "transparent", border: "none", color: "#94a3b8", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, fontSize: 11 }}
+                  <div className="flex items-center gap-2.5 pt-1">
+                    <div
+                      className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                      style={{
+                        background: "var(--surface)",
+                        border: "1px solid var(--border)",
+                        color: "var(--accent)",
+                      }}
+                    >
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    <h3
+                      className="text-lg font-bold leading-snug font-editorial"
+                      style={{ color: "var(--foreground)" }}
+                    >
+                      {s.title}
+                    </h3>
+                  </div>
+
+                  <p className="text-xs leading-relaxed" style={{ color: "var(--muted)" }}>
+                    {s.desc}
+                  </p>
+                </div>
+
+                <div
+                  className="pt-4 mt-4 border-t flex flex-wrap items-center justify-between gap-2"
+                  style={{ borderColor: "var(--border)" }}
+                >
+                  <div className="flex flex-wrap gap-1.5">
+                    {s.metrics.map((m) => (
+                      <span
+                        key={m}
+                        className="text-[11px] px-2 py-0.5 rounded font-medium"
+                        style={{
+                          background: "var(--surface)",
+                          color: "var(--muted)",
+                          border: "1px solid var(--border)",
+                        }}
+                      >
+                        {m}
+                      </span>
+                    ))}
+                  </div>
+                  <ArrowRight className="w-3.5 h-3.5" style={{ color: "var(--accent)" }} />
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* STRIDE & MITRE CAPEC Coverage Matrix */}
+      <section className="card-surface p-6 sm:p-8 space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div className="desk-kicker">REFERENCE CATALOG &middot; STRIDE &amp; MITRE CAPEC</div>
+            <h2 className="text-2xl font-bold mt-1 font-editorial" style={{ color: "var(--foreground)" }}>
+              STRIDE Threat Taxonomy &amp; Guardrail Coverage
+            </h2>
+            <p className="text-xs mt-1" style={{ color: "var(--muted)" }}>
+              Mapped to MITRE CAPEC, SOC 2 Trust Services Criteria, ISO 27001, and PCI-DSS 4.0 controls.
+            </p>
+          </div>
+          <Link
+            href="/threat-model"
+            className="text-xs font-bold inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl"
+            style={{
+              background: "var(--accent)",
+              color: "#fbf8f3",
+            }}
+          >
+            <FileCode2 className="w-3.5 h-3.5" />
+            <span>Open Interactive STRIDE Matrix</span>
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {strideCatalog.map((item) => (
+            <div
+              key={item.id}
+              className="p-3.5 rounded-xl flex items-center justify-between gap-3"
+              style={{
+                background: "var(--background)",
+                border: "1px solid var(--border)",
+              }}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <span
+                  className="text-xs font-mono font-bold px-2.5 py-1 rounded shrink-0"
+                  style={{
+                    background: "var(--accent-soft)",
+                    color: "var(--accent)",
+                  }}
+                >
+                  {item.id}
+                </span>
+                <div className="truncate">
+                  <div
+                    className="text-xs font-semibold truncate"
+                    style={{ color: "var(--foreground)" }}
+                  >
+                    {item.name}
+                  </div>
+                  <div className="text-[11px] font-mono" style={{ color: "var(--muted)" }}>
+                    {item.ref}
+                  </div>
+                </div>
+              </div>
+              <span
+                className={`${
+                  item.status.includes("Alert") ? "badge-high" : "badge-resolved"
+                } text-[11px] font-semibold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 shrink-0`}
               >
-                <span>Next</span>
-                <ChevronRight size={14} />
-              </button>
+                <CheckCircle2 className="w-3 h-3" />
+                {item.status}
+              </span>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* KPI Bar */}
-      <section style={{ maxWidth: 1360, margin: "0 auto 60px auto", padding: "0 20px" }}>
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-          gap: 16,
-          background: "rgba(14, 8, 38, 0.7)",
-          border: "1px solid rgba(139, 92, 246, 0.3)",
-          borderRadius: 16,
-          padding: "20px 24px",
-          backdropFilter: "blur(16px)"
-        }}>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase" }}>DFD Synthesis Speed</div>
-            <div style={{ fontSize: 26, fontWeight: 900, color: "#10b981", marginTop: 4 }}>Instant / AST</div>
-            <div style={{ fontSize: 11, color: "#64748b" }}>Codebase-to-architecture graph</div>
-          </div>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase" }}>Threats Categorized</div>
-            <div style={{ fontSize: 26, fontWeight: 900, color: "#00f0ff", marginTop: 4 }}>42 Flaws</div>
-            <div style={{ fontSize: 11, color: "#64748b" }}>Full STRIDE taxonomy</div>
-          </div>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase" }}>Attack Paths Modeled</div>
-            <div style={{ fontSize: 26, fontWeight: 900, color: "#ff6b00", marginTop: 4 }}>18 Attack Trees</div>
-            <div style={{ fontSize: 11, color: "#64748b" }}>Cost &amp; probability calculated</div>
-          </div>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase" }}>MITRE / CAPEC Links</div>
-            <div style={{ fontSize: 26, fontWeight: 900, color: "#8b5cf6", marginTop: 4 }}>100% Mapped</div>
-            <div style={{ fontSize: 11, color: "#64748b" }}>Automated countermeasure rules</div>
-          </div>
-        </div>
-      </section>
-
-      {/* 6 Flagship Studios Catalog */}
-      <section style={{ maxWidth: 1360, margin: "0 auto", padding: "0 20px" }}>
-        <div style={{ marginBottom: 24 }}>
-          <h2 style={{ fontSize: 24, fontWeight: 900, color: "#f8fafc" }}>Flagship Threat Modeling Studios</h2>
-          <p style={{ fontSize: 13.5, color: "#94a3b8" }}>Enterprise architecture security and attack simulation inspired by Expedite Core &amp; Black Duck Polaris.</p>
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 20 }}>
-          <Link href="/stride-analyzer" style={{ textDecoration: "none" }}>
-            <div style={{ background: "rgba(21, 13, 56, 0.6)", border: "1px solid rgba(244, 63, 94, 0.35)", borderRadius: 14, padding: 22, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-              <div>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-                  <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(244, 63, 94, 0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <ShieldAlert size={20} color="#f43f5e" />
-                  </div>
-                  <span style={{ fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 4, background: "rgba(244, 63, 94, 0.2)", color: "#f43f5e" }}>STRIDE</span>
-                </div>
-                <h3 style={{ fontSize: 17, fontWeight: 800, color: "#f8fafc", marginBottom: 8 }}>STRIDE Risk Engine</h3>
-                <p style={{ fontSize: 12.5, color: "#94a3b8", lineHeight: 1.5 }}>Automatically evaluate systems against Spoofing, Tampering, Repudiation, Information Disclosure, DoS, and Elevation of Privilege.</p>
-              </div>
-              <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "#00f0ff" }}>
-                <span>Launch STRIDE Engine</span>
-                <ArrowRight size={13} />
-              </div>
-            </div>
-          </Link>
-
-          <Link href="/dfd-studio" style={{ textDecoration: "none" }}>
-            <div style={{ background: "rgba(21, 13, 56, 0.6)", border: "1px solid rgba(0, 240, 255, 0.35)", borderRadius: 14, padding: 22, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-              <div>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-                  <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(0, 240, 255, 0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <Compass size={20} color="#00f0ff" />
-                  </div>
-                  <span style={{ fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 4, background: "rgba(0, 240, 255, 0.2)", color: "#00f0ff" }}>DFD CANVAS</span>
-                </div>
-                <h3 style={{ fontSize: 17, fontWeight: 800, color: "#f8fafc", marginBottom: 8 }}>Data Flow Diagram Canvas</h3>
-                <p style={{ fontSize: 12.5, color: "#94a3b8", lineHeight: 1.5 }}>Interactive node-and-wire canvas modeling Processes, Data Stores, External Interactors, and Trust Boundaries.</p>
-              </div>
-              <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "#00f0ff" }}>
-                <span>Open DFD Canvas</span>
-                <ArrowRight size={13} />
-              </div>
-            </div>
-          </Link>
-
-          <Link href="/attack-trees" style={{ textDecoration: "none" }}>
-            <div style={{ background: "rgba(21, 13, 56, 0.6)", border: "1px solid rgba(255, 107, 0, 0.35)", borderRadius: 14, padding: 22, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-              <div>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-                  <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(255, 107, 0, 0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <GitBranch size={20} color="#ff6b00" />
-                  </div>
-                  <span style={{ fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 4, background: "rgba(255, 107, 0, 0.2)", color: "#ff6b00" }}>ATTACK TREES</span>
-                </div>
-                <h3 style={{ fontSize: 17, fontWeight: 800, color: "#f8fafc", marginBottom: 8 }}>Attack Tree Simulator</h3>
-                <p style={{ fontSize: 12.5, color: "#94a3b8", lineHeight: 1.5 }}>Model AND/OR attacker decision trees, estimating adversary financial cost, required skill level, and choke points.</p>
-              </div>
-              <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "#00f0ff" }}>
-                <span>Simulate Attack Trees</span>
-                <ArrowRight size={13} />
-              </div>
-            </div>
-          </Link>
-
-          <Link href="/mitre-capec-bridge" style={{ textDecoration: "none" }}>
-            <div style={{ background: "rgba(21, 13, 56, 0.6)", border: "1px solid rgba(139, 92, 246, 0.35)", borderRadius: 14, padding: 22, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-              <div>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-                  <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(139, 92, 246, 0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <Layers size={20} color="#8b5cf6" />
-                  </div>
-                  <span style={{ fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 4, background: "rgba(139, 92, 246, 0.2)", color: "#c4b5fd" }}>MITRE ATT&amp;CK</span>
-                </div>
-                <h3 style={{ fontSize: 17, fontWeight: 800, color: "#f8fafc", marginBottom: 8 }}>MITRE ATT&amp;CK &amp; CAPEC Bridge</h3>
-                <p style={{ fontSize: 12.5, color: "#94a3b8", lineHeight: 1.5 }}>Link theoretical threat model vectors directly to real-world adversary TTPs and nation-state threat actor profiles.</p>
-              </div>
-              <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "#00f0ff" }}>
-                <span>Explore MITRE Matrix</span>
-                <ArrowRight size={13} />
-              </div>
-            </div>
-          </Link>
-
-          <Link href="/countermeasure-planner" style={{ textDecoration: "none" }}>
-            <div style={{ background: "rgba(21, 13, 56, 0.6)", border: "1px solid rgba(16, 185, 129, 0.35)", borderRadius: 14, padding: 22, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-              <div>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-                  <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(16, 185, 129, 0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <ShieldCheck size={20} color="#10b981" />
-                  </div>
-                  <span style={{ fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 4, background: "rgba(16, 185, 129, 0.2)", color: "#10b981" }}>GUARDRAILS</span>
-                </div>
-                <h3 style={{ fontSize: 17, fontWeight: 800, color: "#f8fafc", marginBottom: 8 }}>Countermeasure &amp; Guardrail Planner</h3>
-                <p style={{ fontSize: 12.5, color: "#94a3b8", lineHeight: 1.5 }}>Synthesize Open Policy Agent Rego guardrails, Terraform IAM constraints, and WAF rules to remediate threats.</p>
-              </div>
-              <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "#00f0ff" }}>
-                <span>Deploy Countermeasures</span>
-                <ArrowRight size={13} />
-              </div>
-            </div>
-          </Link>
-
-          <Link href="/scan" style={{ textDecoration: "none" }}>
-            <div style={{ background: "rgba(21, 13, 56, 0.6)", border: "1px solid rgba(139, 92, 246, 0.35)", borderRadius: 14, padding: 22, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-              <div>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-                  <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(139, 92, 246, 0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <GitBranch size={20} color="#8b5cf6" />
-                  </div>
-                  <span style={{ fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 4, background: "rgba(139, 92, 246, 0.2)", color: "#c4b5fd" }}>INTERACTIVE</span>
-                </div>
-                <h3 style={{ fontSize: 17, fontWeight: 800, color: "#f8fafc", marginBottom: 8 }}>Automated Architecture Scanner</h3>
-                <p style={{ fontSize: 12.5, color: "#94a3b8", lineHeight: 1.5 }}>Ingest cloud infrastructure HCL or microservice topology to automatically synthesize threat models.</p>
-              </div>
-              <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "#00f0ff" }}>
-                <span>Synthesize Threat Model</span>
-                <ArrowRight size={13} />
-              </div>
-            </div>
-          </Link>
+          ))}
         </div>
       </section>
     </div>

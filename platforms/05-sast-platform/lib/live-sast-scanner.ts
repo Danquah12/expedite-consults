@@ -2163,6 +2163,49 @@ export async function runDynamicRepoOrCodeScan(params: {
 export function loadActiveScanSession(): ActiveScanSession | null {
   if (typeof window === "undefined") return null;
   try {
+    const liveRaw =
+      window.sessionStorage.getItem("xtrike_live_sast_scan_v1") ||
+      window.localStorage.getItem("xtrike_live_sast_scan_v1");
+    if (liveRaw) {
+      const t = JSON.parse(liveRaw);
+      if (t && Array.isArray(t.findings) && t.findings.length > 0) {
+        const matches = t.findings.map((f: SASTFinding) => ({
+          cwe: f.cwe || "CWE-89",
+          title: f.title,
+          filePath: f.file,
+          lineNumber: f.line,
+          codeLine: f.sink || f.title,
+          codeSnippet: f.codeSnippet || f.taintPath?.join("\n") || f.sink,
+          language: f.language || t.language || "Java",
+        }));
+        const enriched = buildFindingRecordsFromMatches({
+          repoUrl: t.repoUrl || "live-scan",
+          commitSha: t.commitSha || "a4f92c81",
+          matches,
+        });
+        return {
+          sessionId: `SCAN-400PLG-${(t.commitSha || "live").slice(0, 6).toUpperCase()}`,
+          repoUrl: t.repoUrl || "attached-codebase",
+          branch: t.branch || "main",
+          commitSha: t.commitSha || "a4f92c81",
+          language: t.language || "Java",
+          scanMode: t.liveGitHubFetched ? "github-live" : "code",
+          engines: t.engines || ["Checkmarx", "IBM Code Scan", "Fortify SCA", "CodeQL", "Semgrep", "Snyk"],
+          activePlugins: PYTHON_STANDARD_PLUGINS.map((p) => p.pluginId),
+          filesScanned: t.filesScanned || 1,
+          linesScanned: t.linesScanned || 100,
+          scannedAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          scanLogs: t.logs || [],
+          sastFindings: t.findings,
+          validationFindings:
+            Array.isArray(t.validationFindings) && t.validationFindings.length > 0
+              ? t.validationFindings
+              : enriched.validationFindings,
+          pluginEvaluations: enriched.pluginEvaluations,
+        };
+      }
+    }
+
     const raw = window.localStorage.getItem(ACTIVE_SCAN_STORAGE_KEY);
     if (!raw) return null;
     return JSON.parse(raw) as ActiveScanSession;

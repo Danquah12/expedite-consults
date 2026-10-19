@@ -39,3 +39,4 @@ scratch/logs/
 **/.env*
 .env*
 *.env
+expedite-consults/orea-prezi/

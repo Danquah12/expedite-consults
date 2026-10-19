@@ -13,6 +13,7 @@ import { Quote, ArrowRight, CornerUpLeft } from "lucide-react";
 interface SlideCardProps {
   slide: SlideData;
   isActive: boolean;
+  isVisible: boolean;
   onFocus: () => void;
   onNext: () => void;
   onOverview: () => void;
@@ -22,11 +23,16 @@ interface SlideCardProps {
 export const SlideCard: React.FC<SlideCardProps> = ({
   slide,
   isActive,
+  isVisible,
   onFocus,
   onNext,
   onOverview,
   accentColor = "#3b82f6",
 }) => {
+  if (!isVisible) {
+    return null;
+  }
+
   return (
     <div
       style={{
@@ -39,7 +45,7 @@ export const SlideCard: React.FC<SlideCardProps> = ({
       className={`transition-all duration-500 pointer-events-auto ${
         isActive
           ? "z-30 scale-100 opacity-100"
-          : "z-10 scale-[0.88] opacity-70 hover:opacity-100 hover:scale-[0.92] cursor-pointer"
+          : "z-10 scale-[0.90] opacity-40 hover:opacity-90 hover:scale-[0.94] cursor-pointer"
       }`}
       onClick={(e) => {
         if (!isActive) {

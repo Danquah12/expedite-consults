@@ -2,20 +2,39 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   COMMERCIAL_DEEP_DIVE_PLUGINS,
   THOUSAND_VULN_PLUGINS,
-  THOUSAND_PLUGINS_SUMMARY
+  THOUSAND_PLUGINS_SUMMARY,
+  buildMitreNavigatorLayerJson
 } from "@/data/deepDivePlugins";
+import { FINDINGS } from "@/data/findings";
 
 export const dynamic = "force-dynamic";
 
+const VALID_SCANNERS = [
+  "OPENVAS",
+  "ZAP",
+  "NUCLEI",
+  "BURP",
+  "AI_LLM",
+  "SECRETS_SBOM",
+  "CLOUD_K8S",
+  "COMPLIANCE"
+];
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
+  const format = searchParams.get("format")?.toLowerCase();
   const scanner = searchParams.get("scanner")?.toUpperCase();
   const tactic = searchParams.get("tactic")?.toUpperCase();
   const d3fend = searchParams.get("d3fend")?.toUpperCase();
   const stage = searchParams.get("stage") ? Number(searchParams.get("stage")) : null;
 
+  if (format === "mitre_navigator") {
+    const layer = buildMitreNavigatorLayerJson(FINDINGS, "https://11-dast-security-platform.vercel.app");
+    return NextResponse.json(layer);
+  }
+
   let filtered = THOUSAND_VULN_PLUGINS;
-  if (scanner && ["OPENVAS", "ZAP", "NUCLEI", "BURP"].includes(scanner)) {
+  if (scanner && VALID_SCANNERS.includes(scanner)) {
     filtered = filtered.filter((p) => p.scannerFamily === scanner);
   }
   if (tactic) {

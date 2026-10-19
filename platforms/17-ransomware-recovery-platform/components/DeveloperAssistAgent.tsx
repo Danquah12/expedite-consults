@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Bot, X, Sparkles, Send, Minimize2, Maximize2 } from "lucide-react";
+import { Bot, X, Send, Minimize2, Maximize2, ShieldCheck } from "lucide-react";
 
 export function DeveloperAssistAgent() {
   const [isOpen, setIsOpen] = useState(false);
@@ -9,152 +9,133 @@ export function DeveloperAssistAgent() {
   const [messages, setMessages] = useState([
     {
       sender: "agent",
-      text: "👋 Hi! I am Aegis AI, your Ransomware Recovery Copilot. I can analyze encryption flaws, evaluate S3 Object Lock snapshot integrity, and orchestrate 5-phase disaster recovery.",
-      time: "Just now"
-    }
+      text: "XTRIKE Recovery Desk Briefing: Ask me to evaluate LockBit 3.0 cryptographic headers, verify S3 Object Lock WORM snapshot integrity, or orchestrate 5-pillar clean-room restoration.",
+      time: "Just now",
+    },
   ]);
   const [input, setInput] = useState("");
 
   const handleSend = () => {
     if (!input.trim()) return;
-    const userMsg = { sender: "user", text: input, time: "Just now" };
-    setMessages(prev => [...prev, userMsg]);
+    const query = input.trim();
+    const userMsg = { sender: "user", text: query, time: "Just now" };
+    setMessages((prev) => [...prev, userMsg]);
     setInput("");
 
     setTimeout(() => {
-      setMessages(prev => [
+      let reply =
+        "Forensic Recovery Assessment: Case `IR-2026-089` (Mercy General Health System) exhibits intermittent AES-256 + ChaCha20 header encryption across 47.2k files. Clean Immutable ZFS + S3 Object Lock snapshots verified at 95.0% readiness. Recommended strategy: Zero-Payment Clean-Room Rollback (Est. RTO: 18.5h).";
+      if (query.toLowerCase().includes("backup") || query.toLowerCase().includes("worm")) {
+        reply =
+          "Immutable Backup Verification: S3 Object Lock Compliance Mode and ZFS read-only snapshots (`#20260823`) passed SHA-256 Merkle root verification. Zero persistence mechanisms detected in Sandbox-A.";
+      } else if (query.toLowerCase().includes("plan") || query.toLowerCase().includes("pillar")) {
+        reply =
+          "5-Pillar Recovery Gate Status: Pillar 1 (Detect) COMPLETED; Pillar 2 (FRE 901 Preserve) IN_PROGRESS; Pillar 3 (ZFS/S3 Stream at 842 MB/s) ACTIVE; Pillar 4 (Dual-Custody Reinfection Check) QUEUED.";
+      }
+      setMessages((prev) => [
         ...prev,
         {
           sender: "agent",
-          text: "🛡️ Recovery Feasibility Assessed: LockBit 3.0 strain detected. Clean Immutable Backups verified at 95% recovery probability. Estimated RTO: 18.5 hours. Recommended path: Snapshot Rollback in isolated enclave.",
-          time: "Just now"
-        }
+          text: reply,
+          time: "Just now",
+        },
       ]);
-    }, 800);
+    }, 450);
   };
 
   if (!isOpen) {
     return (
       <button
         onClick={() => setIsOpen(true)}
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-2.5 rounded-full text-xs font-semibold shadow-md transition-colors cursor-pointer"
         style={{
-          position: "fixed",
-          bottom: 24,
-          right: 24,
-          zIndex: 9999,
-          background: "linear-gradient(135deg, #10b981 0%, #00f0ff 100%)",
-          color: "#070414",
-          padding: "12px 20px",
-          borderRadius: 50,
-          border: "1px solid rgba(255,255,255,0.3)",
-          boxShadow: "0 0 30px rgba(16, 185, 129, 0.4)",
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          cursor: "pointer",
-          fontWeight: 800,
-          fontSize: 13,
-          letterSpacing: "0.02em"
+          background: "var(--accent)",
+          color: "#fbf8f3",
+          border: "1px solid #72361d",
         }}
       >
-        <div style={{
-          width: 24,
-          height: 24,
-          borderRadius: "50%",
-          background: "#070414",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center"
-        }}>
-          <Sparkles size={14} color="#10b981" />
-        </div>
-        <span>Ask Aegis &middot; AI Recovery Agent</span>
+        <ShieldCheck className="w-4 h-4" />
+        <span>XTRIKE Recovery Desk &middot; Recovery Copilot</span>
       </button>
     );
   }
 
   return (
     <div
+      className="fixed bottom-6 right-6 z-50 flex flex-col overflow-hidden rounded-xl shadow-xl transition-all"
       style={{
-        position: "fixed",
-        bottom: 24,
-        right: 24,
-        width: isMinimized ? 320 : 390,
-        height: isMinimized ? 56 : 540,
-        zIndex: 9999,
-        background: "rgba(14, 8, 38, 0.95)",
-        backdropFilter: "blur(20px)",
-        border: "1px solid rgba(16, 185, 129, 0.4)",
-        borderRadius: 16,
-        boxShadow: "0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(16, 185, 129, 0.3)",
-        display: "flex",
-        flexDirection: "column",
-        overflow: "hidden",
-        transition: "height 0.2s ease"
+        width: isMinimized ? 300 : 380,
+        height: isMinimized ? 52 : 480,
+        background: "var(--surface)",
+        border: "1px solid var(--border)",
       }}
     >
-      <div style={{
-        padding: "12px 16px",
-        background: "linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(0, 240, 255, 0.25) 100%)",
-        borderBottom: "1px solid var(--border)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between"
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{
-            width: 32,
-            height: 32,
-            borderRadius: "50%",
-            background: "linear-gradient(135deg, #10b981, #00f0ff)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: "0 0 10px rgba(16,185,129,0.4)"
-          }}>
-            <Bot size={18} color="#070414" />
+      <div
+        className="px-4 py-3 border-b flex items-center justify-between"
+        style={{ background: "var(--surface-2)", borderColor: "var(--border)" }}
+      >
+        <div className="flex items-center gap-2.5">
+          <div
+            className="w-7 h-7 rounded-full flex items-center justify-center"
+            style={{
+              background: "var(--accent)",
+              color: "#fbf8f3",
+            }}
+          >
+            <Bot className="w-4 h-4" />
           </div>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 800, color: "#f8fafc" }}>Aegis &middot; AI Recovery Agent</div>
-            <div style={{ fontSize: 10, color: "#10b981", display: "flex", alignItems: "center", gap: 4 }}>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981", display: "inline-block" }} />
-              Recovery Orchestrator Active
+            <div
+              className="text-xs font-bold font-editorial"
+              style={{ color: "var(--foreground)" }}
+            >
+              XTRIKE Recovery Desk &middot; Forensic Copilot
+            </div>
+            <div
+              className="text-[10px] flex items-center gap-1.5"
+              style={{ color: "var(--muted)" }}
+            >
+              <span
+                className="w-1.5 h-1.5 rounded-full inline-block"
+                style={{ background: "var(--success)" }}
+              />
+              FRE 901 Custody &middot; Clean-Room Orchestrator
             </div>
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <div className="flex items-center gap-1">
           <button
             onClick={() => setIsMinimized(!isMinimized)}
-            style={{ background: "transparent", border: "none", color: "#94a3b8", cursor: "pointer", padding: 4 }}
+            className="p-1 rounded cursor-pointer"
+            style={{ color: "var(--muted)" }}
           >
-            {isMinimized ? <Maximize2 size={15} /> : <Minimize2 size={15} />}
+            {isMinimized ? <Maximize2 className="w-3.5 h-3.5" /> : <Minimize2 className="w-3.5 h-3.5" />}
           </button>
           <button
             onClick={() => setIsOpen(false)}
-            style={{ background: "transparent", border: "none", color: "#94a3b8", cursor: "pointer", padding: 4 }}
+            className="p-1 rounded cursor-pointer"
+            style={{ color: "var(--muted)" }}
           >
-            <X size={16} />
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
 
       {!isMinimized && (
         <>
-          <div style={{ flex: 1, padding: 14, overflowY: "auto", display: "flex", flexDirection: "column", gap: 10 }}>
+          <div className="flex-1 p-3.5 overflow-y-auto flex flex-col gap-2.5">
             {messages.map((m, i) => (
               <div
                 key={i}
+                className="rounded-lg px-3 py-2 text-xs leading-relaxed max-w-[88%]"
                 style={{
                   alignSelf: m.sender === "user" ? "flex-end" : "flex-start",
-                  maxWidth: "85%",
-                  background: m.sender === "user" ? "linear-gradient(135deg, #10b981, #059669)" : "rgba(21, 13, 56, 0.8)",
-                  border: m.sender === "user" ? "none" : "1px solid rgba(16, 185, 129, 0.3)",
-                  borderRadius: 12,
-                  padding: "10px 14px",
-                  fontSize: 12,
-                  color: "#f8fafc",
-                  lineHeight: 1.4
+                  background:
+                    m.sender === "user" ? "var(--accent)" : "var(--surface-2)",
+                  color: m.sender === "user" ? "#fbf8f3" : "var(--foreground)",
+                  border:
+                    m.sender === "user" ? "none" : "1px solid var(--border)",
                 }}
               >
                 {m.text}
@@ -162,79 +143,53 @@ export function DeveloperAssistAgent() {
             ))}
           </div>
 
-          <div style={{ padding: "0 12px 8px 12px", display: "flex", gap: 6, overflowX: "auto" }}>
-            <button
-              onClick={() => setInput("Evaluate clean backup feasibility")}
-              style={{
-                fontSize: 10.5,
-                background: "rgba(16, 185, 129, 0.15)",
-                border: "1px solid rgba(16, 185, 129, 0.4)",
-                color: "#10b981",
-                padding: "4px 8px",
-                borderRadius: 6,
-                whiteSpace: "nowrap",
-                cursor: "pointer"
-              }}
-            >
-              🔄 Backup Feasibility
-            </button>
-            <button
-              onClick={() => setInput("Generate 5-Phase Disaster Recovery Plan")}
-              style={{
-                fontSize: 10.5,
-                background: "rgba(0, 240, 255, 0.15)",
-                border: "1px solid rgba(0, 240, 255, 0.4)",
-                color: "#00f0ff",
-                padding: "4px 8px",
-                borderRadius: 6,
-                whiteSpace: "nowrap",
-                cursor: "pointer"
-              }}
-            >
-              📋 Master Recovery Plan
-            </button>
+          <div className="px-3 pb-2 flex gap-1.5 overflow-x-auto">
+            {[
+              { label: "Verify Clean Backups", prompt: "Verify S3 Object Lock WORM snapshot readiness" },
+              { label: "5-Pillar Status", prompt: "Show 5-Pillar recovery gate status" },
+              { label: "Assess LockBit 3.0", prompt: "Assess LockBit 3.0 cryptographic header damage" },
+            ].map((chip) => (
+              <button
+                key={chip.label}
+                onClick={() => setInput(chip.prompt)}
+                className="text-[11px] px-2.5 py-1 rounded-md whitespace-nowrap transition-colors cursor-pointer"
+                style={{
+                  background: "var(--surface-2)",
+                  border: "1px solid var(--border)",
+                  color: "var(--foreground)",
+                }}
+              >
+                {chip.label}
+              </button>
+            ))}
           </div>
 
-          <div style={{
-            padding: 10,
-            borderTop: "1px solid var(--border)",
-            background: "rgba(7, 4, 20, 0.9)",
-            display: "flex",
-            alignItems: "center",
-            gap: 8
-          }}>
+          <div
+            className="p-2.5 border-t flex items-center gap-2"
+            style={{ background: "var(--background)", borderColor: "var(--border)" }}
+          >
             <input
               type="text"
-              placeholder="Ask Aegis about RTO/RPO, clean backups, decryptors..."
+              placeholder="Ask about snapshots, RTO, FRE 901, LockBit..."
               value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && handleSend()}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              className="flex-1 px-3 py-1.5 rounded-lg text-xs outline-none"
               style={{
-                flex: 1,
-                background: "rgba(21, 13, 56, 0.9)",
-                border: "1px solid rgba(16, 185, 129, 0.3)",
-                color: "#f8fafc",
-                fontSize: 12,
-                borderRadius: 8,
-                padding: "8px 12px",
-                outline: "none"
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+                color: "var(--foreground)",
               }}
             />
             <button
               onClick={handleSend}
+              className="p-2 rounded-lg transition-opacity hover:opacity-90 cursor-pointer"
               style={{
-                background: "linear-gradient(135deg, #10b981, #00f0ff)",
-                border: "none",
-                borderRadius: 8,
-                padding: "8px 12px",
-                color: "#070414",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center"
+                background: "var(--accent)",
+                color: "#fbf8f3",
               }}
             >
-              <Send size={14} />
+              <Send className="w-3.5 h-3.5" />
             </button>
           </div>
         </>

@@ -31,34 +31,28 @@ export const ConstellationLines: React.FC<ConstellationLinesProps> = ({
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
-
-        {/* Center Gradient */}
-        <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.4" />
-          <stop offset="100%" stopColor="#38bdf8" stopOpacity="0" />
-        </radialGradient>
       </defs>
 
-      {/* Center Beacon Ambient Ring */}
-      <circle cx={0} cy={-80} r={420} fill="none" stroke="#38bdf815" strokeWidth={1} strokeDasharray="4 8" />
-      <circle cx={0} cy={-80} r={720} fill="none" stroke="#818cf812" strokeWidth={1} strokeDasharray="6 12" />
+      {/* Center Beacon Ambient Concentric Rings */}
+      <circle cx={0} cy={0} r={520} fill="none" stroke="#38bdf818" strokeWidth={1} strokeDasharray="6 8" />
+      <circle cx={0} cy={0} r={1150} fill="none" stroke="#818cf812" strokeWidth={1} strokeDasharray="8 12" />
+      <circle cx={0} cy={0} r={1900} fill="none" stroke="#38bdf810" strokeWidth={1} strokeDasharray="10 16" />
 
-      {/* Lines from Center to each Cluster */}
+      {/* Trunk lines from Center (0,0) to each Cluster */}
       {clusters.map((cluster) => {
         const isClusterActive = activeClusterId === cluster.id;
         const color = cluster.accentColor || "#38bdf8";
 
         return (
           <g key={cluster.id}>
-            {/* Trunk line from Center to Cluster */}
             <line
               x1={0}
-              y1={-80}
+              y1={0}
               x2={cluster.x}
               y2={cluster.y}
               stroke={color}
-              strokeWidth={isClusterActive ? 2.5 : 1.2}
-              strokeOpacity={isClusterActive ? 0.8 : 0.22}
+              strokeWidth={isClusterActive ? 3 : 1.2}
+              strokeOpacity={isClusterActive ? 0.85 : 0.25}
               strokeDasharray={isClusterActive ? "none" : "6 6"}
               filter={isClusterActive ? "url(#glow-line)" : undefined}
             />
@@ -75,7 +69,7 @@ export const ConstellationLines: React.FC<ConstellationLinesProps> = ({
                   y2={slide.y}
                   stroke={color}
                   strokeWidth={isSlideActive ? 2.5 : 1}
-                  strokeOpacity={isSlideActive ? 0.9 : 0.3}
+                  strokeOpacity={isSlideActive ? 0.9 : 0.25}
                   strokeDasharray="4 4"
                   filter={isSlideActive ? "url(#glow-line)" : undefined}
                 />
@@ -85,7 +79,7 @@ export const ConstellationLines: React.FC<ConstellationLinesProps> = ({
         );
       })}
 
-      {/* Ring interconnecting all clusters in sequence */}
+      {/* Hexagonal Outer Perimeter Link uniting all clusters */}
       {clusters.map((cluster, idx) => {
         const nextCluster = clusters[(idx + 1) % clusters.length];
         return (
@@ -96,8 +90,8 @@ export const ConstellationLines: React.FC<ConstellationLinesProps> = ({
             x2={nextCluster.x}
             y2={nextCluster.y}
             stroke="#64748b"
-            strokeWidth={0.8}
-            strokeOpacity={0.15}
+            strokeWidth={1}
+            strokeOpacity={0.2}
             strokeDasharray="8 8"
           />
         );

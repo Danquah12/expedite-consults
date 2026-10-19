@@ -1,58 +1,228 @@
 @import "tailwindcss";
 
 :root {
-  --background: #070414;
-  --surface: #0e0826;
-  --surface-2: #150d38;
-  --surface-3: #1f144d;
-  --foreground: #f8fafc;
-  --foreground-muted: #94a3b8;
-  --muted: #64748b;
-  --border: #2a1b5e;
-  --border-subtle: rgba(139, 92, 246, 0.2);
-  --primary: #8b5cf6;
-  --primary-hover: #7c3aed;
-  --primary-glow: rgba(139, 92, 246, 0.4);
-  --cyan: #00f0ff;
-  --cyan-glow: rgba(0, 240, 255, 0.4);
-  --amber: #ff6b00;
-  --amber-glow: rgba(255, 107, 0, 0.4);
-  --emerald: #10b981;
-  --rose: #f43f5e;
-  --critical: #f43f5e;
-  --high: #ff6b00;
-  --medium: #f59e0b;
-  --low: #10b981;
+  --font-serif: "Newsreader", Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+
+  /* "Desk Note" Warm Editorial Parchment & Paper Palette */
+  --background: #f3eee4;
+  --bg:         #f3eee4;
+  --surface:    #fbf8f3;
+  --surface-2:  #ece5d8;
+  --surface-3:  #e2d9c8;
+  --border:     #ddd3c2;
+  --border-subtle: #e6decb;
+
+  /* Editorial Ink Typography Hierarchy */
+  --foreground: #1f1b18;
+  --fg:         #1f1b18;
+  --foreground-muted: #4a4239;
+  --muted:      #5c5349;
+  --subtle:     #867b6e;
+
+  /* Primary Accent — Rich Terracotta / Burnt Sienna */
+  --accent:      #8b4528;
+  --accent-soft: #f4e5dc;
+
+  /* Semantic Severity / Status (Editorial Warm-Paper Tuned) */
+  --critical: #9e2a2b;
+  --high:     #8b4528;
+  --medium:   #996b1f;
+  --low:      #5c5349;
+  --success:  #2d6a4f;
+
+  /* Legacy compatibility aliases mapped to the warm Desk Note system */
+  --primary:       var(--accent);
+  --primary-hover: #72361d;
+  --primary-dark:  #72361d;
+  --primary-glow:  var(--accent-soft);
+  --secondary:     var(--muted);
+  --cyan:          var(--accent);
+  --cyan-glow:     rgba(139, 69, 40, 0.12);
+  --amber:         var(--medium);
+  --amber-glow:    rgba(153, 107, 31, 0.12);
+  --emerald:       var(--success);
+  --crimson:       var(--critical);
+  --violet:        var(--accent);
+  --rose:          var(--critical);
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, .font-editorial {
+    font-family: var(--font-serif), Georgia, Cambria, "Times New Roman", Times, serif;
+    letter-spacing: -0.02em;
+    color: var(--foreground);
+  }
 }
 
-body {
-  background-color: var(--background);
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--background); }
+::-webkit-scrollbar-thumb { background: #cbbca6; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--subtle); }
+
+/* Editorial Paper Cards & Controls */
+.card-surface,
+.card-tactical {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0.875rem;
+  box-shadow: 0 1px 2px rgba(31, 27, 24, 0.04);
   color: var(--foreground);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  overflow-x: hidden;
-  background-image: 
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(120, 58, 237, 0.25), transparent 70%),
-    radial-gradient(circle at 90% 80%, rgba(0, 240, 255, 0.08), transparent 40%),
-    radial-gradient(circle at 10% 90%, rgba(255, 107, 0, 0.08), transparent 40%);
 }
 
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+.card-hover {
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
 }
-::-webkit-scrollbar-track {
-  background: var(--surface);
+.card-hover:hover {
+  border-color: #c5b69e;
+  background-color: #fdfbf8;
+  box-shadow: 0 4px 12px rgba(31, 27, 24, 0.06);
 }
-::-webkit-scrollbar-thumb {
-  background: var(--surface-3);
-  border-radius: 3px;
+
+/* Desk Note Kicker / Eyebrow Label */
+.desk-kicker {
+  font-family: var(--font-sans), sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
 }
-::-webkit-scrollbar-thumb:hover {
-  background: var(--primary);
+
+/* Status & Severity Badges — High Contrast on Warm Ivory Paper */
+.badge-critical {
+  background: #f9e6e6;
+  color: #8c2022;
+  border: 1px solid #e3b8b9;
+}
+.badge-high {
+  background: #f4e5dc;
+  color: #7c3b20;
+  border: 1px solid #debdae;
+}
+.badge-medium {
+  background: #f6ecda;
+  color: #7d5413;
+  border: 1px solid #dfd8b8;
+}
+.badge-low {
+  background: #ece5d8;
+  color: #4a4239;
+  border: 1px solid #d5cab8;
+}
+.badge-info {
+  background: #ece5d8;
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+.badge-open {
+  background: #f9e6e6;
+  color: #8c2022;
+  border: 1px solid #e3b8b9;
+}
+.badge-resolved {
+  background: #e3f0e9;
+  color: #21573e;
+  border: 1px solid #b8d8c7;
+}
+.badge-suppressed {
+  background: #ece5d8;
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+
+.code-block {
+  font-family: var(--font-mono), "JetBrains Mono", "Fira Code", monospace;
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+/* Harmonize legacy dark Tailwind & inline styles on secondary studios to Warm Parchment */
+[class*="bg-slate-950"],
+[class*="bg-gray-950"],
+[class*="bg-zinc-950"],
+[class*="bg-[#070414]"],
+[class*="bg-[#0a0f1e]"] {
+  background-color: var(--background) !important;
+}
+
+[class*="bg-slate-900"],
+[class*="bg-gray-900"],
+[class*="bg-zinc-900"],
+[class*="bg-[#0e0826]"],
+[class*="bg-[#111827]"] {
+  background-color: var(--surface) !important;
+}
+
+[class*="bg-slate-800"],
+[class*="bg-gray-800"],
+[class*="bg-zinc-800"],
+[class*="bg-[#150d38]"] {
+  background-color: var(--surface-2) !important;
+}
+
+[class*="border-slate-"],
+[class*="border-gray-"],
+[class*="border-zinc-"] {
+  border-color: var(--border) !important;
+}
+
+[class*="text-white"],
+[class*="text-slate-100"],
+[class*="text-slate-200"],
+[class*="text-gray-100"] {
+  color: var(--foreground) !important;
+}
+
+[class*="text-slate-300"],
+[class*="text-slate-400"],
+[class*="text-gray-400"] {
+  color: var(--muted) !important;
+}
+
+[style*="background: rgba(14, 8, 38"],
+[style*="background:rgba(14,8,38"],
+[style*="background: rgba(21, 13, 56"],
+[style*="background: #070414"],
+[style*="background:#070414"],
+[style*="background: #0e0826"],
+[style*="background:#0e0826"] {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+}
+
+[style*="color: #f8fafc"],
+[style*="color:#f8fafc"],
+[style*="color: rgb(248, 250, 252)"],
+[style*="color: #ffffff"],
+[style*="color:#ffffff"] {
+  color: var(--foreground) !important;
+}
+
+[style*="color: #94a3b8"],
+[style*="color:#94a3b8"],
+[style*="color: #cbd5e1"],
+[style*="color:#cbd5e1"] {
+  color: var(--muted) !important;
 }

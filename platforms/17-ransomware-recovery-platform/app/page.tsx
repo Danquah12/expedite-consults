@@ -3,19 +3,13 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
-  ShieldAlert,
   ShieldCheck,
-  AlertTriangle,
-  Flame,
   Activity,
   Server,
   Database,
   Lock,
-  Unlock,
-  Radio,
   Clock,
   ArrowRight,
-  TrendingDown,
   FileText,
   Binary,
   Layers,
@@ -23,24 +17,18 @@ import {
   Terminal,
   Zap,
   CheckCircle2,
-  HardDrive,
   RefreshCw,
-  ExternalLink,
-  ChevronRight,
-  Eye,
-  Crosshair,
-  Volume2
+  Search,
 } from "lucide-react";
-import { MOCK_CASES, MOCK_BACKUP_SOURCES } from "@/data/recoveryData";
-import { IncidentSeverity, IncidentStatus } from "@/types/recovery";
+import { MOCK_CASES } from "@/data/recoveryData";
 
 export default function CommandCenterHub() {
   const [activeCaseIndex, setActiveCaseIndex] = useState(0);
-  const [defconLevel, setDefconLevel] = useState<1 | 2 | 3 | 4 | 5>(1);
-  const [containmentActive, setContainmentActive] = useState(false);
+  const [deskQuery, setDeskQuery] = useState("");
+  const [selectedFilter, setSelectedFilter] = useState<string>("all");
   const [networkIsolation, setNetworkIsolation] = useState(true);
   const [s3VaultLocked, setS3VaultLocked] = useState(true);
-  const [activeTab, setActiveTab] = useState<"live-feed" | "containment" | "studios">("live-feed");
+  const [activeTab, setActiveTab] = useState<"live-feed" | "containment">("live-feed");
   const [elapsedSeconds, setElapsedSeconds] = useState(3640);
 
   const activeCase = MOCK_CASES[activeCaseIndex] || MOCK_CASES[0];
@@ -61,502 +49,632 @@ export default function CommandCenterHub() {
 
   const pillars = [
     {
-      step: "01",
-      name: "DETECT & IDENTIFY",
+      step: "PILLAR 01",
+      name: "Detect & Identify",
       status: "COMPLETED",
       desc: "Telemetry ingested, LockBit 3.0 signature validated",
       href: "/triage",
       active: true,
-      color: "#10b981"
     },
     {
-      step: "02",
-      name: "ANALYZE & PRESERVE",
-      status: "IN_PROGRESS",
+      step: "PILLAR 02",
+      name: "Analyze & Preserve",
+      status: "IN PROGRESS",
       desc: "FRE 901 Merkle roots locked, DAG impact calculated",
       href: "/crypto-analysis",
       active: true,
-      color: "#06b6d4"
     },
     {
-      step: "03",
-      name: "RECOVER & ORCHESTRATE",
+      step: "PILLAR 03",
+      name: "Recover & Orchestrate",
       status: "ACTIVE",
       desc: "ZFS & S3 immutable streams restoring 24 targets",
       href: "/recovery-ops",
       active: true,
-      color: "#f59e0b"
     },
     {
-      step: "04",
-      name: "PROTECT & VALIDATE",
+      step: "PILLAR 04",
+      name: "Protect & Validate",
       status: "QUEUED",
       desc: "Reinfection hunter & gatekeeper dual-custody",
       href: "/reinfection-risk",
       active: false,
-      color: "#8493a8"
     },
     {
-      step: "05",
-      name: "GOVERN & LEARN",
+      step: "PILLAR 05",
+      name: "Govern & Learn",
       status: "QUEUED",
-      desc: "Executive post-mortem, ledger reporting",
+      desc: "Executive post-mortem & SEC/HIPAA ledger reporting",
       href: "/reports",
       active: false,
-      color: "#8493a8"
-    }
+    },
   ];
 
   const recentIncidents = [
     {
       time: "00:18:24 UTC",
-      level: "ALERT",
-      msg: "ZFS Snapshot #20260823 partition stream at 842 MB/s on SAN-POOL-01",
-      badge: "RESTORE"
+      badge: "RESTORE",
+      msg: "ZFS Snapshot #20260823 partition stream verified at 842 MB/s on SAN-POOL-01",
     },
     {
       time: "00:15:10 UTC",
-      level: "CONTAIN",
-      msg: "Vlan 104 (Clinical Medical Imaging) blocked outbound port 445 / 3389",
-      badge: "FIREWALL"
+      badge: "FIREWALL",
+      msg: "VLAN 104 (Clinical Medical Imaging) blocked outbound SMB/RDP ports 445 & 3389",
     },
     {
       time: "00:11:42 UTC",
-      level: "INTEL",
-      msg: "Attribution correlation matches UNC3944 (Scattered Spider affiliate)",
-      badge: "NEXUS"
+      badge: "NEXUS",
+      msg: "Attribution correlation matches UNC3944 / LockBit 3.0 affiliate cluster",
     },
     {
       time: "00:08:05 UTC",
-      level: "CRITICAL",
-      msg: "Compromised domain admin credential 'svc_backup_mgmt' revoked",
-      badge: "IDENTITY"
+      badge: "IDENTITY",
+      msg: "Compromised domain admin credential 'svc_backup_mgmt' revoked & KRBTGT rotated",
     },
     {
       time: "00:02:19 UTC",
-      level: "SUCCESS",
-      msg: "Primary Domain Controller DC01.mercy.local staged clean in Sandbox-A",
-      badge: "ENCLAVE"
-    }
+      badge: "ENCLAVE",
+      msg: "Primary Domain Controller DC01.mercy.local staged clean in isolated Sandbox-A",
+    },
   ];
 
   const studios = [
-    { title: "Automated Incident Triage", path: "/triage", desc: "1-Click sample extraction & rapid AI verdict", tag: "Pillar 1", icon: Zap, color: "#10b981" },
-    { title: "SOC Threat Analyst Workspace", path: "/soc-analyst", desc: "IOC ledger, C2 sniffer & signed notes", tag: "Intelligence", icon: Terminal, color: "#06b6d4" },
-    { title: "Executive Boardroom Impact", path: "/executive", desc: "$/hr loss tracker & compliance exposure", tag: "C-Level", icon: Activity, color: "#f43f5e" },
-    { title: "Recovery Operations Desk", path: "/recovery-ops", desc: "Real-time SAN / VMFS volume restoration", tag: "Ops", icon: Cpu, color: "#f59e0b" },
-    { title: "Ransom Note NLP & Tor", path: "/ransom-notes", desc: "Darknet links, onion entities & sentiment", tag: "Pillar 1", icon: FileText, color: "#a855f7" },
-    { title: "Encrypted File Pattern Analyzer", path: "/file-patterns", desc: "Byte-level header damage & entropy map", tag: "Pillar 1", icon: Binary, color: "#06b6d4" },
-    { title: "Campaign Correlator & Nexus", path: "/campaigns", desc: "Cross-tenant affiliate cluster intelligence", tag: "Pillar 1", icon: Layers, color: "#10b981" },
-    { title: "Incident Intake & Case Desk", path: "/cases", desc: "FRE 901 custody & task assignment", tag: "Pillar 1", icon: ShieldCheck, color: "#3b82f6" }
+    {
+      title: "Automated Incident Triage",
+      href: "/triage",
+      kicker: "PILLAR 01 · TRIAGE",
+      badge: "LockBit 3.0",
+      desc: "1-Click encrypted sample extraction, cipher family attribution, and rapid zero-payment recovery feasibility verdict.",
+      metrics: ["Sample Verdict", "Strain Attribution", "Zero-Payment Check"],
+      icon: Zap,
+      category: "triage",
+    },
+    {
+      title: "Cryptographic & FRE 901 Evidence Desk",
+      href: "/crypto-analysis",
+      kicker: "PILLAR 02 · FORENSICS",
+      badge: "FRE 901 Locked",
+      desc: "Inspect AES-256 + ChaCha20 header damage, PRNG seed entropy, and cryptographically signed Merkle chain-of-custody.",
+      metrics: ["Entropy Map", "Key Schedule Audit", "FRE 901 Ledger"],
+      icon: Lock,
+      category: "crypto",
+    },
+    {
+      title: "Recovery Operations & SAN Stream Desk",
+      href: "/recovery-ops",
+      kicker: "PILLAR 03 · RESTORATION",
+      badge: "24 Targets",
+      desc: "Real-time SAN, VMFS, and immutable S3/ZFS snapshot orchestration across Tier-0 Active Directory and clinical databases.",
+      metrics: ["842 MB/s Stream", "ZFS Snapshot #20260823", "Tier-0 Priority"],
+      icon: Cpu,
+      category: "ops",
+    },
+    {
+      title: "Reinfection Guard & Clean-Room Gatekeeper",
+      href: "/reinfection-risk",
+      kicker: "PILLAR 04 · VALIDATION",
+      badge: "Dual-Custody",
+      desc: "Scans restored snapshots in isolated Sandbox-A for dormant WMI/scheduled-task persistence before production re-entry.",
+      metrics: ["Sandbox-A Enclave", "Persistence Sweep", "Dual Sign-Off"],
+      icon: ShieldCheck,
+      category: "validation",
+    },
+    {
+      title: "SOC Threat Analyst Workspace",
+      href: "/soc-analyst",
+      kicker: "INTELLIGENCE DESK",
+      badge: "IOC Ledger",
+      desc: "Correlates C2 beacons, lateral movement paths, and signed analyst notes across affected subnets and identity providers.",
+      metrics: ["IOC Correlation", "C2 Sniffer", "Signed Notes"],
+      icon: Terminal,
+      category: "triage",
+    },
+    {
+      title: "Executive Boardroom & RTO Impact",
+      href: "/executive",
+      kicker: "PILLAR 05 · GOVERNANCE",
+      badge: "RTO 18.5h",
+      desc: "Tracks hourly downtime averted, zero-ransom-payment savings ($1.8M preserved), and SEC/HIPAA disclosure readiness.",
+      metrics: ["$1.8M Preserved", "18.5h Target RTO", "SEC / HIPAA Ready"],
+      icon: Activity,
+      category: "gov",
+    },
+    {
+      title: "Ransom Note NLP & Darknet Intel",
+      href: "/ransom-notes",
+      kicker: "PILLAR 01 · ATTRIBUTION",
+      badge: "NLP Match",
+      desc: "Linguistic stylometry, Tor onion entity extraction, and affiliate negotiation playbook behavioral profiling.",
+      metrics: ["Stylometry", "Affiliate Cluster", "Tor Entity Graph"],
+      icon: FileText,
+      category: "triage",
+    },
+    {
+      title: "Encrypted File Pattern Analyzer",
+      href: "/file-patterns",
+      kicker: "PILLAR 02 · BYTE-LEVEL",
+      badge: "47.2k Files",
+      desc: "Analyzes intermittent stripe encryption, file-header corruption offsets, and partial block reconstruction viability.",
+      metrics: ["Stripe Offset", "Header Diff", "1.8 TB Scanned"],
+      icon: Binary,
+      category: "crypto",
+    },
+    {
+      title: "Incident Intake & Case Desk",
+      href: "/cases",
+      kicker: "CASE MANAGEMENT",
+      badge: "3 Active Cases",
+      desc: "Multi-tenant incident case ledger, forensic evidence locker, and role-based responder task assignment.",
+      metrics: ["FRE 901 Custody", "Responder Roster", "Audit Trail"],
+      icon: Layers,
+      category: "gov",
+    },
   ];
 
+  const filteredStudios = studios.filter((s) => {
+    const matchFilter = selectedFilter === "all" || s.category === selectedFilter;
+    const matchQuery =
+      !deskQuery ||
+      s.title.toLowerCase().includes(deskQuery.toLowerCase()) ||
+      s.desc.toLowerCase().includes(deskQuery.toLowerCase()) ||
+      s.kicker.toLowerCase().includes(deskQuery.toLowerCase());
+    return matchFilter && matchQuery;
+  });
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      {/* DEFCON STATUS BANNER */}
-      <div
-        style={{
-          background: "linear-gradient(90deg, rgba(244,63,94,0.18) 0%, rgba(14,21,38,0.9) 60%, rgba(16,185,129,0.1) 100%)",
-          border: "1px solid rgba(244,63,94,0.4)",
-          borderRadius: 10,
-          padding: "14px 20px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          boxShadow: "0 0 25px rgba(244,63,94,0.15)"
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <div
+    <div className="max-w-[1360px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
+      {/* XTRIKE RECOVERY DESK Editorial Masthead Section (Matching Desk Note screenshot) */}
+      <section className="space-y-6">
+        <div className="space-y-2 max-w-3xl">
+          <div className="desk-kicker">XTRIKE RECOVERY DESK &middot; PLATFORM 17</div>
+          <h1
+            className="text-4xl sm:text-5xl font-bold tracking-tight font-editorial"
+            style={{ color: "var(--foreground)" }}
+          >
+            XTRIKE Recovery Desk
+          </h1>
+          <p className="text-sm sm:text-base leading-relaxed" style={{ color: "var(--muted)" }}>
+            Live incident telemetry and immutable backup snapshots stay current. The front page is first. Choose a tab for Triage, Crypto Forensics, SAN Recovery, Reinfection Guard, or Governance. A readiness number scores snapshot integrity—it is a cryptographic proof, not a guess.
+          </p>
+        </div>
+
+        {/* Action Strip (Matching "Turn off notifications" in the reference design) */}
+        <div className="flex flex-wrap items-center gap-4">
+          <Link
+            href="/triage"
+            className="px-4 py-2.5 rounded-xl text-xs font-bold transition-colors"
             style={{
-              width: 44,
-              height: 44,
-              borderRadius: 8,
-              background: "rgba(244,63,94,0.2)",
-              border: "1px solid #f43f5e",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center"
+              background: "var(--surface)",
+              color: "var(--foreground)",
+              border: "1px solid var(--border)",
+              boxShadow: "0 1px 2px rgba(31, 27, 24, 0.05)",
             }}
           >
-            <Flame size={24} color="#f43f5e" className="animate-bounce" />
-          </div>
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontSize: 11, fontWeight: 900, letterSpacing: "0.1em", color: "#f43f5e", fontFamily: "monospace" }}>
-                DEFCON CONDITION {defconLevel}
-              </span>
-              <span style={{ fontSize: 10, padding: "2px 6px", borderRadius: 4, background: "rgba(244,63,94,0.3)", color: "#fecdd3", fontWeight: 700 }}>
-                ACTIVE RANSOMWARE INCIDENT
-              </span>
-            </div>
-            <div style={{ fontSize: 16, fontWeight: 800, color: "#f8fafc", marginTop: 2 }}>
-              {activeCase.organization} — {activeCase.title}
-            </div>
-          </div>
+            Run Forensic Triage &amp; Snapshot Check
+          </Link>
+          <p className="text-xs max-w-xl leading-relaxed" style={{ color: "var(--muted)" }}>
+            Enclave isolation stays on for this desk (`24 / 24 hosts contained`). Elapsed incident timer: <strong>{formatTimer(elapsedSeconds)}</strong> &middot; Target RTO: <strong>{activeCase.estimatedRecoveryTimeHours}h 00m</strong>.
+          </p>
         </div>
 
-        {/* Tactical Counters */}
-        <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 10, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Incident Elapsed</div>
-            <div style={{ fontSize: 17, fontWeight: 800, color: "#06b6d4", fontFamily: "monospace" }}>{formatTimer(elapsedSeconds)}</div>
-          </div>
-
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 10, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Target RTO</div>
-            <div style={{ fontSize: 17, fontWeight: 800, color: "#10b981", fontFamily: "monospace" }}>{activeCase.estimatedRecoveryTimeHours}h 00m</div>
-          </div>
-
-          <div style={{ display: "flex", gap: 6 }}>
-            {[1, 2, 3, 4, 5].map((lvl) => (
-              <button
-                key={lvl}
-                onClick={() => setDefconLevel(lvl as 1 | 2 | 3 | 4 | 5)}
-                style={{
-                  padding: "4px 8px",
-                  borderRadius: 4,
-                  fontSize: 10,
-                  fontWeight: 800,
-                  fontFamily: "monospace",
-                  cursor: "pointer",
-                  background: defconLevel === lvl ? "#f43f5e" : "var(--surface-2)",
-                  color: defconLevel === lvl ? "#fff" : "var(--muted)",
-                  border: defconLevel === lvl ? "1px solid #f43f5e" : "1px solid var(--border)"
-                }}
-              >
-                D{lvl}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* KPI METRIC CARDS */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 14 }}>
-        <div className="card-tactical" style={{ padding: "14px 16px" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase" }}>Affected Hosts</span>
-            <Server size={15} color="#f43f5e" />
-          </div>
-          <div style={{ fontSize: 24, fontWeight: 900, color: "#f8fafc", marginTop: 8 }}>
-            24 <span style={{ fontSize: 12, color: "var(--muted)", fontWeight: 500 }}>/ 24 isolated</span>
-          </div>
-          <div style={{ fontSize: 10.5, color: "#f43f5e", marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
-            <span>● 100% network contained</span>
-          </div>
-        </div>
-
-        <div className="card-tactical" style={{ padding: "14px 16px" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase" }}>Encrypted Files</span>
-            <Lock size={15} color="#f59e0b" />
-          </div>
-          <div style={{ fontSize: 24, fontWeight: 900, color: "#f8fafc", marginTop: 8 }}>
-            47.2k <span style={{ fontSize: 12, color: "var(--muted)", fontWeight: 500 }}>files (1.8 TB)</span>
-          </div>
-          <div style={{ fontSize: 10.5, color: "#f59e0b", marginTop: 4 }}>
-            AES-256 + ChaCha20 combo
-          </div>
-        </div>
-
-        <div className="card-tactical" style={{ padding: "14px 16px" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase" }}>Ransom Extortion</span>
-            <Radio size={15} color="#f43f5e" />
-          </div>
-          <div style={{ fontSize: 24, fontWeight: 900, color: "#f43f5e", marginTop: 8 }}>
-            $1.8M <span style={{ fontSize: 12, color: "var(--muted)", fontWeight: 500 }}>(28.5 BTC)</span>
-          </div>
-          <div style={{ fontSize: 10.5, color: "#10b981", marginTop: 4 }}>
-            Strategy: ZERO-PAYMENT BACKUP
-          </div>
-        </div>
-
-        <div className="card-tactical" style={{ padding: "14px 16px" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase" }}>Clean Backups</span>
-            <ShieldCheck size={15} color="#10b981" />
-          </div>
-          <div style={{ fontSize: 24, fontWeight: 900, color: "#10b981", marginTop: 8 }}>
-            95.0% <span style={{ fontSize: 12, color: "var(--muted)", fontWeight: 500 }}>readiness</span>
-          </div>
-          <div style={{ fontSize: 10.5, color: "#10b981", marginTop: 4 }}>
-            Immutable S3 + ZFS snapshots
-          </div>
-        </div>
-
-        <div className="card-tactical" style={{ padding: "14px 16px" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase" }}>Est. RTO Target</span>
-            <Clock size={15} color="#06b6d4" />
-          </div>
-          <div style={{ fontSize: 24, fontWeight: 900, color: "#06b6d4", marginTop: 8 }}>
-            18.5h <span style={{ fontSize: 12, color: "var(--muted)", fontWeight: 500 }}>total</span>
-          </div>
-          <div style={{ fontSize: 10.5, color: "#06b6d4", marginTop: 4 }}>
-            6.2h Tier-0 Identity restored
-          </div>
-        </div>
-      </div>
-
-      {/* 5-PILLAR LIFECYCLE PROGRESSION */}
-      <div className="card-tactical" style={{ padding: "18px 20px" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 800, color: "#f8fafc", letterSpacing: "0.04em" }}>
-              5-PILLAR AUTONOMOUS RECOVERY LIFECYCLE
-            </div>
-            <div style={{ fontSize: 11, color: "var(--muted)" }}>
-              Deterministic transition gates from ingestion to dual-custody production re-entry
-            </div>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 11, color: "#10b981", fontWeight: 700 }}>● PHASE 3 IN PROGRESS (42%)</span>
-          </div>
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12, position: "relative" }}>
-          {pillars.map((pillar, idx) => (
-            <Link
-              key={idx}
-              href={pillar.href}
+        {/* Search the desk */}
+        <div className="space-y-2 pt-2">
+          <label
+            className="block text-xs font-bold"
+            style={{ color: "var(--foreground)" }}
+          >
+            Search the desk
+          </label>
+          <div className="relative">
+            <Search
+              className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2"
+              style={{ color: "var(--subtle)" }}
+            />
+            <input
+              type="text"
+              value={deskQuery}
+              onChange={(e) => setDeskQuery(e.target.value)}
+              placeholder="Case, ransomware strain, ZFS snapshot, FRE 901 hash, or studio..."
+              className="w-full pl-11 pr-4 py-3.5 rounded-xl text-sm outline-none"
               style={{
-                textDecoration: "none",
-                background: pillar.active ? "var(--surface-2)" : "rgba(22,32,56,0.5)",
-                border: pillar.active ? `1px solid ${pillar.color}` : "1px solid var(--border)",
-                borderRadius: 8,
-                padding: "12px 14px",
-                display: "flex",
-                flexDirection: "column",
-                gap: 6,
-                transition: "all 0.15s ease",
-                cursor: "pointer"
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+                color: "var(--foreground)",
+                boxShadow: "0 1px 2px rgba(31, 27, 24, 0.03)",
+              }}
+            />
+          </div>
+          <div className="text-xs" style={{ color: "var(--muted)" }}>
+            Last job &middot; Case `{activeCase.caseNumber}` ({activeCase.organization} &mdash; 95.0% clean backup readiness). Open a studio, or inspect a snapshot stream.
+          </div>
+        </div>
+
+        {/* Region / Active Case Selector + Filter Pill Strip + Breaking Ticker (Matching Desk Note screenshot) */}
+        <div
+          className="pt-4 border-t space-y-3.5"
+          style={{ borderColor: "var(--border)" }}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <span
+              className="text-[11px] font-bold uppercase tracking-wider shrink-0"
+              style={{ color: "var(--muted)" }}
+            >
+              ACTIVE CASE
+            </span>
+            <select
+              value={activeCaseIndex}
+              onChange={(e) => setActiveCaseIndex(Number(e.target.value))}
+              className="w-full px-3.5 py-2.5 rounded-xl text-xs font-bold outline-none cursor-pointer"
+              style={{
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+                color: "var(--foreground)",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <span style={{ fontSize: 10, fontWeight: 900, color: pillar.color, fontFamily: "monospace" }}>
-                  PILLAR {pillar.step}
-                </span>
-                <span
+              {MOCK_CASES.map((c, idx) => (
+                <option key={c.id} value={idx}>
+                  {c.organization} &mdash; {c.title} ({c.ransomwareFamily} &middot; {c.caseNumber})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {[
+              { id: "all", label: "Front page", count: "5 hot" },
+              { id: "triage", label: "Triage & Intel", count: "3" },
+              { id: "crypto", label: "Crypto & Evidence", count: "FRE 901" },
+              { id: "ops", label: "SAN & ZFS Restore", count: "24 Hosts" },
+              { id: "validation", label: "Reinfection Guard", count: "Clean" },
+              { id: "gov", label: "Executive & Cases", count: "RTO 18.5h" },
+            ].map((pill) => {
+              const active = selectedFilter === pill.id;
+              return (
+                <button
+                  key={pill.id}
+                  onClick={() => setSelectedFilter(pill.id)}
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all"
                   style={{
-                    fontSize: 8.5,
-                    fontWeight: 800,
-                    padding: "2px 5px",
-                    borderRadius: 3,
-                    background: pillar.status === "COMPLETED" ? "rgba(16,185,129,0.2)" : pillar.status === "IN_PROGRESS" || pillar.status === "ACTIVE" ? "rgba(6,182,212,0.2)" : "rgba(255,255,255,0.05)",
-                    color: pillar.status === "COMPLETED" ? "#10b981" : pillar.status === "IN_PROGRESS" || pillar.status === "ACTIVE" ? "#06b6d4" : "var(--muted)"
+                    background: active ? "var(--accent)" : "var(--surface)",
+                    color: active ? "#fbf8f3" : "var(--foreground)",
+                    border: active
+                      ? "1px solid #72361d"
+                      : "1px solid var(--border)",
+                    boxShadow: "0 1px 2px rgba(31, 27, 24, 0.04)",
                   }}
                 >
-                  {pillar.status}
-                </span>
+                  <span>{pill.label}</span>
+                  {pill.count && (
+                    <span
+                      className="px-2 py-0.5 rounded-full text-[11px] font-bold"
+                      style={{
+                        background: active ? "#fbf8f3" : "var(--accent-soft)",
+                        color: "var(--accent)",
+                      }}
+                    >
+                      {pill.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Breaking / Verified Recovery Ticker Strip */}
+          <div
+            className="flex items-center rounded-lg overflow-hidden border text-xs"
+            style={{
+              background: "var(--surface)",
+              borderColor: "var(--border)",
+            }}
+          >
+            <span
+              className="px-3 py-2 font-bold uppercase tracking-wider shrink-0"
+              style={{
+                background: "var(--accent)",
+                color: "#fbf8f3",
+                fontSize: "0.68rem",
+              }}
+            >
+              BREAKING
+            </span>
+            <div
+              className="px-3.5 py-2 flex items-center gap-6 overflow-x-auto whitespace-nowrap"
+              style={{ color: "var(--muted)" }}
+            >
+              <span>
+                <strong style={{ color: "var(--foreground)" }}>ZFS Snapshot #20260823</strong> &middot; Partition stream restoring at 842 MB/s on SAN-POOL-01
+              </span>
+              <span>
+                <strong style={{ color: "var(--foreground)" }}>Zero-Payment Verified</strong> &middot; 95.0% immutable S3 Object Lock + ZFS coverage ($1.8M extortion bypassed)
+              </span>
+              <span>
+                <strong style={{ color: "var(--foreground)" }}>Sandbox-A Enclave</strong> &middot; Primary Domain Controller `DC01.mercy.local` staged clean
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* THE READING: Main Editorial Container Card */}
+      <section className="card-surface p-6 sm:p-8 space-y-8">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div className="space-y-2 max-w-3xl">
+            <div className="desk-kicker">THE READING &middot; 5-PILLAR AUTONOMOUS RECOVERY</div>
+            <h2
+              className="text-2xl sm:text-3xl font-bold font-editorial"
+              style={{ color: "var(--foreground)" }}
+            >
+              The clean snapshot first
+            </h2>
+            <p className="text-xs sm:text-sm leading-relaxed" style={{ color: "var(--muted)" }}>
+              Deterministic transition gates from initial sample triage and FRE 901 Merkle evidence locking to clean-room ZFS/S3 restoration and dual-custody production re-entry.
+            </p>
+            <div className="flex items-center gap-2 pt-1 text-xs" style={{ color: "var(--muted)" }}>
+              <span
+                className="w-2 h-2 rounded-full inline-block"
+                style={{ background: "var(--foreground)" }}
+              />
+              <strong style={{ color: "var(--foreground)" }}>Live</strong>
+              <span>24/24 hosts isolated &middot; 47.2k encrypted files mapped &middot; Phase 3 restoration in progress (42%).</span>
+            </div>
+          </div>
+
+          <Link
+            href="/recovery-ops"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold shrink-0"
+            style={{
+              background: "var(--surface)",
+              color: "var(--foreground)",
+              border: "1px solid var(--border)",
+              boxShadow: "0 1px 2px rgba(31, 27, 24, 0.04)",
+            }}
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Open Recovery Ops Desk</span>
+          </Link>
+        </div>
+
+        {/* 5-Pillar Lifecycle Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+          {pillars.map((pillar) => (
+            <Link
+              key={pillar.step}
+              href={pillar.href}
+              className="p-4 rounded-xl flex flex-col justify-between gap-3 card-hover"
+              style={{
+                background: "var(--background)",
+                border: pillar.active ? "1px solid var(--accent)" : "1px solid var(--border)",
+              }}
+            >
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-1">
+                  <span className="desk-kicker">{pillar.step}</span>
+                  <span
+                    className="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                    style={{
+                      background: pillar.active ? "var(--accent-soft)" : "var(--surface-2)",
+                      color: pillar.active ? "var(--accent)" : "var(--muted)",
+                    }}
+                  >
+                    {pillar.status}
+                  </span>
+                </div>
+                <div className="text-sm font-bold font-editorial" style={{ color: "var(--foreground)" }}>
+                  {pillar.name}
+                </div>
+                <p className="text-xs leading-relaxed" style={{ color: "var(--muted)" }}>
+                  {pillar.desc}
+                </p>
               </div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "#f8fafc" }}>{pillar.name}</div>
-              <div style={{ fontSize: 10.5, color: "var(--muted)", lineHeight: 1.3 }}>{pillar.desc}</div>
-              <div style={{ marginTop: 4, display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: pillar.color, fontWeight: 700 }}>
-                <span>Launch Studio</span>
-                <ChevronRight size={12} />
+              <div className="pt-2 border-t flex items-center justify-between text-[11px] font-bold" style={{ borderColor: "var(--border)", color: "var(--accent)" }}>
+                <span>Open Gate</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </div>
             </Link>
           ))}
         </div>
-      </div>
 
-      {/* DUAL WORKSPACE SECTION: INCIDENT FEED & CONTAINMENT vs QUICK LAUNCH */}
-      <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 16 }}>
-        {/* Left Column: Live Feed and Emergency Controls */}
-        <div className="card-tactical" style={{ padding: "18px 20px", display: "flex", flexDirection: "column", gap: 14 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid var(--border)", paddingBottom: 10 }}>
-            <div style={{ display: "flex", gap: 12 }}>
-              <button
-                onClick={() => setActiveTab("live-feed")}
+        {/* 3-Column Editorial Workbench Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredStudios.map((s) => {
+            const Icon = s.icon;
+            return (
+              <Link
+                key={s.href}
+                href={s.href}
+                className="flex flex-col justify-between p-5 rounded-xl transition-all card-hover"
                 style={{
-                  background: activeTab === "live-feed" ? "rgba(16,185,129,0.15)" : "transparent",
-                  color: activeTab === "live-feed" ? "#10b981" : "var(--muted)",
-                  border: activeTab === "live-feed" ? "1px solid rgba(16,185,129,0.4)" : "1px solid transparent",
-                  padding: "5px 12px",
-                  borderRadius: 6,
-                  fontSize: 12,
-                  fontWeight: 700,
-                  cursor: "pointer"
+                  background: "var(--background)",
+                  border: "1px solid var(--border)",
                 }}
               >
-                Real-Time Incident Stream
-              </button>
-              <button
-                onClick={() => setActiveTab("containment")}
-                style={{
-                  background: activeTab === "containment" ? "rgba(244,63,94,0.15)" : "transparent",
-                  color: activeTab === "containment" ? "#f43f5e" : "var(--muted)",
-                  border: activeTab === "containment" ? "1px solid rgba(244,63,94,0.4)" : "1px solid transparent",
-                  padding: "5px 12px",
-                  borderRadius: 6,
-                  fontSize: 12,
-                  fontWeight: 700,
-                  cursor: "pointer"
-                }}
-              >
-                Emergency Containment Matrix
-              </button>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--muted)" }}>
-              <Activity size={13} color="#10b981" />
-              <span>LIVE TELEMETRY</span>
-            </div>
-          </div>
+                <div className="space-y-3">
+                  <div
+                    className="flex items-center justify-between gap-2 border-b pb-2.5"
+                    style={{ borderColor: "var(--border)" }}
+                  >
+                    <span className="desk-kicker">{s.kicker}</span>
+                    <span
+                      className="px-2 py-0.5 rounded-full text-[11px] font-bold"
+                      style={{
+                        background: "var(--accent-soft)",
+                        color: "var(--accent)",
+                      }}
+                    >
+                      {s.badge}
+                    </span>
+                  </div>
 
-          {activeTab === "live-feed" ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {recentIncidents.map((inc, i) => (
+                  <div className="flex items-center gap-2.5 pt-1">
+                    <div
+                      className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                      style={{
+                        background: "var(--surface)",
+                        border: "1px solid var(--border)",
+                        color: "var(--accent)",
+                      }}
+                    >
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    <h3
+                      className="text-lg font-bold leading-snug font-editorial"
+                      style={{ color: "var(--foreground)" }}
+                    >
+                      {s.title}
+                    </h3>
+                  </div>
+
+                  <p className="text-xs leading-relaxed" style={{ color: "var(--muted)" }}>
+                    {s.desc}
+                  </p>
+                </div>
+
                 <div
-                  key={i}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    padding: "10px 12px",
-                    borderRadius: 6,
-                    background: "var(--surface-2)",
-                    border: "1px solid var(--border)"
-                  }}
+                  className="pt-4 mt-4 border-t flex flex-wrap items-center justify-between gap-2"
+                  style={{ borderColor: "var(--border)" }}
                 >
-                  <span style={{ fontSize: 10, color: "var(--muted)", fontFamily: "monospace", width: 85 }}>{inc.time}</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {s.metrics.map((m) => (
+                      <span
+                        key={m}
+                        className="text-[11px] px-2 py-0.5 rounded font-medium"
+                        style={{
+                          background: "var(--surface)",
+                          color: "var(--muted)",
+                          border: "1px solid var(--border)",
+                        }}
+                      >
+                        {m}
+                      </span>
+                    ))}
+                  </div>
+                  <ArrowRight className="w-3.5 h-3.5" style={{ color: "var(--accent)" }} />
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Live Telemetry Ledger & Emergency Containment Controls */}
+      <section className="card-surface p-6 sm:p-8 space-y-5">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-4" style={{ borderColor: "var(--border)" }}>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setActiveTab("live-feed")}
+              className="px-3.5 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all"
+              style={{
+                background: activeTab === "live-feed" ? "var(--accent)" : "var(--background)",
+                color: activeTab === "live-feed" ? "#fbf8f3" : "var(--foreground)",
+                border: activeTab === "live-feed" ? "1px solid #72361d" : "1px solid var(--border)",
+              }}
+            >
+              Real-Time Incident Stream
+            </button>
+            <button
+              onClick={() => setActiveTab("containment")}
+              className="px-3.5 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all"
+              style={{
+                background: activeTab === "containment" ? "var(--accent)" : "var(--background)",
+                color: activeTab === "containment" ? "#fbf8f3" : "var(--foreground)",
+                border: activeTab === "containment" ? "1px solid #72361d" : "1px solid var(--border)",
+              }}
+            >
+              Emergency Containment Matrix
+            </button>
+          </div>
+          <div className="text-xs font-semibold flex items-center gap-2" style={{ color: "var(--muted)" }}>
+            <CheckCircle2 className="w-4 h-4" style={{ color: "var(--success)" }} />
+            <span>Zero-Payment Strategy &middot; 95.0% Immutable Snapshot Coverage</span>
+          </div>
+        </div>
+
+        {activeTab === "live-feed" ? (
+          <div className="grid grid-cols-1 gap-2.5">
+            {recentIncidents.map((inc, i) => (
+              <div
+                key={i}
+                className="p-3.5 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                style={{
+                  background: "var(--background)",
+                  border: "1px solid var(--border)",
+                }}
+              >
+                <div className="flex items-center gap-3">
                   <span
+                    className="text-xs font-mono font-bold px-2.5 py-1 rounded shrink-0"
                     style={{
-                      fontSize: 9,
-                      fontWeight: 800,
-                      padding: "2px 6px",
-                      borderRadius: 4,
-                      fontFamily: "monospace",
-                      background: inc.level === "CRITICAL" || inc.level === "ALERT" ? "rgba(244,63,94,0.2)" : inc.level === "SUCCESS" ? "rgba(16,185,129,0.2)" : "rgba(6,182,212,0.2)",
-                      color: inc.level === "CRITICAL" || inc.level === "ALERT" ? "#f43f5e" : inc.level === "SUCCESS" ? "#10b981" : "#06b6d4"
+                      background: "var(--accent-soft)",
+                      color: "var(--accent)",
                     }}
                   >
                     {inc.badge}
                   </span>
-                  <span style={{ fontSize: 11.5, color: "var(--fg-2)", flex: 1 }}>{inc.msg}</span>
+                  <span className="text-xs sm:text-sm font-medium" style={{ color: "var(--foreground)" }}>
+                    {inc.msg}
+                  </span>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <div style={{ fontSize: 12, color: "var(--muted)" }}>
-                Emergency switches allow zero-trust isolation of corrupted subnets, revocation of administrative Kerberos tickets, and hardware snapshot write-locks.
+                <span className="text-xs font-mono shrink-0" style={{ color: "var(--muted)" }}>
+                  {inc.time}
+                </span>
               </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                <div style={{ padding: 12, borderRadius: 6, background: "var(--surface-2)", border: "1px solid var(--border)" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span style={{ fontSize: 12, fontWeight: 700 }}>Network Egress Sever</span>
-                    <button
-                      onClick={() => setNetworkIsolation(!networkIsolation)}
-                      style={{
-                        padding: "4px 10px",
-                        borderRadius: 4,
-                        fontSize: 11,
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        background: networkIsolation ? "rgba(244,63,94,0.2)" : "rgba(16,185,129,0.2)",
-                        color: networkIsolation ? "#f43f5e" : "#10b981",
-                        border: networkIsolation ? "1px solid #f43f5e" : "1px solid #10b981"
-                      }}
-                    >
-                      {networkIsolation ? "SEVERED" : "ENABLED"}
-                    </button>
-                  </div>
-                  <div style={{ fontSize: 10.5, color: "var(--muted)", marginTop: 6 }}>BGP routes withdrawn; WAN firewalls dropping all egress packets</div>
-                </div>
-
-                <div style={{ padding: 12, borderRadius: 6, background: "var(--surface-2)", border: "1px solid var(--border)" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span style={{ fontSize: 12, fontWeight: 700 }}>Immutable S3 Object Lock</span>
-                    <button
-                      onClick={() => setS3VaultLocked(!s3VaultLocked)}
-                      style={{
-                        padding: "4px 10px",
-                        borderRadius: 4,
-                        fontSize: 11,
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        background: s3VaultLocked ? "rgba(16,185,129,0.2)" : "rgba(244,63,94,0.2)",
-                        color: s3VaultLocked ? "#10b981" : "#f43f5e",
-                        border: s3VaultLocked ? "1px solid #10b981" : "1px solid #f43f5e"
-                      }}
-                    >
-                      {s3VaultLocked ? "COMPLIANCE WORM" : "UNLOCKED"}
-                    </button>
-                  </div>
-                  <div style={{ fontSize: 10.5, color: "var(--muted)", marginTop: 6 }}>AWS S3 Compliance mode prevents deletion even by root account</div>
-                </div>
-              </div>
-
-              <div style={{ display: "flex", gap: 10 }}>
-                <button
-                  onClick={() => alert("Kerberos KRBTGT double password roll triggered enterprise-wide.")}
-                  className="btn-secondary"
-                  style={{ flex: 1, fontSize: 11.5, justifyContent: "center" }}
-                >
-                  <RefreshCw size={13} />
-                  <span>Execute KRBTGT Double Roll</span>
-                </button>
-                <button
-                  onClick={() => alert("Forensic RAM snapshot dumped to cold storage.")}
-                  className="btn-secondary"
-                  style={{ flex: 1, fontSize: 11.5, justifyContent: "center" }}
-                >
-                  <Database size={13} />
-                  <span>Freeze Hypervisor State</span>
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Right Column: Quick-Launch Studios Matrix */}
-        <div className="card-tactical" style={{ padding: "18px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid var(--border)", paddingBottom: 10 }}>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 800, color: "#f8fafc" }}>RECOVERY STUDIOS QUICK-LAUNCH</div>
-              <div style={{ fontSize: 11, color: "var(--muted)" }}>Direct access to all forensic and restoration consoles</div>
-            </div>
-            <ExternalLink size={14} color="#06b6d4" />
+            ))}
           </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            {studios.map((st, i) => {
-              const Icon = st.icon;
-              return (
-                <Link
-                  key={i}
-                  href={st.path}
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div
+              className="p-5 rounded-xl space-y-2"
+              style={{ background: "var(--background)", border: "1px solid var(--border)" }}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-bold font-editorial" style={{ color: "var(--foreground)" }}>
+                  Network Egress Sever (VLAN 104)
+                </span>
+                <button
+                  onClick={() => setNetworkIsolation(!networkIsolation)}
+                  className="px-3 py-1 rounded-full text-xs font-bold cursor-pointer"
                   style={{
-                    textDecoration: "none",
-                    background: "var(--surface-2)",
+                    background: networkIsolation ? "var(--accent)" : "var(--surface)",
+                    color: networkIsolation ? "#fbf8f3" : "var(--foreground)",
                     border: "1px solid var(--border)",
-                    borderRadius: 6,
-                    padding: "10px 12px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 4,
-                    transition: "all 0.15s ease"
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <div style={{ width: 22, height: 22, borderRadius: 4, background: "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <Icon size={12} color={st.color} />
-                    </div>
-                    <span style={{ fontSize: 9, color: st.color, fontWeight: 800, fontFamily: "monospace" }}>{st.tag}</span>
-                  </div>
-                  <div style={{ fontSize: 11.5, fontWeight: 700, color: "#f8fafc", marginTop: 2 }}>{st.title}</div>
-                  <div style={{ fontSize: 10, color: "var(--muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {st.desc}
-                  </div>
-                </Link>
-              );
-            })}
+                  {networkIsolation ? "SEVERED" : "ENABLED"}
+                </button>
+              </div>
+              <p className="text-xs" style={{ color: "var(--muted)" }}>
+                BGP routes withdrawn and SMB/RDP ports 445 &amp; 3389 isolated across 24 affected clinical hosts.
+              </p>
+            </div>
+
+            <div
+              className="p-5 rounded-xl space-y-2"
+              style={{ background: "var(--background)", border: "1px solid var(--border)" }}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-bold font-editorial" style={{ color: "var(--foreground)" }}>
+                  Immutable S3 Object Lock (WORM)
+                </span>
+                <button
+                  onClick={() => setS3VaultLocked(!s3VaultLocked)}
+                  className="px-3 py-1 rounded-full text-xs font-bold cursor-pointer"
+                  style={{
+                    background: s3VaultLocked ? "var(--accent)" : "var(--surface)",
+                    color: s3VaultLocked ? "#fbf8f3" : "var(--foreground)",
+                    border: "1px solid var(--border)",
+                  }}
+                >
+                  {s3VaultLocked ? "COMPLIANCE WORM" : "UNLOCKED"}
+                </button>
+              </div>
+              <p className="text-xs" style={{ color: "var(--muted)" }}>
+                AWS S3 Object Lock Compliance mode &amp; ZFS read-only hardware locks prevent snapshot tampering.
+              </p>
+            </div>
           </div>
-        </div>
-      </div>
+        )}
+      </section>
     </div>
   );
 }

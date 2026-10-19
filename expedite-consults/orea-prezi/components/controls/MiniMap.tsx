@@ -24,10 +24,10 @@ export const MiniMap: React.FC<MiniMapProps> = ({
   // Map virtual canvas coordinates [-1600, 1600] x [-1200, 1400] to MiniMap size [160, 110]
   const mapWidth = 170;
   const mapHeight = 115;
-  const canvasMinX = -1300;
-  const canvasMaxX = 1300;
-  const canvasMinY = -900;
-  const canvasMaxY = 1200;
+  const canvasMinX = -3200;
+  const canvasMaxX = 3200;
+  const canvasMinY = -2200;
+  const canvasMaxY = 2400;
 
   const toMapX = (x: number) => {
     return ((x - canvasMinX) / (canvasMaxX - canvasMinX)) * mapWidth;
@@ -72,7 +72,7 @@ export const MiniMap: React.FC<MiniMapProps> = ({
               className="bg-slate-950/90 rounded border border-slate-800/80 cursor-crosshair relative"
             >
               {/* Center origin crosshair */}
-              <circle cx={toMapX(0)} cy={toMapY(-80)} r={3} fill="#38bdf8" fillOpacity={0.7} />
+              <circle cx={toMapX(0)} cy={toMapY(0)} r={3.5} fill="#38bdf8" fillOpacity={0.8} />
 
               {/* Cluster nodes */}
               {clusters.map((c) => {

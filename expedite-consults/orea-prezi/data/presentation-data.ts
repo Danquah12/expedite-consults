@@ -9,9 +9,9 @@ export const CLUSTERS: ClusterData[] = [
     icon: "Compass",
     accentColor: "#3b82f6", // Blue
     badge: "Pillar 01",
-    x: -850,
-    y: -480,
-    radius: 340,
+    x: -1500,
+    y: -900,
+    radius: 400,
     slides: [
       {
         id: "s-vision-thesis",
@@ -19,9 +19,9 @@ export const CLUSTERS: ClusterData[] = [
         kicker: "Executive Vision",
         title: "The 2030 Horizon: Transforming Ontario Real Estate",
         subtitle: "A digital-first paradigm built for consumer trust, member growth, and market velocity.",
-        x: -950,
-        y: -580,
-        scale: 1.6,
+        x: -1950,
+        y: -900,
+        scale: 1.65,
         presenterNotes:
           "Welcome leadership and board members. Today we unveil the OREA-PREZI strategic blueprint. Highlight that Ontario's real estate ecosystem is facing regulatory shifts under TRESA, rapid AI adoption, and evolving consumer expectations. Our mission is delivering proactive, frictionless tools for every Realtor.",
         metrics: [
@@ -59,9 +59,9 @@ export const CLUSTERS: ClusterData[] = [
         kicker: "Strategic Framework",
         title: "Three Core Modernization Pillars",
         subtitle: "Synthesizing member value, regulatory compliance, and cutting-edge digital experiences.",
-        x: -750,
-        y: -380,
-        scale: 1.6,
+        x: -1050,
+        y: -900,
+        scale: 1.65,
         presenterNotes:
           "Walk through the three strategic pillars: Standard Forms Modernization, MLS Unified Interoperability, and Member Intelligence. Each pillar drives measurable savings and reduces liability for Ontario brokers.",
         metrics: [
@@ -97,9 +97,9 @@ export const CLUSTERS: ClusterData[] = [
     icon: "FileCheck2",
     accentColor: "#10b981", // Emerald
     badge: "Pillar 02",
-    x: 850,
-    y: -480,
-    radius: 340,
+    x: 1500,
+    y: -900,
+    radius: 400,
     slides: [
       {
         id: "s-forms-smart",
@@ -107,9 +107,9 @@ export const CLUSTERS: ClusterData[] = [
         kicker: "Next-Gen Documents",
         title: "OREA Standard Forms 2.0: Dynamic Smart Contracts",
         subtitle: "Eliminating manual clause entry with intelligent condition validators and instant legal verification.",
-        x: 750,
-        y: -580,
-        scale: 1.6,
+        x: 1050,
+        y: -900,
+        scale: 1.65,
         presenterNotes:
           "Highlight how Standard Forms 2.0 eliminates 80% of drafting errors. Point out the dynamic condition generator that automatically adjusts financing and inspection clauses based on property type and municipality.",
         metrics: [
@@ -134,9 +134,9 @@ export const CLUSTERS: ClusterData[] = [
         kicker: "Regulatory Defense",
         title: "TRESA Compliance Engine & Audit Assurance",
         subtitle: "Automating mandatory disclosures, open-offer transparent options, and FINTRAC verification.",
-        x: 950,
-        y: -380,
-        scale: 1.6,
+        x: 1950,
+        y: -900,
+        scale: 1.65,
         presenterNotes:
           "Stress that TRESA compliance is the single highest concern for brokerages. Our engine validates open offer opt-ins, designated agency agreements, and buyer representation disclosures prior to submission.",
         bullets: [
@@ -171,9 +171,9 @@ export const CLUSTERS: ClusterData[] = [
     icon: "Network",
     accentColor: "#06b6d4", // Cyan
     badge: "Pillar 03",
-    x: 0,
-    y: 0,
-    radius: 360,
+    x: 2100,
+    y: 350,
+    radius: 400,
     slides: [
       {
         id: "s-mls-architecture",
@@ -181,9 +181,9 @@ export const CLUSTERS: ClusterData[] = [
         kicker: "Data Architecture",
         title: "The Ontario Real Estate Unified Data Fabric",
         subtitle: "Eliminating data silos between TRREB, RAHB, Ottawa, London-St. Thomas, and regional boards.",
-        x: 0,
-        y: -80,
-        scale: 1.7,
+        x: 1650,
+        y: 350,
+        scale: 1.65,
         presenterNotes:
           "This is the core technical architecture slide. Walk through how the unified data fabric normalizes listings, historical sold data, and tax records across all Ontario real estate boards in under 200 milliseconds.",
         widgetType: "architecture-diagram",
@@ -221,9 +221,9 @@ export const CLUSTERS: ClusterData[] = [
         kicker: "Member Experience",
         title: "Universal Member Search & Comparative Market Tool",
         subtitle: "Giving every Ontario Realtor instant access to province-wide historical data and neighborhood analytics.",
-        x: 0,
-        y: 120,
-        scale: 1.7,
+        x: 2550,
+        y: 350,
+        scale: 1.65,
         presenterNotes:
           "Show how Realtors can generate high-gloss, client-facing CMA reports in seconds, complete with school rankings, transit scores, and past sales comparisons.",
         bullets: [
@@ -254,9 +254,9 @@ export const CLUSTERS: ClusterData[] = [
     icon: "Sparkles",
     accentColor: "#8b5cf6", // Purple
     badge: "Pillar 04",
-    x: -850,
-    y: 480,
-    radius: 340,
+    x: 1200,
+    y: 1550,
+    radius: 400,
     slides: [
       {
         id: "s-ai-copilot",
@@ -264,9 +264,9 @@ export const CLUSTERS: ClusterData[] = [
         kicker: "Next-Gen AI",
         title: "OreaAI Listing Copilot: From Notes to Staged Marketing",
         subtitle: "Generate compelling MLS descriptions, social assets, and video walk-through scripts in seconds.",
-        x: -950,
-        y: 380,
-        scale: 1.6,
+        x: 750,
+        y: 1550,
+        scale: 1.65,
         presenterNotes:
           "OreaAI is trained specifically on Canadian real estate law and advertising guidelines. It flags non-compliant claims, prevents fair housing wording issues, and crafts bilingual listing copy in French and English.",
         metrics: [
@@ -298,9 +298,9 @@ export const CLUSTERS: ClusterData[] = [
         kicker: "Market Science",
         title: "Predictive Pricing & Ontario Liquidity Radar",
         subtitle: "Empower clients with hyper-local probabilistic pricing models and days-on-market forecasting.",
-        x: -750,
-        y: 580,
-        scale: 1.6,
+        x: 1650,
+        y: 1550,
+        scale: 1.65,
         presenterNotes:
           "Demonstrate that OreaAI doesn't just look at past comparables; it evaluates interest rate trajectories, inventory absorption rates, and seasonal micro-trends to predict listing velocity with 94% precision.",
         bullets: [
@@ -331,9 +331,9 @@ export const CLUSTERS: ClusterData[] = [
     icon: "Megaphone",
     accentColor: "#f59e0b", // Amber
     badge: "Pillar 05",
-    x: 850,
-    y: 480,
-    radius: 340,
+    x: -1200,
+    y: 1550,
+    radius: 400,
     slides: [
       {
         id: "s-advocacy-policy",
@@ -341,9 +341,9 @@ export const CLUSTERS: ClusterData[] = [
         kicker: "Government Relations",
         title: "The Housing Affordability & Supply Agenda",
         subtitle: "Policy proposals accelerating 1.5 million homes, cutting red tape, and protecting first-time buyers.",
-        x: 750,
-        y: 380,
-        scale: 1.6,
+        x: -1650,
+        y: 1550,
+        scale: 1.65,
         presenterNotes:
           "Highlight OREA's leadership in Queen's Park and Ottawa. We've championed ending exclusionary zoning, allowing fourplexes as-of-right, and expanding municipal infrastructure funding to unblock home building.",
         metrics: [
@@ -375,9 +375,9 @@ export const CLUSTERS: ClusterData[] = [
         kicker: "Professional Standards",
         title: "OREA Leadership Academy & Continuing Education",
         subtitle: "Next-generation professional development empowering Realtors to thrive in an AI and advisory era.",
-        x: 950,
-        y: 580,
-        scale: 1.6,
+        x: -750,
+        y: 1550,
+        scale: 1.65,
         presenterNotes:
           "Discuss the transformation of OREA continuing education into on-demand micro-credentials, executive commercial diplomas, and ethical advisory workshops.",
         bullets: [
@@ -408,9 +408,9 @@ export const CLUSTERS: ClusterData[] = [
     icon: "Rocket",
     accentColor: "#ec4899", // Pink
     badge: "Pillar 06",
-    x: 0,
-    y: 920,
-    radius: 360,
+    x: -2100,
+    y: 350,
+    radius: 400,
     slides: [
       {
         id: "s-roadmap-phases",
@@ -418,9 +418,9 @@ export const CLUSTERS: ClusterData[] = [
         kicker: "Implementation Timeline",
         title: "The 3-Year Modernization Master Plan",
         subtitle: "Phased architecture deployment ensuring zero disruption to daily real estate operations.",
-        x: -120,
-        y: 840,
-        scale: 1.6,
+        x: -2550,
+        y: 350,
+        scale: 1.65,
         presenterNotes:
           "Walk through the phased schedule. Phase 1 delivers Standard Forms 2.0 and TRESA automation by Q4 2026, followed by the MLS Unified Data Fabric in 2027 and OreaAI Enterprise rollout in 2028.",
         widgetType: "timeline-flow",
@@ -479,9 +479,9 @@ export const CLUSTERS: ClusterData[] = [
         kicker: "Value Realization",
         title: "Economic Impact & Member ROI Model",
         subtitle: "Interactive value assessment modeling hours saved, risk mitigation, and member retention dividends.",
-        x: 120,
-        y: 960,
-        scale: 1.6,
+        x: -1650,
+        y: 350,
+        scale: 1.65,
         presenterNotes:
           "Conclude the presentation with the member ROI impact. Use the interactive calculator to show how an average brokerage of 50 agents saves over $240,000 annually in administrative and legal review overhead.",
         widgetType: "roi-calculator",
@@ -510,5 +510,5 @@ export const PRESENTATION_META = {
   fullTitle: "Ontario Real Estate Association — Strategic Platform & Digital Horizon",
   author: "OREA Digital Transformation Taskforce",
   year: "2026-2028",
-  overviewCoordinates: { x: 0, y: 150, zoom: 0.38 }
+  overviewCoordinates: { x: 0, y: 120, zoom: 0.28 }
 };
