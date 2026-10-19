@@ -13,6 +13,7 @@ export interface LiveEndpointProbe {
 }
 
 export interface TargetScanResult {
+  schemaVersion?: string;
   targetUrl: string;
   finalUrl: string;
   host: string;
@@ -1247,34 +1248,51 @@ async function probeTarget(
       });
     }
 
-    // Finding 5: Live Cookie Security Attributes Audit
+    // Finding 5: Live Cookie Security Attributes Audit (Distinguishing Session/Auth Cookies vs. Non-Session Tracking/Preference Cookies)
     const insecureCookies = cookiesAudit.filter(c => !c.secure || !c.httpOnly || !c.sameSite);
     if (insecureCookies.length > 0) {
+      const sessionCookieRegex = /(sess|ssess|phpsessid|jsessionid|aspsessionid|token|auth|jwt|sid|login|user_id)/i;
+      const hasSessionCookie = insecureCookies.some(c => sessionCookieRegex.test(c.name));
+      const cookieNamesStr = insecureCookies.map(c => c.name).join(", ");
+      const cookieBreakdownLines = insecureCookies.map(c => {
+        const missingFlags = [
+          !c.secure ? "Secure" : null,
+          !c.httpOnly ? "HttpOnly" : null,
+          !c.sameSite ? "SameSite" : null
+        ].filter(Boolean).join(", ");
+        const cookieClass = sessionCookieRegex.test(c.name) ? "Authentication/Session Cookie" : "Tracking/Localization Cookie";
+        return `• Set-Cookie: ${c.raw} [${cookieClass} — Missing: ${missingFlags}]`;
+      });
+
       liveFindings.push({
         id: `LIVE-${host}-COOKIES`,
-        title: `[LIVE EXTERNAL AUDIT] Session Cookie Missing Security Flags (HttpOnly / Secure / SameSite) on ${host}`,
-        severity: "Medium",
+        title: hasSessionCookie
+          ? `[LIVE EXTERNAL AUDIT] Session Cookie Missing Security Flags (HttpOnly / Secure / SameSite) on ${host}`
+          : `[LIVE EXTERNAL AUDIT] Cookie Hardening Attributes Missing (Secure / HttpOnly / SameSite) on Non-Session Cookies (${cookieNamesStr}) on ${host}`,
+        severity: hasSessionCookie ? "Medium" : "Low",
         confidence: "Confirmed",
         plugin: "Auth",
         url: finalUrl,
-        parameter: insecureCookies.map(c => c.name).join(", "),
+        parameter: cookieNamesStr,
         method: "GET",
-        owaspRef: "A07:2021 · WSTG-SESS-02 · ASVS V3.4",
+        owaspRef: "A05:2021 · WSTG-SESS-02 · ASVS V3.4",
         cweId: "CWE-614",
-        description: `Live inspection of 'Set-Cookie' headers returned by ${finalUrl} found ${insecureCookies.length} cookie(s) missing Secure, HttpOnly, or SameSite attributes.`,
-        impact: "Cookies lacking HttpOnly can be read via document.cookie during XSS; cookies lacking Secure can leak over HTTP; cookies lacking SameSite are sent on cross-site CSRF requests.",
-        remediation: "Append '; Secure; HttpOnly; SameSite=Lax' (or Strict) to all session and authentication Set-Cookie headers.",
+        description: `Live inspection of 'Set-Cookie' headers returned by ${finalUrl} identified ${insecureCookies.length} cookie(s) (${cookieNamesStr}) missing Secure, HttpOnly, or SameSite attributes. ${hasSessionCookie ? "At least one affected cookie matches an authentication/session identifier pattern." : "Observed Fact: The affected cookies appear to be tracking/localization or preference cookies rather than primary authenticated session identifiers, so severity is rated Low (Hardening Observation)."}`,
+        impact: hasSessionCookie
+          ? "Session cookies lacking HttpOnly can be read via document.cookie if an XSS flaw exists; cookies lacking Secure can be transmitted over cleartext HTTP; cookies lacking SameSite are sent on cross-site requests."
+          : "Non-session tracking/preference cookies without Secure, HttpOnly, and SameSite attributes can be read by client-side scripts or sent across cross-origin requests, slightly increasing client-state exposure.",
+        remediation: "Append '; Secure; HttpOnly; SameSite=Lax' (or Strict) to all Set-Cookie response headers at the application or edge proxy layer.",
         evidence: {
-          originalRequest: `GET / HTTP/1.1\r\nHost: ${host}`,
-          testRequest: `GET ${finalUrl} HTTP/1.1\r\nHost: ${host}`,
+          originalRequest: `GET ${new URL(finalUrl).pathname || "/"} HTTP/1.1\r\nHost: ${host}\r\nUser-Agent: ExpediteStrike-LiveScanner/5.0`,
+          testRequest: `GET ${new URL(finalUrl).pathname || "/"} HTTP/1.1\r\nHost: ${host}\r\nUser-Agent: ExpediteStrike-Cookie-Auditor/5.0`,
           originalResponse: rawHeadersText,
-          testResponse: insecureCookies.map(c => `Set-Cookie: ${c.raw}`).join("\r\n"),
+          testResponse: `HTTP/1.1 ${statusCode} OK\r\n${insecureCookies.map(c => `Set-Cookie: ${c.raw}`).join("\r\n")}\r\n\r\n[LIVE SET-COOKIE ATTRIBUTE & CLASSIFICATION AUDIT — ${finalUrl}]\r\n${cookieBreakdownLines.join("\r\n")}`,
           payload: "Live Set-Cookie Attribute Audit (WSTG-SESS-02)",
-          matchedPattern: insecureCookies.map(c => c.raw).join(" | "),
+          matchedPattern: insecureCookies.map(c => `Set-Cookie: ${c.raw}`).join(" | "),
           reproductionSteps: [
-            `Step 1 (Capture Set-Cookie): Run 'curl -s -I ${finalUrl} | grep -i set-cookie'.`,
-            `Step 2 (Inspect Flags): Check each cookie for 'Secure', 'HttpOnly', and 'SameSite'.`,
-            `Step 3 (Verify Missing Flags): Confirm ${insecureCookies.map(c => c.name).join(", ")} lacks full flag protection.`
+            `Step 1 (Capture Set-Cookie): Run 'curl -s -I "${finalUrl}" | grep -i "set-cookie"'.`,
+            `Step 2 (Inspect Flags & Cookie Role): Check each cookie (${cookieNamesStr}) for 'Secure', 'HttpOnly', and 'SameSite' attributes and classify whether it is a session or preference cookie.`,
+            `Step 3 (Verify Missing Flags): Confirm ${cookieNamesStr} is returned without full attribute hardening.`
           ]
         },
         ttp: [
@@ -1283,25 +1301,25 @@ async function probeTarget(
             tacticId: "TA0006",
             technique: "Steal Web Session Cookie",
             techniqueId: "T1539",
-            procedure: `Cookies set by ${host} without HttpOnly/Secure flags are exposed to client-side script access or network interception.`,
+            procedure: `Cookies set by ${host} (${cookieNamesStr}) without HttpOnly/Secure/SameSite flags are exposed to client-side script access or cross-site transmission.`,
             mitigations: ["M1054 — Set HttpOnly, Secure, and SameSite flags on all cookies"],
             references: ["https://attack.mitre.org/techniques/T1539/"]
           }
         ],
         poc: {
           description: `Check live Set-Cookie headers on ${finalUrl}`,
-          curlCommand: `curl -s -I "${finalUrl}" | grep -i "set-cookie"\n# ➔ [CAPTURED RESULT]: ${insecureCookies.map(c => c.raw).join(" | ")}`,
-          pythonScript: `import requests\nr = requests.get("${finalUrl}", timeout=10)\nfor k, v in r.cookies.items():\n    print(f"[*] Cookie on ${host}: {k}={v}")\n# ➔ [CAPTURED RESULT]: Insecure cookies detected on ${host}: ${insecureCookies.map(c => c.name).join(", ")}`,
-          expectedResult: "Set-Cookie header returned without Secure, HttpOnly, or SameSite attributes.",
-          severity: "Medium — CVSS 5.3"
+          curlCommand: `curl -s -I "${finalUrl}" | grep -i "set-cookie"\n# ➔ [CAPTURED RESULT]: ${insecureCookies.map(c => `set-cookie: ${c.raw}`).join(" | ")}`,
+          pythonScript: `import requests\nr = requests.get("${finalUrl}", timeout=10)\nfor k, v in r.cookies.items():\n    print(f"[*] Cookie on ${host}: {k}={v}")\n# ➔ [CAPTURED RESULT]: Cookies missing Secure/HttpOnly/SameSite on ${host}: ${cookieNamesStr}`,
+          expectedResult: `Set-Cookie header(s) (${cookieNamesStr}) returned without Secure, HttpOnly, or SameSite attributes.`,
+          severity: hasSessionCookie ? "Medium — CVSS 5.3" : "Low — CVSS 3.4"
         },
         collectedEvidence: [
           {
             type: "LIVE_COOKIE_AUDIT",
             title: `Sample Evidence 1 — Live Set-Cookie Headers Captured from ${finalUrl}`,
-            content: insecureCookies.map(c => `Set-Cookie: ${c.raw}\nFlags -> Secure: ${c.secure}, HttpOnly: ${c.httpOnly}, SameSite: ${c.sameSite}`).join("\n\n"),
-            highlight: insecureCookies[0]?.name || "Set-Cookie",
-            annotation: "Captured directly from the live HTTP response."
+            content: insecureCookies.map(c => `Set-Cookie: ${c.raw}\nClassification: ${sessionCookieRegex.test(c.name) ? "Session/Auth" : "Tracking/Preference"}\nFlags -> Secure: ${c.secure}, HttpOnly: ${c.httpOnly}, SameSite: ${c.sameSite}`).join("\n\n"),
+            highlight: insecureCookies[0]?.raw || cookieNamesStr,
+            annotation: "Captured directly from the live HTTP response headers."
           }
         ],
         verificationStatus: "Verified",
@@ -1374,32 +1392,46 @@ async function probeTarget(
       });
     }
 
-    // Finding 7: Server / Technology Banner Information Disclosure
-    if (headersMap["server"] || poweredByHeader) {
+    // Finding 7: Server / Technology / Backend Header Information Disclosure (Only Actual Disclosed Headers — Never "Undisclosed Web Server")
+    const disclosedBannerHeaders: Array<{ headerName: string; value: string }> = [
+      headersMap["server"] ? { headerName: "server", value: headersMap["server"] } : null,
+      headersMap["x-powered-by"] ? { headerName: "x-powered-by", value: headersMap["x-powered-by"] } : null,
+      headersMap["x-generator"] ? { headerName: "x-generator", value: headersMap["x-generator"] } : null,
+      headersMap["x-aspnet-version"] ? { headerName: "x-aspnet-version", value: headersMap["x-aspnet-version"] } : null,
+      headersMap["x-backend"] ? { headerName: "x-backend", value: headersMap["x-backend"] } : null,
+      headersMap["x-be"] ? { headerName: "x-be", value: headersMap["x-be"] } : null
+    ].filter((item): item is { headerName: string; value: string } => Boolean(item));
+
+    if (disclosedBannerHeaders.length > 0) {
+      const disclosedSummary = disclosedBannerHeaders.map(h => `${h.headerName}: ${h.value}`).join(" | ");
+      const disclosedNames = disclosedBannerHeaders.map(h => h.headerName).join(", ");
+      const primaryDisclosed = `${disclosedBannerHeaders[0].headerName}: ${disclosedBannerHeaders[0].value}`;
+
       liveFindings.push({
         id: `LIVE-${host}-BANNER`,
-        title: `[LIVE EXTERNAL AUDIT] Web Server & Technology Stack Fingerprint Disclosure (${serverHeader}${poweredByHeader ? ` · ${poweredByHeader}` : ""}) on ${host}`,
+        title: `[LIVE EXTERNAL AUDIT] Technology Stack & Backend Header Disclosure (${disclosedSummary}) on ${host}`,
         severity: "Low",
         confidence: "Confirmed",
         plugin: "Header",
         url: finalUrl,
-        parameter: "Server / X-Powered-By Response Headers",
+        parameter: `${disclosedNames} (HTTP Response Headers)`,
         method: "GET",
         owaspRef: "A05:2021 · WSTG-INFO-02 · ASVS V14.3.3",
         cweId: "CWE-200",
-        description: `Live HTTP response headers from ${finalUrl} (Page Title: "${domDiscoveryParsed.pageTitle}") disclose infrastructure and framework identifiers: Server='${serverHeader}'${poweredByHeader ? `, X-Powered-By='${poweredByHeader}'` : ""}.`,
-        impact: "Assists automated reconnaissance in fingerprinting exact web server, edge proxy, or runtime versions.",
-        remediation: "Suppress verbose 'Server' and 'X-Powered-By' headers in web server / framework configuration (e.g., ServerTokens Prod in Apache, server_tokens off in Nginx, poweredByHeader: false in Next.js).",
+        description: `Live HTTP response headers from ${finalUrl} (Page Title: "${domDiscoveryParsed.pageTitle}") disclose internal framework, CMS, or backend routing identifiers: ${disclosedSummary}.${!headersMap["server"] ? " (Note: Primary 'Server' header is suppressed/hardened, but downstream technology headers remain exposed.)" : ""}`,
+        impact: "Assists external reconnaissance in fingerprinting exact CMS/framework versions (such as Drupal 7) and internal backend cluster names.",
+        remediation: `Strip verbose technology and backend routing headers (${disclosedNames}) at the reverse proxy or CDN edge before returning responses to external clients.`,
         evidence: {
-          originalRequest: `GET / HTTP/1.1\r\nHost: ${host}`,
-          testRequest: `HEAD ${finalUrl} HTTP/1.1\r\nHost: ${host}`,
+          originalRequest: `GET ${new URL(finalUrl).pathname || "/"} HTTP/1.1\r\nHost: ${host}\r\nUser-Agent: ExpediteStrike-LiveScanner/5.0`,
+          testRequest: `HEAD ${new URL(finalUrl).pathname || "/"} HTTP/1.1\r\nHost: ${host}\r\nUser-Agent: ExpediteStrike-Banner-Auditor/5.0`,
           originalResponse: rawHeadersText,
-          testResponse: `[ACTIVE SERVER & STACK FINGERPRINT AUDIT — ${host}]\r\nServer Banner: ${serverHeader}${poweredByHeader ? `\r\nX-Powered-By: ${poweredByHeader}` : ""}\r\nPage Title: ${domDiscoveryParsed.pageTitle}\r\nAllowed HTTP Methods: ${allowedMethods}\r\nResponse Latency: ${responseTimeMs}ms (HTTP ${statusCode})`,
-          payload: "Passive Banner Grabbing (WSTG-INFO-02)",
-          matchedPattern: `Server: ${serverHeader}`,
+          testResponse: `HTTP/1.1 ${statusCode} OK\r\n${disclosedBannerHeaders.map(h => `${h.headerName}: ${h.value}`).join("\r\n")}\r\n\r\n[ACTIVE TECHNOLOGY & BACKEND HEADER FINGERPRINT AUDIT — ${host}]\r\n• Primary Server Header: ${headersMap["server"] ? headersMap["server"] : "Suppressed / Not Returned"}\r\n• Disclosed Technology / Backend Headers:\r\n${disclosedBannerHeaders.map(h => `  - ${h.headerName}: ${h.value}`).join("\r\n")}\r\n• Page Title: ${domDiscoveryParsed.pageTitle}\r\n• Response Latency: ${responseTimeMs}ms (HTTP ${statusCode})`,
+          payload: "Passive Banner & Header Fingerprinting (WSTG-INFO-02)",
+          matchedPattern: disclosedSummary,
           reproductionSteps: [
-            `Step 1 (Banner Grab): Run 'curl -s -I ${finalUrl} | grep -E -i "server:|x-powered-by:|via:|cf-ray:|x-vercel-id:"'.`,
-            `Step 2 (Verify Disclosure): Observe exposed server/framework banner '${serverHeader}'.`
+            `Step 1 (Banner Grab): Run 'curl -s -I "${finalUrl}" | grep -E -i "server:|x-powered-by:|x-generator:|x-backend:|x-be:"'.`,
+            `Step 2 (Verify Disclosure): Confirm the response exposes '${disclosedSummary}'.`,
+            `Step 3 (Remediate & Retest): Remove '${disclosedNames}' at the CDN/reverse-proxy layer and re-run verification.`
           ]
         },
         ttp: [
@@ -1408,25 +1440,25 @@ async function probeTarget(
             tacticId: "TA0043",
             technique: "Gather Victim Host Information: Software",
             techniqueId: "T1592.002",
-            procedure: `Banner grabbing against ${finalUrl} revealed '${serverHeader}'.`,
-            mitigations: ["M1054 — Suppress Server and X-Powered-By response headers"],
+            procedure: `Passive HTTP header inspection against ${finalUrl} revealed '${disclosedSummary}'.`,
+            mitigations: [`M1054 — Strip ${disclosedNames} response headers at edge proxy`],
             references: ["https://attack.mitre.org/techniques/T1592/002/"]
           }
         ],
         poc: {
-          description: `Grab live server and framework banners from ${finalUrl}`,
-          curlCommand: `curl -s -I "${finalUrl}" | grep -E -i "server|x-powered-by|x-vercel|cf-ray"\n# ➔ [CAPTURED RESULT]: Server: ${serverHeader}${poweredByHeader ? ` | X-Powered-By: ${poweredByHeader}` : ""}`,
-          pythonScript: `import requests\nr = requests.head("${finalUrl}", timeout=10)\nprint("Server:", r.headers.get("Server"), "| X-Powered-By:", r.headers.get("X-Powered-By"))\n# ➔ [CAPTURED RESULT]: Server: ${serverHeader} | X-Powered-By: ${poweredByHeader || "None"}`,
-          expectedResult: `Server: ${serverHeader}`,
+          description: `Inspect disclosed technology and backend headers on ${finalUrl}`,
+          curlCommand: `curl -s -I "${finalUrl}" | grep -E -i "server:|x-powered-by:|x-generator:|x-backend:|x-be:"\n# ➔ [CAPTURED RESULT]: ${disclosedSummary}`,
+          pythonScript: `import requests\nr = requests.head("${finalUrl}", timeout=10)\nfor h in ["Server", "X-Powered-By", "X-Generator", "X-Backend", "X-Be"]:\n    if h in r.headers:\n        print(f"{h}: {r.headers[h]}")\n# ➔ [CAPTURED RESULT]: ${disclosedSummary}`,
+          expectedResult: disclosedSummary,
           severity: "Low — CVSS 3.1"
         },
         collectedEvidence: [
           {
             type: "LIVE_BANNER_GRAB",
-            title: `Sample Evidence 1 — Live Server Banner & Edge Fingerprint (${host})`,
+            title: `Sample Evidence 1 — Live Disclosed Technology & Backend Headers (${host})`,
             content: rawHeadersText,
-            highlight: serverHeader,
-            annotation: `Genuine HTTP response headers returned by ${finalUrl}.`
+            highlight: primaryDisclosed,
+            annotation: `Genuine HTTP response headers returned by ${finalUrl} exposing: ${disclosedSummary}.`
           }
         ],
         verificationStatus: "Verified",
@@ -2077,6 +2109,7 @@ async function probeTarget(
   }));
 
   return {
+    schemaVersion: "5.4.0-forensic-clean",
     targetUrl: cleanUrl,
     finalUrl,
     host,

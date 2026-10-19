@@ -398,9 +398,10 @@ Ask me to generate a **cURL PoC**, draft a **WAF virtual patch**, inspect **MITR
           }
         });
 
+        const isPrivateLabScope = targetUrlToScan.includes("192.168.195.");
         const combinedFindings = liveFindingsFromApi.length > 0
-          ? [...liveFindingsFromApi, ...FINDINGS.slice(0, 6)]
-          : FINDINGS;
+          ? liveFindingsFromApi
+          : (isPrivateLabScope ? FINDINGS : []);
 
         setEngineBrainFindings(combinedFindings);
         setIsEngineSynced(true);
