@@ -10,6 +10,7 @@ async function getSiteSettings() {
 
 	return {
 		...siteSettings.data,
+		email: "kasiedu@expedite-consults.com",
 		phone: "240 260 7898",
 		whatsapp: "12402607898",
 	};

@@ -16,7 +16,7 @@ export const send = async (formData: TContactFormValidator) => {
 
 		const { error } = await resend.emails.send({
 			from: fromAddress,
-			to: ["sanity.expediteconsults@gmail.com"],
+			to: ["kasiedu@expedite-consults.com"],
 			subject: `${formData.subject} - ${formData.first_name} ${formData.last_name}`,
 			replyTo: formData.email,
 			react: await EmailTemplate({
