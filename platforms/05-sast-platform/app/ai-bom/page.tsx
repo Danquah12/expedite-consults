@@ -7,29 +7,29 @@ export default function AIBomPage() {
   const models = [
     {
       id: "AI-M-01",
-      name: "meta-llama/Llama-3-8B-Instruct",
-      source: "Hugging Face Hub",
+      name: "xtrike-llm/Core-8B-Instruct",
+      source: "XTRIKE Model Registry",
       format: "Safetensors (GGUF)",
-      license: "Llama 3 Community",
+      license: "Enterprise Internal",
       risk: "LOW",
-      promptInjectionRisk: "Guarded (LlamaGuard 3)",
+      promptInjectionRisk: "Guarded (XTRIKE PromptShield v3)",
       vulnerabilities: "None (SHA-256 Verified)"
     },
     {
       id: "AI-M-02",
-      name: "langchain-rag-agent-v2",
-      source: "Internal Repo / LLM Chain",
-      format: "Python LangGraph Pipeline",
+      name: "xtrike-rag-agent-v2",
+      source: "Internal Repo / Agent Chain",
+      format: "Python Agentic Pipeline",
       license: "Proprietary",
       risk: "CRITICAL",
       promptInjectionRisk: "Direct Indirect Injection in User Prompt",
-      vulnerabilities: "CVE-2024-LangChain-Eval (Untrusted Code Exec)"
+      vulnerabilities: "CVE-2024-Agent-Eval (Untrusted Code Exec)"
     },
     {
       id: "AI-M-03",
-      name: "sentence-transformers/all-MiniLM-L6-v2",
-      source: "Hugging Face Embeddings",
-      format: "PyTorch / ONNX",
+      name: "xtrike-embeddings/MiniLM-L6-v2",
+      source: "XTRIKE Embeddings Hub",
+      format: "ONNX Runtime",
       license: "Apache-2.0",
       risk: "LOW",
       promptInjectionRisk: "N/A (Embedding Only)",
@@ -52,11 +52,11 @@ export default function AIBomPage() {
       <div style={{ marginBottom: 30 }}>
         <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px", borderRadius: 4, background: "rgba(226, 133, 59, 0.15)", border: "1px solid rgba(226, 133, 59, 0.4)", color: "#e2853b", fontSize: 11, fontWeight: 800, marginBottom: 8 }}>
           <Box size={13} />
-          <span>CHECKMARX AI SUPPLY CHAIN &amp; AI-BOM</span>
+          <span>XTRIKE AI SUPPLY CHAIN &amp; AI-BOM</span>
         </div>
-        <h1 style={{ fontSize: 28, fontWeight: 900, color: "#1f1b18" }}>AI Inventory &amp; AI-BOM Security Hub</h1>
+        <h1 style={{ fontSize: 28, fontWeight: 900, color: "#1f1b18" }}>XTRIKE AI Inventory &amp; AI-BOM Security Hub</h1>
         <p style={{ fontSize: 14, color: "#5c5349" }}>
-          Inventory, verify, and monitor LLM model weights, LangChain/LlamaIndex pipelines, prompt injection vectors, and MCP server endpoints.
+          Inventory, verify, and monitor AI model weights, agentic RAG pipelines, prompt injection vectors, and MCP server endpoints.
         </p>
       </div>
 

@@ -1855,11 +1855,37 @@ export default function EnginePage() {
       const scriptsCount = lr.domDiscovery?.scriptsFound?.length || 0;
       const formsCount = lr.domDiscovery?.formsFound?.length || 0;
       const jsRoutesCount = lr.deepSpider?.jsRoutesExtracted?.length || 0;
+      const paramsCount = lr.deepSpider?.discoveredParameters?.length || 0;
+      const totalExtScripts = lr.deepSpider?.sriAudit?.totalExternalScripts ?? scriptsCount;
+      const missingSriCount = lr.deepSpider?.sriAudit?.externalScriptsWithoutSri ?? 0;
+      const reachableWellKnown = (lr.domDiscovery?.wellKnownProbes || []).filter((p: any) => p.reachable);
+      const highCritCount = liveFindings.filter(f => f.severity === "Critical" || f.severity === "High").length;
+      const medLowCount = liveFindings.filter(f => f.severity === "Medium" || f.severity === "Low").length;
+
+      const tacticSpecificEvidence: Record<string, string> = {
+        TA0043: `Passive & active web/DNS reconnaissance on ${lr.host}: spidered ${spideredPagesCount} page(s), ${linksCount} hyperlink(s), ${scriptsCount} script(s), ${formsCount} form(s), and queried Cloudflare DoH DNS (SPF: ${lr.dnsSecurity?.spfPresent ? "Present" : "Missing"}, DMARC: ${lr.dnsSecurity?.dmarcPresent ? "Present" : "Missing"}, CAA: ${lr.dnsSecurity?.caaPresent ? "Present" : "Missing"}).`,
+        TA0042: `Fingerprinted edge/origin stack (${lr.serverHeader || "HTTPS"} · HTTP ${lr.statusCode} · ${lr.responseTimeMs}ms) and inventoried ${totalExtScripts} external script tag(s) (${missingSriCount} lacking Subresource Integrity sha384/sha512 hashes).`,
+        TA0001: `Audited public HTTP entry points across ${lr.host}; recorded ${highCritCount} High/Critical and ${medLowCount} Medium/Low verified control finding(s) (Primary: ${liveF ? `"${liveF.title}" [${liveF.cweId}]` : "Baseline HTTP/TLS Controls"}).`,
+        TA0002: `Evaluated browser script execution policy (Content-Security-Policy: ${lr.securityHeaders?.csp ? "Present — audited directives" : "Missing / Unenforced"}) across ${scriptsCount} script tag(s) and ${jsRoutesCount} client route(s). No server-side exploit payloads were executed under read-only ROE.`,
+        TA0003: `Audited browser session & cache persistence controls (Cache-Control: ${lr.securityHeaders?.cacheControl || "Not explicitly restricted"}). Out-of-scope under read-only DAST ROE for host/OS persistence (0 backdoors or accounts created).`,
+        TA0004: `Evaluated web origin isolation boundaries (COOP: ${lr.securityHeaders?.coop || "Missing"}, CORP: ${lr.securityHeaders?.corp || "Missing"}). Out-of-scope under read-only DAST ROE for Linux/Windows OS privilege escalation.`,
+        TA0005: `Inspected framing & MIME-sniffing defenses on ${lr.host} (X-Frame-Options: ${lr.securityHeaders?.xFrameOptions || "Missing"}, X-Content-Type-Options: ${lr.securityHeaders?.xContentTypeOptions || "Missing"}). All probes used compliant standard HTTPS navigation.`,
+        TA0006: `Audited transport-layer credential & cookie protection (Strict-Transport-Security: ${lr.securityHeaders?.hsts ? "Present" : "Missing"}) and Set-Cookie flags (Secure, HttpOnly, SameSite). Zero brute-force or credential stuffing attacks executed.`,
+        TA0007: `Probed 10 standardized RFC/OWASP well-known endpoints on ${lr.host} and cataloged ${reachableWellKnown.length} reachable path(s) (${reachableWellKnown.map((p: any) => `${p.path} [${p.status}]`).join(", ") || "No unauthenticated admin/schema endpoints exposed"}).`,
+        TA0008: `Evaluated cross-origin trust boundaries (Access-Control-Allow-Origin: ${lr.securityHeaders?.corsOrigin || "Restricted / Not reflected"}, Referrer-Policy: ${lr.securityHeaders?.referrerPolicy || "Missing"}). Out-of-scope under read-only DAST ROE for internal network pivoting.`,
+        TA0009: `Inspected HTTP response caching headers and DOM input surface (${formsCount} HTML form(s), ${paramsCount} query/input parameter(s)) for potential browser/proxy data retention exposure.`,
+        TA0011: `Evaluated outbound connect-src and form-action CSP restrictions on ${lr.host} to determine whether client-side scripts can beacon to arbitrary external origins. Zero C2 callbacks established.`,
+        TA0010: `Assessed cross-origin read boundaries (CORS / CORP) and verified sensitive environment files (/.env) are not publicly downloadable. Zero customer records exfiltrated.`,
+        TA0040: `Completed non-destructive posture scoring (${lr.securityScore}/100 · Grade ${lr.securityGrade}) and SHA-256 chain-of-custody verification across ${lr.host} with 0% service disruption.`
+      };
+
       return {
         ...m,
-        labValidation: liveF
-          ? `Safe Read-Only DAST Verification on ${lr.host} (HTTP ${lr.statusCode} · ${lr.responseTimeMs}ms · Server: ${lr.serverHeader || "HTTPS"}): Confirmed Control Exposure "${liveF.title}" (${liveF.cweId}) across ${spideredPagesCount} spidered page(s), ${linksCount} links, ${scriptsCount} scripts, ${formsCount} forms, and ${jsRoutesCount} JS routes.`
-          : `Safe Read-Only DAST Verification on ${lr.host}: ${spideredPagesCount} page(s) spidered, ${linksCount} links, ${scriptsCount} scripts, ${formsCount} forms (Posture Score ${lr.securityScore}/100 · Grade ${lr.securityGrade}).`
+        labValidation: tacticSpecificEvidence[m.tacticId] || (
+          liveF
+            ? `Safe Read-Only DAST Verification on ${lr.host} (HTTP ${lr.statusCode} · ${lr.responseTimeMs}ms): Confirmed "${liveF.title}" (${liveF.cweId}).`
+            : `Safe Read-Only DAST Verification on ${lr.host} (Posture Score ${lr.securityScore}/100 · Grade ${lr.securityGrade}).`
+        )
       };
     }
     return {
@@ -1917,12 +1943,16 @@ export default function EnginePage() {
     const host = extractCleanHost(t.url);
     const liveRes = engineResults.find(r => r.targetUrl === t.url || r.host === host);
     if (liveRes && !liveRes.isPrivateLab) {
+      const hostFindings: Finding[] = Array.isArray(liveRes.liveFindings) ? liveRes.liveFindings : [];
+      const hasCrit = hostFindings.some(f => f.severity === "Critical");
+      const hasHigh = hostFindings.some(f => f.severity === "High");
+      const unifiedRiskLabel = hasCrit ? "CRITICAL RISK" : hasHigh ? "HIGH RISK" : "MEDIUM RISK";
       return {
         host,
         stack: `${liveRes.serverHeader || "Cloud Edge / HTTPS"}${liveRes.poweredByHeader ? ` · ${liveRes.poweredByHeader}` : ""} · HTTP ${liveRes.statusCode || 200} (${liveRes.responseTimeMs || 95}ms)`,
         ports: `TCP [1-65535]: 80, 443/tcp | UDP [1-65535]: 53/udp (DNS), 443/udp (QUIC) · SPF:${liveRes.dnsSecurity?.spfPresent ? "✓" : "✗"} DMARC:${liveRes.dnsSecurity?.dmarcPresent ? "✓" : "✗"}`,
         privilege: `Public Web Surface · Grade ${liveRes.securityGrade || "B"} (${liveRes.securityScore ?? 78}/100)`,
-        riskLabel: (liveRes.securityScore ?? 78) < 65 ? "HIGH RISK" : "MEDIUM / HARDENING"
+        riskLabel: unifiedRiskLabel
       };
     }
     if (!t.url.includes("192.168.195.")) {
@@ -2854,7 +2884,7 @@ ${f.remediation}
             setLiveExternalProbing(false);
             setRunning(false);
             if (autoEmailRef.current) {
-              dispatchAssessmentEmailReport("AUTO_ON_COMPLETE", combinedLiveAndDeep, urlsToProbe);
+              dispatchAssessmentEmailReport("AUTO_ON_COMPLETE", combinedLiveAndDeep, urlsToProbe, results[0]);
             }
             try {
               const totalElapsed = Math.max(1, Math.round((Date.now() - scanStartMs) / 1000));
@@ -2892,7 +2922,8 @@ ${f.remediation}
   const dispatchAssessmentEmailReport = async (
     triggerType: "AUTO_ON_COMPLETE" | "MANUAL_DISPATCH" = "MANUAL_DISPATCH",
     overrideFindings?: Finding[],
-    overrideTargetUrls?: string[]
+    overrideTargetUrls?: string[],
+    overrideLiveTelemetry?: any
   ) => {
     const pendingTyped = newRecipientInput.trim();
     const effectiveRecipients = Array.from(
@@ -2909,6 +2940,7 @@ ${f.remediation}
     setEmailDispatching(true);
     const findingsPayload = overrideFindings && overrideFindings.length > 0 ? overrideFindings : getContextualFindings();
     const urlsPayload = overrideTargetUrls && overrideTargetUrls.length > 0 ? overrideTargetUrls : targets.map(t => t.url);
+    const telemetryPayload = overrideLiveTelemetry || primaryLiveTelemetry || undefined;
     const ccList = emailCcInput
       .split(/[,;\s]+/)
       .map(s => s.trim())
@@ -2926,6 +2958,7 @@ ${f.remediation}
           pentestStandard,
           triggerType,
           findings: findingsPayload,
+          liveTelemetry: telemetryPayload,
           smtpConfig: {
             provider: emailProvider,
             apiKey: emailApiKey || undefined,
@@ -3092,6 +3125,16 @@ ${f.remediation}
     const highCount = reportItems.filter(f => f.severity === "High").length;
     const verifiedFixedCount = reportItems.filter((f, idx) => getRetestRecord(f, idx).status === "VERIFIED_FIXED" || getRetestRecord(f, idx).status === "MITIGATED_WAF").length;
 
+    const execSum = buildExecutiveSummaryDossier({
+      targetUrls: targets.map(t => t.url),
+      findings: reportItems,
+      clientOrgName,
+      engagementId,
+      liveTelemetry: primaryLiveTelemetry
+    });
+    const unifiedScore = execSum.overallRiskRating.postureScore;
+    const unifiedGrade = execSum.overallRiskRating.postureGrade;
+
     const stdLabel =
       pentestStandard === "PTES"
         ? "PTES (Penetration Testing Execution Standard — 7 Phases) + MITRE ATT&CK® v15"
@@ -3154,7 +3197,7 @@ ${f.remediation}
       padding: 10px 14px;
       background: #f8fafc;
     }
-    .kpi-box .val { font-size: 20px; font-weight: 900; color: #0f172a; }
+    .kpi-box .val { font-size: 18px; font-weight: 900; color: #0f172a; word-break: break-word; }
     .kpi-box .lbl { font-size: 9.5px; color: #475569; text-transform: uppercase; font-weight: 700; }
     h2 {
       font-size: 15px;
@@ -3236,7 +3279,7 @@ ${f.remediation}
 
   <div class="header">
     <div>
-      <div style="font-size:11px;font-weight:800;color:#0284c7;letter-spacing:0.08em;">🌐 EXPEDITE CONSULTS · XTRIKE™ &amp; AEGIS.SOC™ DAST (DYNAMIC APPLICATION SECURITY TESTING) v5.2 · ${classificationLevel}</div>
+      <div style="font-size:11px;font-weight:800;color:#0284c7;letter-spacing:0.08em;">🌐 EXPEDITE CONSULTS · XTRIKE™ &amp; AEGIS.SOC™ DAST (DYNAMIC APPLICATION SECURITY TESTING) v5.5 · ${classificationLevel}</div>
       <h1 style="margin:4px 0;font-size:20px;">XTRIKE™ &amp; Aegis.SOC™ — DAST &amp; Web Interface Security Assessment Report</h1>
       <div style="font-size:11.5px;color:#0f172a;margin:3px 0;">
         <strong>Prepared For Client:</strong> <span class="badge std-badge">${clientOrgName}</span> &nbsp;|&nbsp;
@@ -3257,7 +3300,7 @@ ${f.remediation}
       <div><strong>Dossier ID:</strong> ${engagementId} · EXP-STRIKE-${Date.now().toString().slice(-6)}</div>
       <div><strong>Date:</strong> ${new Date().toLocaleString()}</div>
       <div><strong>Hosts Affected:</strong> ${targets.length} Scoped Node(s) (${primaryHost})</div>
-      <div><strong>Security Posture Grade:</strong> <span class="badge ${verifiedFixedCount === reportItems.length ? "verified" : primaryLiveTelemetry?.securityGrade ? "std-badge" : "med"}">${verifiedFixedCount === reportItems.length ? "A+ (98/100 · REMEDIATED)" : primaryLiveTelemetry?.securityGrade ? `${primaryLiveTelemetry.securityGrade} (${primaryLiveTelemetry.securityScore}/100 LIVE)` : "C (68/100 BASELINE)"}</span></div>
+      <div><strong>Security Posture Grade:</strong> <span class="badge ${verifiedFixedCount === reportItems.length ? "verified" : "std-badge"}">${verifiedFixedCount === reportItems.length ? "A+ (98/100 · REMEDIATED)" : `${unifiedGrade} (${unifiedScore}/100 LIVE)`}</span></div>
       <div style="margin-top:3px;"><strong>Retest Status:</strong> <span class="badge ${verifiedFixedCount === reportItems.length ? "verified" : "crit"}">${verifiedFixedCount}/${reportItems.length} REMEDIATED &amp; VERIFIED</span></div>
     </div>
   </div>
@@ -3265,11 +3308,11 @@ ${f.remediation}
   <div class="kpi-grid">
     <div class="kpi-box">
       <div class="lbl">Customer Hosts</div>
-      <div class="val">${targets.length} (${primaryHost.slice(0, 14)})</div>
+      <div class="val">${targets.length} (${primaryHost})</div>
     </div>
     <div class="kpi-box">
       <div class="lbl">Security Posture</div>
-      <div class="val" style="color:#0284c7;">${verifiedFixedCount === reportItems.length ? "A+ (98)" : primaryLiveTelemetry?.securityGrade ? `${primaryLiveTelemetry.securityGrade} (${primaryLiveTelemetry.securityScore})` : "C (68)"}</div>
+      <div class="val" style="color:#0284c7;">${verifiedFixedCount === reportItems.length ? "A+ (98)" : `${unifiedGrade} (${unifiedScore})`}</div>
     </div>
     <div class="kpi-box">
       <div class="lbl">MITRE ATT&amp;CK®</div>
@@ -3290,13 +3333,6 @@ ${f.remediation}
   </div>
 
   ${(() => {
-    const execSum = buildExecutiveSummaryDossier({
-      targetUrls: targets.map(t => t.url),
-      findings: reportItems,
-      clientOrgName,
-      engagementId,
-      liveTelemetry: primaryLiveTelemetry
-    });
     const ratingColor =
       execSum.overallRiskRating.rating === "Critical"
         ? "#e11d48"

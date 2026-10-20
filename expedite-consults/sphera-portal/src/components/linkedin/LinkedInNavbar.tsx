@@ -323,7 +323,8 @@ export function LinkedInNavbar({
   }
 
   return (
-    <header className="sticky top-0 z-40 w-full max-w-full border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 shadow-xs">
+    <>
+    <header className="fixed top-0 left-0 right-0 z-50 w-full max-w-full border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 shadow-sm">
       {/* Mobile Expandable Search Bar Overlay (when search icon tapped on mobile) */}
       {isMobileSearchOpen && (
         <div className="lg:hidden absolute inset-x-0 top-0 z-50 bg-white dark:bg-zinc-900 px-3 py-2 border-b border-zinc-200 dark:border-zinc-800 shadow-md flex items-center gap-2">
@@ -1985,5 +1986,8 @@ export function LinkedInNavbar({
         </>
       )}
     </header>
+    {/* Spacer matching the fixed 2-row mobile header (99px / 103px) and 1-row desktop header (56px) */}
+    <div className="h-[99px] sm:h-[103px] lg:h-14 w-full shrink-0" aria-hidden="true" />
+    </>
   )
 }

@@ -8,12 +8,12 @@ export default function McpServerPage() {
 
   const mcpConfig = `{
   "mcpServers": {
-    "axiom-sast": {
+    "xtrike-sast": {
       "command": "npx",
-      "args": ["@axiom/mcp-sast-server"],
+      "args": ["@xtrike/mcp-sast-server"],
       "env": {
-        "AXIOM_API_KEY": "ax_live_948fbc2819e94",
-        "AXIOM_HYBRID_ENGINE": "true"
+        "XTRIKE_API_KEY": "xt_live_948fbc2819e94",
+        "XTRIKE_HYBRID_ENGINE": "true"
       }
     }
   }
@@ -24,17 +24,17 @@ export default function McpServerPage() {
       <div style={{ marginBottom: 28 }}>
         <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px", borderRadius: 4, background: "#f4e5dc", border: "1px solid var(--border)", color: "#8b4528", fontSize: 11, fontWeight: 800, marginBottom: 8 }}>
           <Terminal size={13} />
-          <span>CHECKMARX MCP SPECIFICATION &middot; MODEL CONTEXT PROTOCOL</span>
+          <span>XTRIKE MCP SPECIFICATION &middot; MODEL CONTEXT PROTOCOL</span>
         </div>
-        <h1 style={{ fontSize: 28, fontWeight: 900, color: "#1f1b18" }}>AXIOM MCP Server &amp; IDE Hub</h1>
+        <h1 style={{ fontSize: 28, fontWeight: 900, color: "#1f1b18" }}>XTRIKE MCP Server &amp; IDE Hub</h1>
         <p style={{ fontSize: 14, color: "#5c5349" }}>
-          Connect Cursor, VS Code, Windsurf, and Claude Desktop directly to SAST hybrid analysis via the open Model Context Protocol.
+          Connect XTRIKE IDE extensions and desktop agents directly to XTRIKE SAST hybrid analysis via the Model Context Protocol.
         </p>
       </div>
 
       <div style={{ background: "#fbf8f3", border: "1px solid var(--border)", borderRadius: 14, padding: 22, marginBottom: 24 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <h2 style={{ fontSize: 15, fontWeight: 800, color: "#1f1b18" }}>Cursor / Claude Desktop Config (claude_desktop_config.json)</h2>
+          <h2 style={{ fontSize: 15, fontWeight: 800, color: "#1f1b18" }}>XTRIKE IDE / Agent Config (xtrike_mcp_config.json)</h2>
           <button
             onClick={() => {
               navigator.clipboard.writeText(mcpConfig);
@@ -77,11 +77,11 @@ export default function McpServerPage() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
         <div style={{ background: "#ece5d8", border: "1px solid var(--border)", borderRadius: 12, padding: 18 }}>
           <div style={{ fontSize: 14, fontWeight: 800, color: "#1f1b18", marginBottom: 6 }}>tool: scan_active_buffer</div>
-          <p style={{ fontSize: 12, color: "#5c5349" }}>Runs AST + Frontier AI scan on the developer's unsaved in-memory editor buffer.</p>
+          <p style={{ fontSize: 12, color: "#5c5349" }}>Runs AST + XTRIKE Neural-Triage scan on the developer's unsaved in-memory editor buffer.</p>
         </div>
         <div style={{ background: "#ece5d8", border: "1px solid var(--border)", borderRadius: 12, padding: 18 }}>
           <div style={{ fontSize: 14, fontWeight: 800, color: "#1f1b18", marginBottom: 6 }}>tool: generate_1click_fix</div>
-          <p style={{ fontSize: 12, color: "#5c5349" }}>Sends AST patch directly to Cursor/VS Code to apply line edits automatically.</p>
+          <p style={{ fontSize: 12, color: "#5c5349" }}>Sends AST patch directly to the developer's IDE workspace to apply line edits automatically.</p>
         </div>
         <div style={{ background: "#ece5d8", border: "1px solid rgba(226, 133, 59, 0.25)", borderRadius: 12, padding: 18 }}>
           <div style={{ fontSize: 14, fontWeight: 800, color: "#1f1b18", marginBottom: 6 }}>tool: explain_taint_path</div>

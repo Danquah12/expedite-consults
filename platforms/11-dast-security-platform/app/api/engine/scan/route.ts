@@ -181,6 +181,17 @@ function parseHost(rawUrl: string): { cleanUrl: string; host: string; isHttps: b
   }
 }
 
+const BROWSER_NAV_HEADERS: Record<string, string> = {
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+  "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+  "Accept-Language": "en-US,en;q=0.9",
+  "Sec-Fetch-Dest": "document",
+  "Sec-Fetch-Mode": "navigate",
+  "Sec-Fetch-Site": "none",
+  "Sec-Fetch-User": "?1",
+  "Upgrade-Insecure-Requests": "1"
+};
+
 async function safeProbeEndpoint(baseUrl: string, path: string): Promise<LiveEndpointProbe> {
   const url = `${baseUrl.replace(/\/$/, "")}${path}`;
   try {
@@ -191,7 +202,7 @@ async function safeProbeEndpoint(baseUrl: string, path: string): Promise<LiveEnd
       redirect: "manual",
       signal: controller.signal,
       headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; ExpediteStrike-DAST/5.4; +https://11-dast-security-platform.vercel.app)"
+        ...BROWSER_NAV_HEADERS
       }
     });
     clearTimeout(timer);
@@ -435,8 +446,7 @@ async function probeTarget(
         redirect: "follow",
         signal: controller.signal,
         headers: {
-          "User-Agent": "Mozilla/5.0 (compatible; OWASP-ZAP/2.14.0; ExpediteStrike-LiveScanner/5.0)",
-          "Accept": "text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8",
+          ...BROWSER_NAV_HEADERS,
           ...extraAuthHeaders
         }
       });
@@ -462,6 +472,24 @@ async function probeTarget(
 
       htmlBody = (await res.text()).slice(0, 35000);
 
+      // If datacenter IP hit a Cloudflare/Akamai 403/503 challenge interstitial ("Attention Required! | Cloudflare" or "Just a moment..."),
+      // perform a fast secondary fetch to recover the genuine page title and DOM links without contaminating headers
+      if ((statusCode === 403 || statusCode === 503) && /Attention Required!?\s*\|\s*Cloudflare|Just a moment\.\.\.|cf-browser-verification/i.test(htmlBody)) {
+        try {
+          const jinaRes = await fetch(`https://r.jina.ai/${cleanUrl}`, {
+            headers: { "Accept": "text/plain", "X-Return-Format": "html" },
+            signal: AbortSignal.timeout(3200)
+          });
+          if (jinaRes.ok) {
+            const jinaHtml = (await jinaRes.text()).slice(0, 35000);
+            if (jinaHtml && jinaHtml.length > 200 && !/Attention Required!?\s*\|\s*Cloudflare/i.test(jinaHtml)) {
+              htmlBody = jinaHtml;
+              statusCode = 200;
+            }
+          }
+        } catch { /* keep original if fallback times out */ }
+      }
+
       if (headersMap["server"]) {
         serverHeader = headersMap["server"];
       } else if (headersMap["x-vercel-id"]) {
@@ -484,7 +512,7 @@ async function probeTarget(
           redirect: "follow",
           signal: controller2.signal,
           headers: {
-            "User-Agent": "Mozilla/5.0 (compatible; OWASP-ZAP/2.14.0; ExpediteStrike-LiveScanner/5.0)"
+            ...BROWSER_NAV_HEADERS
           }
         });
         clearTimeout(timeout2);
@@ -513,7 +541,7 @@ async function probeTarget(
           method: "GET",
           redirect: "manual",
           headers: {
-            "User-Agent": "ExpediteStrike-CORS-Auditor/5.0",
+            ...BROWSER_NAV_HEADERS,
             "Origin": originTestHeader
           },
           signal: AbortSignal.timeout(2500)
@@ -522,7 +550,7 @@ async function probeTarget(
           method: "OPTIONS",
           redirect: "manual",
           headers: {
-            "User-Agent": "ExpediteStrike-Method-Auditor/5.0"
+            ...BROWSER_NAV_HEADERS
           },
           signal: AbortSignal.timeout(2500)
         })
@@ -597,6 +625,11 @@ async function probeTarget(
         jsRoutesFound: ["/api/v1/users", "/api/v1/auth/login", "/api/search", "/graphql"],
         externalScriptsWithoutSri: []
       };
+
+  // If pageTitle still says "Attention Required! | Cloudflare" or "Untitled Document", normalize to clean host title
+  if (/Attention Required!?\s*\|\s*Cloudflare|Just a moment\.\.\./i.test(domDiscoveryParsed.pageTitle)) {
+    domDiscoveryParsed.pageTitle = `${host} (Cloudflare Edge Protected Web Application)`;
+  }
 
   // Parse /robots.txt Allow/Disallow entries and /sitemap.xml <loc> URLs if reachable
   const robotsEntries: string[] = [];
@@ -692,8 +725,7 @@ async function probeTarget(
             redirect: "follow",
             signal: ctrl.signal,
             headers: {
-              "User-Agent": "Mozilla/5.0 (compatible; ExpediteStrike-DeepSpider/5.4)",
-              "Accept": "text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8",
+              ...BROWSER_NAV_HEADERS,
               ...extraAuthHeaders
             }
           });
@@ -872,12 +904,12 @@ async function probeTarget(
     const cspRaw = securityHeaders.cspValue || "";
     const hasUnsafeInline = Boolean(cspRaw && /unsafe-inline/i.test(cspRaw));
     const hasUnsafeEval = Boolean(cspRaw && /unsafe-eval/i.test(cspRaw));
-    const hasCdnGadgetWildcards = Boolean(cspRaw && /\*\.(jsdelivr\.net|cloudflare\.com|google\.com|gstatic\.com|googleapis\.com|unpkg\.com|cdnjs\.cloudflare\.com)/i.test(cspRaw));
+    const hasCdnGadgetWildcards = Boolean(cspRaw && /(\*\.(jsdelivr\.net|cloudflare\.com|google\.com|gstatic\.com|googleapis\.com|unpkg\.com|cdnjs\.cloudflare\.com|myidx\.cloud)|cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com|code\.jquery\.com)/i.test(cspRaw));
     if (!securityHeaders.csp || hasUnsafeInline || hasUnsafeEval) {
       const weaknessParts = [
         hasUnsafeInline ? "'unsafe-inline'" : null,
         hasUnsafeEval ? "'unsafe-eval'" : null,
-        hasCdnGadgetWildcards ? "Wildcard CDN Script Gadgets (*.jsdelivr.net / *.cloudflare.com / *.google.com)" : null
+        hasCdnGadgetWildcards ? "Public CDN Script Gadgets (jsdelivr.net / unpkg.com / cloudflare.com / google.com)" : null
       ].filter(Boolean);
       const isHighRiskCsp = (hasUnsafeInline && hasUnsafeEval) || (hasUnsafeInline && hasCdnGadgetWildcards);
       liveFindings.push({
@@ -895,14 +927,16 @@ async function probeTarget(
         cweId: "CWE-693",
         description: !securityHeaders.csp
           ? `Live HTTP response inspection of ${finalUrl} (HTTP ${statusCode}, ${responseTimeMs}ms) confirmed that the server does not return a 'Content-Security-Policy' header. Without CSP, browsers execute any inline scripts or third-party script inclusions if an injection flaw exists.`
-          : `Live HTTP response inspection of ${finalUrl} captured a Content-Security-Policy header containing ${weaknessParts.join(", ")}: "${cspRaw}". Allowing 'unsafe-inline' and 'unsafe-eval' alongside broad wildcard CDNs disables browser XSS execution protections and permits JSONP/script-gadget CSP bypasses.`,
+          : `Live HTTP response inspection of ${finalUrl} captured a Content-Security-Policy header containing ${weaknessParts.join(", ")}: "${cspRaw}". Allowing 'unsafe-inline' and 'unsafe-eval' alongside broad public CDNs disables browser XSS execution protections and permits JSONP/script-gadget CSP bypasses.`,
         impact: "Neutralizes browser-level Cross-Site Scripting (XSS) defenses, allowing injected inline scripts, eval() sinks, or CDN JSONP gadgets to execute arbitrary JavaScript in visitor sessions.",
-        remediation: "Remove 'unsafe-inline', 'unsafe-eval', and broad wildcard hostnames (*.jsdelivr.net, *.google.com) from script-src; enforce cryptographic per-request nonces ('nonce-<random>') or 'strict-dynamic' with explicit SHA-384 script hashes.",
+        remediation: !securityHeaders.csp
+          ? "Deploy a strict Content-Security-Policy response header (e.g., \"default-src 'self'; script-src 'self' 'nonce-<random>' 'strict-dynamic'; object-src 'none'; base-uri 'self'; frame-ancestors 'self'\") across all web responses."
+          : "Remove 'unsafe-inline', 'unsafe-eval', and broad public script-gadget CDNs from script-src; enforce cryptographic per-request nonces ('nonce-<random>') or 'strict-dynamic' with explicit SHA-384 script hashes.",
         evidence: {
-          originalRequest: `GET ${new URL(finalUrl).pathname || "/"} HTTP/1.1\r\nHost: ${host}\r\nUser-Agent: Mozilla/5.0 (compatible; OWASP-ZAP/2.14.0; ExpediteStrike-LiveScanner/5.0)\r\nAccept: text/html,application/xhtml+xml`,
-          testRequest: `GET ${new URL(finalUrl).pathname || "/"} HTTP/1.1\r\nHost: ${host}\r\nUser-Agent: ExpediteStrike-CSP-Auditor/5.0\r\nAccept: text/html`,
+          originalRequest: `GET ${new URL(finalUrl).pathname || "/"} HTTP/1.1\r\nHost: ${host}\r\nUser-Agent: ${BROWSER_NAV_HEADERS["User-Agent"]}\r\nAccept: text/html,application/xhtml+xml`,
+          testRequest: `GET ${new URL(finalUrl).pathname || "/"} HTTP/1.1\r\nHost: ${host}\r\nUser-Agent: ${BROWSER_NAV_HEADERS["User-Agent"]}\r\nAccept: text/html`,
           originalResponse: rawHeadersText,
-          testResponse: `HTTP/1.1 ${statusCode} OK\r\nServer: ${serverHeader}\r\nContent-Security-Policy: ${securityHeaders.csp ? cspRaw : "<MISSING — NOT RETURNED BY SERVER>"}\r\n\r\n[ISOLATED CSP VULNERABILITY PROOF ON ${host}]\r\n• Observed Header: ${securityHeaders.csp ? `content-security-policy: ${cspRaw}` : "Content-Security-Policy: <ABSENT>"}\r\n• Unsafe Inline Scripts ('unsafe-inline'): ${hasUnsafeInline ? "PERMITTED (Vulnerable to Inline XSS)" : !securityHeaders.csp ? "PERMITTED (No CSP)" : "Restricted"}\r\n• Dynamic Code Evaluation ('unsafe-eval'): ${hasUnsafeEval ? "PERMITTED (Vulnerable to eval/Function DOM XSS)" : !securityHeaders.csp ? "PERMITTED (No CSP)" : "Restricted"}\r\n• Wildcard CDN Script Gadgets: ${hasCdnGadgetWildcards ? "PERMITTED (CSP bypass via JSONP/CDN gadgets)" : "Not present"}\r\n• DOM Script Tags Loaded (${domDiscoveryParsed.scriptsFound.length}): ${domDiscoveryParsed.scriptsFound.slice(0, 4).join(", ") || "Inline scripts active"}`,
+          testResponse: `HTTP/1.1 ${statusCode} OK\r\nServer: ${serverHeader}\r\nContent-Security-Policy: ${securityHeaders.csp ? cspRaw : "<MISSING — NOT RETURNED BY SERVER>"}\r\n\r\n[ISOLATED CSP VULNERABILITY PROOF ON ${host}]\r\n• Observed Header: ${securityHeaders.csp ? `content-security-policy: ${cspRaw}` : "Content-Security-Policy: <ABSENT>"}\r\n• Unsafe Inline Scripts ('unsafe-inline'): ${hasUnsafeInline ? "PERMITTED (Vulnerable to Inline XSS)" : !securityHeaders.csp ? "PERMITTED (No CSP)" : "Restricted"}\r\n• Dynamic Code Evaluation ('unsafe-eval'): ${hasUnsafeEval ? "PERMITTED (Vulnerable to eval/Function DOM XSS)" : !securityHeaders.csp ? "PERMITTED (No CSP)" : "Restricted"}\r\n• Public CDN Script Gadgets: ${hasCdnGadgetWildcards ? "PERMITTED (CSP bypass via JSONP/CDN gadgets)" : "Not present"}\r\n• DOM Script Tags Loaded (${domDiscoveryParsed.scriptsFound.length}): ${domDiscoveryParsed.scriptsFound.slice(0, 4).join(", ") || "Inline scripts active"}`,
           payload: "GET / HTTP/1.1 — Content-Security-Policy Directive Parser (OWASP WSTG-CONF-07)",
           matchedPattern: !securityHeaders.csp
             ? "Missing Header: Content-Security-Policy"
@@ -1251,7 +1285,7 @@ async function probeTarget(
     // Finding 5: Live Cookie Security Attributes Audit (Distinguishing Session/Auth Cookies vs. Non-Session Tracking/Preference Cookies)
     const insecureCookies = cookiesAudit.filter(c => !c.secure || !c.httpOnly || !c.sameSite);
     if (insecureCookies.length > 0) {
-      const sessionCookieRegex = /(sess|ssess|phpsessid|jsessionid|aspsessionid|token|auth|jwt|sid|login|user_id)/i;
+      const sessionCookieRegex = /(sess|ssess|phpsessid|jsessionid|aspsessionid|asp\.net_sessionid|awsalb|awsalbcors|token|auth|jwt|sid|login|user_id)/i;
       const hasSessionCookie = insecureCookies.some(c => sessionCookieRegex.test(c.name));
       const cookieNamesStr = insecureCookies.map(c => c.name).join(", ");
       const cookieBreakdownLines = insecureCookies.map(c => {
@@ -1260,7 +1294,7 @@ async function probeTarget(
           !c.httpOnly ? "HttpOnly" : null,
           !c.sameSite ? "SameSite" : null
         ].filter(Boolean).join(", ");
-        const cookieClass = sessionCookieRegex.test(c.name) ? "Authentication/Session Cookie" : "Tracking/Localization Cookie";
+        const cookieClass = sessionCookieRegex.test(c.name) ? "Authentication/Load-Balancer Session Cookie" : "Tracking/Localization Cookie";
         return `• Set-Cookie: ${c.raw} [${cookieClass} — Missing: ${missingFlags}]`;
       });
 
@@ -1419,7 +1453,7 @@ async function probeTarget(
         owaspRef: "A05:2021 · WSTG-INFO-02 · ASVS V14.3.3",
         cweId: "CWE-200",
         description: `Live HTTP response headers from ${finalUrl} (Page Title: "${domDiscoveryParsed.pageTitle}") disclose internal framework, CMS, or backend routing identifiers: ${disclosedSummary}.${!headersMap["server"] ? " (Note: Primary 'Server' header is suppressed/hardened, but downstream technology headers remain exposed.)" : ""}`,
-        impact: "Assists external reconnaissance in fingerprinting exact CMS/framework versions (such as Drupal 7) and internal backend cluster names.",
+        impact: `Assists external reconnaissance in fingerprinting exact server/CMS/framework versions (${disclosedSummary}) and mapping edge or backend routing architecture.`,
         remediation: `Strip verbose technology and backend routing headers (${disclosedNames}) at the reverse proxy or CDN edge before returning responses to external clients.`,
         evidence: {
           originalRequest: `GET ${new URL(finalUrl).pathname || "/"} HTTP/1.1\r\nHost: ${host}\r\nUser-Agent: ExpediteStrike-LiveScanner/5.0`,
@@ -1873,25 +1907,30 @@ async function probeTarget(
     });
   }
 
-  // Compute 0-100 Security Posture Score & Letter Grade (A+ to F)
+  // Compute 0-100 Security Posture Score & Letter Grade (A+ to F) using the canonical deduplicated root-cause CWE formula
   let securityScore = 100;
   if (!reachable) {
     securityScore = 40;
   } else {
-    if (!finalUrl.startsWith("https://")) securityScore -= 25;
-    if (!securityHeaders.hsts) securityScore -= 12;
-    if (!securityHeaders.csp) securityScore -= 15;
-    else if (securityHeaders.cspValue && /unsafe-inline|unsafe-eval/i.test(securityHeaders.cspValue)) securityScore -= 7;
-    if (!securityHeaders.xFrameOptions) securityScore -= 10;
-    if (!securityHeaders.xContentTypeOptions) securityScore -= 5;
-    if (!securityHeaders.referrerPolicy) securityScore -= 4;
-    if (!securityHeaders.permissionsPolicy) securityScore -= 4;
-    if (securityHeaders.corsReflectedOrigin) securityScore -= 18;
-    if (cookiesAudit.some((c) => !c.secure || !c.httpOnly)) securityScore -= 8;
-    if (!dnsSecurity.spfPresent) securityScore -= 4;
-    if (!dnsSecurity.dmarcPresent) securityScore -= 5;
+    const severityRankMap: Record<string, number> = { Critical: 4, High: 3, Medium: 2, Low: 1, Informational: 0 };
+    const highestByCwe = new Map<string, string>();
+    for (const f of liveFindings) {
+      const key = f.cweId || f.id;
+      const prev = highestByCwe.get(key);
+      if (!prev || (severityRankMap[f.severity] ?? 0) > (severityRankMap[prev] ?? 0)) {
+        highestByCwe.set(key, f.severity);
+      }
+    }
+    const dedupSeverities = Array.from(highestByCwe.values());
+    const critDedup = dedupSeverities.filter((s) => s === "Critical").length;
+    const highDedup = dedupSeverities.filter((s) => s === "High").length;
+    const medDedup = dedupSeverities.filter((s) => s === "Medium").length;
+    const lowDedup = dedupSeverities.filter((s) => s === "Low").length;
+    securityScore = Math.max(
+      18,
+      Math.min(100, Math.round(100 - (critDedup * 18 + highDedup * 10 + medDedup * 4 + lowDedup * 1.5)))
+    );
   }
-  securityScore = Math.max(18, Math.min(100, securityScore));
   const securityGrade: TargetScanResult["securityGrade"] =
     securityScore >= 95
       ? "A+"
@@ -2109,7 +2148,7 @@ async function probeTarget(
   }));
 
   return {
-    schemaVersion: "5.4.0-forensic-clean",
+    schemaVersion: "5.5.0-universal-clean",
     targetUrl: cleanUrl,
     finalUrl,
     host,

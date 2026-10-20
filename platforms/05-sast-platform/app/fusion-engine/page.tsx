@@ -55,11 +55,11 @@ export default function FusionEnginePage() {
         <div>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px", borderRadius: 4, background: "rgba(226, 133, 59, 0.15)", border: "1px solid rgba(226, 133, 59, 0.4)", color: "#e2853b", fontSize: 11, fontWeight: 800, marginBottom: 8 }}>
             <Sparkles size={13} />
-            <span>CHECKMARX FUSION &middot; HYBRID ENGINE SPECIFICATION</span>
+            <span>XTRIKE FUSION &middot; HYBRID ENGINE SPECIFICATION</span>
           </div>
-          <h1 style={{ fontSize: 28, fontWeight: 900, color: "#1f1b18" }}>AXIOM Fusion Hybrid Scanning Studio</h1>
+          <h1 style={{ fontSize: 28, fontWeight: 900, color: "#1f1b18" }}>XTRIKE Fusion Hybrid Scanning Studio</h1>
           <p style={{ fontSize: 14, color: "#5c5349" }}>
-            Combining deterministic Semgrep AST pattern rules with Frontier LLM reasoning to achieve &gt;99% precision.
+            Combining deterministic XTRIKE PatternGuard AST rules with XTRIKE Neural-Triage reasoning to achieve &gt;99% precision.
           </p>
         </div>
 
@@ -84,7 +84,7 @@ export default function FusionEnginePage() {
           }}
         >
           <RefreshCw size={14} className={running ? "animate-spin" : ""} />
-          <span>{running ? "Analyzing with Claude 3.7..." : "Run Hybrid Fusion Benchmark"}</span>
+          <span>{running ? "Analyzing with XTRIKE Neural-Triage..." : "Run Hybrid Fusion Benchmark"}</span>
         </button>
       </div>
 
@@ -103,7 +103,7 @@ export default function FusionEnginePage() {
             <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#8b4528", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 900, color: "#f3eee4" }}>1</div>
             <div style={{ fontSize: 14, fontWeight: 800, color: "#1f1b18" }}>Deterministic AST Match</div>
           </div>
-          <p style={{ fontSize: 12, color: "#5c5349" }}>Scans 100k lines of code in 1.4s using Semgrep rules and CodeQL predicates.</p>
+          <p style={{ fontSize: 12, color: "#5c5349" }}>Scans 100k lines of code in 1.4s using XTRIKE PatternGuard rules and XTRIKE AST-Query predicates.</p>
           <div style={{ marginTop: 10, fontSize: 11, color: "#8b4528", fontWeight: 700 }}>Candidate Findings: 42 Detected</div>
         </div>
 
@@ -119,9 +119,9 @@ export default function FusionEnginePage() {
         <div style={{ background: "#ece5d8", padding: 16, borderRadius: 12, border: "1px solid rgba(226, 133, 59, 0.3)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
             <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#e2853b", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 900, color: "#f3eee4" }}>3</div>
-            <div style={{ fontSize: 14, fontWeight: 800, color: "#1f1b18" }}>Frontier AI Triage &amp; Fix</div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: "#1f1b18" }}>XTRIKE Neural-Triage &amp; Fix</div>
           </div>
-          <p style={{ fontSize: 12, color: "#5c5349" }}>Anthropic Claude 3.7 eliminates benign matches and generates 1-click git diff fixes.</p>
+          <p style={{ fontSize: 12, color: "#5c5349" }}>XTRIKE Neural-Triage v4 eliminates benign matches and generates 1-click git diff fixes.</p>
           <div style={{ marginTop: 10, fontSize: 11, color: "#46a36e", fontWeight: 700 }}>True Positives: 2 Confirmed (94.2% FP Cut)</div>
         </div>
       </div>

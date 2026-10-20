@@ -19,6 +19,7 @@ interface EmailReportRequestBody {
   pentestStandard?: string;
   triggerType?: "AUTO_ON_COMPLETE" | "MANUAL_DISPATCH";
   findings?: Finding[];
+  liveTelemetry?: any;
   smtpConfig?: {
     provider?: "SANDBOX_RELAY" | "RESEND" | "SENDGRID" | "SMTP_WEBHOOK";
     fromEmail?: string;
@@ -85,6 +86,7 @@ function generateMultiPageAssessmentPdfBuffer(params: {
   lowCount: number;
   findings: Finding[];
   primaryUrl: string;
+  liveTelemetry?: any;
 }): Buffer {
   const {
     targetUrls,
@@ -92,18 +94,34 @@ function generateMultiPageAssessmentPdfBuffer(params: {
     messageId,
     reportSha256,
     recipients,
-    critCount,
-    highCount,
-    medCount,
-    lowCount,
     findings,
-    primaryUrl
+    primaryUrl,
+    liveTelemetry
   } = params;
 
   const execSummary = buildExecutiveSummaryDossier({
     targetUrls,
-    findings
+    findings,
+    liveTelemetry
   });
+
+  const trendGraphNodes = execSummary.securityPostureTrendTable
+    .map((tr, i) => {
+      const shortLbl =
+        i === 0
+          ? "Ref Q1"
+          : i === 1
+          ? "Ref Q2"
+          : i === 2
+          ? "Ref Q3"
+          : i === 3
+          ? "Measured DAST"
+          : i === 4
+          ? "Phase 1 Forecast"
+          : "Retest Target";
+      return `${shortLbl}[${tr.postureScore}/100]`;
+    })
+    .join(" ===> ");
 
   const docLines: PdfLineItem[] = [
     { text: "XTRIKE & AEGIS.SOC - DAST & WEB INTERFACE SECURITY ASSESSMENT REPORT", bold: true, size: 12, colorRgb: [0.02, 0.35, 0.65] },
@@ -113,37 +131,38 @@ function generateMultiPageAssessmentPdfBuffer(params: {
     { text: `Generated At: ${timestampIso}   |   Message-ID: ${messageId}`, size: 8.5 },
     { text: `Chain-of-Custody SHA-256: ${reportSha256}`, size: 8.5 },
     { text: `Recipients: ${recipients.join(", ")}`, size: 8.5 },
-    { text: `XTRIKE / Aegis.SOC Port Coverage: 65,535 TCP + 65,535 UDP (131,070 Total Transport Sockets Audited)`, bold: true, size: 8.5, colorRgb: [0.02, 0.45, 0.35] },
+    { text: `Canonical Scan Record: ${execSummary.canonicalScanRecord.spideredPagesCount} Spidered Page(s) | ${execSummary.canonicalScanRecord.linksCount} Link(s) | ${execSummary.canonicalScanRecord.scriptsCount} Script(s) | ${execSummary.canonicalScanRecord.formsCount} Form(s) | ${execSummary.canonicalScanRecord.endpointsProbedCount} Endpoint Probes`, bold: true, size: 8.5, colorRgb: [0.02, 0.45, 0.35] },
     { text: "" },
     { text: "==============================================================================================", bold: true, size: 9 },
     { text: "EXECUTIVE SUMMARY (FOR BOARD MEMBERS, EXECUTIVES & RISK OWNERS)", bold: true, size: 11, colorRgb: [0.02, 0.35, 0.65] },
     { text: "==============================================================================================", bold: true, size: 9 },
-    { text: "1. Engagement Overview", bold: true, size: 9.5, colorRgb: [0.05, 0.15, 0.35] },
+    { text: "1. Engagement Overview & Canonical Scan Record", bold: true, size: 9.5, colorRgb: [0.05, 0.15, 0.35] },
     ...wrapTextLine(execSummary.engagementOverview.narrativeParagraph, 94).map(ln => ({ text: `  ${ln}`, size: 8.5 })),
     ...wrapTextLine(`  Methodology: ${execSummary.engagementOverview.methodologyReferenced}`, 94).map(ln => ({ text: `  ${ln}`, size: 8 })),
     ...wrapTextLine(`  Rules of Engagement: ${execSummary.engagementOverview.rulesOfEngagement}`, 94).map(ln => ({ text: `  ${ln}`, size: 8 })),
     { text: "" },
-    { text: `2. Overall Risk Rating: ${execSummary.overallRiskRating.rating.toUpperCase()}`, bold: true, size: 9.5, colorRgb: [0.78, 0.07, 0.2] },
+    { text: `2. Overall Risk Rating: ${execSummary.overallRiskRating.rating.toUpperCase()}   |   Measured Posture Score: ${execSummary.overallRiskRating.postureScore}/100 (Grade ${execSummary.overallRiskRating.postureGrade})`, bold: true, size: 9.5, colorRgb: [0.78, 0.07, 0.2] },
     ...wrapTextLine(execSummary.overallRiskRating.justification, 94).map(ln => ({ text: `  ${ln}`, size: 8.5 })),
+    ...wrapTextLine(`  Published Scoring Formula: ${execSummary.scoringMethodology.formulaText}`, 94).map(ln => ({ text: `  ${ln}`, bold: true, size: 8, colorRgb: [0.05, 0.25, 0.55] as [number, number, number] })),
     { text: "" },
     { text: "3. Findings Summary & Severity Breakdown Table", bold: true, size: 9.5, colorRgb: [0.05, 0.15, 0.35] },
     { text: `  A total of ${execSummary.findingsSummary.totalFindings} confirmed findings were identified (${execSummary.findingsSummary.informational} informational observations):`, bold: true, size: 8.5 },
     { text: `    - Critical: ${execSummary.findingsSummary.critical} (Confirmed)   |   High: ${execSummary.findingsSummary.high} (Confirmed)   |   Medium: ${execSummary.findingsSummary.medium}   |   Low: ${execSummary.findingsSummary.low}   |   Informational: ${execSummary.findingsSummary.informational}`, bold: true, size: 8.5, colorRgb: [0.75, 0.08, 0.2] },
-    { text: "  +---------------+-----------+-----------+------------+----------+-----------------------------+------------------------+", bold: true, size: 7.5 },
-    { text: "  | Severity      | Confirmed | Potential | Risk Share | Max CVSS | Business Risk Exposure      | Target Remediation SLA |", bold: true, size: 7.5, colorRgb: [0.05, 0.25, 0.55] },
-    { text: "  +---------------+-----------+-----------+------------+----------+-----------------------------+------------------------+", bold: true, size: 7.5 },
+    { text: "  +---------------+------+----------+----------+---------------------------------------------------+--------------------+", bold: true, size: 7.2 },
+    { text: "  | Severity      | Conf | Risk %   | Max CVSS | Business Risk Exposure                            | Remediation SLA    |", bold: true, size: 7.2, colorRgb: [0.05, 0.25, 0.55] },
+    { text: "  +---------------+------+----------+----------+---------------------------------------------------+--------------------+", bold: true, size: 7.2 },
     ...execSummary.severityBreakdownTable.map(row => ({
-      text: `  | ${row.severity.padEnd(13)} | ${String(row.confirmedCount).padEnd(9)} | ${String(row.potentialCount).padEnd(9)} | ${row.riskWeightPct.padEnd(10)} | ${row.maxCvss.padEnd(8)} | ${row.businessRiskExposure.slice(0, 27).padEnd(27)} | ${row.remediationSla.slice(0, 22).padEnd(22)} |`,
-      size: 7.5
+      text: `  | ${row.severity.padEnd(13)} | ${String(row.confirmedCount).padEnd(4)} | ${row.riskWeightPct.slice(0, 8).padEnd(8)} | ${row.maxCvss.slice(0, 8).padEnd(8)} | ${row.businessRiskExposure.padEnd(49)} | ${row.remediationSla.padEnd(18)} |`,
+      size: 7.2
     })),
-    { text: "  +---------------+-----------+-----------+------------+----------+-----------------------------+------------------------+", bold: true, size: 7.5 },
+    { text: "  +---------------+------+----------+----------+---------------------------------------------------+--------------------+", bold: true, size: 7.2 },
     ...wrapTextLine(`  ${execSummary.findingsSummary.confirmationNote}`, 94).map(ln => ({ text: `  ${ln}`, size: 8 })),
     { text: "" },
-    { text: "3B. Multi-Quarter Security Posture Trend & Trajectory Table (Q1 2026 -> Projected Retest)", bold: true, size: 9.5, colorRgb: [0.02, 0.38, 0.55] },
-    { text: "  Posture Trajectory Graph: Q1[54/100 D] ===> Q2[61/100 C-] ===> Q3[64/100 C] ===> Current DAST[68/100 C+] ===> 7-Day SLA[88/100 B+] ===> Retest[98/100 A+]", bold: true, size: 8, colorRgb: [0.02, 0.45, 0.35] },
+    { text: "3B. Multi-Quarter Security Posture Trend & Conditional Forecast Table", bold: true, size: 9.5, colorRgb: [0.02, 0.38, 0.55] },
+    { text: `  Posture Trajectory: ${trendGraphNodes}`, bold: true, size: 8, colorRgb: [0.02, 0.45, 0.35] },
     ...execSummary.securityPostureTrendTable.map(tr => ({
-      text: `  * ${tr.periodLabel.padEnd(28)} | Score: ${String(tr.postureScore).padEnd(3)}/100 (${tr.securityGrade.padEnd(2)}) | Crit: ${tr.criticalOpen} | High: ${tr.highOpen} | Med/Low: ${tr.mediumLowOpen} | MTTR: ${tr.mttrDays.padEnd(9)} | ${tr.trendDelta}`,
-      size: 7.8
+      text: `  * ${tr.periodLabel.padEnd(40)} | Score: ${String(tr.postureScore).padEnd(3)}/100 | Crit: ${tr.criticalOpen} | High: ${tr.highOpen} | Med/Low: ${tr.mediumLowOpen} | MTTR: ${tr.mttrDays.padEnd(16)} | ${tr.trendDelta}`,
+      size: 7.5
     })),
     { text: "" },
     { text: "4. Key Findings Highlights", bold: true, size: 9.5, colorRgb: [0.05, 0.15, 0.35] },
@@ -167,15 +186,22 @@ function generateMultiPageAssessmentPdfBuffer(params: {
     ...execSummary.highLevelRecommendations.flatMap(rec =>
       wrapTextLine(`  - [${rec.priorityWindow}] ${rec.action}`, 92).map(ln => ({ text: ln, size: 8 }))
     ),
-    ...execSummary.executiveActionRoadmapTable.map(rm => ({
-      text: `  [ROADMAP ${rm.phaseWindow}] ${rm.focusArea} | Findings: ${rm.targetFindings} | Risk Reduction: ${rm.projectedRiskReduction} | Owner: ${rm.stakeholderOwner}`,
-      size: 7.8,
-      bold: true
-    })),
+    ...execSummary.executiveActionRoadmapTable.flatMap(rm =>
+      wrapTextLine(
+        `  [ROADMAP ${rm.phaseWindow}] ${rm.focusArea} | Findings: ${rm.targetFindings} | Risk Reduction: ${rm.projectedRiskReduction} | Owner: ${rm.stakeholderOwner}`,
+        92
+      ).map(ln => ({
+        text: ln,
+        size: 7.8,
+        bold: true
+      }))
+    ),
     { text: "" },
     { text: "8. Conclusion and Next Steps", bold: true, size: 9.5, colorRgb: [0.05, 0.15, 0.35] },
     ...wrapTextLine(execSummary.conclusionAndNextSteps.conclusionParagraph, 94).map(ln => ({ text: `  ${ln}`, size: 8.5 })),
-    ...execSummary.conclusionAndNextSteps.nextStepsChecklist.map(ns => ({ text: `  ${ns}`, size: 8 })),
+    ...execSummary.conclusionAndNextSteps.nextStepsChecklist.flatMap(ns =>
+      wrapTextLine(`  ${ns}`, 92).map(ln => ({ text: ln, size: 8 }))
+    ),
     { text: "" }
   ];
 
@@ -190,7 +216,9 @@ function generateMultiPageAssessmentPdfBuffer(params: {
 
     docLines.push({ text: "==============================================================================================", bold: true, size: 8.5 });
     docLines.push({ text: `Finding ID: ${fr.findingId}`, bold: true, size: 10, colorRgb: sevRgb });
-    docLines.push({ text: `Title: ${fr.title}`, bold: true, size: 10, colorRgb: [0.05, 0.1, 0.2] });
+    for (const ln of wrapTextLine(`Title: ${fr.title}`, 94)) {
+      docLines.push({ text: ln, bold: true, size: 10, colorRgb: [0.05, 0.1, 0.2] });
+    }
     docLines.push({ text: `Severity: ${fr.severity}   |   CVSS Score: ${fr.cvssScore}   |   Status: ${fr.status}   |   Discovery Date: ${fr.discoveryDate}`, bold: true, size: 8.5, colorRgb: sevRgb });
     docLines.push({ text: `CVSS Vector: ${fr.cvssVector}`, size: 8.5 });
     for (const ln of wrapTextLine(`Tester / Tool: ${fr.testerTool}`, 94)) {
@@ -222,39 +250,49 @@ function generateMultiPageAssessmentPdfBuffer(params: {
       }
     });
 
-    docLines.push({ text: "Evidence & Collected Exploitation Proof", bold: true, size: 9.5, colorRgb: [0.05, 0.15, 0.35] });
-    docLines.push({ text: `  Exploitation Status: ${fr.exploitationStatusLabel}`, bold: true, size: 8.5, colorRgb: [0.75, 0.08, 0.18] });
-    docLines.push({ text: `  Forensic Evidence of TTP: ${fr.evidence.forensicHeader}`, bold: true, size: 8.5, colorRgb: [0.55, 0.1, 0.25] });
+    docLines.push({ text: "Evidence & Collected Verification Proof", bold: true, size: 9.5, colorRgb: [0.05, 0.15, 0.35] });
+    for (const ln of wrapTextLine(`  Validation Status: ${fr.exploitationStatusLabel}`, 94)) {
+      docLines.push({ text: ln, bold: true, size: 8.5, colorRgb: [0.75, 0.08, 0.18] });
+    }
+    for (const ln of wrapTextLine(`  Forensic Evidence of TTP: ${fr.evidence.forensicHeader}`, 94)) {
+      docLines.push({ text: ln, bold: true, size: 8.5, colorRgb: [0.55, 0.1, 0.25] });
+    }
     for (const ln of wrapTextLine(`  ${fr.evidence.ruleMatchLine} | Matched Indicator: ${fr.evidence.matchedIndicator}`, 94)) {
       docLines.push({ text: `  ${ln}`, size: 8.5 });
     }
-    docLines.push({ text: "  Sample Collected Exploitation Evidence Artifacts:", bold: true, size: 8.5, colorRgb: [0.05, 0.15, 0.35] });
+    docLines.push({ text: "  Sample Collected Verification Evidence Artifacts:", bold: true, size: 8.5, colorRgb: [0.05, 0.15, 0.35] });
     fr.evidence.collectedExploitationSamples.forEach(ev => {
-      docLines.push({ text: `    [${ev.artifactId}] ${ev.title} (${ev.category})`, bold: true, size: 8, colorRgb: [0.65, 0.08, 0.2] });
+      for (const ln of wrapTextLine(`    [${ev.artifactId}] ${ev.title} (${ev.category})`, 92)) {
+        docLines.push({ text: ln, bold: true, size: 8, colorRgb: [0.65, 0.08, 0.2] });
+      }
       for (const ln of wrapTextLine(`      Request/Cmd: ${ev.capturedCommandOrRequest.replace(/\n+/g, " | ")}`, 92)) {
         docLines.push({ text: ln, size: 7.8 });
       }
       for (const ln of wrapTextLine(`      Collected Output: ${ev.capturedOutputOrLoot.replace(/\n+/g, " | ")}`, 92)) {
         docLines.push({ text: ln, size: 7.8, colorRgb: [0.02, 0.42, 0.32] });
       }
-      for (const ln of wrapTextLine(`      Customer CI Verdict: ${ev.customerCiSummary} (SHA-256: ${ev.sha256Digest.slice(0, 24)}...)`, 92)) {
+      for (const ln of wrapTextLine(`      Customer CI Verdict: ${ev.customerCiSummary} (SHA-256: ${ev.sha256Digest})`, 92)) {
         docLines.push({ text: ln, size: 7.8 });
       }
     });
-    docLines.push({ text: "  Visual Exploitation Screenshots Included in HTML & Portal Dossier:", bold: true, size: 8.5, colorRgb: [0.05, 0.15, 0.35] });
+    docLines.push({ text: "  Visual Forensic Screenshots Included in HTML & Portal Dossier:", bold: true, size: 8.5, colorRgb: [0.05, 0.15, 0.35] });
     fr.evidence.exploitationPictures.forEach(pic => {
       for (const ln of wrapTextLine(`    * [${pic.figureId}] ${pic.title} — ${pic.caption}`, 92)) {
         docLines.push({ text: ln, size: 7.8 });
       }
     });
-    for (const ln of wrapTextLine(`  Mapped Assessment Scripts: ${fr.evidence.mappedAssessmentScripts.join(" | ")}`, 94)) {
+    for (const ln of wrapTextLine(`  Mapped Assessment Rules & Checks: ${fr.evidence.mappedAssessmentScripts.join(" | ")}`, 94)) {
       docLines.push({ text: `  ${ln}`, size: 8 });
     }
-    for (const ln of wrapTextLine(`  Triggered Privilege Escalation Scripts (TA0004): ${fr.evidence.triggeredPrivEscScripts.join(" | ")}`, 94)) {
+    for (const ln of wrapTextLine(`  Privilege Escalation Scope (TA0004): ${fr.evidence.triggeredPrivEscScripts.join(" | ")}`, 94)) {
       docLines.push({ text: `  ${ln}`, size: 8 });
     }
-    docLines.push({ text: `  Triggered Lateral Movement Scripts (TA0008): ${fr.evidence.triggeredLateralScripts.join(" | ")}`, size: 8 });
-    docLines.push({ text: `  Triggered Post-Exploitation Scripts (TA0003-TA0040): ${fr.evidence.triggeredPostExploitScripts.join(" | ")}`, size: 8 });
+    for (const ln of wrapTextLine(`  Lateral Movement Scope (TA0008): ${fr.evidence.triggeredLateralScripts.join(" | ")}`, 94)) {
+      docLines.push({ text: `  ${ln}`, size: 8 });
+    }
+    for (const ln of wrapTextLine(`  Post-Assessment Verification Scope: ${fr.evidence.triggeredPostExploitScripts.join(" | ")}`, 94)) {
+      docLines.push({ text: `  ${ln}`, size: 8 });
+    }
 
     docLines.push({ text: "Impact", bold: true, size: 9.5, colorRgb: [0.05, 0.15, 0.35] });
     docLines.push({ text: "  Technical Impact:", bold: true, size: 8.5 });
@@ -265,7 +303,9 @@ function generateMultiPageAssessmentPdfBuffer(params: {
     fr.impact.businessImpact.forEach(bi => {
       for (const ln of wrapTextLine(`    * ${bi}`, 94)) docLines.push({ text: ln, size: 8.5 });
     });
-    docLines.push({ text: `  Scope: ${fr.impact.scope}`, size: 8.5 });
+    for (const ln of wrapTextLine(`  Scope: ${fr.impact.scope}`, 94)) {
+      docLines.push({ text: ln, size: 8.5 });
+    }
 
     docLines.push({ text: `Likelihood: ${fr.likelihood.level}`, bold: true, size: 9, colorRgb: sevRgb });
     for (const ln of wrapTextLine(`  ${fr.likelihood.rationale}`, 94)) {
@@ -274,13 +314,21 @@ function generateMultiPageAssessmentPdfBuffer(params: {
 
     docLines.push({ text: "Remediation", bold: true, size: 9.5, colorRgb: [0.02, 0.42, 0.32] });
     docLines.push({ text: "  Immediate Actions:", bold: true, size: 8.5 });
-    fr.remediation.immediateActions.forEach(ia => docLines.push({ text: `    - ${ia}`, size: 8.5 }));
+    fr.remediation.immediateActions.forEach(ia => {
+      for (const ln of wrapTextLine(`    - ${ia}`, 92)) docLines.push({ text: ln, size: 8.5 });
+    });
     docLines.push({ text: "  Short-Term Hardening:", bold: true, size: 8.5 });
-    fr.remediation.shortTermHardening.forEach(sh => docLines.push({ text: `    - ${sh}`, size: 8.5 }));
+    fr.remediation.shortTermHardening.forEach(sh => {
+      for (const ln of wrapTextLine(`    - ${sh}`, 92)) docLines.push({ text: ln, size: 8.5 });
+    });
     docLines.push({ text: "  Container / Host Hardening:", bold: true, size: 8.5 });
-    fr.remediation.containerHostHardening.forEach(ch => docLines.push({ text: `    - ${ch}`, size: 8.5 }));
+    fr.remediation.containerHostHardening.forEach(ch => {
+      for (const ln of wrapTextLine(`    - ${ch}`, 92)) docLines.push({ text: ln, size: 8.5 });
+    });
     docLines.push({ text: "  Detection & Monitoring:", bold: true, size: 8.5 });
-    fr.remediation.detectionAndMonitoring.forEach(dm => docLines.push({ text: `    - ${dm}`, size: 8.5 }));
+    fr.remediation.detectionAndMonitoring.forEach(dm => {
+      for (const ln of wrapTextLine(`    - ${dm}`, 92)) docLines.push({ text: ln, size: 8.5 });
+    });
     for (const ln of wrapTextLine(`  MITRE D3FEND Countermeasure: ${fr.remediation.mitreD3fendCountermeasure}`, 94)) {
       docLines.push({ text: `  ${ln}`, bold: true, size: 8.5, colorRgb: [0.02, 0.42, 0.32] });
     }
@@ -292,7 +340,7 @@ function generateMultiPageAssessmentPdfBuffer(params: {
 
     docLines.push({ text: "Retest Criteria", bold: true, size: 9, colorRgb: [0.05, 0.15, 0.35] });
     fr.retestCriteria.forEach(rc => {
-      docLines.push({ text: `  [ ] ${rc}`, size: 8 });
+      for (const ln of wrapTextLine(`  [ ] ${rc}`, 92)) docLines.push({ text: ln, size: 8 });
     });
     docLines.push({ text: "" });
   });
@@ -751,7 +799,8 @@ export async function POST(req: NextRequest) {
       ${(() => {
         const execSum = buildExecutiveSummaryDossier({
           targetUrls,
-          findings
+          findings,
+          liveTelemetry: body.liveTelemetry
         });
         const ratingColor =
           execSum.overallRiskRating.rating === "Critical"
@@ -772,7 +821,7 @@ export async function POST(req: NextRequest) {
             </h2>
           </div>
           <span style="background:${ratingColor};color:#ffffff;font-weight:900;font-size:12px;padding:5px 12px;border-radius:6px;font-family:monospace;">
-            OVERALL RISK RATING: ${escapeHtml(execSum.overallRiskRating.rating.toUpperCase())}
+            OVERALL RISK RATING: ${escapeHtml(execSum.overallRiskRating.rating.toUpperCase())} (${execSum.overallRiskRating.postureScore}/100 · GRADE ${escapeHtml(execSum.overallRiskRating.postureGrade)})
           </span>
         </div>
 
@@ -882,7 +931,7 @@ export async function POST(req: NextRequest) {
               ${execSum.securityPostureTrendTable
                 .map(
                   tr => `
-                <tr style="${tr.periodLabel.includes("Current") ? "background:#fff1f2;" : tr.periodLabel.includes("Projected") ? "background:#ecfdf5;" : ""}">
+                <tr style="${tr.periodLabel.includes("Current") ? "background:#fff1f2;" : tr.periodLabel.includes("Forecast") ? "background:#ecfdf5;" : ""}">
                   <td style="padding:6px 9px;border:1px solid #cbd5e1;font-weight:800;color:#0f172a;">${escapeHtml(tr.periodLabel)}</td>
                   <td style="padding:6px 9px;border:1px solid #cbd5e1;font-family:monospace;font-weight:900;color:${
                     tr.postureScore >= 85 ? "#059669" : tr.postureScore >= 65 ? "#0284c7" : "#d97706"
@@ -1027,7 +1076,7 @@ export async function POST(req: NextRequest) {
 </body>
 </html>`;
 
-    const execSumText = buildExecutiveSummaryDossier({ targetUrls, findings });
+    const execSumText = buildExecutiveSummaryDossier({ targetUrls, findings, liveTelemetry: body.liveTelemetry });
     const textContent = [
       `XTRIKE™ & AEGIS.SOC™ — DAST & WEB INTERFACE SECURITY ASSESSMENT REPORT`,
       `========================================================================`,
@@ -1037,7 +1086,7 @@ export async function POST(req: NextRequest) {
       `Message-ID: ${messageId}`,
       `SHA-256 Digest: ${reportSha256}`,
       `Recipients: ${recipients.join(", ")}`,
-      `Port Coverage: 65,535 TCP + 65,535 UDP (131,070 Total Transport Sockets Mapped)`,
+      `Canonical Scan Record: ${execSumText.canonicalScanRecord.spideredPagesCount} Spidered Page(s) | ${execSumText.canonicalScanRecord.linksCount} Link(s) | ${execSumText.canonicalScanRecord.scriptsCount} Script(s) | ${execSumText.canonicalScanRecord.formsCount} Form(s) | ${execSumText.canonicalScanRecord.endpointsProbedCount} Endpoint Probes`,
       ``,
       `========================================================================`,
       `EXECUTIVE SUMMARY`,
@@ -1047,8 +1096,9 @@ export async function POST(req: NextRequest) {
       `Methodology: ${execSumText.engagementOverview.methodologyReferenced}`,
       `Rules of Engagement: ${execSumText.engagementOverview.rulesOfEngagement}`,
       ``,
-      `2. Overall Risk Rating: ${execSumText.overallRiskRating.rating}`,
+      `2. Overall Risk Rating: ${execSumText.overallRiskRating.rating} (Posture Score: ${execSumText.overallRiskRating.postureScore}/100, Grade ${execSumText.overallRiskRating.postureGrade})`,
       execSumText.overallRiskRating.justification,
+      `Published Scoring Formula: ${execSumText.scoringMethodology.formulaText}`,
       ``,
       `3. Findings Summary & Severity Breakdown Table`,
       `A total of ${execSumText.findingsSummary.totalFindings} confirmed findings were identified:`,
@@ -1107,7 +1157,7 @@ export async function POST(req: NextRequest) {
           `Steps to Reproduce`,
           ...fr.stepsToReproduce.map((s, i) => `${i + 1}. ${s}`),
           ``,
-          `Evidence & Sample Collected Exploitation Proof`,
+          `Evidence & Sample Collected Verification Proof`,
           `Forensic Evidence of TTP: ${fr.evidence.forensicHeader}`,
           `${fr.evidence.ruleMatchLine}`,
           `Matched Indicator: ${fr.evidence.matchedIndicator}`,
@@ -1118,10 +1168,10 @@ export async function POST(req: NextRequest) {
           ...fr.evidence.exploitationPictures.map(
             pic => `  * [Visual Screenshot ${pic.figureId}] ${pic.title} — ${pic.caption}`
           ),
-          `Mapped Assessment Scripts: ${fr.evidence.mappedAssessmentScripts.join(", ")}`,
-          `Triggered Privilege Escalation Scripts (TA0004): ${fr.evidence.triggeredPrivEscScripts.join(", ")}`,
-          `Triggered Lateral Movement Scripts (TA0008): ${fr.evidence.triggeredLateralScripts.join(" | ")}`,
-          `Triggered Post-Exploitation Scripts (TA0003-TA0040): ${fr.evidence.triggeredPostExploitScripts.join(" | ")}`,
+          `Mapped Assessment Rules & Checks: ${fr.evidence.mappedAssessmentScripts.join(", ")}`,
+          `Privilege Escalation Scope (TA0004): ${fr.evidence.triggeredPrivEscScripts.join(", ")}`,
+          `Lateral Movement Scope (TA0008): ${fr.evidence.triggeredLateralScripts.join(" | ")}`,
+          `Post-Assessment Verification Scope: ${fr.evidence.triggeredPostExploitScripts.join(" | ")}`,
           ``,
           `Impact`,
           `Technical Impact:`,
@@ -1177,7 +1227,8 @@ export async function POST(req: NextRequest) {
       medCount,
       lowCount,
       findings,
-      primaryUrl
+      primaryUrl,
+      liveTelemetry: body.liveTelemetry
     });
     const pdfBase64 = pdfBuffer.toString("base64");
     const pdfSha256 = crypto.createHash("sha256").update(pdfBuffer).digest("hex");
