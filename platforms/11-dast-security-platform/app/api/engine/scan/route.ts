@@ -900,43 +900,57 @@ async function probeTarget(
   }
 
   if (reachable) {
-    // Finding 1: Missing or Weak Content-Security-Policy (CSP)
+    // Finding 1: Missing or Weak Content-Security-Policy (CSP) & Directive Gaps (Consolidated CWE-693)
     const cspRaw = securityHeaders.cspValue || "";
     const hasUnsafeInline = Boolean(cspRaw && /unsafe-inline/i.test(cspRaw));
     const hasUnsafeEval = Boolean(cspRaw && /unsafe-eval/i.test(cspRaw));
-    const hasCdnGadgetWildcards = Boolean(cspRaw && /(\*\.(jsdelivr\.net|cloudflare\.com|google\.com|gstatic\.com|googleapis\.com|unpkg\.com|cdnjs\.cloudflare\.com|myidx\.cloud)|cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com|code\.jquery\.com)/i.test(cspRaw));
-    if (!securityHeaders.csp || hasUnsafeInline || hasUnsafeEval) {
+    const hasCdnGadgetWildcards = Boolean(cspRaw && /(\*\.(jsdelivr\.net|cloudflare\.com|google\.com|gstatic\.com|googleapis\.com|unpkg\.com|cdnjs\.cloudflare\.com)|cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com|code\.jquery\.com)/i.test(cspRaw));
+    const connectSrcMatch = cspRaw.match(/connect-src\s+([^;]+)/i);
+    const frameSrcMatch = cspRaw.match(/frame-src\s+([^;]+)/i);
+    const hasConnectWildcard = Boolean(connectSrcMatch && /(?:^|\s)(?:\*|(?:https?|wss?):\*)(?:\s|$)/i.test(connectSrcMatch[1]));
+    const hasFrameWildcard = Boolean(frameSrcMatch && /(?:^|\s)(?:\*|(?:https?):\*)(?:\s|$)/i.test(frameSrcMatch[1]));
+    const missingFrameAncestors = Boolean(cspRaw && !/frame-ancestors/i.test(cspRaw));
+    const missingFormAction = Boolean(cspRaw && !/form-action/i.test(cspRaw));
+    const missingBaseUri = Boolean(cspRaw && !/base-uri/i.test(cspRaw));
+
+    if (!securityHeaders.csp || hasUnsafeInline || hasUnsafeEval || hasConnectWildcard || hasFrameWildcard || missingFrameAncestors || missingFormAction || missingBaseUri) {
       const weaknessParts = [
         hasUnsafeInline ? "'unsafe-inline'" : null,
         hasUnsafeEval ? "'unsafe-eval'" : null,
-        hasCdnGadgetWildcards ? "Public CDN Script Gadgets (jsdelivr.net / unpkg.com / cloudflare.com / google.com)" : null
+        hasConnectWildcard ? "connect-src *" : null,
+        hasFrameWildcard ? "frame-src *" : null,
+        hasCdnGadgetWildcards ? "Public CDN Script Gadgets" : null,
+        missingFrameAncestors ? "missing 'frame-ancestors'" : null,
+        missingFormAction ? "missing 'form-action'" : null,
+        missingBaseUri ? "missing 'base-uri'" : null
       ].filter(Boolean);
-      const isHighRiskCsp = (hasUnsafeInline && hasUnsafeEval) || (hasUnsafeInline && hasCdnGadgetWildcards);
+      const isHighRiskCsp = (hasUnsafeInline && hasUnsafeEval) || (hasUnsafeInline && hasCdnGadgetWildcards) || hasConnectWildcard;
+      const cspPreview = cspRaw.length > 160 ? `${cspRaw.slice(0, 160)}... [${cspRaw.length} chars total]` : cspRaw;
       liveFindings.push({
         id: `LIVE-${host}-CSP`,
         title: !securityHeaders.csp
           ? `[LIVE EXTERNAL AUDIT] Content-Security-Policy (CSP) Header Missing on ${host}`
-          : `[LIVE EXTERNAL AUDIT] Permissive Content-Security-Policy (${weaknessParts.join(" + ")}) on ${host}`,
+          : `[LIVE EXTERNAL AUDIT] Permissive Content-Security-Policy (${weaknessParts.slice(0, 4).join(" + ")}) on ${host}`,
         severity: isHighRiskCsp ? "High" : "Medium",
         confidence: "Confirmed",
         plugin: "Header",
         url: finalUrl,
-        parameter: "Content-Security-Policy (script-src / style-src)",
+        parameter: "Content-Security-Policy (script-src / style-src / frame-ancestors / form-action)",
         method: "GET",
         owaspRef: "A05:2021 · WSTG-CONF-07 · ASVS V14.4.3",
         cweId: "CWE-693",
         description: !securityHeaders.csp
           ? `Live HTTP response inspection of ${finalUrl} (HTTP ${statusCode}, ${responseTimeMs}ms) confirmed that the server does not return a 'Content-Security-Policy' header. Without CSP, browsers execute any inline scripts or third-party script inclusions if an injection flaw exists.`
-          : `Live HTTP response inspection of ${finalUrl} captured a Content-Security-Policy header containing ${weaknessParts.join(", ")}: "${cspRaw}". Allowing 'unsafe-inline' and 'unsafe-eval' alongside broad public CDNs disables browser XSS execution protections and permits JSONP/script-gadget CSP bypasses.`,
-        impact: "Neutralizes browser-level Cross-Site Scripting (XSS) defenses, allowing injected inline scripts, eval() sinks, or CDN JSONP gadgets to execute arbitrary JavaScript in visitor sessions.",
+          : `Live HTTP response inspection of ${finalUrl} captured a ${cspRaw.length}-character Content-Security-Policy header exhibiting ${weaknessParts.join(", ")} (Excerpt: "${cspPreview}"). Allowing 'unsafe-inline' or 'unsafe-eval' alongside broad third-party origins and omitting 'frame-ancestors'/'form-action'/'base-uri' weakens browser XSS and framing defenses.`,
+        impact: "Weakens browser-level Cross-Site Scripting (XSS), framing, and form-action defenses, allowing injected inline scripts, eval() sinks, or third-party script gadgets to execute in visitor sessions.",
         remediation: !securityHeaders.csp
-          ? "Deploy a strict Content-Security-Policy response header (e.g., \"default-src 'self'; script-src 'self' 'nonce-<random>' 'strict-dynamic'; object-src 'none'; base-uri 'self'; frame-ancestors 'self'\") across all web responses."
-          : "Remove 'unsafe-inline', 'unsafe-eval', and broad public script-gadget CDNs from script-src; enforce cryptographic per-request nonces ('nonce-<random>') or 'strict-dynamic' with explicit SHA-384 script hashes.",
+          ? "Deploy a strict Content-Security-Policy response header (e.g., \"default-src 'self'; script-src 'self' 'nonce-<random>' 'strict-dynamic'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'\") across all web responses."
+          : "Remove 'unsafe-inline' and 'unsafe-eval' from script-src in favor of cryptographic per-request nonces ('nonce-<random>') or 'strict-dynamic', and explicitly define 'frame-ancestors \\'self\\'', 'form-action \\'self\\'', and 'base-uri \\'self\\''.",
         evidence: {
           originalRequest: `GET ${new URL(finalUrl).pathname || "/"} HTTP/1.1\r\nHost: ${host}\r\nUser-Agent: ${BROWSER_NAV_HEADERS["User-Agent"]}\r\nAccept: text/html,application/xhtml+xml`,
           testRequest: `GET ${new URL(finalUrl).pathname || "/"} HTTP/1.1\r\nHost: ${host}\r\nUser-Agent: ${BROWSER_NAV_HEADERS["User-Agent"]}\r\nAccept: text/html`,
           originalResponse: rawHeadersText,
-          testResponse: `HTTP/1.1 ${statusCode} OK\r\nServer: ${serverHeader}\r\nContent-Security-Policy: ${securityHeaders.csp ? cspRaw : "<MISSING — NOT RETURNED BY SERVER>"}\r\n\r\n[ISOLATED CSP VULNERABILITY PROOF ON ${host}]\r\n• Observed Header: ${securityHeaders.csp ? `content-security-policy: ${cspRaw}` : "Content-Security-Policy: <ABSENT>"}\r\n• Unsafe Inline Scripts ('unsafe-inline'): ${hasUnsafeInline ? "PERMITTED (Vulnerable to Inline XSS)" : !securityHeaders.csp ? "PERMITTED (No CSP)" : "Restricted"}\r\n• Dynamic Code Evaluation ('unsafe-eval'): ${hasUnsafeEval ? "PERMITTED (Vulnerable to eval/Function DOM XSS)" : !securityHeaders.csp ? "PERMITTED (No CSP)" : "Restricted"}\r\n• Public CDN Script Gadgets: ${hasCdnGadgetWildcards ? "PERMITTED (CSP bypass via JSONP/CDN gadgets)" : "Not present"}\r\n• DOM Script Tags Loaded (${domDiscoveryParsed.scriptsFound.length}): ${domDiscoveryParsed.scriptsFound.slice(0, 4).join(", ") || "Inline scripts active"}`,
+          testResponse: `HTTP/1.1 ${statusCode} OK\r\nServer: ${serverHeader}\r\nContent-Security-Policy: ${securityHeaders.csp ? cspRaw : "<MISSING — NOT RETURNED BY SERVER>"}\r\n\r\n[ISOLATED CSP VULNERABILITY PROOF ON ${host}]\r\n• Observed Header: ${securityHeaders.csp ? `content-security-policy: ${cspRaw}` : "Content-Security-Policy: <ABSENT>"}\r\n• Unsafe Inline Scripts ('unsafe-inline'): ${hasUnsafeInline ? "PERMITTED (Vulnerable to Inline XSS)" : !securityHeaders.csp ? "PERMITTED (No CSP)" : "Restricted"}\r\n• Dynamic Code Evaluation ('unsafe-eval'): ${hasUnsafeEval ? "PERMITTED (Vulnerable to eval/Function DOM XSS)" : !securityHeaders.csp ? "PERMITTED (No CSP)" : "Restricted"}\r\n• Public CDN Script Gadgets: ${hasCdnGadgetWildcards ? "PERMITTED (CSP bypass via JSONP/CDN gadgets)" : "Not present"}\r\n• Missing Hardening Directives: ${[missingFrameAncestors ? "frame-ancestors" : null, missingFormAction ? "form-action" : null, missingBaseUri ? "base-uri" : null].filter(Boolean).join(", ") || "None"}\r\n• DOM Script Tags Loaded (${domDiscoveryParsed.scriptsFound.length}): ${domDiscoveryParsed.scriptsFound.slice(0, 4).join(", ") || "Inline scripts active"}`,
           payload: "GET / HTTP/1.1 — Content-Security-Policy Directive Parser (OWASP WSTG-CONF-07)",
           matchedPattern: !securityHeaders.csp
             ? "Missing Header: Content-Security-Policy"
@@ -945,7 +959,7 @@ async function probeTarget(
             `Step 1 (Send Live HTTP Request): Issue 'curl -s -I "${finalUrl}"' and capture the raw HTTP response headers from ${host}.`,
             `Step 2 (Inspect CSP Header): Locate the 'content-security-policy' header in the HTTP ${statusCode} response.`,
             `Step 3 (Verify Unsafe Directives): Confirm that ${!securityHeaders.csp ? "no Content-Security-Policy header is returned" : `the live policy contains ${weaknessParts.join(", ")}`}.`,
-            `Step 4 (Retest After Fix): Replace 'unsafe-inline' and 'unsafe-eval' with cryptographic nonces on ${host} and run 'Verify Fix (Retest)'.`
+            `Step 4 (Retest After Fix): Replace 'unsafe-inline' and 'unsafe-eval' with cryptographic nonces and add 'frame-ancestors'/'form-action'/'base-uri' on ${host}, then run 'Verify Fix (Retest)'.`
           ]
         },
         ttp: [
@@ -965,18 +979,18 @@ async function probeTarget(
             techniqueId: "T1562",
             procedure: !securityHeaders.csp
               ? "Absence of browser-enforced Content-Security-Policy removes client-side defense-in-depth against unauthorized script execution."
-              : `Inclusion of ${weaknessParts.join(" and ")} in Content-Security-Policy on ${host} neutralizes browser XSS script blocking.`,
+              : `Inclusion of ${weaknessParts.join(", ")} in Content-Security-Policy on ${host} weakens browser XSS and framing protections.`,
             mitigations: ["M1021 — Restrict Web-Based Content"],
             references: ["https://attack.mitre.org/techniques/T1562/"]
           }
         ],
         poc: {
           description: `Live cURL & Python commands to verify the Content-Security-Policy header on ${finalUrl}`,
-          curlCommand: `# Step 1: Fetch live HTTP response headers from ${finalUrl}\ncurl -s -D - -o /dev/null "${finalUrl}"\n# ➔ [CAPTURED RESULT]: HTTP/1.1 ${statusCode} OK | Server: ${serverHeader} (${Object.keys(headersMap).length} headers returned)\n\n# Step 2: Inspect the live Content-Security-Policy header on ${host}\ncurl -s -I "${finalUrl}" | grep -i "content-security-policy"\n# ➔ [CAPTURED RESULT]: ${securityHeaders.csp ? `content-security-policy: ${cspRaw}` : `[!] VULNERABLE: Content-Security-Policy header is MISSING on ${host}`}`,
-          pythonScript: `import requests\n\nurl = "${finalUrl}"\nr = requests.get(url, timeout=10)\ncsp = r.headers.get("Content-Security-Policy")\nprint(f"[*] Live Status: {r.status_code} | Server: {r.headers.get('Server')}")\nprint(f"[*] Captured CSP on ${host}: {csp}")\n# ➔ [CAPTURED RESULT]: [*] Live Status: ${statusCode} | Server: ${serverHeader}\n# ➔ [CAPTURED RESULT]: [*] Captured CSP on ${host}: ${securityHeaders.csp ? cspRaw : "None (MISSING)"}`,
+          curlCommand: `# Step 1: Fetch live HTTP response headers from ${finalUrl}\ncurl -s -D - -o /dev/null "${finalUrl}"\n# ➔ [CAPTURED RESULT]: HTTP/1.1 ${statusCode} OK | Server: ${serverHeader} (${Object.keys(headersMap).length} headers returned)\n\n# Step 2: Inspect the live Content-Security-Policy header on ${host}\ncurl -s -I "${finalUrl}" | grep -i "content-security-policy"\n# ➔ [CAPTURED RESULT]: ${securityHeaders.csp ? `content-security-policy: ${cspPreview}` : `[!] VULNERABLE: Content-Security-Policy header is MISSING on ${host}`}`,
+          pythonScript: `import requests\n\nurl = "${finalUrl}"\nr = requests.get(url, timeout=10)\ncsp = r.headers.get("Content-Security-Policy")\nprint(f"[*] Live Status: {r.status_code} | Server: {r.headers.get('Server')}")\nprint(f"[*] Captured CSP on ${host}: {csp}")\n# ➔ [CAPTURED RESULT]: [*] Live Status: ${statusCode} | Server: ${serverHeader}\n# ➔ [CAPTURED RESULT]: [*] Captured CSP on ${host}: ${securityHeaders.csp ? cspPreview : "None (MISSING)"}`,
           expectedResult: !securityHeaders.csp
             ? `No 'Content-Security-Policy' header is returned in the live HTTP ${statusCode} response from ${finalUrl}.`
-            : `Live CSP header on ${finalUrl} contains ${weaknessParts.join(", ")}.`,
+            : `Live CSP header on ${finalUrl} exhibits ${weaknessParts.join(", ")}.`,
           severity: isHighRiskCsp ? "High — CVSS 7.4" : "Medium — CVSS 6.1"
         },
         collectedEvidence: [
@@ -998,83 +1012,6 @@ async function probeTarget(
         verificationStatus: "Verified",
         detectedAt: nowTime
       });
-    }
-
-    // Finding 1B: CSP Wildcard Data Exfiltration (connect-src *) & Missing Frame-Ancestors / Base-URI / Form-Action
-    if (securityHeaders.csp && cspRaw) {
-      const hasConnectWildcard = /connect-src[^;]*\*/i.test(cspRaw);
-      const hasFrameWildcard = /frame-src[^;]*\*/i.test(cspRaw);
-      const missingFrameAncestors = !/frame-ancestors/i.test(cspRaw);
-      const missingFormAction = !/form-action/i.test(cspRaw);
-      const missingBaseUri = !/base-uri/i.test(cspRaw);
-
-      if (hasConnectWildcard || hasFrameWildcard || missingFrameAncestors || missingFormAction || missingBaseUri) {
-        const gaps = [
-          hasConnectWildcard ? "connect-src allows wildcard '*' (unrestricted XHR/Fetch/WebSocket exfiltration)" : null,
-          hasFrameWildcard ? "frame-src allows wildcard '*' (arbitrary external iframe embedding)" : null,
-          missingFrameAncestors ? "missing 'frame-ancestors' directive (anti-framing not enforced in CSP)" : null,
-          missingFormAction ? "missing 'form-action' directive (HTML form action hijacking permitted)" : null,
-          missingBaseUri ? "missing 'base-uri' directive (<base> tag URI hijacking permitted)" : null
-        ].filter(Boolean);
-
-        liveFindings.push({
-          id: `LIVE-${host}-CSP-EXFIL`,
-          title: `[LIVE EXTERNAL AUDIT] CSP Wildcard Data Exfiltration & Directive Gaps (${hasConnectWildcard ? "connect-src * · " : ""}${hasFrameWildcard ? "frame-src * · " : ""}Missing frame-ancestors / form-action) on ${host}`,
-          severity: hasConnectWildcard ? "High" : "Medium",
-          confidence: "Confirmed",
-          plugin: "Header",
-          url: finalUrl,
-          parameter: "Content-Security-Policy (connect-src / frame-src / frame-ancestors / form-action)",
-          method: "GET",
-          owaspRef: "A05:2021 · WSTG-CLNT-12 / WSTG-CONF-07 · ASVS V14.4.3",
-          cweId: "CWE-693",
-          description: `Deep directive analysis of the live Content-Security-Policy header on ${finalUrl} identified critical policy gaps: ${gaps.join("; ")}. Specifically, ${hasConnectWildcard ? "'connect-src' includes a wildcard ('*'), allowing any client-side script or third-party tracker to exfiltrate session data or PII to arbitrary external servers via fetch()/XMLHttpRequest/WebSocket." : "omitting 'frame-ancestors', 'form-action', and 'base-uri' leaves the page exposed to framing, form hijacking, and base-tag injection."}`,
-          impact: "Allows unauthorized cross-origin data exfiltration (connect-src *), external framing manipulation (frame-src * / missing frame-ancestors), and form credential redirection (missing form-action).",
-          remediation: "Restrict 'connect-src' to explicit first-party and required API domains (never '*'), and explicitly define 'frame-ancestors \\'self\\'', 'form-action \\'self\\'', and 'base-uri \\'self\\'' in the Content-Security-Policy header.",
-          evidence: {
-            originalRequest: `GET ${new URL(finalUrl).pathname || "/"} HTTP/1.1\r\nHost: ${host}\r\nUser-Agent: Mozilla/5.0 (compatible; OWASP-ZAP/2.14.0; ExpediteStrike-LiveScanner/5.0)\r\nAccept: text/html`,
-            testRequest: `GET ${new URL(finalUrl).pathname || "/"} HTTP/1.1\r\nHost: ${host}\r\nUser-Agent: ExpediteStrike-CSP-Directive-Analyzer/5.0`,
-            originalResponse: rawHeadersText,
-            testResponse: `HTTP/1.1 ${statusCode} OK\r\nServer: ${serverHeader}\r\ncontent-security-policy: ${cspRaw}\r\n\r\n[CSP DIRECTIVE AUDIT BREAKDOWN ON ${host}]\r\n${gaps.map((g, i) => `  [${i + 1}] VULNERABLE: ${g}`).join("\r\n")}`,
-            payload: "CSP Directive Decomposition (connect-src / frame-src / frame-ancestors / form-action / base-uri)",
-            matchedPattern: `${hasConnectWildcard ? "connect-src 'self' *" : ""}${hasFrameWildcard ? " | frame-src 'self' *" : ""} | Missing: ${[missingFrameAncestors ? "frame-ancestors" : "", missingFormAction ? "form-action" : "", missingBaseUri ? "base-uri" : ""].filter(Boolean).join(", ")}`.replace(/^ \| /, ""),
-            reproductionSteps: [
-              `Step 1 (Capture Live CSP Header): Run 'curl -s -I "${finalUrl}" | grep -i content-security-policy'.`,
-              `Step 2 (Inspect Directives): Parse 'connect-src', 'frame-src', 'frame-ancestors', 'form-action', and 'base-uri'.`,
-              `Step 3 (Verify Gaps): Confirm ${gaps.join("; ")} in the live response from ${host}.`
-            ]
-          },
-          ttp: [
-            {
-              tactic: "Exfiltration",
-              tacticId: "TA0010",
-              technique: "Exfiltration Over Web Service",
-              techniqueId: "T1567",
-              procedure: `Permissive CSP directives (${gaps.slice(0, 2).join(", ")}) on ${host} permit browser-side data exfiltration over HTTPS/WSS to arbitrary external endpoints.`,
-              mitigations: ["M1054 — Restrict CSP connect-src, form-action, base-uri, and frame-ancestors to explicit trusted origins"],
-              references: ["https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/connect-src"]
-            }
-          ],
-          poc: {
-            description: `Inspect live CSP exfiltration and framing directives on ${finalUrl}`,
-            curlCommand: `# Step 1: Extract the live Content-Security-Policy header from ${finalUrl}\ncurl -s -I "${finalUrl}" | grep -i "content-security-policy"\n# ➔ [CAPTURED RESULT]: content-security-policy: ${cspRaw}\n\n# Step 2: Verify wildcard connect-src / frame-src and missing frame-ancestors / form-action\n# ➔ [CAPTURED RESULT]: ${gaps.join(" | ")}`,
-            pythonScript: `import requests\nr = requests.get("${finalUrl}", timeout=10)\ncsp = r.headers.get("Content-Security-Policy", "")\nfor d in ["connect-src", "frame-src", "frame-ancestors", "form-action", "base-uri"]:\n    print(d, "->", "PRESENT" if d in csp.lower() else "MISSING")\n# ➔ [CAPTURED RESULT]: ${gaps.join(" | ")}`,
-            expectedResult: `CSP on ${host} exhibits: ${gaps.join("; ")}`,
-            severity: hasConnectWildcard ? "High — CVSS 7.2" : "Medium — CVSS 5.8"
-          },
-          collectedEvidence: [
-            {
-              type: "LIVE_HTTP_HEADERS",
-              title: `Sample Evidence 1 — Live CSP Header & Directive Decomposition (${host})`,
-              content: `content-security-policy: ${cspRaw}\n\nIdentified Directive Weaknesses:\n${gaps.map((g, i) => `${i + 1}. ${g}`).join("\n")}`,
-              highlight: hasConnectWildcard ? "connect-src 'self' *" : "content-security-policy",
-              annotation: `Extracted directly from the live HTTP response of ${finalUrl}.`
-            }
-          ],
-          verificationStatus: "Verified",
-          detectedAt: nowTime
-        });
-      }
     }
 
     // Finding 2: Missing or Incomplete HSTS Policy or Unencrypted HTTP Transport
@@ -1426,9 +1363,14 @@ async function probeTarget(
       });
     }
 
-    // Finding 7: Server / Technology / Backend Header Information Disclosure (Only Actual Disclosed Headers — Never "Undisclosed Web Server")
+    // Finding 7: Server / Technology / Backend Header Information Disclosure (Only Actual Disclosed Backend/Version Headers — Never Generic Versionless CDN Edge Proxies)
+    const rawServerVal = (headersMap["server"] || "").trim();
+    const isGenericEdgeProxyOnly = Boolean(
+      rawServerVal &&
+      /^(cloudflare|cloudfront|amzncf|vercel|akamaighost|akamai-ighost|fastly|gws|esf|amazons3)$/i.test(rawServerVal)
+    );
     const disclosedBannerHeaders: Array<{ headerName: string; value: string }> = [
-      headersMap["server"] ? { headerName: "server", value: headersMap["server"] } : null,
+      rawServerVal && !isGenericEdgeProxyOnly ? { headerName: "server", value: rawServerVal } : null,
       headersMap["x-powered-by"] ? { headerName: "x-powered-by", value: headersMap["x-powered-by"] } : null,
       headersMap["x-generator"] ? { headerName: "x-generator", value: headersMap["x-generator"] } : null,
       headersMap["x-aspnet-version"] ? { headerName: "x-aspnet-version", value: headersMap["x-aspnet-version"] } : null,
@@ -1451,7 +1393,7 @@ async function probeTarget(
         parameter: `${disclosedNames} (HTTP Response Headers)`,
         method: "GET",
         owaspRef: "A05:2021 · WSTG-INFO-02 · ASVS V14.3.3",
-        cweId: "CWE-200",
+        cweId: "CWE-497",
         description: `Live HTTP response headers from ${finalUrl} (Page Title: "${domDiscoveryParsed.pageTitle}") disclose internal framework, CMS, or backend routing identifiers: ${disclosedSummary}.${!headersMap["server"] ? " (Note: Primary 'Server' header is suppressed/hardened, but downstream technology headers remain exposed.)" : ""}`,
         impact: `Assists external reconnaissance in fingerprinting exact server/CMS/framework versions (${disclosedSummary}) and mapping edge or backend routing architecture.`,
         remediation: `Strip verbose technology and backend routing headers (${disclosedNames}) at the reverse proxy or CDN edge before returning responses to external clients.`,
@@ -1717,7 +1659,7 @@ async function probeTarget(
         parameter: jsRoutesList.slice(0, 4).join(", ") || spideredPages.map(p => p.path).slice(0, 4).join(", "),
         method: "GET",
         owaspRef: "A05:2021 · WSTG-INFO-06 / WSTG-INFO-07 · API9:2023",
-        cweId: "CWE-200",
+        cweId: "CWE-425",
         description: `Recursive spidering and DOM route extraction on ${host} mapped ${spideredPages.length} live page(s) (${spideredPages.map(p => `${p.path} [HTTP ${p.status}, ${p.latencyMs}ms]`).join(", ")}), ${domDiscoveryParsed.linksFound.length} hyperlink(s), and ${jsRoutesList.length} client-side / API route pattern(s) (${jsRoutesList.slice(0, 6).join(", ") || "root routes"}).`,
         impact: "Client-exposed route tables and unauthenticated sub-pages allow attackers to map application workflows and identify undocumented or legacy API endpoints (OWASP API9:2023 Improper Inventory Management).",
         remediation: "Ensure all client-referenced API routes enforce authentication and rate-limiting, disable production JavaScript source maps (.js.map), and decommission unused routes.",
@@ -2148,7 +2090,7 @@ async function probeTarget(
   }));
 
   return {
-    schemaVersion: "5.5.0-universal-clean",
+    schemaVersion: "5.6.0-universal-clean",
     targetUrl: cleanUrl,
     finalUrl,
     host,

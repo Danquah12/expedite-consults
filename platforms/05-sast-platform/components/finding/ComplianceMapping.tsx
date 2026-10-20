@@ -13,15 +13,15 @@ const FW_COLORS: Record<string, string> = {
   "OWASP Top 10": "#e2853b",
 };
 
-// Map CodeQL/Joern queries based on finding ID
-const CODEQL_QUERIES: Record<string, string> = {
+// Map XTRIKE XQL queries based on finding ID
+const XQL_QUERIES: Record<string, string> = {
   "F-001": `/**
  * @name SQL Injection
  * @kind path-problem
- * @id java/sql-injection
+ * @id xtrike/java/sql-injection
  */
 import java
-import semmle.code.java.security.QueryInjection
+import xtrike.code.java.security.QueryInjection
 import QueryInjectionFlow::PathGraph
 
 from QueryInjectionFlow::PathNode source, QueryInjectionFlow::PathNode sink
@@ -30,10 +30,10 @@ select sink.getNode(), source, sink, "SQL Injection flow path detected."`,
   "F-002": `/**
  * @name Deserialization of untrusted data
  * @kind path-problem
- * @id java/unsafe-deserialization
+ * @id xtrike/java/unsafe-deserialization
  */
 import java
-import semmle.code.java.security.UnsafeDeserialization
+import xtrike.code.java.security.UnsafeDeserialization
 import UnsafeDeserializationFlow::PathGraph
 
 from UnsafeDeserializationFlow::PathNode source, UnsafeDeserializationFlow::PathNode sink
@@ -42,9 +42,9 @@ select sink.getNode(), source, sink, "Deserialization gadget vulnerability detec
 };
 
 export default function ComplianceMapping({ finding: f }: Props) {
-  const codeqlQuery = CODEQL_QUERIES[f.id] || `/**
- * @name Custom AST query
- * @id java/custom-ast-match
+  const xqlQuery = XQL_QUERIES[f.id] || `/**
+ * @name XTRIKE Custom AST Query
+ * @id xtrike/custom-ast-match
  */
 import java
 from MethodCall call
@@ -97,18 +97,18 @@ select call, "Matching invocation signature."`;
         )}
       </div>
 
-      {/* CodeQL Query Box */}
+      {/* XTRIKE XQL Query Box */}
       <div className="rounded-2xl p-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
         <h2 className="text-base font-bold text-[#1f1b18] mb-3 flex items-center gap-2">
           <Code2 size={16} className="text-[#8b4528]" />
-          CodeQL Query Node Signature
+          XTRIKE XQL Query Node Signature
         </h2>
         <div className="terminal">
           <div className="terminal-header">
             <div className="terminal-dot" style={{ background: "#e5484d" }} />
             <div className="terminal-dot" style={{ background: "#d6a847" }} />
             <div className="terminal-dot" style={{ background: "#46a36e" }} />
-            <span className="ml-2 text-xs" style={{ color: "var(--muted)" }}>java/query-detect.ql</span>
+            <span className="ml-2 text-xs" style={{ color: "var(--muted)" }}>xtrike/query-detect.xql</span>
           </div>
           <pre style={{
             padding: 12,
@@ -120,11 +120,11 @@ select call, "Matching invocation signature."`;
             lineHeight: 1.4,
             maxHeight: 180
           }}>
-            {codeqlQuery}
+            {xqlQuery}
           </pre>
         </div>
         <div className="text-[10px] text-slate-500 mt-2">
-          This CodeQL script checks structural patterns inside AST compiler trees to trace path reachability.
+          This XTRIKE XQL predicate checks structural patterns inside AST compiler trees to trace path reachability.
         </div>
       </div>
 

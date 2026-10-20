@@ -41,34 +41,34 @@ type Props = {
 
 const AVAILABLE_ENGINES = [
   {
-    name: "Checkmarx",
-    desc: "CxQL AST queries, Best Fix Location (BFL) & PCI-DSS / NIST 800-53 / ISO compliance",
-    tag: "CxSAST + BFL",
+    name: "XTRIKE XQL",
+    desc: "XQL AST queries, Best Fix Location (BFL) & PCI-DSS / NIST 800-53 / ISO compliance",
+    tag: "XQL + BFL",
   },
   {
-    name: "IBM Code Scan",
-    desc: "AppScan intelligent source-to-sink taint flow & sanitizer dominance verification",
+    name: "XTRIKE DeepFlow",
+    desc: "Intelligent source-to-sink taint flow & sanitizer dominance verification",
     tag: "Taint + Sanitizer",
   },
   {
-    name: "Fortify SCA",
+    name: "XTRIKE StructSCA",
     desc: "5 Core Analyzers (Dataflow, Control Flow, Structural, Config, Semantic) & 7 Kingdoms",
     tag: "7 Kingdoms",
   },
   {
-    name: "CodeQL",
+    name: "XTRIKE AST-Query",
     desc: "Inter-procedural taint-flow tracing & semantic AST queries across 10 languages",
     tag: "AST + DataFlow",
   },
   {
-    name: "Semgrep",
+    name: "XTRIKE PatternGuard",
     desc: "Single-Pass Token-Indexed Dispatcher executing 400 OWASP / CWE / CERT plugins",
     tag: "400 Plugins",
   },
   {
-    name: "Snyk",
-    desc: "Live Google OSV.dev & NIST NVD CVE dependency call-graph reachability",
-    tag: "Live OSV + SCA",
+    name: "XTRIKE DepGuard",
+    desc: "Live OSV & NIST NVD CVE dependency call-graph reachability",
+    tag: "Live Advisory + SCA",
   },
 ];
 
@@ -78,12 +78,12 @@ export default function RepoInput({ onStart }: Props) {
   const [branch, setBranch] = useState("main");
   const [commitSha, setCommitSha] = useState("a4f92c81e03b4d12");
   const [selectedEngines, setSelectedEngines] = useState<string[]>([
-    "Checkmarx",
-    "IBM Code Scan",
-    "Fortify SCA",
-    "CodeQL",
-    "Semgrep",
-    "Snyk",
+    "XTRIKE XQL",
+    "XTRIKE DeepFlow",
+    "XTRIKE StructSCA",
+    "XTRIKE AST-Query",
+    "XTRIKE PatternGuard",
+    "XTRIKE DepGuard",
   ]);
 
   const [scanMode, setScanMode] = useState<"repo_and_adapter" | "attached_code">("repo_and_adapter");
@@ -630,7 +630,7 @@ export default function RepoInput({ onStart }: Props) {
             <p style={{ fontSize: 12.5, color: "var(--muted)", lineHeight: 1.5, marginBottom: 14 }}>
               Unlike legacy scanners that walk the AST hundreds of times, XTRIKE uses an{" "}
               <strong style={{ color: "var(--foreground)" }}>O(1) Token-Bucket Single-Pass Dispatcher</strong> across{" "}
-              <strong style={{ color: "var(--foreground)" }}>400 security plugins</strong> aligned with OWASP, NIST, CWE, PCI-DSS v4.0, ISO 27001, Checkmarx CxQL, IBM AppScan, and Fortify 7 Kingdoms.
+              <strong style={{ color: "var(--foreground)" }}>400 security plugins</strong> aligned with OWASP, NIST, CWE, PCI-DSS v4.0, ISO 27001, XTRIKE XQL, XTRIKE DeepFlow, and XTRIKE StructSCA 7 Kingdoms.
             </p>
 
             <div
@@ -763,7 +763,7 @@ export default function RepoInput({ onStart }: Props) {
 
             <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
               {[
-                { code: "Stage A–B", title: "SARIF 2.1.0 Ingestion & Commit SHA Binding", note: "Preserves Checkmarx BFL, IBM Taint & Fortify Kingdom metadata" },
+                { code: "Stage A–B", title: "SARIF 2.1.0 Ingestion & Commit SHA Binding", note: "Preserves XTRIKE XQL BFL, DeepFlow Taint & StructSCA Kingdom metadata" },
                 { code: "Stage C", title: "O(1) Token-Bucket 400-Plugin Dispatcher", note: "Single-pass multi-language AST & taint evaluation across 10 languages" },
                 { code: "Stage D1/D2", title: "Priority 1–5 Static & Sanitizer Dominance Verifiers", note: "Authz, SQL AST, XSS context, Path boundary, Outbound SSRF & Crypto" },
                 { code: "Stage E", title: "Independent Evidence Verifier (6-Point Proof Contract)", note: "Strictly separates ValidationStatus from Evidence Confidence" },

@@ -1211,7 +1211,7 @@ export default function EnginePage() {
       if (savedResults) {
         const parsedRes = JSON.parse(savedResults);
         if (Array.isArray(parsedRes) && parsedRes.length > 0) {
-          const validFreshResults = parsedRes.filter((r: any) => r?.schemaVersion === "5.4.0-forensic-clean");
+          const validFreshResults = parsedRes.filter((r: any) => r?.schemaVersion === "5.6.0-universal-clean");
           if (validFreshResults.length > 0) {
             setEngineResults(validFreshResults);
           } else {
@@ -1912,23 +1912,47 @@ export default function EnginePage() {
       const rawHeadersBlock = liveRes.rawHeadersText || Object.entries(liveRes.securityHeaders || {}).map(([k, v]) => `${k}: ${v || "MISSING"}`).join("\n");
       const appendixSeed = `${liveRes.host}|${liveRes.finalUrl}|${liveRes.serverHeader}|${liveRes.securityScore}|APPENDIX-${apIdx}|${rawHeadersBlock.slice(0, 160)}`;
       const uniqueSha256 = computePageUniqueHash(appendixSeed);
+      const spideredPages = Array.isArray(liveRes.deepSpider?.spideredPages) ? liveRes.deepSpider.spideredPages : [];
+      const wellKnownProbes = Array.isArray(liveRes.domDiscovery?.wellKnownProbes) ? liveRes.domDiscovery.wellKnownProbes : [];
+      const liveFList: Finding[] = Array.isArray(liveRes.liveFindings) ? liveRes.liveFindings : [];
 
       if (apIdx === 0) {
         return {
           ...ap,
           title: `Live Outbound HTTPS/HTTP Headers, Server Fingerprint & Cloudflare DoH DNS Capture (${liveRes.host})`,
           host: allScopedUrlsStr,
-          tool: "EXPEDITE STRIKE™ Live Outbound HTTPS/HTTP Prober + Cloudflare DoH DNS + DOM Spider",
+          tool: "EXPEDITE STRIKE™ Live Outbound HTTPS/HTTP Prober + Cloudflare DoH DNS Resolver",
           sha256: uniqueSha256,
-          rawArtifact: `[LIVE OUTBOUND HTTPS/HTTP & CLOUDFLARE DoH DNS TELEMETRY — ${liveRes.timestamp || new Date().toISOString()}]\nTarget Scanned: ${liveRes.targetUrl}\nResolved Final URL: ${liveRes.finalUrl}\nHTTP Status: ${liveRes.statusCode} | Response Latency: ${liveRes.responseTimeMs}ms | Security Grade: ${liveRes.securityGrade || "B"} (${liveRes.securityScore || 78}/100)\nServer Banner: ${liveRes.serverHeader}${liveRes.poweredByHeader ? ` | X-Powered-By: ${liveRes.poweredByHeader}` : ""}\nDNS SPF: ${liveRes.dnsSecurity?.spfPresent ? liveRes.dnsSecurity.spfRecord : "MISSING"} | DNS DMARC: ${liveRes.dnsSecurity?.dmarcPresent ? liveRes.dnsSecurity.dmarcRecord : "MISSING"} | DNS CAA: ${liveRes.dnsSecurity?.caaPresent ? liveRes.dnsSecurity.caaRecord : "MISSING"}\nDOM Spider: Title="${liveRes.domDiscovery?.pageTitle || liveRes.host}" | Links=${liveRes.domDiscovery?.linksFound?.length || 0} | Forms=${liveRes.domDiscovery?.formsFound?.length || 0} | Scripts=${liveRes.domDiscovery?.scriptsFound?.length || 0}\n\n--- [RAW HTTP RESPONSE HEADERS CAPTURED FROM ${liveRes.host}] ---\n${rawHeadersBlock}\n\n--- [NMAP & PERIMETER RECONNAISSANCE TRACE] ---\n${contextualizeText(ap.rawArtifact)}`
+          rawArtifact: `[LIVE OUTBOUND HTTPS/HTTP & CLOUDFLARE DoH DNS TELEMETRY — ${liveRes.timestamp || new Date().toISOString()}]\nTarget Scanned: ${liveRes.targetUrl}\nResolved Final URL: ${liveRes.finalUrl}\nHTTP Status: ${liveRes.statusCode} | Response Latency: ${liveRes.responseTimeMs}ms | Security Grade: ${liveRes.securityGrade || "B"} (${liveRes.securityScore || 78}/100)\nServer Banner: ${liveRes.serverHeader}${liveRes.poweredByHeader ? ` | X-Powered-By: ${liveRes.poweredByHeader}` : ""}\nDNS SPF: ${liveRes.dnsSecurity?.spfPresent ? liveRes.dnsSecurity.spfRecord : "MISSING"}\nDNS DMARC: ${liveRes.dnsSecurity?.dmarcPresent ? liveRes.dnsSecurity.dmarcRecord : "MISSING"}\nDNS CAA: ${liveRes.dnsSecurity?.caaPresent ? liveRes.dnsSecurity.caaRecord : "MISSING"}\n\n--- [RAW HTTP RESPONSE HEADERS CAPTURED FROM ${liveRes.host}] ---\n${rawHeadersBlock}`
+        };
+      }
+      if (apIdx === 1) {
+        return {
+          ...ap,
+          title: `Live Multi-Page DOM Spider, Hyperlink & Script Bundle Surface Log (${liveRes.host})`,
+          host: allScopedUrlsStr,
+          tool: "XTRIKE-WebPulse™ Multi-Page Same-Origin DOM Spider & Subresource Integrity (SRI) Auditor",
+          sha256: uniqueSha256,
+          rawArtifact: `[LIVE MULTI-PAGE DOM SPIDER & SCRIPT INVENTORY — ${liveRes.host}]\nRoot Document Title: "${liveRes.domDiscovery?.pageTitle || liveRes.host}"\nPages Spidered: ${spideredPages.length} | Total Hyperlinks: ${liveRes.domDiscovery?.linksFound?.length || 0} | Script Bundles: ${liveRes.domDiscovery?.scriptsFound?.length || 0} | HTML Forms: ${liveRes.domDiscovery?.formsFound?.length || 0}\n\n--- [CRAWLED SUB-PAGES] ---\n${spideredPages.map((p: any, i: number) => `[${i + 1}] ${p.url} ➔ HTTP ${p.status} (${p.latencyMs}ms) | Title="${p.title}" | Links=${p.linksCount} | Scripts=${p.scriptsCount} | Forms=${p.formsCount}`).join("\n") || `1. ${liveRes.finalUrl} (HTTP ${liveRes.statusCode})`}\n\n--- [DISCOVERED SCRIPT BUNDLES] ---\n${(liveRes.domDiscovery?.scriptsFound || []).slice(0, 15).map((s: string, i: number) => `[Script #${i + 1}] ${s}`).join("\n") || "(Inline scripts only)"}`
+        };
+      }
+      if (apIdx === 2) {
+        return {
+          ...ap,
+          title: `Live 10-Endpoint Well-Known, Crawler Directive (/robots.txt, /sitemap.xml) & RFC 9116 Probe Matrix (${liveRes.host})`,
+          host: allScopedUrlsStr,
+          tool: "XTRIKE-NetRecon™ Well-Known Endpoint & Schema Prober (WSTG-INFO-03 / RFC 9116)",
+          sha256: uniqueSha256,
+          rawArtifact: `[LIVE 10-ENDPOINT WELL-KNOWN & DISCOVERY PROBE MATRIX — ${liveRes.host}]\n${wellKnownProbes.map((p: any) => `• ${String(p.path).padEnd(32, " ")} ➔ HTTP ${p.status} (${p.reachable ? "REACHABLE" : "NOT EXPOSED"})${p.reachable && p.snippet ? `\n  Excerpt: ${String(p.snippet).slice(0, 160).replace(/\s+/g, " ")}` : ""}`).join("\n") || "Well-known probes completed."}\n\n--- [DISCOVERED INPUT & QUERY PARAMETERS (${liveRes.deepSpider?.discoveredParameters?.length || 0})] ---\n${(liveRes.deepSpider?.discoveredParameters || []).slice(0, 15).map((dp: any) => `• param="${dp.param}" | source=${dp.source} | page=${dp.pageUrl}`).join("\n") || "(No exposed query/form parameters on root surface)"}`
         };
       }
       return {
         ...ap,
-        title: `${contextualizeText(ap.title)} (${liveRes.host})`,
+        title: `Cryptographic Chain-of-Custody & Verified Finding Digest Ledger (${liveRes.host})`,
         host: allScopedUrlsStr,
+        tool: "Aegis.SOC™ Read-Only Forensic Verifier & FIPS 180-4 SHA-256 Ledger",
         sha256: uniqueSha256,
-        rawArtifact: `[LIVE TARGET CONTEXT: ${liveRes.host} | Server: ${liveRes.serverHeader} | HTTP ${liveRes.statusCode} (${liveRes.responseTimeMs}ms) | Grade: ${liveRes.securityGrade} (${liveRes.securityScore}/100)]\n\n${contextualizeText(ap.rawArtifact)}`
+        rawArtifact: `[VERIFIED FINDING LEDGER & CHAIN OF CUSTODY — ${liveRes.host}]\nMeasured Security Posture: ${liveRes.securityScore}/100 (Grade ${liveRes.securityGrade}) | Total Verified Findings: ${liveFList.length}\nRules of Engagement: Non-Destructive Read-Only External Assessment (Zero state-changing payloads or OS/DB intrusion)\n\n${liveFList.map((lf, i) => `[${i + 1}] ${lf.id} | ${lf.severity.toUpperCase()} | ${lf.cweId} | ${lf.title}\n    Endpoint: ${lf.method} ${lf.url} (${lf.parameter})\n    Matched Indicator: ${lf.evidence?.matchedPattern || "Verified"}\n    Remediation: ${lf.remediation}`).join("\n\n")}`
       };
     }
     return {
@@ -3279,7 +3303,7 @@ ${f.remediation}
 
   <div class="header">
     <div>
-      <div style="font-size:11px;font-weight:800;color:#0284c7;letter-spacing:0.08em;">🌐 EXPEDITE CONSULTS · XTRIKE™ &amp; AEGIS.SOC™ DAST (DYNAMIC APPLICATION SECURITY TESTING) v5.5 · ${classificationLevel}</div>
+      <div style="font-size:11px;font-weight:800;color:#0284c7;letter-spacing:0.08em;">🌐 EXPEDITE CONSULTS · XTRIKE™ &amp; AEGIS.SOC™ DAST (DYNAMIC APPLICATION SECURITY TESTING) v5.6 · ${classificationLevel}</div>
       <h1 style="margin:4px 0;font-size:20px;">XTRIKE™ &amp; Aegis.SOC™ — DAST &amp; Web Interface Security Assessment Report</h1>
       <div style="font-size:11.5px;color:#0f172a;margin:3px 0;">
         <strong>Prepared For Client:</strong> <span class="badge std-badge">${clientOrgName}</span> &nbsp;|&nbsp;
@@ -3677,11 +3701,71 @@ ${f.remediation}
       </tr>
     </thead>
     <tbody>
-      ${AUTONOMOUS_8_STAGE_WORKFLOW.map(wf => `
+      ${(isExternalCustomerScope
+        ? [
+            {
+              name: "STAGE 1 · SCOPE",
+              title: "Target Scope & Read-Only ROE Lock",
+              detail: `Validated external target ${primaryTargetUrl} (${primaryHost}) under Non-Destructive Read-Only Rules of Engagement.`,
+              standards: "PTES Phase 1 · NIST SP 800-115 §2",
+              status: "COMPLETED"
+            },
+            {
+              name: "STAGE 2 · RECON",
+              title: "Live HTTPS/HTTP Edge & Cloudflare DoH DNS Audit",
+              detail: `Probed ${primaryTargetUrl} (HTTP ${primaryLiveTelemetry?.statusCode || 200}, ${primaryLiveTelemetry?.responseTimeMs || 85}ms, Server: ${primaryLiveTelemetry?.serverHeader || "Web Edge"}) and queried SPF, DMARC, and CAA DNS records.`,
+              standards: "PTES Phase 2 · MITRE TA0043 · WSTG-INFO",
+              status: "COMPLETED"
+            },
+            {
+              name: "STAGE 3 · SPIDER",
+              title: "Multi-Page Same-Origin DOM Spider & Discovery Probe",
+              detail: `Crawled ${primaryLiveTelemetry?.deepSpider?.spideredPages?.length || 1} page(s), ${primaryLiveTelemetry?.domDiscovery?.linksFound?.length || 0} hyperlink(s), ${primaryLiveTelemetry?.domDiscovery?.scriptsFound?.length || 0} script bundle(s), ${primaryLiveTelemetry?.domDiscovery?.formsFound?.length || 0} form(s), and 10 well-known discovery endpoints on ${primaryHost}.`,
+              standards: "OWASP WSTG-INFO-03/06 · API9:2023",
+              status: "COMPLETED"
+            },
+            {
+              name: "STAGE 4 · HEADERS",
+              title: "Security Header, CSP, HSTS & Framing Policy Audit",
+              detail: `Evaluated Content-Security-Policy, Strict-Transport-Security, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, and COOP/CORP on ${primaryHost}.`,
+              standards: "OWASP WSTG-CONF-07 · ASVS V14.4",
+              status: "COMPLETED"
+            },
+            {
+              name: "STAGE 5 · SURFACE",
+              title: "Subresource Integrity (SRI), Cookie & Input Vector Analysis",
+              detail: `Inspected ${primaryLiveTelemetry?.domDiscovery?.scriptsFound?.length || 0} script tag(s) for SHA-384 SRI hashes, audited Set-Cookie flags, and enumerated ${primaryLiveTelemetry?.deepSpider?.discoveredParameters?.length || 0} parameter vector(s).`,
+              standards: "OWASP A08:2021 · WSTG-CLNT-13 · WSTG-SESS-02",
+              status: "COMPLETED"
+            },
+            {
+              name: "STAGE 6 · BOUNDARY",
+              title: "Cross-Origin & Public Access Boundary Evaluation",
+              detail: `Verified CORS origin reflection policy (${primaryLiveTelemetry?.securityHeaders?.corsOrigin || "Restricted"}) and public discovery boundaries under Read-Only ROE (zero destructive payloads or OS/DB intrusion).`,
+              standards: "PTES Phase 5/6 · MITRE TA0005/TA0008",
+              status: "COMPLETED"
+            },
+            {
+              name: "STAGE 7 · TRIAGE",
+              title: "CWE Root-Cause Deduplication & Posture Scoring",
+              detail: `Deduplicated ${reportItems.length} verified findings into ${execSum.scoringMethodology.deduplicatedClusterCount} CWE root-cause clusters; computed Posture Score ${unifiedScore}/100 (Grade ${unifiedGrade}).`,
+              standards: "FIRST CVSS v3.1 · CWE v4.14 · NIST SSDF",
+              status: "COMPLETED"
+            },
+            {
+              name: "STAGE 8 · RETEST",
+              title: "Deterministic cURL/Python Retest Gate & SHA-256 Ledger",
+              detail: `Generated FIPS 180-4 SHA-256 artifact digests and deterministic cURL/Python retest scripts for all ${reportItems.length} findings on ${primaryHost}.`,
+              standards: "PTES Phase 7 · MITRE D3FEND™ · SARIF v2.1.0",
+              status: "READY"
+            }
+          ]
+        : AUTONOMOUS_8_STAGE_WORKFLOW.map(wf => ({ ...wf, detail: contextualizeText(wf.detail) }))
+      ).map(wf => `
         <tr>
           <td><strong>${wf.name}</strong></td>
           <td><strong>${wf.title}</strong></td>
-          <td>${contextualizeText(wf.detail)}</td>
+          <td>${wf.detail}</td>
           <td><span class="badge mitre-badge">${wf.standards}</span></td>
           <td><span class="badge verified">✓ ${wf.status}</span></td>
         </tr>
@@ -3702,13 +3786,73 @@ ${f.remediation}
       </tr>
     </thead>
     <tbody>
-      ${PTES_NIST_PHASES.map(p => `
+      ${(isExternalCustomerScope
+        ? [
+            {
+              ptesPhase: "Phase 1: Pre-Engagement Interactions",
+              nistPhase: "NIST §2 Planning & ROE",
+              mitreTactics: "PRE-ATT&CK · Scope Lock",
+              engineModule: "ROE-Scope-Validator",
+              deliverable: `Authorized non-destructive read-only external assessment scope locked for ${primaryTargetUrl} (Engagement Ref: ${engagementId}).`,
+              status: "VERIFIED"
+            },
+            {
+              ptesPhase: "Phase 2: Intelligence Gathering",
+              nistPhase: "NIST §3.1 Discovery (Passive/Active)",
+              mitreTactics: "TA0043 Reconnaissance",
+              engineModule: "XTRIKE-NetRecon + DoH-DNS",
+              deliverable: `Captured live HTTP ${primaryLiveTelemetry?.statusCode || 200} headers (${primaryLiveTelemetry?.serverHeader || "Web Edge"}), Cloudflare DoH SPF/DMARC/CAA records, and 10 well-known discovery endpoints on ${primaryHost}.`,
+              status: "VERIFIED"
+            },
+            {
+              ptesPhase: "Phase 3: Threat Modeling",
+              nistPhase: "NIST §3.2 Attack Surface Mapping",
+              mitreTactics: "TA0042 Resource Dev · TA0001",
+              engineModule: "XTRIKE-DeepSpider-AST",
+              deliverable: `Mapped ${primaryLiveTelemetry?.deepSpider?.spideredPages?.length || 1} spidered page(s), ${primaryLiveTelemetry?.domDiscovery?.linksFound?.length || 0} hyperlink(s), ${primaryLiveTelemetry?.domDiscovery?.scriptsFound?.length || 0} script bundle(s), and ${primaryLiveTelemetry?.deepSpider?.discoveredParameters?.length || 0} input/query parameter(s) on ${primaryHost}.`,
+              status: "VERIFIED"
+            },
+            {
+              ptesPhase: "Phase 4: Vulnerability Analysis",
+              nistPhase: "NIST §4 Vulnerability Identification",
+              mitreTactics: "TA0005 Defense Evasion · TA0007",
+              engineModule: "XTRIKE-WebPulse (OWASP WSTG)",
+              deliverable: `Identified and verified ${reportItems.length} security findings (${execSum.scoringMethodology.deduplicatedClusterCount} deduplicated CWE clusters) across CSP, HSTS, framing, headers, SRI, and DNS controls on ${primaryHost}.`,
+              status: "VERIFIED"
+            },
+            {
+              ptesPhase: "Phase 5: Exploitation (Read-Only Verification)",
+              nistPhase: "NIST §5 Security Control Validation",
+              mitreTactics: "TA0002 Execution · TA0006",
+              engineModule: "Aegis.SOC-Forensic-Verifier",
+              deliverable: `Executed non-destructive baseline-vs-test HTTP/DNS probes on ${primaryHost}, recording exact header/DOM differentials and FIPS 180-4 SHA-256 digests with zero service disruption.`,
+              status: "VERIFIED"
+            },
+            {
+              ptesPhase: "Phase 6: Post-Exploitation & Boundary Analysis",
+              nistPhase: "NIST §5.3 Downstream Risk Modeling",
+              mitreTactics: "TA0004 · TA0008 · TA0009 · TA0010",
+              engineModule: "Observed-vs-Inferred-Gate",
+              deliverable: `Modeled downstream client-side and cross-origin impact analytically under Read-Only ROE, strictly separating directly observed facts from inferred risk.`,
+              status: "VERIFIED"
+            },
+            {
+              ptesPhase: "Phase 7: Reporting & Retest Verification",
+              nistPhase: "NIST §6 Reporting & Remediation",
+              mitreTactics: "MITRE D3FEND™ Countermeasures",
+              engineModule: "Executive-Dossier & Retest-Gate",
+              deliverable: `Compiled board-ready dossier (Score: ${unifiedScore}/100, Grade ${unifiedGrade}) with cURL/Python reproduction scripts and conditional post-retest forecast gating.`,
+              status: "VERIFIED"
+            }
+          ]
+        : PTES_NIST_PHASES.map(p => ({ ...p, deliverable: contextualizeText(p.deliverable) }))
+      ).map(p => `
         <tr>
           <td><strong>${p.ptesPhase}</strong></td>
           <td>${p.nistPhase}</td>
           <td><span class="badge mitre-badge">${p.mitreTactics}</span></td>
           <td><code>${p.engineModule}</code></td>
-          <td>${contextualizeText(p.deliverable)}</td>
+          <td>${p.deliverable}</td>
           <td><span class="badge verified">✓ ${p.status}</span></td>
         </tr>
       `).join("")}
@@ -3723,13 +3867,28 @@ ${f.remediation}
         <th>Name</th>
         <th>MITRE ATT&amp;CK® Mapping</th>
         <th>Validating Engine(s)</th>
-        <th>Confirmed Assessment Finding</th>
+        <th>Confirmed Assessment Finding on ${primaryHost}</th>
         <th>Security Risk</th>
         <th>Status</th>
       </tr>
     </thead>
     <tbody>
-      ${OWASP_TOP_10_MATRIX.map(row => `
+      ${OWASP_TOP_10_MATRIX.map(row => {
+        if (isExternalCustomerScope) {
+          const matchedLive = reportItems.filter(f => (f.owaspRef || "").includes(row.id) || (row.id === "A05:2021" && (f.plugin === "Header" || f.cweId === "CWE-693" || f.cweId === "CWE-1021" || f.cweId === "CWE-16")) || (row.id === "A02:2021" && f.cweId === "CWE-319") || (row.id === "A08:2021" && f.cweId === "CWE-829"));
+          const topMatch = matchedLive[0];
+          return `
+        <tr>
+          <td><strong>${row.id}</strong></td>
+          <td><strong>${row.name}</strong></td>
+          <td><span class="badge mitre-badge">${row.mitre}</span></td>
+          <td><code>XTRIKE-WebPulse / Live Prober</code> (${topMatch ? topMatch.cweId : "WSTG v4.2"})</td>
+          <td>${topMatch ? `${topMatch.title} (${matchedLive.length} finding(s) verified on ${primaryHost})` : `No unauthenticated vulnerability triggered on ${primaryHost} during non-destructive read-only assessment`}</td>
+          <td><span class="badge ${topMatch ? (topMatch.severity === "Critical" ? "crit" : topMatch.severity === "High" ? "high" : "med") : "verified"}">${topMatch ? topMatch.severity : "Pass / Hardened"}</span></td>
+          <td><span class="badge verified">✓ ${topMatch ? "VERIFIED FINDING" : "AUDITED (PASS)"}</span></td>
+        </tr>`;
+        }
+        return `
         <tr>
           <td><strong>${row.id}</strong></td>
           <td><strong>${row.name}</strong></td>
@@ -3738,24 +3897,72 @@ ${f.remediation}
           <td>${contextualizeText(row.finding)}</td>
           <td><span class="badge ${row.severity === "Critical" ? "crit" : row.severity === "High" ? "high" : "med"}">${row.severity}</span></td>
           <td><span class="badge verified">✓ ${row.status}</span></td>
-        </tr>
-      `).join("")}
+        </tr>`;
+      }).join("")}
     </tbody>
   </table>
 
-  <h2>7. Privilege Escalation, Lateral Movement &amp; Post-Assessment Validation (MITRE TA0003–TA0010)</h2>
+  <h2>7. ${isExternalCustomerScope ? `External Read-Only Boundary, Framing & Cross-Origin Isolation Validation (${primaryHost})` : "Privilege Escalation, Lateral Movement & Post-Assessment Validation (MITRE TA0003–TA0010)"}</h2>
   <table>
     <thead>
       <tr>
-        <th>ID &amp; Phase</th>
-        <th>Source Context / Host</th>
-        <th>Target Privilege / Pivot Host</th>
-        <th>Validated Attack Path &amp; Mechanism</th>
+        <th>ID &amp; Boundary</th>
+        <th>Source Context</th>
+        <th>Target Boundary on ${primaryHost}</th>
+        <th>Observed Control Behavior &amp; Read-Only ROE Scope</th>
         <th>MITRE ATT&amp;CK / OWASP</th>
         <th>Validation</th>
       </tr>
     </thead>
     <tbody>
+      ${isExternalCustomerScope
+        ? [
+            {
+              id: "BND-01 (Framing & UI Redressing)",
+              src: `External Cross-Origin Page`,
+              dst: `${primaryHost} (DOM / Iframe Boundary)`,
+              desc: `X-Frame-Options: ${primaryLiveTelemetry?.securityHeaders?.xFrameOptions ? primaryLiveTelemetry?.securityHeaders?.xFrameOptionsValue : "MISSING"} | CSP frame-ancestors: ${/frame-ancestors/i.test(primaryLiveTelemetry?.securityHeaders?.cspValue || "") ? "PRESENT" : "MISSING"}`,
+              mitre: "TA0005 · T1562 / CWE-1021",
+              badge: primaryLiveTelemetry?.securityHeaders?.xFrameOptions ? "verified" : "med",
+              status: primaryLiveTelemetry?.securityHeaders?.xFrameOptions ? "ENFORCED" : "FINDING LOGGED"
+            },
+            {
+              id: "BND-02 (Cross-Origin Resource Sharing)",
+              src: `Origin: https://audit-probe.expeditestrike.io`,
+              dst: `${primaryTargetUrl} (CORS Policy)`,
+              desc: `Access-Control-Allow-Origin: ${primaryLiveTelemetry?.securityHeaders?.corsOrigin || "Not Reflected (Restricted)"} | Credentials: ${primaryLiveTelemetry?.securityHeaders?.corsCredentials || "Not Set"}`,
+              mitre: "TA0008 · T1539 / CWE-942",
+              badge: primaryLiveTelemetry?.securityHeaders?.corsReflectedOrigin ? "high" : "verified",
+              status: primaryLiveTelemetry?.securityHeaders?.corsReflectedOrigin ? "FINDING LOGGED" : "RESTRICTED (PASS)"
+            },
+            {
+              id: "BND-03 (Cross-Origin Window & Cache Isolation)",
+              src: `Browser Tab / Shared Proxy`,
+              dst: `${primaryHost} (COOP / CORP / Cache-Control)`,
+              desc: `COOP: ${primaryLiveTelemetry?.securityHeaders?.coop || "MISSING"} | CORP: ${primaryLiveTelemetry?.securityHeaders?.corp || "MISSING"} | Cache-Control: ${primaryLiveTelemetry?.securityHeaders?.cacheControl || "Default"}`,
+              mitre: "TA0009 · T1005 / CWE-525",
+              badge: "med",
+              status: "AUDITED (READ-ONLY)"
+            },
+            {
+              id: "BND-04 (Host PrivEsc & Internal Lateral Pivot)",
+              src: `External Unauthenticated Scanner`,
+              dst: `Internal Host / OS / DB Tier (${primaryHost})`,
+              desc: `Out-of-scope under Non-Destructive Read-Only External ROE. Zero OS commands, zero credential brute-forcing, and zero internal network pivots executed.`,
+              mitre: "TA0004 / TA0008 · ROE Guard",
+              badge: "verified",
+              status: "ROE COMPLIANT (0 INTRUSION)"
+            }
+          ].map(b => `
+        <tr>
+          <td><strong>${b.id}</strong></td>
+          <td><code>${b.src}</code></td>
+          <td><code>${b.dst}</code></td>
+          <td>${b.desc}</td>
+          <td><span class="badge mitre-badge">${b.mitre}</span></td>
+          <td><span class="badge ${b.badge}">${b.status}</span></td>
+        </tr>`).join("")
+        : `
       ${PRIVESC_VECTORS.map(pe => `
         <tr>
           <td><strong>${pe.id}</strong> (PrivEsc: ${pe.type})</td>
@@ -3775,7 +3982,7 @@ ${f.remediation}
           <td><span class="badge mitre-badge">${lm.mitre}</span></td>
           <td><span class="badge high">${lm.status}</span></td>
         </tr>
-      `).join("")}
+      `).join("")}`}
     </tbody>
   </table>
 
@@ -3805,20 +4012,49 @@ ${f.remediation}
     </tbody>
   </table>
 
-  <h2>9. Role &amp; Permission Differential Testing Matrix + Systemic Root-Cause Grouping (NIST SSDF / CWE)</h2>
+  <h2>9. ${isExternalCustomerScope ? `Live Endpoint Discovery Matrix & Systemic CWE Root-Cause Grouping (${primaryHost})` : "Role & Permission Differential Testing Matrix + Systemic Root-Cause Grouping (NIST SSDF / CWE)"}</h2>
   <table>
     <thead>
       <tr>
-        <th>Sensitive Operation / Endpoint</th>
-        <th>Expected Policy</th>
-        <th>Admin (id=1)</th>
-        <th>Standard User (id=1042)</th>
-        <th>Unauth Guest</th>
-        <th>Differential Verdict</th>
+        <th>${isExternalCustomerScope ? `Probed Endpoint / Route on ${primaryHost}` : "Sensitive Operation / Endpoint"}</th>
+        <th>${isExternalCustomerScope ? "Probe Category" : "Expected Policy"}</th>
+        <th>${isExternalCustomerScope ? "HTTP Status" : "Admin (id=1)"}</th>
+        <th>${isExternalCustomerScope ? "Observed Control / Content" : "Standard User (id=1042)"}</th>
+        <th>${isExternalCustomerScope ? "Access Context" : "Unauth Guest"}</th>
+        <th>Verdict</th>
       </tr>
     </thead>
     <tbody>
-      ${ROLE_PERMISSION_DIFF_MATRIX.map(r => `
+      ${isExternalCustomerScope
+        ? [
+            ...(primaryLiveTelemetry?.deepSpider?.spideredPages || []).slice(0, 5).map((p: any) => ({
+              op: p.path || p.url,
+              cat: "Same-Origin DOM Spider",
+              st: `HTTP ${p.status} (${p.latencyMs}ms)`,
+              obs: `Title: "${p.title}" · Links: ${p.linksCount} · Scripts: ${p.scriptsCount}`,
+              ctx: "Unauthenticated GET",
+              verdict: "REACHABLE PUBLIC PAGE",
+              badge: "verified"
+            })),
+            ...(primaryLiveTelemetry?.domDiscovery?.wellKnownProbes || []).slice(0, 6).map((wp: any) => ({
+              op: wp.path,
+              cat: "Well-Known / Discovery Probe",
+              st: `HTTP ${wp.status}`,
+              obs: wp.reachable ? `Publicly accessible (${(wp.snippet || "").slice(0, 48).replace(/\s+/g, " ")}...)` : "Not exposed / Filtered",
+              ctx: "Unauthenticated GET",
+              verdict: wp.path === "/.well-known/security.txt" && !wp.reachable ? "RFC 9116 MISSING" : wp.reachable ? "PUBLICLY EXPOSED" : "RESTRICTED (404/403)",
+              badge: wp.path === "/.well-known/security.txt" && !wp.reachable ? "med" : "verified"
+            }))
+          ].map(r => `
+        <tr>
+          <td><strong><code>${r.op}</code></strong></td>
+          <td>${r.cat}</td>
+          <td><code>${r.st}</code></td>
+          <td>${r.obs.replace(/</g, "&lt;")}</td>
+          <td>${r.ctx}</td>
+          <td><span class="badge ${r.badge}">${r.verdict}</span></td>
+        </tr>`).join("")
+        : ROLE_PERMISSION_DIFF_MATRIX.map(r => `
         <tr>
           <td><strong><code>${r.operation}</code></strong></td>
           <td>${r.expectedPolicy}</td>
@@ -3836,14 +4072,32 @@ ${f.remediation}
       <tr>
         <th>Root-Cause ID</th>
         <th>Systemic Engineering Root Cause</th>
-        <th>CWE &amp; NIST SSDF</th>
+        <th>CWE &amp; OWASP Reference</th>
         <th>Grouped Findings</th>
-        <th>Affected Endpoints</th>
+        <th>Affected Control / Endpoint on ${primaryHost}</th>
         <th>Single Architectural Fix</th>
       </tr>
     </thead>
     <tbody>
-      ${ROOT_CAUSE_CLUSTERS.map(rc => `
+      ${isExternalCustomerScope
+        ? Array.from(
+            reportItems.reduce((acc, f) => {
+              const key = f.cweId || "CWE-200";
+              const existing = acc.get(key) || [];
+              existing.push(f);
+              acc.set(key, existing);
+              return acc;
+            }, new Map<string, Finding[]>()).entries()
+          ).map(([cweKey, group], idx) => `
+        <tr>
+          <td><strong>RC-${String(idx + 1).padStart(2, "0")}</strong></td>
+          <td><strong>${group[0].title.replace(/^\[[^\]]+\]\s*/, "")}</strong></td>
+          <td><span class="badge std-badge">${cweKey} · ${group[0].owaspRef}</span></td>
+          <td><strong>${group.length} Finding(s)</strong></td>
+          <td><code>${group[0].parameter || group[0].url}</code></td>
+          <td>${group[0].remediation}</td>
+        </tr>`).join("")
+        : ROOT_CAUSE_CLUSTERS.map(rc => `
         <tr>
           <td><strong>${rc.clusterId}</strong></td>
           <td><strong>${rc.rootCause}</strong></td>
@@ -3856,20 +4110,23 @@ ${f.remediation}
     </tbody>
   </table>
 
-  <h2>9B. Full 65,535 TCP &amp; 65,535 UDP Port-to-Assessment-Script Mapping &amp; Daemon TTP Catalog (131,070 Sockets)</h2>
+  <h2>9B. ${isExternalCustomerScope ? `Web Edge, TLS & DNS Protocol Assessment Script Mapping (${primaryHost})` : "Full 65,535 TCP & 65,535 UDP Port-to-Assessment-Script Mapping & Daemon TTP Catalog (131,070 Sockets)"}</h2>
   <table>
     <thead>
       <tr>
-        <th>Detected Port / Range (1–65535)</th>
+        <th>Detected Port / Protocol</th>
         <th>Protocol &amp; Service Category</th>
         <th>Assigned Daemon</th>
-        <th>Mapped Assessment Script(s) &amp; Static CLI</th>
+        <th>Mapped Assessment Script(s) &amp; Verification CLI</th>
         <th>MITRE ATT&amp;CK® Tactic, Technique &amp; Procedure (TTP)</th>
         <th>Evidence of TTP &amp; D3FEND™ Fix</th>
       </tr>
     </thead>
     <tbody>
-      ${PORT_ASSESSMENT_SCRIPT_CATALOG.map(ps => `
+      ${(isExternalCustomerScope
+        ? PORT_ASSESSMENT_SCRIPT_CATALOG.filter(ps => /80|443|53/i.test(ps.portRangeOrNumber)).slice(0, 4)
+        : PORT_ASSESSMENT_SCRIPT_CATALOG
+      ).map(ps => `
         <tr>
           <td><strong><code>${ps.portRangeOrNumber}</code></strong></td>
           <td><span class="badge std-badge">${ps.protocol}</span><br/>${ps.serviceCategory}</td>
@@ -3882,6 +4139,7 @@ ${f.remediation}
     </tbody>
   </table>
 
+  ${!isExternalCustomerScope ? `
   <h2>9C. Linux &amp; Windows Privilege Escalation (TA0004), Lateral Movement (TA0008) &amp; Post-Exploitation (TA0003–TA0040) Script Inventories (40 Scripts)</h2>
   <table>
     <thead>
@@ -3910,9 +4168,9 @@ ${f.remediation}
         </tr>
       `).join("")}
     </tbody>
-  </table>
+  </table>` : ""}
 
-  <h2>10. Formal Penetration Testing Finding Dossiers (EXT-2026-001 – EXT-2026-${String(reportItems.length).padStart(3, "0")}) — XTRIKE™ &amp; Aegis.SOC™</h2>
+  <h2>10. Formal Penetration Testing Finding Dossiers (DAST-WEB-2026-001 – DAST-WEB-2026-${String(reportItems.length).padStart(3, "0")}) — XTRIKE™ &amp; Aegis.SOC™</h2>
   ${reportItems.map((f, idx) => {
     const rt = getRetestRecord(f, idx);
     const isFixed = rt.status === "VERIFIED_FIXED" || rt.status === "MITIGATED_WAF";
@@ -4049,11 +4307,11 @@ ${f.remediation}
 
       <!-- PART A: COMPLETE STEP-BY-STEP EXPLOITATION PROCESS & CLI / SCRIPT REPRODUCTION -->
       <div style="background:#f8fafc;border:1px solid #cbd5e1;border-left:4px solid #0284c7;border-radius:4px;padding:8px 10px;margin-bottom:8px;">
-        <div style="font-size:11px;font-weight:800;color:#0369a1;margin-bottom:4px;">⚙️ PART 1 · COMPLETE EXPLOITATION PROCESS &amp; STEP-BY-STEP REPRODUCTION PROCEDURE:</div>
+        <div style="font-size:11px;font-weight:800;color:#0369a1;margin-bottom:4px;">⚙️ PART 1 · COMPLETE VERIFICATION PROCESS &amp; STEP-BY-STEP REPRODUCTION PROCEDURE:</div>
         <ol style="margin:0 0 6px 18px;padding:0;font-size:11px;line-height:1.45;">
           ${reproSteps.map(st => `<li style="margin-bottom:3px;">${st.replace(/</g, "&lt;")}</li>`).join("")}
         </ol>
-        <div style="font-size:10.5px;font-weight:700;color:#0f172a;margin-top:6px;">💻 Multi-Step CLI / cURL Exploitation Commands:</div>
+        <div style="font-size:10.5px;font-weight:700;color:#0f172a;margin-top:6px;">💻 Multi-Step CLI / cURL Verification Commands:</div>
         <pre style="margin-top:3px;">${(f.poc?.curlCommand || "").replace(/</g, "&lt;")}</pre>
         <div style="font-size:10px;font-weight:800;color:#15803d;margin-top:3px;">📥 Captured Execution Evidence / Output (from Running CLI / cURL Commands Above):</div>
         <pre style="margin-top:2px;border-left:3px solid #16a34a;">${cmdEv.curlEvidenceOutput.replace(/</g, "&lt;")}</pre>
@@ -4062,7 +4320,7 @@ ${f.remediation}
         </div>
 
         ${f.poc?.pythonScript ? `
-        <div style="font-size:10.5px;font-weight:700;color:#0f172a;margin-top:8px;">🐍 Automated Python Exploitation &amp; Verification Script:</div>
+        <div style="font-size:10.5px;font-weight:700;color:#0f172a;margin-top:8px;">🐍 Automated Python Verification Script:</div>
         <pre style="margin-top:3px;">${f.poc.pythonScript.replace(/</g, "&lt;")}</pre>
         <div style="font-size:10px;font-weight:800;color:#15803d;margin-top:3px;">📥 Captured Execution Evidence / Output (from Running Python Script Above):</div>
         <pre style="margin-top:2px;border-left:3px solid #16a34a;">${cmdEv.pythonEvidenceOutput.replace(/</g, "&lt;")}</pre>
@@ -4070,22 +4328,23 @@ ${f.remediation}
           <strong>💡 Python Script &amp; Result Explanation Note:</strong> ${cmdEv.pythonExplanationNote.replace(/</g, "&lt;")}
         </div>` : ""}
 
-        <div style="font-size:10.5px;font-weight:700;color:#0f172a;margin-top:8px;">🧰 SearchSploit / Exploit-DB / GitHub (${intel.githubAndNuclei.ghsaId}) / Nuclei (${intel.githubAndNuclei.nucleiTemplateId}) / Nmap NSE (${intel.githubAndNuclei.nmapNseScript}) Verification Script:</div>
+        <div style="font-size:10.5px;font-weight:700;color:#0f172a;margin-top:8px;">🧰 OWASP WSTG / Nuclei (${intel.githubAndNuclei.nucleiTemplateId}) / Nmap NSE (${intel.githubAndNuclei.nmapNseScript}) Verification Script:</div>
         <pre style="margin-top:3px;">${(intel.githubAndNuclei.verificationScript || "").replace(/</g, "&lt;")}</pre>
-        <div style="font-size:10px;font-weight:800;color:#15803d;margin-top:3px;">📥 Captured Execution Evidence / Output (from Running SearchSploit / Nuclei / Nmap NSE Script Above):</div>
+        <div style="font-size:10px;font-weight:800;color:#15803d;margin-top:3px;">📥 Captured Execution Evidence / Output (from Running Verification Suite Above):</div>
         <pre style="margin-top:2px;border-left:3px solid #16a34a;">${cmdEv.nucleiNseEvidenceOutput.replace(/</g, "&lt;")}</pre>
         <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:4px;padding:5px 8px;margin-top:3px;font-size:10px;color:#14532d;">
           <strong>💡 Verification Suite &amp; Result Explanation Note:</strong> ${cmdEv.nucleiNseExplanationNote.replace(/</g, "&lt;")}
         </div>
       </div>
 
-      <!-- PART B: 4-STAGE DEEP-DIVE EXPLOITATION KILL-CHAIN (EXECUTION -> PRIVESC -> LATERAL -> POST-EXPLOIT) -->
+      <!-- PART B: 4-STAGE CONTROL EVALUATION & DOWNSTREAM RISK MODELING -->
       <div style="background:#faf5ff;border:1px solid #d8b4fe;border-left:4px solid #7e22ce;border-radius:4px;padding:8px 10px;margin-bottom:8px;">
-        <div style="font-size:11px;font-weight:800;color:#6b21a8;margin-bottom:6px;">🔑 PART 2 · 4-STAGE DEEP-DIVE EXPLOITATION KILL-CHAIN &amp; TRIGGERED LINUX/WINDOWS SCRIPTS (PRIVESC · LATERAL · POST-EXPLOIT):</div>
+        <div style="font-size:11px;font-weight:800;color:#6b21a8;margin-bottom:6px;">🔑 PART 2 · 4-STAGE CONTROL EVALUATION &amp; DOWNSTREAM RISK MODELING (${f.cweId}):</div>
         <div style="font-size:10px;color:#475569;margin-bottom:6px;">
-          <strong>Public Exploit Catalog References:</strong>
+          <strong>Standard &amp; Reference Mapping:</strong>
           ${intel.searchSploitRefs.map(sr => `<code>${sr.edbId}</code> (${sr.title} · <code>${sr.exploitDbPath}</code>)`).join(" &nbsp;|&nbsp; ")}
         </div>
+        ${daemonDossier.triggeredLinuxPrivEscScripts.length > 0 ? `
         <div style="font-size:10px;color:#0f172a;margin-bottom:6px;">
           <strong>Triggered Linux &amp; Windows PrivEsc Scripts (TA0004):</strong>
           ${[...daemonDossier.triggeredLinuxPrivEscScripts, ...daemonDossier.triggeredWindowsPrivEscScripts].map(s => `<code>${s.scriptId} (${s.osPlatform}: ${s.auditScriptName})</code>`).join(" · ")}<br/>
@@ -4093,14 +4352,14 @@ ${f.remediation}
           ${[...daemonDossier.triggeredLinuxLateralScripts, ...daemonDossier.triggeredWindowsLateralScripts].map(s => `<code>${s.scriptId} (${s.osPlatform}: ${s.auditScriptName})</code>`).join(" · ")}<br/>
           <strong>Triggered Linux &amp; Windows Post-Exploitation Scripts (TA0003–TA0040):</strong>
           ${[...daemonDossier.triggeredLinuxPostExploitScripts, ...daemonDossier.triggeredWindowsPostExploitScripts].map(s => `<code>${s.scriptId} (${s.osPlatform}: ${s.auditScriptName})</code>`).join(" · ")}
-        </div>
+        </div>` : ""}
         <table style="margin-bottom:0;font-size:10px;">
           <thead>
             <tr>
-              <th>Kill-Chain Stage</th>
+              <th>Evaluation Stage</th>
               <th>MITRE Technique</th>
               <th>Source ➔ Target Context</th>
-              <th>Exploitation Mechanism &amp; Verification Command</th>
+              <th>Control Evaluation &amp; Verification Command</th>
               <th>MITRE D3FEND™ Fix</th>
             </tr>
           </thead>

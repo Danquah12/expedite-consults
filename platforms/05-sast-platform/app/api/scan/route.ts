@@ -63,7 +63,7 @@ async function queryOsvForPackageJson(
     });
 
     checked = queries.length;
-    logs.push(`[Snyk/OSV]  Querying live OSV.dev NVD database for ${checked} npm dependencies in package.json...`);
+    logs.push(`[XTRIKE DepGuard] Querying live OSV.dev NVD database for ${checked} npm dependencies in package.json...`);
 
     const osvRes = await fetch("https://api.osv.dev/v1/querybatch", {
       method: "POST",
@@ -83,7 +83,7 @@ async function queryOsvForPackageJson(
       const topVuln = resItem.vulns[0];
       const [pkgName, pkgVer] = pkg;
 
-      logs.push(`[Snyk/OSV]  LIVE CVE MATCH: ${pkgName}@${pkgVer} -> ${topVuln.id} (${resItem.vulns.length} advisories)`);
+      logs.push(`[XTRIKE DepGuard] LIVE CVE MATCH: ${pkgName}@${pkgVer} -> ${topVuln.id} (${resItem.vulns.length} advisories)`);
 
       vulns.push({
         id: `SCA-${String(vulns.length + 1).padStart(3, "0")}`,
@@ -105,16 +105,16 @@ async function queryOsvForPackageJson(
         source: `package.json dependency "${pkgName}": "${pkgVer}"`,
         sink: `Live OSV/NVD Advisory ${topVuln.id}`,
         taintPath: [`package.json (${pkgName}@${pkgVer})`, `OSV/NVD Advisory ${topVuln.id}`],
-        checkmarxQuery: `CxSCA/${topVuln.id.replace(/[^a-zA-Z0-9_]/g, "_")}`,
+        checkmarxQuery: `XQL-SCA/${topVuln.id.replace(/[^a-zA-Z0-9_]/g, "_")}`,
         checkmarxBfl: "package.json",
-        ibmRuleId: `IBM-SCA-OSV-${idx + 1}`,
+        ibmRuleId: `XTRIKE-SCA-OSV-${idx + 1}`,
         ibmTraceSummary: `Live OSV.dev NVD query matched ${resItem.vulns.length} advisories for ${pkgName}@${pkgVer}`,
         fortifyKingdom: "Encapsulation",
         fortifyAnalyzer: "Configuration",
         engines: [
-          { name: "Snyk", confidence: 0.99, confirmed: true, details: `Live OSV/NVD match: ${topVuln.id}` },
-          { name: "Checkmarx", confidence: 0.96, confirmed: true, details: `CxSCA dependency reachability confirmed` },
-          { name: "Fortify SCA", confidence: 0.94, confirmed: true, details: `[Configuration] Kingdom: Encapsulation` },
+          { name: "XTRIKE DepGuard", confidence: 0.99, confirmed: true, details: `Live OSV/NVD match: ${topVuln.id}` },
+          { name: "XTRIKE XQL", confidence: 0.96, confirmed: true, details: `XQL dependency reachability confirmed` },
+          { name: "XTRIKE StructSCA", confidence: 0.94, confirmed: true, details: `[Configuration] Kingdom: Encapsulation` },
         ],
         confidence: 0.96,
         reachable: true,
@@ -163,7 +163,7 @@ async function queryOsvForPackageJson(
 
 export async function GET() {
   return NextResponse.json({
-    engine: "XTRIKE Enterprise SAST Engine (Checkmarx CxQL + IBM Code Scan + Fortify SCA + 400-Plugin Dispatcher)",
+    engine: "XTRIKE Enterprise SAST Engine (XTRIKE XQL + XTRIKE DeepFlow + XTRIKE StructSCA + 400-Plugin Dispatcher)",
     totalPlugins: SAST_400_PLUGINS.length,
     supportedLanguages: [
       "Java",
@@ -190,7 +190,7 @@ export async function POST(req: NextRequest) {
     const language: string = body.language || "Java";
     const engines: string[] = Array.isArray(body.engines) && body.engines.length > 0
       ? body.engines
-      : ["Checkmarx", "IBM Code Scan", "Fortify SCA", "CodeQL", "Semgrep", "Snyk"];
+      : ["XTRIKE XQL", "XTRIKE DeepFlow", "XTRIKE StructSCA", "XTRIKE AST-Query", "XTRIKE PatternGuard", "XTRIKE DepGuard"];
     const rawAttached = Array.isArray(body.attachedFiles)
       ? body.attachedFiles
       : Array.isArray(body.files)
@@ -202,7 +202,7 @@ export async function POST(req: NextRequest) {
     );
 
     const initialLogs: string[] = [
-      `[INIT]      Initializing Enterprise SAST Engine (Checkmarx CxQL · IBM Code Scan · Fortify SCA · 400-Plugin Dispatcher)...`,
+      `[INIT]      Initializing XTRIKE Enterprise SAST Engine (XTRIKE XQL · XTRIKE DeepFlow · XTRIKE StructSCA · 400-Plugin Dispatcher)...`,
       `[ADAPTER]   Primary Language & AST Adapter locked: ${language} (10-Language Polyglot AST Engine Ready)`,
     ];
 

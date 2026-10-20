@@ -2310,13 +2310,15 @@ export function getDaemonFindingTtpDossier(finding: Finding, fallbackUrl?: strin
       : "XTRIKE-WebPulse™ · Aegis.SOC Active/Passive DAST Daemon (Embedded Core: OWASP ZAP v2.14.0 + Manual Verification)";
 
   const ttp = finding.ttp?.[0];
+  const isLiveExternalFinding = String(finding.id || "").startsWith("LIVE-");
 
   // 1. Triggered Linux & Windows Privilege Escalation (TA0004) scripts
   const linuxScripts = LINUX_WINDOWS_PRIVESC_SCRIPT_INVENTORY.filter(s => s.osPlatform === "LINUX");
   const windowsScripts = LINUX_WINDOWS_PRIVESC_SCRIPT_INVENTORY.filter(s => s.osPlatform === "WINDOWS");
 
-  const triggeredLinuxPrivEscScripts =
-    cwe === "CWE-78" || titleUpper.includes("COMMAND")
+  const triggeredLinuxPrivEscScripts = isLiveExternalFinding
+    ? []
+    : cwe === "CWE-78" || titleUpper.includes("COMMAND")
       ? [linuxScripts[0], linuxScripts[1], linuxScripts[2]] // SUID, Sudoers, Capabilities
       : cwe === "CWE-89" || titleUpper.includes("SQL") || isNmap
       ? [linuxScripts[3], linuxScripts[5], linuxScripts[7]] // Systemd, Kernel/Shadow, .env/ld.so
@@ -2324,8 +2326,9 @@ export function getDaemonFindingTtpDossier(finding: Finding, fallbackUrl?: strin
       ? [linuxScripts[6], linuxScripts[4]] // Container/K8s, Cron
       : [linuxScripts[1], linuxScripts[3], linuxScripts[7]];
 
-  const triggeredWindowsPrivEscScripts =
-    cwe === "CWE-78" || titleUpper.includes("COMMAND")
+  const triggeredWindowsPrivEscScripts = isLiveExternalFinding
+    ? []
+    : cwe === "CWE-78" || titleUpper.includes("COMMAND")
       ? [windowsScripts[0], windowsScripts[1], windowsScripts[3]] // Unquoted Service, Service ACLs, Token Privileges
       : cwe === "CWE-89" || titleUpper.includes("SQL") || isNmap
       ? [windowsScripts[1], windowsScripts[3], windowsScripts[6]] // Service ACLs, Token Privs, Autoruns/Unattend
@@ -2337,8 +2340,9 @@ export function getDaemonFindingTtpDossier(finding: Finding, fallbackUrl?: strin
   const linuxLat = LINUX_WINDOWS_LATERAL_MOVEMENT_SCRIPT_INVENTORY.filter(s => s.osPlatform === "LINUX");
   const windowsLat = LINUX_WINDOWS_LATERAL_MOVEMENT_SCRIPT_INVENTORY.filter(s => s.osPlatform === "WINDOWS");
 
-  const triggeredLinuxLateralScripts =
-    cwe === "CWE-78" || titleUpper.includes("COMMAND")
+  const triggeredLinuxLateralScripts = isLiveExternalFinding
+    ? []
+    : cwe === "CWE-78" || titleUpper.includes("COMMAND")
       ? [linuxLat[0], linuxLat[1], linuxLat[3]] // SSH Forwarding, ARP/Subnet, K8s ServiceMesh
       : cwe === "CWE-89" || titleUpper.includes("SQL") || isNmap
       ? [linuxLat[1], linuxLat[2], linuxLat[4]] // ARP/Subnet, DB Credential Reuse, NFS/Samba
@@ -2346,8 +2350,9 @@ export function getDaemonFindingTtpDossier(finding: Finding, fallbackUrl?: strin
       ? [linuxLat[3], linuxLat[5]] // K8s ServiceMesh, IMDSv2/Kerberos
       : [linuxLat[0], linuxLat[2]];
 
-  const triggeredWindowsLateralScripts =
-    cwe === "CWE-78" || titleUpper.includes("COMMAND")
+  const triggeredWindowsLateralScripts = isLiveExternalFinding
+    ? []
+    : cwe === "CWE-78" || titleUpper.includes("COMMAND")
       ? [windowsLat[0], windowsLat[1], windowsLat[2]] // SMB Signing, WinRM/JEA, WMI/RDP NLA
       : cwe === "CWE-89" || titleUpper.includes("SQL") || isNmap
       ? [windowsLat[0], windowsLat[3], windowsLat[5]] // SMB Signing, AD Kerberos SPN, cmdkey/LAPS
@@ -2359,8 +2364,9 @@ export function getDaemonFindingTtpDossier(finding: Finding, fallbackUrl?: strin
   const linuxPost = LINUX_WINDOWS_POST_EXPLOITATION_SCRIPT_INVENTORY.filter(s => s.osPlatform === "LINUX");
   const windowsPost = LINUX_WINDOWS_POST_EXPLOITATION_SCRIPT_INVENTORY.filter(s => s.osPlatform === "WINDOWS");
 
-  const triggeredLinuxPostExploitScripts =
-    cwe === "CWE-78" || titleUpper.includes("COMMAND")
+  const triggeredLinuxPostExploitScripts = isLiveExternalFinding
+    ? []
+    : cwe === "CWE-78" || titleUpper.includes("COMMAND")
       ? [linuxPost[1], linuxPost[2], linuxPost[5]] // Persistence Surface, Auditd/SIEM, Cleanup Verify
       : cwe === "CWE-89" || titleUpper.includes("SQL") || isNmap
       ? [linuxPost[0], linuxPost[3], linuxPost[4]] // Data/Secret Boundary, Egress Filter, Immutable Backup
@@ -2368,8 +2374,9 @@ export function getDaemonFindingTtpDossier(finding: Finding, fallbackUrl?: strin
       ? [linuxPost[3], linuxPost[2], linuxPost[5]] // Egress Filter, Auditd/SIEM, Cleanup Verify
       : [linuxPost[0], linuxPost[2], linuxPost[5]];
 
-  const triggeredWindowsPostExploitScripts =
-    cwe === "CWE-78" || titleUpper.includes("COMMAND")
+  const triggeredWindowsPostExploitScripts = isLiveExternalFinding
+    ? []
+    : cwe === "CWE-78" || titleUpper.includes("COMMAND")
       ? [windowsPost[1], windowsPost[2], windowsPost[5]] // WMI/Registry Persistence, Auditpol/Sysmon/4104, Cleanup
       : cwe === "CWE-89" || titleUpper.includes("SQL") || isNmap
       ? [windowsPost[0], windowsPost[3], windowsPost[4]] // DPAPI/IIS/SQL ACLs, Outbound Firewall, VSS/ASR
@@ -2421,30 +2428,36 @@ export function getDaemonFindingTtpDossier(finding: Finding, fallbackUrl?: strin
     return {
       daemonSource,
       daemonLabel,
-      portSpectrumCovered: "TCP 1–65535 & UDP 1–65535 (131,070 Transport Sockets)",
+      portSpectrumCovered: isLiveExternalFinding ? "HTTPS/HTTP & DNS DoH Edge Endpoints (80/443/tcp · 53/udp)" : "TCP 1–65535 & UDP 1–65535 (131,070 Transport Sockets)",
       staticAuditIdentifier: "STATIC-XTRIKE-NETRECON-65535-AUDIT",
-      mappedDaemonScripts: [
-        "mysql-info.nse (3306/tcp)",
-        "http-enum.nse & http-headers.nse (80/443/8080/tcp)",
-        "ssl-enum-ciphers.nse (443/tcp)",
-        "dns-nsid.nse (53/udp)",
-        "ntp-info.nse (123/udp)",
-        "snmp-info.nse (161/udp)",
-        "quic-info.nse (443/udp)",
-        "vulners.nse (CPE/CVE Lookup)"
-      ],
-      staticAuditSummary: `Static transport-layer audit across all 65,535 TCP and 65,535 UDP ports for ${url}. Maps each responding port to its service-specific XTRIKE-NetRecon™ (Embedded Nmap NSE) assessment script.`,
+      mappedDaemonScripts: isLiveExternalFinding
+        ? [
+            "http-headers.nse & http-security-headers.nse (80/443/tcp)",
+            "ssl-enum-ciphers.nse (443/tcp)",
+            "dns-nsid.nse & DoH SPF/DMARC/CAA Resolver (53/udp)"
+          ]
+        : [
+            "mysql-info.nse (3306/tcp)",
+            "http-enum.nse & http-headers.nse (80/443/8080/tcp)",
+            "ssl-enum-ciphers.nse (443/tcp)",
+            "dns-nsid.nse (53/udp)",
+            "ntp-info.nse (123/udp)",
+            "snmp-info.nse (161/udp)",
+            "quic-info.nse (443/udp)",
+            "vulners.nse (CPE/CVE Lookup)"
+          ],
+      staticAuditSummary: `Static transport-layer and DNS security audit for ${url}. Maps each responding edge service to its XTRIKE-NetRecon™ assessment check.`,
       tacticId: ttp?.tacticId || "TA0043 / TA0007",
       tacticName: ttp?.tactic || "Reconnaissance & Network Service Discovery",
       techniqueId: ttp?.techniqueId || "T1046 / T1595.001",
       techniqueName: ttp?.technique || "Network Service Discovery & Active IP/Port Scanning",
       procedureSummary:
         ttp?.procedure ||
-        `Adversaries enumerate TCP and UDP sockets across ports 1–65535 on ${url} to identify exposed database listeners, management interfaces, and service versions (${cwe} · ${owasp}).`,
-      ttpEvidenceArtifact: `[XTRIKE-NETRECON / AEGIS.SOC TTP ARTIFACT · ${cwe}] Port & Service State Ledger recorded for ${url} | Matched Indicator: ${finding.evidence?.matchedPattern || "Open TCP/UDP service banner verified across 1–65535 sweep"}`,
+        `Adversaries inspect DNS records and web edge services on ${url} to evaluate domain anti-spoofing and transport security controls (${cwe} · ${owasp}).`,
+      ttpEvidenceArtifact: `[XTRIKE-NETRECON / AEGIS.SOC TTP ARTIFACT · ${cwe}] Service & DNS State Ledger recorded for ${url} | Matched Indicator: ${finding.evidence?.matchedPattern || "Edge service and DNS policy verified"}`,
       siemAndNetworkIndicators: [
-        "NetFlow / Firewall Telemetry: Sequential TCP SYN and UDP datagram probes across ports 1–65535",
-        `Service Banner Audit: ${finding.evidence?.matchedPattern || "Exposed service handshake recorded on scoped host"}`,
+        `Edge / DNS Telemetry: Non-destructive HTTP and DNS-over-HTTPS verification probes against ${url}`,
+        `Service Policy Audit: ${finding.evidence?.matchedPattern || "Observed header/DNS record state recorded on scoped host"}`,
         "MITRE D3FEND™ Sensor Match: D3-NTA (Network Traffic Analysis) & D3-NTF (Network Traffic Filtering)"
       ],
       d3fendControl: "D3-NTF (Network Traffic Filtering) & D3-NI (Network Isolation)",
@@ -2539,30 +2552,37 @@ export function getDaemonFindingTtpDossier(finding: Finding, fallbackUrl?: strin
   return {
     daemonSource: "ZAP",
     daemonLabel,
-    portSpectrumCovered: "HTTP/HTTPS & API Service Ports across 1–65535 TCP/UDP",
+    portSpectrumCovered: "HTTP/HTTPS & API Service Ports (80/443/tcp)",
     staticAuditIdentifier: "STATIC-XTRIKE-WEBPULSE-WSTG-AUDIT",
-    mappedDaemonScripts: [
-      "ZAP-40018 (SQLi – WSTG-INPV-05)",
-      "ZAP-40012 (Reflected XSS – WSTG-INPV-01)",
-      "ZAP-90020 (Command Injection – WSTG-INPV-12)",
-      "ZAP-10038 / ZAP-10035 / ZAP-10020 (CSP / HSTS / XFO Passive Rules)",
-      "ZAP-10010 / ZAP-10054 (Cookie HttpOnly / SameSite / Secure Rules)"
-    ],
-    staticAuditSummary: `Static OWASP WSTG v4.2 input-handling, output-encoding, and security configuration audit on ${url} (parameter '${finding.parameter || "N/A"}'). Maps the detected HTTP/HTTPS port to XTRIKE-WebPulse™ / Aegis.SOC (Embedded OWASP ZAP) active/passive scan rules.`,
-    tacticId: ttp?.tacticId || "TA0001 / TA0002",
-    tacticName: ttp?.tactic || "Initial Access & Execution",
-    techniqueId: ttp?.techniqueId || "T1190 / T1059",
-    techniqueName: ttp?.technique || "Public-Facing Application Input & Parser Handling",
+    mappedDaemonScripts: isLiveExternalFinding
+      ? [
+          "ZAP-10038 (Content-Security-Policy Directive Audit – WSTG-CONF-07)",
+          "ZAP-10035 (Strict-Transport-Security Audit – WSTG-CONF-07)",
+          "ZAP-10020 (Anti-Clickjacking X-Frame-Options – WSTG-CLNT-09)",
+          "ZAP-10021 / ZAP-10054 (Header, Cookie & Subresource Integrity Rules)"
+        ]
+      : [
+          "ZAP-40018 (SQLi – WSTG-INPV-05)",
+          "ZAP-40012 (Reflected XSS – WSTG-INPV-01)",
+          "ZAP-90020 (Command Injection – WSTG-INPV-12)",
+          "ZAP-10038 / ZAP-10035 / ZAP-10020 (CSP / HSTS / XFO Passive Rules)",
+          "ZAP-10010 / ZAP-10054 (Cookie HttpOnly / SameSite / Secure Rules)"
+        ],
+    staticAuditSummary: `Static OWASP WSTG v4.2 security configuration, DOM script, and header audit on ${url} (control '${finding.parameter || "HTTP Response"}'). Maps the detected HTTP/HTTPS endpoint to XTRIKE-WebPulse™ / Aegis.SOC (Embedded OWASP ZAP) audit rules.`,
+    tacticId: ttp?.tacticId || "TA0043 / TA0005",
+    tacticName: ttp?.tactic || "Reconnaissance & Defense Evasion",
+    techniqueId: ttp?.techniqueId || "T1592.002 / T1562",
+    techniqueName: ttp?.technique || "Web Security Control & Header Policy Evaluation",
     procedureSummary:
       ttp?.procedure ||
-      `Unvalidated input or missing security controls on ${url} (parameter '${finding.parameter || "N/A"}') allow untrusted data to alter application parser behavior or response headers (${cwe} · ${owasp}).`,
-    ttpEvidenceArtifact: `[XTRIKE-WEBPULSE / AEGIS.SOC TTP ARTIFACT · ${cwe}] WSTG Active/Passive Rule Match on ${finding.method} ${url} | Matched Indicator: ${finding.evidence?.matchedPattern || "HTTP response differential verified"}`,
+      `Missing or permissive security directives on ${url} (control '${finding.parameter || "N/A"}') weaken browser-enforced defense-in-depth protections (${cwe} · ${owasp}).`,
+    ttpEvidenceArtifact: `[XTRIKE-WEBPULSE / AEGIS.SOC TTP ARTIFACT · ${cwe}] WSTG Rule Match on ${finding.method} ${url} | Matched Indicator: ${finding.evidence?.matchedPattern || "HTTP response differential verified"}`,
     siemAndNetworkIndicators: [
-      `WAF / HTTP Inspection Log: Anomalous characters or missing security directives detected on ${finding.method} ${url}`,
+      `HTTP Inspection Telemetry: Security directive or DOM control evaluated on ${finding.method} ${url}`,
       `Matched Detection Signature: ${finding.evidence?.matchedPattern || "Application response differential recorded"}`,
-      "MITRE D3FEND™ Sensor Match: D3-IV (Input Validation) & D3-PSA (Parameterized Statement Execution)"
+      "MITRE D3FEND™ Sensor Match: D3-IV (Input Validation) & D3-OTF (Outbound Traffic Filtering)"
     ],
-    d3fendControl: "D3-IV (Input Validation), Context-Aware Output Encoding & Parameterized Queries",
+    d3fendControl: "D3-IV (Input Validation) & Browser Security Policy Hardening",
     remediationGuidance: finding.remediation,
     triggeredLinuxPrivEscScripts,
     triggeredWindowsPrivEscScripts,
@@ -4012,7 +4032,7 @@ export function buildExecutiveSummaryDossier(params: {
   const securityPostureTrendTable: ExecutiveSummaryTrendRow[] = [
     {
       periodLabel: `Historical Q1 Reference (${primaryHost})`,
-      securityGrade: `${q1Score >= 75 ? "B" : q1Score >= 62 ? "C" : "D"} (${q1Score}/100)`,
+      securityGrade: `Grade ${q1Score >= 75 ? "B" : q1Score >= 62 ? "C" : "D"}`,
       postureScore: q1Score,
       criticalOpen: critical,
       highOpen: high + 1,
@@ -4022,7 +4042,7 @@ export function buildExecutiveSummaryDossier(params: {
     },
     {
       periodLabel: `Historical Q2 Reference (${primaryHost})`,
-      securityGrade: `${q2Score >= 75 ? "B" : q2Score >= 62 ? "C" : "D"} (${q2Score}/100)`,
+      securityGrade: `Grade ${q2Score >= 75 ? "B" : q2Score >= 62 ? "C" : "D"}`,
       postureScore: q2Score,
       criticalOpen: critical,
       highOpen: high + 1,
@@ -4032,7 +4052,7 @@ export function buildExecutiveSummaryDossier(params: {
     },
     {
       periodLabel: `Historical Q3 Reference (${primaryHost})`,
-      securityGrade: `${q3Score >= 75 ? "B" : q3Score >= 62 ? "C" : "D"} (${q3Score}/100)`,
+      securityGrade: `Grade ${q3Score >= 75 ? "B" : q3Score >= 62 ? "C" : "D"}`,
       postureScore: q3Score,
       criticalOpen: critical,
       highOpen: high,
@@ -4042,7 +4062,7 @@ export function buildExecutiveSummaryDossier(params: {
     },
     {
       periodLabel: `Measured Current Live DAST (${endDate})`,
-      securityGrade: `${computedGrade} (${computedScore}/100)`,
+      securityGrade: `Grade ${computedGrade}`,
       postureScore: computedScore,
       criticalOpen: critical,
       highOpen: high,
@@ -4052,7 +4072,7 @@ export function buildExecutiveSummaryDossier(params: {
     },
     {
       periodLabel: "Forecast: Phase 1 (0–7 Days, Conditional)",
-      securityGrade: `B (${phase1ProjectedScore}/100 Forecast)`,
+      securityGrade: "Grade B · Forecast",
       postureScore: phase1ProjectedScore,
       criticalOpen: 0,
       highOpen: 0,
@@ -4062,7 +4082,7 @@ export function buildExecutiveSummaryDossier(params: {
     },
     {
       periodLabel: "Forecast: Phase 3 Retest Pass (Conditional)",
-      securityGrade: `A+ (${phase3ProjectedScore}/100 Forecast)`,
+      securityGrade: "Grade A+ · Forecast",
       postureScore: phase3ProjectedScore,
       criticalOpen: 0,
       highOpen: 0,

@@ -4,10 +4,14 @@ import type { SASTFinding } from "@/types/sast";
 type Props = { finding: SASTFinding };
 
 const ENGINE_COLORS: Record<string, string> = {
-  CodeQL:   "#8b4528",
-  Semgrep:  "#8b4528",
-  Joern:    "#8b4528",
-  DataFlow: "#46a36e",
+  "XTRIKE XQL":          "#8b4528",
+  "XTRIKE DeepFlow":     "#8b4528",
+  "XTRIKE StructSCA":    "#8b4528",
+  "XTRIKE AST-Query":    "#8b4528",
+  "XTRIKE PatternGuard": "#8b4528",
+  "XTRIKE DepGuard":     "#e2853b",
+  "XTRIKE GraphCPG":     "#8b4528",
+  "XTRIKE TaintFlow":    "#46a36e",
 };
 
 export default function ConfidenceBreakdown({ finding: f }: Props) {

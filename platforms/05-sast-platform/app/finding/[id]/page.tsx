@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   if (!finding) {
     return {
       title: `${id} — Live Scanned Finding | XTRIKE SAST`,
-      description: "Live 400-Plugin Checkmarx / IBM Code Scan / Fortify SCA Finding Analysis",
+      description: "Live 400-Plugin XTRIKE XQL / XTRIKE DeepFlow / XTRIKE StructSCA Finding Analysis",
     };
   }
   return {

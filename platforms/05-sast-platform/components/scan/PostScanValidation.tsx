@@ -128,7 +128,7 @@ export default function PostScanValidation({
         {
           tool: {
             driver: {
-              name: "XTRIKE Enterprise SAST (Checkmarx CxQL + IBM Code Scan + Fortify SCA + 400 Plugins)",
+              name: "XTRIKE Enterprise SAST (XTRIKE XQL + XTRIKE DeepFlow + XTRIKE StructSCA + 400 Plugins)",
               version: "4.0.0",
             },
           },
@@ -173,7 +173,7 @@ export default function PostScanValidation({
               <GitCommit className="w-3.5 h-3.5" style={{ color: "var(--primary)" }} />
               <span>Target: {repo}</span>
               <span>&middot;</span>
-              <span>Adapter: {language} AST + Checkmarx / IBM / Fortify Verifier</span>
+              <span>Adapter: {language} AST + XTRIKE XQL / DeepFlow / StructSCA Verifier</span>
             </div>
             <div className="text-base font-bold" style={{ color: "var(--foreground)" }}>
               Post-Scan Finding Validation Pipeline (Stages A &rarr; F &middot; {activeValidationList.length} Findings)

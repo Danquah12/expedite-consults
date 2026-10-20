@@ -47,7 +47,7 @@ export default function DiffRemediation({ finding: f }: Props) {
       `[compiler] Compiling with local build target...`,
       `[compiler] Running: mvn compile / npm run build`,
       `[compiler] SUCCESS: Compile verify passed (0 errors)`,
-      `[validator] running local Semgrep/CodeQL security regression audit...`,
+      `[validator] running local XTRIKE PatternGuard / XQL security regression audit...`,
       `[validator] 0 match signatures found. Vulnerability mitigated.`,
       `[test] Running 47 regression tests...`,
       `[test] PASS: All 47 tests passed (0 failures)`,

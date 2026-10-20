@@ -64,18 +64,18 @@ public class AccountController {
     metadata:
       cwe: "CWE-89"
       owasp: "A03:2021-Injection"
-      ai_model: "DeepSeek-Coder-V2"
+      ai_model: "XTRIKE-Coder-V4"
     languages: [java]`,
     fixExplanation: "Replaced raw string interpolation with parameterized SQL placeholders (`?`). The query engine now treats user input strictly as literal data rather than executable SQL command tokens."
   },
   "python_cmdi": {
     lang: "python",
-    name: "Python FastAPI: Command Injection in Subprocess",
+    name: "Python API Service: Command Injection in Subprocess",
     cwe: "CWE-78 (OS Command Injection)",
-    vulnCode: `from fastapi import FastAPI, Query
+    vulnCode: `from xtrike_web import WebApp, Query
 import subprocess
 
-app = FastAPI()
+app = WebApp()
 
 @app.get("/ping")
 def ping_host(host: str = Query(...)):
@@ -83,11 +83,11 @@ def ping_host(host: str = Query(...)):
     command = f"ping -c 1 {host}"
     output = subprocess.check_output(command, shell=True)
     return {"status": "ok", "output": output.decode()}`,
-    fixedCode: `from fastapi import FastAPI, Query
+    fixedCode: `from xtrike_web import WebApp, Query
 import subprocess
 import ipaddress
 
-app = FastAPI()
+app = WebApp()
 
 @app.get("/ping")
 def ping_host(host: str = Query(...)):
@@ -165,8 +165,8 @@ export default function RuleEditorPage() {
   const [prStatus, setPrStatus] = useState<"idle" | "creating" | "testing" | "merged">("idle");
   const [matches, setMatches] = useState<{ line: number; text: string; details: string; cwe: string }[]>([]);
   const [consoleLogs, setConsoleLogs] = useState<string[]>([
-    "[init] DeepSeek-Coder-V2 AST Analyzer online.",
-    "[init] Semgrep-AXIOM Static Rule Engine initialized.",
+    "[init] XTRIKE-Coder-V4 AST Analyzer online.",
+    "[init] XTRIKE PatternGuard Static Rule Engine initialized.",
     "[ready] Select a language template or run AST vulnerability analysis on the canvas."
   ]);
 
@@ -176,16 +176,16 @@ export default function RuleEditorPage() {
     setPrStatus("creating");
     setConsoleLogs(c => [
       ...c,
-      `[gitops-bot] Initializing branch 'patch/deepseek-${selectedKey}'...`,
+      `[gitops-bot] Initializing branch 'patch/xtrike-${selectedKey}'...`,
       `[gitops-bot] Committing signed AST remediation patch...`,
-      `[gitops-bot] Opening GitHub PR #342 against main repository...`
+      `[gitops-bot] Opening Pull Request #342 against main repository...`
     ]);
 
     setTimeout(() => {
       setPrStatus("testing");
       setConsoleLogs(c => [
         ...c,
-        `[ci-cd-sandbox] Running isolated Docker container regression suite...`,
+        `[ci-cd-sandbox] Running isolated container regression suite...`,
         `[ci-cd-sandbox] ✓ 142/142 unit tests passed. 0 AST regressions detected.`
       ]);
 
@@ -194,7 +194,7 @@ export default function RuleEditorPage() {
         setConsoleLogs(c => [
           ...c,
           `[gitops-bot] PR #342 merged automatically into production main branch.`,
-          `[axiom-sync] Marked vulnerability ${activeTemplate.cwe} as CLOSED across all SOC dashboards.`
+          `[xtrike-sync] Marked vulnerability ${activeTemplate.cwe} as CLOSED across all SOC dashboards.`
         ]);
       }, 1200);
     }, 1000);
@@ -216,9 +216,9 @@ export default function RuleEditorPage() {
     setMatches([]);
     setConsoleLogs(c => [
       ...c,
-      `[deepseek-ast] Ingesting source tokens (${activeTemplate.lang})...`,
-      `[deepseek-ast] Building Control Flow Graph (CFG) & Abstract Syntax Tree (AST)...`,
-      `[rules] Evaluating Semgrep pattern: ${activeTemplate.cwe}...`
+      `[xtrike-ast] Ingesting source tokens (${activeTemplate.lang})...`,
+      `[xtrike-ast] Building Control Flow Graph (CFG) & Abstract Syntax Tree (AST)...`,
+      `[rules] Evaluating XTRIKE PatternGuard rule: ${activeTemplate.cwe}...`
     ]);
 
     setTimeout(() => {
@@ -234,7 +234,7 @@ export default function RuleEditorPage() {
           foundMatches.push({
             line: index + 1,
             text: line.trim(),
-            details: `DeepSeek-Coder AST flagged insecure data flow sink: Variable reaches execution boundary without sanitizer.`,
+            details: `XTRIKE-Coder AST flagged insecure data flow sink: Variable reaches execution boundary without sanitizer.`,
             cwe: activeTemplate.cwe
           });
         }
@@ -257,8 +257,8 @@ export default function RuleEditorPage() {
     setGeneratingPatch(true);
     setConsoleLogs(c => [
       ...c,
-      `[deepseek-coder] Generating automated AST patch diff for ${activeTemplate.cwe}...`,
-      `[deepseek-coder] Applying secure coding pattern rules (OWASP Top 10 guidelines)...`
+      `[xtrike-coder] Generating automated AST patch diff for ${activeTemplate.cwe}...`,
+      `[xtrike-coder] Applying secure coding pattern rules (OWASP Top 10 guidelines)...`
     ]);
 
     setTimeout(() => {
@@ -280,7 +280,7 @@ export default function RuleEditorPage() {
     setConsoleLogs(c => [
       ...c,
       `[commit] AI Patch applied to code canvas.`,
-      `[re-eval] Re-running DeepSeek AST verification...`,
+      `[re-eval] Re-running XTRIKE AST verification...`,
       `[re-eval] ✅ Verified: All CWE vulnerability sinks resolved.`
     ]);
   };
@@ -298,7 +298,7 @@ export default function RuleEditorPage() {
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
                 <Brain size={16} className="text-[#8b4528]" />
-                <span className="text-xs font-bold uppercase tracking-wider text-[#1f1b18]">DeepSeek-Coder AST Engine</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-[#1f1b18]">XTRIKE-Coder AST Engine</span>
               </div>
 
               {/* Language Template Selector */}
@@ -376,12 +376,12 @@ export default function RuleEditorPage() {
         {/* 3-Column Split Workbench */}
         <div className="flex-1 flex overflow-hidden">
           
-          {/* Column 1: YAML Semgrep Rule */}
+          {/* Column 1: YAML XTRIKE PatternGuard Rule */}
           <div className="w-[310px] flex flex-col border-r" style={{ borderColor: "var(--border)" }}>
             <div className="px-4 py-3 border-b flex items-center justify-between" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
               <div className="flex items-center gap-2">
                 <FileText size={14} className="text-[#8b4528]" />
-                <span className="text-xs font-bold text-[#1f1b18] uppercase">Semgrep AST Rule</span>
+                <span className="text-xs font-bold text-[#1f1b18] uppercase">XTRIKE PatternGuard Rule</span>
               </div>
               <span style={{ fontSize: 9.5, color: "var(--muted)", fontFamily: "monospace" }}>YAML v2</span>
             </div>
@@ -494,7 +494,7 @@ export default function RuleEditorPage() {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                 <div>
                   <span style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", color: "var(--primary)" }}>
-                    DeepSeek-Coder AI Patch Generator
+                    XTRIKE-Coder AI Patch Generator
                   </span>
                   <h3 style={{ fontSize: 18, fontWeight: 800, color: "#1f1b18", marginTop: 4 }}>
                     Automated Code Diff & Fix Review ({activeTemplate.cwe})
@@ -535,7 +535,7 @@ export default function RuleEditorPage() {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
                     <span style={{ fontWeight: 800, color: "#1f1b18", fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
                       <GitPullRequest size={14} color="var(--primary)" />
-                      GitHub Pull Request #342: [DeepSeek-APR] {activeTemplate.cwe} Patch
+                      Pull Request #342: [XTRIKE-APR] {activeTemplate.cwe} Patch
                     </span>
                     <span style={{
                       fontSize: 10.5,
@@ -550,8 +550,8 @@ export default function RuleEditorPage() {
                     </span>
                   </div>
                   <div style={{ fontSize: 11, color: "var(--muted)", fontFamily: "monospace" }}>
-                    {prStatus === "creating" && "Pushing signed AST diff to branch patch/deepseek..."}
-                    {prStatus === "testing" && "Running Docker regression sandbox: 142/142 tests passed."}
+                    {prStatus === "creating" && "Pushing signed AST diff to branch patch/xtrike..."}
+                    {prStatus === "testing" && "Running container regression sandbox: 142/142 tests passed."}
                     {prStatus === "merged" && "Vulnerability auto-closed in central SOC bus. Pull Request merged."}
                   </div>
                 </div>
@@ -576,7 +576,7 @@ export default function RuleEditorPage() {
                   }}
                 >
                   <GitPullRequest size={13} />
-                  {prStatus === "idle" ? "🚀 Open Automated GitHub PR (GitOps)" : prStatus === "merged" ? "✓ PR Merged & Closed" : "Running Automated Pipeline..."}
+                  {prStatus === "idle" ? "🚀 Open Automated Pull Request (GitOps)" : prStatus === "merged" ? "✓ PR Merged & Closed" : "Running Automated Pipeline..."}
                 </button>
 
                 <div style={{ display: "flex", gap: 10 }}>
@@ -603,7 +603,7 @@ export default function RuleEditorPage() {
           <div className="px-4 py-2 border-b flex items-center justify-between" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
             <div className="flex items-center gap-2">
               <Terminal size={12} className="text-[#46a36e]" />
-              <span className="text-[10px] font-bold text-[#46a36e] uppercase tracking-wider">DeepSeek-AST & Semgrep Trace Stream</span>
+              <span className="text-[10px] font-bold text-[#46a36e] uppercase tracking-wider">XTRIKE-AST & PatternGuard Trace Stream</span>
             </div>
           </div>
           <div className="flex-1 p-3 overflow-y-auto font-mono text-[10.5px] space-y-1 text-slate-400 select-all">

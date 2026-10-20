@@ -6,12 +6,12 @@ import type { AttachedSourceFile } from "./RepoInput";
 import type { LiveScanTelemetry } from "@/lib/enterprise-sast-engine";
 
 const ENGINE_DETAILS_MAP: Record<string, { color: string; label: string }> = {
-  Checkmarx:       { color: "#8b4528", label: "Executing CxQL AST queries, Best Fix Location (BFL) & PCI/NIST mapping..." },
-  "IBM Code Scan": { color: "#8b4528", label: "Tracing AppScan source-to-sink taint paths & sanitizer dominance..." },
-  "Fortify SCA":   { color: "#8b4528", label: "Running 5 Core Analyzers (Dataflow, Control Flow, Structural, Config, Semantic)..." },
-  CodeQL:          { color: "#8b4528", label: "Tracing inter-procedural dataflows & semantic AST queries..." },
-  Semgrep:         { color: "#8b4528", label: "Dispatching 400 OWASP / NIST / CWE / CERT token-indexed plugins..." },
-  Snyk:            { color: "#e2853b", label: "Querying live Google OSV.dev & NVD CVE dependency database..." },
+  "XTRIKE XQL":          { color: "#8b4528", label: "Executing XQL AST queries, Best Fix Location (BFL) & PCI/NIST mapping..." },
+  "XTRIKE DeepFlow":     { color: "#8b4528", label: "Tracing DeepFlow source-to-sink taint paths & sanitizer dominance..." },
+  "XTRIKE StructSCA":    { color: "#8b4528", label: "Running 5 Core Analyzers (Dataflow, Control Flow, Structural, Config, Semantic)..." },
+  "XTRIKE AST-Query":    { color: "#8b4528", label: "Tracing inter-procedural dataflows & semantic AST queries..." },
+  "XTRIKE PatternGuard": { color: "#8b4528", label: "Dispatching 400 OWASP / NIST / CWE / CERT token-indexed plugins..." },
+  "XTRIKE DepGuard":     { color: "#e2853b", label: "Querying live OSV & NVD CVE dependency database..." },
 };
 
 type Props = {
@@ -36,7 +36,7 @@ export default function ScanProgress({
   const activeEngines =
     engines.length > 0
       ? engines
-      : ["Checkmarx", "IBM Code Scan", "Fortify SCA", "CodeQL", "Semgrep", "Snyk"];
+      : ["XTRIKE XQL", "XTRIKE DeepFlow", "XTRIKE StructSCA", "XTRIKE AST-Query", "XTRIKE PatternGuard", "XTRIKE DepGuard"];
 
   const [progress, setProgress] = useState<number[]>(() => activeEngines.map(() => 0));
   const [done, setDone] = useState<boolean[]>(() => activeEngines.map(() => false));
@@ -296,7 +296,7 @@ export default function ScanProgress({
             <div className="terminal-dot" style={{ background: "#3a404c" }} />
             <div className="terminal-dot" style={{ background: "#3a404c" }} />
             <span style={{ marginLeft: 8, fontSize: 12, color: "var(--muted)" }}>
-              live-sast-stream &mdash; Checkmarx &middot; IBM Code Scan &middot; Fortify SCA &middot; {language} AST
+              live-sast-stream &mdash; XTRIKE XQL &middot; XTRIKE DeepFlow &middot; XTRIKE StructSCA &middot; {language} AST
             </span>
           </div>
           <div
@@ -316,13 +316,13 @@ export default function ScanProgress({
                 style={{
                   fontSize: 12,
                   color:
-                    log.startsWith("[Checkmarx]") || log.startsWith("[Plugin")
+                    log.startsWith("[XTRIKE XQL]") || log.startsWith("[Plugin")
                       ? "#8b4528"
-                      : log.startsWith("[IBM Scan]") || log.startsWith("[Fortify]")
+                      : log.startsWith("[XTRIKE DeepFlow]") || log.startsWith("[XTRIKE StructSCA]")
                       ? "#1f1b18"
                       : log.startsWith("[DONE]") || log.startsWith("[GIT-LOCK]")
                       ? "#46a36e"
-                      : log.startsWith("[Snyk")
+                      : log.startsWith("[XTRIKE DepGuard")
                       ? "#e2853b"
                       : "var(--foreground-muted)",
                 }}

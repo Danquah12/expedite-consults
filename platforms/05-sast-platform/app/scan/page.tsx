@@ -50,8 +50,8 @@ export default function ScanPage() {
   };
 
   const stepLabels = [
-    { step: 1, title: "Repository & 10-Lang AST", sub: "GitHub URL or Attached Codebase" },
-    { step: 2, title: "400-Plugin Multi-Engine Scan", sub: "Checkmarx · IBM · Fortify · CodeQL · OSV" },
+    { step: 1, title: "Repository & 10-Lang AST", sub: "Repo URL or Attached Codebase" },
+    { step: 2, title: "400-Plugin Multi-Engine Scan", sub: "XTRIKE XQL · DeepFlow · StructSCA · DepGuard" },
     { step: 3, title: "Finding Validation (A–F)", sub: "6-Point Proof Contract" },
     { step: 4, title: "Verified Dashboard", sub: "Triage & remediation" },
   ];
@@ -91,7 +91,7 @@ export default function ScanPage() {
                 Scan &amp; Proof Validation Workspace
               </h1>
               <p style={{ fontSize: 13.5, color: "var(--muted)", marginTop: 4 }}>
-                Connect a GitHub repository or attach source code across 10 languages, execute Checkmarx / IBM Code Scan / Fortify SCA + 400 OWASP/NIST plugins, and verify 6-point proof contracts.
+                Connect a code repository or attach source code across 10 languages, execute XTRIKE XQL / XTRIKE DeepFlow / XTRIKE StructSCA + 400 OWASP/NIST plugins, and verify 6-point proof contracts.
               </p>
             </div>
           </div>
