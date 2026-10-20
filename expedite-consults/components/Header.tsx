@@ -61,7 +61,7 @@ export default function Header({
 						<NavList services={services} />
 					</div>
 					<div className="lg:hidden flex items-center gap-4">
-						<Link href="tel:+1-855-443-9733">
+						<Link href="tel:240-260-7898">
 							<Phone
 								className="size-7 text-primary fill-primary"
 								strokeWidth={0.5}

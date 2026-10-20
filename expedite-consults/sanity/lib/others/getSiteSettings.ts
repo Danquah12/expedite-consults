@@ -8,7 +8,11 @@ async function getSiteSettings() {
 		query: getSiteSettingsQuery,
 	});
 
-	return siteSettings.data;
+	return {
+		...siteSettings.data,
+		phone: "240 260 7898",
+		whatsapp: "12402607898",
+	};
 }
 
 export default getSiteSettings;
