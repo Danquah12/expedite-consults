@@ -7,6 +7,8 @@ export function cn(...inputs: ClassValue[]) {
 
 export const getSectionLabel = (key: string) => {
 	switch (key) {
+		case "platforms":
+			return "Platforms";
 		case "about":
 			return "About Us";
 		case "insight":

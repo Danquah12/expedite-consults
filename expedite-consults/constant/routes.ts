@@ -52,6 +52,24 @@ export const routes = {
 };
 
 export const subroutes = {
+	platforms: [
+		{
+			title: "🚀 Digital Ecosystem Launchpad",
+			url: "/launchpad",
+		},
+		{
+			title: "💼 ConnectIn Professional OS",
+			url: "/connectin",
+		},
+		{
+			title: "🎓 Digital Campus Platform",
+			url: "/campus",
+		},
+		{
+			title: "VeritasLens Media Intelligence",
+			url: "/veritaslens",
+		},
+	],
 	about: [
 		{
 			title: "About Us (Overview)",
@@ -64,32 +82,12 @@ export const subroutes = {
 	],
 	insight: [
 		{
-			title: "🚀 Digital Ecosystem Launchpad",
-			url: "/launchpad",
-		},
-		{
-			title: "💼 ConnectIn Professional OS",
-			url: "/connectin",
-		},
-		{
-			title: "VeritasLens Media Intelligence",
-			url: "/veritaslens",
-		},
-		{
-			title: "🎓 Digital Campus Platform",
-			url: "/campus",
-		},
-		{
 			title: "Blogs",
 			url: routes.insight.url + "/blogs",
 		},
 		{
 			title: "News",
 			url: routes.insight.url + "/news",
-		},
-		{
-			title: "🔐 Student Verification & Onboarding",
-			url: "/campus/login",
 		},
 	],
 };

@@ -64,24 +64,17 @@ export default function HeroContent({ heroHeading, heroSubheading }: HeroContent
                 {heroSubheading ?? ""}
             </motion.div>
 
-            <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-5 mt-10">
-                <Link
-                    href={routes.campus.url}
-                    className="text-sm border border-indigo-400/60 hover:border-indigo-300 text-white font-semibold lg:text-base mb-0 px-8 py-3.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 backdrop-blur-md shadow-lg shadow-indigo-600/30 transition-all duration-300 rounded-[4px] relative overflow-hidden group"
-                >
-                    <span className="relative z-10 flex items-center gap-2">🎓 Launch Digital Campus</span>
-                    <div className="absolute inset-0 h-full w-0 bg-white/20 transition-all duration-500 ease-out group-hover:w-full"></div>
-                </Link>
+            <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-4 mt-10">
                 <Link
                     href={routes.incidentResponse}
-                    className="text-sm border border-transparent hover:border-white/20 text-white font-semibold lg:text-base mb-0 px-8 py-3.5 bg-primary/80 hover:bg-primary backdrop-blur-md shadow-lg shadow-primary/20 transition-all duration-300 rounded-[4px] relative overflow-hidden group"
+                    className="text-sm border border-transparent hover:border-white/20 text-white font-semibold lg:text-base mb-0 px-8 py-3.5 bg-primary/90 hover:bg-primary backdrop-blur-md shadow-lg shadow-primary/20 transition-all duration-300 rounded-[4px] relative overflow-hidden group"
                 >
                     <span className="relative z-10 flex items-center gap-2">Get Immediate Help</span>
                     <div className="absolute inset-0 h-full w-0 bg-white/20 transition-all duration-500 ease-out group-hover:w-full"></div>
                 </Link>
                 <Link
                     href={routes.assessment}
-                    className="text-sm border border-blue-500/50 hover:border-blue-400 text-white font-medium lg:text-base mb-0 px-8 py-3.5 bg-blue-600/20 hover:bg-blue-600/30 backdrop-blur-md transition-all duration-300 rounded-[4px] shadow-[0_0_15px_rgba(37,99,235,0.2)] hover:shadow-[0_0_20px_rgba(37,99,235,0.4)]"
+                    className="text-sm border border-primary/40 hover:border-primary text-white font-medium lg:text-base mb-0 px-8 py-3.5 bg-secondary/60 hover:bg-primary/20 backdrop-blur-md transition-all duration-300 rounded-[4px] shadow-[0_0_15px_rgba(67,187,209,0.15)] hover:shadow-[0_0_20px_rgba(67,187,209,0.3)]"
                 >
                     Free Compliance Assessment
                 </Link>

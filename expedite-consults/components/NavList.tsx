@@ -27,52 +27,13 @@ const NavList = ({ services }: { services: GetServicesQueryResult }) => {
 					hidden: isScrolled,
 				})}
 			>
-				<div className="flex items-center gap-2.5 ml-auto mt-8">
-					<Link
-						href={routes.launchpad.url}
-						className={cn(
-							"hidden lg:flex items-center gap-2 text-white font-bold text-sm bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 px-4 py-1.5 border border-cyan-400/50 rounded-full hover:from-cyan-500 hover:to-indigo-500 transition-all duration-300 shadow-[0_0_18px_rgba(6,182,212,0.4)] hover:shadow-[0_0_24px_rgba(6,182,212,0.6)]"
-						)}
-					>
-						<span className="text-xs">🚀</span>
-						Ecosystem Launchpad
-					</Link>
-					<Link
-						href={routes.connectin.url}
-						className={cn(
-							"hidden lg:flex items-center gap-1.5 text-white font-medium text-sm bg-slate-900/90 px-3.5 py-1.5 border border-slate-700 rounded-full hover:bg-slate-800 hover:border-cyan-500/50 transition-all duration-300"
-						)}
-					>
-						<span className="text-xs">💼</span>
-						ConnectIn OS
-					</Link>
-					<Link
-						href={routes.campus.url}
-						className={cn(
-							"hidden lg:flex items-center gap-1.5 text-white font-medium text-sm bg-indigo-950/80 px-3.5 py-1.5 border border-indigo-500/40 rounded-full hover:bg-indigo-900 transition-all duration-300"
-						)}
-					>
-						<span className="text-xs">🎓</span>
-						Campus
-					</Link>
-					<Link
-						href={routes.incidentResponse}
-						className={cn(
-							"hidden xl:flex items-center gap-2 text-white text-sm bg-primary/10 px-3.5 py-1.5 border border-primary/10 rounded-full hover:bg-primary/20 transition-all duration-300"
-						)}
-					>
-						<TriangleAlert className="size-4 shrink-0" />
-						24/7 SOC
-					</Link>
-					<Link
-						href={routes.assessment}
-						className={cn(
-							"hidden lg:flex items-center gap-2 text-white font-medium text-sm bg-blue-600/80 px-4 py-1.5 border border-blue-500/50 rounded-full hover:bg-blue-500 transition-all duration-300 shadow-[0_0_15px_rgba(37,99,235,0.3)] hover:shadow-[0_0_20px_rgba(37,99,235,0.5)]"
-						)}
-					>
-						Free Assessment
-					</Link>
-				</div>
+				<Link
+					href={routes.incidentResponse}
+					className="hidden lg:flex items-center gap-2 text-white text-sm ml-auto mt-8 bg-primary/10 px-4 py-1.5 border border-primary/20 rounded-full hover:bg-primary/20 transition-all duration-300"
+				>
+					<TriangleAlert className="size-4 shrink-0 text-primary" />
+					24/7 Incident Response
+				</Link>
 			</div>
 
 			<Menu setActive={setActive}>

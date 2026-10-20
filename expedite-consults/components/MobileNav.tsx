@@ -208,30 +208,6 @@ export default function MobileNav({
 						{/* Quick Links */}
 						<div className="flex flex-col gap-2 mb-6">
 							<Link
-								href={routes.launchpad.url}
-								onClick={() => setIsOpen(false)}
-								className="w-full flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-cyan-600/30 to-blue-600/30 text-cyan-300 font-bold rounded-md border border-cyan-500/50 hover:from-cyan-600/40 hover:to-blue-600/40 transition-colors text-sm shadow-[0_0_15px_rgba(6,182,212,0.2)]"
-							>
-								<span className="text-base">🚀</span>
-								Digital Ecosystem Launchpad
-							</Link>
-							<Link
-								href={routes.connectin.url}
-								onClick={() => setIsOpen(false)}
-								className="w-full flex items-center gap-3 px-4 py-3 bg-slate-900 text-slate-200 font-medium rounded-md border border-slate-700 hover:bg-slate-800 transition-colors text-sm"
-							>
-								<span className="text-base">💼</span>
-								ConnectIn Professional OS
-							</Link>
-							<Link
-								href={routes.campus.url}
-								onClick={() => setIsOpen(false)}
-								className="w-full flex items-center gap-3 px-4 py-3 bg-indigo-950/40 text-indigo-300 font-medium rounded-md border border-indigo-500/30 hover:bg-indigo-900/40 transition-colors text-sm"
-							>
-								<span className="text-base">🎓</span>
-								Digital Campus Platform
-							</Link>
-							<Link
 								href={routes.incidentResponse}
 								onClick={() => setIsOpen(false)}
 								className="w-full flex items-center gap-3 px-4 py-3 bg-red-500/10 text-red-400 font-medium rounded-md border border-red-500/20 hover:bg-red-500/20 transition-colors text-sm"
@@ -242,7 +218,7 @@ export default function MobileNav({
 							<Link
 								href={routes.assessment}
 								onClick={() => setIsOpen(false)}
-								className="w-full flex items-center gap-3 px-4 py-3 bg-blue-600/20 text-blue-400 font-medium rounded-md border border-blue-500/30 hover:bg-blue-600/30 transition-colors text-sm"
+								className="w-full flex items-center gap-3 px-4 py-3 bg-primary/10 text-primary font-medium rounded-md border border-primary/30 hover:bg-primary/20 transition-colors text-sm"
 							>
 								<LucideIcons.ShieldAlert className="size-4" />
 								Free Compliance Assessment
