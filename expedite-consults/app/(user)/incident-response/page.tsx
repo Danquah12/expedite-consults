@@ -106,10 +106,10 @@ const page = () => {
 								<p className="text-white/70 text-sm">Call us directly for immediate incident response activation.</p>
 
 								<Link
-									href="tel:240-260-7898"
+									href="tel:1-855-443-9733"
 									className="group/button w-full relative inline-flex items-center justify-center overflow-hidden bg-red-600 hover:bg-red-500 p-4 rounded-lg font-bold text-white transition-all duration-300 shadow-lg shadow-red-900/50"
 								>
-									<span className="text-2xl tracking-wider">240 260 7898</span>
+									<span className="text-2xl tracking-wider">1-855-443-9733</span>
 									<div className="absolute inset-0 flex h-full w-full justify-center [transform:skew(-13deg)_translateX(-150%)] group-hover/button:duration-1000 group-hover/button:[transform:skew(-13deg)_translateX(150%)]">
 										<div className="relative h-full w-10 bg-white/20"></div>
 									</div>

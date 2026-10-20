@@ -11,8 +11,8 @@ async function getSiteSettings() {
 	return {
 		...siteSettings.data,
 		email: "kasiedu@expedite-consults.com",
-		phone: "240 260 7898",
-		whatsapp: "12402607898",
+		phone: "1-855-443-9733",
+		whatsapp: "18554439733",
 	};
 }
 
