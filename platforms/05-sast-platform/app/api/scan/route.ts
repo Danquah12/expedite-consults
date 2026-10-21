@@ -361,7 +361,7 @@ export async function POST(req: NextRequest) {
       filesToScan.push(...(LANGUAGE_STARTER_CODEBASES[language] || BENCHMARK_REPO_FILES.webgoat));
     }
 
-    // 4. Execute Checkmarx CxSAST + IBM Code Scan + Fortify SCA + 400-Plugin Single-Pass Dispatcher
+    // 4. Execute XTRIKE XQL CxSAST + XTRIKE DeepFlow + XTRIKE StructSCA + 400-Plugin Single-Pass Dispatcher
     const scanOutput = scanFilesWithEnterpriseEngines({
       files: filesToScan,
       repoUrl,

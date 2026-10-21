@@ -29,7 +29,7 @@ interface CareerSuiteViewProps {
 }
 
 export function CareerSuiteView({ currentUser }: CareerSuiteViewProps) {
-  const [activeSubTab, setActiveSubTab] = useState<'maximizer' | 'tailor' | 'tracker' | 'live_app'>('maximizer')
+  const [activeSubTab, setActiveSubTab] = useState<'maximizer' | 'tailor' | 'tracker' | 'live_app'>('live_app')
 
   // Profile Maximizer State
   const [targetIndustry, setTargetIndustry] = useState("Cloud Security & AI Architecture")
@@ -113,24 +113,24 @@ Experience:
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 pb-12">
+    <div className="mx-auto max-w-6xl space-y-6 pb-12">
       {/* Header Banner */}
       <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
               <span className="rounded-full bg-blue-50 dark:bg-blue-950/50 px-2.5 py-0.5 text-xs font-semibold text-[#0A66C2] dark:text-sky-300 border border-blue-200/60 dark:border-blue-800/60 flex items-center gap-1.5 w-fit">
-                <Sparkles className="h-3.5 w-3.5" /> CareerSuite™ Resume &amp; Profile Hub
+                <Sparkles className="h-3.5 w-3.5" /> CareerSuite™ Resume Preparation App
               </span>
               <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
-                Connected App
+                Connected Live Studio
               </span>
             </div>
             <h2 className="mt-2 text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-              Resume Tailoring &amp; Profile Optimization
+              AI Resume Preparation, Tailoring &amp; Profile Optimization
             </h2>
             <p className="mt-1 text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-xl">
-              Tailor your master resume and cover letter to target job descriptions. Highlight key competencies and skills to match employer expectations.
+              Tailor your master resume and cover letter to Corporate &amp; Federal USAJOBS descriptions, generate ATS Fit Scores, and export .DOCX packages.
             </p>
           </div>
 
@@ -139,9 +139,9 @@ Experience:
               href="https://tuhousing.vercel.app/"
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 px-4 py-2 text-xs font-semibold transition-colors"
+              className="flex items-center gap-1.5 rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white px-4 py-2 text-xs font-bold transition-colors shadow-xs"
             >
-              <span>Open Vercel App</span>
+              <span>Open Full Resume App</span>
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
           </div>
@@ -152,8 +152,20 @@ Experience:
       <div className="flex items-center justify-between border-b border-zinc-200 bg-white px-4 rounded-xl shadow-xs dark:border-zinc-800 dark:bg-zinc-900 overflow-x-auto text-xs font-bold">
         <div className="flex items-center gap-2">
           <button
+            onClick={() => setActiveSubTab('live_app')}
+            className={`py-3 px-3 transition-colors border-b-2 flex items-center gap-1.5 cursor-pointer ${
+              activeSubTab === 'live_app'
+                ? "border-[#0A66C2] text-[#0A66C2]"
+                : "border-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+            }`}
+          >
+            <Sparkles className="h-4 w-4 text-amber-500" />
+            <span>Live Resume Preparation App</span>
+          </button>
+
+          <button
             onClick={() => setActiveSubTab('maximizer')}
-            className={`py-3 px-3 transition-colors border-b-2 flex items-center gap-1.5 ${
+            className={`py-3 px-3 transition-colors border-b-2 flex items-center gap-1.5 cursor-pointer ${
               activeSubTab === 'maximizer'
                 ? "border-[#0A66C2] text-[#0A66C2]"
                 : "border-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
@@ -165,19 +177,19 @@ Experience:
 
           <button
             onClick={() => setActiveSubTab('tailor')}
-            className={`py-3 px-3 transition-colors border-b-2 flex items-center gap-1.5 ${
+            className={`py-3 px-3 transition-colors border-b-2 flex items-center gap-1.5 cursor-pointer ${
               activeSubTab === 'tailor'
                 ? "border-[#0A66C2] text-[#0A66C2]"
                 : "border-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
             }`}
           >
             <FileText className="h-4 w-4 text-emerald-500" />
-            <span>AI Resume & Cover Tailor</span>
+            <span>Quick Resume &amp; Cover Tailor</span>
           </button>
 
           <button
             onClick={() => setActiveSubTab('tracker')}
-            className={`py-3 px-3 transition-colors border-b-2 flex items-center gap-1.5 ${
+            className={`py-3 px-3 transition-colors border-b-2 flex items-center gap-1.5 cursor-pointer ${
               activeSubTab === 'tracker'
                 ? "border-[#0A66C2] text-[#0A66C2]"
                 : "border-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
@@ -185,18 +197,6 @@ Experience:
           >
             <Briefcase className="h-4 w-4 text-purple-500" />
             <span>Job Tracker ({trackedJobs.length})</span>
-          </button>
-
-          <button
-            onClick={() => setActiveSubTab('live_app')}
-            className={`py-3 px-3 transition-colors border-b-2 flex items-center gap-1.5 ${
-              activeSubTab === 'live_app'
-                ? "border-[#0A66C2] text-[#0A66C2]"
-                : "border-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
-            }`}
-          >
-            <ExternalLink className="h-4 w-4 text-amber-500" />
-            <span>Live Cloud Hub (Iframe)</span>
           </button>
         </div>
       </div>

@@ -6,9 +6,9 @@ export type SASTPluginCategory =
   | "OWASP LLM & GenAI Top 10:2025"
   | "MITRE CWE Top 25 & SANS 25"
   | "NIST SP 800-53 Rev.5 & SSDF"
-  | "Checkmarx CxQL High-Risk Queries"
-  | "IBM AppScan Taint-Flow Rules"
-  | "Fortify SCA 7 Kingdoms"
+  | "XTRIKE XQL XTRIKE-XQL High-Risk Queries"
+  | "XTRIKE DeepFlow Taint-Flow Rules"
+  | "XTRIKE StructSCA 7 Kingdoms"
   | "Cryptographic & FIPS 140-3"
   | "Secrets & Credential Hygiene"
   | "Cloud, IaC, Docker & K8s (CISA/NSA)"
@@ -162,7 +162,7 @@ const DOMAIN_SEEDS: DomainSeed[] = [
 
   // 3. Dynamic Code Injection, Eval, SSTI & Expression Language (20 Plugins)
   {
-    category: "Checkmarx CxQL High-Risk Queries",
+    category: "XTRIKE XQL XTRIKE-XQL High-Risk Queries",
     cwe: "CWE-94",
     cweName: "Improper Control of Generation of Code ('Code Injection')",
     owasp: "A03:2021 · Injection",
@@ -205,7 +205,7 @@ const DOMAIN_SEEDS: DomainSeed[] = [
 
   // 4. Cross-Site Scripting (XSS) — DOM, Reflected & Stored (20 Plugins)
   {
-    category: "IBM AppScan Taint-Flow Rules",
+    category: "XTRIKE DeepFlow Taint-Flow Rules",
     cwe: "CWE-79",
     cweName: "Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')",
     owasp: "A03:2021 · Injection",
@@ -248,7 +248,7 @@ const DOMAIN_SEEDS: DomainSeed[] = [
 
   // 5. Path Traversal, Arbitrary File Read/Write & ZipSlip (20 Plugins)
   {
-    category: "Fortify SCA 7 Kingdoms",
+    category: "XTRIKE StructSCA 7 Kingdoms",
     cwe: "CWE-22",
     cweName: "Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')",
     owasp: "A01:2021 · Broken Access Control",
@@ -362,14 +362,14 @@ const DOMAIN_SEEDS: DomainSeed[] = [
       { code: "SSRF-NODE-HTTPGET", name: "Node.js http.get / https.request Unvalidated Host/URL", languages: ["Node.js", "TypeScript"], fastTokens: ["http.get(", "https.get("], pattern: "https?\\.(?:get|request)\\s*\\(\\s*req\\.", cxQuery: "JS_High_Risk/SSRF_Http_Get", ibmRule: "IBM-SSRF-HTTP-128" },
       { code: "SSRF-PY-REQUESTS", name: "Python requests.get/post() Unvalidated URL Parameter", languages: ["Python"], fastTokens: ["requests.get", "requests.post"], pattern: "requests\\.(?:get|post|put|request)\\s*\\(\\s*(?:req|user|url|target|webhook)", cxQuery: "Python_High_Risk/SSRF_Requests", ibmRule: "IBM-SSRF-PY-129" },
       { code: "SSRF-PY-URLLIB", name: "Python urllib.request.urlopen() Unvalidated URL", languages: ["Python"], fastTokens: ["urlopen("], pattern: "urlopen\\s*\\(\\s*(?:req|user|url|target)", cxQuery: "Python_High_Risk/SSRF_Urllib", ibmRule: "IBM-SSRF-URL-130" },
-      { code: "SSRF-PY-HTTPX-AIOHTTP", name: "Python httpx / aiohttp ClientSession.get() SSRF", languages: ["Python"], fastTokens: ["httpx.get", "session.get("], pattern: "(?:httpx|session)\\.(?:get|post)\\s*\\(\\s*(?:req|user|url|target)", cxQuery: "Python_Async/SSRF_Httpx_Aiohttp", ibmRule: "IBM-SSRF-HTTPX-131" },
+      { code: "SSRF-PY-HTTPX-AIOHTTP", name: "Python XTRIKE-HTTP / aiohttp ClientSession.get() SSRF", languages: ["Python"], fastTokens: ["XTRIKE-HTTP.get", "session.get("], pattern: "(?:XTRIKE-HTTP|session)\\.(?:get|post)\\s*\\(\\s*(?:req|user|url|target)", cxQuery: "Python_Async/SSRF_Httpx_Aiohttp", ibmRule: "IBM-SSRF-HTTPX-131" },
       { code: "SSRF-JAVA-URL-OPENCONN", name: "Java new URL(userInput).openConnection() / openStream() SSRF", languages: ["Java"], fastTokens: ["openconnection", "openstream"], pattern: "new\\s+URL\\s*\\([^)]+\\)\\.(?:openConnection|openStream)\\s*\\(", cxQuery: "Java_High_Risk/SSRF_URL_OpenConnection", ibmRule: "IBM-SSRF-JAVA-132" },
       { code: "SSRF-JAVA-RESTTEMPLATE", name: "Spring RestTemplate / WebClient Unvalidated URI Fetch", languages: ["Java", "Kotlin"], fastTokens: ["resttemplate", "getforobject", "getforentity"], pattern: "restTemplate\\.(?:getForObject|getForEntity|postForObject|exchange)\\s*\\(", cxQuery: "Java_Spring/SSRF_RestTemplate", ibmRule: "IBM-SSRF-SPRING-133" },
       { code: "SSRF-JAVA-HTTPCLIENT", name: "Java HttpClient / OkHttpClient Request.Builder().url() SSRF", languages: ["Java"], fastTokens: ["uri.create(", ".url("], pattern: "(?:URI\\.create|Builder\\(\\)\\.url)\\s*\\(\\s*(?:req|user|target|url)", cxQuery: "Java_HttpClient/SSRF_URI", ibmRule: "IBM-SSRF-OKHTTP-134" },
       { code: "SSRF-GO-HTTPGET", name: "Go http.Get() / http.NewRequest() Unvalidated Query URL", languages: ["Go"], fastTokens: ["http.get(", "http.newrequest"], pattern: "http\\.(?:Get|Post|NewRequest)\\s*\\([^)]*(?:r\\.URL|req|target|url)", cxQuery: "Go_High_Risk/SSRF_Http_Get", ibmRule: "IBM-SSRF-GO-135" },
       { code: "SSRF-PHP-CURL", name: "PHP curl_setopt(CURLOPT_URL, $_GET) SSRF", languages: ["PHP"], fastTokens: ["curl_setopt", "curlopt_url"], pattern: "curl_setopt\\s*\\([^,]+,\\s*CURLOPT_URL\\s*,\\s*\\$", cxQuery: "PHP_High_Risk/SSRF_Curl", ibmRule: "IBM-SSRF-PHP-136" },
       { code: "SSRF-CS-HTTPCLIENT", name: "C# HttpClient.GetAsync() / WebClient.DownloadString() SSRF", languages: ["C#"], fastTokens: ["getasync(", "downloadstring("], pattern: "(?:GetAsync|GetStringAsync|DownloadString)\\s*\\(\\s*(?:req|user|url|target)", cxQuery: "CSharp_High_Risk/SSRF_HttpClient", ibmRule: "IBM-SSRF-CS-137" },
-      { code: "SSRF-HEADLESS-PUPPETEER", name: "Puppeteer / Playwright page.goto(userUrl) Headless Browser SSRF", languages: ["Node.js", "TypeScript"], fastTokens: ["page.goto("], pattern: "page\\.goto\\s*\\(\\s*(?:req\\.|userUrl|targetUrl)", cxQuery: "JS_Headless/Puppeteer_Goto_SSRF", ibmRule: "IBM-SSRF-PUP-138" },
+      { code: "SSRF-HEADLESS-PUPPETEER", name: "Puppeteer / XTRIKE-DOM page.goto(userUrl) Headless Browser SSRF", languages: ["Node.js", "TypeScript"], fastTokens: ["page.goto("], pattern: "page\\.goto\\s*\\(\\s*(?:req\\.|userUrl|targetUrl)", cxQuery: "JS_Headless/Puppeteer_Goto_SSRF", ibmRule: "IBM-SSRF-PUP-138" },
       { code: "SSRF-WKHTMLTOPDF", name: "Server-Side PDF Generator (wkhtmltopdf / WeasyPrint) SSRF", languages: ["Python", "Node.js", "PHP"], fastTokens: ["wkhtmltopdf", "weasyprint"], pattern: "(?:wkhtmltopdf|HTML\\s*\\(\\s*url\\s*=)", cxQuery: "AppSec_PDF/Generator_SSRF", ibmRule: "IBM-SSRF-PDF-139" },
       { code: "SSRF-CLOUD-METADATA", name: "Direct Cloud Instance Metadata IP (169.254.169.254) Reference", languages: ["Python", "Node.js", "Java", "Go"], fastTokens: ["169.254.169.254"], pattern: "169\\.254\\.169\\.254", cxQuery: "Cloud_Security/IMDS_Endpoint_Reference", ibmRule: "IBM-SSRF-IMDS-140" },
       { code: "REDIR-EXPRESS-REDIRECT", name: "Express res.redirect(req.query.next) Open Redirect (CWE-601)", languages: ["Node.js", "TypeScript"], fastTokens: ["res.redirect("], pattern: "res\\.redirect\\s*\\(\\s*req\\.(?:query|body|params)", cxQuery: "JS_Medium_Threat/Open_Redirect", ibmRule: "IBM-REDIR-EXP-141" },

@@ -145,21 +145,21 @@ export default function EvidencePanel({ finding: f }: Props) {
         >
           {f.checkmarxQuery && (
             <div>
-              <div style={{ fontWeight: 800, color: "#8b4528" }}>Checkmarx CxSAST / BFL</div>
+              <div style={{ fontWeight: 800, color: "#8b4528" }}>XTRIKE XQL / Best Fix Location</div>
               <div style={{ fontFamily: "monospace", color: "var(--foreground)", marginTop: 2 }}>{f.checkmarxQuery}</div>
               {f.checkmarxBfl && <div style={{ color: "var(--muted)" }}>BFL: {f.checkmarxBfl}</div>}
             </div>
           )}
           {f.ibmRuleId && (
             <div>
-              <div style={{ fontWeight: 800, color: "#8b4528" }}>IBM Code Scan (AppScan)</div>
+              <div style={{ fontWeight: 800, color: "#8b4528" }}>XTRIKE DeepFlow (Taint Engine)</div>
               <div style={{ fontFamily: "monospace", color: "var(--foreground)", marginTop: 2 }}>{f.ibmRuleId}</div>
               {f.ibmTraceSummary && <div style={{ color: "var(--muted)" }}>{f.ibmTraceSummary}</div>}
             </div>
           )}
           {f.fortifyKingdom && (
             <div>
-              <div style={{ fontWeight: 800, color: "#8b4528" }}>Fortify SCA ({f.fortifyAnalyzer || "Dataflow"})</div>
+              <div style={{ fontWeight: 800, color: "#8b4528" }}>XTRIKE StructSCA ({f.fortifyAnalyzer || "Dataflow"})</div>
               <div style={{ color: "var(--foreground)", marginTop: 2 }}>Kingdom: {f.fortifyKingdom}</div>
             </div>
           )}

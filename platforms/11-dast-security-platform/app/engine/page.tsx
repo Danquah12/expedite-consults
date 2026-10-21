@@ -84,9 +84,6 @@ interface ScannerItem {
 
 const INITIAL_TARGETS: TargetItem[] = [
   { id: "ext-init-1", url: "https://11-dast-security-platform.vercel.app", status: "idle", progress: 0, phase: "Public External Scope", findings: 0 },
-  { id: "ext-init-2", url: "https://testphp.vulnweb.com", status: "idle", progress: 0, phase: "Public External Scope", findings: 0 },
-  { id: "ext-init-3", url: "https://demo.testfire.net", status: "idle", progress: 0, phase: "Public External Scope", findings: 0 },
-  { id: "ext-init-4", url: "https://example.com", status: "idle", progress: 0, phase: "Public External Scope", findings: 0 },
 ];
 
 const VIRTUAL_LAB_PRESET_TARGETS: TargetItem[] = [
@@ -1211,7 +1208,7 @@ export default function EnginePage() {
       if (savedResults) {
         const parsedRes = JSON.parse(savedResults);
         if (Array.isArray(parsedRes) && parsedRes.length > 0) {
-          const validFreshResults = parsedRes.filter((r: any) => r?.schemaVersion === "5.6.0-universal-clean");
+          const validFreshResults = parsedRes.filter((r: any) => r?.schemaVersion === "5.7.0-universal-clean");
           if (validFreshResults.length > 0) {
             setEngineResults(validFreshResults);
           } else {
@@ -1357,7 +1354,7 @@ export default function EnginePage() {
   useEffect(() => {
     if (isPortalClearedForNewEngagement || !isExternalCustomerScope || nonLabUrls.length === 0) return;
     const alreadyProbed = engineResults.some(
-      r => !r?.isPrivateLab && r?.schemaVersion === "5.4.0-forensic-clean" && (r?.host === primaryHost || extractCleanHost(r?.targetUrl || "") === primaryHost) && Array.isArray(r?.liveFindings) && r.liveFindings.length >= 1
+      r => !r?.isPrivateLab && r?.schemaVersion === "5.7.0-universal-clean" && (r?.host === primaryHost || extractCleanHost(r?.targetUrl || "") === primaryHost) && Array.isArray(r?.liveFindings) && r.liveFindings.length >= 1
     );
     if (alreadyProbed) return;
 

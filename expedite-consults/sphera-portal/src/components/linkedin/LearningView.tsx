@@ -35,13 +35,20 @@ import {
   Play,
   CheckSquare,
   BadgeCheck,
-  ChevronRight
+  ChevronRight,
+  ChevronLeft,
+  FileText,
+  Download,
+  Printer,
+  Microscope,
+  GitBranch
 } from "lucide-react"
 import {
   LearningCourse,
   InteractiveLab,
   CertificationTrack,
   CareerLearningPath,
+  LearningPathStep,
   LEARNING_COURSES_DATA,
   INTERACTIVE_LABS_DATA,
   CERTIFICATION_TRACKS_DATA,
@@ -51,6 +58,12 @@ import {
   getEnclaveInteractiveLabs,
   getEnclaveCertificationTracks
 } from "@/lib/learning-platform-data"
+import {
+  getRoadmapStepWhitePaper,
+  RoadmapStepWhitePaper,
+  SkillDeepDiveSpec
+} from "@/lib/learning-roadmap-whitepapers"
+import dynamic from "next/dynamic"
 import { UserProfile } from "@/lib/linkedin-data"
 import { ConnectInVideoWheel } from "@/components/linkedin/ConnectInVideoWheel"
 import {
@@ -59,6 +72,51 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+
+const ConnectLnStudiesCatalogView = dynamic(
+  () =>
+    import("@/components/linkedin/ConnectLnStudiesCatalogView").then(
+      (m) => m.ConnectLnStudiesCatalogView
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-8 text-center text-xs font-bold text-zinc-500">
+        Loading ConnectLn Studies Catalog...
+      </div>
+    )
+  }
+)
+
+const ConnectLnCareerMasteryAcademyView = dynamic(
+  () =>
+    import("@/components/linkedin/ConnectLnCareerMasteryAcademyView").then(
+      (m) => m.ConnectLnCareerMasteryAcademyView
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-8 text-center text-xs font-bold text-zinc-500">
+        Loading Career Mastery Academy Classroom...
+      </div>
+    )
+  }
+)
+
+const ConnectLnChangeProfessionInfrastructure = dynamic(
+  () =>
+    import("@/components/linkedin/ConnectLnChangeProfessionInfrastructure").then(
+      (m) => m.ConnectLnChangeProfessionInfrastructure
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-8 text-center text-xs font-bold text-zinc-500">
+        Loading Vibe AI Career Mobility &amp; Decision Engine...
+      </div>
+    )
+  }
+)
 
 export interface VibetokProductionRoute {
   id: string
@@ -138,8 +196,9 @@ export function LearningView({
   onAddCertificateToProfile,
   onNavigateMarketplace
 }: LearningViewProps) {
-  // Master Mode: Courses vs Labs vs Certifications vs Learning Paths vs VibeTOK Hub
-  const [learningMode, setLearningMode] = useState<'courses' | 'labs' | 'certifications' | 'paths' | 'vibetok'>('paths')
+  // Master Mode: Courses vs Labs vs Certifications vs Learning Paths vs VibeTOK Hub vs ConnectLn Studies vs Career Mastery Academy vs Change/Upgrade Profession
+  const [learningMode, setLearningMode] = useState<'courses' | 'labs' | 'certifications' | 'paths' | 'vibetok' | 'connectln_studies' | 'career_mastery' | 'change_profession'>('paths')
+  const [selectedMobilityCareerNumber, setSelectedMobilityCareerNumber] = useState<number | null>(null)
   const [vibetokExpanded, setVibetokExpanded] = useState(false)
   const [vibetokKey, setVibetokKey] = useState(0)
   const [vibetokRoute, setVibetokRoute] = useState<string>("https://vibetok-learning-hub.vercel.app")
@@ -154,9 +213,68 @@ export function LearningView({
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [selectedCourse, setSelectedCourse] = useState<LearningCourse | null>(null)
 
+  // Interactive 10-Page White Paper & Step Detail Reader Modal State
+  const [selectedStepNumber, setSelectedStepNumber] = useState<number | null>(null)
+  const [activeWhitePaperPage, setActiveWhitePaperPage] = useState<number>(1)
+  const [whitePaperViewAll, setWhitePaperViewAll] = useState<boolean>(false)
+  const [highlightedSkillName, setHighlightedSkillName] = useState<string | null>(null)
+  const [customStepStatuses, setCustomStepStatuses] = useState<Record<string, 'Completed' | 'In Progress' | 'Up Next'>>({})
+
   useEffect(() => {
     setCourses(getEnclaveLearningCourses(user.professionEnclave))
+    setSelectedStepNumber(null)
+    setHighlightedSkillName(null)
   }, [user.professionEnclave])
+
+  const getStepEffectiveStatus = (step: LearningPathStep): 'Completed' | 'In Progress' | 'Up Next' => {
+    const key = `${learningPath.id}:${step.stepNumber}`
+    return customStepStatuses[key] || step.status
+  }
+
+  const handleCycleStepStatus = (step: LearningPathStep, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation()
+    const key = `${learningPath.id}:${step.stepNumber}`
+    const current = getStepEffectiveStatus(step)
+    const next: 'Completed' | 'In Progress' | 'Up Next' =
+      current === 'Completed' ? 'In Progress' : current === 'In Progress' ? 'Up Next' : 'Completed'
+    setCustomStepStatuses(prev => ({ ...prev, [key]: next }))
+  }
+
+  const openStepWhitePaper = (stepNumber: number, focusSkill?: string) => {
+    const targetStep = learningPath.steps.find(s => s.stepNumber === stepNumber)
+    if (!targetStep) return
+    const wp = getRoadmapStepWhitePaper(learningPath, targetStep)
+    setSelectedStepNumber(stepNumber)
+    if (focusSkill) {
+      setHighlightedSkillName(focusSkill)
+      const matchedSpec = wp.skillDeepDives.find(s => s.skillName === focusSkill)
+      setActiveWhitePaperPage(matchedSpec ? matchedSpec.pageNumber : 3)
+      setWhitePaperViewAll(false)
+    } else {
+      setHighlightedSkillName(wp.skillDeepDives[0]?.skillName || null)
+      setActiveWhitePaperPage(1)
+    }
+  }
+
+  const activeRoadmapStep =
+    selectedStepNumber !== null
+      ? learningPath.steps.find(s => s.stepNumber === selectedStepNumber) || null
+      : null
+
+  const activeStepWhitePaper: RoadmapStepWhitePaper | null =
+    activeRoadmapStep ? getRoadmapStepWhitePaper(learningPath, activeRoadmapStep) : null
+
+  const handleDownloadStepWhitePaper = (wp: RoadmapStepWhitePaper) => {
+    const blob = new Blob([wp.fullMarkdown], { type: "text/markdown;charset=utf-8" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `${wp.docId.toLowerCase()}-step-${wp.stepNumber}-10page-whitepaper.md`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
 
   // Interactive Lab Modal State
   const [activeLab, setActiveLab] = useState<InteractiveLab | null>(null)
@@ -365,8 +483,18 @@ export function LearningView({
               Advance your career through structured learning paths, practical hands-on labs, practice tests, and industry-recognized certifications.
             </p>
 
-            {/* Direct VibeTOK Learning Hub Integration Banner */}
+            {/* Direct VibeTOK Learning Hub & Change Profession Integration Banner */}
             <div className="pt-2 flex items-center gap-2.5 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setLearningMode('change_profession')}
+                className="group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 px-4 py-2 text-xs font-bold text-white shadow-xs transition-all cursor-pointer"
+              >
+                <GitBranch className="h-3.5 w-3.5" />
+                <span>Change or Upgrade Profession</span>
+                <span className="rounded-full bg-white/20 px-2 py-0.2 text-[10px] font-mono">Vibe AI Decision Engine</span>
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+              </button>
               <button
                 type="button"
                 onClick={() => setLearningMode('vibetok')}
@@ -449,6 +577,19 @@ export function LearningView({
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
             <button
               type="button"
+              onClick={() => setLearningMode('change_profession')}
+              className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
+                learningMode === 'change_profession'
+                  ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
+                  : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 border border-emerald-300 dark:border-emerald-800 font-bold"
+              }`}
+            >
+              <GitBranch className="h-3.5 w-3.5" />
+              <span>🔄 Change or Upgrade Profession (Vibe AI)</span>
+            </button>
+
+            <button
+              type="button"
               onClick={() => setLearningMode('vibetok')}
               className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
                 learningMode === 'vibetok'
@@ -470,6 +611,32 @@ export function LearningView({
             >
               <Compass className="h-3.5 w-3.5" />
               <span>Learning Paths</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setLearningMode('career_mastery')}
+              className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
+                learningMode === 'career_mastery'
+                  ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
+                  : "bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 hover:bg-amber-100 border border-amber-200 dark:border-amber-800"
+              }`}
+            >
+              <GraduationCap className="h-3.5 w-3.5" />
+              <span>Career Mastery Academy (13 Industries · 108+ Careers)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setLearningMode('connectln_studies')}
+              className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
+                learningMode === 'connectln_studies'
+                  ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
+                  : "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 border border-indigo-200 dark:border-indigo-800"
+              }`}
+            >
+              <Shield className="h-3.5 w-3.5" />
+              <span>ConnectLn Studies (Cyber, AI &amp; 175+ Certs)</span>
             </button>
 
             <button
@@ -508,9 +675,127 @@ export function LearningView({
               }`}
             >
               <Award className="h-3.5 w-3.5" />
-              <span>Certifications ({enclaveCertTracks.length})</span>
+              <span>Certifications (175+ &amp; CEUs)</span>
             </button>
           </div>
+        </div>
+
+        {/* Visual 5-Card Learning & Career Quick-Map */}
+        <div className="mt-4 pt-3.5 border-t border-zinc-100 dark:border-zinc-800 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
+          <button
+            type="button"
+            onClick={() => setLearningMode('change_profession')}
+            className={`rounded-xl p-3 text-left border transition-all cursor-pointer flex flex-col justify-between ${
+              learningMode === 'change_profession'
+                ? "border-[#0A66C2] bg-blue-50/70 dark:bg-sky-950/40 ring-2 ring-[#0A66C2]/20"
+                : "border-emerald-300/90 dark:border-emerald-700/80 bg-emerald-50/60 dark:bg-emerald-950/30 hover:border-emerald-500"
+            }`}
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="rounded bg-emerald-600 text-white px-1.5 py-0.2 text-[9px] font-mono font-black">
+                VIBE AI MOBILITY
+              </span>
+              <GitBranch className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <p className="text-xs font-black text-zinc-900 dark:text-zinc-100">
+              1. Change or Upgrade Profession
+            </p>
+            <p className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5 line-clamp-1">
+              Upgrade Grade/Level or Pivot to New Career →
+            </p>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setLearningMode('career_mastery')}
+            className={`rounded-xl p-3 text-left border transition-all cursor-pointer flex flex-col justify-between ${
+              learningMode === 'career_mastery'
+                ? "border-[#0A66C2] bg-blue-50/70 dark:bg-sky-950/40 ring-2 ring-[#0A66C2]/20"
+                : "border-amber-200/80 dark:border-amber-800/60 bg-amber-50/40 dark:bg-amber-950/20 hover:border-amber-400"
+            }`}
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="rounded bg-amber-500 text-slate-950 px-1.5 py-0.2 text-[9px] font-mono font-black">
+                13 INDUSTRIES · 108+ CAREERS
+              </span>
+              <GraduationCap className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            </div>
+            <p className="text-xs font-black text-zinc-900 dark:text-zinc-100">
+              2. Career Mastery Academy
+            </p>
+            <p className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5 line-clamp-1">
+              9-Milestone Classroom, Live Calculators &amp; Spec Builder →
+            </p>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setLearningMode('connectln_studies')}
+            className={`rounded-xl p-3 text-left border transition-all cursor-pointer flex flex-col justify-between ${
+              learningMode === 'connectln_studies'
+                ? "border-[#0A66C2] bg-blue-50/70 dark:bg-sky-950/40 ring-2 ring-[#0A66C2]/20"
+                : "border-indigo-200/80 dark:border-indigo-800/60 bg-indigo-50/40 dark:bg-indigo-950/20 hover:border-indigo-400"
+            }`}
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="rounded bg-indigo-600 text-white px-1.5 py-0.2 text-[9px] font-mono font-black">
+                CYBER · AI · 175+ CERTS
+              </span>
+              <Shield className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+            </div>
+            <p className="text-xs font-black text-zinc-900 dark:text-zinc-100">
+              3. ConnectLn Studies Catalog
+            </p>
+            <p className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5 line-clamp-1">
+              12 Cyber Shelves, AI Framework, Videos &amp; 10-Slide Decks →
+            </p>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setLearningMode('paths')}
+            className={`rounded-xl p-3 text-left border transition-all cursor-pointer flex flex-col justify-between ${
+              learningMode === 'paths'
+                ? "border-[#0A66C2] bg-blue-50/70 dark:bg-sky-950/40 ring-2 ring-[#0A66C2]/20"
+                : "border-emerald-200/80 dark:border-emerald-800/60 bg-emerald-50/40 dark:bg-emerald-950/20 hover:border-emerald-400"
+            }`}
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="rounded bg-emerald-600 text-white px-1.5 py-0.2 text-[9px] font-mono font-black">
+                9-STEP ENCLAVE ROADMAP
+              </span>
+              <Compass className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <p className="text-xs font-black text-zinc-900 dark:text-zinc-100">
+              4. Featured Career Blueprint
+            </p>
+            <p className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5 line-clamp-1">
+              {learningPath.title} (90 Pgs of White Papers) →
+            </p>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setLearningMode('certifications')}
+            className={`rounded-xl p-3 text-left border transition-all cursor-pointer flex flex-col justify-between ${
+              learningMode === 'certifications'
+                ? "border-[#0A66C2] bg-blue-50/70 dark:bg-sky-950/40 ring-2 ring-[#0A66C2]/20"
+                : "border-rose-200/80 dark:border-rose-800/60 bg-rose-50/40 dark:bg-rose-950/20 hover:border-rose-400"
+            }`}
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="rounded bg-rose-600 text-white px-1.5 py-0.2 text-[9px] font-mono font-black">
+                24 OFFICIAL AUTHORITIES
+              </span>
+              <Award className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+            </div>
+            <p className="text-xs font-black text-zinc-900 dark:text-zinc-100">
+              5. Certifications &amp; CEU Hub
+            </p>
+            <p className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5 line-clamp-1">
+              Microsoft, AWS, ISC2, CompTIA, PMI &amp; Practice Exams →
+            </p>
+          </button>
         </div>
 
         {/* Course Categories Ribbon (Visible in Courses Mode) */}
@@ -556,9 +841,14 @@ export function LearningView({
           <div className="rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-slate-900 via-indigo-950 to-blue-950 p-6 text-white shadow-xl space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
               <div className="space-y-1">
-                <span className="rounded-full bg-indigo-500/30 px-3 py-0.5 text-xs font-bold text-indigo-200 border border-indigo-400/40">
-                  Featured Career Path
-                </span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-indigo-500/30 px-3 py-0.5 text-xs font-bold text-indigo-200 border border-indigo-400/40">
+                    Featured Career Path
+                  </span>
+                  <span className="rounded-full bg-amber-500/20 px-3 py-0.5 text-xs font-bold text-amber-300 border border-amber-400/40">
+                    📜 {learningPath.steps.length * 10} Pages of Peer-Reviewed White Papers Attached
+                  </span>
+                </div>
                 <h2 className="text-xl sm:text-2xl font-black text-white mt-1">
                   {learningPath.title}
                 </h2>
@@ -567,10 +857,18 @@ export function LearningView({
                 </p>
               </div>
 
-              <div className="text-right shrink-0">
+              <div className="flex flex-col items-end gap-2 shrink-0">
                 <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-bold text-emerald-300 border border-emerald-500/40">
                   Step 3 of {learningPath.steps.length} In Progress
                 </span>
+                <button
+                  type="button"
+                  onClick={() => openStepWhitePaper(1)}
+                  className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 px-3.5 py-2 text-xs font-black text-white shadow-md flex items-center gap-1.5 cursor-pointer transition-all"
+                >
+                  <FileText className="h-3.5 w-3.5" />
+                  <span>Read Full 10-Page White Papers (Steps 1–{learningPath.steps.length}) →</span>
+                </button>
               </div>
             </div>
 
@@ -581,73 +879,133 @@ export function LearningView({
 
           {/* 9-Step Roadmap Timeline */}
           <div className="space-y-4">
-            <h3 className="font-black text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-              <Compass className="h-5 w-5 text-indigo-600" />
-              <span>Multi-Stage Curriculum Roadmap ({learningPath.steps.length} Milestone Steps)</span>
-            </h3>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <h3 className="font-black text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                <Compass className="h-5 w-5 text-indigo-600" />
+                <span>Multi-Stage Curriculum Roadmap ({learningPath.steps.length} Milestone Steps)</span>
+              </h3>
+              <span className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 rounded-full px-3 py-1">
+                💡 Click any Step card or Skill tag (e.g. {learningPath.steps[0]?.skills[0]}) to read its 10-Page White Paper &amp; Technical Details
+              </span>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {learningPath.steps.map((step) => (
-                <div
-                  key={step.stepNumber}
-                  className={`rounded-2xl border p-5 flex flex-col justify-between space-y-3 transition-all ${
-                    step.status === 'Completed'
-                      ? "border-emerald-300 bg-emerald-50/30 dark:bg-emerald-950/10 dark:border-emerald-900"
-                      : step.status === 'In Progress'
-                      ? "border-indigo-500 bg-indigo-50/40 dark:bg-indigo-950/30 dark:border-indigo-800 shadow-md ring-2 ring-indigo-500/20"
-                      : "border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900"
-                  }`}
-                >
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-mono font-bold uppercase rounded-full bg-zinc-100 px-2 py-0.5 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-                        Step {step.stepNumber} · {step.duration}
-                      </span>
-                      <span
-                        className={`text-[10px] font-bold uppercase ${
-                          step.status === 'Completed'
-                            ? "text-emerald-600"
-                            : step.status === 'In Progress'
-                            ? "text-indigo-600 animate-pulse"
-                            : "text-zinc-400"
-                        }`}
-                      >
-                        {step.status}
-                      </span>
+              {learningPath.steps.map((step) => {
+                const effectiveStatus = getStepEffectiveStatus(step)
+                return (
+                  <div
+                    key={step.stepNumber}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => openStepWhitePaper(step.stepNumber)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        openStepWhitePaper(step.stepNumber)
+                      }
+                    }}
+                    className={`group rounded-2xl border p-5 flex flex-col justify-between space-y-3 transition-all cursor-pointer hover:-translate-y-0.5 hover:shadow-lg ${
+                      effectiveStatus === 'Completed'
+                        ? "border-emerald-300 bg-emerald-50/30 hover:border-emerald-500 dark:bg-emerald-950/10 dark:border-emerald-900"
+                        : effectiveStatus === 'In Progress'
+                        ? "border-indigo-500 bg-indigo-50/40 hover:border-indigo-600 dark:bg-indigo-950/30 dark:border-indigo-800 shadow-md ring-2 ring-indigo-500/20"
+                        : "border-zinc-200 bg-white hover:border-indigo-400 dark:border-zinc-800 dark:bg-zinc-900"
+                    }`}
+                  >
+                    <div className="space-y-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[10px] font-mono font-bold uppercase rounded-full bg-zinc-100 px-2.5 py-0.5 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                          Step {step.stepNumber} · {step.duration}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => handleCycleStepStatus(step, e)}
+                          title="Click to cycle milestone status (Completed / In Progress / Up Next)"
+                          className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border transition-all cursor-pointer ${
+                            effectiveStatus === 'Completed'
+                              ? "text-emerald-700 bg-emerald-100/80 border-emerald-300 dark:text-emerald-300 dark:bg-emerald-950/60 dark:border-emerald-800"
+                              : effectiveStatus === 'In Progress'
+                              ? "text-indigo-700 bg-indigo-100/80 border-indigo-300 animate-pulse dark:text-indigo-300 dark:bg-indigo-950/60 dark:border-indigo-800"
+                              : "text-zinc-500 bg-zinc-100 border-zinc-200 dark:text-zinc-400 dark:bg-zinc-800 dark:border-zinc-700"
+                          }`}
+                        >
+                          {effectiveStatus}
+                        </button>
+                      </div>
+
+                      <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2] dark:group-hover:text-indigo-400 transition-colors flex items-start justify-between gap-1.5">
+                        <span>{step.title}</span>
+                        <ChevronRight className="h-4 w-4 shrink-0 text-zinc-400 group-hover:text-[#0A66C2] group-hover:translate-x-0.5 transition-all mt-0.5" />
+                      </h4>
+
+                      {/* Clickable Skill Pills — Each opens the White Paper directly to that skill's deep dive! */}
+                      <div className="space-y-1 pt-0.5">
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 block">
+                          Click any topic for deep-dive specs:
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {step.skills.map((skill) => (
+                            <button
+                              key={skill}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                openStepWhitePaper(step.stepNumber, skill)
+                              }}
+                              title={`Open 10-Page White Paper & Engineering Deep-Dive for: ${skill}`}
+                              className="rounded-md bg-zinc-100 hover:bg-indigo-600 hover:text-white px-2 py-1 text-[10px] font-semibold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-indigo-600 dark:hover:text-white border border-zinc-200/80 dark:border-zinc-700 transition-all inline-flex items-center gap-1 cursor-pointer shadow-2xs"
+                            >
+                              <Microscope className="h-2.5 w-2.5 opacity-75 shrink-0" />
+                              <span>{skill}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
 
-                    <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
-                      {step.title}
-                    </h4>
+                    <div className="space-y-2 pt-2">
+                      {/* Connected Marketplace Tool in Roadmap Step */}
+                      {step.recommendedTool && (
+                        <div className="pt-2 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs">
+                          <span className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-300 truncate">
+                            {step.recommendedTool.icon} {step.recommendedTool.name}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (onNavigateMarketplace) onNavigateMarketplace()
+                            }}
+                            className="text-[10px] font-bold text-[#0A66C2] hover:underline shrink-0 cursor-pointer"
+                          >
+                            {step.recommendedTool.actionText} →
+                          </button>
+                        </div>
+                      )}
 
-                    <div className="flex flex-wrap gap-1 pt-1">
-                      {step.skills.map((skill) => (
-                        <span
-                          key={skill}
-                          className="rounded bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                      {/* Explicit 10-Page White Paper & Full Details CTA Footer */}
+                      <div className="pt-2 border-t border-zinc-200/80 dark:border-zinc-800 flex items-center justify-between gap-2">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            openStepWhitePaper(step.stepNumber)
+                          }}
+                          className="w-full rounded-xl bg-gradient-to-r from-[#0A66C2] to-indigo-600 hover:from-[#084e96] hover:to-indigo-700 px-3 py-2 text-[11px] font-bold text-white shadow-xs flex items-center justify-between gap-1.5 cursor-pointer transition-all"
                         >
-                          {skill}
-                        </span>
-                      ))}
+                          <span className="flex items-center gap-1.5">
+                            <FileText className="h-3.5 w-3.5 text-amber-300 shrink-0" />
+                            <span>📜 Read 10-Page White Paper &amp; Details</span>
+                          </span>
+                          <span className="rounded bg-white/20 px-1.5 py-0.5 text-[9px] font-mono">
+                            10 Pgs →
+                          </span>
+                        </button>
+                      </div>
                     </div>
                   </div>
-
-                  {/* Connected Marketplace Tool in Roadmap Step */}
-                  {step.recommendedTool && (
-                    <div className="pt-2 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs">
-                      <span className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-300 truncate">
-                        {step.recommendedTool.icon} {step.recommendedTool.name}
-                      </span>
-                      <button
-                        onClick={onNavigateMarketplace}
-                        className="text-[10px] font-bold text-[#0A66C2] hover:underline shrink-0"
-                      >
-                        {step.recommendedTool.actionText} →
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
 
@@ -688,14 +1046,124 @@ export function LearningView({
               ))}
             </div>
           </div>
+
+          {/* Prominent Change or Upgrade Profession & Specialist Academy Launch Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="rounded-2xl border-2 border-emerald-500/60 bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-900 p-5 text-white shadow-lg flex flex-col justify-between space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="rounded-full bg-emerald-400/20 border border-emerald-400/40 px-2.5 py-0.5 text-[10px] font-mono font-black text-emerald-300">
+                    VIBE AI MOBILITY ENGINE
+                  </span>
+                  <GitBranch className="h-5 w-5 text-emerald-400" />
+                </div>
+                <h3 className="text-base font-black text-white">
+                  Change or Upgrade Your Profession
+                </h3>
+                <p className="text-xs text-emerald-100/90 leading-relaxed">
+                  Specify your current profession, level, or grade and let Vibe AI calculate your transferable skill overlap, fast-track milestones, and 5-year income gain for a vertical promotion or complete career pivot.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setLearningMode('change_profession')}
+                className="w-full rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black py-2.5 px-4 text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <span>Open Change / Upgrade Profession →</span>
+              </button>
+            </div>
+
+            <div className="rounded-2xl border border-amber-500/40 bg-gradient-to-br from-slate-950 via-amber-950/60 to-slate-900 p-5 text-white shadow-lg flex flex-col justify-between space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="rounded-full bg-amber-400/20 border border-amber-400/40 px-2.5 py-0.5 text-[10px] font-mono font-black text-amber-300">
+                    60 SPECIALIST CAREERS · 13 INDUSTRIES
+                  </span>
+                  <GraduationCap className="h-5 w-5 text-amber-400" />
+                </div>
+                <h3 className="text-base font-black text-white">
+                  Career Mastery Academy &amp; Simulators
+                </h3>
+                <p className="text-xs text-amber-100/90 leading-relaxed">
+                  Enter the 9-Milestone Classroom across 60 Tangible-Competence Careers, watch multi-domain training videos with telemetry recommendations, and run 5 live engineering workbenches.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setLearningMode('career_mastery')}
+                className="w-full rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black py-2.5 px-4 text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <span>Enter Career Mastery Academy →</span>
+              </button>
+            </div>
+
+            <div className="rounded-2xl border border-indigo-500/40 bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 p-5 text-white shadow-lg flex flex-col justify-between space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="rounded-full bg-indigo-400/20 border border-indigo-400/40 px-2.5 py-0.5 text-[10px] font-mono font-black text-indigo-300">
+                    12 CYBER SHELVES · AI · 175+ CERTS
+                  </span>
+                  <Shield className="h-5 w-5 text-indigo-400" />
+                </div>
+                <h3 className="text-base font-black text-white">
+                  ConnectLn Studies &amp; 175+ Certifications
+                </h3>
+                <p className="text-xs text-indigo-100/90 leading-relaxed">
+                  Explore 12 Cybersecurity Specialist shelves, the 8-part AI Studies curriculum, 10-slide presentation decks, and 175+ official certifications from 24 authorities.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setLearningMode('connectln_studies')}
+                className="w-full rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white font-black py-2.5 px-4 text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <span>Open ConnectLn Studies Catalog →</span>
+              </button>
+            </div>
+          </div>
         </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODE 0: CHANGE OR UPGRADE PROFESSION — VIBE AI DECISION INFRASTRUCTURE    */}
+      {/* ========================================================================= */}
+      {learningMode === 'change_profession' && (
+        <ConnectLnChangeProfessionInfrastructure
+          onLaunchTargetCareerInClassroom={(_pathway, spec) => {
+            if (spec) {
+              setSelectedMobilityCareerNumber(spec.careerNumber)
+            }
+            setLearningMode('career_mastery')
+          }}
+          onClaimCertificate={handleClaimCertificate}
+        />
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODE 1A: DEDICATED CAREER MASTERY ACADEMY (13 INDUSTRIES · 108+ CAREERS)  */}
+      {/* ========================================================================= */}
+      {learningMode === 'career_mastery' && (
+        <ConnectLnCareerMasteryAcademyView
+          onClaimCertificate={handleClaimCertificate}
+          initialCareerNumber={selectedMobilityCareerNumber}
+        />
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODE 1B: DEDICATED CONNECTLN STUDIES HUB (CYBER, AI & 175+ CERTIFICATIONS) */}
+      {/* ========================================================================= */}
+      {learningMode === 'connectln_studies' && (
+        <ConnectLnStudiesCatalogView
+          onClaimCertificate={handleClaimCertificate}
+          initialAcademyFilter="all"
+        />
       )}
 
       {/* ========================================================================= */}
       {/* MODE 2: COURSES CATALOG (Cybersecurity, AI, Cloud, Programming, Business) */}
       {/* ========================================================================= */}
       {learningMode === 'courses' && (
-        <div className="space-y-5">
+        <div className="space-y-6">
           <div className="rounded-xl border border-zinc-200 bg-white p-3.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 flex items-center justify-between gap-3">
             <div className="relative flex-1 flex items-center rounded-lg bg-zinc-50 px-3 py-2 border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800/80">
               <Search className="h-4 w-4 text-zinc-400 mr-2 shrink-0" />
@@ -780,6 +1248,12 @@ export function LearningView({
               </div>
             ))}
           </div>
+
+          {/* Full ConnectLn Studies shelves inside Courses view */}
+          <ConnectLnStudiesCatalogView
+            onClaimCertificate={handleClaimCertificate}
+            initialAcademyFilter="all"
+          />
         </div>
       )}
 
@@ -882,7 +1356,7 @@ export function LearningView({
       {/* MODE 4: CERTIFICATIONS & PRACTICE EXAM ENGINE */}
       {/* ========================================================================= */}
       {learningMode === 'certifications' && (
-        <div className="space-y-5">
+        <div className="space-y-6">
           <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-r from-slate-900 via-amber-950 to-indigo-950 p-6 text-white shadow-xl space-y-2">
             <span className="rounded-full bg-amber-500/30 px-3 py-0.5 text-xs font-bold text-amber-200 border border-amber-400/40">
               Verified Industry Credentials &amp; Practice Exams
@@ -959,6 +1433,12 @@ export function LearningView({
               </div>
             ))}
           </div>
+
+          {/* 175+ Official Certifications, Professional Certificates, Practice Exams, CEUs & Instructor Office Hours */}
+          <ConnectLnStudiesCatalogView
+            onClaimCertificate={handleClaimCertificate}
+            initialAcademyFilter="certifications_ceu"
+          />
         </div>
       )}
 
@@ -1434,6 +1914,461 @@ export function LearningView({
           )}
         </DialogContent>
       </Dialog>
+
+      {/* ========================================================================= */}
+      {/* MILESTONE STEP 10-PAGE WHITE PAPER & TECHNICAL SPECIFICATION READER MODAL */}
+      {/* ========================================================================= */}
+      <Dialog
+        open={!!activeStepWhitePaper}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedStepNumber(null)
+            setHighlightedSkillName(null)
+          }
+        }}
+      >
+        <DialogContent className="max-w-6xl w-[96vw] max-h-[92vh] overflow-y-auto p-0 border-indigo-500/40 bg-zinc-50 dark:bg-zinc-950">
+          {activeStepWhitePaper && activeRoadmapStep && (
+            <div className="flex flex-col">
+              {/* Top Monograph Banner Header */}
+              <div className="bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 text-white p-5 sm:p-6 border-b border-indigo-500/30 space-y-4">
+                <DialogHeader>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-full bg-amber-500/20 border border-amber-400/50 px-3 py-0.5 text-[11px] font-mono font-bold text-amber-300">
+                        📜 {activeStepWhitePaper.docId} · 10-PAGE WHITE PAPER
+                      </span>
+                      <span className="rounded-full bg-indigo-500/30 border border-indigo-400/40 px-2.5 py-0.5 text-[11px] font-bold text-indigo-200">
+                        Step {activeStepWhitePaper.stepNumber} of {learningPath.steps.length} · {activeStepWhitePaper.duration}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleCycleStepStatus(activeRoadmapStep)}
+                        className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold border cursor-pointer ${
+                          getStepEffectiveStatus(activeRoadmapStep) === 'Completed'
+                            ? "bg-emerald-500/20 text-emerald-300 border-emerald-400/50"
+                            : getStepEffectiveStatus(activeRoadmapStep) === 'In Progress'
+                            ? "bg-blue-500/30 text-blue-200 border-blue-400/50"
+                            : "bg-white/10 text-zinc-300 border-white/20"
+                        }`}
+                      >
+                        Status: {getStepEffectiveStatus(activeRoadmapStep)} (Click to Toggle)
+                      </button>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setWhitePaperViewAll(!whitePaperViewAll)}
+                        className={`rounded-lg px-3 py-1.5 text-xs font-bold border transition-all cursor-pointer ${
+                          whitePaperViewAll
+                            ? "bg-amber-500 text-slate-950 border-amber-400"
+                            : "bg-white/10 text-white hover:bg-white/20 border-white/20"
+                        }`}
+                      >
+                        {whitePaperViewAll ? "📖 Switch to Single-Page View" : "📜 View All 10 Pages Continuous"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadStepWhitePaper(activeStepWhitePaper)}
+                        className="rounded-lg bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 text-xs font-bold text-white flex items-center gap-1.5 cursor-pointer shadow-xs"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        <span>Download 10-Page .MD</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => window.print()}
+                        className="rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1.5 text-xs font-bold text-white flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Printer className="h-3.5 w-3.5" />
+                        <span>Print / PDF</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <DialogTitle className="text-xl sm:text-2xl font-black text-white pt-1 leading-tight">
+                    Step {activeStepWhitePaper.stepNumber}: {activeStepWhitePaper.stepTitle}
+                  </DialogTitle>
+                  <p className="text-xs text-indigo-200">
+                    <strong>Career Path:</strong> {activeStepWhitePaper.pathTitle} · <strong>Standards Body:</strong> {activeStepWhitePaper.standardsBody} · <strong>Authors:</strong> {activeStepWhitePaper.authors}
+                  </p>
+                </DialogHeader>
+
+                {/* 9-Step Curriculum Switcher Bar Inside Modal */}
+                <div className="pt-2 border-t border-white/15 flex items-center gap-1.5 overflow-x-auto pb-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-300 shrink-0 mr-1">
+                    Jump to Step:
+                  </span>
+                  {learningPath.steps.map((s) => {
+                    const isCurrent = s.stepNumber === activeStepWhitePaper.stepNumber
+                    return (
+                      <button
+                        key={s.stepNumber}
+                        type="button"
+                        onClick={() => openStepWhitePaper(s.stepNumber)}
+                        className={`rounded-lg px-2.5 py-1 text-[11px] font-bold shrink-0 transition-all cursor-pointer ${
+                          isCurrent
+                            ? "bg-amber-400 text-slate-950 shadow-sm"
+                            : "bg-white/10 text-zinc-200 hover:bg-white/20"
+                        }`}
+                      >
+                        Step {s.stepNumber}: {s.title.split(" ").slice(0, 3).join(" ")}…
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div className="p-4 sm:p-6 space-y-6">
+                {/* Key Quantitative Engineering Metrics Strip */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                  {activeStepWhitePaper.keyMetrics.map((m, idx) => (
+                    <div
+                      key={idx}
+                      className="rounded-xl border border-indigo-200/80 bg-white p-3.5 shadow-2xs dark:border-indigo-900/50 dark:bg-zinc-900"
+                    >
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">
+                        {m.label}
+                      </span>
+                      <span className="text-base sm:text-lg font-black text-indigo-600 dark:text-indigo-400 mt-0.5 block">
+                        {m.value}
+                      </span>
+                      <span className="text-[10px] text-zinc-500 dark:text-zinc-400 block mt-0.5">
+                        {m.subtext}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Interactive Skill Deep-Dive Inspector (Clicking any Skill Tag jumps & highlights here) */}
+                <div className="rounded-2xl border border-indigo-300 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-950/25 p-4 sm:p-5 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Microscope className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                      <h3 className="font-black text-sm sm:text-base text-zinc-900 dark:text-zinc-100">
+                        Interactive Competency &amp; Topic Deep-Dive Encyclopedia ({activeStepWhitePaper.skillDeepDives.length} Core Modules)
+                      </h3>
+                    </div>
+                    <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                      Select any topic pill below to inspect its governing formulas, field protocol &amp; dedicated white paper page:
+                    </span>
+                  </div>
+
+                  {/* Skill Selector Pills */}
+                  <div className="flex flex-wrap gap-2">
+                    {activeStepWhitePaper.skillDeepDives.map((spec) => {
+                      const isSelected =
+                        highlightedSkillName === spec.skillName ||
+                        (!highlightedSkillName && spec.skillName === activeStepWhitePaper.skillDeepDives[0]?.skillName)
+                      return (
+                        <button
+                          key={spec.skillName}
+                          type="button"
+                          onClick={() => {
+                            setHighlightedSkillName(spec.skillName)
+                            setActiveWhitePaperPage(spec.pageNumber)
+                          }}
+                          className={`rounded-xl px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                            isSelected
+                              ? "bg-[#0A66C2] text-white shadow-md ring-2 ring-blue-400/50"
+                              : "bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:border-indigo-400"
+                          }`}
+                        >
+                          <Microscope className="h-3.5 w-3.5 shrink-0" />
+                          <span>{spec.skillName}</span>
+                          <span className="rounded bg-black/20 px-1.5 py-0.5 text-[10px] font-mono">
+                            Pg {spec.pageNumber}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  {/* Active Skill Deep-Dive Card */}
+                  {(() => {
+                    const activeSpec: SkillDeepDiveSpec | undefined =
+                      activeStepWhitePaper.skillDeepDives.find((s) => s.skillName === highlightedSkillName) ||
+                      activeStepWhitePaper.skillDeepDives[0]
+                    if (!activeSpec) return null
+                    return (
+                      <div className="rounded-xl bg-white dark:bg-zinc-900 border border-indigo-200 dark:border-indigo-800/80 p-4 sm:p-5 space-y-4 shadow-xs">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
+                          <div>
+                            <span className="text-[10px] font-mono font-bold uppercase text-indigo-600 dark:text-indigo-400">
+                              {activeSpec.categoryBadge} · {activeSpec.standardCode}
+                            </span>
+                            <h4 className="text-base sm:text-lg font-black text-zinc-900 dark:text-zinc-100 mt-0.5">
+                              {activeSpec.skillName} — Complete Technical Specification
+                            </h4>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setWhitePaperViewAll(false)
+                              setActiveWhitePaperPage(activeSpec.pageNumber)
+                            }}
+                            className="rounded-lg bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 text-xs font-bold text-white shrink-0 cursor-pointer"
+                          >
+                            Jump to Page {activeSpec.pageNumber} in Manuscript ↓
+                          </button>
+                        </div>
+
+                        <p className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                          {activeSpec.technicalSummary}
+                        </p>
+
+                        <div className="rounded-lg bg-slate-950 text-emerald-400 p-3.5 font-mono text-xs overflow-x-auto border border-slate-800">
+                          <span className="text-zinc-400 block text-[10px] uppercase mb-1">
+                            Governing Equation / Engineering Specification:
+                          </span>
+                          {activeSpec.governingEquation}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <h5 className="text-xs font-black uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
+                              Mandatory 4-Step Field Execution Protocol:
+                            </h5>
+                            <ul className="space-y-1.5 text-xs text-zinc-600 dark:text-zinc-300">
+                              {activeSpec.fieldProtocol.map((p, i) => (
+                                <li key={i} className="flex items-start gap-2">
+                                  <span className="rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold text-[10px] px-1.5 py-0.5 shrink-0 mt-0.5">
+                                    {i + 1}
+                                  </span>
+                                  <span>{p}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+
+                          <div className="space-y-2.5 text-xs">
+                            <div className="rounded-lg bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 p-3">
+                              <span className="font-black text-emerald-800 dark:text-emerald-300 block uppercase text-[10px]">
+                                ✓ Critical Acceptance Tolerance:
+                              </span>
+                              <span className="text-emerald-950 dark:text-emerald-200 font-semibold mt-0.5 block">
+                                {activeSpec.criticalTolerance}
+                              </span>
+                            </div>
+
+                            <div className="rounded-lg bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 p-3">
+                              <span className="font-black text-blue-800 dark:text-blue-300 block uppercase text-[10px]">
+                                🧰 Calibrated Tooling &amp; Metrology Required:
+                              </span>
+                              <span className="text-blue-950 dark:text-blue-200 font-semibold mt-0.5 block">
+                                {activeSpec.toolingRequired}
+                              </span>
+                            </div>
+
+                            <div className="rounded-lg bg-rose-50/70 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 p-3">
+                              <span className="font-black text-rose-800 dark:text-rose-300 block uppercase text-[10px]">
+                                ⚠️ Failure Mode Prevented:
+                              </span>
+                              <span className="text-rose-950 dark:text-rose-200 mt-0.5 block">
+                                {activeSpec.failureMode}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })()}
+                </div>
+
+                {/* 10-PAGE WRITTEN WHITE PAPER MANUSCRIPT READER */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                  {/* Left Sidebar: 10-Page Table of Contents */}
+                  <div className="lg:col-span-3 space-y-2">
+                    <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3 space-y-2 sticky top-3">
+                      <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-2">
+                        <span className="text-xs font-black uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
+                          10-Page Manuscript Index
+                        </span>
+                        <span className="text-[10px] font-mono text-indigo-600 dark:text-indigo-400 font-bold">
+                          ~5,700 Words
+                        </span>
+                      </div>
+
+                      <div className="space-y-1 max-h-[420px] overflow-y-auto pr-1">
+                        {activeStepWhitePaper.pages.map((p) => {
+                          const isCurrentPage = !whitePaperViewAll && activeWhitePaperPage === p.pageNumber
+                          return (
+                            <button
+                              key={p.pageNumber}
+                              type="button"
+                              onClick={() => {
+                                setWhitePaperViewAll(false)
+                                setActiveWhitePaperPage(p.pageNumber)
+                              }}
+                              className={`w-full text-left rounded-lg px-2.5 py-2 text-xs transition-all flex items-center justify-between gap-2 cursor-pointer ${
+                                isCurrentPage
+                                  ? "bg-[#0A66C2] text-white font-bold shadow-xs"
+                                  : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
+                              }`}
+                            >
+                              <span className="truncate">
+                                <strong>Pg {p.pageNumber}:</strong> {p.summaryBadge}
+                              </span>
+                              <span
+                                className={`text-[9px] font-mono px-1.5 py-0.5 rounded shrink-0 ${
+                                  isCurrentPage
+                                    ? "bg-white/20 text-white"
+                                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
+                                }`}
+                              >
+                                {p.wordCountEst}w
+                              </span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Manuscript Content Area */}
+                  <div className="lg:col-span-9 space-y-6">
+                    {(whitePaperViewAll
+                      ? activeStepWhitePaper.pages
+                      : activeStepWhitePaper.pages.filter((p) => p.pageNumber === activeWhitePaperPage)
+                    ).map((page) => (
+                      <div
+                        key={page.pageNumber}
+                        className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 sm:p-8 shadow-sm space-y-6"
+                      >
+                        {/* Running Monograph Header */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-zinc-900 dark:border-zinc-700 pb-3">
+                          <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
+                            {page.runningHeader}
+                          </span>
+                          <span className="rounded-full bg-indigo-100 dark:bg-indigo-950 px-2.5 py-0.5 text-[10px] font-mono font-bold text-indigo-700 dark:text-indigo-300">
+                            Page {page.pageNumber} of 10
+                          </span>
+                        </div>
+
+                        <h3 className="text-lg sm:text-xl font-black text-zinc-900 dark:text-zinc-100">
+                          {page.pageTitle}
+                        </h3>
+
+                        {page.sections.map((sec, idx) => (
+                          <div key={idx} className="space-y-3">
+                            <h4 className="text-sm sm:text-base font-bold text-indigo-950 dark:text-indigo-300 border-l-4 border-indigo-600 pl-3">
+                              {sec.heading}
+                            </h4>
+
+                            <div className="space-y-2.5 text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                              {sec.body.map((para, pIdx) => (
+                                <p key={pIdx}>{para}</p>
+                              ))}
+                            </div>
+
+                            {sec.codeOrFormulaBlock && (
+                              <pre className="rounded-xl bg-slate-950 text-emerald-400 p-4 font-mono text-xs overflow-x-auto border border-slate-800 leading-relaxed">
+                                {sec.codeOrFormulaBlock}
+                              </pre>
+                            )}
+
+                            {sec.tableData && (
+                              <div className="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-800">
+                                <table className="w-full text-left border-collapse text-xs">
+                                  <thead>
+                                    <tr className="bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">
+                                      {sec.tableData.headers.map((h, hIdx) => (
+                                        <th key={hIdx} className="p-2.5 font-bold border-b border-zinc-200 dark:border-zinc-700">
+                                          {h}
+                                        </th>
+                                      ))}
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                                    {sec.tableData.rows.map((row, rIdx) => (
+                                      <tr key={rIdx} className="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40">
+                                        {row.map((cell, cIdx) => (
+                                          <td key={cIdx} className="p-2.5 text-zinc-700 dark:text-zinc-300">
+                                            {cell}
+                                          </td>
+                                        ))}
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            )}
+
+                            {sec.calloutTitle && sec.calloutBody && (
+                              <div className="rounded-xl border border-amber-300 dark:border-amber-800 bg-amber-50/70 dark:bg-amber-950/30 p-4 text-xs">
+                                <p className="font-black text-amber-900 dark:text-amber-300 uppercase tracking-wider">
+                                  📌 {sec.calloutTitle}
+                                </p>
+                                <p className="text-amber-950 dark:text-amber-200 mt-1 leading-relaxed">
+                                  {sec.calloutBody}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+
+                        {/* Bottom Page Pagination Bar */}
+                        <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between gap-2">
+                          <button
+                            type="button"
+                            disabled={page.pageNumber <= 1}
+                            onClick={() => {
+                              setWhitePaperViewAll(false)
+                              setActiveWhitePaperPage(Math.max(1, page.pageNumber - 1))
+                            }}
+                            className="rounded-lg border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-300 disabled:opacity-40 flex items-center gap-1 cursor-pointer"
+                          >
+                            <ChevronLeft className="h-3.5 w-3.5" />
+                            <span>Previous Page</span>
+                          </button>
+
+                          <span className="text-xs font-mono text-zinc-500">
+                            {activeStepWhitePaper.docId} · Page {page.pageNumber} of 10
+                          </span>
+
+                          {page.pageNumber < 10 ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setWhitePaperViewAll(false)
+                                setActiveWhitePaperPage(Math.min(10, page.pageNumber + 1))
+                              }}
+                              className="rounded-lg bg-[#0A66C2] hover:bg-[#084e96] px-3.5 py-1.5 text-xs font-bold text-white flex items-center gap-1 cursor-pointer"
+                            >
+                              <span>Next Page (Pg {page.pageNumber + 1})</span>
+                              <ChevronRight className="h-3.5 w-3.5" />
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (activeStepWhitePaper.stepNumber < learningPath.steps.length) {
+                                  openStepWhitePaper(activeStepWhitePaper.stepNumber + 1)
+                                } else {
+                                  setSelectedStepNumber(null)
+                                }
+                              }}
+                              className="rounded-lg bg-emerald-600 hover:bg-emerald-700 px-3.5 py-1.5 text-xs font-bold text-white flex items-center gap-1 cursor-pointer"
+                            >
+                              <span>
+                                {activeStepWhitePaper.stepNumber < learningPath.steps.length
+                                  ? `Proceed to Step ${activeStepWhitePaper.stepNumber + 1} White Paper →`
+                                  : "Complete Curriculum Review ✓"}
+                              </span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
+

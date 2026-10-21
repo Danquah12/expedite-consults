@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
+import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
 import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
 import { LinkedInNavbar } from "@/components/linkedin/LinkedInNavbar"
@@ -12,9 +13,32 @@ import { ProfileView } from "@/components/linkedin/ProfileView"
 import { NetworkView } from "@/components/linkedin/NetworkView"
 import { JobsView } from "@/components/linkedin/JobsView"
 import { MessagingView } from "@/components/linkedin/MessagingView"
-import { LearningView } from "@/components/linkedin/LearningView"
 import { NotificationsView } from "@/components/linkedin/NotificationsView"
 import { FloatingMessagingDock } from "@/components/linkedin/FloatingMessagingDock"
+
+const LearningView = dynamic(
+  () => import("@/components/linkedin/LearningView").then((m) => m.LearningView),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="mx-auto max-w-7xl rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-10 text-center text-sm font-bold text-zinc-500">
+        Loading ConnectLn Learning &amp; Career Mastery Academy...
+      </div>
+    )
+  }
+)
+
+const VibeUnifiedCommunicationsView = dynamic(
+  () => import("@/components/linkedin/VibeUnifiedCommunicationsView").then((m) => m.VibeUnifiedCommunicationsView),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="mx-auto max-w-7xl rounded-2xl border border-emerald-200 dark:border-emerald-900 bg-white dark:bg-zinc-900 p-10 text-center text-sm font-bold text-emerald-600">
+        Loading Vibe / DeskNote Next-Gen E2EE Unified Communications Platform...
+      </div>
+    )
+  }
+)
 import { PulseRoomsView } from "@/components/linkedin/PulseRoomsView"
 import { PeerReviewView } from "@/components/linkedin/PeerReviewView"
 import { CompensationCalculator } from "@/components/linkedin/CompensationCalculator"
@@ -90,6 +114,7 @@ export default function LinkedInPage() {
     | 'aiagents'
     | 'code'
     | 'wallet'
+    | 'vibecomms'
     | 'guilds'
     | 'bounties'
     | 'accountsecurity'
@@ -152,7 +177,38 @@ export default function LinkedInPage() {
     const initializeAuth = async () => {
       if (typeof window === "undefined") return
 
+      const urlParams = new URLSearchParams(window.location.search)
+      const tabParam = urlParams.get("tab")
+      const joinCallParam = urlParams.get("joinCall")
+      if (joinCallParam || tabParam === "vibecomms") {
+        setActiveTab("vibecomms")
+      }
+
       const isSignedOut = localStorage.getItem("connectin_is_signed_out") === "true"
+
+      // Try to get stored user profile
+      const explicitUser = getExplicitStoredUser()
+      // Check if user has previously verified (persistent across sessions)
+      const hasVerified = localStorage.getItem("connectin_verified") === "true"
+
+      // If an invited friend clicks a live meeting link (?joinCall=...) and has no stored account yet,
+      // admit them directly into the meeting room as an Invited Friend Guest without blocking with a login modal!
+      if (joinCallParam && !explicitUser) {
+        if (isMounted) {
+          const guestUser = {
+            ...initialCurrentUser,
+            id: `guest-${Date.now().toString().slice(-5)}`,
+            name: "Invited Friend (Live Guest)",
+            headline: "Invited Meeting Participant · VibeChat E2EE",
+          }
+          setUserData(guestUser)
+          setIsAuthenticated(true)
+          setIsAuthModalOpen(false)
+          setActiveTab("vibecomms")
+          setHasHydrated(true)
+        }
+        return
+      }
 
       // If explicitly signed out, show auth modal immediately
       if (isSignedOut) {
@@ -164,11 +220,6 @@ export default function LinkedInPage() {
         return
       }
 
-      // Try to get stored user profile
-      const explicitUser = getExplicitStoredUser()
-      // Check if user has previously verified (persistent across sessions)
-      const hasVerified = localStorage.getItem("connectin_verified") === "true"
-
       if (explicitUser) {
         // Full profile in localStorage — hydrate immediately
         if (isMounted) {
@@ -179,7 +230,11 @@ export default function LinkedInPage() {
           const savedRoute = loadStoredSessionRoute()
           if (savedPosts && savedPosts.length > 0) setPosts(savedPosts)
           if (savedConnections && savedConnections.length > 0) setSuggestedPeople(savedConnections)
-          if (savedRoute.tab) setActiveTab(savedRoute.tab as any)
+          if (joinCallParam || tabParam === "vibecomms") {
+            setActiveTab("vibecomms")
+          } else if (savedRoute.tab) {
+            setActiveTab(savedRoute.tab as any)
+          }
           if (savedRoute.workspace) setActiveWorkspace(savedRoute.workspace)
           setHasHydrated(true)
         }
@@ -206,6 +261,9 @@ export default function LinkedInPage() {
         // User has signed in before but profile data is missing — keep them in, fetch from server
         if (isMounted) {
           setIsAuthenticated(true)
+          if (joinCallParam || tabParam === "vibecomms") {
+            setActiveTab("vibecomms")
+          }
           setHasHydrated(true)
         }
         try {
@@ -241,6 +299,9 @@ export default function LinkedInPage() {
             saveStoredUser(profile)
             setUserData(profile)
             setIsAuthenticated(true)
+            if (joinCallParam || tabParam === "vibecomms") {
+              setActiveTab("vibecomms")
+            }
             setHasHydrated(true)
             const savedPosts = loadStoredPosts()
             const savedConnections = loadStoredConnections()
@@ -1394,6 +1455,15 @@ export default function LinkedInPage() {
           />
         )}
 
+        {/* VIEW: VIBE / DESKNOTE NEXT-GEN WHATSAPP+ UNIFIED COMMUNICATIONS */}
+        {activeTab === 'vibecomms' && (
+          <VibeUnifiedCommunicationsView
+            currentUser={userData}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+            onOpenVibeCampus={() => setActiveTab('vibe')}
+          />
+        )}
+
         {/* VIEW: GATED GUILDS & PRIVATE ENCLAVES */}
         {activeTab === 'guilds' && (
           <GatedGuildsView
@@ -1605,6 +1675,12 @@ export default function LinkedInPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setActiveTab('vibecomms')}
+                  className="rounded-full bg-emerald-600 hover:bg-emerald-500 text-xs font-extrabold px-3.5 py-1.5 text-white transition-colors cursor-pointer"
+                >
+                  💬 Open VibeChat Unified Comms (WhatsApp+)
+                </button>
                 <button
                   onClick={() => setActiveTab('home')}
                   className="rounded-full border border-zinc-700 bg-zinc-800/80 hover:bg-zinc-700 text-xs font-semibold px-3.5 py-1.5 text-zinc-200 transition-colors cursor-pointer"

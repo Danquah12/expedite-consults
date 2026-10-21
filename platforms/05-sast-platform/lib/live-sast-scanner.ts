@@ -92,9 +92,9 @@ export interface PtesPhaseDetail {
   phase7Reporting: string;
 }
 
-export interface SearchSploitDetail {
+export interface XTRIKE Exploit-IndexDetail {
   edbId: string;
-  searchsploitCmd: string;
+  xtrike-exploit-indexCmd: string;
   exploitClass: string;
   cisaKevStatus: string;
   epssScore: number;
@@ -102,7 +102,7 @@ export interface SearchSploitDetail {
   defensiveTakeaway: string;
 }
 
-export interface MetasploitCheckDetail {
+export interface XTRIKE VerifyModuleCheckDetail {
   msfModule: string;
   msfCheckMethod: string;
   verificationMode: string;
@@ -126,8 +126,8 @@ export interface MultiStandardPluginEvaluation {
   nist: NistStandardsDetail;
   githubGhsa: GitHubGhsaDetail;
   ptes: PtesPhaseDetail;
-  searchsploit: SearchSploitDetail;
-  metasploitCheck: MetasploitCheckDetail;
+  xtrike-exploit-index: XTRIKE Exploit-IndexDetail;
+  metasploitCheck: XTRIKE VerifyModuleCheckDetail;
 }
 
 export interface ActiveScanSession {
@@ -235,11 +235,11 @@ export const PYTHON_STANDARD_PLUGINS: PythonPluginSpec[] = [
     pluginId: "PY-PLUGIN-GITHUB-GHSA",
     modulePath: "validation_engine/plugins/ptes_exploitdb_msf_plugin.py",
     className: "GitHubGhsaPlugin",
-    name: "GitHub Advisory (GHSA) & CodeQL Query Pack",
-    shortBadge: "GitHub GHSA + CodeQL",
-    standardVersion: "GHSA 2025 / CodeQL CLI v2.17",
+    name: "GitHub Advisory (GHSA) & XTRIKE AST-Query Query Pack",
+    shortBadge: "GitHub GHSA + XTRIKE AST-Query",
+    standardVersion: "GHSA 2025 / XTRIKE AST-Query CLI v2.17",
     description:
-      "Correlates findings with GitHub Advisory Database (GHSA) identifiers, CodeQL query IDs, Dependabot ecosystems, and live GitHub repository tree/commit metadata.",
+      "Correlates findings with GitHub Advisory Database (GHSA) identifiers, XTRIKE AST-Query query IDs, Dependabot ecosystems, and live GitHub repository tree/commit metadata.",
     pythonCodePreview: `class GitHubGhsaPlugin(SecurityStandardPlugin):
     plugin_id = "github_ghsa_codeql"
     def evaluate_finding(self, ctx: CodeSnippetContext) -> StandardCheckVerdict:
@@ -264,14 +264,14 @@ export const PYTHON_STANDARD_PLUGINS: PythonPluginSpec[] = [
   {
     pluginId: "PY-PLUGIN-SEARCHSPLOIT-EDB",
     modulePath: "validation_engine/plugins/ptes_exploitdb_msf_plugin.py",
-    className: "SearchSploitExploitDbPlugin",
-    name: "SearchSploit / Exploit-DB & CISA KEV Correlator",
-    shortBadge: "SearchSploit / EDB-ID",
-    standardVersion: "Exploit-DB 2025 / FIRST EPSS v3",
+    className: "XTRIKE Exploit-IndexExploitDbPlugin",
+    name: "XTRIKE Exploit-Index (XEDB) & CISA KEV Correlator",
+    shortBadge: "XTRIKE Exploit-Index / EDB-ID",
+    standardVersion: "XTRIKE Exploit-Index (XEDB) 2025 / FIRST EPSS v3",
     description:
-      "Correlates CWE/CVE patterns with Offensive Security SearchSploit / Exploit-DB (EDB-ID) advisory references, CISA KEV status, and FIRST EPSS 30-day probability percentiles.",
-    pythonCodePreview: `class SearchSploitExploitDbPlugin(SecurityStandardPlugin):
-    plugin_id = "searchsploit_exploitdb"
+      "Correlates CWE/CVE patterns with Offensive Security XTRIKE Exploit-Index (XEDB) (EDB-ID) advisory references, CISA KEV status, and FIRST EPSS 30-day probability percentiles.",
+    pythonCodePreview: `class XTRIKE Exploit-IndexExploitDbPlugin(SecurityStandardPlugin):
+    plugin_id = "xtrike-exploit-index_exploitdb"
     def evaluate_finding(self, ctx: CodeSnippetContext) -> StandardCheckVerdict:
         info = SEARCHSPLOIT_EXPLOITDB_MAP.get(ctx.cwe_id)
         return StandardCheckVerdict(primary_id=info["edb_id"], ...)`,
@@ -279,13 +279,13 @@ export const PYTHON_STANDARD_PLUGINS: PythonPluginSpec[] = [
   {
     pluginId: "PY-PLUGIN-METASPLOIT-CHECK",
     modulePath: "validation_engine/plugins/ptes_exploitdb_msf_plugin.py",
-    className: "MetasploitCheckReferencePlugin",
-    name: "Metasploit Auxiliary & CheckCode Reference",
-    shortBadge: "Metasploit CheckCode",
+    className: "XTRIKE VerifyModuleCheckReferencePlugin",
+    name: "XTRIKE VerifyModule Auxiliary & CheckCode Reference",
+    shortBadge: "XTRIKE VerifyModule CheckCode",
     standardVersion: "Msf::Exploit::CheckCode Defensive Spec",
     description:
-      "Maps findings to defensive Metasploit Framework auxiliary scanner modules and non-destructive CheckCode::Appears / CheckCode::Safe verification contracts.",
-    pythonCodePreview: `class MetasploitCheckReferencePlugin(SecurityStandardPlugin):
+      "Maps findings to defensive XTRIKE Verification Framework auxiliary scanner modules and non-destructive CheckCode::Appears / CheckCode::Safe verification contracts.",
+    pythonCodePreview: `class XTRIKE VerifyModuleCheckReferencePlugin(SecurityStandardPlugin):
     plugin_id = "metasploit_check_ref"
     def evaluate_finding(self, ctx: CodeSnippetContext) -> StandardCheckVerdict:
         info = METASPLOIT_CHECK_MAP.get(ctx.cwe_id)
@@ -309,8 +309,8 @@ interface CweKnowledgeEntry {
   nist: NistStandardsDetail;
   githubGhsa: GitHubGhsaDetail;
   ptes: PtesPhaseDetail;
-  searchsploit: SearchSploitDetail;
-  metasploitCheck: MetasploitCheckDetail;
+  xtrike-exploit-index: XTRIKE Exploit-IndexDetail;
+  metasploitCheck: XTRIKE VerifyModuleCheckDetail;
   remediationCode: string;
   remediationExplanation: string;
 }
@@ -380,14 +380,14 @@ export const CWE_MULTI_STANDARD_KNOWLEDGE: Record<string, CweKnowledgeEntry> = {
       phase1Scope: "Target repository commit SHA locked; relational DAO and controller routes in scope.",
       phase2Intel: "Enumerated HTTP parameters flowing into database query builders.",
       phase3ThreatModel: "External unauthenticated/tenant caller crosses API boundary into SQL database engine.",
-      phase4VulnAnalysis: "CodeQL taint tracking & Semgrep AST rules confirm unparameterized string concatenation.",
+      phase4VulnAnalysis: "XTRIKE AST-Query taint tracking & XTRIKE PatternGuard AST rules confirm unparameterized string concatenation.",
       phase5Verification: "Controlled AST & SQL lexer structure check confirms predicate boundary alteration.",
       phase6PostImpact: "Unauthorized read/write access to relational tables and cross-tenant PII disclosure.",
       phase7Reporting: "6-Point Proof Contract verified; parameterized query diff & CI regression gate generated.",
     },
-    searchsploit: {
+    xtrike-exploit-index: {
       edbId: "EDB-ID: 51984 / EDB-ID: 50891",
-      searchsploitCmd: "searchsploit --cve CVE-2024-1597 --www",
+      xtrike-exploit-indexCmd: "xtrike-exploit-index --cve CVE-2024-1597 --www",
       exploitClass: "Remote / WebApps — SQL Injection Parameter Manipulation Advisory",
       cisaKevStatus: "CISA KEV Monitored Injection Class",
       epssScore: 0.142,
@@ -395,7 +395,7 @@ export const CWE_MULTI_STANDARD_KNOWLEDGE: Record<string, CweKnowledgeEntry> = {
       defensiveTakeaway: "Public advisories target unparameterized SQL sinks; enforce strict placeholder binding.",
     },
     metasploitCheck: {
-      msfModule: "auxiliary/scanner/http/sql_injection_check",
+      msfModule: "xtrike/scanner/http/sql_injection_check",
       msfCheckMethod: "Msf::Exploit::CheckCode::Appears (Non-Destructive Parameter Binding Check)",
       verificationMode: "Read-only syntax & AST parameter binding audit (Zero payload mutation)",
       telemetrySignature: "Confirms SQL statement AST changes when parameter placeholders are omitted.",
@@ -469,14 +469,14 @@ const result = await db.query("SELECT id, email, role FROM users WHERE id = $1 A
       phase1Scope: "Commit SHA locked; system diagnostic, PDF/report export, and CLI wrapper modules in scope.",
       phase2Intel: "Identified process-spawning calls accepting HTTP request fields.",
       phase3ThreatModel: "External API caller input crosses application boundary into OS shell interpreter.",
-      phase4VulnAnalysis: "CodeQL & Semgrep confirm unescaped string interpolation into shell execution sink.",
+      phase4VulnAnalysis: "XTRIKE AST-Query & XTRIKE PatternGuard confirm unescaped string interpolation into shell execution sink.",
       phase5Verification: "Controlled lexical argv tokenizer confirms shell metacharacters split the command AST.",
       phase6PostImpact: "Remote code execution under the container/host service account.",
       phase7Reporting: "Documented shell=False / execFile remediation and regression unit test.",
     },
-    searchsploit: {
+    xtrike-exploit-index: {
       edbId: "EDB-ID: 51993 / EDB-ID: 51422",
-      searchsploitCmd: "searchsploit --cve CVE-2024-23897 --www",
+      xtrike-exploit-indexCmd: "xtrike-exploit-index --cve CVE-2024-23897 --www",
       exploitClass: "Remote / WebApps — OS Command Argument & Shell Injection Advisory",
       cisaKevStatus: "CISA KEV Active Exploitation Pattern",
       epssScore: 0.684,
@@ -484,7 +484,7 @@ const result = await db.query("SELECT id, email, role FROM users WHERE id = $1 A
       defensiveTakeaway: "Eliminate shell=True and child_process.exec in favor of parameterized argv execution.",
     },
     metasploitCheck: {
-      msfModule: "auxiliary/scanner/http/command_injection_check",
+      msfModule: "xtrike/scanner/http/command_injection_check",
       msfCheckMethod: "Msf::Exploit::CheckCode::Appears (AST Shell Invocation Audit)",
       verificationMode: "Controlled static/sandboxed argv inspection (No active shell payload execution)",
       telemetrySignature: "Verifies subprocess shell=True / Runtime.exec string concatenation reachability.",
@@ -565,9 +565,9 @@ subprocess.run(["/usr/bin/ping", "-c", "1", target_host], shell=False, check=Tru
       phase6PostImpact: "Session hijacking and unauthorized actions via victim browser context.",
       phase7Reporting: "Generated DOMPurify remediation patch and CSP header policy.",
     },
-    searchsploit: {
+    xtrike-exploit-index: {
       edbId: "EDB-ID: 51640",
-      searchsploitCmd: "searchsploit --cwe CWE-79 dom xss",
+      xtrike-exploit-indexCmd: "xtrike-exploit-index --cwe CWE-79 dom xss",
       exploitClass: "Client-Side / WebApps — Unencoded DOM Sink Advisory",
       cisaKevStatus: "OWASP Top 10 Primary Web Vector",
       epssScore: 0.048,
@@ -575,7 +575,7 @@ subprocess.run(["/usr/bin/ping", "-c", "1", target_host], shell=False, check=Tru
       defensiveTakeaway: "Avoid raw HTML injection sinks; enforce DOMPurify and strict CSP nonces.",
     },
     metasploitCheck: {
-      msfModule: "auxiliary/scanner/http/xss_reflected_context_check",
+      msfModule: "xtrike/scanner/http/xss_reflected_context_check",
       msfCheckMethod: "Msf::Exploit::CheckCode::Detected (DOM Sink & CSP Header Inspector)",
       verificationMode: "Safe canary token reflection & Content-Security-Policy header evaluation",
       telemetrySignature: "Checks whether dangerous DOM sink is guarded by contextual encoding or DOMPurify.",
@@ -655,9 +655,9 @@ import DOMPurify from "dompurify";
       phase6PostImpact: "Disclosure of `/etc/passwd`, `.env`, or application private keys.",
       phase7Reporting: "Generated canonical path containment guard and unit test.",
     },
-    searchsploit: {
+    xtrike-exploit-index: {
       edbId: "EDB-ID: 52014 / EDB-ID: 51802",
-      searchsploitCmd: "searchsploit --cve CVE-2024-38816 --www",
+      xtrike-exploit-indexCmd: "xtrike-exploit-index --cve CVE-2024-38816 --www",
       exploitClass: "Remote / WebApps — Directory Traversal & Arbitrary File Read Advisory",
       cisaKevStatus: "CISA KEV Monitored Traversal Pattern",
       epssScore: 0.215,
@@ -665,7 +665,7 @@ import DOMPurify from "dompurify";
       defensiveTakeaway: "Enforce canonical realpath resolution and verify prefix containment before opening files.",
     },
     metasploitCheck: {
-      msfModule: "auxiliary/scanner/http/file_traversal_check",
+      msfModule: "xtrike/scanner/http/file_traversal_check",
       msfCheckMethod: "Msf::Exploit::CheckCode::Appears (Canonical Path Boundary Check)",
       verificationMode: "Synthetic sandbox path resolution check against BASE_STORAGE_DIR",
       telemetrySignature: "Verifies whether filepath.Clean / realpath is paired with prefix containment guard.",
@@ -747,9 +747,9 @@ if (!safePath.startsWith(path.resolve(BASE_STORAGE_DIR) + path.sep)) {
       phase6PostImpact: "Arbitrary code execution within application runtime.",
       phase7Reporting: "Generated safe JSON / `yaml.safe_load` migration diff.",
     },
-    searchsploit: {
+    xtrike-exploit-index: {
       edbId: "EDB-ID: 51588 / EDB-ID: 50942",
-      searchsploitCmd: "searchsploit unsafe deserialization gadget chain",
+      xtrike-exploit-indexCmd: "xtrike-exploit-index unsafe deserialization gadget chain",
       exploitClass: "Remote / Application — Untrusted Object Stream Deserialization Advisory",
       cisaKevStatus: "CISA KEV Critical Deserialization Class",
       epssScore: 0.312,
@@ -757,7 +757,7 @@ if (!safePath.startsWith(path.resolve(BASE_STORAGE_DIR) + path.sep)) {
       defensiveTakeaway: "Never deserialize untrusted streams with pickle or raw ObjectInputStream; use JSON or yaml.safe_load.",
     },
     metasploitCheck: {
-      msfModule: "auxiliary/scanner/http/java_python_deserialization_check",
+      msfModule: "xtrike/scanner/http/java_python_deserialization_check",
       msfCheckMethod: "Msf::Exploit::CheckCode::Appears (Stream Header & ObjectInputFilter Check)",
       verificationMode: "Safe class-whitelist and serializer configuration verification",
       telemetrySignature: "Detects unrestricted ObjectInputStream, pickle.loads, or yaml.load without SafeLoader.",
@@ -836,9 +836,9 @@ parsed_config = yaml.safe_load(untrusted_yaml_payload)`,
       phase6PostImpact: "Token forgery or unauthorized cloud/database access.",
       phase7Reporting: "Flagged for immediate rotation and environment variable externalization.",
     },
-    searchsploit: {
+    xtrike-exploit-index: {
       edbId: "EDB-ID: 51105 (Hardcoded Credential Advisory)",
-      searchsploitCmd: "searchsploit hardcoded api key jwt secret",
+      xtrike-exploit-indexCmd: "xtrike-exploit-index hardcoded api key jwt secret",
       exploitClass: "Authentication / Configuration — Hardcoded Secret Exposure",
       cisaKevStatus: "High-Risk Credential Exposure",
       epssScore: 0.19,
@@ -928,9 +928,9 @@ if (!jwtSecret || jwtSecret.length < 32) {
       phase6PostImpact: "Exposure of cloud IAM role credentials (169.254.169.254) and internal microservice APIs.",
       phase7Reporting: "Generated DNS-pinning egress guard and redirect-disable patch.",
     },
-    searchsploit: {
+    xtrike-exploit-index: {
       edbId: "EDB-ID: 51912 / EDB-ID: 51274",
-      searchsploitCmd: "searchsploit --cve CVE-2024-22243 ssrf",
+      xtrike-exploit-indexCmd: "xtrike-exploit-index --cve CVE-2024-22243 ssrf",
       exploitClass: "Server-Side / Cloud — SSRF Metadata & Internal Port Pivot Advisory",
       cisaKevStatus: "CISA Cloud Security Priority Advisory",
       epssScore: 0.164,
@@ -938,7 +938,7 @@ if (!jwtSecret || jwtSecret.length < 32) {
       defensiveTakeaway: "Enforce IMDSv2 and validate resolved IP addresses against RFC1918/link-local blocklists.",
     },
     metasploitCheck: {
-      msfModule: "auxiliary/scanner/http/ssrf_egress_boundary_check",
+      msfModule: "xtrike/scanner/http/ssrf_egress_boundary_check",
       msfCheckMethod: "Msf::Exploit::CheckCode::Appears (Loopback Canary & Egress Filter Check)",
       verificationMode: "Controlled local canary listener & RFC1918/IMDS blocklist verification",
       telemetrySignature: "Verifies whether outbound HTTP client blocks link-local 169.254.169.254 and internal IPs.",
@@ -1021,9 +1021,9 @@ await fetch(parsed.toString(), { redirect: "error" });`,
       phase6PostImpact: "Horizontal privilege escalation and unauthorized multi-tenant data disclosure.",
       phase7Reporting: "Generated tenant-scoped query patch and executable security contract test.",
     },
-    searchsploit: {
+    xtrike-exploit-index: {
       edbId: "EDB-ID: 51730 (BOLA / IDOR Advisory)",
-      searchsploitCmd: "searchsploit broken access control idor tenant",
+      xtrike-exploit-indexCmd: "xtrike-exploit-index broken access control idor tenant",
       exploitClass: "Authorization / API — Cross-Tenant Object Enumeration Advisory",
       cisaKevStatus: "OWASP API1:2023 Primary Breach Vector",
       epssScore: 0.118,
@@ -1031,7 +1031,7 @@ await fetch(parsed.toString(), { redirect: "error" });`,
       defensiveTakeaway: "Never query multi-tenant tables by primary key alone; always bind the authenticated tenant_id.",
     },
     metasploitCheck: {
-      msfModule: "auxiliary/scanner/http/bola_tenant_isolation_check",
+      msfModule: "xtrike/scanner/http/bola_tenant_isolation_check",
       msfCheckMethod: "Msf::Exploit::CheckCode::Appears (Cross-Tenant Authorization Matrix Check)",
       verificationMode: "Controlled Tenant-A vs Tenant-B read-only access boundary verification",
       telemetrySignature: "Checks whether data-access query enforces authenticated principal tenant_id predicate.",
@@ -1113,9 +1113,9 @@ stmt = select(Invoice).where(
       phase6PostImpact: "Credential recovery or ciphertext tampering.",
       phase7Reporting: "Generated SHA-256 / Argon2id / AES-256-GCM drop-in replacement.",
     },
-    searchsploit: {
+    xtrike-exploit-index: {
       edbId: "EDB-ID: 50419 (Weak Cryptographic Primitive Advisory)",
-      searchsploitCmd: "searchsploit weak cipher md5 sha1 ecb",
+      xtrike-exploit-indexCmd: "xtrike-exploit-index weak cipher md5 sha1 ecb",
       exploitClass: "Cryptography — Collision & Ciphertext Malleability Advisory",
       cisaKevStatus: "NIST FIPS 140-3 Non-Compliant",
       epssScore: 0.031,
@@ -1123,7 +1123,7 @@ stmt = select(Invoice).where(
       defensiveTakeaway: "Retire MD5, SHA-1, DES, and ECB mode across all security-critical code paths.",
     },
     metasploitCheck: {
-      msfModule: "auxiliary/scanner/ssl/cipher_suite_and_hash_audit",
+      msfModule: "xtrike/scanner/ssl/cipher_suite_and_hash_audit",
       msfCheckMethod: "Msf::Exploit::CheckCode::Detected (Cryptographic Primitive Compliance Check)",
       verificationMode: "Static cryptographic API & cipher mode inspection",
       telemetrySignature: "Flags MD5, SHA-1, DES, and ECB mode usage against NIST SP 800-131A.",
@@ -1202,9 +1202,9 @@ digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()`,
       phase6PostImpact: "Full application server compromise and environment secret exfiltration.",
       phase7Reporting: "Generated `ast.literal_eval` / declarative operator-map replacement.",
     },
-    searchsploit: {
+    xtrike-exploit-index: {
       edbId: "EDB-ID: 51890",
-      searchsploitCmd: "searchsploit eval code injection",
+      xtrike-exploit-indexCmd: "xtrike-exploit-index eval code injection",
       exploitClass: "Remote / Runtime — Dynamic Code Evaluation Advisory",
       cisaKevStatus: "Critical Injection Class",
       epssScore: 0.49,
@@ -1212,7 +1212,7 @@ digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()`,
       defensiveTakeaway: "Never pass user-controlled strings to eval(), exec(), or Function().",
     },
     metasploitCheck: {
-      msfModule: "auxiliary/scanner/http/dynamic_eval_sink_check",
+      msfModule: "xtrike/scanner/http/dynamic_eval_sink_check",
       msfCheckMethod: "Msf::Exploit::CheckCode::Appears (AST Dynamic Code Execution Check)",
       verificationMode: "Static AST verification of eval/exec/Function call sites",
       telemetrySignature: "Confirms untrusted input reaches dynamic interpreter evaluation sink.",
@@ -1277,7 +1277,7 @@ export function evaluateFindingWithPlugins(params: {
     nist: kb.nist,
     githubGhsa: kb.githubGhsa,
     ptes: kb.ptes,
-    searchsploit: kb.searchsploit,
+    xtrike-exploit-index: kb.xtrike-exploit-index,
     metasploitCheck: kb.metasploitCheck,
   };
 }
@@ -1350,7 +1350,7 @@ const LIVE_SCAN_PATTERNS: LiveCodePattern[] = [
 
 export const SAMPLE_CODE_SNIPPETS: Record<string, { label: string; language: string; filePath: string; code: string }> = {
   Python: {
-    label: "Python FastAPI Billing & Diagnostic Service",
+    label: "Python XTRIKE-API Billing & Diagnostic Service",
     language: "Python",
     filePath: "services/billing_api/routes/diagnostics.py",
     code: `import os
@@ -1662,7 +1662,7 @@ function buildFindingRecordsFromMatches(params: {
       cwe: evalRecord.cwe,
       cweName: evalRecord.cweAst.cweName,
       cvss: evalRecord.cvss.cvssV31Score,
-      epss: evalRecord.searchsploit.epssScore,
+      epss: evalRecord.xtrike-exploit-index.epssScore,
       mitre: `${evalRecord.mitre.techniqueId} (${evalRecord.mitre.subTechniqueId})`,
       owasp: evalRecord.owasp.owasp2021.split(" ")[0],
       owaspCategory: evalRecord.owasp.owasp2021,
@@ -1677,10 +1677,10 @@ function buildFindingRecordsFromMatches(params: {
         `[Sink] ${evalRecord.cweAst.astSinkPattern}`,
       ],
       engines: [
-        { name: "CodeQL", confidence: 0.96, confirmed: true, details: `Query: ${evalRecord.githubGhsa.codeqlQueryId}` },
-        { name: "Semgrep", confidence: 0.94, confirmed: true, details: `Matched ${evalRecord.cwe} AST sink rule` },
-        { name: "Joern", confidence: 0.95, confirmed: true, details: `CPG path verified at ${evalRecord.filePath}:${evalRecord.lineNumber}` },
-        { name: "DataFlow", confidence: 0.93, confirmed: true, details: `Missing guard: ${evalRecord.cweAst.requiredSanitizerGuard}` },
+        { name: "XTRIKE AST-Query", confidence: 0.96, confirmed: true, details: `Query: ${evalRecord.githubGhsa.codeqlQueryId}` },
+        { name: "XTRIKE PatternGuard", confidence: 0.94, confirmed: true, details: `Matched ${evalRecord.cwe} AST sink rule` },
+        { name: "XTRIKE GraphCPG", confidence: 0.95, confirmed: true, details: `CPG path verified at ${evalRecord.filePath}:${evalRecord.lineNumber}` },
+        { name: "XTRIKE TaintFlow", confidence: 0.93, confirmed: true, details: `Missing guard: ${evalRecord.cweAst.requiredSanitizerGuard}` },
       ],
       confidence: 0.95,
       reachable: true,
@@ -1692,10 +1692,10 @@ function buildFindingRecordsFromMatches(params: {
         { label: "External Caller", type: "entry", description: evalRecord.cweAst.astSourcePattern },
         { label: `${evalRecord.filePath.split("/").pop()}:${evalRecord.lineNumber}`, type: "vulnerability", description: evalRecord.codeLine },
         { label: `${evalRecord.mitre.techniqueId}`, type: "lateral", description: evalRecord.mitre.subTechniqueName },
-        { label: evalRecord.searchsploit.edbId, type: "asset", description: evalRecord.metasploitCheck.msfModule },
+        { label: evalRecord.xtrike-exploit-index.edbId, type: "asset", description: evalRecord.metasploitCheck.msfModule },
         { label: "Impact", type: "impact", description: evalRecord.ptes.phase6PostImpact },
       ],
-      executiveSummary: `${evalRecord.githubGhsa.advisorySummary} Mapped to MITRE ATT&CK ${evalRecord.mitre.tacticId} (${evalRecord.mitre.subTechniqueId}), ${evalRecord.owasp.owasp2021} (${evalRecord.owasp.asvsRequirementId}), and SearchSploit ${evalRecord.searchsploit.edbId}.`,
+      executiveSummary: `${evalRecord.githubGhsa.advisorySummary} Mapped to MITRE ATT&CK ${evalRecord.mitre.tacticId} (${evalRecord.mitre.subTechniqueId}), ${evalRecord.owasp.owasp2021} (${evalRecord.owasp.asvsRequirementId}), and XTRIKE Exploit-Index ${evalRecord.xtrike-exploit-index.edbId}.`,
       businessImpact: `${evalRecord.ptes.phase6PostImpact} CVSS v3.1: ${evalRecord.cvss.cvssV31Score} (${evalRecord.cvss.cvssV31Vector}) | CVSS v4.0: ${evalRecord.cvss.cvssV40Score}.`,
       rootCause: `Missing ${evalRecord.cweAst.requiredSanitizerGuard} before sink \`${evalRecord.codeLine}\` at ${evalRecord.filePath}:${evalRecord.lineNumber}.`,
       falsePositiveLikelihood: "Very Low",
@@ -1717,8 +1717,8 @@ function buildFindingRecordsFromMatches(params: {
       validationSteps: [
         `PTES Phase 4: ${evalRecord.ptes.phase4VulnAnalysis}`,
         `PTES Phase 5: ${evalRecord.ptes.phase5Verification}`,
-        `Metasploit Safe Check: ${evalRecord.metasploitCheck.msfModule} -> ${evalRecord.metasploitCheck.msfCheckMethod}`,
-        `SearchSploit Advisory Check: ${evalRecord.searchsploit.searchsploitCmd} (${evalRecord.searchsploit.edbId})`,
+        `XTRIKE VerifyModule Safe Check: ${evalRecord.metasploitCheck.msfModule} -> ${evalRecord.metasploitCheck.msfCheckMethod}`,
+        `XTRIKE Exploit-Index Advisory Check: ${evalRecord.xtrike-exploit-index.xtrike-exploit-indexCmd} (${evalRecord.xtrike-exploit-index.edbId})`,
       ],
       slaDeadline: "2026-10-25",
       owner: "AppSec & Core Engineering",
@@ -1731,7 +1731,7 @@ function buildFindingRecordsFromMatches(params: {
     const valStatus: ValidationStatus = "confirmed";
     validationFindings.push({
       findingId: valId,
-      scanner: "CodeQL",
+      scanner: "XTRIKE AST-Query",
       ruleId: `${evalRecord.cwe} · ${evalRecord.githubGhsa.ghsaId}`,
       cwe: evalRecord.cwe,
       cweTitle: evalRecord.cweAst.cweName,
@@ -1754,7 +1754,7 @@ function buildFindingRecordsFromMatches(params: {
       ],
       sinkExpr: evalRecord.codeLine,
       sanitizersDetected: [],
-      traceProvenance: `CodeQL + Semgrep + 9 Python Standards Plugins (${evalRecord.githubGhsa.ghsaId})`,
+      traceProvenance: `XTRIKE AST-Query + XTRIKE PatternGuard + 9 Python Standards Plugins (${evalRecord.githubGhsa.ghsaId})`,
       buildId: `build-${params.commitSha.slice(0, 8)}`,
       endpoint: `/${evalRecord.filePath.split("/").pop() || "api"}`,
       httpMethod: "POST",
@@ -1769,7 +1769,7 @@ function buildFindingRecordsFromMatches(params: {
           deterministic: true,
           status: "pass",
           summary: `Locked commit ${params.commitSha.slice(0, 8)} · Correlated ${evalRecord.githubGhsa.ghsaId} (${evalRecord.githubGhsa.cveId}).`,
-          detail: `CodeQL Query: ${evalRecord.githubGhsa.codeqlQueryId}`,
+          detail: `XTRIKE AST-Query Query: ${evalRecord.githubGhsa.codeqlQueryId}`,
           durationMs: 38,
         },
         assess: {
@@ -1789,11 +1789,11 @@ function buildFindingRecordsFromMatches(params: {
           durationMs: 29,
         },
         execute: {
-          label: "4. Execute (SearchSploit & MSF CheckCode)",
+          label: "4. Execute (XTRIKE Exploit-Index & MSF CheckCode)",
           deterministic: true,
           status: "pass",
-          summary: `${evalRecord.metasploitCheck.msfCheckMethod} · Correlated ${evalRecord.searchsploit.edbId}.`,
-          detail: `${evalRecord.searchsploit.searchsploitCmd} (${evalRecord.searchsploit.epssPercentile})`,
+          summary: `${evalRecord.metasploitCheck.msfCheckMethod} · Correlated ${evalRecord.xtrike-exploit-index.edbId}.`,
+          detail: `${evalRecord.xtrike-exploit-index.xtrike-exploit-indexCmd} (${evalRecord.xtrike-exploit-index.epssPercentile})`,
           durationMs: 164,
         },
         verify: {
@@ -1839,7 +1839,7 @@ function buildFindingRecordsFromMatches(params: {
         },
         {
           requirement: "Behavioral proof",
-          question: "Does controlled Metasploit CheckCode / PTES Phase 5 verification confirm the flaw?",
+          question: "Does controlled XTRIKE VerifyModule CheckCode / PTES Phase 5 verification confirm the flaw?",
           satisfied: true,
           evidenceSummary: `${evalRecord.metasploitCheck.msfModule} -> ${evalRecord.metasploitCheck.msfCheckMethod}`,
           sourceType: "Controlled Check",
@@ -1848,7 +1848,7 @@ function buildFindingRecordsFromMatches(params: {
           requirement: "Alternative explanations",
           question: "Have upstream WAF/middleware mitigations been ruled out?",
           satisfied: true,
-          evidenceSummary: `SearchSploit ${evalRecord.searchsploit.edbId} · GHSA ${evalRecord.githubGhsa.ghsaId}`,
+          evidenceSummary: `XTRIKE Exploit-Index ${evalRecord.xtrike-exploit-index.edbId} · GHSA ${evalRecord.githubGhsa.ghsaId}`,
           sourceType: "App Log",
         },
         {
@@ -1856,14 +1856,14 @@ function buildFindingRecordsFromMatches(params: {
           question: "Is the finding bound to commit SHA with deterministic CVSS & NIST traces?",
           satisfied: true,
           evidenceSummary: `CVSS v3.1 ${evalRecord.cvss.cvssV31Score} · NIST ${evalRecord.nist.sp80053Controls[0]}`,
-          sourceType: "OTel Trace",
+          sourceType: "XTRIKE-Trace Trace",
         },
       ],
       status: valStatus,
       evidenceConfidence: 0.96,
       groundTruthCategory: "actually_vulnerable",
       impact: `${evalRecord.ptes.phase6PostImpact} (CVSS v3.1 ${evalRecord.cvss.cvssV31Score} / v4.0 ${evalRecord.cvss.cvssV40Score})`,
-      rationale: `${evalRecord.githubGhsa.advisorySummary} Correlated with ${evalRecord.searchsploit.edbId} and ${evalRecord.metasploitCheck.msfModule}.`,
+      rationale: `${evalRecord.githubGhsa.advisorySummary} Correlated with ${evalRecord.xtrike-exploit-index.edbId} and ${evalRecord.metasploitCheck.msfModule}.`,
       unresolvedAssumptions: [],
       limitations: [],
       reproducible: true,
@@ -1874,7 +1874,7 @@ function buildFindingRecordsFromMatches(params: {
       regressionTest: `def test_${evalRecord.cwe.toLowerCase().replace("-", "_")}_guard_${index + 1}():\n    # Verifies ${evalRecord.owasp.asvsRequirementId} & ${evalRecord.mitre.d3fendId}\n    assert enforce_security_guard("${evalRecord.filePath}", line=${evalRecord.lineNumber}) is True`,
       rawSarifRecord: {
         schemaVersion: "2.1.0",
-        toolDriver: "CodeQL + StandardsPluginRunner",
+        toolDriver: "XTRIKE AST-Query + StandardsPluginRunner",
         ruleId: evalRecord.cwe,
         level: "error",
         physicalLocation: `${evalRecord.filePath}:${evalRecord.lineNumber}`,
@@ -1964,10 +1964,10 @@ export function scanFilesWithPythonPlugins(params: {
     `[INIT]        Target locked: ${params.repoUrl} (branch: ${params.branch} @ ${params.commitSha.slice(0, 8)})`,
     `[AST]         Parsed ${params.totalFilesCount || params.files.length} source files (${(params.totalLinesCount || computedLines).toLocaleString()} LOC) with ${params.language} adapter`,
     ...pluginEvaluations.flatMap((ev) => [
-      `[CodeQL/AST]  MATCH ${ev.cwe} at ${ev.filePath}:${ev.lineNumber} -> ${ev.codeLine.slice(0, 68)}`,
+      `[XTRIKE AST-Query/AST]  MATCH ${ev.cwe} at ${ev.filePath}:${ev.lineNumber} -> ${ev.codeLine.slice(0, 68)}`,
       `[MITRE-TTP]   ${ev.findingId}: ${ev.mitre.tacticId} -> ${ev.mitre.subTechniqueId} (${ev.mitre.subTechniqueName}) | Countermeasure: ${ev.mitre.d3fendId}`,
       `[STANDARDS]   ${ev.findingId}: ${ev.owasp.owasp2021} (${ev.owasp.asvsRequirementId}) · CVSS v3.1 ${ev.cvss.cvssV31Score} / v4.0 ${ev.cvss.cvssV40Score} · NIST ${ev.nist.sp80053Controls[0]}`,
-      `[THREAT-INT]  ${ev.findingId}: GHSA ${ev.githubGhsa.ghsaId} · SearchSploit ${ev.searchsploit.edbId} · MSF ${ev.metasploitCheck.msfModule}`,
+      `[THREAT-INT]  ${ev.findingId}: GHSA ${ev.githubGhsa.ghsaId} · XTRIKE Exploit-Index ${ev.xtrike-exploit-index.edbId} · MSF ${ev.metasploitCheck.msfModule}`,
     ]),
     `[PTES-7PHASE] Completed Phases 1-7 verification across ${pluginEvaluations.length} findings.`,
     `[DONE]        Normalized ${pluginEvaluations.length} multi-standard findings to Active Workspace.`,
@@ -2190,7 +2190,7 @@ export function loadActiveScanSession(): ActiveScanSession | null {
           commitSha: t.commitSha || "a4f92c81",
           language: t.language || "Java",
           scanMode: t.liveGitHubFetched ? "github-live" : "code",
-          engines: t.engines || ["Checkmarx", "IBM Code Scan", "Fortify SCA", "CodeQL", "Semgrep", "Snyk"],
+          engines: t.engines || ["XTRIKE XQL", "XTRIKE DeepFlow", "XTRIKE StructSCA", "XTRIKE AST-Query", "XTRIKE PatternGuard", "XTRIKE DepGuard"],
           activePlugins: PYTHON_STANDARD_PLUGINS.map((p) => p.pluginId),
           filesScanned: t.filesScanned || 1,
           linesScanned: t.linesScanned || 100,

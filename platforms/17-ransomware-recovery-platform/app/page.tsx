@@ -19,6 +19,7 @@ import {
   CheckCircle2,
   RefreshCw,
   Search,
+  FlaskConical,
 } from "lucide-react";
 import { MOCK_CASES } from "@/data/recoveryData";
 
@@ -75,10 +76,10 @@ export default function CommandCenterHub() {
     {
       step: "PILLAR 04",
       name: "Protect & Validate",
-      status: "QUEUED",
-      desc: "Reinfection hunter & gatekeeper dual-custody",
-      href: "/reinfection-risk",
-      active: false,
+      status: "ACTIVE",
+      desc: "SIM-001..007 defense validation & clean-room gatekeeper",
+      href: "/synthetic-attack-lab",
+      active: true,
     },
     {
       step: "PILLAR 05",
@@ -119,6 +120,16 @@ export default function CommandCenterHub() {
   ];
 
   const studios = [
+    {
+      title: "Ransomware Simulation & Defense Validation Lab",
+      href: "/synthetic-attack-lab",
+      kicker: "EVIDENCE-BACKED VALIDATION · SIM-001..007",
+      badge: "18/22 Detections",
+      desc: "Execute authorized non-destructive ransomware simulations (canary files, mass rename, shadow-copy probe, SMB pathing, S3 WORM & SHA-256 restore verification) with 8 pre-flight safety gates.",
+      metrics: ["SIM-001..007 Catalog", "8 Safety Policy Gates", "Python RDP Engine"],
+      icon: FlaskConical,
+      category: "validation",
+    },
     {
       title: "Automated Incident Triage",
       href: "/triage",
@@ -391,6 +402,134 @@ export default function CommandCenterHub() {
               <span>
                 <strong style={{ color: "var(--foreground)" }}>Sandbox-A Enclave</strong> &middot; Primary Domain Controller `DC01.mercy.local` staged clean
               </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* RANSOMWARE RESILIENCE CENTER (Section 10 Evidence-Based Validation Wireframe) */}
+      <section className="card-surface p-6 sm:p-8 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-5" style={{ borderColor: "var(--border)" }}>
+          <div className="space-y-1">
+            <div className="desk-kicker">EVIDENCE-BASED VALIDATION &middot; PYTHON RDP ENGINE</div>
+            <h2 className="text-2xl sm:text-3xl font-bold font-editorial" style={{ color: "var(--foreground)" }}>
+              Ransomware Resilience Center
+            </h2>
+            <p className="text-xs sm:text-sm" style={{ color: "var(--muted)" }}>
+              Controlled simulation verdicts (<code className="font-mono font-bold">PASS</code>, <code className="font-mono font-bold">FAIL</code>, <code className="font-mono font-bold">INCONCLUSIVE</code>) across 8 mandatory pre-execution safety policy gates.
+            </p>
+          </div>
+          <Link
+            href="/synthetic-attack-lab"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold shrink-0"
+            style={{
+              background: "var(--accent)",
+              color: "#fbf8f3",
+              border: "1px solid #72361d",
+            }}
+          >
+            <FlaskConical className="w-4 h-4" />
+            <span>Open Validation Center (SIM-001..007)</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        {/* 4 Top Summary Counters */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-4 rounded-xl space-y-1" style={{ background: "var(--background)", border: "1px solid var(--border)" }}>
+            <div className="text-2xl font-bold font-editorial" style={{ color: "var(--foreground)" }}>24</div>
+            <div className="text-xs font-bold" style={{ color: "var(--muted)" }}>Assets assessed</div>
+            <div className="text-[11px] font-mono" style={{ color: "var(--subtle)" }}>lab_simulation=true verified</div>
+          </div>
+          <div className="p-4 rounded-xl space-y-1" style={{ background: "var(--background)", border: "1px solid var(--border)" }}>
+            <div className="text-2xl font-bold font-editorial" style={{ color: "var(--accent)" }}>18/22</div>
+            <div className="text-xs font-bold" style={{ color: "var(--muted)" }}>Eligible detections observed</div>
+            <div className="text-[11px] font-mono" style={{ color: "var(--subtle)" }}>81.8% detection coverage</div>
+          </div>
+          <div className="p-4 rounded-xl space-y-1" style={{ background: "var(--background)", border: "1px solid var(--border)" }}>
+            <div className="text-2xl font-bold font-editorial" style={{ color: "var(--danger)" }}>3</div>
+            <div className="text-xs font-bold" style={{ color: "var(--muted)" }}>Unresolved test failures</div>
+            <div className="text-[11px] font-mono" style={{ color: "var(--subtle)" }}>SIM-002, SIM-004, SIM-005</div>
+          </div>
+          <div className="p-4 rounded-xl space-y-1" style={{ background: "var(--background)", border: "1px solid var(--border)" }}>
+            <div className="text-2xl font-bold font-editorial" style={{ color: "var(--warning)" }}>Pending</div>
+            <div className="text-xs font-bold" style={{ color: "var(--muted)" }}>Recovery verification</div>
+            <div className="text-[11px] font-mono" style={{ color: "var(--subtle)" }}>SHA-256 restore check ready</div>
+          </div>
+        </div>
+
+        {/* Readiness Score + Priority Findings */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="p-5 rounded-xl space-y-3.5" style={{ background: "var(--background)", border: "1px solid var(--border)" }}>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-bold font-editorial" style={{ color: "var(--foreground)" }}>
+                Readiness Score (Evidence-Backed)
+              </span>
+              <span className="text-[11px] font-mono px-2 py-0.5 rounded" style={{ background: "var(--accent-soft)", color: "var(--accent)" }}>
+                Denominator-Grounded
+              </span>
+            </div>
+            {[
+              { label: "Prevention", pct: 82, denom: "9/11 policy & ACL controls verified" },
+              { label: "Detection", pct: 68, denom: "15/22 telemetry alerts correlated" },
+              { label: "Containment", pct: 55, denom: "6/11 automated host isolations < 30s" },
+              { label: "Recovery", pct: 91, denom: "22/24 snapshots SHA-256 hash-matched" },
+              { label: "Identity protection", pct: 73, denom: "8/11 tier-0 lateral paths blocked" },
+            ].map((item) => (
+              <div key={item.label} className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold" style={{ color: "var(--foreground)" }}>{item.label}: {item.pct}%</span>
+                  <span className="text-[11px] font-mono" style={{ color: "var(--muted)" }}>{item.denom}</span>
+                </div>
+                <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: "var(--surface-2)" }}>
+                  <div
+                    className="h-full rounded-full"
+                    style={{
+                      width: `${item.pct}%`,
+                      background: item.pct >= 80 ? "var(--success)" : item.pct >= 65 ? "var(--accent)" : "var(--danger)",
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="p-5 rounded-xl flex flex-col justify-between space-y-4" style={{ background: "var(--background)", border: "1px solid var(--border)" }}>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-bold font-editorial" style={{ color: "var(--foreground)" }}>
+                  Priority Findings (Controlled Test Failures)
+                </span>
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(161, 44, 34, 0.12)", color: "var(--danger)" }}>
+                  3 Actionable
+                </span>
+              </div>
+              <div className="space-y-2">
+                <div className="p-3 rounded-lg flex items-start justify-between gap-2" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+                  <div className="text-xs">
+                    <span className="font-bold" style={{ color: "var(--danger)" }}>[High]</span>{" "}
+                    <strong style={{ color: "var(--foreground)" }}>Backup restore test not completed inside target RTO</strong>
+                    <div className="text-[11px] font-mono mt-0.5" style={{ color: "var(--muted)" }}>SIM-REC-006 &middot; Target 15m vs Observed 18.4m</div>
+                  </div>
+                  <Link href="/synthetic-attack-lab" className="text-[11px] font-bold shrink-0" style={{ color: "var(--accent)" }}>Retest &rarr;</Link>
+                </div>
+                <div className="p-3 rounded-lg flex items-start justify-between gap-2" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+                  <div className="text-xs">
+                    <span className="font-bold" style={{ color: "var(--danger)" }}>[High]</span>{" "}
+                    <strong style={{ color: "var(--foreground)" }}>Shadow-copy query command generated no alert</strong>
+                    <div className="text-[11px] font-mono mt-0.5" style={{ color: "var(--muted)" }}>SIM-VSS-004 &middot; Missing Sysmon Event ID 1 rule for vssadmin list shadows</div>
+                  </div>
+                  <Link href="/synthetic-attack-lab" className="text-[11px] font-bold shrink-0" style={{ color: "var(--accent)" }}>Fix &rarr;</Link>
+                </div>
+                <div className="p-3 rounded-lg flex items-start justify-between gap-2" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+                  <div className="text-xs">
+                    <span className="font-bold" style={{ color: "var(--warning)" }}>[Med]</span>{" "}
+                    <strong style={{ color: "var(--foreground)" }}>Workstation group has write access to shared finance folder</strong>
+                    <div className="text-[11px] font-mono mt-0.5" style={{ color: "var(--muted)" }}>SIM-LAT-005 &middot; 3 SMB shares writable by standard domain user</div>
+                  </div>
+                  <Link href="/synthetic-attack-lab" className="text-[11px] font-bold shrink-0" style={{ color: "var(--accent)" }}>Fix &rarr;</Link>
+                </div>
+              </div>
             </div>
           </div>
         </div>

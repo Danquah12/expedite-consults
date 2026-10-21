@@ -194,7 +194,7 @@ export default function ValidationEnginePage() {
       title: "SAST Findings (Total) — 248 Raw SARIF Alerts Ingested",
       badge: "SARIF 2.1.0 Stream",
       description:
-        "All candidate alerts ingested from CodeQL, Semgrep, Snyk, Checkmarx, and the 9 Python Standards Plugins before deduplication and proof contract evaluation.",
+        "All candidate alerts ingested from XTRIKE AST-Query, XTRIKE PatternGuard, XTRIKE DepGuard, XTRIKE XQL, and the 9 Python Standards Plugins before deduplication and proof contract evaluation.",
       proofRule: "Normalized to CanonicalValidationFinding schema and bound to build commit_sha.",
       targetTab: "pipeline",
       statusFilterValue: "all",
@@ -238,10 +238,10 @@ export default function ValidationEnginePage() {
     },
     "Independent Discoveries": {
       title: "Independent Discoveries — +4 Logic & Cross-Tenant Flaws Missed by SAST",
-      badge: "SECURITY INVARIANTS & Z3",
+      badge: "SECURITY INVARIANTS & XTRIKE-Solver",
       description:
-        "Business-logic, multi-step workflow, and cross-tenant BOLA/IDOR violations discovered directly by Executable Security Contracts and Z3 property checking—with zero prior SAST alert.",
-      proofRule: "Proven via Given/When/Expected Security Contracts (CTR-01..03) and Z3 counterexample synthesis.",
+        "Business-logic, multi-step workflow, and cross-tenant BOLA/IDOR violations discovered directly by Executable Security Contracts and XTRIKE-Solver property checking—with zero prior SAST alert.",
+      proofRule: "Proven via Given/When/Expected Security Contracts (CTR-01..03) and XTRIKE-Solver counterexample synthesis.",
       targetTab: "invariants",
     },
     "Validation Coverage": {
@@ -354,13 +354,13 @@ export default function ValidationEnginePage() {
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
             {[
-              { label: "FastAPI", tab: "pipeline" as StudioTab },
-              { label: "Pydantic", tab: "pipeline" as StudioTab },
+              { label: "XTRIKE-API", tab: "pipeline" as StudioTab },
+              { label: "XTRIKE-Schema", tab: "pipeline" as StudioTab },
               { label: "SARIF 2.1.0", tab: "pipeline" as StudioTab },
-              { label: "Z3 Solver", tab: "claims" as StudioTab },
-              { label: "httpx", tab: "optimizer" as StudioTab },
-              { label: "Playwright", tab: "invariants" as StudioTab },
-              { label: "OTel", tab: "catalog" as StudioTab },
+              { label: "XTRIKE-Solver", tab: "claims" as StudioTab },
+              { label: "XTRIKE-HTTP", tab: "optimizer" as StudioTab },
+              { label: "XTRIKE-DOM", tab: "invariants" as StudioTab },
+              { label: "XTRIKE-Trace", tab: "catalog" as StudioTab },
             ].map((item) => (
               <button
                 key={item.label}
@@ -453,6 +453,25 @@ export default function ValidationEnginePage() {
               <Play size={12} />
               <span>{isScanningLive ? "Scanning..." : "Re-Run Validation Pass"}</span>
             </button>
+
+            <a
+              href="/reports"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "6px 12px",
+                borderRadius: 8,
+                fontSize: 11.5,
+                fontWeight: 800,
+                background: "#f4e5dc",
+                color: "#8b4528",
+                border: "1px solid #8b4528",
+                textDecoration: "none",
+              }}
+            >
+              <span>🖨️ Print / Report Engine</span>
+            </a>
 
             <a
               href="/scan"
@@ -841,10 +860,10 @@ export default function ValidationEnginePage() {
       >
         {[
           { id: "pipeline", label: "1. A–F Pipeline & Proof Contracts", icon: Layers },
-          { id: "claims", label: "2. Claim Verifier & Counterexamples (Z3)", icon: FileCheck2 },
+          { id: "claims", label: "2. Claim Verifier & Counterexamples (XTRIKE-Solver)", icon: FileCheck2 },
           { id: "invariants", label: "3. Security Invariants, Contracts & Chains", icon: Network },
           { id: "optimizer", label: "4. Test Optimizer, 10 Modules & Quality Gates", icon: Sliders },
-          { id: "catalog", label: "5. 9 Python Standards Plugins (MITRE · OWASP · CWE · CVSS · NIST · PTES · SearchSploit · MSF)", icon: Crosshair },
+          { id: "catalog", label: "5. 9 Python Standards Plugins (MITRE · OWASP · CWE · CVSS · NIST · PTES · XTRIKE Exploit-Index · MSF)", icon: Crosshair },
           { id: "roadmap", label: "6. Prioritized Plan Builder & Governance", icon: Terminal },
         ].map((tab) => {
           const Icon = tab.icon;
@@ -1254,13 +1273,13 @@ export default function ValidationEnginePage() {
             </div>
           </div>
 
-          {/* Counterexample & Z3 Constraint Solver */}
+          {/* Counterexample & XTRIKE-Solver Constraint Solver */}
           <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: 20 }}>
             <h2 style={{ fontSize: 17, fontWeight: 800, color: "var(--foreground)", marginBottom: 4 }}>
-              Counterexample Engine, Symbolic Z3 Constraints &amp; Test Minimization
+              Counterexample Engine, Symbolic XTRIKE-Solver Constraints &amp; Test Minimization
             </h2>
             <p style={{ fontSize: 12.5, color: "var(--muted)", marginBottom: 14 }}>
-              Produces structured Source &rarr; Execution Path &rarr; Z3 Constraint &rarr; Sensitive Operation &rarr; Delta-Minimized Counterexample traces, and distinguishes formal counterexamples from reachability approximations.
+              Produces structured Source &rarr; Execution Path &rarr; XTRIKE-Solver Constraint &rarr; Sensitive Operation &rarr; Delta-Minimized Counterexample traces, and distinguishes formal counterexamples from reachability approximations.
             </p>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -1289,7 +1308,7 @@ export default function ValidationEnginePage() {
                       <div style={{ color: "var(--muted)", marginTop: 4 }}>{cx.executionPathStage}</div>
                     </div>
                     <div style={{ background: "var(--surface)", padding: 10, borderRadius: 8, border: "1px solid var(--border)" }}>
-                      <div style={{ fontWeight: 700, color: "var(--foreground-muted)" }}>3. Z3 Path Constraint &amp; 4. Minimized Proof</div>
+                      <div style={{ fontWeight: 700, color: "var(--foreground-muted)" }}>3. XTRIKE-Solver Path Constraint &amp; 4. Minimized Proof</div>
                       <div style={{ fontFamily: "monospace", fontSize: 10.5, color: "#8b4528", marginTop: 2 }}>
                         {cx.pathConstraintZ3}
                       </div>
@@ -1450,7 +1469,7 @@ export default function ValidationEnginePage() {
                 </div>
                 <div style={{ background: "var(--background)", padding: 8, borderRadius: 8, border: "1px solid var(--border)" }}>
                   <div style={{ fontSize: 16, fontWeight: 800, color: "var(--foreground)" }}>{ATTACK_SURFACE_COMPLETENESS.runtimeObservedRoutes}</div>
-                  <div style={{ fontSize: 10, color: "var(--muted)" }}>OTel Observed</div>
+                  <div style={{ fontSize: 10, color: "var(--muted)" }}>XTRIKE-Trace Observed</div>
                 </div>
               </div>
               {ATTACK_SURFACE_COMPLETENESS.dependencyReachability.map((dep) => (
@@ -1657,7 +1676,7 @@ export default function ValidationEnginePage() {
                   Priority 1–5 Validators &amp; Claim Verifier
                 </div>
                 <p style={{ fontSize: 11.5, color: "var(--muted)", lineHeight: 1.5 }}>
-                  Focus on &ldquo;{primaryObjective}&rdquo; with 6-point Proof Contracts, OpenTelemetry span correlation, and disposable container fixtures.
+                  Focus on &ldquo;{primaryObjective}&rdquo; with 6-point Proof Contracts, XTRIKE-Trace span correlation, and disposable container fixtures.
                 </p>
               </div>
               <div style={{ background: "var(--background)", border: "1px solid var(--border)", borderRadius: 10, padding: 14 }}>
@@ -1666,7 +1685,7 @@ export default function ValidationEnginePage() {
                   Invariants, Differential Retest &amp; CI/CD Gates
                 </div>
                 <p style={{ fontSize: 11.5, color: "var(--muted)", lineHeight: 1.5 }}>
-                  Enable Given/When/Expected security contracts, Z3 counterexample minimization, 7-factor test optimization, and benchmark calibration.
+                  Enable Given/When/Expected security contracts, XTRIKE-Solver counterexample minimization, 7-factor test optimization, and benchmark calibration.
                 </p>
               </div>
             </div>
@@ -1799,13 +1818,13 @@ export default function ValidationEnginePage() {
             </div>
           </div>
 
-          {/* 2. Interactive CWE Multi-Standard TTP / OWASP / CVSS / NIST / GHSA / PTES / SearchSploit / Metasploit Explorer */}
+          {/* 2. Interactive CWE Multi-Standard TTP / OWASP / CVSS / NIST / GHSA / PTES / XTRIKE Exploit-Index / XTRIKE VerifyModule Explorer */}
           <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: 20 }}>
             <h2 style={{ fontSize: 17, fontWeight: 800, color: "var(--foreground)", marginBottom: 4 }}>
-              Interactive CWE Multi-Standard Correlation Explorer (MITRE ATT&amp;CK · OWASP ASVS · CVSS v3.1/v4.0 · NIST · GHSA · PTES · SearchSploit · Metasploit)
+              Interactive CWE Multi-Standard Correlation Explorer (MITRE ATT&amp;CK · OWASP ASVS · CVSS v3.1/v4.0 · NIST · GHSA · PTES · XTRIKE Exploit-Index · XTRIKE VerifyModule)
             </h2>
             <p style={{ fontSize: 12.5, color: "var(--muted)", marginBottom: 12 }}>
-              Select any vulnerability class below to inspect the exact TTP procedure, CVSS v3.1/v4.0 vector, NIST 800-53r5/SSDF controls, GitHub GHSA advisory, PTES 7-phase trace, SearchSploit EDB-ID, and Metasploit CheckCode module.
+              Select any vulnerability class below to inspect the exact TTP procedure, CVSS v3.1/v4.0 vector, NIST 800-53r5/SSDF controls, GitHub GHSA advisory, PTES 7-phase trace, XTRIKE Exploit-Index EDB-ID, and XTRIKE VerifyModule CheckCode module.
             </p>
 
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
@@ -1891,20 +1910,20 @@ export default function ValidationEnginePage() {
                 </div>
               </div>
 
-              {/* Card D: GitHub GHSA · PTES 7-Phase · SearchSploit · Metasploit CheckCode */}
+              {/* Card D: GitHub GHSA · PTES 7-Phase · XTRIKE Exploit-Index · XTRIKE VerifyModule CheckCode */}
               <div style={{ background: "var(--background)", border: "1px solid var(--border)", borderRadius: 10, padding: 14, fontSize: 11.5 }}>
                 <div style={{ fontWeight: 800, color: "#8b4528", marginBottom: 4 }}>
-                  4. GitHub GHSA · PTES 7-Phase · SearchSploit · Metasploit Check
+                  4. GitHub GHSA · PTES 7-Phase · XTRIKE Exploit-Index · XTRIKE VerifyModule Check
                 </div>
                 <div style={{ color: "var(--foreground)" }}>
                   <strong>GitHub GHSA:</strong> {activeCweEntry.githubGhsa.ghsaId} ({activeCweEntry.githubGhsa.cveId}) &mdash;{" "}
                   <span style={{ fontFamily: "monospace", fontSize: 10.5 }}>{activeCweEntry.githubGhsa.codeqlQueryId}</span>
                 </div>
                 <div style={{ color: "var(--foreground)", marginTop: 4 }}>
-                  <strong>SearchSploit / Exploit-DB:</strong> {activeCweEntry.searchsploit.edbId} &middot; EPSS {activeCweEntry.searchsploit.epssPercentile}
+                  <strong>XTRIKE Exploit-Index (XEDB):</strong> {activeCweEntry.xtrike-exploit-index.edbId} &middot; EPSS {activeCweEntry.xtrike-exploit-index.epssPercentile}
                 </div>
                 <div style={{ color: "var(--foreground)", marginTop: 4 }}>
-                  <strong>Metasploit Check Module:</strong>{" "}
+                  <strong>XTRIKE VerifyModule Check Module:</strong>{" "}
                   <span style={{ fontFamily: "monospace" }}>{activeCweEntry.metasploitCheck.msfModule}</span> ({activeCweEntry.metasploitCheck.msfCheckMethod})
                 </div>
                 <div style={{ color: "var(--muted)", marginTop: 4 }}>

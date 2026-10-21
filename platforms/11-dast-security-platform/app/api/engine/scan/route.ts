@@ -232,6 +232,31 @@ async function safeProbeEndpoint(baseUrl: string, path: string): Promise<LiveEnd
   }
 }
 
+function decodeHtmlEntities(raw: string): string {
+  return String(raw || "")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#0*39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&ndash;/gi, "–")
+    .replace(/&mdash;/gi, "—")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&trade;/gi, "™")
+    .replace(/&reg;/gi, "®")
+    .replace(/&copy;/gi, "©")
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(Number(dec)));
+}
+
+function isStaticAssetPathname(pathname: string): boolean {
+  return (
+    pathname.startsWith("/_next/") ||
+    pathname.startsWith("/static/") ||
+    pathname.startsWith("/assets/") ||
+    /\.(js|mjs|cjs|css|map|png|jpg|jpeg|gif|svg|ico|webp|avif|woff|woff2|ttf|eot|otf|pdf|zip|gz|mp4|webm|mp3|json|xml)$/i.test(pathname)
+  );
+}
+
 function parseDomAssets(html: string, baseUrl: string): {
   pageTitle: string;
   linksFound: string[];
@@ -243,7 +268,9 @@ function parseDomAssets(html: string, baseUrl: string): {
   externalScriptsWithoutSri: string[];
 } {
   const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
-  const pageTitle = titleMatch ? titleMatch[1].replace(/\s+/g, " ").trim().slice(0, 90) : "Untitled Document";
+  const pageTitle = titleMatch
+    ? decodeHtmlEntities(titleMatch[1].replace(/\s+/g, " ").trim()).slice(0, 90)
+    : "Untitled Document";
 
   const linksSet = new Set<string>();
   const queryParamsSet = new Set<string>();
@@ -251,15 +278,20 @@ function parseDomAssets(html: string, baseUrl: string): {
   let m: RegExpExecArray | null;
   while ((m = linkRegex.exec(html)) !== null && linksSet.size < 45) {
     const href = m[1].trim();
-    if (!href || href.startsWith("javascript:") || href.startsWith("mailto:") || href.startsWith("tel:")) continue;
+    if (!href || href.startsWith("javascript:") || href.startsWith("mailto:") || href.startsWith("tel:") || href.startsWith("data:")) continue;
     try {
       const resolvedObj = new URL(href, baseUrl);
+      if (isStaticAssetPathname(resolvedObj.pathname)) continue;
       linksSet.add(resolvedObj.href);
       resolvedObj.searchParams.forEach((_, k) => {
-        if (k) queryParamsSet.add(k);
+        if (k && !/^(dpl|v|ver|version|_v|t|cb|cachebust)$/i.test(k)) {
+          queryParamsSet.add(k);
+        }
       });
     } catch {
-      linksSet.add(href);
+      if (!isStaticAssetPathname(href.split("?")[0] || "")) {
+        linksSet.add(href);
+      }
     }
   }
 
@@ -706,7 +738,7 @@ async function probeTarget(
           return (
             parsedU.origin === originUrl &&
             parsedU.href !== finalUrl &&
-            !parsedU.pathname.match(/\.(png|jpg|jpeg|gif|svg|ico|css|woff|woff2|ttf|pdf|zip)$/i)
+            !isStaticAssetPathname(parsedU.pathname)
           );
         } catch {
           return false;
@@ -852,7 +884,7 @@ async function probeTarget(
       parameter: "TCP/HTTP Handshake",
       method: "GET",
       owaspRef: "WSTG-INFO-02 / A05:2021",
-      cweId: "CWE-693",
+      cweId: "CWE-1059",
       description: `The live outbound scanner attempted HTTPS and HTTP connections to ${cleanUrl} from the cloud assessment node, but the host did not respond within the 5,000ms timeout window or refused the connection.`,
       impact: "Verify that the hostname resolves in public DNS and that firewall/WAF rules permit inbound HTTPS/HTTP traffic.",
       remediation: "Ensure the domain resolves to a public IPv4/IPv6 address and accepts standard TLSv1.2/1.3 handshakes on port 443.",
@@ -1442,17 +1474,15 @@ async function probeTarget(
       });
     }
 
-    // Finding 9: Website-Unique Client-Side Script & Subresource Integrity (SRI) Supply-Chain Audit
+    // Finding 9: Website-Unique Client-Side Script & Subresource Integrity (SRI) Supply-Chain Audit (Only for third-party external scripts missing integrity)
     const externalNoSriList = Array.from(allExternalNoSriSet);
     const allScriptsList = domDiscoveryParsed.scriptsFound;
-    if (externalNoSriList.length > 0 || allScriptsList.length > 0) {
-      const targetScripts = externalNoSriList.length > 0 ? externalNoSriList : allScriptsList;
+    if (externalNoSriList.length > 0) {
+      const targetScripts = externalNoSriList;
       liveFindings.push({
         id: `LIVE-${host}-SRI-SCRIPTS`,
-        title: externalNoSriList.length > 0
-          ? `[LIVE EXTERNAL AUDIT] ${externalNoSriList.length} External JavaScript Resource(s) Loaded Without Subresource Integrity (SRI) on ${host}`
-          : `[LIVE EXTERNAL AUDIT] Client-Side JavaScript Bundle & Script Execution Surface (${allScriptsList.length} Script(s)) on ${host}`,
-        severity: externalNoSriList.length > 0 ? "Medium" : "Low",
+        title: `[LIVE EXTERNAL AUDIT] ${externalNoSriList.length} External JavaScript Resource(s) Loaded Without Subresource Integrity (SRI) on ${host}`,
+        severity: "Medium",
         confidence: "Confirmed",
         plugin: "XSS",
         url: finalUrl,
@@ -1460,9 +1490,7 @@ async function probeTarget(
         method: "GET",
         owaspRef: "A08:2021-Software and Data Integrity Failures · WSTG-CLNT-13 · ASVS V14.2.2",
         cweId: "CWE-829",
-        description: externalNoSriList.length > 0
-          ? `Live DOM parsing of "${domDiscoveryParsed.pageTitle}" (${finalUrl}) identified ${externalNoSriList.length} external third-party <script> tag(s) loaded without cryptographic Subresource Integrity (integrity="sha384-...") hashes: ${externalNoSriList.slice(0, 4).join(", ")}. If any upstream CDN or third-party script host is compromised, arbitrary JavaScript executes inside every visitor's browser on ${host}.`
-          : `Live DOM spidering of "${domDiscoveryParsed.pageTitle}" (${finalUrl}) enumerated ${allScriptsList.length} client-side script bundle(s) (${allScriptsList.slice(0, 4).join(", ")}) loaded without strict CSP script-src cryptographic nonces.`,
+        description: `Live DOM parsing of "${domDiscoveryParsed.pageTitle}" (${finalUrl}) identified ${externalNoSriList.length} external third-party <script> tag(s) loaded without cryptographic Subresource Integrity (integrity="sha384-...") hashes: ${externalNoSriList.slice(0, 4).join(", ")}. If any upstream CDN or third-party script host is compromised, arbitrary JavaScript executes inside every visitor's browser on ${host}.`,
         impact: "Enables supply-chain script tampering (Magecart / DOM skimming) and unauthorized client-side code execution in visitor browsers.",
         remediation: "Add cryptographic 'integrity=\"sha384-...\"' and 'crossorigin=\"anonymous\"' attributes to all external <script> tags, and restrict allowed script origins via Content-Security-Policy script-src.",
         evidence: {
@@ -1474,7 +1502,7 @@ async function probeTarget(
           matchedPattern: `Script without SRI: ${targetScripts[0] || "inline <script>"}`,
           reproductionSteps: [
             `Step 1 (Fetch Live HTML DOM): Run 'curl -sL "${finalUrl}" | grep -i "<script"' to list all script inclusions on ${host}.`,
-            `Step 2 (Inspect SRI Attributes): Check each <script src="..."> tag for an 'integrity="sha256-.../sha384-..."' attribute.`,
+            `Step 2 (Inspect SRI Attributes): Check each external <script src="..."> tag for an 'integrity="sha256-.../sha384-..."' attribute.`,
             `Step 3 (Verify Missing Hash): Confirm that ${targetScripts.slice(0, 3).join(", ")} is loaded without cryptographic integrity verification.`
           ]
         },
@@ -1484,25 +1512,25 @@ async function probeTarget(
             tacticId: "TA0001",
             technique: "Supply Chain Compromise",
             techniqueId: "T1195.002",
-            procedure: `Inclusion of ${targetScripts.length} script bundle(s) on ${finalUrl} without Subresource Integrity (SRI) hashes.`,
-            mitigations: ["M1054 — Enforce Subresource Integrity (SRI) SHA-384 hashes on all <script> tags"],
+            procedure: `Inclusion of ${targetScripts.length} external script bundle(s) on ${finalUrl} without Subresource Integrity (SRI) hashes.`,
+            mitigations: ["M1054 — Enforce Subresource Integrity (SRI) SHA-384 hashes on all external <script> tags"],
             references: ["https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity"]
           }
         ],
         poc: {
-          description: `Enumerate live <script> tags and verify missing Subresource Integrity (SRI) attributes on ${finalUrl}`,
-          curlCommand: `# Step 1: Extract all <script src="..."> tags from ${finalUrl}\ncurl -sL "${finalUrl}" | grep -E -o '<script[^>]+src=["'"'"'][^"'"'"']+["'"'"'][^>]*>' | head -n 10\n# ➔ [CAPTURED RESULT]: Found ${allScriptsList.length} script tag(s) on ${host}:\n${targetScripts.slice(0, 4).map(s => `# ➔ [CAPTURED RESULT]: <script src="${s}"> (Missing integrity="sha384-...")`).join("\n")}`,
-          pythonScript: `import requests, re\nhtml = requests.get("${finalUrl}", timeout=10).text\nscripts = re.findall(r'<script[^>]+src=["\\']([^"\\']+)["\\'][^>]*>', html, re.I)\nprint(f"[*] Discovered {len(scripts)} script(s) on ${host}:", scripts[:5])\n# ➔ [CAPTURED RESULT]: [*] Discovered ${allScriptsList.length} script(s) on ${host}: ${JSON.stringify(targetScripts.slice(0, 4))}`,
-          expectedResult: `${targetScripts.length} script resource(s) loaded without SRI integrity attribute on ${host}.`,
-          severity: externalNoSriList.length > 0 ? "Medium — CVSS 5.8" : "Low — CVSS 3.7"
+          description: `Enumerate live external <script> tags and verify missing Subresource Integrity (SRI) attributes on ${finalUrl}`,
+          curlCommand: `# Step 1: Extract all <script src="..."> tags from ${finalUrl}\ncurl -sL "${finalUrl}" | grep -E -o '<script[^>]+src=["'"'"'][^"'"'"']+["'"'"'][^>]*>' | head -n 10\n# ➔ [CAPTURED RESULT]: Found ${externalNoSriList.length} external script tag(s) without SRI on ${host}:\n${targetScripts.slice(0, 4).map(s => `# ➔ [CAPTURED RESULT]: <script src="${s}"> (Missing integrity="sha384-...")`).join("\n")}`,
+          pythonScript: `import requests, re\nhtml = requests.get("${finalUrl}", timeout=10).text\nscripts = re.findall(r'<script[^>]+src=["\\']([^"\\']+)["\\'][^>]*>', html, re.I)\nprint(f"[*] Discovered {len(scripts)} script(s) on ${host}:", scripts[:5])\n# ➔ [CAPTURED RESULT]: [*] External script(s) without SRI on ${host}: ${JSON.stringify(targetScripts.slice(0, 4))}`,
+          expectedResult: `${targetScripts.length} external script resource(s) loaded without SRI integrity attribute on ${host}.`,
+          severity: "Medium — CVSS 5.8"
         },
         collectedEvidence: [
           {
             type: "DOM_SPIDER_SNAPSHOT",
-            title: `Sample Evidence 1 — Live Script Bundle & SRI Inventory Captured from ${finalUrl}`,
+            title: `Sample Evidence 1 — Live External Script & SRI Inventory Captured from ${finalUrl}`,
             content: `Target Page: ${finalUrl} ("${domDiscoveryParsed.pageTitle}")\nTotal Scripts Discovered: ${allScriptsList.length}\nExternal Scripts Without SRI: ${externalNoSriList.length}\nScript URLs:\n${targetScripts.slice(0, 10).map((s, i) => `${i + 1}. ${s}`).join("\n")}`,
             highlight: targetScripts[0] || "script src",
-            annotation: `Genuine <script> URLs extracted live from the HTML DOM of ${finalUrl}.`
+            annotation: `Genuine external <script> URLs extracted live from the HTML DOM of ${finalUrl}.`
           }
         ],
         verificationStatus: "Verified",
@@ -2090,7 +2118,7 @@ async function probeTarget(
   }));
 
   return {
-    schemaVersion: "5.6.0-universal-clean",
+    schemaVersion: "5.7.0-universal-clean",
     targetUrl: cleanUrl,
     finalUrl,
     host,

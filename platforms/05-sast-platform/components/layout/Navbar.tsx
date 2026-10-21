@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Shield, Cpu, CheckCircle2, Play, BarChart3, Layers, GitGraph, Bot, Box } from "lucide-react";
+import { Shield, Cpu, CheckCircle2, Play, BarChart3, Layers, GitGraph, Bot, Box, Printer } from "lucide-react";
 
 const NAV_LINKS = [
   { label: "Front Desk", href: "/", badge: "P05", icon: Shield },
   { label: "Scan Workspace", href: "/scan", badge: "1360px", icon: Play },
   { label: "Proof Engine", href: "/validation-engine", badge: "6 Stages", icon: Cpu },
   { label: "Triage Desk", href: "/dashboard", badge: "Split", icon: BarChart3 },
-  { label: "AXIOM Fusion", href: "/fusion-engine", icon: Layers },
+  { label: "Report Engine", href: "/reports", badge: "Print/PDF", icon: Printer },
+  { label: "XTRIKE Fusion", href: "/fusion-engine", icon: Layers },
   { label: "Taint Graph", href: "/taint-graph", icon: GitGraph },
   { label: "AI-BOM", href: "/ai-bom", icon: Box },
   { label: "Dev Assist", href: "/developer-assist", icon: Bot },
@@ -20,7 +21,7 @@ export default function Navbar() {
 
   return (
     <header
-      className="sticky top-0 z-50 border-b"
+      className="sticky top-0 z-50 border-b no-print"
       style={{
         background: "rgba(243, 238, 228, 0.94)",
         backdropFilter: "blur(10px)",
@@ -63,6 +64,20 @@ export default function Navbar() {
               <CheckCircle2 className="w-3.5 h-3.5" style={{ color: "var(--success)" }} />
               <span>PTES &amp; NIST 800-115 &middot; 6-Stage Proof Pipeline</span>
             </div>
+
+            <Link
+              href="/reports"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-opacity hover:opacity-90"
+              style={{
+                background: "var(--surface)",
+                color: "var(--accent)",
+                border: "1px solid var(--accent)",
+                textDecoration: "none",
+              }}
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span>Print Report</span>
+            </Link>
 
             <Link
               href="/scan"

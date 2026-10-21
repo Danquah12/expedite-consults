@@ -66,7 +66,7 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     owaspCategory: "Injection",
     validatorPriority: 2,
     validatorName: "SQLStructureValidator",
-    checkmarxQuery: "CxQL/High_Risk/SQL_Injection_Dynamic_Query",
+    checkmarxQuery: "XTRIKE-XQL/High_Risk/SQL_Injection_Dynamic_Query",
     ibmRuleId: "IBM-APPSCAN-SQLI-TAINT-001",
     fortifyKingdom: "Input Validation and Representation",
     fortifyAnalyzer: "Dataflow",
@@ -77,7 +77,7 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     defaultSink: "SQL Query Execution Sink",
     privilegeGain: "Unauthenticated read/write access to relational database & potential RCE via DB extensions",
     executiveSummary:
-      "Checkmarx AST, IBM Code Scan Taint Analyzer, and Fortify Dataflow Analyzer traced untrusted input into a dynamically constructed SQL statement without parameter binding.",
+      "XTRIKE XQL AST, XTRIKE DeepFlow Taint Analyzer, and XTRIKE StructSCA Dataflow Analyzer traced untrusted input into a dynamically constructed SQL statement without parameter binding.",
     businessImpact:
       "Full database compromise, exfiltration of customer PII/credentials, unauthorized record modification, and regulatory non-compliance (PCI-DSS / GDPR).",
     rootCause:
@@ -92,7 +92,7 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
       {
         platform: "Java",
         explanation: "Replace string concatenation with PreparedStatement and bind variables.",
-        code: `// ❌ VULNERABLE\nString sql = "SELECT * FROM users WHERE id = '" + userId + "'";\nstmt.executeQuery(sql);\n\n// ✅ FIXED (Checkmarx BFL / Fortify Verified)\nPreparedStatement ps = conn.prepareStatement("SELECT * FROM users WHERE id = ?");\nps.setString(1, userId);\nResultSet rs = ps.executeQuery();`,
+        code: `// ❌ VULNERABLE\nString sql = "SELECT * FROM users WHERE id = '" + userId + "'";\nstmt.executeQuery(sql);\n\n// ✅ FIXED (XTRIKE XQL BFL / XTRIKE StructSCA Verified)\nPreparedStatement ps = conn.prepareStatement("SELECT * FROM users WHERE id = ?");\nps.setString(1, userId);\nResultSet rs = ps.executeQuery();`,
       },
       {
         platform: "Python",
@@ -107,8 +107,8 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     ],
     validationSteps: [
       "Verify that SQL AST structure remains invariant under quote/boolean tautology payloads (' OR '1'='1).",
-      "Confirm PreparedStatement / parameterized bind array is used at the Checkmarx Best Fix Location (BFL).",
-      "Re-run Fortify Dataflow Analyzer and IBM Code Scan to confirm taint path is terminated.",
+      "Confirm PreparedStatement / parameterized bind array is used at the XTRIKE XQL Best Fix Location (BFL).",
+      "Re-run XTRIKE StructSCA Dataflow Analyzer and XTRIKE DeepFlow to confirm taint path is terminated.",
     ],
   },
   {
@@ -124,7 +124,7 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     owaspCategory: "Injection",
     validatorPriority: 2,
     validatorName: "CommandExecutionValidator",
-    checkmarxQuery: "CxQL/High_Risk/Command_Injection",
+    checkmarxQuery: "XTRIKE-XQL/High_Risk/Command_Injection",
     ibmRuleId: "IBM-APPSCAN-CMDI-TAINT-002",
     fortifyKingdom: "Input Validation and Representation",
     fortifyAnalyzer: "Dataflow",
@@ -135,7 +135,7 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     defaultSink: "OS Shell Interpreter Execution Sink",
     privilegeGain: "Arbitrary Remote Code Execution (RCE) under the application service account",
     executiveSummary:
-      "Fortify Dataflow Analyzer and IBM Code Scan identified an OS command execution call that invokes a system shell with untrusted input.",
+      "XTRIKE StructSCA Dataflow Analyzer and XTRIKE DeepFlow identified an OS command execution call that invokes a system shell with untrusted input.",
     businessImpact:
       "Complete host takeover, lateral movement into internal cloud VPC networks, container escape, and theft of runtime secrets.",
     rootCause:
@@ -176,7 +176,7 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     owaspCategory: "Injection",
     validatorPriority: 2,
     validatorName: "DynamicCodeEvalValidator",
-    checkmarxQuery: "CxQL/High_Risk/Code_Injection_Eval",
+    checkmarxQuery: "XTRIKE-XQL/High_Risk/Code_Injection_Eval",
     ibmRuleId: "IBM-APPSCAN-CODEI-003",
     fortifyKingdom: "Input Validation and Representation",
     fortifyAnalyzer: "Semantic",
@@ -187,7 +187,7 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     defaultSink: "Runtime Script Interpreter (eval / Function)",
     privilegeGain: "Arbitrary server-side code execution inside the language runtime",
     executiveSummary:
-      "Checkmarx CxSAST and Fortify Semantic Analyzer detected dynamic code evaluation (`eval`/`Function`) capable of executing attacker-controlled expressions.",
+      "XTRIKE XQL CxSAST and XTRIKE StructSCA Semantic Analyzer detected dynamic code evaluation (`eval`/`Function`) capable of executing attacker-controlled expressions.",
     businessImpact:
       "Full compromise of the application process, access to environment variables, in-memory session tokens, and backend databases.",
     rootCause:
@@ -227,7 +227,7 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     owaspCategory: "Software and Data Integrity Failures",
     validatorPriority: 2,
     validatorName: "DeserializationSafetyValidator",
-    checkmarxQuery: "CxQL/High_Risk/Deserialization_of_Untrusted_Data",
+    checkmarxQuery: "XTRIKE-XQL/High_Risk/Deserialization_of_Untrusted_Data",
     ibmRuleId: "IBM-APPSCAN-DESER-004",
     fortifyKingdom: "Input Validation and Representation",
     fortifyAnalyzer: "Structural",
@@ -238,7 +238,7 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     defaultSink: "Native Object Deserializer",
     privilegeGain: "Remote Code Execution via gadget chain invocation during object reconstruction",
     executiveSummary:
-      "Fortify Structural Analyzer and IBM Code Scan detected native object deserialization on untrusted streams without class allowlisting.",
+      "XTRIKE StructSCA Structural Analyzer and XTRIKE DeepFlow detected native object deserialization on untrusted streams without class allowlisting.",
     businessImpact:
       "Immediate pre-authentication Remote Code Execution (RCE) via known classpath gadget chains (e.g., CommonsCollections, PyYAML, pickle).",
     rootCause:
@@ -277,7 +277,7 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     owaspCategory: "Injection",
     validatorPriority: 3,
     validatorName: "XSSOutputContextValidator",
-    checkmarxQuery: "CxQL/High_Risk/Reflected_XSS_All_Clients",
+    checkmarxQuery: "XTRIKE-XQL/High_Risk/Reflected_XSS_All_Clients",
     ibmRuleId: "IBM-APPSCAN-XSS-005",
     fortifyKingdom: "Input Validation and Representation",
     fortifyAnalyzer: "Dataflow",
@@ -288,7 +288,7 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     defaultSink: "Unencoded HTML / DOM Rendering Sink",
     privilegeGain: "Session hijacking, credential theft, and arbitrary actions on behalf of authenticated users",
     executiveSummary:
-      "Checkmarx CxSAST and IBM Code Scan traced user-controllable data into a raw HTML rendering sink without context-aware encoding or DOMPurify sanitization.",
+      "XTRIKE XQL CxSAST and XTRIKE DeepFlow traced user-controllable data into a raw HTML rendering sink without context-aware encoding or DOMPurify sanitization.",
     businessImpact:
       "Attackers can execute arbitrary JavaScript in victim browsers, steal session tokens, or perform unauthorized state-changing requests.",
     rootCause:
@@ -322,7 +322,7 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     owaspCategory: "Broken Access Control",
     validatorPriority: 4,
     validatorName: "PathBoundaryValidator",
-    checkmarxQuery: "CxQL/High_Risk/Stored_Absolute_Path_Traversal",
+    checkmarxQuery: "XTRIKE-XQL/High_Risk/Stored_Absolute_Path_Traversal",
     ibmRuleId: "IBM-APPSCAN-PATHTRAV-006",
     fortifyKingdom: "Input Validation and Representation",
     fortifyAnalyzer: "Dataflow",
@@ -333,7 +333,7 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     defaultSink: "Filesystem Read / Stream Sink",
     privilegeGain: "Arbitrary read access to server configuration files, source code, and credentials (/etc/passwd, .env)",
     executiveSummary:
-      "Fortify Dataflow Analyzer and Checkmarx CxSAST identified user input flowing into a filesystem operation without canonical root prefix enforcement.",
+      "XTRIKE StructSCA Dataflow Analyzer and XTRIKE XQL CxSAST identified user input flowing into a filesystem operation without canonical root prefix enforcement.",
     businessImpact:
       "Disclosure of sensitive configuration files (`.env`, private keys, cloud credentials) or overwrite of critical server files.",
     rootCause:
@@ -367,7 +367,7 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     owaspCategory: "Server-Side Request Forgery",
     validatorPriority: 5,
     validatorName: "OutboundSSRFGuardValidator",
-    checkmarxQuery: "CxQL/High_Risk/SSRF_Outbound_Request",
+    checkmarxQuery: "XTRIKE-XQL/High_Risk/SSRF_Outbound_Request",
     ibmRuleId: "IBM-APPSCAN-SSRF-007",
     fortifyKingdom: "Input Validation and Representation",
     fortifyAnalyzer: "Dataflow",
@@ -378,7 +378,7 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     defaultSink: "Outbound HTTP Client (fetch / axios / requests)",
     privilegeGain: "Access to internal cloud metadata service (169.254.169.254) & internal microservices",
     executiveSummary:
-      "IBM Code Scan and Checkmarx identified an outbound HTTP client request whose target URL is derived from user input without RFC1918 / link-local IP blocking.",
+      "XTRIKE DeepFlow and XTRIKE XQL identified an outbound HTTP client request whose target URL is derived from user input without RFC1918 / link-local IP blocking.",
     businessImpact:
       "Theft of cloud IAM instance credentials via AWS/GCP/Azure metadata endpoints (`169.254.169.254`) and internal network port scanning.",
     rootCause:
@@ -412,7 +412,7 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     owaspCategory: "Identification and Authentication Failures",
     validatorPriority: 1,
     validatorName: "CredentialExposureValidator",
-    checkmarxQuery: "CxQL/High_Risk/Hardcoded_Password_in_Connection_String",
+    checkmarxQuery: "XTRIKE-XQL/High_Risk/Hardcoded_Password_in_Connection_String",
     ibmRuleId: "IBM-APPSCAN-SECRET-008",
     fortifyKingdom: "Security Features",
     fortifyAnalyzer: "Configuration",
@@ -423,7 +423,7 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     defaultSink: "Authentication / Cryptographic Credential Sink",
     privilegeGain: "Direct unauthorized authentication to production databases, payment gateways, or cloud APIs",
     executiveSummary:
-      "Fortify Configuration Analyzer and Checkmarx Secret Detection identified hardcoded credentials or API tokens committed directly in source code.",
+      "XTRIKE StructSCA Configuration Analyzer and XTRIKE XQL Secret Detection identified hardcoded credentials or API tokens committed directly in source code.",
     businessImpact:
       "Anyone with repository read access or leaked build artifacts can authenticate directly to production infrastructure or sign forged JWT tokens.",
     rootCause:
@@ -458,7 +458,7 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     owaspCategory: "Cryptographic Failures",
     validatorPriority: 3,
     validatorName: "CryptographicPolicyValidator",
-    checkmarxQuery: "CxQL/Medium_Threat/Use_of_Broken_or_Risky_Cryptographic_Algorithm",
+    checkmarxQuery: "XTRIKE-XQL/Medium_Threat/Use_of_Broken_or_Risky_Cryptographic_Algorithm",
     ibmRuleId: "IBM-APPSCAN-CRYPTO-009",
     fortifyKingdom: "Security Features",
     fortifyAnalyzer: "Semantic",
@@ -469,7 +469,7 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     defaultSink: "Weak Cryptographic Primitive (MD5 / SHA-1 / DES / ECB)",
     privilegeGain: "Offline collision / rainbow-table recovery of hashed credentials or ciphertext blocks",
     executiveSummary:
-      "Fortify Semantic Analyzer and IBM Code Scan detected the use of cryptographically broken algorithms (MD5, SHA-1, DES, or AES-ECB mode).",
+      "XTRIKE StructSCA Semantic Analyzer and XTRIKE DeepFlow detected the use of cryptographically broken algorithms (MD5, SHA-1, DES, or AES-ECB mode).",
     businessImpact:
       "Weak digests and ECB ciphers allow attackers to recover plaintext passwords or forge collision signatures.",
     rootCause:
@@ -503,7 +503,7 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     owaspCategory: "Security Misconfiguration",
     validatorPriority: 3,
     validatorName: "XMLParserHardeningValidator",
-    checkmarxQuery: "CxQL/High_Risk/XXE_DocumentBuilderFactory",
+    checkmarxQuery: "XTRIKE-XQL/High_Risk/XXE_DocumentBuilderFactory",
     ibmRuleId: "IBM-APPSCAN-XXE-010",
     fortifyKingdom: "Input Validation and Representation",
     fortifyAnalyzer: "Configuration",
@@ -514,7 +514,7 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     defaultSink: "XML Parser with External DTD / Entity Resolution",
     privilegeGain: "Local file disclosure (/etc/passwd) and internal SSRF via external DTD entities",
     executiveSummary:
-      "Checkmarx CxSAST and Fortify Configuration Analyzer detected an XML parser instantiated without disabling external DTDs and entity resolution.",
+      "XTRIKE XQL CxSAST and XTRIKE StructSCA Configuration Analyzer detected an XML parser instantiated without disabling external DTDs and entity resolution.",
     businessImpact:
       "Arbitrary server file exfiltration, internal network SSRF probing, and denial-of-service (Billion Laughs attack).",
     rootCause:
@@ -548,7 +548,7 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     owaspCategory: "Security Misconfiguration",
     validatorPriority: 4,
     validatorName: "CORSPolicyValidator",
-    checkmarxQuery: "CxQL/Medium_Threat/Overly_Permissive_CORS",
+    checkmarxQuery: "XTRIKE-XQL/Medium_Threat/Overly_Permissive_CORS",
     ibmRuleId: "IBM-APPSCAN-CORS-011",
     fortifyKingdom: "Environment",
     fortifyAnalyzer: "Configuration",
@@ -559,7 +559,7 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     defaultSink: "HTTP Response CORS Header Configuration",
     privilegeGain: "Cross-origin read access to sensitive API responses from untrusted third-party sites",
     executiveSummary:
-      "Fortify Configuration Analyzer flagged an overly permissive CORS policy allowing arbitrary origins (`*`) to read API responses.",
+      "XTRIKE StructSCA Configuration Analyzer flagged an overly permissive CORS policy allowing arbitrary origins (`*`) to read API responses.",
     businessImpact:
       "Malicious websites visited by authenticated users may read sensitive API data across origins.",
     rootCause:
@@ -592,7 +592,7 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     owaspCategory: "Cryptographic Failures",
     validatorPriority: 4,
     validatorName: "EntropyPRNGValidator",
-    checkmarxQuery: "CxQL/Medium_Threat/Use_of_Insufficiently_Random_Values",
+    checkmarxQuery: "XTRIKE-XQL/Medium_Threat/Use_of_Insufficiently_Random_Values",
     ibmRuleId: "IBM-APPSCAN-PRNG-012",
     fortifyKingdom: "Security Features",
     fortifyAnalyzer: "Semantic",
@@ -603,7 +603,7 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     defaultSink: "Token / OTP / Session Identifier Generation",
     privilegeGain: "Prediction of password reset tokens, OTP codes, or session identifiers",
     executiveSummary:
-      "Fortify Semantic Analyzer and Checkmarx detected a non-cryptographic PRNG (`Math.random()`, `java.util.Random`, `random`) used where unpredictable entropy is required.",
+      "XTRIKE StructSCA Semantic Analyzer and XTRIKE XQL detected a non-cryptographic PRNG (`Math.random()`, `java.util.Random`, `random`) used where unpredictable entropy is required.",
     businessImpact:
       "Attackers can predict generated tokens or session IDs by observing sequential outputs.",
     rootCause:
@@ -1091,7 +1091,7 @@ export function scanFilesWithEnterpriseEngines(params: {
     linesScanned += rawLines.length;
     const fileLang = fileObj.language || detectLanguageFromPath(fileObj.path, primaryLanguage);
 
-    // Full-file source & sanitizer context (IBM Code Scan & Fortify Dataflow)
+    // Full-file source & sanitizer context (XTRIKE DeepFlow & XTRIKE StructSCA Dataflow)
     const fullText = fileObj.content;
     const fileHasUntrustedSource = ENTERPRISE_SAST_RULES.some((r) => r.sourceHints.test(fullText));
 
@@ -1150,25 +1150,25 @@ export function scanFilesWithEnterpriseEngines(params: {
 
         const engineResults: EngineResult[] = [
           {
-            name: "Checkmarx",
+            name: "XTRIKE XQL",
             confidence: sanitizerDetected ? 0.64 : 0.97,
             confirmed: !sanitizerDetected,
             details: `${cxQuery} · BFL at ${fileObj.path.split("/").pop()}:${Math.max(1, lineNumber - 1)}`,
           },
           {
-            name: "IBM Code Scan",
+            name: "XTRIKE DeepFlow",
             confidence: sanitizerDetected ? 0.58 : 0.96,
             confirmed: !sanitizerDetected,
             details: `${ibmRule} · Taint trace ${detectedSourceLine.slice(0, 34)} -> line ${lineNumber}`,
           },
           {
-            name: "Fortify SCA",
+            name: "XTRIKE StructSCA",
             confidence: sanitizerDetected ? 0.61 : 0.98,
             confirmed: !sanitizerDetected,
             details: `[${fortifyAnalyzer}] Kingdom: ${fortifyKingdom}`,
           },
           {
-            name: "CodeQL",
+            name: "XTRIKE AST-Query",
             confidence: sanitizerDetected ? 0.60 : 0.95,
             confirmed: !sanitizerDetected,
             details: `AST DataFlow query matched ${rule.cwe} sink in ${fnName}`,
@@ -1180,9 +1180,9 @@ export function scanFilesWithEnterpriseEngines(params: {
         );
 
         logs.push(
-          `[Checkmarx] ${cxQuery} matched at ${fileObj.path}:${lineNumber} (${rule.cwe})`,
+          `[XTRIKE XQL] ${cxQuery} matched at ${fileObj.path}:${lineNumber} (${rule.cwe})`,
           `[IBM Scan]  ${ibmRule} taint trace verified in ${fnName} -> ${trimmed.slice(0, 52)}`,
-          `[Fortify]   [${fortifyAnalyzer} Analyzer] Kingdom="${fortifyKingdom}" Priority=${rule.severity}`
+          `[XTRIKE StructSCA]   [${fortifyAnalyzer} Analyzer] Kingdom="${fortifyKingdom}" Priority=${rule.severity}`
         );
 
         const taintPath =
@@ -1237,7 +1237,7 @@ export function scanFilesWithEnterpriseEngines(params: {
           attackPath: [
             { label: "Untrusted Entry", type: "entry", description: detectedSourceLine.slice(0, 60) },
             { label: `${fileObj.path.split("/").pop()}:${lineNumber}`, type: "vulnerability", description: `${rule.cwe} — ${rule.title}` },
-            { label: fnName, type: "lateral", description: `Fortify ${fortifyAnalyzer} & IBM Taint propagation` },
+            { label: fnName, type: "lateral", description: `XTRIKE StructSCA ${fortifyAnalyzer} & IBM Taint propagation` },
             { label: rule.defaultSink, type: "asset", description: trimmed.slice(0, 65) },
             { label: "Security Impact", type: "impact", description: rule.privilegeGain },
           ],
@@ -1261,7 +1261,7 @@ export function scanFilesWithEnterpriseEngines(params: {
 
         validationFindings.push({
           findingId: valId,
-          scanner: "Checkmarx",
+          scanner: "XTRIKE XQL",
           ruleId: `${cxQuery} / ${ibmRule}`,
           cwe: rule.cwe,
           cweTitle: rule.cweName,
@@ -1276,12 +1276,12 @@ export function scanFilesWithEnterpriseEngines(params: {
           endLine: lineNumber,
           functionName: fnName,
           language: fileLang,
-          framework: `${fileLang} · Fortify ${fortifyAnalyzer} + IBM Taint`,
+          framework: `${fileLang} · XTRIKE StructSCA ${fortifyAnalyzer} + IBM Taint`,
           sourceExpr: detectedSourceLine !== trimmed ? detectedSourceLine : rule.defaultSource,
           intermediateCalls: [fnName],
           sinkExpr: trimmed,
           sanitizersDetected: sanitizerDetected ? ["Sanitizer Guard Detected in Local AST Scope"] : [],
-          traceProvenance: `Checkmarx (${cxQuery}) + IBM Code Scan (${ibmRule}) + Fortify SCA (${fortifyKingdom})`,
+          traceProvenance: `XTRIKE XQL (${cxQuery}) + XTRIKE DeepFlow (${ibmRule}) + XTRIKE StructSCA (${fortifyKingdom})`,
           buildId: `build-${commitSha.slice(0, 8)}`,
           endpoint: fileObj.path,
           httpMethod: "POST",
@@ -1300,10 +1300,10 @@ export function scanFilesWithEnterpriseEngines(params: {
               durationMs: 14,
             },
             assess: {
-              label: "2. Static Assessment (Checkmarx + Fortify)",
+              label: "2. Static Assessment (XTRIKE XQL + XTRIKE StructSCA)",
               deterministic: true,
               status: "pass",
-              summary: `Matched ${cxQuery} & Fortify Kingdom '${fortifyKingdom}' at line ${lineNumber}.`,
+              summary: `Matched ${cxQuery} & XTRIKE StructSCA Kingdom '${fortifyKingdom}' at line ${lineNumber}.`,
               detail: `Sink expression: ${trimmed}`,
               durationMs: 32,
             },
@@ -1372,7 +1372,7 @@ export function scanFilesWithEnterpriseEngines(params: {
               requirement: "Behavioral proof",
               question: "Did multi-engine concordance confirm the vulnerability pattern?",
               satisfied: !sanitizerDetected,
-              evidenceSummary: `Checkmarx, IBM Code Scan, and Fortify SCA (${fortifyAnalyzer}) concurred (${Math.round(avgConfidence * 100)}%).`,
+              evidenceSummary: `XTRIKE XQL, XTRIKE DeepFlow, and XTRIKE StructSCA (${fortifyAnalyzer}) concurred (${Math.round(avgConfidence * 100)}%).`,
               sourceType: "Controlled Check",
             },
             {
@@ -1405,7 +1405,7 @@ export function scanFilesWithEnterpriseEngines(params: {
           regressionTest: rule.validationSteps[0] || "Verify sink rejects untrusted input.",
           rawSarifRecord: {
             schemaVersion: "2.1.0",
-            toolDriver: "Checkmarx + CodeQL",
+            toolDriver: "XTRIKE XQL + XTRIKE AST-Query",
             ruleId: cxQuery,
             level: rule.severity === "Critical" || rule.severity === "High" ? "error" : "warning",
             physicalLocation: `${fileObj.path}:${lineNumber}`,
@@ -1430,25 +1430,25 @@ export function scanFilesWithEnterpriseEngines(params: {
 
         const engineResults: EngineResult[] = [
           {
-            name: "Checkmarx",
+            name: "XTRIKE XQL",
             confidence: 0.96,
             confirmed: true,
             details: `${matchedPlugin.pluginId} · ${matchedPlugin.checkmarxQuery}`,
           },
           {
-            name: "IBM Code Scan",
+            name: "XTRIKE DeepFlow",
             confidence: 0.94,
             confirmed: true,
             details: `${matchedPlugin.ibmRuleId} · ${matchedPlugin.asvs}`,
           },
           {
-            name: "Fortify SCA",
+            name: "XTRIKE StructSCA",
             confidence: 0.97,
             confirmed: true,
             details: `[${matchedPlugin.fortifyAnalyzer}] Kingdom: ${matchedPlugin.fortifyKingdom}`,
           },
           {
-            name: "Semgrep",
+            name: "XTRIKE PatternGuard",
             confidence: 0.95,
             confirmed: true,
             details: `Matched plugin ${matchedPlugin.code} (${matchedPlugin.cwe})`,
@@ -1530,7 +1530,7 @@ export function scanFilesWithEnterpriseEngines(params: {
 
         validationFindings.push({
           findingId: valId,
-          scanner: "Checkmarx",
+          scanner: "XTRIKE XQL",
           ruleId: `${matchedPlugin.pluginId} · ${matchedPlugin.checkmarxQuery}`,
           cwe: matchedPlugin.cwe,
           cweTitle: matchedPlugin.cweName,
@@ -1615,7 +1615,7 @@ export function scanFilesWithEnterpriseEngines(params: {
             { requirement: "Source provenance", question: "Where does input/config originate?", satisfied: true, evidenceSummary: `Located in ${fnName} (${fileObj.path}:${lineNumber})`, sourceType: "AST" },
             { requirement: "Sink reachability", question: "Is the vulnerable pattern reachable?", satisfied: true, evidenceSummary: trimmed.slice(0, 60), sourceType: "DataFlow" },
             { requirement: "Security control", question: "Was the required security control absent?", satisfied: true, evidenceSummary: `Missing: ${matchedPlugin.sanitizerHint}`, sourceType: "AST" },
-            { requirement: "Behavioral proof", question: "Did multi-engine concordance confirm?", satisfied: true, evidenceSummary: `Checkmarx, IBM Code Scan & Fortify SCA confirmed ${matchedPlugin.pluginId}`, sourceType: "Controlled Check" },
+            { requirement: "Behavioral proof", question: "Did multi-engine concordance confirm?", satisfied: true, evidenceSummary: `XTRIKE XQL, XTRIKE DeepFlow & XTRIKE StructSCA confirmed ${matchedPlugin.pluginId}`, sourceType: "Controlled Check" },
             { requirement: "Alternative explanations", question: "Were comments/dead code excluded?", satisfied: true, evidenceSummary: "Active statement verified.", sourceType: "AST" },
             { requirement: "Reproducibility", question: "Bound to deterministic file/line/commit?", satisfied: true, evidenceSummary: `${fileObj.path}:${lineNumber} @ ${commitSha.slice(0, 8)}`, sourceType: "Controlled Check" },
           ],
@@ -1634,7 +1634,7 @@ export function scanFilesWithEnterpriseEngines(params: {
           regressionTest: `Verify ${matchedPlugin.pluginId} (${matchedPlugin.code}) returns 0 violations.`,
           rawSarifRecord: {
             schemaVersion: "2.1.0",
-            toolDriver: "Checkmarx + 400-Plugin Dispatcher",
+            toolDriver: "XTRIKE XQL + 400-Plugin Dispatcher",
             ruleId: matchedPlugin.checkmarxQuery,
             level: matchedPlugin.severity === "Critical" || matchedPlugin.severity === "High" ? "error" : "warning",
             physicalLocation: `${fileObj.path}:${lineNumber}`,

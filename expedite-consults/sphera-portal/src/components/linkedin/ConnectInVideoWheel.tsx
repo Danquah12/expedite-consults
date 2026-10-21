@@ -76,6 +76,9 @@ export function ConnectInVideoWheel({
   const [isPlayingAuto, setIsPlayingAuto] = useState<boolean>(true)
   const [copyFeedback, setCopyFeedback] = useState<boolean>(false)
   const trackRef = useRef<HTMLDivElement>(null)
+  const disciplinesRef = useRef<HTMLDivElement>(null)
+  const disciplinesPausedRef = useRef<boolean>(false)
+  const disciplinesResumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Multi-Social Sharing State
   const [videoToShare, setVideoToShare] = useState<WheelVideoTalk | null>(null)
@@ -115,6 +118,39 @@ export function ConnectInVideoWheel({
     const offset = direction === 'left' ? -320 : 320
     trackRef.current.scrollBy({ left: offset, behavior: 'smooth' })
   }
+
+  // Slow, continuous left-to-right auto-scroll for the Disciplines filter strip
+  useEffect(() => {
+    const el = disciplinesRef.current
+    if (!el) return
+
+    let rafId: number
+    let pos = el.scrollWidth / 2
+    el.scrollLeft = pos
+
+    const step = () => {
+      const node = disciplinesRef.current
+      if (node && !disciplinesPausedRef.current) {
+        const half = node.scrollWidth / 2
+        if (half > 0) {
+          pos -= 0.35 // Decrement scrollLeft so pills move visually from left to right slowly
+          if (pos <= 0) {
+            pos += half
+          }
+          node.scrollLeft = pos
+        }
+      } else if (node) {
+        pos = node.scrollLeft
+      }
+      rafId = requestAnimationFrame(step)
+    }
+
+    rafId = requestAnimationFrame(step)
+    return () => {
+      cancelAnimationFrame(rafId)
+      if (disciplinesResumeTimer.current) clearTimeout(disciplinesResumeTimer.current)
+    }
+  }, [filterChips.length])
 
   // Auto-scroll loop when auto-play is enabled
   useEffect(() => {
@@ -369,26 +405,60 @@ export function ConnectInVideoWheel({
         </div>
       </div>
 
-      {/* Multi-Profession Enclave Filter Chips */}
-      <div className="flex items-center gap-1.5 overflow-x-auto py-2.5 no-scrollbar text-xs">
-        <span className="text-[10px] uppercase font-bold tracking-wider text-[#EFE8DC]/50 shrink-0 mr-1">
+      {/* Multi-Profession Enclave Filter Chips — Slow Left-to-Right Auto-Scroll */}
+      <div className="flex items-center gap-2 py-2.5 text-xs">
+        <span className="text-[10px] uppercase font-bold tracking-wider text-[#EFE8DC]/50 shrink-0">
           Disciplines:
         </span>
-        {filterChips.map(chip => (
-          <button
-            key={chip.id}
-            type="button"
-            onClick={() => setSelectedFilter(chip.id)}
-            className={`px-3 py-1 rounded-full text-[11px] font-semibold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
-              selectedFilter === chip.id
-                ? "bg-amber-500 text-zinc-950 font-bold shadow-xs scale-102"
-                : "bg-white/5 text-[#EFE8DC]/70 hover:bg-white/10 border border-white/10"
-            }`}
-          >
-            <span>{chip.icon}</span>
-            <span>{chip.label}</span>
-          </button>
-        ))}
+        <div
+          ref={disciplinesRef}
+          onMouseEnter={() => {
+            disciplinesPausedRef.current = true
+            if (disciplinesResumeTimer.current) clearTimeout(disciplinesResumeTimer.current)
+          }}
+          onMouseLeave={() => {
+            if (disciplinesResumeTimer.current) clearTimeout(disciplinesResumeTimer.current)
+            disciplinesResumeTimer.current = setTimeout(() => {
+              disciplinesPausedRef.current = false
+            }, 600)
+          }}
+          onTouchStart={() => {
+            disciplinesPausedRef.current = true
+            if (disciplinesResumeTimer.current) clearTimeout(disciplinesResumeTimer.current)
+          }}
+          onTouchEnd={() => {
+            if (disciplinesResumeTimer.current) clearTimeout(disciplinesResumeTimer.current)
+            disciplinesResumeTimer.current = setTimeout(() => {
+              disciplinesPausedRef.current = false
+            }, 2500)
+          }}
+          onWheel={() => {
+            disciplinesPausedRef.current = true
+            if (disciplinesResumeTimer.current) clearTimeout(disciplinesResumeTimer.current)
+            disciplinesResumeTimer.current = setTimeout(() => {
+              disciplinesPausedRef.current = false
+            }, 2000)
+          }}
+          className="flex-1 flex items-center gap-1.5 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {[0, 1].map(copyIdx =>
+            filterChips.map(chip => (
+              <button
+                key={`${copyIdx}-${chip.id}`}
+                type="button"
+                onClick={() => setSelectedFilter(chip.id)}
+                className={`px-3 py-1 rounded-full text-[11px] font-semibold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
+                  selectedFilter === chip.id
+                    ? "bg-amber-500 text-zinc-950 font-bold shadow-xs scale-102"
+                    : "bg-white/5 text-[#EFE8DC]/70 hover:bg-white/10 border border-white/10"
+                }`}
+              >
+                <span>{chip.icon}</span>
+                <span>{chip.label}</span>
+              </button>
+            ))
+          )}
+        </div>
       </div>
 
       {/* The Wheel Horizontal Scrolling Track */}

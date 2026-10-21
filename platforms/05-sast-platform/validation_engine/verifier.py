@@ -80,7 +80,7 @@ class IndependentEvidenceVerifier:
                 satisfied=bool(runtime_observations.get("alternatives_ruled_out", False)),
                 evidence_summary=runtime_observations.get(
                     "alternatives_note",
-                    "Baseline vs. test response compared against OpenTelemetry span & app log",
+                    "Baseline vs. test response compared against XTRIKE-Trace span & app log",
                 ),
                 source_type="otel_span",
             ),

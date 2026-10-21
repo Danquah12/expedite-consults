@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expedite CareerSuite | AI-Powered Resume Tailoring</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <!-- Welcome Landing Page (Shown to non-logged in users) -->
+    <div id="landing-container" class="landing-container" style="display: none;">
+        <div class="landing-card glass-panel">
+            <div class="brand-pill">✨ Expedite Consults</div>
+            <h2>Welcome to CareerSuite</h2>
+            <p>Register or sign in to save your profile, store your master &amp; tailored resumes, and tailor your resume to any job description.</p>
+            
+            <div class="landing-tabs">
+                <button type="button" class="landing-tab-btn active" id="landing-tab-login">Log In</button>
+                <button type="button" class="landing-tab-btn" id="landing-tab-register">Create Account</button>
+                <button type="button" class="landing-tab-btn" id="landing-tab-reset">Reset Password</button>
+            </div>
+            
+            <!-- Landing Login Form -->
+            <form id="landing-login-form" class="landing-form">
+                <div class="input-group">
+                    <label for="landing-username">Username or Email</label>
+                    <input type="text" id="landing-username" placeholder="Enter your username or email" required>
+                </div>
+                <div class="input-group">
+                    <label for="landing-password">Password</label>
+                    <input type="password" id="landing-password" placeholder="Enter your password" required>
+                </div>
+                <div class="landing-error hidden" id="landing-login-error"></div>
+                <button type="submit" class="btn primary-btn" style="width: 100%; margin-top: 10px;">Log In &amp; Tailor Resume</button>
+                <div style="display: flex; justify-content: space-between; margin-top: 14px; font-size: 0.85rem;">
+                    <a href="#" id="landing-goto-register">New user? Register here</a>
+                    <a href="#" id="landing-goto-reset">Forgot password?</a>
+                </div>
+            </form>
+            
+            <!-- Landing Register Form -->
+            <form id="landing-register-form" class="landing-form hidden">
+                <div class="grid-2-col" style="gap: 12px;">
+                    <div class="input-group" style="margin-bottom: 12px;">
+                        <label for="landing-reg-name">Full Name *</label>
+                        <input type="text" id="landing-reg-name" placeholder="e.g., Jane Doe" required>
+                    </div>
+                    <div class="input-group" style="margin-bottom: 12px;">
+                        <label for="landing-reg-username">Username *</label>
+                        <input type="text" id="landing-reg-username" placeholder="Choose username" required>
+                    </div>
+                </div>
+                <div class="grid-2-col" style="gap: 12px;">
+                    <div class="input-group" style="margin-bottom: 12px;">
+                        <label for="landing-reg-email">Email Address *</label>
+                        <input type="email" id="landing-reg-email" placeholder="name@example.com" required>
+                    </div>
+                    <div class="input-group" style="margin-bottom: 12px;">
+                        <label for="landing-reg-phone">Phone Number</label>
+                        <input type="text" id="landing-reg-phone" placeholder="e.g., (555) 234-5678">
+                    </div>
+                </div>
+                <div class="grid-2-col" style="gap: 12px;">
+                    <div class="input-group" style="margin-bottom: 12px;">
+                        <label for="landing-reg-location">Location (City, State)</label>
+                        <input type="text" id="landing-reg-location" placeholder="e.g., Laurel, MD">
+                    </div>
+                    <div class="input-group" style="margin-bottom: 12px;">
+                        <label for="landing-reg-role">Target Job Title</label>
+                        <input type="text" id="landing-reg-role" placeholder="e.g., Cybersecurity Analyst">
+                    </div>
+                </div>
+                <div class="grid-2-col" style="gap: 12px;">
+                    <div class="input-group" style="margin-bottom: 12px;">
+                        <label for="landing-reg-linkedin">LinkedIn URL (Optional)</label>
+                        <input type="text" id="landing-reg-linkedin" placeholder="linkedin.com/in/yourprofile">
+                    </div>
+                    <div class="input-group" style="margin-bottom: 12px;">
+                        <label for="landing-reg-clearance">Security Clearance</label>
+                        <select id="landing-reg-clearance" class="styled-select">
+                            <option value="">None / Not Applicable</option>
+                            <option value="Public Trust">Public Trust</option>
+                            <option value="Secret">Secret</option>
+                            <option value="Top Secret">Top Secret</option>
+                            <option value="Active TS/SCI">Active TS/SCI</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid-2-col" style="gap: 12px;">
+                    <div class="input-group" style="margin-bottom: 12px;">
+                        <label for="landing-reg-password">Password * (min 6 chars)</label>
+                        <input type="password" id="landing-reg-password" placeholder="Create password" minlength="6" required>
+                    </div>
+                    <div class="input-group" style="margin-bottom: 12px;">
+                        <label for="landing-reg-confirm">Confirm Password *</label>
+                        <input type="password" id="landing-reg-confirm" placeholder="Confirm password" minlength="6" required>
+                    </div>
+                </div>
+                <div class="input-group" style="margin-bottom: 12px;">
+                    <label for="landing-reg-resume">Master Resume (Optional — Paste now or add later)</label>
+                    <textarea id="landing-reg-resume" placeholder="Paste your current resume text here to save it directly to your profile..." style="height: 95px;"></textarea>
+                </div>
+                <div class="landing-error hidden" id="landing-reg-error"></div>
+                <button type="submit" class="btn primary-btn" style="width: 100%; margin-top: 8px;">🚀 Register &amp; Start Tailoring</button>
+            </form>
+
+            <!-- Landing Reset Password Form -->
+            <form id="landing-reset-form" class="landing-form hidden">
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px;">Verify your username and registered email address to set a new password.</p>
+                <div class="input-group" style="margin-bottom: 12px;">
+                    <label for="landing-reset-username">Username</label>
+                    <input type="text" id="landing-reset-username" placeholder="Your username" required>
+                </div>
+                <div class="input-group" style="margin-bottom: 12px;">
+                    <label for="landing-reset-email">Registered Email Address</label>
+                    <input type="email" id="landing-reset-email" placeholder="name@example.com" required>
+                </div>
+                <div class="grid-2-col" style="gap: 12px;">
+                    <div class="input-group" style="margin-bottom: 12px;">
+                        <label for="landing-reset-new-password">New Password (min 6 chars)</label>
+                        <input type="password" id="landing-reset-new-password" placeholder="New password" minlength="6" required>
+                    </div>
+                    <div class="input-group" style="margin-bottom: 12px;">
+                        <label for="landing-reset-confirm-password">Confirm New Password</label>
+                        <input type="password" id="landing-reset-confirm-password" placeholder="Confirm new password" minlength="6" required>
+                    </div>
+                </div>
+                <div class="landing-error hidden" id="landing-reset-error"></div>
+                <div class="landing-success hidden" id="landing-reset-success"></div>
+                <button type="submit" class="btn primary-btn" style="width: 100%; margin-top: 10px;">🔑 Update Password</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="app-layout">
+        <!-- Sidebar for History -->
+        <aside class="history-sidebar glass-panel">
+            <h3>My Tailored Resumes</h3>
+            <div id="history-list" class="history-list">
+                <!-- History items injected here -->
+            </div>
+            <button type="button" id="clear-history-btn" class="btn secondary-btn" style="width: 100%; margin-top: 15px; font-size: 0.85rem;">🗑️ Clear History</button>
+        </aside>
+
+        <div class="container glass-panel">
+            <header>
+                <div class="user-bar" id="user-bar">
+                    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                        <span id="user-welcome">👋 Welcome, Guest</span>
+                        <span id="user-role-badge" class="badge hidden" style="background: rgba(59, 130, 246, 0.15); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.3); text-transform: none;"></span>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <button type="button" class="btn secondary-btn" id="quick-profile-btn" style="width: auto; margin: 0; padding: 0.45rem 0.9rem; font-size: 0.85rem;">👤 My Profile &amp; Password</button>
+                        <button type="button" class="btn auth-btn" id="auth-action-btn" style="width: auto; margin: 0; padding: 0.5rem 1rem; font-size: 0.9rem;">Log In / Sign Up</button>
+                    </div>
+                </div>
+                <h1>Expedite CareerSuite</h1>
+                <p>Instantly tailor your Master Resume and Cover Letter to any Job Description with Expedite Consults.</p>
+            </header>
+
+            <!-- Main Navigation Tabs (Resume Tailor is active by default so users can immediately tailor) -->
+            <div class="main-nav-container">
+                <button type="button" class="main-nav-btn active" id="nav-btn-tailor">📝 Resume Tailor</button>
+                <button type="button" class="main-nav-btn" id="nav-btn-optimizer">🚀 Profile Maximizer</button>
+                <button type="button" class="main-nav-btn" id="nav-btn-tracker">💼 Job Tracker</button>
+                <button type="button" class="main-nav-btn" id="nav-btn-timeline">📅 Timeline &amp; Reminders</button>
+                <button type="button" class="main-nav-btn" id="nav-btn-settings">⚙️ Profile, Resume &amp; Password</button>
+                <button type="button" class="main-nav-btn hidden" id="nav-btn-admin">🛡️ Admin Panel</button>
+            </div>
+
+            <!-- PANEL 1: TAILOR -->
+            <div id="panel-tailor" class="content-panel">
+                <!-- Saved Last Tailored Resume Banner (Shown when user has a stored last tailored resume in DB) -->
+                <div id="last-resume-banner" class="last-resume-banner hidden">
+                    <div class="last-resume-banner-left">
+                        <div class="last-resume-tag">📌 Your Last Tailored Resume (Saved in Database)</div>
+                        <h4 id="last-resume-title-display">Target Role at Target Company</h4>
+                        <p id="last-resume-meta-display">ATS Fit Score: --% • Saved on --</p>
+                    </div>
+                    <div class="last-resume-banner-actions">
+                        <button type="button" class="btn primary-btn" id="btn-view-last-resume" style="width: auto; margin: 0; padding: 0.55rem 1rem; font-size: 0.85rem;">👁️ View Last Package</button>
+                        <a id="btn-dl-last-resume" class="btn secondary-btn" style="width: auto; margin: 0; padding: 0.55rem 1rem; font-size: 0.85rem; display: inline-flex; align-items: center;" download>📥 Download Last Resume (.docx)</a>
+                        <button type="button" class="btn secondary-btn" id="btn-load-last-jd" style="width: auto; margin: 0; padding: 0.55rem 1rem; font-size: 0.85rem;">🔄 Reuse Last JD</button>
+                    </div>
+                </div>
+
+                <div class="tabs-container">
+                    <button type="button" class="tab-btn active" id="tab-standard">Standard Corporate</button>
+                    <button type="button" class="tab-btn" id="tab-federal">Federal Government</button>
+                </div>
+
+                <form id="generator-form">
+                    <div class="input-group">
+                        <label for="api-key">Gemini API Key (Required)</label>
+                        <input type="password" id="api-key" placeholder="AIzaSy..." required>
+                        <small>Get a free key from <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a>. Automatically saved to your account profile.</small>
+                    </div>
+
+                    <div class="grid-2-col">
+                        <div class="input-group">
+                            <label for="candidate-name">Candidate Name</label>
+                            <input type="text" id="candidate-name" placeholder="e.g., Jane Doe" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="candidate-contact">Contact Information</label>
+                            <input type="text" id="candidate-contact" placeholder="Email | Phone | Location | LinkedIn" required>
+                        </div>
+                    </div>
+
+                    <div class="grid-2-col">
+                        <div class="input-group">
+                            <label for="target-company">Target Company (For Cover Letter)</label>
+                            <input type="text" id="target-company" placeholder="e.g., GovCIO" required>
+                        </div>
+                        <div class="input-group" style="grid-column: 1 / -1; margin-top: 0.5rem;">
+                            <label class="template-gallery-label">🎨 Select Resume Template Design Style</label>
+                            <select id="resume-template" style="display: none;" required>
+                                <option value="cyber_navy">Executive Cyber Director</option>
+                            </select>
+                            <div id="template-gallery" class="template-gallery-grid"></div>
+                        </div>
+                    </div>
+
+                    <!-- Federal Only Fields -->
+                    <div id="federal-fields" class="hidden-fields">
+                        <div class="grid-2-col">
+                            <div class="input-group">
+                                <label for="federal-gs">Target GS Grade / Target Salary</label>
+                                <input type="text" id="federal-gs" placeholder="e.g., GS-13, GS-14">
+                            </div>
+                            <div class="input-group">
+                                <label for="federal-series">Target Series Code</label>
+                                <input type="text" id="federal-series" placeholder="e.g., 2210 IT Management">
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="federal-ksa">Required KSAs or Questionnaires</label>
+                            <textarea id="federal-ksa" placeholder="Paste the specific Knowledge, Skills, and Abilities prompts from USAJOBS..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="grid-2-col">
+                        <div class="input-group">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <label for="master-resume" style="margin-bottom: 0;">Master Resume (Raw Text)</label>
+                                <button type="button" id="quick-save-resume-btn" class="btn secondary-btn" style="width: auto; margin: 0; padding: 0.3rem 0.75rem; font-size: 0.78rem;">💾 Save Resume to Profile</button>
+                            </div>
+                            <textarea id="master-resume" placeholder="Paste your entire Master Resume here..." required></textarea>
+                            <small id="master-resume-save-status" style="color: #6ee7b7; display: none;">✅ Saved to your profile database!</small>
+                        </div>
+                        <div class="input-group">
+                            <label for="linkedin-experience">LinkedIn Experience (Optional)</label>
+                            <textarea id="linkedin-experience" placeholder="Paste your LinkedIn Experience section here so the AI can reconcile and merge it with your resume..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="job-description">Job Description</label>
+                        <textarea id="job-description" placeholder="Paste the target Job Description here..." required></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label for="possible-questions">Possible Interview Questions (Optional)</label>
+                        <textarea id="possible-questions" placeholder="Paste any specific interview questions provided by the recruiter so the AI can answer them using the STAR method..." style="height: 100px;"></textarea>
+                    </div>
+
+                    <div style="display: flex; gap: 15px; margin-top: 20px;">
+                        <button type="submit" id="submit-btn" style="flex: 3; margin: 0;">
+                            <span class="btn-text">Generate ATS Package &amp; Save Resume</span>
+                            <div class="spinner hidden" id="loading-spinner"></div>
+                        </button>
+                        <button type="button" id="clear-form-btn" class="btn secondary-btn" style="flex: 1; margin: 0;">Clear Job Form</button>
+                    </div>
+                </form>
+
+                <div id="status-message" class="hidden"></div>
+                
+                <div id="results" class="hidden">
+                    <div class="dashboard">
+                        <div class="score-card">
+                            <h3>ATS Fit Score</h3>
+                            <div class="score-circle">
+                                <span id="fit-score-value">0</span>%
+                            </div>
+                        </div>
+                        <div class="analysis-card">
+                            <h3>Top Strengths</h3>
+                            <ul id="top-strengths-list"></ul>
+                            <h3 style="margin-top: 15px; color: #e74c3c;">Missing Keywords</h3>
+                            <ul id="missing-keywords-list" style="color: #c0392b;"></ul>
+                        </div>
+                    </div>
+
+                    <!-- Tailored Resume Live Preview Card -->
+                    <div class="outreach-card" id="tailored-resume-preview-card" style="margin-bottom: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                            <h3 style="margin-bottom: 0;">📄 Tailored Resume Preview (Stored in Your Account)</h3>
+                            <button type="button" class="copy-btn" onclick="copyText('tailored-resume-preview-text')">📋 Copy Resume Text</button>
+                        </div>
+                        <textarea id="tailored-resume-preview-text" readonly style="height: 220px; font-family: inherit;"></textarea>
+                    </div>
+                    
+                    <div class="outreach-card">
+                        <h3>Recruiter Outreach Message</h3>
+                        <textarea id="outreach-message" readonly></textarea>
+                        <button type="button" class="copy-btn" onclick="copyText('outreach-message')">📋 Copy</button>
+                    </div>
+
+                    <div class="outreach-card" style="margin-top: 1.5rem;">
+                        <h3>LinkedIn Profile Optimizer</h3>
+                        <h4 style="color: var(--text-muted); margin-bottom: 0.5rem; margin-top: 0.5rem;">Headline</h4>
+                        <textarea id="linkedin-headline" readonly style="height: 60px;"></textarea>
+                        <h4 style="color: var(--text-muted); margin-bottom: 0.5rem; margin-top: 0.5rem;">About Section</h4>
+                        <textarea id="linkedin-about" readonly style="height: 120px;"></textarea>
+                    </div>
+
+                    <div class="outreach-card" style="margin-top: 1.5rem;">
+                        <h3>Workday / Taleo Auto-Filler</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">Copy this raw JSON to easily paste into application portal text boxes.</p>
+                        <textarea id="workday-json" readonly style="height: 150px; font-family: monospace;"></textarea>
+                        <button type="button" class="copy-btn" onclick="copyText('workday-json')">📋 Copy JSON</button>
+                    </div>
+
+                    <h3 style="margin-top: 30px;">Career Suite Documents Generated!</h3>
+                    <div class="actions" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 15px;">
+                        <a id="download-resume" class="btn primary-btn" style="width: auto; margin: 0;" download>Download ATS Resume (.docx)</a>
+                        <a id="download-cover" class="btn secondary-btn" style="width: auto; margin: 0;" download>Download Cover Letter (.docx)</a>
+                        <a id="download-report" class="btn secondary-btn" style="display:none; width: auto; margin: 0;" download>Download ATS Report (.docx)</a>
+                        <a id="download-prep" class="btn secondary-btn" style="display:none; width: auto; margin: 0;" download>Download Interview Prep (.docx)</a>
+                        <a id="download-thank-you" class="btn secondary-btn" style="display:none; width: auto; margin: 0;" download>Download Thank You Note (.docx)</a>
+                        <a id="download-plan" class="btn secondary-btn" style="display:none; width: auto; margin: 0;" download>Download 90-Day Plan (.docx)</a>
+                        <a id="download-ksa" class="btn secondary-btn" style="display:none; background: #0f172a; color: white; width: auto; margin: 0;" download>Download Federal KSAs (.docx)</a>
+                    </div>
+
+                    <div class="email-card" style="margin-top: 2rem; background: rgba(15, 23, 42, 0.6); padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border-color); text-align: left;">
+                        <h3 style="color: #a78bfa !important; margin-bottom: 1rem;">📨 Email Documents Directly</h3>
+                        <div style="display: flex; flex-direction: column; gap: 1rem;">
+                            <div class="input-group" style="margin: 0;">
+                                <label for="email-document-select">Select Documents to Send</label>
+                                <select id="email-document-select" style="width: 100%; padding: 0.8rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(0,0,0,0.2); color: white; font-family:inherit;">
+                                    <option value="all">📁 All Generated Documents (Full Package)</option>
+                                    <option value="download-resume">📝 Tailored ATS Resume</option>
+                                    <option value="download-cover">✉️ Cover Letter</option>
+                                    <option value="download-report">📊 ATS Match Report</option>
+                                    <option value="download-prep">🎯 Interview Preparation Guide</option>
+                                    <option value="download-thank-you">✉️ Thank You Note</option>
+                                    <option value="download-plan">📅 90-Day Plan</option>
+                                    <option value="download-ksa">🏛️ Federal KSAs</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; gap: 1rem; align-items: center;">
+                                <input type="email" id="target-email" placeholder="Recruiter or Your Email Address" style="flex: 1; margin: 0;">
+                                <button type="button" id="send-email-btn" style="width: auto; margin: 0; background: #8b5cf6;" onclick="sendEmail()">Send Email</button>
+                            </div>
+                        </div>
+                        <div id="email-status" style="margin-top: 1rem; font-size: 0.9rem;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANEL 2: TRACKER -->
+            <div id="panel-tracker" class="content-panel hidden">
+                <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h2>Job Application Tracker</h2>
+                    <button type="button" class="btn primary-btn" id="add-manual-app-btn" style="width: auto; margin: 0; padding: 0.8rem 1.5rem;">➕ Add Job Manually</button>
+                </div>
+                <div class="tracker-filters" style="display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px;">
+                    <button type="button" class="filter-btn active" data-status="all">All</button>
+                    <button type="button" class="filter-btn" data-status="Generated">Generated</button>
+                    <button type="button" class="filter-btn" data-status="Draft">Draft</button>
+                    <button type="button" class="filter-btn" data-status="Applied">Applied</button>
+                    <button type="button" class="filter-btn" data-status="Interviewing">Interviewing</button>
+                    <button type="button" class="filter-btn" data-status="Offer">Offer</button>
+                    <button type="button" class="filter-btn" data-status="Rejected">Rejected</button>
+                </div>
+                <div id="tracker-list" class="tracker-list" style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
+                    <!-- Jobs rendered via JS -->
+                </div>
+            </div>
+
+            <!-- PANEL 3: TIMELINE -->
+            <div id="panel-timeline" class="content-panel hidden">
+                <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h2>Timelines &amp; Reminders</h2>
+                    <button type="button" class="btn primary-btn" id="add-general-event-btn" style="width: auto; margin: 0; padding: 0.8rem 1.5rem;">➕ Schedule Event</button>
+                </div>
+                <div class="timeline-layout-grid" style="display: grid; grid-template-columns: 1fr; gap: 2rem;">
+                    <div class="timeline-wrap glass-panel" style="padding: 2rem; position: relative;">
+                        <div class="vertical-line" style="position: absolute; left: 35px; top: 2rem; bottom: 2rem; width: 3px; background: rgba(59, 130, 246, 0.3); z-index: 1;"></div>
+                        <div id="timeline-events-list" style="position: relative; z-index: 2; display: flex; flex-direction: column; gap: 2rem;">
+                            <!-- Injected via JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANEL 4: SETTINGS, REGISTRATION INFO, LAST RESUME & CHANGE PASSWORD -->
+            <div id="panel-settings" class="content-panel hidden">
+                <h2>👤 User Profile, Registration Info &amp; Security</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 1.75rem;">Manage your registration details, default Master Resume, last tailored resume, and account password stored in the backend database.</p>
+
+                <!-- Account Summary Header -->
+                <div class="profile-summary-bar" id="profile-summary-bar">
+                    <div>
+                        <span style="color: var(--text-secondary); font-size: 0.85rem;">Account Username:</span>
+                        <strong id="settings-username-display" style="margin-left: 6px; color: #60a5fa;">Guest</strong>
+                    </div>
+                    <div>
+                        <span style="color: var(--text-secondary); font-size: 0.85rem;">Registered Since:</span>
+                        <strong id="settings-created-display" style="margin-left: 6px;">--</strong>
+                    </div>
+                    <div>
+                        <span style="color: var(--text-secondary); font-size: 0.85rem;">Last Updated:</span>
+                        <strong id="settings-updated-display" style="margin-left: 6px;">--</strong>
+                    </div>
+                </div>
+
+                <!-- 1. Profile & Registration Info Form -->
+                <div class="settings-section-card">
+                    <h3>📋 Registration &amp; Profile Details</h3>
+                    <form id="profile-settings-form">
+                        <div class="grid-2-col">
+                            <div class="input-group">
+                                <label for="settings-name">Full Name</label>
+                                <input type="text" id="settings-name" placeholder="e.g., Jane Doe">
+                            </div>
+                            <div class="input-group">
+                                <label for="settings-email">Email Address</label>
+                                <input type="email" id="settings-email" placeholder="name@example.com">
+                            </div>
+                        </div>
+                        <div class="grid-2-col">
+                            <div class="input-group">
+                                <label for="settings-phone">Phone Number</label>
+                                <input type="text" id="settings-phone" placeholder="e.g., (555) 234-5678">
+                            </div>
+                            <div class="input-group">
+                                <label for="settings-location">Location (City, State)</label>
+                                <input type="text" id="settings-location" placeholder="e.g., Laurel, MD">
+                            </div>
+                        </div>
+                        <div class="grid-2-col">
+                            <div class="input-group">
+                                <label for="settings-linkedin-url">LinkedIn Profile URL</label>
+                                <input type="text" id="settings-linkedin-url" placeholder="linkedin.com/in/yourprofile">
+                            </div>
+                            <div class="input-group">
+                                <label for="settings-target-role">Target Job Title / Industry</label>
+                                <input type="text" id="settings-target-role" placeholder="e.g., Senior Cybersecurity Engineer">
+                            </div>
+                        </div>
+                        <div class="grid-2-col">
+                            <div class="input-group">
+                                <label for="settings-clearance">Security Clearance</label>
+                                <select id="settings-clearance" class="styled-select">
+                                    <option value="">None / Not Applicable</option>
+                                    <option value="Public Trust">Public Trust</option>
+                                    <option value="Secret">Secret</option>
+                                    <option value="Top Secret">Top Secret</option>
+                                    <option value="Active TS/SCI">Active TS/SCI</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label for="settings-contact">Resume Header Contact Line</label>
+                                <input type="text" id="settings-contact" placeholder="Email | Phone | Location | LinkedIn">
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="settings-api-key">Default Gemini API Key</label>
+                            <input type="password" id="settings-api-key" placeholder="AIzaSy...">
+                        </div>
+                        <div class="grid-2-col">
+                            <div class="input-group">
+                                <label for="settings-resume">Saved Master Resume (Raw Text)</label>
+                                <textarea id="settings-resume" placeholder="Paste your default Master Resume here..." style="height: 250px;"></textarea>
+                            </div>
+                            <div class="input-group">
+                                <label for="settings-linkedin">Saved LinkedIn Experience (Optional)</label>
+                                <textarea id="settings-linkedin" placeholder="Paste default LinkedIn experience here..." style="height: 250px;"></textarea>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn primary-btn" style="width: auto; padding: 0.9rem 2rem; margin-top: 0.5rem;">💾 Save Profile &amp; Master Resume</button>
+                        <div id="settings-status" class="hidden" style="margin-top: 15px; padding: 1rem; border-radius: 8px; text-align: center; font-weight: 600;"></div>
+                    </form>
+                </div>
+
+                <!-- 2. Last Tailored Resume Stored in Database -->
+                <div class="settings-section-card" style="margin-top: 2rem;">
+                    <h3>📄 Your Last Tailored Resume (Database Record)</h3>
+                    <div id="settings-last-resume-empty" style="color: var(--text-secondary); font-size: 0.95rem;">
+                        No tailored resume has been generated under this account yet. Head to the <strong>Resume Tailor</strong> tab to generate your first tailored package!
+                    </div>
+                    <div id="settings-last-resume-content" class="hidden">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+                            <div>
+                                <div style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary);" id="settings-last-resume-heading">--</div>
+                                <div style="font-size: 0.88rem; color: var(--text-secondary); margin-top: 4px;" id="settings-last-resume-sub">--</div>
+                            </div>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                <a id="settings-dl-last-resume" class="btn primary-btn" style="width: auto; margin: 0; padding: 0.55rem 1.1rem; font-size: 0.85rem;" download>📥 Download Last Resume (.docx)</a>
+                                <a id="settings-dl-last-cover" class="btn secondary-btn" style="width: auto; margin: 0; padding: 0.55rem 1.1rem; font-size: 0.85rem;" download>✉️ Download Cover Letter (.docx)</a>
+                            </div>
+                        </div>
+                        <label style="font-size: 0.85rem; color: var(--text-secondary);">Last Tailored Resume Text Snapshot</label>
+                        <textarea id="settings-last-resume-preview" readonly style="height: 200px; margin-top: 6px; font-size: 0.88rem;"></textarea>
+                    </div>
+                </div>
+
+                <!-- 3. Change Password Section -->
+                <div class="settings-section-card" style="margin-top: 2rem;">
+                    <h3>🔒 Change Account Password</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.25rem;">Update your login password stored in the CareerSuite database.</p>
+                    <form id="change-password-form">
+                        <div class="grid-2-col">
+                            <div class="input-group">
+                                <label for="cp-current-password">Current Password</label>
+                                <input type="password" id="cp-current-password" placeholder="Enter current password" required>
+                            </div>
+                            <div></div>
+                        </div>
+                        <div class="grid-2-col">
+                            <div class="input-group">
+                                <label for="cp-new-password">New Password (min 6 characters)</label>
+                                <input type="password" id="cp-new-password" placeholder="Enter new password" minlength="6" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="cp-confirm-password">Confirm New Password</label>
+                                <input type="password" id="cp-confirm-password" placeholder="Confirm new password" minlength="6" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn primary-btn" style="width: auto; padding: 0.85rem 1.75rem; background: #8b5cf6;">🔑 Update Password</button>
+                        <div id="change-password-status" class="hidden" style="margin-top: 15px; padding: 1rem; border-radius: 8px; text-align: center; font-weight: 600;"></div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- PANEL 5: PROFILE MAXIMIZER -->
+            <div id="panel-optimizer" class="content-panel hidden">
+                <h2>Profile Maximizer &amp; Platform Optimizer</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 2rem;">Optimize your profiles for LinkedIn, Indeed, and other platforms using your Master Resume to dramatically increase visibility to recruiters.</p>
+                
+                <form id="optimizer-form">
+                    <div class="input-group">
+                        <label for="optimizer-api-key">Gemini API Key</label>
+                        <input type="password" id="optimizer-api-key" placeholder="AIzaSy..." required>
+                    </div>
+                    <div class="input-group">
+                        <label for="optimizer-target-role">Target Job Title / Industry (Optional)</label>
+                        <input type="text" id="optimizer-target-role" placeholder="e.g. Cybersecurity Analyst, Software Engineer">
+                    </div>
+                    <div class="input-group">
+                        <label for="optimizer-resume">Master Resume (Raw Text)</label>
+                        <textarea id="optimizer-resume" placeholder="Paste your Master Resume here..." style="height: 200px;" required></textarea>
+                    </div>
+                    <button type="submit" class="btn primary-btn" style="width: auto; padding: 1rem 2rem;">🚀 Maximize Platform Profiles</button>
+                </form>
+
+                <!-- RESULTS PANEL -->
+                <div id="optimizer-results" class="hidden" style="margin-top: 30px;">
+                    <div style="text-align: center; margin-bottom: 25px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+                        <a id="download-optimizer-doc" class="btn primary-btn" style="width: auto; display: inline-block; margin: 0; background: linear-gradient(135deg, #10b981, #059669); border-color: #10b981;" download>📥 Download Profile Update Guide (.docx)</a>
+                        <button type="button" id="send-to-tailor-btn" class="btn primary-btn" style="width: auto; margin: 0; background: linear-gradient(135deg, #3b82f6, #1d4ed8); border-color: #3b82f6;" onclick="sendOptimizerToTailor()">⚡ Send to Resume Tailor</button>
+                    </div>
+                    <div class="tabs-container" id="optimizer-tabs" style="margin-bottom: 20px;">
+                        <button type="button" class="tab-btn active" data-opt-tab="linkedin">LinkedIn</button>
+                        <button type="button" class="tab-btn" data-opt-tab="indeed">Indeed</button>
+                        <button type="button" class="tab-btn" data-opt-tab="guides">Step-by-Step Upload Guides</button>
+                    </div>
+
+                    <div class="opt-sub-panel" id="opt-panel-linkedin"></div>
+                    <div class="opt-sub-panel hidden" id="opt-panel-indeed"></div>
+                    <div class="opt-sub-panel hidden" id="opt-panel-guides"></div>
+
+                    <!-- EMAIL BLOCK -->
+                    <div class="email-card" style="margin-top: 2rem; background: rgba(15, 23, 42, 0.6); padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border-color); text-align: left;">
+                        <h3 style="color: #a78bfa !important; margin-bottom: 1rem;">📨 Email Profile Guide Directly</h3>
+                        <div style="display: flex; gap: 1rem; align-items: center;">
+                            <input type="email" id="optimizer-target-email" placeholder="Customer or Recruiter Email Address" style="flex: 1; margin: 0;">
+                            <button type="button" id="send-optimizer-email-btn" style="width: auto; margin: 0; background: #8b5cf6;" onclick="sendOptimizerEmail()">Send Guide</button>
+                        </div>
+                        <div id="optimizer-email-status" style="margin-top: 1rem; font-size: 0.9rem;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANEL 6: ADMIN WORKSPACE -->
+            <div id="panel-admin" class="content-panel hidden">
+                <h2>🛡️ Administrative Control &amp; Audits</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 2rem;">Audit system logins, review user activities, and manage registered user accounts and passwords.</p>
+
+                <div class="tabs-container" style="margin-bottom: 25px;">
+                    <button type="button" class="tab-btn active" id="admin-tab-logs">📊 Activity &amp; Logins Audit</button>
+                    <button type="button" class="tab-btn" id="admin-tab-users">👥 User Directory</button>
+                </div>
+
+                <!-- Admin Subpanel: Audit Logs -->
+                <div class="admin-sub-panel" id="admin-panel-logs">
+                    <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+                        <input type="text" id="admin-log-search" placeholder="Search by username or action..." style="flex: 1; margin: 0; min-width: 200px;">
+                        <select id="admin-log-filter-action" style="padding: 0.8rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(0,0,0,0.2); color: white; font-family: inherit;">
+                            <option value="ALL">All Operations</option>
+                            <option value="LOGIN">Logins</option>
+                            <option value="REGISTER">Registrations</option>
+                            <option value="CHANGE_PASSWORD">Password Changes</option>
+                            <option value="RESET_PASSWORD">Password Resets</option>
+                            <option value="UPDATE_PROFILE">Profile Updates</option>
+                            <option value="TAILOR_RESUME">Tailor Resumes</option>
+                            <option value="OPTIMIZE_PROFILE">Profile Maximizer</option>
+                            <option value="DELETE_USER">Deletions</option>
+                        </select>
+                    </div>
+
+                    <div style="overflow-x: auto;">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>User</th>
+                                    <th>Operation</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-logs-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Admin Subpanel: Users Directory -->
+                <div class="admin-sub-panel hidden" id="admin-panel-users">
+                    <div style="overflow-x: auto;">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Username &amp; Name</th>
+                                    <th>Email &amp; Phone</th>
+                                    <th>Role / Clearance</th>
+                                    <th>Registered</th>
+                                    <th>Saved Resume / Tailored</th>
+                                    <th>Management Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-users-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div> <!-- end container -->
+    </div> <!-- end app-layout -->
+
+    <!-- AUTH MODAL -->
+    <div id="auth-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel" style="max-width: 540px;">
+            <button class="close-modal" id="close-auth-btn">&times;</button>
+            <div class="auth-tabs" style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                <button type="button" class="auth-tab active" id="auth-tab-login" style="background:none; border:none; color:white; font-size:1.05rem; font-weight:bold; cursor:pointer; width:50%; margin:0; padding:10px 0;">Log In</button>
+                <button type="button" class="auth-tab" id="auth-tab-register" style="background:none; border:none; color:var(--text-secondary); font-size:1.05rem; font-weight:bold; cursor:pointer; width:50%; margin:0; padding:10px 0;">Create Account</button>
+            </div>
+            
+            <form id="login-form" class="auth-form" style="display:flex; flex-direction:column; gap:15px;">
+                <div class="input-group" style="margin:0;">
+                    <label for="login-username">Username or Email</label>
+                    <input type="text" id="login-username" required>
+                </div>
+                <div class="input-group" style="margin:0;">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" required>
+                </div>
+                <button type="submit" style="margin-top:10px;">Log In</button>
+            </form>
+            
+            <form id="register-form" class="auth-form hidden" style="display:flex; flex-direction:column; gap:12px;">
+                <div class="grid-2-col" style="gap: 12px;">
+                    <div class="input-group" style="margin:0;">
+                        <label for="register-name">Full Name *</label>
+                        <input type="text" id="register-name" placeholder="Jane Doe" required>
+                    </div>
+                    <div class="input-group" style="margin:0;">
+                        <label for="register-username">Username *</label>
+                        <input type="text" id="register-username" placeholder="janedoe" required>
+                    </div>
+                </div>
+                <div class="grid-2-col" style="gap: 12px;">
+                    <div class="input-group" style="margin:0;">
+                        <label for="register-email">Email *</label>
+                        <input type="email" id="register-email" placeholder="jane@example.com" required>
+                    </div>
+                    <div class="input-group" style="margin:0;">
+                        <label for="register-phone">Phone</label>
+                        <input type="text" id="register-phone" placeholder="(555) 234-5678">
+                    </div>
+                </div>
+                <div class="grid-2-col" style="gap: 12px;">
+                    <div class="input-group" style="margin:0;">
+                        <label for="register-location">Location</label>
+                        <input type="text" id="register-location" placeholder="City, State">
+                    </div>
+                    <div class="input-group" style="margin:0;">
+                        <label for="register-role">Target Role</label>
+                        <input type="text" id="register-role" placeholder="Cybersecurity Engineer">
+                    </div>
+                </div>
+                <div class="grid-2-col" style="gap: 12px;">
+                    <div class="input-group" style="margin:0;">
+                        <label for="register-password">Password *</label>
+                        <input type="password" id="register-password" minlength="6" required>
+                    </div>
+                    <div class="input-group" style="margin:0;">
+                        <label for="register-confirm-password">Confirm Password *</label>
+                        <input type="password" id="register-confirm-password" minlength="6" required>
+                    </div>
+                </div>
+                <div class="input-group" style="margin:0;">
+                    <label for="register-resume">Master Resume (Optional)</label>
+                    <textarea id="register-resume" placeholder="Paste your Master Resume now or later..." style="height: 80px;"></textarea>
+                </div>
+                <button type="submit" style="margin-top:8px;">Register &amp; Tailor Resume</button>
+            </form>
+            
+            <div id="auth-error" class="error hidden" style="margin-top: 15px;"></div>
+        </div>
+    </div>
+
+    <!-- MANUAL APPLICATION MODAL -->
+    <div id="manual-app-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel" style="max-width: 500px;">
+            <button class="close-modal" id="close-manual-btn">&times;</button>
+            <h3 style="margin-bottom:15px; color:#60a5fa;">Add Job Application Manually</h3>
+            <form id="manual-app-form" style="display:flex; flex-direction:column; gap:15px;">
+                <div class="input-group" style="margin:0;">
+                    <label for="manual-company">Target Company</label>
+                    <input type="text" id="manual-company" required>
+                </div>
+                <div class="input-group" style="margin:0;">
+                    <label for="manual-title">Job Title</label>
+                    <input type="text" id="manual-title" required>
+                </div>
+                <div class="input-group" style="margin:0;">
+                    <label for="manual-status">Application Status</label>
+                    <select id="manual-status" style="width: 100%; padding: 0.8rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(0,0,0,0.2); color: white; font-family:inherit;">
+                        <option value="Draft" style="background: #151f32;">Draft</option>
+                        <option value="Applied" selected style="background: #151f32;">Applied</option>
+                        <option value="Interviewing" style="background: #151f32;">Interviewing</option>
+                        <option value="Offer" style="background: #151f32;">Offer</option>
+                        <option value="Rejected" style="background: #151f32;">Rejected</option>
+                    </select>
+                </div>
+                <div class="input-group" style="margin:0;">
+                    <label for="manual-applied-date">Applied Date</label>
+                    <input type="date" id="manual-applied-date">
+                </div>
+                <div class="input-group" style="margin:0;">
+                    <label for="manual-notes">Application Notes</label>
+                    <textarea id="manual-notes" style="height: 100px;" placeholder="Job link, salary range, location, reference details..."></textarea>
+                </div>
+                <button type="submit" style="margin-top:10px;">Add Job</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- EVENT SCHEDULER MODAL -->
+    <div id="event-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel" style="max-width: 500px;">
+            <button class="close-modal" id="close-event-btn">&times;</button>
+            <h3 id="event-modal-title" style="margin-bottom:15px; color:#a78bfa;">Schedule Timeline Event</h3>
+            <form id="event-form" style="display:flex; flex-direction:column; gap:15px;">
+                <input type="hidden" id="event-app-id">
+                <div class="input-group" style="margin:0;" id="event-job-select-group">
+                    <label for="event-job-select">Associated Application</label>
+                    <select id="event-job-select" style="width: 100%; padding: 0.8rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(0,0,0,0.2); color: white; font-family:inherit;"></select>
+                </div>
+                <div class="input-group" style="margin:0;">
+                    <label for="event-title-input">Event Title / Milestone</label>
+                    <input type="text" id="event-title-input" placeholder="e.g. Technical Screening, Hiring Manager Call" required>
+                </div>
+                <div class="input-group" style="margin:0;">
+                    <label for="event-date-input">Date &amp; Time</label>
+                    <input type="datetime-local" id="event-date-input" required>
+                </div>
+                <div class="input-group" style="margin:0;">
+                    <label for="event-description-input">Details / Prep Notes</label>
+                    <textarea id="event-description-input" style="height: 100px;" placeholder="Interviewer names, coding questions, salary details..."></textarea>
+                </div>
+                <button type="submit" style="margin-top:10px;">Schedule Event</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function copyText(elementId) {
+            const textElement = document.getElementById(elementId);
+            if (!textElement) return;
+            textElement.select();
+            document.execCommand('copy');
+            alert('Copied to clipboard!');
+        }
+
+        async function sendEmail() {
+            const email = document.getElementById('target-email').value;
+            const statusDiv = document.getElementById('email-status');
+            const docSelect = document.getElementById('email-document-select').value;
+            
+            if (!email) {
+                statusDiv.textContent = 'Please enter an email address.';
+                statusDiv.style.color = '#ef4444';
+                return;
+            }
+
+            statusDiv.textContent = 'Sending email...';
+            statusDiv.style.color = '#3b82f6';
+            
+            let fileUrls = [];
+            if (docSelect === 'all') {
+                fileUrls = [
+                    document.getElementById('download-resume').href,
+                    document.getElementById('download-cover').href,
+                    document.getElementById('download-report').href,
+                    document.getElementById('download-prep').href,
+                    document.getElementById('download-thank-you').href,
+                    document.getElementById('download-plan').href,
+                    document.getElementById('download-ksa').href
+                ];
+            } else {
+                const selectedEl = document.getElementById(docSelect);
+                if (selectedEl) {
+                    fileUrls = [selectedEl.href];
+                }
+            }
+
+            fileUrls = fileUrls.filter(url => {
+                if (!url || url.endsWith('#')) return false;
+                const matchEl = Array.from(document.querySelectorAll('.actions a')).find(a => a.href === url);
+                if (matchEl && matchEl.style.display === 'none') return false;
+                return true;
+            });
+
+            if (fileUrls.length === 0) {
+                statusDiv.textContent = '❌ Please generate the selected document first before emailing.';
+                statusDiv.style.color = '#ef4444';
+                return;
+            }
+
+            const token = localStorage.getItem('auth_token');
+            const headers = {'Content-Type': 'application/json'};
+            if (token) {
+                headers['Authorization'] = 'Bearer ' + token;
+            }
+
+            try {
+                const response = await fetch('/api/send_email', {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({ email: email, file_urls: fileUrls })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    if (data.status === 'mock') {
+                        statusDiv.textContent = 'ℹ️ Mock Email generated! Check backend logs for details.';
+                        statusDiv.style.color = '#f59e0b';
+                    } else {
+                        statusDiv.textContent = '✅ Email sent successfully!';
+                        statusDiv.style.color = '#10b981';
+                    }
+                } else {
+                    statusDiv.textContent = '❌ Error: ' + (data.detail || 'Failed to send.');
+                    statusDiv.style.color = '#ef4444';
+                }
+            } catch (error) {
+                statusDiv.textContent = '❌ Error sending email.';
+                statusDiv.style.color = '#ef4444';
+            }
+        }
+
+        async function sendOptimizerEmail() {
+            const email = document.getElementById('optimizer-target-email').value;
+            const statusDiv = document.getElementById('optimizer-email-status');
+            if (!email) {
+                statusDiv.textContent = 'Please enter an email address.';
+                statusDiv.style.color = '#ef4444';
+                return;
+            }
+
+            statusDiv.textContent = 'Sending email...';
+            statusDiv.style.color = '#3b82f6';
+            
+            const fileUrl = document.getElementById('download-optimizer-doc').href;
+            if (!fileUrl || fileUrl.endsWith('#')) {
+                statusDiv.textContent = '❌ Please generate the guide first.';
+                statusDiv.style.color = '#ef4444';
+                return;
+            }
+
+            const token = localStorage.getItem('auth_token');
+            const headers = {'Content-Type': 'application/json'};
+            if (token) {
+                headers['Authorization'] = 'Bearer ' + token;
+            }
+
+            try {
+                const response = await fetch('/api/send_email', {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({ email: email, file_urls: [fileUrl] })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    if (data.status === 'mock') {
+                        statusDiv.textContent = 'ℹ️ Mock Email generated! Check backend logs for details.';
+                        statusDiv.style.color = '#f59e0b';
+                    } else {
+                        statusDiv.textContent = '✅ Email sent successfully!';
+                        statusDiv.style.color = '#10b981';
+                    }
+                } else {
+                    statusDiv.textContent = '❌ Error: ' + (data.detail || 'Failed to send.');
+                    statusDiv.style.color = '#ef4444';
+                }
+            } catch (error) {
+                statusDiv.textContent = '❌ Error sending email.';
+                statusDiv.style.color = '#ef4444';
+            }
+        }
+
+        function sendOptimizerToTailor() {
+            const optResume = document.getElementById('optimizer-resume').value;
+            const liAbout = document.getElementById('li-about-text') ? document.getElementById('li-about-text').value : "";
+            
+            const expTextareas = document.querySelectorAll('[id^="li-exp-text-"]');
+            let liExpCombined = "";
+            if (liAbout) {
+                liExpCombined += "ABOUT ME / SUMMARY:\n" + liAbout + "\n\n";
+            }
+            
+            if (expTextareas.length > 0) {
+                liExpCombined += "OPTIMIZED WORK EXPERIENCE:\n";
+                expTextareas.forEach(ta => {
+                    const titleEl = ta.previousElementSibling?.querySelector('strong');
+                    const label = titleEl ? titleEl.textContent : "Experience";
+                    liExpCombined += `--- ${label} ---\n${ta.value}\n\n`;
+                });
+            }
+
+            const tailorResume = document.getElementById('master-resume');
+            const tailorLi = document.getElementById('linkedin-experience');
+            
+            if (tailorResume) {
+                tailorResume.value = optResume;
+                tailorResume.dispatchEvent(new Event('input'));
+            }
+            
+            if (tailorLi) {
+                tailorLi.value = liExpCombined;
+                tailorLi.dispatchEvent(new Event('input'));
+            }
+
+            const navBtnTailor = document.getElementById('nav-btn-tailor');
+            if (navBtnTailor) {
+                navBtnTailor.click();
+            }
+            
+            alert('⚡ Profile Maximizer details sent to Resume Tailor successfully! Forms are pre-filled and ready.');
+        }
+    </script>
+    <script src="/static/app.js"></script>
+</body>
+</html>

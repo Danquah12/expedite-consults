@@ -168,3 +168,63 @@
   border: 1px solid var(--border);
   box-shadow: 0 2px 8px rgba(31, 27, 24, 0.06);
 }
+
+/* ============================================================================
+ * XTRIKE PRINTABLE REPORT ENGINE (@media print)
+ * ============================================================================ */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 14mm 12mm 14mm 12mm;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    color: #1f1b18 !important;
+    font-size: 10pt !important;
+    line-height: 1.45 !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  header,
+  footer,
+  nav,
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .print-sheet {
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    background: #ffffff !important;
+  }
+
+  .print-avoid-break {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .print-page-break {
+    break-before: page !important;
+    page-break-before: always !important;
+  }
+
+  pre,
+  code {
+    white-space: pre-wrap !important;
+    word-break: break-word !important;
+    overflow-x: visible !important;
+  }
+}
+

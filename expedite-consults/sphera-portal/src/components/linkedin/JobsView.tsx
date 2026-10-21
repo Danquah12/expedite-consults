@@ -117,7 +117,24 @@ export function JobsView({
   onNavigateMarketplace
 }: JobsViewProps) {
   // Primary Master Mode
-  const [masterMode, setMasterMode] = useState<'find' | 'applications' | 'recruiting'>('find')
+  const [masterMode, setMasterMode] = useState<'find' | 'applications' | 'recruiting' | 'resumeprep'>('find')
+
+  // Resume Preparation App (https://tuhousing.vercel.app/) State
+  const [tailorTargetJob, setTailorTargetJob] = useState<GlobalJobItem | null>(null)
+  const [copiedJobDesc, setCopiedJobDesc] = useState(false)
+  const [resumeIframeKey, setResumeIframeKey] = useState(0)
+  const [isResumeFullscreen, setIsResumeFullscreen] = useState(false)
+
+  const handleTailorResumeForJob = (job: GlobalJobItem) => {
+    setTailorTargetJob(job)
+    const fullSpec = `Job Title: ${job.title}\nCompany: ${job.company}\nLocation: ${job.location}\nSalary: ${job.salaryRange || 'Competitive'}\n\nDescription:\n${job.description}\n\nRequirements:\n${(job.requirements || []).join('\n• ')}\n\nSkills & Tags: ${(job.tags || []).join(', ')}`
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(fullSpec).catch(() => {})
+      setCopiedJobDesc(true)
+      setTimeout(() => setCopiedJobDesc(false), 3500)
+    }
+    setMasterMode('resumeprep')
+  }
 
   const DOMAIN_CATEGORIES = getEnclaveJobCategories(currentUser?.professionEnclave)
 
@@ -366,6 +383,19 @@ export function JobsView({
 
             <button
               type="button"
+              onClick={() => setMasterMode('resumeprep')}
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
+                masterMode === 'resumeprep'
+                  ? "bg-emerald-600 text-white shadow-xs"
+                  : "text-emerald-700 dark:text-emerald-300 bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60"
+              }`}
+            >
+              <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+              <span>Resume Prep App</span>
+            </button>
+
+            <button
+              type="button"
               onClick={() => setMasterMode('applications')}
               className={`px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
                 masterMode === 'applications'
@@ -432,6 +462,41 @@ export function JobsView({
         <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
           {/* Left Rail: Domain Categories & Hubs */}
           <div className="md:col-span-4 lg:col-span-3 space-y-4">
+            {/* Resume Preparation App Card (Top of Left Rail) */}
+            <div className="rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50/90 via-teal-50/70 to-sky-50/80 p-4 shadow-xs dark:border-emerald-900/50 dark:from-emerald-950/40 dark:via-teal-950/30 dark:to-sky-950/30 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-xs text-emerald-900 dark:text-emerald-300 flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                  Resume Preparation App
+                </span>
+                <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[9px] font-bold text-white uppercase tracking-wider">
+                  Live Studio
+                </span>
+              </div>
+              <p className="text-[11px] text-zinc-600 dark:text-zinc-300 leading-relaxed">
+                AI Resume Tailor, ATS Fit Score, Corporate &amp; USAJOBS Federal KSAs, and Profile Maximizer.
+              </p>
+              <div className="flex items-center gap-1.5 pt-0.5">
+                <button
+                  type="button"
+                  onClick={() => setMasterMode('resumeprep')}
+                  className="flex-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1.5 text-[11px] font-bold text-white shadow-2xs transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                >
+                  <FileText className="h-3 w-3" />
+                  <span>Open Resume Studio</span>
+                </button>
+                <a
+                  href="https://tuhousing.vercel.app/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-lg bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 border border-emerald-200 dark:border-emerald-800 px-2.5 py-1.5 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 transition-colors flex items-center gap-1"
+                  title="Open Resume Preparation App in a new tab"
+                >
+                  <span>↗</span>
+                </a>
+              </div>
+            </div>
+
             {/* Domain Categories */}
             <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-2">
               <h3 className="font-bold text-xs uppercase tracking-wider text-zinc-500 mb-2 flex items-center gap-1.5">
@@ -491,9 +556,7 @@ export function JobsView({
 
             {/* CareerSuite Quick Link */}
             <div
-              onClick={() => {
-                if (onNavigateCareerSuite) onNavigateCareerSuite()
-              }}
+              onClick={() => setMasterMode('resumeprep')}
               className="rounded-xl border border-purple-200 bg-gradient-to-br from-purple-50 to-indigo-50 p-4 shadow-xs dark:border-purple-900/40 dark:from-purple-950/30 dark:to-indigo-950/30 cursor-pointer hover:border-purple-400 transition-all space-y-2"
             >
               <div className="flex items-center justify-between">
@@ -671,14 +734,25 @@ export function JobsView({
                         </div>
 
                         {/* Actions Right Side */}
-                        <div className="flex sm:flex-col items-center sm:items-end gap-2 shrink-0">
-                          <div className="flex items-center gap-1.5">
+                        <div className="flex sm:flex-col items-center sm:items-end gap-2 shrink-0 flex-wrap">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             <button
+                              type="button"
+                              onClick={() => handleTailorResumeForJob(job)}
+                              className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 border border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300 transition-all flex items-center gap-1 cursor-pointer"
+                              title="Tailor your resume & cover letter for this job using the Resume Preparation App"
+                            >
+                              <FileText className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                              <span>Tailor Resume</span>
+                            </button>
+
+                            <button
+                              type="button"
                               onClick={() => {
                                 setCareerTwinJob(job)
                                 setIsCareerTwinOpen(true)
                               }}
-                              className="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700 border border-purple-200 hover:bg-purple-100 dark:bg-purple-950/40 dark:border-purple-800 dark:text-purple-300 transition-all flex items-center gap-1"
+                              className="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700 border border-purple-200 hover:bg-purple-100 dark:bg-purple-950/40 dark:border-purple-800 dark:text-purple-300 transition-all flex items-center gap-1 cursor-pointer"
                               title="AI Interview Simulation"
                             >
                               <Sparkles className="h-3 w-3 text-amber-500" />
@@ -686,8 +760,9 @@ export function JobsView({
                             </button>
 
                             <button
+                              type="button"
                               onClick={() => toggleSaveJob(job.id)}
-                              className={`rounded-full p-1.5 transition-colors ${
+                              className={`rounded-full p-1.5 transition-colors cursor-pointer ${
                                 job.isSaved
                                   ? "text-[#0A66C2] bg-sky-50 dark:bg-sky-950"
                                   : "text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
@@ -991,6 +1066,162 @@ export function JobsView({
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODE 4: RESUME PREPARATION & AI TAILORING STUDIO (tuhousing.vercel.app) */}
+      {/* ========================================================================= */}
+      {masterMode === 'resumeprep' && (
+        <div
+          className={
+            isResumeFullscreen
+              ? "fixed inset-0 z-[80] bg-zinc-950/95 p-3 sm:p-5 flex flex-col gap-3 overflow-y-auto"
+              : "space-y-4"
+          }
+        >
+          {/* Studio Top Control Bar */}
+          <div className="rounded-2xl border border-emerald-200/90 dark:border-emerald-800/70 bg-gradient-to-r from-emerald-50/90 via-teal-50/70 to-sky-50/90 dark:from-emerald-950/50 dark:via-teal-950/40 dark:to-sky-950/40 p-4 shadow-xs">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsResumeFullscreen(false)
+                      setMasterMode('find')
+                    }}
+                    className="rounded-full bg-white dark:bg-zinc-800 px-3 py-1 text-xs font-bold text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 transition-colors cursor-pointer"
+                  >
+                    ← Back to Job Openings
+                  </button>
+                  <span className="rounded-full bg-emerald-600 px-2.5 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider flex items-center gap-1">
+                    <Sparkles className="h-3 w-3 text-amber-300" />
+                    Expedite CareerSuite™ Live Studio
+                  </span>
+                  <span className="text-[11px] font-semibold text-emerald-800 dark:text-emerald-300">
+                    Corporate &amp; Federal USAJOBS KSAs · ATS Fit Score · .DOCX Export
+                  </span>
+                </div>
+                <h2 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100">
+                  AI Resume Preparation, Tailoring &amp; Profile Maximizer
+                </h2>
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap shrink-0">
+                {/* Select any ConnectIn job to copy description for tailoring */}
+                <select
+                  value={tailorTargetJob?.id || ""}
+                  onChange={(e) => {
+                    const found = jobs.find((j) => j.id === e.target.value) || GLOBAL_JOBS_CATALOG.find((j) => j.id === e.target.value)
+                    if (found) {
+                      handleTailorResumeForJob(found)
+                    }
+                  }}
+                  className="rounded-full border border-emerald-300 dark:border-emerald-700 bg-white dark:bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-zinc-800 dark:text-zinc-200 max-w-[240px] truncate"
+                  title="Pick a ConnectIn job opening to copy its description for AI tailoring"
+                >
+                  <option value="">🎯 Pick a Job to Tailor Resume...</option>
+                  {(jobs.length > 0 ? jobs : GLOBAL_JOBS_CATALOG.slice(0, 15)).map((j) => (
+                    <option key={j.id} value={j.id}>
+                      {j.title} — {j.company}
+                    </option>
+                  ))}
+                </select>
+
+                <button
+                  type="button"
+                  onClick={() => setResumeIframeKey((prev) => prev + 1)}
+                  className="rounded-full bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 px-3 py-1.5 text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
+                  title="Reload Resume Preparation App"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  <span>Reload</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsResumeFullscreen((prev) => !prev)}
+                  className="rounded-full bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
+                >
+                  {isResumeFullscreen ? "Exit Fullscreen" : "⛶ Expand Fullscreen"}
+                </button>
+
+                <a
+                  href="https://tuhousing.vercel.app/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white px-4 py-1.5 text-xs font-bold transition-colors flex items-center gap-1.5 shadow-xs"
+                >
+                  <span>Open Full App</span>
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              </div>
+            </div>
+
+            {/* Active Target Job Helper Bar (when user clicked "Tailor Resume" on a job card) */}
+            {tailorTargetJob && (
+              <div className="mt-3 pt-3 border-t border-emerald-200/80 dark:border-emerald-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white/85 dark:bg-zinc-900/85 rounded-xl p-3 border">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="rounded bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:text-emerald-300">
+                      TARGET ROLE SELECTED
+                    </span>
+                    <span className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 truncate">
+                      {tailorTargetJob.title}
+                    </span>
+                    <span className="text-xs text-zinc-500">at {tailorTargetJob.company}</span>
+                  </div>
+                  <p className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5 truncate">
+                    Paste the copied job description into <strong>Resume Tailor → Step 2 (Target Job Description)</strong> below to generate your ATS-optimized resume &amp; cover letter.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => handleTailorResumeForJob(tailorTargetJob)}
+                    className="rounded-full bg-emerald-600 hover:bg-emerald-700 px-3.5 py-1.5 text-xs font-bold text-white transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                  >
+                    {copiedJobDesc ? (
+                      <>
+                        <Check className="h-3.5 w-3.5" />
+                        <span>Copied Job Description!</span>
+                      </>
+                    ) : (
+                      <>
+                        <FileText className="h-3.5 w-3.5" />
+                        <span>Copy Job Description</span>
+                      </>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTailorTargetJob(null)}
+                    className="rounded-full p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
+                    title="Clear target job"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Embedded Live Resume Preparation App (https://tuhousing.vercel.app/) */}
+          <div
+            className={`rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-lg bg-white dark:bg-zinc-900 ${
+              isResumeFullscreen ? "flex-1 min-h-[75vh]" : "h-[840px]"
+            }`}
+          >
+            <iframe
+              key={resumeIframeKey}
+              src="https://tuhousing.vercel.app/"
+              title="Expedite CareerSuite — AI-Powered Resume Preparation & Tailoring App"
+              className="w-full h-full border-0"
+              allow="camera; microphone; clipboard-write; clipboard-read; downloads"
+            />
           </div>
         </div>
       )}

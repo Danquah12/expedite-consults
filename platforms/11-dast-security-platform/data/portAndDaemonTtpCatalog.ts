@@ -2969,46 +2969,51 @@ function redactSensitiveTokens(text: string): string {
  */
 function buildConcreteSecurityRequirement(finding: Finding, cleanTitle: string, hostName: string, cwe: string): string {
   const t = cleanTitle.toUpperCase();
+  const fId = String(finding.id || "").toUpperCase();
+
+  if (fId.includes("-UNREACHABLE") || t.includes("UNREACHABLE") || t.includes("CONNECTION REFUSED") || cwe === "CWE-1059") {
+    return `Target host ${hostName} must resolve in public DNS and accept inbound HTTPS/TLSv1.2+ (port 443) or HTTP (port 80) connections from authorized assessment nodes within the 5,000ms SLA window.`;
+  }
+  if (fId.includes("-CLICKJACK") || t.includes("CLICKJACK") || t.includes("X-FRAME-OPTIONS") || t.includes("ANTI-FRAMING") || cwe === "CWE-1021") {
+    return `All HTML responses from ${hostName} must include 'X-Frame-Options: DENY' (or 'SAMEORIGIN') and 'Content-Security-Policy: frame-ancestors \\'none\\'' (or '\\'self\\'') to prohibit unauthorized cross-origin iframe embedding and UI redressing.`;
+  }
   if (t.includes("EXFILTRATION") || t.includes("DIRECTIVE GAPS") || (t.includes("CSP") && t.includes("CONNECT-SRC"))) {
     return `HTTP responses from ${hostName} must restrict 'connect-src' and 'frame-src' to explicit trusted origins (removing wildcard '*') and explicitly define 'frame-ancestors \\'self\\'', 'form-action \\'self\\'', and 'base-uri \\'self\\'' in the Content-Security-Policy header.`;
   }
-  if (t.includes("CSP") || t.includes("CONTENT-SECURITY-POLICY") || cwe === "CWE-693") {
+  if (fId.includes("-CSP") || t.includes("CONTENT-SECURITY-POLICY") || cwe === "CWE-693") {
     return `HTTP responses from ${hostName} must emit a Content-Security-Policy header that defines 'default-src \\'self\\'', enforces cryptographic nonces or SHA-384 hashes on 'script-src' without '\\'unsafe-inline\\'', '\\'unsafe-eval\\'', or public script-gadget CDNs, and sets 'object-src \\'none\\'', 'base-uri \\'self\\'', and 'frame-ancestors \\'self\\''.`;
   }
-  if (t.includes("HSTS") || t.includes("STRICT-TRANSPORT") || cwe === "CWE-319") {
+  if (fId.includes("-HSTS") || t.includes("HSTS") || t.includes("STRICT-TRANSPORT") || cwe === "CWE-319") {
     return `HTTPS responses from ${hostName} must emit 'Strict-Transport-Security: max-age=63072000; includeSubDomains; preload' to enforce encrypted TLS connections across the apex domain and all subdomains and prevent SSL-stripping or first-visit HTTP downgrade.`;
   }
-  if (t.includes("CLICKJACK") || t.includes("X-FRAME-OPTIONS") || t.includes("FRAMING") || cwe === "CWE-1021") {
-    return `All HTML responses from ${hostName} must include 'X-Frame-Options: DENY' (or 'SAMEORIGIN') and 'Content-Security-Policy: frame-ancestors \\'none\\'' (or '\\'self\\'') to prohibit unauthorized cross-origin iframe embedding and UI redressing.`;
-  }
-  if (t.includes("HARDENING HEADERS") || t.includes("REFERRER-POLICY") || t.includes("PERMISSIONS-POLICY") || t.includes("NOSNIFF") || cwe === "CWE-16") {
+  if (fId.includes("-HARDENING") || t.includes("HARDENING HEADERS") || t.includes("REFERRER-POLICY") || t.includes("PERMISSIONS-POLICY") || t.includes("NOSNIFF") || cwe === "CWE-16") {
     return `All HTTP responses from ${hostName} must return 'X-Content-Type-Options: nosniff', 'Referrer-Policy: strict-origin-when-cross-origin', and 'Permissions-Policy: camera=(), microphone=(), geolocation=()' in accordance with OWASP ASVS V14.4.`;
   }
-  if (t.includes("COOKIE") || cwe === "CWE-614" || cwe === "CWE-1004") {
+  if (fId.includes("-COOKIES") || t.includes("COOKIE") || cwe === "CWE-614" || cwe === "CWE-1004") {
     return `All Set-Cookie headers emitted by ${hostName} (${finding.parameter || "session/state cookies"}) must enforce the 'Secure', 'HttpOnly', and 'SameSite=Lax' (or 'Strict') attributes to prevent cleartext transmission, JavaScript DOM access, and cross-site transmission.`;
   }
-  if (t.includes("CORS") || cwe === "CWE-942") {
+  if (fId.includes("-CORS") || t.includes("CORS") || cwe === "CWE-942") {
     return `Cross-Origin Resource Sharing (CORS) on ${hostName} must validate the incoming 'Origin' header against an explicit server-side allowlist and must never reflect arbitrary origins or combine 'Access-Control-Allow-Origin: *' with 'Access-Control-Allow-Credentials: true'.`;
   }
-  if (t.includes("SRI") || t.includes("SUBRESOURCE INTEGRITY") || t.includes("EXTERNAL JAVASCRIPT") || cwe === "CWE-829" || cwe === "CWE-353") {
+  if (fId.includes("-SRI") || t.includes("SUBRESOURCE INTEGRITY") || t.includes("EXTERNAL JAVASCRIPT") || cwe === "CWE-829" || cwe === "CWE-353") {
     return `All third-party '<script>' and '<link rel="stylesheet">' tags loaded from external CDNs on ${hostName} must include cryptographic 'integrity="sha384-..."' and 'crossorigin="anonymous"' attributes to prevent supply-chain script tampering (OWASP WSTG-CLNT-01 / ASVS V14.2.2).`;
   }
-  if (t.includes("FORM") || t.includes("INPUT PARAMETER") || t.includes("CSRF") || cwe === "CWE-352") {
+  if (fId.includes("-FORMS-INPUTS") || t.includes("HTML FORM") || t.includes("INPUT PARAMETER") || t.includes("ANTI-CSRF") || cwe === "CWE-352" || cwe === "CWE-20") {
     return `All HTML '<form>' endpoints on ${hostName} must enforce cryptographically random anti-CSRF tokens alongside strict server-side input validation and parameterized query handling on all discovered parameters (${finding.parameter || "form/query inputs"}).`;
   }
-  if (t.includes("WELL-KNOWN") || t.includes("ROBOTS.TXT") || t.includes("SECURITY.TXT")) {
+  if (fId.includes("-WELLKNOWN") || t.includes("WELL-KNOWN") || t.includes("ROBOTS.TXT") || t.includes("SECURITY.TXT") || t.includes("RECONNAISSANCE ENDPOINTS")) {
     return `Public discovery files on ${hostName} (/robots.txt, /sitemap.xml) must not disclose sensitive internal or administrative routes, internal OpenAPI/GraphQL schemas must require authentication, and a valid RFC 9116 '/.well-known/security.txt' policy with 'Contact:' and 'Expires:' fields must be published.`;
   }
-  if (t.includes("SPIDER") || t.includes("ROUTE ENUMERATION")) {
+  if (fId.includes("-SPIDER-ROUTES") || t.includes("SPIDER") || t.includes("ROUTE ENUMERATION") || cwe === "CWE-425") {
     return `All client-referenced routes and spidered sub-pages on ${hostName} must enforce consistent HTTP security headers, authentication/authorization checks on non-public workflows, and disable production JavaScript source maps (.js.map) (OWASP API9:2023).`;
   }
-  if (t.includes("BANNER") || t.includes("TECHNOLOGY STACK") || t.includes("HEADER DISCLOSURE")) {
+  if (fId.includes("-BANNER") || t.includes("BANNER") || t.includes("TECHNOLOGY STACK") || t.includes("HEADER DISCLOSURE") || cwe === "CWE-497") {
     return `Reverse proxies and CDN edges serving ${hostName} must suppress verbose technology, CMS version, and internal backend cluster headers (${finding.parameter || "Server / X-Powered-By / X-Generator / X-Backend"}) before returning responses to external clients (OWASP WSTG-INFO-02 / ASVS V14.3.3).`;
   }
-  if (t.includes("CACHE-CONTROL") || t.includes("CROSS-ORIGIN ISOLATION") || t.includes("COOP") || cwe === "CWE-525") {
+  if (fId.includes("-CACHE-ISOLATION") || t.includes("CACHE-CONTROL") || t.includes("CROSS-ORIGIN ISOLATION") || t.includes("COOP") || cwe === "CWE-525") {
     return `Responses from ${hostName} must set 'Cross-Origin-Opener-Policy: same-origin', 'Cross-Origin-Resource-Policy: same-origin', and explicit 'Cache-Control: no-store, max-age=0' on dynamic or session-aware pages (OWASP WSTG-CLNT-14 / ASVS V14.4.6).`;
   }
-  if (t.includes("SPF") || t.includes("DMARC") || t.includes("DNS") || t.includes("CAA") || cwe === "CWE-290") {
+  if (fId.includes("-DNS") || t.includes("SPF") || t.includes("DMARC") || t.includes("DNS") || t.includes("CAA") || cwe === "CWE-290") {
     return `The DNS zone for ${hostName} must publish a strict Sender Policy Framework TXT record ('v=spf1 ... -all'), a DMARC record at '_dmarc.${hostName}' with 'p=quarantine' or 'p=reject', and CAA records restricting TLS certificate issuance to authorized CAs.`;
   }
   if (t.includes("MYSQL") || t.includes("LATERAL") || t.includes("DATABASE")) {
@@ -3037,7 +3042,7 @@ export function buildFormalFindingReport(
   const findingId = `DAST-WEB-2026-${String(idx + 1).padStart(3, "0")}`;
   const cleanTitle = (finding.title || "Validated Web Interface Security Vulnerability")
     .replace(/\s*\(PTES.*$/i, "")
-    .replace(/\s*on\s+https?:\/\/[^\s]+/i, "")
+    .replace(/\s+on\s+(?:https?:\/\/)?[a-z0-9.:-]+$/i, "")
     .trim();
 
   const url = finding.url || fallbackUrl || "https://demo.testfire.net";
@@ -3092,7 +3097,7 @@ export function buildFormalFindingReport(
     ? { score: "6.1", vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N" }
     : cwe === "CWE-829"
     ? { score: "5.9", vector: "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:C/C:L/I:L/A:N" }
-    : cwe === "CWE-1021" || cwe === "CWE-352"
+    : cwe === "CWE-1021" || cwe === "CWE-352" || cwe === "CWE-20"
     ? { score: finding.severity === "Medium" ? "5.4" : "3.5", vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:L/A:N" }
     : cwe === "CWE-319"
     ? {
@@ -3104,7 +3109,7 @@ export function buildFormalFindingReport(
         score: finding.severity === "Medium" ? "5.3" : "3.4",
         vector: finding.severity === "Medium" ? "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N" : "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:L/I:N/A:N"
       }
-    : cwe === "CWE-200" && titleUpper.includes("SPIDER")
+    : cwe === "CWE-425" || cwe === "CWE-497" || (cwe === "CWE-200" && titleUpper.includes("SPIDER"))
     ? { score: "3.1", vector: "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:N/A:N" }
     : cwe === "CWE-200" || cwe === "CWE-525"
     ? { score: "3.4", vector: "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:N/A:N" }
@@ -3291,7 +3296,7 @@ export function buildFormalFindingReport(
     ]
   };
 
-  // Map ONLY control-relevant WSTG / passive / DOM / DNS verification rules for live read-only web findings (never attaching Linux sudoers / Windows unquoted service path or active SQLi/CMDi scripts to passive HTTP header findings!)
+  const fIdUpper = String(finding.id || "").toUpperCase();
   const liveMappedScripts =
     cwe === "CWE-693"
       ? ["ZAP-10038 (Content-Security-Policy Scanner – WSTG-CONF-07)", "ZAP-10055 (CSP Directive & Wildcard Analyzer – ASVS V14.4.3)"]
@@ -3301,20 +3306,24 @@ export function buildFormalFindingReport(
       ? ["ZAP-10020 (X-Frame-Options & CSP frame-ancestors Scanner – WSTG-CLNT-09)"]
       : cwe === "CWE-16"
       ? ["ZAP-10021 (X-Content-Type-Options Verifier)", "ZAP-10050 (Referrer-Policy & Permissions-Policy Verifier – ASVS V14.4)"]
-      : cwe === "CWE-614"
+      : cwe === "CWE-614" || cwe === "CWE-1004"
       ? ["ZAP-10010 (Cookie No HttpOnly Flag)", "ZAP-10011 (Cookie Without Secure Flag)", "ZAP-10054 (Cookie Without SameSite Attribute – WSTG-SESS-02)"]
-      : cwe === "CWE-829"
+      : cwe === "CWE-942"
+      ? ["ZAP-40040 (CORS Header & Origin Reflection Verifier – WSTG-CLNT-07 / OWASP API8:2023)"]
+      : cwe === "CWE-829" || cwe === "CWE-353"
       ? ["ZAP-90003 (Subresource Integrity Attribute Missing – WSTG-CLNT-01 / ASVS V14.2.2)"]
-      : cwe === "CWE-352"
+      : cwe === "CWE-352" || cwe === "CWE-20" || fIdUpper.includes("-FORMS-INPUTS")
       ? ["ZAP-10202 (Absence of Anti-CSRF Tokens – WSTG-SESS-05)", "WSTG-INPV-01 (DOM Form & Parameter Surface Mapper)"]
-      : cwe === "CWE-525"
+      : cwe === "CWE-525" || fIdUpper.includes("-CACHE-ISOLATION")
       ? ["ZAP-10049 (Cache-Control & Cross-Origin Isolation COOP/CORP Verifier – WSTG-CLNT-14)"]
-      : cwe === "CWE-290"
+      : cwe === "CWE-290" || fIdUpper.includes("-DNS")
       ? ["Cloudflare DoH RFC 7208 SPF / RFC 7489 DMARC / RFC 8659 CAA Verifier"]
-      : titleUpper.includes("WELL-KNOWN") || titleUpper.includes("ROBOTS")
+      : fIdUpper.includes("-WELLKNOWN") || titleUpper.includes("WELL-KNOWN") || titleUpper.includes("ROBOTS") || titleUpper.includes("SECURITY.TXT")
       ? ["WSTG-INFO-03 (Webserver Metafiles /robots.txt & /sitemap.xml Auditor)", "RFC 9116 /.well-known/security.txt Compliance Check"]
-      : titleUpper.includes("SPIDER")
+      : cwe === "CWE-425" || fIdUpper.includes("-SPIDER-ROUTES") || titleUpper.includes("SPIDER")
       ? ["WSTG-INFO-06 / WSTG-INFO-07 (Application Entrypoints & Client-Side Route Spider – OWASP API9:2023)"]
+      : cwe === "CWE-1059" || fIdUpper.includes("-UNREACHABLE")
+      ? ["XTRIKE-NetRecon HTTPS/HTTP Reachability & DNS Resolution Verifier"]
       : ["ZAP-10036 (Server & Technology Header Fingerprint Verifier – WSTG-INFO-02)"];
 
   const mappedAssessmentScriptsFinal = isLiveFinding ? liveMappedScripts : d.mappedDaemonScripts;
@@ -3603,11 +3612,11 @@ export function buildFormalFindingReport(
   ];
 
   const passCriterion2Text =
-    titleUpper.includes("WELL-KNOWN") || titleUpper.includes("ROBOTS.TXT") || titleUpper.includes("SECURITY.TXT")
+    fIdUpper.includes("-WELLKNOWN") || titleUpper.includes("WELL-KNOWN") || titleUpper.includes("ROBOTS.TXT") || titleUpper.includes("SECURITY.TXT")
       ? `PASS CRITERION 2: Replaying 'curl -s -i "${originUrl}/.well-known/security.txt"' returns HTTP 200 OK with valid RFC 9116 'Contact:' and 'Expires:' fields, and '${originUrl}/robots.txt' discloses no sensitive administrative paths`
-      : titleUpper.includes("SPIDER") || titleUpper.includes("ROUTE ENUMERATION")
+      : fIdUpper.includes("-SPIDER-ROUTES") || cwe === "CWE-425" || titleUpper.includes("SPIDER") || titleUpper.includes("ROUTE ENUMERATION")
       ? `PASS CRITERION 2: Replaying the multi-page spider and route verification probe against ${hostName} confirms all discovered sub-pages and API routes enforce consistent security headers and access controls`
-      : titleUpper.includes("FORM") || titleUpper.includes("INPUT PARAMETER")
+      : fIdUpper.includes("-FORMS-INPUTS") || cwe === "CWE-352" || cwe === "CWE-20" || titleUpper.includes("HTML FORM") || titleUpper.includes("INPUT PARAMETER")
       ? `PASS CRITERION 2: Replaying the DOM form and parameter inspection against ${url} confirms anti-CSRF token presence and strict server-side input validation on [${finding.parameter || "discovered inputs"}]`
       : `PASS CRITERION 2: Replaying the cURL verification probe against ${url} confirms the vulnerable control state ('${matchedIndicator.slice(0, 70)}') is remediated`;
 
@@ -3896,21 +3905,32 @@ export function buildExecutiveSummaryDossier(params: {
   const dmarcPresent: boolean = Boolean(lt.dmarcPresent ?? lt.dnsSecurity?.dmarcPresent);
   const dmarcRecord: string | null = lt.dmarcRecord ?? lt.dnsSecurity?.dmarcRecord ?? null;
 
-  // Deduplicate findings by underlying root-cause CWE + control category for reproducible scoring
+  // Deduplicate findings by underlying root-cause CWE + control category per host for reproducible scoring
   const dedupedClusters = new Map<string, string>();
+  const uniqueFindingHosts = new Set<string>();
   for (const f of list) {
-    const key = `${f.cweId || f.cwe || f.title.slice(0, 24)}`;
+    let fHost = primaryHost;
+    try {
+      if (f.url) fHost = new URL(f.url.startsWith("http") ? f.url : `https://${f.url}`).host || primaryHost;
+    } catch { /* ignore */ }
+    uniqueFindingHosts.add(fHost);
+    const key = `${fHost}:${f.cweId || f.cwe || f.title.slice(0, 24)}`;
     const existingSev = dedupedClusters.get(key);
     const rank = (s: string) => (s === "Critical" ? 4 : s === "High" ? 3 : s === "Medium" ? 2 : 1);
     if (!existingSev || rank(f.severity) > rank(existingSev)) {
       dedupedClusters.set(key, f.severity);
     }
   }
+  const hostCountDivisor = Math.max(1, uniqueFindingHosts.size);
+  const scopeHostsLabel =
+    scopedTargets.length > 1
+      ? `${primaryHost} (+${scopedTargets.length - 1} additional scoped target${scopedTargets.length > 2 ? "s" : ""})`
+      : primaryHost;
   const dedupedValues = Array.from(dedupedClusters.values());
-  const dedupCrit = dedupedValues.filter(s => s === "Critical").length;
-  const dedupHigh = dedupedValues.filter(s => s === "High").length;
-  const dedupMed = dedupedValues.filter(s => s === "Medium").length;
-  const dedupLow = dedupedValues.filter(s => s === "Low").length;
+  const dedupCrit = Math.round(dedupedValues.filter(s => s === "Critical").length / hostCountDivisor);
+  const dedupHigh = Math.round(dedupedValues.filter(s => s === "High").length / hostCountDivisor);
+  const dedupMed = Math.round(dedupedValues.filter(s => s === "Medium").length / hostCountDivisor);
+  const dedupLow = Math.round(dedupedValues.filter(s => s === "Low").length / hostCountDivisor);
 
   // Published Deterministic Posture Score Formula (0–100) from deduplicated findings:
   // Score = max(18, 100 - (18 * Crit_dedup + 10 * High_dedup + 4 * Med_dedup + 1.5 * Low_dedup))
@@ -3957,9 +3977,9 @@ export function buildExecutiveSummaryDossier(params: {
     `PostureScore = max(18, round(100 - (18 × Crit_dedup[${dedupCrit}] + 10 × High_dedup[${dedupHigh}] + 4 × Med_dedup[${dedupMed}] + 1.5 × Low_dedup[${dedupLow}]))) = ${computedScore}/100 (Grade ${computedGrade})`;
 
   const ratingJustification =
-    `The target environment (${primaryHost} — "${pageTitleLabel}", served via ${serverStackLabel}) is rated at ${overallRating} Overall Technical Risk with a deduplicated Security Posture Score of ${computedScore}/100 (Grade ${computedGrade}). ` +
-    `Across ${spideredPagesCount} spidered page(s), ${linksCount} hyperlink(s), ${scriptsCount} script bundle(s), ${formsCount} form(s), and ${endpointsProbedCount} well-known endpoint probes, the engine recorded ${totalFindings} verified findings (${critical} Critical, ${high} High, ${medium} Medium, ${low} Low; deduplicated into ${dedupedClusters.size} root-cause CWE clusters). ` +
-    `Note: The Posture Score (${computedScore}/100) measures aggregate defense-in-depth control coverage across ${primaryHost}, whereas the Overall Risk Rating (${overallRating}) reflects the highest unmitigated technical exposure (${peakCvss} Max CVSS v3.1).`;
+    `The target environment (${scopeHostsLabel} — "${pageTitleLabel}", served via ${serverStackLabel}) is rated at ${overallRating} Overall Technical Risk with a deduplicated Security Posture Score of ${computedScore}/100 (Grade ${computedGrade}). ` +
+    `Across ${spideredPagesCount} spidered page(s), ${linksCount} hyperlink(s), ${scriptsCount} script bundle(s), ${formsCount} form(s), and ${endpointsProbedCount} well-known endpoint probes, the engine recorded ${totalFindings} verified findings (${critical} Critical, ${high} High, ${medium} Medium, ${low} Low; deduplicated into ${dedupedClusters.size} per-host root-cause CWE clusters). ` +
+    `Note: The Posture Score (${computedScore}/100) measures aggregate defense-in-depth control coverage across ${scopeHostsLabel}, whereas the Overall Risk Rating (${overallRating}) reflects the highest unmitigated technical exposure (${peakCvss} Max CVSS v3.1).`;
 
   const totalWeightUnits = Math.max(1, critical * 10 + high * 6 + medium * 3 + low * 1);
   const critPct = Math.round(((critical * 10) / totalWeightUnits) * 100);
@@ -4137,7 +4157,7 @@ export function buildExecutiveSummaryDossier(params: {
         phase3Findings.length > 0
           ? `DNS Anti-Spoofing (SPF/DMARC/CAA), RFC 9116 security.txt & CI/CD DAST Gating for ${primaryHost}`
           : `Continuous CI/CD DAST Release Gating & SIEM Telemetry for ${primaryHost}`,
-      targetFindings: `All Remaining Hardening Controls (${totalFindings} Total on ${primaryHost})`,
+      targetFindings: `All Remaining Hardening Controls (${totalFindings} Total on ${scopeHostsLabel})`,
       projectedRiskReduction: `Forecast: ${phase2ProjectedScore} ➔ ${phase3ProjectedScore}/100 (Subject to Retest Sign-Off)`,
       stakeholderOwner: "CISO · Security Operations Center (SOC)",
       verificationMethod: "Automated D3FEND Retest Pass Criterion Verification"
@@ -4361,24 +4381,24 @@ export function buildExecutiveSummaryDossier(params: {
   const executiveCharts: ExecutiveSummaryVisualChart[] = [
     {
       chartId: "EXEC-GRAPH-01",
-      title: `Findings Severity Distribution & Deduplicated Risk Share on ${primaryHost}`,
+      title: `Findings Severity Distribution & Deduplicated Risk Share on ${scopeHostsLabel}`,
       subtitle: `Breakdown of ${totalFindings} verified findings across ${spideredPagesCount} spidered pages (${critical} Critical, ${high} High, ${medium} Medium, ${low} Low)`,
       svgDataUri: svgToDataUri(chart1Svg),
-      keyTakeaway: `${primaryHost} recorded ${totalFindings} findings (${dedupedClusters.size} deduplicated root-cause CWE clusters), yielding a measured Posture Score of ${computedScore}/100 (Grade ${computedGrade}, Max CVSS ${peakCvss}).`
+      keyTakeaway: `${scopeHostsLabel} recorded ${totalFindings} findings (${dedupedClusters.size} deduplicated root-cause CWE clusters), yielding a measured Posture Score of ${computedScore}/100 (Grade ${computedGrade}, Max CVSS ${peakCvss}).`
     },
     {
       chartId: "EXEC-GRAPH-02",
-      title: `Measured Security Posture & Conditional Remediation Forecast for ${primaryHost}`,
+      title: `Measured Security Posture & Conditional Remediation Forecast for ${scopeHostsLabel}`,
       subtitle: `Measured score (${computedScore}/100) and conditional forecast (${phase1ProjectedScore} ➔ ${phase2ProjectedScore} ➔ ${phase3ProjectedScore}) subject to post-remediation retesting`,
       svgDataUri: svgToDataUri(chart2Svg),
       keyTakeaway: `Projected scores (${phase1ProjectedScore}, ${phase2ProjectedScore}, and ${phase3ProjectedScore}/100) are conditional engineering forecasts assuming all findings in Phases 1–3 pass their verification retest criteria.`
     },
     {
       chartId: "EXEC-GRAPH-03",
-      title: `5-Pillar Web Security Benchmark for ${primaryHost} vs. Industry Target (85%)`,
+      title: `5-Pillar Web Security Benchmark for ${scopeHostsLabel} vs. Industry Target (85%)`,
       subtitle: `Domain-specific control comparison across Session/CORS, DOM/SRI/Forms, DNS SPF/DMARC, Security Headers, and TLS Transport`,
       svgDataUri: svgToDataUri(chart3Svg),
-      keyTakeaway: `On ${primaryHost}, Transport/TLS scored ${pillar5Pct}%, while Browser Security Headers (${pillar4Pct}%), DOM/Script/Form Controls (${pillar2Pct}%), and DNS/Discovery Hygiene (${pillar3Pct}%) represent the primary hardening opportunities.`
+      keyTakeaway: `On ${scopeHostsLabel}, Transport/TLS scored ${pillar5Pct}%, while Browser Security Headers (${pillar4Pct}%), DOM/Script/Form Controls (${pillar2Pct}%), and DNS/Discovery Hygiene (${pillar3Pct}%) represent the primary hardening opportunities.`
     }
   ];
 
@@ -4410,7 +4430,7 @@ export function buildExecutiveSummaryDossier(params: {
   return {
     canonicalScanRecord: {
       scanId: params.engagementId || `EXP-SCAN-${todayIso.replace(/-/g, "")}-${primaryHost.slice(0, 8).toUpperCase()}`,
-      scannerVersion: "EXPEDITE STRIKE™ (XTRIKE™ & Aegis.SOC™) v5.4 — Read-Only Forensic Verifier",
+      scannerVersion: "EXPEDITE STRIKE™ (XTRIKE™ & Aegis.SOC™) v5.7 — Read-Only Forensic Verifier",
       crawlProfile: "Multi-Page Same-Origin DOM Spider + 10 Well-Known Endpoint Probes + DoH DNS Audit",
       authState: "Unauthenticated Public Surface (Non-Destructive Read-Only Mode)",
       spideredPagesCount,
@@ -4426,22 +4446,22 @@ export function buildExecutiveSummaryDossier(params: {
       rawFindingCount: totalFindings,
       deduplicatedClusterCount: dedupedClusters.size,
       deduplicationRationale:
-        `Findings sharing the same underlying CWE root cause on ${primaryHost} are grouped into ${dedupedClusters.size} deduplicated cluster(s) prior to posture score calculation so related header/directive observations do not artificially inflate the penalty.`,
+        `Findings sharing the same underlying CWE root cause per target host (${scopeHostsLabel}) are grouped into ${dedupedClusters.size} deduplicated cluster(s) prior to posture score calculation so related header/directive observations do not artificially inflate the penalty.`,
       cvssVsBusinessRiskNote:
-        `Technical Severity (CVSS v3.1) measures the intrinsic technical properties of each weakness (Max CVSS: ${peakCvss}), whereas Contextual Business Risk (${overallRating}) and Posture Score (${computedScore}/100, Grade ${computedGrade}) evaluate aggregate control coverage and environmental exposure on ${primaryHost}.`,
+        `Technical Severity (CVSS v3.1) measures the intrinsic technical properties of each weakness (Max CVSS: ${peakCvss}), whereas Contextual Business Risk (${overallRating}) and Posture Score (${computedScore}/100, Grade ${computedGrade}) evaluate aggregate control coverage and environmental exposure across ${scopeHostsLabel}.`,
       forecastDisclaimer:
         `Projected post-remediation scores (${phase1ProjectedScore}/100 after Phase 1, ${phase2ProjectedScore}/100 after Phase 2, and ${phase3ProjectedScore}/100 after Phase 3) are conditional engineering forecasts. No finding is marked Remediated and no Certificate of Validation is issued until post-fix retest probes pass all verification criteria.`
     },
     qualityGateChecks,
     engagementOverview: {
-      assessmentType: `Dynamic Application Security Testing (DAST) & Live Web Surface Assessment (${primaryHost})`,
+      assessmentType: `Dynamic Application Security Testing (DAST) & Live Web Surface Assessment (${scopeHostsLabel})`,
       testingDates: `${startDate} to ${endDate}`,
       scopedTargets,
       methodologyReferenced:
         "Penetration Testing Execution Standard (PTES), NIST SP 800-115, OWASP Web Security Testing Guide (WSTG v4.2), OWASP Top 10:2021, and MITRE ATT&CK® Enterprise v15",
       rulesOfEngagement:
         `Authorized non-destructive active and passive validation across ${scopedTargets.join(", ")} (Server Stack: ${serverStackLabel}). All verification evidence was collected live using safe read-only HTTP/DNS probes; downstream exploit chains are modeled analytically without destructive execution.`,
-      narrativeParagraph: `An external Dynamic Application Security Testing (DAST) and web interface security assessment was conducted against ${scopedTargets.join(", ")} (Document Title: "${pageTitleLabel}" · Fingerprinted Stack: ${serverStackLabel})${params.clientOrgName ? ` for ${params.clientOrgName}` : ""} between ${startDate} and ${endDate}${params.engagementId ? ` (Engagement Reference: ${params.engagementId})` : ""}. Using a single canonical scan record, the engine inspected live HTTP response headers, TLS transport, Cloudflare DoH DNS records (SPF/DMARC/CAA), ${spideredPagesCount} spidered page(s), ${linksCount} hyperlink(s), ${scriptsCount} script bundle(s), ${formsCount} HTML form(s), and ${endpointsProbedCount} well-known/API endpoint probe(s) (${requestsAttempted} requests attempted, ${responsesReceived} responses received) to identify verifiable security weaknesses on ${primaryHost}.`
+      narrativeParagraph: `An external Dynamic Application Security Testing (DAST) and web interface security assessment was conducted against ${scopedTargets.join(", ")} (Document Title: "${pageTitleLabel}" · Fingerprinted Stack: ${serverStackLabel})${params.clientOrgName ? ` for ${params.clientOrgName}` : ""} between ${startDate} and ${endDate}${params.engagementId ? ` (Engagement Reference: ${params.engagementId})` : ""}. Using a single canonical scan record, the engine inspected live HTTP response headers, TLS transport, Cloudflare DoH DNS records (SPF/DMARC/CAA), ${spideredPagesCount} spidered page(s), ${linksCount} hyperlink(s), ${scriptsCount} script bundle(s), ${formsCount} HTML form(s), and ${endpointsProbedCount} well-known/API endpoint probe(s) (${requestsAttempted} requests attempted, ${responsesReceived} responses received) to identify verifiable security weaknesses across ${scopeHostsLabel}.`
     },
     overallRiskRating: {
       rating: overallRating,
@@ -4458,7 +4478,7 @@ export function buildExecutiveSummaryDossier(params: {
       informational,
       confirmedCount,
       potentialCount,
-      confirmationNote: `All ${confirmedCount} reported findings on ${primaryHost} (${critical} Critical, ${high} High, ${medium} Medium, ${low} Low; ${dedupedClusters.size} deduplicated root-cause clusters) include raw baseline-vs-test HTTP evidence, FIPS 180-4 SHA-256 digests, explicit Observed-vs-Inferred boundaries, and deterministic cURL/Python reproduction scripts.`
+      confirmationNote: `All ${confirmedCount} reported findings across ${scopeHostsLabel} (${critical} Critical, ${high} High, ${medium} Medium, ${low} Low; ${dedupedClusters.size} deduplicated root-cause clusters) include raw baseline-vs-test HTTP evidence, FIPS 180-4 SHA-256 digests, explicit Observed-vs-Inferred boundaries, and deterministic cURL/Python reproduction scripts.`
     },
     severityBreakdownTable,
     securityPostureTrendTable,
@@ -4467,27 +4487,27 @@ export function buildExecutiveSummaryDossier(params: {
     keyFindingsHighlights: highlights,
     businessImpact: {
       narrativeParagraph:
-        `The ${totalFindings} verified findings on ${primaryHost} ("${pageTitleLabel}") affect the defense-in-depth posture of the web interface served by ${serverStackLabel}. Addressing these controls will mitigate client-side script supply-chain risks, enforce strict browser framing and transport policies, protect form/parameter inputs, and strengthen domain anti-spoofing.`,
+        `The ${totalFindings} verified findings across ${scopeHostsLabel} ("${pageTitleLabel}") affect the defense-in-depth posture of the web interface served by ${serverStackLabel}. Addressing these controls will mitigate client-side script supply-chain risks, enforce strict browser framing and transport policies, protect form/parameter inputs, and strengthen domain anti-spoofing.`,
       impactPillars: [
         {
-          category: `Client-Side & Browser Execution Boundary (${primaryHost})`,
+          category: `Client-Side & Browser Execution Boundary (${scopeHostsLabel})`,
           description:
-            `Missing or permissive CSP directives, Subresource Integrity (SRI), or X-Frame-Options controls on ${primaryHost} increase exposure to cross-site scripting (XSS), third-party CDN script tampering, and UI redressing (Clickjacking).`
+            `Missing or permissive CSP directives, Subresource Integrity (SRI), or X-Frame-Options controls on ${scopeHostsLabel} increase exposure to cross-site scripting (XSS), third-party CDN script tampering, and UI redressing (Clickjacking).`
         },
         {
-          category: `Transport, Cookie & Session Boundary (${primaryHost})`,
+          category: `Transport, Cookie & Session Boundary (${scopeHostsLabel})`,
           description:
             `Transport and session policy gaps (HSTS preload/includeSubDomains, Cookie flags, CORS, Cache-Control) on ${serverStackLabel} can allow SSL-stripping or unauthorized cross-origin resource reading.`
         },
         {
           category: "Regulatory & Compliance Alignment (SOC 2 / PCI-DSS v4.0 / ISO 27001)",
           description:
-            `Remediating the ${totalFindings} findings on ${primaryHost} aligns the web application with OWASP ASVS v4.0.3, PCI-DSS v4.0 Req 6.4, and SOC 2 CC6/CC7 controls.`
+            `Remediating the ${totalFindings} findings across ${scopeHostsLabel} aligns the web application with OWASP ASVS v4.0.3, PCI-DSS v4.0 Req 6.4, and SOC 2 CC6/CC7 controls.`
         },
         {
-          category: `Brand Trust & Anti-Phishing Posture (${primaryHost})`,
+          category: `Brand Trust & Anti-Phishing Posture (${scopeHostsLabel})`,
           description:
-            `Enforcing strict DNS SPF, DMARC, CAA, and RFC 9116 /.well-known/security.txt policies protects ${primaryHost} users from domain spoofing and standardizes vulnerability disclosure.`
+            `Enforcing strict DNS SPF, DMARC, CAA, and RFC 9116 /.well-known/security.txt policies protects ${scopeHostsLabel} users from domain spoofing and standardizes vulnerability disclosure.`
         }
       ]
     },
@@ -4496,7 +4516,7 @@ export function buildExecutiveSummaryDossier(params: {
       `Unified Multi-Page Crawl & Asset Visibility: Spidering of "${pageTitleLabel}" indexed ${spideredPagesCount} page(s), ${linksCount} link(s), ${scriptsCount} script(s), and ${formsCount} form(s) with zero 5xx server errors.`,
       spfPresent || dmarcPresent
         ? `Domain Email Authentication Active: ${primaryHost} publishes ${spfPresent ? `SPF (${spfRecord})` : ""} ${dmarcPresent ? `and DMARC (${dmarcRecord})` : ""}.`
-        : `Deterministic Forensic Traceability: All ${totalFindings} findings on ${primaryHost} produced repeatable HTTP/DNS responses verified with FIPS 180-4 SHA-256 digests.`,
+        : `Deterministic Forensic Traceability: All ${totalFindings} findings across ${scopeHostsLabel} produced repeatable HTTP/DNS responses verified with FIPS 180-4 SHA-256 digests.`,
       `Pre-Release Quality Gate Passed: All 7 automated consistency checks (Severity Sum, Coverage Reconciliation, Provenance, CVSS Alignment, Secret Redaction, Observed-vs-Inferred Separation, and Forecast Gating) passed.`
     ],
     highLevelRecommendations: list.slice(0, 4).map((f, idx) => ({
@@ -4510,9 +4530,9 @@ export function buildExecutiveSummaryDossier(params: {
     })),
     conclusionAndNextSteps: {
       conclusionParagraph:
-        `The assessment of ${primaryHost} (${scopedTargets.join(", ")}) identified ${totalFindings} verified findings (${dedupedClusters.size} deduplicated root-cause clusters), resulting in a measured Security Posture Score of ${computedScore}/100 (Grade ${computedGrade}). Implementing the recommended remediations and verifying each fix via the Retest Tracker is projected to elevate ${primaryHost} toward ${phase3ProjectedScore}/100 (subject to post-remediation retest verification).`,
+        `The assessment of ${scopeHostsLabel} (${scopedTargets.join(", ")}) identified ${totalFindings} verified findings (${dedupedClusters.size} deduplicated root-cause clusters), resulting in a measured Security Posture Score of ${computedScore}/100 (Grade ${computedGrade}). Implementing the recommended remediations and verifying each fix via the Retest Tracker is projected to elevate ${scopeHostsLabel} toward ${phase3ProjectedScore}/100 (subject to post-remediation retest verification).`,
       nextStepsChecklist: [
-        `1. Remediate Phase 1 priority findings on ${primaryHost} (${list.slice(0, 2).map(f => summarizeFindingShort(f.title)).join(", ") || "CSP & HSTS hardening"}).`,
+        `1. Remediate Phase 1 priority findings on ${scopeHostsLabel} (${list.slice(0, 2).map(f => summarizeFindingShort(f.title)).join(", ") || "CSP & HSTS hardening"}).`,
         `2. Deploy updated HTTP security headers, SRI hashes, and DNS records on ${serverStackLabel}.`,
         `3. Execute the 'Verify Fix (Retest)' probes in the XTRIKE™ & Aegis.SOC™ Portal against ${primaryTarget}; mark findings Remediated only after all pass criteria succeed.`,
         `4. Export the SARIF v2.1.0 / JSON dossier for ${primaryHost} into CI/CD pipelines for continuous regression gating.`

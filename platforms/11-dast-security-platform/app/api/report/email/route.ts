@@ -345,9 +345,21 @@ function generateMultiPageAssessmentPdfBuffer(params: {
     docLines.push({ text: "" });
   });
 
-  docLines.push({ text: "APPENDIX: 65,535 TCP & 65,535 UDP PORT-TO-ASSESSMENT-SCRIPT CATALOG (131,070 SOCKETS)", bold: true, size: 10.5, colorRgb: [0.05, 0.15, 0.35] });
+  const isExternalWebOnly = !params.targetUrls.some(u => u.includes("192.168.") || u.includes("10."));
+  const scopedPortCatalog = isExternalWebOnly
+    ? PORT_ASSESSMENT_SCRIPT_CATALOG.filter(ps => /80|443|53|8080|8443/i.test(ps.portRangeOrNumber))
+    : PORT_ASSESSMENT_SCRIPT_CATALOG;
+
+  docLines.push({
+    text: isExternalWebOnly
+      ? "APPENDIX: WEB, TLS & DNS PORT-TO-ASSESSMENT-SCRIPT CATALOG (80/443/8080/8443/TCP & 53/443/UDP)"
+      : "APPENDIX: 65,535 TCP & 65,535 UDP PORT-TO-ASSESSMENT-SCRIPT CATALOG (131,070 SOCKETS)",
+    bold: true,
+    size: 10.5,
+    colorRgb: [0.05, 0.15, 0.35]
+  });
   docLines.push({ text: "----------------------------------------------------------------------------------------------", size: 8.5 });
-  PORT_ASSESSMENT_SCRIPT_CATALOG.forEach(ps => {
+  scopedPortCatalog.forEach(ps => {
     docLines.push({
       text: `[${ps.portRangeOrNumber}] (${ps.protocol}) -> ${ps.daemonDetector} | TTP: ${ps.mitreTactic} / ${ps.mitreTechnique}`,
       bold: true,
@@ -701,7 +713,12 @@ export async function POST(req: NextRequest) {
       })
       .join("\n");
 
-    const portCatalogRowsHtml = PORT_ASSESSMENT_SCRIPT_CATALOG.map(
+    const isExternalWebOnlyEmail = !targetUrls.some(u => u.includes("192.168.") || u.includes("10."));
+    const scopedEmailPortCatalog = isExternalWebOnlyEmail
+      ? PORT_ASSESSMENT_SCRIPT_CATALOG.filter(ps => /80|443|53|8080|8443/i.test(ps.portRangeOrNumber))
+      : PORT_ASSESSMENT_SCRIPT_CATALOG;
+
+    const portCatalogRowsHtml = scopedEmailPortCatalog.map(
       ps => `
       <tr>
         <td style="padding:6px;border:1px solid #cbd5e1;font-family:monospace;font-size:11px;"><strong>${escapeHtml(

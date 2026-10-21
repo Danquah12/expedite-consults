@@ -20,8 +20,8 @@ from .nist_standards_plugin import NistStandardsPlugin
 from .ptes_exploitdb_msf_plugin import (
     GitHubGhsaPlugin,
     PtesMethodologyPlugin,
-    SearchSploitExploitDbPlugin,
-    MetasploitCheckReferencePlugin,
+    XTRIKE Exploit-IndexExploitDbPlugin,
+    XTRIKE VerifyModuleCheckReferencePlugin,
 )
 
 
@@ -95,8 +95,8 @@ class StandardsPluginRunner:
             NistStandardsPlugin(),
             GitHubGhsaPlugin(),
             PtesMethodologyPlugin(),
-            SearchSploitExploitDbPlugin(),
-            MetasploitCheckReferencePlugin(),
+            XTRIKE Exploit-IndexExploitDbPlugin(),
+            XTRIKE VerifyModuleCheckReferencePlugin(),
         ]
 
     def evaluate_context(self, ctx: CodeSnippetContext, finding_id: str, title: str) -> MultiStandardFindingReport:

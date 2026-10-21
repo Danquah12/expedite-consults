@@ -979,13 +979,14 @@ export function LinkedInNavbar({
             [
               ...primaryNavItems.map((i) => ({ id: i.id, label: i.shortLabel || i.label, icon: i.icon, badge: i.badge, kind: i.isMarketplace ? 'purple' : i.id === 'learning' ? 'blue' : i.id === 'media' ? 'rose' : i.id === 'pulserooms' ? 'emerald' : 'default' })),
               { id: 'wallet', label: 'Wallet', icon: DollarSign, badge: 0, kind: 'emerald' },
+              { id: 'vibecomms', label: 'VibeChat', icon: MessageSquare, badge: 0, kind: 'emerald' },
               { id: 'company', label: 'Companies', icon: Building2, badge: 0, kind: 'blue' },
               { id: 'guilds', label: 'Guilds', icon: Shield, badge: 0, kind: 'amber' },
               { id: 'bounties', label: 'Bounties', icon: Flame, badge: 0, kind: 'orange' },
               { id: 'events', label: 'Events', icon: Calendar, badge: 0, kind: 'indigo' },
               { id: 'procurement', label: 'RFPs', icon: FileCheck, badge: 0, kind: 'teal' },
               { id: 'launchpad', label: 'Launchpad', icon: Rocket, badge: 0, kind: 'purple' },
-              { id: 'careersuite', label: 'CareerAI', icon: Award, badge: 0, kind: 'cyan' },
+              { id: 'careersuite', label: 'Resume Prep', icon: Award, badge: 0, kind: 'cyan' },
             ].map((item) => {
               const Icon = item.icon
               const isMore = item.id === '__more'
@@ -1287,15 +1288,15 @@ export function LinkedInNavbar({
 
             {/* Scrollable Categories List */}
             <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pt-2.5 pr-1">
-              {/* Enterprise & Platform Hubs 8-Card Grid */}
+              {/* Enterprise & Platform Hubs 9-Card Grid */}
               <div className="rounded-xl bg-gradient-to-r from-blue-50/70 via-indigo-50/50 to-purple-50/70 dark:from-blue-950/30 dark:via-indigo-950/20 dark:to-purple-950/20 p-2.5 border border-blue-100 dark:border-blue-900/50">
                 <div className="flex items-center justify-between mb-2 px-0.5">
                   <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                     Enterprise &amp; Specialized Hubs
                   </p>
-                  <span className="text-[9px] font-semibold text-[#0A66C2]">8 Direct Hubs</span>
+                  <span className="text-[9px] font-semibold text-[#0A66C2]">9 Direct Hubs</span>
                 </div>
-                <div className="grid grid-cols-4 gap-1.5 text-center">
+                <div className="grid grid-cols-3 gap-1.5 text-center">
                   {/* 1. Wallet & Escrow */}
                   <button
                     type="button"
@@ -1311,6 +1312,24 @@ export function LinkedInNavbar({
                   >
                     <DollarSign className={`h-5 w-5 mb-1 ${activeTab === 'wallet' ? "text-white" : "text-emerald-600 dark:text-emerald-400"}`} />
                     <span className="text-[10px] font-bold truncate w-full">Wallet</span>
+                  </button>
+
+                  {/* 1.5. VibeChat (Next-Gen WhatsApp+ Unified Comms) */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('vibecomms')
+                      setIsMoreOpen(false)
+                    }}
+                    className={`p-2 rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
+                      activeTab === 'vibecomms'
+                        ? "bg-emerald-600 text-white shadow-xs"
+                        : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-emerald-300/90 dark:border-emerald-700 hover:border-emerald-400"
+                    }`}
+                    title="Vibe / DeskNote Next-Gen WhatsApp+ Unified Communications (E2EE, WebRTC, Communities & AI)"
+                  >
+                    <MessageSquare className={`h-5 w-5 mb-1 ${activeTab === 'vibecomms' ? "text-white" : "text-emerald-600 dark:text-emerald-400"}`} />
+                    <span className="text-[10px] font-bold truncate w-full">VibeChat</span>
                   </button>
 
                   {/* 2. Company Directory */}
@@ -1415,7 +1434,7 @@ export function LinkedInNavbar({
                     <span className="text-[10px] font-bold truncate w-full">Launchpad</span>
                   </button>
 
-                  {/* 8. CareerSuite AI */}
+                  {/* 8. CareerSuite AI / Resume Prep */}
                   <button
                     type="button"
                     onClick={() => {
@@ -1427,9 +1446,10 @@ export function LinkedInNavbar({
                         ? "bg-cyan-600 text-white shadow-xs"
                         : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-700 hover:border-cyan-300"
                     }`}
+                    title="Resume Preparation App & AI Tailoring Studio (tuhousing.vercel.app)"
                   >
                     <Award className={`h-5 w-5 mb-1 ${activeTab === 'careersuite' ? "text-white" : "text-cyan-600 dark:text-cyan-400"}`} />
-                    <span className="text-[10px] font-bold truncate w-full">CareerAI</span>
+                    <span className="text-[10px] font-bold truncate w-full">Resume Prep</span>
                   </button>
                 </div>
               </div>

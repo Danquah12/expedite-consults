@@ -13,10 +13,13 @@ import {
   FileText,
   CheckCircle2,
   Layers,
+  FlaskConical,
 } from "lucide-react";
 
 const navItems = [
   { href: "/", label: "Front Desk", badge: "P17", icon: ShieldAlert },
+  { href: "/synthetic-attack-lab", label: "Resilience & Validation Lab", badge: "SIM-001..007", icon: FlaskConical },
+  { href: "/resilience-score", label: "Readiness Score", badge: "82–91%", icon: ShieldCheck },
   { href: "/triage", label: "Incident Triage", badge: "LockBit 3.0", icon: Zap },
   { href: "/crypto-analysis", label: "Crypto & Evidence", badge: "FRE 901", icon: Lock },
   { href: "/recovery-ops", label: "Recovery Ops", badge: "24 Hosts", icon: Cpu },

@@ -29,12 +29,12 @@ export type ProofRequirementCheck = {
   question: string;
   satisfied: boolean;
   evidenceSummary: string;
-  sourceType: "AST" | "DataFlow" | "OTel Trace" | "App Log" | "Controlled Check";
+  sourceType: "AST" | "DataFlow" | "XTRIKE-Trace Trace" | "App Log" | "Controlled Check";
 };
 
 export type EvidenceArtifact = {
   evidenceId: string;
-  kind: "SARIF Trace" | "AST Guard Check" | "Controlled HTTP Exchange" | "OpenTelemetry Span" | "Audit Log";
+  kind: "SARIF Trace" | "AST Guard Check" | "Controlled HTTP Exchange" | "XTRIKE-Trace Span" | "Audit Log";
   summary: string;
   sha256Checksum: string;
   commitSha: string;
@@ -44,7 +44,7 @@ export type EvidenceArtifact = {
 export type CanonicalValidationFinding = {
   // 1. Identity
   findingId: string;
-  scanner: "Checkmarx" | "IBM Code Scan" | "Fortify SCA" | "CodeQL" | "Semgrep" | "Snyk" | "Joern";
+  scanner: "XTRIKE XQL" | "XTRIKE DeepFlow" | "XTRIKE StructSCA" | "XTRIKE AST-Query" | "XTRIKE PatternGuard" | "XTRIKE DepGuard" | "XTRIKE GraphCPG";
   ruleId: string;
   cwe: string;
   cweTitle: string;
@@ -133,16 +133,16 @@ export const PIPELINE_ARCHITECTURE_STAGES = [
     title: "SAST Ingestion",
     subtitle: "SARIF 2.1.0 / JSON · Rule IDs · Locations · Traces",
     deterministic: true,
-    tech: "Pydantic + SARIF 2.1.0",
+    tech: "XTRIKE-Schema + SARIF 2.1.0",
     description:
-      "Ingests raw static analysis reports from CodeQL, Semgrep, and Checkmarx while preserving the original rule, physical location, and codeFlow trace verbatim.",
+      "Ingests raw static analysis reports from XTRIKE AST-Query, XTRIKE PatternGuard, and XTRIKE XQL while preserving the original rule, physical location, and codeFlow trace verbatim.",
   },
   {
     code: "B",
     title: "Normalization & Code Intelligence",
     subtitle: "Repo Map · AST · Call Graph · Taint · Build Commit SHA",
     deterministic: true,
-    tech: "LibCST / CodeQL / Language Adapters",
+    tech: "XTRIKE-CST / XTRIKE AST-Query / Language Adapters",
     description:
       "Maps findings into a CanonicalFinding record bound to an exact commit_sha, resolving framework routes, middleware guards, and call-graph reachability.",
   },
@@ -167,11 +167,11 @@ export const PIPELINE_ARCHITECTURE_STAGES = [
   {
     code: "D2",
     title: "Runtime Validator",
-    subtitle: "Controlled HTTP/API Checks · Role Matrix · OTel Spans",
+    subtitle: "Controlled HTTP/API Checks · Role Matrix · XTRIKE-Trace Spans",
     deterministic: true,
-    tech: "httpx + Playwright + OpenTelemetry",
+    tech: "XTRIKE-HTTP + XTRIKE-DOM + XTRIKE-Trace",
     description:
-      "Executes non-destructive comparison checks in an isolated disposable container, recording HTTP exchanges, OpenTelemetry spans, and database driver logs.",
+      "Executes non-destructive comparison checks in an isolated disposable container, recording HTTP exchanges, XTRIKE-Trace spans, and database driver logs.",
   },
   {
     code: "E",
@@ -239,7 +239,7 @@ export const PRIORITY_VALIDATOR_SPECS = [
 export const CANONICAL_VALIDATION_FINDINGS: CanonicalValidationFinding[] = [
   {
     findingId: "VAL-101",
-    scanner: "CodeQL",
+    scanner: "XTRIKE AST-Query",
     ruleId: "py/missing-object-level-authorization",
     cwe: "CWE-862",
     cweTitle: "Missing Authorization (BOLA / IDOR)",
@@ -254,7 +254,7 @@ export const CANONICAL_VALIDATION_FINDINGS: CanonicalValidationFinding[] = [
     endLine: 79,
     functionName: "get_invoice_by_id",
     language: "Python",
-    framework: "FastAPI + SQLAlchemy",
+    framework: "XTRIKE-API + SQLAlchemy",
     sourceExpr: "invoice_id: UUID (Path param)",
     intermediateCalls: [
       "invoices.get_invoice_by_id()",
@@ -263,7 +263,7 @@ export const CANONICAL_VALIDATION_FINDINGS: CanonicalValidationFinding[] = [
     ],
     sinkExpr: "session.execute() without tenant_id predicate",
     sanitizersDetected: ["Depends(get_current_user) — authenticates caller but omits tenant ownership check"],
-    traceProvenance: "SARIF codeFlow #0 + LibCST route decorator inspection",
+    traceProvenance: "SARIF codeFlow #0 + XTRIKE-CST route decorator inspection",
     buildId: "build-2026.10.16-a4f92c81",
     endpoint: "/api/v1/invoices/{invoice_id}",
     httpMethod: "GET",
@@ -286,7 +286,7 @@ export const CANONICAL_VALIDATION_FINDINGS: CanonicalValidationFinding[] = [
         deterministic: true,
         status: "pass",
         summary: "Route reachable · SQLAlchemy WHERE clause filters by Invoice.id only",
-        detail: "Python AST + LibCST inspection confirmed Depends(get_current_user) is present, but current_user.tenant_id is never passed to InvoiceRepository.fetch_one().",
+        detail: "Python AST + XTRIKE-CST inspection confirmed Depends(get_current_user) is present, but current_user.tenant_id is never passed to InvoiceRepository.fetch_one().",
         durationMs: 118,
       },
       plan: {
@@ -302,7 +302,7 @@ export const CANONICAL_VALIDATION_FINDINGS: CanonicalValidationFinding[] = [
         deterministic: true,
         status: "pass",
         summary: "Tenant-A principal received Tenant-B fixture record (3/3 repeatable runs)",
-        detail: "httpx recorded HTTP 200 with fixture JSON matching Tenant-B resource checksum; OpenTelemetry DB span confirmed query lacked tenant_id filter.",
+        detail: "XTRIKE-HTTP recorded HTTP 200 with fixture JSON matching Tenant-B resource checksum; XTRIKE-Trace DB span confirmed query lacked tenant_id filter.",
         durationMs: 310,
       },
       verify: {
@@ -318,7 +318,7 @@ export const CANONICAL_VALIDATION_FINDINGS: CanonicalValidationFinding[] = [
       {
         evidenceId: "EV-101-AST",
         kind: "AST Guard Check",
-        summary: "LibCST verified select(Invoice).where(Invoice.id == invoice_id) omits tenant_id predicate at L74.",
+        summary: "XTRIKE-CST verified select(Invoice).where(Invoice.id == invoice_id) omits tenant_id predicate at L74.",
         sha256Checksum: "9f84b2c011e8a34d",
         commitSha: "a4f92c81e03b4d12",
         timestamp: "2026-10-16T19:35:01Z",
@@ -333,7 +333,7 @@ export const CANONICAL_VALIDATION_FINDINGS: CanonicalValidationFinding[] = [
       },
       {
         evidenceId: "EV-101-OTEL",
-        kind: "OpenTelemetry Span",
+        kind: "XTRIKE-Trace Span",
         summary: "DB span trace_id=7b2019ef showed SELECT invoices WHERE invoices.id = $1 with 1 row returned.",
         sha256Checksum: "6a91e044bc8210fa",
         commitSha: "a4f92c81e03b4d12",
@@ -345,15 +345,15 @@ export const CANONICAL_VALIDATION_FINDINGS: CanonicalValidationFinding[] = [
         requirement: "Source provenance",
         question: "Did the tested input originate from the relevant user-controlled source?",
         satisfied: true,
-        evidenceSummary: "Path parameter invoice_id traced directly from FastAPI route handler.",
+        evidenceSummary: "Path parameter invoice_id traced directly from XTRIKE-API route handler.",
         sourceType: "DataFlow",
       },
       {
         requirement: "Sink reachability",
         question: "Did the input reach the sensitive operation along an active call path?",
         satisfied: true,
-        evidenceSummary: "OpenTelemetry span confirmed InvoiceRepository.fetch_one() executed.",
-        sourceType: "OTel Trace",
+        evidenceSummary: "XTRIKE-Trace span confirmed InvoiceRepository.fetch_one() executed.",
+        sourceType: "XTRIKE-Trace Trace",
       },
       {
         requirement: "Security control",
@@ -405,7 +405,7 @@ export const CANONICAL_VALIDATION_FINDINGS: CanonicalValidationFinding[] = [
     assert res.status_code == 404`,
     rawSarifRecord: {
       schemaVersion: "2.1.0",
-      toolDriver: "CodeQL 2.19.1",
+      toolDriver: "XTRIKE AST-Query 2.19.1",
       ruleId: "py/missing-object-level-authorization",
       level: "error",
       physicalLocation: "app/api/routes/invoices.py:64:5",
@@ -414,7 +414,7 @@ export const CANONICAL_VALIDATION_FINDINGS: CanonicalValidationFinding[] = [
   },
   {
     findingId: "VAL-102",
-    scanner: "Semgrep",
+    scanner: "XTRIKE PatternGuard",
     ruleId: "java.spring.jdbc-raw-query-concat",
     cwe: "CWE-89",
     cweTitle: "SQL Injection",
@@ -438,7 +438,7 @@ export const CANONICAL_VALIDATION_FINDINGS: CanonicalValidationFinding[] = [
     ],
     sinkExpr: "jdbcTemplate.queryForList(sql)",
     sanitizersDetected: [],
-    traceProvenance: "CodeQL dataflow + Spring RequestMapping AST resolver",
+    traceProvenance: "XTRIKE AST-Query dataflow + Spring RequestMapping AST resolver",
     buildId: "build-2026.10.16-7d31b904",
     endpoint: "/api/orders/search?code=",
     httpMethod: "GET",
@@ -500,7 +500,7 @@ export const CANONICAL_VALIDATION_FINDINGS: CanonicalValidationFinding[] = [
       },
       {
         evidenceId: "EV-102-OTEL",
-        kind: "OpenTelemetry Span",
+        kind: "XTRIKE-Trace Span",
         summary: "JDBC span db.statement confirmed zero bind parameters ($1 absent) on executed query.",
         sha256Checksum: "88f12c9400ab412d",
         commitSha: "7d31b904c12e88a1",
@@ -520,7 +520,7 @@ export const CANONICAL_VALIDATION_FINDINGS: CanonicalValidationFinding[] = [
         question: "Did the input reach the vulnerable query operation?",
         satisfied: true,
         evidenceSummary: "JDBC driver span recorded execution at OrderDao.java:121.",
-        sourceType: "OTel Trace",
+        sourceType: "XTRIKE-Trace Trace",
       },
       {
         requirement: "Security control",
@@ -576,7 +576,7 @@ void searchOrdersUsesParameterizedQuery() {
 }`,
     rawSarifRecord: {
       schemaVersion: "2.1.0",
-      toolDriver: "Semgrep 1.90.0",
+      toolDriver: "XTRIKE PatternGuard 1.90.0",
       ruleId: "java.spring.jdbc-raw-query-concat",
       level: "error",
       physicalLocation: "src/main/java/com/acme/orders/OrderDao.java:118:19",
@@ -585,7 +585,7 @@ void searchOrdersUsesParameterizedQuery() {
   },
   {
     findingId: "VAL-103",
-    scanner: "Semgrep",
+    scanner: "XTRIKE PatternGuard",
     ruleId: "ts.express.ssrf-fetch-sink",
     cwe: "CWE-918",
     cweTitle: "Server-Side Request Forgery (SSRF)",
@@ -612,7 +612,7 @@ void searchOrdersUsesParameterizedQuery() {
       "assertPublicHostnameAndResolve() at L82 — blocks RFC 1918, loopback, link-local 169.254.0.0/16, and pins DNS lookup",
       "redirect: 'error' prevents open-redirect bypass",
     ],
-    traceProvenance: "Semgrep pattern match + TypeScript compiler AST call-graph",
+    traceProvenance: "XTRIKE PatternGuard pattern match + TypeScript compiler AST call-graph",
     buildId: "build-2026.10.16-c8104f29",
     endpoint: "/api/webhooks/test",
     httpMethod: "POST",
@@ -651,7 +651,7 @@ void searchOrdersUsesParameterizedQuery() {
         deterministic: true,
         status: "pass",
         summary: "All private/link-local ranges deterministically rejected with EgressPolicyError (0 sockets opened)",
-        detail: "OpenTelemetry net.sock span count = 0 for restricted ranges; allowed fixture host succeeded.",
+        detail: "XTRIKE-Trace net.sock span count = 0 for restricted ranges; allowed fixture host succeeded.",
         durationMs: 210,
       },
       verify: {
@@ -694,7 +694,7 @@ void searchOrdersUsesParameterizedQuery() {
         question: "Did restricted inputs reach the underlying socket connect operation?",
         satisfied: false,
         evidenceSummary: "Blocked at L82 by assertPublicHostnameAndResolve() prior to fetch().",
-        sourceType: "OTel Trace",
+        sourceType: "XTRIKE-Trace Trace",
       },
       {
         requirement: "Security control",
@@ -728,7 +728,7 @@ void searchOrdersUsesParameterizedQuery() {
     status: "not_reproduced",
     evidenceConfidence: 0.98,
     groundTruthCategory: "safely_mitigated",
-    impact: "No exploitable impact — Semgrep pattern rule matched fetch(), but upstream DNS-pinned subnet guard prevents internal egress.",
+    impact: "No exploitable impact — XTRIKE PatternGuard pattern rule matched fetch(), but upstream DNS-pinned subnet guard prevents internal egress.",
     rationale:
       "Classified as Safely Mitigated (NOT_REPRODUCED with 98% evidence confidence) because both control-flow dominance and runtime telemetry prove the guard blocks restricted ranges.",
     unresolvedAssumptions: [],
@@ -737,14 +737,14 @@ void searchOrdersUsesParameterizedQuery() {
     runtimeCostMs: 409,
     requestsSent: 3,
     rootCause: "Pattern-only SAST rule did not model custom ipaddr.js sanitizer helper.",
-    suggestedFix: `// Code is already protected. Add a Semgrep sanitizer annotation to suppress recurring false alerts:
+    suggestedFix: `// Code is already protected. Add a XTRIKE PatternGuard sanitizer annotation to suppress recurring false alerts:
 // semgrep-sanitizer: assertPublicHostnameAndResolve(targetUrl)`,
     regressionTest: `test("rejects RFC1918 and link-local metadata addresses", async () => {
   await expect(assertPublicHostnameAndResolve("http://169.254.169.254/latest")).rejects.toThrow(EgressPolicyError);
 });`,
     rawSarifRecord: {
       schemaVersion: "2.1.0",
-      toolDriver: "Semgrep 1.90.0",
+      toolDriver: "XTRIKE PatternGuard 1.90.0",
       ruleId: "ts.express.ssrf-fetch-sink",
       level: "warning",
       physicalLocation: "src/services/webhookDispatcher.ts:94:18",
@@ -753,7 +753,7 @@ void searchOrdersUsesParameterizedQuery() {
   },
   {
     findingId: "VAL-104",
-    scanner: "Joern",
+    scanner: "XTRIKE GraphCPG",
     ruleId: "go.ArchivePathTraversal",
     cwe: "CWE-22",
     cweTitle: "Path Traversal",
@@ -777,7 +777,7 @@ void searchOrdersUsesParameterizedQuery() {
     ],
     sinkExpr: "os.Open(resolvedPath)",
     sanitizersDetected: ["filepath.Join() cleans lexically but does not enforce baseStorageDir prefix when relative segments resolve above root"],
-    traceProvenance: "Joern CPG call-graph + Go SSA dataflow",
+    traceProvenance: "XTRIKE GraphCPG CPG call-graph + Go SSA dataflow",
     buildId: "build-2026.10.16-5e209a14",
     endpoint: "/v1/artifacts/download?artifact=",
     httpMethod: "GET",
@@ -859,7 +859,7 @@ void searchOrdersUsesParameterizedQuery() {
         question: "Did the input reach the file open operation?",
         satisfied: true,
         evidenceSummary: "os.Open() executed with resolved path.",
-        sourceType: "OTel Trace",
+        sourceType: "XTRIKE-Trace Trace",
       },
       {
         requirement: "Security control",
@@ -919,7 +919,7 @@ f, err := root.Open(artifactParam)`,
 }`,
     rawSarifRecord: {
       schemaVersion: "2.1.0",
-      toolDriver: "Joern 2.0",
+      toolDriver: "XTRIKE GraphCPG 2.0",
       ruleId: "go.ArchivePathTraversal",
       level: "error",
       physicalLocation: "internal/handlers/download.go:55:12",
@@ -928,7 +928,7 @@ f, err := root.Open(artifactParam)`,
   },
   {
     findingId: "VAL-105",
-    scanner: "Checkmarx",
+    scanner: "XTRIKE XQL",
     ruleId: "csharp.aspnet.reflected-xss-razor",
     cwe: "CWE-79",
     cweTitle: "Cross-Site Scripting (XSS)",
@@ -952,7 +952,7 @@ f, err := root.Open(artifactParam)`,
     ],
     sinkExpr: "@Html.Raw(Model.FormattedNote)",
     sanitizersDetected: ["Ganss.XSS.HtmlSanitizer detected in OnGet(), but deployed staging build SHA differs from scanned commit"],
-    traceProvenance: "Checkmarx AST trace",
+    traceProvenance: "XTRIKE XQL AST trace",
     buildId: "build-2026.10.14-e30291bc",
     endpoint: "/Admin/AuditPreview?note=",
     httpMethod: "GET",
@@ -1079,7 +1079,7 @@ public void AuditPreview_EncodesUntrustedMarkup() {
 }`,
     rawSarifRecord: {
       schemaVersion: "2.1.0",
-      toolDriver: "Checkmarx One 3.14",
+      toolDriver: "XTRIKE XQL One 3.14",
       ruleId: "csharp.aspnet.reflected-xss-razor",
       level: "warning",
       physicalLocation: "Pages/Admin/AuditPreview.cshtml:33:14",
@@ -1131,7 +1131,7 @@ export const BENCHMARK_SUITE_SUMMARY = {
       name: "False Confirmation Rate",
       value: "1.1%",
       question: "How often does the engine incorrectly claim a finding is confirmed?",
-      detail: "Kept near zero by requiring DB/OTel span proof in addition to HTTP responses.",
+      detail: "Kept near zero by requiring DB/XTRIKE-Trace span proof in addition to HTTP responses.",
     },
     {
       name: "False Dismissal Rate",
@@ -1182,7 +1182,7 @@ export const DETERMINISTIC_VS_AI_MATRIX = {
     },
     {
       item: "Content-Addressed Evidence Integrity",
-      detail: "SHA-256 hashes over raw SARIF traces, HTTP exchanges, and OpenTelemetry spans.",
+      detail: "SHA-256 hashes over raw SARIF traces, HTTP exchanges, and XTRIKE-Trace spans.",
     },
     {
       item: "Proof-Contract Evaluation & State Transitions",
@@ -1227,23 +1227,23 @@ export const HYBRID_PROOF_TECHNIQUES = [
   {
     step: 1,
     title: "Static & Bidirectional Analysis",
-    engine: "CodeQL + LibCST + Joern CPG",
+    engine: "XTRIKE AST-Query + XTRIKE-CST + XTRIKE GraphCPG CPG",
     role: "Traces untrusted data forward from sources to sinks and backward from sensitive operations to enumerate every upstream caller, sanitizer, and variable alias.",
     metric: "100% call-graph coverage across 5 languages",
   },
   {
     step: 2,
     title: "Symbolic & Constraint Analysis",
-    engine: "Z3 Theorem Prover + CrossHair",
+    engine: "XTRIKE-Solver Theorem Prover + XTRIKE-SymExec",
     role: "Derives path conditions and guard clauses required to reach a sink, solves for minimal satisfying inputs, and proves dead/unreachable branches.",
     metric: "36 unreachable branches proven statically",
   },
   {
     step: 3,
     title: "Dynamic & Runtime-to-Source Correlation",
-    engine: "httpx + Playwright + OpenTelemetry",
+    engine: "XTRIKE-HTTP + XTRIKE-DOM + XTRIKE-Trace",
     role: "Exercises controlled inputs in disposable containers while mapping HTTP requests directly to executed functions, DB queries, and source lines.",
-    metric: "Sub-millisecond OTel span-to-line correlation",
+    metric: "Sub-millisecond XTRIKE-Trace span-to-line correlation",
   },
   {
     step: 4,
@@ -1348,7 +1348,7 @@ export const COUNTEREXAMPLE_RECORDS: CounterexampleRecord[] = [
     sensitiveOperationStage:
       "fetch(validatedUrl, { redirect: 'error' }) is unreachable for private or link-local IP ranges.",
     minimizedCounterexample:
-      "Z3 constraint UNSAT for private/link-local ranges; runtime check confirmed EgressPolicyError with 0 sockets opened.",
+      "XTRIKE-Solver constraint UNSAT for private/link-local ranges; runtime check confirmed EgressPolicyError with 0 sockets opened.",
     unminimizedLength: 220,
     minimizedLength: 48,
     differentialOutcome:
@@ -1529,7 +1529,7 @@ export const KNOWLEDGE_GRAPH_EDGES = [
     relation: "MAPS_TO_SOURCE_SINK",
     toType: "AST Function",
     toNode: "invoices.get_invoice_by_id() -> session.execute()",
-    learnedInsight: "FastAPI Depends(get_current_user) proves authentication, not tenant ownership.",
+    learnedInsight: "XTRIKE-API Depends(get_current_user) proves authentication, not tenant ownership.",
   },
   {
     fromType: "AST Sanitizer",
@@ -1589,12 +1589,12 @@ export const SELF_TESTING_QUALITY_GATES = [
 ] as const;
 
 export const SIXTEEN_ADVANCED_CAPABILITIES = [
-  { id: 1, name: "Bidirectional Source-to-Sink Analysis", group: "Core Analysis", status: "Active (CodeQL + LibCST)" },
+  { id: 1, name: "Bidirectional Source-to-Sink Analysis", group: "Core Analysis", status: "Active (XTRIKE AST-Query + XTRIKE-CST)" },
   { id: 2, name: "Multi-Vulnerability Attack-Chain Discovery", group: "Graph Intelligence", status: "Active (CHAIN-01, CHAIN-02)" },
-  { id: 3, name: "Runtime-to-Source Correlation", group: "Dynamic Telemetry", status: "Active (OTel Span -> Line)" },
+  { id: 3, name: "Runtime-to-Source Correlation", group: "Dynamic Telemetry", status: "Active (XTRIKE-Trace Span -> Line)" },
   { id: 4, name: "Coverage-Guided API & Schema Fuzzing", group: "Dynamic Telemetry", status: "Active (Schema-Bounded)" },
   { id: 5, name: "Automated Fix & Patch Bypass Verification", group: "Differential", status: "Active (PR Retest Loop)" },
-  { id: 6, name: "Symbolic Execution & Z3 Constraint Solving", group: "Formal / Solver", status: "Active (Z3 + CrossHair)" },
+  { id: 6, name: "Symbolic Execution & XTRIKE-Solver Constraint Solving", group: "Formal / Solver", status: "Active (XTRIKE-Solver + XTRIKE-SymExec)" },
   { id: 7, name: "Security-Invariant Engine (INV-01..06)", group: "Property Testing", status: "Active (SAST-Independent)" },
   { id: 8, name: "Multi-Tenant Isolation Testing", group: "Property Testing", status: "Active (Two-Tenant Harness)" },
   { id: 9, name: "Business-Logic & State-Machine Testing", group: "Property Testing", status: "Active (Transition Verifier)" },
@@ -1630,7 +1630,7 @@ export const SECURITY_CLAIMS_LEDGER: VerifiableClaim[] = [
     claimId: "CLM-01",
     claimType: "Vulnerable code is reachable",
     findingRef: "VAL-101 (CWE-862)",
-    requiredProof: "Supported call path and observed runtime OpenTelemetry trace on active route.",
+    requiredProof: "Supported call path and observed runtime XTRIKE-Trace trace on active route.",
     observedEvidence: "GET /api/v1/invoices/{invoice_id} invoked get_invoice_by_id() -> fetch_one() (trace_id=7b2019ef).",
     verdict: "ESTABLISHED",
     unestablishedNotes: "None — direct route-to-function span recorded on commit a4f92c81.",
@@ -1724,7 +1724,7 @@ export const EXECUTABLE_SECURITY_CONTRACTS: SecurityContractSpec[] = [
     given: "An authenticated workspace administrator configuring a webhook callback URL.",
     when: "The callback URL resolves to RFC-1918 private space or link-local metadata (169.254.169.254).",
     expected: "The dispatcher must reject the address prior to opening any network socket.",
-    evidenceRequired: "DNS resolution log, guard exception trace, and OpenTelemetry net.sock span count == 0.",
+    evidenceRequired: "DNS resolution log, guard exception trace, and XTRIKE-Trace net.sock span count == 0.",
     generatedTestName: "test_contract_egress_containment_webhooks()",
     executionStatus: "CONTRACT SATISFIED",
     observedOutcome: "assertPublicHostnameAndResolve() threw EgressPolicyError; 0 sockets opened (linked to VAL-103).",
@@ -1868,7 +1868,7 @@ export const MUTATION_TESTING_SUMMARY = {
       operator: "DowngradePreparedStatementMutator",
       target: "OrderDao.java:118",
       description: "Replaced parameterized ? binding with string concatenation in disposable test build.",
-      detectedBy: "P2 SQL Structure Validator + OTel JDBC Span Check (390 ms)",
+      detectedBy: "P2 SQL Structure Validator + XTRIKE-Trace JDBC Span Check (390 ms)",
       status: "KILLED (Detected)",
     },
     {

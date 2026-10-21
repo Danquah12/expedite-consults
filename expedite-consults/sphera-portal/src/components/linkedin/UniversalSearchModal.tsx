@@ -9,21 +9,17 @@ import {
   Wrench,
   GraduationCap,
   FileText,
-  Radio,
   Globe,
-  ArrowRight,
   ShieldCheck,
-  Star,
   ExternalLink,
   Sparkles,
   X,
-  Check,
-  RefreshCw
+  RefreshCw,
+  Layers
 } from "lucide-react"
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
 
@@ -32,6 +28,7 @@ import { getEnclaveGlobalJobs } from "@/lib/global-jobs-data"
 import { getEnclaveMarketplaceProducts } from "@/lib/marketplace-engine-data"
 import { getEnclaveLearningCourses } from "@/lib/learning-platform-data"
 import { getEnclavePulseArticles } from "@/lib/pulse-news-data"
+import { getEnclaveModules } from "@/lib/connectin-navbar-data"
 
 interface UniversalSearchModalProps {
   isOpen: boolean
@@ -59,19 +56,19 @@ export function UniversalSearchModal({
   onNavigateTab,
   currentUser
 }: UniversalSearchModalProps) {
-  const enclaveId = currentUser?.professionEnclave || 'tech_cybersecurity'
+  const enclaveId = currentUser?.professionEnclave || 'trades_construction'
   const [query, setQuery] = useState(initialQuery || "")
   const [selectedCategory, setSelectedCategory] = useState<string>("All")
 
-  const basePeople: PersonSearchResult[] = getEnclaveConnectedMembers(enclaveId).map(m => ({
+  const basePeople: PersonSearchResult[] = (getEnclaveConnectedMembers(enclaveId) || []).map(m => ({
     id: m.id,
-    name: m.name,
-    role: m.headline,
+    name: m.name || "Verified Member",
+    role: m.headline || "ConnectIn Professional",
     org: m.mutualClearance || "Verified Trade Network",
     rating: 4.95,
     verified: true,
-    avatar: m.avatar,
-    skills: m.tags || []
+    avatar: m.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=Member&backgroundColor=0a66c2",
+    skills: Array.isArray(m.tags) ? m.tags : []
   }))
 
   const [liveUsers, setLiveUsers] = useState<PersonSearchResult[]>(basePeople)
@@ -79,52 +76,68 @@ export function UniversalSearchModal({
   const [isLoadingUsers, setIsLoadingUsers] = useState(false)
 
   useEffect(() => {
-    setLiveUsers(getEnclaveConnectedMembers(enclaveId).map(m => ({
+    setLiveUsers((getEnclaveConnectedMembers(enclaveId) || []).map(m => ({
       id: m.id,
-      name: m.name,
-      role: m.headline,
+      name: m.name || "Verified Member",
+      role: m.headline || "ConnectIn Professional",
       org: m.mutualClearance || "Verified Trade Network",
       rating: 4.95,
       verified: true,
-      avatar: m.avatar,
-      skills: m.tags || []
+      avatar: m.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=Member&backgroundColor=0a66c2",
+      skills: Array.isArray(m.tags) ? m.tags : []
     })))
   }, [enclaveId])
 
-  const ALL_JOBS = getEnclaveGlobalJobs(enclaveId).map(j => ({
-    title: j.title,
-    company: j.company,
-    salary: j.salary,
-    clearance: j.clearance,
-    skills: j.tags
+  // Platform Modules & Connected Apps (including Resume Preparation App)
+  const ALL_MODULES = [
+    {
+      id: "careersuite",
+      label: "Expedite CareerSuite™ — Resume Preparation App",
+      desc: "AI Resume Tailoring, ATS Fit Score, Corporate & USAJOBS Federal KSAs, and Profile Maximizer",
+      icon: "📝",
+      url: "https://tuhousing.vercel.app/",
+      isExternal: false,
+      badge: "RESUME AI"
+    },
+    ...(getEnclaveModules(enclaveId, true) || [])
+  ]
+
+  const ALL_JOBS = (getEnclaveGlobalJobs(enclaveId) || []).map(j => ({
+    title: String(j.title || "Open Role"),
+    company: String(j.company || "Verified Employer"),
+    salary: String(j.salaryRange || (j as any).salary || "Competitive Compensation"),
+    clearance: String(j.clearanceRequired || (j as any).clearance || "Verified Identity"),
+    skills: Array.isArray(j.tags) ? j.tags.map(String) : []
   }))
 
-  const ALL_PRODUCTS = getEnclaveMarketplaceProducts(enclaveId).map(p => ({
-    name: p.name,
-    icon: enclaveId === 'trades_construction' ? '🧰' : (enclaveId === 'healthcare_medicine' ? '🩺' : (enclaveId === 'automotive_mechanics' ? '🔧' : '🛡️')),
-    tagline: p.description,
-    price: p.pricing,
-    category: p.category
+  const ALL_PRODUCTS = (getEnclaveMarketplaceProducts(enclaveId) || []).map(p => ({
+    name: String(p.name || "Enterprise Solution"),
+    icon: p.icon || (enclaveId === 'trades_construction' ? '🧰' : (enclaveId === 'healthcare_medicine' ? '🩺' : (enclaveId === 'automotive_mechanics' ? '🔧' : '🛡️'))),
+    tagline: String(p.tagline || p.overview || (p as any).description || "Verified ConnectIn Marketplace solution"),
+    price: typeof p.pricing === 'object' && p.pricing !== null
+      ? String(p.pricing.displayPrice || "$0")
+      : String(p.pricing || "$0"),
+    category: String(p.category || "Software")
   }))
 
   const ALL_SERVICES = [
-    { name: `${currentUser?.profession || 'Trade'} Verified Advisory Sprint`, vendor: "ConnectIn Verified Network", startingPrice: "$8,500 / Project", desc: "Expert assessment, compliance audit, and operational readiness." },
+    { name: `${currentUser?.profession || 'Professional'} Verified Advisory Sprint`, vendor: "ConnectIn Verified Network", startingPrice: "$8,500 / Project", desc: "Expert assessment, compliance audit, and operational readiness." },
     { name: "Full-Scope Safety & Process Audit", vendor: "Ecosystem Quality Group", startingPrice: "$12,000 / Engagement", desc: "Rigorous standards inspection and field certification." }
   ]
 
-  const ALL_COURSES = getEnclaveLearningCourses(enclaveId).map(c => ({
-    title: c.title,
-    duration: c.duration,
+  const ALL_COURSES = (getEnclaveLearningCourses(enclaveId) || []).map(c => ({
+    title: String(c.title || "Masterclass Course"),
+    duration: String(c.duration || "4h 30m"),
     labs: 3,
-    level: c.level,
-    instructor: c.instructor.name
+    level: String(c.level || "Intermediate"),
+    instructor: String(c.instructor?.name || "Verified Instructor")
   }))
 
-  const ALL_RESEARCH = getEnclavePulseArticles(enclaveId).map(a => ({
-    title: a.title,
-    date: a.publishedTime,
-    format: a.category,
-    author: a.source
+  const ALL_RESEARCH = (getEnclavePulseArticles(enclaveId) || []).map(a => ({
+    title: String(a.title || "Technical Briefing"),
+    date: String(a.publishedAt || (a as any).publishedTime || "Recent"),
+    format: String(a.category || "Research"),
+    author: String(a.author?.name || a.author?.source || (a as any).source || "ConnectIn Intelligence")
   }))
 
   // Sync initial query when opened or changed
@@ -147,18 +160,17 @@ export function UniversalSearchModal({
           if (data.success && Array.isArray(data.users)) {
             const apiPeople: PersonSearchResult[] = data.users.map((u: any) => ({
               id: u.id,
-              name: u.name,
-              role: u.headline || "ConnectIn Member",
-              org: u.role ? `ConnectIn ${u.role.charAt(0).toUpperCase() + u.role.slice(1)}` : "ConnectIn Member",
+              name: String(u.name || "ConnectIn Member"),
+              role: String(u.headline || "ConnectIn Member"),
+              org: u.role ? `ConnectIn ${String(u.role).charAt(0).toUpperCase() + String(u.role).slice(1)}` : "ConnectIn Member",
               rating: 4.9,
               verified: true,
-              avatar: u.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.name)}&backgroundColor=0a66c2`,
-              skills: ["Cyber Security", "Zero Trust", "Cloud Security"]
+              avatar: u.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.name || "Member")}&backgroundColor=0a66c2`,
+              skills: ["Verified Member", "Zero Trust", "ConnectIn Network"]
             }))
 
-            // Merge with basePeople, avoiding duplicate names
             const merged = [...apiPeople, ...basePeople].filter((item, index, self) =>
-              index === self.findIndex(t => t.name.toLowerCase() === item.name.toLowerCase())
+              index === self.findIndex(t => (t.name || "").toLowerCase() === (item.name || "").toLowerCase())
             )
             setLiveUsers(merged)
           }
@@ -173,16 +185,26 @@ export function UniversalSearchModal({
     fetchUsers()
   }, [isOpen])
 
-  const q = query.toLowerCase().trim()
+  const q = (query || "").toLowerCase().trim()
+
+  // Filter modules & hubs
+  const filteredModules = ALL_MODULES.filter(m => {
+    if (!q) return true
+    return (
+      (m.label || "").toLowerCase().includes(q) ||
+      (m.desc || "").toLowerCase().includes(q) ||
+      (m.id || "").toLowerCase().includes(q)
+    )
+  })
 
   // Filter people
   const filteredPeople = liveUsers.filter(p => {
     if (!q) return true
     return (
-      p.name.toLowerCase().includes(q) ||
-      p.role.toLowerCase().includes(q) ||
-      p.org.toLowerCase().includes(q) ||
-      p.skills?.some(s => s.toLowerCase().includes(q))
+      (p.name || "").toLowerCase().includes(q) ||
+      (p.role || "").toLowerCase().includes(q) ||
+      (p.org || "").toLowerCase().includes(q) ||
+      p.skills?.some(s => (s || "").toLowerCase().includes(q))
     )
   })
 
@@ -190,10 +212,10 @@ export function UniversalSearchModal({
   const filteredJobs = ALL_JOBS.filter(j => {
     if (!q) return true
     return (
-      j.title.toLowerCase().includes(q) ||
-      j.company.toLowerCase().includes(q) ||
-      j.clearance.toLowerCase().includes(q) ||
-      j.skills?.some(s => s.toLowerCase().includes(q))
+      (j.title || "").toLowerCase().includes(q) ||
+      (j.company || "").toLowerCase().includes(q) ||
+      (j.clearance || "").toLowerCase().includes(q) ||
+      j.skills?.some(s => (s || "").toLowerCase().includes(q))
     )
   })
 
@@ -201,9 +223,9 @@ export function UniversalSearchModal({
   const filteredProducts = ALL_PRODUCTS.filter(prod => {
     if (!q) return true
     return (
-      prod.name.toLowerCase().includes(q) ||
-      prod.tagline.toLowerCase().includes(q) ||
-      prod.category.toLowerCase().includes(q)
+      (prod.name || "").toLowerCase().includes(q) ||
+      (prod.tagline || "").toLowerCase().includes(q) ||
+      (prod.category || "").toLowerCase().includes(q)
     )
   })
 
@@ -211,9 +233,9 @@ export function UniversalSearchModal({
   const filteredServices = ALL_SERVICES.filter(s => {
     if (!q) return true
     return (
-      s.name.toLowerCase().includes(q) ||
-      s.vendor.toLowerCase().includes(q) ||
-      s.desc.toLowerCase().includes(q)
+      (s.name || "").toLowerCase().includes(q) ||
+      (s.vendor || "").toLowerCase().includes(q) ||
+      (s.desc || "").toLowerCase().includes(q)
     )
   })
 
@@ -221,9 +243,9 @@ export function UniversalSearchModal({
   const filteredCourses = ALL_COURSES.filter(c => {
     if (!q) return true
     return (
-      c.title.toLowerCase().includes(q) ||
-      c.instructor.toLowerCase().includes(q) ||
-      c.level.toLowerCase().includes(q)
+      (c.title || "").toLowerCase().includes(q) ||
+      (c.instructor || "").toLowerCase().includes(q) ||
+      (c.level || "").toLowerCase().includes(q)
     )
   })
 
@@ -231,13 +253,14 @@ export function UniversalSearchModal({
   const filteredResearch = ALL_RESEARCH.filter(r => {
     if (!q) return true
     return (
-      r.title.toLowerCase().includes(q) ||
-      r.author.toLowerCase().includes(q) ||
-      r.format.toLowerCase().includes(q)
+      (r.title || "").toLowerCase().includes(q) ||
+      (r.author || "").toLowerCase().includes(q) ||
+      (r.format || "").toLowerCase().includes(q)
     )
   })
 
   const totalResultsCount =
+    filteredModules.length +
     filteredPeople.length +
     filteredJobs.length +
     filteredProducts.length +
@@ -248,6 +271,7 @@ export function UniversalSearchModal({
   const categoryCounts = [
     { id: "All", label: "All Results", count: String(totalResultsCount) },
     { id: "People", label: "People & Members", count: String(filteredPeople.length), targetTab: "network" },
+    { id: "Modules", label: "Hubs & Apps", count: String(filteredModules.length), targetTab: "home" },
     { id: "Jobs", label: "Jobs", count: String(filteredJobs.length), targetTab: "jobs" },
     { id: "Products", label: "Products", count: String(filteredProducts.length), targetTab: "marketplace" },
     { id: "Services", label: "Services", count: String(filteredServices.length), targetTab: "marketplace" },
@@ -262,16 +286,18 @@ export function UniversalSearchModal({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-5xl max-h-[88vh] flex flex-col p-0 overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-2xl">
+        <DialogTitle className="sr-only">ConnectIn Universal Omnisearch Directory</DialogTitle>
+
         {/* Header Search Input */}
         <div className="bg-white dark:bg-zinc-900 p-4 sm:p-5 border-b border-zinc-200 dark:border-zinc-800 shrink-0 text-zinc-900 dark:text-zinc-100 space-y-3.5">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-3 py-1 text-xs font-semibold text-[#0A66C2] dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center gap-1.5">
                 <Globe className="h-3.5 w-3.5 text-[#0A66C2]" />
-                ConnectIn Universal Search
+                ConnectIn Universal Omnisearch Directory
               </span>
               <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                {isLoadingUsers ? "Indexing members..." : `${liveUsers.length} members & assets indexed`}
+                {isLoadingUsers ? "Indexing members..." : `${totalResultsCount} members, jobs, hubs & assets indexed`}
               </span>
             </div>
             {isLoadingUsers && (
@@ -283,7 +309,7 @@ export function UniversalSearchModal({
             <Search className="absolute left-4 top-3.5 h-5 w-5 text-zinc-400" />
             <input
               type="text"
-              placeholder="Search members (Rhoda, Kwesi, Alex...), jobs, solutions, courses..."
+              placeholder="Search members (Rhoda, Kwesi, Alex...), Resume Prep, jobs, solutions, courses..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               autoFocus
@@ -306,6 +332,7 @@ export function UniversalSearchModal({
             {categoryCounts.map((cat) => (
               <button
                 key={cat.id}
+                type="button"
                 onClick={() => setSelectedCategory(cat.id)}
                 className={`rounded-full px-3 py-1 font-semibold transition-all shrink-0 text-xs cursor-pointer ${
                   selectedCategory === cat.id
@@ -327,9 +354,10 @@ export function UniversalSearchModal({
                 No results found matching &ldquo;{query}&rdquo;
               </p>
               <p className="text-xs text-zinc-500">
-                Try searching for <strong>Rhoda</strong>, <strong>Kwesi</strong>, <strong>Alex</strong>, <strong>Zero Trust</strong>, or <strong>FedRAMP</strong>.
+                Try searching for <strong>Rhoda</strong>, <strong>Kwesi</strong>, <strong>Alex</strong>, <strong>Resume</strong>, <strong>Zero Trust</strong>, or <strong>FedRAMP</strong>.
               </p>
               <button
+                type="button"
                 onClick={() => setQuery("")}
                 className="mt-2 rounded-lg bg-[#0A66C2] text-white px-3 py-1 font-bold text-xs hover:bg-[#004182] cursor-pointer"
               >
@@ -347,6 +375,7 @@ export function UniversalSearchModal({
                   <span>People &amp; Verified Members ({filteredPeople.length} found)</span>
                 </h4>
                 <button
+                  type="button"
                   onClick={() => { onClose(); onNavigateTab('network'); }}
                   className="text-[#0A66C2] font-bold hover:underline cursor-pointer"
                 >
@@ -413,6 +442,60 @@ export function UniversalSearchModal({
             </div>
           )}
 
+          {/* 1.5. PLATFORM HUBS & CONNECTED APPS */}
+          {(selectedCategory === "All" || selectedCategory === "Modules") && filteredModules.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                  <Layers className="h-4 w-4 text-emerald-600" />
+                  <span>Platform Hubs &amp; Connected Apps ({filteredModules.length} found)</span>
+                </h4>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {filteredModules.map((mod, i) => (
+                  <div
+                    key={`${mod.id}_${i}`}
+                    className="rounded-xl border border-zinc-200 bg-white p-3.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 flex items-center justify-between gap-3 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="text-xl shrink-0">{mod.icon}</span>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <p className="font-bold text-zinc-900 dark:text-zinc-100 truncate">{mod.label}</p>
+                          {mod.badge && (
+                            <span className="rounded bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 px-1.5 py-0.5 text-[9px] font-mono font-bold shrink-0">
+                              {mod.badge}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">{mod.desc}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (mod.isExternal && mod.url) {
+                            window.open(mod.url, '_blank', 'noopener,noreferrer')
+                          } else {
+                            onClose()
+                            onNavigateTab(mod.id)
+                          }
+                        }}
+                        className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white px-3 py-1 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                      >
+                        <span>Open</span>
+                        {mod.isExternal && <ExternalLink className="h-3 w-3" />}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* 2. PRODUCTS & SOFTWARE */}
           {(selectedCategory === "All" || selectedCategory === "Products") && filteredProducts.length > 0 && (
             <div className="space-y-3">
@@ -421,7 +504,11 @@ export function UniversalSearchModal({
                   <ShoppingBag className="h-4 w-4 text-purple-600" />
                   <span>Enterprise Software &amp; Tools ({filteredProducts.length} found)</span>
                 </h4>
-                <button onClick={() => { onClose(); onNavigateTab('marketplace'); }} className="text-purple-600 font-bold hover:underline cursor-pointer">
+                <button
+                  type="button"
+                  onClick={() => { onClose(); onNavigateTab('marketplace'); }}
+                  className="text-purple-600 font-bold hover:underline cursor-pointer"
+                >
                   View all in Marketplace →
                 </button>
               </div>
@@ -437,7 +524,11 @@ export function UniversalSearchModal({
                       <p className="text-[11px] text-zinc-500 dark:text-zinc-400 line-clamp-1">{prod.tagline}</p>
                       <span className="font-mono text-emerald-600 font-bold text-[10px] block">{prod.price} · 14-Day Free Trial</span>
                     </div>
-                    <button onClick={() => { onClose(); onNavigateTab('marketplace'); }} className="rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-3 py-1 text-[11px] font-bold shrink-0 shadow-xs cursor-pointer">
+                    <button
+                      type="button"
+                      onClick={() => { onClose(); onNavigateTab('marketplace'); }}
+                      className="rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-3 py-1 text-[11px] font-bold shrink-0 shadow-xs cursor-pointer"
+                    >
                       Try Free
                     </button>
                   </div>
@@ -454,7 +545,11 @@ export function UniversalSearchModal({
                   <Briefcase className="h-4 w-4 text-emerald-600" />
                   <span>Open Requisitions &amp; Cleared Roles ({filteredJobs.length} found)</span>
                 </h4>
-                <button onClick={() => { onClose(); onNavigateTab('jobs'); }} className="text-[#0A66C2] font-bold hover:underline cursor-pointer">
+                <button
+                  type="button"
+                  onClick={() => { onClose(); onNavigateTab('jobs'); }}
+                  className="text-[#0A66C2] font-bold hover:underline cursor-pointer"
+                >
                   View all in Jobs →
                 </button>
               </div>
@@ -467,7 +562,11 @@ export function UniversalSearchModal({
                       <p className="text-[11px] text-zinc-500 dark:text-zinc-400">{job.company} · Clearance: <strong className="text-purple-600">{job.clearance}</strong></p>
                       <span className="font-mono text-emerald-600 font-bold text-[10px]">{job.salary}</span>
                     </div>
-                    <button onClick={() => { onClose(); onNavigateTab('jobs'); }} className="rounded-full bg-[#0A66C2] text-white px-3 py-1 text-[11px] font-bold shrink-0 cursor-pointer">
+                    <button
+                      type="button"
+                      onClick={() => { onClose(); onNavigateTab('jobs'); }}
+                      className="rounded-full bg-[#0A66C2] text-white px-3 py-1 text-[11px] font-bold shrink-0 cursor-pointer"
+                    >
                       1-Click Apply
                     </button>
                   </div>
@@ -484,7 +583,11 @@ export function UniversalSearchModal({
                   <Wrench className="h-4 w-4 text-amber-500" />
                   <span>Advisory &amp; Engineering Services ({filteredServices.length} found)</span>
                 </h4>
-                <button onClick={() => { onClose(); onNavigateTab('marketplace'); }} className="text-[#0A66C2] font-bold hover:underline cursor-pointer">
+                <button
+                  type="button"
+                  onClick={() => { onClose(); onNavigateTab('marketplace'); }}
+                  className="text-[#0A66C2] font-bold hover:underline cursor-pointer"
+                >
                   View in Marketplace →
                 </button>
               </div>
@@ -497,7 +600,11 @@ export function UniversalSearchModal({
                       <p className="text-[11px] text-zinc-500 dark:text-zinc-400">{svc.vendor} · {svc.desc}</p>
                       <span className="font-mono text-emerald-600 font-bold text-[10px]">{svc.startingPrice}</span>
                     </div>
-                    <button onClick={() => { onClose(); onNavigateTab('marketplace'); }} className="rounded-full bg-[#0A66C2] text-white px-3 py-1 text-[11px] font-bold shrink-0 cursor-pointer">
+                    <button
+                      type="button"
+                      onClick={() => { onClose(); onNavigateTab('marketplace'); }}
+                      className="rounded-full bg-[#0A66C2] text-white px-3 py-1 text-[11px] font-bold shrink-0 cursor-pointer"
+                    >
                       Book Sprint
                     </button>
                   </div>
@@ -514,7 +621,11 @@ export function UniversalSearchModal({
                   <GraduationCap className="h-4 w-4 text-blue-600" />
                   <span>Interactive Courses &amp; Defense Labs ({filteredCourses.length} found)</span>
                 </h4>
-                <button onClick={() => { onClose(); onNavigateTab('learning'); }} className="text-[#0A66C2] font-bold hover:underline cursor-pointer">
+                <button
+                  type="button"
+                  onClick={() => { onClose(); onNavigateTab('learning'); }}
+                  className="text-[#0A66C2] font-bold hover:underline cursor-pointer"
+                >
                   View in Learning →
                 </button>
               </div>
@@ -529,7 +640,11 @@ export function UniversalSearchModal({
                         {c.level}
                       </span>
                     </div>
-                    <button onClick={() => { onClose(); onNavigateTab('learning'); }} className="rounded-full bg-[#0A66C2] text-white px-3 py-1 text-[11px] font-bold shrink-0 cursor-pointer">
+                    <button
+                      type="button"
+                      onClick={() => { onClose(); onNavigateTab('learning'); }}
+                      className="rounded-full bg-[#0A66C2] text-white px-3 py-1 text-[11px] font-bold shrink-0 cursor-pointer"
+                    >
                       Start Lab
                     </button>
                   </div>
@@ -546,7 +661,11 @@ export function UniversalSearchModal({
                   <FileText className="h-4 w-4 text-slate-600" />
                   <span>Research &amp; Technical Reports ({filteredResearch.length} found)</span>
                 </h4>
-                <button onClick={() => { onClose(); onNavigateTab('pulserooms'); }} className="text-[#0A66C2] font-bold hover:underline cursor-pointer">
+                <button
+                  type="button"
+                  onClick={() => { onClose(); onNavigateTab('pulserooms'); }}
+                  className="text-[#0A66C2] font-bold hover:underline cursor-pointer"
+                >
                   View in Pulse →
                 </button>
               </div>
@@ -561,7 +680,11 @@ export function UniversalSearchModal({
                         {r.format}
                       </span>
                     </div>
-                    <button onClick={() => { onClose(); onNavigateTab('pulserooms'); }} className="rounded-full bg-[#0A66C2] text-white px-3 py-1 text-[11px] font-bold shrink-0 cursor-pointer">
+                    <button
+                      type="button"
+                      onClick={() => { onClose(); onNavigateTab('pulserooms'); }}
+                      className="rounded-full bg-[#0A66C2] text-white px-3 py-1 text-[11px] font-bold shrink-0 cursor-pointer"
+                    >
                       Read Report
                     </button>
                   </div>
@@ -574,4 +697,3 @@ export function UniversalSearchModal({
     </Dialog>
   )
 }
-

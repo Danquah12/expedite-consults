@@ -196,6 +196,18 @@ export default function PostScanValidation({
             >
               Re-Run Validation Pass
             </button>
+            <a
+              href="/reports"
+              className="text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+              style={{
+                background: "#f4e5dc",
+                color: "#8b4528",
+                border: "1px solid #8b4528",
+                textDecoration: "none",
+              }}
+            >
+              <span>🖨️ Print / Report Engine</span>
+            </a>
             <button
               type="button"
               onClick={handleDownloadSarif}

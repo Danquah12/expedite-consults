@@ -36,6 +36,7 @@ export function DeveloperAssistAgent() {
   if (!isOpen) {
     return (
       <button
+        className="no-print"
         onClick={() => setIsOpen(true)}
         style={{
           position: "fixed",
@@ -68,13 +69,14 @@ export function DeveloperAssistAgent() {
         }}>
           <Sparkles size={14} color="#8b4528" />
         </div>
-        <span>Ask Max &middot; AI AppSec Agent</span>
+        <span>Ask XTRIKE Copilot &middot; AI AppSec Agent</span>
       </button>
     );
   }
 
   return (
     <div
+      className="no-print"
       style={{
         position: "fixed",
         bottom: 24,
@@ -115,10 +117,10 @@ export function DeveloperAssistAgent() {
             <Bot size={18} color="#f3eee4" />
           </div>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 800, color: "#1f1b18" }}>Max &middot; AI AppSec Agent</div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: "#1f1b18" }}>XTRIKE Copilot &middot; AI AppSec Agent</div>
             <div style={{ fontSize: 10, color: "#8b4528", display: "flex", alignItems: "center", gap: 4 }}>
               <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#46a36e", display: "inline-block" }} />
-              Frontier Hybrid Triage Ready
+              XTRIKE Hybrid Triage Ready
             </div>
           </div>
         </div>
