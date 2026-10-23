@@ -3168,11 +3168,18 @@ ${f.remediation}
     const printWin = window.open("", "_blank", "width=1180,height=920");
     if (!printWin) return;
 
+    const escHtml = (val: any): string =>
+      String(val ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+
     const html = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>EXPEDITE STRIKE™ — Automated Penetration Testing & DAST Validation Dossier (${allScopedUrlsStr})</title>
+  <title>EXPEDITE STRIKE™ — Automated Penetration Testing &amp; DAST Validation Dossier (${escHtml(allScopedUrlsStr)})</title>
   <style>
     @page { size: A4; margin: 14mm; }
     * { box-sizing: border-box; }
@@ -3294,34 +3301,34 @@ ${f.remediation}
 </head>
 <body>
   <div class="no-print">
-    <div><strong>🌐 EXPEDITE STRIKE™ (XTRIKE™ &amp; Aegis.SOC™) — DAST &amp; Web Interface Security Assessment Report (${allScopedUrlsStr})</strong></div>
+    <div><strong>🌐 EXPEDITE STRIKE™ (XTRIKE™ &amp; Aegis.SOC™) — DAST &amp; Web Interface Security Assessment Report (${escHtml(allScopedUrlsStr)})</strong></div>
     <button class="print-btn" onclick="window.print()">🖨️ Print / Save DAST &amp; Web Interface Security Report as PDF</button>
   </div>
 
   <div class="header">
     <div>
-      <div style="font-size:11px;font-weight:800;color:#0284c7;letter-spacing:0.08em;">🌐 EXPEDITE CONSULTS · XTRIKE™ &amp; AEGIS.SOC™ DAST (DYNAMIC APPLICATION SECURITY TESTING) v5.6 · ${classificationLevel}</div>
+      <div style="font-size:11px;font-weight:800;color:#0284c7;letter-spacing:0.08em;">🌐 EXPEDITE CONSULTS · XTRIKE™ &amp; AEGIS.SOC™ DAST (DYNAMIC APPLICATION SECURITY TESTING) v5.7 · ${escHtml(classificationLevel)}</div>
       <h1 style="margin:4px 0;font-size:20px;">XTRIKE™ &amp; Aegis.SOC™ — DAST &amp; Web Interface Security Assessment Report</h1>
       <div style="font-size:11.5px;color:#0f172a;margin:3px 0;">
-        <strong>Prepared For Client:</strong> <span class="badge std-badge">${clientOrgName}</span> &nbsp;|&nbsp;
-        <strong>Lead Assessor:</strong> ${leadAssessorName} &nbsp;|&nbsp;
-        <strong>Engagement / ROE Ref:</strong> <code>${engagementId}</code>
+        <strong>Prepared For Client:</strong> <span class="badge std-badge">${escHtml(clientOrgName)}</span> &nbsp;|&nbsp;
+        <strong>Lead Assessor:</strong> ${escHtml(leadAssessorName)} &nbsp;|&nbsp;
+        <strong>Engagement / ROE Ref:</strong> <code>${escHtml(engagementId)}</code>
       </div>
       <div style="font-size:11.5px;color:#0f172a;margin:3px 0;">
-        <strong>Customer Target URL(s) Scanned:</strong> <code>${allScopedUrlsStr}</code>
+        <strong>Customer Target URL(s) Scanned:</strong> <code>${escHtml(allScopedUrlsStr)}</code>
       </div>
       <div style="font-size:11.5px;color:#475569;">
-        <strong>Governing Standard:</strong> <span class="badge std-badge">${stdLabel}</span>
+        <strong>Governing Standard:</strong> <span class="badge std-badge">${escHtml(stdLabel)}</span>
       </div>
       <div style="font-size:11.5px;color:#475569;margin-top:4px;">
-        <strong>Toolchain:</strong> Live External HTTP/DoH Prober · Nmap NSE v7.94 · OpenVAS / GVM v22.4.1 · OWASP ZAP v2.14.0 (${zapPolicy}) · Burp Suite v2023.10 · MITRE ATT&amp;CK® 14-Tactic Brain
+        <strong>Toolchain:</strong> Live External HTTP/DoH Prober · Nmap NSE v7.94 · OpenVAS / GVM v22.4.1 · OWASP ZAP v2.14.0 (${escHtml(zapPolicy)}) · Burp Suite v2023.10 · MITRE ATT&amp;CK® 14-Tactic Brain
       </div>
     </div>
     <div style="text-align:right;font-size:11.5px;color:#475569;">
-      <div><strong>Dossier ID:</strong> ${engagementId} · EXP-STRIKE-${Date.now().toString().slice(-6)}</div>
-      <div><strong>Date:</strong> ${new Date().toLocaleString()}</div>
-      <div><strong>Hosts Affected:</strong> ${targets.length} Scoped Node(s) (${primaryHost})</div>
-      <div><strong>Security Posture Grade:</strong> <span class="badge ${verifiedFixedCount === reportItems.length ? "verified" : "std-badge"}">${verifiedFixedCount === reportItems.length ? "A+ (98/100 · REMEDIATED)" : `${unifiedGrade} (${unifiedScore}/100 LIVE)`}</span></div>
+      <div><strong>Dossier ID:</strong> ${escHtml(engagementId)} · EXP-STRIKE-${Date.now().toString().slice(-6)}</div>
+      <div><strong>Date:</strong> ${escHtml(new Date().toLocaleString())}</div>
+      <div><strong>Hosts Affected:</strong> ${targets.length} Scoped Node(s) (${escHtml(primaryHost)})</div>
+      <div><strong>Security Posture Grade:</strong> <span class="badge ${verifiedFixedCount === reportItems.length ? "verified" : "std-badge"}">${verifiedFixedCount === reportItems.length ? "A+ (98/100 · REMEDIATED)" : `${escHtml(unifiedGrade)} (${unifiedScore}/100 LIVE)`}</span></div>
       <div style="margin-top:3px;"><strong>Retest Status:</strong> <span class="badge ${verifiedFixedCount === reportItems.length ? "verified" : "crit"}">${verifiedFixedCount}/${reportItems.length} REMEDIATED &amp; VERIFIED</span></div>
     </div>
   </div>
@@ -3329,11 +3336,11 @@ ${f.remediation}
   <div class="kpi-grid">
     <div class="kpi-box">
       <div class="lbl">Customer Hosts</div>
-      <div class="val">${targets.length} (${primaryHost})</div>
+      <div class="val">${targets.length} (${escHtml(primaryHost)})</div>
     </div>
     <div class="kpi-box">
       <div class="lbl">Security Posture</div>
-      <div class="val" style="color:#0284c7;">${verifiedFixedCount === reportItems.length ? "A+ (98)" : `${unifiedGrade} (${unifiedScore})`}</div>
+      <div class="val" style="color:#0284c7;">${verifiedFixedCount === reportItems.length ? "A+ (98)" : `${escHtml(unifiedGrade)} (${unifiedScore})`}</div>
     </div>
     <div class="kpi-box">
       <div class="lbl">MITRE ATT&amp;CK®</div>
@@ -3370,26 +3377,26 @@ ${f.remediation}
         <h2 style="margin:2px 0 0 0;border:none;padding:0;font-size:17px;color:#0f172a;">Executive Summary</h2>
       </div>
       <span class="badge crit" style="font-size:11.5px;padding:4px 10px;background:${ratingColor};color:#fff;">
-        OVERALL RISK RATING: ${execSum.overallRiskRating.rating.toUpperCase()}
+        OVERALL RISK RATING: ${escHtml(execSum.overallRiskRating.rating.toUpperCase())}
       </span>
     </div>
 
     <div style="margin-bottom:10px;">
       <strong style="font-size:12.5px;color:#0f172a;">1. Engagement Overview &amp; Canonical Versioned Scan Record (Single Source of Truth)</strong>
       <p style="margin:4px 0 6px 0;font-size:11.5px;color:#1e293b;line-height:1.5;">
-        ${execSum.engagementOverview.narrativeParagraph}
+        ${escHtml(execSum.engagementOverview.narrativeParagraph)}
       </p>
       <div style="font-size:10.5px;color:#334155;background:#ffffff;border:1px solid #cbd5e1;border-radius:6px;padding:7px 10px;margin-bottom:6px;">
-        <strong>Assessment Type:</strong> ${execSum.engagementOverview.assessmentType} &nbsp;|&nbsp;
-        <strong>Testing Dates:</strong> ${execSum.engagementOverview.testingDates}<br/>
-        <strong>Methodology Referenced:</strong> ${execSum.engagementOverview.methodologyReferenced}<br/>
-        <strong>Rules of Engagement:</strong> ${execSum.engagementOverview.rulesOfEngagement}
+        <strong>Assessment Type:</strong> ${escHtml(execSum.engagementOverview.assessmentType)} &nbsp;|&nbsp;
+        <strong>Testing Dates:</strong> ${escHtml(execSum.engagementOverview.testingDates)}<br/>
+        <strong>Methodology Referenced:</strong> ${escHtml(execSum.engagementOverview.methodologyReferenced)}<br/>
+        <strong>Rules of Engagement:</strong> ${escHtml(execSum.engagementOverview.rulesOfEngagement)}
       </div>
       <div style="font-size:10px;font-family:monospace;color:#0f172a;background:#f0f9ff;border:1px solid #7dd3fc;border-radius:6px;padding:7px 10px;">
-        <strong>📌 CANONICAL SCAN RECORD (${execSum.canonicalScanRecord.scanId}):</strong>
-        Engine: <code>${execSum.canonicalScanRecord.scannerVersion}</code> |
-        Crawl Profile: <code>${execSum.canonicalScanRecord.crawlProfile}</code> |
-        Auth State: <code>${execSum.canonicalScanRecord.authState}</code><br/>
+        <strong>📌 CANONICAL SCAN RECORD (${escHtml(execSum.canonicalScanRecord.scanId)}):</strong>
+        Engine: <code>${escHtml(execSum.canonicalScanRecord.scannerVersion)}</code> |
+        Crawl Profile: <code>${escHtml(execSum.canonicalScanRecord.crawlProfile)}</code> |
+        Auth State: <code>${escHtml(execSum.canonicalScanRecord.authState)}</code><br/>
         <strong>Reconciled Coverage Metrics:</strong>
         Pages Spidered: <strong>${execSum.canonicalScanRecord.spideredPagesCount}</strong> |
         Hyperlinks: <strong>${execSum.canonicalScanRecord.linksCount}</strong> |
@@ -3401,14 +3408,14 @@ ${f.remediation}
     </div>
 
     <div style="margin-bottom:10px;">
-      <strong style="font-size:12.5px;color:#0f172a;">2. Overall Risk Rating (<span style="color:${ratingColor};">${execSum.overallRiskRating.rating}</span>) &amp; Published Reproducible Scoring Methodology</strong>
+      <strong style="font-size:12.5px;color:#0f172a;">2. Overall Risk Rating (<span style="color:${ratingColor};">${escHtml(execSum.overallRiskRating.rating)}</span>) &amp; Published Reproducible Scoring Methodology</strong>
       <p style="margin:4px 0 6px 0;font-size:11.5px;color:#1e293b;background:#fff1f2;border-left:4px solid ${ratingColor};padding:7px 10px;border-radius:0 6px 6px 0;">
-        ${execSum.overallRiskRating.justification}
+        ${escHtml(execSum.overallRiskRating.justification)}
       </p>
       <div style="font-size:10px;color:#1e293b;background:#ffffff;border:1px solid #cbd5e1;border-radius:6px;padding:7px 10px;">
-        <div><strong>Published Formula:</strong> <code>${execSum.scoringMethodology.formulaText}</code></div>
-        <div style="margin-top:2px;"><strong>Deduplication &amp; Weighting:</strong> ${execSum.scoringMethodology.deduplicationRationale} (${execSum.scoringMethodology.rawFindingCount} raw findings ➔ <strong>${execSum.scoringMethodology.deduplicatedClusterCount} unique CWE root-cause clusters</strong>)</div>
-        <div style="margin-top:2px;"><strong>CVSS Technical vs. Contextual Business Risk:</strong> ${execSum.scoringMethodology.cvssVsBusinessRiskNote}</div>
+        <div><strong>Published Formula:</strong> <code>${escHtml(execSum.scoringMethodology.formulaText)}</code></div>
+        <div style="margin-top:2px;"><strong>Deduplication &amp; Weighting:</strong> ${escHtml(execSum.scoringMethodology.deduplicationRationale)} (${execSum.scoringMethodology.rawFindingCount} raw findings ➔ <strong>${execSum.scoringMethodology.deduplicatedClusterCount} unique CWE root-cause clusters</strong>)</div>
+        <div style="margin-top:2px;"><strong>CVSS Technical vs. Contextual Business Risk:</strong> ${escHtml(execSum.scoringMethodology.cvssVsBusinessRiskNote)}</div>
       </div>
     </div>
 
@@ -3431,18 +3438,18 @@ ${f.remediation}
           <tbody>
             ${execSum.severityBreakdownTable.map(row => `
               <tr>
-                <td style="padding:5px 7px;border:1px solid #cbd5e1;font-weight:800;color:${row.severity === "Critical" ? "#e11d48" : row.severity === "High" ? "#ea580c" : "#0284c7"};">${row.severity}</td>
+                <td style="padding:5px 7px;border:1px solid #cbd5e1;font-weight:800;color:${row.severity === "Critical" ? "#e11d48" : row.severity === "High" ? "#ea580c" : "#0284c7"};">${escHtml(row.severity)}</td>
                 <td style="padding:5px 7px;border:1px solid #cbd5e1;font-weight:800;">${row.confirmedCount}</td>
                 <td style="padding:5px 7px;border:1px solid #cbd5e1;">${row.potentialCount}</td>
-                <td style="padding:5px 7px;border:1px solid #cbd5e1;font-family:monospace;">${row.riskWeightPct}</td>
-                <td style="padding:5px 7px;border:1px solid #cbd5e1;font-family:monospace;font-weight:800;">${row.maxCvss}</td>
-                <td style="padding:5px 7px;border:1px solid #cbd5e1;">${row.businessRiskExposure}</td>
-                <td style="padding:5px 7px;border:1px solid #cbd5e1;font-weight:700;">${row.remediationSla}</td>
+                <td style="padding:5px 7px;border:1px solid #cbd5e1;font-family:monospace;">${escHtml(row.riskWeightPct)}</td>
+                <td style="padding:5px 7px;border:1px solid #cbd5e1;font-family:monospace;font-weight:800;">${escHtml(row.maxCvss)}</td>
+                <td style="padding:5px 7px;border:1px solid #cbd5e1;">${escHtml(row.businessRiskExposure)}</td>
+                <td style="padding:5px 7px;border:1px solid #cbd5e1;font-weight:700;">${escHtml(row.remediationSla)}</td>
               </tr>
             `).join("")}
           </tbody>
         </table>
-        <span style="font-size:10.5px;color:#475569;">${execSum.findingsSummary.confirmationNote}</span>
+        <span style="font-size:10.5px;color:#475569;">${escHtml(execSum.findingsSummary.confirmationNote)}</span>
       </div>
     </div>
 
@@ -3450,7 +3457,7 @@ ${f.remediation}
       <strong style="font-size:11.5px;color:#065f46;">✅ 3A. Automated 7-Check Pre-Release Report Quality Gate (Audit &amp; Forensic Readiness Verification)</strong>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;margin-top:5px;font-size:10px;color:#064e3b;">
         ${execSum.qualityGateChecks.map(qg => `
-          <div><strong>[${qg.checkId} · ${qg.status}] ${qg.checkName}:</strong> ${qg.verificationDetail}</div>
+          <div><strong>[${escHtml(qg.checkId)} · ${escHtml(qg.status)}] ${escHtml(qg.checkName)}:</strong> ${escHtml(qg.verificationDetail)}</div>
         `).join("")}
       </div>
     </div>
@@ -3460,9 +3467,9 @@ ${f.remediation}
       <div style="margin-top:6px;">
         ${execSum.executiveCharts.map(chart => `
           <div style="background:#0f172a;border:1px solid #1e293b;border-radius:7px;padding:8px 10px;margin-bottom:8px;color:#e2e8f0;page-break-inside:avoid;">
-            <div style="font-size:11px;font-weight:800;color:#38bdf8;font-family:monospace;margin-bottom:5px;">[${chart.chartId}] ${chart.title}</div>
-            <img src="${chart.svgDataUri}" alt="${chart.title}" style="width:100%;max-width:100%;height:auto;display:block;border-radius:5px;border:1px solid #334155;margin-bottom:5px;" />
-            <div style="font-size:10px;color:#cbd5e1;"><strong style="color:#fcd34d;">Executive Takeaway:</strong> ${chart.keyTakeaway}</div>
+            <div style="font-size:11px;font-weight:800;color:#38bdf8;font-family:monospace;margin-bottom:5px;">[${escHtml(chart.chartId)}] ${escHtml(chart.title)}</div>
+            <img src="${chart.svgDataUri}" alt="${escHtml(chart.title)}" style="width:100%;max-width:100%;height:auto;display:block;border-radius:5px;border:1px solid #334155;margin-bottom:5px;" />
+            <div style="font-size:10px;color:#cbd5e1;"><strong style="color:#fcd34d;">Executive Takeaway:</strong> ${escHtml(chart.keyTakeaway)}</div>
           </div>
         `).join("")}
       </div>
@@ -3485,13 +3492,13 @@ ${f.remediation}
         <tbody>
           ${execSum.securityPostureTrendTable.map(tr => `
             <tr style="${tr.periodLabel.includes("Current") ? "background:#fff1f2;" : tr.periodLabel.includes("Projected") ? "background:#ecfdf5;" : ""}">
-              <td style="padding:5px 7px;border:1px solid #cbd5e1;font-weight:800;">${tr.periodLabel}</td>
-              <td style="padding:5px 7px;border:1px solid #cbd5e1;font-family:monospace;font-weight:800;">${tr.postureScore}/100 (${tr.securityGrade})</td>
+              <td style="padding:5px 7px;border:1px solid #cbd5e1;font-weight:800;">${escHtml(tr.periodLabel)}</td>
+              <td style="padding:5px 7px;border:1px solid #cbd5e1;font-family:monospace;font-weight:800;">${tr.postureScore}/100 (${escHtml(tr.securityGrade)})</td>
               <td style="padding:5px 7px;border:1px solid #cbd5e1;font-weight:800;color:${tr.criticalOpen > 0 ? "#e11d48" : "#059669"};">${tr.criticalOpen}</td>
               <td style="padding:5px 7px;border:1px solid #cbd5e1;font-weight:800;color:${tr.highOpen > 0 ? "#ea580c" : "#059669"};">${tr.highOpen}</td>
               <td style="padding:5px 7px;border:1px solid #cbd5e1;">${tr.mediumLowOpen}</td>
-              <td style="padding:5px 7px;border:1px solid #cbd5e1;font-family:monospace;">${tr.mttrDays}</td>
-              <td style="padding:5px 7px;border:1px solid #cbd5e1;font-weight:700;">${tr.trendDelta}</td>
+              <td style="padding:5px 7px;border:1px solid #cbd5e1;font-family:monospace;">${escHtml(tr.mttrDays)}</td>
+              <td style="padding:5px 7px;border:1px solid #cbd5e1;font-weight:700;">${escHtml(tr.trendDelta)}</td>
             </tr>
           `).join("")}
         </tbody>
@@ -3503,8 +3510,8 @@ ${f.remediation}
       <div style="margin-top:5px;">
         ${execSum.keyFindingsHighlights.map(kh => `
           <div style="background:#ffffff;border:1px solid #cbd5e1;border-left:4px solid ${kh.severity === "Critical" ? "#e11d48" : "#ea580c"};border-radius:5px;padding:7px 10px;margin-bottom:6px;font-size:11px;">
-            <div><strong>[${kh.findingId} · ${kh.severity}] ${kh.headline}:</strong> ${kh.plainLanguageSummary}</div>
-            <div style="color:#475569;margin-top:2px;"><strong>Business Risk:</strong> ${kh.businessRiskImpact}</div>
+            <div><strong>[${escHtml(kh.findingId)} · ${escHtml(kh.severity)}] ${escHtml(kh.headline)}:</strong> ${escHtml(kh.plainLanguageSummary)}</div>
+            <div style="color:#475569;margin-top:2px;"><strong>Business Risk:</strong> ${escHtml(kh.businessRiskImpact)}</div>
           </div>
         `).join("")}
       </div>
@@ -3513,22 +3520,22 @@ ${f.remediation}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;">
       <div style="background:#ffffff;border:1px solid #cbd5e1;border-radius:6px;padding:8px 10px;font-size:11px;">
         <strong style="font-size:12px;color:#0f172a;">5. Business Impact</strong>
-        <p style="margin:4px 0 6px 0;color:#1e293b;">${execSum.businessImpact.narrativeParagraph}</p>
+        <p style="margin:4px 0 6px 0;color:#1e293b;">${escHtml(execSum.businessImpact.narrativeParagraph)}</p>
         <ul style="margin:0 0 0 16px;padding:0;color:#334155;">
-          ${execSum.businessImpact.impactPillars.map(ip => `<li style="margin-bottom:3px;"><strong>${ip.category}:</strong> ${ip.description}</li>`).join("")}
+          ${execSum.businessImpact.impactPillars.map(ip => `<li style="margin-bottom:3px;"><strong>${escHtml(ip.category)}:</strong> ${escHtml(ip.description)}</li>`).join("")}
         </ul>
       </div>
       <div style="display:flex;flex-direction:column;gap:8px;">
         <div style="background:#ecfdf5;border:1px solid #6ee7b7;border-radius:6px;padding:8px 10px;font-size:11px;color:#065f46;">
           <strong style="font-size:12px;">6. Positive Security Observations</strong>
           <ul style="margin:4px 0 0 16px;padding:0;">
-            ${execSum.positiveObservations.map(po => `<li style="margin-bottom:3px;">${po}</li>`).join("")}
+            ${execSum.positiveObservations.map(po => `<li style="margin-bottom:3px;">${escHtml(po)}</li>`).join("")}
           </ul>
         </div>
         <div style="background:#ffffff;border:1px solid #cbd5e1;border-radius:6px;padding:8px 10px;font-size:11px;">
           <strong style="font-size:12px;color:#0f172a;">7. High-Level Recommendations</strong>
           <ul style="margin:4px 0 0 16px;padding:0;color:#1e293b;">
-            ${execSum.highLevelRecommendations.map(rec => `<li style="margin-bottom:3px;"><strong>[${rec.priorityWindow}]</strong> ${rec.action}</li>`).join("")}
+            ${execSum.highLevelRecommendations.map(rec => `<li style="margin-bottom:3px;"><strong>[${escHtml(rec.priorityWindow)}]</strong> ${escHtml(rec.action)}</li>`).join("")}
           </ul>
         </div>
       </div>
@@ -3550,12 +3557,12 @@ ${f.remediation}
         <tbody>
           ${execSum.executiveActionRoadmapTable.map(rm => `
             <tr>
-              <td style="padding:5px 7px;border:1px solid #cbd5e1;font-weight:800;color:#0284c7;">${rm.phaseWindow}</td>
-              <td style="padding:5px 7px;border:1px solid #cbd5e1;font-weight:700;">${rm.focusArea}</td>
-              <td style="padding:5px 7px;border:1px solid #cbd5e1;font-family:monospace;font-weight:700;color:#e11d48;">${rm.targetFindings}</td>
-              <td style="padding:5px 7px;border:1px solid #cbd5e1;font-weight:800;color:#059669;">${rm.projectedRiskReduction}</td>
-              <td style="padding:5px 7px;border:1px solid #cbd5e1;">${rm.stakeholderOwner}</td>
-              <td style="padding:5px 7px;border:1px solid #cbd5e1;">${rm.verificationMethod}</td>
+              <td style="padding:5px 7px;border:1px solid #cbd5e1;font-weight:800;color:#0284c7;">${escHtml(rm.phaseWindow)}</td>
+              <td style="padding:5px 7px;border:1px solid #cbd5e1;font-weight:700;">${escHtml(rm.focusArea)}</td>
+              <td style="padding:5px 7px;border:1px solid #cbd5e1;font-family:monospace;font-weight:700;color:#e11d48;">${escHtml(rm.targetFindings)}</td>
+              <td style="padding:5px 7px;border:1px solid #cbd5e1;font-weight:800;color:#059669;">${escHtml(rm.projectedRiskReduction)}</td>
+              <td style="padding:5px 7px;border:1px solid #cbd5e1;">${escHtml(rm.stakeholderOwner)}</td>
+              <td style="padding:5px 7px;border:1px solid #cbd5e1;">${escHtml(rm.verificationMethod)}</td>
             </tr>
           `).join("")}
         </tbody>
@@ -3564,9 +3571,9 @@ ${f.remediation}
 
     <div style="background:#f1f5f9;border:1px solid #cbd5e1;border-radius:6px;padding:8px 10px;font-size:11px;">
       <strong style="font-size:12px;color:#0f172a;">8. Conclusion and Next Steps</strong>
-      <p style="margin:3px 0 5px 0;color:#1e293b;">${execSum.conclusionAndNextSteps.conclusionParagraph}</p>
+      <p style="margin:3px 0 5px 0;color:#1e293b;">${escHtml(execSum.conclusionAndNextSteps.conclusionParagraph)}</p>
       <div style="color:#0f172a;font-family:monospace;font-size:10.5px;">
-        ${execSum.conclusionAndNextSteps.nextStepsChecklist.map(ns => `<div>☑️ ${ns}</div>`).join("")}
+        ${execSum.conclusionAndNextSteps.nextStepsChecklist.map(ns => `<div>☑️ ${escHtml(ns)}</div>`).join("")}
       </div>
     </div>
   </div>`;
@@ -3581,7 +3588,7 @@ ${f.remediation}
         <th>MITRE Techniques Executed</th>
         <th>PTES / NIST Phase</th>
         <th>Engine Module</th>
-        <th>Validated Assessment Evidence (${primaryHost})</th>
+        <th>Validated Assessment Evidence (${escHtml(primaryHost)})</th>
         <th>MITRE D3FEND™ Countermeasure</th>
       </tr>
     </thead>
@@ -3589,12 +3596,12 @@ ${f.remediation}
       ${contextualMitreMatrix.map(m => `
         <tr>
           <td><strong>#${m.order}</strong></td>
-          <td><span class="badge mitre-badge">${m.tacticId}</span><br/><strong>${m.tactic}</strong></td>
-          <td><code>${m.techniques}</code></td>
-          <td>${m.ptesNist}</td>
-          <td><code>${m.engineModule}</code></td>
-          <td>${m.labValidation}</td>
-          <td><strong>${m.d3fend}</strong></td>
+          <td><span class="badge mitre-badge">${escHtml(m.tacticId)}</span><br/><strong>${escHtml(m.tactic)}</strong></td>
+          <td><code>${escHtml(m.techniques)}</code></td>
+          <td>${escHtml(m.ptesNist)}</td>
+          <td><code>${escHtml(m.engineModule)}</code></td>
+          <td>${escHtml(m.labValidation)}</td>
+          <td><strong>${escHtml(m.d3fend)}</strong></td>
         </tr>
       `).join("")}
     </tbody>
@@ -3619,37 +3626,37 @@ ${f.remediation}
         return `
         <tr>
           <td>${idx + 1}</td>
-          <td><strong><code>${t.url}</code></strong><br/><span style="font-size:10px;color:#475569;">Host: ${rowInfo.host}</span></td>
-          <td>${rowInfo.stack}</td>
-          <td><code>${rowInfo.ports}</code></td>
+          <td><strong><code>${escHtml(t.url)}</code></strong><br/><span style="font-size:10px;color:#475569;">Host: ${escHtml(rowInfo.host)}</span></td>
+          <td>${escHtml(rowInfo.stack)}</td>
+          <td><code>${escHtml(rowInfo.ports)}</code></td>
           <td><code>TA0043 ➔ TA0001 ➔ TA0002 ➔ TA0005 ➔ TA0006 ➔ TA0040</code></td>
-          <td><code>${rowInfo.privilege}</code></td>
-          <td><span class="badge ${rowInfo.riskLabel.includes("CRIT") ? "crit" : "high"}">${rowInfo.riskLabel}</span></td>
+          <td><code>${escHtml(rowInfo.privilege)}</code></td>
+          <td><span class="badge ${rowInfo.riskLabel.includes("CRIT") ? "crit" : "high"}">${escHtml(rowInfo.riskLabel)}</span></td>
         </tr>`;
       }).join("")}
     </tbody>
   </table>
 
-  <h2>3. Step-by-Step Exploitation Walkthroughs &amp; How to Mimic the Assessment Process (${primaryHost})</h2>
+  <h2>3. Step-by-Step Exploitation Walkthroughs &amp; How to Mimic the Assessment Process (${escHtml(primaryHost)})</h2>
   ${contextualWalkthroughs.map(w => `
     <div class="walkthrough-card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <strong style="font-size:13.5px;color:#0369a1;">[${w.chainId}] ${w.title}</strong>
-        <span class="badge crit">${w.securityRisk}</span>
+        <strong style="font-size:13.5px;color:#0369a1;">[${escHtml(w.chainId)}] ${escHtml(w.title)}</strong>
+        <span class="badge crit">${escHtml(w.securityRisk)}</span>
       </div>
-      <div style="font-size:11px;color:#475569;margin-bottom:4px;"><strong>Standard &amp; MITRE Mapping:</strong> ${w.standardRef}</div>
-      <div style="font-size:11.5px;margin-bottom:4px;"><strong>Customer Host(s) Affected:</strong> <code>${w.hostsAffected}</code></div>
-      <div style="font-size:11.5px;margin-bottom:8px;"><strong>Security Risk &amp; Impact:</strong> ${w.riskSummary}</div>
+      <div style="font-size:11px;color:#475569;margin-bottom:4px;"><strong>Standard &amp; MITRE Mapping:</strong> ${escHtml(w.standardRef)}</div>
+      <div style="font-size:11.5px;margin-bottom:4px;"><strong>Customer Host(s) Affected:</strong> <code>${escHtml(w.hostsAffected)}</code></div>
+      <div style="font-size:11.5px;margin-bottom:8px;"><strong>Security Risk &amp; Impact:</strong> ${escHtml(w.riskSummary)}</div>
       <div style="font-size:11.5px;font-weight:800;margin-bottom:4px;">Step-by-Step Exploitation &amp; Validation Procedure:</div>
       <ol style="margin:0 0 8px 18px;padding:0;font-size:11.5px;">
-        ${w.steps.map(s => `<li style="margin-bottom:3px;">${s}</li>`).join("")}
+        ${w.steps.map(s => `<li style="margin-bottom:3px;">${escHtml(s)}</li>`).join("")}
       </ol>
-      <div style="font-size:11px;font-weight:800;color:#0284c7;">How to Mimic / Reproduce This Verification Process Against ${primaryHost}:</div>
-      <pre>${w.mimicCommands.replace(/</g, "&lt;")}</pre>
+      <div style="font-size:11px;font-weight:800;color:#0284c7;">How to Mimic / Reproduce This Verification Process Against ${escHtml(primaryHost)}:</div>
+      <pre>${escHtml(w.mimicCommands)}</pre>
       <div style="font-size:10.5px;font-weight:800;color:#15803d;margin-top:4px;">📥 Captured Execution Evidence / Output (from Running Walkthrough Commands Above):</div>
-      <pre style="margin-top:3px;border-left:3px solid #16a34a;">${(w.evidenceOutput || "").replace(/</g, "&lt;")}</pre>
+      <pre style="margin-top:3px;border-left:3px solid #16a34a;">${escHtml(w.evidenceOutput || "")}</pre>
       <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:4px;padding:6px 8px;margin-top:4px;font-size:10.5px;color:#14532d;">
-        <strong>💡 Plain-English Explanation &amp; Note (${w.chainId}):</strong> The commands above were executed against <code>${primaryHost}</code> to validate <strong>${w.title}</strong>. The captured output directly below the command shows the unredacted server response proving <em>${w.riskSummary}</em>
+        <strong>💡 Plain-English Explanation &amp; Note (${escHtml(w.chainId)}):</strong> The commands above were executed against <code>${escHtml(primaryHost)}</code> to validate <strong>${escHtml(w.title)}</strong>. The captured output directly below the command shows the unredacted server response proving <em>${escHtml(w.riskSummary)}</em>
       </div>
     </div>
   `).join("")}
@@ -3675,12 +3682,12 @@ ${f.remediation}
         return `
         <tr>
           <td><strong>#${idx + 1}</strong></td>
-          <td><strong>${f.title}</strong><br/><code>${f.method} ${f.url}</code></td>
-          <td><span class="badge ${f.severity === "Critical" ? "crit" : "high"}">${f.severity}</span></td>
-          <td><span class="badge mitre-badge">${ttpCode}</span></td>
-          <td><span class="badge ${isFixed ? "verified" : rt.status === "IN_REMEDIATION" ? "med" : "crit"}">${rt.status.replace(/_/g, " ")}</span></td>
-          <td><code>${rt.verifiedAt ? `${new Date(rt.verifiedAt).toLocaleTimeString()} · ${rt.verificationHash}` : "Pending Retest"}</code></td>
-          <td>${rt.retestNote}</td>
+          <td><strong>${escHtml(f.title)}</strong><br/><code>${escHtml(f.method)} ${escHtml(f.url)}</code></td>
+          <td><span class="badge ${f.severity === "Critical" ? "crit" : "high"}">${escHtml(f.severity)}</span></td>
+          <td><span class="badge mitre-badge">${escHtml(ttpCode)}</span></td>
+          <td><span class="badge ${isFixed ? "verified" : rt.status === "IN_REMEDIATION" ? "med" : "crit"}">${escHtml(rt.status.replace(/_/g, " "))}</span></td>
+          <td><code>${rt.verifiedAt ? `${escHtml(new Date(rt.verifiedAt).toLocaleTimeString())} · ${escHtml(rt.verificationHash)}` : "Pending Retest"}</code></td>
+          <td>${escHtml(rt.retestNote)}</td>
         </tr>`;
       }).join("")}
     </tbody>
@@ -3760,11 +3767,11 @@ ${f.remediation}
         : AUTONOMOUS_8_STAGE_WORKFLOW.map(wf => ({ ...wf, detail: contextualizeText(wf.detail) }))
       ).map(wf => `
         <tr>
-          <td><strong>${wf.name}</strong></td>
-          <td><strong>${wf.title}</strong></td>
-          <td>${wf.detail}</td>
-          <td><span class="badge mitre-badge">${wf.standards}</span></td>
-          <td><span class="badge verified">✓ ${wf.status}</span></td>
+          <td><strong>${escHtml(wf.name)}</strong></td>
+          <td><strong>${escHtml(wf.title)}</strong></td>
+          <td>${escHtml(wf.detail)}</td>
+          <td><span class="badge mitre-badge">${escHtml(wf.standards)}</span></td>
+          <td><span class="badge verified">✓ ${escHtml(wf.status)}</span></td>
         </tr>
       `).join("")}
     </tbody>
@@ -3845,12 +3852,12 @@ ${f.remediation}
         : PTES_NIST_PHASES.map(p => ({ ...p, deliverable: contextualizeText(p.deliverable) }))
       ).map(p => `
         <tr>
-          <td><strong>${p.ptesPhase}</strong></td>
-          <td>${p.nistPhase}</td>
-          <td><span class="badge mitre-badge">${p.mitreTactics}</span></td>
-          <td><code>${p.engineModule}</code></td>
-          <td>${p.deliverable}</td>
-          <td><span class="badge verified">✓ ${p.status}</span></td>
+          <td><strong>${escHtml(p.ptesPhase)}</strong></td>
+          <td>${escHtml(p.nistPhase)}</td>
+          <td><span class="badge mitre-badge">${escHtml(p.mitreTactics)}</span></td>
+          <td><code>${escHtml(p.engineModule)}</code></td>
+          <td>${escHtml(p.deliverable)}</td>
+          <td><span class="badge verified">✓ ${escHtml(p.status)}</span></td>
         </tr>
       `).join("")}
     </tbody>
@@ -3864,7 +3871,7 @@ ${f.remediation}
         <th>Name</th>
         <th>MITRE ATT&amp;CK® Mapping</th>
         <th>Validating Engine(s)</th>
-        <th>Confirmed Assessment Finding on ${primaryHost}</th>
+        <th>Confirmed Assessment Finding on ${escHtml(primaryHost)}</th>
         <th>Security Risk</th>
         <th>Status</th>
       </tr>
@@ -3876,36 +3883,36 @@ ${f.remediation}
           const topMatch = matchedLive[0];
           return `
         <tr>
-          <td><strong>${row.id}</strong></td>
-          <td><strong>${row.name}</strong></td>
-          <td><span class="badge mitre-badge">${row.mitre}</span></td>
-          <td><code>XTRIKE-WebPulse / Live Prober</code> (${topMatch ? topMatch.cweId : "WSTG v4.2"})</td>
-          <td>${topMatch ? `${topMatch.title} (${matchedLive.length} finding(s) verified on ${primaryHost})` : `No unauthenticated vulnerability triggered on ${primaryHost} during non-destructive read-only assessment`}</td>
-          <td><span class="badge ${topMatch ? (topMatch.severity === "Critical" ? "crit" : topMatch.severity === "High" ? "high" : "med") : "verified"}">${topMatch ? topMatch.severity : "Pass / Hardened"}</span></td>
+          <td><strong>${escHtml(row.id)}</strong></td>
+          <td><strong>${escHtml(row.name)}</strong></td>
+          <td><span class="badge mitre-badge">${escHtml(row.mitre)}</span></td>
+          <td><code>XTRIKE-WebPulse / Live Prober</code> (${escHtml(topMatch ? topMatch.cweId : "WSTG v4.2")})</td>
+          <td>${escHtml(topMatch ? `${topMatch.title} (${matchedLive.length} finding(s) verified on ${primaryHost})` : `No unauthenticated vulnerability triggered on ${primaryHost} during non-destructive read-only assessment`)}</td>
+          <td><span class="badge ${topMatch ? (topMatch.severity === "Critical" ? "crit" : topMatch.severity === "High" ? "high" : "med") : "verified"}">${escHtml(topMatch ? topMatch.severity : "Pass / Hardened")}</span></td>
           <td><span class="badge verified">✓ ${topMatch ? "VERIFIED FINDING" : "AUDITED (PASS)"}</span></td>
         </tr>`;
         }
         return `
         <tr>
-          <td><strong>${row.id}</strong></td>
-          <td><strong>${row.name}</strong></td>
-          <td><span class="badge mitre-badge">${row.mitre}</span></td>
-          <td><code>${row.engines}</code> (${row.cwe})</td>
-          <td>${contextualizeText(row.finding)}</td>
-          <td><span class="badge ${row.severity === "Critical" ? "crit" : row.severity === "High" ? "high" : "med"}">${row.severity}</span></td>
-          <td><span class="badge verified">✓ ${row.status}</span></td>
+          <td><strong>${escHtml(row.id)}</strong></td>
+          <td><strong>${escHtml(row.name)}</strong></td>
+          <td><span class="badge mitre-badge">${escHtml(row.mitre)}</span></td>
+          <td><code>${escHtml(row.engines)}</code> (${escHtml(row.cwe)})</td>
+          <td>${escHtml(contextualizeText(row.finding))}</td>
+          <td><span class="badge ${row.severity === "Critical" ? "crit" : row.severity === "High" ? "high" : "med"}">${escHtml(row.severity)}</span></td>
+          <td><span class="badge verified">✓ ${escHtml(row.status)}</span></td>
         </tr>`;
       }).join("")}
     </tbody>
   </table>
 
-  <h2>7. ${isExternalCustomerScope ? `External Read-Only Boundary, Framing & Cross-Origin Isolation Validation (${primaryHost})` : "Privilege Escalation, Lateral Movement & Post-Assessment Validation (MITRE TA0003–TA0010)"}</h2>
+  <h2>7. ${escHtml(isExternalCustomerScope ? `External Read-Only Boundary, Framing & Cross-Origin Isolation Validation (${primaryHost})` : "Privilege Escalation, Lateral Movement & Post-Assessment Validation (MITRE TA0003–TA0010)")}</h2>
   <table>
     <thead>
       <tr>
         <th>ID &amp; Boundary</th>
         <th>Source Context</th>
-        <th>Target Boundary on ${primaryHost}</th>
+        <th>Target Boundary on ${escHtml(primaryHost)}</th>
         <th>Observed Control Behavior &amp; Read-Only ROE Scope</th>
         <th>MITRE ATT&amp;CK / OWASP</th>
         <th>Validation</th>
@@ -3952,32 +3959,32 @@ ${f.remediation}
             }
           ].map(b => `
         <tr>
-          <td><strong>${b.id}</strong></td>
-          <td><code>${b.src}</code></td>
-          <td><code>${b.dst}</code></td>
-          <td>${b.desc}</td>
-          <td><span class="badge mitre-badge">${b.mitre}</span></td>
-          <td><span class="badge ${b.badge}">${b.status}</span></td>
+          <td><strong>${escHtml(b.id)}</strong></td>
+          <td><code>${escHtml(b.src)}</code></td>
+          <td><code>${escHtml(b.dst)}</code></td>
+          <td>${escHtml(b.desc)}</td>
+          <td><span class="badge mitre-badge">${escHtml(b.mitre)}</span></td>
+          <td><span class="badge ${b.badge}">${escHtml(b.status)}</span></td>
         </tr>`).join("")
         : `
       ${PRIVESC_VECTORS.map(pe => `
         <tr>
-          <td><strong>${pe.id}</strong> (PrivEsc: ${pe.type})</td>
-          <td><code>${pe.sourcePriv}</code></td>
-          <td><code>${pe.targetPriv}</code></td>
-          <td>${contextualizeText(pe.vector)}</td>
-          <td><span class="badge mitre-badge">${pe.mitre}</span> · ${pe.owasp}</td>
-          <td><span class="badge crit">${pe.status}</span></td>
+          <td><strong>${escHtml(pe.id)}</strong> (PrivEsc: ${escHtml(pe.type)})</td>
+          <td><code>${escHtml(pe.sourcePriv)}</code></td>
+          <td><code>${escHtml(pe.targetPriv)}</code></td>
+          <td>${escHtml(contextualizeText(pe.vector))}</td>
+          <td><span class="badge mitre-badge">${escHtml(pe.mitre)}</span> · ${escHtml(pe.owasp)}</td>
+          <td><span class="badge crit">${escHtml(pe.status)}</span></td>
         </tr>
       `).join("")}
       ${contextualLateralPaths.map(lm => `
         <tr>
-          <td><strong>${lm.id}</strong> (Lateral Movement)</td>
-          <td><code>${lm.sourceHost}</code></td>
-          <td><code>${lm.destHost}</code></td>
-          <td>${lm.pivotMaterial} (${lm.protocol}) — Blast Radius: ${lm.blastRadius}</td>
-          <td><span class="badge mitre-badge">${lm.mitre}</span></td>
-          <td><span class="badge high">${lm.status}</span></td>
+          <td><strong>${escHtml(lm.id)}</strong> (Lateral Movement)</td>
+          <td><code>${escHtml(lm.sourceHost)}</code></td>
+          <td><code>${escHtml(lm.destHost)}</code></td>
+          <td>${escHtml(lm.pivotMaterial)} (${escHtml(lm.protocol)}) — Blast Radius: ${escHtml(lm.blastRadius)}</td>
+          <td><span class="badge mitre-badge">${escHtml(lm.mitre)}</span></td>
+          <td><span class="badge high">${escHtml(lm.status)}</span></td>
         </tr>
       `).join("")}`}
     </tbody>
@@ -3999,25 +4006,25 @@ ${f.remediation}
       ${MULTI_FRAMEWORK_MAPPING_ENGINE.map(f => `
         <tr>
           <td><strong>P${f.priority}</strong></td>
-          <td><strong>${f.standard}</strong></td>
-          <td>${f.purpose}</td>
-          <td><code>${f.testRef}</code></td>
-          <td>${f.coverage}</td>
-          <td><span class="badge verified">✓ ${f.status}</span></td>
+          <td><strong>${escHtml(f.standard)}</strong></td>
+          <td>${escHtml(f.purpose)}</td>
+          <td><code>${escHtml(f.testRef)}</code></td>
+          <td>${escHtml(f.coverage)}</td>
+          <td><span class="badge verified">✓ ${escHtml(f.status)}</span></td>
         </tr>
       `).join("")}
     </tbody>
   </table>
 
-  <h2>9. ${isExternalCustomerScope ? `Live Endpoint Discovery Matrix & Systemic CWE Root-Cause Grouping (${primaryHost})` : "Role & Permission Differential Testing Matrix + Systemic Root-Cause Grouping (NIST SSDF / CWE)"}</h2>
+  <h2>9. ${escHtml(isExternalCustomerScope ? `Live Endpoint Discovery Matrix & Systemic CWE Root-Cause Grouping (${primaryHost})` : "Role & Permission Differential Testing Matrix + Systemic Root-Cause Grouping (NIST SSDF / CWE)")}</h2>
   <table>
     <thead>
       <tr>
-        <th>${isExternalCustomerScope ? `Probed Endpoint / Route on ${primaryHost}` : "Sensitive Operation / Endpoint"}</th>
-        <th>${isExternalCustomerScope ? "Probe Category" : "Expected Policy"}</th>
-        <th>${isExternalCustomerScope ? "HTTP Status" : "Admin (id=1)"}</th>
-        <th>${isExternalCustomerScope ? "Observed Control / Content" : "Standard User (id=1042)"}</th>
-        <th>${isExternalCustomerScope ? "Access Context" : "Unauth Guest"}</th>
+        <th>${escHtml(isExternalCustomerScope ? `Probed Endpoint / Route on ${primaryHost}` : "Sensitive Operation / Endpoint")}</th>
+        <th>${escHtml(isExternalCustomerScope ? "Probe Category" : "Expected Policy")}</th>
+        <th>${escHtml(isExternalCustomerScope ? "HTTP Status" : "Admin (id=1)")}</th>
+        <th>${escHtml(isExternalCustomerScope ? "Observed Control / Content" : "Standard User (id=1042)")}</th>
+        <th>${escHtml(isExternalCustomerScope ? "Access Context" : "Unauth Guest")}</th>
         <th>Verdict</th>
       </tr>
     </thead>
@@ -4044,21 +4051,21 @@ ${f.remediation}
             }))
           ].map(r => `
         <tr>
-          <td><strong><code>${r.op}</code></strong></td>
-          <td>${r.cat}</td>
-          <td><code>${r.st}</code></td>
-          <td>${r.obs.replace(/</g, "&lt;")}</td>
-          <td>${r.ctx}</td>
-          <td><span class="badge ${r.badge}">${r.verdict}</span></td>
+          <td><strong><code>${escHtml(r.op)}</code></strong></td>
+          <td>${escHtml(r.cat)}</td>
+          <td><code>${escHtml(r.st)}</code></td>
+          <td>${escHtml(r.obs)}</td>
+          <td>${escHtml(r.ctx)}</td>
+          <td><span class="badge ${r.badge}">${escHtml(r.verdict)}</span></td>
         </tr>`).join("")
         : ROLE_PERMISSION_DIFF_MATRIX.map(r => `
         <tr>
-          <td><strong><code>${r.operation}</code></strong></td>
-          <td>${r.expectedPolicy}</td>
-          <td>${r.adminRole}</td>
-          <td><strong>${r.userRole}</strong></td>
-          <td>${r.guestRole}</td>
-          <td><span class="badge crit">${r.diffVerdict}</span></td>
+          <td><strong><code>${escHtml(r.operation)}</code></strong></td>
+          <td>${escHtml(r.expectedPolicy)}</td>
+          <td>${escHtml(r.adminRole)}</td>
+          <td><strong>${escHtml(r.userRole)}</strong></td>
+          <td>${escHtml(r.guestRole)}</td>
+          <td><span class="badge crit">${escHtml(r.diffVerdict)}</span></td>
         </tr>
       `).join("")}
     </tbody>
@@ -4071,7 +4078,7 @@ ${f.remediation}
         <th>Systemic Engineering Root Cause</th>
         <th>CWE &amp; OWASP Reference</th>
         <th>Grouped Findings</th>
-        <th>Affected Control / Endpoint on ${primaryHost}</th>
+        <th>Affected Control / Endpoint on ${escHtml(primaryHost)}</th>
         <th>Single Architectural Fix</th>
       </tr>
     </thead>
@@ -4088,26 +4095,26 @@ ${f.remediation}
           ).map(([cweKey, group], idx) => `
         <tr>
           <td><strong>RC-${String(idx + 1).padStart(2, "0")}</strong></td>
-          <td><strong>${group[0].title.replace(/^\[[^\]]+\]\s*/, "")}</strong></td>
-          <td><span class="badge std-badge">${cweKey} · ${group[0].owaspRef}</span></td>
+          <td><strong>${escHtml(group[0].title.replace(/^\[[^\]]+\]\s*/, ""))}</strong></td>
+          <td><span class="badge std-badge">${escHtml(cweKey)} · ${escHtml(group[0].owaspRef)}</span></td>
           <td><strong>${group.length} Finding(s)</strong></td>
-          <td><code>${group[0].parameter || group[0].url}</code></td>
-          <td>${group[0].remediation}</td>
+          <td><code>${escHtml(group[0].parameter || group[0].url)}</code></td>
+          <td>${escHtml(group[0].remediation)}</td>
         </tr>`).join("")
         : ROOT_CAUSE_CLUSTERS.map(rc => `
         <tr>
-          <td><strong>${rc.clusterId}</strong></td>
-          <td><strong>${rc.rootCause}</strong></td>
-          <td><span class="badge std-badge">${rc.cwe} · ${rc.ssdf}</span></td>
+          <td><strong>${escHtml(rc.clusterId)}</strong></td>
+          <td><strong>${escHtml(rc.rootCause)}</strong></td>
+          <td><span class="badge std-badge">${escHtml(rc.cwe)} · ${escHtml(rc.ssdf)}</span></td>
           <td><strong>${rc.findingsGrouped} Findings</strong></td>
-          <td><code>${contextualizeText(rc.affectedEndpoints)}</code></td>
-          <td>${rc.singleEngineeringFix}</td>
+          <td><code>${escHtml(contextualizeText(rc.affectedEndpoints))}</code></td>
+          <td>${escHtml(rc.singleEngineeringFix)}</td>
         </tr>
       `).join("")}
     </tbody>
   </table>
 
-  <h2>9B. ${isExternalCustomerScope ? `Web Edge, TLS & DNS Protocol Assessment Script Mapping (${primaryHost})` : "Full 65,535 TCP & 65,535 UDP Port-to-Assessment-Script Mapping & Daemon TTP Catalog (131,070 Sockets)"}</h2>
+  <h2>9B. ${escHtml(isExternalCustomerScope ? `Web Edge, TLS & DNS Protocol Assessment Script Mapping (${primaryHost})` : "Full 65,535 TCP & 65,535 UDP Port-to-Assessment-Script Mapping & Daemon TTP Catalog (131,070 Sockets)")}</h2>
   <table>
     <thead>
       <tr>
@@ -4125,12 +4132,12 @@ ${f.remediation}
         : PORT_ASSESSMENT_SCRIPT_CATALOG
       ).map(ps => `
         <tr>
-          <td><strong><code>${ps.portRangeOrNumber}</code></strong></td>
-          <td><span class="badge std-badge">${ps.protocol}</span><br/>${ps.serviceCategory}</td>
-          <td><strong>${ps.daemonDetector}</strong></td>
-          <td><code>${ps.mappedAssessmentScripts.join(", ")}</code><br/><span style="font-size:9.5px;color:#0369a1;">CLI: <code>${ps.staticAssessmentCli.replace(/<target>/g, primaryHost)}</code></span></td>
-          <td><span class="badge mitre-badge">${ps.mitreTactic}</span><br/><strong>${ps.mitreTechnique}:</strong> ${ps.ttpProcedure}</td>
-          <td><strong>TTP Evidence:</strong> ${ps.ttpTelemetryEvidence}<br/><strong>D3FEND™:</strong> ${ps.d3fendCountermeasure}</td>
+          <td><strong><code>${escHtml(ps.portRangeOrNumber)}</code></strong></td>
+          <td><span class="badge std-badge">${escHtml(ps.protocol)}</span><br/>${escHtml(ps.serviceCategory)}</td>
+          <td><strong>${escHtml(ps.daemonDetector)}</strong></td>
+          <td><code>${escHtml(ps.mappedAssessmentScripts.join(", "))}</code><br/><span style="font-size:9.5px;color:#0369a1;">CLI: <code>${escHtml(ps.staticAssessmentCli.replace(/<target>/g, primaryHost))}</code></span></td>
+          <td><span class="badge mitre-badge">${escHtml(ps.mitreTactic)}</span><br/><strong>${escHtml(ps.mitreTechnique)}:</strong> ${escHtml(ps.ttpProcedure)}</td>
+          <td><strong>TTP Evidence:</strong> ${escHtml(ps.ttpTelemetryEvidence)}<br/><strong>D3FEND™:</strong> ${escHtml(ps.d3fendCountermeasure)}</td>
         </tr>
       `).join("")}
     </tbody>
@@ -4156,12 +4163,12 @@ ${f.remediation}
         ...LINUX_WINDOWS_POST_EXPLOITATION_SCRIPT_INVENTORY
       ].map(sc => `
         <tr>
-          <td><strong><code>${sc.scriptId}</code></strong><br/><span class="badge ${sc.osPlatform === "LINUX" ? "std-badge" : "mitre-badge"}">${sc.osPlatform}</span></td>
-          <td><strong>${sc.mitreTacticId}</strong><br/>${sc.featureOrServiceCategory}</td>
-          <td><strong>${sc.name}</strong><br/><code>${sc.auditScriptName}</code><br/><span style="font-size:9.5px;color:#475569;">${sc.triggeredWhen}</span></td>
-          <td><pre style="margin:0;font-size:9px;">${sc.readOnlyAuditCommands.replace(/</g, "&lt;")}</pre></td>
-          <td><span class="badge mitre-badge">${sc.mitreTechniqueId}: ${sc.mitreTechniqueName}</span><br/>${sc.ttpProcedure}<br/><strong>Evidence:</strong> ${sc.ttpTelemetryEvidence}</td>
-          <td><strong>${sc.d3fendCountermeasure}</strong><br/>${sc.remediation}</td>
+          <td><strong><code>${escHtml(sc.scriptId)}</code></strong><br/><span class="badge ${sc.osPlatform === "LINUX" ? "std-badge" : "mitre-badge"}">${escHtml(sc.osPlatform)}</span></td>
+          <td><strong>${escHtml(sc.mitreTacticId)}</strong><br/>${escHtml(sc.featureOrServiceCategory)}</td>
+          <td><strong>${escHtml(sc.name)}</strong><br/><code>${escHtml(sc.auditScriptName)}</code><br/><span style="font-size:9.5px;color:#475569;">${escHtml(sc.triggeredWhen)}</span></td>
+          <td><pre style="margin:0;font-size:9px;">${escHtml(sc.readOnlyAuditCommands)}</pre></td>
+          <td><span class="badge mitre-badge">${escHtml(sc.mitreTechniqueId)}: ${escHtml(sc.mitreTechniqueName)}</span><br/>${escHtml(sc.ttpProcedure)}<br/><strong>Evidence:</strong> ${escHtml(sc.ttpTelemetryEvidence)}</td>
+          <td><strong>${escHtml(sc.d3fendCountermeasure)}</strong><br/>${escHtml(sc.remediation)}</td>
         </tr>
       `).join("")}
     </tbody>
@@ -4194,17 +4201,17 @@ ${f.remediation}
     return `
     <div class="finding-card">
       <div style="border-bottom:2px solid #cbd5e1;padding-bottom:8px;margin-bottom:10px;font-size:11.5px;line-height:1.6;">
-        <div><strong>Finding ID:</strong> <code>${fr.findingId}</code> &nbsp;|&nbsp; <span class="badge ${f.severity === "Critical" ? "crit" : "high"}">${fr.severity} (CVSS ${fr.cvssScore})</span> &nbsp;|&nbsp; <span class="badge ${isFixed ? "verified" : "std-badge"}">RETEST: ${rt.status.replace(/_/g, " ")}</span></div>
-        <div><strong>Title:</strong> <strong style="font-size:14px;">${fr.title}</strong></div>
-        <div><strong>Severity:</strong> ${fr.severity} &nbsp;|&nbsp; <strong>CVSS Score:</strong> ${fr.cvssScore} &nbsp;|&nbsp; <strong>CVSS Vector:</strong> <code>${fr.cvssVector}</code></div>
-        <div><strong>Status:</strong> ${fr.status} &nbsp;|&nbsp; <strong>Discovery Date:</strong> ${fr.discoveryDate}</div>
-        <div><strong>Tester / Tool:</strong> ${fr.testerTool}</div>
-        <div><strong>Framework Mapping:</strong> ${fr.frameworkMapping} · EPSS: <strong>${intel.epssScore}</strong></div>
+        <div><strong>Finding ID:</strong> <code>${escHtml(fr.findingId)}</code> &nbsp;|&nbsp; <span class="badge ${f.severity === "Critical" ? "crit" : "high"}">${escHtml(fr.severity)} (CVSS ${escHtml(fr.cvssScore)})</span> &nbsp;|&nbsp; <span class="badge ${isFixed ? "verified" : "std-badge"}">RETEST: ${escHtml(rt.status.replace(/_/g, " "))}</span></div>
+        <div><strong>Title:</strong> <strong style="font-size:14px;">${escHtml(fr.title)}</strong></div>
+        <div><strong>Severity:</strong> ${escHtml(fr.severity)} &nbsp;|&nbsp; <strong>CVSS Score:</strong> ${escHtml(fr.cvssScore)} &nbsp;|&nbsp; <strong>CVSS Vector:</strong> <code>${escHtml(fr.cvssVector)}</code></div>
+        <div><strong>Status:</strong> ${escHtml(fr.status)} &nbsp;|&nbsp; <strong>Discovery Date:</strong> ${escHtml(fr.discoveryDate)}</div>
+        <div><strong>Tester / Tool:</strong> ${escHtml(fr.testerTool)}</div>
+        <div><strong>Framework Mapping:</strong> ${escHtml(fr.frameworkMapping)} · EPSS: <strong>${escHtml(intel.epssScore)}</strong></div>
       </div>
 
       <div style="font-size:11.5px;margin-bottom:8px;">
         <strong>Description:</strong><br/>
-        ${fr.descriptionParagraphs.map(p => `<div style="margin-top:4px;">${p.replace(/</g, "&lt;")}</div>`).join("")}
+        ${fr.descriptionParagraphs.map(p => `<div style="margin-top:4px;">${escHtml(p)}</div>`).join("")}
       </div>
 
       <div style="font-size:11.5px;margin-bottom:8px;">
@@ -4214,7 +4221,7 @@ ${f.remediation}
             <tr><th style="width:28%;">Item</th><th>Detail</th></tr>
           </thead>
           <tbody>
-            ${fr.affectedAssets.map(a => `<tr><td><strong>${a.item}</strong></td><td><code>${a.detail.replace(/</g, "&lt;")}</code></td></tr>`).join("")}
+            ${fr.affectedAssets.map(a => `<tr><td><strong>${escHtml(a.item)}</strong></td><td><code>${escHtml(a.detail)}</code></td></tr>`).join("")}
           </tbody>
         </table>
       </div>
@@ -4222,50 +4229,50 @@ ${f.remediation}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;font-size:11px;">
         <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:4px;padding:8px;">
           <strong>Impact (Technical &amp; Business):</strong>
-          <div style="margin-top:3px;"><em>Technical Impact:</em> ${fr.impact.technicalImpact.join(" · ")}</div>
-          <div style="margin-top:3px;"><em>Business Impact:</em> ${fr.impact.businessImpact.join(" · ")}</div>
-          <div style="margin-top:3px;"><em>Scope:</em> ${fr.impact.scope}</div>
-          <div style="margin-top:4px;"><strong>Likelihood (${fr.likelihood.level}):</strong> ${fr.likelihood.rationale}</div>
+          <div style="margin-top:3px;"><em>Technical Impact:</em> ${escHtml(fr.impact.technicalImpact.join(" · "))}</div>
+          <div style="margin-top:3px;"><em>Business Impact:</em> ${escHtml(fr.impact.businessImpact.join(" · "))}</div>
+          <div style="margin-top:3px;"><em>Scope:</em> ${escHtml(fr.impact.scope)}</div>
+          <div style="margin-top:4px;"><strong>Likelihood (${escHtml(fr.likelihood.level)}):</strong> ${escHtml(fr.likelihood.rationale)}</div>
         </div>
         <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:4px;padding:8px;">
           <strong>Structured Remediation &amp; Retest Criteria:</strong>
-          <div style="margin-top:3px;"><em>Immediate:</em> ${fr.remediation.immediateActions.join(" · ")}</div>
-          <div style="margin-top:3px;"><em>Short-Term:</em> ${fr.remediation.shortTermHardening.join(" · ")}</div>
-          <div style="margin-top:3px;"><em>Container/Host:</em> <code>${fr.remediation.containerHostHardening.join(" · ").replace(/</g, "&lt;")}</code></div>
-          <div style="margin-top:3px;"><em>Retest Criteria:</em> ${fr.retestCriteria.map(rc => `[${isFixed ? "x" : " "}] ${rc}`).join(" · ")}</div>
+          <div style="margin-top:3px;"><em>Immediate:</em> ${escHtml(fr.remediation.immediateActions.join(" · "))}</div>
+          <div style="margin-top:3px;"><em>Short-Term:</em> ${escHtml(fr.remediation.shortTermHardening.join(" · "))}</div>
+          <div style="margin-top:3px;"><em>Container/Host:</em> <code>${escHtml(fr.remediation.containerHostHardening.join(" · "))}</code></div>
+          <div style="margin-top:3px;"><em>Retest Criteria:</em> ${escHtml(fr.retestCriteria.map(rc => `[${isFixed ? "x" : " "}] ${rc}`).join(" · "))}</div>
         </div>
       </div>
-      <div style="font-size:11px;color:#475569;margin-bottom:8px;"><strong>References:</strong> ${fr.references.join(" &nbsp;|&nbsp; ")}</div>
+      <div style="font-size:11px;color:#475569;margin-bottom:8px;"><strong>References:</strong> ${fr.references.map(r => escHtml(r)).join(" &nbsp;|&nbsp; ")}</div>
 
       <!-- 4-STAGE EVIDENCE GATE (DISCOVERY · EXPOSURE · EXPLOITABILITY · CONFIRMED IMPACT) + OBSERVED FACTS VS. INFERRED IMPACT -->
       <div style="background:#f8fafc;border:1.5px solid #0284c7;border-radius:6px;padding:8px 10px;margin-bottom:8px;font-size:10.5px;">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:6px;border-bottom:1px solid #cbd5e1;padding-bottom:4px;">
           <strong style="color:#0369a1;">🔬 4-STAGE FORENSIC EVIDENCE GATE &amp; 7-STATE VALIDATION PROVENANCE</strong>
-          <span class="badge std-badge">7-STATE VALIDATION: ${fr.validationState.toUpperCase()}</span>
+          <span class="badge std-badge">7-STATE VALIDATION: ${escHtml(fr.validationState.toUpperCase())}</span>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;">
           <div style="background:#ffffff;border:1px solid #cbd5e1;border-radius:4px;padding:5px 7px;">
-            <div><strong>1. Discovery:</strong> <span class="badge verified">${fr.fourStageEvidenceGate.discovery.status}</span></div>
-            <div style="margin-top:2px;">${fr.fourStageEvidenceGate.discovery.evidenceSummary.replace(/</g, "&lt;")}</div>
+            <div><strong>1. Discovery:</strong> <span class="badge verified">${escHtml(fr.fourStageEvidenceGate.discovery.status)}</span></div>
+            <div style="margin-top:2px;">${escHtml(fr.fourStageEvidenceGate.discovery.evidenceSummary)}</div>
           </div>
           <div style="background:#ffffff;border:1px solid #cbd5e1;border-radius:4px;padding:5px 7px;">
-            <div><strong>2. Exposure:</strong> <span class="badge verified">${fr.fourStageEvidenceGate.exposure.status}</span></div>
-            <div style="margin-top:2px;">${fr.fourStageEvidenceGate.exposure.evidenceSummary.replace(/</g, "&lt;")}</div>
+            <div><strong>2. Exposure:</strong> <span class="badge verified">${escHtml(fr.fourStageEvidenceGate.exposure.status)}</span></div>
+            <div style="margin-top:2px;">${escHtml(fr.fourStageEvidenceGate.exposure.evidenceSummary)}</div>
           </div>
           <div style="background:#ffffff;border:1px solid #cbd5e1;border-radius:4px;padding:5px 7px;">
-            <div><strong>3. Exploitability:</strong> <span class="badge std-badge">${fr.fourStageEvidenceGate.exploitability.status}</span></div>
-            <div style="margin-top:2px;">${fr.fourStageEvidenceGate.exploitability.evidenceSummary.replace(/</g, "&lt;")}</div>
+            <div><strong>3. Exploitability:</strong> <span class="badge std-badge">${escHtml(fr.fourStageEvidenceGate.exploitability.status)}</span></div>
+            <div style="margin-top:2px;">${escHtml(fr.fourStageEvidenceGate.exploitability.evidenceSummary)}</div>
           </div>
           <div style="background:#ffffff;border:1px solid #cbd5e1;border-radius:4px;padding:5px 7px;">
-            <div><strong>4. Confirmed Impact:</strong> <span class="badge std-badge">${fr.fourStageEvidenceGate.confirmedImpact.status}</span></div>
-            <div style="margin-top:2px;">${fr.fourStageEvidenceGate.confirmedImpact.evidenceSummary.replace(/</g, "&lt;")}</div>
+            <div><strong>4. Confirmed Impact:</strong> <span class="badge std-badge">${escHtml(fr.fourStageEvidenceGate.confirmedImpact.status)}</span></div>
+            <div style="margin-top:2px;">${escHtml(fr.fourStageEvidenceGate.confirmedImpact.evidenceSummary)}</div>
           </div>
         </div>
         <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:4px;padding:6px 8px;line-height:1.45;">
-          <div><strong>Concrete Security Requirement:</strong> <code>${fr.observedVsInferred.concreteSecurityRequirement.replace(/</g, "&lt;")}</code></div>
-          <div style="margin-top:3px;"><strong>Observed Facts (Directly Verified):</strong> ${fr.observedVsInferred.observedFacts.map(x => x.replace(/</g, "&lt;")).join(" · ")}</div>
-          <div style="margin-top:3px;"><strong>Inferred / Potential Downstream Impact:</strong> ${fr.observedVsInferred.inferredOrPotentialImpact.map(x => x.replace(/</g, "&lt;")).join(" · ")}</div>
-          <div style="margin-top:3px;"><strong>Evidence Limitations &amp; Required Follow-On Validation:</strong> ${fr.observedVsInferred.evidenceLimitations.map(x => x.replace(/</g, "&lt;")).join(" · ")} | <em>Next Step:</em> ${fr.observedVsInferred.requiredValidation.map(x => x.replace(/</g, "&lt;")).join(" · ")}</div>
+          <div><strong>Concrete Security Requirement:</strong> <code>${escHtml(fr.observedVsInferred.concreteSecurityRequirement)}</code></div>
+          <div style="margin-top:3px;"><strong>Observed Facts (Directly Verified):</strong> ${fr.observedVsInferred.observedFacts.map(x => escHtml(x)).join(" · ")}</div>
+          <div style="margin-top:3px;"><strong>Inferred / Potential Downstream Impact:</strong> ${fr.observedVsInferred.inferredOrPotentialImpact.map(x => escHtml(x)).join(" · ")}</div>
+          <div style="margin-top:3px;"><strong>Evidence Limitations &amp; Required Follow-On Validation:</strong> ${fr.observedVsInferred.evidenceLimitations.map(x => escHtml(x)).join(" · ")} | <em>Next Step:</em> ${fr.observedVsInferred.requiredValidation.map(x => escHtml(x)).join(" · ")}</div>
         </div>
       </div>
 
@@ -4275,80 +4282,80 @@ ${f.remediation}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;">
           ${plgCorr.triggeredPlugins.map(tp => `
             <div style="background:#ffffff;border:1px solid #dfd7ca;border-radius:4px;padding:5px 7px;">
-              <div><strong>[${tp.scannerFamily}] ${tp.code}</strong> · <code>${tp.scannerRefId}</code></div>
-              <div style="font-size:10px;">${tp.name.replace(/</g, "&lt;")}</div>
+              <div><strong>[${escHtml(tp.scannerFamily)}] ${escHtml(tp.code)}</strong> · <code>${escHtml(tp.scannerRefId)}</code></div>
+              <div style="font-size:10px;">${escHtml(tp.name)}</div>
             </div>
           `).join("")}
         </div>
         <div style="margin-bottom:4px;">
-          <strong>🎯 MITRE ATT&amp;CK® TTP:</strong> ${plgCorr.primaryMitreTtp.tacticId} (${plgCorr.primaryMitreTtp.tacticName}) · ${plgCorr.primaryMitreTtp.subTechniqueId || plgCorr.primaryMitreTtp.techniqueId} (${plgCorr.primaryMitreTtp.techniqueName})
-          &nbsp;|&nbsp; <strong>🛡️ Blue Team (BT) D3FEND™:</strong> ${plgCorr.primaryBlueTeamDefense.d3fendId} [${plgCorr.primaryBlueTeamDefense.d3fendCategory}] — ${plgCorr.primaryBlueTeamDefense.d3fendTechnique} (${plgCorr.primaryBlueTeamDefense.btLogSource})
+          <strong>🎯 MITRE ATT&amp;CK® TTP:</strong> ${escHtml(plgCorr.primaryMitreTtp.tacticId)} (${escHtml(plgCorr.primaryMitreTtp.tacticName)}) · ${escHtml(plgCorr.primaryMitreTtp.subTechniqueId || plgCorr.primaryMitreTtp.techniqueId)} (${escHtml(plgCorr.primaryMitreTtp.techniqueName)})
+          &nbsp;|&nbsp; <strong>🛡️ Blue Team (BT) D3FEND™:</strong> ${escHtml(plgCorr.primaryBlueTeamDefense.d3fendId)} [${escHtml(plgCorr.primaryBlueTeamDefense.d3fendCategory)}] — ${escHtml(plgCorr.primaryBlueTeamDefense.d3fendTechnique)} (${escHtml(plgCorr.primaryBlueTeamDefense.btLogSource)})
         </div>
         <div style="margin-bottom:4px;">
-          <strong>📋 Automated Compliance Control Mapping:</strong> ${(plgCorr.complianceControls || []).join(" &nbsp;·&nbsp; ")}
+          <strong>📋 Automated Compliance Control Mapping:</strong> ${(plgCorr.complianceControls || []).map(c => escHtml(c)).join(" &nbsp;·&nbsp; ")}
         </div>
         <div style="font-weight:700;margin-top:4px;">📡 Blue Team (BT) SIEM Sigma Detection Rule:</div>
-        <pre style="margin-top:2px;font-size:9.5px;">${plgCorr.sigmaRuleYaml.replace(/</g, "&lt;")}</pre>
+        <pre style="margin-top:2px;font-size:9.5px;">${escHtml(plgCorr.sigmaRuleYaml)}</pre>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;">
           <div>
             <div style="font-weight:700;">🔎 Splunk SPL Query:</div>
-            <pre style="margin-top:2px;font-size:9px;">${(plgCorr.splunkSplQuery || "").replace(/</g, "&lt;")}</pre>
+            <pre style="margin-top:2px;font-size:9px;">${escHtml(plgCorr.splunkSplQuery || "")}</pre>
           </div>
           <div>
             <div style="font-weight:700;">🔎 Microsoft Sentinel KQL Query:</div>
-            <pre style="margin-top:2px;font-size:9px;">${(plgCorr.sentinelKqlQuery || "").replace(/</g, "&lt;")}</pre>
+            <pre style="margin-top:2px;font-size:9px;">${escHtml(plgCorr.sentinelKqlQuery || "")}</pre>
           </div>
         </div>
       </div>
-      <div style="display:none;"><span>${ttpItem ? ttpItem.tacticId : ""}</span></div>
+      <div style="display:none;"><span>${escHtml(ttpItem ? ttpItem.tacticId : "")}</span></div>
 
       <!-- PART A: COMPLETE STEP-BY-STEP EXPLOITATION PROCESS & CLI / SCRIPT REPRODUCTION -->
       <div style="background:#f8fafc;border:1px solid #cbd5e1;border-left:4px solid #0284c7;border-radius:4px;padding:8px 10px;margin-bottom:8px;">
         <div style="font-size:11px;font-weight:800;color:#0369a1;margin-bottom:4px;">⚙️ PART 1 · COMPLETE VERIFICATION PROCESS &amp; STEP-BY-STEP REPRODUCTION PROCEDURE:</div>
         <ol style="margin:0 0 6px 18px;padding:0;font-size:11px;line-height:1.45;">
-          ${reproSteps.map(st => `<li style="margin-bottom:3px;">${st.replace(/</g, "&lt;")}</li>`).join("")}
+          ${reproSteps.map(st => `<li style="margin-bottom:3px;">${escHtml(st)}</li>`).join("")}
         </ol>
         <div style="font-size:10.5px;font-weight:700;color:#0f172a;margin-top:6px;">💻 Multi-Step CLI / cURL Verification Commands:</div>
-        <pre style="margin-top:3px;">${(f.poc?.curlCommand || "").replace(/</g, "&lt;")}</pre>
+        <pre style="margin-top:3px;">${escHtml(f.poc?.curlCommand || "")}</pre>
         <div style="font-size:10px;font-weight:800;color:#15803d;margin-top:3px;">📥 Captured Execution Evidence / Output (from Running CLI / cURL Commands Above):</div>
-        <pre style="margin-top:2px;border-left:3px solid #16a34a;">${cmdEv.curlEvidenceOutput.replace(/</g, "&lt;")}</pre>
+        <pre style="margin-top:2px;border-left:3px solid #16a34a;">${escHtml(cmdEv.curlEvidenceOutput)}</pre>
         <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:4px;padding:5px 8px;margin-top:3px;font-size:10px;color:#14532d;">
-          <strong>💡 Command &amp; Result Explanation Note:</strong> ${cmdEv.curlExplanationNote.replace(/</g, "&lt;")}
+          <strong>💡 Command &amp; Result Explanation Note:</strong> ${escHtml(cmdEv.curlExplanationNote)}
         </div>
 
         ${f.poc?.pythonScript ? `
         <div style="font-size:10.5px;font-weight:700;color:#0f172a;margin-top:8px;">🐍 Automated Python Verification Script:</div>
-        <pre style="margin-top:3px;">${f.poc.pythonScript.replace(/</g, "&lt;")}</pre>
+        <pre style="margin-top:3px;">${escHtml(f.poc.pythonScript)}</pre>
         <div style="font-size:10px;font-weight:800;color:#15803d;margin-top:3px;">📥 Captured Execution Evidence / Output (from Running Python Script Above):</div>
-        <pre style="margin-top:2px;border-left:3px solid #16a34a;">${cmdEv.pythonEvidenceOutput.replace(/</g, "&lt;")}</pre>
+        <pre style="margin-top:2px;border-left:3px solid #16a34a;">${escHtml(cmdEv.pythonEvidenceOutput)}</pre>
         <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:4px;padding:5px 8px;margin-top:3px;font-size:10px;color:#14532d;">
-          <strong>💡 Python Script &amp; Result Explanation Note:</strong> ${cmdEv.pythonExplanationNote.replace(/</g, "&lt;")}
+          <strong>💡 Python Script &amp; Result Explanation Note:</strong> ${escHtml(cmdEv.pythonExplanationNote)}
         </div>` : ""}
 
-        <div style="font-size:10.5px;font-weight:700;color:#0f172a;margin-top:8px;">🧰 OWASP WSTG / Nuclei (${intel.githubAndNuclei.nucleiTemplateId}) / Nmap NSE (${intel.githubAndNuclei.nmapNseScript}) Verification Script:</div>
-        <pre style="margin-top:3px;">${(intel.githubAndNuclei.verificationScript || "").replace(/</g, "&lt;")}</pre>
+        <div style="font-size:10.5px;font-weight:700;color:#0f172a;margin-top:8px;">🧰 OWASP WSTG / Nuclei (${escHtml(intel.githubAndNuclei.nucleiTemplateId)}) / Nmap NSE (${escHtml(intel.githubAndNuclei.nmapNseScript)}) Verification Script:</div>
+        <pre style="margin-top:3px;">${escHtml(intel.githubAndNuclei.verificationScript || "")}</pre>
         <div style="font-size:10px;font-weight:800;color:#15803d;margin-top:3px;">📥 Captured Execution Evidence / Output (from Running Verification Suite Above):</div>
-        <pre style="margin-top:2px;border-left:3px solid #16a34a;">${cmdEv.nucleiNseEvidenceOutput.replace(/</g, "&lt;")}</pre>
+        <pre style="margin-top:2px;border-left:3px solid #16a34a;">${escHtml(cmdEv.nucleiNseEvidenceOutput)}</pre>
         <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:4px;padding:5px 8px;margin-top:3px;font-size:10px;color:#14532d;">
-          <strong>💡 Verification Suite &amp; Result Explanation Note:</strong> ${cmdEv.nucleiNseExplanationNote.replace(/</g, "&lt;")}
+          <strong>💡 Verification Suite &amp; Result Explanation Note:</strong> ${escHtml(cmdEv.nucleiNseExplanationNote)}
         </div>
       </div>
 
       <!-- PART B: 4-STAGE CONTROL EVALUATION & DOWNSTREAM RISK MODELING -->
       <div style="background:#faf5ff;border:1px solid #d8b4fe;border-left:4px solid #7e22ce;border-radius:4px;padding:8px 10px;margin-bottom:8px;">
-        <div style="font-size:11px;font-weight:800;color:#6b21a8;margin-bottom:6px;">🔑 PART 2 · 4-STAGE CONTROL EVALUATION &amp; DOWNSTREAM RISK MODELING (${f.cweId}):</div>
+        <div style="font-size:11px;font-weight:800;color:#6b21a8;margin-bottom:6px;">🔑 PART 2 · 4-STAGE CONTROL EVALUATION &amp; DOWNSTREAM RISK MODELING (${escHtml(f.cweId)}):</div>
         <div style="font-size:10px;color:#475569;margin-bottom:6px;">
           <strong>Standard &amp; Reference Mapping:</strong>
-          ${intel.searchSploitRefs.map(sr => `<code>${sr.edbId}</code> (${sr.title} · <code>${sr.exploitDbPath}</code>)`).join(" &nbsp;|&nbsp; ")}
+          ${intel.searchSploitRefs.map(sr => `<code>${escHtml(sr.edbId)}</code> (${escHtml(sr.title)} · <code>${escHtml(sr.exploitDbPath)}</code>)`).join(" &nbsp;|&nbsp; ")}
         </div>
         ${daemonDossier.triggeredLinuxPrivEscScripts.length > 0 ? `
         <div style="font-size:10px;color:#0f172a;margin-bottom:6px;">
           <strong>Triggered Linux &amp; Windows PrivEsc Scripts (TA0004):</strong>
-          ${[...daemonDossier.triggeredLinuxPrivEscScripts, ...daemonDossier.triggeredWindowsPrivEscScripts].map(s => `<code>${s.scriptId} (${s.osPlatform}: ${s.auditScriptName})</code>`).join(" · ")}<br/>
+          ${[...daemonDossier.triggeredLinuxPrivEscScripts, ...daemonDossier.triggeredWindowsPrivEscScripts].map(s => `<code>${escHtml(s.scriptId)} (${escHtml(s.osPlatform)}: ${escHtml(s.auditScriptName)})</code>`).join(" · ")}<br/>
           <strong>Triggered Linux &amp; Windows Lateral Movement Scripts (TA0008):</strong>
-          ${[...daemonDossier.triggeredLinuxLateralScripts, ...daemonDossier.triggeredWindowsLateralScripts].map(s => `<code>${s.scriptId} (${s.osPlatform}: ${s.auditScriptName})</code>`).join(" · ")}<br/>
+          ${[...daemonDossier.triggeredLinuxLateralScripts, ...daemonDossier.triggeredWindowsLateralScripts].map(s => `<code>${escHtml(s.scriptId)} (${escHtml(s.osPlatform)}: ${escHtml(s.auditScriptName)})</code>`).join(" · ")}<br/>
           <strong>Triggered Linux &amp; Windows Post-Exploitation Scripts (TA0003–TA0040):</strong>
-          ${[...daemonDossier.triggeredLinuxPostExploitScripts, ...daemonDossier.triggeredWindowsPostExploitScripts].map(s => `<code>${s.scriptId} (${s.osPlatform}: ${s.auditScriptName})</code>`).join(" · ")}
+          ${[...daemonDossier.triggeredLinuxPostExploitScripts, ...daemonDossier.triggeredWindowsPostExploitScripts].map(s => `<code>${escHtml(s.scriptId)} (${escHtml(s.osPlatform)}: ${escHtml(s.auditScriptName)})</code>`).join(" · ")}
         </div>` : ""}
         <table style="margin-bottom:0;font-size:10px;">
           <thead>
@@ -4363,11 +4370,11 @@ ${f.remediation}
           <tbody>
             ${intel.killChainStages.map(kc => `
               <tr>
-                <td><strong>${kc.stageName}</strong></td>
-                <td><span class="badge mitre-badge">${kc.mitreTechniqueId}</span><br/>${kc.mitreTechniqueName}</td>
-                <td><code>${kc.sourceContext.replace(/</g, "&lt;")}</code><br/>➔ <code>${kc.targetContext.replace(/</g, "&lt;")}</code></td>
-                <td>${kc.deepDiveMechanism.replace(/</g, "&lt;")}<br/><strong>CLI Proof:</strong> <code>${kc.verificationCommand.replace(/</g, "&lt;")}</code></td>
-                <td><strong>${kc.d3fendCountermeasure}</strong></td>
+                <td><strong>${escHtml(kc.stageName)}</strong></td>
+                <td><span class="badge mitre-badge">${escHtml(kc.mitreTechniqueId)}</span><br/>${escHtml(kc.mitreTechniqueName)}</td>
+                <td><code>${escHtml(kc.sourceContext)}</code><br/>➔ <code>${escHtml(kc.targetContext)}</code></td>
+                <td>${escHtml(kc.deepDiveMechanism)}<br/><strong>CLI Proof:</strong> <code>${escHtml(kc.verificationCommand)}</code></td>
+                <td><strong>${escHtml(kc.d3fendCountermeasure)}</strong></td>
               </tr>
             `).join("")}
           </tbody>
@@ -4376,26 +4383,26 @@ ${f.remediation}
 
       <!-- PART C: FORENSIC EVIDENCE OF EXPLOITATION (BASELINE VS EXPLOITED HTTP TRACE + COLLECTED SAMPLES + VISUAL SCREENSHOTS) -->
       <div style="background:#fff1f2;border:1px solid #fecdd3;border-left:4px solid #e11d48;border-radius:4px;padding:8px 10px;margin-bottom:8px;">
-        <div style="font-size:11px;font-weight:800;color:#be123c;margin-bottom:6px;">🔬 PART 3 · FORENSIC EVIDENCE OF EXPLOITATION (${fr.exploitationStatusLabel}):</div>
+        <div style="font-size:11px;font-weight:800;color:#be123c;margin-bottom:6px;">🔬 PART 3 · FORENSIC EVIDENCE OF EXPLOITATION (${escHtml(fr.exploitationStatusLabel)}):</div>
         <div style="font-size:10.5px;color:#881337;margin-bottom:6px;">
-          <strong>Injected Payload:</strong> <code>${(f.evidence?.payload || "N/A").replace(/</g, "&lt;")}</code> &nbsp;|&nbsp;
-          <strong>Matched Exploitation Indicator:</strong> <code>${(f.evidence?.matchedPattern || fr.evidence.matchedIndicator).replace(/</g, "&lt;")}</code>
+          <strong>Injected Payload:</strong> <code>${escHtml(f.evidence?.payload || "N/A")}</code> &nbsp;|&nbsp;
+          <strong>Matched Exploitation Indicator:</strong> <code>${escHtml(f.evidence?.matchedPattern || fr.evidence.matchedIndicator)}</code>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
           <div>
             <div style="font-size:10px;font-weight:800;color:#475569;">1. Baseline (Unexploited) HTTP Request &amp; Response:</div>
-            <pre style="margin:3px 0;">${(f.evidence?.originalRequest || `${f.method} ${f.url}`).replace(/</g, "&lt;")}\n\n${(f.evidence?.originalResponse || "HTTP/1.1 200 OK (Baseline Response)").replace(/</g, "&lt;")}</pre>
+            <pre style="margin:3px 0;">${escHtml(f.evidence?.originalRequest || `${f.method} ${f.url}`)}\n\n${escHtml(f.evidence?.originalResponse || "HTTP/1.1 200 OK (Baseline Response)")}</pre>
             <div style="background:#f8fafc;border:1px solid #cbd5e1;border-left:3px solid #0284c7;border-radius:4px;padding:5px 7px;margin-top:4px;font-size:9.8px;color:#0f172a;line-height:1.4;">
-              <div><strong>📖 Explanation (${baselineExp.summary.replace(/</g, "&lt;")}):</strong> ${baselineExp.details.replace(/</g, "&lt;")}</div>
-              <div style="margin-top:2px;color:#0369a1;"><strong>💡 Note for Understanding:</strong> ${baselineExp.customerNote.replace(/</g, "&lt;")}</div>
+              <div><strong>📖 Explanation (${escHtml(baselineExp.summary)}):</strong> ${escHtml(baselineExp.details)}</div>
+              <div style="margin-top:2px;color:#0369a1;"><strong>💡 Note for Understanding:</strong> ${escHtml(baselineExp.customerNote)}</div>
             </div>
           </div>
           <div>
             <div style="font-size:10px;font-weight:800;color:#be123c;">2. Exploited (Injected) HTTP Request &amp; Response Proof:</div>
-            <pre style="margin:3px 0;">${(f.evidence?.testRequest || `${f.method} ${f.url}`).replace(/</g, "&lt;")}\n\n${(f.evidence?.testResponse || "").replace(/</g, "&lt;")}</pre>
+            <pre style="margin:3px 0;">${escHtml(f.evidence?.testRequest || `${f.method} ${f.url}`)}\n\n${escHtml(f.evidence?.testResponse || "")}</pre>
             <div style="background:#fff1f2;border:1px solid #fda4af;border-left:3px solid #e11d48;border-radius:4px;padding:5px 7px;margin-top:4px;font-size:9.8px;color:#881337;line-height:1.4;">
-              <div><strong>📖 Explanation (${exploitedExp.summary.replace(/</g, "&lt;")}):</strong> ${exploitedExp.details.replace(/</g, "&lt;")}</div>
-              <div style="margin-top:2px;color:#9f1239;"><strong>💡 Note for Understanding:</strong> ${exploitedExp.customerNote.replace(/</g, "&lt;")}</div>
+              <div><strong>📖 Explanation (${escHtml(exploitedExp.summary)}):</strong> ${escHtml(exploitedExp.details)}</div>
+              <div style="margin-top:2px;color:#9f1239;"><strong>💡 Note for Understanding:</strong> ${escHtml(exploitedExp.customerNote)}</div>
             </div>
           </div>
         </div>
@@ -4408,14 +4415,14 @@ ${f.remediation}
             return `
             <div style="background:#ffffff;border:1px solid #fda4af;border-radius:4px;padding:6px 8px;margin-bottom:6px;">
               <div style="display:flex;justify-content:space-between;font-size:10px;font-weight:800;color:#be123c;flex-wrap:wrap;gap:4px;">
-                <span>[${ev.artifactId}] ${ev.title.replace(/</g, "&lt;")}</span>
-                <span>${ev.category} · Full SHA-256: ${ev.sha256Digest}</span>
+                <span>[${escHtml(ev.artifactId)}] ${escHtml(ev.title)}</span>
+                <span>${escHtml(ev.category)} · Full SHA-256: ${escHtml(ev.sha256Digest)}</span>
               </div>
-              <pre style="margin:3px 0;">${ev.capturedCommandOrRequest.replace(/</g, "&lt;")}\n---\n${ev.capturedOutputOrLoot.replace(/</g, "&lt;")}</pre>
-              <div style="font-size:10px;color:#0f172a;"><strong>Customer Confidence (CI) Summary:</strong> ${ev.customerCiSummary.replace(/</g, "&lt;")}</div>
+              <pre style="margin:3px 0;">${escHtml(ev.capturedCommandOrRequest)}\n---\n${escHtml(ev.capturedOutputOrLoot)}</pre>
+              <div style="font-size:10px;color:#0f172a;"><strong>Customer Confidence (CI) Summary:</strong> ${escHtml(ev.customerCiSummary)}</div>
               <div style="background:#f0fdf4;border:1px solid #86efac;border-left:3px solid #16a34a;border-radius:4px;padding:5px 7px;margin-top:4px;font-size:9.8px;color:#14532d;line-height:1.4;">
-                <div><strong>📖 Explanation (${evExp.summary.replace(/</g, "&lt;")}):</strong> ${evExp.details.replace(/</g, "&lt;")}</div>
-                <div style="margin-top:2px;"><strong>💡 Note for Customer Understanding:</strong> ${evExp.customerNote.replace(/</g, "&lt;")}</div>
+                <div><strong>📖 Explanation (${escHtml(evExp.summary)}):</strong> ${escHtml(evExp.details)}</div>
+                <div style="margin-top:2px;"><strong>💡 Note for Customer Understanding:</strong> ${escHtml(evExp.customerNote)}</div>
               </div>
             </div>`;
           }).join("")}
@@ -4423,18 +4430,18 @@ ${f.remediation}
 
         <!-- Visual Screenshots of How It Was Exploited -->
         <div style="background:#0f172a;border:1px solid #38bdf8;border-radius:6px;padding:8px 10px;margin-bottom:8px;color:#f8fafc;">
-          <div style="font-size:10.5px;font-weight:800;color:#38bdf8;margin-bottom:6px;">📸 Visual Pictures of How ${fr.findingId} Was Exploited (Forensic Screenshots for Customer CI):</div>
+          <div style="font-size:10.5px;font-weight:800;color:#38bdf8;margin-bottom:6px;">📸 Visual Pictures of How ${escHtml(fr.findingId)} Was Exploited (Forensic Screenshots for Customer CI):</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
             ${fr.evidence.exploitationPictures.map(pic => {
               const picExp = explainScreenEvidence("VISUAL_PIC", `${pic.figureId} ${pic.title}`, pic.caption, f, fr);
               return `
               <div style="background:#050811;border:1px solid #334155;border-radius:5px;padding:6px;">
-                <div style="font-size:10px;font-weight:800;color:#f8fafc;margin-bottom:4px;">[${pic.figureId}] ${pic.title.replace(/</g, "&lt;")}</div>
-                <img src="${pic.svgDataUri}" alt="${pic.title.replace(/"/g, "&quot;")}" style="width:100%;height:auto;border-radius:4px;border:1px solid #1e293b;display:block;margin-bottom:4px;" />
-                <div style="font-size:9.5px;color:#cbd5e1;line-height:1.35;">${pic.caption.replace(/</g, "&lt;")}</div>
+                <div style="font-size:10px;font-weight:800;color:#f8fafc;margin-bottom:4px;">[${escHtml(pic.figureId)}] ${escHtml(pic.title)}</div>
+                <img src="${pic.svgDataUri}" alt="${escHtml(pic.title)}" style="width:100%;height:auto;border-radius:4px;border:1px solid #1e293b;display:block;margin-bottom:4px;" />
+                <div style="font-size:9.5px;color:#cbd5e1;line-height:1.35;">${escHtml(pic.caption)}</div>
                 <div style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.35);border-radius:4px;padding:5px 7px;margin-top:5px;font-size:9.2px;color:#d1fae5;line-height:1.35;">
-                  <div><strong>📖 Visual Screen Explanation:</strong> ${picExp.details.replace(/</g, "&lt;")}</div>
-                  <div style="margin-top:2px;color:#6ee7b7;"><strong>💡 Note:</strong> ${picExp.customerNote.replace(/</g, "&lt;")}</div>
+                  <div><strong>📖 Visual Screen Explanation:</strong> ${escHtml(picExp.details)}</div>
+                  <div style="margin-top:2px;color:#6ee7b7;"><strong>💡 Note:</strong> ${escHtml(picExp.customerNote)}</div>
                 </div>
               </div>`;
             }).join("")}
@@ -4445,33 +4452,33 @@ ${f.remediation}
           const liveExp = explainScreenEvidence("LIVE_EVIDENCE", `[${ev.type}] ${ev.title || ev.label || "Sample Evidence"}`, ev.content || "", f, fr);
           return `
           <div style="margin-bottom:6px;padding-bottom:6px;border-bottom:${evIdx < sampleEvList.length - 1 ? "1px dashed #fda4af" : "none"};">
-            <div style="font-size:10.5px;font-weight:700;color:#881337;">[${ev.type}] ${(ev.title || ev.label || "Sample Evidence").replace(/</g, "&lt;")}</div>
-            <pre style="margin:3px 0;">${(ev.content || "").replace(/</g, "&lt;")}</pre>
-            ${ev.highlight ? `<div style="font-size:10px;color:#9f1239;"><strong>Matched Exploitation Indicator:</strong> <code>${ev.highlight.replace(/</g, "&lt;")}</code></div>` : ""}
-            <div style="font-size:10px;color:#475569;"><strong>Forensic Annotation:</strong> ${(ev.annotation || "").replace(/</g, "&lt;")}</div>
+            <div style="font-size:10.5px;font-weight:700;color:#881337;">[${escHtml(ev.type)}] ${escHtml(ev.title || ev.label || "Sample Evidence")}</div>
+            <pre style="margin:3px 0;">${escHtml(ev.content || "")}</pre>
+            ${ev.highlight ? `<div style="font-size:10px;color:#9f1239;"><strong>Matched Exploitation Indicator:</strong> <code>${escHtml(ev.highlight)}</code></div>` : ""}
+            <div style="font-size:10px;color:#475569;"><strong>Forensic Annotation:</strong> ${escHtml(ev.annotation || "")}</div>
             <div style="background:#f8fafc;border:1px solid #cbd5e1;border-left:3px solid #0284c7;border-radius:4px;padding:5px 8px;margin-top:4px;font-size:9.8px;color:#0f172a;line-height:1.4;">
-              <div><strong>📖 Explanation (${liveExp.summary.replace(/</g, "&lt;")}):</strong> ${liveExp.details.replace(/</g, "&lt;")}</div>
-              <div style="margin-top:2px;color:#0369a1;"><strong>💡 Note for Understanding:</strong> ${liveExp.customerNote.replace(/</g, "&lt;")}</div>
+              <div><strong>📖 Explanation (${escHtml(liveExp.summary)}):</strong> ${escHtml(liveExp.details)}</div>
+              <div style="margin-top:2px;color:#0369a1;"><strong>💡 Note for Understanding:</strong> ${escHtml(liveExp.customerNote)}</div>
             </div>
           </div>`;
         }).join("")}
       </div>
 
-      <div style="font-size:11.5px;color:#0369a1;"><strong>Remediation &amp; MITRE D3FEND™ Fix:</strong> ${f.remediation} (Retest Note: ${rt.retestNote})</div>
+      <div style="font-size:11.5px;color:#0369a1;"><strong>Remediation &amp; MITRE D3FEND™ Fix:</strong> ${escHtml(f.remediation)} (Retest Note: ${escHtml(rt.retestNote)})</div>
     </div>`;
   }).join("")}
 
-  <h2>11. APPENDIX (A–D) — Sample Collected Evidence, Raw Terminal Logs &amp; Chain of Custody (${primaryHost})</h2>
+  <h2>11. APPENDIX (A–D) — Sample Collected Evidence, Raw Terminal Logs &amp; Chain of Custody (${escHtml(primaryHost)})</h2>
   ${contextualAppendices.map(ap => `
     <div class="finding-card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;flex-wrap:wrap;gap:4px;">
-        <strong style="font-size:13px;color:#0284c7;">${ap.appendixId}: ${ap.title}</strong>
-        <span class="badge verified">Full SHA-256: ${ap.sha256}</span>
+        <strong style="font-size:13px;color:#0284c7;">${escHtml(ap.appendixId)}: ${escHtml(ap.title)}</strong>
+        <span class="badge verified">Full SHA-256: ${escHtml(ap.sha256)}</span>
       </div>
-      <div style="font-size:11px;color:#475569;margin-bottom:4px;"><strong>Customer Host Affected:</strong> <code>${ap.host}</code> &nbsp;|&nbsp; <strong>Collection Engine:</strong> ${ap.tool}</div>
-      <pre>${ap.rawArtifact.replace(/</g, "&lt;")}</pre>
+      <div style="font-size:11px;color:#475569;margin-bottom:4px;"><strong>Customer Host Affected:</strong> <code>${escHtml(ap.host)}</code> &nbsp;|&nbsp; <strong>Collection Engine:</strong> ${escHtml(ap.tool)}</div>
+      <pre>${escHtml(ap.rawArtifact)}</pre>
       <div style="background:#f0fdf4;border:1px solid #86efac;border-left:3px solid #16a34a;border-radius:4px;padding:6px 8px;margin-top:4px;font-size:10px;color:#14532d;line-height:1.4;">
-        <strong>💡 Appendix Evidence Explanation &amp; Note (${ap.appendixId}):</strong> This raw terminal log was captured by <code>${ap.tool}</code> against <code>${ap.host}</code> and cryptographically hashed (SHA-256: <code>${ap.sha256}</code>) with zero redaction so engineering and compliance auditors can independently verify every finding.
+        <strong>💡 Appendix Evidence Explanation &amp; Note (${escHtml(ap.appendixId)}):</strong> This raw terminal log was captured by <code>${escHtml(ap.tool)}</code> against <code>${escHtml(ap.host)}</code> and cryptographically hashed (SHA-256: <code>${escHtml(ap.sha256)}</code>) with zero redaction so engineering and compliance auditors can independently verify every finding.
       </div>
     </div>
   `).join("")}
@@ -4484,6 +4491,12 @@ ${f.remediation}
   };
 
   const exportZapReportHtml = () => {
+    const escHtml = (val: any): string =>
+      String(val ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
     const zapFindings = getContextualFindings();
     const execDossier = buildExecutiveSummaryDossier({
       targetUrls: targets.map(t => t.url),
@@ -4496,7 +4509,7 @@ ${f.remediation}
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>OWASP ZAP v2.14.0 & PTES/NIST Security Report — ${allScopedUrlsStr}</title>
+  <title>OWASP ZAP v2.14.0 &amp; PTES/NIST Security Report — ${escHtml(allScopedUrlsStr)}</title>
   <style>
     body { font-family: system-ui, sans-serif; background: #0b0f17; color: #f8fafc; padding: 32px; line-height: 1.5; }
     h1 { color: #38bdf8; margin-bottom: 6px; }
@@ -4514,16 +4527,16 @@ ${f.remediation}
   </style>
 </head>
 <body>
-  <h1>⚡ OWASP ZAP v2.14.0 · PTES & NIST SP 800-115 Forensic Validation Report (${allScopedUrlsStr})</h1>
-  <p>Policy: ${zapPolicy} · Standard: ${pentestStandard} · Generated: ${new Date().toISOString()} · Customer Targets Scanned: ${allScopedUrlsStr} · Total Validated Findings: ${zapFindings.length}</p>
+  <h1>⚡ OWASP ZAP v2.14.0 · PTES &amp; NIST SP 800-115 Forensic Validation Report (${escHtml(allScopedUrlsStr)})</h1>
+  <p>Policy: ${escHtml(zapPolicy)} · Standard: ${escHtml(pentestStandard)} · Generated: ${escHtml(new Date().toISOString())} · Customer Targets Scanned: ${escHtml(allScopedUrlsStr)} · Total Validated Findings: ${zapFindings.length}</p>
 
   <div class="card">
     <h2>1. Canonical Versioned Scan Record &amp; Unified Telemetry (Single Source of Truth)</h2>
     <table>
       <tr>
-        <th>Scan Record ID</th><td><code>${execDossier.canonicalScanRecord.scanId}</code></td>
-        <th>Crawl Profile</th><td>${execDossier.canonicalScanRecord.crawlProfile}</td>
-        <th>Auth Mode</th><td>${execDossier.canonicalScanRecord.authState}</td>
+        <th>Scan Record ID</th><td><code>${escHtml(execDossier.canonicalScanRecord.scanId)}</code></td>
+        <th>Crawl Profile</th><td>${escHtml(execDossier.canonicalScanRecord.crawlProfile)}</td>
+        <th>Auth Mode</th><td>${escHtml(execDossier.canonicalScanRecord.authState)}</td>
       </tr>
       <tr>
         <th>Spidered Pages</th><td>${execDossier.canonicalScanRecord.spideredPagesCount}</td>
@@ -4532,12 +4545,12 @@ ${f.remediation}
       </tr>
       <tr>
         <th>Endpoints Probed</th><td>${execDossier.canonicalScanRecord.endpointsProbedCount}</td>
-        <th>Scanner Version</th><td>${execDossier.canonicalScanRecord.scannerVersion}</td>
+        <th>Scanner Version</th><td>${escHtml(execDossier.canonicalScanRecord.scannerVersion)}</td>
         <th>Root-Cause Deduplication</th><td>${execDossier.scoringMethodology.rawFindingCount} raw ➔ ${execDossier.scoringMethodology.deduplicatedClusterCount} CWE clusters</td>
       </tr>
     </table>
-    <p><strong>Published Security Score Formula:</strong> <code>${execDossier.scoringMethodology.formulaText}</code></p>
-    <p><strong>Pre-Release Report Quality Gate (7 / 7 Checks Passed):</strong> ${execDossier.qualityGateChecks.map(c => `[${c.status}] ${c.checkId} ${c.checkName}`).join(" · ")}</p>
+    <p><strong>Published Security Score Formula:</strong> <code>${escHtml(execDossier.scoringMethodology.formulaText)}</code></p>
+    <p><strong>Pre-Release Report Quality Gate (7 / 7 Checks Passed):</strong> ${execDossier.qualityGateChecks.map(c => `[${escHtml(c.status)}] ${escHtml(c.checkId)} ${escHtml(c.checkName)}`).join(" · ")}</p>
   </div>
 
   ${zapFindings.map((f, idx) => {
@@ -4549,53 +4562,53 @@ ${f.remediation}
     return `
     <div class="card">
       <div>
-        <span class="${sevClass}">[${f.severity}]</span>
-        <strong>${f.title}</strong> (${f.cweId} · ${f.owaspRef})
-        <span class="badge">7-State Validation: ${formal.validationState}</span>
-        <span class="badge">Confidence: ${f.confidence || "Confirmed (99%)"}</span>
+        <span class="${sevClass}">[${escHtml(f.severity)}]</span>
+        <strong>${escHtml(f.title)}</strong> (${escHtml(f.cweId)} · ${escHtml(f.owaspRef)})
+        <span class="badge">7-State Validation: ${escHtml(formal.validationState)}</span>
+        <span class="badge">Confidence: ${escHtml(f.confidence || "Confirmed (99%)")}</span>
       </div>
-      <p><strong>Endpoint:</strong> ${f.method} ${f.url} (param: <code>${f.parameter}</code> · probe: <code>${(f.evidence?.payload || "N/A").replace(/</g, "&lt;")}</code>)</p>
-      <p>${f.description} ${f.impact}</p>
+      <p><strong>Endpoint:</strong> ${escHtml(f.method)} ${escHtml(f.url)} (param: <code>${escHtml(f.parameter)}</code> · probe: <code>${escHtml(f.evidence?.payload || "N/A")}</code>)</p>
+      <p>${escHtml(f.description)} ${escHtml(f.impact)}</p>
 
       <p><strong>4-Stage Forensic Evidence Gate (Discovery ➔ Exposure ➔ Exploitability ➔ Confirmed Impact):</strong></p>
       <table>
         <tr>
-          <th>1. Discovery (${formal.fourStageEvidenceGate.discovery.status})</th>
-          <th>2. Exposure (${formal.fourStageEvidenceGate.exposure.status})</th>
-          <th>3. Exploitability (${formal.fourStageEvidenceGate.exploitability.status})</th>
-          <th>4. Confirmed Impact (${formal.fourStageEvidenceGate.confirmedImpact.status})</th>
+          <th>1. Discovery (${escHtml(formal.fourStageEvidenceGate.discovery.status)})</th>
+          <th>2. Exposure (${escHtml(formal.fourStageEvidenceGate.exposure.status)})</th>
+          <th>3. Exploitability (${escHtml(formal.fourStageEvidenceGate.exploitability.status)})</th>
+          <th>4. Confirmed Impact (${escHtml(formal.fourStageEvidenceGate.confirmedImpact.status)})</th>
         </tr>
         <tr>
-          <td>${formal.fourStageEvidenceGate.discovery.evidenceSummary.replace(/</g, "&lt;")}</td>
-          <td>${formal.fourStageEvidenceGate.exposure.evidenceSummary.replace(/</g, "&lt;")}</td>
-          <td>${formal.fourStageEvidenceGate.exploitability.evidenceSummary.replace(/</g, "&lt;")}</td>
-          <td>${formal.fourStageEvidenceGate.confirmedImpact.evidenceSummary.replace(/</g, "&lt;")}</td>
+          <td>${escHtml(formal.fourStageEvidenceGate.discovery.evidenceSummary)}</td>
+          <td>${escHtml(formal.fourStageEvidenceGate.exposure.evidenceSummary)}</td>
+          <td>${escHtml(formal.fourStageEvidenceGate.exploitability.evidenceSummary)}</td>
+          <td>${escHtml(formal.fourStageEvidenceGate.confirmedImpact.evidenceSummary)}</td>
         </tr>
       </table>
 
-      <p><strong>Observed Facts vs. Inferred Impact Separation (Requirement: <code>${formal.observedVsInferred.concreteSecurityRequirement}</code>):</strong></p>
+      <p><strong>Observed Facts vs. Inferred Impact Separation (Requirement: <code>${escHtml(formal.observedVsInferred.concreteSecurityRequirement)}</code>):</strong></p>
       <table>
         <tr>
           <th>Directly Observed Telemetry Facts (Verified by Probe)</th>
           <th>Architectural Risk Inferences (Requires Chaining / Not Claimed as Exploited)</th>
         </tr>
         <tr>
-          <td><ul>${formal.observedVsInferred.observedFacts.map(fact => `<li>${fact.replace(/</g, "&lt;")}</li>`).join("")}</ul></td>
-          <td><ul>${formal.observedVsInferred.inferredOrPotentialImpact.map(inf => `<li>${inf.replace(/</g, "&lt;")}</li>`).join("")}</ul></td>
+          <td><ul>${formal.observedVsInferred.observedFacts.map(fact => `<li>${escHtml(fact)}</li>`).join("")}</ul></td>
+          <td><ul>${formal.observedVsInferred.inferredOrPotentialImpact.map(inf => `<li>${escHtml(inf)}</li>`).join("")}</ul></td>
         </tr>
       </table>
 
       <p><strong>1. Step-by-Step Verification &amp; Reproduction Process:</strong></p>
-      <ol>${(f.evidence?.reproductionSteps || []).map(s => `<li>${s.replace(/</g, "&lt;")}</li>`).join("")}</ol>
+      <ol>${(f.evidence?.reproductionSteps || []).map(s => `<li>${escHtml(s)}</li>`).join("")}</ol>
       <p><strong>2. Safe Read-Only CLI / cURL &amp; Verification Scripts:</strong></p>
-      <pre>${(f.poc?.curlCommand || "").replace(/</g, "&lt;")}\n\n${(intel.githubAndNuclei.verificationScript || "").replace(/</g, "&lt;")}</pre>
+      <pre>${escHtml(f.poc?.curlCommand || "")}\n\n${escHtml(intel.githubAndNuclei.verificationScript || "")}</pre>
       <p><strong>3. 4-Stage Forensic Verification &amp; Chaining Evaluation:</strong></p>
-      <ul>${intel.killChainStages.map(kc => `<li><strong>${kc.stageName} (${kc.mitreTechniqueId}):</strong> ${kc.deepDiveMechanism.replace(/</g, "&lt;")} — CLI: <code>${kc.verificationCommand.replace(/</g, "&lt;")}</code></li>`).join("")}</ul>
+      <ul>${intel.killChainStages.map(kc => `<li><strong>${escHtml(kc.stageName)} (${escHtml(kc.mitreTechniqueId)}):</strong> ${escHtml(kc.deepDiveMechanism)} — CLI: <code>${escHtml(kc.verificationCommand)}</code></li>`).join("")}</ul>
       <p><strong>4. Forensic HTTP Evidence (Baseline vs. ${isReadOnlyProbe ? "Confirmed Control Exposure — Safe Read-Only Probe" : "Exploited HTTP Proof"}):</strong></p>
-      <pre>--- BASELINE HTTP REQUEST &amp; RESPONSE ---\n${(f.evidence?.originalRequest || "").replace(/</g, "&lt;")}\n\n${(f.evidence?.originalResponse || "").replace(/</g, "&lt;")}\n\n--- ${isReadOnlyProbe ? "CONFIRMED CONTROL EXPOSURE (SAFE READ-ONLY PROBE)" : "EXPLOITED HTTP REQUEST &amp; RESPONSE"} ---\n${(f.evidence?.testRequest || "").replace(/</g, "&lt;")}\n\n${(f.evidence?.testResponse || "").replace(/</g, "&lt;")}\n\nMatched Indicator: ${(f.evidence?.matchedPattern || "").replace(/</g, "&lt;")}</pre>
-      ${(f.collectedEvidence || []).map(ev => `<pre>[${ev.type}] ${(ev.title || ev.label || "Captured Evidence").replace(/</g, "&lt;")}\n${(ev.content || "").replace(/</g, "&lt;")}\nMatched: ${(ev.highlight || "").replace(/</g, "&lt;")}\nAnnotation: ${(ev.annotation || "").replace(/</g, "&lt;")}</pre>`).join("")}
-      <p><strong>Remediation:</strong> ${f.remediation}</p>
-      <p style="font-size:11px;color:#94a3b8;"><strong>FIPS 180-4 SHA-256 Evidence Digest:</strong> <code>${findingDigest}</code> · <strong>Validation State:</strong> ${formal.validationState}</p>
+      <pre>--- BASELINE HTTP REQUEST &amp; RESPONSE ---\n${escHtml(f.evidence?.originalRequest || "")}\n\n${escHtml(f.evidence?.originalResponse || "")}\n\n--- ${isReadOnlyProbe ? "CONFIRMED CONTROL EXPOSURE (SAFE READ-ONLY PROBE)" : "EXPLOITED HTTP REQUEST &amp; RESPONSE"} ---\n${escHtml(f.evidence?.testRequest || "")}\n\n${escHtml(f.evidence?.testResponse || "")}\n\nMatched Indicator: ${escHtml(f.evidence?.matchedPattern || "")}</pre>
+      ${(f.collectedEvidence || []).map(ev => `<pre>[${escHtml(ev.type)}] ${escHtml(ev.title || ev.label || "Captured Evidence")}\n${escHtml(ev.content || "")}\nMatched: ${escHtml(ev.highlight || "")}\nAnnotation: ${escHtml(ev.annotation || "")}</pre>`).join("")}
+      <p><strong>Remediation:</strong> ${escHtml(f.remediation)}</p>
+      <p style="font-size:11px;color:#94a3b8;"><strong>FIPS 180-4 SHA-256 Evidence Digest:</strong> <code>${escHtml(findingDigest)}</code> · <strong>Validation State:</strong> ${escHtml(formal.validationState)}</p>
     </div>
   `;
   }).join("")}
