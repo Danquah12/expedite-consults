@@ -45,11 +45,11 @@ export default function Header({
 							className="flex items-center space-x-2 hover:opacity-90 transition-opacity"
 						>
 							<Image
-								src="/logo.jpg"
+								src="/logo-icon.png"
 								width={100}
 								height={100}
-								alt="logo"
-								className="w-[50px] h-[45px] lg:w-[60px] lg:h-[55px] flex-shrink-0e"
+								alt="Expedite Consults LLC logo"
+								className="w-[46px] h-[46px] lg:w-[54px] lg:h-[54px] rounded-sm object-contain flex-shrink-0"
 							/>
 							<span className="text-base lg:text-lg text-white font-semibold">
 								Expedite Consults LLC

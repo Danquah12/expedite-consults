@@ -22,11 +22,11 @@ async function Footer({ services }: { services: GetServicesQueryResult }) {
 							className="flex items-center space-x-2 hover:opacity-90 transition-opacity"
 						>
 							<Image
-								src="/logo.jpg"
-								className="w-[50px] h-[45px] lg:w-[60px] lg:h-[55px] flex-shrink-0"
+								src="/logo-icon.png"
+								className="w-[46px] h-[46px] lg:w-[54px] lg:h-[54px] rounded-sm object-contain flex-shrink-0"
 								width={100}
 								height={100}
-								alt="logo"
+								alt="Expedite Consults LLC logo"
 							/>
 							<span className="text-base lg:text-lg font-semibold text-white">
 								Expedite Consults LLC
