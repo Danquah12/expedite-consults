@@ -51,6 +51,13 @@ export async function Partners() {
 							className="w-[200px] h-[60px] object-contain mx-10 brightness-110 transition-all duration-300 ease-in-out"
 						/>
 					))}
+					<Image
+						src="/partners/splunk.svg"
+						alt="Splunk Partner"
+						width="200"
+						height="60"
+						className="w-[180px] h-[60px] object-contain mx-10 brightness-110 transition-all duration-300 ease-in-out"
+					/>
 				</Marquee>
 
 				<div className="pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-background"></div>
