@@ -1792,10 +1792,10 @@ export default function EnginePage() {
     return computeRealSha256Hex(seed);
   };
 
-  // Automatically probe customer website URLs in background whenever scoped customer host changes so every website report is 100% unique
+  // Automatically probe customer website URLs in background only when idle (never override an active scan that just reset to zero)
   const nonLabUrlsKey = nonLabUrls.join("|");
   useEffect(() => {
-    if (isPortalClearedForNewEngagement || !isExternalCustomerScope || nonLabUrls.length === 0) return;
+    if (running || liveExternalProbing || isPortalClearedForNewEngagement || !isExternalCustomerScope || nonLabUrls.length === 0) return;
     const alreadyProbed = engineResults.some(
       r => !r?.isPrivateLab && r?.schemaVersion === "6.1.0-client-ready-verified" && (r?.host === primaryHost || extractCleanHost(r?.targetUrl || "") === primaryHost) && Array.isArray(r?.liveFindings) && r.liveFindings.length >= 1
     );
@@ -1813,7 +1813,7 @@ export default function EnginePage() {
     })
       .then(r => r.json())
       .then(data => {
-        if (cancelled || !Array.isArray(data?.results) || data.results.length === 0) return;
+        if (cancelled || running || liveExternalProbing || !Array.isArray(data?.results) || data.results.length === 0) return;
         setEngineResults(prev => {
           const incomingHosts = new Set(data.results.map((r: any) => r.host || extractCleanHost(r.targetUrl || "")));
           const merged = [...data.results, ...prev.filter((p: any) => !incomingHosts.has(p.host || extractCleanHost(p.targetUrl || "")))];
@@ -1844,7 +1844,7 @@ export default function EnginePage() {
     return () => {
       cancelled = true;
     };
-  }, [nonLabUrlsKey, primaryHost, isExternalCustomerScope, isPortalClearedForNewEngagement]);
+  }, [nonLabUrlsKey, primaryHost, isExternalCustomerScope, isPortalClearedForNewEngagement, running, liveExternalProbing]);
 
   const contextualizeText = (raw?: string): string => {
     if (!raw) return "";
@@ -1928,6 +1928,10 @@ export default function EnginePage() {
   };
 
   const getContextualFindings = (): Finding[] => {
+    // While a scan is actively running, return strictly what has been progressively discovered so far (starts at 0!)
+    if (running || liveExternalProbing) {
+      return verifiedFindings;
+    }
     if (isPortalClearedForNewEngagement && verifiedFindings.length === 0 && engineResults.length === 0) {
       return [];
     }
@@ -2941,11 +2945,29 @@ ${f.remediation}
         : "Fast (~2m / 120s)";
 
     stopAllTimers();
+    // ── FULL ZERO-STATE RESET FOR NEW SCAN ──
     setIsPortalClearedForNewEngagement(false);
+    setVerifiedFindings([]);
+    setFindingsCount(0);
+    setEngineResults([]);
+    setRetestMap({});
+    setSelectedFinding(null);
+    setLogs([]);
+    livePendingFindingsRef.current = [];
+    pendingEventsRef.current = [];
+    try {
+      localStorage.removeItem("axiom_last_findings");
+      localStorage.removeItem("axiom_last_finding_count");
+      localStorage.removeItem("axiom_last_engine_results");
+      localStorage.removeItem("axiom_last_retest_map");
+      localStorage.removeItem("axiom_last_duration");
+    } catch { /* ignore */ }
+
     setLiveExternalProbing(true);
     setRunning(true);
     setDone(false);
-    setProgress(2);
+    setProgress(0);
+    setElapsedSec(0);
     setCurrentEngineStep(onlyEngine === "OPENVAS" ? 2 : onlyEngine === "ZAP" ? 3 : onlyEngine === "BURP" ? 4 : onlyEngine === "POST_EXPLOIT" ? 5 : 1);
     setCurrentBrainStage(1);
     setSelectedBrainStage(1);
@@ -2954,22 +2976,17 @@ ${f.remediation}
     if (onlyEngine) {
       setActiveLogTab(onlyEngine);
     }
-    if (!onlyEngine) {
-      setVerifiedFindings([]);
-      setFindingsCount(0);
-    }
-    setElapsedSec(0);
 
-    // Initialize the 5 scanner daemons so the active daemon(s) show RUNNING immediately
+    // Initialize all 5 scanner daemons at 0 activeRequests & 0 findingsFound
     setScanners(prev =>
       prev.map(s => {
         if (onlyEngine) {
           return s.tabId === onlyEngine
-            ? { ...s, status: "RUNNING", activeRequests: 12, findingsFound: 0 }
-            : s;
+            ? { ...s, status: "RUNNING", activeRequests: 0, findingsFound: 0 }
+            : { ...s, status: "STANDBY", activeRequests: 0, findingsFound: 0 };
         }
         return s.id === "nmap"
-          ? { ...s, status: "RUNNING", activeRequests: 16, findingsFound: 0 }
+          ? { ...s, status: "RUNNING", activeRequests: 0, findingsFound: 0 }
           : { ...s, status: "STANDBY", activeRequests: 0, findingsFound: 0 };
       })
     );
@@ -2978,8 +2995,8 @@ ${f.remediation}
     clockRef.current = setInterval(() => {
       const elapsed = Math.floor((Date.now() - scanStartMs) / 1000);
       setElapsedSec(elapsed);
-      // Smoothly advance overall progress bar according to exact selected duration (2m / 5m / 12m / 60m)
-      const timeBasedProgress = Math.min(99, Math.max(2, Math.round((elapsed / Math.max(1, totalTargetDurationSec)) * 100)));
+      // Smoothly advance overall progress bar from 0% according to exact selected duration (2m / 5m / 12m / 60m)
+      const timeBasedProgress = Math.min(99, Math.max(0, Math.round((elapsed / Math.max(1, totalTargetDurationSec)) * 100)));
       setProgress(prev => Math.max(prev, timeBasedProgress));
       // Increment active requests on whichever scanner daemon is currently RUNNING
       setScanners(prev =>
@@ -2991,13 +3008,13 @@ ${f.remediation}
       );
     }, 1000);
 
-    // Scope `targets` strictly to the customer's scanned external URLs
+    // Scope `targets` strictly to the customer's scanned external URLs starting at 0% progress and 0 findings
     setTargets(urlsToProbe.map((u, idx) => ({
       id: `ext-customer-${scanStartMs}-${idx}`,
       url: u,
       status: "nmap" as const,
-      progress: 4,
-      phase: onlyEngine ? `Running ${onlyEngine} Live Engine` : "Brain 1/8 · Discover (Nmap + DNS + TLS)",
+      progress: 0,
+      phase: onlyEngine ? `Running ${onlyEngine} Live Engine (0%)` : "Brain 1/8 · Discover (Nmap + DNS + TLS)",
       findings: 0
     })));
 
@@ -3008,7 +3025,7 @@ ${f.remediation}
       brainStage: 1,
       pluginCode: "EXP-PLG-101",
       time: new Date().toLocaleTimeString(),
-      msg: `🧠 [LIVE EXTERNAL DAST ORCHESTRATOR] Initiating ${onlyEngine ? `${onlyEngine} Dedicated Engine Phase` : "Full 5-Engine Suite (Nmap NSE + OpenVAS GVM / Tenable Nessus + OWASP ZAP + Burp Suite + Post-Exploit CWE Verifier)"} across ${urlsToProbe.join(", ")} | Pacing Profile: ${durationLabel} (${totalTargetDurationSec}s total budget)${customAuthHeader || customSessionCookie ? " [AUTHENTICATED SESSION INJECTED]" : ""}`,
+      msg: `🧹 [SCAN STATE RESET TO ZERO] Cleared all previous scan findings (0), telemetry caches, and counters. Initiating ${onlyEngine ? `${onlyEngine} Dedicated Engine Phase` : "Full 5-Engine Suite + Enumeration Engine + Penetration Testing Assessment Engine"} across ${urlsToProbe.join(", ")} | Pacing Profile: ${durationLabel} (${totalTargetDurationSec}s total budget)${customAuthHeader || customSessionCookie ? " [AUTHENTICATED SESSION INJECTED]" : ""}`,
       c: "#38bdf8"
     };
     setLogs([startLog]);
@@ -3499,6 +3516,18 @@ ${f.remediation}
               ? "post_exploit"
               : "");
 
+          // Progressive finding reveal starting from 0 and counting up 1 by 1 across the scan timeline
+          const revealedCount =
+            idx === totalEventsCount - 1
+              ? combinedLiveAndDeep.length
+              : Math.min(
+                  combinedLiveAndDeep.length,
+                  Math.floor((idx / Math.max(1, totalEventsCount)) * combinedLiveAndDeep.length)
+                );
+          const progressiveFindings = combinedLiveAndDeep.slice(0, revealedCount);
+          setVerifiedFindings(progressiveFindings);
+          setFindingsCount(progressiveFindings.length);
+
           if (activeScannerId) {
             const scannerOrder = ["nmap", "openvas", "zap", "burp", "post_exploit"];
             const activeOrderIdx = scannerOrder.indexOf(activeScannerId);
@@ -3511,7 +3540,7 @@ ${f.remediation}
                       ...s,
                       status: "RUNNING",
                       activeRequests: s.activeRequests + 14,
-                      findingsFound: evt.isFinding ? Math.min(combinedLiveAndDeep.length, s.findingsFound + 1) : s.findingsFound
+                      findingsFound: progressiveFindings.length
                     };
                   }
                   return s;
@@ -3521,7 +3550,7 @@ ${f.remediation}
                     ...s,
                     status: "RUNNING",
                     activeRequests: s.activeRequests + 18,
-                    findingsFound: evt.isFinding ? Math.min(combinedLiveAndDeep.length, s.findingsFound + 1) : Math.max(s.findingsFound, combinedLiveAndDeep.length > 0 ? 1 : 0)
+                    findingsFound: progressiveFindings.length
                   };
                 }
                 if (sIdx >= 0 && sIdx < activeOrderIdx) {
@@ -3529,7 +3558,7 @@ ${f.remediation}
                     ...s,
                     status: "COMPLETED",
                     activeRequests: Math.max(64, s.activeRequests),
-                    findingsFound: combinedLiveAndDeep.length
+                    findingsFound: progressiveFindings.length
                   };
                 }
                 return s;
@@ -3537,15 +3566,9 @@ ${f.remediation}
             );
           }
 
-          // Reveal verified findings progressively as scanners detect them
-          if (evt.isFinding || idx >= Math.floor(totalEventsCount * 0.35)) {
-            setVerifiedFindings(combinedLiveAndDeep);
-            setFindingsCount(combinedLiveAndDeep.length);
-          }
-
           setTargets(urlsToProbe.map((u, tIdx) => {
             const h = extractCleanHost(u);
-            const hostFindingsCount = combinedLiveAndDeep.filter(f => f.url.includes(h)).length;
+            const hostProgressiveCount = progressiveFindings.filter(f => f.url.includes(h)).length;
             return {
               id: `ext-customer-${scanStartMs}-${tIdx}`,
               url: u,
@@ -3563,7 +3586,7 @@ ${f.remediation}
                   : "post_assess",
               progress: idx === totalEventsCount - 1 ? 100 : stepProg,
               phase: idx === totalEventsCount - 1 ? "Brain 8/8 · Complete (All 5 Engines)" : `${evt.tag} · ${evt.pluginCode || "Active"}`,
-              findings: hostFindingsCount || combinedLiveAndDeep.length
+              findings: idx === totalEventsCount - 1 ? (combinedLiveAndDeep.filter(f => f.url.includes(h)).length || combinedLiveAndDeep.length) : hostProgressiveCount
             };
           }));
 
@@ -5580,15 +5603,26 @@ ${f.remediation}
     }
     stopAllTimers();
     setIsPortalClearedForNewEngagement(false);
+    setVerifiedFindings([]);
+    setFindingsCount(0);
+    setEngineResults([]);
+    setRetestMap({});
+    setSelectedFinding(null);
+    livePendingFindingsRef.current = [];
+    pendingEventsRef.current = [];
+    try {
+      localStorage.removeItem("axiom_last_findings");
+      localStorage.removeItem("axiom_last_finding_count");
+      localStorage.removeItem("axiom_last_engine_results");
+      localStorage.removeItem("axiom_last_retest_map");
+      localStorage.removeItem("axiom_last_duration");
+    } catch { /* ignore */ }
+
     setRunning(true);
     setDone(false);
     setLogs([]);
     setProgress(0);
     setElapsedSec(0);
-    if (!onlyEngine) {
-      setFindingsCount(FINDINGS.length);
-      setVerifiedFindings(FINDINGS);
-    }
     setStage("scope");
     setCurrentEngineStep(1);
     setCurrentBrainStage(1);
@@ -5602,14 +5636,14 @@ ${f.remediation}
 
     const validUrls = targets.map(t => t.url);
 
-    // Reset scanner & target states
+    // Reset scanner & target states to 0
     setScanners(prev => prev.map(s => ({
       ...s,
       activeRequests: 0,
-      findingsFound: onlyEngine && s.tabId !== onlyEngine ? s.findingsFound : 0,
+      findingsFound: 0,
       status: "STANDBY"
     })));
-    setTargets(prev => prev.map(t => ({ ...t, status: "queued", progress: 2, phase: "PTES P1 Queued", findings: onlyEngine ? t.findings : 0 })));
+    setTargets(prev => prev.map(t => ({ ...t, status: "queued", progress: 0, phase: "PTES P1 Queued (0%)", findings: 0 })));
 
     // Fire real serverless /api/engine/scan and /api/zap requests in background
     fetch("/api/engine/scan", {
