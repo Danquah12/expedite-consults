@@ -1211,42 +1211,87 @@ export function matchPluginsForFinding(finding: {
   const primary = triggeredPlugins.reduce((best, cur) => (scorePlugin(cur) > scorePlugin(best) ? cur : best), triggeredPlugins[1]);
 
   let urlPath = "/";
+  let hostOnly = "example.com";
   try {
-    if (finding.url) urlPath = new URL(finding.url).pathname || "/";
+    if (finding.url) {
+      const u = new URL(finding.url);
+      urlPath = u.pathname || "/";
+      hostOnly = u.host || "example.com";
+    }
   } catch {
     urlPath = finding.url || "/";
   }
 
-  const sigmaRuleYaml = [
-    `title: ${finding.title || primary.name}`,
-    `id: exp-sigma-${(finding.cweId || primary.cwe).toLowerCase()}-${primary.code.toLowerCase()}`,
-    `status: production`,
-    `description: Blue Team (BT) SIEM detection rule for ${finding.title || primary.name} (${primary.mitreTtp.tacticId} / ${primary.mitreTtp.techniqueId})`,
-    `logsource:`,
-    `  category: webserver_and_waf`,
-    `  service: ${primary.blueTeamDefense.btLogSource}`,
-    `detection:`,
-    `  selection:`,
-    `    url|contains: '${urlPath}'`,
-    `    parameter|contains: '${finding.parameter || "header_or_query"}'`,
-    `    scanner_plugins: ['${triggeredPlugins.map((t) => t.code).join("', '")}']`,
-    `  condition: selection`,
-    `level: ${(finding.severity || primary.severity).toLowerCase()}`,
-    `tags:`,
-    `  - attack.${primary.mitreTtp.tacticName.toLowerCase().replace(/\s+/g, "_")}`,
-    `  - attack.${(primary.mitreTtp.subTechniqueId || primary.mitreTtp.techniqueId).toLowerCase()}`,
-    `  - d3fend.${primary.blueTeamDefense.d3fendId.toLowerCase()}`
-  ].join("\n");
+  const isHeaderOrDnsOrConfigFinding =
+    String(finding.id || "").startsWith("LIVE-") ||
+    ["CWE-693", "CWE-319", "CWE-1021", "CWE-16", "CWE-497", "CWE-200", "CWE-525", "CWE-290", "CWE-358", "CWE-353", "CWE-829", "CWE-614"].includes(cweUpper);
 
-  const splunkSplQuery = `index=web OR index=waf uri_path="*${urlPath}*" | eval mitre_ttp="${primary.mitreTtp.tacticId}:${primary.mitreTtp.techniqueId}", bt_d3fend="${primary.blueTeamDefense.d3fendId}" | stats count values(status) values(http_user_agent) by src_ip, uri_path, mitre_ttp, bt_d3fend | where count > 0`;
+  const isDnsCheck = cweUpper === "CWE-290" || cweUpper === "CWE-358" || titleLower.includes("spf") || titleLower.includes("dmarc") || titleLower.includes("caa");
 
-  const sentinelKqlQuery = `AzureDiagnostics | where Category in ("ApplicationGatewayAccessLog", "ApplicationGatewayFirewallLog", "FrontDoorAccessLog") | where requestUri_s contains "${urlPath}" | extend MitreTTP = "${primary.mitreTtp.tacticId} (${primary.mitreTtp.techniqueId})", BlueTeamD3FEND = "${primary.blueTeamDefense.d3fendId}" | summarize EventCount = count(), StatusCodes = make_set(httpStatus_d) by clientIP_s, requestUri_s, MitreTTP, BlueTeamD3FEND`;
+  const sigmaRuleYaml = isHeaderOrDnsOrConfigFinding
+    ? isDnsCheck
+      ? [
+          `# CONFIGURATION-DRIFT & SYNTHETIC DNS MONITOR (Replaces generic SIEM attack rule for DNS control checks)`,
+          `name: dns-auth-drift-monitor-${hostOnly.replace(/[^a-z0-9-]/gi, "-")}`,
+          `schedule: "0 */6 * * *" # Every 6 hours via Synthetic DNS Monitor / CI-CD`,
+          `target_domain: "${hostOnly}"`,
+          `checks:`,
+          `  - record_type: TXT`,
+          `    host: "${hostOnly}"`,
+          `    assert_contains: "v=spf1"`,
+          `  - record_type: TXT`,
+          `    host: "_dmarc.${hostOnly}"`,
+          `    assert_contains: "v=DMARC1; p="`,
+          `  - record_type: CAA`,
+          `    host: "${hostOnly}"`,
+          `    assert_contains: "issue"`,
+          `alert_on_drift: true`
+        ].join("\n")
+      : [
+          `# CI/CD & SYNTHETIC HEADER DRIFT ASSERTION (Replaces generic SIEM log rule for HTTP configuration checks)`,
+          `name: http-header-regression-gate-${(finding.cweId || "cwe693").toLowerCase()}`,
+          `trigger: [deployment, scheduled_synthetic_probe]`,
+          `target_url: "${finding.url || `https://${hostOnly}${urlPath}`}"`,
+          `audited_control: "${finding.parameter || "HTTP Response Header"}"`,
+          `assertions:`,
+          `  - status_code: 200`,
+          `  - header_present: "${(finding.parameter || "Content-Security-Policy").split(",")[0].trim()}"`,
+          `  - d3fend_control: "${primary.blueTeamDefense.d3fendId} (${primary.blueTeamDefense.d3fendTechnique})"`,
+          `fail_pipeline_on_missing: true`
+        ].join("\n")
+    : [
+        `title: ${finding.title || primary.name}`,
+        `id: exp-sigma-${(finding.cweId || primary.cwe).toLowerCase()}-${primary.code.toLowerCase()}`,
+        `status: production`,
+        `description: Blue Team (BT) SIEM detection rule for ${finding.title || primary.name} (${primary.mitreTtp.tacticId} / ${primary.mitreTtp.techniqueId})`,
+        `logsource:`,
+        `  category: webserver_and_waf`,
+        `  service: ${primary.blueTeamDefense.btLogSource}`,
+        `detection:`,
+        `  selection:`,
+        `    url|contains: '${urlPath}'`,
+        `    parameter|contains: '${finding.parameter || "header_or_query"}'`,
+        `    scanner_plugins: ['${triggeredPlugins.map((t) => t.code).join("', '")}']`,
+        `  condition: selection`,
+        `level: ${(finding.severity || primary.severity).toLowerCase()}`,
+        `tags:`,
+        `  - attack.${primary.mitreTtp.tacticName.toLowerCase().replace(/\s+/g, "_")}`,
+        `  - attack.${(primary.mitreTtp.subTechniqueId || primary.mitreTtp.techniqueId).toLowerCase()}`,
+        `  - d3fend.${primary.blueTeamDefense.d3fendId.toLowerCase()}`
+      ].join("\n");
+
+  const splunkSplQuery = isHeaderOrDnsOrConfigFinding
+    ? `| makeresults | eval target="${finding.url || hostOnly}", control="${finding.parameter || "HTTP/DNS Control"}", monitor_type="Synthetic Config-Drift & CI/CD Header/DNS Check (Not a SIEM Attack Rule)" | table target, control, monitor_type`
+    : `index=web OR index=waf uri_path="*${urlPath}*" | eval mitre_ttp="${primary.mitreTtp.tacticId}:${primary.mitreTtp.techniqueId}", bt_d3fend="${primary.blueTeamDefense.d3fendId}" | stats count values(status) values(http_user_agent) by src_ip, uri_path, mitre_ttp, bt_d3fend | where count > 0`;
+
+  const sentinelKqlQuery = isHeaderOrDnsOrConfigFinding
+    ? `// Configuration-Drift & Synthetic Availability Check (Use CI/CD or Synthetic Monitor for Header/DNS Controls)\nAppAvailabilityResults | where Name has "${hostOnly}" | project TimeGenerated, Name, Success, Message, AuditedControl="${finding.parameter || "HTTP/DNS Policy"}"`
+    : `AzureDiagnostics | where Category in ("ApplicationGatewayAccessLog", "ApplicationGatewayFirewallLog", "FrontDoorAccessLog") | where requestUri_s contains "${urlPath}" | extend MitreTTP = "${primary.mitreTtp.tacticId} (${primary.mitreTtp.techniqueId})", BlueTeamD3FEND = "${primary.blueTeamDefense.d3fendId}" | summarize EventCount = count(), StatusCodes = make_set(httpStatus_d) by clientIP_s, requestUri_s, MitreTTP, BlueTeamD3FEND`;
 
   const complianceControls = [
-    "PCI-DSS v4.0 Req 6.4.1 / 6.4.2 (Web App & Script Protection)",
-    "SOC 2 Type II CC6.1 / CC6.6 / CC7.1 (Logical Access & Boundary Telemetry)",
-    "ISO/IEC 27001:2022 Annex A.8.8 / A.8.26 (Technical Vulnerability & AppSec)",
-    "NIST CSF 2.0 PR.DS-02 / DE.CM-01 & HIPAA §164.312(e)(1)"
+    "OWASP ASVS v4.0.3 V14.4 / WSTG v4.2 (Primary Technical Benchmark)",
+    "PCI-DSS v4.0 Req 6.4.1 (Indicative Control Relevance — if CDE/payment pages are in scope)",
+    "SOC 2 CC6.6 / ISO/IEC 27001:2022 Annex A.8.26 (Indicative Control Relevance — subject to client scope)"
   ];
 
   return {

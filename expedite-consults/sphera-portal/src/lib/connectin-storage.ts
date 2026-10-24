@@ -60,7 +60,11 @@ function writeJsonMap<T>(storageKey: string, map: Record<string, T>) {
 
 export function isDefaultPlaceholderAvatar(url?: string | null): boolean {
   if (!url || typeof url !== 'string' || !url.trim()) return true
-  return url.includes('api.dicebear.com')
+  return (
+    url.includes('api.dicebear.com') ||
+    url.includes('photo-1507003211169-0a1dd7228f2d') ||
+    url.includes('photo-1534528741775-53994a69daeb')
+  )
 }
 
 export function isDefaultPlaceholderCover(url?: string | null): boolean {
@@ -78,6 +82,7 @@ export function savePersistentAvatar(avatarUrl: string, user?: Partial<UserProfi
       keys.forEach(k => { avatarMap[k] = avatarUrl })
       writeJsonMap(STORAGE_KEYS.AVATAR_MAP, avatarMap)
     }
+    localStorage.setItem(STORAGE_KEYS.AVATAR, avatarUrl)
   } catch (e) {
     console.error('Failed to save persistent avatar', e)
   }
@@ -96,10 +101,36 @@ export function loadPersistentAvatar(user?: Partial<UserProfile> | null): string
         }
       }
     }
+    const directSaved = localStorage.getItem(STORAGE_KEYS.AVATAR)
+    if (directSaved && !isDefaultPlaceholderAvatar(directSaved)) {
+      return directSaved
+    }
     return null
   } catch {
     return null
   }
+}
+
+export function resolveUserProfilePicture(user?: Partial<UserProfile> | null, fallbackUrl?: string | null): string {
+  // 1. If user has a custom data:image/ photo directly on the object, use it immediately
+  if (user?.avatar && user.avatar.startsWith('data:image/')) {
+    return user.avatar
+  }
+  // 2. Check persistent avatar storage for this user
+  const persistent = loadPersistentAvatar(user)
+  if (persistent && !isDefaultPlaceholderAvatar(persistent)) {
+    return persistent
+  }
+  // 3. Check user.avatar if not a generic placeholder
+  if (user?.avatar && !isDefaultPlaceholderAvatar(user.avatar)) {
+    return user.avatar
+  }
+  // 4. Check fallbackUrl if not a generic placeholder
+  if (fallbackUrl && !isDefaultPlaceholderAvatar(fallbackUrl)) {
+    return fallbackUrl
+  }
+  // 5. Guaranteed portrait fallback (blue-ringed user profile portrait)
+  return '/brand/kwesi-avatar.png'
 }
 
 export function savePersistentCover(coverUrl: string, user?: Partial<UserProfile> | null) {
@@ -173,7 +204,24 @@ export function loadStoredPosts(): Post[] {
   if (typeof window === 'undefined') return initialPosts
   try {
     const saved = localStorage.getItem(STORAGE_KEYS.POSTS)
-    return saved ? JSON.parse(saved) : initialPosts
+    const parsed: Post[] = saved ? JSON.parse(saved) : initialPosts
+    const userPic = resolveUserProfilePicture()
+    // Ensure featured DSTRIKE shared video post is present and any user-authored posts use the resolved profile picture
+    const hasFeaturedVideo = parsed.some(p => p.id === 'post_dstrike_wheel_masterclass' || p.media?.type === 'video')
+    const baseList = hasFeaturedVideo ? parsed : [initialPosts[0], ...parsed]
+    return baseList.map(p => {
+      if (p.author?.connectionDegree === 'You' || p.id === 'post_dstrike_wheel_masterclass') {
+        return {
+          ...p,
+          professionEnclave: p.media?.type === 'video' ? 'all' : p.professionEnclave,
+          author: {
+            ...p.author,
+            avatar: !isDefaultPlaceholderAvatar(p.author?.avatar) ? p.author.avatar : userPic
+          }
+        }
+      }
+      return p
+    })
   } catch (e) {
     console.error('Failed to load posts from storage', e)
     return initialPosts
@@ -204,7 +252,8 @@ export function getExplicitStoredUser(): UserProfile | null {
       const isKwesi =
         email.toLowerCase() === "kasiedu@expedite-consults.com" ||
         email.toLowerCase() === "asiedudanquah@gmail.com" ||
-        merged.name.toLowerCase() === "kwesi asiedu"
+        merged.name.toLowerCase().includes("kwesi asiedu") ||
+        merged.name.toLowerCase().includes("emmanuel asiedu")
 
       const finalExp = (merged.experience && merged.experience.length > 0)
         ? merged.experience
@@ -225,12 +274,17 @@ export function getExplicitStoredUser(): UserProfile | null {
       const persistentAvatar = loadPersistentAvatar({ ...merged, email })
       const persistentCover = loadPersistentCover({ ...merged, email })
 
-      // Prioritize custom uploaded avatar strictly for this user account
-      const resolvedAvatar = !isDefaultPlaceholderAvatar(merged.avatar)
-        ? merged.avatar
-        : !isDefaultPlaceholderAvatar(vaultEntry?.avatar)
-        ? vaultEntry!.avatar!
-        : (persistentAvatar || merged.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(merged.name)}&backgroundColor=0a66c2`)
+      // Prioritize custom uploaded avatar strictly for this user account, with /brand/kwesi-avatar.png as portrait fallback
+      const resolvedAvatar =
+        (merged.avatar && merged.avatar.startsWith('data:image/'))
+          ? merged.avatar
+          : persistentAvatar
+          ? persistentAvatar
+          : !isDefaultPlaceholderAvatar(merged.avatar)
+          ? merged.avatar
+          : !isDefaultPlaceholderAvatar(vaultEntry?.avatar)
+          ? vaultEntry!.avatar!
+          : '/brand/kwesi-avatar.png'
 
       const resolvedCover = !isDefaultPlaceholderCover(merged.coverImage)
         ? merged.coverImage

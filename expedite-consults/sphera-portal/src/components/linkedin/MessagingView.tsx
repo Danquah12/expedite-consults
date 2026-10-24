@@ -8,6 +8,7 @@ import {
     B2BMessageItem,
 } from '@/lib/b2b-messaging-data';
 import { PROFESSION_ENCLAVES } from '@/lib/connectin-professions';
+import { resolveUserProfilePicture } from '@/lib/connectin-storage';
 
 type ChannelFilterType = 'All' | 'People' | 'Companies' | 'Products' | 'Communities';
 
@@ -1407,6 +1408,10 @@ export function MessagingView({
                             {activeThread.messages.map((msg) => {
                                 const isMe =
                                     msg.sender.id === 'me' || msg.sender.name === 'You';
+                                const myResolvedPic = resolveUserProfilePicture(
+                                    currentUser,
+                                    msg.sender.avatar
+                                );
                                 return (
                                     <div
                                         key={msg.id}
@@ -1415,13 +1420,12 @@ export function MessagingView({
                                         }`}
                                     >
                                         <img
-                                            src={
-                                                isMe
-                                                    ? currentUser?.avatar || msg.sender.avatar
-                                                    : msg.sender.avatar
-                                            }
+                                            src={isMe ? myResolvedPic : msg.sender.avatar}
                                             alt={msg.sender.name}
-                                            className="w-9 h-9 rounded-full object-cover shrink-0 mt-1 border border-slate-200 shadow-sm"
+                                            onError={(e) => {
+                                                if (isMe) e.currentTarget.src = '/brand/kwesi-avatar.png';
+                                            }}
+                                            className="w-9 h-9 rounded-full object-cover shrink-0 mt-1 border border-slate-200 shadow-sm ring-2 ring-[#0066FF]"
                                         />
                                         <div
                                             className={`max-w-[75%] flex flex-col ${
@@ -1439,45 +1443,93 @@ export function MessagingView({
                                                 </span>
                                             </div>
 
-                                            {/* High-Contrast Message Bubble */}
+                                            {/* High-Contrast Message Bubble (Outgoing messages include Profile Picture inserted into ConnectLn Logo Card) */}
                                             <div
-                                                className={`p-3.5 rounded-2xl text-sm leading-relaxed shadow-sm whitespace-pre-line ${
+                                                className={`overflow-hidden rounded-2xl text-sm leading-relaxed shadow-sm whitespace-pre-line ${
                                                     isMe
                                                         ? 'rounded-tr-none font-semibold'
-                                                        : 'bg-white text-slate-800 border border-slate-200 rounded-tl-none font-medium'
+                                                        : 'p-3.5 bg-white text-slate-800 border border-slate-200 rounded-tl-none font-medium'
                                                 }`}
                                                 style={
                                                     isMe
                                                         ? {
-                                                              backgroundColor: '#5C2D0C',
-                                                              color: '#FFFFFF',
-                                                              border: '1px solid #4A2208',
+                                                              backgroundColor: '#171513',
+                                                              color: '#F5F0EB',
+                                                              border: '1px solid #2C2825',
                                                           }
                                                         : undefined
                                                 }
                                             >
-                                                <p style={isMe ? { color: '#FFFFFF' } : undefined}>
-                                                    {msg.text}
-                                                </p>
-
-                                                {/* Attachments inside bubble */}
-                                                {msg.attachments && msg.attachments.length > 0 && (
-                                                    <div className="mt-2 pt-2 border-t border-white/20 flex flex-wrap gap-1.5">
-                                                        {msg.attachments.map((att, i) => (
+                                                {isMe && (
+                                                    <div
+                                                        className="flex items-center justify-between gap-4 px-3.5 py-2 border-b"
+                                                        style={{
+                                                            backgroundColor: '#1F1C1A',
+                                                            borderColor: 'rgba(255,255,255,0.1)',
+                                                        }}
+                                                    >
+                                                        <div className="flex items-center gap-2 min-w-0">
+                                                            <img
+                                                                src={myResolvedPic}
+                                                                alt={currentUser?.name || 'You'}
+                                                                onError={(e) => {
+                                                                    e.currentTarget.src = '/brand/kwesi-avatar.png';
+                                                                }}
+                                                                className="h-7 w-7 rounded-full object-cover ring-2 ring-[#0066FF] shrink-0"
+                                                            />
                                                             <span
-                                                                key={i}
-                                                                className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg ${
-                                                                    isMe
-                                                                        ? 'bg-black/25 text-white'
-                                                                        : 'bg-slate-100 text-[#0A66C2] border border-slate-200'
-                                                                }`}
+                                                                className="text-[11px] font-extrabold truncate"
+                                                                style={{ color: '#F5F0EB' }}
                                                             >
-                                                                <span>📎</span>
-                                                                <span>{att.name}</span>
+                                                                {currentUser?.name || 'Kwesi Asiedu'}
                                                             </span>
-                                                        ))}
+                                                        </div>
+                                                        <div className="flex items-center gap-1.5 shrink-0">
+                                                            <img
+                                                                src="/brand/connectln-icon-256.png"
+                                                                alt="ConnectLn"
+                                                                className="h-5 w-5 rounded-sm object-contain"
+                                                            />
+                                                            <div className="inline-flex flex-col">
+                                                                <span
+                                                                    className="text-xs font-black tracking-tight leading-none"
+                                                                    style={{ color: '#F5F0EB' }}
+                                                                >
+                                                                    ConnectLn
+                                                                </span>
+                                                                <span
+                                                                    className="mt-0.5 h-0.5 w-4/5 rounded-full"
+                                                                    style={{ backgroundColor: '#A64532' }}
+                                                                />
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 )}
+
+                                                <div className={isMe ? 'p-3.5' : ''}>
+                                                    <p style={isMe ? { color: '#F5F0EB' } : undefined}>
+                                                        {msg.text}
+                                                    </p>
+
+                                                    {/* Attachments inside bubble */}
+                                                    {msg.attachments && msg.attachments.length > 0 && (
+                                                        <div className="mt-2 pt-2 border-t border-white/20 flex flex-wrap gap-1.5">
+                                                            {msg.attachments.map((att, i) => (
+                                                                <span
+                                                                    key={i}
+                                                                    className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg ${
+                                                                        isMe
+                                                                            ? 'bg-white/10 text-white'
+                                                                            : 'bg-slate-100 text-[#0A66C2] border border-slate-200'
+                                                                    }`}
+                                                                >
+                                                                    <span>📎</span>
+                                                                    <span>{att.name}</span>
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

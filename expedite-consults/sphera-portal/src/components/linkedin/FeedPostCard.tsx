@@ -44,6 +44,7 @@ import {
 } from "@/components/ui/dialog"
 import { useLanguage } from "@/context/LanguageContext"
 import { translatePostText } from "@/lib/translations/post-translator"
+import { resolveUserProfilePicture } from "@/lib/connectin-storage"
 import { VideoShareBanner } from "./VideoShareBanner"
 
 interface FeedPostCardProps {
@@ -130,17 +131,23 @@ export function FeedPostCard({
   }
 
   const [showShareModal, setShowShareModal] = useState(false)
+  const resolvedUserPic = resolveUserProfilePicture(currentUser)
+  const resolvedPostAuthorPic =
+    post.author.connectionDegree === 'You' || post.media?.type === 'video'
+      ? resolveUserProfilePicture(currentUser, post.author.avatar)
+      : post.author.avatar || resolvedUserPic
 
   const getPostShareData = () => {
-    const origin = typeof window !== "undefined" ? window.location.origin : "https://sphera-portal.vercel.app"
-    const postUrl = `${origin}/connectin`
+    const origin = "https://www.connectln.app"
+    const postUrl = `${origin}/connectin?v=connectln5`
     const snippet = (post.content || "").slice(0, 100).replace(/\n/g, ' ').trim()
-    const text = `Check out this post by ${post.author.name} on ConnectIn:\n\n"${snippet}..."\n\n${postUrl}`
+    const text = `ConnectLn · Shared by ${post.author.name}:\n\n"${snippet}..."\n\n${postUrl}`
     return { origin, postUrl, snippet, text }
   }
 
   const handleCopyLink = () => {
-    navigator.clipboard?.writeText(window.location.href)
+    const { postUrl } = getPostShareData()
+    navigator.clipboard?.writeText(postUrl)
     setCopiedLink(true)
     setTimeout(() => setCopiedLink(false), 2000)
     setShowMenu(false)
@@ -216,10 +223,13 @@ export function FeedPostCard({
       {/* Post Header */}
       <div className="flex items-start justify-between p-4 pb-2">
         <div className="flex items-start gap-3 min-w-0">
-          <div className="relative h-12 w-12 shrink-0 rounded-full overflow-hidden ring-1 ring-zinc-200 dark:ring-zinc-800">
+          <div className="relative h-12 w-12 shrink-0 rounded-full overflow-hidden ring-2 ring-[#0066FF]">
             <img
-              src={post.author.avatar}
+              src={resolvedPostAuthorPic}
               alt={post.author.name}
+              onError={(e) => {
+                e.currentTarget.src = "/brand/kwesi-avatar.png"
+              }}
               className="h-full w-full object-cover"
             />
           </div>
@@ -680,26 +690,57 @@ export function FeedPostCard({
         </div>
       )}
 
-      {/* Standard Image Media */}
+      {/* Standard Image Media with Profile Picture Inserted into ConnectLn Logo Header */}
       {post.media && post.media.type === 'image' && (
-        <div className="relative mt-2 w-full overflow-hidden bg-zinc-100 dark:bg-zinc-800 max-h-[480px]">
-          <img
-            src={post.media.url}
-            alt="Post content"
-            className="w-full object-cover max-h-[480px]"
-          />
+        <div className="mx-4 my-3 overflow-hidden rounded-2xl border border-zinc-800 shadow-md" style={{ backgroundColor: '#171513' }}>
+          {/* Official ConnectLn Logo Strip with Profile Picture Inserted */}
+          <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/10" style={{ backgroundColor: '#171513', color: '#F5F0EB' }}>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <img
+                src={resolvedPostAuthorPic}
+                alt={post.author.name}
+                onError={(e) => {
+                  e.currentTarget.src = "/brand/kwesi-avatar.png"
+                }}
+                className="h-9 w-9 rounded-full object-cover ring-2 ring-[#0066FF] shrink-0"
+              />
+              <div className="min-w-0">
+                <p className="text-xs font-extrabold truncate" style={{ color: '#F5F0EB' }}>{post.author.name}</p>
+                <p className="text-[10px] truncate" style={{ color: '#9E9891' }}>Tickets, vouches, and real work</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <img
+                src="/brand/connectln-icon-256.png"
+                alt="ConnectLn"
+                className="h-7 w-7 rounded-lg object-contain"
+              />
+              <div className="flex flex-col">
+                <span className="text-sm font-black tracking-tight leading-none" style={{ color: '#F5F0EB' }}>ConnectLn</span>
+                <span className="mt-0.5 h-1 w-4/5 rounded-full" style={{ backgroundColor: '#A64532' }} />
+              </div>
+            </div>
+          </div>
+          <div className="relative w-full overflow-hidden bg-zinc-900 max-h-[480px]">
+            <img
+              src={post.media.url}
+              alt="Post content"
+              className="w-full object-cover max-h-[480px]"
+            />
+          </div>
         </div>
       )}
 
-      {/* Signature Profile + Brand Video Share Banner (When a video is shared from The Wheel or anywhere on ConnectIn) */}
+      {/* Signature Profile + ConnectLn Video Share Banner (When a video is shared from The Wheel or anywhere on ConnectLn) */}
       {post.media && post.media.type === 'video' && (
         <div className="mx-4 my-3">
           <VideoShareBanner
-            avatarUrl={post.author.avatar || currentUser.avatar}
-            authorName={post.author.name || currentUser.name}
-            authorHeadline={post.author.headline || currentUser.headline}
-            brandName={post.media.brandName || "DSTRIKE"}
-            videoTitle={post.media.title || "ConnectIn Masterclass & Technical Briefing"}
+            avatarUrl={resolvedUserPic}
+            userAvatar={resolvedUserPic}
+            authorName={currentUser.name || post.author.name || "Kwesi Asiedu"}
+            authorHeadline={currentUser.headline || post.author.headline}
+            brandName="ConnectLn"
+            videoTitle={post.media.title || "ConnectLn Masterclass & Technical Briefing"}
             videoSubtitle={post.media.description || post.author.headline}
             youtubeId={post.media.youtubeId}
             thumbnailUrl={post.media.thumbnailUrl}
@@ -820,9 +861,42 @@ export function FeedPostCard({
           {showShareModal && (
             <>
               <div className="fixed inset-0 z-20" onClick={() => setShowShareModal(false)} />
-              <div className="absolute left-0 bottom-full mb-2 z-30 w-56 rounded-xl border border-zinc-200 bg-white p-2 shadow-xl dark:border-zinc-800 dark:bg-zinc-900 text-xs space-y-1 animate-in fade-in zoom-in-95 duration-100">
-                <span className="px-2 py-1 text-[10px] uppercase font-bold text-zinc-400 block border-b border-zinc-100 dark:border-zinc-800 pb-1">
-                  Share this post to:
+              <div className="absolute left-0 bottom-full mb-2 z-30 w-64 rounded-xl border border-zinc-200 bg-white p-2.5 shadow-xl dark:border-zinc-800 dark:bg-zinc-900 text-xs space-y-1.5 animate-in fade-in zoom-in-95 duration-100">
+                {/* Official ConnectLn Logo Card Preview with Profile Picture Inserted */}
+                <div
+                  className="flex items-center gap-3 rounded-lg p-2.5 border border-zinc-800 shadow-sm"
+                  style={{ backgroundColor: '#171513', color: '#F5F0EB' }}
+                >
+                  <img
+                    src={resolvedUserPic}
+                    alt={currentUser.name}
+                    onError={(e) => {
+                      e.currentTarget.src = "/brand/kwesi-avatar.png"
+                    }}
+                    className="h-10 w-10 rounded-full object-cover ring-2 ring-[#0066FF] shrink-0"
+                  />
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <img
+                      src="/brand/connectln-icon-256.png"
+                      alt="ConnectLn"
+                      className="h-7 w-7 rounded-md object-contain shrink-0"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="inline-flex flex-col">
+                        <span className="text-sm font-black tracking-tight leading-none" style={{ color: '#F5F0EB' }}>
+                          ConnectLn
+                        </span>
+                        <span className="mt-0.5 h-1 w-4/5 rounded-full" style={{ backgroundColor: '#A64532' }} />
+                      </div>
+                      <p className="text-[9px] truncate mt-0.5" style={{ color: '#9E9891' }}>
+                        Tickets, vouches, and real work
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <span className="px-2 py-0.5 text-[10px] uppercase font-bold text-zinc-400 block border-b border-zinc-100 dark:border-zinc-800 pb-1">
+                  Share ConnectLn Card to:
                 </span>
                 
                 {/* 1. WhatsApp */}

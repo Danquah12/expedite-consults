@@ -13,6 +13,7 @@ import DiffRemediation from "@/components/finding/DiffRemediation";
 import ValidationSteps from "@/components/finding/ValidationSteps";
 import AIExplanation from "@/components/finding/AIExplanation";
 import ChallengeAgent from "@/components/finding/ChallengeAgent";
+import DeepExploitabilityPanel from "@/components/finding/DeepExploitabilityPanel";
 import FINDINGS from "@/data/findings";
 import { loadActiveScanSession } from "@/lib/live-sast-scanner";
 import type { SASTFinding } from "@/types/sast";
@@ -60,6 +61,7 @@ export default function FindingDetailClient({ id }: { id: string }) {
         <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="space-y-6">
             <FindingHeader finding={finding} />
+            <DeepExploitabilityPanel finding={finding} />
             <AIExplanation finding={finding} />
             <ChallengeAgent finding={finding} />
 

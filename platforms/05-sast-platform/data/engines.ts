@@ -1,3 +1,5 @@
+import { BENCHMARK_32_REPOS } from "@/data/benchmark-repos";
+
 export const ENGINES = [
   {
     name: "XTRIKE AST-Query",
@@ -38,26 +40,16 @@ export const LANGUAGES = [
   "Go", "C#", "PHP", "Ruby", "Kotlin", "Swift",
 ];
 
-export const SAMPLE_REPOS = [
-  {
-    name: "XTRIKE-Java-Core",
-    url: "https://github.com/WebGoat/WebGoat",
-    description: "Enterprise Java banking & API reference target",
-    language: "Java",
-    expectedFindings: 27,
-  },
-  {
-    name: "XTRIKE-PHP-Portal",
-    url: "https://github.com/digininja/DVWA",
-    description: "Legacy PHP web portal reference target",
-    language: "PHP",
-    expectedFindings: 22,
-  },
-  {
-    name: "XTRIKE-Node-Commerce",
-    url: "https://github.com/juice-shop/juice-shop",
-    description: "Modern Node.js & TypeScript microservice target",
-    language: "Node.js",
-    expectedFindings: 19,
-  },
-];
+export const SAMPLE_REPOS = BENCHMARK_32_REPOS.map((repo) => ({
+  name: repo.name,
+  ownerRepo: repo.ownerRepo,
+  url: repo.url,
+  category: repo.category,
+  description: repo.description,
+  language: repo.language,
+  defaultBranch: repo.defaultBranch,
+  defaultCommitSha: repo.defaultCommitSha,
+  expectedFindings: repo.expectedFindings,
+  keyCwes: repo.keyCwes,
+}));
+

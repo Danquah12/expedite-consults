@@ -386,9 +386,9 @@ export interface AnalyticsData {
 
 export const currentUser: UserProfile = {
   id: 'user_alex_taylor',
-  name: 'Alex Taylor',
+  name: 'Kwesi Asiedu',
   headline: 'Principal Cloud & Security Architect | AI Infrastructure & Zero Trust Lead @ Expedite Consults',
-  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
+  avatar: '/brand/kwesi-avatar.png',
   coverImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop&q=80',
   location: 'Greater New York City Area · Contact info',
   connectionsCount: 842,
@@ -531,6 +531,52 @@ Proven track record of scaling high-availability Next.js, Kubernetes, and AWS/GC
 }
 
 export const initialPosts: Post[] = [
+  // ─── 0. FEATURED WHEEL VIDEO SHARE WITH PROFILE PICTURE & DSTRIKE CARD ───
+  {
+    id: 'post_dstrike_wheel_masterclass',
+    professionEnclave: 'all',
+    author: {
+      id: 'user_kwesi_asiedu',
+      name: 'Kwesi Asiedu',
+      headline: 'Principal Cloud & Security Architect | AI Infrastructure & Zero Trust Lead @ Expedite Consults',
+      avatar: '/brand/kwesi-avatar.png',
+      connectionDegree: 'You',
+      isFollowing: false
+    },
+    timestamp: 'Just now · 🎡 Shared from The Wheel · 🌐',
+    visibility: 'Public',
+    postType: 'standard',
+    feedCategory: 'for_you',
+    feedSubCategory: 'All',
+    content: `🎬 Shared a Masterclass Briefing on ConnectLn The Wheel: "OSHA Fall Protection & Harness Inspection — 4-Point Field Protocol" (CLN-CMP01)\n\nField-grade safety briefing covering full-body harness webbing inspection, shock-absorber pack verification, dorsal D-ring positioning, and swing-fall clearance calculation.`,
+    hashtags: ['#Safety', '#OSHA', '#Construction', '#Compliance', '#ConnectLn', '#RealWork'],
+    media: {
+      type: 'video',
+      url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      youtubeId: '5a73W9f6g7s',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&auto=format&fit=crop&q=80',
+      title: 'OSHA Fall Protection & Harness Inspection — 4-Point Field Protocol',
+      description: 'Inspector Ray Vance · Certified Safety Director (CSP, OSHA 500)',
+      duration: '5:05',
+      serialPlate: 'CLN-CMP01',
+      brandName: 'ConnectLn',
+      takeaways: [
+        'Inspect all load-bearing straps for UV fraying, chemical burns, or pulled stitching before every shift',
+        'Verify the dorsal D-ring sits squarely between the shoulder blades and chest strap is mid-sternum',
+        'Calculate total fall clearance: Free Fall (6 ft) + Deceleration (3.5 ft) + Worker Height + Safety Factor (2 ft)'
+      ],
+      aspectRatio: '16:9'
+    },
+    stats: {
+      likesCount: 412,
+      commentsCount: 38,
+      repostsCount: 64,
+      reactionsBreakdown: { like: 240, celebrate: 92, support: 40, love: 28, insightful: 12, funny: 0 }
+    },
+    userReaction: null,
+    isSaved: false,
+    comments: []
+  },
   // ─── 1. SKILLED TRADES & CRAFTSMANSHIP ENCLAVE (CARPENTER, CONTRACTOR, TRADES) ───
   {
     id: 'post_carpenter_timber_frame',

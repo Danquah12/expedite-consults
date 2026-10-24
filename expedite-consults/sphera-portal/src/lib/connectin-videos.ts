@@ -646,6 +646,253 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
       "Formulating realistic multi-year research project personnel budgets"
     ],
     tags: ["#AcademicResearch", "#GrantWriting", "#NIHGrants", "#NSF", "#HigherEd"]
+  },
+
+  // ─── 13. COMMERCE, RETAIL & SMALL BUSINESS (commerce_small_business) ─
+  {
+    id: "wheel-supply-chain-inventory",
+    serialPlate: "CLN-COM01",
+    title: "Multi-Warehouse Inventory Forecasting & Working Capital Turn",
+    speaker: "Independent Merchants & Logistics Council",
+    speakerTitle: "VP of Commercial Supply Chain (CSCP)",
+    youtubeId: "3zmzQgWs-YI",
+    duration: "5:14",
+    category: "commerce_small_business",
+    categoryLabel: "Commerce & Small Business",
+    enclaveId: "commerce_small_business",
+    professionId: "retail_store_owner",
+    thumbnailUrl: "https://i.ytimg.com/vi/3zmzQgWs-YI/hqdefault.jpg",
+    summary: "Mastering Economic Order Quantity (EOQ), safety stock buffers, SKU velocity grading, and supplier net-60 trade credit terms for growing businesses.",
+    takeaways: [
+      "ABC inventory stratification: dedicating 80% of cycle counts to top-20% margin SKUs",
+      "Calculating reorder points (ROP) using lead-time demand variance",
+      "Negotiating 2/10 Net 60 vendor trade terms to accelerate cash conversion cycles"
+    ],
+    tags: ["#SmallBusiness", "#SupplyChain", "#InventoryManagement", "#WorkingCapital", "#Commerce"]
+  },
+  {
+    id: "wheel-b2b-contract-negotiation",
+    serialPlate: "CLN-COM02",
+    title: "Enterprise B2B Procurement & Master Service Agreement Strategy",
+    speaker: "Commercial Growth Directorate",
+    speakerTitle: "Principal Commercial Strategist",
+    youtubeId: "FZNCce1spHQ",
+    duration: "4:56",
+    category: "commerce_small_business",
+    categoryLabel: "Commerce & Small Business",
+    enclaveId: "commerce_small_business",
+    professionId: "ecommerce_seller",
+    thumbnailUrl: "https://i.ytimg.com/vi/FZNCce1spHQ/hqdefault.jpg",
+    summary: "Structuring multi-year B2B vendor contracts, SLA uptime credits, limitation of liability clauses, and volume rebate tiers.",
+    takeaways: [
+      "Structuring tiered volume rebates that protect gross margin floors",
+      "Capping consequential damages and defining clear acceptance criteria in SOWs",
+      "Automating EDI 850/810 purchase order and invoice reconciliation"
+    ],
+    tags: ["#B2BCommerce", "#Procurement", "#ContractNegotiation", "#VendorManagement", "#Entrepreneurship"]
+  },
+
+  // ─── 14. EDUCATION, TRAINING & WORKFORCE (education_workforce) ───────
+  {
+    id: "wheel-instructional-mastery",
+    serialPlate: "CLN-EDU01",
+    title: "Competency-Based Curriculum Design & Cognitive Load Mastery",
+    speaker: "National Educators & Guild Trainers Board",
+    speakerTitle: "Lead Instructional Architect (M.Ed / NBCT)",
+    youtubeId: "zM61V4PuQ8w",
+    duration: "5:18",
+    category: "education_workforce",
+    categoryLabel: "Education & Workforce",
+    enclaveId: "education_workforce",
+    professionId: "k12_teacher",
+    thumbnailUrl: "https://i.ytimg.com/vi/zM61V4PuQ8w/hqdefault.jpg",
+    summary: "Applying Bloom's Taxonomy, scaffolded lab assessments, and active retrieval practice to maximize retention in technical and K-12 classrooms.",
+    takeaways: [
+      "Chunking complex technical procedures to prevent working-memory overload",
+      "Designing rubric-driven practical evaluations with measurable mastery thresholds",
+      "Spaced repetition schedules that boost 90-day skill retention by over 60%"
+    ],
+    tags: ["#Education", "#CurriculumDesign", "#WorkforceTraining", "#Pedagogy", "#InstructionalDesign"]
+  },
+  {
+    id: "wheel-apprenticeship-director",
+    serialPlate: "CLN-EDU02",
+    title: "Registered Apprenticeship Standards & Department of Labor Compliance",
+    speaker: "Workforce Development Institute",
+    speakerTitle: "Director of Vocational & Technical Education",
+    youtubeId: "Tsok2MiPtHY",
+    duration: "5:08",
+    category: "education_workforce",
+    categoryLabel: "Education & Workforce",
+    enclaveId: "education_workforce",
+    professionId: "vocational_instructor",
+    thumbnailUrl: "https://i.ytimg.com/vi/Tsok2MiPtHY/hqdefault.jpg",
+    summary: "Building DOL-registered apprenticeship programs combining 144 hours of Related Technical Instruction (RTI) with structured mentor sign-offs.",
+    takeaways: [
+      "Mapping 2,000 annual OJT hours to verifiable competency logbook milestones",
+      "Integrating virtual reality simulator labs with live shop floor safety assessments",
+      "Leveraging WIOA federal workforce grants for employer training reimbursement"
+    ],
+    tags: ["#VocationalEducation", "#Apprenticeship", "#WorkforceDevelopment", "#TechnicalTraining"]
+  },
+
+  // ─── 15. CIVIC, PUBLIC SAFETY & EMERGENCY (community_civic_security) ─
+  {
+    id: "wheel-ics-incident-command",
+    serialPlate: "CLN-CIV01",
+    title: "FEMA NIMS / ICS-300 Unified Incident Command & Triage",
+    speaker: "Metropolitan Emergency Response Directorate",
+    speakerTitle: "Battalion Chief & Incident Commander",
+    youtubeId: "OWNXI09WI14",
+    duration: "5:28",
+    category: "community_civic_security",
+    categoryLabel: "Civic & Public Safety",
+    enclaveId: "community_civic_security",
+    professionId: "firefighter_paramedic",
+    thumbnailUrl: "https://i.ytimg.com/vi/OWNXI09WI14/hqdefault.jpg",
+    summary: "Coordinating multi-agency fire, EMS, and municipal public works during mass-casualty and severe weather emergencies using NIMS ICS protocols.",
+    takeaways: [
+      "Establishing Unified Command (Operations, Planning, Logistics, Finance) within 10 minutes",
+      "START mass-casualty triage color coding (Immediate, Delayed, Minimal, Expectant)",
+      "Interoperable P25 tactical radio channel allocation across mutual-aid jurisdictions"
+    ],
+    tags: ["#IncidentCommand", "#FEMA", "#FirstResponders", "#FireEMS", "#PublicSafety"]
+  },
+
+  // ─── 16. MANUFACTURING & INDUSTRIAL ENGINEERING (manufacturing_industrial)
+  {
+    id: "wheel-cnc-5axis-gdandt",
+    serialPlate: "CLN-MFG01",
+    title: "5-Axis Simultaneous CNC Machining & ASME Y14.5 GD&T Metrology",
+    speaker: "Precision Manufacturing & Tooling Guild",
+    speakerTitle: "Principal CNC & Metrology Engineer",
+    youtubeId: "VMCdHzpmy1I",
+    duration: "5:32",
+    category: "manufacturing_industrial",
+    categoryLabel: "Manufacturing & Industrial",
+    enclaveId: "manufacturing_industrial",
+    professionId: "cnc_machinist",
+    thumbnailUrl: "https://i.ytimg.com/vi/VMCdHzpmy1I/hqdefault.jpg",
+    summary: "High-speed trochoidal milling in Titanium Ti-6Al-4V, thermal spindle compensation, and Coordinate Measuring Machine (CMM) true-position verification.",
+    takeaways: [
+      "Interpreting ASME Y14.5 datum reference frames and Maximum Material Condition (MMC)",
+      "Dynamic tool center point control (TCPC) to eliminate 5-axis surface witness marks",
+      "In-process Renishaw spindle probing for automated tool wear offset updates"
+    ],
+    tags: ["#CNCMachining", "#GDT", "#Metrology", "#AerospaceManufacturing", "#LeanSixSigma"]
+  },
+  {
+    id: "wheel-plc-scada-automation",
+    serialPlate: "CLN-MFG02",
+    title: "Industrial PLC Ladder Logic, Motion Control & Six Sigma OEE",
+    speaker: "Automated Factory Systems Council",
+    speakerTitle: "Senior Controls & Robotics Engineer",
+    youtubeId: "Pe3n9-r8TP0",
+    duration: "5:02",
+    category: "manufacturing_industrial",
+    categoryLabel: "Manufacturing & Industrial",
+    enclaveId: "manufacturing_industrial",
+    professionId: "industrial_automation_eng",
+    thumbnailUrl: "https://i.ytimg.com/vi/Pe3n9-r8TP0/hqdefault.jpg",
+    summary: "Programming IEC 61131-3 structured text and ladder logic, EtherCAT servo synchronization, and boosting Overall Equipment Effectiveness (OEE).",
+    takeaways: [
+      "Designing fail-safe Dual-Channel Safety Relay and SIL-3 emergency stop circuits",
+      "Tuning PID closed-loop pressure and temperature controllers to eliminate overshoot",
+      "Calculating OEE = Availability × Performance × Quality for bottleneck elimination"
+    ],
+    tags: ["#PLCProgramming", "#IndustrialAutomation", "#Robotics", "#OEE", "#SmartFactory"]
+  },
+
+  // ─── 17. ENERGY, UTILITIES & ENVIRONMENT (energy_utilities_environment)
+  {
+    id: "wheel-substation-protection",
+    serialPlate: "CLN-NRG01",
+    title: "High-Voltage Substation Relay Protection & Grid Stability",
+    speaker: "North American Power Grid Directorate",
+    speakerTitle: "Principal Power Systems Engineer (PE)",
+    youtubeId: "RVITn9lWfOY",
+    duration: "5:22",
+    category: "energy_utilities_environment",
+    categoryLabel: "Energy & Utilities",
+    enclaveId: "energy_utilities_environment",
+    professionId: "power_grid_engineer",
+    thumbnailUrl: "https://i.ytimg.com/vi/RVITn9lWfOY/hqdefault.jpg",
+    summary: "Differential transformer protection (ANSI 87T), synchrophasor PMU telemetry, SF6 circuit breaker maintenance, and NERC CIP compliance.",
+    takeaways: [
+      "Coordinating overcurrent (50/51) and distance impedance (21) protective relays",
+      "Dissolved Gas Analysis (DGA) in substation power transformers to detect incipient arcing",
+      "Black-start restoration sequencing and frequency load-shedding thresholds"
+    ],
+    tags: ["#PowerGrid", "#SubstationEngineering", "#NERCCIP", "#HighVoltage", "#EnergyUtilities"]
+  },
+
+  // ─── 18. SCIENCE, BIOTECH & LAB RESEARCH (science_laboratory_research)
+  {
+    id: "wheel-glp-chromatography",
+    serialPlate: "CLN-SCI01",
+    title: "GLP/GMP Analytical HPLC-MS Validation & Biosafety Level 3",
+    speaker: "Biomedical & Analytical Sciences Institute",
+    speakerTitle: "Principal Analytical Chemist & Biosafety Officer",
+    youtubeId: "VM8DODp68Oc",
+    duration: "5:16",
+    category: "science_laboratory_research",
+    categoryLabel: "Science & Lab Research",
+    enclaveId: "science_laboratory_research",
+    professionId: "analytical_chemist",
+    thumbnailUrl: "https://i.ytimg.com/vi/VM8DODp68Oc/hqdefault.jpg",
+    summary: "21 CFR Part 11 audit trail integrity in liquid chromatography-mass spectrometry, calibration curve linearity, and BSL-3 negative-pressure containment.",
+    takeaways: [
+      "Validating Limit of Detection (LOD) and Limit of Quantitation (LOQ) with R² ≥ 0.999",
+      "Maintaining Class II Type A2 Biosafety Cabinet laminar air velocity at 100 fpm",
+      "ALCOA+ data integrity standards for FDA pre-approval laboratory inspections"
+    ],
+    tags: ["#Biotech", "#AnalyticalChemistry", "#HPLC", "#GMPCompliance", "#LabResearch"]
+  },
+
+  // ─── 19. AVIATION, AEROSPACE & MARITIME (aviation_aerospace_maritime) ─
+  {
+    id: "wheel-faa-airframe-powerplant",
+    serialPlate: "CLN-AVM01",
+    title: "FAA Part 145 Turbine Engine Hot-Section Borescope & NDT",
+    speaker: "Aerospace Maintenance & Flight Operations Guild",
+    speakerTitle: "FAA Airframe & Powerplant (A&P / IA) Inspector",
+    youtubeId: "Xo284DSmZto",
+    duration: "5:26",
+    category: "aviation_aerospace_maritime",
+    categoryLabel: "Aviation, Aerospace & Maritime",
+    enclaveId: "aviation_aerospace_maritime",
+    professionId: "aircraft_mechanic_ap",
+    thumbnailUrl: "https://i.ytimg.com/vi/Xo284DSmZto/hqdefault.jpg",
+    summary: "High-pressure turbine blade borescope inspection, eddy-current crack detection, Airworthiness Directives (AD) sign-offs, and ETOPS release.",
+    takeaways: [
+      "Measuring high-pressure turbine (HPT) tip clearance and thermal barrier coating spallation",
+      "Strict tool FOD (Foreign Object Debris) shadow-board accountability before cowling closure",
+      "Executing dual-inspector RII (Required Inspection Item) sign-offs on flight controls"
+    ],
+    tags: ["#AviationMaintenance", "#FAA", "#TurbineEngine", "#AerospaceEngineering", "#Airworthiness"]
+  },
+
+  // ─── 20. TELECOM, FIBER & DIGITAL INFRASTRUCTURE (telecom_digital_infrastructure)
+  {
+    id: "wheel-fiber-otdr-splicing",
+    serialPlate: "CLN-TEL01",
+    title: "Long-Haul DWDM Fiber Fusion Splicing & OTDR Trace Analysis",
+    speaker: "Global Fiber & RF Infrastructure Guild",
+    speakerTitle: "Master CFOT Fiber & RF Systems Architect",
+    youtubeId: "RkmWCI-JtL8",
+    duration: "4:58",
+    category: "telecom_digital_infrastructure",
+    categoryLabel: "Telecom & Infrastructure",
+    enclaveId: "telecom_digital_infrastructure",
+    professionId: "fiber_optic_technician",
+    thumbnailUrl: "https://i.ytimg.com/vi/RkmWCI-JtL8/hqdefault.jpg",
+    summary: "Core-alignment fusion splicing under 0.02 dB loss, bidirectional OTDR dead-zone testing, and 5G C-band massive MIMO tower commissioning.",
+    takeaways: [
+      "Achieving <0.02 dB splice attenuation using dual-axis core-alignment fusion splicers",
+      "Using launch and receive test fibers to eliminate OTDR event dead zones",
+      "PIM (Passive Intermodulation) and VSWR sweep testing on 5G cellular antenna arrays"
+    ],
+    tags: ["#FiberOptics", "#OTDR", "#TelecomInfrastructure", "#5GRF", "#DataCenters"]
   }
 ]
 
@@ -655,9 +902,9 @@ const ENCLAVE_VIDEO_ID_POOLS: Record<string, string[]> = {
   agriculture_natural_resources: ["Pe3n9-r8TP0", "RVITn9lWfOY", "g6lcLQMy42E", "OWNXI09WI14"],
   personal_services_wellness: ["OWNXI09WI14", "FZNCce1spHQ", "VM8DODp68Oc", "g6lcLQMy42E"],
   culinary_hospitality_events: ["g6lcLQMy42E", "FZNCce1spHQ", "OWNXI09WI14", "VM8DODp68Oc"],
-  commerce_small_business: ["VM8DODp68Oc", "FZNCce1spHQ", "3zmzQgWs-YI", "zM61V4PuQ8w"],
+  commerce_small_business: ["3zmzQgWs-YI", "FZNCce1spHQ", "VM8DODp68Oc", "zM61V4PuQ8w"],
   creative_media_arts: ["VMCdHzpmy1I", "g6lcLQMy42E", "3zmzQgWs-YI", "zM61V4PuQ8w"],
-  education_workforce: ["VM8DODp68Oc", "FZNCce1spHQ", "OWNXI09WI14", "3zmzQgWs-YI"],
+  education_workforce: ["zM61V4PuQ8w", "Tsok2MiPtHY", "VM8DODp68Oc", "FZNCce1spHQ"],
   community_civic_security: ["OWNXI09WI14", "Tsok2MiPtHY", "RkmWCI-JtL8", "FZNCce1spHQ"],
   healthcare_medicine: ["VM8DODp68Oc", "FZNCce1spHQ", "OWNXI09WI14", "zM61V4PuQ8w"],
   tech_cybersecurity: ["RkmWCI-JtL8", "Tsok2MiPtHY", "3zmzQgWs-YI", "zM61V4PuQ8w"],
@@ -669,7 +916,7 @@ const ENCLAVE_VIDEO_ID_POOLS: Record<string, string[]> = {
   energy_utilities_environment: ["RVITn9lWfOY", "Tsok2MiPtHY", "Pe3n9-r8TP0", "Xo284DSmZto"],
   science_laboratory_research: ["VM8DODp68Oc", "FZNCce1spHQ", "3zmzQgWs-YI", "Pe3n9-r8TP0"],
   aviation_aerospace_maritime: ["Xo284DSmZto", "RVITn9lWfOY", "Tsok2MiPtHY", "VMCdHzpmy1I"],
-  telecom_digital_infrastructure: ["Tsok2MiPtHY", "zM61V4PuQ8w", "3zmzQgWs-YI", "RkmWCI-JtL8"]
+  telecom_digital_infrastructure: ["RkmWCI-JtL8", "Tsok2MiPtHY", "zM61V4PuQ8w", "3zmzQgWs-YI"]
 }
 
 const ENCLAVE_SERIAL_PREFIXES: Record<string, string> = {
@@ -754,7 +1001,30 @@ function buildComprehensiveProfessionWheelTalks(): WheelVideoTalk[] {
     })
   }
 
-  return [...CORE_EDUCATIONAL_WHEEL_TALKS, ...generatedTalks]
+  // Group all talks by enclave and interleave round-robin so The Wheel immediately showcases EVERY profession discipline!
+  const allCombined = [...CORE_EDUCATIONAL_WHEEL_TALKS, ...generatedTalks]
+  const buckets = new Map<string, WheelVideoTalk[]>()
+  for (const talk of allCombined) {
+    const key = talk.enclaveId || "general"
+    if (!buckets.has(key)) buckets.set(key, [])
+    buckets.get(key)!.push(talk)
+  }
+
+  const interleaved: WheelVideoTalk[] = []
+  let added = true
+  let round = 0
+  while (added) {
+    added = false
+    for (const [, list] of buckets) {
+      if (round < list.length) {
+        interleaved.push(list[round])
+        added = true
+      }
+    }
+    round++
+  }
+
+  return interleaved
 }
 
 export const EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = buildComprehensiveProfessionWheelTalks()

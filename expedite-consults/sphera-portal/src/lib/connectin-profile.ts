@@ -298,10 +298,10 @@ export function createUniqueUserProfile(params: UserInitParams): UserProfile {
   if (!avatarUrl) {
     if (cleanName.includes("Commander Robert Hayes") || cleanEmail.includes("robert.hayes") || cleanEmail === "sec-admin@connectin.internal") {
       avatarUrl = "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80"
-    } else if (cleanName.includes("Kwesi Asiedu") || cleanEmail.includes("kasiedu") || cleanEmail.includes("asiedudanquah")) {
-      avatarUrl = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80"
+    } else if (cleanName.includes("Kwesi Asiedu") || cleanName.includes("Emmanuel Asiedu") || cleanEmail.includes("kasiedu") || cleanEmail.includes("asiedudanquah")) {
+      avatarUrl = "/brand/kwesi-avatar.png"
     } else if (cleanName.includes("Alex Taylor") || cleanEmail.includes("alex.taylor")) {
-      avatarUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80"
+      avatarUrl = "/brand/kwesi-avatar.png"
     } else if (cleanName.includes("Elena Rostova") || cleanEmail.includes("elena.nurse")) {
       avatarUrl = "https://images.unsplash.com/photo-1594824813571-638f02614d3f?w=400&auto=format&fit=crop&q=80" // Trauma nurse in scrubs
     } else if (cleanName.includes("Angela Vance") || cleanEmail.includes("angela.vance")) {

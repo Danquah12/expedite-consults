@@ -100,6 +100,11 @@ export interface Finding {
   collectedEvidence?: CollectedEvidence[];
   verificationStatus: "Verified" | "Needs Review" | "False Positive";
   detectedAt:       string;
+  cvssVector?:      string;
+  cvssScore?:       number;
+  validationState?: "Observed Configuration State" | "Validated Control Gap" | "Exploit Verified" | "Potential / Inferred Impact";
+  findingClassification?: "Exploitable Vulnerability" | "Hardening Control Gap" | "Informational Observation";
+  retestPassCriteria?: string;
 }
 
 export interface FindingEvidence {

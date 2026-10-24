@@ -46,7 +46,7 @@ export function PostCreator({ user, onAddPost }: PostCreatorProps) {
   const [mediaUrl, setMediaUrl] = useState("")
   const [mediaKind, setMediaKind] = useState<'image' | 'video'>('video')
   const [videoTitleInput, setVideoTitleInput] = useState("")
-  const [videoBrandInput, setVideoBrandInput] = useState("DSTRIKE")
+  const [videoBrandInput, setVideoBrandInput] = useState("ConnectLn")
   const [showMediaInput, setShowMediaInput] = useState(false)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
 
@@ -152,7 +152,7 @@ export function PostCreator({ user, onAddPost }: PostCreatorProps) {
             youtubeId: detectedYoutubeId || undefined,
             thumbnailUrl: detectedYoutubeId ? `https://i.ytimg.com/vi/${detectedYoutubeId}/hqdefault.jpg` : undefined,
             title: videoTitleInput.trim() || content.trim().split('\n')[0]?.slice(0, 75) || `${user.name} — Executive Video Briefing`,
-            brandName: videoBrandInput.trim() || "DSTRIKE",
+            brandName: videoBrandInput.trim() || "ConnectLn",
             duration: "5:00",
             serialPlate: `CLN-VID${Math.floor(100 + Math.random() * 900)}`,
             aspectRatio: '16:9'
@@ -559,7 +559,7 @@ export function PostCreator({ user, onAddPost }: PostCreatorProps) {
                     />
                     <input
                       type="text"
-                      placeholder="Brand Header (Default: DSTRIKE)"
+                      placeholder="Brand Header (Default: ConnectLn)"
                       value={videoBrandInput}
                       onChange={(e) => setVideoBrandInput(e.target.value)}
                       className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs text-zinc-900 focus:border-[#0066FF] focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 font-bold"
@@ -567,18 +567,18 @@ export function PostCreator({ user, onAddPost }: PostCreatorProps) {
                   </div>
                 )}
 
-                {/* Live Preview of the Signature Profile Picture + DSTRIKE Video Banner */}
+                {/* Live Preview of the Signature Profile Picture + ConnectLn Logo Banner */}
                 {(mediaKind === 'video' || isVideoDetected) && (
                   <div className="pt-1">
                     <p className="text-[10px] font-bold uppercase tracking-wider text-[#0066FF] mb-1.5">
-                      Live Signature Video Share Preview (Your Profile Picture + Telemetry Banner):
+                      Live ConnectLn Share Preview (Your Profile Picture + ConnectLn Logo Card):
                     </p>
                     <VideoShareBanner
                       compact
                       avatarUrl={user.avatar}
                       authorName={user.name}
                       authorHeadline={user.headline}
-                      brandName={videoBrandInput || "DSTRIKE"}
+                      brandName={videoBrandInput || "ConnectLn"}
                       videoTitle={videoTitleInput.trim() || content.trim().split('\n')[0] || `${user.name} — Featured Video Briefing`}
                       videoSubtitle={user.headline}
                       youtubeId={detectedYoutubeId || undefined}

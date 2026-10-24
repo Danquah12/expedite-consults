@@ -39,6 +39,80 @@ export type Remediation = {
 
 export type ExploitabilityLevel = "Very Easy" | "Easy" | "Moderate" | "Difficult" | "Very Difficult";
 
+export type DeepExploitabilityDossier = {
+  enumerationPhase: {
+    discoveryPass:
+      | "Pass 1: Primary AST & Surface Enumeration"
+      | "Pass 2: Second-Order Re-Enumeration (Post-Pivot)"
+      | "Pass 3: Deep Supply-Chain & Config Enumeration";
+    entrypointRoute: string;
+    astNodeSignature: string;
+    enumeratedAssets: string[];
+  };
+  databaseCorrelations: {
+    githubGhsa: {
+      advisoryId: string;
+      cveId: string;
+      ghRepoMatches: number;
+      exploitMaturity: "PoC Public on GitHub" | "Functional Verification Module" | "High-Signal Advisory";
+      summary: string;
+    };
+    searchsploit: {
+      edbId: string;
+      queryCmd: string;
+      exploitTitle: string;
+      verifiedEdb: boolean;
+      platformType: string;
+      exploitRank: "Excellent" | "Great" | "Normal";
+    };
+    googleIntel: {
+      osvId: string;
+      googleDorkSignature: string;
+      cisaKevListed: boolean;
+      projectZeroRef: string;
+      zeroDayRisk: string;
+      nvdCvssV4: number;
+    };
+    otherDatabases: {
+      packetStormRef: string;
+      vulnDbId: string;
+      epssScore: number;
+      epssPercentile: string;
+      exploitabilityExtent: string;
+    };
+  };
+  penetrationTestLifecycle: {
+    initialPentest: {
+      phase: string;
+      probeType: string;
+      targetBoundary: string;
+      resultStatus: "EXPLOITABLE (Confirmed)" | "PARTIAL BYPASS (Chained)" | "GUARDED";
+      evidenceLog: string;
+    };
+    reEnumeration: {
+      triggeredBy: string;
+      newlyDiscoveredSurface: string[];
+      secondarySinksFound: number;
+      summary: string;
+    };
+    rePenetrationTest: {
+      chainId: string;
+      attackChainSteps: string[];
+      chainedCvss: number;
+      verificationVerdict: string;
+      proofArtifact: string;
+    };
+    postExploitation: {
+      privilegeAttained: string;
+      lateralMovementPaths: string[];
+      dataExfiltrationScope: string;
+      persistenceRisk: string;
+      blastRadiusScore: number;
+      executiveRemediationPriority: string;
+    };
+  };
+};
+
 export type SASTFinding = {
   id: string;
   title: string;
@@ -106,6 +180,9 @@ export type SASTFinding = {
   // Trend
   firstDetected: string;
   lastSeen: string;
+
+  // Deep Enumeration, Multi-DB Correlation (GitHub/SearchSploit/Google) & PTES Re-Penetration / Post-Exploitation
+  deepExploitability?: DeepExploitabilityDossier;
 };
 
 export type ScanResult = {

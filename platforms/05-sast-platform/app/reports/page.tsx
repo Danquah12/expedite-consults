@@ -24,6 +24,7 @@ import {
   type MultiStandardPluginEvaluation,
 } from "@/lib/live-sast-scanner";
 import { calculateRiskScore, severityCounts, averageConfidence } from "@/lib/risk";
+import { buildDeepExploitabilityDossier } from "@/lib/deep-enumeration-engine";
 import type { SASTFinding } from "@/types/sast";
 
 type ReportTemplate = "full_technical" | "executive_brief" | "compliance_attestation";
@@ -189,16 +190,28 @@ export default function ReportEnginePage() {
           `| \`${p.pluginId}\` | \`${p.modulePath}\` | ${p.standardVersion} | ${filteredFindings.length} verified |`
       ),
       ``,
-      `## 3. Detailed Finding Dossiers`,
+      `## 3. Detailed Finding Dossiers (4-DB Correlation, Re-Enumeration & Post-Exploitation)`,
       ``,
       ...filteredFindings.flatMap((f, idx) => {
         const vf = validationById.get(f.id);
         const rem = f.remediation[0];
+        const dossier = f.deepExploitability || buildDeepExploitabilityDossier(f);
+        const { enumerationPhase, databaseCorrelations, penetrationTestLifecycle } = dossier;
         return [
           `### 3.${idx + 1} [${f.severity.toUpperCase()}] ${f.id} — ${f.title}`,
-          `- **Location:** \`${f.file}:${f.line}\` (${f.language})`,
+          `- **Location:** \`${f.file}:${f.line}\` (${f.language}) · **Enumeration Pass:** ${enumerationPhase.discoveryPass}`,
           `- **CWE / OWASP:** ${f.cwe} (${f.cweName}) · ${f.owasp} (${f.owaspCategory})`,
-          `- **CVSS v3.1 / EPSS:** ${f.cvss} · EPSS ${(f.epss * 100).toFixed(1)}%`,
+          `- **CVSS v3.1 / Chained CVSS / EPSS:** ${f.cvss} → Chained **${penetrationTestLifecycle.rePenetrationTest.chainedCvss}** · EPSS ${(f.epss * 100).toFixed(1)}%`,
+          `- **Extent of Exploitability:** **${databaseCorrelations.otherDatabases.exploitabilityExtent}** (Blast Radius: **${penetrationTestLifecycle.postExploitation.blastRadiusScore}/100**)`,
+          `- **4-Database Threat Correlation:**`,
+          `  - **GitHub Advisory (GHSA):** \`${databaseCorrelations.githubGhsa.advisoryId}\` (${databaseCorrelations.githubGhsa.cveId}) — ${databaseCorrelations.githubGhsa.exploitMaturity} (${databaseCorrelations.githubGhsa.ghRepoMatches} public PoC repos)`,
+          `  - **SearchSploit / Exploit-DB:** \`${databaseCorrelations.searchsploit.edbId}\` (\`${databaseCorrelations.searchsploit.queryCmd}\`)`,
+          `  - **Google OSV / Project Zero:** \`${databaseCorrelations.googleIntel.osvId}\` · ${databaseCorrelations.googleIntel.cisaKevListed ? "CISA KEV Listed" : "Monitored"} · ${databaseCorrelations.googleIntel.projectZeroRef}`,
+          `  - **VulnDB / PacketStorm:** \`${databaseCorrelations.otherDatabases.vulnDbId}\` · \`${databaseCorrelations.otherDatabases.packetStormRef}\``,
+          `- **Initial Penetration Probe:** \`${penetrationTestLifecycle.initialPentest.resultStatus}\` — ${penetrationTestLifecycle.initialPentest.probeType} (\`${penetrationTestLifecycle.initialPentest.evidenceLog}\`)`,
+          `- **Post-Pivot Re-Enumeration Surfaces Unlocked:** ${penetrationTestLifecycle.reEnumeration.newlyDiscoveredSurface.join(" | ")}`,
+          `- **Chained Re-Penetration Verification (${penetrationTestLifecycle.rePenetrationTest.chainId}):** ${penetrationTestLifecycle.rePenetrationTest.attackChainSteps.join(" → ")}`,
+          `- **Post-Exploitation Impact:** Privilege: **${penetrationTestLifecycle.postExploitation.privilegeAttained}** · Exfiltration Scope: ${penetrationTestLifecycle.postExploitation.dataExfiltrationScope}`,
           `- **MITRE ATT&CK TTP:** ${f.mitre}`,
           `- **Proof Validation Status:** \`${vf?.status?.toUpperCase() || f.status.toUpperCase()}\` (Confidence: ${Math.round(f.confidence * 100)}%)`,
           `- **Executive Summary:** ${f.executiveSummary}`,
@@ -1240,6 +1253,10 @@ export default function ReportEnginePage() {
                   const vf = validationById.get(finding.id);
                   const pev = pluginEvalById.get(finding.id);
                   const rem = finding.remediation[0];
+                  const dossier =
+                    finding.deepExploitability || buildDeepExploitabilityDossier(finding);
+                  const { enumerationPhase, databaseCorrelations, penetrationTestLifecycle } =
+                    dossier;
                   const sevColor =
                     finding.severity === "Critical"
                       ? "#9e2a2b"
@@ -1293,7 +1310,8 @@ export default function ReportEnginePage() {
                               textTransform: "uppercase",
                             }}
                           >
-                            {finding.severity} &middot; CVSS {finding.cvss}
+                            {finding.severity} &middot; CVSS {finding.cvss} &rarr; Chained{" "}
+                            {penetrationTestLifecycle.rePenetrationTest.chainedCvss}
                           </span>
                           <span
                             style={{
@@ -1310,7 +1328,20 @@ export default function ReportEnginePage() {
                           </h3>
                         </div>
 
-                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                          <span
+                            style={{
+                              padding: "2px 8px",
+                              borderRadius: 6,
+                              background: "#f3eee4",
+                              border: "1px solid #ddd3c2",
+                              fontSize: 10.5,
+                              fontWeight: 700,
+                              fontFamily: "monospace",
+                            }}
+                          >
+                            {enumerationPhase.discoveryPass}
+                          </span>
                           <span
                             style={{
                               padding: "2px 8px",
@@ -1328,13 +1359,14 @@ export default function ReportEnginePage() {
                             style={{
                               padding: "2px 8px",
                               borderRadius: 6,
-                              background: "#f3eee4",
-                              border: "1px solid #ddd3c2",
+                              background: "#f9e6e6",
+                              border: "1px solid #e8c5c6",
+                              color: "#9e2a2b",
                               fontSize: 10.5,
-                              fontWeight: 700,
+                              fontWeight: 800,
                             }}
                           >
-                            Confidence: {Math.round(finding.confidence * 100)}%
+                            Blast Radius: {penetrationTestLifecycle.postExploitation.blastRadiusScore}/100
                           </span>
                         </div>
                       </div>
@@ -1395,6 +1427,105 @@ export default function ReportEnginePage() {
                               .map((e) => e.name)
                               .join(", ")}
                           </span>
+                        </div>
+                      </div>
+
+                      {/* 4-Database Threat Correlation & 7-Phase Penetration / Re-Enumeration / Post-Exploitation Block */}
+                      <div
+                        style={{
+                          padding: "10px 12px",
+                          borderRadius: 8,
+                          background: "#f7f3eb",
+                          border: "1px solid #ddd3c2",
+                          fontSize: 11.2,
+                          marginBottom: 12,
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 6,
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            flexWrap: "wrap",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: 8,
+                            borderBottom: "1px solid #e4dccb",
+                            paddingBottom: 6,
+                          }}
+                        >
+                          <strong style={{ color: "#8b4528", textTransform: "uppercase", fontSize: 10.5 }}>
+                            4-Database Exploitability Correlation &amp; Iterative Re-Penetration Lifecycle
+                          </strong>
+                          <span style={{ fontWeight: 800, color: "#9e2a2b" }}>
+                            Extent: {databaseCorrelations.otherDatabases.exploitabilityExtent}
+                          </span>
+                        </div>
+
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
+                            gap: 8,
+                          }}
+                        >
+                          <div>
+                            <strong style={{ color: "#1f1b18" }}>GitHub Advisory (GHSA): </strong>
+                            <code style={{ fontFamily: "monospace", color: "#8b4528" }}>
+                              {databaseCorrelations.githubGhsa.advisoryId}
+                            </code>{" "}
+                            ({databaseCorrelations.githubGhsa.cveId} &middot;{" "}
+                            {databaseCorrelations.githubGhsa.ghRepoMatches} PoC repos)
+                          </div>
+                          <div>
+                            <strong style={{ color: "#1f1b18" }}>SearchSploit / Exploit-DB: </strong>
+                            <code style={{ fontFamily: "monospace", color: "#9e2a2b" }}>
+                              {databaseCorrelations.searchsploit.edbId}
+                            </code>{" "}
+                            ({databaseCorrelations.searchsploit.queryCmd})
+                          </div>
+                          <div>
+                            <strong style={{ color: "#1f1b18" }}>Google OSV / Project Zero: </strong>
+                            <code style={{ fontFamily: "monospace" }}>
+                              {databaseCorrelations.googleIntel.osvId}
+                            </code>{" "}
+                            ({databaseCorrelations.googleIntel.cisaKevListed ? "CISA KEV Listed" : "Monitored"})
+                          </div>
+                          <div>
+                            <strong style={{ color: "#1f1b18" }}>VulnDB / PacketStorm / EPSS: </strong>
+                            <code style={{ fontFamily: "monospace" }}>
+                              {databaseCorrelations.otherDatabases.vulnDbId}
+                            </code>{" "}
+                            &middot; EPSS {(databaseCorrelations.otherDatabases.epssScore * 100).toFixed(1)}%
+                          </div>
+                        </div>
+
+                        <div style={{ borderTop: "1px solid #e4dccb", paddingTop: 6, color: "#36302a" }}>
+                          <div>
+                            <strong>
+                              Initial Penetration Probe ({penetrationTestLifecycle.initialPentest.resultStatus}):{" "}
+                            </strong>
+                            <code style={{ fontFamily: "monospace", fontSize: 10.5 }}>
+                              {penetrationTestLifecycle.initialPentest.evidenceLog}
+                            </code>
+                          </div>
+                          <div style={{ marginTop: 3 }}>
+                            <strong>Post-Pivot Re-Enumeration Surfaces Unlocked: </strong>
+                            {penetrationTestLifecycle.reEnumeration.newlyDiscoveredSurface.join(" · ")}
+                          </div>
+                          <div style={{ marginTop: 3 }}>
+                            <strong>
+                              Chained Re-Penetration ({penetrationTestLifecycle.rePenetrationTest.chainId}):{" "}
+                            </strong>
+                            {penetrationTestLifecycle.rePenetrationTest.attackChainSteps.join(" → ")}
+                          </div>
+                          <div style={{ marginTop: 3 }}>
+                            <strong>Post-Exploitation Impact &amp; Exfiltration Scope: </strong>
+                            Privilege:{" "}
+                            <strong>{penetrationTestLifecycle.postExploitation.privilegeAttained}</strong>{" "}
+                            &middot; {penetrationTestLifecycle.postExploitation.dataExfiltrationScope}
+                          </div>
                         </div>
                       </div>
 

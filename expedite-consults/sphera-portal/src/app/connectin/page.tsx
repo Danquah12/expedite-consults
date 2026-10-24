@@ -93,7 +93,8 @@ import {
   saveStoredUser,
   loadStoredConnections,
   saveStoredConnections,
-  loadStoredSessionRoute
+  loadStoredSessionRoute,
+  resolveUserProfilePicture
 } from "@/lib/connectin-storage"
 import { isSuperAdminUser } from "@/lib/connectin-profile"
 import { PROFESSION_ENCLAVES, findEnclaveById, findProfessionById } from "@/lib/connectin-professions"
@@ -505,7 +506,7 @@ export default function LinkedInPage() {
     setPosts(prev => [newPost, ...prev])
   }
 
-  // Share any video from The Wheel or Media Hub directly to the ConnectIn Feed with the user's Profile Picture + DSTRIKE Video Banner
+  // Share any video from The Wheel or Media Hub directly to the ConnectLn Feed with the user's Profile Picture + ConnectLn Logo Card
   const handleShareWheelVideoToFeed = (video: {
     title: string
     speaker?: string
@@ -520,19 +521,20 @@ export default function LinkedInPage() {
     enclaveId?: string
   }) => {
     const ytUrl = video.youtubeId ? `https://www.youtube.com/watch?v=${video.youtubeId}` : "https://www.connectln.app/connectin"
+    const resolvedPic = resolveUserProfilePicture(userData)
     handleAddPost({
       author: {
         id: userData.id,
-        name: userData.name,
+        name: userData.name || 'Kwesi Asiedu',
         headline: userData.headline,
-        avatar: userData.avatar,
+        avatar: resolvedPic,
         connectionDegree: 'You',
         isFollowing: false
       },
-      professionEnclave: video.enclaveId || userData.professionEnclave || 'trades_construction',
+      professionEnclave: 'all',
       visibility: 'Public',
-      content: `🎬 Shared a Masterclass Briefing on ConnectIn The Wheel: "${video.title}"${video.summary ? `\n\n${video.summary}` : ""}`,
-      hashtags: video.tags && video.tags.length > 0 ? video.tags : ['#ConnectIn', '#DSTRIKE', '#Masterclass'],
+      content: `🎬 Shared a Masterclass Briefing on ConnectLn The Wheel: "${video.title}"${video.summary ? `\n\n${video.summary}` : ""}`,
+      hashtags: video.tags && video.tags.length > 0 ? video.tags : ['#ConnectLn', '#Masterclass', '#RealWork'],
       postType: 'standard',
       media: {
         type: 'video',
@@ -543,13 +545,14 @@ export default function LinkedInPage() {
         description: video.speaker ? `${video.speaker} · ${video.speakerTitle || ''}` : userData.headline,
         duration: video.duration || '5:00',
         serialPlate: video.serialPlate || 'CLN-VID',
-        brandName: 'DSTRIKE',
+        brandName: 'ConnectLn',
         takeaways: video.takeaways,
         aspectRatio: '16:9'
       },
       userReaction: null,
       isSaved: false
     })
+    setActiveTab('home')
   }
 
   // Handle Reactions (Like, Celebrate, Support, Love, Insightful, Funny)
@@ -725,10 +728,10 @@ export default function LinkedInPage() {
 
   // Filter Posts based on Stream, Sub-category, Search Query, Feed Type, or Tag
   const filteredPosts = posts.filter(post => {
-    // 0. Strict Need-to-Know Enclave Segregation
-    // Enforce least privilege: user sees content matching their selected enclaves (multi-enclave federation support)
+    // 0. Strict Need-to-Know Enclave Segregation (always keep user's own posts and shared video cards visible)
+    const isUserOrVideoPost = post.author?.connectionDegree === 'You' || post.media?.type === 'video'
     const isAllSelected = selectedEnclaves.length === 0 || selectedEnclaves.includes('all') || selectedEnclaves.length >= PROFESSION_ENCLAVES.length
-    if (!isAllSelected) {
+    if (!isAllSelected && !isUserOrVideoPost) {
       const postEnclave = post.professionEnclave || 'tech_software'
       if (postEnclave !== 'all' && !selectedEnclaves.includes(postEnclave)) {
         return false

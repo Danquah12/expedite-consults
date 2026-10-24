@@ -13,6 +13,7 @@ import {
 } from "lucide-react"
 import { UserProfile } from "@/lib/linkedin-data"
 import { getEnclaveB2BThreads, B2BConversationThread, B2BMessageItem } from "@/lib/b2b-messaging-data"
+import { resolveUserProfilePicture } from "@/lib/connectin-storage"
 
 interface FloatingMessagingDockProps {
   currentUser: UserProfile
@@ -203,34 +204,71 @@ export function FloatingMessagingDock({
           <div className="flex-1 overflow-y-auto p-3 space-y-2.5 bg-zinc-50/70 text-xs">
             {activeChatThread.messages.map((msg) => {
               const isMe = msg.sender.id === "me" || msg.sender.name === "You"
+              const myPic = resolveUserProfilePicture(currentUser, msg.sender.avatar)
               return (
                 <div
                   key={msg.id}
                   className={`flex ${isMe ? "justify-end" : "justify-start"}`}
                 >
                   <div
-                    className={`max-w-[85%] rounded-xl px-3 py-2 leading-relaxed ${
+                    className={`max-w-[85%] overflow-hidden rounded-xl leading-relaxed ${
                       isMe
                         ? "rounded-br-xs font-semibold"
-                        : "bg-white text-zinc-800 border border-zinc-200 rounded-bl-xs"
+                        : "bg-white text-zinc-800 border border-zinc-200 rounded-bl-xs px-3 py-2"
                     }`}
                     style={
                       isMe
                         ? {
-                            backgroundColor: "#5C2D0C",
-                            color: "#FFFFFF",
+                            backgroundColor: "#171513",
+                            color: "#F5F0EB",
+                            border: "1px solid #2C2825"
                           }
                         : undefined
                     }
                   >
-                    <p style={isMe ? { color: "#FFFFFF" } : undefined}>{msg.text}</p>
-                    <div
-                      className={`mt-1 text-[9px] text-right flex items-center justify-end gap-1 ${
-                        isMe ? "text-amber-100" : "text-zinc-400"
-                      }`}
-                    >
-                      <span>{msg.timestamp}</span>
-                      {isMe && <CheckCheck className="h-2.5 w-2.5" />}
+                    {isMe && (
+                      <div
+                        className="flex items-center justify-between gap-2 px-2.5 py-1.5 border-b"
+                        style={{
+                          backgroundColor: "#1F1C1A",
+                          borderColor: "rgba(255,255,255,0.1)"
+                        }}
+                      >
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <img
+                            src={myPic}
+                            alt={currentUser?.name || "You"}
+                            onError={(e) => {
+                              e.currentTarget.src = "/brand/kwesi-avatar.png"
+                            }}
+                            className="h-5 w-5 rounded-full object-cover ring-1 ring-[#0066FF] shrink-0"
+                          />
+                          <span className="text-[10px] font-bold truncate" style={{ color: "#F5F0EB" }}>
+                            {currentUser?.name || "Kwesi Asiedu"}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <img
+                            src="/brand/connectln-icon-256.png"
+                            alt="ConnectLn"
+                            className="h-4 w-4 rounded-xs object-contain"
+                          />
+                          <span className="text-[10px] font-black tracking-tight" style={{ color: "#F5F0EB" }}>
+                            ConnectLn
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    <div className={isMe ? "px-3 py-2" : ""}>
+                      <p style={isMe ? { color: "#F5F0EB" } : undefined}>{msg.text}</p>
+                      <div
+                        className={`mt-1 text-[9px] text-right flex items-center justify-end gap-1 ${
+                          isMe ? "text-zinc-400" : "text-zinc-400"
+                        }`}
+                      >
+                        <span>{msg.timestamp}</span>
+                        {isMe && <CheckCheck className="h-2.5 w-2.5 text-emerald-400" />}
+                      </div>
                     </div>
                   </div>
                 </div>
