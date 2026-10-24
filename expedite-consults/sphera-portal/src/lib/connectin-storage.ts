@@ -146,11 +146,11 @@ function getRawCurrentStoredUser(): any | null {
   }
 }
 
-function getActiveUserNamespace(): string {
-  const raw = getRawCurrentStoredUser()
+export function getActiveUserNamespace(user?: Partial<UserProfile> | null): string {
+  const raw = user || getRawCurrentStoredUser()
   if (!raw) return 'anon_isolated'
-  const email = (raw.email || '').toLowerCase().trim()
-  const id = (raw.id || raw.userId || '').toLowerCase().trim()
+  const email = ((raw as any).email || '').toLowerCase().trim()
+  const id = (raw.id || (raw as any).userId || '').toLowerCase().trim()
   const name = (raw.name || '').toLowerCase().trim().replace(/\s+/g, '_')
   return email || id || name || 'anon_isolated'
 }

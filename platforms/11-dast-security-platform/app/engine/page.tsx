@@ -1931,8 +1931,8 @@ export default function EnginePage() {
         const tlsInfo = liveRes.tlsSecurity?.inspected
           ? `TLS Protocol: ${liveRes.tlsSecurity.protocol} | Cipher: ${liveRes.tlsSecurity.cipherName}\nX.509 Subject CN: ${liveRes.tlsSecurity.subjectCN} | Issuer: ${liveRes.tlsSecurity.issuerOrg} (${liveRes.tlsSecurity.issuerCN})\nX.509 Validity: ${liveRes.tlsSecurity.validFrom} to ${liveRes.tlsSecurity.validTo} (${liveRes.tlsSecurity.daysRemaining} days remaining)\nX.509 SHA-256 Fingerprint: ${liveRes.tlsSecurity.fingerprint256} | SAN Count: ${liveRes.tlsSecurity.sanCount} | Chain Trusted: ${liveRes.tlsSecurity.authorized}`
           : `TLS Transport: HTTPS (443/tcp)`;
-        const redirectInfo = liveRes.httpRedirectProbe?.tested
-          ? `Port 80 HTTP-to-HTTPS Redirect Probe: HTTP ${liveRes.httpRedirectProbe.statusCode} -> Location: ${liveRes.httpRedirectProbe.locationHeader || "(none)"} (Redirects to HTTPS: ${liveRes.httpRedirectProbe.redirectsToHttps})`
+        const redirectInfo = liveRes.httpRedirectProbe
+          ? `Port 80 HTTP-to-HTTPS Redirect Probe (${liveRes.httpRedirectProbe.httpUrl}): HTTP ${liveRes.httpRedirectProbe.status} -> Location: ${liveRes.httpRedirectProbe.locationHeader || "(none)"} (Redirects to HTTPS: ${liveRes.httpRedirectProbe.redirectsToHttps})`
           : `Port 80 HTTP Redirect Probe: Not applicable`;
         return {
           ...ap,

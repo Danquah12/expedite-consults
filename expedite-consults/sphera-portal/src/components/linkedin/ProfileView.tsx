@@ -327,7 +327,7 @@ export function ProfileView({
   }
 
   const handleUpdateAvatar = (newAvatarUrl: string) => {
-    savePersistentAvatar(newAvatarUrl)
+    savePersistentAvatar(newAvatarUrl, user)
     const updated: UserProfile = {
       ...user,
       avatar: newAvatarUrl
@@ -337,13 +337,13 @@ export function ProfileView({
       onUpdateUser(updated)
     }
     setEditAvatar(newAvatarUrl)
-    setPhotoSuccessMsg("Profile picture saved permanently!")
+    setPhotoSuccessMsg("Profile picture saved permanently to your isolated account vault!")
     setTimeout(() => setPhotoSuccessMsg(null), 4000)
     setIsPhotoModalOpen(false)
   }
 
   const handleUpdateCover = (newCoverUrl: string) => {
-    savePersistentCover(newCoverUrl)
+    savePersistentCover(newCoverUrl, user)
     const updated: UserProfile = {
       ...user,
       coverImage: newCoverUrl
@@ -353,7 +353,7 @@ export function ProfileView({
       onUpdateUser(updated)
     }
     setEditCover(newCoverUrl)
-    setPhotoSuccessMsg("Cover photo saved permanently!")
+    setPhotoSuccessMsg("Cover photo saved permanently to your isolated account vault!")
     setTimeout(() => setPhotoSuccessMsg(null), 4000)
     setIsPhotoModalOpen(false)
   }
@@ -382,7 +382,7 @@ export function ProfileView({
     const dataUrl = await compressImageFile(file, 560, 560, 0.86)
     if (dataUrl) {
       setEditAvatar(dataUrl)
-      savePersistentAvatar(dataUrl)
+      savePersistentAvatar(dataUrl, user)
     }
   }
 
@@ -392,7 +392,7 @@ export function ProfileView({
     const dataUrl = await compressImageFile(file, 1400, 500, 0.85)
     if (dataUrl) {
       setEditCover(dataUrl)
-      savePersistentCover(dataUrl)
+      savePersistentCover(dataUrl, user)
     }
   }
 
@@ -480,13 +480,6 @@ export function ProfileView({
     const resolvedAvatar = editAvatar.trim() || user.avatar
     const resolvedCover = editCover.trim() || user.coverImage
 
-    if (resolvedAvatar && !resolvedAvatar.includes("api.dicebear.com")) {
-      savePersistentAvatar(resolvedAvatar)
-    }
-    if (resolvedCover) {
-      savePersistentCover(resolvedCover)
-    }
-
     const updated: UserProfile = {
       ...user,
       name: editName.trim(),
@@ -495,6 +488,13 @@ export function ProfileView({
       about: editAbout.trim(),
       avatar: resolvedAvatar,
       ...(resolvedCover ? { coverImage: resolvedCover } : {})
+    }
+
+    if (resolvedAvatar && !resolvedAvatar.includes("api.dicebear.com")) {
+      savePersistentAvatar(resolvedAvatar, updated)
+    }
+    if (resolvedCover) {
+      savePersistentCover(resolvedCover, updated)
     }
 
     saveStoredUser(updated)
