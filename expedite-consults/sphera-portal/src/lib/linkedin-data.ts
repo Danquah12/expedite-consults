@@ -183,6 +183,12 @@ export interface Post {
     title?: string
     domain?: string
     description?: string
+    youtubeId?: string
+    thumbnailUrl?: string
+    duration?: string
+    serialPlate?: string
+    brandName?: string
+    takeaways?: string[]
   }
   stats: {
     likesCount: number

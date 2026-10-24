@@ -35,6 +35,7 @@ import {
 import { PROFESSION_ENCLAVES, ALL_PROFESSIONS, findEnclaveById } from "@/lib/connectin-professions"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { UserProfile } from "@/lib/linkedin-data"
+import { VideoShareBanner } from "./VideoShareBanner"
 
 interface ConnectInVideoWheelProps {
   className?: string
@@ -44,6 +45,7 @@ interface ConnectInVideoWheelProps {
   title?: string
   subtitle?: string
   onOpenVideoGuide?: () => void
+  onShareVideoToFeed?: (video: WheelVideoTalk) => void
 }
 
 export function ConnectInVideoWheel({
@@ -53,7 +55,8 @@ export function ConnectInVideoWheel({
   user,
   title = "The Wheel — Multi-Profession Masterclasses & Briefings",
   subtitle = "Expedite Consults educational talks, trade apprenticeship standards, and verified professional briefings across every profession.",
-  onOpenVideoGuide
+  onOpenVideoGuide,
+  onShareVideoToFeed
 }: ConnectInVideoWheelProps) {
   const [allTalks, setAllTalks] = useState<WheelVideoTalk[]>(EDUCATIONAL_WHEEL_TALKS)
 
@@ -315,7 +318,10 @@ export function ConnectInVideoWheel({
 
     const updated = saveStoredCustomVideo(newTalk)
     setAllTalks(updated)
-    setSubmitSuccessMsg(`Successfully added "${newTalk.title}" to The Wheel!`)
+    if (onShareVideoToFeed) {
+      onShareVideoToFeed(newTalk)
+    }
+    setSubmitSuccessMsg(`Successfully added "${newTalk.title}" to The Wheel & shared to your Feed with your Profile Picture!`)
     setActiveVideo(newTalk)
 
     setTimeout(() => {
@@ -561,7 +567,7 @@ export function ConnectInVideoWheel({
               <div
                 key={talk.id}
                 onClick={() => setActiveVideo(talk)}
-                className="group relative h-[19rem] w-[14rem] sm:w-[15.5rem] shrink-0 snap-center rounded-2xl overflow-hidden border border-[#3E3832] bg-[#25211D] hover:border-amber-500/70 transition-all duration-300 hover:scale-[1.02] cursor-pointer flex flex-col justify-between shadow-md"
+                className="group relative h-[19.5rem] w-[14.5rem] sm:w-[16rem] shrink-0 snap-center rounded-2xl overflow-hidden border border-[#3E3832] bg-[#25211D] hover:border-[#0066FF] transition-all duration-300 hover:scale-[1.02] cursor-pointer flex flex-col justify-between shadow-md"
               >
                 {/* Top Serial Plate Badge */}
                 <div className="p-2.5 flex items-center justify-between border-b border-[#35302B] bg-[#1F1B18]/90 z-10">
@@ -584,10 +590,11 @@ export function ConnectInVideoWheel({
                         setVideoToShare(talk)
                         setIsShareModalOpen(true)
                       }}
-                      className="p-1 rounded-md text-[#EFE8DC]/60 hover:text-white hover:bg-white/10 transition-colors"
-                      title="Share this masterclass"
+                      className="px-2 py-0.5 rounded-full bg-[#0066FF] hover:bg-[#0052CC] text-white text-[9px] font-bold flex items-center gap-1 transition-colors shadow-xs"
+                      title="Share with your Profile Picture + DSTRIKE Video Card"
                     >
-                      <Share2 className="h-3 w-3" />
+                      <Share2 className="h-2.5 w-2.5" />
+                      <span>Share</span>
                     </button>
                     <span className="text-[10px] font-bold text-[#EFE8DC]/75 px-1.5 py-0.5 rounded bg-white/5">
                       ⏱ {talk.duration}
@@ -595,7 +602,7 @@ export function ConnectInVideoWheel({
                   </div>
                 </div>
 
-                {/* Video Thumbnail with Play Button Overlay */}
+                {/* Video Thumbnail with Play Button Overlay + Circular Blue-Ringed Profile Picture */}
                 <div className="relative flex-1 overflow-hidden bg-black/40">
                   <img
                     src={talk.thumbnailUrl}
@@ -604,6 +611,20 @@ export function ConnectInVideoWheel({
                     loading="lazy"
                   />
                   <div className="absolute inset-0 bg-linear-to-t from-[#1C1916] via-[#1C1916]/40 to-transparent" />
+
+                  {/* Signature Left Circular Profile Picture with Electric Blue Ring */}
+                  {user?.avatar && (
+                    <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5 rounded-full bg-black/75 pr-2.5 p-0.5 border border-[#0066FF]/70 backdrop-blur-xs shadow-md">
+                      <img
+                        src={user.avatar}
+                        alt={user.name}
+                        className="h-7 w-7 rounded-full object-cover ring-2 ring-[#0066FF]"
+                      />
+                      <span className="text-[9px] font-extrabold tracking-wider text-white">
+                        DSTRI<span className="text-[#38BDF8]">K</span>E
+                      </span>
+                    </div>
+                  )}
 
                   {/* Centered Play Button */}
                   <div className="absolute inset-0 flex items-center justify-center">
@@ -641,7 +662,7 @@ export function ConnectInVideoWheel({
         <p className="text-[11px] flex items-center gap-1.5">
           <span>🔒</span>
           <span>
-            Curated across all 12+ professional enclaves. Free for all verified ConnectIn members.
+            Curated across all 12+ professional enclaves. Every shared video includes your Profile Picture &amp; DSTRIKE Telemetry Card.
           </span>
         </p>
         <button
@@ -663,6 +684,13 @@ export function ConnectInVideoWheel({
               {/* Header */}
               <div className="p-4 sm:p-5 border-b border-zinc-800 flex items-center justify-between bg-zinc-900/90 backdrop-blur-md">
                 <div className="flex items-center gap-2.5 pr-4">
+                  {user?.avatar && (
+                    <img
+                      src={user.avatar}
+                      alt={user.name}
+                      className="h-9 w-9 rounded-full object-cover ring-2 ring-[#0066FF] shrink-0"
+                    />
+                  )}
                   <span className="font-mono text-xs font-bold text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-500/40">
                     {activeVideo.serialPlate}
                   </span>
@@ -676,7 +704,25 @@ export function ConnectInVideoWheel({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                  {/* Direct 1-Click Share to ConnectIn Feed with Profile Picture Banner */}
+                  {onShareVideoToFeed && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onShareVideoToFeed(activeVideo)
+                        setShareFeedback("✓ Posted to your ConnectIn Feed with your Profile Picture + Video Banner!")
+                        setTimeout(() => setShareFeedback(null), 3500)
+                        setActiveVideo(null)
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0066FF] hover:bg-[#0052CC] text-white text-xs font-bold shadow-md transition-all cursor-pointer hover:scale-105 active:scale-95"
+                      title="Share video to ConnectIn Feed with your profile picture banner"
+                    >
+                      <Send className="h-3.5 w-3.5" />
+                      <span>Post to ConnectIn Feed</span>
+                    </button>
+                  )}
+
                   {/* Direct 1-Click WhatsApp Share Pill */}
                   <button
                     type="button"
@@ -801,7 +847,7 @@ export function ConnectInVideoWheel({
       {/* 2. MULTI-SOCIAL SHARE MODAL (WHATSAPP, LINKEDIN, FB, X...) */}
       {/* ────────────────────────────────────────────────────────── */}
       <Dialog open={isShareModalOpen} onOpenChange={setIsShareModalOpen}>
-        <DialogContent className="max-w-md p-0 border border-zinc-700 bg-zinc-950 text-white rounded-3xl overflow-hidden shadow-2xl">
+        <DialogContent className="max-w-2xl p-0 border border-zinc-700 bg-zinc-950 text-white rounded-3xl overflow-hidden shadow-2xl">
           <DialogHeader className="p-5 border-b border-zinc-800 bg-zinc-900/80">
             <div className="flex items-center gap-2">
               <span className="p-2 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 text-sm">
@@ -809,39 +855,52 @@ export function ConnectInVideoWheel({
               </span>
               <div>
                 <DialogTitle className="text-base font-bold text-white flex items-center gap-2">
-                  <span>Share Masterclass Video</span>
+                  <span>Share Masterclass Video with Your Profile Banner</span>
                 </DialogTitle>
                 <DialogDescription className="text-xs text-zinc-400 mt-0.5">
-                  Distribute this technical briefing, blueprint guide, or guild tutorial to your professional network.
+                  Your shared video automatically includes your circular profile picture alongside the DSTRIKE telemetry &amp; metrics card.
                 </DialogDescription>
               </div>
             </div>
           </DialogHeader>
 
           {videoToShare && (
-            <div className="p-5 space-y-4">
-              {/* Video Preview Card */}
-              <div className="p-3 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center gap-3">
-                <img
-                  src={videoToShare.thumbnailUrl}
-                  alt={videoToShare.title}
-                  className="h-14 w-20 rounded-xl object-cover border border-zinc-700 shrink-0"
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] font-mono font-bold bg-amber-950/80 text-amber-300 px-1.5 py-0.2 rounded border border-amber-500/30">
-                      {videoToShare.serialPlate}
-                    </span>
-                    <span className="text-[10px] text-zinc-400">⏱ {videoToShare.duration}</span>
-                  </div>
-                  <h4 className="text-xs font-bold text-white truncate mt-1">
-                    {videoToShare.title}
-                  </h4>
-                  <p className="text-[10px] text-zinc-400 truncate">
-                    {videoToShare.speaker} · {videoToShare.categoryLabel}
-                  </p>
-                </div>
-              </div>
+            <div className="p-5 space-y-4 max-h-[80vh] overflow-y-auto">
+              {/* Signature Profile Picture + DSTRIKE Video Share Banner Preview */}
+              <VideoShareBanner
+                compact
+                avatarUrl={user?.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user?.name || "Member")}&backgroundColor=0a66c2`}
+                authorName={user?.name || videoToShare.speaker}
+                authorHeadline={user?.headline || videoToShare.speakerTitle}
+                brandName="DSTRIKE"
+                videoTitle={videoToShare.title}
+                videoSubtitle={`${videoToShare.speaker} · ${videoToShare.categoryLabel}`}
+                youtubeId={videoToShare.youtubeId}
+                thumbnailUrl={videoToShare.thumbnailUrl}
+                videoUrl={`https://www.youtube.com/watch?v=${videoToShare.youtubeId}`}
+                duration={videoToShare.duration}
+                serialPlate={videoToShare.serialPlate}
+                takeaways={videoToShare.takeaways}
+              />
+
+              {/* Primary 1-Click Share to ConnectIn Feed Button */}
+              {onShareVideoToFeed && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onShareVideoToFeed(videoToShare)
+                    setShareFeedback("✓ Shared to your ConnectIn Feed with your Profile Picture + Video Banner!")
+                    setTimeout(() => {
+                      setShareFeedback(null)
+                      setIsShareModalOpen(false)
+                    }, 1800)
+                  }}
+                  className="w-full py-3 px-4 rounded-2xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer"
+                >
+                  <Send className="h-4 w-4" />
+                  <span>Post Video Card to My ConnectIn Feed Now</span>
+                </button>
+              )}
 
               {/* Feedback Alert Toast */}
               {shareFeedback && (
@@ -852,7 +911,7 @@ export function ConnectInVideoWheel({
               )}
 
               {/* 6 Social Channels Grid */}
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                 {/* 1. WhatsApp */}
                 <button
                   type="button"
@@ -1055,28 +1114,28 @@ export function ConnectInVideoWheel({
                 className="w-full rounded-xl bg-zinc-900 border border-zinc-700 px-3 py-2 text-xs text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-amber-500 font-mono"
               />
 
-              {/* Instant Thumbnail Live Preview */}
+              {/* Instant Signature Profile Picture + DSTRIKE Video Banner Live Preview */}
               {extractedVideoId && (
-                <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-2.5 flex items-center gap-3">
-                  <div className="relative h-14 w-24 rounded-lg overflow-hidden bg-black shrink-0 border border-zinc-700">
-                    <img
-                      src={`https://i.ytimg.com/vi/${extractedVideoId}/hqdefault.jpg`}
-                      alt="Preview"
-                      className="h-full w-full object-cover"
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                      <Play className="h-4 w-4 text-white fill-current" />
-                    </div>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[11px] font-bold text-emerald-400 flex items-center gap-1">
-                      <CheckCircle2 className="h-3 w-3" />
-                      <span>Valid Video Identified</span>
-                    </p>
-                    <p className="text-[10px] font-mono text-zinc-400 truncate">
-                      ID: {extractedVideoId}
-                    </p>
-                  </div>
+                <div className="pt-1 space-y-1.5">
+                  <p className="text-[11px] font-bold text-emerald-400 flex items-center gap-1">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    <span>Valid Video Identified — Your Signature Profile + Video Share Card Preview:</span>
+                  </p>
+                  <VideoShareBanner
+                    compact
+                    avatarUrl={user?.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user?.name || "Member")}&backgroundColor=0a66c2`}
+                    authorName={submitSpeaker.trim() || user?.name || "Verified Member"}
+                    authorHeadline={submitSpeakerTitle.trim() || user?.headline || "Verified Guild Master"}
+                    brandName="DSTRIKE"
+                    videoTitle={submitTitle.trim() || "Masterclass Technical Briefing"}
+                    videoSubtitle={submitSummary.trim() || "ConnectIn Verified Video Masterclass"}
+                    youtubeId={extractedVideoId}
+                    thumbnailUrl={`https://i.ytimg.com/vi/${extractedVideoId}/hqdefault.jpg`}
+                    videoUrl={`https://www.youtube.com/watch?v=${extractedVideoId}`}
+                    duration={submitDuration.trim() || "5:00"}
+                    serialPlate="CLN-NEW"
+                    takeaways={[takeaway1, takeaway2, takeaway3].filter(Boolean)}
+                  />
                 </div>
               )}
             </div>

@@ -502,7 +502,54 @@ export default function LinkedInPage() {
       comments: []
     }
 
-    setPosts([newPost, ...posts])
+    setPosts(prev => [newPost, ...prev])
+  }
+
+  // Share any video from The Wheel or Media Hub directly to the ConnectIn Feed with the user's Profile Picture + DSTRIKE Video Banner
+  const handleShareWheelVideoToFeed = (video: {
+    title: string
+    speaker?: string
+    speakerTitle?: string
+    youtubeId?: string
+    thumbnailUrl?: string
+    duration?: string
+    serialPlate?: string
+    summary?: string
+    takeaways?: string[]
+    tags?: string[]
+    enclaveId?: string
+  }) => {
+    const ytUrl = video.youtubeId ? `https://www.youtube.com/watch?v=${video.youtubeId}` : "https://www.connectln.app/connectin"
+    handleAddPost({
+      author: {
+        id: userData.id,
+        name: userData.name,
+        headline: userData.headline,
+        avatar: userData.avatar,
+        connectionDegree: 'You',
+        isFollowing: false
+      },
+      professionEnclave: video.enclaveId || userData.professionEnclave || 'trades_construction',
+      visibility: 'Public',
+      content: `🎬 Shared a Masterclass Briefing on ConnectIn The Wheel: "${video.title}"${video.summary ? `\n\n${video.summary}` : ""}`,
+      hashtags: video.tags && video.tags.length > 0 ? video.tags : ['#ConnectIn', '#DSTRIKE', '#Masterclass'],
+      postType: 'standard',
+      media: {
+        type: 'video',
+        url: ytUrl,
+        youtubeId: video.youtubeId,
+        thumbnailUrl: video.thumbnailUrl || (video.youtubeId ? `https://i.ytimg.com/vi/${video.youtubeId}/hqdefault.jpg` : undefined),
+        title: video.title,
+        description: video.speaker ? `${video.speaker} · ${video.speakerTitle || ''}` : userData.headline,
+        duration: video.duration || '5:00',
+        serialPlate: video.serialPlate || 'CLN-VID',
+        brandName: 'DSTRIKE',
+        takeaways: video.takeaways,
+        aspectRatio: '16:9'
+      },
+      userReaction: null,
+      isSaved: false
+    })
   }
 
   // Handle Reactions (Like, Celebrate, Support, Love, Insightful, Funny)
@@ -832,6 +879,7 @@ export default function LinkedInPage() {
                       title="The Wheel — Multi-Profession Masterclasses & Briefings"
                       subtitle="Curated trade apprenticeship standards, software architecture, clinical medicine, and verified field briefings."
                       onOpenVideoGuide={() => setIsVideoGuideOpen(true)}
+                      onShareVideoToFeed={handleShareWheelVideoToFeed}
                     />
                     <div className="flex items-center justify-between px-2 pt-0.5 text-[10px] text-zinc-500">
                       <span className="flex items-center gap-1">
@@ -886,6 +934,7 @@ export default function LinkedInPage() {
                       title="The Wheel — Masterclasses"
                       subtitle="5-minute verified briefings & standards"
                       onOpenVideoGuide={() => setIsVideoGuideOpen(true)}
+                      onShareVideoToFeed={handleShareWheelVideoToFeed}
                     />
                   </div>
                 )}
@@ -1577,6 +1626,7 @@ export default function LinkedInPage() {
           <MediaView
             currentUser={userData}
             onNavigateTab={(tab) => setActiveTab(tab as any)}
+            onShareVideoToFeed={handleShareWheelVideoToFeed}
           />
         )}
 

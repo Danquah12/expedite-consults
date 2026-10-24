@@ -58,15 +58,18 @@ import {
 } from "@/lib/connectin-media-data"
 import { UserProfile } from "@/lib/linkedin-data"
 import { ConnectInVideoWheel } from "@/components/linkedin/ConnectInVideoWheel"
+import { VideoShareBanner } from "@/components/linkedin/VideoShareBanner"
 
 interface MediaViewProps {
   currentUser: UserProfile
   onNavigateTab: (tab: string) => void
+  onShareVideoToFeed?: (video: any) => void
 }
 
 export function MediaView({
   currentUser,
-  onNavigateTab
+  onNavigateTab,
+  onShareVideoToFeed
 }: MediaViewProps) {
   const enclaveId = currentUser?.professionEnclave
   const initialVideos = getEnclaveMediaVideos(enclaveId)
@@ -82,6 +85,8 @@ export function MediaView({
   const [currentPlaybackSeconds, setCurrentPlaybackSeconds] = useState(0)
   const [aiSearchPrompt, setAiSearchPrompt] = useState("")
   const [aiSearchFeedback, setAiSearchFeedback] = useState<string | null>(null)
+  const [showShareBannerPreview, setShowShareBannerPreview] = useState(false)
+  const [sharedToFeedNotice, setSharedToFeedNotice] = useState(false)
 
   const getDefaultLiveChat = (encId?: string) => {
     if (encId === 'trades_construction') {
@@ -286,6 +291,7 @@ export function MediaView({
         user={currentUser}
         title="The Wheel — Multi-Profession Masterclasses & Briefings"
         subtitle="Curated trade apprenticeships, software architecture, healthcare, and verified field briefings across all disciplines."
+        onShareVideoToFeed={onShareVideoToFeed}
       />
 
       {/* ========================================================================= */}
@@ -365,7 +371,7 @@ export function MediaView({
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <button
                           onClick={() => setIsTerminalSandboxOpen(!isTerminalSandboxOpen)}
                           className={`rounded-full px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1.5 ${
@@ -383,11 +389,66 @@ export function MediaView({
                         <button className="rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 p-2 text-zinc-700 dark:text-zinc-300">
                           <ThumbsUp className="h-4 w-4" />
                         </button>
-                        <button className="rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 p-2 text-zinc-700 dark:text-zinc-300">
-                          <Share2 className="h-4 w-4" />
+                        <button
+                          onClick={() => setShowShareBannerPreview(!showShareBannerPreview)}
+                          className="rounded-full bg-[#0066FF] hover:bg-blue-700 text-white px-3.5 py-1.5 text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Share2 className="h-3.5 w-3.5" />
+                          <span>Share Video Card</span>
                         </button>
                       </div>
                     </div>
+
+                    {/* Signature Profile Picture + DSTRIKE Telemetry Video Share Card */}
+                    {showShareBannerPreview && (
+                      <div className="pt-2 space-y-3 animate-in fade-in duration-200">
+                        <VideoShareBanner
+                          userName={currentUser?.name || selectedVideo.channelName}
+                          userAvatar={currentUser?.avatar || selectedVideo.channelAvatar}
+                          userHeadline={currentUser?.headline || selectedVideo.channelRole}
+                          videoTitle={selectedVideo.title}
+                          thumbnailUrl={selectedVideo.thumbnail}
+                          duration={selectedVideo.duration}
+                          brandName="DSTRIKE"
+                          serialPlate={`MEDIA-${selectedVideo.id.toUpperCase()}`}
+                          takeaways={selectedVideo.chapters?.map((c) => `${c.timestamp} · ${c.title}`) || [
+                            selectedVideo.title,
+                            `Verified by ${selectedVideo.channelName}`
+                          ]}
+                          onWatchClick={() => setIsPlaying(true)}
+                        />
+                        {onShareVideoToFeed && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onShareVideoToFeed({
+                                id: selectedVideo.id,
+                                enclaveId: enclaveId || 'cyber_cloud_engineering',
+                                categoryLabel: selectedVideo.visibility || 'Professional Video',
+                                serialPlate: `MEDIA-${selectedVideo.id.toUpperCase()}`,
+                                title: selectedVideo.title,
+                                speaker: selectedVideo.channelName,
+                                speakerRole: selectedVideo.channelRole,
+                                speakerAvatar: selectedVideo.channelAvatar,
+                                duration: selectedVideo.duration,
+                                views: selectedVideo.views || '12.4K',
+                                youtubeId: 'L_Guz73e6fw',
+                                thumbnailUrl: selectedVideo.thumbnail,
+                                summary: selectedVideo.description || selectedVideo.title,
+                                takeaways: selectedVideo.chapters?.map((c) => `${c.timestamp} · ${c.title}`) || [selectedVideo.title],
+                                badgeColor: 'from-blue-600 to-indigo-700'
+                              })
+                              setSharedToFeedNotice(true)
+                              setTimeout(() => setSharedToFeedNotice(false), 3000)
+                            }}
+                            className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#0066FF] to-[#0A66C2] hover:from-blue-700 hover:to-blue-800 text-white font-black text-xs shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer"
+                          >
+                            <Share2 className="h-4 w-4" />
+                            <span>{sharedToFeedNotice ? '✓ Shared to Your ConnectIn Feed with Profile Picture!' : 'Post Video Card with Profile Picture to My ConnectIn Feed'}</span>
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* 1.5. LIVE SIDE-BY-SIDE TERMINAL SANDBOX */}

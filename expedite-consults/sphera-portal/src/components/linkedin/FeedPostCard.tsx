@@ -44,6 +44,7 @@ import {
 } from "@/components/ui/dialog"
 import { useLanguage } from "@/context/LanguageContext"
 import { translatePostText } from "@/lib/translations/post-translator"
+import { VideoShareBanner } from "./VideoShareBanner"
 
 interface FeedPostCardProps {
   post: Post
@@ -686,6 +687,26 @@ export function FeedPostCard({
             src={post.media.url}
             alt="Post content"
             className="w-full object-cover max-h-[480px]"
+          />
+        </div>
+      )}
+
+      {/* Signature Profile + Brand Video Share Banner (When a video is shared from The Wheel or anywhere on ConnectIn) */}
+      {post.media && post.media.type === 'video' && (
+        <div className="mx-4 my-3">
+          <VideoShareBanner
+            avatarUrl={post.author.avatar || currentUser.avatar}
+            authorName={post.author.name || currentUser.name}
+            authorHeadline={post.author.headline || currentUser.headline}
+            brandName={post.media.brandName || "DSTRIKE"}
+            videoTitle={post.media.title || "ConnectIn Masterclass & Technical Briefing"}
+            videoSubtitle={post.media.description || post.author.headline}
+            youtubeId={post.media.youtubeId}
+            thumbnailUrl={post.media.thumbnailUrl}
+            videoUrl={post.media.url}
+            duration={post.media.duration || "5:00"}
+            serialPlate={post.media.serialPlate}
+            takeaways={post.media.takeaways}
           />
         </div>
       )}
