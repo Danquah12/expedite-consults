@@ -144,31 +144,31 @@ export default function EvidencePanel({ finding: f }: Props) {
           }}
         >
           {f.checkmarxQuery && (
-            <div>
+            <div style={{ minWidth: 0 }}>
               <div style={{ fontWeight: 800, color: "#8b4528" }}>XTRIKE XQL / Best Fix Location</div>
-              <div style={{ fontFamily: "monospace", color: "var(--foreground)", marginTop: 2 }}>{f.checkmarxQuery}</div>
-              {f.checkmarxBfl && <div style={{ color: "var(--muted)" }}>BFL: {f.checkmarxBfl}</div>}
+              <div style={{ fontFamily: "monospace", color: "var(--foreground)", marginTop: 2, wordBreak: "break-word", overflowWrap: "anywhere" }}>{f.checkmarxQuery}</div>
+              {f.checkmarxBfl && <div style={{ color: "var(--muted)", wordBreak: "break-word" }}>BFL: {f.checkmarxBfl}</div>}
             </div>
           )}
           {f.ibmRuleId && (
-            <div>
+            <div style={{ minWidth: 0 }}>
               <div style={{ fontWeight: 800, color: "#8b4528" }}>XTRIKE DeepFlow (Taint Engine)</div>
-              <div style={{ fontFamily: "monospace", color: "var(--foreground)", marginTop: 2 }}>{f.ibmRuleId}</div>
-              {f.ibmTraceSummary && <div style={{ color: "var(--muted)" }}>{f.ibmTraceSummary}</div>}
+              <div style={{ fontFamily: "monospace", color: "var(--foreground)", marginTop: 2, wordBreak: "break-word", overflowWrap: "anywhere" }}>{f.ibmRuleId}</div>
+              {f.ibmTraceSummary && <div style={{ color: "var(--muted)", wordBreak: "break-word" }}>{f.ibmTraceSummary}</div>}
             </div>
           )}
           {f.fortifyKingdom && (
-            <div>
+            <div style={{ minWidth: 0 }}>
               <div style={{ fontWeight: 800, color: "#8b4528" }}>XTRIKE StructSCA ({f.fortifyAnalyzer || "Dataflow"})</div>
-              <div style={{ color: "var(--foreground)", marginTop: 2 }}>Kingdom: {f.fortifyKingdom}</div>
+              <div style={{ color: "var(--foreground)", marginTop: 2, wordBreak: "break-word" }}>Kingdom: {f.fortifyKingdom}</div>
             </div>
           )}
         </div>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 0 }}>
           <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: "var(--muted)" }}>Taint Hops:</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {sample.steps.map((step, idx) => {
@@ -187,10 +187,11 @@ export default function EvidencePanel({ finding: f }: Props) {
                     border: isSelected ? "1px solid var(--border)" : "1px solid var(--border)",
                     cursor: isPlaying ? "default" : "pointer",
                     position: "relative",
-                    transition: "all 0.2s"
+                    transition: "all 0.2s",
+                    minWidth: 0,
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, flexWrap: "wrap", marginBottom: 4 }}>
                     <span style={{
                       fontSize: 9.5,
                       fontWeight: 800,
@@ -206,10 +207,10 @@ export default function EvidencePanel({ finding: f }: Props) {
                       Line {step.line}
                     </span>
                   </div>
-                  <div style={{ fontSize: 10.5, fontFamily: "monospace", color: "#1f1b18", margin: "4px 0", wordBreak: "break-all" }}>
+                  <div style={{ fontSize: 10.5, fontFamily: "monospace", color: "#1f1b18", margin: "4px 0", wordBreak: "break-word", overflowWrap: "anywhere" }}>
                     {f.taintPath[idx]}
                   </div>
-                  <div style={{ fontSize: 9.5, color: "var(--muted)", lineHeight: "1.3" }}>
+                  <div style={{ fontSize: 9.5, color: "var(--muted)", lineHeight: "1.35", wordBreak: "break-word" }}>
                     {step.details}
                   </div>
                   {idx < sample.steps.length - 1 && (
@@ -229,14 +230,14 @@ export default function EvidencePanel({ finding: f }: Props) {
           </div>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 0 }}>
           <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: "var(--muted)" }}>Target Code View:</div>
-          <div className="terminal" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+          <div className="terminal overflow-hidden" style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
             <div className="terminal-header">
               <div className="terminal-dot" style={{ background: "#e5484d" }} />
               <div className="terminal-dot" style={{ background: "#d6a847" }} />
               <div className="terminal-dot" style={{ background: "#46a36e" }} />
-              <span className="ml-2 text-xs" style={{ color: "var(--muted)" }}>{f.file.split("/").pop()}</span>
+              <span className="ml-2 text-xs truncate" style={{ color: "var(--muted)" }}>{f.file.split("/").pop()}</span>
             </div>
             <div style={{ padding: 12, fontFamily: "monospace", fontSize: 11, overflowY: "auto", flex: 1, background: "var(--bg)", maxHeight: 310 }}>
               {codeLines.map((line, i) => {
@@ -269,7 +270,11 @@ export default function EvidencePanel({ finding: f }: Props) {
                         ? "#867b6e"
                         : "#1f1b18",
                       fontStyle: line.trim().startsWith("//") ? "italic" : "normal",
-                      whiteSpace: "pre"
+                      whiteSpace: "pre-wrap",
+                      wordBreak: "break-word",
+                      overflowWrap: "anywhere",
+                      minWidth: 0,
+                      flex: 1,
                     }}>
                       {line}
                     </span>

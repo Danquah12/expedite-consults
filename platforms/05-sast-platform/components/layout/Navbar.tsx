@@ -95,7 +95,7 @@ export default function Navbar() {
         </div>
 
         {/* Desk Note Pill Navigation Row */}
-        <nav className="flex items-center gap-2 overflow-x-auto pb-0.5">
+        <nav className="flex flex-wrap items-center gap-1.5">
           {NAV_LINKS.map(({ href, label, badge, icon: Icon }) => {
             const active =
               pathname === href ||
@@ -104,7 +104,7 @@ export default function Navbar() {
               <Link
                 key={href}
                 href={href}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all"
                 style={{
                   background: active ? "var(--accent)" : "var(--surface)",
                   color: active ? "#fbf8f3" : "var(--foreground)",
@@ -116,7 +116,7 @@ export default function Navbar() {
                 }}
               >
                 <Icon
-                  className="w-3.5 h-3.5"
+                  className="w-3.5 h-3.5 shrink-0"
                   style={{
                     color: active ? "#fbf8f3" : "var(--muted)",
                   }}

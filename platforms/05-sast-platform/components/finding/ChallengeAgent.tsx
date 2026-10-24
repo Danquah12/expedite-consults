@@ -118,8 +118,8 @@ export default function ChallengeAgent({ finding: f }: Props) {
               transition: "border 0.3s"
             }}
           >
-            <ShieldCheck size={14} className={done ? "text-[#46a36e]" : "text-slate-500"} />
-            <span className="text-xs font-semibold text-slate-300">{item.label}</span>
+            <ShieldCheck size={14} className={done ? "text-[#46a36e] shrink-0" : "text-[#8b4528] shrink-0"} />
+            <span className="text-xs font-semibold text-[#1f1b18]">{item.label}</span>
           </div>
         ))}
       </div>

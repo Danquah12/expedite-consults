@@ -56,22 +56,22 @@ export default function FindingDetailClient({ id }: { id: string }) {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <main className="flex-1 pt-24 pb-24">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <main className="flex-1 pt-8 pb-24">
+        <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="space-y-6">
             <FindingHeader finding={finding} />
             <AIExplanation finding={finding} />
             <ChallengeAgent finding={finding} />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 space-y-6">
+              <div className="lg:col-span-2 space-y-6 min-w-0">
                 <ExecutiveSummary finding={finding} />
                 <EvidencePanel finding={finding} />
                 <DiffRemediation finding={finding} />
                 <ValidationSteps finding={finding} />
               </div>
 
-              <div className="space-y-6">
+              <div className="space-y-6 min-w-0">
                 <AttackPath finding={finding} />
                 <ExploitabilityScore finding={finding} />
                 <ConfidenceBreakdown finding={finding} />

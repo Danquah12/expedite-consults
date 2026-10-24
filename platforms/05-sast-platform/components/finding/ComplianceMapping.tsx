@@ -66,24 +66,57 @@ select call, "Matching invocation signature."`;
             return (
               <div
                 key={i}
-                className="flex items-start gap-3 rounded-xl p-3"
-                style={{ background: "var(--background)", border: "1px solid var(--border)" }}
+                className="rounded-xl p-3.5 overflow-hidden"
+                style={{
+                  background: "var(--background)",
+                  border: "1px solid var(--border)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                }}
               >
                 <div
-                  className="px-2.5 py-1 rounded-lg text-[10px] font-bold flex-shrink-0 text-[#1f1b18]"
-                  style={{ background: color }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 8,
+                    flexWrap: "wrap",
+                  }}
                 >
-                  {c.reference}
+                  <span className="text-xs font-bold text-[#1f1b18]">{c.framework}</span>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                    <span className="text-[10px] text-[#e5484d] font-bold">NON-COMPLIANT</span>
+                    <ShieldAlert size={12} className="text-[#e5484d]" />
+                  </span>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <span className="text-xs font-semibold text-[#1f1b18]">{c.framework}</span>
-                    <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
-                      <span className="text-[10px] text-[#e5484d] font-bold">NON-COMPLIANT</span>
-                      <ShieldAlert size={12} className="text-[#e5484d]" />
-                    </span>
-                  </div>
-                  <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>{c.description}</div>
+
+                <div>
+                  <span
+                    className="px-2.5 py-1 rounded-md text-[10.5px] font-bold inline-block"
+                    style={{
+                      background: color,
+                      color: "#fbf8f3",
+                      wordBreak: "break-word",
+                      overflowWrap: "anywhere",
+                      maxWidth: "100%",
+                      lineHeight: 1.35,
+                    }}
+                  >
+                    {c.reference}
+                  </span>
+                </div>
+
+                <div
+                  className="text-xs"
+                  style={{
+                    color: "var(--muted)",
+                    wordBreak: "break-word",
+                    overflowWrap: "anywhere",
+                    lineHeight: 1.45,
+                  }}
+                >
+                  {c.description}
                 </div>
               </div>
             );
@@ -98,27 +131,30 @@ select call, "Matching invocation signature."`;
       </div>
 
       {/* XTRIKE XQL Query Box */}
-      <div className="rounded-2xl p-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+      <div className="rounded-2xl p-6 overflow-hidden" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
         <h2 className="text-base font-bold text-[#1f1b18] mb-3 flex items-center gap-2">
-          <Code2 size={16} className="text-[#8b4528]" />
-          XTRIKE XQL Query Node Signature
+          <Code2 size={16} className="text-[#8b4528] shrink-0" />
+          <span>XTRIKE XQL Query Node Signature</span>
         </h2>
-        <div className="terminal">
+        <div className="terminal overflow-hidden">
           <div className="terminal-header">
             <div className="terminal-dot" style={{ background: "#e5484d" }} />
             <div className="terminal-dot" style={{ background: "#d6a847" }} />
             <div className="terminal-dot" style={{ background: "#46a36e" }} />
-            <span className="ml-2 text-xs" style={{ color: "var(--muted)" }}>xtrike/query-detect.xql</span>
+            <span className="ml-2 text-xs truncate" style={{ color: "var(--muted)" }}>xtrike/query-detect.xql</span>
           </div>
           <pre style={{
             padding: 12,
             background: "#f3eee4",
             fontFamily: "monospace",
-            fontSize: 9.5,
+            fontSize: 10,
             color: "#8b4528",
-            overflowX: "auto",
-            lineHeight: 1.4,
-            maxHeight: 180
+            whiteSpace: "pre-wrap",
+            wordBreak: "break-word",
+            overflowWrap: "anywhere",
+            lineHeight: 1.45,
+            maxHeight: 200,
+            overflowY: "auto"
           }}>
             {xqlQuery}
           </pre>

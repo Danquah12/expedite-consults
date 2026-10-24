@@ -34,7 +34,12 @@ export default function ConfidenceBreakdown({ finding: f }: Props) {
                 <span className="text-sm font-bold flex-shrink-0" style={{ color }}>{Math.round(engine.confidence * 100)}%</span>
               </div>
               {engine.details && (
-                <div className="text-[10px] mb-1 pl-6" style={{ color: "var(--muted)" }}>{engine.details}</div>
+                <div
+                  className="text-[10.5px] mb-1.5 pl-6"
+                  style={{ color: "var(--muted)", wordBreak: "break-word", overflowWrap: "anywhere" }}
+                >
+                  {engine.details}
+                </div>
               )}
               <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--background)" }}>
                 <div
