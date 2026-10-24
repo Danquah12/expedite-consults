@@ -1920,7 +1920,7 @@ export default function ValidationEnginePage() {
                   <span style={{ fontFamily: "monospace", fontSize: 10.5 }}>{activeCweEntry.githubGhsa.codeqlQueryId}</span>
                 </div>
                 <div style={{ color: "var(--foreground)", marginTop: 4 }}>
-                  <strong>XTRIKE Exploit-Index (XEDB):</strong> {activeCweEntry.xtrike-exploit-index.edbId} &middot; EPSS {activeCweEntry.xtrike-exploit-index.epssPercentile}
+                  <strong>XTRIKE Exploit-Index (XEDB):</strong> {activeCweEntry.exploitIndex.edbId} &middot; EPSS {activeCweEntry.exploitIndex.epssPercentile}
                 </div>
                 <div style={{ color: "var(--foreground)", marginTop: 4 }}>
                   <strong>XTRIKE VerifyModule Check Module:</strong>{" "}

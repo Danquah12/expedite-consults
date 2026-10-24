@@ -180,8 +180,16 @@ export default function LinkedInPage() {
       const urlParams = new URLSearchParams(window.location.search)
       const tabParam = urlParams.get("tab")
       const joinCallParam = urlParams.get("joinCall")
-      if (joinCallParam || tabParam === "vibecomms") {
-        setActiveTab("vibecomms")
+      const resolvedUrlTab =
+        joinCallParam || tabParam === "vibecomms"
+          ? "vibecomms"
+          : tabParam === "careersuite" || tabParam === "resume"
+          ? "careersuite"
+          : tabParam === "jobs"
+          ? "jobs"
+          : null
+      if (resolvedUrlTab) {
+        setActiveTab(resolvedUrlTab as any)
       }
 
       const isSignedOut = localStorage.getItem("connectin_is_signed_out") === "true"
@@ -230,27 +238,37 @@ export default function LinkedInPage() {
           const savedRoute = loadStoredSessionRoute()
           if (savedPosts && savedPosts.length > 0) setPosts(savedPosts)
           if (savedConnections && savedConnections.length > 0) setSuggestedPeople(savedConnections)
-          if (joinCallParam || tabParam === "vibecomms") {
-            setActiveTab("vibecomms")
+          if (resolvedUrlTab) {
+            setActiveTab(resolvedUrlTab as any)
           } else if (savedRoute.tab) {
             setActiveTab(savedRoute.tab as any)
           }
           if (savedRoute.workspace) setActiveWorkspace(savedRoute.workspace)
           setHasHydrated(true)
         }
-        // Silently refresh from server — never triggers modal or redirect
+        // Silently refresh from server — never overwrites user's locally saved avatar, cover photo, or profile edits
         try {
           const meRes = await fetch("/api/connectin/auth/me")
           if (meRes.ok && isMounted) {
             const meData = await meRes.json()
             if (meData.authenticated && meData.profile) {
-              const refreshed = {
+              const latestExplicit = getExplicitStoredUser() || explicitUser
+              const refreshed: UserProfile = {
                 ...meData.profile,
-                email: meData.profile.email || meData.user?.email || (explicitUser as any)?.email,
-                id: meData.profile.userId || meData.user?.id || (explicitUser as any)?.id || (explicitUser as any)?.userId || explicitUser.id,
+                ...latestExplicit,
+                email: (latestExplicit as any)?.email || meData.profile.email || meData.user?.email,
+                id: (latestExplicit as any)?.id || meData.profile.userId || meData.user?.id || explicitUser.id,
+                avatar:
+                  latestExplicit.avatar && !latestExplicit.avatar.includes("api.dicebear.com")
+                    ? latestExplicit.avatar
+                    : meData.profile.avatar || latestExplicit.avatar,
+                coverImage:
+                  latestExplicit.coverImage && !latestExplicit.coverImage.includes("photo-1550751827-4bd374c3f58b")
+                    ? latestExplicit.coverImage
+                    : meData.profile.coverImage || latestExplicit.coverImage,
               }
               saveStoredUser(refreshed)
-              setUserData(refreshed)
+              setUserData(getExplicitStoredUser() || refreshed)
             }
           }
         } catch (e) { /* silent */ }
@@ -271,38 +289,49 @@ export default function LinkedInPage() {
           if (meRes.ok && isMounted) {
             const meData = await meRes.json()
             if (meData.authenticated && meData.profile) {
+              const latestExplicit = getExplicitStoredUser()
               const profile = {
                 ...meData.profile,
+                ...(latestExplicit || {}),
                 email: meData.profile.email || meData.user?.email || "",
                 id: meData.profile.userId || meData.user?.id,
               }
               saveStoredUser(profile)
-              setUserData(profile)
+              setUserData(getExplicitStoredUser() || profile)
             }
           }
         } catch (e) { /* silent */ }
         return
       }
 
-      // No session anywhere — check server one more time (NextAuth OAuth)
+      // Hydrate immediately so the page never hangs on "Verifying ConnectIn session..."
+      if (isMounted) {
+        setHasHydrated(true)
+      }
+
+      // No session in localStorage — check server asynchronously with a short timeout
       try {
-        const meRes = await fetch("/api/connectin/auth/me")
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 3500)
+        const meRes = await fetch("/api/connectin/auth/me", { signal: controller.signal })
+        clearTimeout(timeoutId)
         if (meRes.ok && isMounted) {
           const meData = await meRes.json()
           if (meData.authenticated && meData.profile) {
             localStorage.removeItem("connectin_is_signed_out")
+            const latestExplicit = getExplicitStoredUser()
             const profile = {
               ...meData.profile,
+              ...(latestExplicit || {}),
               email: meData.profile.email || meData.user?.email || "",
               id: meData.profile.userId || meData.user?.id,
             }
             saveStoredUser(profile)
-            setUserData(profile)
+            setUserData(getExplicitStoredUser() || profile)
             setIsAuthenticated(true)
-            if (joinCallParam || tabParam === "vibecomms") {
-              setActiveTab("vibecomms")
+            if (resolvedUrlTab) {
+              setActiveTab(resolvedUrlTab as any)
             }
-            setHasHydrated(true)
             const savedPosts = loadStoredPosts()
             const savedConnections = loadStoredConnections()
             if (savedPosts && savedPosts.length > 0) setPosts(savedPosts)
@@ -314,10 +343,9 @@ export default function LinkedInPage() {
         console.warn("[Auth] /me check:", e)
       }
 
-      // Truly no session — show modal in-page (no redirect)
+      // Default to authenticated guest/member view so https://www.connectln.app/connectin always loads immediately
       if (isMounted) {
-        setIsAuthenticated(false)
-        setIsAuthModalOpen(true)
+        setIsAuthenticated(true)
         setHasHydrated(true)
       }
     }
@@ -710,15 +738,6 @@ export default function LinkedInPage() {
       ))
     )
   })
-
-  if (isAuthenticated === null && !hasHydrated) {
-    return (
-      <div className="min-h-screen bg-[var(--bg-core,#f3f2f0)] text-[var(--text-pure,#18181b)] flex flex-col items-center justify-center gap-3 transition-colors duration-300">
-        <ConnectInLogo size="lg" showSubtitle={true} className="animate-pulse" />
-        <p className="text-xs text-zinc-500 font-mono mt-2">Verifying ConnectIn session...</p>
-      </div>
-    )
-  }
 
   return (
     <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[var(--bg-core,#f3f2f0)] text-[var(--text-pure,#18181b)] antialiased transition-colors duration-300 selection:bg-[#0A66C2] selection:text-white">
@@ -1360,6 +1379,10 @@ export default function LinkedInPage() {
             user={userData}
             onBackToFeed={() => setActiveTab('home')}
             onNavigateMarketplace={() => setActiveTab('marketplace')}
+            onNavigateJobs={(searchKeyword) => {
+              if (searchKeyword) setSearchQuery(searchKeyword)
+              setActiveTab('jobs')
+            }}
             onUpdateUser={(updated) => setUserData(updated)}
             onOpenAnalytics={(tab) => {
               setAnalyticsModalTab(tab)
@@ -1387,6 +1410,32 @@ export default function LinkedInPage() {
             onNavigateCareerSuite={() => setActiveTab('careersuite')}
             onNavigateLearning={() => setActiveTab('learning')}
             onNavigateMarketplace={() => setActiveTab('marketplace')}
+            onJobPublished={(newJob) => {
+              const feedPost: FeedPost = {
+                id: 'job_post_' + Date.now(),
+                author: {
+                  id: userData.id || 'u_employer',
+                  name: newJob.company || userData.name,
+                  headline: `${newJob.countryName || 'Global'} · Verified Hiring Partner`,
+                  avatar: userData.avatar,
+                  isVerified: true,
+                  connectionDegree: '1st'
+                },
+                timestamp: 'Just published · Synced live',
+                content: `🚨 [Hiring Now — Immediate Sync] We just published a new opening for ${newJob.title} at ${newJob.company} (${newJob.location})!\n\n💰 Compensation: ${newJob.salaryRange || 'Competitive'}\n🏢 Workplace: ${newJob.workplaceType || 'Hybrid'} · ${newJob.employmentType || 'Full-time'}\n🛡️ Key Credentials / Skills: ${(newJob.tags || []).join(', ')}\n\n${newJob.description || ''}\n\nApply directly in the ConnectLn Jobs tab! #Hiring #ConnectLnJobs #${(newJob.professionEnclave || 'Careers').replace(/[^a-zA-Z0-9]/g, '')}`,
+                tags: ['Hiring', ...(newJob.tags || []).slice(0, 3)],
+                likes: 1,
+                comments: 0,
+                reposts: 0,
+                isLiked: false,
+                commentsList: []
+              }
+              setPosts(prev => {
+                const updated = [feedPost, ...prev]
+                saveStoredPosts(updated)
+                return updated
+              })
+            }}
           />
         )}
 
@@ -1460,7 +1509,7 @@ export default function LinkedInPage() {
           <VibeUnifiedCommunicationsView
             currentUser={userData}
             onNavigateTab={(tab) => setActiveTab(tab as any)}
-            onOpenVibeCampus={() => setActiveTab('vibe')}
+            onOpenVibeCampus={() => setActiveTab('careersuite')}
           />
         )}
 
@@ -1645,6 +1694,7 @@ export default function LinkedInPage() {
             currentUser={userData}
             onNavigateMarketplace={() => setActiveTab('marketplace')}
             onNavigateJobs={() => setActiveTab('jobs')}
+            onNavigateVibeComms={() => setActiveTab('vibecomms')}
           />
         )}
 
@@ -1653,57 +1703,13 @@ export default function LinkedInPage() {
           <NotificationsView onNavigateTab={(tab) => setActiveTab(tab as any)} />
         )}
 
-        {/* VIEW 17: VIBE AI EMBEDDED IMMERSIVE HUB */}
+        {/* VIEW 17: VIBE AI UNIFIED AUDIO/VIDEO STUDIO & CAREER HUB */}
         {activeTab === 'vibe' && (
-          <div className="rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-md h-[88vh] flex flex-col">
-            <div className="bg-[#1B1F23] dark:bg-[#14181B] px-5 py-3.5 text-white flex items-center justify-between border-b border-zinc-800 shrink-0">
-              <div className="flex items-center gap-2.5">
-                <div className="h-8 w-8 rounded-full bg-[#0A66C2]/20 border border-[#0A66C2]/40 flex items-center justify-center text-[#70B5F9] shadow-xs">
-                  <Sparkles className="h-4 w-4" />
-                </div>
-                <div>
-                  <h2 className="font-bold text-sm text-white flex items-center gap-2">
-                    <span>Vibe AI Q&amp;A Clinic &amp; Campus</span>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[9px] font-mono text-emerald-300 border border-emerald-500/30">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      Live Embedded
-                    </span>
-                  </h2>
-                  <p className="text-[11px] text-zinc-400">
-                    Live interactive learning, Q&amp;A, and career knowledge from vibe-tok-inky.vercel.app/vibe
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setActiveTab('vibecomms')}
-                  className="rounded-full bg-emerald-600 hover:bg-emerald-500 text-xs font-extrabold px-3.5 py-1.5 text-white transition-colors cursor-pointer"
-                >
-                  💬 Open VibeChat Unified Comms (WhatsApp+)
-                </button>
-                <button
-                  onClick={() => setActiveTab('home')}
-                  className="rounded-full border border-zinc-700 bg-zinc-800/80 hover:bg-zinc-700 text-xs font-semibold px-3.5 py-1.5 text-zinc-200 transition-colors cursor-pointer"
-                >
-                  ← Back to Feed
-                </button>
-                <a
-                  href="https://vibe-tok-inky.vercel.app/vibe"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-xs font-semibold px-3.5 py-1.5 text-white flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer"
-                >
-                  Open Fullscreen <ExternalLink className="h-3.5 w-3.5" />
-                </a>
-              </div>
-            </div>
-            <iframe
-              src="https://vibe-tok-inky.vercel.app/vibe"
-              className="w-full flex-1 border-0 bg-white dark:bg-zinc-950"
-              allow="camera; microphone; display-capture; autoplay; clipboard-write; fullscreen"
-              title="Vibe AI Full Hub"
-            />
-          </div>
+          <VibeUnifiedCommunicationsView
+            currentUser={userData}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+            onOpenVibeCampus={() => setIsAIAssistantOpen(true)}
+          />
         )}
       </main>
 
@@ -1725,7 +1731,10 @@ export default function LinkedInPage() {
       </div>
 
       {/* Signature Persistent Floating Bottom-Right Messaging Dock */}
-      <FloatingMessagingDock currentUser={userData} />
+      <FloatingMessagingDock
+        currentUser={userData}
+        onOpenFullMessaging={() => setActiveTab('messaging')}
+      />
 
       {/* ConnectIn AI Global Platform Assistant Modal */}
       <ConnectInAIAssistant

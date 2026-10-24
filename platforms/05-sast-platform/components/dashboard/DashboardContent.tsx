@@ -520,7 +520,7 @@ export default function DashboardContent() {
                     </td>
                     <td style={{ padding: "9px 10px" }}>
                       <div style={{ fontWeight: 700, color: "var(--foreground)" }}>
-                        {ev.githubGhsa.ghsaId} &middot; {ev.xtrike-exploit-index.edbId}
+                        {ev.githubGhsa.ghsaId} &middot; {ev.exploitIndex.edbId}
                       </div>
                       <div style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: "var(--muted)" }}>
                         {ev.metasploitCheck.msfModule}

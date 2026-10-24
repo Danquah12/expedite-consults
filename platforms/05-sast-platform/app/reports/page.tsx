@@ -15,7 +15,6 @@ import {
 import FINDINGS from "@/data/findings";
 import {
   CANONICAL_VALIDATION_FINDINGS,
-  exportNormalizedValidationSarif,
   type CanonicalValidationFinding,
 } from "@/lib/validation-engine";
 import {
@@ -267,7 +266,33 @@ export default function ReportEnginePage() {
   };
 
   const handleExportSarif = () => {
-    const sarif = exportNormalizedValidationSarif(rawValidationFindings);
+    const sarif = {
+      version: "2.1.0",
+      $schema: "https://json.schemastore.org/sarif-2.1.0.json",
+      runs: [
+        {
+          tool: {
+            driver: {
+              name: "XTRIKE SAST Desk (XTRIKE XQL + XTRIKE DeepFlow + XTRIKE StructSCA + 9 Standards Plugins)",
+              version: "4.2.0",
+            },
+          },
+          results: rawValidationFindings.map((f) => ({
+            ruleId: f.ruleId,
+            level: f.rawSarifRecord.level,
+            message: { text: `${f.title} (${f.cwe})` },
+            locations: [{ physicalLocation: f.rawSarifRecord.physicalLocation }],
+            properties: {
+              cwe: f.cwe,
+              validationStatus: f.status,
+              evidenceConfidence: f.evidenceConfidence,
+              commitSha: f.commitSha,
+              language: f.language,
+            },
+          })),
+        },
+      ],
+    };
     const blob = new Blob([JSON.stringify(sarif, null, 2)], {
       type: "application/json;charset=utf-8",
     });

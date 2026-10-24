@@ -104,6 +104,171 @@ export const MARKETPLACE_CATEGORIES_CONFIG = [
 ]
 
 export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
+  // ================= FEATURED CLOUD PLATFORMS & UTILITIES =================
+  {
+    id: 'prod_expedite_ecosystem_launchpad',
+    name: 'Expedite Consults — Digital Ecosystem Launchpad (67+ Platforms)',
+    tagline: 'Direct single-click gateway across 67+ platforms: Autonomous AST Defense, Expedite Strike 2026, Ægis SOC, TruePlace™ Housing Credit & Real Estate, and Campus OS',
+    category: 'Enterprise Solutions',
+    subCategory: 'Productivity & Field Notes',
+    icon: '🚀',
+    badge: '🔥 Featured 67+ Platforms',
+    rating: 5.0,
+    reviewsCount: 612,
+    activeUsersCount: '28,500+ Enterprise Operators',
+    pricing: {
+      displayPrice: 'Free / Enterprise',
+      billingPeriod: 'cloud gateway',
+      hasFreeTrial: true,
+      trialDays: 30
+    },
+    vendor: {
+      name: 'Expedite Consults',
+      logo: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=100&auto=format&fit=crop&q=80',
+      isVerified: true,
+      isFellow: true
+    },
+    overview: 'Direct single-click access across all 67 Expedite Consults platforms: Live Command Center Studios, Autonomous AST Defense (Platforms 05–19: SAST Proof Engine, SCA, Secrets, Container, K8s, IaC, DAST, API Desk, Mobile, Exploitability, Threat Modeling, CERBERUS-RE, Aegis Recovery), Expedite Strike 2026, Ægis SOC Platform, TruePlace™ Housing Credit & Real Estate Intelligence, and Campus Operating Ecosystems.',
+    features: [
+      { title: '67+ Live Cloud & Local Platforms', desc: 'Unified single-click launcher for SAST/DAST/API Proof Engines, Autonomous PenTest Console, and Expedite Strike 2026.' },
+      { title: 'TruePlace™ Housing Credit & Real Estate', desc: '7-Pillar deterministic Housing Passport™, custom underwriting intake, 25-home DMV affordability & HomeTruth™ property audits.' },
+      { title: 'Cross-Platform SOAR & Executive Telemetry', desc: 'Boardroom Executive Reporting, GraphQL/REST API Gateway, Security Data Lake, and STIX 2.1 Threat Intelligence Hub.' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&auto=format&fit=crop&q=80'],
+    demoUrl: 'https://expedite-consults.vercel.app/launchpad',
+    liveUrl: 'https://expedite-consults.vercel.app/launchpad',
+    isVercelLive: true,
+    isLaunchpadDeployed: true,
+    launchpadCategory: 'orchestration',
+    architecture: {
+      title: 'Federated Multi-Platform Cloud Mesh',
+      summary: 'Edge-routed gateway connecting 67 specialized security, real estate, career, and enterprise platforms.',
+      layers: ['Next.js Global Edge Launchpad', '18-Platform AST & SOAR Mesh', 'TruePlace™ Deterministic Credit Engine'],
+      latency: '< 15ms Edge Dispatch',
+      dataPrivacy: 'Zero-Trust RBAC & SOC 2 Type II'
+    },
+    integrations: ['ConnectIn OS', 'Ægis SOC', 'Expedite Strike 2026', 'TruePlace™', 'Splunk', 'Sentinel', 'Jira'],
+    security: {
+      compliance: ['SOC 2 Type II', 'NIST 800-53', 'FCRA § 604/611/615', 'OWASP Top 10'],
+      encryption: 'TLS 1.3 + AES-256-GCM',
+      isolation: 'Multi-Tenant Zero-Trust Federation'
+    },
+    pricingTiers: [
+      {
+        name: 'Cloud Launchpad Access',
+        price: '$0',
+        period: 'instant launch',
+        description: 'Immediate browser access to the Digital Ecosystem Launchpad and live cloud consoles.',
+        features: ['All 67+ platform links', 'TruePlace™ Housing Passport', 'SAST & API Proof Studios', 'Autonomous PenTest & DAST'],
+        recommended: true,
+        ctaText: 'Launch Ecosystem Now'
+      }
+    ],
+    reviews: [
+      {
+        author: 'Marcus Vance',
+        role: 'Principal Enterprise Architect',
+        company: 'Apex Defense Systems',
+        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+        rating: 5,
+        text: 'Having all 67 platforms—from XTRIKE SAST/API Proof Studios to TruePlace Housing Passport—accessible from a single command launchpad saves our team hours every day.',
+        date: 'October 18, 2026'
+      }
+    ],
+    documentation: {
+      quickstart: 'Open https://expedite-consults.vercel.app/launchpad and click any platform card to launch its live cloud or local console.',
+      apiEndpoints: ['https://expedite-consults.vercel.app/launchpad'],
+      sdkSupport: ['Web Browser', 'REST / GraphQL Gateway', 'CLI']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.99% Uptime SLA',
+      channel: '24/7 Expedite Mission Control Desk',
+      responseHours: '< 1 Hour'
+    }
+  },
+  {
+    id: 'prod_pdfadore_suite',
+    name: 'PDFAdore — All-in-One Private PDF Tools (31+ Browser Utilities)',
+    tagline: 'Merge, split, compress, convert, sign, edit, and protect PDFs in seconds — 100% client-side privacy with zero server uploads',
+    category: 'Software',
+    subCategory: 'Productivity & Field Notes',
+    icon: '📄',
+    badge: '🔒 100% Client-Side Privacy',
+    rating: 4.99,
+    reviewsCount: 845,
+    activeUsersCount: '45,000+ Professionals',
+    pricing: {
+      displayPrice: 'Free',
+      billingPeriod: 'no signup required',
+      hasFreeTrial: true,
+      trialDays: 365
+    },
+    vendor: {
+      name: 'PDFAdore',
+      logo: 'https://www.pdfadore.com/apple-icon.png',
+      isVerified: true,
+      isFellow: true
+    },
+    overview: 'PDFAdore provides 31+ fast, free, and 100% private online PDF tools directly in your browser. Merge, split, compress, repair, organize, convert to/from Word (.docx), PowerPoint (.pptx), Excel (.xlsx), JPG/PNG, HTML, sign, watermark, unlock, and password-protect PDFs with zero server uploads — your files never leave your device.',
+    features: [
+      { title: '31+ Complete PDF Tools', desc: 'Merge, Split, Remove Pages, Organize, Compress, Repair, Word/Excel/PPT/JPG/HTML conversion, e-Sign, and Protect.' },
+      { title: '100% Client-Side Processing', desc: 'Documents are processed locally inside your browser using WebAssembly — sensitive contracts and blueprints never leave your device.' },
+      { title: 'Instant Zero-Friction Workflow', desc: 'No registration required, sub-second document rendering, and precision quality compression presets.' }
+    ],
+    screenshots: ['https://www.pdfadore.com/opengraph-image'],
+    demoUrl: 'https://www.pdfadore.com/',
+    liveUrl: 'https://www.pdfadore.com/',
+    isVercelLive: true,
+    isLaunchpadDeployed: true,
+    launchpadCategory: 'ai',
+    architecture: {
+      title: '100% In-Browser WebAssembly PDF Engine',
+      summary: 'Zero-upload local document manipulation engine ensuring complete data sovereignty for legal, medical, cyber, and construction documents.',
+      layers: ['Client-Side WebAssembly PDF Core', 'Local Browser Memory Sandbox', 'Zero-Upload Privacy Guard'],
+      latency: 'Instant Local Execution',
+      dataPrivacy: '100% On-Device (Files Never Leave Browser)'
+    },
+    integrations: ['Word (.docx)', 'Excel (.xlsx)', 'PowerPoint (.pptx)', 'JPG / PNG', 'HTML', 'ConnectIn Document Vault'],
+    security: {
+      compliance: ['100% Client-Side Privacy', 'GDPR / HIPAA Friendly', 'Zero Cloud Storage Retention'],
+      encryption: 'AES-256 PDF Password Protection',
+      isolation: 'Strict Local Browser Sandbox'
+    },
+    pricingTiers: [
+      {
+        name: 'PDFAdore All 31 Tools',
+        price: 'Free',
+        period: 'unlimited browser use',
+        description: 'Full access to all 31 PDF organize, optimize, convert, edit, and security tools.',
+        features: ['Merge, Split & Compress PDF', 'PDF to Word, Excel, PPT & JPG', 'Sign, Protect & Unlock PDF', '100% Client-Side Privacy'],
+        recommended: true,
+        ctaText: 'Open PDFAdore Now'
+      }
+    ],
+    reviews: [
+      {
+        author: 'Elena Rostova',
+        role: 'Chief Legal & Compliance Counsel',
+        company: 'Sovereign Shield Advisory',
+        avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
+        rating: 5,
+        text: 'Because PDFAdore runs 100% client-side in the browser with zero uploads, our legal, healthcare, and defense teams can safely merge, sign, and convert sensitive PDFs without data leakage.',
+        date: 'October 20, 2026'
+      }
+    ],
+    documentation: {
+      quickstart: 'Visit https://www.pdfadore.com/ and drop any PDF or Office document to merge, compress, convert, or sign directly in your browser.',
+      apiEndpoints: ['https://www.pdfadore.com/', 'https://www.pdfadore.com/all-tools'],
+      sdkSupport: ['Web Browser (Desktop & Mobile)', 'PWA']
+    },
+    caseStudies: [],
+    support: {
+      sla: 'Always-On Client-Side Availability',
+      channel: 'PDFAdore Web Portal',
+      responseHours: 'Instant'
+    }
+  },
   // ================= SKILLED TRADES & CARPENTRY =================
   {
     id: 'prod_festool_domino',

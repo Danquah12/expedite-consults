@@ -88,16 +88,34 @@ export function UniversalSearchModal({
     })))
   }, [enclaveId])
 
-  // Platform Modules & Connected Apps (including Resume Preparation App)
+  // Platform Modules & Connected Apps (including Resume Preparation App, Ecosystem Launchpad, and PDFAdore)
   const ALL_MODULES = [
     {
       id: "careersuite",
       label: "Expedite CareerSuite™ — Resume Preparation App",
-      desc: "AI Resume Tailoring, ATS Fit Score, Corporate & USAJOBS Federal KSAs, and Profile Maximizer",
+      desc: "Embedded AI Resume Tailoring, ATS Fit Score, Corporate & USAJOBS Federal KSAs, and Profile Maximizer",
       icon: "📝",
       url: "https://tuhousing.vercel.app/",
       isExternal: false,
       badge: "RESUME AI"
+    },
+    {
+      id: "expedite-ecosystem-launchpad",
+      label: "Expedite Consults — Digital Ecosystem Launchpad (67+ Platforms)",
+      desc: "Unified command center to launch 67+ live production platforms across AI, Cybersecurity, Healthcare, Cloud, and E-Commerce (https://expedite-consults.vercel.app/launchpad)",
+      icon: "🚀",
+      url: "https://expedite-consults.vercel.app/launchpad",
+      isExternal: true,
+      badge: "67+ APPS"
+    },
+    {
+      id: "pdfadore-suite",
+      label: "PDFAdore — All-in-One Private PDF Tools (31+ Utilities)",
+      desc: "100% browser-based private PDF workstation: Merge, Split, Compress, Sign, Redact, OCR, Watermark & Convert PDFs with zero server uploads (https://www.pdfadore.com/)",
+      icon: "📄",
+      url: "https://www.pdfadore.com/",
+      isExternal: true,
+      badge: "PDF SUITE"
     },
     ...(getEnclaveModules(enclaveId, true) || [])
   ]

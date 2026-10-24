@@ -4,6 +4,7 @@ import json
 import requests
 from dotenv import load_dotenv
 load_dotenv()
+from typing import Optional
 from fastapi import FastAPI, HTTPException, Request, Depends, Header, Query
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, HTMLResponse
@@ -197,23 +198,23 @@ except Exception:
     pass
 
 class GenerationRequest(BaseModel):
-    master_resume: str = ""
-    linkedin_experience: str = ""
+    master_resume: Optional[str] = ""
+    linkedin_experience: Optional[str] = ""
     job_description: str
     api_key: str
-    user_id: str = ""
-    candidate_name: str = ""
-    candidate_contact: str = ""
-    target_company: str = ""
-    possible_interview_questions: str = ""
-    resume_template: str = "cyber_navy"
+    user_id: Optional[str] = ""
+    candidate_name: Optional[str] = ""
+    candidate_contact: Optional[str] = ""
+    target_company: Optional[str] = ""
+    possible_interview_questions: Optional[str] = ""
+    resume_template: Optional[str] = "cyber_navy"
 
 class FederalGenerationRequest(GenerationRequest):
-    federal_gs_grade: str = ""
-    federal_series: str = ""
-    federal_ksa_prompts: str = ""
+    federal_gs_grade: Optional[str] = ""
+    federal_series: Optional[str] = ""
+    federal_ksa_prompts: Optional[str] = ""
 
-async def get_current_user(authorization: str = Header(None)):
+async def get_current_user(authorization: Optional[str] = Header(None)):
     if not authorization:
         return None
     try:
@@ -228,18 +229,18 @@ async def get_current_user(authorization: str = Header(None)):
 class RegisterRequest(BaseModel):
     username: str
     password: str
-    email: str = None
-    candidate_name: str = None
-    phone: str = None
-    location: str = None
-    linkedin_url: str = None
-    target_role: str = None
-    clearance: str = None
-    candidate_contact: str = None
-    master_resume: str = None
-    linkedin_experience: str = None
-    api_key: str = None
-    preferred_template: str = "cyber_navy"
+    email: Optional[str] = None
+    candidate_name: Optional[str] = None
+    phone: Optional[str] = None
+    location: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    target_role: Optional[str] = None
+    clearance: Optional[str] = None
+    candidate_contact: Optional[str] = None
+    master_resume: Optional[str] = None
+    linkedin_experience: Optional[str] = None
+    api_key: Optional[str] = None
+    preferred_template: Optional[str] = "cyber_navy"
 
 class LoginRequest(BaseModel):
     username: str
@@ -248,13 +249,13 @@ class LoginRequest(BaseModel):
 class ChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str
-    confirm_password: str = None
+    confirm_password: Optional[str] = None
 
 class ResetPasswordRequest(BaseModel):
     username: str
     email: str
     new_password: str
-    confirm_password: str = None
+    confirm_password: Optional[str] = None
 
 class AdminResetPasswordRequest(BaseModel):
     new_password: str
@@ -263,40 +264,40 @@ class MigrateRequest(BaseModel):
     guest_id: str
 
 class ProfileUpdateRequest(BaseModel):
-    api_key: str = None
-    master_resume: str = None
-    linkedin_experience: str = None
-    candidate_name: str = None
-    candidate_contact: str = None
-    email: str = None
-    phone: str = None
-    location: str = None
-    linkedin_url: str = None
-    target_role: str = None
-    clearance: str = None
-    preferred_template: str = None
+    api_key: Optional[str] = None
+    master_resume: Optional[str] = None
+    linkedin_experience: Optional[str] = None
+    candidate_name: Optional[str] = None
+    candidate_contact: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    location: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    target_role: Optional[str] = None
+    clearance: Optional[str] = None
+    preferred_template: Optional[str] = None
 
 class ManualApplicationRequest(BaseModel):
     target_company: str
     job_title: str
     status: str
-    notes: str = None
-    applied_date: str = None
+    notes: Optional[str] = None
+    applied_date: Optional[str] = None
 
 class ApplicationUpdateRequest(BaseModel):
-    status: str = None
-    notes: str = None
-    applied_date: str = None
-    interview_date: str = None
-    follow_up_date: str = None
-    target_company: str = None
-    job_title: str = None
+    status: Optional[str] = None
+    notes: Optional[str] = None
+    applied_date: Optional[str] = None
+    interview_date: Optional[str] = None
+    follow_up_date: Optional[str] = None
+    target_company: Optional[str] = None
+    job_title: Optional[str] = None
 
 class TimelineEventRequest(BaseModel):
-    application_id: int = None
+    application_id: Optional[int] = None
     title: str
     event_date: str
-    description: str = None
+    description: Optional[str] = None
 
 def get_gemini_prompt(master_resume: str, job_description: str, linkedin_experience: str = "", possible_interview_questions: str = "") -> str:
     linkedin_section = f"\nLINKEDIN EXPERIENCE:\n{linkedin_experience}\n(Please reconcile and merge any relevant details from this LinkedIn experience into the final output.)\n" if linkedin_experience else ""
@@ -1003,7 +1004,7 @@ async def download_application_doc(app_id: int, doc_type: str):
 @app.get("/api/user/last-resume/download/{doc_type}")
 async def download_user_last_resume_doc(
     doc_type: str,
-    token: str = Query(None),
+    token: Optional[str] = Query(None),
     current_user: dict = Depends(get_current_user)
 ):
     user = current_user
@@ -1242,7 +1243,7 @@ async def api_get_last_resume(current_user: dict = Depends(get_current_user)):
 
 # --- APPLICATION TRACKER ROUTES ---
 @app.get("/api/applications")
-async def api_get_applications(current_user: dict = Depends(get_current_user), guest_id: str = None):
+async def api_get_applications(current_user: dict = Depends(get_current_user), guest_id: Optional[str] = None):
     user_key = str(current_user["id"]) if current_user else guest_id
     if not user_key:
         return {"applications": []}
@@ -1264,7 +1265,7 @@ async def api_get_applications(current_user: dict = Depends(get_current_user), g
     return {"applications": apps}
 
 @app.post("/api/applications/manual")
-async def api_add_manual_application(req: ManualApplicationRequest, current_user: dict = Depends(get_current_user), guest_id: str = None):
+async def api_add_manual_application(req: ManualApplicationRequest, current_user: dict = Depends(get_current_user), guest_id: Optional[str] = None):
     user_key = str(current_user["id"]) if current_user else guest_id
     if not user_key:
         raise HTTPException(status_code=400, detail="User identifier (auth or guest ID) required.")
@@ -1280,7 +1281,7 @@ async def api_add_manual_application(req: ManualApplicationRequest, current_user
     return {"status": "success", "application_id": app_id}
 
 @app.put("/api/applications/{id}")
-async def api_update_application(id: int, req: ApplicationUpdateRequest, current_user: dict = Depends(get_current_user), guest_id: str = None):
+async def api_update_application(id: int, req: ApplicationUpdateRequest, current_user: dict = Depends(get_current_user), guest_id: Optional[str] = None):
     user_key = str(current_user["id"]) if current_user else guest_id
     if not user_key:
         raise HTTPException(status_code=400, detail="User identifier (auth or guest ID) required.")
@@ -1299,7 +1300,7 @@ async def api_update_application(id: int, req: ApplicationUpdateRequest, current
     return {"status": "success"}
 
 @app.delete("/api/applications/{id}")
-async def api_delete_application(id: int, current_user: dict = Depends(get_current_user), guest_id: str = None):
+async def api_delete_application(id: int, current_user: dict = Depends(get_current_user), guest_id: Optional[str] = None):
     user_key = str(current_user["id"]) if current_user else guest_id
     if not user_key:
         raise HTTPException(status_code=400, detail="User identifier (auth or guest ID) required.")
@@ -1308,7 +1309,7 @@ async def api_delete_application(id: int, current_user: dict = Depends(get_curre
     return {"status": "success"}
 
 @app.delete("/api/applications")
-async def api_clear_history(current_user: dict = Depends(get_current_user), guest_id: str = None):
+async def api_clear_history(current_user: dict = Depends(get_current_user), guest_id: Optional[str] = None):
     user_key = str(current_user["id"]) if current_user else guest_id
     if not user_key:
         raise HTTPException(status_code=400, detail="User identifier (auth or guest ID) required.")
@@ -1318,7 +1319,7 @@ async def api_clear_history(current_user: dict = Depends(get_current_user), gues
 
 # --- TIMELINE ROUTES ---
 @app.get("/api/timeline")
-async def api_get_timeline(current_user: dict = Depends(get_current_user), guest_id: str = None):
+async def api_get_timeline(current_user: dict = Depends(get_current_user), guest_id: Optional[str] = None):
     user_key = str(current_user["id"]) if current_user else guest_id
     if not user_key:
         return {"events": []}
@@ -1326,7 +1327,7 @@ async def api_get_timeline(current_user: dict = Depends(get_current_user), guest
     return {"events": events}
 
 @app.post("/api/timeline")
-async def api_add_timeline_event(req: TimelineEventRequest, current_user: dict = Depends(get_current_user), guest_id: str = None):
+async def api_add_timeline_event(req: TimelineEventRequest, current_user: dict = Depends(get_current_user), guest_id: Optional[str] = None):
     user_key = str(current_user["id"]) if current_user else guest_id
     if not user_key:
         raise HTTPException(status_code=400, detail="User identifier (auth or guest ID) required.")
@@ -1341,7 +1342,7 @@ async def api_add_timeline_event(req: TimelineEventRequest, current_user: dict =
     return {"status": "success", "event_id": event_id}
 
 @app.delete("/api/timeline/{id}")
-async def api_delete_timeline_event(id: int, current_user: dict = Depends(get_current_user), guest_id: str = None):
+async def api_delete_timeline_event(id: int, current_user: dict = Depends(get_current_user), guest_id: Optional[str] = None):
     user_key = str(current_user["id"]) if current_user else guest_id
     if not user_key:
         raise HTTPException(status_code=400, detail="User identifier (auth or guest ID) required.")
@@ -1458,7 +1459,7 @@ async def api_get_resume_templates():
 class ProfileOptimizerRequest(BaseModel):
     master_resume: str
     api_key: str
-    target_role: str = ""
+    target_role: Optional[str] = ""
 
 def get_profile_optimization_prompt(master_resume: str, target_role: str = "") -> str:
     role_context = f"\nTARGET ROLE/INDUSTRY: {target_role}\n" if target_role else ""

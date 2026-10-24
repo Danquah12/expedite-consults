@@ -25,7 +25,30 @@ export interface EnclaveModuleItem {
   badge?: string
 }
 
+export const NOCTIS_SOCIAL_MENU_GROUP: MoreMenuGroup = {
+  category: "Connected Social & Global Network 🌙",
+  items: [
+    {
+      id: "noctis_social",
+      label: "🌙 Noctis Social Network",
+      desc: "Connect & engage on Noctis Social (https://www.noctis.social)",
+      url: "https://www.noctis.social",
+      isExternal: true,
+      badge: "NOCTIS.SOCIAL"
+    }
+  ]
+}
+
 export function getCategorizedMoreMenu(
+  enclaveId?: string,
+  isAdminUser: boolean = false,
+  profession?: string
+): MoreMenuGroup[] {
+  const groups = getCategorizedMoreMenuInternal(enclaveId, isAdminUser, profession)
+  return [NOCTIS_SOCIAL_MENU_GROUP, ...groups]
+}
+
+function getCategorizedMoreMenuInternal(
   enclaveId?: string,
   isAdminUser: boolean = false,
   profession?: string
@@ -38,6 +61,14 @@ export function getCategorizedMoreMenu(
       {
         category: "Job Site & Subcontractor Hub 🔨",
         items: [
+          {
+            id: "noctis_social_trades",
+            label: "🌙 Noctis Social",
+            desc: "Global social feed & community network (noctis.social)",
+            url: "https://www.noctis.social",
+            isExternal: true,
+            badge: "LIVE SOCIAL"
+          },
           {
             id: "skillhands_app",
             label: "🛠️ SkillHands Vocational Trade Hub",

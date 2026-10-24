@@ -575,19 +575,19 @@ export async function POST(req: NextRequest) {
             ${fr.stepsToReproduce.map(st => `<li style="margin-bottom:4px;">${escapeHtml(st)}</li>`).join("")}
           </ol>
 
-          <h3 style="margin:14px 0 6px 0;font-size:14px;color:#0f172a;border-bottom:1px solid #f1f5f9;padding-bottom:4px;">Evidence &amp; Collected Exploitation Proof</h3>
+          <h3 style="margin:14px 0 6px 0;font-size:14px;color:#0f172a;border-bottom:1px solid #f1f5f9;padding-bottom:4px;">Verbatim HTTP Wire Evidence &amp; Forensic Verification Proof</h3>
           <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:12px 14px;font-size:12px;margin-bottom:12px;">
             <div style="margin-bottom:8px;">
-              <strong>Forensic Evidence of TTP:</strong><br/>
+              <strong>Forensic Verification Record:</strong><br/>
               <code style="color:#be123c;font-weight:700;">${escapeHtml(fr.evidence.forensicHeader)}</code><br/>
               <span>${escapeHtml(fr.evidence.ruleMatchLine)}</span><br/>
-              <strong>Matched Indicator:</strong> <code>${escapeHtml(fr.evidence.matchedIndicator)}</code>
+              <strong>Directly Observed Indicator:</strong> <code>${escapeHtml(fr.evidence.matchedIndicator)}</code>
             </div>
 
-            <!-- Sample Collected Exploitation Evidence Cards -->
+            <!-- Sample Collected Forensic Verification Evidence Cards -->
             <div style="margin:12px 0;padding:10px 12px;background:#fff1f2;border:1px solid #fecdd3;border-radius:6px;">
               <div style="font-weight:800;color:#be123c;font-size:12.5px;margin-bottom:8px;">
-                🔬 Sample Collected Evidence of Exploitation (${fr.evidence.collectedExploitationSamples.length} Verified Forensic Captures):
+                🔬 Captured Forensic Verification Artifacts (${fr.evidence.collectedExploitationSamples.length} Verbatim Wire Captures):
               </div>
               ${fr.evidence.collectedExploitationSamples
                 .map(
@@ -597,21 +597,21 @@ export async function POST(req: NextRequest) {
                     <strong style="color:#9f1239;font-size:12px;">[${escapeHtml(ev.artifactId)}] ${escapeHtml(ev.title)}</strong>
                     <span style="background:#ffe4e6;color:#be123c;font-family:monospace;font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;">${escapeHtml(ev.category)}</span>
                   </div>
-                  <div style="font-size:11px;font-weight:700;color:#475569;margin-bottom:2px;">Injected Exploit Request / Command:</div>
+                  <div style="font-size:11px;font-weight:700;color:#475569;margin-bottom:2px;">Executed HTTP Probe / Verification Command:</div>
                   <pre style="margin:0 0 6px 0;padding:8px;background:#0f172a;color:#38bdf8;border-radius:4px;font-size:11px;font-family:monospace;white-space:pre-wrap;word-break:break-all;">${escapeHtml(ev.capturedCommandOrRequest)}</pre>
-                  <div style="font-size:11px;font-weight:700;color:#065f46;margin-bottom:2px;">Collected Exploitation Output / Sample Loot Proof:</div>
+                  <div style="font-size:11px;font-weight:700;color:#065f46;margin-bottom:2px;">Verbatim Captured Server Response / Wire Proof:</div>
                   <pre style="margin:0 0 6px 0;padding:8px;background:#022c22;color:#6ee7b7;border-radius:4px;font-size:11px;font-family:monospace;white-space:pre-wrap;word-break:break-all;">${escapeHtml(ev.capturedOutputOrLoot)}</pre>
-                  <div style="font-size:11.5px;color:#1e293b;"><strong>Customer Confidence (CI) Summary:</strong> ${escapeHtml(ev.customerCiSummary)}</div>
+                  <div style="font-size:11.5px;color:#1e293b;"><strong>Verification Verdict:</strong> ${escapeHtml(ev.customerCiSummary)}</div>
                   <div style="font-size:10px;color:#64748b;font-family:monospace;margin-top:3px;">Chain-of-Custody SHA-256: ${escapeHtml(ev.sha256Digest)}</div>
                 </div>`
                 )
                 .join("")}
             </div>
 
-            <!-- Visual Pictures of How It Was Exploited -->
+            <!-- Visual Forensic Verification Diagrams -->
             <div style="margin:12px 0;padding:10px 12px;background:#0f172a;border:1px solid #38bdf8;border-radius:6px;color:#f8fafc;">
               <div style="font-weight:800;color:#38bdf8;font-size:12.5px;margin-bottom:8px;">
-                📸 Visual Pictures of How ${escapeHtml(fr.findingId)} Was Exploited (Customer CI Forensic Screenshots):
+                📸 Visual Forensic Verification Diagrams (${escapeHtml(fr.findingId)}):
               </div>
               ${fr.evidence.exploitationPictures
                 .map(

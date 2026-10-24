@@ -148,8 +148,9 @@ export function MarketplaceView({
     // 1. Strict Enclave Least-Privilege Isolation
     // Only apply enclave restriction when in 'Discover' without search query and when showAllEcosystem is false
     const isGlobalCategory = ['Cybersecurity', 'Launchpad', 'Software', 'AI', 'Cloud', 'Training', 'Enterprise', 'Solutions', 'Sphera', 'Deals'].includes(selectedMainCategory)
+    const isFeaturedGlobalApp = p.id === 'prod_expedite_ecosystem_launchpad' || p.id === 'prod_pdfadore_suite'
 
-    if (!showAllEcosystem && !searchQuery.trim() && !isGlobalCategory) {
+    if (!showAllEcosystem && !searchQuery.trim() && !isGlobalCategory && !isFeaturedGlobalApp) {
       if (userEnclave === 'trades_construction') {
         if (p.professionEnclave && p.professionEnclave !== 'trades_construction') return false
         if (!p.professionEnclave && !['Tools & Joinery', 'CAD & Measurement', 'Lumber & Materials', 'Hardware', 'Trades & Vocational Network', 'Productivity & Field Notes', 'Trade Machinery & Commerce', 'Video Masterclasses & Tutorials'].includes(p.subCategory)) return false
@@ -314,6 +315,26 @@ export function MarketplaceView({
           </div>
 
           <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <a
+              href="https://expedite-consults.vercel.app/launchpad"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white px-4 py-2 text-xs font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer transition-all"
+            >
+              <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+              <span>Ecosystem Launchpad (67+ Apps) ↗</span>
+            </a>
+
+            <a
+              href="https://www.pdfadore.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full bg-rose-600 hover:bg-rose-500 text-white px-4 py-2 text-xs font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer transition-all"
+            >
+              <span>📄</span>
+              <span>PDFAdore (31+ PDF Tools) ↗</span>
+            </a>
+
             <button
               type="button"
               onClick={() => {
@@ -323,7 +344,7 @@ export function MarketplaceView({
               className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white px-4 py-2 text-xs font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer transition-colors"
             >
               <Sparkles className="h-3.5 w-3.5" />
-              <span>Launchpad Fleet (24+ Apps)</span>
+              <span>Launchpad Fleet Catalog</span>
             </button>
 
             <button
@@ -716,8 +737,24 @@ export function MarketplaceView({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 text-xs font-mono text-purple-300 shrink-0">
-                  <span className="rounded-lg bg-white/10 px-3 py-1 border border-white/15">
+                <div className="flex items-center gap-2 text-xs font-mono text-purple-300 shrink-0 flex-wrap">
+                  <a
+                    href="https://expedite-consults.vercel.app/launchpad"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-lg bg-gradient-to-r from-teal-400 to-emerald-500 hover:from-teal-300 hover:to-emerald-400 text-zinc-950 font-sans font-black text-xs px-3 py-1.5 flex items-center gap-1.5 shadow-sm transition-all"
+                  >
+                    <span>🚀 Open Master Launchpad (67+ Platforms) ↗</span>
+                  </a>
+                  <a
+                    href="https://www.pdfadore.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-sans font-black text-xs px-3 py-1.5 flex items-center gap-1.5 shadow-sm transition-all"
+                  >
+                    <span>📄 Open PDFAdore (31+ PDF Tools) ↗</span>
+                  </a>
+                  <span className="rounded-lg bg-white/10 px-3 py-1.5 border border-white/15">
                     {filteredProducts.length} Platforms Live
                   </span>
                 </div>
@@ -726,7 +763,7 @@ export function MarketplaceView({
               {/* Sub-Category Filter Pills */}
               <div className="pt-2 border-t border-white/10 flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
                 {[
-                  { id: 'All', label: '🚀 All Fleet (24+)' },
+                  { id: 'All', label: '🚀 All Fleet (26+)' },
                   { id: 'security', label: '🛡️ Cyber & PenTest' },
                   { id: 'ai', label: '🤖 AI & Media Intelligence' },
                   { id: 'marketplace', label: '🛍️ Escrow Commerce & Eats' },
@@ -760,7 +797,7 @@ export function MarketplaceView({
               <Search className="h-4 w-4 text-zinc-400 mr-2 shrink-0" />
               <input
                 type="text"
-                placeholder="Search software, pentests, zero trust retainers, O'Reilly certifications, APIs..."
+                placeholder="Search Launchpad, PDFAdore, software, pentests, zero trust retainers, certifications..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-transparent text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-500 focus:outline-none dark:text-zinc-100"
@@ -806,27 +843,36 @@ export function MarketplaceView({
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-black text-sm text-white">
-                      Ecosystem Fleet &amp; Mission Control
+                      Expedite Digital Ecosystem Launchpad &amp; Featured Cloud Suites
                     </span>
                     <span className="rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 text-[10px] px-2 py-0.5 font-bold uppercase tracking-wider">
-                      24+ Live Platforms
+                      67+ Live Platforms
                     </span>
                   </div>
                   <p className="text-xs text-purple-200/80">
-                    Ægis Mission Control (:9000), AXIOM ASPM (:9012), SAST Proof Engine (:3005) &amp; Autonomous PenTest (:9011) are live and accessible across all enclaves.
+                    Launch the 67+ Platform Digital Ecosystem Launchpad, PDFAdore (31+ Private PDF Tools), Ægis Mission Control, AXIOM ASPM &amp; SAST Proof Engine across all enclaves.
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 shrink-0 flex-wrap">
                 <a
-                  href="https://ecosystem-launchpad.vercel.app/"
+                  href="https://expedite-consults.vercel.app/launchpad"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="rounded-xl bg-gradient-to-r from-teal-400 to-emerald-500 hover:from-teal-300 hover:to-emerald-400 text-zinc-950 font-black text-xs px-3.5 py-2 flex items-center gap-1.5 shadow-md transition-all hover:scale-105"
                 >
                   <Zap className="h-3.5 w-3.5 fill-zinc-950 text-zinc-950" />
-                  <span>Launch Mission Control ↗</span>
+                  <span>Ecosystem Launchpad ↗</span>
+                </a>
+
+                <a
+                  href="https://www.pdfadore.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black text-xs px-3.5 py-2 flex items-center gap-1.5 shadow-md transition-all hover:scale-105"
+                >
+                  <span>📄 PDFAdore (31+ PDF Tools) ↗</span>
                 </a>
 
                 <button
@@ -836,7 +882,7 @@ export function MarketplaceView({
                   }}
                   className="rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs px-3.5 py-2 font-bold transition-all border border-white/15"
                 >
-                  Open Launchpad Fleet (24+ Apps) →
+                  Open Launchpad Fleet →
                 </button>
               </div>
             </div>

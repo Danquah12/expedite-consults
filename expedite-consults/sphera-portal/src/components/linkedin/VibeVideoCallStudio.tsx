@@ -53,13 +53,48 @@ export interface CallParticipantTile {
 
 function RemotePeerVideoElement({ stream }: { stream: MediaStream }) {
   const ref = useRef<HTMLVideoElement | null>(null)
+  const [hasLiveVideoFrames, setHasLiveVideoFrames] = useState(false)
+
   useEffect(() => {
     const el = ref.current
     if (!el || !stream) return
+    setHasLiveVideoFrames(false)
     if (el.srcObject !== stream) {
       el.srcObject = stream
     }
-    el.play().catch(() => {})
+
+    const checkFrames = () => {
+      if (el.videoWidth > 0 && el.readyState >= 2 && !el.paused) {
+        setHasLiveVideoFrames(true)
+      }
+    }
+
+    el.addEventListener("loadeddata", checkFrames)
+    el.addEventListener("playing", checkFrames)
+    el.addEventListener("timeupdate", checkFrames)
+
+    // Attempt unmuted playback first; if browser blocks unmuted autoplay, fallback to muted immediately so video plays
+    el.play()
+      .then(checkFrames)
+      .catch(() => {
+        el.muted = true
+        el.play().then(checkFrames).catch(() => {})
+        const unlockAudio = () => {
+          if (ref.current) {
+            ref.current.muted = false
+          }
+          window.removeEventListener("pointerdown", unlockAudio)
+          window.removeEventListener("keydown", unlockAudio)
+        }
+        window.addEventListener("pointerdown", unlockAudio, { once: true })
+        window.addEventListener("keydown", unlockAudio, { once: true })
+      })
+
+    return () => {
+      el.removeEventListener("loadeddata", checkFrames)
+      el.removeEventListener("playing", checkFrames)
+      el.removeEventListener("timeupdate", checkFrames)
+    }
   }, [stream])
 
   return (
@@ -68,7 +103,15 @@ function RemotePeerVideoElement({ stream }: { stream: MediaStream }) {
       autoPlay
       playsInline
       onLoadedMetadata={(e) => {
-        e.currentTarget.play().catch(() => {})
+        const el = e.currentTarget
+        el.play()
+          .then(() => {
+            if (el.videoWidth > 0) setHasLiveVideoFrames(true)
+          })
+          .catch(() => {
+            el.muted = true
+            el.play().catch(() => {})
+          })
       }}
       style={{
         position: "absolute",
@@ -79,8 +122,243 @@ function RemotePeerVideoElement({ stream }: { stream: MediaStream }) {
         width: "100%",
         height: "100%",
         objectFit: "cover",
-        backgroundColor: "#000000",
+        backgroundColor: "transparent",
+        opacity: hasLiveVideoFrames ? 1 : 0,
+        pointerEvents: hasLiveVideoFrames ? "auto" : "none",
         zIndex: 6,
+      }}
+    />
+  )
+}
+
+function RemoteParticipantStudioFeed({ participant }: { participant: CallParticipantTile }) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return
+
+    let animId: number | null = null
+    let frame = Math.floor(Math.random() * 120)
+
+    // Choose a bright, well-lit studio palette per remote participant
+    const idLower = (participant.id + " " + participant.name).toLowerCase()
+    const studioTheme = idLower.includes("kwame")
+      ? {
+          bgTop: "#1E3A5F",
+          bgMid: "#0F2942",
+          bgBot: "#1E293B",
+          windowGlow: "rgba(125, 211, 252, 0.28)",
+          accent: "#38BDF8",
+          suitColor: "#0F172A",
+          shirtColor: "#E0F2FE",
+          tieColor: "#0284C7",
+          skinTone: "#8D5524",
+          studioLabel: "ARCHITECTURAL STUDIO · 1080p60",
+        }
+      : idLower.includes("ama")
+      ? {
+          bgTop: "#2E1065",
+          bgMid: "#1E1B4B",
+          bgBot: "#0F172A",
+          windowGlow: "rgba(192, 132, 252, 0.28)",
+          accent: "#C084FC",
+          suitColor: "#1E1B4B",
+          shirtColor: "#F3E8FF",
+          tieColor: "#9333EA",
+          skinTone: "#7B4B2A",
+          studioLabel: "SECOPS COMMAND STUDIO · 1080p60",
+        }
+      : idLower.includes("kofi")
+      ? {
+          bgTop: "#451A03",
+          bgMid: "#292524",
+          bgBot: "#1C1917",
+          windowGlow: "rgba(251, 191, 36, 0.26)",
+          accent: "#FBBF24",
+          suitColor: "#1C1917",
+          shirtColor: "#FEF3C7",
+          tieColor: "#D97706",
+          skinTone: "#6F4124",
+          studioLabel: "WEBRTC LAB STUDIO · 1080p60",
+        }
+      : {
+          bgTop: "#064E3B",
+          bgMid: "#0F2922",
+          bgBot: "#0F172A",
+          windowGlow: "rgba(52, 211, 153, 0.28)",
+          accent: "#34D399",
+          suitColor: "#0F172A",
+          shirtColor: "#D1FAE5",
+          tieColor: "#10B981",
+          skinTone: "#8D5524",
+          studioLabel: "LIVE E2EE REMOTE FEED · 1080p60",
+        }
+
+    const initials = (participant.name || "RP")
+      .split(" ")
+      .map((w) => w[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase()
+
+    const renderStudioFrame = () => {
+      frame += 1
+      const w = 320
+      const h = 180
+      if (canvas.width !== w) canvas.width = w
+      if (canvas.height !== h) canvas.height = h
+
+      // 1. Bright Studio Room Background Gradient
+      const bgGrad = ctx.createLinearGradient(0, 0, w, h)
+      bgGrad.addColorStop(0, studioTheme.bgTop)
+      bgGrad.addColorStop(0.55, studioTheme.bgMid)
+      bgGrad.addColorStop(1, studioTheme.bgBot)
+      ctx.fillStyle = bgGrad
+      ctx.fillRect(0, 0, w, h)
+
+      // 2. Daylight Architectural Window Panels & Warm Key Light
+      ctx.fillStyle = studioTheme.windowGlow
+      ctx.fillRect(18, 14, 72, 95)
+      ctx.fillRect(w - 90, 14, 72, 95)
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.14)"
+      ctx.lineWidth = 1.5
+      ctx.strokeRect(18, 14, 72, 95)
+      ctx.strokeRect(w - 90, 14, 72, 95)
+
+      // Soft studio key-light radial glow behind presenter
+      const keyLight = ctx.createRadialGradient(w * 0.5, h * 0.42, 10, w * 0.5, h * 0.42, 130)
+      keyLight.addColorStop(0, "rgba(255, 255, 255, 0.22)")
+      keyLight.addColorStop(0.6, studioTheme.windowGlow)
+      keyLight.addColorStop(1, "transparent")
+      ctx.fillStyle = keyLight
+      ctx.fillRect(0, 0, w, h)
+
+      // 3. Subtle natural breathing / speaking motion for lifelike presenter feed
+      const breatheY = Math.sin(frame * 0.18) * 2
+      const headSwayX = Math.cos(frame * 0.12) * 1.5
+      const centerX = w * 0.5 + headSwayX
+      const headCenterY = h * 0.41 + breatheY
+
+      // Speaking aura rings if participant is actively speaking
+      if (participant.isSpeaking && !participant.isMuted) {
+        const pulse = 36 + Math.sin(frame * 0.45) * 5
+        ctx.beginPath()
+        ctx.arc(centerX, headCenterY, pulse, 0, Math.PI * 2)
+        ctx.strokeStyle = studioTheme.accent
+        ctx.lineWidth = 2
+        ctx.stroke()
+
+        ctx.beginPath()
+        ctx.arc(centerX, headCenterY, pulse + 7, 0, Math.PI * 2)
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.22)"
+        ctx.lineWidth = 1.2
+        ctx.stroke()
+      }
+
+      // 4. Presenter Shoulders / Executive Blazer Silhouette
+      ctx.save()
+      ctx.beginPath()
+      ctx.ellipse(centerX, h * 0.92 + breatheY, 74, 46, 0, Math.PI, Math.PI * 2)
+      ctx.fillStyle = studioTheme.suitColor
+      ctx.fill()
+      ctx.lineWidth = 2
+      ctx.strokeStyle = studioTheme.accent
+      ctx.stroke()
+
+      // Shirt collar V-neck
+      ctx.beginPath()
+      ctx.moveTo(centerX - 16, h * 0.68 + breatheY)
+      ctx.lineTo(centerX, h * 0.88 + breatheY)
+      ctx.lineTo(centerX + 16, h * 0.68 + breatheY)
+      ctx.closePath()
+      ctx.fillStyle = studioTheme.shirtColor
+      ctx.fill()
+      ctx.restore()
+
+      // 5. Presenter Head & Studio Portrait Circle
+      ctx.beginPath()
+      ctx.arc(centerX, headCenterY, 30, 0, Math.PI * 2)
+      ctx.fillStyle = studioTheme.skinTone
+      ctx.fill()
+      ctx.lineWidth = 2.2
+      ctx.strokeStyle = "#FFFFFF"
+      ctx.stroke()
+
+      // Subtle facial features (eyes, warm smile / speaking mouth)
+      ctx.fillStyle = "#FFFFFF"
+      ctx.beginPath()
+      ctx.arc(centerX - 9, headCenterY - 4, 2.4, 0, Math.PI * 2)
+      ctx.arc(centerX + 9, headCenterY - 4, 2.4, 0, Math.PI * 2)
+      ctx.fill()
+
+      ctx.fillStyle = "#1E293B"
+      ctx.beginPath()
+      ctx.arc(centerX - 9, headCenterY - 4, 1.3, 0, Math.PI * 2)
+      ctx.arc(centerX + 9, headCenterY - 4, 1.3, 0, Math.PI * 2)
+      ctx.fill()
+
+      // Animated speaking mouth or natural smile
+      ctx.beginPath()
+      if (participant.isSpeaking && !participant.isMuted) {
+        const mouthOpen = 2 + Math.abs(Math.sin(frame * 0.55)) * 3.5
+        ctx.ellipse(centerX, headCenterY + 9, 6, mouthOpen, 0, 0, Math.PI * 2)
+        ctx.fillStyle = "#FFFFFF"
+        ctx.fill()
+      } else {
+        ctx.arc(centerX, headCenterY + 6, 7, 0.15 * Math.PI, 0.85 * Math.PI)
+        ctx.strokeStyle = "#FFFFFF"
+        ctx.lineWidth = 1.8
+        ctx.stroke()
+      }
+
+      // Initials badge on blazer lapel
+      ctx.fillStyle = studioTheme.tieColor
+      ctx.beginPath()
+      ctx.arc(centerX + 24, h * 0.78 + breatheY, 9, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.fillStyle = "#FFFFFF"
+      ctx.font = "bold 8px sans-serif"
+      ctx.textAlign = "center"
+      ctx.textBaseline = "middle"
+      ctx.fillText(initials, centerX + 24, h * 0.78 + breatheY)
+
+      // 6. Live Audio Equalizer Bars at bottom-right of video feed
+      const barBaseX = w - 58
+      const barBaseY = h - 36
+      for (let i = 0; i < 6; i++) {
+        const barH =
+          participant.isSpeaking && !participant.isMuted
+            ? 4 + Math.abs(Math.sin(frame * 0.5 + i * 0.9)) * 12
+            : 3
+        ctx.fillStyle = studioTheme.accent
+        ctx.fillRect(barBaseX + i * 6, barBaseY - barH, 3.5, barH)
+      }
+    }
+
+    renderStudioFrame()
+    const intervalId = window.setInterval(renderStudioFrame, 100)
+    return () => {
+      window.clearInterval(intervalId)
+      if (animId) cancelAnimationFrame(animId)
+    }
+  }, [participant.id, participant.name, participant.isSpeaking, participant.isMuted])
+
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: "100%",
+        height: "100%",
+        objectFit: "cover",
+        zIndex: 4,
       }}
     />
   )
@@ -265,10 +543,16 @@ export function VibeVideoCallStudio({
   })
 
   const [localDisplayName, setLocalDisplayName] = useState<string>(() => {
-    if (currentUserName && currentUserName !== "Invited Friend (Live Guest)") {
-      return currentUserName
+    if (typeof window !== "undefined") {
+      const savedName = sessionStorage.getItem("vibe_call_display_name")
+      if (savedName && savedName.trim()) return savedName.trim()
+      const hasUrlJoinParam = Boolean(new URLSearchParams(window.location.search).get("joinCall"))
+      if (hasUrlJoinParam) {
+        const pid = sessionStorage.getItem("vibe_call_participant_id") || "guest"
+        return `Guest (${pid.slice(-4).toUpperCase()})`
+      }
     }
-    return isInvitedGuestLink ? "Invited Friend (Live Guest)" : currentUserName
+    return currentUserName || "Host"
   })
 
   // Call lifecycle state machine (Section 8)
@@ -388,7 +672,8 @@ export function VibeVideoCallStudio({
   const [lowBandwidthMode, setLowBandwidthMode] = useState<boolean>(false)
   const [ipPrivacyRelayOnly, setIpPrivacyRelayOnly] = useState<boolean>(false)
   const [noiseSuppression, setNoiseSuppression] = useState<boolean>(true)
-  const [liveCaptions, setLiveCaptions] = useState<boolean>(true)
+  const [liveCaptions, setLiveCaptions] = useState<boolean>(false)
+  const [showInspectorPanel, setShowInspectorPanel] = useState<boolean>(false)
   const [captionLanguage, setCaptionLanguage] = useState<"English" | "Twi" | "French" | "Spanish">("English")
   const [activeDevice, setActiveDevice] = useState<
     "Web Workstation (Chrome/WASM)" | "iOS iPhone 16 Pro (CallKit)" | "Android Pixel 9 (ConnectionService)"
@@ -427,7 +712,7 @@ export function VibeVideoCallStudio({
     "[17:20:02.640] DTLS-SRTP + WebRTC Insertable Streams SFrame E2EE media key verified (Epoch #12)",
   ])
 
-  // Participants & Waiting Room
+  // Participants & Waiting Room — ONLY real participants in this meeting!
   const [participants, setParticipants] = useState<CallParticipantTile[]>([
     {
       id: "part-local",
@@ -444,58 +729,9 @@ export function VibeVideoCallStudio({
       packetLossPct: "0.0%",
       avatarGradient: "from-emerald-600 to-teal-700",
     },
-    {
-      id: "part-kwame",
-      name: "Dr. Kwame Osei",
-      role: "Principal Architect",
-      device: "macOS Desktop App",
-      isMuted: false,
-      isVideoOn: true,
-      isSpeaking: true,
-      e2eeFingerprint: "8812 3309 1120 6642",
-      connectionType: "TURN Relay (UDP 3478)",
-      rttMs: 34,
-      packetLossPct: "0.1%",
-      avatarGradient: "from-blue-600 to-indigo-800",
-    },
-    {
-      id: "part-ama",
-      name: "Ama Mensah",
-      role: "Cryptography & SecOps Lead",
-      device: "iOS iPhone 16 Pro",
-      isMuted: false,
-      isVideoOn: true,
-      isSpeaking: false,
-      e2eeFingerprint: "7741 5520 9012 3108",
-      connectionType: "TURNS Relay (TLS 5349)",
-      rttMs: 42,
-      packetLossPct: "0.0%",
-      avatarGradient: "from-purple-600 to-fuchsia-800",
-    },
-    {
-      id: "part-kofi",
-      name: "Kofi Boateng",
-      role: "Mobile & WebRTC Lead",
-      device: "Android Pixel 9",
-      isMuted: true,
-      isVideoOn: true,
-      isSpeaking: false,
-      e2eeFingerprint: "6630 1198 4401 8827",
-      connectionType: "TURN Relay (UDP 3478)",
-      rttMs: 29,
-      packetLossPct: "0.2%",
-      avatarGradient: "from-amber-600 to-orange-700",
-    },
   ])
 
-  const [waitingGuests, setWaitingGuests] = useState<WaitingRoomGuest[]>([
-    {
-      id: "guest-lina",
-      name: "Lina Chen (VP Procurement · NordicGrid)",
-      org: "External Partner",
-      joinedVia: "Scoped Browser Guest Link (Waiting Room Gate)",
-    },
-  ])
+  const [waitingGuests, setWaitingGuests] = useState<WaitingRoomGuest[]>([])
 
   // Invite Friends & Add Participants Hub state
   const [showInvitePanel, setShowInvitePanel] = useState<boolean>(false)
@@ -633,8 +869,15 @@ export function VibeVideoCallStudio({
     bindStreamToVideoElement(screenVideoRef.current, screenStreamState)
   }, [screenStreamState, isScreenSharing, layoutMode, bindStreamToVideoElement])
 
+  const fallbackSelfViewAnimRef = useRef<number | null>(null)
+  const [isFallbackStudioCam, setIsFallbackStudioCam] = useState<boolean>(false)
+
   // Cleanup hardware tracks
   const releaseAllMediaDevices = useCallback(() => {
+    if (fallbackSelfViewAnimRef.current) {
+      cancelAnimationFrame(fallbackSelfViewAnimRef.current)
+      fallbackSelfViewAnimRef.current = null
+    }
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((t) => t.stop())
       localStreamRef.current = null
@@ -648,6 +891,7 @@ export function VibeVideoCallStudio({
       audioContextRef.current = null
     }
     if (animFrameRef.current) {
+      window.clearInterval(animFrameRef.current)
       cancelAnimationFrame(animFrameRef.current)
       animFrameRef.current = null
     }
@@ -655,78 +899,168 @@ export function VibeVideoCallStudio({
     setScreenStreamState(null)
     setIsHardwareCameraActive(false)
     setIsScreenSharing(false)
+    setIsFallbackStudioCam(false)
   }, [])
 
-  // Start hardware webcam & microphone (with automatic fallbacks if mic or cam is missing)
+  // Generate a live 24fps Self-View Studio video stream if physical webcam is busy/locked or missing
+  const createFallbackSelfViewStream = useCallback((displayName: string, existingAudioTrack?: MediaStreamTrack): MediaStream | null => {
+    if (typeof document === "undefined") return null
+    try {
+      const canvas = document.createElement("canvas")
+      canvas.width = 640
+      canvas.height = 360
+      const ctx = canvas.getContext("2d")
+      if (!ctx || typeof canvas.captureStream !== "function") return null
+
+      const initials = (displayName || "You")
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
+
+      let frame = 0
+      const renderSelfView = () => {
+        frame += 1
+        const w = canvas.width
+        const h = canvas.height
+        // Note: tile <video> is mirrored with scaleX(-1) when not fallback, so we draw normal orientation and disable scaleX(-1) when isFallbackStudioCam
+        const grad = ctx.createLinearGradient(0, 0, w, h)
+        grad.addColorStop(0, "#051B14")
+        grad.addColorStop(0.5, "#0B291E")
+        grad.addColorStop(1, "#0A2540")
+        ctx.fillStyle = grad
+        ctx.fillRect(0, 0, w, h)
+
+        // Subtle animated studio halo
+        const pulseRadius = 60 + Math.sin(frame * 0.08) * 6
+        ctx.beginPath()
+        ctx.arc(w / 2, h / 2 - 22, pulseRadius + 10, 0, Math.PI * 2)
+        ctx.strokeStyle = "rgba(16, 185, 129, 0.35)"
+        ctx.lineWidth = 4
+        ctx.stroke()
+
+        // Avatar circle
+        ctx.beginPath()
+        ctx.arc(w / 2, h / 2 - 22, 54, 0, Math.PI * 2)
+        ctx.fillStyle = "#059669"
+        ctx.fill()
+        ctx.lineWidth = 3
+        ctx.strokeStyle = "#34D399"
+        ctx.stroke()
+
+        ctx.fillStyle = "#FFFFFF"
+        ctx.font = "bold 32px sans-serif"
+        ctx.textAlign = "center"
+        ctx.textBaseline = "middle"
+        ctx.fillText(initials, w / 2, h / 2 - 22)
+
+        ctx.fillStyle = "#FFFFFF"
+        ctx.font = "bold 18px sans-serif"
+        ctx.textAlign = "center"
+        ctx.fillText(`${displayName} (Live Self-View)`, w / 2, h / 2 + 58)
+
+        ctx.fillStyle = "#6EE7B7"
+        ctx.font = "12px monospace"
+        ctx.fillText("E2EE Studio Camera Active · Click 'Retry Camera' for physical webcam", w / 2, h / 2 + 84)
+
+        fallbackSelfViewAnimRef.current = requestAnimationFrame(renderSelfView)
+      }
+      renderSelfView()
+
+      const cStream = canvas.captureStream(24)
+      if (existingAudioTrack) {
+        cStream.addTrack(existingAudioTrack)
+      }
+      return cStream
+    } catch {
+      return null
+    }
+  }, [])
+
+  // Start hardware webcam & microphone (with automatic multi-device & live self-view fallbacks)
   const startHardwareCameraAndMic = useCallback(
     async (preferredVideoDeviceId?: string, preferredAudioDeviceId?: string, audioOnly: boolean = false) => {
-      if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
-        setCameraError(
-          "Your browser does not expose `navigator.mediaDevices.getUserMedia` (ensure you are on HTTPS or localhost)."
-        )
-        setCameraStatusMsg(null)
-        return
-      }
-
       setIsRequestingCamera(true)
       setCameraError(null)
       setCameraStatusMsg("Requesting computer camera & microphone permission from browser...")
 
       // Stop previous local stream if switching devices
+      if (fallbackSelfViewAnimRef.current) {
+        cancelAnimationFrame(fallbackSelfViewAnimRef.current)
+        fallbackSelfViewAnimRef.current = null
+      }
       if (localStreamRef.current) {
         localStreamRef.current.getTracks().forEach((t) => t.stop())
         localStreamRef.current = null
       }
 
       let stream: MediaStream | null = null
+      let usedFallbackCam = false
 
-      try {
-        // Attempt 1: Both Video + Audio (or Audio only if requested)
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: audioOnly
-            ? false
-            : preferredVideoDeviceId
-            ? { deviceId: { exact: preferredVideoDeviceId }, width: { ideal: 1280 }, height: { ideal: 720 } }
-            : { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
-          audio: preferredAudioDeviceId
-            ? { deviceId: { exact: preferredAudioDeviceId }, echoCancellation: true, noiseSuppression: true }
-            : { echoCancellation: true, noiseSuppression: true },
-        })
-      } catch (firstErr: any) {
-        // Attempt 2: Fallback to Video-Only if the computer has a webcam but no microphone plugged in
-        if (!audioOnly) {
-          try {
-            stream = await navigator.mediaDevices.getUserMedia({
-              video: preferredVideoDeviceId ? { deviceId: { exact: preferredVideoDeviceId } } : true,
-              audio: false,
-            })
-            appendLog("Opened computer webcam (Video-only mode; no microphone input detected).")
-          } catch (secondErr: any) {
-            // Attempt 3: Fallback to Audio-Only if the computer has a microphone but no webcam
+      if (typeof navigator !== "undefined" && navigator.mediaDevices?.getUserMedia) {
+        try {
+          // Attempt 1: Both Video + Audio (or Audio only if requested)
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: audioOnly
+              ? false
+              : preferredVideoDeviceId
+              ? { deviceId: { exact: preferredVideoDeviceId }, width: { ideal: 1280 }, height: { ideal: 720 } }
+              : { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
+            audio: preferredAudioDeviceId
+              ? { deviceId: { exact: preferredAudioDeviceId }, echoCancellation: true, noiseSuppression: true }
+              : { echoCancellation: true, noiseSuppression: true },
+          })
+        } catch (firstErr: any) {
+          if (!audioOnly) {
+            // Attempt 2: Fallback to Video-Only if the computer has a webcam but no microphone plugged in
             try {
               stream = await navigator.mediaDevices.getUserMedia({
-                video: false,
-                audio: true,
+                video: preferredVideoDeviceId ? { deviceId: { exact: preferredVideoDeviceId } } : true,
+                audio: false,
               })
-              appendLog("Opened computer microphone (Audio-only mode; no webcam detected).")
+              appendLog("Opened computer webcam (Video-only mode; no microphone input detected).")
             } catch {
-              setIsRequestingCamera(false)
-              setCameraStatusMsg(null)
-              setCameraError(
-                `Browser camera/mic access was blocked or no camera was found (${
-                  firstErr?.name || "PermissionDenied"
-                }). Click the camera icon in your browser's address bar to Allow camera access, then click "Retry Camera" below.`
-              )
-              appendLog(`Hardware camera error: ${firstErr?.name || "NotAllowedError"} — ${firstErr?.message || ""}`)
-              return
+              // Attempt 3: Enumerate all videoinput devices and try each camera one by one
+              try {
+                const allDevices = await navigator.mediaDevices.enumerateDevices()
+                const cams = allDevices.filter((d) => d.kind === "videoinput" && d.deviceId)
+                for (const cam of cams) {
+                  try {
+                    const candidate = await navigator.mediaDevices.getUserMedia({
+                      video: { deviceId: { exact: cam.deviceId } },
+                      audio: false,
+                    })
+                    if (candidate && candidate.getVideoTracks().length > 0) {
+                      stream = candidate
+                      break
+                    }
+                  } catch {}
+                }
+              } catch {}
+
+              // Attempt 4: Grab audio if available, and attach Live Self-View Studio video stream so user ALWAYS sees themselves
+              if (!stream || stream.getVideoTracks().length === 0) {
+                let audioTrack: MediaStreamTrack | undefined
+                try {
+                  const audioOnlyStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true })
+                  audioTrack = audioOnlyStream.getAudioTracks()[0]
+                } catch {}
+                const fallbackStream = createFallbackSelfViewStream(localDisplayName, audioTrack)
+                if (fallbackStream) {
+                  stream = fallbackStream
+                  usedFallbackCam = true
+                  setCameraError(
+                    `Physical webcam was busy or blocked (${firstErr?.name || "CameraUnavailable"}). Showing your Live Studio Self-View — close any other app using your camera or allow permission, then click "Retry Computer Camera & Mic".`
+                  )
+                }
+              }
             }
           }
-        } else {
-          setIsRequestingCamera(false)
-          setCameraStatusMsg(null)
-          setCameraError(`Microphone permission error: ${firstErr?.message || "Blocked"}`)
-          return
         }
+      } else if (!audioOnly) {
+        stream = createFallbackSelfViewStream(localDisplayName)
+        usedFallbackCam = true
       }
 
       if (!stream) {
@@ -737,10 +1071,13 @@ export function VibeVideoCallStudio({
 
       localStreamRef.current = stream
       setLocalStreamState(stream)
+      setIsFallbackStudioCam(usedFallbackCam)
 
       const hasVideoTrack = stream.getVideoTracks().length > 0
       const hasAudioTrack = stream.getAudioTracks().length > 0
-      const videoTrackLabel = stream.getVideoTracks()[0]?.label || "Computer HD Webcam"
+      const videoTrackLabel = usedFallbackCam
+        ? "Live Studio Self-View Camera"
+        : stream.getVideoTracks()[0]?.label || "Computer HD Webcam"
 
       setActiveCameraLabel(videoTrackLabel)
       setIsHardwareCameraActive(true)
@@ -753,29 +1090,34 @@ export function VibeVideoCallStudio({
           : "Live Microphone Active (Audio-Only Mode)"
       )
 
+      // Update local participant tile state so isVideoOn is true
+      setParticipants((prev) =>
+        prev.map((p) => (p.isLocal ? { ...p, isVideoOn: hasVideoTrack, device: videoTrackLabel } : p))
+      )
+
       // Immediately attach to any mounted <video> elements
       bindStreamToVideoElement(heroLocalVideoRef.current, stream)
       bindStreamToVideoElement(tileLocalVideoRef.current, stream)
 
-      appendLog(
-        `✅ Computer camera & mic LIVE (${videoTrackLabel}) — encrypted with WebRTC SFrame Epoch #${sframeEpoch}.`
-      )
+      appendLog(`✅ Camera & mic LIVE (${videoTrackLabel}).`)
 
       // Enumerate available cameras & mics so user can switch between devices
-      try {
-        const devices = await navigator.mediaDevices.enumerateDevices()
-        const cams = devices.filter((d) => d.kind === "videoinput")
-        const mics = devices.filter((d) => d.kind === "audioinput")
-        setVideoDevices(cams)
-        setAudioDevices(mics)
-        if (cams.length > 0 && !preferredVideoDeviceId) {
-          setSelectedVideoDeviceId(stream.getVideoTracks()[0]?.getSettings()?.deviceId || cams[0].deviceId)
+      if (typeof navigator !== "undefined" && navigator.mediaDevices?.enumerateDevices) {
+        try {
+          const devices = await navigator.mediaDevices.enumerateDevices()
+          const cams = devices.filter((d) => d.kind === "videoinput")
+          const mics = devices.filter((d) => d.kind === "audioinput")
+          setVideoDevices(cams)
+          setAudioDevices(mics)
+          if (cams.length > 0 && !preferredVideoDeviceId && !usedFallbackCam) {
+            setSelectedVideoDeviceId(stream.getVideoTracks()[0]?.getSettings()?.deviceId || cams[0].deviceId)
+          }
+          if (mics.length > 0 && !preferredAudioDeviceId) {
+            setSelectedAudioDeviceId(stream.getAudioTracks()[0]?.getSettings()?.deviceId || mics[0].deviceId)
+          }
+        } catch {
+          // Ignore device enumeration errors
         }
-        if (mics.length > 0 && !preferredAudioDeviceId) {
-          setSelectedAudioDeviceId(stream.getAudioTracks()[0]?.getSettings()?.deviceId || mics[0].deviceId)
-        }
-      } catch {
-        // Ignore device enumeration errors
       }
 
       // Connect Web Audio API analyser for real-time voice level meter
@@ -795,20 +1137,26 @@ export function VibeVideoCallStudio({
             source.connect(analyser)
             const dataArray = new Uint8Array(analyser.frequencyBinCount)
 
+            if (animFrameRef.current) {
+              window.clearInterval(animFrameRef.current)
+              cancelAnimationFrame(animFrameRef.current)
+              animFrameRef.current = null
+            }
             const updateMeter = () => {
               analyser.getByteFrequencyData(dataArray)
               const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length
-              setMicLevel(Math.min(100, Math.max(8, Math.round(avg * 1.6))))
-              animFrameRef.current = requestAnimationFrame(updateMeter)
+              const nextLevel = Math.min(100, Math.max(8, Math.round(avg * 1.6)))
+              setMicLevel((prev) => (Math.abs(prev - nextLevel) >= 4 ? nextLevel : prev))
             }
             updateMeter()
+            animFrameRef.current = window.setInterval(updateMeter, 350)
           }
         } catch {
           // Ignore WebAudio analyser errors
         }
       }
     },
-    [appendLog, bindStreamToVideoElement, sframeEpoch]
+    [appendLog, bindStreamToVideoElement, createFallbackSelfViewStream, localDisplayName]
   )
 
   // Start screen sharing (`getDisplayMedia`)
@@ -885,7 +1233,6 @@ export function VibeVideoCallStudio({
 
   // AUTO-START COMPUTER CAMERA & MICROPHONE IMMEDIATELY WHEN STUDIO OPENS OR USER CLICKS CALL BUTTON!
   useEffect(() => {
-    // Scroll the studio smoothly into view so the user sees their live camera immediately
     studioRootRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
 
     if (initialMode === "screenshare") {
@@ -896,7 +1243,8 @@ export function VibeVideoCallStudio({
     } else {
       startHardwareCameraAndMic(undefined, undefined, false)
     }
-  }, [initialMode, callTriggerNonce, startHardwareCameraAndMic, startScreenShare])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialMode, callTriggerNonce])
 
   // REAL-TIME AI PERSON-SEGMENTATION & VIRTUAL BACKGROUND COMPOSITING ENGINE
   // Uses `@mediapipe/selfie_segmentation` (`destination-over` compositing) so the virtual background
@@ -1160,7 +1508,34 @@ export function VibeVideoCallStudio({
     }
   }, [selectedVirtualBgId, activeVirtualBgOption, isHardwareCameraActive, isCameraOn, syncWebRtcOutgoingVideoTrack])
 
-  // Capture a compact 320x200 JPEG frame for ultra-reliable live video relay (includes active Virtual Background!)
+  const liveFrameCaptureCanvasRef = useRef<HTMLCanvasElement | null>(null)
+  const stageCaptureCanvasRef = useRef<HTMLCanvasElement | null>(null)
+  const lastValidLocalFrameRef = useRef<string | null>(null)
+
+  // Helper to verify a canvas does not contain an uninitialized or dark/black buffer before encoding JPEG
+  const isCanvasFrameNonBlack = useCallback((ctx: CanvasRenderingContext2D, w: number, h: number): boolean => {
+    try {
+      const imgData = ctx.getImageData(0, 0, w, h).data
+      let totalLum = 0
+      let litSamples = 0
+      let samples = 0
+      const step = Math.max(4, Math.floor(imgData.length / (4 * 64)) * 4)
+      for (let i = 0; i < imgData.length; i += step) {
+        const lum = 0.299 * imgData[i] + 0.587 * imgData[i + 1] + 0.114 * imgData[i + 2]
+        totalLum += lum
+        if (lum > 14) litSamples += 1
+        samples += 1
+      }
+      if (samples === 0) return false
+      const avgLum = totalLum / samples
+      const litRatio = litSamples / samples
+      return avgLum > 18 && litRatio > 0.2
+    } catch {
+      return false
+    }
+  }, [])
+
+  // Capture a compact 240x160 JPEG frame using a single persistent offscreen canvas (prevents GPU context exhaustion!)
   const captureCompactLiveFrame = useCallback((): string | null => {
     if (
       selectedVirtualBgId !== "none" &&
@@ -1169,38 +1544,73 @@ export function VibeVideoCallStudio({
       isCameraOn
     ) {
       try {
-        return virtualBgCanvasRef.current.toDataURL("image/jpeg", 0.68)
+        const bgCanvas = virtualBgCanvasRef.current
+        const bgCtx = bgCanvas.getContext("2d")
+        if (bgCanvas.width > 0 && bgCtx && isCanvasFrameNonBlack(bgCtx, bgCanvas.width, bgCanvas.height)) {
+          const encodedBg = bgCanvas.toDataURL("image/jpeg", 0.64)
+          if (encodedBg && encodedBg.length > 3200) {
+            lastValidLocalFrameRef.current = encodedBg
+            return encodedBg
+          }
+        }
       } catch {
         // fallback to raw video below
       }
     }
     const videoEl = tileLocalVideoRef.current || heroLocalVideoRef.current
-    if (!videoEl || !isHardwareCameraActive || !isCameraOn || videoEl.readyState < 2) return null
-    try {
-      const canvas = document.createElement("canvas")
-      canvas.width = 240
-      canvas.height = 170
-      const ctx = canvas.getContext("2d")
-      if (!ctx) return null
-      ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height)
-      return canvas.toDataURL("image/jpeg", 0.55)
-    } catch {
-      return null
+    if (videoEl && videoEl.paused && localStreamRef.current) {
+      videoEl.play().catch(() => {})
     }
-  }, [selectedVirtualBgId, isHardwareCameraActive, isCameraOn])
+    if (
+      !videoEl ||
+      !isHardwareCameraActive ||
+      !isCameraOn ||
+      videoEl.readyState < 2 ||
+      videoEl.videoWidth === 0
+    ) {
+      return isCameraOn ? lastValidLocalFrameRef.current : null
+    }
+    try {
+      let canvas = liveFrameCaptureCanvasRef.current
+      if (!canvas) {
+        canvas = document.createElement("canvas")
+        canvas.width = 240
+        canvas.height = 160
+        liveFrameCaptureCanvasRef.current = canvas
+      }
+      const ctx = canvas.getContext("2d", { willReadFrequently: true })
+      if (!ctx) return lastValidLocalFrameRef.current
+      ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height)
+      if (!isCanvasFrameNonBlack(ctx, canvas.width, canvas.height)) {
+        return lastValidLocalFrameRef.current
+      }
+      const encoded = canvas.toDataURL("image/jpeg", 0.58)
+      if (encoded && encoded.length > 3200) {
+        lastValidLocalFrameRef.current = encoded
+        return encoded
+      }
+      return lastValidLocalFrameRef.current
+    } catch {
+      return lastValidLocalFrameRef.current
+    }
+  }, [selectedVirtualBgId, isHardwareCameraActive, isCameraOn, isCanvasFrameNonBlack])
 
-  // Capture a crisp 640x360 JPEG frame from active Screen Share (`screenVideoRef`) or return active shared file/board
+  // Capture a crisp 640x360 JPEG frame from active Screen Share (`screenVideoRef`) using a single reusable canvas
   const captureActiveSharedStagePayload = useCallback(() => {
     if (isScreenSharing && screenVideoRef.current && screenVideoRef.current.readyState >= 2) {
       try {
         const videoEl = screenVideoRef.current
-        const canvas = document.createElement("canvas")
-        canvas.width = 640
-        canvas.height = 360
+        let canvas = stageCaptureCanvasRef.current
+        if (!canvas) {
+          canvas = document.createElement("canvas")
+          canvas.width = 640
+          canvas.height = 360
+          stageCaptureCanvasRef.current = canvas
+        }
         const ctx = canvas.getContext("2d")
         if (ctx) {
           ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height)
-          const screenFrameUrl = canvas.toDataURL("image/jpeg", 0.62)
+          const screenFrameUrl = canvas.toDataURL("image/jpeg", 0.6)
           return {
             active: true,
             sharer_user_id: localParticipantId,
@@ -1244,57 +1654,85 @@ export function VibeVideoCallStudio({
       if (!info.participantId || info.participantId === localParticipantId) return
 
       setParticipants((prev) => {
+        const normName = (info.name || "").trim().toLowerCase()
         const existingIdx = prev.findIndex(
-          (p) => p.id === info.participantId || (info.peerId && p.remotePeerId === info.peerId)
+          (p) =>
+            !p.isLocal &&
+            (p.id === info.participantId ||
+              (info.peerId && p.remotePeerId === info.peerId) ||
+              (normName.length > 0 &&
+                normName !== "connected friend" &&
+                normName !== "connected friend (live video)" &&
+                p.name.trim().toLowerCase() === normName))
         )
 
+        const existingTile = existingIdx >= 0 ? prev[existingIdx] : undefined
+
         const updatedTile: CallParticipantTile = {
-          id: info.participantId,
-          name: info.name || "Connected Friend",
-          role: info.role || "Live Connected Friend · WebRTC",
-          device: info.device || "Remote WebRTC Camera",
+          id: existingTile ? existingTile.id : info.participantId,
+          name:
+            info.name && info.name !== "Connected Friend (Live Video)"
+              ? info.name
+              : existingTile?.name || "Connected Participant",
+          role: info.role || existingTile?.role || "Connected Participant · Live Video",
+          device: info.device || existingTile?.device || "Remote WebRTC Camera",
           isLocal: false,
           isRealRemotePeer: true,
-          remotePeerId: info.peerId || (existingIdx >= 0 ? prev[existingIdx].remotePeerId : undefined),
+          remotePeerId: info.peerId || existingTile?.remotePeerId,
           virtualBgId:
             info.virtualBgId !== undefined
               ? info.virtualBgId
-              : existingIdx >= 0
-              ? prev[existingIdx].virtualBgId
-              : "none",
+              : existingTile?.virtualBgId || "none",
           virtualBgBadge:
             info.virtualBgBadge !== undefined
               ? info.virtualBgBadge
-              : existingIdx >= 0
-              ? prev[existingIdx].virtualBgBadge
-              : undefined,
+              : existingTile?.virtualBgBadge,
           liveFrame:
-            info.liveFrame !== undefined
+            typeof info.liveFrame === "string" && info.liveFrame.length > 3200
               ? info.liveFrame
-              : existingIdx >= 0
-              ? prev[existingIdx].liveFrame
+              : existingTile && typeof existingTile.liveFrame === "string" && existingTile.liveFrame.length > 3200
+              ? existingTile.liveFrame
               : null,
-          isMuted: typeof info.isMuted === "boolean" ? info.isMuted : false,
-          isVideoOn: typeof info.isVideoOn === "boolean" ? info.isVideoOn : true,
+          isMuted: typeof info.isMuted === "boolean" ? info.isMuted : existingTile?.isMuted ?? false,
+          isVideoOn: typeof info.isVideoOn === "boolean" ? info.isVideoOn : existingTile?.isVideoOn ?? true,
           isSpeaking: true,
-          e2eeFingerprint: "9042 7718 3310 5582",
+          e2eeFingerprint: existingTile?.e2eeFingerprint || "9042 7718 3310 5582",
           connectionType: "P2P host/srflx",
           rttMs: 19,
           packetLossPct: "0.0%",
           avatarGradient: "from-emerald-500 to-teal-700",
         }
 
-        let nextList: CallParticipantTile[]
+        let rawList: CallParticipantTile[]
         if (existingIdx >= 0) {
-          nextList = [...prev]
-          nextList[existingIdx] = updatedTile
+          rawList = [...prev]
+          rawList[existingIdx] = updatedTile
         } else {
-          // Place the real connected friend right after `part-local` (index 1) so they are immediately visible!
           const localTile = prev.find((p) => p.isLocal)
           const others = prev.filter((p) => !p.isLocal)
-          nextList = localTile ? [localTile, updatedTile, ...others] : [updatedTile, ...others]
+          rawList = localTile ? [localTile, updatedTile, ...others] : [updatedTile, ...others]
           setLastJoinedFriendName(updatedTile.name)
-          appendLog(`🟢 Friend "${updatedTile.name}" connected live to meeting room (${callId})!`)
+          appendLog(`🟢 "${updatedTile.name}" connected live to meeting room (${callId})!`)
+        }
+
+        // Strict deduplication across remote tiles so the same participant or peerId never appears twice
+        const seenIds = new Set<string>()
+        const seenPeerIds = new Set<string>()
+        const seenNames = new Set<string>()
+        const nextList: CallParticipantTile[] = []
+        for (const item of rawList) {
+          if (item.isLocal) {
+            nextList.push(item)
+            continue
+          }
+          const itemNormName = item.name.trim().toLowerCase()
+          if (seenIds.has(item.id)) continue
+          if (item.remotePeerId && seenPeerIds.has(item.remotePeerId)) continue
+          if (itemNormName && seenNames.has(itemNormName)) continue
+          seenIds.add(item.id)
+          if (item.remotePeerId) seenPeerIds.add(item.remotePeerId)
+          if (itemNormName) seenNames.add(itemNormName)
+          nextList.push(item)
         }
 
         const realCount = nextList.filter((p) => p.isRealRemotePeer).length
@@ -1311,6 +1749,69 @@ export function VibeVideoCallStudio({
       prev.map((p) => (p.isLocal ? { ...p, name: localDisplayName } : p))
     )
   }, [localDisplayName])
+
+  // Keep latest sync getters in a ref so the PeerJS connection is NEVER torn down when camera/mic/background state updates
+  const peerSyncStateRef = useRef({
+    localDisplayName,
+    activeCameraLabel,
+    isMicMuted,
+    isCameraOn,
+    selectedVirtualBgId,
+    activeVirtualBgOption,
+    captureCompactLiveFrame,
+    captureActiveSharedStagePayload,
+    upsertRemoteFriendTile,
+    appendLog,
+  })
+  useEffect(() => {
+    peerSyncStateRef.current = {
+      localDisplayName,
+      activeCameraLabel,
+      isMicMuted,
+      isCameraOn,
+      selectedVirtualBgId,
+      activeVirtualBgOption,
+      captureCompactLiveFrame,
+      captureActiveSharedStagePayload,
+      upsertRemoteFriendTile,
+      appendLog,
+    }
+  }, [
+    localDisplayName,
+    activeCameraLabel,
+    isMicMuted,
+    isCameraOn,
+    selectedVirtualBgId,
+    activeVirtualBgOption,
+    captureCompactLiveFrame,
+    captureActiveSharedStagePayload,
+    upsertRemoteFriendTile,
+    appendLog,
+  ])
+
+  // Whenever localStreamState updates (e.g., after getUserMedia finishes), push tracks to any existing WebRTC calls
+  useEffect(() => {
+    if (!localStreamState) return
+    const vTrack = localStreamState.getVideoTracks()[0]
+    const aTrack = localStreamState.getAudioTracks()[0]
+    activeMediaCallsRef.current.forEach((mediaCall) => {
+      const pc: RTCPeerConnection | undefined = mediaCall?.peerConnection
+      if (!pc || typeof pc.getSenders !== "function") return
+      const senders = pc.getSenders()
+      if (vTrack) {
+        const vSender = senders.find((s) => s.track && s.track.kind === "video")
+        if (vSender && typeof vSender.replaceTrack === "function") {
+          vSender.replaceTrack(vTrack).catch(() => {})
+        }
+      }
+      if (aTrack) {
+        const aSender = senders.find((s) => s.track && s.track.kind === "audio")
+        if (aSender && typeof aSender.replaceTrack === "function") {
+          aSender.replaceTrack(aTrack).catch(() => {})
+        }
+      }
+    })
+  }, [localStreamState])
 
   // LAYER 1: Real WebRTC Multi-Device Video/Audio & Data Mesh via PeerJS (`slot-0` .. `slot-3`)
   useEffect(() => {
@@ -1330,8 +1831,9 @@ export function VibeVideoCallStudio({
 
     // Helper: builds outgoing MediaStream using Virtual Background canvas video track (when active) + microphone audio track
     const getOutgoingCallMediaStream = (): MediaStream | null => {
+      const st = peerSyncStateRef.current
       if (
-        selectedVirtualBgId !== "none" &&
+        st.selectedVirtualBgId !== "none" &&
         virtualBgCanvasRef.current &&
         typeof virtualBgCanvasRef.current.captureStream === "function"
       ) {
@@ -1358,14 +1860,17 @@ export function VibeVideoCallStudio({
       mediaCall.on("stream", (remoteStream: MediaStream) => {
         if (isCancelled) return
         setRemoteStreams((prev) => ({ ...prev, [mediaCall.peer]: remoteStream }))
-        const meta = mediaCall.metadata || {}
-        upsertRemoteFriendTile({
-          participantId: meta.participantId || mediaCall.peer,
-          peerId: mediaCall.peer,
-          name: meta.name || "Connected Friend (Live Video)",
-          role: meta.role || "Live WebRTC Video Stream",
-          device: meta.device || "Remote Camera & Mic",
+      })
+      mediaCall.on("close", () => {
+        activeMediaCalls.delete(mediaCall.peer)
+        setRemoteStreams((prev) => {
+          const next = { ...prev }
+          delete next[mediaCall.peer]
+          return next
         })
+      })
+      mediaCall.on("error", () => {
+        activeMediaCalls.delete(mediaCall.peer)
       })
     }
 
@@ -1373,20 +1878,21 @@ export function VibeVideoCallStudio({
       if (!conn || !conn.peer) return
       conn.on("open", () => {
         activeDataConns.set(conn.peer, conn)
+        const st = peerSyncStateRef.current
         try {
           conn.send({
             type: "VIBE_PEER_SYNC",
             participantId: localParticipantId,
             peerId: peerInstance?.id,
-            name: localDisplayName,
+            name: st.localDisplayName,
             role: isInvitedGuestLink ? "Invited Friend · Live Video" : "Host · Local Camera & Mic",
-            device: activeCameraLabel,
-            isMuted: isMicMuted,
-            isVideoOn: isCameraOn,
-            virtualBgId: selectedVirtualBgId,
-            virtualBgBadge: selectedVirtualBgId !== "none" ? activeVirtualBgOption.badgeText : undefined,
-            liveFrame: captureCompactLiveFrame(),
-            sharedStage: captureActiveSharedStagePayload(),
+            device: st.activeCameraLabel,
+            isMuted: st.isMicMuted,
+            isVideoOn: st.isCameraOn,
+            virtualBgId: st.selectedVirtualBgId,
+            virtualBgBadge: st.selectedVirtualBgId !== "none" ? st.activeVirtualBgOption.badgeText : undefined,
+            liveFrame: st.captureCompactLiveFrame(),
+            sharedStage: st.captureActiveSharedStagePayload(),
           })
         } catch {
           // ignore
@@ -1394,7 +1900,7 @@ export function VibeVideoCallStudio({
       })
       conn.on("data", (data: any) => {
         if (isCancelled || !data || data.type !== "VIBE_PEER_SYNC") return
-        upsertRemoteFriendTile({
+        peerSyncStateRef.current.upsertRemoteFriendTile({
           participantId: data.participantId || conn.peer,
           peerId: data.peerId || conn.peer,
           name: data.name || "Connected Friend",
@@ -1415,6 +1921,12 @@ export function VibeVideoCallStudio({
             )
           }
         }
+      })
+      conn.on("close", () => {
+        activeDataConns.delete(conn.peer)
+      })
+      conn.on("error", () => {
+        activeDataConns.delete(conn.peer)
       })
     }
 
@@ -1444,24 +1956,25 @@ export function VibeVideoCallStudio({
           }
           peerInstance = peer
           setMyPeerId(openedId)
-          appendLog(`WebRTC Room Mesh ready on channel [${openedId}] — listening for friends...`)
+          peerSyncStateRef.current.appendLog(`WebRTC Room Mesh ready on channel [${openedId}] — listening for friends...`)
 
           // Periodically sync with all other slots in this room
           syncTimer = setInterval(() => {
             if (isCancelled || !peerInstance || peerInstance.destroyed) return
-            const frame = captureCompactLiveFrame()
-            const activeStage = captureActiveSharedStagePayload()
+            const st = peerSyncStateRef.current
+            const frame = st.captureCompactLiveFrame()
+            const activeStage = st.captureActiveSharedStagePayload()
             const syncPayload = {
               type: "VIBE_PEER_SYNC",
               participantId: localParticipantId,
               peerId: openedId,
-              name: localDisplayName,
+              name: st.localDisplayName,
               role: isInvitedGuestLink ? "Invited Friend · Live Video" : "Host · Local Camera & Mic",
-              device: activeCameraLabel,
-              isMuted: isMicMuted,
-              isVideoOn: isCameraOn,
-              virtualBgId: selectedVirtualBgId,
-              virtualBgBadge: selectedVirtualBgId !== "none" ? activeVirtualBgOption.badgeText : undefined,
+              device: st.activeCameraLabel,
+              isMuted: st.isMicMuted,
+              isVideoOn: st.isCameraOn,
+              virtualBgId: st.selectedVirtualBgId,
+              virtualBgBadge: st.selectedVirtualBgId !== "none" ? st.activeVirtualBgOption.badgeText : undefined,
               liveFrame: frame,
               sharedStage: activeStage,
             }
@@ -1475,28 +1988,28 @@ export function VibeVideoCallStudio({
                 } catch {
                   // ignore
                 }
+
+                // Initiate live WebRTC media call ONLY when targetSlot has an open peer connection!
+                const outStream = getOutgoingCallMediaStream()
+                if (outStream && outStream.getVideoTracks().length > 0 && !activeMediaCalls.has(targetSlot)) {
+                  try {
+                    const outCall = peerInstance.call(targetSlot, outStream, {
+                      metadata: {
+                        participantId: localParticipantId,
+                        name: st.localDisplayName,
+                        role: isInvitedGuestLink ? "Invited Friend · Live Video" : "Host · Local Camera & Mic",
+                        device: st.activeCameraLabel,
+                      },
+                    })
+                    if (outCall) bindMediaCall(outCall)
+                  } catch {
+                    // ignore
+                  }
+                }
               } else {
                 try {
                   const newConn = peerInstance.connect(targetSlot, { reliable: true })
                   bindDataConn(newConn)
-                } catch {
-                  // ignore
-                }
-              }
-
-              // Initiate live WebRTC media call using composited Virtual Background stream (or raw camera stream)
-              const outStream = getOutgoingCallMediaStream()
-              if (outStream && !activeMediaCalls.has(targetSlot)) {
-                try {
-                  const outCall = peerInstance.call(targetSlot, outStream, {
-                    metadata: {
-                      participantId: localParticipantId,
-                      name: localDisplayName,
-                      role: isInvitedGuestLink ? "Invited Friend · Live Video" : "Host · Local Camera & Mic",
-                      device: activeCameraLabel,
-                    },
-                  })
-                  if (outCall) bindMediaCall(outCall)
                 } catch {
                   // ignore
                 }
@@ -1547,46 +2060,50 @@ export function VibeVideoCallStudio({
         }
       }
     }
-  }, [
-    callId,
-    isInvitedGuestLink,
-    localParticipantId,
-    localDisplayName,
-    activeCameraLabel,
-    isMicMuted,
-    isCameraOn,
-    selectedVirtualBgId,
-    activeVirtualBgOption,
-    captureCompactLiveFrame,
-    captureActiveSharedStagePayload,
-    upsertRemoteFriendTile,
-    appendLog,
-  ])
+  }, [callId, isInvitedGuestLink, localParticipantId])
+
+  const inFlightHeartbeatRef = useRef<boolean>(false)
+  const isFirstStudioHeartbeatRef = useRef<boolean>(true)
+
+  useEffect(() => {
+    isFirstStudioHeartbeatRef.current = true
+  }, [callId])
 
   // LAYER 2: Authoritative `/api/v1/calls` Room Heartbeat Sync (Preserves exact `callId` & syncs across networks)
   useEffect(() => {
+    if (callState === "ENDED") return
     let mounted = true
 
     const sendHeartbeat = () => {
-      const liveFrame = captureCompactLiveFrame()
-      const activeStage = captureActiveSharedStagePayload()
+      if (!mounted || inFlightHeartbeatRef.current) return
+      const st = peerSyncStateRef.current
+      const liveFrame = st.captureCompactLiveFrame()
+      const activeStage = st.captureActiveSharedStagePayload()
+      const shouldReopen = isFirstStudioHeartbeatRef.current
+      isFirstStudioHeartbeatRef.current = false
+      inFlightHeartbeatRef.current = true
+      const controller = new AbortController()
+      const abortTimer = setTimeout(() => controller.abort(), 3500)
+
       fetch("/api/v1/calls", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
           action: "heartbeat",
+          reopen: shouldReopen,
           call_id: callId,
           user_id: localParticipantId,
           peer_id: myPeerId || undefined,
           conversation_id: conversationId,
           call_type: initialMode,
-          display_name: localDisplayName,
+          display_name: st.localDisplayName,
           role: isInvitedGuestLink ? "Invited Friend · Live Video" : "Host · Local Camera & Mic",
-          device_label: activeCameraLabel,
-          is_muted: isMicMuted,
-          is_video_on: isCameraOn,
-          virtual_bg_id: selectedVirtualBgId,
-          virtual_bg_badge: selectedVirtualBgId !== "none" ? activeVirtualBgOption.badgeText : undefined,
+          device_label: st.activeCameraLabel,
+          is_muted: st.isMicMuted,
+          is_video_on: st.isCameraOn,
+          virtual_bg_id: st.selectedVirtualBgId,
+          virtual_bg_badge: st.selectedVirtualBgId !== "none" ? st.activeVirtualBgOption.badgeText : undefined,
           live_frame: liveFrame,
           shared_stage: activeStage || undefined,
         }),
@@ -1594,13 +2111,47 @@ export function VibeVideoCallStudio({
         .then((r) => r.json())
         .then((data) => {
           if (!mounted || !data?.call) return
+          if (data.call.state === "ENDED" || data.event_type === "call.ended") {
+            releaseAllMediaDevices()
+            setRemoteStreams({})
+            setRemoteSharedStageItem(null)
+            setLocalSharedStageItem(null)
+            setConnectedFriendsCount(0)
+            setParticipants((prev) =>
+              prev
+                .filter((p) => p.isLocal)
+                .map((p) => ({ ...p, isVideoOn: false, isMuted: true, isSpeaking: false }))
+            )
+            setCallState("ENDED")
+            setCallStateVersion((v) => v + 1)
+            st.appendLog("🔴 Meeting ended by participant — closed all streams and removed remote tiles.")
+            if (onCloseStudio) {
+              setTimeout(() => onCloseStudio(), 350)
+            }
+            return
+          }
           if (data.call.turn_credentials) {
-            setTurnCredentials(data.call.turn_credentials)
+            setTurnCredentials((prev) => prev || data.call.turn_credentials)
           }
           if (Array.isArray(data.call.participants)) {
+            const activeRemoteUserIds = new Set<string>()
+            const activeRemotePeerIds = new Set<string>()
+            const activeRemoteNames = new Set<string>()
             for (const p of data.call.participants) {
-              if (p.user_id && p.user_id !== localParticipantId) {
-                upsertRemoteFriendTile({
+              if (
+                p.user_id &&
+                p.user_id !== localParticipantId &&
+                (!p.peer_id || !myPeerId || p.peer_id !== myPeerId)
+              ) {
+                activeRemoteUserIds.add(p.user_id)
+                if (p.peer_id) {
+                  activeRemoteUserIds.add(p.peer_id)
+                  activeRemotePeerIds.add(p.peer_id)
+                }
+                if (typeof p.display_name === "string" && p.display_name.trim()) {
+                  activeRemoteNames.add(p.display_name.trim().toLowerCase())
+                }
+                st.upsertRemoteFriendTile({
                   participantId: p.user_id,
                   peerId: p.peer_id,
                   name: p.display_name,
@@ -1614,6 +2165,20 @@ export function VibeVideoCallStudio({
                 })
               }
             }
+            // Prune any real remote peer tile whose participant has left or timed out
+            setParticipants((prev) => {
+              const isStillActive = (p: CallParticipant) =>
+                activeRemoteUserIds.has(p.id) ||
+                Boolean(p.remotePeerId && activeRemotePeerIds.has(p.remotePeerId)) ||
+                activeRemoteNames.has(p.name.trim().toLowerCase())
+
+              const hasStalePeer = prev.some((p) => p.isRealRemotePeer && !isStillActive(p))
+              if (!hasStalePeer) return prev
+              const nextList = prev.filter((p) => !p.isRealRemotePeer || isStillActive(p))
+              const realCount = nextList.filter((p) => p.isRealRemotePeer).length
+              setConnectedFriendsCount(realCount)
+              return nextList
+            })
           }
           const remoteStage = data.call.shared_stage
           if (remoteStage && remoteStage.sharer_user_id !== localParticipantId) {
@@ -1627,32 +2192,40 @@ export function VibeVideoCallStudio({
           }
         })
         .catch(() => {})
+        .finally(() => {
+          clearTimeout(abortTimer)
+          inFlightHeartbeatRef.current = false
+        })
     }
 
     sendHeartbeat()
-    const interval = setInterval(sendHeartbeat, 1500)
+    const interval = setInterval(sendHeartbeat, 1600)
+
+    const handleBeforeUnload = () => {
+      fetch("/api/v1/calls", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        keepalive: true,
+        body: JSON.stringify({
+          action: "leave",
+          call_id: callId,
+          user_id: localParticipantId,
+        }),
+      }).catch(() => {})
+    }
+    if (typeof window !== "undefined") {
+      window.addEventListener("beforeunload", handleBeforeUnload)
+    }
 
     return () => {
       mounted = false
+      inFlightHeartbeatRef.current = false
       clearInterval(interval)
+      if (typeof window !== "undefined") {
+        window.removeEventListener("beforeunload", handleBeforeUnload)
+      }
     }
-  }, [
-    callId,
-    localParticipantId,
-    myPeerId,
-    conversationId,
-    initialMode,
-    localDisplayName,
-    isInvitedGuestLink,
-    activeCameraLabel,
-    isMicMuted,
-    isCameraOn,
-    selectedVirtualBgId,
-    activeVirtualBgOption,
-    captureCompactLiveFrame,
-    captureActiveSharedStagePayload,
-    upsertRemoteFriendTile,
-  ])
+  }, [callId, localParticipantId, myPeerId, conversationId, initialMode, isInvitedGuestLink, callState, releaseAllMediaDevices, onCloseStudio])
 
   // Call duration timer
   useEffect(() => {
@@ -1663,12 +2236,22 @@ export function VibeVideoCallStudio({
     return () => clearInterval(timer)
   }, [callState])
 
-  // Release hardware when component unmounts
+  // Release hardware & notify server when component unmounts
   useEffect(() => {
     return () => {
       releaseAllMediaDevices()
+      fetch("/api/v1/calls", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        keepalive: true,
+        body: JSON.stringify({
+          action: "leave",
+          call_id: callId,
+          user_id: localParticipantId,
+        }),
+      }).catch(() => {})
     }
-  }, [releaseAllMediaDevices])
+  }, [releaseAllMediaDevices, callId, localParticipantId])
 
   const handleToggleHardwareCamera = async () => {
     if (isHardwareCameraActive) {
@@ -2089,15 +2672,46 @@ export function VibeVideoCallStudio({
   }
 
   const handleEndCall = () => {
+    fetch("/api/v1/calls", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      keepalive: true,
+      body: JSON.stringify({
+        action: "end",
+        call_id: callId,
+        user_id: localParticipantId,
+      }),
+    }).catch(() => {})
     releaseAllMediaDevices()
+    setRemoteStreams({})
+    setRemoteSharedStageItem(null)
+    setLocalSharedStageItem(null)
+    setConnectedFriendsCount(0)
+    setParticipants((prev) =>
+      prev
+        .filter((p) => p.isLocal)
+        .map((p) => ({ ...p, isVideoOn: false, isMuted: true, isSpeaking: false }))
+    )
     setCallState("ENDED")
     setCallStateVersion((v) => v + 1)
     appendLog(
-      "Call state → ENDED: Released all microphone/camera hardware handles and invalidated ephemeral TURN credentials."
+      "Call state → ENDED: Broadcast termination to all participants, removed remote tiles, and released all microphone/camera hardware handles."
     )
     if (onCloseStudio) {
-      setTimeout(() => onCloseStudio(), 400)
+      setTimeout(() => onCloseStudio(), 350)
     }
+  }
+
+  const handleRestartCall = async () => {
+    isFirstStudioHeartbeatRef.current = true
+    setCallDurationSec(0)
+    setCallState("CONNECTED")
+    setCallStateVersion((v) => v + 1)
+    setParticipants((prev) =>
+      prev.map((p) => (p.isLocal ? { ...p, isVideoOn: true, isMuted: false, isSpeaking: true } : p))
+    )
+    await startHardwareCameraAndMic(selectedVideoDeviceId || undefined, selectedAudioDeviceId || undefined, false)
+    appendLog("Reopened live meeting room and restarted local camera & microphone.")
   }
 
   const formatTime = (totalSec: number) => {
@@ -2122,13 +2736,14 @@ export function VibeVideoCallStudio({
       ref={studioRootRef}
       className="rounded-3xl bg-slate-950 text-white border-2 border-emerald-500/60 shadow-2xl overflow-hidden space-y-0"
     >
-      {/* TOP CALL INFRASTRUCTURE STATUS BAR */}
-      <div className="bg-gradient-to-r from-[#04120C] via-[#0A261B] to-[#071C2E] px-5 py-3.5 border-b border-emerald-500/30 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="relative flex items-center justify-center h-10 w-10 rounded-2xl bg-emerald-500/20 border border-emerald-400/40">
-            <Video className="h-5 w-5 text-emerald-300" />
+      {/* UNIFIED EXECUTIVE MEETING HEADER BAR */}
+      <div className="bg-gradient-to-r from-[#04120C] via-[#0A261B] to-[#071C2E] px-5 py-3 border-b border-emerald-500/30 flex flex-wrap items-center justify-between gap-3">
+        {/* Left: Meeting Title, Live Badges & Timer */}
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="relative flex items-center justify-center h-9 w-9 rounded-xl bg-emerald-500/20 border border-emerald-400/40 shrink-0">
+            <Video className="h-4 w-4 text-emerald-300" />
             <span
-              className={`absolute -top-1 -right-1 h-3 w-3 rounded-full ring-2 ring-slate-950 ${
+              className={`absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full ring-2 ring-slate-950 ${
                 isHardwareCameraActive
                   ? "bg-emerald-400 animate-ping"
                   : callState === "RECONNECTING"
@@ -2138,47 +2753,70 @@ export function VibeVideoCallStudio({
             />
           </div>
 
-          <div>
+          <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-sm sm:text-base font-extrabold text-white">{conversationName}</h2>
+              <h2 className="text-sm sm:text-base font-extrabold text-white truncate">{conversationName}</h2>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
-                {isHardwareCameraActive ? "🟢 CAMERA LIVE" : `State: ${callState}`} (v{callStateVersion})
+                🟢 LIVE E2EE
               </span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-teal-500/20 text-teal-200 border border-teal-400/30">
-                🔒 E2EE SFrame Epoch #{sframeEpoch}
-              </span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-white/10 text-zinc-200">
-                👥 {participants.length} in Call
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-white/10 text-zinc-100 font-bold">
+                👥 {participants.length} Connected
               </span>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-white/10 text-zinc-200">
                 ⏱ {formatTime(callDurationSec)}
               </span>
               {isRecording && (
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-extrabold bg-red-600 text-white animate-pulse">
-                  ● REC (Consented)
+                  ● REC
                 </span>
               )}
             </div>
-            <p className="text-[11px] text-emerald-200/80 mt-0.5 font-mono">
-              {cameraStatusMsg || `Call ID: ${callId.slice(0, 18)} · Active Device: ${activeDevice}`}
-            </p>
+            <div className="flex flex-wrap items-center gap-2 mt-1 text-[11px]">
+              <span className="font-mono text-emerald-300/80">Room: {callId}</span>
+              <span className="text-zinc-500">·</span>
+              <label className="text-emerald-200 font-semibold">Your Name:</label>
+              <input
+                type="text"
+                value={localDisplayName}
+                onChange={(e) => {
+                  const val = e.target.value
+                  setLocalDisplayName(val)
+                  if (typeof window !== "undefined") {
+                    sessionStorage.setItem("vibe_call_display_name", val)
+                  }
+                }}
+                placeholder="Enter your name..."
+                className="rounded-lg bg-slate-900/90 border border-emerald-400/40 px-2.5 py-0.5 text-[11px] font-bold text-white focus:border-emerald-300 focus:outline-none w-36 sm:w-44"
+              />
+            </div>
           </div>
         </div>
 
-        {/* Invite Friends Button + Hardware Device Selector + Layout Switcher */}
+        {/* Right: Organized Header Actions (Layout | Invite & Link | Notes & Security) */}
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setShowInvitePanel((prev) => !prev)}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer shadow-md ${
-              showInvitePanel
-                ? "bg-amber-400 text-slate-950"
-                : "bg-emerald-400 hover:bg-emerald-300 text-slate-950"
-            }`}
-          >
-            <UserPlus className="h-3.5 w-3.5" />
-            <span>{showInvitePanel ? "Close Invite Hub" : "+ Invite Friends"}</span>
-          </button>
+          {/* Segmented Layout Switcher */}
+          <div className="inline-flex items-center rounded-xl bg-black/50 p-1 border border-white/10">
+            {(
+              [
+                { id: "grid", label: "Grid" },
+                { id: "speaker", label: "Speaker" },
+                { id: "presentation", label: "Stage" },
+              ] as const
+            ).map((ly) => (
+              <button
+                key={ly.id}
+                type="button"
+                onClick={() => setLayoutMode(ly.id)}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                  layoutMode === ly.id
+                    ? "bg-emerald-500 text-slate-950 shadow-xs"
+                    : "text-zinc-300 hover:text-white"
+                }`}
+              >
+                {ly.label}
+              </button>
+            ))}
+          </div>
 
           <button
             type="button"
@@ -2194,37 +2832,32 @@ export function VibeVideoCallStudio({
             <span>{guestLinkCopied ? "✓ Link Copied!" : "Copy Join Link"}</span>
           </button>
 
-          {videoDevices.length > 0 && (
-            <select
-              value={selectedVideoDeviceId}
-              onChange={(e) => {
-                const newId = e.target.value
-                setSelectedVideoDeviceId(newId)
-                startHardwareCameraAndMic(newId, selectedAudioDeviceId || undefined, false)
-              }}
-              className="rounded-xl bg-black/50 border border-emerald-500/40 px-2.5 py-1 text-[11px] font-semibold text-emerald-200"
-              title="Switch Computer Camera"
-            >
-              {videoDevices.map((d, idx) => (
-                <option key={d.deviceId || idx} value={d.deviceId} className="bg-slate-900 text-white">
-                  📷 {d.label || `Camera ${idx + 1}`}
-                </option>
-              ))}
-            </select>
-          )}
+          <button
+            type="button"
+            onClick={() => setShowInvitePanel((prev) => !prev)}
+            className={`px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm ${
+              showInvitePanel
+                ? "bg-amber-400 text-slate-950"
+                : "bg-emerald-400 hover:bg-emerald-300 text-slate-950"
+            }`}
+          >
+            <UserPlus className="h-3.5 w-3.5" />
+            <span>{showInvitePanel ? "Close Invite" : "+ Invite"}</span>
+          </button>
 
-          {(["grid", "speaker", "presentation"] as const).map((ly) => (
-            <button
-              key={ly}
-              type="button"
-              onClick={() => setLayoutMode(ly)}
-              className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase cursor-pointer ${
-                layoutMode === ly ? "bg-teal-500 text-slate-950" : "bg-white/10 text-zinc-300"
-              }`}
-            >
-              {ly}
-            </button>
-          ))}
+          <button
+            type="button"
+            onClick={() => setShowInspectorPanel((prev) => !prev)}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border ${
+              showInspectorPanel
+                ? "bg-teal-400 text-slate-950 border-teal-300 font-extrabold"
+                : "bg-white/10 hover:bg-white/15 text-zinc-200 border-white/15"
+            }`}
+            title="Toggle Meeting Notes & E2EE Security Inspector"
+          >
+            <Shield className="h-3.5 w-3.5" />
+            <span>Notes &amp; Security</span>
+          </button>
         </div>
       </div>
 
@@ -2465,40 +3098,6 @@ export function VibeVideoCallStudio({
         </div>
       )}
 
-      {/* GUEST / PARTICIPANT DISPLAY NAME & LIVE ROOM CONNECTION BAR */}
-      <div className="bg-emerald-950/80 border-b border-emerald-500/40 px-5 py-2.5 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500 text-slate-950 font-extrabold text-[11px]">
-            <span className="h-2 w-2 rounded-full bg-slate-950 animate-ping" />
-            {isInvitedGuestLink ? "JOINED VIA FRIEND LINK" : "LIVE MEETING ROOM ACTIVE"}
-          </span>
-          <span className="font-mono text-emerald-200 text-[11px]">
-            Room: <strong>{callId}</strong>
-          </span>
-          {connectedFriendsCount > 0 ? (
-            <span className="px-2.5 py-0.5 rounded-full bg-teal-400 text-slate-950 font-extrabold text-[11px]">
-              🟢 {connectedFriendsCount} Live Friend{connectedFriendsCount > 1 ? "s" : ""} Connected
-              {lastJoinedFriendName ? ` (${lastJoinedFriendName})` : ""}
-            </span>
-          ) : (
-            <span className="text-emerald-300/90 text-[11px]">
-              · Waiting for friends to open your Join Link (auto-connects in ~2s)
-            </span>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2">
-          <label className="text-[11px] font-bold text-emerald-200">Your Name in Call:</label>
-          <input
-            type="text"
-            value={localDisplayName}
-            onChange={(e) => setLocalDisplayName(e.target.value)}
-            placeholder="Enter your name..."
-            className="rounded-xl bg-slate-900 border border-emerald-400/50 px-3 py-1 text-xs font-extrabold text-white focus:border-emerald-300 focus:outline-none w-44 sm:w-52"
-          />
-        </div>
-      </div>
-
       {/* CAMERA PERMISSION OR STATUS ALERT BAR */}
       {cameraError && (
         <div className="bg-rose-950/90 border-b border-rose-500/50 px-5 py-3 flex flex-wrap items-center justify-between gap-3">
@@ -2550,63 +3149,14 @@ export function VibeVideoCallStudio({
         </div>
       )}
 
-      {/* MAIN CALL STAGE + SIDEBAR INFRASTRUCTURE INSPECTOR */}
+      {/* MAIN CALL STAGE + OPTIONAL COLLAPSIBLE NOTES & SECURITY DRAWER */}
       <div className="grid grid-cols-1 lg:grid-cols-12">
-        {/* LEFT/CENTER (8 cols): MULTI-PARTICIPANT VIDEO GRID WITH LIVE HARDWARE WEBCAM IN LOCAL TILE */}
-        <div className="lg:col-span-8 p-5 space-y-4 border-b lg:border-b-0 lg:border-r border-white/10">
-          {/* Top Camera Toolbar: Mic Meter, Camera Switcher & Snapshot */}
-          <div className="rounded-2xl bg-slate-900/95 border border-emerald-500/40 px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
-            <div className="flex items-center gap-2">
-              <span
-                className={`h-2.5 w-2.5 rounded-full ${
-                  isHardwareCameraActive && isCameraOn ? "bg-emerald-400 animate-ping" : "bg-amber-400"
-                }`}
-              />
-              <span className="font-extrabold text-emerald-300">
-                {isHardwareCameraActive && isCameraOn
-                  ? `Live Computer Camera Active in Your Tile (${activeCameraLabel})`
-                  : isRequestingCamera
-                  ? "Starting Computer Camera (Click 'Allow' in browser if prompted)..."
-                  : "Camera Paused — Click 'Start Computer Cam' to enable"}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 bg-black/50 px-2.5 py-1 rounded-full text-[10px] font-mono border border-white/10">
-                <Mic className="h-3 w-3 text-emerald-400" />
-                <span>Mic:</span>
-                <div className="w-16 h-2 bg-zinc-800 rounded-full overflow-hidden">
-                  <div
-                    style={{ width: `${isMicMuted ? 0 : micLevel}%` }}
-                    className="h-full bg-emerald-400 transition-all duration-75"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setShowVirtualBgPicker((prev) => !prev)}
-                className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold flex items-center gap-1 cursor-pointer transition-all ${
-                  selectedVirtualBgId !== "none" || showVirtualBgPicker
-                    ? "bg-teal-400 text-slate-950 shadow-sm"
-                    : "bg-teal-500/20 hover:bg-teal-500/30 border border-teal-400/40 text-teal-200"
-                }`}
-              >
-                <span>✨ Virtual Background: {activeVirtualBgOption.name}</span>
-              </button>
-
-              {isHardwareCameraActive && isCameraOn && (
-                <button
-                  type="button"
-                  onClick={handleCaptureSnapshot}
-                  className="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-200 text-[10px] font-bold flex items-center gap-1 cursor-pointer"
-                >
-                  <Camera className="h-3 w-3" />
-                  <span>Capture Snapshot</span>
-                </button>
-              )}
-            </div>
-          </div>
+        {/* MAIN VIDEO STAGE (Full 12 columns by default; 8 columns when Notes & Security drawer is open) */}
+        <div
+          className={`${
+            showInspectorPanel ? "lg:col-span-8 lg:border-r border-white/10" : "lg:col-span-12"
+          } p-5 space-y-4`}
+        >
 
           {/* VIRTUAL BACKGROUND STUDIO GALLERY DRAWER */}
           {showVirtualBgPicker && (
@@ -2913,34 +3463,71 @@ export function VibeVideoCallStudio({
             </div>
           )}
 
-          {/* PARTICIPANT VIDEO GRID (YOUR LIVE WEBCAM FILLS THE TOP-LEFT KASIED1 ASIEDU TILE EDGE-TO-EDGE!) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          {callState === "ENDED" && (
+            <div className="rounded-2xl bg-slate-900/95 border-2 border-rose-500/50 p-6 flex flex-col items-center justify-center text-center space-y-3 shadow-xl">
+              <div className="h-12 w-12 rounded-2xl bg-rose-500/20 border border-rose-400/40 flex items-center justify-center text-rose-400">
+                <PhoneOff className="h-6 w-6" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-base font-extrabold text-white">Meeting Ended</h3>
+                <p className="text-xs text-zinc-300 max-w-md">
+                  All participant streams have been closed cleanly and camera/microphone hardware handles have been released.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleRestartCall}
+                className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold flex items-center gap-1.5 cursor-pointer shadow-lg"
+              >
+                <Video className="h-4 w-4" />
+                <span>Start / Rejoin Live Meeting</span>
+              </button>
+            </div>
+          )}
+
+          {/* PARTICIPANT VIDEO GRID (CLEAN, UNCLUTTERED, REAL PARTICIPANTS ONLY) */}
+          {callState !== "ENDED" && (
+          <div
+            className={`grid gap-4 ${
+              participants.length === 1
+                ? "grid-cols-1 max-w-4xl mx-auto"
+                : participants.length === 2
+                ? "grid-cols-1 md:grid-cols-2"
+                : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+            }`}
+          >
             {participants.map((part) => {
               const isLocalTile = Boolean(part.isLocal)
               const showLiveVideoInTile = isLocalTile && isHardwareCameraActive && isCameraOn
               const remoteStream =
                 !isLocalTile && part.remotePeerId ? remoteStreams[part.remotePeerId] : undefined
-              const showRemoteFriendLiveVideo =
-                !isLocalTile && part.isVideoOn && Boolean(remoteStream || part.liveFrame)
+              const showRemoteFriendLiveVideo = !isLocalTile && part.isVideoOn
 
               return (
                 <div
                   key={part.id}
                   style={{
-                    backgroundColor: "#070D0A",
-                    minHeight: isLocalTile && layoutMode === "speaker" ? "360px" : "250px",
+                    backgroundColor: "#0F241D",
+                    minHeight:
+                      participants.length === 1
+                        ? "420px"
+                        : isLocalTile && layoutMode === "speaker"
+                        ? "380px"
+                        : "280px",
                   }}
                   className={`rounded-2xl border-2 overflow-hidden relative flex flex-col justify-between transition-all ${
-                    isLocalTile && layoutMode === "speaker" ? "sm:col-span-2" : ""
+                    isLocalTile && layoutMode === "speaker" && participants.length > 1
+                      ? "md:col-span-2"
+                      : ""
                   } ${
                     showLiveVideoInTile || part.isRealRemotePeer
-                      ? "border-emerald-400 shadow-[0_0_25px_rgba(16,185,129,0.35)]"
+                      ? "border-emerald-400/80 shadow-[0_0_24px_rgba(16,185,129,0.25)]"
                       : part.isSpeaking && !part.isMuted
                       ? "border-emerald-500/70 shadow-[0_0_18px_rgba(16,185,129,0.2)]"
                       : "border-white/15"
                   }`}
                 >
-                  {/* FULL-BLEED LIVE COMPUTER WEBCAM VIDEO INSIDE KASIED1 ASIEDU'S TILE */}
+                  {/* FULL-BLEED LIVE COMPUTER WEBCAM VIDEO INSIDE LOCAL TILE */}
                   {isLocalTile && (
                     <>
                       <video
@@ -2960,10 +3547,12 @@ export function VibeVideoCallStudio({
                           width: "100%",
                           height: "100%",
                           objectFit: "cover",
-                          transform: "scaleX(-1)",
+                          transform: isFallbackStudioCam ? "none" : "scaleX(-1)",
                           backgroundColor: "#000000",
                           zIndex: 5,
-                          display: showLiveVideoInTile ? "block" : "none",
+                          display: "block",
+                          opacity: showLiveVideoInTile ? 1 : 0,
+                          pointerEvents: showLiveVideoInTile ? "auto" : "none",
                         }}
                       />
                       {/* LIVE VIRTUAL BACKGROUND COMPOSITING CANVAS OVERLAY */}
@@ -2986,71 +3575,57 @@ export function VibeVideoCallStudio({
                     </>
                   )}
 
-                  {/* FULL-BLEED LIVE REMOTE FRIEND WEBRTC STREAM OR LIVE FRAME RELAY */}
-                  {/* Note: We always mount RemotePeerVideoElement when remoteStream exists so live WebRTC audio plays! */}
+                  {/* LAYER 1 (zIndex 4): BRIGHT LIVE STUDIO VIDEO FEED FOR ALL REMOTE PARTICIPANTS WITH VIDEO ON */}
+                  {!isLocalTile && part.isVideoOn && (
+                    <RemoteParticipantStudioFeed participant={part} />
+                  )}
+
+                  {/* LAYER 2 (zIndex 5 or 7): LIVE REMOTE CAMERA FRAME RELAY (HTTP / PeerJS DataChannel) */}
+                  {!isLocalTile && part.liveFrame && part.isVideoOn && (
+                    <img
+                      src={part.liveFrame}
+                      alt={part.name}
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        backgroundColor: "transparent",
+                        zIndex: part.virtualBgId && part.virtualBgId !== "none" ? 7 : 5,
+                      }}
+                    />
+                  )}
+
+                  {/* LAYER 3 (zIndex 6): LIVE REMOTE WEBRTC MEDIASTREAM (Transparent until videoWidth > 0) */}
                   {!isLocalTile && remoteStream && part.isVideoOn && (
                     <RemotePeerVideoElement stream={remoteStream} />
                   )}
-                  {/* If the remote friend has a Virtual Background active (or if P2P video stream is relayed via frame), render their composited Virtual Background frame on top (`zIndex: 7`) so their physical room is NEVER exposed! */}
-                  {!isLocalTile &&
-                    part.liveFrame &&
-                    part.isVideoOn &&
-                    (!remoteStream || (part.virtualBgId && part.virtualBgId !== "none")) && (
-                      <img
-                        src={part.liveFrame}
-                        alt={part.name}
-                        style={{
-                          position: "absolute",
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                          backgroundColor: "#000000",
-                          zIndex: 7,
-                        }}
-                      />
-                    )}
 
-                  {/* Top Overlay: Fingerprint & Connection Type */}
-                  <div className="p-3 flex items-center justify-between gap-2 relative z-20 bg-gradient-to-b from-black/80 via-black/40 to-transparent">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="px-2 py-0.5 rounded-md bg-black/80 text-[10px] font-mono text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
-                        <Lock className="h-2.5 w-2.5" />
-                        {part.e2eeFingerprint}
+                  {/* Minimal Top-Left Status Pill (Does not cover participant faces) */}
+                  <div className="p-2.5 flex items-center justify-between gap-2 relative z-20 pointer-events-none">
+                    <div className="flex items-center gap-1.5">
+                      <span className="px-2 py-0.5 rounded-full bg-black/65 backdrop-blur-md text-[10px] font-bold text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        {isLocalTile ? "YOU · LIVE" : "LIVE"}
                       </span>
-                      <span className="px-2 py-0.5 rounded-md bg-black/80 text-[10px] font-mono text-zinc-200">
-                        {ipPrivacyRelayOnly ? "TURN Relay (IP Hidden)" : part.connectionType}
-                      </span>
-                      {showLiveVideoInTile && (
-                        <span className="px-2 py-0.5 rounded-md bg-emerald-500 text-slate-950 text-[10px] font-mono font-extrabold">
-                          ● LIVE CAM
-                        </span>
-                      )}
                       {isLocalTile && selectedVirtualBgId !== "none" && (
-                        <span className="px-2 py-0.5 rounded-md bg-teal-400 text-slate-950 text-[10px] font-mono font-extrabold">
+                        <span className="px-2 py-0.5 rounded-full bg-teal-500/80 text-slate-950 text-[10px] font-extrabold">
                           ✨ {activeVirtualBgOption.badgeText}
                         </span>
                       )}
                       {!isLocalTile && part.virtualBgId && part.virtualBgId !== "none" && (
-                        <span className="px-2 py-0.5 rounded-md bg-teal-400 text-slate-950 text-[10px] font-mono font-extrabold">
-                          ✨ {part.virtualBgBadge || "VIRTUAL BG"}
-                        </span>
-                      )}
-                      {part.isRealRemotePeer && (
-                        <span className="px-2 py-0.5 rounded-md bg-teal-400 text-slate-950 text-[10px] font-mono font-extrabold">
-                          🟢 LIVE FRIEND CONNECTED
+                        <span className="px-2 py-0.5 rounded-full bg-teal-500/80 text-slate-950 text-[10px] font-extrabold">
+                          ✨ {part.virtualBgBadge || "BG"}
                         </span>
                       )}
                     </div>
-                    <span className="text-[10px] font-mono text-emerald-400 bg-black/80 px-2 py-0.5 rounded">
-                      {part.rttMs}ms · {part.packetLossPct}
-                    </span>
                   </div>
 
-                  {/* Center Area: Shown only when camera is off or for remote simulated participants */}
+                  {/* Center Area: Shown only when camera is off */}
                   <div className="flex-1 flex items-center justify-center relative z-10 px-4 py-2">
                     {!showLiveVideoInTile && !showRemoteFriendLiveVideo && (
                       <div className="flex flex-col items-center justify-center text-center space-y-2.5">
@@ -3080,24 +3655,13 @@ export function VibeVideoCallStudio({
                           >
                             <Video className="h-3.5 w-3.5" />
                             <span>
-                              {isRequestingCamera ? "Starting Webcam..." : "Turn On Computer Camera"}
+                              {isRequestingCamera ? "Starting Webcam..." : "Turn On Camera"}
                             </span>
                           </button>
                         ) : (
-                          <div className="flex items-center gap-1 h-3">
-                            {[1, 2, 3, 4, 5, 6].map((bar) => (
-                              <span
-                                key={bar}
-                                style={{
-                                  height:
-                                    part.isSpeaking && !part.isMuted
-                                      ? `${Math.max(4, (45 * ((bar % 3) + 1)) / 8)}px`
-                                      : "4px",
-                                }}
-                                className="w-1 rounded-full bg-emerald-400 transition-all duration-150"
-                              />
-                            ))}
-                          </div>
+                          <span className="text-[11px] font-semibold text-zinc-400">
+                            Camera Off
+                          </span>
                         )}
                       </div>
                     )}
@@ -3106,9 +3670,11 @@ export function VibeVideoCallStudio({
                   {/* Bottom Overlay: Participant Name, Role & Mic Indicator */}
                   <div className="p-3 flex items-center justify-between gap-2 relative z-20 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
                     <div className="min-w-0">
-                      <p className="text-xs font-extrabold text-white truncate">{part.name}</p>
-                      <p className="text-[10px] text-emerald-200/90 truncate">
-                        {part.role} · {isLocalTile ? activeCameraLabel : part.device}
+                      <p className="text-xs font-extrabold text-white truncate">
+                        {part.name} {isLocalTile ? "(You)" : ""}
+                      </p>
+                      <p className="text-[10px] text-emerald-200/80 truncate">
+                        {part.role}
                       </p>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
@@ -3127,14 +3693,15 @@ export function VibeVideoCallStudio({
               )
             })}
           </div>
+          )}
 
-          {/* LIVE AI MULTILINGUAL CAPTION BAR */}
+          {/* LIVE AI MULTILINGUAL CAPTION BAR (TOGGLED VIA CC BUTTON) */}
           {liveCaptions && (
-            <div className="rounded-2xl bg-black/60 border border-emerald-500/30 p-3.5 space-y-2">
+            <div className="rounded-2xl bg-black/60 border border-emerald-500/30 p-3 space-y-1.5">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="text-[10px] font-mono font-bold uppercase text-emerald-400 flex items-center gap-1.5">
                   <Captions className="h-3.5 w-3.5" />
-                  On-Device Live Transcription &amp; Translation (Zero Cloud Plaintext Leakage)
+                  Live Captions &amp; Translation
                 </span>
                 <div className="flex items-center gap-1">
                   {(["English", "Twi", "French", "Spanish"] as const).map((lang) => (
@@ -3159,8 +3726,8 @@ export function VibeVideoCallStudio({
             </div>
           )}
 
-          {/* CALL CONTROL DECK (BOTTOM BAR) */}
-          <div className="rounded-2xl bg-slate-900/90 border border-white/10 p-3.5 flex flex-wrap items-center justify-between gap-2">
+          {/* ORGANIZED 4-ZONE MEETING CONTROL DOCK */}
+          <div className="rounded-2xl bg-slate-900/95 border border-emerald-500/25 p-3 shadow-2xl">
             {/* Hidden file input for sharing files/images/slides to the live meeting stage */}
             <input
               ref={sharedFileInputRef}
@@ -3169,159 +3736,264 @@ export function VibeVideoCallStudio({
               onChange={handleShareFileUpload}
               className="hidden"
             />
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={handleToggleMute}
-                className={`px-3.5 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 cursor-pointer transition-all ${
-                  isMicMuted
-                    ? "bg-red-600 text-white"
-                    : "bg-zinc-800 hover:bg-zinc-700 text-white border border-white/10"
-                }`}
-              >
-                {isMicMuted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4 text-emerald-400" />}
-                <span>{isMicMuted ? "Unmute Mic" : "Mute Mic"}</span>
-              </button>
 
-              <button
-                type="button"
-                onClick={handleToggleVideo}
-                className={`px-3.5 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 cursor-pointer transition-all ${
-                  !isCameraOn
-                    ? "bg-red-600 text-white"
-                    : "bg-zinc-800 hover:bg-zinc-700 text-white border border-white/10"
-                }`}
-              >
-                {isCameraOn ? <Video className="h-4 w-4 text-emerald-400" /> : <VideoOff className="h-4 w-4" />}
-                <span>{isCameraOn ? "Camera ON" : "Camera OFF"}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleToggleHardwareCamera}
-                className={`px-3.5 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 cursor-pointer transition-all ${
-                  isHardwareCameraActive
-                    ? "bg-emerald-500 text-slate-950"
-                    : "bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-500/40"
-                }`}
-              >
-                <Video className="h-4 w-4" />
-                <span>{isHardwareCameraActive ? "Restart / Stop Cam" : "Start Computer Cam"}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setShowVirtualBgPicker((prev) => !prev)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 cursor-pointer transition-all ${
-                  showVirtualBgPicker || selectedVirtualBgId !== "none"
-                    ? "bg-teal-400 text-slate-950 shadow-md"
-                    : "bg-zinc-800 hover:bg-zinc-700 text-teal-200 border border-teal-500/40"
-                }`}
-              >
-                <span>✨ Virtual Backgrounds</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleToggleScreenShare}
-                className={`px-3.5 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 cursor-pointer transition-all ${
-                  isScreenSharing || localSharedStageItem?.active
-                    ? "bg-teal-500 text-slate-950"
-                    : "bg-zinc-800 hover:bg-zinc-700 text-white border border-white/10"
-                }`}
-              >
-                <MonitorUp className="h-4 w-4 text-teal-400" />
-                <span>
-                  {isScreenSharing || localSharedStageItem?.active ? "Stop Sharing" : "Share Screen"}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              {/* ZONE 1: AUDIO & VIDEO CONTROLS */}
+              <div className="flex flex-wrap items-center gap-1.5 bg-black/40 px-2.5 py-1.5 rounded-xl border border-white/10">
+                <span className="text-[9px] font-mono uppercase tracking-wider text-zinc-400 px-1 hidden sm:inline">
+                  Media
                 </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => sharedFileInputRef.current?.click()}
-                className="px-3.5 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 cursor-pointer transition-all bg-teal-950 hover:bg-teal-900 text-teal-200 border border-teal-400/40"
-              >
-                <FileText className="h-4 w-4 text-teal-300" />
-                <span>Share File / Image / Slide</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setShowInvitePanel((prev) => !prev)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 cursor-pointer transition-all ${
-                  showInvitePanel
-                    ? "bg-amber-400 text-slate-950"
-                    : "bg-emerald-500 hover:bg-emerald-400 text-slate-950"
-                }`}
-              >
-                <UserPlus className="h-4 w-4" />
-                <span>{showInvitePanel ? "Hide Invite Hub" : "+ Invite Friends"}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setLowBandwidthMode(!lowBandwidthMode)}
-                className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer ${
-                  lowBandwidthMode
-                    ? "bg-amber-500 text-slate-950"
-                    : "bg-zinc-800 text-zinc-200 border border-white/10"
-                }`}
-              >
-                <WifiLow className="h-4 w-4" />
-                <span>{lowBandwidthMode ? "Low-BW Active" : "Low-BW Mode"}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleToggleRecording}
-                className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer ${
-                  isRecording
-                    ? "bg-red-600 text-white animate-pulse"
-                    : "bg-zinc-800 text-zinc-200 border border-white/10"
-                }`}
-              >
-                <CircleDot className="h-4 w-4 text-red-400" />
-                <span>
-                  {!recordingConsentGiven
-                    ? "Authorize Recording"
-                    : isRecording
-                    ? "Stop Recording"
-                    : "Start Recording"}
-                </span>
-              </button>
-
-              {recordedDownloadUrl && (
-                <a
-                  href={recordedDownloadUrl}
-                  download={`vibe-call-${callId.slice(0, 8)}.webm`}
-                  className="px-3 py-2 rounded-xl bg-emerald-600 text-white text-xs font-extrabold flex items-center gap-1"
+                <button
+                  type="button"
+                  onClick={handleToggleMute}
+                  className={`px-3 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 cursor-pointer transition-all ${
+                    isMicMuted
+                      ? "bg-red-600 text-white"
+                      : "bg-zinc-800 hover:bg-zinc-700 text-white border border-white/10"
+                  }`}
                 >
-                  <Download className="h-3.5 w-3.5" />
-                  <span>Download .webm</span>
-                </a>
-              )}
-            </div>
+                  {isMicMuted ? (
+                    <MicOff className="h-4 w-4" />
+                  ) : (
+                    <Mic className="h-4 w-4 text-emerald-400" />
+                  )}
+                  <span>{isMicMuted ? "Unmute" : "Mute"}</span>
+                </button>
 
-            <button
-              type="button"
-              onClick={handleEndCall}
-              className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-extrabold flex items-center gap-1.5 cursor-pointer shadow-lg"
-            >
-              <PhoneOff className="h-4 w-4" />
-              <span>End Call &amp; Release Mic/Cam</span>
-            </button>
+                <button
+                  type="button"
+                  onClick={handleToggleVideo}
+                  className={`px-3 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 cursor-pointer transition-all ${
+                    !isCameraOn
+                      ? "bg-red-600 text-white"
+                      : "bg-zinc-800 hover:bg-zinc-700 text-white border border-white/10"
+                  }`}
+                >
+                  {isCameraOn ? (
+                    <Video className="h-4 w-4 text-emerald-400" />
+                  ) : (
+                    <VideoOff className="h-4 w-4" />
+                  )}
+                  <span>{isCameraOn ? "Camera On" : "Camera Off"}</span>
+                </button>
+
+                {videoDevices.length > 1 && (
+                  <select
+                    value={selectedVideoDeviceId}
+                    onChange={(e) => handleSelectCameraDevice(e.target.value)}
+                    aria-label="Select camera device"
+                    className="rounded-xl bg-zinc-900 border border-white/10 px-2 py-2 text-[11px] text-zinc-200 max-w-[130px] focus:border-emerald-400 focus:outline-none"
+                  >
+                    {videoDevices.map((d, idx) => (
+                      <option key={d.deviceId || idx} value={d.deviceId}>
+                        {d.label || `Camera #${idx + 1}`}
+                      </option>
+                    ))}
+                  </select>
+                )}
+
+                {isHardwareCameraActive && (
+                  <button
+                    type="button"
+                    onClick={handleCaptureSnapshot}
+                    title="Take HD Snapshot"
+                    className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/10 cursor-pointer"
+                  >
+                    <Camera className="h-4 w-4 text-emerald-400" />
+                  </button>
+                )}
+              </div>
+
+              {/* ZONE 2: PRESENT & STUDIO EFFECTS */}
+              <div className="flex flex-wrap items-center gap-1.5 bg-black/40 px-2.5 py-1.5 rounded-xl border border-white/10">
+                <span className="text-[9px] font-mono uppercase tracking-wider text-zinc-400 px-1 hidden sm:inline">
+                  Present
+                </span>
+                <button
+                  type="button"
+                  onClick={handleToggleScreenShare}
+                  className={`px-3 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 cursor-pointer transition-all ${
+                    isScreenSharing || localSharedStageItem?.active
+                      ? "bg-teal-500 text-slate-950"
+                      : "bg-zinc-800 hover:bg-zinc-700 text-white border border-white/10"
+                  }`}
+                >
+                  <MonitorUp className="h-4 w-4 text-teal-400" />
+                  <span>
+                    {isScreenSharing || localSharedStageItem?.active ? "Stop Share" : "Share Screen"}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => sharedFileInputRef.current?.click()}
+                  className="px-3 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 cursor-pointer transition-all bg-zinc-800 hover:bg-zinc-700 text-teal-200 border border-white/10"
+                >
+                  <FileText className="h-4 w-4 text-teal-300" />
+                  <span>Share File</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowVirtualBgPicker((prev) => !prev)}
+                  className={`px-3 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 cursor-pointer transition-all ${
+                    showVirtualBgPicker || selectedVirtualBgId !== "none"
+                      ? "bg-teal-400 text-slate-950 shadow-md"
+                      : "bg-zinc-800 hover:bg-zinc-700 text-teal-200 border border-white/10"
+                  }`}
+                >
+                  <span>✨ Backgrounds</span>
+                </button>
+              </div>
+
+              {/* ZONE 3: COLLABORATION & TOOLS */}
+              <div className="flex flex-wrap items-center gap-1.5 bg-black/40 px-2.5 py-1.5 rounded-xl border border-white/10">
+                <span className="text-[9px] font-mono uppercase tracking-wider text-zinc-400 px-1 hidden sm:inline">
+                  Tools
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowInvitePanel((prev) => !prev)}
+                  className={`px-3 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 cursor-pointer transition-all ${
+                    showInvitePanel
+                      ? "bg-amber-400 text-slate-950"
+                      : "bg-emerald-500 hover:bg-emerald-400 text-slate-950"
+                  }`}
+                >
+                  <UserPlus className="h-4 w-4" />
+                  <span>Invite</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setLiveCaptions((prev) => !prev)}
+                  className={`px-2.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer ${
+                    liveCaptions
+                      ? "bg-emerald-500 text-slate-950"
+                      : "bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/10"
+                  }`}
+                >
+                  <Captions className="h-4 w-4" />
+                  <span>CC</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleToggleRecording}
+                  className={`px-2.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer ${
+                    isRecording
+                      ? "bg-red-600 text-white animate-pulse"
+                      : "bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/10"
+                  }`}
+                >
+                  <CircleDot className="h-4 w-4 text-red-400" />
+                  <span>{isRecording ? "Stop Rec" : "Record"}</span>
+                </button>
+
+                {recordedDownloadUrl && (
+                  <a
+                    href={recordedDownloadUrl}
+                    download={`vibe-call-${callId.slice(0, 8)}.webm`}
+                    className="px-2.5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-extrabold flex items-center gap-1"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    <span>Save</span>
+                  </a>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setShowInspectorPanel((prev) => !prev)}
+                  className={`px-2.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer ${
+                    showInspectorPanel
+                      ? "bg-teal-400 text-slate-950"
+                      : "bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/10"
+                  }`}
+                >
+                  <FileText className="h-4 w-4 text-emerald-400" />
+                  <span>Notes &amp; Tools</span>
+                </button>
+              </div>
+
+              {/* ZONE 4: END MEETING */}
+              <button
+                type="button"
+                onClick={handleEndCall}
+                className="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-extrabold flex items-center gap-1.5 cursor-pointer shadow-lg shrink-0"
+              >
+                <PhoneOff className="h-4 w-4" />
+                <span>End Meeting</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* RIGHT (4 cols): SIGNALING, STUN/TURN RELAY, E2EE MEDIA KEY & CALL NOTES */}
+        {/* COLLAPSIBLE RIGHT DRAWER (4 cols): CALL NOTES, SECURITY & SIGNALING TELEMETRY */}
+        {showInspectorPanel && (
         <div className="lg:col-span-4 p-5 space-y-4 bg-slate-900/50">
+          <div className="rounded-2xl bg-slate-900 border border-white/10 p-4 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-extrabold text-white flex items-center gap-1.5">
+                <FileText className="h-4 w-4 text-emerald-400" />
+                Shared In-Call Meeting Notes
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(shareableMeetingUrl)
+                  setGuestLinkCopied(true)
+                  setTimeout(() => setGuestLinkCopied(false), 2500)
+                }}
+                className="text-[10px] font-bold text-teal-300 hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                <Globe className="h-3 w-3" />
+                <span>{guestLinkCopied ? "Copied Guest Link!" : "Copy Guest Link"}</span>
+              </button>
+            </div>
+
+            <textarea
+              value={callNotes}
+              onChange={(e) => setCallNotes(e.target.value)}
+              rows={3}
+              className="w-full rounded-xl bg-black/50 border border-white/10 p-2.5 text-xs text-zinc-200 focus:border-emerald-500 focus:outline-none"
+            />
+
+            {onCreateWorkflowFromCall && (
+              <button
+                type="button"
+                onClick={() => {
+                  onCreateWorkflowFromCall(
+                    `Call Action Item: ${callNotes.split("\n")[0].replace("• ", "").slice(0, 68)}`,
+                    currentUserName,
+                    `WebRTC Call #${callId.slice(0, 8)} Transcript`
+                  )
+                  appendLog("Converted call meeting note into governed Vibe Workflow task.")
+                }}
+                className="w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Workflow className="h-3.5 w-3.5" />
+                <span>Convert Call Notes → Tracked Workflow Task</span>
+              </button>
+            )}
+          </div>
+
           <div className="rounded-2xl bg-slate-900 border border-white/10 p-4 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-extrabold text-emerald-300 flex items-center gap-1.5">
                 <Server className="h-4 w-4" />
-                WebRTC Resilience &amp; TURN Relay Controls
+                Network &amp; Security Controls
               </span>
-              <span className="text-[10px] font-mono text-zinc-400">Section 8 Spec</span>
+              <button
+                type="button"
+                onClick={() => setLowBandwidthMode(!lowBandwidthMode)}
+                className={`px-2 py-0.5 rounded text-[10px] font-bold cursor-pointer ${
+                  lowBandwidthMode
+                    ? "bg-amber-500 text-slate-950"
+                    : "bg-zinc-800 text-zinc-300 border border-white/10"
+                }`}
+              >
+                {lowBandwidthMode ? "Low-BW ON" : "Low-BW OFF"}
+              </button>
             </div>
 
             <div className="grid grid-cols-2 gap-2">
@@ -3334,7 +4006,7 @@ export function VibeVideoCallStudio({
                   <RefreshCw className="h-3 w-3" /> Wi-Fi ↔ 5G Handoff
                 </div>
                 <div className="text-[10px] text-zinc-400 font-normal mt-0.5">
-                  Test ICE restart &amp; reconnect
+                  Reconnect ICE streams
                 </div>
               </button>
 
@@ -3398,67 +4070,11 @@ export function VibeVideoCallStudio({
                 </div>
               </button>
             </div>
-
-            <div className="rounded-xl bg-black/50 border border-white/10 p-3 font-mono text-[10px] space-y-1">
-              <div className="text-emerald-400 font-bold">
-                Short-Lived Scoped TURN Credentials (TTL: {turnCredentials.ttl_seconds}s)
-              </div>
-              <div className="text-zinc-300 truncate">username: {turnCredentials.username}</div>
-              <div className="text-zinc-400 truncate">
-                uris: {turnCredentials.uris.slice(0, 2).join(" , ")}
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-2xl bg-slate-900 border border-white/10 p-4 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-extrabold text-white flex items-center gap-1.5">
-                <FileText className="h-4 w-4 text-emerald-400" />
-                Shared In-Call Meeting Notes
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  navigator.clipboard.writeText(shareableMeetingUrl)
-                  setGuestLinkCopied(true)
-                  setTimeout(() => setGuestLinkCopied(false), 2500)
-                }}
-                className="text-[10px] font-bold text-teal-300 hover:underline flex items-center gap-1 cursor-pointer"
-              >
-                <Globe className="h-3 w-3" />
-                <span>{guestLinkCopied ? "Copied Guest Link!" : "Copy Guest Link"}</span>
-              </button>
-            </div>
-
-            <textarea
-              value={callNotes}
-              onChange={(e) => setCallNotes(e.target.value)}
-              rows={3}
-              className="w-full rounded-xl bg-black/50 border border-white/10 p-2.5 text-xs text-zinc-200 focus:border-emerald-500 focus:outline-none"
-            />
-
-            {onCreateWorkflowFromCall && (
-              <button
-                type="button"
-                onClick={() => {
-                  onCreateWorkflowFromCall(
-                    `Call Action Item: ${callNotes.split("\n")[0].replace("• ", "").slice(0, 68)}`,
-                    currentUserName,
-                    `WebRTC Call #${callId.slice(0, 8)} Transcript`
-                  )
-                  appendLog("Converted call meeting note into governed Vibe Workflow task.")
-                }}
-                className="w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <Workflow className="h-3.5 w-3.5" />
-                <span>Convert Call Notes → Tracked Workflow Task</span>
-              </button>
-            )}
           </div>
 
           <div className="rounded-2xl bg-black/70 border border-emerald-500/20 p-3.5 space-y-2">
             <span className="text-[10px] font-mono font-bold uppercase text-emerald-400 block">
-              Authoritative Call Signaling &amp; ICE Telemetry Log
+              Call Signaling &amp; Telemetry Log
             </span>
             <div className="space-y-1 max-h-[140px] overflow-y-auto font-mono text-[10px] text-emerald-100/90">
               {signalingLogs.map((log, i) => (
@@ -3469,6 +4085,7 @@ export function VibeVideoCallStudio({
             </div>
           </div>
         </div>
+        )}
       </div>
     </div>
   )

@@ -4041,74 +4041,52 @@ export function buildExecutiveSummaryDossier(params: {
     }
   ];
 
-  // Strictly Monotonic Posture Score Progression (fixes the 95 -> 94 -> 98 regression!)
-  const q1Score = Math.max(28, computedScore - 12);
-  const q2Score = Math.max(34, computedScore - 7);
-  const q3Score = Math.max(40, computedScore - 3);
-  const phase1ProjectedScore = Math.min(90, Math.max(computedScore + 6, Math.round(computedScore + (96 - computedScore) * 0.45)));
-  const phase2ProjectedScore = Math.min(95, Math.max(phase1ProjectedScore + 3, Math.round(computedScore + (96 - computedScore) * 0.78)));
+  // Strictly Monotonic Posture Score Progression based ONLY on Measured Current Scan + Conditional Remediation Phases
+  // (No fabricated historical Q1/Q2/Q3 scan scores for external customer websites)
+  const phase1ProjectedScore = Math.min(92, Math.max(computedScore + 5, Math.round(computedScore + (96 - computedScore) * 0.45)));
+  const phase2ProjectedScore = Math.min(96, Math.max(phase1ProjectedScore + 3, Math.round(computedScore + (96 - computedScore) * 0.78)));
   const phase3ProjectedScore = Math.max(phase2ProjectedScore + 2, 98);
 
   const securityPostureTrendTable: ExecutiveSummaryTrendRow[] = [
     {
-      periodLabel: `Historical Q1 Reference (${primaryHost})`,
-      securityGrade: `Grade ${q1Score >= 75 ? "B" : q1Score >= 62 ? "C" : "D"}`,
-      postureScore: q1Score,
-      criticalOpen: critical,
-      highOpen: high + 1,
-      mediumLowOpen: medium + low + 2,
-      mttrDays: "21.0 Days",
-      trendDelta: "Historical Reference"
-    },
-    {
-      periodLabel: `Historical Q2 Reference (${primaryHost})`,
-      securityGrade: `Grade ${q2Score >= 75 ? "B" : q2Score >= 62 ? "C" : "D"}`,
-      postureScore: q2Score,
-      criticalOpen: critical,
-      highOpen: high + 1,
-      mediumLowOpen: medium + low + 1,
-      mttrDays: "15.4 Days",
-      trendDelta: `+${q2Score - q1Score} Pts`
-    },
-    {
-      periodLabel: `Historical Q3 Reference (${primaryHost})`,
-      securityGrade: `Grade ${q3Score >= 75 ? "B" : q3Score >= 62 ? "C" : "D"}`,
-      postureScore: q3Score,
-      criticalOpen: critical,
-      highOpen: high,
-      mediumLowOpen: medium + low + 1,
-      mttrDays: "11.2 Days",
-      trendDelta: `+${q3Score - q2Score} Pts`
-    },
-    {
-      periodLabel: `Measured Current Live DAST (${endDate})`,
-      securityGrade: `Grade ${computedGrade}`,
+      periodLabel: `Measured Current Live DAST Baseline (${endDate})`,
+      securityGrade: `Grade ${computedGrade} (Measured)`,
       postureScore: computedScore,
       criticalOpen: critical,
       highOpen: high,
       mediumLowOpen: medium + low,
-      mttrDays: "Measured Baseline",
-      trendDelta: `Current Measured Score (${totalFindings} Findings)`
+      mttrDays: "Current Scan Baseline",
+      trendDelta: `Measured Score (${totalFindings} Verified Findings · ${dedupedClusters.size} CWE Clusters)`
     },
     {
-      periodLabel: "Forecast: Phase 1 (0–7 Days, Conditional)",
-      securityGrade: "Grade B · Forecast",
+      periodLabel: "Forecast: Phase 1 Immediate Remediation (0–7 Days)",
+      securityGrade: `Grade ${phase1ProjectedScore >= 90 ? "A" : "B+"} · Forecast`,
       postureScore: phase1ProjectedScore,
       criticalOpen: 0,
       highOpen: 0,
       mediumLowOpen: medium + low,
-      mttrDays: "Est. < 7 Days",
-      trendDelta: `+${phase1ProjectedScore - computedScore} Pts (Assumes Crit/High Fixed & Retested)`
+      mttrDays: "Target SLA: < 7 Days",
+      trendDelta: `+${phase1ProjectedScore - computedScore} Pts (Assumes Crit/High Controls Remediated)`
     },
     {
-      periodLabel: "Forecast: Phase 3 Retest Pass (Conditional)",
-      securityGrade: "Grade A+ · Forecast",
+      periodLabel: "Forecast: Phase 2 Edge & Header Hardening (7–30 Days)",
+      securityGrade: `Grade ${phase2ProjectedScore >= 90 ? "A" : "B+"} · Forecast`,
+      postureScore: phase2ProjectedScore,
+      criticalOpen: 0,
+      highOpen: 0,
+      mediumLowOpen: low,
+      mttrDays: "Target SLA: < 30 Days",
+      trendDelta: `+${phase2ProjectedScore - computedScore} Pts (Assumes Medium Controls Remediated)`
+    },
+    {
+      periodLabel: "Forecast: Phase 3 Full Retest Sign-Off (30–90 Days)",
+      securityGrade: "Grade A+ · Target",
       postureScore: phase3ProjectedScore,
       criticalOpen: 0,
       highOpen: 0,
       mediumLowOpen: 0,
-      mttrDays: "Pending Retest",
-      trendDelta: `+${phase3ProjectedScore - computedScore} Pts (Subject to Retest Verification)`
+      mttrDays: "Pending Live Retest",
+      trendDelta: `+${phase3ProjectedScore - computedScore} Pts (Subject to Live Retest Verification)`
     }
   ];
 
@@ -4266,20 +4244,18 @@ export function buildExecutiveSummaryDossier(params: {
     </g>
   </svg>`;
 
-  // Visual Chart 2: Website-Specific Multi-Period Security Posture Curve
+  // Visual Chart 2: Website-Specific Measured Baseline & Conditional Remediation Trajectory
   const yForScore = (s: number) => Math.round(230 - ((s - 20) / 80) * 165);
-  const y1 = yForScore(q1Score);
-  const y2 = yForScore(q2Score);
-  const y3 = yForScore(q3Score);
-  const y4 = yForScore(computedScore);
-  const y5 = yForScore(phase1ProjectedScore);
-  const y6 = yForScore(phase3ProjectedScore);
+  const yMeasured = yForScore(computedScore);
+  const yPhase1 = yForScore(phase1ProjectedScore);
+  const yPhase2 = yForScore(phase2ProjectedScore);
+  const yPhase3 = yForScore(phase3ProjectedScore);
 
   const chart2Svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 280" width="100%">
     <rect width="860" height="280" rx="10" fill="#070b14" stroke="#1e293b" stroke-width="2"/>
     <rect x="0" y="0" width="860" height="36" rx="10" fill="#0f172a"/>
     <text x="18" y="23" fill="#38bdf8" font-family="monospace" font-size="11.5" font-weight="bold">📈 EXEC-GRAPH-02 · MEASURED POSTURE SCORE &amp; CONDITIONAL REMEDIATION FORECAST (${escapeSvgXml(primaryHost.slice(0, 26))})</text>
-    <text x="842" y="23" text-anchor="end" fill="#34d399" font-family="monospace" font-size="11" font-weight="bold">MEASURED: ${computedScore} ➔ FORECAST: ${phase1ProjectedScore} ➔ ${phase3ProjectedScore}</text>
+    <text x="842" y="23" text-anchor="end" fill="#34d399" font-family="monospace" font-size="11" font-weight="bold">MEASURED: ${computedScore} ➔ FORECAST: ${phase1ProjectedScore} ➔ ${phase2ProjectedScore} ➔ ${phase3ProjectedScore}</text>
 
     <g stroke="#1e293b" stroke-width="1" stroke-dasharray="4 4">
       <line x1="70" y1="65" x2="810" y2="65"/>
@@ -4296,34 +4272,25 @@ export function buildExecutiveSummaryDossier(params: {
       <text x="60" y="204">40 (D)</text>
     </g>
 
-    <polygon points="110,${y1} 250,${y2} 390,${y3} 530,${y4} 670,${y5} 790,${y6} 790,230 110,230" fill="#0284c7" fill-opacity="0.16"/>
-    <polyline fill="none" stroke="#38bdf8" stroke-width="3.5" points="110,${y1} 250,${y2} 390,${y3} 530,${y4}"/>
-    <polyline fill="none" stroke="#10b981" stroke-width="3" stroke-dasharray="6 4" points="530,${y4} 670,${y5} 790,${y6}"/>
+    <polygon points="150,${yMeasured} 360,${yPhase1} 570,${yPhase2} 760,${yPhase3} 760,230 150,230" fill="#0284c7" fill-opacity="0.16"/>
+    <polyline fill="none" stroke="#10b981" stroke-width="3.5" stroke-dasharray="6 4" points="150,${yMeasured} 360,${yPhase1} 570,${yPhase2} 760,${yPhase3}"/>
 
     <g font-family="monospace" font-size="10.5" font-weight="bold" text-anchor="middle">
-      <circle cx="110" cy="${y1}" r="5" fill="#f43f5e"/>
-      <text x="110" y="${y1 - 10}" fill="#fda4af">${q1Score}</text>
-      <text x="110" y="250" fill="#cbd5e1">Ref Q1</text>
+      <circle cx="150" cy="${yMeasured}" r="7" fill="#38bdf8" stroke="#fff" stroke-width="2"/>
+      <text x="150" y="${yMeasured - 12}" fill="#38bdf8">${computedScore} (${computedGrade})</text>
+      <text x="150" y="250" fill="#38bdf8">Measured Baseline</text>
 
-      <circle cx="250" cy="${y2}" r="5" fill="#fb923c"/>
-      <text x="250" y="${y2 - 10}" fill="#fdba74">${q2Score}</text>
-      <text x="250" y="250" fill="#cbd5e1">Ref Q2</text>
+      <circle cx="360" cy="${yPhase1}" r="6" fill="#34d399"/>
+      <text x="360" y="${yPhase1 - 10}" fill="#34d399">${phase1ProjectedScore} (Phase 1)</text>
+      <text x="360" y="250" fill="#cbd5e1">0–7d Immediate</text>
 
-      <circle cx="390" cy="${y3}" r="5" fill="#fbbf24"/>
-      <text x="390" y="${y3 - 10}" fill="#fde047">${q3Score}</text>
-      <text x="390" y="250" fill="#cbd5e1">Ref Q3</text>
+      <circle cx="570" cy="${yPhase2}" r="6" fill="#10b981"/>
+      <text x="570" y="${yPhase2 - 10}" fill="#6ee7b7">${phase2ProjectedScore} (Phase 2)</text>
+      <text x="570" y="250" fill="#cbd5e1">7–30d Hardening</text>
 
-      <circle cx="530" cy="${y4}" r="6" fill="#38bdf8" stroke="#fff" stroke-width="2"/>
-      <text x="530" y="${y4 - 12}" fill="#38bdf8">${computedScore} (${computedGrade})</text>
-      <text x="530" y="250" fill="#38bdf8">Measured Now</text>
-
-      <circle cx="670" cy="${y5}" r="6" fill="#10b981"/>
-      <text x="670" y="${y5 - 10}" fill="#34d399">${phase1ProjectedScore} (Est.)</text>
-      <text x="670" y="250" fill="#34d399">Phase 1 Est.</text>
-
-      <circle cx="790" cy="${y6}" r="7" fill="#10b981" stroke="#fff" stroke-width="2"/>
-      <text x="790" y="${y6 - 10}" fill="#10b981">${phase3ProjectedScore} (Target)</text>
-      <text x="790" y="250" fill="#10b981">Post-Retest</text>
+      <circle cx="760" cy="${yPhase3}" r="7" fill="#10b981" stroke="#fff" stroke-width="2"/>
+      <text x="760" y="${yPhase3 - 10}" fill="#10b981">${phase3ProjectedScore} (Target)</text>
+      <text x="760" y="250" fill="#10b981">Post-Retest Sign-Off</text>
     </g>
   </svg>`;
 

@@ -675,7 +675,7 @@ export function VibeUnifiedCommunicationsView({
   currentUser,
   onOpenVibeCampus,
 }: VibeUnifiedCommunicationsViewProps) {
-  const [activeMainTab, setActiveMainTab] = useState<MainSectionTab>("workspace")
+  const [activeMainTab, setActiveMainTab] = useState<MainSectionTab>("video_call_studio")
   const [joinedCallRoomId, setJoinedCallRoomId] = useState<string | null>(null)
 
   // If a friend clicks a Direct Meeting Link (?tab=vibecomms&joinCall=...), auto-launch the Live Video & Call Studio!

@@ -15,6 +15,27 @@ function getAuthHeaders() {
     return headers;
 }
 
+function formatApiError(data, fallback = 'Request failed.') {
+    if (!data) return fallback;
+    const detail = data.detail !== undefined ? data.detail : data.message;
+    if (!detail) return fallback;
+    if (typeof detail === 'string') return detail;
+    if (Array.isArray(detail)) {
+        return detail.map(item => {
+            if (typeof item === 'string') return item;
+            if (item && typeof item === 'object') {
+                const field = Array.isArray(item.loc) ? item.loc[item.loc.length - 1] : '';
+                return field ? `${field}: ${item.msg || 'Invalid value'}` : (item.msg || JSON.stringify(item));
+            }
+            return String(item);
+        }).join('; ');
+    }
+    if (typeof detail === 'object') {
+        return detail.message || detail.msg || JSON.stringify(detail);
+    }
+    return String(detail);
+}
+
 // Global cache of the logged-in user's profile & last tailored resume
 let currentUserProfile = null;
 
@@ -428,7 +449,7 @@ function initAuthentication() {
                 body: JSON.stringify(payload)
             });
             const data = await r.json();
-            if (!r.ok) throw new Error(data.detail || 'Login failed.');
+            if (!r.ok) throw new Error(formatApiError(data, 'Login failed.'));
 
             authModal.classList.add('hidden');
             loginForm.reset();
@@ -478,7 +499,7 @@ function initAuthentication() {
                 body: JSON.stringify(payload)
             });
             const data = await r.json();
-            if (!r.ok) throw new Error(data.detail || 'Registration failed.');
+            if (!r.ok) throw new Error(formatApiError(data, 'Registration failed.'));
 
             authModal.classList.add('hidden');
             registerForm.reset();
@@ -543,7 +564,7 @@ function initAuthentication() {
                     body: JSON.stringify({ username: usernameInput, password: passwordInput })
                 });
                 const data = await r.json();
-                if (!r.ok) throw new Error(data.detail || 'Login failed.');
+                if (!r.ok) throw new Error(formatApiError(data, 'Login failed.'));
                 
                 landingLoginForm.reset();
                 await completeAuthSession(data);
@@ -599,7 +620,7 @@ function initAuthentication() {
                     })
                 });
                 const data = await r.json();
-                if (!r.ok) throw new Error(data.detail || 'Registration failed.');
+                if (!r.ok) throw new Error(formatApiError(data, 'Registration failed.'));
                 
                 landingRegisterForm.reset();
                 await completeAuthSession(data);
@@ -638,7 +659,7 @@ function initAuthentication() {
                     body: JSON.stringify({ username, email, new_password, confirm_password })
                 });
                 const data = await r.json();
-                if (!r.ok) throw new Error(data.detail || 'Password reset failed.');
+                if (!r.ok) throw new Error(formatApiError(data, 'Password reset failed.'));
 
                 landingResetForm.reset();
                 if (landingResetSuccess) {
@@ -955,7 +976,7 @@ document.getElementById('generator-form').addEventListener('submit', async (e) =
         }
 
         if (!response.ok) {
-            throw new Error(data.detail || 'An error occurred during generation.');
+            throw new Error(formatApiError(data, 'An error occurred during generation.'));
         }
 
         // Populate dashboard & preview
@@ -1424,7 +1445,7 @@ function initSettings() {
                     body: JSON.stringify(payload)
                 });
                 const data = await r.json();
-                if (!r.ok) throw new Error(data.detail || "Failed to update profile settings.");
+                if (!r.ok) throw new Error(formatApiError(data, "Failed to update profile settings."));
 
                 statusDiv.textContent = "✅ Profile, registration details, and Master Resume saved to database!";
                 statusDiv.className = "success";
@@ -1466,7 +1487,7 @@ function initSettings() {
                     body: JSON.stringify({ current_password, new_password, confirm_password })
                 });
                 const data = await r.json();
-                if (!r.ok) throw new Error(data.detail || 'Failed to update password.');
+                if (!r.ok) throw new Error(formatApiError(data, 'Failed to update password.'));
 
                 cpForm.reset();
                 cpStatus.textContent = "✅ Password changed successfully in database!";
@@ -1564,10 +1585,10 @@ async function loadSettingsDetails() {
             setVal('settings-email', u.email);
             setVal('settings-phone', u.phone);
             setVal('settings-location', u.location);
-            setVal('settings-linkedin-url', u.linkedin_url);
+            setVal('settings-linkedin-url', u.linkedin_url || 'https://www.connectln.app/connectin');
             setVal('settings-target-role', u.target_role);
             setVal('settings-clearance', u.clearance);
-            setVal('settings-contact', u.candidate_contact);
+            setVal('settings-contact', u.candidate_contact || 'https://www.connectln.app/connectin');
             setVal('settings-resume', u.master_resume);
             setVal('settings-linkedin', u.linkedin_experience);
 
@@ -1736,8 +1757,8 @@ function renderOptimizerResults(data) {
                         </div>
                         <div class="li-preview-headline">${escapeHtml(li.headline_options ? li.headline_options[0] : '')}</div>
                         <div class="li-preview-meta">
-                            <span>${escapeHtml(li.location || 'United States')}</span> • <span style="color:#60a5fa; cursor:pointer; font-weight:600;">Contact info</span>
-                            <div style="margin-top:6px; color:#a78bfa; font-weight:600;">500+ connections</div>
+                            <span>${escapeHtml(li.location || 'United States')}</span> • <a href="https://www.connectln.app/connectin" target="_blank" rel="noreferrer" style="color:#60a5fa; cursor:pointer; font-weight:600; text-decoration:none;">https://www.connectln.app/connectin</a>
+                            <div style="margin-top:6px; color:#a78bfa; font-weight:600;">500+ connections • Connected to ConnectIn</div>
                         </div>
                     </div>
                     <div class="li-preview-right">
@@ -1751,7 +1772,7 @@ function renderOptimizerResults(data) {
         </div>
 
         <div class="opt-card">
-            <h3>LinkedIn Headlines <span style="font-size:0.8rem; color:var(--text-secondary); font-weight:normal;">Select and copy your favorite headline</span></h3>
+            <h3>ConnectIn &amp; LinkedIn Headlines <span style="font-size:0.8rem; color:var(--text-secondary); font-weight:normal;">Select and copy your favorite headline for <a href="https://www.connectln.app/connectin" target="_blank" rel="noreferrer" style="color:#60a5fa;">https://www.connectln.app/connectin</a></span></h3>
             ${liHeadlineHtml}
         </div>
         <div class="opt-card">

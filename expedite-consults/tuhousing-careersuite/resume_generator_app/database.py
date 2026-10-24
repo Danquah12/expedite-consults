@@ -72,7 +72,8 @@ def verify_password(password: str, password_hash: str, salt: str) -> bool:
 def build_contact_line(email: str = None, phone: str = None, location: str = None, linkedin_url: str = None, existing_contact: str = None) -> str:
     if existing_contact and existing_contact.strip():
         return existing_contact.strip()
-    parts = [p.strip() for p in [email, phone, location, linkedin_url] if p and p.strip()]
+    effective_profile_url = (linkedin_url or "").strip() or "https://www.connectln.app/connectin"
+    parts = [p.strip() for p in [email, phone, location, effective_profile_url] if p and p.strip()]
     return " | ".join(parts)
 
 def init_db():

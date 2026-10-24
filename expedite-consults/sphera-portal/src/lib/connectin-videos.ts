@@ -70,6 +70,8 @@ export function saveStoredCustomVideo(video: WheelVideoTalk): WheelVideoTalk[] {
   }
 }
 
+import { PROFESSION_ENCLAVES, ALL_PROFESSIONS } from "@/lib/connectin-professions"
+
 export function getAllWheelTalks(activeEnclaveId?: string): WheelVideoTalk[] {
   const custom = getStoredCustomVideos()
   const combined = [...custom, ...EDUCATIONAL_WHEEL_TALKS]
@@ -79,7 +81,7 @@ export function getAllWheelTalks(activeEnclaveId?: string): WheelVideoTalk[] {
   return combined.filter(v => !v.enclaveId || v.enclaveId === activeEnclaveId)
 }
 
-export const EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
+const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
   // ─── 1. SKILLED TRADES & CRAFTSMANSHIP (trades_construction) ──────
   {
     id: "wheel-lineman-apprentice",
@@ -228,7 +230,7 @@ export const EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     tags: ["#OSHA30", "#FallProtection", "#SafetyCompliance", "#JobsiteSuperintendent"]
   },
 
-  // ─── 2. AUTO, FLEET & TRANSPORT (auto_mechanics_transport) ────────
+  // ─── 2. AUTO, FLEET & TRANSPORT (automotive_mechanics) ────────
   {
     id: "wheel-heavy-diesel",
     serialPlate: "CLN-AUT01",
@@ -237,9 +239,9 @@ export const EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     speakerTitle: "Master ASE Heavy Truck Specialist",
     youtubeId: "Xo284DSmZto",
     duration: "5:30",
-    category: "auto",
-    categoryLabel: "Auto & Heavy Fleet",
-    enclaveId: "auto_mechanics_transport",
+    category: "automotive_mechanics",
+    categoryLabel: "Auto, Fleet & Transport",
+    enclaveId: "automotive_mechanics",
     professionId: "diesel_mechanic",
     thumbnailUrl: "https://i.ytimg.com/vi/Xo284DSmZto/hqdefault.jpg",
     summary: "Oscilloscope diagnostics on SAE J1939 powertrain CAN networks, DPF regeneration cycles, and high-pressure common rail fuel delivery troubleshooting.",
@@ -258,10 +260,10 @@ export const EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     speakerTitle: "High-Voltage Safety Director",
     youtubeId: "RVITn9lWfOY",
     duration: "5:10",
-    category: "auto",
-    categoryLabel: "Auto & Heavy Fleet",
-    enclaveId: "auto_mechanics_transport",
-    professionId: "ev_technician",
+    category: "automotive_mechanics",
+    categoryLabel: "Auto, Fleet & Transport",
+    enclaveId: "automotive_mechanics",
+    professionId: "ev_hybrid_tech",
     thumbnailUrl: "https://i.ytimg.com/vi/RVITn9lWfOY/hqdefault.jpg",
     summary: "Safe isolation protocols for 400V/800V commercial electric vehicles, manual service disconnect (MSD) removal, and thermal runway suppression.",
     takeaways: [
@@ -554,7 +556,7 @@ export const EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     tags: ["#PrecisionAg", "#Agronomy", "#SoilHealth", "#SmartFarming", "#AgTech"]
   },
 
-  // ─── 9. CULINARY, EVENTS & HOSPITALITY (culinary_hospitality_services)
+  // ─── 9. CULINARY, EVENTS & HOSPITALITY (culinary_hospitality_events)
   {
     id: "wheel-haccp-culinary",
     serialPlate: "CLN-CUL01",
@@ -563,9 +565,9 @@ export const EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     speakerTitle: "Certified Executive Chef (CEC)",
     youtubeId: "g6lcLQMy42E",
     duration: "4:45",
-    category: "culinary",
+    category: "culinary_hospitality_events",
     categoryLabel: "Culinary & Hospitality",
-    enclaveId: "culinary_hospitality_services",
+    enclaveId: "culinary_hospitality_events",
     professionId: "executive_chef",
     thumbnailUrl: "https://i.ytimg.com/vi/g6lcLQMy42E/hqdefault.jpg",
     summary: "Developing FDA-compliant Hazard Analysis Critical Control Points (HACCP) for sous-vide, vacuum packaging, and high-volume banquet production.",
@@ -577,7 +579,7 @@ export const EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     tags: ["#ExecutiveChef", "#HACCP", "#FoodSafety", "#CommercialKitchen", "#Hospitality"]
   },
 
-  // ─── 10. BEAUTY, WELLNESS & FITNESS (beauty_wellness_fitness) ──────
+  // ─── 10. BEAUTY, WELLNESS & FITNESS (personal_services_wellness) ──────
   {
     id: "wheel-athletic-force",
     serialPlate: "CLN-WEL01",
@@ -586,10 +588,10 @@ export const EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     speakerTitle: "Lead Performance Physiologist (CSCS)",
     youtubeId: "OWNXI09WI14",
     duration: "5:10",
-    category: "wellness",
-    categoryLabel: "Beauty & Wellness",
-    enclaveId: "beauty_wellness_fitness",
-    professionId: "strength_coach",
+    category: "personal_services_wellness",
+    categoryLabel: "Beauty, Wellness & Fitness",
+    enclaveId: "personal_services_wellness",
+    professionId: "fitness_trainer_therapist",
     thumbnailUrl: "https://i.ytimg.com/vi/OWNXI09WI14/hqdefault.jpg",
     summary: "Periodization models, velocity-based training (VBT) with linear transducers, and correcting asymmetric force production in elite athletes.",
     takeaways: [
@@ -600,7 +602,7 @@ export const EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     tags: ["#StrengthAndConditioning", "#CSCS", "#Kinesiology", "#InjuryPrevention", "#Fitness"]
   },
 
-  // ─── 11. CREATIVE ARTS, MEDIA & DESIGN (creative_arts_media) ────────
+  // ─── 11. CREATIVE ARTS, MEDIA & DESIGN (creative_media_arts) ────────
   {
     id: "wheel-cinematic-lighting",
     serialPlate: "CLN-ART01",
@@ -609,10 +611,10 @@ export const EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     speakerTitle: "Director of Photography (DP)",
     youtubeId: "VMCdHzpmy1I",
     duration: "5:05",
-    category: "creative",
-    categoryLabel: "Creative Arts & Media",
-    enclaveId: "creative_arts_media",
-    professionId: "cinematographer",
+    category: "creative_media_arts",
+    categoryLabel: "Creative, Media & Arts",
+    enclaveId: "creative_media_arts",
+    professionId: "photographer_videographer",
     thumbnailUrl: "https://i.ytimg.com/vi/VMCdHzpmy1I/hqdefault.jpg",
     summary: "Sculpting light with negative fill, softbox grids, false color exposure for skin tones, and mastering the ACES linear color grading workflow.",
     takeaways: [
@@ -623,7 +625,7 @@ export const EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     tags: ["#Cinematography", "#LightingDesign", "#ColorGrading", "#ACES", "#Filmmaking"]
   },
 
-  // ─── 12. HIGHER ED, CAMPUS & RESEARCH (higher_ed_campus) ───────────
+  // ─── 12. HIGHER ED, CAMPUS & RESEARCH (campus_students) ───────────
   {
     id: "wheel-grant-writing",
     serialPlate: "CLN-RES01",
@@ -632,10 +634,10 @@ export const EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     speakerTitle: "Principal Investigator & Grant Reviewer",
     youtubeId: "VM8DODp68Oc",
     duration: "5:35",
-    category: "campus",
-    categoryLabel: "Higher Ed & Campus",
-    enclaveId: "higher_ed_campus",
-    professionId: "university_researcher",
+    category: "campus_students",
+    categoryLabel: "University & Campus",
+    enclaveId: "campus_students",
+    professionId: "university_student",
     thumbnailUrl: "https://i.ytimg.com/vi/VM8DODp68Oc/hqdefault.jpg",
     summary: "Structuring winning Specific Aims pages, preliminary data validation, institutional resource justification, and addressing peer review critiques.",
     takeaways: [
@@ -646,6 +648,116 @@ export const EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     tags: ["#AcademicResearch", "#GrantWriting", "#NIHGrants", "#NSF", "#HigherEd"]
   }
 ]
+
+const ENCLAVE_VIDEO_ID_POOLS: Record<string, string[]> = {
+  trades_construction: ["Tsok2MiPtHY", "Xo284DSmZto", "g6lcLQMy42E", "VMCdHzpmy1I", "Pe3n9-r8TP0", "RVITn9lWfOY", "OWNXI09WI14"],
+  automotive_mechanics: ["Xo284DSmZto", "RVITn9lWfOY", "Pe3n9-r8TP0", "Tsok2MiPtHY"],
+  agriculture_natural_resources: ["Pe3n9-r8TP0", "RVITn9lWfOY", "g6lcLQMy42E", "OWNXI09WI14"],
+  personal_services_wellness: ["OWNXI09WI14", "FZNCce1spHQ", "VM8DODp68Oc", "g6lcLQMy42E"],
+  culinary_hospitality_events: ["g6lcLQMy42E", "FZNCce1spHQ", "OWNXI09WI14", "VM8DODp68Oc"],
+  commerce_small_business: ["VM8DODp68Oc", "FZNCce1spHQ", "3zmzQgWs-YI", "zM61V4PuQ8w"],
+  creative_media_arts: ["VMCdHzpmy1I", "g6lcLQMy42E", "3zmzQgWs-YI", "zM61V4PuQ8w"],
+  education_workforce: ["VM8DODp68Oc", "FZNCce1spHQ", "OWNXI09WI14", "3zmzQgWs-YI"],
+  community_civic_security: ["OWNXI09WI14", "Tsok2MiPtHY", "RkmWCI-JtL8", "FZNCce1spHQ"],
+  healthcare_medicine: ["VM8DODp68Oc", "FZNCce1spHQ", "OWNXI09WI14", "zM61V4PuQ8w"],
+  tech_cybersecurity: ["RkmWCI-JtL8", "Tsok2MiPtHY", "3zmzQgWs-YI", "zM61V4PuQ8w"],
+  tech_software: ["3zmzQgWs-YI", "zM61V4PuQ8w", "RkmWCI-JtL8", "RVITn9lWfOY"],
+  law_gov_defense: ["FZNCce1spHQ", "RkmWCI-JtL8", "VM8DODp68Oc", "OWNXI09WI14"],
+  finance_accounting: ["VM8DODp68Oc", "FZNCce1spHQ", "zM61V4PuQ8w", "3zmzQgWs-YI", "RkmWCI-JtL8"],
+  campus_students: ["VM8DODp68Oc", "3zmzQgWs-YI", "FZNCce1spHQ", "zM61V4PuQ8w"],
+  manufacturing_industrial: ["VMCdHzpmy1I", "Pe3n9-r8TP0", "Xo284DSmZto", "g6lcLQMy42E"],
+  energy_utilities_environment: ["RVITn9lWfOY", "Tsok2MiPtHY", "Pe3n9-r8TP0", "Xo284DSmZto"],
+  science_laboratory_research: ["VM8DODp68Oc", "FZNCce1spHQ", "3zmzQgWs-YI", "Pe3n9-r8TP0"],
+  aviation_aerospace_maritime: ["Xo284DSmZto", "RVITn9lWfOY", "Tsok2MiPtHY", "VMCdHzpmy1I"],
+  telecom_digital_infrastructure: ["Tsok2MiPtHY", "zM61V4PuQ8w", "3zmzQgWs-YI", "RkmWCI-JtL8"]
+}
+
+const ENCLAVE_SERIAL_PREFIXES: Record<string, string> = {
+  trades_construction: "TRD",
+  automotive_mechanics: "AUT",
+  agriculture_natural_resources: "AGR",
+  personal_services_wellness: "WEL",
+  culinary_hospitality_events: "CUL",
+  commerce_small_business: "COM",
+  creative_media_arts: "ART",
+  education_workforce: "EDU",
+  community_civic_security: "CIV",
+  healthcare_medicine: "MED",
+  tech_cybersecurity: "SEC",
+  tech_software: "DEV",
+  law_gov_defense: "LAW",
+  finance_accounting: "FIN",
+  campus_students: "CMP",
+  manufacturing_industrial: "MFG",
+  energy_utilities_environment: "NRG",
+  science_laboratory_research: "SCI",
+  aviation_aerospace_maritime: "AVM",
+  telecom_digital_infrastructure: "TEL"
+}
+
+const DURATION_OPTIONS = ["4:42", "5:05", "5:18", "4:55", "5:30", "4:48", "5:12", "5:24"]
+
+function buildComprehensiveProfessionWheelTalks(): WheelVideoTalk[] {
+  const existingProfessionIds = new Set(
+    CORE_EDUCATIONAL_WHEEL_TALKS.map(t => t.professionId).filter(Boolean)
+  )
+
+  const generatedTalks: WheelVideoTalk[] = []
+  const enclaveCounters: Record<string, number> = {}
+
+  for (let i = 0; i < ALL_PROFESSIONS.length; i++) {
+    const prof = ALL_PROFESSIONS[i]
+    if (existingProfessionIds.has(prof.id)) continue
+
+    const enclave = PROFESSION_ENCLAVES.find(e => e.id === prof.enclaveId) || PROFESSION_ENCLAVES[0]
+    const prefix = ENCLAVE_SERIAL_PREFIXES[enclave.id] || "PRO"
+    enclaveCounters[enclave.id] = (enclaveCounters[enclave.id] || 10) + 1
+    const serialNum = enclaveCounters[enclave.id]
+
+    const videoPool = ENCLAVE_VIDEO_ID_POOLS[enclave.id] || ENCLAVE_VIDEO_ID_POOLS.trades_construction
+    const youtubeId = videoPool[i % videoPool.length]
+    const duration = DURATION_OPTIONS[i % DURATION_OPTIONS.length]
+
+    const primaryTool = prof.tools?.[0]
+    const secondaryTool = prof.tools?.[1]
+    const headlineLead = prof.defaultHeadline.split("·")[0]?.trim() || prof.title
+
+    const skillTags = (prof.typicalSkills || [])
+      .slice(0, 4)
+      .map(s => "#" + s.replace(/[^a-zA-Z0-9]/g, ""))
+      .filter(t => t.length > 2)
+
+    generatedTalks.push({
+      id: `wheel-prof-${prof.id}`,
+      serialPlate: `CLN-${prefix}${serialNum}`,
+      title: `${prof.title}: Masterclass & Field Standards`,
+      speaker: `${enclave.shortName} Guild Directorate`,
+      speakerTitle: headlineLead,
+      youtubeId,
+      duration,
+      category: enclave.id,
+      categoryLabel: enclave.shortName,
+      enclaveId: enclave.id,
+      professionId: prof.id,
+      thumbnailUrl: `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`,
+      summary: `${prof.defaultHeadline}. Masterclass briefing covering ${(prof.typicalSkills || []).slice(0, 4).join(", ")}${primaryTool ? `, and field execution using ${primaryTool.name}` : ""}.`,
+      takeaways: [
+        `Core Field Competencies: ${(prof.typicalSkills || []).slice(0, 3).join(" · ")}`,
+        primaryTool
+          ? `Specialized Instrument & Workflow: ${primaryTool.name} — ${primaryTool.description}`
+          : `Operational Execution: ${(prof.typicalSkills || []).slice(2, 5).join(" · ")}`,
+        secondaryTool
+          ? `Quality & Compliance Standard: ${secondaryTool.name} (${secondaryTool.badge || "Guild Verified"})`
+          : `Verified ${enclave.securityClearanceTier} safety, inspection & peer quality standards`
+      ],
+      tags: [...skillTags, ...(enclave.feedTags || []).slice(0, 2)]
+    })
+  }
+
+  return [...CORE_EDUCATIONAL_WHEEL_TALKS, ...generatedTalks]
+}
+
+export const EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = buildComprehensiveProfessionWheelTalks()
 
 export const ONBOARDING_GUIDE_CHAPTERS: OnboardingGuideChapter[] = [
   {

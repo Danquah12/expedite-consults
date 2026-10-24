@@ -32,7 +32,7 @@ import {
   getStoredCustomVideos,
   saveStoredCustomVideo
 } from "@/lib/connectin-videos"
-import { PROFESSION_ENCLAVES, findEnclaveById } from "@/lib/connectin-professions"
+import { PROFESSION_ENCLAVES, ALL_PROFESSIONS, findEnclaveById } from "@/lib/connectin-professions"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { UserProfile } from "@/lib/linkedin-data"
 
@@ -52,7 +52,7 @@ export function ConnectInVideoWheel({
   activeEnclaveId,
   user,
   title = "The Wheel — Multi-Profession Masterclasses & Briefings",
-  subtitle = "Expedite Consults educational talks, trade apprenticeship standards, and verified professional briefings.",
+  subtitle = "Expedite Consults educational talks, trade apprenticeship standards, and verified professional briefings across every profession.",
   onOpenVideoGuide
 }: ConnectInVideoWheelProps) {
   const [allTalks, setAllTalks] = useState<WheelVideoTalk[]>(EDUCATIONAL_WHEEL_TALKS)
@@ -72,6 +72,8 @@ export function ConnectInVideoWheel({
   const activeEnclave = findEnclaveById(effectiveEnclaveId)
 
   const [selectedFilter, setSelectedFilter] = useState<string>(defaultCategory)
+  const [selectedProfessionId, setSelectedProfessionId] = useState<string>("all")
+  const [professionSearchQuery, setProfessionSearchQuery] = useState<string>("")
   const [activeVideo, setActiveVideo] = useState<WheelVideoTalk | null>(null)
   const [isPlayingAuto, setIsPlayingAuto] = useState<boolean>(true)
   const [copyFeedback, setCopyFeedback] = useState<boolean>(false)
@@ -103,14 +105,37 @@ export function ConnectInVideoWheel({
 
   const extractedVideoId = useMemo(() => extractYouTubeId(submitUrl), [submitUrl])
 
-  // Filter talks based on selected tab
+  // Professions available in current selected enclave filter
+  const availableProfessions = useMemo(() => {
+    if (selectedFilter === "all") return ALL_PROFESSIONS
+    const targetEnclaveId = selectedFilter === "my_enclave" ? effectiveEnclaveId : selectedFilter
+    return ALL_PROFESSIONS.filter(p => p.enclaveId === targetEnclaveId)
+  }, [selectedFilter, effectiveEnclaveId])
+
+  // Filter talks based on selected enclave, profession, and search query
   const filteredTalks = useMemo(() => {
-    if (selectedFilter === "all") return allTalks
+    let list = allTalks
     if (selectedFilter === "my_enclave") {
-      return allTalks.filter(t => t.enclaveId === effectiveEnclaveId)
+      list = list.filter(t => t.enclaveId === effectiveEnclaveId)
+    } else if (selectedFilter !== "all") {
+      list = list.filter(t => t.enclaveId === selectedFilter || t.category === selectedFilter)
     }
-    return allTalks.filter(t => t.enclaveId === selectedFilter || t.category === selectedFilter)
-  }, [allTalks, selectedFilter, effectiveEnclaveId])
+    if (selectedProfessionId !== "all") {
+      list = list.filter(t => t.professionId === selectedProfessionId)
+    }
+    const q = professionSearchQuery.trim().toLowerCase()
+    if (q) {
+      list = list.filter(
+        t =>
+          t.title.toLowerCase().includes(q) ||
+          t.speakerTitle.toLowerCase().includes(q) ||
+          t.categoryLabel.toLowerCase().includes(q) ||
+          t.summary.toLowerCase().includes(q) ||
+          (t.tags || []).some(tag => tag.toLowerCase().includes(q))
+      )
+    }
+    return list
+  }, [allTalks, selectedFilter, effectiveEnclaveId, selectedProfessionId, professionSearchQuery])
 
   // Smooth scroll left / right
   const scrollWheel = (direction: 'left' | 'right') => {
@@ -150,7 +175,7 @@ export function ConnectInVideoWheel({
       cancelAnimationFrame(rafId)
       if (disciplinesResumeTimer.current) clearTimeout(disciplinesResumeTimer.current)
     }
-  }, [filterChips.length])
+  }, [])
 
   // Auto-scroll loop when auto-play is enabled
   useEffect(() => {
@@ -171,7 +196,7 @@ export function ConnectInVideoWheel({
 
   // Social Share Payload Generator
   const getVideoSharePayload = (video: WheelVideoTalk) => {
-    const connectInUrl = `https://connectln.vercel.app/connectin`
+    const connectInUrl = `https://www.connectln.app/connectin`
     const ytUrl = `https://www.youtube.com/watch?v=${video.youtubeId}`
     const takeaways = video.takeaways.map(t => `• ${t}`).join('\n')
     const hashtags = (video.tags || []).join(' ')
@@ -305,7 +330,7 @@ export function ConnectInVideoWheel({
     }, 1500)
   }
 
-  // Filter Categories with Counts
+  // Filter Categories with Counts across ALL Profession Enclaves
   const filterChips = [
     { id: "all", label: `All Briefings (${allTalks.length})`, icon: "🎡" },
     {
@@ -313,18 +338,11 @@ export function ConnectInVideoWheel({
       label: `My Enclave: ${activeEnclave?.shortName || 'Current'} (${allTalks.filter(t => t.enclaveId === effectiveEnclaveId).length})`,
       icon: activeEnclave?.icon || "🔨"
     },
-    { id: "trades_construction", label: "Trades & Craft", icon: "🔨" },
-    { id: "auto_mechanics_transport", label: "Auto & Heavy Fleet", icon: "🚛" },
-    { id: "healthcare_medicine", label: "Healthcare & Clinical", icon: "🩺" },
-    { id: "tech_cybersecurity", label: "Cybersecurity & Infosec", icon: "🛡️" },
-    { id: "tech_software", label: "Software & Cloud", icon: "💻" },
-    { id: "finance_accounting", label: "Finance & Treasury", icon: "📈" },
-    { id: "law_gov_defense", label: "Law, Gov & Defense", icon: "⚖️" },
-    { id: "agriculture_natural_resources", label: "Agri & Natural Resources", icon: "🌾" },
-    { id: "culinary_hospitality_services", label: "Culinary & Kitchens", icon: "🍳" },
-    { id: "beauty_wellness_fitness", label: "Beauty & Wellness", icon: "💆" },
-    { id: "creative_arts_media", label: "Creative Arts & Media", icon: "🎬" },
-    { id: "higher_ed_campus", label: "Higher Ed & Research", icon: "🏛️" }
+    ...PROFESSION_ENCLAVES.map(enc => ({
+      id: enc.id,
+      label: `${enc.shortName} (${allTalks.filter(t => t.enclaveId === enc.id).length})`,
+      icon: enc.icon
+    }))
   ]
 
   return (
@@ -332,14 +350,14 @@ export function ConnectInVideoWheel({
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#35302B] pb-3.5">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="inline-flex items-center justify-center h-6 w-6 rounded-lg bg-amber-500/20 text-amber-300 text-xs font-bold border border-amber-500/30">
               🎡
             </span>
-            <h2 className="font-bold text-sm sm:text-base text-white tracking-wide flex items-center gap-2">
+            <h2 className="font-bold text-sm sm:text-base text-white tracking-wide flex items-center gap-2 flex-wrap">
               <span>{title}</span>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-600/40 font-semibold">
-                {allTalks.length} Videos Active
+                {allTalks.length} Videos Active · {ALL_PROFESSIONS.length} Professions Covered
               </span>
             </h2>
           </div>
@@ -408,7 +426,7 @@ export function ConnectInVideoWheel({
       {/* Multi-Profession Enclave Filter Chips — Slow Left-to-Right Auto-Scroll */}
       <div className="flex items-center gap-2 py-2.5 text-xs">
         <span className="text-[10px] uppercase font-bold tracking-wider text-[#EFE8DC]/50 shrink-0">
-          Disciplines:
+          Disciplines ({PROFESSION_ENCLAVES.length}):
         </span>
         <div
           ref={disciplinesRef}
@@ -446,7 +464,10 @@ export function ConnectInVideoWheel({
               <button
                 key={`${copyIdx}-${chip.id}`}
                 type="button"
-                onClick={() => setSelectedFilter(chip.id)}
+                onClick={() => {
+                  setSelectedFilter(chip.id)
+                  setSelectedProfessionId("all")
+                }}
                 className={`px-3 py-1 rounded-full text-[11px] font-semibold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
                   selectedFilter === chip.id
                     ? "bg-amber-500 text-zinc-950 font-bold shadow-xs scale-102"
@@ -459,6 +480,54 @@ export function ConnectInVideoWheel({
             ))
           )}
         </div>
+      </div>
+
+      {/* Profession Selector & Search Bar across All Professions */}
+      <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-1 border-b border-[#35302B] text-xs">
+        <div className="flex flex-wrap items-center gap-2 flex-1 min-w-[240px]">
+          <span className="text-[10px] uppercase font-bold tracking-wider text-amber-300/90 shrink-0">
+            Profession Filter:
+          </span>
+          <select
+            value={selectedProfessionId}
+            onChange={(e) => setSelectedProfessionId(e.target.value)}
+            className="rounded-xl bg-[#25211D] border border-amber-500/30 px-3 py-1.5 text-[11px] font-semibold text-white focus:border-amber-400 focus:outline-none max-w-xs sm:max-w-sm cursor-pointer"
+          >
+            <option value="all">
+              All Professions in View ({availableProfessions.length} Professions · {filteredTalks.length} Videos)
+            </option>
+            {availableProfessions.map((prof) => (
+              <option key={prof.id} value={prof.id}>
+                {prof.title}
+              </option>
+            ))}
+          </select>
+
+          <input
+            type="text"
+            value={professionSearchQuery}
+            onChange={(e) => setProfessionSearchQuery(e.target.value)}
+            placeholder="Search any profession, trade, or skill (e.g. Plumber, Nurse, CNC, Pilot, Chef)..."
+            className="flex-1 min-w-[180px] rounded-xl bg-[#25211D] border border-white/15 px-3 py-1.5 text-[11px] text-white placeholder:text-[#EFE8DC]/40 focus:border-amber-400 focus:outline-none"
+          />
+
+          {(selectedFilter !== "all" || selectedProfessionId !== "all" || professionSearchQuery) && (
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedFilter("all")
+                setSelectedProfessionId("all")
+                setProfessionSearchQuery("")
+              }}
+              className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/15 text-[11px] font-semibold text-amber-300 cursor-pointer"
+            >
+              Reset Filters
+            </button>
+          )}
+        </div>
+        <span className="text-[10px] font-mono text-[#EFE8DC]/60 shrink-0">
+          Showing {filteredTalks.length} Masterclass{filteredTalks.length === 1 ? "" : "es"}
+        </span>
       </div>
 
       {/* The Wheel Horizontal Scrolling Track */}

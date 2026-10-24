@@ -576,6 +576,52 @@ class ConnectInDatabase {
     return true
   }
 
+  public updateUserProfile(
+    identifier: { userId?: string; email?: string; name?: string },
+    updates: Partial<UserProfileRecord>
+  ): UserProfileRecord | null {
+    this.refreshFromDisk()
+    let user: UserRecord | undefined
+    if (identifier.userId) {
+      user = this.findUserById(identifier.userId)
+    }
+    if (!user && identifier.email) {
+      user = this.findUserByEmail(identifier.email)
+    }
+
+    let profile = user
+      ? this.findProfileByUserId(user.id)
+      : identifier.userId
+      ? this.findProfileByUserId(identifier.userId)
+      : undefined
+
+    if (!profile && identifier.name) {
+      profile = this.data.profiles.find(
+        p => p.name.toLowerCase() === identifier.name!.toLowerCase()
+      )
+    }
+
+    if (profile) {
+      Object.assign(profile, {
+        ...(updates.name ? { name: updates.name } : {}),
+        ...(updates.headline ? { headline: updates.headline } : {}),
+        ...(updates.avatar ? { avatar: updates.avatar } : {}),
+        ...(updates.coverImage ? { coverImage: updates.coverImage } : {}),
+        ...(updates.location ? { location: updates.location } : {}),
+        ...(updates.about ? { about: updates.about } : {}),
+        ...(updates.skills ? { skills: updates.skills } : {}),
+        ...(updates.profession ? { profession: updates.profession } : {}),
+        ...(updates.professionId ? { professionId: updates.professionId } : {}),
+        ...(updates.professionCategory ? { professionCategory: updates.professionCategory } : {}),
+        ...(updates.professionEnclave ? { professionEnclave: updates.professionEnclave } : {})
+      })
+      this.saveData()
+      return profile
+    }
+
+    return null
+  }
+
   // ─── OTP OPERATIONS ───
 
   public setOTP(target: string, code: string, ttlMinutes = 10): void {

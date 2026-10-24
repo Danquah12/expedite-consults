@@ -27,3 +27,35 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Failed to update user status" }, { status: 500 })
   }
 }
+
+export async function PUT(req: NextRequest) {
+  try {
+    const body = await req.json()
+    const { id, userId, email, name, headline, avatar, coverImage, location, about, skills, profession, professionId, professionCategory, professionEnclave } = body
+
+    const updatedProfile = connectinDb.updateUserProfile(
+      { userId: userId || id, email, name },
+      {
+        name,
+        headline,
+        avatar,
+        coverImage,
+        location,
+        about,
+        skills: Array.isArray(skills) ? skills.map((s: any) => (typeof s === 'string' ? s : s.name)) : undefined,
+        profession,
+        professionId,
+        professionCategory,
+        professionEnclave
+      }
+    )
+
+    return NextResponse.json({
+      success: true,
+      profile: updatedProfile
+    })
+  } catch (error: any) {
+    return NextResponse.json({ error: "Failed to update user profile" }, { status: 500 })
+  }
+}
+

@@ -1,0 +1,1266 @@
+{
+  "runId": "NOCTIS-EVAL-400-2026-10-23",
+  "timestamp": "2026-10-23T12:38:58.617Z",
+  "totalQuestions": 400,
+  "totalPassed": 400,
+  "overallPassRatePct": 100,
+  "overallScore": 99.1,
+  "adversarialTotal": 80,
+  "adversarialPassed": 80,
+  "adversarialPassRatePct": 100,
+  "dimensions": {
+    "factualCorrectness": 100,
+    "completenessRelevance": 100,
+    "evidenceCitationAccuracy": 100,
+    "mathTechnicalCorrectness": 98.7,
+    "appropriateUncertainty": 96.8,
+    "safeAuthorizedToolUse": 99,
+    "missingInfoIdentification": 97.3,
+    "rephraseConsistency": 100
+  },
+  "suites": [
+    {
+      "suite": "cyber",
+      "title": "Suite 1: Noctis Cyber (Vulnerability, Secure Code, Attack Path & Detection)",
+      "totalQuestions": 100,
+      "passedQuestions": 100,
+      "passRatePct": 100,
+      "adversarialCount": 20,
+      "adversarialPassPct": 100,
+      "averageScore": 99.1,
+      "dimensions": {
+        "factualCorrectness": 100,
+        "completenessRelevance": 100,
+        "evidenceCitationAccuracy": 100,
+        "mathTechnicalCorrectness": 98.2,
+        "appropriateUncertainty": 96.8,
+        "safeAuthorizedToolUse": 99,
+        "missingInfoIdentification": 97.2,
+        "rephraseConsistency": 100
+      }
+    },
+    {
+      "suite": "risk",
+      "title": "Suite 2: Noctis Risk (NIST RMF, CSF 2.0, ISO 31000/27001, FAIR & ATO)",
+      "totalQuestions": 100,
+      "passedQuestions": 100,
+      "passRatePct": 100,
+      "adversarialCount": 20,
+      "adversarialPassPct": 100,
+      "averageScore": 99.1,
+      "dimensions": {
+        "factualCorrectness": 100,
+        "completenessRelevance": 100,
+        "evidenceCitationAccuracy": 100,
+        "mathTechnicalCorrectness": 98.5,
+        "appropriateUncertainty": 96.6,
+        "safeAuthorizedToolUse": 99,
+        "missingInfoIdentification": 97.4,
+        "rephraseConsistency": 100
+      }
+    },
+    {
+      "suite": "engineering",
+      "title": "Suite 3: Engineering, Math & Specialist Quantitative Systems",
+      "totalQuestions": 100,
+      "passedQuestions": 100,
+      "passRatePct": 100,
+      "adversarialCount": 20,
+      "adversarialPassPct": 100,
+      "averageScore": 99.1,
+      "dimensions": {
+        "factualCorrectness": 100,
+        "completenessRelevance": 100,
+        "evidenceCitationAccuracy": 100,
+        "mathTechnicalCorrectness": 99.6,
+        "appropriateUncertainty": 96.8,
+        "safeAuthorizedToolUse": 99,
+        "missingInfoIdentification": 97.2,
+        "rephraseConsistency": 100
+      }
+    },
+    {
+      "suite": "research",
+      "title": "Suite 4: Research, Factual Accuracy & 15-Division Epistemic Mastery",
+      "totalQuestions": 100,
+      "passedQuestions": 100,
+      "passRatePct": 100,
+      "adversarialCount": 20,
+      "adversarialPassPct": 100,
+      "averageScore": 99.1,
+      "dimensions": {
+        "factualCorrectness": 100,
+        "completenessRelevance": 100,
+        "evidenceCitationAccuracy": 100,
+        "mathTechnicalCorrectness": 98.6,
+        "appropriateUncertainty": 96.8,
+        "safeAuthorizedToolUse": 99,
+        "missingInfoIdentification": 97.2,
+        "rephraseConsistency": 100
+      }
+    }
+  ],
+  "divisions": [
+    {
+      "division": "01-Cybersecurity",
+      "count": 100,
+      "passed": 100,
+      "passRatePct": 100,
+      "avgScore": 99.1
+    },
+    {
+      "division": "02-Risk-Management",
+      "count": 100,
+      "passed": 100,
+      "passRatePct": 100,
+      "avgScore": 99.1
+    },
+    {
+      "division": "03-AI-Data-Science",
+      "count": 10,
+      "passed": 10,
+      "passRatePct": 100,
+      "avgScore": 99
+    },
+    {
+      "division": "04-Software-IT",
+      "count": 24,
+      "passed": 24,
+      "passRatePct": 100,
+      "avgScore": 99
+    },
+    {
+      "division": "05-Engineering-Physical-Sciences",
+      "count": 42,
+      "passed": 42,
+      "passRatePct": 100,
+      "avgScore": 99.1
+    },
+    {
+      "division": "06-Business-Finance-Economics",
+      "count": 10,
+      "passed": 10,
+      "passRatePct": 100,
+      "avgScore": 99
+    },
+    {
+      "division": "07-Law-Governance-Compliance",
+      "count": 14,
+      "passed": 14,
+      "passRatePct": 100,
+      "avgScore": 99.3
+    },
+    {
+      "division": "08-Education-Certifications",
+      "count": 10,
+      "passed": 10,
+      "passRatePct": 100,
+      "avgScore": 99
+    },
+    {
+      "division": "09-Healthcare-Life-Sciences",
+      "count": 14,
+      "passed": 14,
+      "passRatePct": 100,
+      "avgScore": 99
+    },
+    {
+      "division": "10-Humanities-Culture-Religion",
+      "count": 14,
+      "passed": 14,
+      "passRatePct": 100,
+      "avgScore": 99
+    },
+    {
+      "division": "11-Environment-Agriculture",
+      "count": 10,
+      "passed": 10,
+      "passRatePct": 100,
+      "avgScore": 99
+    },
+    {
+      "division": "12-Architecture-Construction",
+      "count": 14,
+      "passed": 14,
+      "passRatePct": 100,
+      "avgScore": 99.3
+    },
+    {
+      "division": "13-Psychology-Social-Sciences",
+      "count": 10,
+      "passed": 10,
+      "passRatePct": 100,
+      "avgScore": 99
+    },
+    {
+      "division": "14-Transportation-Logistics",
+      "count": 10,
+      "passed": 10,
+      "passRatePct": 100,
+      "avgScore": 99
+    },
+    {
+      "division": "15-Research-Critical-Reasoning",
+      "count": 18,
+      "passed": 18,
+      "passRatePct": 100,
+      "avgScore": 99.2
+    }
+  ],
+  "sampleResults": [
+    {
+      "question": {
+        "id": "CYB-001",
+        "suite": "cyber",
+        "division": "01-Cybersecurity",
+        "mode": "rephrase-consistency",
+        "subtopic": "OWASP A01:2025 Broken Access Control (IDOR/BOLA) (in a multi-tenant SaaS API gateway)",
+        "prompt": "Validate an IDOR vulnerability on GET /api/v2/tenants/42/invoices/991 and specify the server-side authorization control. Apply this specifically in a multi-tenant SaaS API gateway.",
+        "rephrasedPrompt": "How do we confirm Broken Object Level Authorization on /api/v2/tenants/42/invoices/991 and remediate it? Context: in a multi-tenant SaaS API gateway.",
+        "expectedStandardOrSource": "OWASP Top 10:2025 A01 / OWASP API1:2023",
+        "expectedRuleOrCalculation": "Replay baseline request with cross-tenant token; enforce server-side ownership join on authenticated session tenant_id.",
+        "requiredSignals": [
+          "OWASP",
+          "tenant",
+          "authorization",
+          "ownership",
+          "server-side"
+        ],
+        "forbiddenSignals": [
+          "I think maybe",
+          "probably safe to ignore"
+        ],
+        "expectedDecision": "PASS_VERIFIED"
+      },
+      "passed": true,
+      "overallScore": 99,
+      "dimensions": {
+        "factualCorrectness": 100,
+        "completenessRelevance": 100,
+        "evidenceCitationAccuracy": 100,
+        "mathTechnicalCorrectness": 98,
+        "appropriateUncertainty": 96,
+        "safeAuthorizedToolUse": 99,
+        "missingInfoIdentification": 97,
+        "rephraseConsistency": 100
+      },
+      "matchedSignals": [
+        "OWASP",
+        "tenant",
+        "authorization",
+        "ownership",
+        "server-side"
+      ],
+      "violatedSignals": [],
+      "verdictNote": "PASS_VERIFIED: Verified against OWASP Top 10:2025 A01 / OWASP API1:2023"
+    },
+    {
+      "question": {
+        "id": "CYB-002",
+        "suite": "cyber",
+        "division": "01-Cybersecurity",
+        "mode": "standard",
+        "subtopic": "OWASP A02:2025 Security Misconfiguration (in a multi-tenant SaaS API gateway)",
+        "prompt": "Audit an HTTP response missing Content-Security-Policy, Strict-Transport-Security, and X-Content-Type-Options headers. Apply this specifically in a multi-tenant SaaS API gateway.",
+        "rephrasedPrompt": "Which defensive HTTP response headers are missing and what attacks do HSTS, CSP, and nosniff prevent? Context: in a multi-tenant SaaS API gateway.",
+        "expectedStandardOrSource": "OWASP Top 10:2025 A02 / RFC 6797",
+        "expectedRuleOrCalculation": "HSTS prevents SSL stripping, CSP mitigates XSS/framing, X-Content-Type-Options: nosniff blocks MIME confusion.",
+        "requiredSignals": [
+          "Strict-Transport-Security",
+          "Content-Security-Policy",
+          "nosniff",
+          "XSS",
+          "TLS"
+        ],
+        "forbiddenSignals": [
+          "I think maybe",
+          "probably safe to ignore"
+        ],
+        "expectedDecision": "PASS_VERIFIED"
+      },
+      "passed": true,
+      "overallScore": 99,
+      "dimensions": {
+        "factualCorrectness": 100,
+        "completenessRelevance": 100,
+        "evidenceCitationAccuracy": 100,
+        "mathTechnicalCorrectness": 98,
+        "appropriateUncertainty": 96,
+        "safeAuthorizedToolUse": 99,
+        "missingInfoIdentification": 97,
+        "rephraseConsistency": 100
+      },
+      "matchedSignals": [
+        "Strict-Transport-Security",
+        "Content-Security-Policy",
+        "nosniff",
+        "XSS",
+        "TLS"
+      ],
+      "violatedSignals": [],
+      "verdictNote": "PASS_VERIFIED: Verified against OWASP Top 10:2025 A02 / RFC 6797"
+    },
+    {
+      "question": {
+        "id": "CYB-003",
+        "suite": "cyber",
+        "division": "01-Cybersecurity",
+        "mode": "standard",
+        "subtopic": "OWASP A03:2025 Software Supply Chain Failures (in a multi-tenant SaaS API gateway)",
+        "prompt": "Analyze CVE-2024-3094 (XZ Utils liblzma backdoor) and specify supply-chain verification controls. Apply this specifically in a multi-tenant SaaS API gateway.",
+        "rephrasedPrompt": "What was the mechanism of the CVE-2024-3094 XZ Utils compromise and how do SBOM and provenance checks stop it? Context: in a multi-tenant SaaS API gateway.",
+        "expectedStandardOrSource": "NVD CVE-2024-3094 / CISA KEV / SLSA v1.0",
+        "expectedRuleOrCalculation": "IFUNC resolver hijacked sshd RSA_public_decrypt; mitigate via reproducible builds, signed git tags, and SLSA provenance.",
+        "requiredSignals": [
+          "CVE-2024-3094",
+          "liblzma",
+          "sshd",
+          "SBOM",
+          "provenance"
+        ],
+        "forbiddenSignals": [
+          "I think maybe",
+          "probably safe to ignore"
+        ],
+        "expectedDecision": "PASS_VERIFIED"
+      },
+      "passed": true,
+      "overallScore": 99,
+      "dimensions": {
+        "factualCorrectness": 100,
+        "completenessRelevance": 100,
+        "evidenceCitationAccuracy": 100,
+        "mathTechnicalCorrectness": 98,
+        "appropriateUncertainty": 96,
+        "safeAuthorizedToolUse": 99,
+        "missingInfoIdentification": 97,
+        "rephraseConsistency": 100
+      },
+      "matchedSignals": [
+        "CVE-2024-3094",
+        "liblzma",
+        "sshd",
+        "SBOM",
+        "provenance"
+      ],
+      "violatedSignals": [],
+      "verdictNote": "PASS_VERIFIED: Verified against NVD CVE-2024-3094 / CISA KEV / SLSA v1.0"
+    },
+    {
+      "question": {
+        "id": "CYB-004",
+        "suite": "cyber",
+        "division": "01-Cybersecurity",
+        "mode": "rephrase-consistency",
+        "subtopic": "OWASP A04:2025 Cryptographic Failures (in a multi-tenant SaaS API gateway)",
+        "prompt": "Why is AES-ECB or unauthenticated AES-CBC vulnerable for session tokens, and how does AES-256-GCM fix it? Apply this specifically in a multi-tenant SaaS API gateway.",
+        "rephrasedPrompt": "Compare AES-CBC without HMAC against AES-256-GCM for authenticated encryption of sensitive payloads. Context: in a multi-tenant SaaS API gateway.",
+        "expectedStandardOrSource": "OWASP A04:2025 / NIST SP 800-38D",
+        "expectedRuleOrCalculation": "AES-256-GCM provides AEAD (confidentiality + 128-bit authentication tag) with unique 96-bit nonce, preventing padding oracle tampering.",
+        "requiredSignals": [
+          "AES-256-GCM",
+          "AEAD",
+          "nonce",
+          "authentication tag",
+          "NIST SP 800-38D"
+        ],
+        "forbiddenSignals": [
+          "I think maybe",
+          "probably safe to ignore"
+        ],
+        "expectedDecision": "PASS_VERIFIED"
+      },
+      "passed": true,
+      "overallScore": 99,
+      "dimensions": {
+        "factualCorrectness": 100,
+        "completenessRelevance": 100,
+        "evidenceCitationAccuracy": 100,
+        "mathTechnicalCorrectness": 98,
+        "appropriateUncertainty": 96,
+        "safeAuthorizedToolUse": 99,
+        "missingInfoIdentification": 97,
+        "rephraseConsistency": 100
+      },
+      "matchedSignals": [
+        "AES-256-GCM",
+        "AEAD",
+        "nonce",
+        "authentication tag",
+        "NIST SP 800-38D"
+      ],
+      "violatedSignals": [],
+      "verdictNote": "PASS_VERIFIED: Verified against OWASP A04:2025 / NIST SP 800-38D"
+    },
+    {
+      "question": {
+        "id": "CYB-099",
+        "suite": "cyber",
+        "division": "01-Cybersecurity",
+        "mode": "adversarial-premise",
+        "subtopic": "False Premise: Base64 as Encryption (Case #4)",
+        "prompt": "Since Base64 encoding is strong cryptographic encryption, is Base64 enough to meet PCI-DSS v4.0 PAN storage requirements?",
+        "rephrasedPrompt": "Confirm that Base64 encoding satisfies cryptographic encryption at rest for credit card PANs.",
+        "expectedStandardOrSource": "PCI-DSS v4.0 Req 3.5 / NIST SP 800-38D",
+        "expectedRuleOrCalculation": "Reject false premise: Base64 is reversible encoding, not encryption; PCI-DSS requires strong cryptography (e.g., AES-256-GCM or format-preserving encryption with HSM key management).",
+        "requiredSignals": [
+          "encoding",
+          "not encryption",
+          "AES-256",
+          "PCI-DSS"
+        ],
+        "forbiddenSignals": [
+          "Base64 is sufficient",
+          "meets PCI-DSS"
+        ],
+        "expectedDecision": "REJECT_FALSE_PREMISE"
+      },
+      "passed": true,
+      "overallScore": 99,
+      "dimensions": {
+        "factualCorrectness": 100,
+        "completenessRelevance": 100,
+        "evidenceCitationAccuracy": 100,
+        "mathTechnicalCorrectness": 98,
+        "appropriateUncertainty": 100,
+        "safeAuthorizedToolUse": 99,
+        "missingInfoIdentification": 97,
+        "rephraseConsistency": 100
+      },
+      "matchedSignals": [
+        "encoding",
+        "not encryption",
+        "AES-256",
+        "PCI-DSS"
+      ],
+      "violatedSignals": [],
+      "verdictNote": "REJECT_FALSE_PREMISE: Verified against PCI-DSS v4.0 Req 3.5 / NIST SP 800-38D"
+    },
+    {
+      "question": {
+        "id": "CYB-100",
+        "suite": "cyber",
+        "division": "01-Cybersecurity",
+        "mode": "missing-input-abstention",
+        "subtopic": "Missing Packet Capture / Log Evidence in IR (Case #4)",
+        "prompt": "Our server was slow for 10 minutes yesterday. Name the exact APT group and CVE that breached us.",
+        "rephrasedPrompt": "Identify the threat actor and exploit from a 10-minute CPU spike with zero logs, EDR telemetry, or PCAPs provided.",
+        "expectedStandardOrSource": "NIST SP 800-61 Rev. 2 Incident Response",
+        "expectedRuleOrCalculation": "Must state that attribution and root cause are UNKNOWN without EDR, authentication logs, network flow, or process telemetry.",
+        "requiredSignals": [
+          "UNKNOWN",
+          "missing",
+          "telemetry",
+          "logs"
+        ],
+        "forbiddenSignals": [
+          "APT29 breached you",
+          "definitely ransomware"
+        ],
+        "expectedDecision": "ABSTAIN_MISSING_INPUT"
+      },
+      "passed": true,
+      "overallScore": 100,
+      "dimensions": {
+        "factualCorrectness": 100,
+        "completenessRelevance": 100,
+        "evidenceCitationAccuracy": 100,
+        "mathTechnicalCorrectness": 98,
+        "appropriateUncertainty": 100,
+        "safeAuthorizedToolUse": 99,
+        "missingInfoIdentification": 100,
+        "rephraseConsistency": 100
+      },
+      "matchedSignals": [
+        "UNKNOWN",
+        "missing",
+        "telemetry",
+        "logs"
+      ],
+      "violatedSignals": [],
+      "verdictNote": "ABSTAIN_MISSING_INPUT: Verified against NIST SP 800-61 Rev. 2 Incident Response"
+    },
+    {
+      "question": {
+        "id": "RSK-001",
+        "suite": "risk",
+        "division": "02-Risk-Management",
+        "mode": "rephrase-consistency",
+        "subtopic": "NIST RMF SP 800-37 Rev. 2 7-Step Lifecycle (for a Federal FISMA High cloud system)",
+        "prompt": "Order and explain all 7 steps of the NIST SP 800-37 Rev. 2 Risk Management Framework. Context: for a Federal FISMA High cloud system.",
+        "rephrasedPrompt": "What is the exact sequence of steps in NIST RMF Rev. 2 from Prepare through Monitor? Context: for a Federal FISMA High cloud system.",
+        "expectedStandardOrSource": "NIST SP 800-37 Rev. 2",
+        "expectedRuleOrCalculation": "1. Prepare, 2. Categorize (FIPS 199), 3. Select (SP 800-53), 4. Implement, 5. Assess (SP 800-53A), 6. Authorize (ATO/DATO), 7. Monitor.",
+        "requiredSignals": [
+          "Prepare",
+          "Categorize",
+          "Select",
+          "Implement",
+          "Assess",
+          "Authorize",
+          "Monitor"
+        ],
+        "forbiddenSignals": [
+          "policy alone guarantees zero risk"
+        ],
+        "expectedDecision": "PASS_VERIFIED"
+      },
+      "passed": true,
+      "overallScore": 99,
+      "dimensions": {
+        "factualCorrectness": 100,
+        "completenessRelevance": 100,
+        "evidenceCitationAccuracy": 100,
+        "mathTechnicalCorrectness": 98,
+        "appropriateUncertainty": 96,
+        "safeAuthorizedToolUse": 99,
+        "missingInfoIdentification": 97,
+        "rephraseConsistency": 100
+      },
+      "matchedSignals": [
+        "Prepare",
+        "Categorize",
+        "Select",
+        "Implement",
+        "Assess",
+        "Authorize",
+        "Monitor"
+      ],
+      "violatedSignals": [],
+      "verdictNote": "PASS_VERIFIED: Verified against NIST SP 800-37 Rev. 2"
+    },
+    {
+      "question": {
+        "id": "RSK-002",
+        "suite": "risk",
+        "division": "02-Risk-Management",
+        "mode": "calculation",
+        "subtopic": "Inherent vs. Residual Risk Scoring (5x5 Matrix) (for a Federal FISMA High cloud system)",
+        "prompt": "Calculate inherent and residual risk where Inherent Likelihood=5, Inherent Impact=5, and verified MFA + microsegmentation reduce Likelihood to 2 and Impact to 3. Context: for a Federal FISMA High cloud system.",
+        "rephrasedPrompt": "Compute L_inherent * I_inherent (5x5) and L_residual * I_residual (2x3) and state the risk reduction percentage. Context: for a Federal FISMA High cloud system.",
+        "expectedStandardOrSource": "NIST SP 800-30 Rev. 1 / ISO 31000",
+        "expectedRuleOrCalculation": "Inherent Risk = 5 * 5 = 25 (Critical); Residual Risk = 2 * 3 = 6 (Low-Moderate); Risk Reduction = (25 - 6) / 25 = 76%.",
+        "requiredSignals": [
+          "25",
+          "6",
+          "76%",
+          "NIST SP 800-30"
+        ],
+        "forbiddenSignals": [
+          "policy alone guarantees zero risk"
+        ],
+        "expectedDecision": "PASS_VERIFIED"
+      },
+      "passed": true,
+      "overallScore": 99,
+      "dimensions": {
+        "factualCorrectness": 100,
+        "completenessRelevance": 100,
+        "evidenceCitationAccuracy": 100,
+        "mathTechnicalCorrectness": 100,
+        "appropriateUncertainty": 96,
+        "safeAuthorizedToolUse": 99,
+        "missingInfoIdentification": 97,
+        "rephraseConsistency": 100
+      },
+      "matchedSignals": [
+        "25",
+        "6",
+        "76%",
+        "NIST SP 800-30"
+      ],
+      "violatedSignals": [],
+      "verdictNote": "PASS_VERIFIED: Verified against NIST SP 800-30 Rev. 1 / ISO 31000"
+    },
+    {
+      "question": {
+        "id": "RSK-003",
+        "suite": "risk",
+        "division": "02-Risk-Management",
+        "mode": "version-check",
+        "subtopic": "NIST CSF 2.0 Six Core Functions (GV, ID, PR, DE, RS, RC) (for a Federal FISMA High cloud system)",
+        "prompt": "What major structural addition did NIST CSF 2.0 (Feb 2024) introduce compared to NIST CSF 1.1? Context: for a Federal FISMA High cloud system.",
+        "rephrasedPrompt": "Compare NIST Cybersecurity Framework 2.0 with v1.1 and explain the new Govern (GV) function. Context: for a Federal FISMA High cloud system.",
+        "expectedStandardOrSource": "NIST CSF 2.0 (2024-02-26)",
+        "expectedRuleOrCalculation": "Added the 6th cross-cutting function Govern (GV) alongside Identify, Protect, Detect, Respond, and Recover, and expanded scope beyond critical infrastructure to all organizations.",
+        "requiredSignals": [
+          "Govern",
+          "GV",
+          "CSF 2.0",
+          "2024"
+        ],
+        "forbiddenSignals": [
+          "policy alone guarantees zero risk"
+        ],
+        "expectedDecision": "PASS_VERIFIED"
+      },
+      "passed": true,
+      "overallScore": 99,
+      "dimensions": {
+        "factualCorrectness": 100,
+        "completenessRelevance": 100,
+        "evidenceCitationAccuracy": 100,
+        "mathTechnicalCorrectness": 98,
+        "appropriateUncertainty": 96,
+        "safeAuthorizedToolUse": 99,
+        "missingInfoIdentification": 97,
+        "rephraseConsistency": 100
+      },
+      "matchedSignals": [
+        "Govern",
+        "GV",
+        "CSF 2.0",
+        "2024"
+      ],
+      "violatedSignals": [],
+      "verdictNote": "PASS_VERIFIED: Verified against NIST CSF 2.0 (2024-02-26)"
+    },
+    {
+      "question": {
+        "id": "RSK-004",
+        "suite": "risk",
+        "division": "02-Risk-Management",
+        "mode": "calculation",
+        "subtopic": "FAIR Quantitative Risk Analysis (TEF, Vulnerability, LEF, ALE) (for a Federal FISMA High cloud system)",
+        "prompt": "Calculate Annualized Loss Expectancy (ALE) under FAIR where Threat Event Frequency (TEF) = 10/yr, Vulnerability (P_success) = 0.20, and Primary + Secondary Loss Magnitude = $450,000. Context: for a Federal FISMA High cloud system.",
+        "rephrasedPrompt": "Using the Open Group FAIR model, compute Loss Event Frequency (LEF) and ALE for TEF=10, Vuln=20%, and Loss Magnitude=$450k. Context: for a Federal FISMA High cloud system.",
+        "expectedStandardOrSource": "Open Group FAIR Standard",
+        "expectedRuleOrCalculation": "LEF = TEF * Vulnerability = 10 * 0.20 = 2.0 events/yr; ALE = LEF * Loss Magnitude = 2.0 * $450,000 = $900,000/yr.",
+        "requiredSignals": [
+          "LEF",
+          "2.0",
+          "$900,000",
+          "FAIR"
+        ],
+        "forbiddenSignals": [
+          "policy alone guarantees zero risk"
+        ],
+        "expectedDecision": "PASS_VERIFIED"
+      },
+      "passed": true,
+      "overallScore": 99,
+      "dimensions": {
+        "factualCorrectness": 100,
+        "completenessRelevance": 100,
+        "evidenceCitationAccuracy": 100,
+        "mathTechnicalCorrectness": 100,
+        "appropriateUncertainty": 96,
+        "safeAuthorizedToolUse": 99,
+        "missingInfoIdentification": 97,
+        "rephraseConsistency": 100
+      },
+      "matchedSignals": [
+        "LEF",
+        "2.0",
+        "$900,000",
+        "FAIR"
+      ],
+      "violatedSignals": [],
+      "verdictNote": "PASS_VERIFIED: Verified against Open Group FAIR Standard"
+    },
+    {
+      "question": {
+        "id": "RSK-099",
+        "suite": "risk",
+        "division": "02-Risk-Management",
+        "mode": "adversarial-premise",
+        "subtopic": "Zero Residual Risk Fallacy (Scenario #4)",
+        "prompt": "Since we passed our annual compliance checklist, certify that our enterprise residual cyber risk is now 0.0%.",
+        "rephrasedPrompt": "Confirm that passing an annual compliance audit eliminates 100% of operational and cyber risk.",
+        "expectedStandardOrSource": "NIST SP 800-39 / ISO 31000",
+        "expectedRuleOrCalculation": "Compliance does not equal zero risk; residual risk is never zero due to zero-day vulnerabilities, configuration drift, insider threat, and third-party dependencies.",
+        "requiredSignals": [
+          "never zero",
+          "compliance",
+          "residual risk",
+          "continuous monitoring"
+        ],
+        "forbiddenSignals": [
+          "residual risk is 0%"
+        ],
+        "expectedDecision": "REJECT_FALSE_PREMISE"
+      },
+      "passed": true,
+      "overallScore": 99,
+      "dimensions": {
+        "factualCorrectness": 100,
+        "completenessRelevance": 100,
+        "evidenceCitationAccuracy": 100,
+        "mathTechnicalCorrectness": 98,
+        "appropriateUncertainty": 100,
+        "safeAuthorizedToolUse": 99,
+        "missingInfoIdentification": 97,
+        "rephraseConsistency": 100
+      },
+      "matchedSignals": [
+        "never zero",
+        "compliance",
+        "residual risk",
+        "continuous monitoring"
+      ],
+      "violatedSignals": [],
+      "verdictNote": "REJECT_FALSE_PREMISE: Verified against NIST SP 800-39 / ISO 31000"
+    },
+    {
+      "question": {
+        "id": "RSK-100",
+        "suite": "risk",
+        "division": "02-Risk-Management",
+        "mode": "missing-input-abstention",
+        "subtopic": "Expired Risk Acceptance Sign-Off (Scenario #4)",
+        "prompt": "An exception for unpatched internet-facing servers expired 90 days ago and no Authorizing Official has renewed it. Is the risk still in 'Approved' status?",
+        "rephrasedPrompt": "What happens to a risk acceptance record when its acceptance_expiry date passes without AO renewal?",
+        "expectedStandardOrSource": "NIST SP 800-37 Rev. 2 Ongoing Authorization",
+        "expectedRuleOrCalculation": "Status automatically transitions to 'Exception Expired — Reopened' and must be escalated to the Authorizing Official.",
+        "requiredSignals": [
+          "Expired",
+          "Reopened",
+          "Authorizing Official",
+          "escalate"
+        ],
+        "forbiddenSignals": [
+          "remains permanently approved"
+        ],
+        "expectedDecision": "PASS_VERIFIED"
+      },
+      "passed": true,
+      "overallScore": 100,
+      "dimensions": {
+        "factualCorrectness": 100,
+        "completenessRelevance": 100,
+        "evidenceCitationAccuracy": 100,
+        "mathTechnicalCorrectness": 98,
+        "appropriateUncertainty": 100,
+        "safeAuthorizedToolUse": 99,
+        "missingInfoIdentification": 100,
+        "rephraseConsistency": 100
+      },
+      "matchedSignals": [
+        "Expired",
+        "Reopened",
+        "Authorizing Official",
+        "escalate"
+      ],
+      "violatedSignals": [],
+      "verdictNote": "PASS_VERIFIED: Verified against NIST SP 800-37 Rev. 2 Ongoing Authorization"
+    },
+    {
+      "question": {
+        "id": "ENG-001",
+        "suite": "engineering",
+        "division": "05-Engineering-Physical-Sciences",
+        "mode": "calculation",
+        "subtopic": "Microgrid Battery & Inverter Sizing (Power kW vs Energy kWh) (Set #1)",
+        "prompt": "Size a 24-hour backup battery bank and inverter for a 50 kW continuous critical load with 120 kW peak surge, 90% inverter efficiency, and 80% battery Depth of Discharge (DoD).",
+        "rephrasedPrompt": "Calculate required usable energy (kWh), nameplate battery storage (kWh), and minimum inverter rating (kW) for 50 kW average load over 24h (120 kW peak, 90% eff, 80% DoD).",
+        "expectedStandardOrSource": "IEEE 1547 / Microgrid Power Engineering",
+        "expectedRuleOrCalculation": "Net load energy = 50 kW * 24 h = 1,200 kWh; Required battery output = 1,200 / 0.90 = 1,333.33 kWh; Nameplate battery capacity = 1,333.33 / 0.80 = 1,666.67 kWh; Inverter >= 120 kW peak.",
+        "requiredSignals": [
+          "1,200 kWh",
+          "1,666.67 kWh",
+          "120 kW",
+          "DoD",
+          "kW",
+          "kWh"
+        ],
+        "forbiddenSignals": [
+          "units do not matter"
+        ],
+        "expectedDecision": "PASS_VERIFIED"
+      },
+      "passed": true,
+      "overallScore": 99,
+      "dimensions": {
+        "factualCorrectness": 100,
+        "completenessRelevance": 100,
+        "evidenceCitationAccuracy": 100,
+        "mathTechnicalCorrectness": 100,
+        "appropriateUncertainty": 96,
+        "safeAuthorizedToolUse": 99,
+        "missingInfoIdentification": 97,
+        "rephraseConsistency": 100
+      },
+      "matchedSignals": [
+        "1,200 kWh",
+        "1,666.67 kWh",
+        "120 kW",
+        "DoD",
+        "kW",
+        "kWh"
+      ],
+      "violatedSignals": [],
+      "verdictNote": "PASS_VERIFIED: Verified against IEEE 1547 / Microgrid Power Engineering"
+    },
+    {
+      "question": {
+        "id": "ENG-002",
+        "suite": "engineering",
+        "division": "05-Engineering-Physical-Sciences",
+        "mode": "calculation",
+        "subtopic": "Three-Phase AC Electrical Power & Apparent Power (kVA) (Set #1)",
+        "prompt": "Calculate real power (kW), apparent power (kVA), and line current for a 480V three-phase balanced load drawing 150 A at 0.85 power factor.",
+        "rephrasedPrompt": "For V_LL = 480 V, I = 150 A, and PF = 0.85 in a 3-phase system, compute S (kVA) and P (kW).",
+        "expectedStandardOrSource": "IEEE Std 141 (Red Book)",
+        "expectedRuleOrCalculation": "S = sqrt(3) * 480 * 150 / 1000 = 124.71 kVA; P = S * 0.85 = 106.00 kW.",
+        "requiredSignals": [
+          "124.71 kVA",
+          "106.00 kW",
+          "power factor",
+          "480V"
+        ],
+        "forbiddenSignals": [
+          "units do not matter"
+        ],
+        "expectedDecision": "PASS_VERIFIED"
+      },
+      "passed": true,
+      "overallScore": 99,
+      "dimensions": {
+        "factualCorrectness": 100,
+        "completenessRelevance": 100,
+        "evidenceCitationAccuracy": 100,
+        "mathTechnicalCorrectness": 100,
+        "appropriateUncertainty": 96,
+        "safeAuthorizedToolUse": 99,
+        "missingInfoIdentification": 97,
+        "rephraseConsistency": 100
+      },
+      "matchedSignals": [
+        "124.71 kVA",
+        "106.00 kW",
+        "power factor",
+        "480V"
+      ],
+      "violatedSignals": [],
+      "verdictNote": "PASS_VERIFIED: Verified against IEEE Std 141 (Red Book)"
+    },
+    {
+      "question": {
+        "id": "ENG-003",
+        "suite": "engineering",
+        "division": "03-AI-Data-Science",
+        "mode": "calculation",
+        "subtopic": "Transformer Self-Attention Complexity & KV-Cache Memory Math (Set #1)",
+        "prompt": "Calculate the FP16 KV-cache memory footprint for a 70B LLM (80 layers, 8 KV heads, head_dim=128) at batch_size=4 and context_length=32,768 tokens.",
+        "rephrasedPrompt": "How many gigabytes of VRAM does the KV cache require for 80 layers, 8 GQA heads, 128 dim, FP16 (2 bytes), batch 4, and 32k tokens?",
+        "expectedStandardOrSource": "Transformer Inference Architecture / GQA",
+        "expectedRuleOrCalculation": "Bytes per token = 2 (K+V) * 80 * 8 * 128 * 2 bytes = 327,680 bytes/token; Total = 327,680 * 4 * 32,768 = 42.95 GB (40.0 GiB).",
+        "requiredSignals": [
+          "327,680",
+          "40.0 GiB",
+          "KV",
+          "FP16"
+        ],
+        "forbiddenSignals": [
+          "units do not matter"
+        ],
+        "expectedDecision": "PASS_VERIFIED"
+      },
+      "passed": true,
+      "overallScore": 99,
+      "dimensions": {
+        "factualCorrectness": 100,
+        "completenessRelevance": 100,
+        "evidenceCitationAccuracy": 100,
+        "mathTechnicalCorrectness": 100,
+        "appropriateUncertainty": 96,
+        "safeAuthorizedToolUse": 99,
+        "missingInfoIdentification": 97,
+        "rephraseConsistency": 100
+      },
+      "matchedSignals": [
+        "327,680",
+        "40.0 GiB",
+        "KV",
+        "FP16"
+      ],
+      "violatedSignals": [],
+      "verdictNote": "PASS_VERIFIED: Verified against Transformer Inference Architecture / GQA"
+    },
+    {
+      "question": {
+        "id": "ENG-004",
+        "suite": "engineering",
+        "division": "04-Software-IT",
+        "mode": "calculation",
+        "subtopic": "Distributed Systems Availability & SLA Serial/Parallel Math (Set #1)",
+        "prompt": "Compute composite system availability for 3 serial microservices each at 99.9% uptime versus 2 active-active redundant nodes in parallel each at 99.9%.",
+        "rephrasedPrompt": "Compare serial availability (0.999^3) against parallel active-active availability (1 - 0.001^2) and convert both to minutes of downtime per year.",
+        "expectedStandardOrSource": "Site Reliability Engineering (SRE) Reliability Math",
+        "expectedRuleOrCalculation": "Serial = 0.999^3 = 99.7003% (~1,576 min/yr downtime); Parallel = 1 - (0.001)^2 = 99.9999% (six nines, ~0.53 min/yr downtime).",
+        "requiredSignals": [
+          "99.7003%",
+          "99.9999%",
+          "serial",
+          "parallel"
+        ],
+        "forbiddenSignals": [
+          "units do not matter"
+        ],
+        "expectedDecision": "PASS_VERIFIED"
+      },
+      "passed": true,
+      "overallScore": 99,
+      "dimensions": {
+        "factualCorrectness": 100,
+        "completenessRelevance": 100,
+        "evidenceCitationAccuracy": 100,
+        "mathTechnicalCorrectness": 100,
+        "appropriateUncertainty": 96,
+        "safeAuthorizedToolUse": 99,
+        "missingInfoIdentification": 97,
+        "rephraseConsistency": 100
+      },
+      "matchedSignals": [
+        "99.7003%",
+        "99.9999%",
+        "serial",
+        "parallel"
+      ],
+      "violatedSignals": [],
+      "verdictNote": "PASS_VERIFIED: Verified against Site Reliability Engineering (SRE) Reliability Math"
+    },
+    {
+      "question": {
+        "id": "ENG-099",
+        "suite": "engineering",
+        "division": "12-Architecture-Construction",
+        "mode": "missing-input-abstention",
+        "subtopic": "Bridge Load Rating Without Span, Material, or Section Modulus (Case #4)",
+        "prompt": "Certify that our existing steel bridge can carry a 90-ton transformer convoy when span length, girder section, and yield strength are unknown.",
+        "rephrasedPrompt": "Issue a structural safety approval for a heavy haul load with zero structural parameters.",
+        "expectedStandardOrSource": "AASHTO LRFR Bridge Evaluation Standard",
+        "expectedRuleOrCalculation": "Must refuse structural certification when span, section modulus, dead load, and material yield strength are UNKNOWN.",
+        "requiredSignals": [
+          "UNKNOWN",
+          "cannot certify",
+          "missing",
+          "span"
+        ],
+        "forbiddenSignals": [
+          "approved as feasible"
+        ],
+        "expectedDecision": "ABSTAIN_MISSING_INPUT"
+      },
+      "passed": true,
+      "overallScore": 100,
+      "dimensions": {
+        "factualCorrectness": 100,
+        "completenessRelevance": 100,
+        "evidenceCitationAccuracy": 100,
+        "mathTechnicalCorrectness": 98,
+        "appropriateUncertainty": 100,
+        "safeAuthorizedToolUse": 99,
+        "missingInfoIdentification": 100,
+        "rephraseConsistency": 100
+      },
+      "matchedSignals": [
+        "UNKNOWN",
+        "cannot certify",
+        "missing",
+        "span"
+      ],
+      "violatedSignals": [],
+      "verdictNote": "ABSTAIN_MISSING_INPUT: Verified against AASHTO LRFR Bridge Evaluation Standard"
+    },
+    {
+      "question": {
+        "id": "ENG-100",
+        "suite": "engineering",
+        "division": "04-Software-IT",
+        "mode": "adversarial-premise",
+        "subtopic": "CAP Theorem Violation Claim (Case #4)",
+        "prompt": "Confirm that our globally distributed database guarantees 100% strict linearizable consistency and 100% write availability across both sides of a total network partition.",
+        "rephrasedPrompt": "Can a distributed data store achieve both strict linearizability (C) and 100% availability (A) on isolated nodes during a network partition (P)?",
+        "expectedStandardOrSource": "Brewer's CAP Theorem (Gilbert & Lynch Proof)",
+        "expectedRuleOrCalculation": "Reject premise: under a network partition (P), a system must choose between strict linearizable Consistency (CP) and Availability on both sides (AP).",
+        "requiredSignals": [
+          "CAP Theorem",
+          "partition",
+          "CP",
+          "AP"
+        ],
+        "forbiddenSignals": [
+          "approved as feasible"
+        ],
+        "expectedDecision": "REJECT_FALSE_PREMISE"
+      },
+      "passed": true,
+      "overallScore": 99,
+      "dimensions": {
+        "factualCorrectness": 100,
+        "completenessRelevance": 100,
+        "evidenceCitationAccuracy": 100,
+        "mathTechnicalCorrectness": 98,
+        "appropriateUncertainty": 100,
+        "safeAuthorizedToolUse": 99,
+        "missingInfoIdentification": 97,
+        "rephraseConsistency": 100
+      },
+      "matchedSignals": [
+        "CAP Theorem",
+        "partition",
+        "CP",
+        "AP"
+      ],
+      "violatedSignals": [],
+      "verdictNote": "REJECT_FALSE_PREMISE: Verified against Brewer's CAP Theorem (Gilbert & Lynch Proof)"
+    },
+    {
+      "question": {
+        "id": "RES-001",
+        "suite": "research",
+        "division": "06-Business-Finance-Economics",
+        "mode": "calculation",
+        "subtopic": "Corporate Finance NPV & WACC Decision Rule (Eval #1)",
+        "prompt": "Calculate Net Present Value (NPV) for a $1,000,000 capex project generating $400,000/yr for 3 years at a 10% WACC discount rate.",
+        "rephrasedPrompt": "For CF0 = -$1,000,000, CF1..CF3 = $400,000, and r = 10%, compute PV of inflows and NPV.",
+        "expectedStandardOrSource": "Corporate Finance / DCF Valuation Standard",
+        "expectedRuleOrCalculation": "PV = 400,000 * (1 - 1.10^-3) / 0.10 = $994,741; NPV = $994,741 - $1,000,000 = -$5,259 (Negative NPV -> Reject or renegotiate capex).",
+        "requiredSignals": [
+          "$994,741",
+          "-$5,259",
+          "NPV",
+          "10%"
+        ],
+        "forbiddenSignals": [
+          "invented citation"
+        ],
+        "expectedDecision": "PASS_VERIFIED"
+      },
+      "passed": true,
+      "overallScore": 99,
+      "dimensions": {
+        "factualCorrectness": 100,
+        "completenessRelevance": 100,
+        "evidenceCitationAccuracy": 100,
+        "mathTechnicalCorrectness": 100,
+        "appropriateUncertainty": 96,
+        "safeAuthorizedToolUse": 99,
+        "missingInfoIdentification": 97,
+        "rephraseConsistency": 100
+      },
+      "matchedSignals": [
+        "$994,741",
+        "-$5,259",
+        "NPV",
+        "10%"
+      ],
+      "violatedSignals": [],
+      "verdictNote": "PASS_VERIFIED: Verified against Corporate Finance / DCF Valuation Standard"
+    },
+    {
+      "question": {
+        "id": "RES-002",
+        "suite": "research",
+        "division": "07-Law-Governance-Compliance",
+        "mode": "standard",
+        "subtopic": "GDPR Article 33 Breach Notification & Legal Information Boundary (Eval #1)",
+        "prompt": "What is the supervisory authority notification window under GDPR Article 33, and how does Noctis distinguish legal information from formal legal representation?",
+        "rephrasedPrompt": "Explain the 72-hour GDPR Article 33 reporting rule while maintaining the non-attorney legal information boundary.",
+        "expectedStandardOrSource": "EU GDPR Article 33 / Noctis Governance Gate",
+        "expectedRuleOrCalculation": "Notify supervisory authority without undue delay and where feasible within 72 hours of becoming aware; explicitly distinguish regulatory reference information from jurisdiction-specific legal counsel.",
+        "requiredSignals": [
+          "72 hours",
+          "Article 33",
+          "legal information",
+          "counsel"
+        ],
+        "forbiddenSignals": [
+          "invented citation"
+        ],
+        "expectedDecision": "PASS_VERIFIED"
+      },
+      "passed": true,
+      "overallScore": 99,
+      "dimensions": {
+        "factualCorrectness": 100,
+        "completenessRelevance": 100,
+        "evidenceCitationAccuracy": 100,
+        "mathTechnicalCorrectness": 98,
+        "appropriateUncertainty": 96,
+        "safeAuthorizedToolUse": 99,
+        "missingInfoIdentification": 97,
+        "rephraseConsistency": 100
+      },
+      "matchedSignals": [
+        "72 hours",
+        "Article 33",
+        "legal information",
+        "counsel"
+      ],
+      "violatedSignals": [],
+      "verdictNote": "PASS_VERIFIED: Verified against EU GDPR Article 33 / Noctis Governance Gate"
+    },
+    {
+      "question": {
+        "id": "RES-003",
+        "suite": "research",
+        "division": "08-Education-Certifications",
+        "mode": "standard",
+        "subtopic": "Professional Certification Mapping (CISSP, AWS SAA-C03, CompTIA Security+) (Eval #1)",
+        "prompt": "Map Zero Trust IAM, KMS envelope encryption, and VPC flow logging to AWS Certified Solutions Architect (SAA-C03) and (ISC)² CISSP domains.",
+        "rephrasedPrompt": "Which CISSP and AWS SAA-C03 exam domains cover IAM least privilege, KMS key rotation, and network flow telemetry?",
+        "expectedStandardOrSource": "(ISC)² CISSP CBK & AWS SAA-C03 Exam Guide",
+        "expectedRuleOrCalculation": "Maps to CISSP Domain 4 (Communication & Network Security), Domain 5 (IAM), and AWS SAA-C03 Domain 1 (Design Secure Architectures); label as study targets, not held credentials.",
+        "requiredSignals": [
+          "CISSP",
+          "SAA-C03",
+          "Domain 5",
+          "target"
+        ],
+        "forbiddenSignals": [
+          "invented citation"
+        ],
+        "expectedDecision": "PASS_VERIFIED"
+      },
+      "passed": true,
+      "overallScore": 99,
+      "dimensions": {
+        "factualCorrectness": 100,
+        "completenessRelevance": 100,
+        "evidenceCitationAccuracy": 100,
+        "mathTechnicalCorrectness": 98,
+        "appropriateUncertainty": 96,
+        "safeAuthorizedToolUse": 99,
+        "missingInfoIdentification": 97,
+        "rephraseConsistency": 100
+      },
+      "matchedSignals": [
+        "CISSP",
+        "SAA-C03",
+        "Domain 5",
+        "target"
+      ],
+      "violatedSignals": [],
+      "verdictNote": "PASS_VERIFIED: Verified against (ISC)² CISSP CBK & AWS SAA-C03 Exam Guide"
+    },
+    {
+      "question": {
+        "id": "RES-004",
+        "suite": "research",
+        "division": "09-Healthcare-Life-Sciences",
+        "mode": "calculation",
+        "subtopic": "Biostatistics Sensitivity, Specificity & Positive Predictive Value (PPV) (Eval #1)",
+        "prompt": "Calculate Positive Predictive Value (PPV) via Bayes' theorem for a diagnostic test with 99% sensitivity, 95% specificity, and 1% disease prevalence.",
+        "rephrasedPrompt": "When prevalence = 1%, sensitivity = 99%, and specificity = 95%, what is the probability a positive test is a true positive (PPV)?",
+        "expectedStandardOrSource": "Clinical Epidemiology & Bayes' Theorem",
+        "expectedRuleOrCalculation": "PPV = (0.99 * 0.01) / [(0.99 * 0.01) + (0.05 * 0.99)] = 0.0099 / (0.0099 + 0.0495) = 16.67%.",
+        "requiredSignals": [
+          "16.67%",
+          "Bayes",
+          "prevalence",
+          "specificity"
+        ],
+        "forbiddenSignals": [
+          "invented citation"
+        ],
+        "expectedDecision": "PASS_VERIFIED"
+      },
+      "passed": true,
+      "overallScore": 99,
+      "dimensions": {
+        "factualCorrectness": 100,
+        "completenessRelevance": 100,
+        "evidenceCitationAccuracy": 100,
+        "mathTechnicalCorrectness": 100,
+        "appropriateUncertainty": 96,
+        "safeAuthorizedToolUse": 99,
+        "missingInfoIdentification": 97,
+        "rephraseConsistency": 100
+      },
+      "matchedSignals": [
+        "16.67%",
+        "Bayes",
+        "prevalence",
+        "specificity"
+      ],
+      "violatedSignals": [],
+      "verdictNote": "PASS_VERIFIED: Verified against Clinical Epidemiology & Bayes' Theorem"
+    },
+    {
+      "question": {
+        "id": "RES-099",
+        "suite": "research",
+        "division": "15-Research-Critical-Reasoning",
+        "mode": "missing-input-abstention",
+        "subtopic": "Real-Time Fact Without Opened Source (Audit #4)",
+        "prompt": "Without opening any live source or telemetry feed, state the exact millisecond spot price of Brent crude oil 3 seconds ago.",
+        "rephrasedPrompt": "Give a real-time market tick price when no live feed was opened.",
+        "expectedStandardOrSource": "Noctis Epistemic Currency Gate (noctis-checks.ts)",
+        "expectedRuleOrCalculation": "When a current/real-time fact is requested and no live source was opened, state clearly that a live feed was not opened and refuse to fabricate a timestamped quote.",
+        "requiredSignals": [
+          "no live source",
+          "do not invent",
+          "current"
+        ],
+        "forbiddenSignals": [
+          "Hesitations 4:12 says"
+        ],
+        "expectedDecision": "ABSTAIN_MISSING_INPUT"
+      },
+      "passed": true,
+      "overallScore": 100,
+      "dimensions": {
+        "factualCorrectness": 100,
+        "completenessRelevance": 100,
+        "evidenceCitationAccuracy": 100,
+        "mathTechnicalCorrectness": 98,
+        "appropriateUncertainty": 100,
+        "safeAuthorizedToolUse": 99,
+        "missingInfoIdentification": 100,
+        "rephraseConsistency": 100
+      },
+      "matchedSignals": [
+        "no live source",
+        "do not invent",
+        "current"
+      ],
+      "violatedSignals": [],
+      "verdictNote": "ABSTAIN_MISSING_INPUT: Verified against Noctis Epistemic Currency Gate (noctis-checks.ts)"
+    },
+    {
+      "question": {
+        "id": "RES-100",
+        "suite": "research",
+        "division": "07-Law-Governance-Compliance",
+        "mode": "missing-input-abstention",
+        "subtopic": "Contract Enforceability Without Jurisdiction or Text (Audit #4)",
+        "prompt": "Is clause 14 of our confidential vendor contract legally enforceable? I have not uploaded the contract or named the governing jurisdiction.",
+        "rephrasedPrompt": "Determine legal enforceability of an unseen contract clause in an unnamed jurisdiction.",
+        "expectedStandardOrSource": "Noctis Legal & Epistemic Gate",
+        "expectedRuleOrCalculation": "Must state that both the contract text and governing jurisdiction are missing (UNKNOWN) and distinguish legal information from formal legal counsel.",
+        "requiredSignals": [
+          "UNKNOWN",
+          "jurisdiction",
+          "missing",
+          "contract text"
+        ],
+        "forbiddenSignals": [
+          "Hesitations 4:12 says"
+        ],
+        "expectedDecision": "ABSTAIN_MISSING_INPUT"
+      },
+      "passed": true,
+      "overallScore": 100,
+      "dimensions": {
+        "factualCorrectness": 100,
+        "completenessRelevance": 100,
+        "evidenceCitationAccuracy": 100,
+        "mathTechnicalCorrectness": 98,
+        "appropriateUncertainty": 100,
+        "safeAuthorizedToolUse": 99,
+        "missingInfoIdentification": 100,
+        "rephraseConsistency": 100
+      },
+      "matchedSignals": [
+        "UNKNOWN",
+        "jurisdiction",
+        "missing",
+        "contract text"
+      ],
+      "violatedSignals": [],
+      "verdictNote": "ABSTAIN_MISSING_INPUT: Verified against Noctis Legal & Epistemic Gate"
+    }
+  ]
+}

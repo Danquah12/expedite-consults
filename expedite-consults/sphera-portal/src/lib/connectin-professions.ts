@@ -236,6 +236,72 @@ export const PROFESSION_ENCLAVES: ProfessionEnclave[] = [
           { name: "Job-Site Manifest & Permits", icon: "🏗️", description: "City permit inspection scheduling, structural sign-offs & municipal approvals", badge: "Active" },
           { name: "Subcontractor Escrow & Draws", icon: "💳", description: "Milestone-based progress disbursements & lien waiver tracker", badge: "Escrow" }
         ]
+      },
+      {
+        id: "bricklayer_mason",
+        title: "Master Bricklayer, Block Mason & Concrete Finisher",
+        enclaveId: "trades_construction",
+        categoryName: "Construction & Building Trades",
+        defaultHeadline: "Master Structural Mason · Bricklaying, CMU Blockwork, Architectural Stone & Foundation Concrete",
+        typicalSkills: ["CMU Blockwork", "Mortar Mix Chemistry", "Laser Leveling", "Reinforced Foundations", "Stamped Concrete", "Scaffolding"],
+        tools: [
+          { name: "Masonry Course & Mortar Batch Calc", icon: "🧱", description: "Brick/CMU block count, Type N/S/M mortar yield and rebar spacing calculator", badge: "ASTM Spec" }
+        ]
+      },
+      {
+        id: "crane_heavy_equipment_operator",
+        title: "NCCCO Tower Crane, Rigger & Heavy Equipment Operator",
+        enclaveId: "trades_construction",
+        categoryName: "Construction & Heavy Rigging",
+        defaultHeadline: "NCCCO Certified Crane & Excavator Operator · Structural Steel Picks, Load Charts & GPS Earthmoving",
+        typicalSkills: ["NCCCO Crane Cert", "Critical Lift Plans", "Signalperson Rigging", "CAT Excavator", "Laser Grading", "Trench Shoring"],
+        tools: [
+          { name: "Crane Load Radius & Wind Speed Matrix", icon: "🏗️", description: "Boom angle capacity charts, outrigger ground pressure and critical lift sign-offs", badge: "NCCCO Safe" }
+        ]
+      },
+      {
+        id: "surveyor_building_inspector",
+        title: "Land Surveyor, Geomatics & Building Code Inspector",
+        enclaveId: "trades_construction",
+        categoryName: "Surveying & Code Compliance",
+        defaultHeadline: "Licensed Land Surveyor (PLS) & ICC Building Inspector · GNSS RTK Rover, Boundary Plats & Code Sign-Offs",
+        typicalSkills: ["GNSS RTK Surveying", "Leica Total Station", "ICC Building Codes", "ALTA Boundary Plats", "Structural Inspection"],
+        tools: [
+          { name: "ICC Code Compliance & GNSS Traverse Log", icon: "🔭", description: "IBC/IRC structural code checklists and millimeter GNSS coordinate logs", badge: "ICC Verified" }
+        ]
+      },
+      {
+        id: "hvac_refrigeration_tech",
+        title: "Master HVAC, Chiller & Commercial Refrigeration Technician",
+        enclaveId: "trades_construction",
+        categoryName: "Mechanical, Electrical & Building Systems (MEP)",
+        defaultHeadline: "EPA 608 Universal HVAC/R Technician · VRF Heat Pumps, Centrifugal Chillers & Cold-Storage Rack Systems",
+        typicalSkills: ["EPA 608 Universal", "Superheat/Subcooling", "VRF Systems", "Commercial Walk-In Freezers", "Brazing", "Psychrometrics"],
+        tools: [
+          { name: "Psychrometric & Superheat/Subcooling Calc", icon: "❄️", description: "PT charts for R-410A/R-454B/CO2, airflow CFM sizer and compressor amp log", badge: "EPA 608" }
+        ]
+      },
+      {
+        id: "elevator_boiler_sprinkler_tech",
+        title: "Elevator Mechanic, Steam Boiler & Fire Sprinkler Specialist",
+        enclaveId: "trades_construction",
+        categoryName: "Mechanical, Electrical & Building Systems (MEP)",
+        defaultHeadline: "QEI Certified Elevator & Life-Safety Systems Technician · Traction Hoistways, High-Pressure Boilers & NFPA 13 Sprinklers",
+        typicalSkills: ["ASME A17.1 Elevators", "NFPA 13 Fire Sprinklers", "High-Pressure Steam Boilers", "BACnet Building Controls", "PLC Relay Logic"],
+        tools: [
+          { name: "BACnet Building Automation & NFPA 13 Riser Log", icon: "🏢", description: "Hydrostatic fire pump test logs, elevator safety circuit diagnostics & boiler pressure gauges", badge: "NFPA / ASME" }
+        ]
+      },
+      {
+        id: "locksmith_home_inspector",
+        title: "Licensed Locksmith, Glazier & Certified Home Inspector",
+        enclaveId: "trades_construction",
+        categoryName: "Property & Building Services",
+        defaultHeadline: "ALOA Certified Locksmith & InterNACHI Home Inspector · Access Control Master Keying, Fenestration & Property Audits",
+        typicalSkills: ["Master Key Systems", "Electronic Access Control", "Thermal Envelope Inspection", "Window/Door Glazing", "Radon/Mold Testing"],
+        tools: [
+          { name: "Property Inspection & Master Pinning Matrix", icon: "🔑", description: "120-point residential/commercial inspection report generator and bitting chart vault", badge: "InterNACHI" }
+        ]
       }
     ]
   },
@@ -1331,14 +1397,47 @@ export const PROFESSION_ENCLAVES: ProfessionEnclave[] = [
         ]
       },
       {
-        id: "textile_worker",
-        title: "Industrial Textile & Fabric Fabricator",
+        id: "firefighter_search_rescue",
+        title: "Firefighter, HazMat & Search-and-Rescue Specialist",
         enclaveId: "community_civic_security",
-        categoryName: "Industrial Manufacturing & Production",
-        defaultHeadline: "Textile Machine Technician · Automated Loom Operation, Thread Tensioning & Fabric Inspection",
-        typicalSkills: ["Loom Operations", "Thread Tension", "Dye Batch Matching", "Defect Mapping", "Machine Maintenance"],
+        categoryName: "Public Safety & Emergency Services",
+        defaultHeadline: "NFPA 1001 Certified Firefighter & USAR Technician · Structural Suppression, Technical Rope Rescue & Incident Command",
+        typicalSkills: ["NFPA 1001 Suppression", "Technical Rope Rescue", "HazMat Operations", "FEMA ICS-300", "Thermal Imaging"],
         tools: [
-          { name: "Loom Tension & Fabric Defect Counter", icon: "🧶", description: "Picks-per-inch verification, roll defect tags and yarn inventory balances", badge: "Textile Spec" }
+          { name: "ICS Incident Command & Hydrant Tactical Map", icon: "🚒", description: "Pre-incident building layouts, hydrant flow rates and MAYDAY LUNAR telemetry", badge: "NFPA 1001" }
+        ]
+      },
+      {
+        id: "emergency_dispatcher_resilience",
+        title: "911 Emergency Dispatcher & Disaster Recovery Coordinator",
+        enclaveId: "community_civic_security",
+        categoryName: "Disaster Recovery & Infrastructure Resilience",
+        defaultHeadline: "APCO Certified Public Safety Telecommunicator & Flood/Dam Resilience Planner · CAD Dispatch & Hazard Mitigation",
+        typicalSkills: ["APCO CAD Dispatch", "Emergency Medical Dispatch (EMD)", "Dam & Flood Control", "FEMA Continuity Planning"],
+        tools: [
+          { name: "Multi-Agency CAD & Flood Telemetry Console", icon: "🚨", description: "Real-time unit AVL routing, floodgate telemetry and emergency power generator status", badge: "CAD Live" }
+        ]
+      },
+      {
+        id: "municipal_public_works_inspector",
+        title: "Municipal Public Works, Bridge & Code Enforcement Specialist",
+        enclaveId: "community_civic_security",
+        categoryName: "Government, Civic & Municipal Services",
+        defaultHeadline: "Municipal Infrastructure & Code Enforcement Officer · Bridge Inspection, Roadways, Building Permits & GIS Mapping",
+        typicalSkills: ["NBIS Bridge Inspection", "Municipal Code Enforcement", "ArcGIS Field Maps", "Asphalt/Paving Specs", "Public Transit Ops"],
+        tools: [
+          { name: "Municipal GIS Asset & Permit Ledger", icon: "🏙️", description: "Right-of-way permits, bridge deck condition ratings and municipal work order dispatch", badge: "GovGIS" }
+        ]
+      },
+      {
+        id: "private_investigator_executive_protection",
+        title: "Licensed Private Investigator, Loss Prevention & Executive Protection",
+        enclaveId: "community_civic_security",
+        categoryName: "Security, Investigations & Protective Services",
+        defaultHeadline: "Licensed Private Investigator & CPP Physical Security Assessor · OSINT, Surveillance, Fire Alarm & Access Control",
+        typicalSkills: ["ASIS CPP Physical Security", "Surveillance & Chain of Evidence", "NICET Fire Alarm Inspection", "Loss Prevention", "Close Protection"],
+        tools: [
+          { name: "Physical Security & Investigative Case Vault", icon: "🕵️", description: "Chain-of-custody evidence logs, perimeter vulnerability audits and NICET alarm checklists", badge: "ASIS CPP" }
         ]
       }
     ]
@@ -1347,17 +1446,17 @@ export const PROFESSION_ENCLAVES: ProfessionEnclave[] = [
   // ─── 11. CYBERSECURITY & OFFENSIVE SECURITY ─────────────────────
   {
     id: "tech_cybersecurity",
-    name: "Cybersecurity, Threat Intelligence & Offensive Ops",
-    shortName: "Cybersecurity & Infosec",
+    name: "Cybersecurity, OT/ICS Industrial Security & Threat Ops",
+    shortName: "Cybersecurity & OT Security",
     icon: "🛡️",
-    tagline: "Live DAST sandboxes, exploit graphs, malware hypervisors, GovCloud CSPM & ransomware recovery",
-    description: "Dedicated workspace for red teamers, penetration testers, reverse engineers, DFIR responders, and threat hunters. Features live external hypervisors and exploit platforms.",
+    tagline: "Live DAST sandboxes, OT/SCADA industrial defense, malware hypervisors & ransomware recovery",
+    description: "Dedicated workspace for red teamers, OT/ICS industrial cybersecurity technicians, penetration testers, reverse engineers, DFIR responders, and threat hunters.",
     themeColor: "from-cyan-600 via-blue-700 to-indigo-900",
     accentBorder: "border-cyan-500",
     badgeBg: "bg-cyan-50 dark:bg-cyan-950/40 border-cyan-200 dark:border-cyan-800",
     badgeText: "text-cyan-800 dark:text-cyan-300",
-    securityClearanceTier: "TS/SCI Red Team Operator (Level 4)",
-    feedTags: ["#Cybersecurity", "#RedTeam", "#DFIR", "#MalwareAnalysis", "#Pentest", "#ZeroTrust", "#SCADA"],
+    securityClearanceTier: "TS/SCI Red Team & GICSP OT Operator (Level 4)",
+    feedTags: ["#Cybersecurity", "#RedTeam", "#OTSecurity", "#SCADA", "#DFIR", "#Pentest", "#ZeroTrust"],
     professions: [
       {
         id: "red_team_operator",
@@ -1370,24 +1469,35 @@ export const PROFESSION_ENCLAVES: ProfessionEnclave[] = [
           { name: "11-DAST Dynamic Pentest Platform", icon: "⚡", description: "Automated black-box web vulnerability scanner & fuzzing engine", badge: "LIVE VERCEL" },
           { name: "16-Malware Detonation Hypervisor", icon: "☣️", description: "Live binary detonation, API hooking & memory dump triage", badge: "LIVE VERCEL" }
         ]
+      },
+      {
+        id: "industrial_ot_cyber_technician",
+        title: "Industrial Cybersecurity (OT / ICS / SCADA) Technician",
+        enclaveId: "tech_cybersecurity",
+        categoryName: "Emerging Industrial Cybersecurity",
+        defaultHeadline: "GICSP Certified Industrial Cybersecurity Specialist · Modbus/DNP3 Deep Packet Inspection, PLC Hardening & Air-Gap Defense",
+        typicalSkills: ["IEC 62443", "GICSP Certification", "Modbus/PROFINET Security", "Purdue Model Segmentation", "Nozomi/Claroty"],
+        tools: [
+          { name: "OT/SCADA Purdue Network Diode Monitor", icon: "🏭", description: "PLC firmware integrity verification and industrial protocol anomaly detection", badge: "IEC 62443" }
+        ]
       }
     ]
   },
 
-  // ─── 12. SOFTWARE, CLOUD & AI ENGINEERING ───────────────────────
+  // ─── 12. SOFTWARE, CLOUD, DIGITAL CREATORS & AI ENGINEERING ─────
   {
     id: "tech_software",
-    name: "Software, Cloud Architecture & AI Engineering",
-    shortName: "Software & Cloud",
+    name: "Software, Cloud Architecture, No-Code & AI Engineering",
+    shortName: "Software, Cloud & AI",
     icon: "💻",
-    tagline: "AST static analysis, AI-BOM software supply chain, IaC Terraform guard & API security shields",
-    description: "Dedicated workspace for software engineers, cloud architects, DevSecOps leads, and AI researchers. Features live automated code analyzers and integration layers.",
+    tagline: "AST static analysis, AI workflow engineering, no-code builders, technical writing & open-source",
+    description: "Dedicated workspace for software engineers, cloud architects, AI workflow specialists, no-code builders, technical writers, and digital knowledge professionals.",
     themeColor: "from-blue-600 via-indigo-700 to-purple-800",
     accentBorder: "border-blue-500",
     badgeBg: "bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800",
     badgeText: "text-blue-800 dark:text-blue-300",
-    securityClearanceTier: "Staff Cloud Engineer (Level 3)",
-    feedTags: ["#SoftwareEngineering", "#CloudArchitecture", "#DevSecOps", "#Kubernetes", "#AIResearch", "#IaC"],
+    securityClearanceTier: "Staff Cloud & AI Systems Engineer (Level 3)",
+    feedTags: ["#SoftwareEngineering", "#CloudArchitecture", "#AIWorkflows", "#NoCode", "#TechnicalWriting", "#OpenSource"],
     professions: [
       {
         id: "software_engineer",
@@ -1400,24 +1510,35 @@ export const PROFESSION_ENCLAVES: ProfessionEnclave[] = [
           { name: "05-SAST Static Code Analyzer", icon: "🔍", description: "AST security vulnerability detection with automated GitHub PR generation", badge: "LIVE VERCEL" },
           { name: "18-Unified Integration Bus", icon: "🌐", description: "Enterprise event-driven microservices & API integration layer", badge: "LIVE VERCEL" }
         ]
+      },
+      {
+        id: "ai_workflow_nocode_specialist",
+        title: "AI Implementation Technician, No-Code Builder & Technical Writer",
+        enclaveId: "tech_software",
+        categoryName: "Emerging Digital & Knowledge Professions",
+        defaultHeadline: "AI Workflow Specialist & Technical Documentation Lead · RAG Pipelines, No-Code Automation, WCAG Accessibility & API Docs",
+        typicalSkills: ["AI Agent Workflows", "Prompt Engineering", "No-Code Automation", "Docs-as-Code", "WCAG 2.2 Accessibility"],
+        tools: [
+          { name: "AI Agent Workflow & WCAG Accessibility Auditor", icon: "🤖", description: "Automated LLM evaluation benchmarks, localization memory and accessibility testing", badge: "AI Ops" }
+        ]
       }
     ]
   },
 
-  // ─── 13. LAW, GOVERNMENT & NATIONAL DEFENSE ─────────────────────
+  // ─── 13. LAW, PARALEGAL, COMPLIANCE & NATIONAL DEFENSE ──────────
   {
     id: "law_gov_defense",
-    name: "Law, Government Compliance & Defense",
-    shortName: "Law, Gov & Defense",
+    name: "Law, Paralegal, Regulatory Compliance & Defense",
+    shortName: "Law, Paralegal & Compliance",
     icon: "🏛️",
-    tagline: "NIST SP 800-53 cATO, OSCAL compliance, STRIDE threat models & federal defense procurements",
-    description: "Dedicated workspace for corporate attorneys, compliance officers, and defense policy analysts. Featuring the live Aegis RMF continuous ATO platform.",
+    tagline: "Paralegal dockets, court reporting, notary seals, contract admin, e-discovery & NIST cATO defense",
+    description: "Dedicated workspace for paralegals, legal secretaries, court reporters, notaries, contract administrators, licensing coordinators, court interpreters, and defense counsel.",
     themeColor: "from-slate-700 via-slate-800 to-zinc-950",
     accentBorder: "border-slate-500",
     badgeBg: "bg-slate-50 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800",
     badgeText: "text-slate-800 dark:text-slate-300",
-    securityClearanceTier: "TS/SCI Polygraph (Level 5 Federal)",
-    feedTags: ["#Defense", "#GovCloud", "#NIST80053", "#cATO", "#Compliance", "#Legal", "#CMMC"],
+    securityClearanceTier: "Legal & Regulatory Compliance Credential (Level 4)",
+    feedTags: ["#Paralegal", "#CourtReporter", "#Notary", "#ContractAdmin", "#EDiscovery", "#Compliance", "#Defense"],
     professions: [
       {
         id: "corporate_attorney",
@@ -1430,24 +1551,46 @@ export const PROFESSION_ENCLAVES: ProfessionEnclave[] = [
           { name: "Aegis RMF Continuous ATO Platform", icon: "📜", description: "NIST SP 800-53 OSCAL machine-readable compliance & continuous POAM engine", badge: "LIVE cATO" },
           { name: "15-Threat Modeling Suite", icon: "🛡️", description: "STRIDE automated threat vector analysis & architectural mitigation catalog", badge: "LIVE VERCEL" }
         ]
+      },
+      {
+        id: "paralegal_court_reporter",
+        title: "Certified Paralegal, Court Reporter & E-Discovery Specialist",
+        enclaveId: "law_gov_defense",
+        categoryName: "Legal, Regulatory & Compliance Support",
+        defaultHeadline: "NALA Certified Paralegal & RPR Realtime Court Reporter · Litigation Docketing, Stenography, Relativity E-Discovery & Subpoenas",
+        typicalSkills: ["NALA CP Certification", "225 WPM Stenography", "Relativity E-Discovery", "PACER E-Filing", "Process Service"],
+        tools: [
+          { name: "Litigation Docket, E-Discovery & Transcript Vault", icon: "⚖️", description: "Bates numbering, deposition realtime stenography feed and court filing deadline calculator", badge: "NALA / NCRA" }
+        ]
+      },
+      {
+        id: "notary_contract_licensing_specialist",
+        title: "Notary Signing Agent, Contract Administrator & Permit Coordinator",
+        enclaveId: "law_gov_defense",
+        categoryName: "Legal, Regulatory & Compliance Support",
+        defaultHeadline: "NNA Certified Notary Signing Agent & Contract Administrator · Loan Closings, CLM Redlines, Records Management & Municipal Licensing",
+        typicalSkills: ["NNA Loan Signing", "Remote Online Notarization (RON)", "Contract Lifecycle (CLM)", "IAPP CIPP Privacy", "Permit Coordination"],
+        tools: [
+          { name: "RON Digital Seal & Contract Redline Matrix", icon: "🖋️", description: "Tamper-evident electronic notary journal, SLA obligation tracker and permit status board", badge: "NNA Verified" }
+        ]
       }
     ]
   },
 
-  // ─── 14. FINANCE, ACCOUNTING & PRIVATE EQUITY ───────────────────
+  // ─── 14. FINANCE, BOOKKEEPING, INSURANCE & MICROFINANCE ─────────
   {
     id: "finance_accounting",
-    name: "Finance, Accounting & Private Equity",
-    shortName: "Finance & Accounting",
+    name: "Finance, Bookkeeping, Insurance, Claims & Microfinance",
+    shortName: "Finance, Tax & Insurance",
     icon: "📊",
-    tagline: "GAAP audits, valuation DCF models, private equity deal flow & corporate treasury",
-    description: "Dedicated workspace for CPAs, investment bankers, and controllers. Strict segregation from trades/developer environments.",
+    tagline: "Bookkeeping ledgers, payroll, tax prep, insurance claims adjusting, procurement & credit unions",
+    description: "Dedicated workspace for bookkeepers, payroll clerks, tax preparers, AP/AR specialists, insurance claims adjusters, loan officers, procurement agents, microfinance officers, and CPAs.",
     themeColor: "from-emerald-700 to-green-900",
     accentBorder: "border-emerald-600",
     badgeBg: "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800",
     badgeText: "text-emerald-800 dark:text-emerald-300",
-    securityClearanceTier: "Financial Fiduciary / SEC Clearance (Level 2)",
-    feedTags: ["#Finance", "#Accounting", "#CPA", "#PrivateEquity", "#Valuation", "#CorporateTreasury", "#GAAP"],
+    securityClearanceTier: "Financial Fiduciary & Claims Licensing (Level 2)",
+    feedTags: ["#Bookkeeping", "#Payroll", "#TaxPrep", "#ClaimsAdjuster", "#Procurement", "#Microfinance", "#CPA"],
     professions: [
       {
         id: "cpa_accountant",
@@ -1458,6 +1601,28 @@ export const PROFESSION_ENCLAVES: ProfessionEnclave[] = [
         typicalSkills: ["GAAP Audit", "Tax Strategy", "Forensic Accounting", "ERP Systems", "Financial Reporting", "IFRS"],
         tools: [
           { name: "GAAP Ledger Reconciler", icon: "📑", description: "Automated bank feed anomaly detection and tax schedule export", badge: "GAAP Ready" }
+        ]
+      },
+      {
+        id: "bookkeeper_payroll_tax_specialist",
+        title: "Certified Bookkeeper, Payroll Specialist & Enrolled Agent Tax Preparer",
+        enclaveId: "finance_accounting",
+        categoryName: "Bookkeeping, Payroll & Tax Operations",
+        defaultHeadline: "AIPB Certified Bookkeeper, CPP Payroll Lead & IRS Enrolled Agent · AP/AR Three-Way Match, Multi-State Payroll & Tax Filings",
+        typicalSkills: ["QuickBooks / Xero", "CPP Multi-State Payroll", "IRS Enrolled Agent", "AP/AR Reconciliation", "Cost Accounting"],
+        tools: [
+          { name: "Three-Way AP/AR Match & Payroll Tax Calculator", icon: "🧮", description: "Automated PO-invoice-receipt matching, W-2/1099 compliance and trial balance audit", badge: "AIPB / CPP" }
+        ]
+      },
+      {
+        id: "insurance_claims_loan_microfinance",
+        title: "Catastrophe Insurance Claims Adjuster, Loan Officer & Microfinance Lead",
+        enclaveId: "finance_accounting",
+        categoryName: "Insurance, Lending & Cooperative Finance",
+        defaultHeadline: "Licensed Catastrophe Claims Adjuster (AIC) & NMLS Mortgage Processor · Xactimate Property Estimates, Underwriting & Credit Union Lending",
+        typicalSkills: ["Xactimate Claims Estimating", "AIC Adjuster License", "NMLS Mortgage Processing", "CFE Fraud Investigation", "Microfinance Cooperatives"],
+        tools: [
+          { name: "Xactimate Property Loss & Loan Underwriting Desk", icon: "🏠", description: "Drone roof damage scope estimator, DTI credit scoring and cooperative micro-loan ledger", badge: "AIC / NMLS" }
         ]
       }
     ]
@@ -1491,8 +1656,650 @@ export const PROFESSION_ENCLAVES: ProfessionEnclave[] = [
         ]
       }
     ]
+  },
+
+  // ─── 16. MANUFACTURING, INDUSTRIAL, TEXTILE & PACKAGING OPS ─────
+  {
+    id: "manufacturing_industrial",
+    name: "Manufacturing, Precision Machining, Textile & Packaging Ops",
+    shortName: "Manufacturing & Machining",
+    icon: "🏭",
+    tagline: "5-axis CNC machining, tool & die, industrial robotics, NDT testing, glass/ceramics & packaging",
+    description: "Dedicated workspace for CNC machinists, tool and die makers, robotics technicians, NDT inspectors, injection molding techs, 3D additive manufacturing specialists, textile/footwear makers, glass blowers, print operators, and equipment lifecycle refurbishers.",
+    themeColor: "from-orange-600 via-amber-700 to-stone-900",
+    accentBorder: "border-orange-500",
+    badgeBg: "bg-orange-50 dark:bg-orange-950/40 border-orange-200 dark:border-orange-800",
+    badgeText: "text-orange-800 dark:text-orange-300",
+    securityClearanceTier: "NIMS Master Machinist & ASNT NDT Level III (Level 3)",
+    feedTags: ["#CNCMachining", "#ToolAndDie", "#IndustrialRobotics", "#NDTTesting", "#InjectionMolding", "#AdditiveManufacturing", "#Packaging", "#TextileProduction"],
+    professions: [
+      {
+        id: "cnc_machinist_tool_die",
+        title: "5-Axis CNC Machinist, Programmer & Tool-and-Die Maker",
+        enclaveId: "manufacturing_industrial",
+        categoryName: "Precision Machining & Tooling",
+        defaultHeadline: "NIMS Certified 5-Axis CNC Programmer & Master Toolmaker · Mastercam, Fanuc G-Code, GD&T & Progressive Stamping Dies",
+        typicalSkills: ["5-Axis CNC Milling", "Mastercam / Siemens NX", "GD&T (ASME Y14.5)", "CMM Metrology", "Progressive Die Design", "Wire EDM"],
+        tools: [
+          { name: "G-Code Speeds/Feeds & GD&T Tolerance Calc", icon: "⚙️", description: "Chip load, surface feet per minute (SFM) and CMM coordinate inspection report log", badge: "NIMS Certified" }
+        ]
+      },
+      {
+        id: "robotics_automation_ndt_tech",
+        title: "Industrial Robotics, PLC Automation & ASNT NDT Inspector",
+        enclaveId: "manufacturing_industrial",
+        categoryName: "Industrial Automation & Quality Assurance",
+        defaultHeadline: "FANUC/KUKA Robotics Maintenance Specialist & ASNT Level III NDT Inspector · Ultrasonic Phased Array, Allen-Bradley PLCs & Six Sigma",
+        typicalSkills: ["FANUC / ABB Robotics", "Allen-Bradley Studio 5000", "Ultrasonic & X-Ray NDT", "Six Sigma Green Belt", "Hydraulic/Pneumatic Servo"],
+        tools: [
+          { name: "PLC Ladder Logic & NDT Phased-Array Scan Vault", icon: "🤖", description: "Robot axis zeroing logs, ultrasonic weld flaw scans and OEE downtime analytics", badge: "ASNT Level III" }
+        ]
+      },
+      {
+        id: "molding_additive_packaging_tech",
+        title: "Injection Molding, 3D Additive, Glass, Print & Packaging Specialist",
+        enclaveId: "manufacturing_industrial",
+        categoryName: "Polymers, Additive, Glass & Packaging Production",
+        defaultHeadline: "RJG Master Molder & Additive DMLS Technician · Scientific Injection Molding, High-Speed Packaging Lines, Offset Press & Kiln Ops",
+        typicalSkills: ["RJG Scientific Molding", "Metal 3D Printing (DMLS)", "Packaging Line Changeover", "Glass/Ceramic Kiln Firing", "Flexographic Prepress"],
+        tools: [
+          { name: "Cavity Pressure & Packaging Line OEE Console", icon: "📦", description: "Melt temperature viscosity curves, DMLS laser sinter logs and carton die-cut templates", badge: "RJG Master" }
+        ]
+      },
+      {
+        id: "leather_footwear_equipment_lifecycle",
+        title: "Master Cobbler, Leatherworker & Industrial Equipment Refurbisher",
+        enclaveId: "manufacturing_industrial",
+        categoryName: "Textile, Footwear & Equipment Lifecycle Management",
+        defaultHeadline: "Bespoke Goodyear-Welt Shoemaker & Industrial Asset Lifecycle Specialist · Pattern Grading, Spare Parts MRO & Reverse Logistics",
+        typicalSkills: ["Goodyear Welt Construction", "Leather Pattern Grading", "Industrial Sewing Tech", "MRO Spare Parts", "Equipment Refurbishment"],
+        tools: [
+          { name: "MRO Spare Parts & Equipment Lifecycle Ledger", icon: "🥾", description: "Preventive overhaul schedules, serialized asset refurbishment logs and footwear last sizing", badge: "ISO 55000" }
+        ]
+      }
+    ]
+  },
+
+  // ─── 17. ENERGY, UTILITIES, MINING, WATER & SANITATION OPS ──────
+  {
+    id: "energy_utilities_environment",
+    name: "Energy, Utilities, Mining, Water & Environmental Ops",
+    shortName: "Energy, Mining & Utilities",
+    icon: "⚡",
+    tagline: "Wind turbines, solar microgrids, high-voltage substations, mining geology, water treatment & waste ops",
+    description: "Dedicated workspace for solar/wind technicians, grid substation operators, nuclear/hydro plant operators, battery storage & EV charger installers, miners, geotechnical/blasting specialists, water/wastewater operators, well drillers, and hazardous waste sanitation crews.",
+    themeColor: "from-emerald-600 via-teal-700 to-slate-900",
+    accentBorder: "border-emerald-500",
+    badgeBg: "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800",
+    badgeText: "text-emerald-800 dark:text-emerald-300",
+    securityClearanceTier: "NERC Grid Operator & MSHA / GWO Certified (Level 3)",
+    feedTags: ["#RenewableEnergy", "#WindTurbine", "#SolarInstall", "#Substation", "#Mining", "#WaterTreatment", "#WasteManagement", "#GridOps"],
+    professions: [
+      {
+        id: "wind_solar_battery_tech",
+        title: "NABCEP Solar, GWO Wind Turbine & Utility Battery Storage Technician",
+        enclaveId: "energy_utilities_environment",
+        categoryName: "Renewable Energy & Grid Storage",
+        defaultHeadline: "GWO Certified Wind Turbine Technician & NABCEP PV Installer · 300ft Nacelle Pitch Hydraulics, BESS Megapacks & EV Fast Chargers",
+        typicalSkills: ["NABCEP PV Installation", "GWO Working at Heights", "Utility BESS Storage", "EVITP Charger Commissioning", "BPI Energy Auditing"],
+        tools: [
+          { name: "Solar String Sizing & Wind Turbine Pitch Telemetry", icon: "☀️", description: "IV-curve tracer logs, nacelle gearbox vibration spectra and BESS state-of-charge balancer", badge: "NABCEP / GWO" }
+        ]
+      },
+      {
+        id: "grid_substation_powerplant_operator",
+        title: "NERC Electrical Grid, High-Voltage Substation & Power Plant Operator",
+        enclaveId: "energy_utilities_environment",
+        categoryName: "Electric Utilities & Power Generation",
+        defaultHeadline: "NERC Certified System Operator & 500kV Substation Relay Technician · SF6 Breakers, Hydro/Nuclear Steam Turbines & SCADA EMS",
+        typicalSkills: ["NERC System Operator", "500kV Substation Relays", "SEL Protection Schemes", "Transformer Dissolved Gas Analysis", "LOTO High-Voltage"],
+        tools: [
+          { name: "SCADA EMS Grid Load & Transformer DGA Analyzer", icon: "⚡", description: "Real-time MVA substation load flow, relay trip oscillography and SF6 breaker logs", badge: "NERC CIP" }
+        ]
+      },
+      {
+        id: "mining_geology_blasting_tech",
+        title: "Mining Engineer, Drilling Operator, Blasting Tech & Gemologist",
+        enclaveId: "energy_utilities_environment",
+        categoryName: "Mining, Geology & Natural Resources",
+        defaultHeadline: "MSHA Certified Underground Miner, Blasting Specialist & GIA Gemologist · Core Drilling, Geotechnical Slope Stability & Land Reclamation",
+        typicalSkills: ["MSHA Part 48", "Controlled Blasting", "Diamond Core Drilling", "Flotation Mineral Processing", "GIA Gemstone Grading", "Mine Rescue"],
+        tools: [
+          { name: "Blast Pattern, Assay Grade & Mine Ventilation Log", icon: "⛏️", description: "Powder factor calculations, drill core gold/lithium g/t assays and airflow CFM maps", badge: "MSHA Verified" }
+        ]
+      },
+      {
+        id: "water_wastewater_sanitation_tech",
+        title: "Water/Wastewater Plant Operator, Well Driller & HazMat Sanitation Tech",
+        enclaveId: "energy_utilities_environment",
+        categoryName: "Water Infrastructure & Environmental Sanitation",
+        defaultHeadline: "Grade IV Water/Wastewater Treatment Operator & HAZWOPER 40 Technician · Membrane Bioreactors, CCTV Sewer Inspection & Spill Response",
+        typicalSkills: ["Grade IV Water/Wastewater", "NGWA Well Drilling", "NASSCO PACP Sewer CCTV", "40-Hr HAZWOPER", "Industrial Decontamination"],
+        tools: [
+          { name: "EPA NPDES Effluent & Sewer CCTV Inspection Console", icon: "💧", description: "Turbidity, residual chlorine, BOD/TSS lab logs and NASSCO pipe defect coding", badge: "EPA / HAZWOPER" }
+        ]
+      }
+    ]
+  },
+
+  // ─── 18. SCIENCE, LABORATORY, METROLOGY & FIELD RESEARCH ────────
+  {
+    id: "science_laboratory_research",
+    name: "Science, Laboratory, Biotech, Metrology & Field Research",
+    shortName: "Science, Lab & Biotech",
+    icon: "🔬",
+    tagline: "GMP biotech cleanrooms, HPLC/GC-MS chromatography, forensic DNA, materials testing & archaeology",
+    description: "Dedicated workspace for laboratory technicians, chemical processing techs, materials/metallurgical testers, forensic scientists, soil/water analysts, microbiology & pharmaceutical GMP manufacturing techs, metrology calibration specialists, and archaeological/museum conservators.",
+    themeColor: "from-indigo-600 via-purple-700 to-slate-900",
+    accentBorder: "border-indigo-500",
+    badgeBg: "bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800",
+    badgeText: "text-indigo-800 dark:text-indigo-300",
+    securityClearanceTier: "ISO 17025 / cGMP Cleanroom Credential (Level 3)",
+    feedTags: ["#LabTech", "#Biotech", "#PharmaceuticalGMP", "#ForensicScience", "#Metrology", "#MaterialsTesting", "#Archaeology", "#MuseumConservation"],
+    professions: [
+      {
+        id: "biotech_pharma_microbiology_tech",
+        title: "Biotechnology, cGMP Pharmaceutical & Microbiology Lab Technician",
+        enclaveId: "science_laboratory_research",
+        categoryName: "Biotech, Pharma & Clinical Laboratory",
+        defaultHeadline: "cGMP Bioprocess Technician & ASCP Microbiologist · Upstream Bioreactors, HPLC/GC-MS, CRISPR PCR Assays & ISO Class 5 Cleanrooms",
+        typicalSkills: ["cGMP Cleanroom", "HPLC / GC-MS", "Upstream Bioreactor Cell Culture", "ELISA / qPCR", "LIMS Documentation", "AALAS Animal Care"],
+        tools: [
+          { name: "LIMS Electronic Lab Notebook & Chromatogram Viewer", icon: "🧬", description: "21 CFR Part 11 compliant batch records, molarity calculators and bioreactor DO/pH curves", badge: "cGMP / ISO" }
+        ]
+      },
+      {
+        id: "chemical_materials_forensic_tech",
+        title: "Chemical Processing, Materials Metallurgy & Forensic Lab Specialist",
+        enclaveId: "science_laboratory_research",
+        categoryName: "Materials, Chemical & Forensic Science",
+        defaultHeadline: "ISO 17025 Materials Testing & Forensic Trace Analyst · Tensile/Charpy Impact Metallurgy, FTIR Spectroscopy & Chain-of-Custody DNA",
+        typicalSkills: ["ASTM Tensile/Hardness Testing", "SEM Metallography", "Forensic STR DNA Profiling", "NIST Traceable Metrology", "ICP-MS Water/Soil"],
+        tools: [
+          { name: "ISO 17025 Metrology Calibration & Stress-Strain Lab", icon: "🧪", description: "Gauge R&R uncertainty budgets, Charpy impact curves and forensic evidence seals", badge: "ISO 17025" }
+        ]
+      },
+      {
+        id: "archaeology_museum_conservator",
+        title: "Archaeological Field Technician & Museum Artifact Conservator",
+        enclaveId: "science_laboratory_research",
+        categoryName: "Cultural Heritage, Archaeology & Conservation",
+        defaultHeadline: "Registered Professional Archaeologist (RPA) & Museum Conservator · Section 106 Cultural Surveys, Stratigraphy & Artifact Stabilization",
+        typicalSkills: ["Section 106 Compliance", "Total Station Trench Mapping", "XRF Non-Destructive Pigment Analysis", "Archival Climate Control", "Provenance Cataloging"],
+        tools: [
+          { name: "Stratigraphic Harris Matrix & Artifact Conservation Log", icon: "🏺", description: "Trench context sheets, radiocarbon C-14 calibration and museum relative humidity logs", badge: "AIC / RPA" }
+        ]
+      }
+    ]
+  },
+
+  // ─── 19. AVIATION, AEROSPACE, MARITIME & UNDERWATER OPS ─────────
+  {
+    id: "aviation_aerospace_maritime",
+    name: "Aviation, Aerospace, Space, Maritime & Underwater Ops",
+    shortName: "Aviation, Space & Maritime",
+    icon: "✈️",
+    tagline: "FAA A&P airframes, avionics, spacecraft cleanrooms, merchant marine, port cranes & commercial diving",
+    description: "Dedicated workspace for FAA A&P aircraft mechanics, avionics techs, flight dispatchers, air traffic controllers, commercial drone pilots, spacecraft assembly techs, merchant mariners, shipbuilders, port crane operators, commercial divers, underwater welders, and oceanographers.",
+    themeColor: "from-sky-600 via-blue-800 to-slate-950",
+    accentBorder: "border-sky-500",
+    badgeBg: "bg-sky-50 dark:bg-sky-950/40 border-sky-200 dark:border-sky-800",
+    badgeText: "text-sky-800 dark:text-sky-300",
+    securityClearanceTier: "FAA Airframe & Powerplant / USCG STCW / ADCI Diver (Level 4)",
+    feedTags: ["#Aviation", "#AircraftMechanic", "#Avionics", "#Aerospace", "#Maritime", "#Shipbuilding", "#CommercialDiving", "#UnderwaterWelding"],
+    professions: [
+      {
+        id: "aircraft_mechanic_avionics_atc",
+        title: "FAA A&P Aircraft Mechanic, Avionics Tech & Flight Dispatcher",
+        enclaveId: "aviation_aerospace_maritime",
+        categoryName: "Aviation Maintenance & Flight Operations",
+        defaultHeadline: "FAA Airframe & Powerplant (A&P) Mechanic w/ Inspection Authorization (IA) · Turbofan Borescopes, Garmin/Honeywell Avionics & Part 121 Dispatch",
+        typicalSkills: ["FAA A&P / IA License", "FCC GROL Avionics", "Turbofan Hot-Section Inspection", "FAA Aircraft Dispatch", "ARFF Airport Rescue"],
+        tools: [
+          { name: "FAA Airworthiness Directive (AD) & Mel Logbook", icon: "✈️", description: " Airframe cycle tracking, borescope turbine blade logs and weight-and-balance calculators", badge: "FAA Part 145" }
+        ]
+      },
+      {
+        id: "aerospace_spacecraft_drone_tech",
+        title: "Spacecraft Assembly, Satellite Ops & Part 107 LiDAR Drone Specialist",
+        enclaveId: "aviation_aerospace_maritime",
+        categoryName: "Aerospace, Satellite & Unmanned Systems",
+        defaultHeadline: "NASA STD-8739 Certified Spacecraft Technician & FAA Part 107 UAV Pilot · Carbon-Epoxy Autoclaves, Satellite Telemetry & Photogrammetry",
+        typicalSkills: ["NASA-STD-8739 Soldering", "AS9100 Aerospace Quality", "Cleanroom Satellite Integration", "FAA Part 107 Drone LiDAR", "Composite Layup"],
+        tools: [
+          { name: "Orbital Telemetry & UAV Photogrammetry Mission Planner", icon: "🛰️", description: "Satellite TLE pass schedules, cleanroom FOD checklists and UAV orthomosaic flight grids", badge: "AS9100 / NASA" }
+        ]
+      },
+      {
+        id: "maritime_shipbuilder_harbor_pilot",
+        title: "Marine Engineer, Shipbuilder, Port Crane Operator & Harbor Pilot",
+        enclaveId: "aviation_aerospace_maritime",
+        categoryName: "Maritime, Shipbuilding & Port Operations",
+        defaultHeadline: "USCG STCW Chief Marine Engineer & ABS Certified Shipyard Welder · Slow-Speed Marine Diesels, Ship-to-Shore Gantry Cranes & Marine Surveying",
+        typicalSkills: ["USCG STCW Endorsement", "ABS Marine Welding", "Marine High-Voltage Electric", "STS Port Gantry Crane", "NAMS Marine Surveying"],
+        tools: [
+          { name: "Vessel Engine Room & Port Container Stowage Console", icon: "🚢", description: "Bunker fuel consumption, hull ultrasonic thickness gauges and TEU bay plan stability", badge: "USCG / ABS" }
+        ]
+      },
+      {
+        id: "commercial_diver_underwater_welder",
+        title: "ADCI Commercial Diver, Underwater Welder & Oceanographer",
+        enclaveId: "aviation_aerospace_maritime",
+        categoryName: "Underwater Engineering & Marine Science",
+        defaultHeadline: "ADCI Surface-Supplied Commercial Diver & AWS D3.6 Underwater Welder · Subsea Pipeline Hyperbaric Repair, ROV Ops & Coral Reef Restoration",
+        typicalSkills: ["ADCI Commercial Diver", "AWS D3.6 Wet/Hyperbaric Welding", "Mixed-Gas Decompression", "Work-Class ROV Pilot", "Bathymetric Sonar"],
+        tools: [
+          { name: "US Navy Dive Decompression Table & Subsea NDT Log", icon: "🤿", description: "No-decompression limit calculators, chamber treatment tables and cathodic protection readings", badge: "ADCI / AWS D3.6" }
+        ]
+      }
+    ]
+  },
+
+  // ─── 20. TELECOM, ELECTRONICS REPAIR & EMERGING FRONTIER TECH ───
+  {
+    id: "telecom_digital_infrastructure",
+    name: "Telecom, Fiber, Micro-Electronics Repair & Frontier Tech",
+    shortName: "Telecom, Repair & Frontier Tech",
+    icon: "📡",
+    tagline: "Fiber-optic splicing, 5G tower climbing, data center hardware, PCB micro-soldering & digital twins",
+    description: "Dedicated workspace for fiber-optic splicers, telecom tower climbers, RF broadcast engineers, data center hardware techs, PCB micro-soldering specialists, watchmakers/horologists, autonomous vehicle techs, digital twin & 3D reality capture specialists, and battery recycling / carbon accounting technicians.",
+    themeColor: "from-violet-600 via-purple-800 to-indigo-950",
+    accentBorder: "border-violet-500",
+    badgeBg: "bg-violet-50 dark:bg-violet-950/40 border-violet-200 dark:border-violet-800",
+    badgeText: "text-violet-800 dark:text-violet-300",
+    securityClearanceTier: "FOA Master Fiber / IPC-7711 / NWate Tower Certified (Level 3)",
+    feedTags: ["#FiberOptics", "#TowerClimber", "#DataCenterTech", "#MicroSoldering", "#PCBRepair", "#Horology", "#DigitalTwin", "#BatteryRecycling"],
+    professions: [
+      {
+        id: "fiber_optic_tower_datacenter_tech",
+        title: "FOA Fiber-Optic Splicer, 5G Tower Climber & Data Center Hardware Tech",
+        enclaveId: "telecom_digital_infrastructure",
+        categoryName: "Telecommunications & Physical Digital Infrastructure",
+        defaultHeadline: "FOA CFOT Fiber Splicer, NWSA Tower Climber & Hyperscale Data Center Technician · OTDR Loss Testing, 5G Massive MIMO & Liquid-Cooled GPU Racks",
+        typicalSkills: ["FOA CFOT Fusion Splicing", "OTDR Trace Analysis", "NWSA Telecom Tower Rescue", "BICSI RCDD Cabling", "Data Center UPS / Liquid Cooling"],
+        tools: [
+          { name: "OTDR Optical Link Loss & Rack Power/Cooling Console", icon: "📡", description: "dB splice loss budgets, RF PIM sweep logs and hyperscale server rack PUE telemetry", badge: "FOA / BICSI" }
+        ]
+      },
+      {
+        id: "pcb_microsoldering_horologist_tech",
+        title: "IPC Micro-Soldering Specialist, Semiconductor Tech & Master Watchmaker",
+        enclaveId: "telecom_digital_infrastructure",
+        categoryName: "Electronics, Precision Instruments & Horology",
+        defaultHeadline: "IPC-7711/7721 BGA Micro-Soldering Technician & AWCI Certified Watchmaker · Multilayer PCB Rework, Oscilloscope Fault Tracing & Mechanical Escapements",
+        typicalSkills: ["IPC-7711 BGA Reballing", "Altium PCB Schematics", "Semiconductor Photolithography", "AWCI Mechanical Horology", "Optical Alignment"],
+        tools: [
+          { name: "PCB Boardview Schematic & Horology Beat-Error Analyzer", icon: "🔬", description: "Thermal camera short detection, SMD pad diode-mode readings and mechanical watch timing traces", badge: "IPC / AWCI" }
+        ]
+      },
+      {
+        id: "digital_twin_autonomous_green_tech",
+        title: "Digital Twin, 3D Reality Capture, Autonomous Fleet & Carbon/Battery Tech",
+        enclaveId: "telecom_digital_infrastructure",
+        categoryName: "Emerging Frontier & Sustainability Professions",
+        defaultHeadline: "3D LiDAR Reality Capture Specialist, Autonomous Vehicle Sensor Tech & GHG Carbon Accountant · Matterport/NavVis SLAM, Li-Ion Hydrometallurgy & ISO 14064",
+        typicalSkills: ["Terrestrial LiDAR (BIM Scan-to-CAD)", "Autonomous LiDAR/Radar Calibration", "Li-Ion Black Mass Battery Recycling", "GHG Scope 1-3 Carbon Accounting", "Assistive Robotics"],
+        tools: [
+          { name: "Point-Cloud BIM Deviation & Scope 1-3 Carbon Ledger", icon: "🌐", description: "Millimeter scan-to-BIM clash detection, autonomous sensor intrinsics and ISO 14064 carbon calculator", badge: "Frontier 2026" }
+        ]
+      }
+    ]
   }
 ]
+
+// ─── 42-CATEGORY UNIVERSAL TAXONOMY & 3 WORKER PILLARS ──────────────────────
+export interface WorkerPillar {
+  id: 'hands_on' | 'independent' | 'emerging_stars'
+  title: string
+  icon: string
+  subtitle: string
+  exampleEnclaves: string[]
+  enclaveIds: string[]
+  keyCapabilities: string[]
+}
+
+export const CONNECTIN_WORKER_PILLARS: WorkerPillar[] = [
+  {
+    id: 'hands_on',
+    title: 'Hands-On & Practical Professionals',
+    icon: '🛠️',
+    subtitle: 'Demonstrate mastery through physical projects, blueprints, diagnostics, lab runs & field evidence rather than corporate slide decks.',
+    exampleEnclaves: ['trades_construction', 'automotive_mechanics', 'manufacturing_industrial', 'energy_utilities_environment', 'aviation_aerospace_maritime', 'healthcare_medicine'],
+    enclaveIds: ['trades_construction', 'automotive_mechanics', 'manufacturing_industrial', 'energy_utilities_environment', 'aviation_aerospace_maritime', 'healthcare_medicine'],
+    keyCapabilities: ['Verified Trade Licenses', 'Before/After Project Portfolios', 'Equipment & Machinery Hours', 'Safety & Code Certifications']
+  },
+  {
+    id: 'independent',
+    title: 'Independent Earners & Service Businesses',
+    icon: '🏪',
+    subtitle: 'Win direct client bookings, local RFPs, service area discovery, commercial contracts & verified customer reviews.',
+    exampleEnclaves: ['personal_services_wellness', 'culinary_hospitality_events', 'commerce_small_business', 'creative_media_arts', 'agriculture_natural_resources', 'finance_accounting', 'law_gov_defense'],
+    enclaveIds: ['personal_services_wellness', 'culinary_hospitality_events', 'commerce_small_business', 'creative_media_arts', 'agriculture_natural_resources', 'finance_accounting', 'law_gov_defense'],
+    keyCapabilities: ['Instant Client Quote Requests', 'Service Radius & Availability', 'Verified Customer Reviews', 'Escrow & Milestone Draws']
+  },
+  {
+    id: 'emerging_stars',
+    title: 'Emerging Specialists & STARs (Alternative Routes)',
+    icon: '🚀',
+    subtitle: 'Skilled Through Alternative Routes (Apprenticeships, Military Transition, Bootcamps, Lab Techs & Frontier Industries — No 4-Year Degree Gatekeeping).',
+    exampleEnclaves: ['education_workforce', 'telecom_digital_infrastructure', 'science_laboratory_research', 'community_civic_security', 'tech_cybersecurity', 'tech_software', 'campus_students'],
+    enclaveIds: ['education_workforce', 'telecom_digital_infrastructure', 'science_laboratory_research', 'community_civic_security', 'tech_cybersecurity', 'tech_software', 'campus_students'],
+    keyCapabilities: ['Skills-First Job Matching', 'Registered Apprenticeships (OJT)', 'Military MOS Skill Translation', 'Frontier Tech Micro-Credentials']
+  }
+]
+
+const EXTRA_SPECIALIZED_PROFESSIONS: ProfessionDefinition[] = [
+  // ── Category 1 & 26: Construction, MEP, Architecture, Surveying & Built Environment ──
+  {
+    id: 'drywall_plasterer_scaffolding_specialist',
+    title: 'Drywall Finisher, Ornamental Plasterer & Scaffolding Specialist',
+    enclaveId: 'trades_construction',
+    categoryName: 'Construction & Building Trades',
+    defaultHeadline: 'Level 5 Drywall Finisher, Venetian Plaster Artisan & SAIA Certified Suspended Scaffolding Rigger',
+    typicalSkills: ['Level 5 Drywall Finishing', 'Ornamental Lime Plaster', 'SAIA Scaffolding Rigging', 'Acoustical Grid Ceilings', 'OSHA Fall Protection'],
+    tools: [{ name: 'Drywall Sheet Takeoff & Scaffold Load Calc', icon: '🧱', description: 'Square-footage board count, joint compound mud estimator & scaffold tie-in schedule', badge: 'SAIA / OSHA' }]
+  },
+  {
+    id: 'bim_cad_quantity_surveyor',
+    title: 'Architectural Technologist, BIM Coordinator & Quantity Surveyor',
+    enclaveId: 'trades_construction',
+    categoryName: 'Architecture, Surveying & Built Environment',
+    defaultHeadline: 'RICS Chartered Quantity Surveyor & Revit BIM Coordinator · Clash Detection, Facade Envelope Specs, Historic Restoration & Cost Takeoffs',
+    typicalSkills: ['Revit BIM Coordination', 'RICS Cost Estimation', 'Curtain Wall Facades', 'Historic Lime Restoration', 'EnergyPlus Modeling'],
+    tools: [{ name: 'Revit Clash Detection & RICS Bill of Quantities', icon: '📐', description: 'Navisworks MEP clash matrix and CSI MasterFormat cost estimator', badge: 'RICS / BIM' }]
+  },
+  {
+    id: 'facade_envelope_historic_restoration_tech',
+    title: 'Building Envelope, Curtain Wall Facade & Historic Restoration Specialist',
+    enclaveId: 'trades_construction',
+    categoryName: 'Architecture, Surveying & Built Environment',
+    defaultHeadline: 'Building Envelope & Historic Preservation Specialist · Infrared Blower-Door Testing, Unitized Glass Facades, Accessibility Compliance & Energy Modeling',
+    typicalSkills: ['ASTM E1186 Air Barrier Testing', 'Curtain Wall Glazing', 'Historic Stone/Timber Preservation', 'ADA Accessibility Audits', 'Building Energy Modeling'],
+    tools: [{ name: 'Blower-Door Envelope & Thermal Bridge Scanner', icon: '🏛️', description: 'ACH50 air-leakage calculator, curtain-wall wind-load anchor checks & ADA slope gauge', badge: 'BPI / RICS' }]
+  },
+  {
+    id: 'industrial_instrumentation_controls_tech',
+    title: 'Building Automation (BAS) & Industrial Instrumentation Controls Technician',
+    enclaveId: 'trades_construction',
+    categoryName: 'Mechanical, Electrical & Building Systems (MEP)',
+    defaultHeadline: 'ISA Certified Control Systems Technician (CCST) & BACnet/Niagara N4 Integrator · 4-20mA Hart Transmitters, PID Loop Tuning & Smart Chiller Plants',
+    typicalSkills: ['Niagara N4 / BACnet IP', 'ISA CCST Instrumentation', '4-20mA HART Calibration', 'VFD & Chiller Plant Sequencing', 'Pneumatic-to-DDC Retrofits'],
+    tools: [{ name: '4-20mA Loop Calibrator & BACnet Object Browser', icon: '🎛️', description: 'PID loop tuning simulator, differential pressure scaling & DDC point checkout sheet', badge: 'ISA CCST' }]
+  },
+
+  // ── Category 2, 10 & 41: Automotive, Heavy Machinery, Rail, Cold-Chain & Customs ──
+  {
+    id: 'auto_electrician_collision_refinish_tech',
+    title: 'Automotive Electrician, Collision Frame & Custom Refinish Specialist',
+    enclaveId: 'automotive_mechanics',
+    categoryName: 'Automotive & Vehicle Engineering',
+    defaultHeadline: 'I-CAR Platinum Collision Structural Tech & Automotive Master Electrician · ADAS Radar Calibration, Celette Frame Straightening & Spectrophotometer Paint',
+    typicalSkills: ['I-CAR Platinum Structural', 'ADAS LiDAR/Radar Calibration', 'CAN-FD Wiring Harness', 'Downdraft Booth Refinishing', 'Aluminum MIG Brazing'],
+    tools: [{ name: 'ADAS Calibration Target & Frame Datum Spec', icon: '🚗', description: '3D chassis millimeter measuring points and OEM ADAS static/dynamic target distances', badge: 'I-CAR Platinum' }]
+  },
+  {
+    id: 'heavy_machinery_rail_signal_tech',
+    title: 'Heavy Equipment Mechanic, Locomotive Tech & Rail Signal Inspector',
+    enclaveId: 'automotive_mechanics',
+    categoryName: 'Heavy Machinery, Rail & Transport',
+    defaultHeadline: 'CAT Heavy Equipment Diagnostic Specialist & FRA Rail Signal Technician · Hydraulic Excavators, Locomotive Traction Motors & Positive Train Control (PTC)',
+    typicalSkills: ['CAT ET Diagnostics', 'FRA Part 236 Rail Signals', 'Locomotive Diesel-Electric', 'Agricultural Combine Hydraulics', 'Forklift Material Handling'],
+    tools: [{ name: 'CAT Hydraulic & FRA Rail Signal Telemetry', icon: '🚂', description: 'Positive Train Control (PTC) track circuit diagnostics and hydraulic pressure logs', badge: 'FRA / ASE' }]
+  },
+  {
+    id: 'freight_forwarder_customs_coldchain',
+    title: 'Licensed Customs Broker, Freight Forwarder & Cold-Chain Operator',
+    enclaveId: 'automotive_mechanics',
+    categoryName: 'Logistics, Warehousing & Supply Chain',
+    defaultHeadline: 'US Customs Broker (LCB) & GDP Cold-Chain Logistics Coordinator · Harmonized Tariff (HTS) Clearance, Reefer Telemetry & Intermodal Dispatch',
+    typicalSkills: ['HTS Customs Classification', 'Incoterms 2020', 'GDP Cold-Chain Monitoring', 'Bill of Lading', 'Port Terminal Dispatch'],
+    tools: [{ name: 'ACE Customs Manifest & Reefer Cold-Chain Monitor', icon: '🚢', description: 'Live -20°C container telemetry and automated Harmonized Tariff lookup', badge: 'LCB / GDP' }]
+  },
+  {
+    id: 'bus_coach_maritime_drone_delivery_operator',
+    title: 'Commercial Bus/Coach Captain, River Barge Crew & Drone Delivery Operator',
+    enclaveId: 'automotive_mechanics',
+    categoryName: 'Transport, Transit & Autonomous Delivery',
+    defaultHeadline: 'CDL Passenger Coach Operator, Inland Waterway Mate & Part 135 Drone Delivery Dispatcher · Zero-Incident Transit, Towboat Rigging & BVLOS Medical Delivery',
+    typicalSkills: ['CDL Passenger Endorsement', 'Inland Tug & Barge Line Handling', 'FAA Part 135 BVLOS Drone Delivery', 'Transit Dispatch Scheduling', 'ADA Passenger Securement'],
+    tools: [{ name: 'Multimodal Transit & BVLOS Delivery Corridor Console', icon: '🚌', description: 'Route headway telemetry, river lock schedules and autonomous delivery payload logs', badge: 'DOT / FAA' }]
+  },
+
+  // ── Category 3, 29 & 41: Hydroponics, Ag-Drone, Food Science, Wildlife & Vet Tech ──
+  {
+    id: 'hydroponics_agdrone_food_scientist',
+    title: 'Hydroponics Specialist, Ag-Drone Operator & Food Technologist',
+    enclaveId: 'agriculture_natural_resources',
+    categoryName: 'Controlled Environment Ag & Food Science',
+    defaultHeadline: 'Controlled Environment Vertical Farmer & IFT Food Scientist · Nutrient Film Hydroponics, Multispectral Ag-Drones, Fermentation & HACCP Audits',
+    typicalSkills: ['Vertical Hydroponics', 'NDVI Multispectral Drones', 'HACCP / SQF Food Safety', 'Sensory & Fermentation Science', 'Irrigation Telemetry'],
+    tools: [{ name: 'Hydroponic EC/pH Dosing & HACCP Food Safety Lab', icon: '🌱', description: 'Automated nutrient dosing curves and SQF microbial shelf-life logs', badge: 'HACCP / FAA' }]
+  },
+  {
+    id: 'dairy_grain_milling_postharvest_tech',
+    title: 'Dairy Processing Specialist, Grain Mill Operator & Post-Harvest Inspector',
+    enclaveId: 'agriculture_natural_resources',
+    categoryName: 'Food Processing & Agricultural Quality',
+    defaultHeadline: 'Pasteurization Dairy Technologist, Roller-Mill Grain Operator & USDA Post-Harvest Cold-Storage Inspector · HTST Pasteurization, Mycotoxin Screening & Silo Aeration',
+    typicalSkills: ['HTST Dairy Pasteurization', 'Flour & Feed Milling', 'USDA Grain Grading', 'Controlled Atmosphere Storage', 'Cheese & Culture Fermentation'],
+    tools: [{ name: 'Dairy Pasteurization & Grain Moisture Silo Console', icon: '🌾', description: 'Somatic cell counts, milkfat standardization and grain bin equilibrium moisture curves', badge: 'USDA / SQF' }]
+  },
+  {
+    id: 'wildlife_ranger_vettech_arborist',
+    title: 'Veterinary Technician, Wildlife Park Ranger & Habitat Restoration Specialist',
+    enclaveId: 'agriculture_natural_resources',
+    categoryName: 'Forestry, Wildlife & Animal Care',
+    defaultHeadline: 'Credentialed Veterinary Technician (CVT), ISA Certified Arborist & Wildlife Conservation Ranger · Telemetry Tracking, Zookeeping & Invasive Species Control',
+    typicalSkills: ['CVT Veterinary Anesthesia', 'ISA Tree Climbing', 'Wildlife GPS Collaring', 'Riparian Habitat Restoration', 'Shelter & Zoo Animal Care'],
+    tools: [{ name: 'Wildlife Biodiversity & Vet Triage Tracker', icon: '🦌', description: 'Camera-trap species counts, invasive plant GIS maps and veterinary anesthesia sheets', badge: 'ISA / CVT' }]
+  },
+
+  // ── Category 4, 28 & 37: Manufacturing, Footwear, Textile, Reverse Logistics ──
+  {
+    id: 'textile_weaving_dyeing_garment_tech',
+    title: 'Textile Production Technician, Master Weaver & Fabric Dyeing Specialist',
+    enclaveId: 'manufacturing_industrial',
+    categoryName: 'Textile, Leather & Footwear Industries',
+    defaultHeadline: 'AATCC Certified Textile Colorist, Jacquard Loom Technician & Industrial Sewing Machine Mechanic · Spectrophotometer Dye Recipes, Pattern Grading & Textile Recycling',
+    typicalSkills: ['Jacquard & Rapier Looms', 'AATCC Colorfastness Dyeing', 'Juki/Brother Sewing Machine Repair', 'Gerber AccuMark Pattern Grading', 'Circular Textile Recycling'],
+    tools: [{ name: 'Pantone Lab Dip & Loom Picks-Per-Inch Console', icon: '🧵', description: 'Delta-E spectrophotometer color matching, warp tension logs and marker yield optimizer', badge: 'AATCC' }]
+  },
+  {
+    id: 'reverse_logistics_ewaste_refurbishment_tech',
+    title: 'Reverse Logistics Coordinator, E-Waste Recycler & Warranty Repair Tech',
+    enclaveId: 'manufacturing_industrial',
+    categoryName: 'Supply Chain Support & Equipment Lifecycle',
+    defaultHeadline: 'R2v3 Certified Electronics Recycler, Warranty RMA Repair Specialist & Cold-Storage Inventory Auditor · NIST 800-88 Data Sanitization, Component Harvesting & Refurbishment',
+    typicalSkills: ['R2v3 / e-Stewards Recycling', 'NIST 800-88 Media Sanitization', 'Warranty RMA Root-Cause', 'Board-Level Refurbishment', 'Cycle Count Auditing'],
+    tools: [{ name: 'RMA Triage, Serialized Refurb & E-Waste Recovery Log', icon: '♻️', description: 'IMEI/Serial erasure certificates, refurbishment grade scoring and precious metal yield', badge: 'R2v3 Certified' }]
+  },
+
+  // ── Category 5, 19, 31 & 42: Energy, Mining, Water, Sanitation & Carbon ──
+  {
+    id: 'well_driller_radon_mold_remediation_tech',
+    title: 'NGWA Water Well Driller, Radon Mitigation & Mold/Asbestos Remediation Tech',
+    enclaveId: 'energy_utilities_environment',
+    categoryName: 'Water Infrastructure & Environmental Remediation',
+    defaultHeadline: 'NGWA Certified Master Well Driller (CWD) & IICRC/NRPP Environmental Remediation Specialist · Rotary Mud Drilling, Sub-Slab Radon Depressurization & HEPA Abatement',
+    typicalSkills: ['NGWA Rotary & Cable-Tool Drilling', 'Submersible Pump Sizing', 'NRPP Radon Mitigation', 'IICRC S520 Mold Remediation', 'EPA Asbestos Abatement'],
+    tools: [{ name: 'Aquifer Drawdown & Radon/IAQ Continuous Monitor', icon: '💧', description: 'Well specific-capacity GPM curves, pCi/L radon logs and negative-air HEPA pressure records', badge: 'NGWA / NRPP' }]
+  },
+
+  // ── Category 6 & 39: Healthcare Support, EMT, Radiology, Surgical Tech, Prosthetics & BMET ──
+  {
+    id: 'surgical_radiology_phlebotomy_emt',
+    title: 'Surgical Technologist, Radiologic Tech, Phlebotomist & Paramedic (NRP)',
+    enclaveId: 'healthcare_medicine',
+    categoryName: 'Allied Health, Diagnostic & Emergency Care',
+    defaultHeadline: 'NBSTSA Certified Surgical Technologist, ARRT Radiographer & NREMT Paramedic · Sterile Field Instrumentation, MRI/CT Imaging & 12-Lead ACLS Triage',
+    typicalSkills: ['NBSTSA Sterile Field', 'ARRT CT/MRI Positioning', 'ASCP Phlebotomy Venipuncture', 'NREMT Paramedic ACLS', 'PTCB Pharmacy Compounding'],
+    tools: [{ name: 'Perioperative Count, DICOM Dose & EMS Run Sheet', icon: '🚑', description: 'WHO surgical Sponge/Sharps counter, ALARA radiation logs and NEMSIS paramedic PCR', badge: 'ARRT / NREMT' }]
+  },
+  {
+    id: 'biomedical_bmet_sterile_medcoding',
+    title: 'Biomedical Equipment Tech (CBET), Medical Gas & CPC Medical Coder',
+    enclaveId: 'healthcare_medicine',
+    categoryName: 'Specialized Healthcare Technology & Operations',
+    defaultHeadline: 'AAMI Certified Biomedical Equipment Technician (CBET), ASSE 6030 Medical Gas Verifier & AAPC CPC Coder · Ventilator Calibration, Autoclaves & ICD-10-CM',
+    typicalSkills: ['AAMI CBET Defibrillator/Ventilator PM', 'NFPA 99 Medical Gas', 'CRCST Sterile Processing', 'ICD-10 / CPT Medical Coding', 'CCHI Medical Interpreting'],
+    tools: [{ name: 'BMET Electrical Safety & Sterilization Spore Log', icon: '🩺', description: 'IEC 60601 leakage current tester, autoclave biological indicator logs & ICD-10 encoder', badge: 'CBET / AAPC' }]
+  },
+  {
+    id: 'prosthetics_orthotics_hyperbaric_sleep_tech',
+    title: 'Prosthetics/Orthotics Tech, Hyperbaric Chamber Operator & Sleep Polysomnographer',
+    enclaveId: 'healthcare_medicine',
+    categoryName: 'Specialized Clinical & Rehabilitation Technology',
+    defaultHeadline: 'ABC Certified Prosthetic/Orthotic Technician, CHT Hyperbaric Technologist & RPSGT Sleep Lab Specialist · Carbon-Fiber Socket Lamination, 3-ATA Wound Therapy & EEG Scoring',
+    typicalSkills: ['ABC Carbon-Fiber Prosthetics', '3D Limb Scanning', 'UHMS Hyperbaric Oxygen (CHT)', 'BRPT Polysomnography (RPSGT)', 'Cardiovascular Cath Lab (RCIS)'],
+    tools: [{ name: '3D Socket Alignment, Hyperbaric Dive & Sleep Stage Console', icon: '🦿', description: 'Dynamic gait load alignment, hyperbaric O2 transcutaneous tension & AHI sleep apnea scorer', badge: 'ABC / RPSGT' }]
+  },
+  {
+    id: 'dental_hygienist_pta_ota_rehab_specialist',
+    title: 'Registered Dental Hygienist (RDH), Physical Therapy (PTA) & Occupational Therapy Assistant',
+    enclaveId: 'healthcare_medicine',
+    categoryName: 'Allied Health & Rehabilitation Care',
+    defaultHeadline: 'Licensed Dental Hygienist (RDH) & APTA Physical Therapy Assistant (PTA) · Ultrasonic Periodontal Scaling, Post-Op Gait Rehabilitation & Neuromuscular Re-education',
+    typicalSkills: ['Periodontal Scaling & Root Planing', 'Local Anesthesia & Nitrous Oxide', 'Therapeutic Exercise & Gait Rehab', 'Goniometric ROM Measurement', 'Adaptive ADL Splinting'],
+    tools: [{ name: 'Periodontal Pocket & Joint ROM Goniometer Log', icon: '🦷', description: '6-point periodontal probing chart and post-surgical functional mobility tracker', badge: 'RDH / PTA' }]
+  },
+
+  // ── Category 7, 30 & 34: Tattoo, Massage, Spa, Sports Turf, Outdoor Guide & Funeral Services ──
+  {
+    id: 'tattoo_massage_nail_spa_specialist',
+    title: 'Licensed Massage Therapist, Tattoo Artist, Nail Tech & Spa Director',
+    enclaveId: 'personal_services_wellness',
+    categoryName: 'Beauty, Body Art & Therapeutic Wellness',
+    defaultHeadline: 'NCBTMB Licensed Massage Therapist (LMT) & Bloodborne-Pathogen Certified Tattoo Artist · Myofascial Release, Custom Stencil Art & Medical Spa Ops',
+    typicalSkills: ['Myofascial & Deep Tissue LMT', 'OSHA Bloodborne Pathogens', 'Autoclave Spore Testing', 'Gel/Acrylic Nail Architecture', 'Bridal Makeup'],
+    tools: [{ name: 'SOAP Bodywork Chart & Consent Portfolio Vault', icon: '💆', description: 'Anatomical trigger-point SOAP notes and client-consented before/after gallery', badge: 'NCBTMB / OSHA' }]
+  },
+  {
+    id: 'outdoor_guide_turf_funeral_director',
+    title: 'Outdoor Adventure Guide, Sports Turf Manager & Licensed Funeral Director',
+    enclaveId: 'personal_services_wellness',
+    categoryName: 'Outdoor Recreation, Sports Ops & Memorial Services',
+    defaultHeadline: 'AMGA Mountain Guide, GCSAA Sports Turf Superintendent & Licensed Funeral Director · Pitch Agronomy, Ski-Lift Rigging & Compassionate Bereavement Care',
+    typicalSkills: ['AMGA Alpine Rigging', 'GCSAA Stadium Turf Agronomy', 'NFDA Funeral Directing & Embalming', 'Monument Stone Engraving', 'Adaptive Sports'],
+    tools: [{ name: 'Turf Moisture, Alpine Route & Memorial Arrangement Desk', icon: '🏔️', description: 'Pitch firmness Clegg hammer readings, avalanche forecasts & memorial service planner', badge: 'GCSAA / NFDA' }]
+  },
+  {
+    id: 'embalmer_crematory_monument_bereavement_specialist',
+    title: 'Licensed Embalmer, Crematory Operator, Monument Engraver & Grief Counselor',
+    enclaveId: 'personal_services_wellness',
+    categoryName: 'Funeral, Memorial & End-of-Life Services',
+    defaultHeadline: 'CANA Certified Crematory Operator, Restorative Embalmer & Monument Stone Mason · Dignity Chain-of-Custody, Granite Sandblast Lettering & Bereavement Support',
+    typicalSkills: ['Restorative Art & Embalming', 'CANA Crematory Operations', 'Granite Monument Sandblasting', 'Cemetery Perpetual Care', 'Grief & Bereavement Facilitation'],
+    tools: [{ name: 'Dignity Chain-of-Custody & Monument Stencil CAD', icon: '🕊️', description: 'Biometric identification tracking, permit registry and memorial inscription layout', badge: 'NFDA / CANA' }]
+  },
+
+  // ── Category 8, 11, 35 & 41: Baker, Butcher, Coffee Roaster, Live Stage Rigging & Pest/Pool ──
+  {
+    id: 'baker_butcher_safari_cruise_specialist',
+    title: 'Artisan Baker, Master Butcher, Safari Tracker & Cruise Hospitality Lead',
+    enclaveId: 'culinary_hospitality_events',
+    categoryName: 'Culinary Craft, Tourism & Maritime Hospitality',
+    defaultHeadline: 'RBA Certified Master Baker, Whole-Animal Butcher & FGASA Safari Guide · Sourdough Fermentation, Dry-Aged Seam Cuts & Eco-Tourism Expeditions',
+    typicalSkills: ['Artisan Sourdough & Viennoiserie', 'Whole-Carcass Butchery', 'HACCP Food Safety Auditing', 'FGASA Wildlife Tracking', 'STCW Cruise Hospitality'],
+    tools: [{ name: 'Baker Percentage, Carcass Yield & Expedition Manifest', icon: '🥐', description: 'Flour hydration/fermentation timers, primal cut yield calculator and guest safari logs', badge: 'RBA / HACCP' }]
+  },
+  {
+    id: 'coffee_roaster_sommelier_brewer_distiller',
+    title: 'Specialty Coffee Roaster (Q-Grader), Sommelier, Brewmaster & Craft Distiller',
+    enclaveId: 'culinary_hospitality_events',
+    categoryName: 'Food Craft, Fermentation & Beverage Science',
+    defaultHeadline: 'CQI Licensed Q-Arabica Grader, Court of Master Sommeliers & IBD Certified Brewmaster · Roast Rate-of-Rise (RoR) Curves, Wort Gravity & Barrel Aging',
+    typicalSkills: ['CQI Q-Grader Cupping', 'Cropster Roast Curve Profiling', 'IBD Brewing & Mash Chemistry', 'CMS Wine Cellar Curation', 'Distillation Proof Gauging'],
+    tools: [{ name: 'Roast Rate-of-Rise (RoR) & Fermentation Plato Log', icon: '☕', description: 'First-crack exothermic curves, Specific Gravity/Brix attenuation & cellar vintage ledger', badge: 'Q-Grader / CMS' }]
+  },
+  {
+    id: 'stage_rigger_sound_lighting_pest_pool',
+    title: 'ETCP Stage Rigger, Live Sound/Pyrotechnics Tech & Pest/Pool Specialist',
+    enclaveId: 'culinary_hospitality_events',
+    categoryName: 'Live Entertainment Production & Property Services',
+    defaultHeadline: 'ETCP Certified Arena Rigger, FOH Live Sound Engineer & Licensed Pest/Pool Operator · Line-Array Acoustics, DMX Lighting, CPO Pool Chemistry & IPM',
+    typicalSkills: ['ETCP Arena Rigging', 'Dante Live Sound & DMX Lighting', 'APA Pyrotechnics Safety', 'CPO Langelier Pool Index', 'Structural Pest IPM'],
+    tools: [{ name: 'Truss Point-Load, DMX Patch & Langelier Pool Calc', icon: '🎛️', description: 'Chain-hoist bridle load vectors, 64-channel stage patch and pool chlorine/pH index', badge: 'ETCP / CPO' }]
+  },
+
+  // ── Category 9, 35, 38 & 41: Furniture, Upholstery, Signage, Luthier & Museum Framing ──
+  {
+    id: 'upholsterer_signmaker_setbuilder_florist',
+    title: 'Master Upholsterer, Sign Installer, Film Set Builder & Floral Designer',
+    enclaveId: 'creative_media_arts',
+    categoryName: 'Practical Design, Set Construction & Signage',
+    defaultHeadline: 'Master Furniture Upholsterer, UL-Listed Sign Fabricator & IATSE Set Carpenter · 8-Way Hand-Tied Springs, Vehicle Wraps, CNC Channel Letters & Floral Installations',
+    typicalSkills: ['8-Way Hand-Tied Upholstery', 'CNC Channel Letter Signage', '3M Vinyl Vehicle Wraps', 'IATSE Stage Carpentry', 'AIFD Floral Architecture'],
+    tools: [{ name: 'Upholstery Yardage, Sign Wind-Load & Set Cut-List', icon: '🪑', description: 'Pattern-repeat fabric estimator, crane sign anchorage calc and stage flat blueprints', badge: 'IATSE / AIFD' }]
+  },
+  {
+    id: 'piano_tuner_luthier_conservation_framer',
+    title: 'Registered Piano Technician (RPT), Master Luthier & Archival Picture Framer',
+    enclaveId: 'creative_media_arts',
+    categoryName: 'Cultural Heritage, Musical Instruments & Fine Craft',
+    defaultHeadline: 'PTG Registered Piano Technician, Acoustic Guitar Luthier & PPFA Certified Picture Framer · Concert Pitch Voicing, Fretboard Plek Leveling & Museum UV Conservation',
+    typicalSkills: ['PTG A440 Aural Piano Tuning', 'Soundboard & Action Regulation', 'Acoustic/Electric Luthier Setup', 'PPFA Archival Rag Matting', 'Bookbinding & Gilding'],
+    tools: [{ name: 'Inharmonicity Temperament & Archival Matting Sizer', icon: '🎻', description: 'Stretch-tuning cent offset analyzer, neck relief gauge and museum frame rabbet calculator', badge: 'PTG / PPFA' }]
+  },
+
+  // ── Category 10, 23 & 37: Retail, Merchandising, Customer Support & Reverse Logistics ──
+  {
+    id: 'retail_merchandiser_customer_support_lead',
+    title: 'Retail Store Supervisor, Visual Merchandiser & Technical Support Specialist',
+    enclaveId: 'commerce_small_business',
+    categoryName: 'Retail, Sales & Customer Experience',
+    defaultHeadline: 'Multi-Unit Retail Supervisor, Planogram Merchandiser & Tier-3 Technical Support Lead · POS Shrink Reduction, Field Sales & E-Commerce Returns RMA',
+    typicalSkills: ['Planogram Visual Merchandising', 'POS Inventory & Loss Prevention', 'Omnichannel CRM Support', 'B2B Field Sales', 'Reverse Logistics RMA'],
+    tools: [{ name: 'Planogram Conversion & RMA Returns Triage Desk', icon: '🛍️', description: 'Sales-per-square-foot heatmaps, SLA ticket escalation and warranty repair routing', badge: 'NRF Certified' }]
+  },
+
+  // ── Category 12, 13, 25 & 33: Accessibility, Braille, Archivist & STARs Pathways ──
+  {
+    id: 'accessibility_braille_archivist_specialist',
+    title: 'Braille Transcriber, Assistive Tech Specialist & Digital Archivist',
+    enclaveId: 'education_workforce',
+    categoryName: 'Accessibility, Inclusion & Knowledge Preservation',
+    defaultHeadline: 'Library of Congress Certified Braille Transcriber, RESNA Assistive Technology Practitioner (ATP) & Certified Archivist · UEB Braille, AAC Devices & Cultural Preservation',
+    typicalSkills: ['LOC Unified English Braille (UEB)', 'RESNA Assistive Tech (ATP)', 'IAAP CPACC Accessibility', 'Archival EAD Metadata', 'Special Education IEP Support'],
+    tools: [{ name: 'UEB Braille Translation & Assistive Tech Fit Matrix', icon: '♿', description: 'Tactile graphics embosser preview, wheelchair/AAC seating matrix and archival catalog', badge: 'RESNA / LOC' }]
+  },
+  {
+    id: 'stars_retiree_freelancer_newcomer',
+    title: 'STARs Non-Degree Specialist, Retiree Mentor, Seasonal & Newcomer Pro',
+    enclaveId: 'education_workforce',
+    categoryName: 'Nontraditional & Alternative Career Pathways (STARs)',
+    defaultHeadline: 'Skilled Through Alternative Routes (STAR) Professional & Senior Master Advisor · Verified Practical Portfolio, Cross-Border Credential Equivalency & Fractional Consulting',
+    typicalSkills: ['Verified Practical Portfolio', 'Prior Learning Assessment (PLA)', 'Fractional Mentorship', 'Seasonal Contract Agility', 'Multilingual Transferable Skills'],
+    tools: [{ name: 'STARs Competency Equivalence & Prior Learning Vault', icon: '🌟', description: 'Maps hands-on work evidence and international licenses to employer skill requirements', badge: 'STARs Verified' }]
+  },
+
+  // ── Category 21 & 22: OT/ICS Industrial Cybersecurity & AI Workflow / No-Code Tech ──
+  {
+    id: 'ot_ics_scada_physical_cyber_tech',
+    title: 'OT/ICS Industrial Cybersecurity & SCADA Network Defense Specialist',
+    enclaveId: 'tech_cybersecurity',
+    categoryName: 'Industrial OT Security & Critical Infrastructure Defense',
+    defaultHeadline: 'GIAC GICSP Industrial Cybersecurity Specialist · IEC 62443 Purdue Model Zoning, Modbus/DNP3 Deep Packet Inspection & Substations/Plant Floor Incident Response',
+    typicalSkills: ['IEC 62443 / NERC CIP', 'Claroty / Dragos / Nozomi OT IDS', 'Modbus TCP & DNP3 Protocol Analysis', 'Data Diode Unidirectional Gateways', 'PLC Firmware Integrity'],
+    tools: [{ name: 'Purdue Model OT/IT Conduit & DNP3 Packet Inspector', icon: '🛡️', description: 'Level 0–3 industrial asset inventory, PLC logic diffing and unidirectional gateway verification', badge: 'GICSP / IEC 62443' }]
+  },
+  {
+    id: 'ai_workflow_nocode_prompt_data_tech',
+    title: 'AI Workflow Automation Specialist, No-Code Builder & RLHF Data Evaluator',
+    enclaveId: 'tech_software',
+    categoryName: 'Emerging AI Operations, No-Code & Digital Documentation',
+    defaultHeadline: 'AI Agent Workflow Architect, Bubble/Retool No-Code Developer & RLHF Domain Evaluator · n8n/Make Orchestration, RAG Knowledge Bases & API Documentation',
+    typicalSkills: ['n8n / Zapier / Make AI Workflows', 'Retool / Bubble Internal Tools', 'RLHF & Red-Team Annotation', 'Docs-as-Code Technical Writing', 'CRM Revenue Operations'],
+    tools: [{ name: 'Multi-Agent Webhook Canvas & RLHF Eval Rubric', icon: '🤖', description: 'JSON schema tool-calling tester, prompt regression benchmark and automated SOP builder', badge: 'AI Ops Verified' }]
+  }
+]
+
+// Automatically attach all specialized professions to their parent enclaves
+for (const extraProf of EXTRA_SPECIALIZED_PROFESSIONS) {
+  const targetEnclave = PROFESSION_ENCLAVES.find(e => e.id === extraProf.enclaveId)
+  if (targetEnclave && !targetEnclave.professions.some(p => p.id === extraProf.id)) {
+    targetEnclave.professions.push(extraProf)
+  }
+}
 
 export const ALL_PROFESSIONS: ProfessionDefinition[] = PROFESSION_ENCLAVES.flatMap(e => e.professions)
 
@@ -1517,3 +2324,5 @@ export function getProfessionsByEnclave(enclaveId: string): ProfessionDefinition
   const enclave = findEnclaveById(enclaveId)
   return enclave ? enclave.professions : []
 }
+
+

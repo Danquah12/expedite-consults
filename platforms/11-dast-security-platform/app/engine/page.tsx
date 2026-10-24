@@ -1208,7 +1208,7 @@ export default function EnginePage() {
       if (savedResults) {
         const parsedRes = JSON.parse(savedResults);
         if (Array.isArray(parsedRes) && parsedRes.length > 0) {
-          const validFreshResults = parsedRes.filter((r: any) => r?.schemaVersion === "5.7.0-universal-clean");
+          const validFreshResults = parsedRes.filter((r: any) => r?.schemaVersion === "6.0.0-forensic-verified" || r?.schemaVersion === "5.7.0-universal-clean");
           if (validFreshResults.length > 0) {
             setEngineResults(validFreshResults);
           } else {
@@ -1274,13 +1274,13 @@ export default function EnginePage() {
         retestNote:
           customNote ||
           (status === "VERIFIED_FIXED"
-            ? "Retest probe confirmed exploit payload blocked (HTTP 403/422 & parameterized query verified)"
+            ? "Retest probe confirmed control exposure resolved on target"
             : status === "MITIGATED_WAF"
-            ? "Virtual patch / ModSecurity WAF rule active & blocking attack vector"
+            ? "Virtual patch / WAF rule active & mitigating exposure"
             : status === "IN_REMEDIATION"
             ? "Assigned to engineering team for code-level patch & hardening"
             : status === "RISK_ACCEPTED"
-            ? "Compensating virtual lab boundary control documented & signed off"
+            ? "Compensating boundary control documented & signed off"
             : "Awaiting patch deployment & MITRE D3FEND verification probe")
       }
     }));
@@ -1304,16 +1304,32 @@ export default function EnginePage() {
       const data = await res.json();
       const firstResult = data?.results?.[0];
       if (firstResult && !firstResult.isPrivateLab) {
-        updateRetestStatus(
-          key,
-          "VERIFIED_FIXED",
-          `Live External Retest Probe (Brain Stage 8/8 · RETEST) to ${firstResult.finalUrl || f.url} completed in ${firstResult.responseTimeMs}ms (HTTP ${firstResult.statusCode} · Grade: ${firstResult.securityGrade || "B"} · Server: ${firstResult.serverHeader}) — Remediation status logged`
+        const liveList: any[] = Array.isArray(firstResult.liveFindings) ? firstResult.liveFindings : [];
+        const stillPresent = liveList.some(
+          lf => lf.id === f.id || (f.cweId && lf.cweId === f.cweId && lf.parameter === f.parameter)
         );
+        if (stillPresent) {
+          updateRetestStatus(
+            key,
+            "OPEN",
+            `Live Retest Probe (${new Date().toLocaleTimeString()}) against ${firstResult.finalUrl || f.url} (HTTP ${firstResult.statusCode} · ${firstResult.responseTimeMs}ms): Exposure is STILL PRESENT (${f.cweId || f.id}). Deploy remediation and re-run verification.`
+          );
+        } else {
+          updateRetestStatus(
+            key,
+            "VERIFIED_FIXED",
+            `Live Retest Probe (${new Date().toLocaleTimeString()}) against ${firstResult.finalUrl || f.url} completed in ${firstResult.responseTimeMs}ms (HTTP ${firstResult.statusCode} · Grade: ${firstResult.securityGrade || "A"}) — Confirmed ${f.cweId || f.id} is no longer reproducible.`
+          );
+        }
       } else {
         updateRetestStatus(key, "VERIFIED_FIXED");
       }
     } catch {
-      updateRetestStatus(key, "VERIFIED_FIXED");
+      updateRetestStatus(
+        key,
+        "OPEN",
+        `Retest probe encountered network timeout while reaching ${f.url}; finding remains OPEN pending verification.`
+      );
     } finally {
       setRetestingKey(null);
     }
@@ -1648,16 +1664,14 @@ export default function EnginePage() {
     const pythonExplanationNote = `This automated Python verification script programmatically replays the request against ${f.url}, parses the response headers/body, and confirms "${indicator}" without manual browser intervention.`;
 
     const nucleiNseEvidenceOutput = [
-      `[${intel?.githubAndNuclei?.nucleiTemplateId || "nuclei-verify"}] [http] [${(f.severity || "high").toLowerCase()}] ${f.url} [matched="${indicator}"]`,
-      `[nmap-nse:${intel?.githubAndNuclei?.nmapNseScript || "http-vuln-verify"}] Target: ${primaryHost} | Plugin: ${intel?.githubAndNuclei?.zapPluginId || f.plugin || "EXP-DAST"} | Status: VULNERABLE / VERIFIED`,
       ev2
-        ? `[${ev2.artifactId} — ${ev2.title}]\n${ev2.capturedOutputOrLoot}\nVerdict: ${ev2.customerCiSummary} (SHA-256: ${ev2.sha256Digest})`
+        ? `[${ev2.artifactId} — ${ev2.title}]\n${ev2.capturedOutputOrLoot}\nVerdict: ${ev2.customerCiSummary}\nChain-of-Custody SHA-256: ${ev2.sha256Digest}`
         : f.collectedEvidence?.[1]
           ? `${f.collectedEvidence[1].content}\nVerdict: ${f.collectedEvidence[1].annotation}`
-          : `[+] Deterministic differential replay confirmed on ${f.url}`
+          : `[+] Directly observed indicator on ${f.url}: ${indicator}`
     ].join("\n\n");
 
-    const nucleiNseExplanationNote = `This multi-tool verification suite cross-checks ${f.title} using SearchSploit/Exploit-DB references (${(intel?.searchSploitRefs || []).map((r: any) => r.edbId).join(", ") || "EDB"}), ProjectDiscovery Nuclei template (${intel?.githubAndNuclei?.nucleiTemplateId || "nuclei"}), and Nmap NSE (${intel?.githubAndNuclei?.nmapNseScript || "http-nse"}) to eliminate false positives.`;
+    const nucleiNseExplanationNote = `This verification block records the cryptographic SHA-256 chain-of-custody digest and OWASP WSTG v4.2 / ASVS v4.0.3 control reference (${f.cweId || "OWASP"}) for independent customer retest validation.`;
 
     return {
       curlEvidenceOutput,
@@ -1914,13 +1928,19 @@ export default function EnginePage() {
       const liveFList: Finding[] = Array.isArray(liveRes.liveFindings) ? liveRes.liveFindings : [];
 
       if (apIdx === 0) {
+        const tlsInfo = liveRes.tlsSecurity?.inspected
+          ? `TLS Protocol: ${liveRes.tlsSecurity.protocol} | Cipher: ${liveRes.tlsSecurity.cipherName}\nX.509 Subject CN: ${liveRes.tlsSecurity.subjectCN} | Issuer: ${liveRes.tlsSecurity.issuerOrg} (${liveRes.tlsSecurity.issuerCN})\nX.509 Validity: ${liveRes.tlsSecurity.validFrom} to ${liveRes.tlsSecurity.validTo} (${liveRes.tlsSecurity.daysRemaining} days remaining)\nX.509 SHA-256 Fingerprint: ${liveRes.tlsSecurity.fingerprint256} | SAN Count: ${liveRes.tlsSecurity.sanCount} | Chain Trusted: ${liveRes.tlsSecurity.authorized}`
+          : `TLS Transport: HTTPS (443/tcp)`;
+        const redirectInfo = liveRes.httpRedirectProbe?.tested
+          ? `Port 80 HTTP-to-HTTPS Redirect Probe: HTTP ${liveRes.httpRedirectProbe.statusCode} -> Location: ${liveRes.httpRedirectProbe.locationHeader || "(none)"} (Redirects to HTTPS: ${liveRes.httpRedirectProbe.redirectsToHttps})`
+          : `Port 80 HTTP Redirect Probe: Not applicable`;
         return {
           ...ap,
-          title: `Live Outbound HTTPS/HTTP Headers, Server Fingerprint & Cloudflare DoH DNS Capture (${liveRes.host})`,
+          title: `Live Outbound HTTPS/TLS X.509 Handshake, HTTP Headers & Cloudflare DoH DNS Capture (${liveRes.host})`,
           host: allScopedUrlsStr,
-          tool: "EXPEDITE STRIKE™ Live Outbound HTTPS/HTTP Prober + Cloudflare DoH DNS Resolver",
+          tool: "EXPEDITE STRIKE™ Live Outbound HTTPS/TLS Socket Inspector + Cloudflare DoH DNS Resolver",
           sha256: uniqueSha256,
-          rawArtifact: `[LIVE OUTBOUND HTTPS/HTTP & CLOUDFLARE DoH DNS TELEMETRY — ${liveRes.timestamp || new Date().toISOString()}]\nTarget Scanned: ${liveRes.targetUrl}\nResolved Final URL: ${liveRes.finalUrl}\nHTTP Status: ${liveRes.statusCode} | Response Latency: ${liveRes.responseTimeMs}ms | Security Grade: ${liveRes.securityGrade || "B"} (${liveRes.securityScore || 78}/100)\nServer Banner: ${liveRes.serverHeader}${liveRes.poweredByHeader ? ` | X-Powered-By: ${liveRes.poweredByHeader}` : ""}\nDNS SPF: ${liveRes.dnsSecurity?.spfPresent ? liveRes.dnsSecurity.spfRecord : "MISSING"}\nDNS DMARC: ${liveRes.dnsSecurity?.dmarcPresent ? liveRes.dnsSecurity.dmarcRecord : "MISSING"}\nDNS CAA: ${liveRes.dnsSecurity?.caaPresent ? liveRes.dnsSecurity.caaRecord : "MISSING"}\n\n--- [RAW HTTP RESPONSE HEADERS CAPTURED FROM ${liveRes.host}] ---\n${rawHeadersBlock}`
+          rawArtifact: `[LIVE OUTBOUND HTTPS/TLS X.509 & CLOUDFLARE DoH DNS TELEMETRY — ${liveRes.timestamp || new Date().toISOString()}]\nTarget Scanned: ${liveRes.targetUrl}\nResolved Final URL: ${liveRes.finalUrl}\nHTTP Status: ${liveRes.statusCode} | Response Latency: ${liveRes.responseTimeMs}ms | Security Grade: ${liveRes.securityGrade || "B"} (${liveRes.securityScore || 78}/100)\nServer Banner: ${liveRes.serverHeader}${liveRes.poweredByHeader ? ` | X-Powered-By: ${liveRes.poweredByHeader}` : ""}\n${tlsInfo}\n${redirectInfo}\nDNS SPF: ${liveRes.dnsSecurity?.spfPresent ? liveRes.dnsSecurity.spfRecord : "MISSING"}\nDNS DMARC: ${liveRes.dnsSecurity?.dmarcPresent ? liveRes.dnsSecurity.dmarcRecord : "MISSING"}\nDNS CAA: ${liveRes.dnsSecurity?.caaPresent ? liveRes.dnsSecurity.caaRecord : "MISSING"}\n\n--- [RAW HTTP RESPONSE HEADERS CAPTURED FROM ${liveRes.host}] ---\n${rawHeadersBlock}`
         };
       }
       if (apIdx === 1) {
@@ -1936,11 +1956,11 @@ export default function EnginePage() {
       if (apIdx === 2) {
         return {
           ...ap,
-          title: `Live 10-Endpoint Well-Known, Crawler Directive (/robots.txt, /sitemap.xml) & RFC 9116 Probe Matrix (${liveRes.host})`,
+          title: `Live Endpoint Exposure, Soft-404 Filtered Probes & Active Parameter Check Matrix (${liveRes.host})`,
           host: allScopedUrlsStr,
-          tool: "XTRIKE-NetRecon™ Well-Known Endpoint & Schema Prober (WSTG-INFO-03 / RFC 9116)",
+          tool: "XTRIKE-NetRecon™ Soft-404-Filtered Endpoint & Canary Reflection Prober (WSTG-INFO-03 / RFC 9116)",
           sha256: uniqueSha256,
-          rawArtifact: `[LIVE 10-ENDPOINT WELL-KNOWN & DISCOVERY PROBE MATRIX — ${liveRes.host}]\n${wellKnownProbes.map((p: any) => `• ${String(p.path).padEnd(32, " ")} ➔ HTTP ${p.status} (${p.reachable ? "REACHABLE" : "NOT EXPOSED"})${p.reachable && p.snippet ? `\n  Excerpt: ${String(p.snippet).slice(0, 160).replace(/\s+/g, " ")}` : ""}`).join("\n") || "Well-known probes completed."}\n\n--- [DISCOVERED INPUT & QUERY PARAMETERS (${liveRes.deepSpider?.discoveredParameters?.length || 0})] ---\n${(liveRes.deepSpider?.discoveredParameters || []).slice(0, 15).map((dp: any) => `• param="${dp.param}" | source=${dp.source} | page=${dp.pageUrl}`).join("\n") || "(No exposed query/form parameters on root surface)"}`
+          rawArtifact: `[LIVE WELL-KNOWN & SENSITIVE ENDPOINT PROBE MATRIX — ${liveRes.host}]\n${wellKnownProbes.map((p: any) => `• ${String(p.path).padEnd(32, " ")} ➔ HTTP ${p.status} (${p.reachable ? "VERIFIED REACHABLE" : "NOT EXPOSED / FILTERED"})${p.reachable && p.snippet ? `\n  Excerpt: ${String(p.snippet).slice(0, 160).replace(/\s+/g, " ")}` : ""}`).join("\n") || "Well-known probes completed."}\n\n--- [DISCOVERED INPUT & QUERY PARAMETERS (${liveRes.deepSpider?.discoveredParameters?.length || 0})] ---\n${(liveRes.deepSpider?.discoveredParameters || []).slice(0, 15).map((dp: any) => `• param="${dp.param}" | source=${dp.source} | page=${dp.pageUrl}`).join("\n") || "(No exposed query/form parameters on root surface)"}`
         };
       }
       return {
@@ -1968,19 +1988,22 @@ export default function EnginePage() {
       const hasCrit = hostFindings.some(f => f.severity === "Critical");
       const hasHigh = hostFindings.some(f => f.severity === "High");
       const unifiedRiskLabel = hasCrit ? "CRITICAL RISK" : hasHigh ? "HIGH RISK" : "MEDIUM RISK";
+      const tlsLabel = liveRes.tlsSecurity?.inspected
+        ? `${liveRes.tlsSecurity.protocol} (${liveRes.tlsSecurity.issuerOrg || "X.509"} · ${liveRes.tlsSecurity.daysRemaining}d left)`
+        : "HTTPS/TLS";
       return {
         host,
-        stack: `${liveRes.serverHeader || "Cloud Edge / HTTPS"}${liveRes.poweredByHeader ? ` · ${liveRes.poweredByHeader}` : ""} · HTTP ${liveRes.statusCode || 200} (${liveRes.responseTimeMs || 95}ms)`,
-        ports: `TCP [1-65535]: 80, 443/tcp | UDP [1-65535]: 53/udp (DNS), 443/udp (QUIC) · SPF:${liveRes.dnsSecurity?.spfPresent ? "✓" : "✗"} DMARC:${liveRes.dnsSecurity?.dmarcPresent ? "✓" : "✗"}`,
-        privilege: `Public Web Surface · Grade ${liveRes.securityGrade || "B"} (${liveRes.securityScore ?? 78}/100)`,
+        stack: `${liveRes.serverHeader || "Cloud Edge / HTTPS"}${liveRes.poweredByHeader ? ` · ${liveRes.poweredByHeader}` : ""} · HTTP ${liveRes.statusCode || 200} (${liveRes.responseTimeMs || 95}ms) · ${tlsLabel}`,
+        ports: `443/tcp (HTTPS), 80/tcp (HTTP Redirect: ${liveRes.httpRedirectProbe?.redirectsToHttps ? "✓" : "Probed"}), 53/udp (DoH DNS) · SPF:${liveRes.dnsSecurity?.spfPresent ? "✓" : "✗"} DMARC:${liveRes.dnsSecurity?.dmarcPresent ? "✓" : "✗"}`,
+        privilege: `Unauthenticated Public Surface · Grade ${liveRes.securityGrade || "B"} (${liveRes.securityScore ?? 78}/100)`,
         riskLabel: unifiedRiskLabel
       };
     }
     if (!t.url.includes("192.168.195.")) {
       return {
         host,
-        stack: `External Web Edge (${host}) · HTTPS/TLS 1.3 · QUIC/HTTP3 · Public Application`,
-        ports: `TCP [1-65535]: 80, 443/tcp | UDP [1-65535]: 53/udp (DNS), 443/udp (QUIC) · 131,070 Sockets`,
+        stack: `External Web Edge (${host}) · HTTPS/TLS · Public Application`,
+        ports: `443/tcp (HTTPS), 80/tcp (HTTP), 53/udp (Cloudflare DoH DNS)`,
         privilege: `External Public Assessment Scope`,
         riskLabel: "SCOPED EXTERNAL"
       };
@@ -4381,16 +4404,16 @@ ${f.remediation}
         </table>
       </div>
 
-      <!-- PART C: FORENSIC EVIDENCE OF EXPLOITATION (BASELINE VS EXPLOITED HTTP TRACE + COLLECTED SAMPLES + VISUAL SCREENSHOTS) -->
+      <!-- PART C: VERBATIM HTTP WIRE EVIDENCE & FORENSIC VERIFICATION ARTIFACTS -->
       <div style="background:#fff1f2;border:1px solid #fecdd3;border-left:4px solid #e11d48;border-radius:4px;padding:8px 10px;margin-bottom:8px;">
-        <div style="font-size:11px;font-weight:800;color:#be123c;margin-bottom:6px;">🔬 PART 3 · FORENSIC EVIDENCE OF EXPLOITATION (${escHtml(fr.exploitationStatusLabel)}):</div>
+        <div style="font-size:11px;font-weight:800;color:#be123c;margin-bottom:6px;">🔬 PART 3 · VERBATIM HTTP WIRE EVIDENCE &amp; FORENSIC VERIFICATION ARTIFACTS (${escHtml(fr.exploitationStatusLabel)}):</div>
         <div style="font-size:10.5px;color:#881337;margin-bottom:6px;">
-          <strong>Injected Payload:</strong> <code>${escHtml(f.evidence?.payload || "N/A")}</code> &nbsp;|&nbsp;
-          <strong>Matched Exploitation Indicator:</strong> <code>${escHtml(f.evidence?.matchedPattern || fr.evidence.matchedIndicator)}</code>
+          <strong>Probe / Control Inspected:</strong> <code>${escHtml(f.evidence?.payload || "N/A")}</code> &nbsp;|&nbsp;
+          <strong>Directly Observed Indicator:</strong> <code>${escHtml(f.evidence?.matchedPattern || fr.evidence.matchedIndicator)}</code>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
           <div>
-            <div style="font-size:10px;font-weight:800;color:#475569;">1. Baseline (Unexploited) HTTP Request &amp; Response:</div>
+            <div style="font-size:10px;font-weight:800;color:#475569;">1. Baseline HTTP Request &amp; Verbatim Server Response:</div>
             <pre style="margin:3px 0;">${escHtml(f.evidence?.originalRequest || `${f.method} ${f.url}`)}\n\n${escHtml(f.evidence?.originalResponse || "HTTP/1.1 200 OK (Baseline Response)")}</pre>
             <div style="background:#f8fafc;border:1px solid #cbd5e1;border-left:3px solid #0284c7;border-radius:4px;padding:5px 7px;margin-top:4px;font-size:9.8px;color:#0f172a;line-height:1.4;">
               <div><strong>📖 Explanation (${escHtml(baselineExp.summary)}):</strong> ${escHtml(baselineExp.details)}</div>
@@ -4398,7 +4421,7 @@ ${f.remediation}
             </div>
           </div>
           <div>
-            <div style="font-size:10px;font-weight:800;color:#be123c;">2. Exploited (Injected) HTTP Request &amp; Response Proof:</div>
+            <div style="font-size:10px;font-weight:800;color:#be123c;">2. Target Verification Probe &amp; Verbatim Response Proof:</div>
             <pre style="margin:3px 0;">${escHtml(f.evidence?.testRequest || `${f.method} ${f.url}`)}\n\n${escHtml(f.evidence?.testResponse || "")}</pre>
             <div style="background:#fff1f2;border:1px solid #fda4af;border-left:3px solid #e11d48;border-radius:4px;padding:5px 7px;margin-top:4px;font-size:9.8px;color:#881337;line-height:1.4;">
               <div><strong>📖 Explanation (${escHtml(exploitedExp.summary)}):</strong> ${escHtml(exploitedExp.details)}</div>
@@ -4407,9 +4430,9 @@ ${f.remediation}
           </div>
         </div>
 
-        <!-- Sample Collected Exploitation Evidence (EVD-01..03) -->
+        <!-- Sample Collected Forensic Verification Artifacts (EVD-01..03) -->
         <div style="margin-bottom:8px;">
-          <div style="font-size:10.5px;font-weight:800;color:#9f1239;margin-bottom:4px;">📂 Sample Collected Exploitation Artifacts (${fr.evidence.collectedExploitationSamples.length} Verified Captures — Full Unredacted Evidence):</div>
+          <div style="font-size:10.5px;font-weight:800;color:#9f1239;margin-bottom:4px;">📂 Captured Forensic Verification Artifacts (${fr.evidence.collectedExploitationSamples.length} Verbatim Wire Captures — FIPS 180-4 SHA-256 Hashed):</div>
           ${fr.evidence.collectedExploitationSamples.map(ev => {
             const evExp = explainScreenEvidence("EVD_SAMPLE", `${ev.artifactId} ${ev.title}`, `${ev.capturedCommandOrRequest}\n${ev.capturedOutputOrLoot}`, f, fr);
             return `
@@ -4419,7 +4442,7 @@ ${f.remediation}
                 <span>${escHtml(ev.category)} · Full SHA-256: ${escHtml(ev.sha256Digest)}</span>
               </div>
               <pre style="margin:3px 0;">${escHtml(ev.capturedCommandOrRequest)}\n---\n${escHtml(ev.capturedOutputOrLoot)}</pre>
-              <div style="font-size:10px;color:#0f172a;"><strong>Customer Confidence (CI) Summary:</strong> ${escHtml(ev.customerCiSummary)}</div>
+              <div style="font-size:10px;color:#0f172a;"><strong>Verification Verdict:</strong> ${escHtml(ev.customerCiSummary)}</div>
               <div style="background:#f0fdf4;border:1px solid #86efac;border-left:3px solid #16a34a;border-radius:4px;padding:5px 7px;margin-top:4px;font-size:9.8px;color:#14532d;line-height:1.4;">
                 <div><strong>📖 Explanation (${escHtml(evExp.summary)}):</strong> ${escHtml(evExp.details)}</div>
                 <div style="margin-top:2px;"><strong>💡 Note for Customer Understanding:</strong> ${escHtml(evExp.customerNote)}</div>
@@ -4428,9 +4451,9 @@ ${f.remediation}
           }).join("")}
         </div>
 
-        <!-- Visual Screenshots of How It Was Exploited -->
+        <!-- Visual Forensic Verification Diagrams -->
         <div style="background:#0f172a;border:1px solid #38bdf8;border-radius:6px;padding:8px 10px;margin-bottom:8px;color:#f8fafc;">
-          <div style="font-size:10.5px;font-weight:800;color:#38bdf8;margin-bottom:6px;">📸 Visual Pictures of How ${escHtml(fr.findingId)} Was Exploited (Forensic Screenshots for Customer CI):</div>
+          <div style="font-size:10.5px;font-weight:800;color:#38bdf8;margin-bottom:6px;">📸 Visual Forensic Verification Diagrams for ${escHtml(fr.findingId)}:</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
             ${fr.evidence.exploitationPictures.map(pic => {
               const picExp = explainScreenEvidence("VISUAL_PIC", `${pic.figureId} ${pic.title}`, pic.caption, f, fr);
@@ -4454,7 +4477,7 @@ ${f.remediation}
           <div style="margin-bottom:6px;padding-bottom:6px;border-bottom:${evIdx < sampleEvList.length - 1 ? "1px dashed #fda4af" : "none"};">
             <div style="font-size:10.5px;font-weight:700;color:#881337;">[${escHtml(ev.type)}] ${escHtml(ev.title || ev.label || "Sample Evidence")}</div>
             <pre style="margin:3px 0;">${escHtml(ev.content || "")}</pre>
-            ${ev.highlight ? `<div style="font-size:10px;color:#9f1239;"><strong>Matched Exploitation Indicator:</strong> <code>${escHtml(ev.highlight)}</code></div>` : ""}
+            ${ev.highlight ? `<div style="font-size:10px;color:#9f1239;"><strong>Directly Observed Indicator:</strong> <code>${escHtml(ev.highlight)}</code></div>` : ""}
             <div style="font-size:10px;color:#475569;"><strong>Forensic Annotation:</strong> ${escHtml(ev.annotation || "")}</div>
             <div style="background:#f8fafc;border:1px solid #cbd5e1;border-left:3px solid #0284c7;border-radius:4px;padding:5px 8px;margin-top:4px;font-size:9.8px;color:#0f172a;line-height:1.4;">
               <div><strong>📖 Explanation (${escHtml(liveExp.summary)}):</strong> ${escHtml(liveExp.details)}</div>

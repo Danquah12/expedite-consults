@@ -79,9 +79,16 @@ const ACTIVE_CALLS_STORE: Map<string, CommCallRecord> =
   globalForCalls.__vibeActiveCallsMap || new Map<string, CommCallRecord>()
 globalForCalls.__vibeActiveCallsMap = ACTIVE_CALLS_STORE
 
-const TMP_CALLS_FILE = path.join(os.tmpdir(), "vibe_active_calls_v3.json")
+const TMP_CALLS_FILE = path.join(os.tmpdir(), "vibe_active_calls_v4.json")
+let lastDiskLoadMs = 0
+let lastDiskSaveMs = 0
 
 function loadPersistedCalls(): Map<string, CommCallRecord> {
+  const nowMs = Date.now()
+  if (ACTIVE_CALLS_STORE.size > 0 && nowMs - lastDiskLoadMs < 2500) {
+    return ACTIVE_CALLS_STORE
+  }
+  lastDiskLoadMs = nowMs
   try {
     if (fs.existsSync(TMP_CALLS_FILE)) {
       const raw = fs.readFileSync(TMP_CALLS_FILE, "utf-8")
@@ -91,18 +98,32 @@ function loadPersistedCalls(): Map<string, CommCallRecord> {
           ACTIVE_CALLS_STORE.set(k, v)
         } else {
           const mem = ACTIVE_CALLS_STORE.get(k)!
-          const mergedMap = new Map<string, CommCallParticipant>()
-          for (const p of mem.participants) mergedMap.set(p.user_id, p)
-          for (const p of v.participants || []) {
-            const existing = mergedMap.get(p.user_id)
-            if (!existing || (p.last_seen_ms || 0) >= (existing.last_seen_ms || 0)) {
-              mergedMap.set(p.user_id, p)
+          if (v.state === "ENDED" && (v.state_version || 0) >= (mem.state_version || 0)) {
+            mem.state = "ENDED"
+            mem.ended_at = v.ended_at
+            mem.participants = []
+            mem.shared_stage = null
+            mem.state_version = v.state_version
+          } else if (mem.state !== "ENDED") {
+            const mergedMap = new Map<string, CommCallParticipant>()
+            for (const p of mem.participants) {
+              if (p.last_seen_ms && nowMs - p.last_seen_ms < 7500) {
+                mergedMap.set(p.user_id, p)
+              }
             }
+            for (const p of v.participants || []) {
+              if (!p.last_seen_ms || nowMs - p.last_seen_ms >= 7500) continue
+              const existing = mergedMap.get(p.user_id)
+              if (!existing || (p.last_seen_ms || 0) >= (existing.last_seen_ms || 0)) {
+                mergedMap.set(p.user_id, p)
+              }
+            }
+            mem.participants = Array.from(mergedMap.values())
           }
-          mem.participants = Array.from(mergedMap.values())
 
           // Merge shared_stage if disk version is newer
           if (
+            mem.state !== "ENDED" &&
             v.shared_stage &&
             (!mem.shared_stage || v.shared_stage.updated_at_ms >= mem.shared_stage.updated_at_ms)
           ) {
@@ -125,11 +146,30 @@ function loadPersistedCalls(): Map<string, CommCallRecord> {
   return ACTIVE_CALLS_STORE
 }
 
-function savePersistedCalls() {
+function savePersistedCalls(force = false) {
+  const nowMs = Date.now()
+  if (!force && nowMs - lastDiskSaveMs < 2500) return
+  lastDiskSaveMs = nowMs
   try {
     const obj: Record<string, CommCallRecord> = {}
     for (const [k, v] of ACTIVE_CALLS_STORE.entries()) {
-      obj[k] = v
+      if (v.state === "ENDED") {
+        const endedMs = v.ended_at ? new Date(v.ended_at).getTime() : 0
+        if (nowMs - endedMs < 20000) {
+          obj[k] = { ...v, participants: [] }
+        } else {
+          ACTIVE_CALLS_STORE.delete(k)
+        }
+        continue
+      }
+      const activeParts = (v.participants || []).filter(
+        (p) => p.last_seen_ms && nowMs - p.last_seen_ms < 7500
+      )
+      if (activeParts.length > 0) {
+        obj[k] = { ...v, participants: activeParts }
+      } else {
+        ACTIVE_CALLS_STORE.delete(k)
+      }
     }
     fs.writeFileSync(TMP_CALLS_FILE, JSON.stringify(obj), "utf-8")
   } catch {
@@ -215,6 +255,46 @@ export async function POST(req: NextRequest) {
     const now = new Date().toISOString()
     const nowMs = Date.now()
 
+    if (action === "leave" && body.call_id) {
+      const existing = ACTIVE_CALLS_STORE.get(body.call_id)
+      if (existing) {
+        if (body.user_id) {
+          existing.participants = (existing.participants || []).filter((p) => p.user_id !== body.user_id)
+        }
+        if (existing.shared_stage && existing.shared_stage.sharer_user_id === body.user_id) {
+          existing.shared_stage = null
+        }
+        existing.state_version += 1
+        ACTIVE_CALLS_STORE.set(body.call_id, existing)
+        savePersistedCalls(true)
+      }
+      return NextResponse.json({
+        protocol_version: 1,
+        event_type: "call.participant_left",
+        occurred_at: now,
+        call: existing || null,
+      })
+    }
+
+    if (action === "end" && body.call_id) {
+      const existing = ACTIVE_CALLS_STORE.get(body.call_id)
+      if (existing) {
+        existing.state = "ENDED"
+        existing.ended_at = now
+        existing.participants = []
+        existing.shared_stage = null
+        existing.state_version += 1
+        ACTIVE_CALLS_STORE.set(body.call_id, existing)
+        savePersistedCalls(true)
+      }
+      return NextResponse.json({
+        protocol_version: 1,
+        event_type: "call.ended",
+        occurred_at: now,
+        call: existing || null,
+      })
+    }
+
     if (action === "create" || action === "join" || action === "heartbeat" || action === "share_stage" || action === "chat_message") {
       const callId = body.call_id || "call-9b0bbf68-live"
       const userId = body.user_id || `user-${nowMs.toString().slice(-6)}`
@@ -223,6 +303,27 @@ export async function POST(req: NextRequest) {
       const conversationId = body.conversation_id || "9b0bbf68-20c8-4416-b82c-0f0e81b8df80"
 
       const record = ensureCallRoom(callId, userId, displayName, conversationId)
+
+      // If this call room was recently ended (< 15s ago) and a client is only sending a periodic heartbeat (not explicitly creating/joining a new call),
+      // return the ENDED state immediately so all remaining screens close/clear frozen participants!
+      if (record.state === "ENDED") {
+        const endedMs = record.ended_at ? new Date(record.ended_at).getTime() : 0
+        if (action === "heartbeat" && !body.reopen && nowMs - endedMs < 15000) {
+          record.participants = []
+          return NextResponse.json({
+            protocol_version: 1,
+            event_type: "call.ended",
+            occurred_at: now,
+            call: record,
+          })
+        }
+        // Otherwise, a new call is being started in this room — reopen cleanly
+        record.state = "CONNECTED"
+        record.ended_at = null
+        record.participants = []
+        record.shared_stage = null
+        record.state_version += 1
+      }
 
       // Update shared presentation stage if provided
       if (body.shared_stage !== undefined) {
@@ -302,7 +403,7 @@ export async function POST(req: NextRequest) {
             ? record.participants[existingIdx].virtual_bg_badge
             : undefined,
         live_frame:
-          body.live_frame !== undefined
+          typeof body.live_frame === "string" && body.live_frame.length > 3200
             ? body.live_frame
             : existingIdx >= 0
             ? record.participants[existingIdx].live_frame
@@ -322,9 +423,9 @@ export async function POST(req: NextRequest) {
         record.state_version += 1
       }
 
-      // Prune stale participants who haven't sent a heartbeat in > 45 seconds
+      // Prune stale participants who haven't sent a heartbeat in > 7.5 seconds so disconnected/ended users never stay frozen
       record.participants = record.participants.filter(
-        (p) => !p.last_seen_ms || nowMs - p.last_seen_ms < 45000
+        (p) => !p.last_seen_ms || nowMs - p.last_seen_ms < 7500
       )
 
       ACTIVE_CALLS_STORE.set(callId, record)
@@ -350,8 +451,10 @@ export async function POST(req: NextRequest) {
       existing.state_version += 1
       if (existing.state === "ENDED") {
         existing.ended_at = now
+        existing.participants = []
+        existing.shared_stage = null
       }
-      savePersistedCalls()
+      savePersistedCalls(true)
       return NextResponse.json({
         protocol_version: 1,
         event_type: `call.${existing.state.toLowerCase()}`,

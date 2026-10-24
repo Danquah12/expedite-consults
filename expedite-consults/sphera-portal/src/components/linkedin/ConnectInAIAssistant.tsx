@@ -291,15 +291,15 @@ export function ConnectInAIAssistant({
   onClose,
   currentUser,
   onNavigateTab,
-  initialMode = 'vibe',
+  initialMode = 'chat',
   initialQuery = ""
 }: ConnectInAIAssistantProps) {
   const { language, t } = useLanguage()
   const iframeRef = useRef<HTMLIFrameElement>(null)
-  const [mode, setMode] = useState<'vibe' | 'chat'>('vibe')
+  const [mode, setMode] = useState<'vibe' | 'chat'>('chat')
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [iframeKey, setIframeKey] = useState(0)
-  const [isIframeLoading, setIsIframeLoading] = useState(true)
+  const [isIframeLoading, setIsIframeLoading] = useState(false)
   const [copiedPrompt, setCopiedPrompt] = useState<string | null>(null)
   const [query, setQuery] = useState(initialQuery || "")
   const [messages, setMessages] = useState<ChatMessage[]>(() => [getLocalizedInitialMessage(currentUser, language) as ChatMessage])
@@ -359,7 +359,104 @@ export function ConnectInAIAssistant({
       const lower = promptText.toLowerCase()
       const enclaveId = currentUser.professionEnclave || 'tech_cybersecurity'
 
-      if (enclaveId === 'trades_construction') {
+      if (lower.includes('zero trust')) {
+        reply = {
+          id: `ai_${Date.now()}`,
+          sender: 'assistant',
+          text: `🛡️ **DoD Zero Trust Architecture — 7 Core Pillars & Implementation Blueprint:**\n\n1. **User Pillar:** Phishing-resistant MFA (FIDO2 / WebAuthn / CAC-PIV) + continuous behavioral risk scoring.\n2. **Device Pillar:** Endpoint EDR telemetry, hardware TPM attestation, and real-time compliance enforcement.\n3. **Network & Environment:** Cilium eBPF micro-segmentation, software-defined perimeter (SDP), and mutual TLS (mTLS) everywhere.\n4. **Application & Workload:** Container image signing (Cosign/SLSA), immutable microVMs, and API gateway policy enforcement.\n5. **Data Pillar:** Data tagging, FIPS 140-3 encryption at rest/in transit, and automated DLP guardrails.\n6. **Visibility & Analytics:** Centralized SIEM/SOAR telemetry + UEBA anomaly detection.\n7. **Automation & Orchestration:** Machine-readable OSCAL continuous ATO (cATO) pipelines.`,
+          suggestedCards: [
+            {
+              title: "Browse Zero Trust & Security Jobs",
+              category: "Live Requisitions",
+              actionText: "Open Jobs",
+              targetTab: "jobs",
+              matchPercent: "98% Match"
+            },
+            {
+              title: "Launch Zero Trust & eBPF Lab",
+              category: "Interactive Lab",
+              actionText: "Open Labs",
+              targetTab: "labs",
+              matchPercent: "+400 XP"
+            }
+          ]
+        }
+      } else if (lower.includes('resume') || lower.includes('currículum') || lower.includes('lebenslauf') || lower.includes('سيرتي')) {
+        reply = {
+          id: `ai_${Date.now()}`,
+          sender: 'assistant',
+          text: `📄 **ConnectIn Executive & Technical Resume Optimization Strategy:**\n\n1. **Quantified Impact First:** Lead every bullet with measurable outcomes (e.g., *"Reduced MTTR by 64% across 40+ production nodes"* or *"Delivered $4.2M commercial timber build 3 weeks ahead of schedule"*).\n2. **Verified Licenses & Tool Matrix:** Explicitly list your active credentials (OSHA 30, ASE Master, CISSP, FAA A&P, State License) and exact equipment/software stack so ATS parsers rank you in the top 5%.\n3. **Federal & Enterprise KSAs:** Mirror the exact keywords from the requisition's required qualifications.\n4. **1-Click Tailoring:** Use the **Vibe AI Career Studio (Live)** tab right here or inside the **Jobs → Resume Prep App** tab to auto-tailor your resume to any job description!`,
+          suggestedCards: [
+            {
+              title: "Open Embedded Resume Prep App",
+              category: "AI Resume Tailor",
+              actionText: "Go to Jobs & Resume Studio",
+              targetTab: "jobs",
+              matchPercent: "ATS 99%"
+            }
+          ]
+        }
+      } else if (lower.includes('nist 800-53') || lower.includes('rmf') || lower.includes('ato')) {
+        reply = {
+          id: `ai_${Date.now()}`,
+          sender: 'assistant',
+          text: `🔒 **NIST SP 800-53 Rev. 5 — High-Priority Controls for RMF & Continuous ATO (cATO):**\n\n• **AC-2 / AC-3 / AC-6 (Access Control):** Automated account lifecycle, least privilege, and privileged access management (PAM).\n• **AU-2 / AU-6 / AU-12 (Audit & Accountability):** Immutable centralized audit logging and automated SIEM correlation.\n• **CM-2 / CM-6 / CM-8 (Configuration Management):** DISA STIG / CIS benchmark baseline enforcement via Infrastructure-as-Code.\n• **IA-2(1)(2) / IA-5 (Identification & Authentication):** Hardware token / FIDO2 MFA for all privileged and non-privileged accounts.\n• **RA-5 / SI-2 / SI-4 (Vulnerability & Flaw Remediation):** Continuous ACAS/Nessus + container scanning with automated POA&M generation in OSCAL format.`,
+          suggestedCards: [
+            {
+              title: "Explore Compliance & GRC Courses",
+              category: "Masterclass",
+              actionText: "Open Learning",
+              targetTab: "learning",
+              matchPercent: "NIST Rev. 5"
+            }
+          ]
+        }
+      } else if (lower.includes('secops') || lower.includes('nessus') || lower.includes('poa&m') || lower.includes('automat')) {
+        reply = {
+          id: `ai_${Date.now()}`,
+          sender: 'assistant',
+          text: `⚡ **SecOps Automation — ACAS/Nessus & Continuous POA&M Pipeline Best Practices:**\n\n1. **Automated Scan Orchestration:** Trigger credentialed Nessus/Nuclei scans on every CI/CD merge and nightly across production subnets.\n2. **Machine-Readable OSCAL Ingestion:** Convert \`.nessus\` XML and SARIF findings directly into NIST OSCAL Assessment Results JSON.\n3. **Auto-Prioritization by EPSS + CISA KEV:** Cross-reference CVEs against the CISA Known Exploited Vulnerabilities (KEV) catalog before opening critical tickets.\n4. **Closed-Loop POA&M Sync:** Auto-close POA&M milestones when verification scans confirm patch deployment.`,
+          suggestedCards: [
+            {
+              title: "Inspect Autonomous Security Agents",
+              category: "AI Agents",
+              actionText: "Open AI Agents",
+              targetTab: "aiagents",
+              matchPercent: "Auto-POA&M"
+            }
+          ]
+        }
+      } else if (lower.includes('govcloud') || lower.includes('fedramp')) {
+        reply = {
+          id: `ai_${Date.now()}`,
+          sender: 'assistant',
+          text: `☁️ **AWS GovCloud (US) — FedRAMP Moderate / High & DoD IL4/IL5 Readiness Checklist:**\n\n• **Cryptographic Boundary:** Enforce FIPS 140-3 validated endpoints (\`*.us-gov-west-1.amazonaws.com\`) and AWS KMS Customer Managed Keys (CMKs).\n• **Network Isolation:** Zero public IPs on compute nodes; route all ingress through AWS WAF + ALB + PrivateLink VPC Endpoints.\n• **Identity Federation:** SAML 2.0 / OIDC federation with hardware MFA and strict IAM Permission Boundaries.\n• **Continuous Compliance:** AWS Security Hub (FSBP + NIST 800-53 standards enabled), AWS Config conformance packs, and GuardDuty threat detection.`,
+          suggestedCards: [
+            {
+              title: "Find Cleared Cloud & GovCloud Jobs",
+              category: "Jobs Network",
+              actionText: "View Openings",
+              targetTab: "jobs",
+              matchPercent: "FedRAMP / IL5"
+            }
+          ]
+        }
+      } else if (lower.includes('python') || lower.includes('script') || lower.includes('code')) {
+        reply = {
+          id: `ai_${Date.now()}`,
+          sender: 'assistant',
+          text: `💻 **Python Automation Script — Parse Nessus \`.nessus\` XML for Critical/High Findings:**\n\n\`\`\`python\nimport xml.etree.ElementTree as ET\nimport csv\n\ndef export_high_findings(nessus_file: str, out_csv: str):\n    tree = ET.parse(nessus_file)\n    root = tree.getroot()\n    with open(out_csv, 'w', newline='', encoding='utf-8') as f:\n        writer = csv.writer(f)\n        writer.writerow(['Host', 'PluginID', 'Severity', 'PluginName', 'CVE'])\n        for host in root.findall('.//ReportHost'):\n            host_name = host.attrib.get('name', 'unknown')\n            for item in host.findall('ReportItem'):\n                sev = int(item.attrib.get('severity', '0'))\n                if sev >= 3:  # 3 = High, 4 = Critical\n                    cve = item.findtext('cve', 'N/A')\n                    writer.writerow([\n                        host_name,\n                        item.attrib.get('pluginID'),\n                        'Critical' if sev == 4 else 'High',\n                        item.attrib.get('pluginName'),\n                        cve\n                    ])\n\`\`\`\n\nYou can run or customize this directly in the **ConnectIn Code & Repositories** workspace.`,
+          suggestedCards: [
+            {
+              title: "Open ConnectIn Code Workspace",
+              category: "Developer Hub",
+              actionText: "Open Code",
+              targetTab: "code",
+              matchPercent: "Python / DevSecOps"
+            }
+          ]
+        }
+      } else if (enclaveId === 'trades_construction') {
         if (lower.includes('focus') || lower.includes('week') || lower.includes('copilot') || lower.includes('what should i do')) {
           reply = {
             id: `ai_${Date.now()}`,
@@ -1055,7 +1152,7 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
           reply = {
             id: `ai_${Date.now()}`,
             sender: 'assistant',
-            text: `I processed your request for "${promptText}". ConnectIn AI has indexed relevant verified experts, technical courses, and enterprise solutions across our ecosystem.`,
+            text: `I processed your request for "${promptText}". ConnectIn AI has indexed relevant verified experts, technical courses, and enterprise solutions across our 20-enclave ecosystem.`,
             suggestedCards: [
               {
                 title: "Explore Solutions Hub",
@@ -1078,7 +1175,7 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
 
       setMessages(prev => [...prev, reply])
       setIsTyping(false)
-    }, 600)
+    }, 450)
   }
 
   return (
@@ -1115,18 +1212,6 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
           {/* Mode Switcher Tabs */}
           <div className="hidden sm:flex items-center bg-zinc-900/90 p-0.5 rounded-lg border border-zinc-700/60 shrink-0">
             <button
-              onClick={() => setMode('vibe')}
-              className={cn(
-                "px-3 py-1 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer",
-                mode === 'vibe'
-                  ? "bg-[#0A66C2] text-white shadow-xs"
-                  : "text-zinc-400 hover:text-white"
-              )}
-            >
-              <Sparkles className="h-3.5 w-3.5 text-amber-300" />
-              Vibe AI (Live)
-            </button>
-            <button
               onClick={() => setMode('chat')}
               className={cn(
                 "px-3 py-1 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer",
@@ -1137,6 +1222,18 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
             >
               <Bot className="h-3.5 w-3.5" />
               ConnectIn Copilot
+            </button>
+            <button
+              onClick={() => setMode('vibe')}
+              className={cn(
+                "px-3 py-1 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer",
+                mode === 'vibe'
+                  ? "bg-[#0A66C2] text-white shadow-xs"
+                  : "text-zinc-400 hover:text-white"
+              )}
+            >
+              <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+              Vibe AI Career Studio (Live)
             </button>
           </div>
 
@@ -1152,7 +1249,7 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
                   setIframeKey(k => k + 1)
                 }}
                 className="h-8 w-8 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 hover:text-white flex items-center justify-center transition-colors border border-zinc-700/60 cursor-pointer"
-                title="Reload Vibe Session"
+                title="Reload Live Studio"
               >
                 <RefreshCw className="h-3.5 w-3.5" />
               </button>
@@ -1165,14 +1262,43 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
               {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
             </button>
             <a
-              href="https://vibe-tok-inky.vercel.app/vibe"
+              href="https://tuhousing.vercel.app/"
               target="_blank"
               rel="noopener noreferrer"
               className="h-8 w-8 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 hover:text-white flex items-center justify-center transition-colors border border-zinc-700/60 cursor-pointer"
-              title="Open Vibe in New Window"
+              title="Open Career & AI Studio in New Window"
             >
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
+          </div>
+        </div>
+
+        {/* Quick Sparks Strip - Always Visible & Executes Immediately */}
+        <div className="bg-zinc-50 dark:bg-zinc-900/80 border-b border-zinc-200 dark:border-zinc-800 px-4 py-2 flex items-center gap-2 overflow-x-auto shrink-0">
+          <span className="text-[10px] uppercase font-bold text-zinc-500 dark:text-zinc-400 flex items-center gap-1 shrink-0">
+            <Zap className="h-3 w-3 text-[#0A66C2]" /> Suggested Prompts:
+          </span>
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            {getLocalizedChips(language).map((chip, idx) => (
+              <button
+                key={idx}
+                onClick={() => {
+                  navigator.clipboard?.writeText(chip.prompt)
+                  setCopiedPrompt(chip.label)
+                  setTimeout(() => setCopiedPrompt(null), 2000)
+                  setMode('chat')
+                  handleSendPrompt(chip.prompt)
+                }}
+                className="rounded-full bg-white dark:bg-zinc-800 hover:bg-blue-50 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 px-3 py-1 whitespace-nowrap text-xs transition-colors flex items-center gap-1.5 border border-zinc-200 dark:border-zinc-700 cursor-pointer shadow-2xs"
+                title={`Click to run prompt: "${chip.prompt}"`}
+              >
+                <span>{chip.emoji}</span>
+                <span className="font-medium">{chip.label}</span>
+                {copiedPrompt === chip.label ? (
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold ml-1">✓ Sent</span>
+                ) : null}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -1182,49 +1308,22 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
             {/* Mobile Tab switcher */}
             <div className="sm:hidden flex items-center justify-around bg-zinc-100 dark:bg-zinc-900 p-1 border-b border-zinc-200 dark:border-zinc-800 shrink-0">
               <button
-                onClick={() => setMode('vibe')}
-                className="px-3 py-1 text-xs font-semibold rounded-md flex items-center gap-1 bg-[#0A66C2] text-white"
-              >
-                <Sparkles className="h-3 w-3 text-amber-300" />
-                Vibe AI (Live)
-              </button>
-              <button
                 onClick={() => setMode('chat')}
                 className="px-3 py-1 text-xs font-semibold rounded-md flex items-center gap-1 text-zinc-600 dark:text-zinc-400"
               >
                 <Bot className="h-3 w-3" />
                 Copilot
               </button>
+              <button
+                onClick={() => setMode('vibe')}
+                className="px-3 py-1 text-xs font-semibold rounded-md flex items-center gap-1 bg-[#0A66C2] text-white"
+              >
+                <Sparkles className="h-3 w-3 text-amber-300" />
+                Career AI Studio
+              </button>
             </div>
 
-            {/* Quick Sparks Strip - LinkedIn Clean Pills */}
-            <div className="bg-zinc-50 dark:bg-zinc-900/80 border-b border-zinc-200 dark:border-zinc-800 px-4 py-2 flex items-center gap-2 overflow-x-auto shrink-0">
-              <span className="text-[10px] uppercase font-bold text-zinc-500 dark:text-zinc-400 flex items-center gap-1 shrink-0">
-                <Zap className="h-3 w-3 text-[#0A66C2]" /> Suggested Prompts:
-              </span>
-              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-                {getLocalizedChips(language).map((chip, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => {
-                      navigator.clipboard?.writeText(chip.prompt)
-                      setCopiedPrompt(chip.label)
-                      setTimeout(() => setCopiedPrompt(null), 2000)
-                    }}
-                    className="rounded-full bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 px-3 py-1 whitespace-nowrap text-xs transition-colors flex items-center gap-1.5 border border-zinc-200 dark:border-zinc-700 cursor-pointer shadow-2xs"
-                    title={`Click to copy prompt: "${chip.prompt}"`}
-                  >
-                    <span>{chip.emoji}</span>
-                    <span className="font-medium">{chip.label}</span>
-                    {copiedPrompt === chip.label ? (
-                      <span className="text-emerald-600 dark:text-emerald-400 font-bold ml-1">✓ Copied</span>
-                    ) : null}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Vibe Iframe */}
+            {/* Live Career & Resume AI Studio Iframe */}
             <div className="relative flex-1 w-full h-full min-h-0 bg-white dark:bg-zinc-950">
               {isIframeLoading && (
                 <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/95 dark:bg-zinc-950/95 text-zinc-900 dark:text-zinc-100 gap-3 p-4">
@@ -1233,9 +1332,8 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
                     <Sparkles className="h-5 w-5 text-[#0A66C2]" />
                   </div>
                   <div className="text-center space-y-1">
-                    <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">Connecting to Vibe AI...</p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">Loading interactive campus intelligence &amp; Q&amp;A</p>
-                    <span className="inline-block text-[10px] font-mono text-[#0A66C2]">vibe-tok-inky.vercel.app/vibe?lang={language}</span>
+                    <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">Connecting to Live Career &amp; Resume AI Studio...</p>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">Loading ATS Resume Tailor, Cover Letter Generator &amp; Career Intelligence</p>
                   </div>
                 </div>
               )}
@@ -1243,19 +1341,11 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
               <iframe
                 ref={iframeRef}
                 key={`${iframeKey}_${language}`}
-                src={`https://vibe-tok-inky.vercel.app/vibe?lang=${language}&locale=${language}&hl=${language}`}
+                src="https://tuhousing.vercel.app/"
                 className="w-full h-full border-0 bg-white dark:bg-zinc-950"
                 allow="camera; microphone; display-capture; autoplay; clipboard-write; fullscreen"
-                onLoad={() => {
-                  setIsIframeLoading(false)
-                  try {
-                    iframeRef.current?.contentWindow?.postMessage(
-                      { type: 'SET_LANGUAGE', lang: language, locale: language },
-                      '*'
-                    )
-                  } catch {}
-                }}
-                title="Vibe AI Campus & Q&A Clinic"
+                onLoad={() => setIsIframeLoading(false)}
+                title="ConnectIn Live Career & Resume AI Studio"
               />
             </div>
           </div>
@@ -1264,18 +1354,18 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
             {/* Mobile Tab switcher */}
             <div className="sm:hidden flex items-center justify-around bg-zinc-100 dark:bg-zinc-800 p-1 border-b border-zinc-200 dark:border-zinc-700 shrink-0">
               <button
-                onClick={() => setMode('vibe')}
-                className="px-3 py-1 text-xs font-semibold rounded-md flex items-center gap-1 text-zinc-600 dark:text-zinc-400"
-              >
-                <Sparkles className="h-3 w-3 text-amber-300" />
-                Vibe AI (Live)
-              </button>
-              <button
                 onClick={() => setMode('chat')}
                 className="px-3 py-1 text-xs font-semibold rounded-md flex items-center gap-1 bg-[#0A66C2] text-white"
               >
                 <Bot className="h-3 w-3" />
                 Copilot
+              </button>
+              <button
+                onClick={() => setMode('vibe')}
+                className="px-3 py-1 text-xs font-semibold rounded-md flex items-center gap-1 text-zinc-600 dark:text-zinc-400"
+              >
+                <Sparkles className="h-3 w-3 text-amber-300" />
+                Career AI Studio
               </button>
             </div>
 

@@ -2,109 +2,197 @@
 
 import React, { useState, useEffect } from "react"
 import {
-  MessageSquare,
   ChevronUp,
   ChevronDown,
   X,
   Send,
-  MoreHorizontal,
   Edit3,
   Search,
   CheckCheck,
-  Minimize2,
   Maximize2
 } from "lucide-react"
-import { MessageThread, initialMessages, UserProfile, getEnclaveFloatingMessages } from "@/lib/linkedin-data"
+import { UserProfile } from "@/lib/linkedin-data"
+import { getEnclaveB2BThreads, B2BConversationThread, B2BMessageItem } from "@/lib/b2b-messaging-data"
 
 interface FloatingMessagingDockProps {
   currentUser: UserProfile
+  onOpenFullMessaging?: () => void
 }
 
-export function FloatingMessagingDock({ currentUser }: FloatingMessagingDockProps) {
-  const enclaveId = currentUser?.professionEnclave
+export function FloatingMessagingDock({
+  currentUser,
+  onOpenFullMessaging,
+}: FloatingMessagingDockProps) {
+  const enclaveId = currentUser?.professionEnclave || "trades_construction"
   const [isDockOpen, setIsDockOpen] = useState(false)
-  const [threads, setThreads] = useState<MessageThread[]>(() => getEnclaveFloatingMessages(enclaveId))
-  const [activeChatThread, setActiveChatThread] = useState<MessageThread | null>(null)
+  const [threads, setThreads] = useState<B2BConversationThread[]>(() =>
+    getEnclaveB2BThreads(enclaveId)
+  )
+  const [activeChatThread, setActiveChatThread] = useState<B2BConversationThread | null>(null)
   const [miniMessageInput, setMiniMessageInput] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
 
   useEffect(() => {
-    const encThreads = getEnclaveFloatingMessages(enclaveId)
+    const encThreads = getEnclaveB2BThreads(enclaveId)
     setThreads(encThreads)
     setActiveChatThread(null)
+
+    fetch(`/api/connectin/messages?enclave=${encodeURIComponent(enclaveId)}`, {
+      cache: "no-store",
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.threads && Array.isArray(data.threads) && data.threads.length > 0) {
+          setThreads(data.threads)
+        }
+      })
+      .catch(() => {})
   }, [enclaveId])
 
-  const totalUnread = threads.reduce((acc, t) => acc + t.unreadCount, 0)
+  const totalUnread = threads.reduce((acc, t) => acc + (t.unreadCount || 0), 0)
 
-  const handleSendMiniMessage = (e: React.FormEvent) => {
+  const handleSendMiniMessage = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!miniMessageInput.trim() || !activeChatThread) return
+    const trimmed = miniMessageInput.trim()
+    if (!trimmed || !activeChatThread) return
 
-    const newMsg = {
-      id: 'mini_msg_' + Date.now(),
-      senderId: 'me' as const,
-      text: miniMessageInput.trim(),
-      timestamp: 'Just now'
+    const newMsg: B2BMessageItem = {
+      id: "mini_msg_" + Date.now(),
+      sender: {
+        id: "me",
+        name: currentUser?.name || "You",
+        avatar: currentUser?.avatar || "",
+        role: currentUser?.headline || "Verified ConnectIn Member",
+      },
+      text: trimmed,
+      timestamp: "Just now",
     }
 
-    const updated = threads.map(t =>
-      t.id === activeChatThread.id
+    const targetId = activeChatThread.id
+
+    const updated = threads.map((t) =>
+      t.id === targetId
         ? {
             ...t,
-            lastMessage: miniMessageInput.trim(),
-            lastMessageTime: 'Just now',
-            messages: [...t.messages, newMsg]
+            unreadCount: 0,
+            lastMessage: trimmed,
+            lastMessageTime: "Just now",
+            messages: [...t.messages, newMsg],
           }
         : t
     )
 
     setThreads(updated)
-    setActiveChatThread({
-      ...activeChatThread,
-      lastMessage: miniMessageInput.trim(),
-      lastMessageTime: 'Just now',
-      messages: [...activeChatThread.messages, newMsg]
-    })
+    setActiveChatThread((prev) =>
+      prev
+        ? {
+            ...prev,
+            lastMessage: trimmed,
+            lastMessageTime: "Just now",
+            messages: [...prev.messages, newMsg],
+          }
+        : null
+    )
     setMiniMessageInput("")
+
+    try {
+      const res = await fetch("/api/connectin/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "send_message",
+          enclave: enclaveId,
+          threadId: targetId,
+          text: trimmed,
+          senderName: currentUser?.name || "You",
+          senderAvatar: currentUser?.avatar,
+          senderRole: currentUser?.headline,
+        }),
+      })
+      const data = await res.json()
+      if (data?.ok && data.autoReply) {
+        setTimeout(() => {
+          setThreads((prev) =>
+            prev.map((t) =>
+              t.id === targetId
+                ? {
+                    ...t,
+                    lastMessage: data.autoReply.text,
+                    lastMessageTime: "Just now",
+                    messages: [...t.messages, data.autoReply],
+                  }
+                : t
+            )
+          )
+          setActiveChatThread((prev) =>
+            prev && prev.id === targetId
+              ? {
+                  ...prev,
+                  lastMessage: data.autoReply.text,
+                  lastMessageTime: "Just now",
+                  messages: [...prev.messages, data.autoReply],
+                }
+              : prev
+          )
+        }, 800)
+      }
+    } catch {
+      // Ignore network errors in mini dock
+    }
   }
 
-  const filteredThreads = threads.filter(t =>
-    t.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredThreads = threads.filter(
+    (t) =>
+      t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.lastMessage.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.subtitle.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   return (
     <div className="hidden lg:flex fixed bottom-0 right-4 z-50 items-end gap-3 pointer-events-none">
-      {/* 1. Mini Floating Chat Pop-up Window (if a conversation is clicked) */}
+      {/* 1. Mini Floating Chat Pop-up Window */}
       {activeChatThread && (
-        <div className="pointer-events-auto flex flex-col w-80 h-96 rounded-t-xl border border-zinc-300 bg-white shadow-2xl dark:border-zinc-700 dark:bg-zinc-900 overflow-hidden animate-in slide-in-from-bottom-5">
+        <div className="pointer-events-auto flex flex-col w-80 h-96 rounded-t-xl border border-zinc-300 bg-white shadow-2xl overflow-hidden animate-in slide-in-from-bottom-5">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-zinc-200 bg-white px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-950">
+          <div className="flex items-center justify-between border-b border-zinc-200 bg-white px-3 py-2.5">
             <div className="flex items-center gap-2 min-w-0">
               <div className="relative shrink-0">
                 <img
-                  src={activeChatThread.user.avatar}
-                  alt={activeChatThread.user.name}
+                  src={activeChatThread.avatar}
+                  alt={activeChatThread.title}
                   className="h-7 w-7 rounded-full object-cover"
                 />
-                {activeChatThread.user.status === 'online' && (
-                  <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-500 ring-1 ring-white dark:ring-zinc-900" />
+                {activeChatThread.onlineStatus === "online" && (
+                  <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-500 ring-1 ring-white" />
                 )}
               </div>
               <div className="min-w-0">
-                <p className="font-bold text-xs text-zinc-900 truncate dark:text-zinc-100">
-                  {activeChatThread.user.name}
+                <p className="font-bold text-xs text-zinc-900 truncate">
+                  {activeChatThread.title}
                 </p>
-                <p className="text-[10px] text-zinc-400 truncate">
-                  {activeChatThread.user.status === 'online' ? 'Active now' : 'Available on mobile'}
+                <p className="text-[10px] text-zinc-500 truncate">
+                  {activeChatThread.subtitle}
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-1 text-zinc-400">
+              {onOpenFullMessaging && (
+                <button
+                  onClick={() => {
+                    setActiveChatThread(null)
+                    setIsDockOpen(false)
+                    onOpenFullMessaging()
+                  }}
+                  className="rounded-sm p-1 hover:bg-zinc-100 hover:text-zinc-700"
+                  title="Open Full Messaging View"
+                >
+                  <Maximize2 className="h-3.5 w-3.5" />
+                </button>
+              )}
               <button
                 onClick={() => setActiveChatThread(null)}
-                className="rounded-sm p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-700"
+                className="rounded-sm p-1 hover:bg-zinc-100 hover:text-zinc-700"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -112,9 +200,9 @@ export function FloatingMessagingDock({ currentUser }: FloatingMessagingDockProp
           </div>
 
           {/* Messages Stream */}
-          <div className="flex-1 overflow-y-auto p-3 space-y-2.5 bg-zinc-50/50 dark:bg-zinc-950/40 text-xs">
+          <div className="flex-1 overflow-y-auto p-3 space-y-2.5 bg-zinc-50/70 text-xs">
             {activeChatThread.messages.map((msg) => {
-              const isMe = msg.senderId === 'me'
+              const isMe = msg.sender.id === "me" || msg.sender.name === "You"
               return (
                 <div
                   key={msg.id}
@@ -123,14 +211,22 @@ export function FloatingMessagingDock({ currentUser }: FloatingMessagingDockProp
                   <div
                     className={`max-w-[85%] rounded-xl px-3 py-2 leading-relaxed ${
                       isMe
-                        ? "bg-[#0A66C2] text-white rounded-br-xs"
-                        : "bg-white text-zinc-800 border border-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:border-zinc-700 rounded-bl-xs"
+                        ? "rounded-br-xs font-semibold"
+                        : "bg-white text-zinc-800 border border-zinc-200 rounded-bl-xs"
                     }`}
+                    style={
+                      isMe
+                        ? {
+                            backgroundColor: "#5C2D0C",
+                            color: "#FFFFFF",
+                          }
+                        : undefined
+                    }
                   >
-                    <p>{msg.text}</p>
+                    <p style={isMe ? { color: "#FFFFFF" } : undefined}>{msg.text}</p>
                     <div
                       className={`mt-1 text-[9px] text-right flex items-center justify-end gap-1 ${
-                        isMe ? "text-blue-100" : "text-zinc-400"
+                        isMe ? "text-amber-100" : "text-zinc-400"
                       }`}
                     >
                       <span>{msg.timestamp}</span>
@@ -143,19 +239,23 @@ export function FloatingMessagingDock({ currentUser }: FloatingMessagingDockProp
           </div>
 
           {/* Input Box */}
-          <form onSubmit={handleSendMiniMessage} className="border-t border-zinc-200 bg-white p-2 dark:border-zinc-800 dark:bg-zinc-900 flex items-center gap-1.5">
+          <form
+            onSubmit={handleSendMiniMessage}
+            className="border-t border-zinc-200 bg-white p-2 flex items-center gap-1.5"
+          >
             <input
               type="text"
               placeholder="Write a message..."
               value={miniMessageInput}
               onChange={(e) => setMiniMessageInput(e.target.value)}
-              className="flex-1 bg-transparent px-2 py-1 text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none dark:text-zinc-100"
+              className="flex-1 bg-transparent px-2 py-1 text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none"
               autoFocus
             />
             <button
               type="submit"
               disabled={!miniMessageInput.trim()}
-              className="rounded-full bg-[#0A66C2] p-1.5 text-white disabled:opacity-30 hover:bg-[#004182]"
+              className="rounded-full bg-[#0A66C2] p-1.5 disabled:opacity-30 hover:bg-[#004182]"
+              style={{ color: "#FFFFFF" }}
             >
               <Send className="h-3 w-3" />
             </button>
@@ -164,11 +264,11 @@ export function FloatingMessagingDock({ currentUser }: FloatingMessagingDockProp
       )}
 
       {/* 2. Collapsible Messaging Dock Drawer */}
-      <div className="pointer-events-auto w-72 rounded-t-xl border border-zinc-300 bg-white shadow-2xl dark:border-zinc-700 dark:bg-zinc-900 overflow-hidden">
+      <div className="pointer-events-auto w-72 rounded-t-xl border border-zinc-300 bg-white shadow-2xl overflow-hidden">
         {/* Dock Header Bar */}
         <div
           onClick={() => setIsDockOpen(!isDockOpen)}
-          className="flex items-center justify-between px-3.5 py-2.5 bg-white dark:bg-zinc-900 cursor-pointer border-b border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-850"
+          className="flex items-center justify-between px-3.5 py-2.5 bg-white cursor-pointer border-b border-zinc-200 hover:bg-zinc-50"
         >
           <div className="flex items-center gap-2">
             <div className="relative">
@@ -179,25 +279,39 @@ export function FloatingMessagingDock({ currentUser }: FloatingMessagingDockProp
               />
               <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-500 ring-1 ring-white" />
             </div>
-            <span className="font-bold text-xs text-zinc-900 dark:text-zinc-100">
-              Messaging
-            </span>
+            <span className="font-bold text-xs text-zinc-900">Messaging</span>
             {totalUnread > 0 && (
-              <span className="rounded-full bg-[#0A66C2] px-1.5 py-0.2 text-[10px] font-bold text-white">
+              <span
+                className="rounded-full bg-[#0A66C2] px-1.5 py-0.2 text-[10px] font-bold"
+                style={{ color: "#FFFFFF" }}
+              >
                 {totalUnread}
               </span>
             )}
           </div>
 
           <div className="flex items-center gap-1 text-zinc-500">
+            {onOpenFullMessaging && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onOpenFullMessaging()
+                }}
+                className="p-1 hover:text-[#0A66C2]"
+                title="Open Full Messaging Tab"
+              >
+                <Maximize2 className="h-3.5 w-3.5" />
+              </button>
+            )}
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation()
-                setActiveChatThread(threads[0])
+                setActiveChatThread(threads[0] || null)
               }}
               className="p-1 hover:text-[#0A66C2]"
-              title="New message"
+              title="Quick message"
             >
               <Edit3 className="h-3.5 w-3.5" />
             </button>
@@ -211,50 +325,56 @@ export function FloatingMessagingDock({ currentUser }: FloatingMessagingDockProp
 
         {/* Expanded Drawer Body */}
         {isDockOpen && (
-          <div className="h-80 flex flex-col bg-white dark:bg-zinc-900 animate-in fade-in">
+          <div className="h-80 flex flex-col bg-white animate-in fade-in">
             {/* Search Input */}
-            <div className="p-2 border-b border-zinc-100 dark:border-zinc-800">
-              <div className="flex items-center gap-1.5 rounded-md bg-zinc-100 px-2 py-1 dark:bg-zinc-800">
+            <div className="p-2 border-b border-zinc-100">
+              <div className="flex items-center gap-1.5 rounded-md bg-zinc-100 px-2 py-1">
                 <Search className="h-3.5 w-3.5 text-zinc-400" />
                 <input
                   type="text"
                   placeholder="Search messages"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-transparent text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none dark:text-zinc-100"
+                  className="w-full bg-transparent text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none"
                 />
               </div>
             </div>
 
             {/* Conversation List */}
-            <div className="flex-1 overflow-y-auto divide-y divide-zinc-100 dark:divide-zinc-800/60">
+            <div className="flex-1 overflow-y-auto divide-y divide-zinc-100">
               {filteredThreads.map((t) => (
                 <div
                   key={t.id}
                   onClick={() => {
                     setActiveChatThread(t)
-                    setThreads(threads.map(th => th.id === t.id ? { ...th, unreadCount: 0 } : th))
+                    setThreads((prev) =>
+                      prev.map((th) =>
+                        th.id === t.id ? { ...th, unreadCount: 0 } : th
+                      )
+                    )
                   }}
-                  className="flex items-start gap-2.5 p-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer transition-colors"
+                  className="flex items-start gap-2.5 p-2.5 hover:bg-zinc-50 cursor-pointer transition-colors"
                 >
                   <div className="relative shrink-0">
                     <img
-                      src={t.user.avatar}
-                      alt={t.user.name}
+                      src={t.avatar}
+                      alt={t.title}
                       className="h-8 w-8 rounded-full object-cover"
                     />
-                    {t.user.status === 'online' && (
+                    {t.onlineStatus === "online" && (
                       <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-500 ring-1 ring-white" />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between">
-                      <p className="font-bold text-xs text-zinc-900 truncate dark:text-zinc-100">
-                        {t.user.name}
+                      <p className="font-bold text-xs text-zinc-900 truncate">
+                        {t.title}
                       </p>
-                      <span className="text-[10px] text-zinc-400">{t.lastMessageTime}</span>
+                      <span className="text-[10px] text-zinc-400">
+                        {t.lastMessageTime}
+                      </span>
                     </div>
-                    <p className="text-[11px] text-zinc-500 truncate dark:text-zinc-400 mt-0.5">
+                    <p className="text-[11px] text-zinc-500 truncate mt-0.5">
                       {t.lastMessage}
                     </p>
                   </div>

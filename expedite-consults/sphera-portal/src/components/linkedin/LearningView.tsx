@@ -67,6 +67,12 @@ import dynamic from "next/dynamic"
 import { UserProfile } from "@/lib/linkedin-data"
 import { ConnectInVideoWheel } from "@/components/linkedin/ConnectInVideoWheel"
 import {
+  LEARNING_VENDOR_SOURCES,
+  VENDOR_CATEGORY_TABS,
+  VendorCategory,
+  getVendorTopicSearchLinks,
+} from "@/lib/learning-vendors"
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -196,12 +202,61 @@ export function LearningView({
   onAddCertificateToProfile,
   onNavigateMarketplace
 }: LearningViewProps) {
-  // Master Mode: Courses vs Labs vs Certifications vs Learning Paths vs VibeTOK Hub vs ConnectLn Studies vs Career Mastery Academy vs Change/Upgrade Profession
-  const [learningMode, setLearningMode] = useState<'courses' | 'labs' | 'certifications' | 'paths' | 'vibetok' | 'connectln_studies' | 'career_mastery' | 'change_profession'>('paths')
+  // Master Mode: Courses vs Labs vs Certifications vs Learning Paths vs VibeTOK Hub vs ConnectLn Studies vs Career Mastery Academy vs Change/Upgrade Profession vs Vendors
+  const [learningMode, setLearningMode] = useState<'courses' | 'labs' | 'certifications' | 'paths' | 'vibetok' | 'connectln_studies' | 'career_mastery' | 'change_profession' | 'vendors'>('paths')
   const [selectedMobilityCareerNumber, setSelectedMobilityCareerNumber] = useState<number | null>(null)
   const [vibetokExpanded, setVibetokExpanded] = useState(false)
   const [vibetokKey, setVibetokKey] = useState(0)
   const [vibetokRoute, setVibetokRoute] = useState<string>("https://vibetok-learning-hub.vercel.app")
+
+  // Connected Vendor Sources State (O'Reilly Media, LinkedIn Learning, GitHub, Microsoft Learn, AWS, etc.)
+  const [selectedVendorCategory, setSelectedVendorCategory] = useState<VendorCategory>("all")
+  const [vendorSearchTopic, setVendorSearchTopic] = useState<string>("")
+  const [showAllTopVendors, setShowAllTopVendors] = useState<boolean>(false)
+  const [connectedVendorIds, setConnectedVendorIds] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {}
+    LEARNING_VENDOR_SOURCES.forEach((v) => {
+      if (v.defaultConnected) initial[v.id] = true
+    })
+    return initial
+  })
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    try {
+      const saved = localStorage.getItem("connectin_connected_learning_vendors")
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (parsed && typeof parsed === "object") {
+          setConnectedVendorIds((prev) => ({ ...prev, ...parsed }))
+        }
+      }
+    } catch {}
+  }, [])
+
+  const handleToggleVendorConnection = (vendorId: string) => {
+    setConnectedVendorIds((prev) => {
+      const next = { ...prev, [vendorId]: !prev[vendorId] }
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("connectin_connected_learning_vendors", JSON.stringify(next))
+        } catch {}
+      }
+      return next
+    })
+  }
+
+  const filteredVendors = LEARNING_VENDOR_SOURCES.filter((v) => {
+    const matchCat = selectedVendorCategory === "all" || v.category === selectedVendorCategory
+    const q = vendorSearchTopic.trim().toLowerCase()
+    if (!q) return matchCat
+    const matchText =
+      v.name.toLowerCase().includes(q) ||
+      v.tagline.toLowerCase().includes(q) ||
+      v.categoryLabel.toLowerCase().includes(q) ||
+      v.popularTopics.some((t) => t.toLowerCase().includes(q))
+    return matchCat && matchText
+  })
 
   const learningPath = getEnclaveLearningPath(user.professionEnclave)
   const enclaveLabs = getEnclaveInteractiveLabs(user.professionEnclave)
@@ -527,54 +582,296 @@ export function LearningView({
           </div>
         </div>
 
-        {/* Live Ecosystem External Learning Platforms */}
-        {liveEcosystemPlatforms.length > 0 && (
-          <div className="mt-5 pt-3.5 border-t border-zinc-100 dark:border-zinc-800">
-            <div className="flex items-center justify-between mb-2.5">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-[#0A66C2]" />
-                <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200 tracking-wide uppercase">
-                  Connected Learning Academies
-                </span>
-              </div>
-              <span className="text-[10px] text-zinc-400 font-mono">1-Click External Launch ↗</span>
+        {/* ===================================================================== */}
+        {/* CONNECTED GLOBAL VENDOR LEARNING SOURCES (O'REILLY, LINKEDIN, GITHUB) */}
+        {/* ===================================================================== */}
+        <div className="mt-5 pt-4 border-t border-zinc-100 dark:border-zinc-800 space-y-3.5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Globe className="h-4 w-4 text-[#0A66C2]" />
+              <span className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100 tracking-wide uppercase">
+                Connected Vendor Learning Sources &amp; Official Academies
+              </span>
+              <span className="rounded-full bg-blue-50 dark:bg-blue-950/60 px-2.5 py-0.5 text-[10px] font-bold text-[#0A66C2] dark:text-sky-300 border border-blue-200 dark:border-blue-800">
+                O&apos;Reilly · LinkedIn Learning · GitHub · Microsoft · AWS · Coursera · SANS/ISC2
+              </span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {liveEcosystemPlatforms.map((plat, idx) => (
-                <a
-                  key={idx}
-                  href={plat.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group rounded-xl bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:hover:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-700/80 p-3 transition-all flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="rounded bg-blue-100 dark:bg-blue-950/60 px-1.5 py-0.5 text-[9px] font-mono font-bold text-blue-700 dark:text-sky-300 border border-blue-200 dark:border-blue-800">
-                        {plat.badge}
-                      </span>
-                      <ExternalLink className="h-3.5 w-3.5 text-zinc-400 group-hover:text-[#0A66C2] transition-colors" />
-                    </div>
-                    <h4 className="font-bold text-xs text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2] transition-colors line-clamp-1">
-                      {plat.title}
-                    </h4>
-                    <p className="text-[11px] text-zinc-500 dark:text-zinc-400 line-clamp-2 mt-0.5 leading-snug">
-                      {plat.desc}
-                    </p>
-                  </div>
-                  <div className="mt-2 pt-2 border-t border-zinc-200/60 dark:border-zinc-700/60 flex items-center justify-between text-[10px] text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-300">
-                    <span className="font-mono truncate">{new URL(plat.url).hostname}</span>
-                    <span className="font-bold text-[#0A66C2] group-hover:underline">Launch →</span>
-                  </div>
-                </a>
-              ))}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowAllTopVendors((prev) => !prev)}
+                className="rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 px-3 py-1 text-[11px] font-bold text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 cursor-pointer transition-colors"
+              >
+                {showAllTopVendors
+                  ? "Show Top 6 Flagship Vendors"
+                  : `View All ${LEARNING_VENDOR_SOURCES.length} Vendor Sources`}
+              </button>
+              <button
+                type="button"
+                onClick={() => setLearningMode("vendors")}
+                className="rounded-full bg-[#0A66C2] hover:bg-[#004182] px-3 py-1 text-[11px] font-bold text-white cursor-pointer transition-colors"
+              >
+                Full Vendor Directory →
+              </button>
             </div>
           </div>
-        )}
+
+          {/* Unified Multi-Vendor Topic Search & Instant Deep-Link Bar */}
+          <div className="rounded-xl bg-zinc-50 dark:bg-zinc-800/70 border border-zinc-200/90 dark:border-zinc-700 p-3 space-y-2.5">
+            <div className="flex flex-col md:flex-row md:items-center gap-2">
+              <div className="relative flex-1 flex items-center rounded-lg bg-white dark:bg-zinc-900 px-3 py-1.5 border border-zinc-200 dark:border-zinc-700">
+                <Search className="h-3.5 w-3.5 text-zinc-400 mr-2 shrink-0" />
+                <input
+                  type="text"
+                  value={vendorSearchTopic}
+                  onChange={(e) => setVendorSearchTopic(e.target.value)}
+                  placeholder="Type any skill, book, repo, or exam (e.g. Kubernetes, CISSP, AI Agents, Rust, OSHA 30) to launch on any vendor..."
+                  className="w-full bg-transparent text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none"
+                />
+              </div>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[10px] font-bold uppercase text-zinc-400 mr-0.5">
+                  Search Topic On:
+                </span>
+                {getVendorTopicSearchLinks(
+                  vendorSearchTopic.trim() || learningPath.targetRole || "AI & Cloud Architecture"
+                ).map((vLink) => (
+                  <a
+                    key={vLink.vendorId}
+                    href={vLink.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`rounded-lg px-2.5 py-1 text-[10px] font-bold border transition-all inline-flex items-center gap-1 ${vLink.badgeClass}`}
+                    title={`Search "${vendorSearchTopic.trim() || learningPath.targetRole}" on ${vLink.name}`}
+                  >
+                    <span>{vLink.shortLabel}</span>
+                    <ExternalLink className="h-2.5 w-2.5" />
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            {/* Category Filter Pills */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 text-[11px]">
+              {VENDOR_CATEGORY_TABS.map((tab) => {
+                const active = selectedVendorCategory === tab.id
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedVendorCategory(tab.id)
+                      if (tab.id !== "all") setShowAllTopVendors(true)
+                    }}
+                    className={`rounded-full px-2.5 py-1 font-semibold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
+                      active
+                        ? "bg-[#0A66C2] text-white shadow-2xs"
+                        : "bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:border-[#0A66C2]"
+                    }`}
+                  >
+                    <span>{tab.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Connected Vendor Cards Grid (O'Reilly Media, LinkedIn Learning, GitHub, Microsoft Learn, AWS, Pluralsight, etc.) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {(showAllTopVendors || selectedVendorCategory !== "all" || vendorSearchTopic.trim()
+              ? filteredVendors
+              : filteredVendors.slice(0, 6)
+            ).map((vendor) => {
+              const isConnected = Boolean(connectedVendorIds[vendor.id])
+              const activeQuery =
+                vendorSearchTopic.trim() || vendor.popularTopics[0] || "Software Architecture"
+              const deepSearchUrl = vendor.searchUrlTemplate.replace(
+                "{query}",
+                encodeURIComponent(activeQuery)
+              )
+
+              return (
+                <div
+                  key={vendor.id}
+                  className="rounded-xl bg-zinc-50/90 hover:bg-white dark:bg-zinc-800/60 dark:hover:bg-zinc-800 border border-zinc-200/90 dark:border-zinc-700/90 p-3.5 transition-all flex flex-col justify-between shadow-2xs hover:shadow-md"
+                >
+                  <div className="space-y-2">
+                    {/* Top Row: Brand Pill, Badge & Connect Account Toggle */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span
+                          className={`rounded-lg bg-gradient-to-r ${vendor.accentGradient} px-2 py-1 text-[10px] font-black text-white tracking-tight shrink-0 shadow-2xs`}
+                        >
+                          {vendor.logoText}
+                        </span>
+                        <div className="min-w-0">
+                          <h4 className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 truncate">
+                            {vendor.name}
+                          </h4>
+                          <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
+                            {vendor.categoryLabel}
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleToggleVendorConnection(vendor.id)}
+                        className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold border transition-all shrink-0 cursor-pointer flex items-center gap-1 ${
+                          isConnected
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800"
+                            : "bg-white text-zinc-700 border-zinc-300 hover:border-[#0A66C2] hover:text-[#0A66C2] dark:bg-zinc-900 dark:text-zinc-300 dark:border-zinc-700"
+                        }`}
+                        title={
+                          isConnected
+                            ? `Connected to ${vendor.name} — Click to disconnect`
+                            : `Connect your ${vendor.name} account to sync courses & CEUs`
+                        }
+                      >
+                        {isConnected ? (
+                          <>
+                            <Check className="h-2.5 w-2.5" />
+                            <span>Connected</span>
+                          </>
+                        ) : (
+                          <span>+ Connect</span>
+                        )}
+                      </button>
+                    </div>
+
+                    <p className="text-[11px] text-zinc-600 dark:text-zinc-300 line-clamp-2 leading-snug">
+                      {vendor.tagline}
+                    </p>
+
+                    {/* Direct Sub-Portal Quick Links */}
+                    <div className="flex flex-wrap gap-1 pt-0.5">
+                      {vendor.quickLinks.map((ql, idx) => (
+                        <a
+                          key={idx}
+                          href={ql.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-md bg-white hover:bg-[#0A66C2] hover:text-white dark:bg-zinc-900 dark:hover:bg-[#0A66C2] px-2 py-0.5 text-[10px] font-semibold text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 transition-colors inline-flex items-center gap-1"
+                        >
+                          <span>{ql.label}</span>
+                          <ExternalLink className="h-2.5 w-2.5 opacity-70" />
+                        </a>
+                      ))}
+                    </div>
+
+                    {/* Popular Topics Deep-Search Pills */}
+                    <div className="pt-1">
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 block mb-1">
+                        1-Click Topic Search on {vendor.shortName}:
+                      </span>
+                      <div className="flex flex-wrap gap-1">
+                        {vendor.popularTopics.slice(0, 3).map((topic) => (
+                          <a
+                            key={topic}
+                            href={vendor.searchUrlTemplate.replace(
+                              "{query}",
+                              encodeURIComponent(topic)
+                            )}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded bg-blue-50/70 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/60 px-1.5 py-0.5 text-[9px] font-medium text-[#0A66C2] dark:text-sky-300 border border-blue-200/60 dark:border-blue-800/60 truncate max-w-[180px]"
+                            title={`Search "${topic}" on ${vendor.name}`}
+                          >
+                            🔍 {topic}
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card Footer: CEU Info + Launch Official Portal & Search */}
+                  <div className="mt-3 pt-2 border-t border-zinc-200/70 dark:border-zinc-700/70 flex items-center justify-between gap-2 text-[10px]">
+                    <span className="text-zinc-500 dark:text-zinc-400 font-semibold truncate">
+                      {vendor.ceuBadge || vendor.badgeText}
+                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {vendorSearchTopic.trim() && (
+                        <a
+                          href={deepSearchUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-0.5"
+                        >
+                          <span>Search &ldquo;{vendorSearchTopic.slice(0, 14)}&rdquo;</span>
+                          <ExternalLink className="h-2.5 w-2.5" />
+                        </a>
+                      )}
+                      <a
+                        href={vendor.officialUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-lg bg-[#0A66C2] hover:bg-[#004182] px-2.5 py-1 text-[10px] font-bold text-white flex items-center gap-1 transition-colors"
+                      >
+                        <span>Launch {vendor.shortName}</span>
+                        <ExternalLink className="h-2.5 w-2.5" />
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Enclave-Specific Live Sandbox & Field Platforms Strip */}
+          {liveEcosystemPlatforms.length > 0 && (
+            <div className="pt-2">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5 text-[#0A66C2]" />
+                  ConnectLn Live Practice Sandboxes &amp; Field Platforms
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                {liveEcosystemPlatforms.map((plat, idx) => (
+                  <a
+                    key={idx}
+                    href={plat.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group rounded-xl bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:hover:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-700/80 p-2.5 transition-all flex items-center justify-between gap-2"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="rounded bg-blue-100 dark:bg-blue-950/60 px-1.5 py-0.2 text-[8px] font-mono font-bold text-blue-700 dark:text-sky-300 border border-blue-200 dark:border-blue-800 shrink-0">
+                          {plat.badge}
+                        </span>
+                        <h4 className="font-bold text-xs text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2] truncate">
+                          {plat.title}
+                        </h4>
+                      </div>
+                      <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
+                        {plat.desc}
+                      </p>
+                    </div>
+                    <ExternalLink className="h-3.5 w-3.5 text-zinc-400 group-hover:text-[#0A66C2] shrink-0" />
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Master Modes Switcher */}
         <div className="mt-5 pt-3.5 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+            <button
+              type="button"
+              onClick={() => setLearningMode('vendors')}
+              className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
+                learningMode === 'vendors'
+                  ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
+                  : "bg-blue-50 dark:bg-blue-950/50 text-[#0A66C2] dark:text-sky-300 hover:bg-blue-100 border border-blue-300 dark:border-blue-800 font-bold"
+              }`}
+            >
+              <Globe className="h-3.5 w-3.5" />
+              <span>🌐 Vendor Sources (O&apos;Reilly · LinkedIn · GitHub + {LEARNING_VENDOR_SOURCES.length})</span>
+            </button>
+
             <button
               type="button"
               onClick={() => setLearningMode('change_profession')}
@@ -983,6 +1280,33 @@ export function LearningView({
                         </div>
                       )}
 
+                      {/* 1-Click Study on Connected Vendors (O'Reilly, LinkedIn Learning, GitHub, MS Learn) */}
+                      <div
+                        className="pt-2 border-t border-zinc-200/70 dark:border-zinc-800 space-y-1"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 block">
+                          Study Step on Vendor Source:
+                        </span>
+                        <div className="flex flex-wrap gap-1">
+                          {getVendorTopicSearchLinks(`${step.title} ${step.skills[0] || ""}`).map(
+                            (vLink) => (
+                              <a
+                                key={vLink.vendorId}
+                                href={vLink.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={`rounded px-1.5 py-0.5 text-[9px] font-bold border transition-all inline-flex items-center gap-0.5 ${vLink.badgeClass}`}
+                                title={`Study "${step.title}" on ${vLink.name}`}
+                              >
+                                <span>{vLink.shortLabel}</span>
+                                <ExternalLink className="h-2 w-2" />
+                              </a>
+                            )
+                          )}
+                        </div>
+                      </div>
+
                       {/* Explicit 10-Page White Paper & Full Details CTA Footer */}
                       <div className="pt-2 border-t border-zinc-200/80 dark:border-zinc-800 flex items-center justify-between gap-2">
                         <button
@@ -1230,6 +1554,28 @@ export function LearningView({
                       <img src={course.instructor.avatar} alt="" className="h-6 w-6 rounded-full object-cover" />
                       <span className="font-semibold text-zinc-700 dark:text-zinc-300">{course.instructor.name}</span>
                     </div>
+
+                    {/* 1-Click Study on Vendor Sources */}
+                    <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 space-y-1">
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 block">
+                        Connect &amp; Learn on Vendor Source:
+                      </span>
+                      <div className="flex flex-wrap gap-1">
+                        {getVendorTopicSearchLinks(course.title).map((vLink) => (
+                          <a
+                            key={vLink.vendorId}
+                            href={vLink.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`rounded px-1.5 py-0.5 text-[9px] font-bold border transition-all inline-flex items-center gap-0.5 ${vLink.badgeClass}`}
+                            title={`Study "${course.title}" on ${vLink.name}`}
+                          >
+                            <span>{vLink.shortLabel}</span>
+                            <ExternalLink className="h-2 w-2" />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -1416,6 +1762,28 @@ export function LearningView({
                       </div>
                     ))}
                   </div>
+
+                  {/* Official Vendor Study Guides & Courses for this Certification */}
+                  <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 space-y-1">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 block">
+                      Official Study Guides &amp; Prep on Vendors:
+                    </span>
+                    <div className="flex flex-wrap gap-1">
+                      {getVendorTopicSearchLinks(`${cert.examCode} ${cert.name}`).map((vLink) => (
+                        <a
+                          key={vLink.vendorId}
+                          href={vLink.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`rounded px-1.5 py-0.5 text-[9px] font-bold border transition-all inline-flex items-center gap-0.5 ${vLink.badgeClass}`}
+                          title={`Study "${cert.examCode} ${cert.name}" on ${vLink.name}`}
+                        >
+                          <span>{vLink.shortLabel}</span>
+                          <ExternalLink className="h-2 w-2" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
@@ -1439,6 +1807,151 @@ export function LearningView({
             onClaimCertificate={handleClaimCertificate}
             initialAcademyFilter="certifications_ceu"
           />
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODE 4B: DEDICATED GLOBAL VENDOR LEARNING SOURCES DIRECTORY               */}
+      {/* ========================================================================= */}
+      {learningMode === 'vendors' && (
+        <div className="space-y-6 animate-in fade-in duration-300">
+          <div className="rounded-2xl border border-blue-500/30 bg-gradient-to-r from-slate-950 via-blue-950 to-indigo-950 p-6 text-white shadow-xl space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="rounded-full bg-blue-500/20 px-3 py-0.5 text-xs font-bold text-sky-300 border border-blue-400/30 flex items-center gap-1.5">
+                    <Globe className="h-3.5 w-3.5" />
+                    Connected Vendor Learning Ecosystem
+                  </span>
+                  <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[11px] font-bold text-emerald-300 border border-emerald-400/30">
+                    {Object.values(connectedVendorIds).filter(Boolean).length} Vendors Connected to Profile
+                  </span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-black text-white">
+                  O&apos;Reilly Media, LinkedIn Learning, GitHub &amp; Official Vendor Academies
+                </h2>
+                <p className="text-xs sm:text-sm text-blue-100/90 max-w-3xl leading-relaxed">
+                  Connect directly to world-leading technical publishers, open-source code repositories, cloud vendor academies, cybersecurity authorities, and university MOOCs. Search any topic below to launch deep-linked courses, books, labs, and certification guides.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {LEARNING_VENDOR_SOURCES.map((vendor) => {
+              const isConnected = Boolean(connectedVendorIds[vendor.id])
+              return (
+                <div
+                  key={vendor.id}
+                  className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-xs hover:border-[#0A66C2] transition-all flex flex-col justify-between space-y-4"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={`rounded-xl bg-gradient-to-r ${vendor.accentGradient} px-3 py-2 text-xs font-black text-white shadow-sm shrink-0`}
+                        >
+                          {vendor.logoText}
+                        </span>
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="font-black text-base text-zinc-900 dark:text-zinc-100">
+                              {vendor.name}
+                            </h3>
+                            <span className="rounded bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 text-[9px] font-mono font-bold text-[#0A66C2] dark:text-sky-300 border border-blue-200 dark:border-blue-800">
+                              {vendor.badgeText}
+                            </span>
+                          </div>
+                          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                            {vendor.categoryLabel}
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleToggleVendorConnection(vendor.id)}
+                        className={`rounded-full px-3 py-1 text-xs font-bold border transition-all shrink-0 cursor-pointer flex items-center gap-1 ${
+                          isConnected
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800"
+                            : "bg-zinc-100 text-zinc-700 border-zinc-300 hover:bg-[#0A66C2] hover:text-white dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700"
+                        }`}
+                      >
+                        {isConnected ? "✓ Connected" : "+ Connect Account"}
+                      </button>
+                    </div>
+
+                    <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed">
+                      {vendor.description}
+                    </p>
+
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">
+                        Direct Vendor Portals &amp; Hubs:
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {vendor.quickLinks.map((ql, idx) => (
+                          <a
+                            key={idx}
+                            href={ql.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-lg bg-zinc-50 hover:bg-[#0A66C2] hover:text-white dark:bg-zinc-800 dark:hover:bg-[#0A66C2] px-2.5 py-1 text-xs font-semibold text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 transition-colors inline-flex items-center gap-1.5"
+                          >
+                            <span>{ql.label}</span>
+                            {ql.badge && (
+                              <span className="rounded bg-black/10 dark:bg-white/10 px-1.5 py-0.2 text-[9px] font-mono">
+                                {ql.badge}
+                              </span>
+                            )}
+                            <ExternalLink className="h-3 w-3 opacity-75" />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">
+                        Popular Topics on {vendor.shortName} (Click to Launch Search):
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {vendor.popularTopics.map((topic) => (
+                          <a
+                            key={topic}
+                            href={vendor.searchUrlTemplate.replace(
+                              "{query}",
+                              encodeURIComponent(topic)
+                            )}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-md bg-blue-50/70 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/60 px-2 py-1 text-[11px] font-medium text-[#0A66C2] dark:text-sky-300 border border-blue-200/70 dark:border-blue-800/70 inline-flex items-center gap-1"
+                          >
+                            <span>🔍 {topic}</span>
+                            <ExternalLink className="h-2.5 w-2.5" />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                      {vendor.ceuBadge || "Verified Learning Provider"}
+                    </span>
+                    <a
+                      href={vendor.officialUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-xl bg-[#0A66C2] hover:bg-[#004182] px-4 py-2 text-xs font-bold text-white flex items-center gap-1.5 shadow-xs transition-colors"
+                    >
+                      <span>Open {vendor.name}</span>
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </div>
       )}
 

@@ -1446,11 +1446,29 @@ export function LinkedInNavbar({
                         ? "bg-cyan-600 text-white shadow-xs"
                         : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-700 hover:border-cyan-300"
                     }`}
-                    title="Resume Preparation App & AI Tailoring Studio (tuhousing.vercel.app)"
+                    title="Resume Preparation App & AI Tailoring Studio (https://www.connectln.app/connectin)"
                   >
                     <Award className={`h-5 w-5 mb-1 ${activeTab === 'careersuite' ? "text-white" : "text-cyan-600 dark:text-cyan-400"}`} />
                     <span className="text-[10px] font-bold truncate w-full">Resume Prep</span>
                   </button>
+
+                  {/* 9. Noctis Social (https://www.noctis.social) */}
+                  <a
+                    href="https://www.noctis.social"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setIsMoreOpen(false)}
+                    className="p-2 rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer bg-gradient-to-br from-slate-900 via-indigo-950 to-purple-950 text-white border border-indigo-400/50 hover:border-indigo-300 shadow-xs col-span-3 sm:col-span-3 mt-1"
+                    title="Open Noctis Social (https://www.noctis.social)"
+                  >
+                    <div className="flex items-center justify-center gap-2 w-full">
+                      <Moon className="h-4 w-4 text-amber-300 shrink-0" />
+                      <span className="text-xs font-extrabold tracking-tight">Noctis Social</span>
+                      <span className="rounded-full bg-indigo-500/30 border border-indigo-400/40 px-2 py-0.2 text-[9px] font-mono font-bold text-indigo-200">
+                        noctis.social ↗
+                      </span>
+                    </div>
+                  </a>
                 </div>
               </div>
 

@@ -112,7 +112,7 @@ export function getFindingDeepDiveIntel(finding: Finding, fallbackUrl?: string):
         nucleiTemplateId: isDnsFinding ? "dns/txt-fingerprint.yaml" : "http/misconfiguration/http-missing-security-headers.yaml",
         nmapNseScript: isDnsFinding ? "dns-txt.nse" : isCookieFinding ? "http-cookie-flags.nse" : "http-security-headers.nse",
         zapPluginId: isCookieFinding ? "ZAP-10010 / ZAP-10054 (Cookie Attribute Passive Audit)" : isCspFinding ? "ZAP-10038 / ZAP-10055 (CSP Directive Passive Audit)" : "ZAP Passive Configuration Rule",
-        verificationScript: `# 1. Live Non-Destructive Control Verification against ${cleanUrl}\n${cliVerifyCmd}\n# ➔ [OBSERVED LIVE FACT]: ${matchedFact}\n\n# 2. ProjectDiscovery Nuclei Read-Only Configuration Check\nnuclei -u "${cleanUrl}" -tags misconfig,headers,exposure -passive\n# ➔ [OBSERVED LIVE FACT]: [${cwe.toLowerCase()}-control-exposure] [http] [${(finding.severity || "medium").toLowerCase()}] ${cleanUrl} [matched="${matchedFact}"]\n\n# 3. Evidence Boundary & Provenance Note\n# Validation State: Confirmed Control Exposure (Safe Read-Only Probe)\n# No destructive payloads, authentication bypasses, or unauthorized state changes were executed against ${host}.`
+        verificationScript: `# 1. Live Non-Destructive Control Verification against ${cleanUrl}\n${cliVerifyCmd}\n\n# 2. TLS X.509 & HTTP Header Verification\nopenssl s_client -connect ${host}:443 -servername ${host} </dev/null 2>/dev/null | openssl x509 -noout -subject -issuer -dates -fingerprint -sha256\n\n# 3. Directly Observed Fact During Scan\n# Matched Indicator: ${matchedFact}\n# Validation State: Confirmed Control Exposure (Safe Read-Only Probe — Zero Destructive Payloads Executed)`
       },
       killChainStages: [
         {
