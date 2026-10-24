@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import type { AttachedSourceFile } from "./RepoInput";
 import type { LiveScanTelemetry } from "@/lib/enterprise-sast-engine";
+import { clearActiveScanSession } from "@/lib/live-sast-scanner";
 import type { SASTFinding } from "@/types/sast";
 
 const ENGINE_DETAILS_MAP: Record<string, { color: string; label: string }> = {
@@ -109,6 +110,7 @@ export default function ScanProgress({
   const [depthMode, setDepthMode] = useState<ScanDepthMode>("deep_22s");
   const [overallPct, setOverallPct] = useState(2);
   const [logs, setLogs] = useState<string[]>([
+    `[RESET]     Cleared previous scan session state and findings buffer...`,
     `[DISPATCH]  Initializing 7-Phase Deep Enumeration & Multi-DB Exploitability Engine (${language} AST · 400 Plugins)...`,
     `[DB-SYNC]   Connected to GitHub Advisory (GHSA), SearchSploit/Exploit-DB, Google OSV.dev/KEV, and VulnDB/EPSS feeds...`,
   ]);
@@ -120,9 +122,20 @@ export default function ScanProgress({
 
   const logRef = useRef<HTMLDivElement>(null);
 
-  // Fetch the deep multi-pass backend telemetry
+  // Clear previous scan state and fetch the new deep multi-pass backend telemetry
   useEffect(() => {
     let cancelled = false;
+    clearActiveScanSession();
+    setTelemetryData(null);
+    setOverallPct(2);
+    setFilesScanned(0);
+    setIsCompleted(false);
+    setLogs([
+      `[RESET]     Cleared previous scan session state and findings buffer...`,
+      `[DISPATCH]  Initializing 7-Phase Deep Enumeration & Multi-DB Exploitability Engine for ${repo} (${language} AST · 400 Plugins)...`,
+      `[DB-SYNC]   Connected to GitHub Advisory (GHSA), SearchSploit/Exploit-DB, Google OSV.dev/KEV, and VulnDB/EPSS feeds...`,
+    ]);
+
     async function fetchDeepScan() {
       try {
         const res = await fetch("/api/scan", {

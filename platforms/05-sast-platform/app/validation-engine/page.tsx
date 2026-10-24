@@ -106,13 +106,24 @@ export default function ValidationEnginePage() {
   );
 
   useEffect(() => {
-    const loaded = loadActiveScanSession();
-    if (loaded) {
+    const syncSession = () => {
+      const loaded = loadActiveScanSession();
       setActiveSession(loaded);
-      if (loaded.validationFindings.length > 0) {
+      if (loaded && loaded.validationFindings.length > 0) {
         setSelectedFindingId(loaded.validationFindings[0].findingId);
+      } else {
+        setSelectedFindingId("VAL-101");
       }
-    }
+    };
+    syncSession();
+    window.addEventListener("storage", syncSession);
+    window.addEventListener("xtrike-scan-updated", syncSession);
+    window.addEventListener("xtrike-scan-cleared", syncSession);
+    return () => {
+      window.removeEventListener("storage", syncSession);
+      window.removeEventListener("xtrike-scan-updated", syncSession);
+      window.removeEventListener("xtrike-scan-cleared", syncSession);
+    };
   }, []);
 
   useEffect(() => {

@@ -231,8 +231,20 @@ export default function DashboardContent() {
   const [useBenchmarkDataset, setUseBenchmarkDataset] = useState(false);
 
   useEffect(() => {
-    const loaded = loadActiveScanSession();
-    if (loaded) setActiveSession(loaded);
+    const syncSession = () => {
+      const loaded = loadActiveScanSession();
+      setActiveSession(loaded);
+      if (loaded) setUseBenchmarkDataset(false);
+    };
+    syncSession();
+    window.addEventListener("storage", syncSession);
+    window.addEventListener("xtrike-scan-updated", syncSession);
+    window.addEventListener("xtrike-scan-cleared", syncSession);
+    return () => {
+      window.removeEventListener("storage", syncSession);
+      window.removeEventListener("xtrike-scan-updated", syncSession);
+      window.removeEventListener("xtrike-scan-cleared", syncSession);
+    };
   }, []);
 
   const update = useCallback(

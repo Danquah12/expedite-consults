@@ -26,6 +26,7 @@ import {
   type BenchmarkRepoTarget,
 } from "@/data/benchmark-repos";
 import { LANGUAGE_STARTER_CODEBASES } from "@/lib/enterprise-sast-engine";
+import { clearActiveScanSession } from "@/lib/live-sast-scanner";
 import { SAST_400_PLUGINS, SAST_400_CATEGORIES } from "@/lib/sast-400-plugins";
 
 export type AttachedSourceFile = {
@@ -115,18 +116,23 @@ export default function RepoInput({ onStart }: Props) {
   };
 
   const handleSelectBenchmarkRepo = (repo: BenchmarkRepoTarget) => {
+    clearActiveScanSession();
     setRepoUrl(repo.url);
     setLanguage(repo.language);
     setBranch(repo.defaultBranch);
     setCommitSha(repo.defaultCommitSha);
     setScanMode("repo_and_adapter");
-    const starter = LANGUAGE_STARTER_CODEBASES[repo.language] || [];
+    const starter = (LANGUAGE_STARTER_CODEBASES[repo.language] || []).map((f) => ({
+      ...f,
+      path: `${repo.ownerRepo}/${f.path}`,
+    }));
     setAttachedFiles([...repo.seedFiles, ...starter]);
     setActiveFileIdx(0);
   };
 
   const handleQuickLaunchRepo = (repo: BenchmarkRepoTarget, e: React.MouseEvent) => {
     e.stopPropagation();
+    clearActiveScanSession();
     onStart({
       repoUrl: repo.url,
       branch: repo.defaultBranch,

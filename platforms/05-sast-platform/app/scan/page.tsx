@@ -6,12 +6,14 @@ import RepoInput, { type AttachedSourceFile } from "@/components/scan/RepoInput"
 import ScanProgress from "@/components/scan/ScanProgress";
 import PostScanValidation from "@/components/scan/PostScanValidation";
 import type { LiveScanTelemetry } from "@/lib/enterprise-sast-engine";
-import { Shield, CheckCircle2 } from "lucide-react";
+import { clearActiveScanSession } from "@/lib/live-sast-scanner";
+import { Shield, CheckCircle2, RotateCcw } from "lucide-react";
 
 type Step = "input" | "scanning" | "validating";
 
 export default function ScanPage() {
   const [step, setStep] = useState<Step>("input");
+  const [scanRunKey, setScanRunKey] = useState(0);
   const [repo, setRepo] = useState("");
   const [branch, setBranch] = useState("main");
   const [commitSha, setCommitSha] = useState("a4f92c81e03b4d12");
@@ -29,20 +31,33 @@ export default function ScanPage() {
     engines: string[];
     attachedFiles: AttachedSourceFile[];
   }) => {
+    // 1. Immediately wipe all previous scan information from memory, sessionStorage, and localStorage
+    clearActiveScanSession();
+    setTelemetry(null);
+
+    // 2. Bind the new scan parameters and mount a fresh ScanProgress instance
     setRepo(params.repoUrl);
     setBranch(params.branch);
     setCommitSha(params.commitSha);
     setLanguage(params.language);
     setEngines(params.engines);
     setAttachedFiles(params.attachedFiles);
+    setScanRunKey((prev) => prev + 1);
     setStep("scanning");
+  };
+
+  const handleResetForNewScan = () => {
+    clearActiveScanSession();
+    setTelemetry(null);
+    setScanRunKey((prev) => prev + 1);
+    setStep("input");
   };
 
   const handleScanComplete = (scanTelemetry?: LiveScanTelemetry) => {
     if (scanTelemetry) {
       setTelemetry(scanTelemetry);
     }
-    setTimeout(() => setStep("validating"), 700);
+    setTimeout(() => setStep("validating"), 400);
   };
 
   const handleValidationComplete = () => {
@@ -87,9 +102,33 @@ export default function ScanPage() {
               <Shield size={24} color="#8b4528" />
             </div>
             <div>
-              <h1 style={{ fontSize: 28, fontWeight: 800, color: "var(--foreground)", lineHeight: 1.2 }}>
-                Scan &amp; Proof Validation Workspace
-              </h1>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                <h1 style={{ fontSize: 28, fontWeight: 800, color: "var(--foreground)", lineHeight: 1.2 }}>
+                  Scan &amp; Proof Validation Workspace
+                </h1>
+                {step !== "input" && (
+                  <button
+                    type="button"
+                    onClick={handleResetForNewScan}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "6px 12px",
+                      borderRadius: 8,
+                      background: "#f4e5dc",
+                      border: "1px solid #8b4528",
+                      color: "#8b4528",
+                      fontSize: 12,
+                      fontWeight: 800,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <RotateCcw size={13} />
+                    Clear &amp; Start New Scan
+                  </button>
+                )}
+              </div>
               <p style={{ fontSize: 13.5, color: "var(--muted)", marginTop: 4 }}>
                 Connect a code repository or attach source code across 10 languages, execute XTRIKE XQL / XTRIKE DeepFlow / XTRIKE StructSCA + 400 OWASP/NIST plugins, and verify 6-point proof contracts.
               </p>
@@ -155,6 +194,7 @@ export default function ScanPage() {
           {step === "input" && <RepoInput onStart={handleStart} />}
           {step === "scanning" && (
             <ScanProgress
+              key={`scan-${scanRunKey}`}
               repo={repo}
               branch={branch}
               commitSha={commitSha}
@@ -166,6 +206,7 @@ export default function ScanPage() {
           )}
           {step === "validating" && (
             <PostScanValidation
+              key={`val-${scanRunKey}`}
               repo={repo}
               language={language}
               telemetry={telemetry}

@@ -371,40 +371,50 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const repoSlug =
+      matchedBenchRepo?.ownerRepo ||
+      (ghParsed ? `${ghParsed.owner}/${ghParsed.repo}` : "custom-target");
+
     // 4. Inject the matched Benchmark Repository's dedicated seed files so its exact modules and CWEs are always enumerated
     if (matchedBenchRepo && matchedBenchRepo.seedFiles.length > 0) {
       initialLogs.push(
         `[CORPUS]    Loaded ${matchedBenchRepo.seedFiles.length} signature vulnerable source module(s) for ${matchedBenchRepo.ownerRepo} (${matchedBenchRepo.keyCwes.join(", ")})...`
       );
-      filesToScan.unshift(...matchedBenchRepo.seedFiles);
+      filesToScan.unshift(
+        ...matchedBenchRepo.seedFiles.map((sf) => ({
+          ...sf,
+          path: sf.path.startsWith(repoSlug) ? sf.path : `${repoSlug}/${sf.path}`,
+        }))
+      );
     }
 
-    // 5. Ensure we also include multi-tier code files for the selected language / benchmark repo so Pass-1 AST enumeration covers all architectural layers
+    // 5. Ensure we also include multi-tier code files for the selected language / benchmark repo scoped to the target repo
     const lowerUrl = repoUrl.toLowerCase();
     if (attachedFiles.length === 0) {
-      if (lowerUrl.includes("webgoat")) {
-        filesToScan.push(...BENCHMARK_REPO_FILES.webgoat);
-      } else if (lowerUrl.includes("dvwa")) {
-        filesToScan.push(...BENCHMARK_REPO_FILES.dvwa);
-      } else if (lowerUrl.includes("juice-shop")) {
-        filesToScan.push(...BENCHMARK_REPO_FILES["juice-shop"]);
-      } else {
-        filesToScan.push(...(LANGUAGE_STARTER_CODEBASES[language] || BENCHMARK_REPO_FILES.webgoat));
-      }
-    }
+      const baseExtraFiles = lowerUrl.includes("webgoat")
+        ? BENCHMARK_REPO_FILES.webgoat
+        : lowerUrl.includes("dvwa")
+          ? BENCHMARK_REPO_FILES.dvwa
+          : lowerUrl.includes("juice-shop")
+            ? BENCHMARK_REPO_FILES["juice-shop"]
+            : LANGUAGE_STARTER_CODEBASES[language] || BENCHMARK_REPO_FILES.webgoat;
 
-    const hasSelectedLangFile = filesToScan.some(
-      (f) => (f.language || "").toLowerCase() === language.toLowerCase()
-    );
-    if (attachedFiles.length === 0 && !hasSelectedLangFile && LANGUAGE_STARTER_CODEBASES[language]) {
-      initialLogs.push(
-        `[AST-LANG]  Loading ${language} AST reference module (${LANGUAGE_STARTER_CODEBASES[language][0].path})...`
+      filesToScan.push(
+        ...baseExtraFiles.map((f) => ({
+          ...f,
+          path: f.path.startsWith(repoSlug) ? f.path : `${repoSlug}/${f.path}`,
+        }))
       );
-      filesToScan.push(...LANGUAGE_STARTER_CODEBASES[language]);
     }
 
     if (filesToScan.length === 0) {
-      filesToScan.push(...(LANGUAGE_STARTER_CODEBASES[language] || BENCHMARK_REPO_FILES.webgoat));
+      const fallback = LANGUAGE_STARTER_CODEBASES[language] || BENCHMARK_REPO_FILES.webgoat;
+      filesToScan.push(
+        ...fallback.map((f) => ({
+          ...f,
+          path: `${repoSlug}/${f.path}`,
+        }))
+      );
     }
 
     // 4. Execute Pass-1 XTRIKE XQL + XTRIKE DeepFlow + XTRIKE StructSCA + 400-Plugin Dispatcher

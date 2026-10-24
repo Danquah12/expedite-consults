@@ -56,14 +56,16 @@ export default function ReportEnginePage() {
   useEffect(() => {
     const sync = () => {
       const session = loadActiveScanSession();
-      if (session) setActiveSession(session);
+      setActiveSession(session);
     };
     sync();
     window.addEventListener("storage", sync);
     window.addEventListener("xtrike-scan-updated", sync);
+    window.addEventListener("xtrike-scan-cleared", sync);
     return () => {
       window.removeEventListener("storage", sync);
       window.removeEventListener("xtrike-scan-updated", sync);
+      window.removeEventListener("xtrike-scan-cleared", sync);
     };
   }, []);
 

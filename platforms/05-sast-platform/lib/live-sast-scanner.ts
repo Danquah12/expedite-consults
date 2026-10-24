@@ -2259,3 +2259,29 @@ export function loadActiveScanSession(): ActiveScanSession | null {
     return null;
   }
 }
+
+/**
+ * Completely clears all persisted and session scan information before a new scan starts.
+ */
+export function clearActiveScanSession(): void {
+  if (typeof window === "undefined") return;
+  try {
+    const keysToRemove = [
+      "xtrike_live_sast_scan_v1",
+      ACTIVE_SCAN_STORAGE_KEY,
+      "sast_active_scan_session_v1",
+      "sast_active_scan_session_v2",
+      "xtrike_active_scan_session_v1",
+      "xtrike_active_scan_session_v2",
+    ];
+    for (const k of keysToRemove) {
+      window.sessionStorage.removeItem(k);
+      window.localStorage.removeItem(k);
+    }
+    window.dispatchEvent(new Event("xtrike-scan-cleared"));
+    window.dispatchEvent(new Event("xtrike-scan-updated"));
+  } catch {
+    // ignore storage errors
+  }
+}
+
