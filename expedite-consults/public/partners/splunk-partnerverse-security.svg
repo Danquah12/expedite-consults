@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 150" width="240" height="150">
+  <defs>
+    <linearGradient id="splunkGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f99d1c"/>
+      <stop offset="50%" stop-color="#f05a28"/>
+      <stop offset="100%" stop-color="#ec008c"/>
+    </linearGradient>
+    <clipPath id="cardClip">
+      <rect x="4" y="4" width="232" height="142" rx="22"/>
+    </clipPath>
+  </defs>
+  <rect x="4" y="4" width="232" height="142" rx="22" fill="#ffffff" stroke="#e2e8f0" stroke-width="2"/>
+  <g clip-path="url(#cardClip)">
+    <rect x="4" y="4" width="232" height="68" fill="url(#splunkGrad)"/>
+    <text x="114" y="34" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="22" fill="#ffffff" text-anchor="middle" letter-spacing="0.5">splunk<tspan fill="#ffffff" font-weight="900">&gt;</tspan></text>
+    <text x="120" y="56" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="16" fill="#ffffff" text-anchor="middle" letter-spacing="0.4">Partnerverse</text>
+    <line x1="65" y1="63" x2="175" y2="63" stroke="#ffffff" stroke-width="1.5" stroke-opacity="0.7"/>
+    <text x="120" y="96" font-family="Arial, Helvetica, sans-serif" font-weight="600" font-size="15" fill="#1e293b" text-anchor="middle">Enterprise</text>
+    <text x="120" y="115" font-family="Arial, Helvetica, sans-serif" font-weight="600" font-size="15" fill="#1e293b" text-anchor="middle">Security</text>
+    <text x="120" y="134" font-family="Arial, Helvetica, sans-serif" font-weight="600" font-size="15" fill="#1e293b" text-anchor="middle">Solutions</text>
+  </g>
+</svg>

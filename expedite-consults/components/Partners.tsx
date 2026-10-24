@@ -53,17 +53,38 @@ export async function Partners() {
 					))}
 					<Image
 						src="/partners/splunk.svg"
-						alt="Splunk Partner"
+						alt="Splunk Official Partner"
 						width="200"
 						height="60"
 						className="w-[180px] h-[60px] object-contain mx-10 brightness-110 transition-all duration-300 ease-in-out"
 					/>
 					<Image
+						src="/partners/splunk-partnerverse-security.svg"
+						alt="Splunk Partnerverse Enterprise Security Solutions"
+						width="200"
+						height="75"
+						className="w-[140px] h-[75px] object-contain mx-8 transition-all duration-300 ease-in-out"
+					/>
+					<Image
+						src="/partners/splunk-partnerverse-manage.svg"
+						alt="Splunk Partnerverse Manage Elite"
+						width="200"
+						height="75"
+						className="w-[140px] h-[75px] object-contain mx-8 transition-all duration-300 ease-in-out"
+					/>
+					<Image
 						src="/partners/cisco.svg"
-						alt="Cisco Partner"
+						alt="Cisco Official Partner"
 						width="200"
 						height="60"
 						className="w-[180px] h-[60px] object-contain mx-10 brightness-110 transition-all duration-300 ease-in-out"
+					/>
+					<Image
+						src="/partners/cisco-360-partner.svg"
+						alt="Cisco 360 Partner Program"
+						width="220"
+						height="70"
+						className="w-[200px] h-[70px] object-contain mx-10 transition-all duration-300 ease-in-out"
 					/>
 				</Marquee>
 
