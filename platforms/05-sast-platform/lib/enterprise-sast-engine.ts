@@ -807,7 +807,96 @@ export const LANGUAGE_STARTER_CODEBASES: Record<
   string,
   { path: string; language: string; content: string }[]
 > = {
-  Java: BENCHMARK_REPO_FILES.webgoat,
+  Java: [
+    {
+      path: "src/main/java/security/controllers/AccountQueryController.java",
+      language: "Java",
+      content: `package security.controllers;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+public class AccountQueryController {
+    @PostMapping("/api/accounts/search")
+    public String injectableQuery(@RequestParam String account, Connection connection) throws Exception {
+        String query = "SELECT * FROM user_data WHERE first_name = 'John' AND last_name = '" + account + "'";
+        Statement statement = connection.createStatement();
+        ResultSet results = statement.executeQuery(query);
+        return results.toString();
+    }
+}`,
+    },
+    {
+      path: "src/main/java/security/services/ObjectDeserializationService.java",
+      language: "Java",
+      content: `package security.services;
+import java.io.ByteArrayInputStream;
+import java.io.ObjectInputStream;
+import java.util.Base64;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+public class ObjectDeserializationService {
+    @PostMapping("/api/session/deserialize")
+    public Object deserializePayload(@RequestParam String token) throws Exception {
+        String b64token = token.replace('-', '+').replace('_', '/');
+        ByteArrayInputStream bais = new ByteArrayInputStream(Base64.getDecoder().decode(b64token));
+        ObjectInputStream ois = new ObjectInputStream(bais);
+        return ois.readObject();
+    }
+}`,
+    },
+    {
+      path: "src/main/java/security/xml/XmlDocumentParser.java",
+      language: "Java",
+      content: `package security.xml;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.DocumentBuilder;
+import java.io.StringReader;
+import org.xml.sax.InputSource;
+
+public class XmlDocumentParser {
+    public void parseXmlPayload(String xmlInput) throws Exception {
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        DocumentBuilder db = dbf.newDocumentBuilder();
+        db.parse(new InputSource(new StringReader(xmlInput)));
+    }
+}`,
+    },
+    {
+      path: "src/main/java/security/files/FileAttachmentController.java",
+      language: "Java",
+      content: `package security.files;
+import java.io.File;
+import javax.servlet.http.HttpServletRequest;
+
+public class FileAttachmentController {
+    public File fetchAttachment(HttpServletRequest request) {
+        String fullName = request.getParameter("fullName");
+        return new File("/var/app/uploads/" + fullName);
+    }
+}`,
+    },
+    {
+      path: "src/main/java/security/crypto/LegacyTokenHashProvider.java",
+      language: "Java",
+      content: `package security.crypto;
+import java.security.MessageDigest;
+import java.util.Random;
+
+public class LegacyTokenHashProvider {
+    private static final String JWT_SECRET = "enterprise-hardcoded-signing-secret-key-2025";
+
+    public byte[] legacyDigest(String password) throws Exception {
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        String resetOtp = String.valueOf(new Random().nextInt(999999));
+        return md.digest((password + resetOtp).getBytes());
+    }
+}`,
+    },
+  ],
   Python: [
     {
       path: "app/controllers/payment_service.py",

@@ -1387,19 +1387,27 @@ export default function ReportEnginePage() {
                           marginBottom: 12,
                         }}
                       >
-                        <div>
+                        <div style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}>
                           <span style={{ color: "#5c5349", fontWeight: 600 }}>Source File &amp; Line: </span>
-                          <code style={{ fontFamily: "monospace", fontWeight: 700, color: "#1f1b18" }}>
+                          <code
+                            style={{
+                              fontFamily: "monospace",
+                              fontWeight: 700,
+                              color: "#1f1b18",
+                              wordBreak: "break-all",
+                              overflowWrap: "anywhere",
+                            }}
+                          >
                             {finding.file}:{finding.line}
                           </code>
                         </div>
-                        <div>
+                        <div style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}>
                           <span style={{ color: "#5c5349", fontWeight: 600 }}>CWE &amp; OWASP: </span>
                           <span style={{ fontWeight: 700 }}>
                             {finding.cwe} ({finding.cweName}) &middot; {finding.owasp}
                           </span>
                         </div>
-                        <div>
+                        <div style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}>
                           <span style={{ color: "#5c5349", fontWeight: 600 }}>MITRE ATT&amp;CK TTP: </span>
                           <span style={{ fontWeight: 700, color: "#8b4528" }}>
                             {pev
@@ -1407,7 +1415,7 @@ export default function ReportEnginePage() {
                               : finding.mitre}
                           </span>
                         </div>
-                        <div>
+                        <div style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}>
                           <span style={{ color: "#5c5349", fontWeight: 600 }}>PTES &amp; XTRIKE Verify: </span>
                           <span style={{ fontFamily: "monospace", fontWeight: 700 }}>
                             {pev
@@ -1415,13 +1423,13 @@ export default function ReportEnginePage() {
                               : "PTES-4 · CheckCode::Appears"}
                           </span>
                         </div>
-                        <div>
+                        <div style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}>
                           <span style={{ color: "#5c5349", fontWeight: 600 }}>Compliance Controls: </span>
                           <span style={{ fontWeight: 600 }}>
                             {finding.compliance.map((c) => `${c.framework} ${c.reference}`).join(" · ")}
                           </span>
                         </div>
-                        <div>
+                        <div style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}>
                           <span style={{ color: "#5c5349", fontWeight: 600 }}>XTRIKE Engines: </span>
                           <span style={{ fontWeight: 700 }}>
                             {finding.engines
@@ -1444,6 +1452,8 @@ export default function ReportEnginePage() {
                           display: "flex",
                           flexDirection: "column",
                           gap: 6,
+                          wordBreak: "break-word",
+                          overflowWrap: "anywhere",
                         }}
                       >
                         <div
@@ -1508,7 +1518,7 @@ export default function ReportEnginePage() {
                             <strong>
                               Initial Penetration Probe ({penetrationTestLifecycle.initialPentest.resultStatus}):{" "}
                             </strong>
-                            <code style={{ fontFamily: "monospace", fontSize: 10.5 }}>
+                            <code style={{ fontFamily: "monospace", fontSize: 10.5, wordBreak: "break-word", overflowWrap: "anywhere" }}>
                               {penetrationTestLifecycle.initialPentest.evidenceLog}
                             </code>
                           </div>
@@ -1532,16 +1542,16 @@ export default function ReportEnginePage() {
                       </div>
 
                       {/* Technical Root Cause & Remediation */}
-                      <div style={{ fontSize: 12, color: "#36302a", lineHeight: 1.55, marginBottom: 8 }}>
+                      <div style={{ fontSize: 12, color: "#36302a", lineHeight: 1.55, marginBottom: 8, wordBreak: "break-word", overflowWrap: "anywhere" }}>
                         <strong>Executive Summary &amp; Root Cause: </strong>
                         {finding.executiveSummary} {finding.rootCause}
                       </div>
 
-                      <div style={{ fontSize: 11.5, color: "#4a4239", lineHeight: 1.55, marginBottom: 8 }}>
+                      <div style={{ fontSize: 11.5, color: "#4a4239", lineHeight: 1.55, marginBottom: 8, wordBreak: "break-word", overflowWrap: "anywhere" }}>
                         <strong>Taint Propagation Path: </strong>
-                        Source <code style={{ fontFamily: "monospace", background: "#f3eee4", padding: "1px 5px" }}>{finding.source}</code>{" "}
+                        Source <code style={{ fontFamily: "monospace", background: "#f3eee4", padding: "1px 5px", wordBreak: "break-all" }}>{finding.source}</code>{" "}
                         &rarr; {finding.taintPath.join(" → ")} &rarr; Sink{" "}
-                        <code style={{ fontFamily: "monospace", background: "#f3eee4", padding: "1px 5px" }}>{finding.sink}</code>
+                        <code style={{ fontFamily: "monospace", background: "#f3eee4", padding: "1px 5px", wordBreak: "break-all" }}>{finding.sink}</code>
                       </div>
 
                       {rem && (
@@ -1556,13 +1566,13 @@ export default function ReportEnginePage() {
                         <div
                           style={{
                             display: "grid",
-                            gridTemplateColumns: finding.codeSnippet && rem ? "1fr 1fr" : "1fr",
+                            gridTemplateColumns: finding.codeSnippet && rem ? "minmax(0, 1fr) minmax(0, 1fr)" : "minmax(0, 1fr)",
                             gap: 10,
                             marginTop: 8,
                           }}
                         >
                           {finding.codeSnippet && (
-                            <div>
+                            <div style={{ minWidth: 0 }}>
                               <div
                                 style={{
                                   fontSize: 10,
@@ -1570,6 +1580,7 @@ export default function ReportEnginePage() {
                                   color: "#9e2a2b",
                                   textTransform: "uppercase",
                                   marginBottom: 4,
+                                  wordBreak: "break-all",
                                 }}
                               >
                                 Discovered AST Code Context ({finding.file}:{finding.line})
@@ -1585,6 +1596,8 @@ export default function ReportEnginePage() {
                                   color: "#5e1618",
                                   overflowX: "auto",
                                   whiteSpace: "pre-wrap",
+                                  wordBreak: "break-word",
+                                  overflowWrap: "anywhere",
                                 }}
                               >
                                 {finding.codeSnippet}
@@ -1593,7 +1606,7 @@ export default function ReportEnginePage() {
                           )}
 
                           {rem && (
-                            <div>
+                            <div style={{ minWidth: 0 }}>
                               <div
                                 style={{
                                   fontSize: 10,
@@ -1616,6 +1629,8 @@ export default function ReportEnginePage() {
                                   color: "#194430",
                                   overflowX: "auto",
                                   whiteSpace: "pre-wrap",
+                                  wordBreak: "break-word",
+                                  overflowWrap: "anywhere",
                                 }}
                               >
                                 {rem.code}

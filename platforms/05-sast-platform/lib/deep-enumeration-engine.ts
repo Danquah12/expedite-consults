@@ -452,7 +452,60 @@ export function generateDeepReEnumeratedFindings(params: {
 } {
   const { primaryFindings, primaryValidation, repoUrl, commitSha, language } = params;
   const today = new Date().toISOString().slice(0, 10);
-  const appSlug = repoUrl.replace(/^https?:\/\/github\.com\//i, "") || "xtrike-enterprise-app";
+  const appSlug =
+    repoUrl
+      .trim()
+      .replace(/^https?:\/\/(www\.)?github\.com\//i, "")
+      .replace(/^https?:\/\/[^/]+\//i, "")
+      .replace(/\.git$/i, "")
+      .replace(/\/+$/, "") || "xtrike-enterprise-app";
+
+  const toSnake = (s: string) =>
+    s
+      .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+      .toLowerCase();
+
+  const resolveReEnumFilePath = (rawPath: string): string => {
+    const clean = rawPath.replace(/^src\//, "").replace(/\.\w+$/, "");
+    const parts = clean.split("/");
+    const baseName = parts[parts.length - 1] || "Module";
+    const subDir = parts.slice(0, -1).join("/") || "core";
+
+    let langRelative: string;
+    switch (language) {
+      case "Java":
+        langRelative = `src/main/java/${subDir}/${baseName}.java`;
+        break;
+      case "Kotlin":
+        langRelative = `src/main/kotlin/${subDir}/${baseName}.kt`;
+        break;
+      case "Python":
+        langRelative = `app/${subDir}/${toSnake(baseName)}.py`;
+        break;
+      case "PHP":
+        langRelative = `modules/${subDir}/${toSnake(baseName)}.php`;
+        break;
+      case "Go":
+        langRelative = `internal/${subDir}/${toSnake(baseName)}.go`;
+        break;
+      case "C#":
+        langRelative = `Services/${baseName}.cs`;
+        break;
+      case "Ruby":
+        langRelative = `app/${subDir}/${toSnake(baseName)}.rb`;
+        break;
+      case "Swift":
+        langRelative = `Sources/Security/${baseName}.swift`;
+        break;
+      case "Node.js":
+        langRelative = `src/${subDir}/${baseName}.js`;
+        break;
+      default:
+        langRelative = `src/${subDir}/${baseName}.ts`;
+        break;
+    }
+    return `${appSlug}/${langRelative}`;
+  };
 
   const deepTemplates: Array<{
     cwe: string;
@@ -681,6 +734,7 @@ export function generateDeepReEnumeratedFindings(params: {
   deepTemplates.forEach((tpl, idx) => {
     const id = `RE-ENUM-${String(idx + 1).padStart(3, "0")}`;
     const valId = `VAL-RE-${String(201 + idx)}`;
+    const resolvedFilePath = resolveReEnumFilePath(tpl.fileSuffix);
 
     const baseFinding: SASTFinding = {
       id,
@@ -694,16 +748,16 @@ export function generateDeepReEnumeratedFindings(params: {
       mitre: tpl.mitre,
       owasp: tpl.owasp,
       owaspCategory: tpl.owaspCategory,
-      file: tpl.fileSuffix,
+      file: resolvedFilePath,
       line: tpl.line,
       language,
       codeSnippet: tpl.codeSnippet,
       snippetStartLine: Math.max(1, tpl.line - 2),
       source: tpl.source,
       sink: tpl.sink,
-      taintPath: [tpl.source, `Re-Enumerated Pivot in ${tpl.fileSuffix}:${tpl.line}`, tpl.sink],
+      taintPath: [tpl.source, `Re-Enumerated Pivot in ${resolvedFilePath}:${tpl.line}`, tpl.sink],
       checkmarxQuery: `XTRIKE-DEEP-REENUM/${tpl.cwe.replace("-", "_")}_SECOND_ORDER`,
-      checkmarxBfl: `${tpl.fileSuffix}:${tpl.line}`,
+      checkmarxBfl: `${resolvedFilePath}:${tpl.line}`,
       ibmRuleId: `XTRIKE-DEEPFLOW-RE-${idx + 1}`,
       ibmTraceSummary: `${tpl.passType} confirmed chained reachability`,
       fortifyKingdom: "Input Validation and Representation",
@@ -722,11 +776,11 @@ export function generateDeepReEnumeratedFindings(params: {
       privilegeGain: `Chained Post-Exploitation Pivot (${tpl.cweName})`,
       attackPath: [
         { label: "Pass-1 Primary Flaw", type: "entry", description: tpl.source },
-        { label: "Re-Enumeration Pivot", type: "lateral", description: `Unlocked ${tpl.fileSuffix}:${tpl.line}` },
+        { label: "Re-Enumeration Pivot", type: "lateral", description: `Unlocked ${resolvedFilePath}:${tpl.line}` },
         { label: `${tpl.cwe} Second-Order Sink`, type: "vulnerability", description: tpl.sink },
         { label: "Post-Exploitation Impact", type: "impact", description: "Full Chained Compromise" },
       ],
-      executiveSummary: `${tpl.passType} uncovered ${tpl.title} at ${tpl.fileSuffix}:${tpl.line}, correlated across GitHub GHSA, SearchSploit/Exploit-DB, and Google OSV.`,
+      executiveSummary: `${tpl.passType} uncovered ${tpl.title} at ${resolvedFilePath}:${tpl.line}, correlated across GitHub GHSA, SearchSploit/Exploit-DB, and Google OSV.`,
       businessImpact: "Enables multi-step chained exploitation, lateral movement across internal services, and post-exploitation data exfiltration.",
       rootCause: tpl.remediationSummary,
       falsePositiveLikelihood: "Very Low",
@@ -745,7 +799,7 @@ export function generateDeepReEnumeratedFindings(params: {
       ],
       validationSteps: [
         tpl.remediationSummary,
-        `Re-run 7-Phase PTES Re-Enumeration & Re-Penetration verification on ${tpl.fileSuffix}:${tpl.line}.`,
+        `Re-run 7-Phase PTES Re-Enumeration & Re-Penetration verification on ${resolvedFilePath}:${tpl.line}.`,
       ],
       slaDeadline: today,
       owner: "AppSec & Red-Team Verification Desk",
@@ -761,7 +815,7 @@ export function generateDeepReEnumeratedFindings(params: {
 
     deepEnumerationLogs.push(
       `[DB-CORRELATE] ${id} (${tpl.cwe}): GitHub ${dossier.databaseCorrelations.githubGhsa.advisoryId} · SearchSploit ${dossier.databaseCorrelations.searchsploit.edbId} · Google OSV ${dossier.databaseCorrelations.googleIntel.osvId}`,
-      `[STAGE 3: INITIAL PENTEST] Probed ${tpl.fileSuffix}:${tpl.line} -> ${dossier.penetrationTestLifecycle.initialPentest.resultStatus}`,
+      `[STAGE 3: INITIAL PENTEST] Probed ${resolvedFilePath}:${tpl.line} -> ${dossier.penetrationTestLifecycle.initialPentest.resultStatus}`,
       `[STAGE 4: RE-ENUMERATION] Unlocked ${dossier.penetrationTestLifecycle.reEnumeration.secondarySinksFound} secondary sinks: ${dossier.penetrationTestLifecycle.reEnumeration.newlyDiscoveredSurface[0]}`,
       `[STAGE 5: RE-PENETRATION] Verified Attack Chain ${dossier.penetrationTestLifecycle.rePenetrationTest.chainId} (Chained CVSS ${dossier.penetrationTestLifecycle.rePenetrationTest.chainedCvss})`,
       `[STAGE 6: POST-EXPLOITATION] Privilege Attained: ${dossier.penetrationTestLifecycle.postExploitation.privilegeAttained} | Blast Radius: ${dossier.penetrationTestLifecycle.postExploitation.blastRadiusScore}/100`
@@ -779,10 +833,10 @@ export function generateDeepReEnumeratedFindings(params: {
       repository: repoUrl,
       commitSha,
       buildCommitSha: commitSha,
-      filePath: tpl.fileSuffix,
+      filePath: resolvedFilePath,
       startLine: tpl.line,
       endLine: tpl.line + 3,
-      functionName: tpl.fileSuffix.split("/").pop()?.replace(/\.\w+$/, "") || "handler",
+      functionName: resolvedFilePath.split("/").pop()?.replace(/\.\w+$/, "") || "handler",
       language,
       framework: `${language} · 7-Phase PTES Re-Penetration Engine`,
       sourceExpr: tpl.source,
@@ -791,7 +845,7 @@ export function generateDeepReEnumeratedFindings(params: {
       sanitizersDetected: [],
       traceProvenance: `GitHub ${dossier.databaseCorrelations.githubGhsa.advisoryId} + SearchSploit ${dossier.databaseCorrelations.searchsploit.edbId} + Google ${dossier.databaseCorrelations.googleIntel.osvId}`,
       buildId: `build-${commitSha.slice(0, 8)}`,
-      endpoint: tpl.fileSuffix,
+      endpoint: resolvedFilePath,
       httpMethod: "POST",
       authContext: "7-Phase Enumeration -> Pentest -> Re-Enumeration -> Post-Exploitation",
       requiredConfig: ["Deep Multi-Pass Enumeration Active", "4-DB Threat Intel Online"],
@@ -803,7 +857,7 @@ export function generateDeepReEnumeratedFindings(params: {
           label: "1. Deep AST & Surface Enumeration",
           deterministic: true,
           status: "pass",
-          summary: `${tpl.passType} indexed ${tpl.fileSuffix}:${tpl.line}.`,
+          summary: `${tpl.passType} indexed ${resolvedFilePath}:${tpl.line}.`,
           detail: `Entrypoint: ${tpl.source}`,
           durationMs: 42,
         },
@@ -852,7 +906,7 @@ export function generateDeepReEnumeratedFindings(params: {
       ],
       proofContract: [
         { requirement: "Source provenance", question: "Where does untrusted input enter?", satisfied: true, evidenceSummary: tpl.source, sourceType: "AST" },
-        { requirement: "Sink reachability", question: "Does input reach the second-order sink?", satisfied: true, evidenceSummary: `${tpl.fileSuffix}:${tpl.line} (${tpl.sink.slice(0, 45)})`, sourceType: "DataFlow" },
+        { requirement: "Sink reachability", question: "Does input reach the second-order sink?", satisfied: true, evidenceSummary: `${resolvedFilePath}:${tpl.line} (${tpl.sink.slice(0, 45)})`, sourceType: "DataFlow" },
         { requirement: "Security control", question: "Were guards bypassed during re-penetration?", satisfied: true, evidenceSummary: dossier.penetrationTestLifecycle.initialPentest.evidenceLog, sourceType: "Controlled Check" },
         { requirement: "Behavioral proof", question: "Correlated with GitHub, SearchSploit & Google OSV?", satisfied: true, evidenceSummary: `${dossier.databaseCorrelations.githubGhsa.advisoryId} · ${dossier.databaseCorrelations.searchsploit.edbId} · ${dossier.databaseCorrelations.googleIntel.osvId}`, sourceType: "Controlled Check" },
         { requirement: "Alternative explanations", question: "Were dead-code paths ruled out?", satisfied: true, evidenceSummary: "Verified active in second-order call graph.", sourceType: "AST" },
@@ -870,13 +924,13 @@ export function generateDeepReEnumeratedFindings(params: {
       requestsSent: 4,
       rootCause: tpl.remediationSummary,
       suggestedFix: tpl.remediationCode,
-      regressionTest: `Verify ${dossier.penetrationTestLifecycle.rePenetrationTest.chainId} is neutralized at ${tpl.fileSuffix}:${tpl.line}`,
+      regressionTest: `Verify ${dossier.penetrationTestLifecycle.rePenetrationTest.chainId} is neutralized at ${resolvedFilePath}:${tpl.line}`,
       rawSarifRecord: {
         schemaVersion: "2.1.0",
         toolDriver: "XTRIKE 7-Phase Deep Enumeration & Re-Penetration Engine",
         ruleId: tpl.cwe,
         level: "error",
-        physicalLocation: `${tpl.fileSuffix}:${tpl.line}`,
+        physicalLocation: `${resolvedFilePath}:${tpl.line}`,
         codeFlowsCount: 3,
       },
     });

@@ -806,10 +806,12 @@ export default function ScanProgress({
             )}
           </div>
 
-          <div style={{ overflowX: "auto" }}>
+          <div style={{ overflowX: "auto", border: "1px solid var(--border)", borderRadius: 10 }}>
             <table
               style={{
                 width: "100%",
+                minWidth: 1020,
+                tableLayout: "fixed",
                 borderCollapse: "collapse",
                 fontSize: 11.5,
                 textAlign: "left",
@@ -823,11 +825,11 @@ export default function ScanProgress({
                     color: "var(--muted)",
                   }}
                 >
-                  <th style={{ padding: "8px 10px" }}>Finding &amp; Enumeration Pass</th>
-                  <th style={{ padding: "8px 10px" }}>GitHub GHSA · SearchSploit · Google OSV</th>
-                  <th style={{ padding: "8px 10px" }}>Initial Pentest &rarr; Re-Enumeration</th>
-                  <th style={{ padding: "8px 10px" }}>Chained Re-Pentest &amp; Post-Exploitation</th>
-                  <th style={{ padding: "8px 10px" }}>Dossier</th>
+                  <th style={{ padding: "10px 12px", width: "27%" }}>Finding &amp; Enumeration Pass</th>
+                  <th style={{ padding: "10px 12px", width: "22%" }}>GitHub GHSA &middot; SearchSploit &middot; Google OSV</th>
+                  <th style={{ padding: "10px 12px", width: "21%" }}>Initial Pentest &rarr; Re-Enumeration</th>
+                  <th style={{ padding: "10px 12px", width: "20%" }}>Chained Re-Pentest &amp; Post-Exploitation</th>
+                  <th style={{ padding: "10px 12px", width: "10%", textAlign: "right" }}>Dossier</th>
                 </tr>
               </thead>
               <tbody>
@@ -836,7 +838,15 @@ export default function ScanProgress({
                   const isReEnum = f.id.startsWith("RE-ENUM-");
                   return (
                     <tr key={f.id} style={{ borderBottom: "1px solid var(--border)" }}>
-                      <td style={{ padding: "9px 10px", maxWidth: 260 }}>
+                      <td
+                        style={{
+                          padding: "11px 12px",
+                          verticalAlign: "top",
+                          overflow: "hidden",
+                          wordBreak: "break-word",
+                          overflowWrap: "anywhere",
+                        }}
+                      >
                         <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                           <span
                             style={{
@@ -854,41 +864,78 @@ export default function ScanProgress({
                             {f.id} ({f.cwe})
                           </span>
                         </div>
-                        <div style={{ fontWeight: 700, color: "#1f1b18", marginTop: 2 }}>
+                        <div
+                          style={{
+                            fontWeight: 700,
+                            color: "#1f1b18",
+                            marginTop: 4,
+                            lineHeight: 1.35,
+                            wordBreak: "break-word",
+                            overflowWrap: "anywhere",
+                          }}
+                        >
                           {f.title}
                         </div>
-                        <div style={{ fontFamily: "monospace", fontSize: 10.5, color: "#8b4528" }}>
+                        <div
+                          style={{
+                            fontFamily: "monospace",
+                            fontSize: 10.5,
+                            color: "#8b4528",
+                            background: "var(--surface)",
+                            border: "1px solid var(--border)",
+                            borderRadius: 6,
+                            padding: "3px 7px",
+                            marginTop: 5,
+                            lineHeight: 1.35,
+                            wordBreak: "break-all",
+                            overflowWrap: "anywhere",
+                          }}
+                        >
                           {f.file}:{f.line}
                         </div>
                       </td>
 
-                      <td style={{ padding: "9px 10px", maxWidth: 260 }}>
+                      <td
+                        style={{
+                          padding: "11px 12px",
+                          verticalAlign: "top",
+                          overflow: "hidden",
+                          wordBreak: "break-word",
+                          overflowWrap: "anywhere",
+                        }}
+                      >
                         {d ? (
-                          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 4, lineHeight: 1.4 }}>
                             <div>
                               <strong style={{ color: "#1f1b18" }}>GitHub:</strong>{" "}
                               <span style={{ fontFamily: "monospace", color: "#8b4528" }}>
                                 {d.databaseCorrelations.githubGhsa.advisoryId}
                               </span>{" "}
-                              ({d.databaseCorrelations.githubGhsa.ghRepoMatches} repos)
+                              <span style={{ color: "var(--muted)", fontSize: 10.5 }}>
+                                ({d.databaseCorrelations.githubGhsa.ghRepoMatches} repos)
+                              </span>
                             </div>
                             <div>
                               <strong style={{ color: "#1f1b18" }}>SearchSploit:</strong>{" "}
                               <span style={{ fontFamily: "monospace", color: "#9e2a2b" }}>
                                 {d.databaseCorrelations.searchsploit.edbId}
                               </span>{" "}
-                              [{d.databaseCorrelations.searchsploit.exploitRank}]
+                              <span style={{ color: "var(--muted)", fontSize: 10.5 }}>
+                                [{d.databaseCorrelations.searchsploit.exploitRank}]
+                              </span>
                             </div>
-                            <div>
-                              <strong style={{ color: "#1f1b18" }}>Google OSV:</strong>{" "}
-                              <span style={{ fontFamily: "monospace" }}>
-                                {d.databaseCorrelations.googleIntel.osvId}
-                              </span>{" "}
+                            <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap" }}>
+                              <span>
+                                <strong style={{ color: "#1f1b18" }}>Google OSV:</strong>{" "}
+                                <span style={{ fontFamily: "monospace" }}>
+                                  {d.databaseCorrelations.googleIntel.osvId}
+                                </span>
+                              </span>
                               {d.databaseCorrelations.googleIntel.cisaKevListed && (
                                 <span
                                   style={{
-                                    padding: "0 4px",
-                                    borderRadius: 3,
+                                    padding: "1px 5px",
+                                    borderRadius: 4,
                                     background: "#f9e6e6",
                                     color: "#9e2a2b",
                                     fontSize: 9.5,
@@ -905,19 +952,27 @@ export default function ScanProgress({
                         )}
                       </td>
 
-                      <td style={{ padding: "9px 10px", maxWidth: 260 }}>
+                      <td
+                        style={{
+                          padding: "11px 12px",
+                          verticalAlign: "top",
+                          overflow: "hidden",
+                          wordBreak: "break-word",
+                          overflowWrap: "anywhere",
+                        }}
+                      >
                         {d ? (
                           <div>
                             <div style={{ fontWeight: 800, color: "#9e2a2b", fontSize: 10.5 }}>
                               {d.penetrationTestLifecycle.initialPentest.resultStatus}
                             </div>
-                            <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
+                            <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 4, lineHeight: 1.4 }}>
                               Unlocked{" "}
-                              <strong>
+                              <strong style={{ color: "#1f1b18" }}>
                                 {d.penetrationTestLifecycle.reEnumeration.secondarySinksFound} secondary sinks
                               </strong>
                               :{" "}
-                              {d.penetrationTestLifecycle.reEnumeration.newlyDiscoveredSurface[0]?.slice(0, 55)}...
+                              {d.penetrationTestLifecycle.reEnumeration.newlyDiscoveredSurface[0]?.slice(0, 60)}...
                             </div>
                           </div>
                         ) : (
@@ -925,16 +980,24 @@ export default function ScanProgress({
                         )}
                       </td>
 
-                      <td style={{ padding: "9px 10px", maxWidth: 260 }}>
+                      <td
+                        style={{
+                          padding: "11px 12px",
+                          verticalAlign: "top",
+                          overflow: "hidden",
+                          wordBreak: "break-word",
+                          overflowWrap: "anywhere",
+                        }}
+                      >
                         {d ? (
                           <div>
-                            <div style={{ fontWeight: 800, color: "#1f1b18" }}>
+                            <div style={{ fontWeight: 800, color: "#1f1b18", lineHeight: 1.35 }}>
                               Chained CVSS {d.penetrationTestLifecycle.rePenetrationTest.chainedCvss} &middot; Blast Radius{" "}
                               <span style={{ color: "#9e2a2b" }}>
                                 {d.penetrationTestLifecycle.postExploitation.blastRadiusScore}/100
                               </span>
                             </div>
-                            <div style={{ fontSize: 10.5, color: "#2d6a4f", fontWeight: 700, marginTop: 2 }}>
+                            <div style={{ fontSize: 10.5, color: "#2d6a4f", fontWeight: 700, marginTop: 4, lineHeight: 1.35 }}>
                               Attained: {d.penetrationTestLifecycle.postExploitation.privilegeAttained}
                             </div>
                           </div>
@@ -943,14 +1006,14 @@ export default function ScanProgress({
                         )}
                       </td>
 
-                      <td style={{ padding: "9px 10px" }}>
+                      <td style={{ padding: "11px 12px", verticalAlign: "top", textAlign: "right" }}>
                         <Link
                           href={`/finding/${f.id}`}
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
                             gap: 4,
-                            padding: "5px 10px",
+                            padding: "6px 10px",
                             borderRadius: 6,
                             background: "#f4e5dc",
                             color: "#8b4528",
