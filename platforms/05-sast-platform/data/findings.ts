@@ -4,101 +4,121 @@ export const FINDINGS: SASTFinding[] = [
   // ─── CRITICAL ───────────────────────────────────────────────────────────────
   {
     id: "F-001",
-    title: "SQL Injection via Unsanitized User Input",
+    title: "SQL Injection via Unsanitized String Concatenation / Interpolation",
     severity: "Critical",
     status: "Open",
     cwe: "CWE-89",
     cweName: "Improper Neutralization of Special Elements used in an SQL Command",
     cvss: 9.8,
-    epss: 0.142,
+    cvssVector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+    cvssRationale: "Worst-case CVSS v3.1 base score for unparameterized SQL sink; actual runtime exploitability and CIA impact depend on endpoint auth middleware and DB connection role privileges.",
+    epss: 0.421,
     mitre: "T1190",
     owasp: "A03:2021",
     owaspCategory: "Injection",
-    file: "src/main/java/com/api/UserController.java",
-    line: 142,
+    proofState: "DATAFLOW_CONFIRMED",
+    auditDisposition: "Credible SQLi Candidate (Dataflow Confirmed) — Runtime Exploitation & DB Privilege Scope Pending Isolated Verification",
+    advisoryApplicability: "FIRST_PARTY_CODE_WEAKNESS_NO_CVE",
+    file: "src/main/java/org/owasp/webgoat/lessons/sqlinjection/introduction/SqlInjectionLesson5a.java",
+    line: 12,
+    snippetStartLine: 6,
+    codeSnippet: `@RestController
+public class SqlInjectionLesson5a {
+    @PostMapping("/SqlInjection/attack5a")
+    public String injectableQuery(@RequestParam String account, Connection connection) throws Exception {
+        String query = "SELECT * FROM user_data WHERE first_name = 'John' AND last_name = '" + account + "'";
+        Statement statement = connection.createStatement();
+        ResultSet results = statement.executeQuery(query);
+        return results.toString();
+    }
+}`,
     language: "Java",
-    source: "request.getParameter(\"id\")",
-    sink: "jdbcTemplate.query(sql)",
+    source: "@RequestParam String account",
+    sink: "ResultSet results = statement.executeQuery(query);",
     taintPath: [
-      "request.getParameter(\"id\")",
-      "String sql = \"SELECT * FROM users WHERE id = \" + id",
-      "jdbcTemplate.query(sql)",
+      "public String injectableQuery(@RequestParam String account, Connection connection) throws Exception {",
+      "String query = \"SELECT * FROM user_data WHERE first_name = 'John' AND last_name = '\" + account + \"'\";",
+      "ResultSet results = statement.executeQuery(query);",
     ],
     engines: [
-      { name: "XTRIKE AST-Query",  confidence: 0.97, confirmed: true,  details: "Taint flow from HTTP param to SQL sink confirmed" },
-      { name: "XTRIKE PatternGuard", confidence: 0.94, confirmed: true,  details: "Pattern match: java.sql injection rule" },
-      { name: "XTRIKE GraphCPG",   confidence: 0.99, confirmed: true,  details: "CPG path analysis: direct source→sink path" },
-      { name: "XTRIKE TaintFlow",confidence: 0.98, confirmed: true,  details: "No sanitization node in path" },
+      { name: "XTRIKE XQL",       confidence: 0.95, confirmed: true,  details: "XTRIKE-XQL/High_Risk/SQL_Injection_Dynamic_Query · BFL at SqlInjectionLesson5a.java:10" },
+      { name: "XTRIKE DeepFlow",  confidence: 0.94, confirmed: true,  details: "IBM-APPSCAN-SQLI-TAINT-001 · Taint trace line 9 -> line 10 -> sink line 12" },
+      { name: "XTRIKE StructSCA", confidence: 0.95, confirmed: true,  details: "[Dataflow] Kingdom: Input Validation and Representation" },
+      { name: "XTRIKE AST-Query", confidence: 0.92, confirmed: true,  details: "AST DataFlow query matched CWE-89 sink in injectableQuery (line 12)" },
     ],
-    confidence: 0.97,
+    confidence: 0.94,
     reachable: true,
-    internetFacing: true,
+    internetFacing: false,
     authRequired: false,
     exploitabilityLevel: "Very Easy",
-    privilegeGain: "Full database read/write access, potential OS command execution",
+    privilegeGain:
+      "Demonstrated (Static Scope): Executes a dynamic SQL SELECT query against table 'user_data' via Statement.executeQuery(query). Unverified Hypothesis: Database write/DDL access or remote code execution (RCE) via DB extensions are NOT established by the displayed code.",
     attackPath: [
-      { label: "Internet",              type: "entry",         description: "Unauthenticated HTTP request" },
-      { label: "GET /api/users?id=...", type: "vulnerability", description: "SQL Injection point — id parameter not sanitized" },
-      { label: "Database Query",        type: "lateral",       description: "Injected SQL executes against CustomerDB" },
-      { label: "CustomerDB",            type: "asset",         description: "Contains PII: names, emails, payment info" },
-      { label: "Full Data Exfiltration",type: "impact",        description: "All customer records extractable" },
+      { label: "1. Source Identified (Line 9)", type: "entry", description: "@RequestParam String account in injectableQuery()" },
+      { label: "2. Taint Propagation (Line 10)", type: "vulnerability", description: "String concatenation into SQL query without parameter binding" },
+      { label: "3. Dangerous Sink (Line 12)", type: "asset", description: "statement.executeQuery(query) executes SELECT on user_data" },
+      { label: "4. Runtime Validation Gate", type: "lateral", description: "Requires isolated test environment to verify SQL predicate alteration" },
+      { label: "Hypothesized Impact", type: "impact", description: "[UNVERIFIED — REQUIRES RUNTIME PROOF] Potential unauthorized read disclosure from user_data; DB write access and RCE are not proved by this method." },
     ],
     executiveSummary:
-      "An attacker can extract the entire customer database without authentication by manipulating the 'id' URL parameter. This requires no special skills and can be automated. Combined with the public-facing nature of the endpoint, this represents an immediate data breach risk.",
+      "Static AST and dataflow analysis identified a credible SQL injection candidate: the request parameter 'account' (line 9) is concatenated into a SQL query string (line 10) and passed to Statement.executeQuery(query) (line 12) with zero sanitizers in the local method scope. While dataflow is confirmed statically, runtime exploitability, endpoint authentication middleware, and downstream database privileges require isolated runtime verification.",
     businessImpact:
-      "Complete exposure of all customer PII. Potential GDPR/CCPA violation fines. Reputational damage. Estimated breach cost: $2M–$15M depending on record count.",
+      "If reachable and unmitigated by upstream filters, an attacker can alter the WHERE predicate of the SELECT query on 'user_data' to read unauthorized rows. Claims of database write access, schema tampering, or remote code execution are unverified hypotheses not established by the displayed code.",
     rootCause:
-      "String concatenation used to build SQL query instead of parameterized queries or prepared statements. Input reaches the sink with no sanitization layer.",
+      "Dynamic SQL string concatenation (\"... last_name = '\" + account + \"'\") is used instead of a parameterized PreparedStatement with bound '?' placeholders.",
     falsePositiveLikelihood: "Very Low",
     compliance: [
-      { framework: "PCI DSS",       reference: "Req 6.2.4",    description: "Prevent injection attacks" },
-      { framework: "NIST 800-53",   reference: "SI-10",        description: "Information input validation" },
-      { framework: "ISO 27001",     reference: "A.8.28",       description: "Secure coding" },
-      { framework: "OWASP Top 10",  reference: "A03:2021",     description: "Injection" },
+      { framework: "PCI DSS",       reference: "Req 6.2.4",    description: "Prevent injection attacks via parameterized queries" },
+      { framework: "NIST 800-53",   reference: "SI-10",        description: "Information input validation & parameterization" },
+      { framework: "ISO 27001",     reference: "A.8.28",       description: "Secure coding principles" },
+      { framework: "OWASP Top 10",  reference: "A03:2021",     description: "Injection (OWASP ASVS v4.0.3 5.3.4)" },
     ],
     remediation: [
       {
         platform: "Java",
-        explanation: "Replace string concatenation with PreparedStatement to eliminate the injection point.",
-        code: `// ❌ VULNERABLE
-String sql = "SELECT * FROM users WHERE id = " + id;
-jdbcTemplate.query(sql);
+        explanation: "Replace Statement string concatenation with a parameterized PreparedStatement and bind the 'account' parameter at index 1.",
+        code: `// ❌ VULNERABLE (Lines 10–12)
+String query = "SELECT * FROM user_data WHERE first_name = 'John' AND last_name = '" + account + "'";
+Statement statement = connection.createStatement();
+ResultSet results = statement.executeQuery(query);
 
-// ✅ FIXED — Use PreparedStatement
-String sql = "SELECT * FROM users WHERE id = ?";
-jdbcTemplate.query(sql, new Object[]{id}, rowMapper);`,
+// ✅ FIXED — Parameterized PreparedStatement (Binds 'account' as literal value)
+String query = "SELECT * FROM user_data WHERE first_name = 'John' AND last_name = ?";
+PreparedStatement statement = connection.prepareStatement(query);
+statement.setString(1, account);
+ResultSet results = statement.executeQuery();`,
       },
       {
         platform: "Python",
-        explanation: "Use parameterized queries with the DB-API parameter substitution.",
+        explanation: "Use parameterized queries with DB-API parameter substitution.",
         code: `# ❌ VULNERABLE
-cursor.execute(f"SELECT * FROM users WHERE id = {id}")
+cursor.execute(f"SELECT * FROM user_data WHERE last_name = '{account}'")
 
 # ✅ FIXED
-cursor.execute("SELECT * FROM users WHERE id = %s", (id,))`,
+cursor.execute("SELECT * FROM user_data WHERE last_name = %s", (account,))`,
       },
       {
         platform: "Node.js",
-        explanation: "Use query placeholders with your ORM or driver.",
+        explanation: "Use parameterized placeholders with your database driver.",
         code: `// ❌ VULNERABLE
-db.query(\`SELECT * FROM users WHERE id = \${id}\`);
+db.query(\`SELECT * FROM user_data WHERE last_name = '\${account}'\`);
 
 // ✅ FIXED
-db.query("SELECT * FROM users WHERE id = ?", [id]);`,
+db.query("SELECT * FROM user_data WHERE last_name = ?", [account]);`,
       },
     ],
     validationSteps: [
-      "Send request: GET /api/users?id=1' OR '1'='1 — confirm no data returned",
-      "Send request: GET /api/users?id=1; DROP TABLE users; -- — confirm no error/change",
-      "Run XTRIKE AST-Query query java/sql-injection — confirm zero results",
-      "Run XTRIKE PatternGuard with java.lang.security rules — confirm clean",
+      "1. Source & Sink Audit: Confirm @RequestParam String account (line 9) is bound via PreparedStatement.setString(1, account) before executeQuery() (line 12).",
+      "2. Controlled Runtime Probe (TC-SQLI-089-001): Send baseline 'account=Smith' vs. boolean probe \"account=Smith' OR '1'='1\" in an isolated test environment.",
+      "3. Mitigation Retest: After applying PreparedStatement, replay \"account=Smith' OR '1'='1\" and verify the input is treated as a literal last_name value with zero SQL predicate alteration.",
+      "4. Static Regression Gate: Re-run XTRIKE XQL & AST-Query java/sql-injection rules on commit SHA to confirm 0 remaining concatenation paths.",
     ],
-    slaDeadline: "2026-08-27",
+    slaDeadline: "2026-10-30",
     owner: "Backend Team",
-    application: "Customer API",
-    riskScore: 97,
-    firstDetected: "2026-08-18",
-    lastSeen: "2026-08-20",
+    application: "OWASP/WebGoat",
+    riskScore: 95,
+    firstDetected: "2026-10-24",
+    lastSeen: "2026-10-26",
   },
 
   {

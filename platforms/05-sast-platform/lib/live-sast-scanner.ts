@@ -1514,11 +1514,22 @@ const REPO_PRESET_TREES: Record<
     linesScanned: 46210,
     files: [
       {
-        filePath: "src/main/java/org/owasp/webgoat/lessons/sqlinjection/SqlInjectionLesson5a.java",
+        filePath: "src/main/java/org/owasp/webgoat/lessons/sqlinjection/introduction/SqlInjectionLesson5a.java",
         language: "Java",
-        code: `public AttackResult injectableQuery(String accountName) {
-  String query = "SELECT * FROM user_data WHERE last_name = '" + accountName + "'";
-  statement.executeQuery("SELECT * FROM user_data WHERE last_name = '" + accountName + "'");
+        code: `package org.owasp.webgoat.lessons.sqlinjection.introduction;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import org.springframework.web.bind.annotation.*;
+@RestController
+public class SqlInjectionLesson5a {
+    @PostMapping("/SqlInjection/attack5a")
+    public String injectableQuery(@RequestParam String account, Connection connection) throws Exception {
+        String query = "SELECT * FROM user_data WHERE first_name = 'John' AND last_name = '" + account + "'";
+        Statement statement = connection.createStatement();
+        ResultSet results = statement.executeQuery(query);
+        return results.toString();
+    }
 }`,
       },
       {

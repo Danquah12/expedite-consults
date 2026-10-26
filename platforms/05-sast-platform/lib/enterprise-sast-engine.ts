@@ -76,11 +76,12 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     sanitizerPattern: /(?:PreparedStatement|setString\s*\(|setInt\s*\(|parameterized|\?\s*,|%\([a-zA-Z0-9_]+\)s|sql\.Named|bindParam)/i,
     defaultSource: "HTTP Request Parameter / Query Input",
     defaultSink: "SQL Query Execution Sink",
-    privilegeGain: "Unauthenticated read/write access to relational database & potential RCE via DB extensions",
+    privilegeGain:
+      "Demonstrated (Static Scope): Alters SQL query structure in the executed statement (e.g., SELECT predicate manipulation on target table). Unverified Hypothesis: DB write/DDL access or OS command execution via DB extensions are NOT established by this method and require separate DB role and runtime driver evidence.",
     executiveSummary:
-      "XTRIKE XQL AST, XTRIKE DeepFlow Taint Analyzer, and XTRIKE StructSCA Dataflow Analyzer traced untrusted input into a dynamically constructed SQL statement without parameter binding.",
+      "Static AST and dataflow analysis traced untrusted request input into a dynamically concatenated SQL string executed without bind parameters (Credible CWE-89 Candidate — Dataflow Confirmed; runtime exploitation pending isolated sandbox verification).",
     businessImpact:
-      "Full database compromise, exfiltration of customer PII/credentials, unauthorized record modification, and regulatory non-compliance (PCI-DSS / GDPR).",
+      "Potential unauthorized row disclosure or predicate bypass within the queried table if the endpoint is reachable at runtime. Higher-order impacts (database write modification or RCE) are unverified hypotheses unless supported by runtime privilege proof.",
     rootCause:
       "Dynamic SQL string concatenation or template interpolation allows attacker input to alter the SQL AST structure instead of binding as a literal parameter.",
     compliance: [
@@ -1619,16 +1620,34 @@ export function scanFilesWithEnterpriseEngines(params: {
         }
 
         const windowStart = Math.max(0, idx - 5);
-        const windowEnd = Math.min(rawLines.length, idx + 5);
+        const windowEnd = Math.min(rawLines.length, idx + 6);
         const surroundingLines = rawLines.slice(windowStart, windowEnd);
         const surroundingText = surroundingLines.join("\n");
 
         const sanitizerDetected = rule.sanitizerPattern.test(surroundingText);
         let detectedSourceLine = trimmed;
+        let detectedSourceLineNum = lineNumber;
         for (let sIdx = Math.max(0, idx - 15); sIdx <= idx; sIdx++) {
           if (rule.sourceHints.test(rawLines[sIdx])) {
             detectedSourceLine = rawLines[sIdx].trim();
+            detectedSourceLineNum = sIdx + 1;
             break;
+          }
+        }
+
+        // If the matched line constructs a query string and a subsequent line executes it (e.g. line 10 query -> line 12 statement.executeQuery(query)), resolve the execution sink line
+        let sinkLineText = trimmed;
+        let effectiveSinkLineNumber = lineNumber;
+        let propagationLineText = `// Taint propagation inside ${fnName} (${fileObj.path}:${lineNumber})`;
+        if (rule.cwe === "CWE-89" && !/(?:executeQuery|execute\s*\(|executeUpdate|db\.query|cursor\.execute|mysqli_query|sequelize\.query)/i.test(trimmed)) {
+          for (let eIdx = idx + 1; eIdx <= Math.min(rawLines.length - 1, idx + 4); eIdx++) {
+            const candidateSink = rawLines[eIdx].trim();
+            if (/(?:executeQuery|execute\s*\(|executeUpdate|prepareStatement|db\.query|cursor\.execute|mysqli_query)/i.test(candidateSink)) {
+              propagationLineText = trimmed;
+              sinkLineText = candidateSink;
+              effectiveSinkLineNumber = eIdx + 1;
+              break;
+            }
           }
         }
 
@@ -1655,13 +1674,13 @@ export function scanFilesWithEnterpriseEngines(params: {
             name: "XTRIKE XQL",
             confidence: sanitizerDetected ? 0.64 : 0.95,
             confirmed: !sanitizerDetected,
-            details: `${cxQuery} · BFL at ${fileObj.path.split("/").pop()}:${Math.max(1, lineNumber - 1)}`,
+            details: `${cxQuery} · BFL at ${fileObj.path.split("/").pop()}:${lineNumber}`,
           },
           {
             name: "XTRIKE DeepFlow",
             confidence: sanitizerDetected ? 0.58 : 0.94,
             confirmed: !sanitizerDetected,
-            details: `${ibmRule} · Taint trace ${detectedSourceLine.slice(0, 34)} -> line ${lineNumber}`,
+            details: `${ibmRule} · Taint trace line ${detectedSourceLineNum} -> line ${lineNumber} -> sink line ${effectiveSinkLineNumber}`,
           },
           {
             name: "XTRIKE StructSCA",
@@ -1673,7 +1692,7 @@ export function scanFilesWithEnterpriseEngines(params: {
             name: "XTRIKE AST-Query",
             confidence: sanitizerDetected ? 0.60 : 0.92,
             confirmed: !sanitizerDetected,
-            details: `AST DataFlow query matched ${rule.cwe} sink in ${fnName}`,
+            details: `AST DataFlow query matched ${rule.cwe} sink in ${fnName} (line ${effectiveSinkLineNumber})`,
           },
         ];
 
@@ -1682,21 +1701,21 @@ export function scanFilesWithEnterpriseEngines(params: {
         );
 
         logs.push(
-          `[XTRIKE XQL] ${cxQuery} matched at ${fileObj.path}:${lineNumber} (${rule.cwe}) [State=${auditMeta.proofState}]`,
-          `[IBM Scan]  ${ibmRule} taint trace verified in ${fnName} -> ${trimmed.slice(0, 52)}`,
+          `[XTRIKE XQL] ${cxQuery} matched at ${fileObj.path}:${effectiveSinkLineNumber} (${rule.cwe}) [State=${auditMeta.proofState}]`,
+          `[IBM Scan]  ${ibmRule} taint trace verified in ${fnName} (line ${detectedSourceLineNum} -> line ${lineNumber} -> line ${effectiveSinkLineNumber})`,
           `[XTRIKE StructSCA]   [${fortifyAnalyzer} Analyzer] Kingdom="${fortifyKingdom}" Priority=${rule.severity}`
         );
 
         const taintPath =
-          detectedSourceLine !== trimmed
+          detectedSourceLine !== sinkLineText
             ? [
                 detectedSourceLine,
-                `// Taint propagation inside ${fnName} (${fileObj.path}:${lineNumber})`,
-                trimmed,
+                propagationLineText,
+                sinkLineText,
               ]
             : [
                 `${rule.defaultSource} in ${fnName}`,
-                trimmed,
+                sinkLineText,
               ];
 
         const today = new Date().toISOString().slice(0, 10);
@@ -1725,7 +1744,7 @@ export function scanFilesWithEnterpriseEngines(params: {
           owasp: rule.owasp,
           owaspCategory: rule.owaspCategory,
           file: fileObj.path,
-          line: lineNumber,
+          line: effectiveSinkLineNumber,
           language: fileLang,
           sinkId,
           duplicateGroupId: dedupKey,
@@ -1737,15 +1756,15 @@ export function scanFilesWithEnterpriseEngines(params: {
           advisoryApplicability: "FIRST_PARTY_CODE_WEAKNESS_NO_CVE",
           codeSnippet: surroundingLines.join("\n"),
           snippetStartLine: windowStart + 1,
-          source: detectedSourceLine !== trimmed ? detectedSourceLine : rule.defaultSource,
-          sink: trimmed,
+          source: detectedSourceLine !== sinkLineText ? detectedSourceLine : rule.defaultSource,
+          sink: sinkLineText,
           taintPath,
           checkmarxQuery: cxQuery,
-          checkmarxBfl: `${fileObj.path}:${Math.max(1, lineNumber - 1)}`,
+          checkmarxBfl: `${fileObj.path}:${lineNumber}`,
           ibmRuleId: ibmRule,
           ibmTraceSummary: sanitizerDetected
             ? "Sanitizer guard intercepted taint flow before sink"
-            : `Static AST & dataflow trace from ${fileHasUntrustedSource ? "untrusted entry point" : "caller scope"} to sink at line ${lineNumber}`,
+            : `Static AST & dataflow trace from line ${detectedSourceLineNum} through line ${lineNumber} to sink at line ${effectiveSinkLineNumber}`,
           fortifyKingdom,
           fortifyAnalyzer,
           engines: engineResults,
@@ -1756,11 +1775,11 @@ export function scanFilesWithEnterpriseEngines(params: {
           exploitabilityLevel: rule.cvss >= 9.0 ? "Very Easy" : rule.cvss >= 7.5 ? "Easy" : "Moderate",
           privilegeGain: rule.privilegeGain,
           attackPath: [
-            { label: "Untrusted Entry", type: "entry", description: detectedSourceLine.slice(0, 60) },
-            { label: `${fileObj.path.split("/").pop()}:${lineNumber}`, type: "vulnerability", description: `${rule.cwe} — ${rule.title}` },
-            { label: fnName, type: "lateral", description: `XTRIKE StructSCA ${fortifyAnalyzer} & IBM Taint propagation` },
-            { label: rule.defaultSink, type: "asset", description: trimmed.slice(0, 65) },
-            { label: "Hypothesized Impact", type: "impact", description: rule.privilegeGain },
+            { label: `1. Source Identified (Line ${detectedSourceLineNum})`, type: "entry", description: detectedSourceLine.slice(0, 75) },
+            { label: `2. Taint Propagation (Line ${lineNumber})`, type: "vulnerability", description: propagationLineText.slice(0, 85) },
+            { label: `3. Dangerous Sink (Line ${effectiveSinkLineNumber})`, type: "asset", description: sinkLineText.slice(0, 75) },
+            { label: "4. Runtime Validation Gate", type: "lateral", description: "Requires isolated test environment probe to verify SQL/sink interpretation change" },
+            { label: "Hypothesized Impact", type: "impact", description: `[UNVERIFIED — REQUIRES RUNTIME PROOF] ${rule.privilegeGain}` },
           ],
           executiveSummary: rule.executiveSummary,
           businessImpact: rule.businessImpact,

@@ -613,7 +613,6 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import org.springframework.web.bind.annotation.*;
-
 @RestController
 public class SqlInjectionLesson5a {
     @PostMapping("/SqlInjection/attack5a")
