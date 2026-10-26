@@ -160,32 +160,32 @@ const DOMAIN_SEEDS: DomainSeed[] = [
     ],
   },
 
-  // 3. Dynamic Code Injection, Eval, SSTI & Expression Language (20 Plugins)
+  // 3. Dynamic Code Injection, Eval, Dynamic Compilation, SSTI & Expression Language (20 Plugins)
   {
     category: "XTRIKE XQL XTRIKE-XQL High-Risk Queries",
     cwe: "CWE-94",
     cweName: "Improper Control of Generation of Code ('Code Injection')",
     owasp: "A03:2021 · Injection",
-    asvs: "ASVS V5.2.4",
+    asvs: "OWASP ASVS v4.0.3 §5.2.4 (Dynamic Code & Compilation Controls — Verify Input Provenance)",
     nist80053: "SI-10 · Information Input Validation",
     nistSsdf: "PW.8.1 · Secure Coding",
-    pciDss: "PCI-DSS v4.0 Req 6.2.4",
-    iso27001: "ISO 27001 A.8.28",
+    pciDss: "PCI-DSS v4.0 Req 6.2.4 (Requires verified untrusted source-to-sink path)",
+    iso27001: "ISO/IEC 27001:2022 A.8.28 (Requires input provenance & isolation evidence)",
     mitreAttack: "T1059.007",
     fortifyKingdom: "Input Validation and Representation",
     fortifyAnalyzer: "Semantic",
-    severity: "Critical",
-    cvss: 9.4,
-    epss: 0.318,
-    sanitizerHint: "JSON.parse() / ast.literal_eval() / Sandboxed Precompiled Templates",
-    remediationSummary: "Eliminate eval(), Function(), and dynamic template string compilation on user-controlled inputs.",
+    severity: "High",
+    cvss: 7.5,
+    epss: 0.0,
+    sanitizerHint: "Treat input as data with a strict schema parser (Jackson DTO / json.loads / JSON.parse + schema validation)",
+    remediationSummary: "Treat untrusted input as structured data validated against a strict schema; if user code must be compiled, isolate compilation in an external sandbox with annotation processors disabled (-proc:none).",
     variants: [
       { code: "CODEI-JS-EVAL", name: "JavaScript / TypeScript eval() Dynamic Execution", languages: ["Node.js", "TypeScript"], fastTokens: ["eval("], pattern: "\\beval\\s*\\(\\s*[^\"')\\s]", cxQuery: "JS_High_Risk/Code_Injection_Eval", ibmRule: "IBM-CODEI-JS-041" },
       { code: "CODEI-JS-NEW-FUNCTION", name: "JavaScript new Function() Dynamic Code Constructor", languages: ["Node.js", "TypeScript"], fastTokens: ["new function"], pattern: "new\\s+Function\\s*\\(", cxQuery: "JS_High_Risk/New_Function_Injection", ibmRule: "IBM-CODEI-JS-042" },
       { code: "CODEI-NODE-VM-RUN", name: "Node.js vm.runInNewContext / runInThisContext Escape", languages: ["Node.js", "TypeScript"], fastTokens: ["vm.run"], pattern: "vm\\.(?:runInNewContext|runInThisContext|runInContext|compileFunction)\\s*\\(", cxQuery: "JS_Node/VM_Sandbox_Code_Injection", ibmRule: "IBM-CODEI-VM-043" },
       { code: "CODEI-JS-SETTIMEOUT-STR", name: "JavaScript setTimeout / setInterval String Eval Sink", languages: ["Node.js", "TypeScript"], fastTokens: ["settimeout", "setinterval"], pattern: "(?:setTimeout|setInterval)\\s*\\(\\s*(?:req\\.|`.*\\$\\{|[\"'][^\"']*\\+)", cxQuery: "JS_High_Risk/Timer_String_Eval", ibmRule: "IBM-CODEI-TIMER-044" },
       { code: "CODEI-PY-EVAL", name: "Python Built-in eval() Untrusted Expression Sink", languages: ["Python"], fastTokens: ["eval("], pattern: "\\beval\\s*\\(\\s*[^\"')\\s]", cxQuery: "Python_High_Risk/Eval_Code_Injection", ibmRule: "IBM-CODEI-PY-045" },
-      { code: "CODEI-PY-EXEC", name: "Python Built-in exec() / compile() Dynamic Execution", languages: ["Python"], fastTokens: ["exec(", "compile("], pattern: "\\b(?:exec|compile)\\s*\\(\\s*[^\"')\\s]", cxQuery: "Python_High_Risk/Exec_Code_Injection", ibmRule: "IBM-CODEI-PY-046" },
+      { code: "CODEI-PY-EXEC", name: "Python Built-in exec() / 3-Arg compile() Dynamic Execution", languages: ["Python"], fastTokens: ["exec(", "compile("], pattern: "\\b(?:exec\\s*\\(\\s*[^\"')\\s]|compile\\s*\\([^,]+,[^,]+,\\s*[\"'](?:exec|eval|single)[\"'])", cxQuery: "Python_High_Risk/Exec_Code_Injection", ibmRule: "IBM-CODEI-PY-046" },
       { code: "CODEI-PY-JINJA2-SSTI", name: "Flask / Jinja2 render_template_string() SSTI Sink", languages: ["Python"], fastTokens: ["render_template_string", "from_string"], pattern: "(?:render_template_string|Template\\s*\\(|from_string)\\s*\\(", cxQuery: "Python_Flask/Jinja2_SSTI", ibmRule: "IBM-SSTI-PY-047" },
       { code: "CODEI-PY-MAKO-SSTI", name: "Python Mako / Tornado Template Dynamic Compilation", languages: ["Python"], fastTokens: ["mako.template"], pattern: "mako\\.template\\.Template\\s*\\(", cxQuery: "Python_Mako/Template_Injection", ibmRule: "IBM-SSTI-MAKO-048" },
       { code: "CODEI-JAVA-SPEL", name: "Spring SpelExpressionParser.parseExpression() Injection", languages: ["Java"], fastTokens: ["parseexpression", "spel"], pattern: "parseExpression\\s*\\(", cxQuery: "Java_Spring/SpEL_Expression_Injection", ibmRule: "IBM-CODEI-SPEL-049" },
@@ -193,7 +193,7 @@ const DOMAIN_SEEDS: DomainSeed[] = [
       { code: "CODEI-JAVA-EL", name: "Jakarta / JSF ExpressionFactory.createValueExpression EL Injection", languages: ["Java"], fastTokens: ["createvalueexpression", "buildconstraintviolationwithtemplate"], pattern: "(?:createValueExpression|buildConstraintViolationWithTemplate)\\s*\\(", cxQuery: "Java_EE/EL_Expression_Injection", ibmRule: "IBM-CODEI-EL-051" },
       { code: "CODEI-JAVA-SCRIPTENGINE", name: "Java javax.script.ScriptEngine.eval() Nashorn/Graal Sink", languages: ["Java"], fastTokens: ["scriptengine", ".eval("], pattern: "ScriptEngine.*\\.eval\\s*\\(", cxQuery: "Java_High_Risk/ScriptEngine_Eval", ibmRule: "IBM-CODEI-JSE-052" },
       { code: "CODEI-JAVA-GROOVY", name: "GroovyShell.evaluate() Dynamic Script Execution", languages: ["Java"], fastTokens: ["groovyshell", ".evaluate("], pattern: "GroovyShell.*\\.evaluate\\s*\\(", cxQuery: "Java_Groovy/GroovyShell_Evaluate", ibmRule: "IBM-CODEI-GROOVY-053" },
-      { code: "CODEI-JAVA-FREEMARKER", name: "FreeMarker / Velocity Template SSTI Construction", languages: ["Java"], fastTokens: ["new template", "velocity.evaluate"], pattern: "(?:new\\s+Template\\s*\\([^,]+,\\s*new\\s+StringReader|Velocity\\.evaluate\\s*\\()", cxQuery: "Java_Template/FreeMarker_Velocity_SSTI", ibmRule: "IBM-SSTI-JAVA-054" },
+      { code: "CODEI-JAVA-COMPILER", name: "Java javax.tools.JavaCompiler.getTask() Dynamic Compilation API", languages: ["Java"], fastTokens: ["javacompiler", "compiler.gettask", "getsystemjavacompiler"], pattern: "(?:JavaCompiler|compiler\\.getTask\\s*\\(|ToolProvider\\.getSystemJavaCompiler\\s*\\()", cxQuery: "Java_Dynamic_Compilation/JavaCompiler_GetTask_Audit", ibmRule: "IBM-CODEI-JAVAC-054" },
       { code: "CODEI-PHP-EVAL", name: "PHP eval() / assert() Dynamic Code Execution", languages: ["PHP"], fastTokens: ["eval(", "assert("], pattern: "\\b(?:eval|assert)\\s*\\(\\s*\\$", cxQuery: "PHP_High_Risk/Eval_Injection", ibmRule: "IBM-CODEI-PHP-055" },
       { code: "CODEI-PHP-PREG-E", name: "PHP preg_replace() with /e Eval Modifier", languages: ["PHP"], fastTokens: ["preg_replace"], pattern: "preg_replace\\s*\\(\\s*[\"']/[^/]+/[a-z]*e", cxQuery: "PHP_High_Risk/Preg_Replace_Eval", ibmRule: "IBM-CODEI-PREG-056" },
       { code: "CODEI-PHP-CREATEFUNC", name: "PHP create_function() Dynamic Lambda Injection", languages: ["PHP"], fastTokens: ["create_function"], pattern: "create_function\\s*\\(", cxQuery: "PHP_High_Risk/Create_Function_Injection", ibmRule: "IBM-CODEI-PHP-057" },
@@ -827,13 +827,39 @@ export const SAST_400_PLUGINS: SASTPluginDefinition[] = (() => {
   for (const seed of DOMAIN_SEEDS) {
     for (const v of seed.variants) {
       const pluginId = `PLG-${String(counter).padStart(3, "0")}`;
+      let mitreAttack = seed.mitreAttack;
+      let sanitizerHint = seed.sanitizerHint;
+      let severity = seed.severity;
+      let cvss = seed.cvss;
+
+      if (seed.cwe === "CWE-94") {
+        if (v.languages.includes("Python")) {
+          mitreAttack = "T1059.006 (Python Execution — Conditional on Runtime Reachability)";
+          sanitizerHint = "Parse data with json.loads() or ast.literal_eval() and validate against a strict Pydantic/JSON schema.";
+        } else if (v.languages.includes("Java")) {
+          mitreAttack =
+            v.code === "CODEI-JAVA-COMPILER"
+              ? "N/A — Java Dynamic Compilation API (Compilation alone does not establish T1059 execution)"
+              : "N/A — Java Expression/Script API (Requires Source-to-Sink & Execution Path Verification)";
+          sanitizerHint =
+            "Parse structured input as data via Jackson ObjectMapper with strict DTO schema validation; if compiling user code, isolate in an external sandbox with -proc:none.";
+          if (v.code === "CODEI-JAVA-COMPILER") {
+            severity = "Medium";
+            cvss = 5.3;
+          }
+        } else if (v.languages.includes("Node.js") || v.languages.includes("TypeScript")) {
+          mitreAttack = "T1059.007 (JavaScript Execution — Conditional on Runtime Reachability)";
+          sanitizerHint = "Parse structured data with JSON.parse() and validate against a strict Zod/JSON schema; never invoke eval() or new Function().";
+        }
+      }
+
       list.push({
         pluginId,
         code: v.code,
         name: v.name,
         category: seed.category,
-        severity: seed.severity,
-        cvss: seed.cvss,
+        severity,
+        cvss,
         epss: seed.epss,
         cwe: seed.cwe,
         cweName: seed.cweName,
@@ -843,7 +869,7 @@ export const SAST_400_PLUGINS: SASTPluginDefinition[] = (() => {
         nistSsdf: seed.nistSsdf,
         pciDss: seed.pciDss,
         iso27001: seed.iso27001,
-        mitreAttack: seed.mitreAttack,
+        mitreAttack,
         checkmarxQuery: v.cxQuery,
         ibmRuleId: v.ibmRule,
         fortifyKingdom: seed.fortifyKingdom,
@@ -851,7 +877,7 @@ export const SAST_400_PLUGINS: SASTPluginDefinition[] = (() => {
         languages: v.languages,
         fastTokens: v.fastTokens.map((t) => t.toLowerCase()),
         pattern: v.pattern,
-        sanitizerHint: seed.sanitizerHint,
+        sanitizerHint,
         remediationSummary: seed.remediationSummary,
       });
       counter++;

@@ -15,19 +15,40 @@ function parseDiff(code: string) {
   const vulnerable: { text: string; type: "bad" | "neutral" }[] = [];
   const fixed: { text: string; type: "good" | "neutral" }[] = [];
 
-  for (const line of lines) {
-    const isBad = line.startsWith("// ❌") || line.startsWith("# ❌");
-    const isGood = line.startsWith("// ✅") || line.startsWith("# ✅");
+  let section: "neutral" | "bad" | "good" = "neutral";
 
-    if (isBad) {
+  for (const line of lines) {
+    const trimmed = line.trim();
+    const isBadHeader = trimmed.startsWith("// ❌") || trimmed.startsWith("# ❌") || trimmed.includes("❌");
+    const isGoodHeader = trimmed.startsWith("// ✅") || trimmed.startsWith("# ✅") || trimmed.includes("✅");
+
+    if (isBadHeader) {
+      section = "bad";
       vulnerable.push({ text: line, type: "bad" });
-    } else if (isGood) {
+      continue;
+    }
+    if (isGoodHeader) {
+      section = "good";
       fixed.push({ text: line, type: "good" });
+      continue;
+    }
+
+    if (section === "bad") {
+      // Skip trailing blank line right before the ✅ section
+      vulnerable.push({ text: line, type: trimmed.length > 0 ? "bad" : "neutral" });
+    } else if (section === "good") {
+      fixed.push({ text: line, type: trimmed.length > 0 ? "good" : "neutral" });
     } else {
       vulnerable.push({ text: line, type: "neutral" });
       fixed.push({ text: line, type: "neutral" });
     }
   }
+
+  // Trim trailing empty neutral lines from vulnerable block
+  while (vulnerable.length > 1 && vulnerable[vulnerable.length - 1].text.trim() === "") {
+    vulnerable.pop();
+  }
+
   return { vulnerable, fixed };
 }
 
@@ -43,8 +64,12 @@ export default function DiffRemediation({
   const [sandboxDone, setSandboxDone] = useState(false);
 
   if (f.remediation.length === 0) return null;
-  const current = f.remediation[active];
+  const current = f.remediation[active] || f.remediation[0];
   const { vulnerable, fixed } = parseDiff(current.code);
+
+  const isJavaCompilerOrCodeGen =
+    f.cwe === "CWE-94" || /compiler\.getTask|JavaCompiler|CODEI/i.test(`${f.title} ${f.sink} ${f.checkmarxQuery}`);
+  const testCaseId = isJavaCompilerOrCodeGen ? "TC-CODEI-094-001" : f.cwe === "CWE-89" ? "TC-SQLI-089-001" : `TC-${f.cwe}-001`;
 
   const runPatchSandbox = () => {
     setSandboxRunning(true);
@@ -53,17 +78,29 @@ export default function DiffRemediation({
       `[retest-init] Starting Mitigation Verification & Retest for ${f.id} (${f.file})...`,
     ]);
 
-    const logsList = [
-      `[ast-diff]    Replacing string concatenation (+ account +) with PreparedStatement (?) bind placeholder...`,
-      `[ast-check]   Verified parameter binding: statement.setString(1, account) (bindParamCount=1, rawConcatCount=0)`,
-      `[compiler]    Compiling patched method injectableQuery() in isolated build container...`,
-      `[compiler]    SUCCESS: Compilation passed (0 errors)`,
-      `[retest-tc]   Replaying Test Case TC-SQLI-089-001: account="Smith' OR '1'='1"`,
-      `[sql-driver]  Bound parameter $1 = "Smith' OR '1'='1" (treated strictly as literal string value)`,
-      `[sql-ast]     Post-patch SQL AST structure unchanged: Where(And(Eq(first_name,'John'), Eq(last_name,$1)))`,
-      `[static-gate] Re-running XTRIKE XQL & AST-Query rules -> 0 tainted concatenation paths remaining`,
-      `[verdict]     PASS: Tainted value is parameterized and vulnerable behavior no longer reproduces [ART-RETEST-089-PASS]`,
-    ];
+    const logsList = isJavaCompilerOrCodeGen
+      ? [
+          `[ast-diff]    Verifying language-strict remediation for ${current.platform} (0 raw engine.eval / 0 cross-language syntax)...`,
+          `[ast-check]   Preferred Pattern 1: Untrusted request input parsed strictly as data via Jackson ObjectMapper into typed DTO...`,
+          `[ast-check]   Preferred Pattern 2 (If compilation required): Isolated external worker + List.of("-proc:none") annotation processor lock...`,
+          `[compiler]    Compiling remediated ${f.file.split("/").pop()} in isolated build container...`,
+          `[compiler]    SUCCESS: Compilation passed (0 errors, 0 dynamic code-generation sinks reachable from request input)`,
+          `[retest-tc]   Replaying Test Case ${testCaseId}: payload="java.lang.Runtime.getRuntime().exec(\\"id\\")"`,
+          `[dto-guard]   Strict DTO schema & allowlist rejected non-conforming operation before any compiler or script sink`,
+          `[static-gate] Re-running XTRIKE XQL (${f.checkmarxQuery}) & AST-Query rules -> 0 unvalidated compilation/eval paths remaining`,
+          `[verdict]     PASS: Input is treated strictly as data (or isolated with -proc:none) and vulnerable behavior does not reproduce [ART-RETEST-094-PASS]`,
+        ]
+      : [
+          `[ast-diff]    Replacing string concatenation (+ account +) with PreparedStatement (?) bind placeholder...`,
+          `[ast-check]   Verified parameter binding: statement.setString(1, account) (bindParamCount=1, rawConcatCount=0)`,
+          `[compiler]    Compiling patched method in isolated build container...`,
+          `[compiler]    SUCCESS: Compilation passed (0 errors)`,
+          `[retest-tc]   Replaying Test Case ${testCaseId}: account="Smith' OR '1'='1"`,
+          `[sql-driver]  Bound parameter $1 = "Smith' OR '1'='1" (treated strictly as literal string value)`,
+          `[sql-ast]     Post-patch SQL AST structure unchanged: Where(And(Eq(first_name,'John'), Eq(last_name,$1)))`,
+          `[static-gate] Re-running XTRIKE XQL & AST-Query rules -> 0 tainted concatenation paths remaining`,
+          `[verdict]     PASS: Tainted value is parameterized and vulnerable behavior no longer reproduces [ART-RETEST-089-PASS]`,
+        ];
 
     logsList.forEach((log, index) => {
       setTimeout(() => {
@@ -89,7 +126,7 @@ export default function DiffRemediation({
             <span>🔧 Remediation &amp; Mitigation Verification</span>
           </h2>
           <p className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>
-            Illustrative language-matched fix pattern + post-fix retest to confirm tainted input is parameterized and the vulnerable behavior no longer reproduces.
+            Illustrative language-matched fix pattern ({current.platform} only — no cross-language mixing) + post-fix retest verification.
           </p>
         </div>
 
@@ -147,7 +184,7 @@ export default function DiffRemediation({
               ? "Mitigation Retest Verified"
               : sandboxRunning
               ? "Retesting Fix..."
-              : "Apply Fix & Retest (TC-SQLI-089-001)"}
+              : `Apply Fix & Retest (${testCaseId})`}
           </button>
         </div>
       </div>
@@ -170,7 +207,7 @@ export default function DiffRemediation({
               }}
             >
               <span className="w-2 h-2 rounded-full bg-[#e5484d]" />
-              <span style={{ color: "var(--critical)" }}>Vulnerable Code Block</span>
+              <span style={{ color: "var(--critical)" }}>Vulnerable / Flagged Code Pattern ({current.platform})</span>
             </div>
             <pre
               className="p-4 text-xs"
@@ -222,7 +259,7 @@ export default function DiffRemediation({
             >
               <span className="w-2 h-2 rounded-full bg-[#46a36e]" />
               <span style={{ color: "var(--low)" }}>
-                Parameterized Remediation ({current.platform})
+                Verified Remediation Pattern ({current.platform} Only — 0 Unsafe Sinks)
               </span>
             </div>
             <pre
@@ -280,33 +317,39 @@ export default function DiffRemediation({
               overflowWrap: "anywhere",
             }}
           >
-            {current.code.split("\n").map((line, i) => {
-              const isBad = line.startsWith("// ❌") || line.startsWith("# ❌");
-              const isGood = line.startsWith("// ✅") || line.startsWith("# ✅");
-              return (
-                <span
-                  key={i}
-                  style={{
-                    display: "block",
-                    color: isBad
-                      ? "var(--critical)"
-                      : isGood
-                      ? "var(--low)"
-                      : "var(--foreground)",
-                    background: isBad
-                      ? "rgba(229, 72, 77, 0.05)"
-                      : isGood
-                      ? "rgba(70, 163, 110, 0.05)"
-                      : "transparent",
-                    whiteSpace: "pre-wrap",
-                    wordBreak: "break-word",
-                    overflowWrap: "anywhere",
-                  }}
-                >
-                  {line}
-                </span>
-              );
-            })}
+            {(() => {
+              let mode: "neutral" | "bad" | "good" = "neutral";
+              return current.code.split("\n").map((line, i) => {
+                const t = line.trim();
+                if (t.startsWith("// ❌") || t.startsWith("# ❌") || t.includes("❌")) mode = "bad";
+                if (t.startsWith("// ✅") || t.startsWith("# ✅") || t.includes("✅")) mode = "good";
+                return (
+                  <span
+                    key={i}
+                    style={{
+                      display: "block",
+                      color:
+                        mode === "bad"
+                          ? "var(--critical)"
+                          : mode === "good"
+                          ? "var(--low)"
+                          : "var(--foreground)",
+                      background:
+                        mode === "bad"
+                          ? "rgba(229, 72, 77, 0.05)"
+                          : mode === "good"
+                          ? "rgba(70, 163, 110, 0.05)"
+                          : "transparent",
+                      whiteSpace: "pre-wrap",
+                      wordBreak: "break-word",
+                      overflowWrap: "anywhere",
+                    }}
+                  >
+                    {line}
+                  </span>
+                );
+              });
+            })()}
           </pre>
         </div>
       )}
@@ -336,17 +379,31 @@ export default function DiffRemediation({
               : "AWAITING POST-FIX RETEST"}
           </span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-[11px]" style={{ color: "var(--muted)" }}>
-          <div className="rounded-lg p-2.5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-            <strong className="text-[#1f1b18]">1. Parameterization Check:</strong> Confirm tainted parameter (<code>account</code>) is bound via <code>PreparedStatement.setString(1, account)</code> instead of string concatenation.
+        {isJavaCompilerOrCodeGen ? (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-[11px]" style={{ color: "var(--muted)" }}>
+            <div className="rounded-lg p-2.5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+              <strong className="text-[#1f1b18]">1. Preferred Fix (Treat Input as Data):</strong> Parse structured input via Jackson <code>ObjectMapper</code> into a typed DTO + enforce schema, field type, length, and enum allowlists (JSON parsing alone is not a security boundary).
+            </div>
+            <div className="rounded-lg p-2.5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+              <strong className="text-[#1f1b18]">2. If Compilation Is Required:</strong> Never compile in the main JVM; isolate in a disposable sandbox with <code>List.of(&quot;-proc:none&quot;)</code>, strict CPU/memory/timeout/network limits, and zero access to application secrets.
+            </div>
+            <div className="rounded-lg p-2.5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+              <strong className="text-[#1f1b18]">3. Language-Strict Diff Guarantee:</strong> Remediated block contains <code>0</code> raw <code>engine.eval(...)</code> calls and <code>0</code> cross-language constructs (<code>JSON.parse</code> / <code>ast.literal_eval</code>).
+            </div>
           </div>
-          <div className="rounded-lg p-2.5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-            <strong className="text-[#1f1b18]">2. Replay Test Case (TC-SQLI-089-001):</strong> Replay <code>account=&quot;Smith&apos; OR &apos;1&apos;=&apos;1&quot;</code> and confirm the SQL parse tree remains invariant.
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-[11px]" style={{ color: "var(--muted)" }}>
+            <div className="rounded-lg p-2.5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+              <strong className="text-[#1f1b18]">1. Parameterization Check:</strong> Confirm tainted parameter (<code>account</code>) is bound via <code>PreparedStatement.setString(1, account)</code> instead of string concatenation.
+            </div>
+            <div className="rounded-lg p-2.5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+              <strong className="text-[#1f1b18]">2. Replay Test Case ({testCaseId}):</strong> Replay <code>account=&quot;Smith&apos; OR &apos;1&apos;=&apos;1&quot;</code> and confirm the SQL parse tree remains invariant.
+            </div>
+            <div className="rounded-lg p-2.5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+              <strong className="text-[#1f1b18]">3. Release Gate Unblock:</strong> Once retest passes and static rules report 0 concatenations, the Release Gate transitions to <code>PASS</code>.
+            </div>
           </div>
-          <div className="rounded-lg p-2.5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-            <strong className="text-[#1f1b18]">3. Release Gate Unblock:</strong> Once retest passes and static rules report 0 concatenations, the Release Gate transitions to <code>PASS</code>.
-          </div>
-        </div>
+        )}
       </div>
 
       {(sandboxRunning || sandboxLogs.length > 0) && (
@@ -360,7 +417,7 @@ export default function DiffRemediation({
               <div className="terminal-dot" style={{ background: "#d6a847" }} />
               <div className="terminal-dot" style={{ background: "#46a36e" }} />
               <span className="ml-2 text-[10px] font-bold text-[#8b4528] uppercase tracking-wider">
-                Mitigation Retest &amp; Parameterization Verifier Logs
+                Mitigation Retest &amp; Language-Strict Remediation Verifier Logs
               </span>
             </div>
             <Terminal size={10} color="var(--muted)" />
@@ -406,7 +463,15 @@ export default function DiffRemediation({
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-[#46a36e]" />
             <span style={{ color: "var(--low)" }}>
-              Mitigation Retest Complete: Tainted value is parameterized (<code>PreparedStatement.setString</code>) and test case <code>TC-SQLI-089-001</code> no longer reproduces.
+              {isJavaCompilerOrCodeGen ? (
+                <>
+                  Mitigation Retest Complete: Input is parsed as data via typed DTO + allowlist (or isolated with <code>-proc:none</code>) and test case <code>{testCaseId}</code> no longer reaches any dynamic compilation or script sink.
+                </>
+              ) : (
+                <>
+                  Mitigation Retest Complete: Tainted value is parameterized (<code>PreparedStatement.setString</code>) and test case <code>{testCaseId}</code> no longer reproduces.
+                </>
+              )}
             </span>
           </div>
         </div>

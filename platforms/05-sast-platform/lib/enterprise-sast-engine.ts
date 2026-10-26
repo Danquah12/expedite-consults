@@ -174,56 +174,91 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     id: "RULE-CODEI-094",
     cwe: "CWE-94",
     cweName: "Improper Control of Generation of Code ('Code Injection')",
-    title: "Dynamic Code Evaluation via eval() / Function() / ScriptEngine",
-    severity: "Critical",
-    cvss: 9.4,
-    epss: 0.318,
-    mitre: "T1059.007",
+    title: "Dynamic Code Evaluation or Unisolated Source Compilation",
+    severity: "High",
+    cvss: 7.5,
+    epss: 0.0,
+    mitre: "T1059 (Conditional on Language & Runtime Execution Proof)",
     owasp: "A03:2021",
     owaspCategory: "Injection",
     validatorPriority: 2,
-    validatorName: "DynamicCodeEvalValidator",
-    checkmarxQuery: "XTRIKE-XQL/High_Risk/Code_Injection_Eval",
+    validatorName: "DynamicCodeAndCompilationValidator",
+    checkmarxQuery: "XTRIKE-XQL/High_Risk/Code_Generation_And_Eval",
     ibmRuleId: "IBM-APPSCAN-CODEI-003",
     fortifyKingdom: "Input Validation and Representation",
     fortifyAnalyzer: "Semantic",
-    sinkPattern: /(?:\beval\s*\(\s*[^"')\s]|new\s+Function\s*\(|vm\.runInNewContext\s*\(|ScriptEngine.*eval\s*\()/i,
-    sourceHints: /(?:req\.|request\.|params|query|body|input|payload)/i,
-    sanitizerPattern: /(?:ast\.literal_eval|JSON\.parse)/i,
-    defaultSource: "Dynamic Expression Payload",
-    defaultSink: "Runtime Script Interpreter (eval / Function)",
-    privilegeGain: "Candidate server-side code execution within application runtime process (requires runtime verification)",
+    sinkPattern: /(?:\beval\s*\(\s*[^"')\s]|new\s+Function\s*\(|vm\.runInNewContext\s*\(|ScriptEngine.*eval\s*\(|compiler\.getTask\s*\()/i,
+    sourceHints: /(?:req\.|request\.|params|query|body|input|payload|@RequestParam|getParameter)/i,
+    sanitizerPattern: /(?:ast\.literal_eval|objectMapper\.readValue|-proc:none)/i,
+    defaultSource: "Untrusted Expression or Source Payload",
+    defaultSink: "Dynamic Interpreter or Compiler API",
+    privilegeGain:
+      "Demonstrated (Static Scope): Identifies dynamic interpreter or JavaCompiler API call. Unverified Hypothesis: Arbitrary runtime code execution is NOT established unless untrusted input reaches compilation/evaluation AND the compiled artifact is loaded/invoked (or annotation processors execute).",
     executiveSummary:
-      "XTRIKE XQL and XTRIKE StructSCA Semantic Analyzer detected dynamic code evaluation (`eval`/`Function`/`ScriptEngine.eval`) on non-literal input.",
+      "Static analysis identified a dynamic code evaluation or compilation API call. Separate detection stages evaluate (1) input source provenance, (2) data flow into compilation/evaluation, (3) compilation execution (`task.call()`), and (4) post-compilation class loading/invocation before claiming runtime code execution.",
     businessImpact:
-      "If reachable with attacker-controlled input, enables execution of arbitrary code within the application process context.",
+      "Actual impact is unconfirmed from a compilation API call alone. If untrusted source is compiled and loaded/invoked inside the main application process (or triggers unsafe annotation processors), it could lead to in-process code execution.",
     rootCause:
-      "Using runtime code evaluation (`eval`) to parse structured data or evaluate expressions instead of a safe parser.",
+      "Using dynamic code evaluation or in-process compilation (`ScriptEngine.eval` / `JavaCompiler.getTask`) without strict data-only parsing or external sandbox isolation.",
     compliance: [
-      { framework: "PCI DSS", reference: "Req 6.2.4", description: "Prevent code injection" },
-      { framework: "NIST 800-53", reference: "SI-10", description: "Input Validation" },
-      { framework: "OWASP Top 10", reference: "A03:2021", description: "Injection" },
+      { framework: "OWASP Top 10", reference: "A03:2021 / ASVS v4.0.3 §5.2.4", description: "Verify that the application avoids dynamic code execution or compilation of untrusted input" },
+      { framework: "PCI DSS", reference: "PCI DSS v4.0 Req 6.2.4", description: "Software engineering techniques to prevent code injection (requires verified source-to-sink path)" },
+      { framework: "NIST 800-53", reference: "SI-10", description: "Information Input Validation & Execution Containment" },
+      { framework: "ISO 27001", reference: "ISO/IEC 27001:2022 A.8.28", description: "Secure coding principles (requires input provenance & isolation evidence)" },
     ],
     remediation: [
       {
         platform: "Java",
-        explanation: "Remove ScriptEngine.eval() on user input; parse structured JSON or use a constrained expression AST.",
-        code: `// ❌ VULNERABLE\nengine.eval(request.getParameter("expr"));\n\n// ✅ FIXED\nJsonNode dto = objectMapper.readTree(request.getParameter("expr"));`,
-      },
-      {
-        platform: "Node.js",
-        explanation: "Replace eval() with JSON.parse() or a safe math/expression parser.",
-        code: `// ❌ VULNERABLE\nconst result = eval(req.body.formula);\n\n// ✅ FIXED\nconst payload = JSON.parse(req.body.formula);`,
+        explanation:
+          "Preferred Fix: Treat input as structured data using Jackson with strict DTO schema, type, length, and allowlist validation (parsing JSON alone is not a security boundary). If user Java source must be compiled, never compile/execute in the main process—use a disposable external sandbox with '-proc:none' and strict CPU/memory/network/filesystem limits.",
+        code: `// ❌ VULNERABLE / UNVERIFIED IN-PROCESS COMPILATION OR EVAL (BlindScript.java)
+JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, diagnostics, null, null, compilationUnits);
+// Risk: Compiling/loading untrusted source in-process or running default annotation processors
+
+// ✅ FIXED OPTION A (PREFERRED) — Treat Input as Data with Jackson + Strict Schema Validation
+public record CalculationRequest(String operation, int operandA, int operandB) {}
+CalculationRequest reqDto = objectMapper.readValue(rawJsonInput, CalculationRequest.class);
+if (!Set.of("ADD", "SUBTRACT", "MULTIPLY").contains(reqDto.operation())) {
+    throw new IllegalArgumentException("Disallowed operation in schema allowlist");
+}
+int result = predefinedOperations.execute(reqDto);
+
+// ✅ FIXED OPTION B (IF USER CODE MUST BE COMPILED) — External Sandbox + Disable Annotation Processors (-proc:none)
+List<String> safeCompilerOptions = List.of("-proc:none", "-implicit:none");
+// Execute compilation & any class invocation ONLY inside a disposable, network-isolated microVM/container
+SandboxCompilationResult sandboxResult = isolatedCompilerSandboxClient.compileOutOfProcess(
+    sourceProvenanceId, safeCompilerOptions, Duration.ofSeconds(3)
+);`,
       },
       {
         platform: "Python",
-        explanation: "Use ast.literal_eval() or json.loads() instead of eval().",
-        code: `# ❌ VULNERABLE\ndata = eval(user_input)\n\n# ✅ FIXED\ndata = ast.literal_eval(user_input)`,
+        explanation:
+          "Replace Python exec() / compile() / eval() with json.loads() or ast.literal_eval() backed by strict schema validation (MITRE ATT&CK T1059.006).",
+        code: `# ❌ VULNERABLE (Python CODEI-PY-EXEC)
+compiled_code = compile(user_payload, "<string>", "exec")
+exec(compiled_code)
+
+# ✅ FIXED — Treat input as data & validate schema
+parsed_data = json.loads(user_payload)
+validated_dto = CalculationSchema.model_validate(parsed_data)`,
+      },
+      {
+        platform: "Node.js",
+        explanation:
+          "Replace JavaScript eval() / new Function() with JSON.parse() and validate against a strict schema (MITRE ATT&CK T1059.007).",
+        code: `// ❌ VULNERABLE (JavaScript CODEI-JS-EVAL)
+const result = eval(req.body.formula);
+
+// ✅ FIXED — Parse structured JSON & validate against strict schema
+const parsed = SafeFormulaSchema.parse(JSON.parse(req.body.formula));`,
       },
     ],
     validationSteps: [
-      "Remove all calls to eval(), exec(), and new Function() on non-literal inputs.",
-      "Verify AST contains zero dynamic code generation sinks.",
+      "1. Source-to-Compilation Trace: Inspect the caller of compile() and the JavaFileObject implementation to verify whether untrusted input reaches JavaCompiler.getTask(...).",
+      "2. Execution Path Check: Verify whether CompilationTask.call() is invoked and whether compiled classes are loaded/invoked via ClassLoader or reflection.",
+      "3. Compiler & Annotation Processor Check: Verify '-proc:none' is enforced and compilation is isolated from the main application process and secrets.",
+      "4. Schema Validation Retest: If replaced with Jackson JSON parsing, verify dynamic compilation is removed and invalid schema inputs are rejected.",
     ],
   },
   {
@@ -1397,12 +1432,33 @@ const CVSS_VECTORS_BY_CWE: Record<string, { vector: string; rationale: string }>
   },
 };
 
+export function pluginSupportsLanguage(pluginLangs: string[], fileLang: string): boolean {
+  if (!pluginLangs || pluginLangs.length === 0) return true;
+  const fl = fileLang.toLowerCase();
+  return pluginLangs.some((pl) => {
+    const p = pl.toLowerCase();
+    if (p === "any" || p === "*") return true;
+    if (p === fl) return true;
+    if (
+      (p === "node.js" || p === "javascript" || p === "typescript") &&
+      (fl === "node.js" || fl === "javascript" || fl === "typescript")
+    ) {
+      return true;
+    }
+    if ((p === "java" || p === "kotlin" || p === "spring") && (fl === "java" || fl === "kotlin")) {
+      return true;
+    }
+    return false;
+  });
+}
+
 export function deriveFindingAuditMetadata(params: {
   cwe: string;
   sanitizerDetected: boolean;
   surroundingText: string;
   repoUrl: string;
   filePath: string;
+  lineText?: string;
 }): {
   proofState: CanonicalProofState;
   valStatus: ValidationStatus;
@@ -1412,8 +1468,14 @@ export function deriveFindingAuditMetadata(params: {
   cvssRationale: string;
   isBenchmarkFixture: boolean;
   deploymentContextNote: string;
+  overrideSeverity?: "Critical" | "High" | "Medium" | "Low";
+  overrideCvss?: number;
+  overrideEpss?: number;
+  overrideMitre?: string;
+  overrideExploitability?: "Very Easy" | "Easy" | "Moderate" | "Difficult";
+  overrideFpLikelihood?: "Very Low" | "Low" | "Medium" | "High";
 } {
-  const { cwe, sanitizerDetected, surroundingText, repoUrl, filePath } = params;
+  const { cwe, sanitizerDetected, surroundingText, repoUrl, filePath, lineText = "" } = params;
   const combinedPath = `${repoUrl} ${filePath}`.toLowerCase();
   const isBenchmarkFixture =
     /(?:benchmark|webgoat|dvwa|juice-shop|nodegoat|pygoat|railsgoat|mutillidae|shepherd|vulnerable|vuln|damnvulnerable|crapi|vampi|wrongsecrets)/i.test(
@@ -1439,6 +1501,84 @@ export function deriveFindingAuditMetadata(params: {
       cvssRationale: cvssMeta.rationale,
       isBenchmarkFixture,
       deploymentContextNote,
+    };
+  }
+
+  // PLG-046 / PLG-054 6-Stage Java Dynamic Compilation Analysis (javax.tools.JavaCompiler.getTask)
+  if (
+    cwe === "CWE-94" &&
+    /\b(?:compiler\.getTask\s*\(|ToolProvider\.getSystemJavaCompiler\s*\()/i.test(`${lineText}\n${surroundingText}`)
+  ) {
+    const hasUntrustedSourceInExcerpt =
+      /(?:request\.getParameter|@RequestParam|@RequestBody|@PathVariable|getQueryString|getHeader|req\.body|req\.query)/i.test(
+        surroundingText
+      );
+    const hasTaskCall = /\btask\.call\s*\(|\bgetTask\s*\([^)]*\)\s*\.call\s*\(/i.test(surroundingText);
+    const hasClassInvocation =
+      /(?:loadClass\s*\(|Class\.forName\s*\(|newInstance\s*\(|\.invoke\s*\()/i.test(surroundingText);
+
+    // AT-PLG046-04: Untrusted input is compiled, loaded, and invoked -> Critical RCE risk
+    if (hasUntrustedSourceInExcerpt && hasTaskCall && hasClassInvocation) {
+      return {
+        proofState: "DATAFLOW_CONFIRMED",
+        valStatus: "confirmed",
+        gtCat: "actually_vulnerable",
+        auditDisposition:
+          "Disposition: Confirmed Static Source-to-Execution Chain | Static evidence: Untrusted input -> JavaFileObject -> compiler.getTask() -> task.call() -> ClassLoader.loadClass() -> reflective invocation",
+        cvssVector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+        cvssRationale:
+          "Base 9.4 Critical: End-to-end static taint path verified from untrusted input into JavaFileObject, task.call() execution, and post-compilation ClassLoader invocation.",
+        isBenchmarkFixture,
+        deploymentContextNote,
+        overrideSeverity: "Critical",
+        overrideCvss: 9.4,
+        overrideEpss: 0.0,
+        overrideMitre: "T1059 — Command and Scripting Interpreter (Dynamic JVM Compilation & Class Invocation)",
+        overrideExploitability: "Easy",
+        overrideFpLikelihood: "Low",
+      };
+    }
+
+    // AT-PLG046-03: Untrusted input reaches SimpleJavaFileObject and task.call() is executed
+    if (hasUntrustedSourceInExcerpt && hasTaskCall) {
+      return {
+        proofState: "DETECTED_STATIC",
+        valStatus: "inconclusive",
+        gtCat: "environment_dependent",
+        auditDisposition:
+          "Disposition: High-Confidence Dynamic Compilation Risk | Static evidence: Untrusted input reaches JavaFileObject + task.call() executed | Runtime code execution: Verify -proc:none annotation processor guard and downstream ClassLoader invocation",
+        cvssVector: "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:N",
+        cvssRationale:
+          "Provisional 7.5 High: Untrusted input reaches JavaCompiler.getTask() and task.call() is invoked; full RCE confirmation requires verifying whether -proc:none is absent or compiled classes are loaded/invoked.",
+        isBenchmarkFixture,
+        deploymentContextNote,
+        overrideSeverity: "High",
+        overrideCvss: 7.5,
+        overrideEpss: 0.0,
+        overrideMitre: "N/A — Java Dynamic Compilation API (task.call() verified; post-compilation class invocation unconfirmed)",
+        overrideExploitability: "Moderate",
+        overrideFpLikelihood: "Low",
+      };
+    }
+
+    // AT-PLG046-02 (Default for BlindScript.java excerpt): compiler.getTask(...) present, but source of fileObjects, task.call(), and class loading are not established by the excerpt
+    return {
+      proofState: "NEEDS_MANUAL_VALIDATION",
+      valStatus: "inconclusive",
+      gtCat: "environment_dependent",
+      auditDisposition:
+        "Disposition: Needs validation | Static evidence: Java compiler API identified | Untrusted input flow: Not established by excerpt | Runtime code execution: Not demonstrated | Actual impact: Unconfirmed | CVSS / EPSS: Reassessment required",
+      cvssVector: "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:L/I:L/A:N",
+      cvssRationale:
+        "CVSS / EPSS: Reassessment required (Provisional 5.3 Medium). Excerpt shows javax.tools.JavaCompiler.getTask(...) task creation only; does not establish untrusted input flow into fileObjects, task.call() execution, annotation processor configuration (-proc:none), or post-compilation ClassLoader invocation.",
+      isBenchmarkFixture,
+      deploymentContextNote,
+      overrideSeverity: "Medium",
+      overrideCvss: 5.3,
+      overrideEpss: 0.0,
+      overrideMitre: "N/A — Java Dynamic Compilation API (Compilation alone does not establish T1059 execution)",
+      overrideExploitability: "Moderate",
+      overrideFpLikelihood: "Medium",
     };
   }
 
@@ -1586,12 +1726,25 @@ export function scanFilesWithEnterpriseEngines(params: {
         continue;
       }
 
+      // AT-PLG046-01: Suppress constant Java source compiled inside an approved unit test harness (*Test.java / @Test)
+      if (
+        /\b(?:compiler\.getTask\s*\(|ToolProvider\.getSystemJavaCompiler\s*\()/i.test(lineText) &&
+        /(?:Test\.java|Tests\.java|@Test\b)/i.test(`${fileObj.path}\n${fullText}`) &&
+        !fileHasUntrustedSource
+      ) {
+        logs.push(
+          `[AST-GUARD] AT-PLG046-01 Test-Harness Constant Source Suppression: Ignored JavaCompiler.getTask() in approved test harness ${fileObj.path}:${idx + 1} (constant source, 0 untrusted inputs)`
+        );
+        continue;
+      }
+
       const lowerLine = trimmed.toLowerCase();
       let matchedOnLine = false;
 
-      // Pass 1: Check 400-Plugin Token-Indexed Catalog for specific signature match
+      // Pass 1: Check 400-Plugin Token-Indexed Catalog for language-matched specific signature match
       let matchedPlugin: SASTPluginDefinition | undefined;
       for (const item of COMPILED_400_PLUGINS) {
+        if (!pluginSupportsLanguage(item.def.languages, fileLang)) continue;
         const hasFastToken =
           item.def.fastTokens.length === 0 ||
           item.def.fastTokens.some((tok) => lowerLine.includes(tok));
@@ -1654,8 +1807,11 @@ export function scanFilesWithEnterpriseEngines(params: {
         const findingId = `SAST-${String(findingCounter).padStart(3, "0")}`;
         findingCounter++;
 
-        // Only attach matchedPlugin metadata if it belongs to the same CWE family
-        const sameCwePlugin = matchedPlugin && matchedPlugin.cwe === rule.cwe ? matchedPlugin : undefined;
+        // Only attach matchedPlugin metadata if it belongs to the same CWE family and supports fileLang
+        const sameCwePlugin =
+          matchedPlugin && matchedPlugin.cwe === rule.cwe && pluginSupportsLanguage(matchedPlugin.languages, fileLang)
+            ? matchedPlugin
+            : undefined;
         const cxQuery = sameCwePlugin ? `${sameCwePlugin.pluginId}:${sameCwePlugin.checkmarxQuery}` : rule.checkmarxQuery;
         const ibmRule = sameCwePlugin ? sameCwePlugin.ibmRuleId : rule.ibmRuleId;
         const fortifyKingdom = sameCwePlugin ? sameCwePlugin.fortifyKingdom : rule.fortifyKingdom;
@@ -1667,31 +1823,36 @@ export function scanFilesWithEnterpriseEngines(params: {
           surroundingText,
           repoUrl,
           filePath: fileObj.path,
+          lineText: trimmed,
         });
+
+        const isUnconfirmedNeedsValidation = auditMeta.proofState === "NEEDS_MANUAL_VALIDATION";
 
         const engineResults: EngineResult[] = [
           {
             name: "XTRIKE XQL",
-            confidence: sanitizerDetected ? 0.64 : 0.95,
-            confirmed: !sanitizerDetected,
+            confidence: sanitizerDetected ? 0.64 : isUnconfirmedNeedsValidation ? 0.72 : 0.95,
+            confirmed: !sanitizerDetected && !isUnconfirmedNeedsValidation,
             details: `${cxQuery} · BFL at ${fileObj.path.split("/").pop()}:${lineNumber}`,
           },
           {
             name: "XTRIKE DeepFlow",
-            confidence: sanitizerDetected ? 0.58 : 0.94,
-            confirmed: !sanitizerDetected,
-            details: `${ibmRule} · Taint trace line ${detectedSourceLineNum} -> line ${lineNumber} -> sink line ${effectiveSinkLineNumber}`,
+            confidence: sanitizerDetected ? 0.58 : isUnconfirmedNeedsValidation ? 0.65 : 0.94,
+            confirmed: !sanitizerDetected && !isUnconfirmedNeedsValidation,
+            details: isUnconfirmedNeedsValidation
+              ? `${ibmRule} · Sink API identified at line ${effectiveSinkLineNumber}; untrusted source & post-compilation execution not established in excerpt`
+              : `${ibmRule} · Taint trace line ${detectedSourceLineNum} -> line ${lineNumber} -> sink line ${effectiveSinkLineNumber}`,
           },
           {
             name: "XTRIKE StructSCA",
-            confidence: sanitizerDetected ? 0.61 : 0.95,
-            confirmed: !sanitizerDetected,
+            confidence: sanitizerDetected ? 0.61 : isUnconfirmedNeedsValidation ? 0.74 : 0.95,
+            confirmed: !sanitizerDetected && !isUnconfirmedNeedsValidation,
             details: `[${fortifyAnalyzer}] Kingdom: ${fortifyKingdom}`,
           },
           {
             name: "XTRIKE AST-Query",
-            confidence: sanitizerDetected ? 0.60 : 0.92,
-            confirmed: !sanitizerDetected,
+            confidence: sanitizerDetected ? 0.60 : isUnconfirmedNeedsValidation ? 0.69 : 0.92,
+            confirmed: !sanitizerDetected && !isUnconfirmedNeedsValidation,
             details: `AST DataFlow query matched ${rule.cwe} sink in ${fnName} (line ${effectiveSinkLineNumber})`,
           },
         ];
@@ -1700,10 +1861,22 @@ export function scanFilesWithEnterpriseEngines(params: {
           (engineResults.reduce((acc, e) => acc + e.confidence, 0) / engineResults.length).toFixed(2)
         );
 
+        const effectiveSeverity = auditMeta.overrideSeverity || sameCwePlugin?.severity || rule.severity;
+        const effectiveCvss = auditMeta.overrideCvss ?? sameCwePlugin?.cvss ?? rule.cvss;
+        const effectiveEpss = auditMeta.overrideEpss ?? sameCwePlugin?.epss ?? rule.epss;
+        const effectiveMitre =
+          auditMeta.overrideMitre ||
+          sameCwePlugin?.mitreAttack ||
+          (rule.cwe === "CWE-94" && fileLang === "Python"
+            ? "T1059.006 — Command and Scripting Interpreter: Python"
+            : rule.cwe === "CWE-94" && (fileLang === "JavaScript" || fileLang === "TypeScript" || fileLang === "Node.js")
+              ? "T1059.007 — Command and Scripting Interpreter: JavaScript"
+              : rule.mitre);
+
         logs.push(
           `[XTRIKE XQL] ${cxQuery} matched at ${fileObj.path}:${effectiveSinkLineNumber} (${rule.cwe}) [State=${auditMeta.proofState}]`,
-          `[IBM Scan]  ${ibmRule} taint trace verified in ${fnName} (line ${detectedSourceLineNum} -> line ${lineNumber} -> line ${effectiveSinkLineNumber})`,
-          `[XTRIKE StructSCA]   [${fortifyAnalyzer} Analyzer] Kingdom="${fortifyKingdom}" Priority=${rule.severity}`
+          `[IBM Scan]  ${ibmRule} taint trace evaluated in ${fnName} (line ${detectedSourceLineNum} -> line ${effectiveSinkLineNumber})`,
+          `[XTRIKE StructSCA]   [${fortifyAnalyzer} Analyzer] Kingdom="${fortifyKingdom}" Priority=${effectiveSeverity}`
         );
 
         const taintPath =
@@ -1713,10 +1886,16 @@ export function scanFilesWithEnterpriseEngines(params: {
                 propagationLineText,
                 sinkLineText,
               ]
-            : [
-                `${rule.defaultSource} in ${fnName}`,
-                sinkLineText,
-              ];
+            : isUnconfirmedNeedsValidation
+              ? [
+                  `[SOURCE UNESTABLISHED IN EXCERPT] Inspect ${fileObj.path.split("/").pop()} lines ${Math.max(1, lineNumber - 45)}–${lineNumber + 35} for fileObjects origin`,
+                  sinkLineText,
+                  `[EXECUTION UNESTABLISHED] Verify whether task.call() and ClassLoader.loadClass() are invoked downstream`,
+                ]
+              : [
+                  `${rule.defaultSource} in ${fnName}`,
+                  sinkLineText,
+                ];
 
         const today = new Date().toISOString().slice(0, 10);
         const languageMatchedRemediation = getLanguageMatchedRemediation(rule.remediation, fileLang);
@@ -1727,7 +1906,7 @@ export function scanFilesWithEnterpriseEngines(params: {
         const canonicalFinding: SASTFinding = {
           id: findingId,
           title: sameCwePlugin ? `${sameCwePlugin.name} (${sameCwePlugin.pluginId})` : rule.title,
-          severity: rule.severity,
+          severity: effectiveSeverity,
           status:
             auditMeta.proofState === "MITIGATED_BY_GUARD"
               ? "Resolved"
@@ -1736,11 +1915,11 @@ export function scanFilesWithEnterpriseEngines(params: {
                 : "Open",
           cwe: rule.cwe,
           cweName: rule.cweName,
-          cvss: rule.cvss,
+          cvss: effectiveCvss,
           cvssVector: auditMeta.cvssVector,
           cvssRationale: auditMeta.cvssRationale,
-          epss: rule.epss,
-          mitre: rule.mitre,
+          epss: effectiveEpss,
+          mitre: effectiveMitre,
           owasp: rule.owasp,
           owaspCategory: rule.owaspCategory,
           file: fileObj.path,
@@ -1756,7 +1935,12 @@ export function scanFilesWithEnterpriseEngines(params: {
           advisoryApplicability: "FIRST_PARTY_CODE_WEAKNESS_NO_CVE",
           codeSnippet: surroundingLines.join("\n"),
           snippetStartLine: windowStart + 1,
-          source: detectedSourceLine !== sinkLineText ? detectedSourceLine : rule.defaultSource,
+          source:
+            detectedSourceLine !== sinkLineText
+              ? detectedSourceLine
+              : isUnconfirmedNeedsValidation
+                ? `Not established by excerpt (trace fileObjects origin in ${fnName})`
+                : rule.defaultSource,
           sink: sinkLineText,
           taintPath,
           checkmarxQuery: cxQuery,
@@ -1764,34 +1948,69 @@ export function scanFilesWithEnterpriseEngines(params: {
           ibmRuleId: ibmRule,
           ibmTraceSummary: sanitizerDetected
             ? "Sanitizer guard intercepted taint flow before sink"
-            : `Static AST & dataflow trace from line ${detectedSourceLineNum} through line ${lineNumber} to sink at line ${effectiveSinkLineNumber}`,
+            : isUnconfirmedNeedsValidation
+              ? `Java compiler API identified at line ${effectiveSinkLineNumber}; untrusted input flow into fileObjects and runtime execution (task.call() / ClassLoader) not established by excerpt.`
+              : `Static AST & dataflow trace from line ${detectedSourceLineNum} through line ${lineNumber} to sink at line ${effectiveSinkLineNumber}`,
           fortifyKingdom,
           fortifyAnalyzer,
           engines: engineResults,
           confidence: avgConfidence,
-          reachable: !sanitizerDetected,
+          reachable: !sanitizerDetected && !isUnconfirmedNeedsValidation,
           internetFacing: !auditMeta.isBenchmarkFixture,
           authRequired: false,
-          exploitabilityLevel: rule.cvss >= 9.0 ? "Very Easy" : rule.cvss >= 7.5 ? "Easy" : "Moderate",
-          privilegeGain: rule.privilegeGain,
-          attackPath: [
-            { label: `1. Source Identified (Line ${detectedSourceLineNum})`, type: "entry", description: detectedSourceLine.slice(0, 75) },
-            { label: `2. Taint Propagation (Line ${lineNumber})`, type: "vulnerability", description: propagationLineText.slice(0, 85) },
-            { label: `3. Dangerous Sink (Line ${effectiveSinkLineNumber})`, type: "asset", description: sinkLineText.slice(0, 75) },
-            { label: "4. Runtime Validation Gate", type: "lateral", description: "Requires isolated test environment probe to verify SQL/sink interpretation change" },
-            { label: "Hypothesized Impact", type: "impact", description: `[UNVERIFIED — REQUIRES RUNTIME PROOF] ${rule.privilegeGain}` },
-          ],
-          executiveSummary: rule.executiveSummary,
+          exploitabilityLevel:
+            auditMeta.overrideExploitability ||
+            (effectiveCvss >= 9.0 ? "Very Easy" : effectiveCvss >= 7.5 ? "Easy" : "Moderate"),
+          privilegeGain: isUnconfirmedNeedsValidation
+            ? "Unconfirmed — Excerpt shows compiler.getTask(...) task creation only; requires verifying untrusted input flow, task.call() execution, and post-compilation class invocation."
+            : rule.privilegeGain,
+          attackPath: isUnconfirmedNeedsValidation
+            ? [
+                {
+                  label: "1. Input Provenance (Unestablished)",
+                  type: "entry",
+                  description: `Trace where fileObjects / JavaFileObject is constructed in ${fileObj.path.split("/").pop()}`,
+                },
+                {
+                  label: `2. Compilation Task Created (Line ${effectiveSinkLineNumber})`,
+                  type: "vulnerability",
+                  description: sinkLineText.slice(0, 85),
+                },
+                {
+                  label: "3. Task Execution & Options Gate",
+                  type: "asset",
+                  description: "Verify whether task.call() runs and whether -proc:none disables annotation processors",
+                },
+                {
+                  label: "4. Class Loading & Invocation Gate",
+                  type: "lateral",
+                  description: "Verify whether ClassLoader.loadClass() / newInstance() / Method.invoke() executes compiled bytecode",
+                },
+                {
+                  label: "Actual Impact: Unconfirmed",
+                  type: "impact",
+                  description: "[NEEDS VALIDATION] Runtime code execution is not demonstrated by compiler.getTask(...) alone",
+                },
+              ]
+            : [
+                { label: `1. Source Identified (Line ${detectedSourceLineNum})`, type: "entry", description: detectedSourceLine.slice(0, 75) },
+                { label: `2. Taint Propagation (Line ${lineNumber})`, type: "vulnerability", description: propagationLineText.slice(0, 85) },
+                { label: `3. Dangerous Sink (Line ${effectiveSinkLineNumber})`, type: "asset", description: sinkLineText.slice(0, 75) },
+                { label: "4. Runtime Validation Gate", type: "lateral", description: "Requires isolated test environment probe to verify SQL/sink interpretation change" },
+                { label: "Hypothesized Impact", type: "impact", description: `[UNVERIFIED — REQUIRES RUNTIME PROOF] ${rule.privilegeGain}` },
+              ],
+          executiveSummary: sameCwePlugin ? `${sameCwePlugin.remediationSummary} (${ auditMeta.auditDisposition })` : rule.executiveSummary,
           businessImpact: rule.businessImpact,
-          rootCause: rule.rootCause,
-          falsePositiveLikelihood: sanitizerDetected ? "High" : "Very Low",
+          rootCause: sameCwePlugin ? sameCwePlugin.remediationSummary : rule.rootCause,
+          falsePositiveLikelihood:
+            auditMeta.overrideFpLikelihood || (sanitizerDetected ? "High" : "Very Low"),
           compliance: rule.compliance,
           remediation: languageMatchedRemediation,
           validationSteps: rule.validationSteps,
           slaDeadline: today,
           owner: "AppSec & Core Engineering",
           application: repoUrl.replace(/^https?:\/\/github\.com\//i, "") || "Live Scanned Codebase",
-          riskScore: Math.min(100, Math.round(rule.cvss * 10)),
+          riskScore: Math.min(100, Math.round(effectiveCvss * 10)),
           firstDetected: today,
           lastSeen: today,
         };

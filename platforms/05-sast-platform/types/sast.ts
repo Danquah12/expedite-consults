@@ -64,7 +64,12 @@ export type DeepExploitabilityDossier = {
       advisoryId: string;
       cveId: string;
       ghRepoMatches: number;
-      exploitMaturity: "PoC Public on GitHub" | "Functional Verification Module" | "High-Signal Advisory" | "CWE Taxonomy Pattern (No Product CVE)";
+      exploitMaturity:
+        | "PoC Public on GitHub"
+        | "Functional Verification Module"
+        | "High-Signal Advisory"
+        | "CWE Taxonomy Pattern (No Product CVE)"
+        | "Needs Source-to-Execution Validation";
       summary: string;
     };
     searchsploit: {
@@ -73,7 +78,7 @@ export type DeepExploitabilityDossier = {
       exploitTitle: string;
       verifiedEdb: boolean;
       platformType: string;
-      exploitRank: "Excellent" | "Great" | "Normal";
+      exploitRank: "Excellent" | "Great" | "Normal" | "Manual Review Required";
     };
     googleIntel: {
       osvId: string;

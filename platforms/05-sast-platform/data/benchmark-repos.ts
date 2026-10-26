@@ -602,7 +602,7 @@ shell_exec("whois " . $_POST['domain']);
     defaultBranch: "main",
     defaultCommitSha: "c204f9a83b5d4014",
     expectedFindings: 34,
-    keyCwes: ["CWE-89", "CWE-78", "CWE-502", "CWE-611", "CWE-918", "CWE-798"],
+    keyCwes: ["CWE-89", "CWE-94", "CWE-78", "CWE-502", "CWE-611", "CWE-918", "CWE-798"],
     description: "Deliberately insecure Spring Boot / Java enterprise application maintained by OWASP covering OWASP Top 10 lessons.",
     seedFiles: [
       {
@@ -621,6 +621,29 @@ public class SqlInjectionLesson5a {
         Statement statement = connection.createStatement();
         ResultSet results = statement.executeQuery(query);
         return results.toString();
+    }
+}`,
+      },
+      {
+        path: "src/main/java/org/owasp/webgoat/lessons/selenium/BlindScript.java",
+        language: "Java",
+        content: `package org.owasp.webgoat.lessons.selenium;
+import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.List;
+import javax.tools.DiagnosticCollector;
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileObject;
+import javax.tools.ToolProvider;
+
+public class BlindScript {
+    public boolean compileClasses(Iterable<? extends JavaFileObject> fileObjects) {
+        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+        DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
+        StringWriter out = new StringWriter();
+        List<String> options = Arrays.asList("-proc:none");
+        JavaCompiler.CompilationTask task = compiler.getTask(out, null, diagnostics, options, null, fileObjects);
+        return task != null;
     }
 }`,
       },

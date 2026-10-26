@@ -16,12 +16,17 @@ interface CweDeepIntelTemplate {
   ghsaId: string;
   cveId: string;
   ghRepoMatches: number;
-  exploitMaturity: "PoC Public on GitHub" | "Functional Verification Module" | "High-Signal Advisory";
+  exploitMaturity:
+    | "PoC Public on GitHub"
+    | "Functional Verification Module"
+    | "High-Signal Advisory"
+    | "CWE Taxonomy Pattern (No Product CVE)"
+    | "Needs Source-to-Execution Validation";
   ghSummary: string;
   edbId: string;
   searchsploitCmd: string;
   exploitTitle: string;
-  exploitRank: "Excellent" | "Great" | "Normal";
+  exploitRank: "Excellent" | "Great" | "Normal" | "Manual Review Required";
   googleOsvId: string;
   googleDork: string;
   cisaKevListed: boolean;
@@ -184,43 +189,54 @@ const CWE_DEEP_INTEL_KB: Record<string, CweDeepIntelTemplate> = {
   },
   "CWE-94": {
     cwe: "CWE-94",
-    ghsaId: "ASVS-V5.2.4 / CWE-94",
-    cveId: "N/A (First-Party Source Code Weakness — CWE-94)",
-    ghRepoMatches: 540,
-    exploitMaturity: "Functional Verification Module",
-    ghSummary: "Dynamic code or script evaluation (`eval`, `exec`, `ScriptEngine.eval`) on untrusted input allows arbitrary code execution (OWASP ASVS V5.2.4).",
-    edbId: "CAPEC-242",
-    searchsploitCmd: "taxonomy-lookup --cwe CWE-94 --capec CAPEC-242 --wstg WSTG-INPV-11",
-    exploitTitle: "CWE-94 / CAPEC-242: Dynamic Code & Expression Evaluation Sink Pattern",
-    exploitRank: "Excellent",
-    googleOsvId: "WSTG-INPV-11 (Code Injection)",
-    googleDork: "AST Pattern: ScriptEngine.eval(input) / eval(userExpr)",
+    ghsaId: "ASVS-V5.2.4 / CWE-94 (Input Provenance & Isolation Required)",
+    cveId: "N/A (First-Party Source Code Pattern — No CVE Assigned)",
+    ghRepoMatches: 0,
+    exploitMaturity: "Needs Source-to-Execution Validation",
+    ghSummary:
+      "CWE-94 covers dynamic code generation (`javax.tools.JavaCompiler.getTask`) and dynamic script evaluation (`exec`, `eval`, `ScriptEngine.eval`). Creating a compilation task alone does not prove RCE without untrusted input flow, `task.call()`, and class loading/invocation (OWASP ASVS v4.0.3 §5.2.4).",
+    edbId: "CAPEC-242 (Taxonomy Reference Only)",
+    searchsploitCmd: "taxonomy-lookup --cwe CWE-94 --asvs 5.2.4 --pci-dss 6.2.4 --iso 27001:A.8.28",
+    exploitTitle: "CWE-94: Improper Control of Generation of Code (Requires Source, Compilation & Execution Proof)",
+    exploitRank: "Manual Review Required",
+    googleOsvId: "WSTG-INPV-11 (Code Injection / Dynamic Compilation)",
+    googleDork: "Query: language:Java \"compiler.getTask(\" \"SimpleJavaFileObject\" \"task.call()\"",
     cisaKevListed: false,
-    projectZeroRef: "NIST SP 800-53 SI-10",
-    zeroDayRisk: "STATIC DATAFLOW CONFIRMED — Dynamic interpreter execution without strict AST sandboxing.",
-    nvdCvssV4: 9.8,
-    packetStormRef: "OWASP-A03:2021-CODE-INJ",
-    vulnDbId: "CWE-94-FIRST-PARTY",
-    exploitabilityExtent: "Hypothesized Blast Radius (if reachable): Arbitrary code execution within the application runtime interpreter.",
-    probeType: "Static AST & Taint Dataflow Reachability Check (Runtime Sandbox: NOT_RUN)",
-    targetBoundary: "HTTP Input -> Dynamic Expression/Script Evaluator -> Application Runtime",
+    projectZeroRef: "OWASP ASVS v4.0.3 §5.2.4 / PCI DSS v4.0 Req 6.2.4 / ISO 27001:2022 A.8.28",
+    zeroDayRisk:
+      "STATIC API IDENTIFIED — Exploitability requires proving (1) untrusted input reaches JavaFileObject/source, (2) task.call() or interpreter executes, and (3) compiled classes or annotation processors run.",
+    nvdCvssV4: 5.3,
+    packetStormRef: "OWASP-A03:2021-CWE-94",
+    vulnDbId: "CWE-94-FIRST-PARTY-NO-CVE",
+    exploitabilityExtent:
+      "Unconfirmed until source-to-sink taint flow, task.call() execution, annotation processor options (-proc:none), and post-compilation ClassLoader invocation are verified.",
+    probeType: "6-Stage Dynamic Compilation & Execution Gate Check (Runtime Sandbox: NOT_RUN)",
+    targetBoundary: "Source Input -> JavaFileObject / Script Source -> compiler.getTask() -> task.call() -> ClassLoader Invocation",
     reEnumSurface: [
-      "Candidate follow-up check: Replace dynamic script evaluation with a declarative safe-math/JSON rules parser",
+      "Stage 1 Check: Inspect where fileObjects / SimpleJavaFileObject is constructed (lines 300–380) and whether user request data reaches it",
+      "Stage 2 & 3 Check: Verify whether task.call() is invoked and whether compiler options include List.of(\"-proc:none\") to disable annotation processors",
+      "Stage 4 & 5 Check: Verify whether ClassLoader.loadClass() / newInstance() / Method.invoke() runs in the main JVM or an isolated disposable sandbox",
     ],
-    secondarySinks: 1,
-    reEnumSummary: "Dynamic script evaluation sink detected without AST allowlist.",
+    secondarySinks: 0,
+    reEnumSummary:
+      "Disposition: Needs validation | Static evidence: Compiler/code-gen API identified | Untrusted input flow: Verify in full method scope | Runtime code execution: Not demonstrated by excerpt.",
     attackChainSteps: [
-      "Stage 1 [Observed Static Evidence]: Untrusted input reaches dynamic code evaluation sink.",
-      "Stage 2 [Controlled Runtime Verification — NOT_RUN]: Verify reachability in isolated sandbox.",
-      "Stage 3 [Hypothesized Impact Scenario]: Arbitrary runtime code execution.",
+      "Stage 1 [Input Provenance]: Trace whether fileObjects / source string originates from a constant, template, or untrusted HTTP request.",
+      "Stage 2 [Task Creation vs Execution]: Distinguish compiler.getTask(...) task creation from task.call() compilation execution.",
+      "Stage 3 [Compiler Options & Processors]: Check whether -proc:none disables annotation processors during compilation.",
+      "Stage 4 [Post-Compilation Invocation]: Check whether ClassLoader.loadClass(...) and Method.invoke(...) execute compiled bytecode.",
+      "Stage 5 [Isolation Boundary]: Verify whether compilation/execution occurs in the main application JVM or an external disposable sandbox.",
     ],
-    chainedCvss: 9.8,
-    verificationVerdict: "DATAFLOW_CONFIRMED (Static AST/Taint) — Runtime Sandbox Reproduction: NOT_RUN",
-    privilegeAttained: "Hypothesized: Application Runtime Execution Context",
-    lateralPaths: ["Hypothesized Path: Untrusted Expression -> Interpreter Sink -> Process Runtime"],
-    exfilScope: "Hypothesized Scope: Application memory and service credentials",
-    persistenceRisk: "HIGH if process has write access or outbound network access.",
-    blastRadiusScore: 89,
+    chainedCvss: 5.3,
+    verificationVerdict:
+      "Disposition: Needs validation | Static evidence: Java compiler API identified | Untrusted input flow: Not established by excerpt | Runtime code execution: Not demonstrated | Actual impact: Unconfirmed | CVSS / EPSS: Reassessment required",
+    privilegeAttained: "Unconfirmed — Runtime code execution is not demonstrated by compiler.getTask(...) alone",
+    lateralPaths: [
+      "Unverified Path: Requires proving Untrusted Input -> fileObjects -> compiler.getTask() -> task.call() -> ClassLoader.loadClass()",
+    ],
+    exfilScope: "Unconfirmed — No runtime execution or credential access demonstrated",
+    persistenceRisk: "UNCONFIRMED — Requires verifying whether compiled bytecode is written to disk or loaded into JVM memory.",
+    blastRadiusScore: 0,
   },
   "CWE-502": {
     cwe: "CWE-502",
@@ -736,15 +752,23 @@ export function buildDeepExploitabilityDossier(
         ? "Pass 3: Deep Supply-Chain & Config Enumeration"
         : "Pass 1: Primary AST & Surface Enumeration";
 
+  const isJavaCompilerSink =
+    finding.cwe === "CWE-94" &&
+    /\b(?:compiler\.getTask|JavaCompiler|CODEI-JAVA-COMPILER|PLG-054)/i.test(
+      `${finding.title} ${finding.sink} ${finding.checkmarxQuery} ${finding.codeSnippet}`
+    );
+
   const proofState: CanonicalProofState =
     finding.proofState ||
     (finding.status === "Resolved"
       ? "MITIGATED_BY_GUARD"
-      : finding.cwe === "CWE-798"
+      : isJavaCompilerSink || finding.cwe === "CWE-798"
         ? "NEEDS_MANUAL_VALIDATION"
         : finding.cwe === "CWE-328" || finding.cwe === "CWE-327" || finding.cwe === "CWE-330"
           ? "DETECTED_STATIC"
           : "DATAFLOW_CONFIRMED");
+
+  const isNeedsValidation = proofState === "NEEDS_MANUAL_VALIDATION";
 
   const initialResultStatus =
     proofState === "MITIGATED_BY_GUARD"
@@ -769,8 +793,8 @@ export function buildDeepExploitabilityDossier(
       githubGhsa: {
         advisoryId: kb.ghsaId,
         cveId: kb.cveId,
-        ghRepoMatches: kb.ghRepoMatches + index * 7,
-        exploitMaturity: kb.exploitMaturity,
+        ghRepoMatches: 0,
+        exploitMaturity: isNeedsValidation ? "Needs Source-to-Execution Validation" : kb.exploitMaturity,
         summary: kb.ghSummary,
       },
       searchsploit: {
@@ -779,7 +803,7 @@ export function buildDeepExploitabilityDossier(
         exploitTitle: kb.exploitTitle,
         verifiedEdb: false,
         platformType: `${finding.language} · First-Party Code Weakness Taxonomy`,
-        exploitRank: kb.exploitRank,
+        exploitRank: isNeedsValidation ? "Manual Review Required" : kb.exploitRank,
       },
       googleIntel: {
         osvId: kb.googleOsvId,
@@ -792,8 +816,8 @@ export function buildDeepExploitabilityDossier(
       otherDatabases: {
         packetStormRef: kb.packetStormRef,
         vulnDbId: kb.vulnDbId,
-        epssScore: finding.epss,
-        epssPercentile: "N/A (First-Party Code)",
+        epssScore: isNeedsValidation ? 0 : finding.epss,
+        epssPercentile: "N/A (First-Party Code — No CVE)",
         exploitabilityExtent: kb.exploitabilityExtent,
       },
     },
@@ -803,29 +827,36 @@ export function buildDeepExploitabilityDossier(
         probeType: kb.probeType,
         targetBoundary: kb.targetBoundary,
         resultStatus: initialResultStatus,
-        evidenceLog: `[STATIC-TRACE] Source (${finding.source.slice(0, 48)}) -> Sink (${finding.sink.slice(0, 48)}) at ${finding.file}:${finding.line} | Canonical State: ${proofState} | Runtime Sandbox: NOT_RUN.`,
+        evidenceLog: isJavaCompilerSink
+          ? `[STATIC-AUDIT] Java compiler API identified at ${finding.file}:${finding.line} (${finding.sink.slice(0, 52)}) | Disposition: Needs validation | Untrusted input flow: Not established by excerpt | Runtime code execution: Not demonstrated | Actual impact: Unconfirmed | CVSS / EPSS: Reassessment required.`
+          : `[STATIC-TRACE] Source (${finding.source.slice(0, 48)}) -> Sink (${finding.sink.slice(0, 48)}) at ${finding.file}:${finding.line} | Canonical State: ${proofState} | Runtime Sandbox: NOT_RUN.`,
       },
       reEnumeration: {
         triggeredBy: `Static call-graph & architectural surface review for ${finding.id} (${finding.cwe})`,
         newlyDiscoveredSurface: kb.reEnumSurface,
-        secondarySinksFound: kb.secondarySinks,
+        secondarySinksFound: isNeedsValidation ? 0 : kb.secondarySinks,
         summary: kb.reEnumSummary,
       },
       rePenetrationTest: {
         chainId: `STATIC-CHAIN-${finding.id}-${finding.cwe.replace("CWE-", "")}`,
         attackChainSteps: kb.attackChainSteps,
         chainedCvss: finding.cvss,
-        verificationVerdict: kb.verificationVerdict,
+        verificationVerdict: finding.auditDisposition || kb.verificationVerdict,
         proofArtifact: `AST-FINGERPRINT-${finding.id}-L${finding.line}`,
       },
       postExploitation: {
-        privilegeAttained: kb.privilegeAttained,
+        privilegeAttained: isNeedsValidation
+          ? "Unconfirmed — Runtime code execution is not demonstrated by excerpt"
+          : kb.privilegeAttained,
         lateralMovementPaths: kb.lateralPaths,
-        dataExfiltrationScope: kb.exfilScope,
+        dataExfiltrationScope: isNeedsValidation
+          ? "Unconfirmed — No runtime execution or credential access demonstrated"
+          : kb.exfilScope,
         persistenceRisk: kb.persistenceRisk,
-        blastRadiusScore: kb.blastRadiusScore,
-        executiveRemediationPriority:
-          finding.severity === "Critical"
+        blastRadiusScore: isNeedsValidation ? 0 : kb.blastRadiusScore,
+        executiveRemediationPriority: isNeedsValidation
+          ? "NEEDS VALIDATION — Inspect lines 300–380 to verify fileObjects origin, task.call(), -proc:none, and ClassLoader invocation"
+          : finding.severity === "Critical"
             ? "P0 — Remediate Source Sink & Verify in Isolated Sandbox"
             : finding.severity === "High"
               ? "P1 — Scheduled Security Fix & Regression Unit Test"
