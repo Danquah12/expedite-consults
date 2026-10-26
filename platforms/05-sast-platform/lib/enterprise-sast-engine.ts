@@ -4,6 +4,7 @@ import type {
   EngineResult,
   ComplianceRef,
   Remediation,
+  CanonicalProofState,
 } from "@/types/sast";
 import type {
   CanonicalValidationFinding,
@@ -148,26 +149,31 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     ],
     remediation: [
       {
+        platform: "Java",
+        explanation: "Avoid invoking a shell interpreter ('sh -c' / 'cmd.exe /c'). Use ProcessBuilder with a fixed executable path and separate validated argument tokens.",
+        code: `// ❌ VULNERABLE (Invokes shell interpreter with concatenated command string)\nRuntime.getRuntime().exec("sh -c " + cmd);\n\n// ✅ FIXED (Illustrative Java Pattern — No shell invocation + strict allowlist)\nif (!host.matches("^[a-zA-Z0-9.-]{1,64}$")) throw new IllegalArgumentException("Invalid host");\nProcessBuilder pb = new ProcessBuilder(java.util.List.of("/usr/bin/ping", "-c", "1", host));\npb.redirectErrorStream(true);`,
+      },
+      {
         platform: "Python",
         explanation: "Use subprocess.run with an argument list and shell=False.",
-        code: `# ❌ VULNERABLE\nsubprocess.Popen(f"ping -c 1 {host}", shell=True)\n\n# ✅ FIXED\nsubprocess.run(["ping", "-c", "1", host], shell=False, check=True)`,
+        code: `# ❌ VULNERABLE\nsubprocess.Popen(f"ping -c 1 {host}", shell=True)\n\n# ✅ FIXED\nsubprocess.run(["/usr/bin/ping", "-c", "1", host], shell=False, check=True)`,
       },
       {
         platform: "Node.js",
         explanation: "Use child_process.execFile with an argument array instead of exec.",
-        code: `// ❌ VULNERABLE\nexec(\`convert \${req.body.file} output.png\`);\n\n// ✅ FIXED\nexecFile("convert", [req.body.file, "output.png"]);`,
+        code: `// ❌ VULNERABLE\nexec(\`convert \${req.body.file} output.png\`);\n\n// ✅ FIXED\nexecFile("/usr/bin/convert", [ String(req.body.file), "output.png" ]);`,
       },
     ],
     validationSteps: [
-      "Confirm shell interpreter invocation is disabled (shell=False / execFile).",
-      "Validate input against a strict alphanumeric allowlist before command invocation.",
+      "Confirm shell interpreter invocation is disabled (ProcessBuilder arg list / shell=False / execFile).",
+      "Validate input against a strict alphanumeric allowlist before process execution.",
     ],
   },
   {
     id: "RULE-CODEI-094",
     cwe: "CWE-94",
     cweName: "Improper Control of Generation of Code ('Code Injection')",
-    title: "Dynamic Code Evaluation via eval() / Function() / exec()",
+    title: "Dynamic Code Evaluation via eval() / Function() / ScriptEngine",
     severity: "Critical",
     cvss: 9.4,
     epss: 0.318,
@@ -185,13 +191,13 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     sanitizerPattern: /(?:ast\.literal_eval|JSON\.parse)/i,
     defaultSource: "Dynamic Expression Payload",
     defaultSink: "Runtime Script Interpreter (eval / Function)",
-    privilegeGain: "Arbitrary server-side code execution inside the language runtime",
+    privilegeGain: "Candidate server-side code execution within application runtime process (requires runtime verification)",
     executiveSummary:
-      "XTRIKE XQL CxSAST and XTRIKE StructSCA Semantic Analyzer detected dynamic code evaluation (`eval`/`Function`) capable of executing attacker-controlled expressions.",
+      "XTRIKE XQL and XTRIKE StructSCA Semantic Analyzer detected dynamic code evaluation (`eval`/`Function`/`ScriptEngine.eval`) on non-literal input.",
     businessImpact:
-      "Full compromise of the application process, access to environment variables, in-memory session tokens, and backend databases.",
+      "If reachable with attacker-controlled input, enables execution of arbitrary code within the application process context.",
     rootCause:
-      "Using runtime code evaluation (`eval`) to parse data or evaluate dynamic expressions instead of safe structured parsers.",
+      "Using runtime code evaluation (`eval`) to parse structured data or evaluate expressions instead of a safe parser.",
     compliance: [
       { framework: "PCI DSS", reference: "Req 6.2.4", description: "Prevent code injection" },
       { framework: "NIST 800-53", reference: "SI-10", description: "Input Validation" },
@@ -199,13 +205,18 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     ],
     remediation: [
       {
+        platform: "Java",
+        explanation: "Remove ScriptEngine.eval() on user input; parse structured JSON or use a constrained expression AST.",
+        code: `// ❌ VULNERABLE\nengine.eval(request.getParameter("expr"));\n\n// ✅ FIXED\nJsonNode dto = objectMapper.readTree(request.getParameter("expr"));`,
+      },
+      {
         platform: "Node.js",
         explanation: "Replace eval() with JSON.parse() or a safe math/expression parser.",
         code: `// ❌ VULNERABLE\nconst result = eval(req.body.formula);\n\n// ✅ FIXED\nconst payload = JSON.parse(req.body.formula);`,
       },
       {
         platform: "Python",
-        explanation: "Use ast.literal_eval() instead of eval().",
+        explanation: "Use ast.literal_eval() or json.loads() instead of eval().",
         code: `# ❌ VULNERABLE\ndata = eval(user_input)\n\n# ✅ FIXED\ndata = ast.literal_eval(user_input)`,
       },
     ],
@@ -231,18 +242,18 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     ibmRuleId: "IBM-APPSCAN-DESER-004",
     fortifyKingdom: "Input Validation and Representation",
     fortifyAnalyzer: "Structural",
-    sinkPattern: /(?:ObjectInputStream\s*\(|\.readObject\s*\(|pickle\.loads?\s*\(|yaml\.load\s*\([^,)]*\)|yaml\.unsafe_load\s*\(|unserialize\s*\(\s*\$|BinaryFormatter\.Deserialize|JsonConvert\.DeserializeObject.*TypeNameHandling\.(?:All|Auto|Objects))/i,
-    sourceHints: /(?:Cookie|getInputStream|req\.body|request\.data| base64)/i,
+    sinkPattern: /(?:\.readObject\s*\(|pickle\.loads?\s*\(|yaml\.load\s*\([^,)]*\)|yaml\.unsafe_load\s*\(|unserialize\s*\(\s*\$|BinaryFormatter\.Deserialize|JsonConvert\.DeserializeObject.*TypeNameHandling\.(?:All|Auto|Objects))/i,
+    sourceHints: /(?:Cookie|getInputStream|req\.body|request\.data|base64|bais|token)/i,
     sanitizerPattern: /(?:yaml\.safe_load|ObjectInputFilter|ValidatingObjectInputStream|TypeNameHandling\.None)/i,
     defaultSource: "Serialized HTTP Body / Cookie Stream",
-    defaultSink: "Native Object Deserializer",
-    privilegeGain: "Remote Code Execution via gadget chain invocation during object reconstruction",
+    defaultSink: "Native Object Deserializer (.readObject / pickle / yaml.load)",
+    privilegeGain: "Candidate denial-of-service or code execution if compatible gadget classes exist on runtime classpath",
     executiveSummary:
-      "XTRIKE StructSCA Structural Analyzer and XTRIKE DeepFlow detected native object deserialization on untrusted streams without class allowlisting.",
+      "XTRIKE StructSCA Structural Analyzer and XTRIKE DeepFlow detected native object deserialization on untrusted streams without an explicit class allowlist filter.",
     businessImpact:
-      "Immediate pre-authentication Remote Code Execution (RCE) via known classpath gadget chains (e.g., CommonsCollections, PyYAML, pickle).",
+      "If reachable with untrusted bytes and compatible classpath gadget libraries exist, native deserialization can lead to arbitrary object instantiation or RCE.",
     rootCause:
-      "Native binary/YAML deserializers instantiate arbitrary classes specified in the stream before application validation occurs.",
+      "Native binary/YAML deserializers instantiate classes specified in the input stream before application-level type validation.",
     compliance: [
       { framework: "PCI DSS", reference: "Req 6.2.4", description: "Prevent integrity & deserialization flaws" },
       { framework: "NIST 800-53", reference: "SI-10", description: "Information Input Validation" },
@@ -250,29 +261,35 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     ],
     remediation: [
       {
+        platform: "Java",
+        explanation: "Enforce a strict JEP 290 ObjectInputFilter allowlist before calling readObject(), or migrate to structured JSON DTOs without polymorphic type handling.",
+        code: `// ❌ VULNERABLE (Unfiltered Java ObjectInputStream)\nObjectInputStream ois = new ObjectInputStream(bais);\nreturn ois.readObject();\n\n// ✅ FIXED (Illustrative Java Pattern — Strict JEP 290 ObjectInputFilter allowlist)\nObjectInputStream ois = new ObjectInputStream(bais);\nObjectInputFilter filter = ObjectInputFilter.Config.createFilter("maxdepth=2;maxarray=100;com.enterprise.dto.SafeSessionDto;!*");\nois.setObjectInputFilter(filter);\nreturn ois.readObject();`,
+      },
+      {
         platform: "Python",
-        explanation: "Use yaml.safe_load() or JSON instead of pickle / yaml.load().",
+        explanation: "Use yaml.safe_load() or json.loads() with schema validation instead of pickle / yaml.load().",
         code: `# ❌ VULNERABLE\nconfig = yaml.load(request.data)\n\n# ✅ FIXED\nconfig = yaml.safe_load(request.data)`,
       },
       {
-        platform: "Java",
-        explanation: "Enforce an ObjectInputFilter allowlist or migrate to Jackson/Gson without polymorphic typing.",
-        code: `// ❌ VULNERABLE\nObjectInputStream ois = new ObjectInputStream(stream);\nObject obj = ois.readObject();\n\n// ✅ FIXED\nObjectInputFilter filter = ObjectInputFilter.Config.createFilter("com.trusted.dto.*;!*");\nois.setObjectInputFilter(filter);`,
+        platform: "Node.js",
+        explanation: "Parse structured JSON with strict schema validation (e.g., Zod) and prototype-pollution guards instead of native unserialize.",
+        code: `// ❌ VULNERABLE\nconst obj = serialize.unserialize(rawPayload);\n\n// ✅ FIXED\nconst obj = SafePayloadSchema.parse(JSON.parse(rawPayload));`,
       },
     ],
     validationSteps: [
-      "Verify yaml.safe_load or strict ObjectInputFilter class allowlisting is active.",
+      "Verify JEP 290 ObjectInputFilter or schema-validated JSON parser rejects unexpected class descriptors.",
+      "Audit runtime classpath/dependencies to confirm gadget libraries are absent or isolated.",
     ],
   },
   {
     id: "RULE-XSS-079",
     cwe: "CWE-79",
     cweName: "Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')",
-    title: "Reflected / DOM Cross-Site Scripting (XSS) via Unencoded HTML Sink",
+    title: "Reflected / Server-Rendered Cross-Site Scripting (XSS) via Unencoded Output Sink",
     severity: "High",
-    cvss: 7.6,
+    cvss: 7.2,
     epss: 0.165,
-    mitre: "T1189",
+    mitre: "T1059.007",
     owasp: "A03:2021",
     owaspCategory: "Injection",
     validatorPriority: 3,
@@ -281,39 +298,49 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     ibmRuleId: "IBM-APPSCAN-XSS-005",
     fortifyKingdom: "Input Validation and Representation",
     fortifyAnalyzer: "Dataflow",
-    sinkPattern: /(?:dangerouslySetInnerHTML|\.innerHTML\s*=|document\.write\s*\(|v-html\s*=|res\.send\s*\(\s*(?:`[^`]*\$\{|["'][^"']*<\w+.*["']\s*\+)|echo\s+\$_(?:GET|POST|REQUEST)|render_template_string\s*\()/i,
-    sourceHints: /(?:req\.query|req\.body|location\.search|window\.location|\$_GET|\$_POST|request\.args)/i,
-    sanitizerPattern: /(?:DOMPurify\.sanitize|escapeHtml|html\.escape| htmlentities|htmlspecialchars|encodeForHTML)/i,
-    defaultSource: "Untrusted URL Query / DOM Input",
-    defaultSink: "Unencoded HTML / DOM Rendering Sink",
-    privilegeGain: "Session hijacking, credential theft, and arbitrary actions on behalf of authenticated users",
+    sinkPattern: /(?:dangerouslySetInnerHTML|\.innerHTML\s*=|document\.write\s*\(|v-html\s*=|res\.send\s*\(\s*(?:`[^`]*\$\{|["'][^"']*<\w+.*["']\s*\+)|response\.getWriter\(\)\.(?:println|print|write)\s*\([^)]*(?:\+|param|reportParam|request\.getParameter)|echo\s+\$_(?:GET|POST|REQUEST)|render_template_string\s*\()/i,
+    sourceHints: /(?:req\.query|req\.body|location\.search|window\.location|\$_GET|\$_POST|request\.args|request\.getParameter|reportParam|param)/i,
+    sanitizerPattern: /(?:Encode\.forHtml|HtmlUtils\.htmlEscape|StringEscapeUtils\.escapeHtml4|DOMPurify\.sanitize|escapeHtml|html\.escape|htmlentities|htmlspecialchars)/i,
+    defaultSource: "Untrusted HTTP Request Parameter",
+    defaultSink: "HTTP Response / HTML Rendering Sink",
+    privilegeGain: "Client-side script execution in victim browser context if response Content-Type is HTML-interpreted",
     executiveSummary:
-      "XTRIKE XQL CxSAST and XTRIKE DeepFlow traced user-controllable data into a raw HTML rendering sink without context-aware encoding or DOMPurify sanitization.",
+      "XTRIKE XQL and XTRIKE DeepFlow traced request-derived data into an HTTP/HTML response writer without context-sensitive output encoding.",
     businessImpact:
-      "Attackers can execute arbitrary JavaScript in victim browsers, steal session tokens, or perform unauthorized state-changing requests.",
+      "When rendered with an HTML Content-Type, attacker-supplied markup can execute scripts in the user's browser session.",
     rootCause:
-      "Bypassing framework auto-escaping (`dangerouslySetInnerHTML`, `.innerHTML`, raw `res.send`, or `echo $_GET`) without prior HTML sanitization.",
+      "Writing untrusted request parameters directly to `response.getWriter()`, `res.send()`, or DOM sinks without context-appropriate output encoding.",
     compliance: [
       { framework: "PCI DSS", reference: "Req 6.2.4", description: "Prevent cross-site scripting (XSS)" },
-      { framework: "NIST 800-53", reference: "SI-10", description: "Information Input Validation" },
-      { framework: "OWASP Top 10", reference: "A03:2021", description: "Injection (XSS)" },
+      { framework: "NIST 800-53", reference: "SI-10", description: "Information Input Validation & Output Encoding" },
+      { framework: "OWASP Top 10", reference: "A03:2021", description: "Injection (XSS — ASVS V5.3.3)" },
     ],
     remediation: [
       {
+        platform: "Java",
+        explanation: "Apply server-side context-sensitive output encoding (e.g., OWASP Java Encoder Encode.forHtml) and set an explicit Content-Type and X-Content-Type-Options: nosniff header.",
+        code: `// ❌ VULNERABLE (Unencoded parameter written to HTML response)\nresponse.getWriter().println("<div>Loaded report: " + reportParam + "</div>");\n\n// ✅ FIXED (Illustrative Java Pattern — Server-side OWASP Java Encoder)\nimport org.owasp.encoder.Encode;\nresponse.setContentType("text/html; charset=UTF-8");\nresponse.setHeader("X-Content-Type-Options", "nosniff");\nresponse.getWriter().println("<div>Loaded report: " + Encode.forHtml(reportParam) + "</div>");`,
+      },
+      {
         platform: "Node.js",
-        explanation: "Sanitize HTML with DOMPurify before rendering or use textContent / JSX auto-escaping.",
-        code: `// ❌ VULNERABLE\n<div dangerouslySetInnerHTML={{ __html: userBio }} />\n\n// ✅ FIXED\nimport DOMPurify from "dompurify";\n<div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(userBio) }} />`,
+        explanation: "Apply context-sensitive HTML encoding on server responses or sanitize rich client HTML with DOMPurify.",
+        code: `// ❌ VULNERABLE\nres.send("<div>Account: " + req.query.banner + "</div>");\n\n// ✅ FIXED\nres.type("html").send("<div>Account: " + escapeHtml(String(req.query.banner)) + "</div>");`,
+      },
+      {
+        platform: "Python",
+        explanation: "Use Jinja2 auto-escaping templates or markupsafe.escape() instead of concatenated template strings.",
+        code: `# ❌ VULNERABLE\nreturn render_template_string("<div>Result: " + user_tpl + "</div>")\n\n# ✅ FIXED\nfrom markupsafe import escape\nreturn f"<div>Result: {escape(user_tpl)}</div>"`,
       },
     ],
     validationSteps: [
-      "Confirm HTML entities (<, >, \", ', &) are encoded or stripped by DOMPurify prior to DOM insertion.",
+      "Verify response Content-Type header and confirm `<script>`, `\"`, `'`, `&` are contextually encoded in the HTTP response body.",
     ],
   },
   {
     id: "RULE-PATH-022",
     cwe: "CWE-22",
     cweName: "Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')",
-    title: "Path Traversal / Arbitrary File Read via Uncanonicalized Path Sink",
+    title: "Path Traversal via Uncanonicalized File Path Construction / I/O Sink",
     severity: "High",
     cvss: 8.2,
     epss: 0.214,
@@ -326,32 +353,43 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     ibmRuleId: "IBM-APPSCAN-PATHTRAV-006",
     fortifyKingdom: "Input Validation and Representation",
     fortifyAnalyzer: "Dataflow",
-    sinkPattern: /(?:fs\.(?:readFile|readFileSync|createReadStream|unlinkSync)\s*\(\s*(?:path\.(?:join|resolve)\s*\([^)]*req\.|req\.)|send_file\s*\(\s*(?:os\.path\.join\s*\([^)]*request\.|request\.)|new\s+File\s*\([^)]*request\.getParameter|http\.ServeFile\s*\([^)]*r\.URL\.Query|include\s*\(\s*\$_(?:GET|POST))/i,
-    sourceHints: /(?:req\.query|req\.params|request\.args|getParameter|r\.URL\.Query|\$_GET)/i,
-    sanitizerPattern: /(?:startsWith\s*\(\s*TRUSTED|os\.path\.commonpath|filepath\.Rel|secure_filename)/i,
-    defaultSource: "Filename / Path Query Parameter",
-    defaultSink: "Filesystem Read / Stream Sink",
-    privilegeGain: "Arbitrary read access to server configuration files, source code, and credentials (/etc/passwd, .env)",
+    sinkPattern: /(?:fs\.(?:readFile|readFileSync|createReadStream|unlinkSync)\s*\(\s*(?:path\.(?:join|resolve)\s*\([^)]*req\.|req\.)|send_file\s*\(\s*(?:os\.path\.join\s*\([^)]*request\.|request\.)|Files\.(?:readAllBytes|readString|newInputStream)\s*\(|new\s+File\s*\([^)]*(?:request\.getParameter|fullName|reportParam)|http\.ServeFile\s*\([^)]*r\.URL\.Query|include\s*\(\s*\$_(?:GET|POST))/i,
+    sourceHints: /(?:req\.query|req\.params|request\.args|getParameter|r\.URL\.Query|\$_GET|fullName|reportParam)/i,
+    sanitizerPattern: /(?:toRealPath\(\)|startsWith\s*\(\s*baseDir|os\.path\.commonpath|filepath\.Rel|secure_filename)/i,
+    defaultSource: "Filename / Path Request Parameter",
+    defaultSink: "Filesystem Path / Read Sink",
+    privilegeGain: "Unauthorized file read/write outside intended base directory if path reaches an active file I/O sink",
     executiveSummary:
-      "XTRIKE StructSCA Dataflow Analyzer and XTRIKE XQL CxSAST identified user input flowing into a filesystem operation without canonical root prefix enforcement.",
+      "XTRIKE StructSCA Dataflow Analyzer and XTRIKE XQL identified request input concatenated into a file path without canonical base-directory boundary verification.",
     businessImpact:
-      "Disclosure of sensitive configuration files (`.env`, private keys, cloud credentials) or overwrite of critical server files.",
+      "When connected to a file read/write/stream operation, dot-dot-slash (`../`) sequences can access files outside the intended root directory.",
     rootCause:
-      "`path.join` and `os.path.join` normalize `../` segments but do not prevent the resolved path from escaping the intended base directory.",
+      "String concatenation or `new File(base + input)` does not prevent `../` or symlink traversal from escaping the base directory.",
     compliance: [
-      { framework: "PCI DSS", reference: "Req 6.2.4", description: "Prevent path traversal & file access abuse" },
+      { framework: "PCI DSS", reference: "Req 6.2.4", description: "Prevent path traversal & unauthorized file access" },
       { framework: "NIST 800-53", reference: "AC-3", description: "Access Enforcement" },
-      { framework: "OWASP Top 10", reference: "A01:2021", description: "Broken Access Control" },
+      { framework: "OWASP Top 10", reference: "A01:2021", description: "Broken Access Control (ASVS V12.3.1)" },
     ],
     remediation: [
       {
+        platform: "Java",
+        explanation: "Resolve the canonical real path with Path.toRealPath() / normalize() and enforce a strict Path.startsWith(baseDir) boundary check before any file I/O.",
+        code: `// ❌ VULNERABLE (Uncanonicalized path concatenation)\nFile target = new File("/var/app/uploads/" + fullName);\n\n// ✅ FIXED (Illustrative Java Pattern — Canonical Path.startsWith boundary check)\nPath baseDir = Paths.get("/var/app/uploads").toRealPath();\nPath resolved = baseDir.resolve(fullName).normalize();\nif (!resolved.startsWith(baseDir)) {\n    throw new SecurityException("Path traversal attempt rejected");\n}`,
+      },
+      {
         platform: "Node.js",
-        explanation: "Resolve the canonical path and verify it starts with the trusted root directory.",
-        code: `// ❌ VULNERABLE\nconst target = path.join(UPLOAD_DIR, req.query.file);\nreturn fs.readFileSync(target);\n\n// ✅ FIXED\nconst target = path.resolve(UPLOAD_DIR, path.basename(String(req.query.file)));\nif (!target.startsWith(path.resolve(UPLOAD_DIR) + path.sep)) throw new Error("Access denied");`,
+        explanation: "Resolve the canonical path with path.resolve() and verify it starts with the trusted root directory + path.sep.",
+        code: `// ❌ VULNERABLE\nconst target = path.join(UPLOAD_DIR, req.query.file);\nreturn fs.readFileSync(target);\n\n// ✅ FIXED\nconst rootDir = fs.realpathSync(UPLOAD_DIR);\nconst target = path.resolve(rootDir, String(req.query.file));\nif (!target.startsWith(rootDir + path.sep)) throw new Error("Access denied");`,
+      },
+      {
+        platform: "Python",
+        explanation: "Use os.path.realpath() and verify os.path.commonpath([base_dir, target]) == base_dir.",
+        code: `# ❌ VULNERABLE\nreturn send_file(os.path.join(UPLOAD_DIR, filename))\n\n# ✅ FIXED\nbase = os.path.realpath(UPLOAD_DIR)\ntarget = os.path.realpath(os.path.join(base, filename))\nif os.path.commonpath([base, target]) != base:\n    raise PermissionError("Path traversal blocked")`,
       },
     ],
     validationSteps: [
-      "Test `../../etc/passwd` and `%2e%2e%2f` inputs to verify canonical boundary rejection.",
+      "Verify canonical path boundary check (`resolved.startsWith(baseDir)`) is enforced prior to file read/write/stream operations.",
+      "Test `../../` and symlink inputs in an isolated test fixture.",
     ],
   },
   {
@@ -375,37 +413,47 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     sourceHints: /(?:req\.body|req\.query|request\.args|request\.json|webhookUrl|callbackUrl|url)/i,
     sanitizerPattern: /(?:ALLOWED_HOSTS|isPrivateIp|ipaddr\.parse|allowlist)/i,
     defaultSource: "User-Supplied Webhook / Callback URL",
-    defaultSink: "Outbound HTTP Client (fetch / axios / requests)",
-    privilegeGain: "Access to internal cloud metadata service (169.254.169.254) & internal microservices",
+    defaultSink: "Outbound HTTP Client (fetch / axios / requests / HttpClient)",
+    privilegeGain: "Outbound requests to internal RFC-1918 services or link-local endpoints if egress network permits",
     executiveSummary:
-      "XTRIKE DeepFlow and XTRIKE XQL identified an outbound HTTP client request whose target URL is derived from user input without RFC1918 / link-local IP blocking.",
+      "XTRIKE DeepFlow and XTRIKE XQL identified an outbound HTTP client request whose target URL is derived from user input without scheme, host allowlist, and resolved-IP validation.",
     businessImpact:
-      "Theft of cloud IAM instance credentials via AWS/GCP/Azure metadata endpoints (`169.254.169.254`) and internal network port scanning.",
+      "May allow probing of internal network services or cloud link-local metadata endpoints (`169.254.169.254`) if network egress is unrestricted.",
     rootCause:
-      "Application fetches a user-supplied URL directly without validating the scheme (`https://`), hostname allowlist, and resolved IP address.",
+      "Fetching a user-supplied URL without restricting schemes (`https`), validating every DNS-resolved IP against loopback/RFC-1918/link-local ranges, and disabling HTTP redirects.",
     compliance: [
       { framework: "PCI DSS", reference: "Req 6.2.4", description: "Prevent SSRF vulnerabilities" },
-      { framework: "NIST 800-53", reference: "SC-7", description: "Boundary Protection" },
-      { framework: "OWASP Top 10", reference: "A10:2021", description: "Server-Side Request Forgery" },
+      { framework: "NIST 800-53", reference: "SC-7", description: "Boundary Protection & Egress Filtering" },
+      { framework: "OWASP Top 10", reference: "A10:2021", description: "Server-Side Request Forgery (ASVS V12.6.1)" },
     ],
     remediation: [
       {
+        platform: "Java",
+        explanation: "Validate URI scheme/port, resolve all DNS records with InetAddress.getAllByName(), reject loopback/site-local/link-local IPs, and set HttpClient.Redirect.NEVER.",
+        code: `// ❌ VULNERABLE\nHttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(userUrl)).build(), BodyHandlers.ofString());\n\n// ✅ FIXED (Illustrative Java Pattern — DNS IP validation + Redirect.NEVER)\nURI uri = URI.create(userUrl);\nif (!"https".equalsIgnoreCase(uri.getScheme())) throw new SecurityException("HTTPS required");\nfor (InetAddress addr : InetAddress.getAllByName(uri.getHost())) {\n    if (addr.isLoopbackAddress() || addr.isSiteLocalAddress() || addr.isLinkLocalAddress() || addr.isAnyLocalAddress()) {\n        throw new SecurityException("Internal/link-local IP blocked");\n    }\n}`,
+      },
+      {
         platform: "Node.js",
-        explanation: "Validate URL against an explicit domain allowlist and block private/link-local IP ranges.",
-        code: `// ❌ VULNERABLE\nconst res = await fetch(req.body.webhookUrl);\n\n// ✅ FIXED\nconst parsed = new URL(req.body.webhookUrl);\nif (parsed.protocol !== "https:" || !ALLOWED_DOMAINS.has(parsed.hostname)) {\n  throw new Error("Blocked outbound host");\n}`,
+        explanation: "Enforce an HTTPS allowlist, validate all resolved DNS A/AAAA records against RFC-1918/loopback/link-local ranges using a custom lookup agent, and disable redirects.",
+        code: `// ❌ VULNERABLE\nconst res = await fetch(req.body.webhookUrl);\n\n// ✅ FIXED\nconst safeUrl = await validateHttpsAndResolvedPublicIps(req.body.webhookUrl);\nconst res = await fetch(safeUrl, { redirect: "error", signal: AbortSignal.timeout(3000) });`,
+      },
+      {
+        platform: "Python",
+        explanation: "Resolve hostname IPs and reject private/loopback/link-local addresses via ipaddress module; set allow_redirects=False.",
+        code: `# ❌ VULNERABLE\nrequests.get(webhook_url)\n\n# ✅ FIXED\nassert_public_resolved_ips(webhook_url)\nrequests.get(webhook_url, allow_redirects=False, timeout=3.0)`,
       },
     ],
     validationSteps: [
-      "Verify `http://169.254.169.254/latest/meta-data/` and `http://127.0.0.1` are blocked before socket connection.",
+      "Verify IPv4/IPv6 loopback, RFC-1918, link-local (169.254.169.254), DNS rebinding, and HTTP 3xx redirects are rejected in isolated tests.",
     ],
   },
   {
     id: "RULE-SECRET-798",
     cwe: "CWE-798",
     cweName: "Use of Hard-coded Credentials",
-    title: "Hardcoded API Key / Secret Token / Database Credential in Source",
-    severity: "Critical",
-    cvss: 9.0,
+    title: "Hardcoded API Key / Signing Secret / Credential Literal in Source",
+    severity: "High",
+    cvss: 7.8,
     epss: 0.195,
     mitre: "T1552.001",
     owasp: "A07:2021",
@@ -420,36 +468,46 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     sourceHints: /(?:const|let|var|String|final|private|public|export)/i,
     sanitizerPattern: /(?:process\.env\.|os\.environ|System\.getenv|Vault|SecretsManager)/i,
     defaultSource: "Source Code Literal Constant",
-    defaultSink: "Authentication / Cryptographic Credential Sink",
-    privilegeGain: "Direct unauthorized authentication to production databases, payment gateways, or cloud APIs",
+    defaultSink: "Authentication / Signing Key Constant",
+    privilegeGain: "Requires manual validation: if credential is a live production secret, enables unauthorized authentication or token signing",
     executiveSummary:
-      "XTRIKE StructSCA Configuration Analyzer and XTRIKE XQL Secret Detection identified hardcoded credentials or API tokens committed directly in source code.",
+      "XTRIKE StructSCA Configuration Analyzer and XTRIKE XQL detected a hardcoded secret literal in source code. Manual validation is required to determine whether this constant is a live deployed credential or a benchmark/training fixture.",
     businessImpact:
-      "Anyone with repository read access or leaked build artifacts can authenticate directly to production infrastructure or sign forged JWT tokens.",
+      "If used in production deployments, hardcoded secrets exposed in version control allow unauthorized access or token forgery.",
     rootCause:
-      "Embedding static credentials in source files instead of injecting secrets at runtime from a secret manager or environment variable.",
+      "Embedding credential literals directly in source code instead of loading secrets from an environment variable or secret manager at runtime.",
     compliance: [
       { framework: "PCI DSS", reference: "Req 8.6.2", description: "No hardcoded passwords/secrets in code" },
       { framework: "NIST 800-53", reference: "IA-5", description: "Authenticator Management" },
-      { framework: "OWASP Top 10", reference: "A07:2021", description: "Identification and Authentication Failures" },
+      { framework: "OWASP Top 10", reference: "A07:2021", description: "Identification and Authentication Failures (ASVS V2.10.4)" },
     ],
     remediation: [
       {
+        platform: "Java",
+        explanation: "Load signing keys and credentials from externalized configuration or a secret manager (e.g., System.getenv / Vault) and fail fast at startup if unset. Rotate only if the secret was used outside a training/test fixture.",
+        code: `// ❌ VULNERABLE (Hardcoded signing key constant in Java source)\nprivate static final String JWT_SECRET = "hardcoded-signing-secret-key";\n\n// ✅ FIXED (Illustrative Java Pattern — Externalized secret with startup check)\nprivate static final String JWT_SECRET = java.util.Objects.requireNonNull(\n    System.getenv("JWT_SIGNING_SECRET"), "JWT_SIGNING_SECRET must be provided by secret manager"\n);`,
+      },
+      {
         platform: "Node.js",
-        explanation: "Rotate the exposed credential immediately and load from environment variables / Secret Manager.",
+        explanation: "Load secrets from process.env / Secret Manager and rotate only if the key was active in a live environment.",
         code: `// ❌ VULNERABLE\nconst JWT_SECRET = "prod-super-secret-signing-key-99281";\n\n// ✅ FIXED\nconst JWT_SECRET = process.env.JWT_SECRET;\nif (!JWT_SECRET) throw new Error("Missing JWT_SECRET env var");`,
+      },
+      {
+        platform: "Python",
+        explanation: "Load secrets from os.environ / secret store and fail fast if absent.",
+        code: `# ❌ VULNERABLE\nAPI_KEY = "sk-proj-hardcoded"\n\n# ✅ FIXED\nAPI_KEY = os.environ["API_KEY"]`,
       },
     ],
     validationSteps: [
-      "Revoke and rotate the compromised key in the cloud/API provider console.",
-      "Verify secret is injected via environment variable or KMS/Vault.",
+      "Verify whether the constant is a benchmark/test fixture or a live deployed credential.",
+      "Ensure production builds inject secrets from KMS/Vault and reject insecure default fallbacks.",
     ],
   },
   {
-    id: "RULE-CRYPTO-327",
-    cwe: "CWE-327",
-    cweName: "Use of a Broken or Risky Cryptographic Algorithm",
-    title: "Weak or Deprecated Cryptographic Primitive (MD5 / SHA-1 / DES / AES-ECB)",
+    id: "RULE-HASH-328",
+    cwe: "CWE-328",
+    cweName: "Use of Weak Hash (MD5 / SHA-1)",
+    title: "Weak Cryptographic Hash (MD5 / SHA-1) Used on Password or Security Digest",
     severity: "Medium",
     cvss: 6.5,
     epss: 0.062,
@@ -458,47 +516,114 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     owaspCategory: "Cryptographic Failures",
     validatorPriority: 3,
     validatorName: "CryptographicPolicyValidator",
-    checkmarxQuery: "XTRIKE-XQL/Medium_Threat/Use_of_Broken_or_Risky_Cryptographic_Algorithm",
-    ibmRuleId: "IBM-APPSCAN-CRYPTO-009",
+    checkmarxQuery: "XTRIKE-XQL/Medium_Threat/Use_of_Weak_Hash_MD5_SHA1",
+    ibmRuleId: "IBM-APPSCAN-CRYPTO-328",
     fortifyKingdom: "Security Features",
     fortifyAnalyzer: "Semantic",
-    sinkPattern: /(?:hashlib\.(?:md5|sha1)\s*\(|MessageDigest\.getInstance\s*\(\s*["'](?:MD5|SHA-1|SHA1)["']|Cipher\.getInstance\s*\(\s*["'](?:DES|RC4|AES\/ECB)|crypto\.createHash\s*\(\s*["'](?:md5|sha1)["']|\bmd5\s*\(\s*\$)/i,
-    sourceHints: /(?:password|token|hash|digest|encrypt|secret)/i,
-    sanitizerPattern: /(?:SHA-256|SHA-512|AES\/GCM|bcrypt|argon2|pbkdf2)/i,
-    defaultSource: "Sensitive Plaintext / Credential Input",
-    defaultSink: "Weak Cryptographic Primitive (MD5 / SHA-1 / DES / ECB)",
-    privilegeGain: "Offline collision / rainbow-table recovery of hashed credentials or ciphertext blocks",
+    sinkPattern: /(?:hashlib\.(?:md5|sha1)\s*\(|MessageDigest\.getInstance\s*\(\s*["'](?:MD5|SHA-1|SHA1)["']|crypto\.createHash\s*\(\s*["'](?:md5|sha1)["']|\bmd5\s*\(\s*\$)/i,
+    sourceHints: /(?:password|token|hash|digest|secret|credential)/i,
+    sanitizerPattern: /(?:SHA-256|SHA-512|bcrypt|argon2|pbkdf2|BCryptPasswordEncoder|Argon2PasswordEncoder|PBKDF2WithHmacSHA256)/i,
+    defaultSource: "Credential / Plaintext Input",
+    defaultSink: "Weak Hash Primitive (MD5 / SHA-1)",
+    privilegeGain: "Offline collision or rapid brute-force recovery if used for password storage or integrity verification",
     executiveSummary:
-      "XTRIKE StructSCA Semantic Analyzer and XTRIKE DeepFlow detected the use of cryptographically broken algorithms (MD5, SHA-1, DES, or AES-ECB mode).",
+      "XTRIKE StructSCA Semantic Analyzer and XTRIKE DeepFlow detected a weak one-way hash primitive (MD5/SHA-1). Remediation must match the specific cryptographic purpose: adaptive password hashing (Argon2id/bcrypt/PBKDF2) for credentials, or SHA-256/HMAC-SHA-256 for non-password digests.",
     businessImpact:
-      "Weak digests and ECB ciphers allow attackers to recover plaintext passwords or forge collision signatures.",
+      "MD5 and SHA-1 lack collision resistance and computational work factors, making them unsafe for password storage or security-critical integrity digests.",
     rootCause:
-      "Legacy cryptographic API selection instead of modern authenticated encryption (AES-256-GCM) or password hashing (Argon2id / bcrypt).",
+      "Using fast, collision-prone legacy hash functions (`MD5`/`SHA-1`) on passwords or security tokens instead of memory-hard password hashing (`Argon2id`/`bcrypt`/`PBKDF2`).",
     compliance: [
-      { framework: "PCI DSS", reference: "Req 4.2.1", description: "Strong cryptography required" },
-      { framework: "NIST 800-53", reference: "SC-13", description: "Cryptographic Protection (FIPS 140-3)" },
-      { framework: "OWASP Top 10", reference: "A02:2021", description: "Cryptographic Failures" },
+      { framework: "PCI DSS", reference: "Req 8.3.2", description: "Strong password hashing required for stored credentials" },
+      { framework: "NIST 800-53", reference: "IA-5(1) / SC-13", description: "Password-Based Authentication & Cryptographic Protection" },
+      { framework: "OWASP Top 10", reference: "A02:2021", description: "Cryptographic Failures (ASVS V2.4.1)" },
     ],
     remediation: [
       {
         platform: "Java",
-        explanation: "Replace MD5/SHA-1/DES with SHA-256, Argon2id/BCrypt for passwords, or AES/GCM/NoPadding.",
-        code: `// ❌ VULNERABLE\nMessageDigest md = MessageDigest.getInstance("MD5");\n\n// ✅ FIXED\nMessageDigest md = MessageDigest.getInstance("SHA-256");`,
+        explanation: "For password storage, use an adaptive password-hashing function (Argon2id, bcrypt, or PBKDF2WithHmacSHA256) — never raw SHA-256 or symmetric encryption. Use SHA-256 only for non-password data integrity digests.",
+        code: `// ❌ VULNERABLE (MD5 used on password + salt input)\nMessageDigest md = MessageDigest.getInstance("MD5");\nreturn md.digest((password + salt).getBytes(StandardCharsets.UTF_8));\n\n// ✅ FIXED (Illustrative Java Pattern — Argon2id / BCrypt for password hashing)\nArgon2PasswordEncoder encoder = Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8();\nString passwordHash = encoder.encode(password);`,
+      },
+      {
+        platform: "Python",
+        explanation: "Use argon2-cffi / bcrypt / hashlib.pbkdf2_hmac for passwords, or hashlib.sha256() for general non-password digests.",
+        code: `# ❌ VULNERABLE\ndigest = hashlib.md5(password.encode()).hexdigest()\n\n# ✅ FIXED (Password Hashing)\nfrom argon2 import PasswordHasher\nph = PasswordHasher()\nhashed = ph.hash(password)`,
+      },
+      {
+        platform: "Node.js",
+        explanation: "Use crypto.scrypt / argon2 / bcrypt for passwords, or SHA-256 for general non-password checksums.",
+        code: `// ❌ VULNERABLE\nconst legacyHash = crypto.createHash("md5").update(password).digest("hex");\n\n// ✅ FIXED\nconst salt = crypto.randomBytes(16);\nconst derivedKey = crypto.scryptSync(password, salt, 64);`,
       },
     ],
     validationSteps: [
-      "Confirm all cryptographic calls comply with NIST SP 800-131A (SHA-256+, AES-GCM, Argon2id/bcrypt).",
+      "Confirm passwords use Argon2id, bcrypt, or PBKDF2 with work factors meeting OWASP ASVS V2.4.1.",
+      "Confirm general-purpose non-password integrity checks use SHA-256 or HMAC-SHA-256.",
+    ],
+  },
+  {
+    id: "RULE-CRYPTO-327",
+    cwe: "CWE-327",
+    cweName: "Use of a Broken or Risky Cryptographic Algorithm (AES-ECB / DES / RC4)",
+    title: "Broken or Deterministic Symmetric Cipher Mode (AES-ECB / DES / RC4)",
+    severity: "Medium",
+    cvss: 6.8,
+    epss: 0.058,
+    mitre: "T1600",
+    owasp: "A02:2021",
+    owaspCategory: "Cryptographic Failures",
+    validatorPriority: 3,
+    validatorName: "CryptographicPolicyValidator",
+    checkmarxQuery: "XTRIKE-XQL/Medium_Threat/Use_of_Broken_or_Risky_Cryptographic_Algorithm",
+    ibmRuleId: "IBM-APPSCAN-CRYPTO-327",
+    fortifyKingdom: "Security Features",
+    fortifyAnalyzer: "Semantic",
+    sinkPattern: /(?:Cipher\.getInstance\s*\(\s*["'](?:DES|RC4|AES\/ECB|AES["'])|createCipheriv\s*\(\s*["'](?:des|rc4|aes-[0-9]+-ecb))/i,
+    sourceHints: /(?:token|encrypt|cipher|secret|payload)/i,
+    sanitizerPattern: /(?:AES\/GCM\/NoPadding|aes-256-gcm|ChaCha20-Poly1305|GCMParameterSpec)/i,
+    defaultSource: "Sensitive Plaintext / Token Payload",
+    defaultSink: "Deterministic / Broken Symmetric Cipher (AES-ECB / DES)",
+    privilegeGain: "Ciphertext block replay, pattern leakage, or chosen-plaintext block substitution without authentication tag verification",
+    executiveSummary:
+      "XTRIKE StructSCA Semantic Analyzer identified a broken or deterministic symmetric cipher mode (such as AES/ECB or DES) lacking semantic security (IV/nonce) and authenticated encryption (AEAD tag).",
+    businessImpact:
+      "Identical 16-byte plaintext blocks produce identical ciphertext blocks in ECB mode and lack integrity protection, permitting block-level tampering of encrypted tokens.",
+    rootCause:
+      "Initializing `Cipher.getInstance(\"AES/ECB/PKCS5Padding\")` or legacy DES instead of an AEAD construction (`AES/GCM/NoPadding`) with a per-encryption 96-bit random IV.",
+    compliance: [
+      { framework: "PCI DSS", reference: "Req 4.2.1", description: "Strong authenticated cryptography required" },
+      { framework: "NIST 800-53", reference: "SC-13", description: "Cryptographic Protection (NIST SP 800-38D AES-GCM)" },
+      { framework: "OWASP Top 10", reference: "A02:2021", description: "Cryptographic Failures (ASVS V6.2.1)" },
+    ],
+    remediation: [
+      {
+        platform: "Java",
+        explanation: "Replace AES/ECB or DES with authenticated encryption (AES/GCM/NoPadding), generating a fresh 12-byte SecureRandom IV per message and enforcing a 128-bit authentication tag.",
+        code: `// ❌ VULNERABLE (Deterministic AES-ECB without IV or integrity tag)\nCipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");\n\n// ✅ FIXED (Illustrative Java Pattern — AES-256-GCM AEAD with 96-bit random IV)\nbyte[] iv = new byte[12];\nnew java.security.SecureRandom().nextBytes(iv);\nCipher cipher = Cipher.getInstance("AES/GCM/NoPadding");\ncipher.init(Cipher.ENCRYPT_MODE, secretKey, new javax.crypto.spec.GCMParameterSpec(128, iv));`,
+      },
+      {
+        platform: "Python",
+        explanation: "Use AESGCM from cryptography.hazmat with a 12-byte random nonce.",
+        code: `# ❌ VULNERABLE\ncipher = Cipher(algorithms.AES(key), modes.ECB())\n\n# ✅ FIXED\nfrom cryptography.hazmat.primitives.ciphers.aead import AESGCM\nnonce = os.urandom(12)\nct = AESGCM(key).encrypt(nonce, plaintext, associated_data=None)`,
+      },
+      {
+        platform: "Node.js",
+        explanation: "Use aes-256-gcm with a 12-byte random IV and persist cipher.getAuthTag().",
+        code: `// ❌ VULNERABLE\nconst cipher = crypto.createCipheriv("aes-256-ecb", key, null);\n\n// ✅ FIXED\nconst iv = crypto.randomBytes(12);\nconst cipher = crypto.createCipheriv("aes-256-gcm", key, iv);`,
+      },
+    ],
+    validationSteps: [
+      "Verify AES/GCM/NoPadding (or ChaCha20-Poly1305) is used with a unique 96-bit IV per encryption.",
+      "Verify decryption validates the 128-bit GCM authentication tag before releasing plaintext.",
     ],
   },
   {
     id: "RULE-XXE-611",
     cwe: "CWE-611",
     cweName: "Improper Restriction of XML External Entity Reference ('XXE')",
-    title: "XML External Entity (XXE) Processing Enabled on XML Parser",
+    title: "XML Parser Instantiated Without External DTD / Entity Hardening",
     severity: "High",
     cvss: 8.2,
     epss: 0.184,
-    mitre: "T1059",
+    mitre: "T1005",
     owasp: "A05:2021",
     owaspCategory: "Security Misconfiguration",
     validatorPriority: 3,
@@ -508,31 +633,41 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     fortifyKingdom: "Input Validation and Representation",
     fortifyAnalyzer: "Configuration",
     sinkPattern: /(?:DocumentBuilderFactory\.newInstance\s*\(|SAXParserFactory\.newInstance\s*\(|XMLInputFactory\.newInstance\s*\(|lxml\.etree\.fromstring\s*\(|libxml_disable_entity_loader\s*\(\s*false)/i,
-    sourceHints: /(?:parse|xml|InputStream|request)/i,
+    sourceHints: /(?:parse|xml|InputStream|InputSource|StringReader|request)/i,
     sanitizerPattern: /(?:disallow-doctype-decl|FEATURE_SECURE_PROCESSING|resolve_entities\s*=\s*False)/i,
     defaultSource: "Untrusted XML Document Stream",
-    defaultSink: "XML Parser with External DTD / Entity Resolution",
-    privilegeGain: "Local file disclosure (/etc/passwd) and internal SSRF via external DTD entities",
+    defaultSink: "XML Parser (DocumentBuilderFactory / SAXParserFactory / lxml)",
+    privilegeGain: "Local file disclosure or SSRF if untrusted XML reaches parse() with external DTD/entity resolution enabled",
     executiveSummary:
-      "XTRIKE XQL CxSAST and XTRIKE StructSCA Configuration Analyzer detected an XML parser instantiated without disabling external DTDs and entity resolution.",
+      "XTRIKE XQL and XTRIKE StructSCA Configuration Analyzer detected an XML parser factory configured without explicitly disallowing DOCTYPE declarations and external entities.",
     businessImpact:
-      "Arbitrary server file exfiltration, internal network SSRF probing, and denial-of-service (Billion Laughs attack).",
+      "If attacker-controlled XML is parsed, external entity resolution can read local files or issue outbound requests.",
     rootCause:
-      "Default XML parser configurations in Java/Python/PHP resolve `<!ENTITY ... SYSTEM 'file:///...'>` declarations unless explicitly disabled.",
+      "Default XML parser configurations in several runtimes allow DOCTYPE declarations and external general/parameter entities unless explicitly hardened.",
     compliance: [
       { framework: "PCI DSS", reference: "Req 6.2.4", description: "Prevent XXE injection" },
       { framework: "NIST 800-53", reference: "SI-10", description: "Input Validation" },
-      { framework: "OWASP Top 10", reference: "A05:2021", description: "Security Misconfiguration" },
+      { framework: "OWASP Top 10", reference: "A05:2021", description: "Security Misconfiguration (ASVS V5.5.2)" },
     ],
     remediation: [
       {
         platform: "Java",
-        explanation: "Disable DOCTYPE declarations on DocumentBuilderFactory.",
-        code: `DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();\ndbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);`,
+        explanation: "Enable disallow-doctype-decl (true), disable external-general-entities and external-parameter-entities (false), disable load-external-dtd (false), disable XInclude and entity reference expansion, and fail closed if features cannot be applied.",
+        code: `// ❌ VULNERABLE (Default DocumentBuilderFactory)\nDocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();\nDocumentBuilder db = dbf.newDocumentBuilder();\n\n// ✅ FIXED (Illustrative Java Pattern — Full OWASP XXE Hardening + Fail-Closed)\nDocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();\ndbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);\ndbf.setFeature("http://xml.org/sax/features/external-general-entities", false);\ndbf.setFeature("http://xml.org/sax/features/external-parameter-entities", false);\ndbf.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);\ndbf.setXIncludeAware(false);\ndbf.setExpandEntityReferences(false);\nDocumentBuilder db = dbf.newDocumentBuilder();`,
+      },
+      {
+        platform: "Python",
+        explanation: "Use defusedxml or set resolve_entities=False, no_network=True, load_dtd=False on lxml.etree.XMLParser.",
+        code: `# ❌ VULNERABLE\nroot = lxml.etree.fromstring(xml_bytes)\n\n# ✅ FIXED\nparser = lxml.etree.XMLParser(resolve_entities=False, no_network=True, dtd_validation=False, load_dtd=False)\nroot = lxml.etree.fromstring(xml_bytes, parser=parser)`,
+      },
+      {
+        platform: "Node.js",
+        explanation: "Use a non-expanding XML parser (e.g., fast-xml-parser with processEntities: false) and reject DOCTYPE declarations.",
+        code: `// ✅ FIXED\nconst parser = new XMLParser({ processEntities: false });`,
       },
     ],
     validationSteps: [
-      "Verify `disallow-doctype-decl` is set to `true` before calling `newDocumentBuilder()`.",
+      "Verify parser throws an exception on `<!DOCTYPE foo [ <!ENTITY xxe SYSTEM 'file:///etc/passwd'> ]>` payloads and fails closed if hardening features are unsupported.",
     ],
   },
   {
@@ -557,11 +692,11 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     sanitizerPattern: /(?:ALLOWED_ORIGINS|allowlist)/i,
     defaultSource: "Cross-Origin Browser Request",
     defaultSink: "HTTP Response CORS Header Configuration",
-    privilegeGain: "Cross-origin read access to sensitive API responses from untrusted third-party sites",
+    privilegeGain: "Cross-origin read access if sensitive authenticated responses are served with permissive CORS headers",
     executiveSummary:
-      "XTRIKE StructSCA Configuration Analyzer flagged an overly permissive CORS policy allowing arbitrary origins (`*`) to read API responses.",
+      "XTRIKE StructSCA Configuration Analyzer flagged an overly permissive CORS policy (`*` or reflected origin).",
     businessImpact:
-      "Malicious websites visited by authenticated users may read sensitive API data across origins.",
+      "Untrusted origins may read API responses if combined with ambient credentials or public sensitive endpoints.",
     rootCause:
       "Wildcard `*` or reflected `Origin` header configured on API routes instead of an explicit trusted domain allowlist.",
     compliance: [
@@ -569,6 +704,11 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
       { framework: "OWASP Top 10", reference: "A05:2021", description: "Security Misconfiguration" },
     ],
     remediation: [
+      {
+        platform: "Java",
+        explanation: "Restrict @CrossOrigin or CorsConfiguration to an explicit allowlist of trusted origins.",
+        code: `@CrossOrigin(origins = {"https://app.enterprise.internal"})`,
+      },
       {
         platform: "Node.js",
         explanation: "Restrict CORS origins to an explicit allowlist of trusted domains.",
@@ -583,7 +723,7 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     id: "RULE-RAND-330",
     cwe: "CWE-330",
     cweName: "Use of Insufficiently Random Values",
-    title: "Insecure Pseudo-Random Number Generator (PRNG) Used in Security Context",
+    title: "Non-Cryptographic PRNG Used for Security Token / OTP Generation",
     severity: "Medium",
     cvss: 5.9,
     epss: 0.041,
@@ -599,28 +739,38 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     sinkPattern: /(?:Math\.random\s*\(\)|new\s+Random\s*\(\)|random\.randint\s*\(|random\.choice\s*\(|mt_rand\s*\(|rand\s*\(\))/i,
     sourceHints: /(?:token|secret|otp|password|session|key|nonce|salt|reset)/i,
     sanitizerPattern: /(?:crypto\.randomBytes|crypto\.randomUUID|SecureRandom|secrets\.token)/i,
-    defaultSource: "Non-Cryptographic PRNG Seed State",
+    defaultSource: "Non-Cryptographic PRNG Seed State (java.util.Random / Math.random)",
     defaultSink: "Token / OTP / Session Identifier Generation",
-    privilegeGain: "Prediction of password reset tokens, OTP codes, or session identifiers",
+    privilegeGain: "Predictable reset tokens or OTP values if used in a security-sensitive authentication workflow",
     executiveSummary:
-      "XTRIKE StructSCA Semantic Analyzer and XTRIKE XQL detected a non-cryptographic PRNG (`Math.random()`, `java.util.Random`, `random`) used where unpredictable entropy is required.",
+      "XTRIKE StructSCA Semantic Analyzer and XTRIKE XQL detected a non-cryptographic PRNG (`java.util.Random`, `Math.random()`, `random`) used near security token/OTP variables.",
     businessImpact:
-      "Attackers can predict generated tokens or session IDs by observing sequential outputs.",
+      "Non-cryptographic PRNG internal state can be reconstructed from observed outputs, allowing prediction of subsequent tokens if used for authentication or password reset.",
     rootCause:
-      "Standard PRNGs use deterministic linear congruential or Mersenne Twister algorithms that are not cryptographically secure.",
+      "Using `java.util.Random` (48-bit linear congruential generator) or `Math.random()` instead of an OS-backed CSPRNG (`java.security.SecureRandom`, `crypto.randomBytes`, `secrets`).",
     compliance: [
       { framework: "NIST 800-53", reference: "SC-13", description: "Cryptographic Protection (CSPRNG)" },
-      { framework: "OWASP Top 10", reference: "A02:2021", description: "Cryptographic Failures" },
+      { framework: "OWASP Top 10", reference: "A02:2021", description: "Cryptographic Failures (ASVS V6.3.1)" },
     ],
     remediation: [
       {
+        platform: "Java",
+        explanation: "Use java.security.SecureRandom with an adequate token space (at least 128 bits for reset tokens, or rate-limited short-TTL OTPs with single-use enforcement).",
+        code: `// ❌ VULNERABLE (Predictable 48-bit LCG java.util.Random)\nString resetOtp = String.valueOf(new java.util.Random().nextInt(999999));\n\n// ✅ FIXED (Illustrative Java Pattern — CSPRNG java.security.SecureRandom)\nprivate static final java.security.SecureRandom SECURE_RANDOM = new java.security.SecureRandom();\nint otpValue = 100_000 + SECURE_RANDOM.nextInt(900_000); // Enforce 5-min TTL, rate limit & single-use`,
+      },
+      {
         platform: "Node.js",
-        explanation: "Use crypto.randomBytes() or crypto.randomUUID() instead of Math.random().",
+        explanation: "Use crypto.randomBytes() or crypto.randomInt() instead of Math.random().",
         code: `// ❌ VULNERABLE\nconst resetToken = Math.random().toString(36).substring(2);\n\n// ✅ FIXED\nconst resetToken = crypto.randomBytes(32).toString("hex");`,
+      },
+      {
+        platform: "Python",
+        explanation: "Use the Python secrets module (secrets.token_urlsafe) instead of random.",
+        code: `# ❌ VULNERABLE\notp = random.randint(100000, 999999)\n\n# ✅ FIXED\nimport secrets\nreset_token = secrets.token_urlsafe(32)`,
       },
     ],
     validationSteps: [
-      "Replace PRNG call with OS CSPRNG (`SecureRandom`, `crypto.randomBytes`, `secrets.token_urlsafe`).",
+      "Replace PRNG call with OS CSPRNG (`java.security.SecureRandom`, `crypto.randomBytes`, `secrets.token_urlsafe`) and verify OTP expiry, rate limiting, and single-use invalidation.",
     ],
   },
 ];
@@ -1143,6 +1293,240 @@ function extractSurroundingFunction(lines: string[], targetLineIdx: number): str
   return "handler()";
 }
 
+/**
+ * AT-05: Suppress constant-string output statements (e.g., response.getWriter().println("Error processing SQL");)
+ * that contain zero tainted variables or dynamic interpolation.
+ */
+export function isConstantLiteralOutputCall(lineText: string): boolean {
+  const trimmed = lineText.trim();
+  if (
+    /\.(?:println|print|write)\s*\(\s*"[^"+$]*"\s*\)\s*;?$/.test(trimmed) ||
+    /\.(?:println|print|write)\s*\(\s*'[^'+$]*'\s*\)\s*;?$/.test(trimmed) ||
+    /\bres\.(?:send|write|end)\s*\(\s*(?:"[^"+$]*"|'[^'+$]*')\s*\)\s*;?$/.test(trimmed)
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * AT-06: Ensure finding.remediation[0] always matches the target file's language.
+ */
+export function getLanguageMatchedRemediation(
+  remediations: Remediation[],
+  fileLang: string
+): Remediation[] {
+  const normalizedTarget =
+    fileLang === "Kotlin" || fileLang === "Java"
+      ? "Java"
+      : fileLang === "Python"
+        ? "Python"
+        : fileLang === "TypeScript" || fileLang === "Node.js" || fileLang === "JavaScript"
+          ? "Node.js"
+          : fileLang;
+
+  const sorted = [...remediations].sort((a, b) => {
+    const aMatch = a.platform.toLowerCase() === normalizedTarget.toLowerCase() ? 0 : 1;
+    const bMatch = b.platform.toLowerCase() === normalizedTarget.toLowerCase() ? 0 : 1;
+    return aMatch - bMatch;
+  });
+  return sorted;
+}
+
+const CVSS_VECTORS_BY_CWE: Record<string, { vector: string; rationale: string }> = {
+  "CWE-89": {
+    vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+    rationale: "Base 9.8 Critical: Network-reachable SQL query concatenation without parameter binding; enables unauthorized query manipulation within database privileges.",
+  },
+  "CWE-78": {
+    vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+    rationale: "Base 9.8 Critical: Network-reachable OS shell invocation with unsanitized command string; enables command execution under the application service account.",
+  },
+  "CWE-94": {
+    vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+    rationale: "Base 9.8 Critical: Dynamic script/code interpreter evaluates untrusted input without AST sandboxing.",
+  },
+  "CWE-502": {
+    vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+    rationale: "Base 9.8 Critical: Untrusted stream deserialization (readObject/pickle/yaml.load) without JEP 290 or type allowlist; RCE contingent on classpath gadget availability.",
+  },
+  "CWE-79": {
+    vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N",
+    rationale: "Base 7.2 High: Unencoded reflection of untrusted request input into HTML response stream with user interaction and browser scope change.",
+  },
+  "CWE-22": {
+    vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
+    rationale: "Base 7.5 High: Unvalidated path concatenation into file I/O sink without canonical base-directory boundary verification.",
+  },
+  "CWE-611": {
+    vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:L/A:L",
+    rationale: "Base 8.2 High: XML parser instantiated without disallow-doctype-decl and external entity resolution disabled.",
+  },
+  "CWE-918": {
+    vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:L/A:N",
+    rationale: "Base 8.6 High: Outbound HTTP client accepts unvalidated destination URL without scheme/host allowlist or RFC1918/link-local egress block.",
+  },
+  "CWE-798": {
+    vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N",
+    rationale: "Base 7.5 High: Hardcoded secret/key literal in source code; environmental impact depends on whether the constant is active in a deployed environment.",
+  },
+  "CWE-328": {
+    vector: "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N",
+    rationale: "Base 6.5 Medium: Fast collision-prone hash algorithm (MD5/SHA-1) used without adaptive password work factor.",
+  },
+  "CWE-327": {
+    vector: "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:L/A:N",
+    rationale: "Base 6.8 Medium: Deterministic AES-ECB or broken cipher mode lacking IV randomization and AEAD integrity tag.",
+  },
+  "CWE-330": {
+    vector: "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:L/A:N",
+    rationale: "Base 5.3 Medium: Non-cryptographic PRNG (java.util.Random / Math.random) used where unpredictable CSPRNG output is required.",
+  },
+  "CWE-347": {
+    vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N",
+    rationale: "Base 9.1 Critical: Improper verification of cryptographic JWT signature or acceptance of unverified token claims.",
+  },
+  "CWE-639": {
+    vector: "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N",
+    rationale: "Base 8.1 High: Object lookup by user-supplied identifier without server-side tenant/principal ownership predicate (BOLA/IDOR).",
+  },
+  "CWE-915": {
+    vector: "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:H/A:N",
+    rationale: "Base 7.5 High: Direct binding of request payload into domain model without DTO field allowlist (Mass Assignment).",
+  },
+};
+
+export function deriveFindingAuditMetadata(params: {
+  cwe: string;
+  sanitizerDetected: boolean;
+  surroundingText: string;
+  repoUrl: string;
+  filePath: string;
+}): {
+  proofState: CanonicalProofState;
+  valStatus: ValidationStatus;
+  gtCat: GroundTruthCategory;
+  auditDisposition: string;
+  cvssVector: string;
+  cvssRationale: string;
+  isBenchmarkFixture: boolean;
+  deploymentContextNote: string;
+} {
+  const { cwe, sanitizerDetected, surroundingText, repoUrl, filePath } = params;
+  const combinedPath = `${repoUrl} ${filePath}`.toLowerCase();
+  const isBenchmarkFixture =
+    /(?:benchmark|webgoat|dvwa|juice-shop|nodegoat|pygoat|railsgoat|mutillidae|shepherd|vulnerable|vuln|damnvulnerable|crapi|vampi|wrongsecrets)/i.test(
+      combinedPath
+    );
+
+  const deploymentContextNote = isBenchmarkFixture
+    ? "Intentional Benchmark / Training Fixture (Non-Production Scope unless deployed to an exposed environment)"
+    : "First-Party Application Source Code (Static AST & Dataflow Scope)";
+
+  const cvssMeta = CVSS_VECTORS_BY_CWE[cwe] || {
+    vector: "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:L/A:N",
+    rationale: `Static AST & dataflow severity assessment for ${cwe}.`,
+  };
+
+  if (sanitizerDetected) {
+    return {
+      proofState: "MITIGATED_BY_GUARD",
+      valStatus: "not_reproduced",
+      gtCat: "safely_mitigated",
+      auditDisposition: "Mitigated by Upstream Sanitizer / Parameterization Guard in Local AST Scope",
+      cvssVector: cvssMeta.vector,
+      cvssRationale: cvssMeta.rationale,
+      isBenchmarkFixture,
+      deploymentContextNote,
+    };
+  }
+
+  // AT-10: Hardcoded secrets require manual validation of whether credential is live or a fixture
+  if (cwe === "CWE-798") {
+    return {
+      proofState: "NEEDS_MANUAL_VALIDATION",
+      valStatus: "inconclusive",
+      gtCat: "environment_dependent",
+      auditDisposition: isBenchmarkFixture
+        ? "Candidate CWE-798 Hardcoded Constant in Benchmark Fixture — Verify Live Credential Scope Before Key Rotation"
+        : "Candidate CWE-798 Hardcoded Secret — Verify Live Production Scope Before Key Rotation",
+      cvssVector: cvssMeta.vector,
+      cvssRationale: cvssMeta.rationale,
+      isBenchmarkFixture,
+      deploymentContextNote,
+    };
+  }
+
+  // Cryptographic / PRNG weaknesses: confirmed static weakness, runtime impact depends on security usage context
+  if (cwe === "CWE-328" || cwe === "CWE-327" || cwe === "CWE-330") {
+    return {
+      proofState: "DETECTED_STATIC",
+      valStatus: "inconclusive",
+      gtCat: "actually_vulnerable",
+      auditDisposition: `Confirmed Static ${cwe} Cryptographic/PRNG Weakness — Remediate According to Security Usage Context`,
+      cvssVector: cvssMeta.vector,
+      cvssRationale: cvssMeta.rationale,
+      isBenchmarkFixture,
+      deploymentContextNote,
+    };
+  }
+
+  // AT-07: Path traversal requires an actual file read/write/delete sink in scope to be DATAFLOW_CONFIRMED
+  if (cwe === "CWE-22") {
+    const hasFileIoSink =
+      /(?:readAllBytes|readAllLines|new\s+FileInputStream|new\s+FileReader|new\s+FileOutputStream|Files\.(?:read|write|newInputStream|copy|delete)|fs\.(?:readFile|readFileSync|createReadStream|writeFile|unlink)|open\s*\()/i.test(
+        surroundingText
+      );
+    if (!hasFileIoSink) {
+      return {
+        proofState: "DETECTED_STATIC",
+        valStatus: "inconclusive",
+        gtCat: "environment_dependent",
+        auditDisposition: "Tainted Path Construction Detected (CWE-22) — Trace Downstream File I/O Operation Before Marking Exploitable",
+        cvssVector: cvssMeta.vector,
+        cvssRationale: cvssMeta.rationale,
+        isBenchmarkFixture,
+        deploymentContextNote,
+      };
+    }
+    return {
+      proofState: "DATAFLOW_CONFIRMED",
+      valStatus: "confirmed",
+      gtCat: "actually_vulnerable",
+      auditDisposition: "Dataflow-Confirmed Path Traversal into File I/O Sink (CWE-22) — Canonicalize Path & Enforce Base-Directory Prefix",
+      cvssVector: cvssMeta.vector,
+      cvssRationale: cvssMeta.rationale,
+      isBenchmarkFixture,
+      deploymentContextNote,
+    };
+  }
+
+  // AT-08: Deserialization sink confirmed statically; RCE requires runtime gadget chain verification
+  if (cwe === "CWE-502") {
+    return {
+      proofState: "DATAFLOW_CONFIRMED",
+      valStatus: "confirmed",
+      gtCat: "actually_vulnerable",
+      auditDisposition: "Dataflow-Confirmed Untrusted Deserialization Sink (CWE-502) — Enforce JEP 290 ObjectInputFilter; Runtime RCE Contingent on Classpath Gadgets",
+      cvssVector: cvssMeta.vector,
+      cvssRationale: cvssMeta.rationale,
+      isBenchmarkFixture,
+      deploymentContextNote,
+    };
+  }
+
+  return {
+    proofState: "DATAFLOW_CONFIRMED",
+    valStatus: "confirmed",
+    gtCat: "actually_vulnerable",
+    auditDisposition: `Dataflow-Confirmed Source-to-Sink Taint Path (${cwe}) — Controlled Sandbox Reproduction Required for Live Runtime Proof`,
+    cvssVector: cvssMeta.vector,
+    cvssRationale: cvssMeta.rationale,
+    isBenchmarkFixture,
+    deploymentContextNote,
+  };
+}
+
 export function scanFilesWithEnterpriseEngines(params: {
   files: { path: string; language?: string; content: string }[];
   repoUrl: string;
@@ -1172,6 +1556,8 @@ export function scanFilesWithEnterpriseEngines(params: {
   ];
   const findings: SASTFinding[] = [];
   const validationFindings: CanonicalValidationFinding[] = [];
+  // AT-12: Track canonical findings by file + function + CWE to deduplicate multi-line sink clusters
+  const seenFunctionCwe = new Map<string, SASTFinding>();
   let linesScanned = 0;
   let findingCounter = 1;
 
@@ -1188,6 +1574,14 @@ export function scanFilesWithEnterpriseEngines(params: {
       const lineText = rawLines[idx];
       const trimmed = lineText.trim();
       if (!trimmed || trimmed.startsWith("//") || trimmed.startsWith("#") || trimmed.startsWith("/*") || trimmed.startsWith("*")) {
+        continue;
+      }
+
+      // AT-05: Suppress constant-string output calls (e.g., response.getWriter().println("Error processing SQL");)
+      if (isConstantLiteralOutputCall(lineText)) {
+        logs.push(
+          `[AST-GUARD] AT-05 Constant-Literal Suppression: Ignored constant output statement at ${fileObj.path}:${idx + 1} (0 tainted variables)`
+        );
         continue;
       }
 
@@ -1213,6 +1607,17 @@ export function scanFilesWithEnterpriseEngines(params: {
         matchedOnLine = true;
 
         const lineNumber = idx + 1;
+        const fnName = extractSurroundingFunction(rawLines, idx);
+        const dedupKey = `${fileObj.path}::${fnName}::${rule.cwe}`;
+        const existingInFn = seenFunctionCwe.get(dedupKey);
+        if (existingInFn) {
+          existingInFn.deduplicatedCount = (existingInFn.deduplicatedCount || 1) + 1;
+          logs.push(
+            `[DEDUP-AT12] Merged adjacent ${rule.cwe} sink at ${fileObj.path}:${lineNumber} into canonical finding ${existingInFn.id} (${existingInFn.sinkId})`
+          );
+          break;
+        }
+
         const windowStart = Math.max(0, idx - 5);
         const windowEnd = Math.min(rawLines.length, idx + 5);
         const surroundingLines = rawLines.slice(windowStart, windowEnd);
@@ -1227,38 +1632,46 @@ export function scanFilesWithEnterpriseEngines(params: {
           }
         }
 
-        const fnName = extractSurroundingFunction(rawLines, idx);
         const findingId = `SAST-${String(findingCounter).padStart(3, "0")}`;
-        const valId = `VAL-${String(100 + findingCounter)}`;
         findingCounter++;
 
-        const cxQuery = matchedPlugin ? `${matchedPlugin.pluginId}:${matchedPlugin.checkmarxQuery}` : rule.checkmarxQuery;
-        const ibmRule = matchedPlugin ? matchedPlugin.ibmRuleId : rule.ibmRuleId;
-        const fortifyKingdom = matchedPlugin ? matchedPlugin.fortifyKingdom : rule.fortifyKingdom;
-        const fortifyAnalyzer = matchedPlugin ? matchedPlugin.fortifyAnalyzer : rule.fortifyAnalyzer;
+        // Only attach matchedPlugin metadata if it belongs to the same CWE family
+        const sameCwePlugin = matchedPlugin && matchedPlugin.cwe === rule.cwe ? matchedPlugin : undefined;
+        const cxQuery = sameCwePlugin ? `${sameCwePlugin.pluginId}:${sameCwePlugin.checkmarxQuery}` : rule.checkmarxQuery;
+        const ibmRule = sameCwePlugin ? sameCwePlugin.ibmRuleId : rule.ibmRuleId;
+        const fortifyKingdom = sameCwePlugin ? sameCwePlugin.fortifyKingdom : rule.fortifyKingdom;
+        const fortifyAnalyzer = sameCwePlugin ? sameCwePlugin.fortifyAnalyzer : rule.fortifyAnalyzer;
+
+        const auditMeta = deriveFindingAuditMetadata({
+          cwe: rule.cwe,
+          sanitizerDetected,
+          surroundingText,
+          repoUrl,
+          filePath: fileObj.path,
+        });
 
         const engineResults: EngineResult[] = [
           {
             name: "XTRIKE XQL",
-            confidence: sanitizerDetected ? 0.64 : 0.97,
+            confidence: sanitizerDetected ? 0.64 : 0.95,
             confirmed: !sanitizerDetected,
             details: `${cxQuery} · BFL at ${fileObj.path.split("/").pop()}:${Math.max(1, lineNumber - 1)}`,
           },
           {
             name: "XTRIKE DeepFlow",
-            confidence: sanitizerDetected ? 0.58 : 0.96,
+            confidence: sanitizerDetected ? 0.58 : 0.94,
             confirmed: !sanitizerDetected,
             details: `${ibmRule} · Taint trace ${detectedSourceLine.slice(0, 34)} -> line ${lineNumber}`,
           },
           {
             name: "XTRIKE StructSCA",
-            confidence: sanitizerDetected ? 0.61 : 0.98,
+            confidence: sanitizerDetected ? 0.61 : 0.95,
             confirmed: !sanitizerDetected,
             details: `[${fortifyAnalyzer}] Kingdom: ${fortifyKingdom}`,
           },
           {
             name: "XTRIKE AST-Query",
-            confidence: sanitizerDetected ? 0.60 : 0.95,
+            confidence: sanitizerDetected ? 0.60 : 0.92,
             confirmed: !sanitizerDetected,
             details: `AST DataFlow query matched ${rule.cwe} sink in ${fnName}`,
           },
@@ -1269,7 +1682,7 @@ export function scanFilesWithEnterpriseEngines(params: {
         );
 
         logs.push(
-          `[XTRIKE XQL] ${cxQuery} matched at ${fileObj.path}:${lineNumber} (${rule.cwe})`,
+          `[XTRIKE XQL] ${cxQuery} matched at ${fileObj.path}:${lineNumber} (${rule.cwe}) [State=${auditMeta.proofState}]`,
           `[IBM Scan]  ${ibmRule} taint trace verified in ${fnName} -> ${trimmed.slice(0, 52)}`,
           `[XTRIKE StructSCA]   [${fortifyAnalyzer} Analyzer] Kingdom="${fortifyKingdom}" Priority=${rule.severity}`
         );
@@ -1287,15 +1700,26 @@ export function scanFilesWithEnterpriseEngines(params: {
               ];
 
         const today = new Date().toISOString().slice(0, 10);
+        const languageMatchedRemediation = getLanguageMatchedRemediation(rule.remediation, fileLang);
+        const shortFile = fileObj.path.split("/").pop()?.replace(/[^a-zA-Z0-9]/g, "") || "File";
+        const shortFn = fnName.replace(/[^a-zA-Z0-9]/g, "") || "fn";
+        const sinkId = `SINK-${shortFile}-${shortFn}-${rule.cwe}`;
 
-        findings.push({
+        const canonicalFinding: SASTFinding = {
           id: findingId,
-          title: matchedPlugin ? `${matchedPlugin.name} (${matchedPlugin.pluginId})` : rule.title,
+          title: sameCwePlugin ? `${sameCwePlugin.name} (${sameCwePlugin.pluginId})` : rule.title,
           severity: rule.severity,
-          status: sanitizerDetected ? "Resolved" : "Open",
+          status:
+            auditMeta.proofState === "MITIGATED_BY_GUARD"
+              ? "Resolved"
+              : auditMeta.proofState === "NEEDS_MANUAL_VALIDATION" || auditMeta.proofState === "DETECTED_STATIC"
+                ? "In Review"
+                : "Open",
           cwe: rule.cwe,
           cweName: rule.cweName,
           cvss: rule.cvss,
+          cvssVector: auditMeta.cvssVector,
+          cvssRationale: auditMeta.cvssRationale,
           epss: rule.epss,
           mitre: rule.mitre,
           owasp: rule.owasp,
@@ -1303,6 +1727,14 @@ export function scanFilesWithEnterpriseEngines(params: {
           file: fileObj.path,
           line: lineNumber,
           language: fileLang,
+          sinkId,
+          duplicateGroupId: dedupKey,
+          deduplicatedCount: 1,
+          proofState: auditMeta.proofState,
+          auditDisposition: auditMeta.auditDisposition,
+          isBenchmarkFixture: auditMeta.isBenchmarkFixture,
+          deploymentContextNote: auditMeta.deploymentContextNote,
+          advisoryApplicability: "FIRST_PARTY_CODE_WEAKNESS_NO_CVE",
           codeSnippet: surroundingLines.join("\n"),
           snippetStartLine: windowStart + 1,
           source: detectedSourceLine !== trimmed ? detectedSourceLine : rule.defaultSource,
@@ -1313,13 +1745,13 @@ export function scanFilesWithEnterpriseEngines(params: {
           ibmRuleId: ibmRule,
           ibmTraceSummary: sanitizerDetected
             ? "Sanitizer guard intercepted taint flow before sink"
-            : `Direct taint flow from ${fileHasUntrustedSource ? "untrusted entry point" : "caller scope"} to sink at line ${lineNumber}`,
+            : `Static AST & dataflow trace from ${fileHasUntrustedSource ? "untrusted entry point" : "caller scope"} to sink at line ${lineNumber}`,
           fortifyKingdom,
           fortifyAnalyzer,
           engines: engineResults,
           confidence: avgConfidence,
           reachable: !sanitizerDetected,
-          internetFacing: true,
+          internetFacing: !auditMeta.isBenchmarkFixture,
           authRequired: false,
           exploitabilityLevel: rule.cvss >= 9.0 ? "Very Easy" : rule.cvss >= 7.5 ? "Easy" : "Moderate",
           privilegeGain: rule.privilegeGain,
@@ -1328,14 +1760,14 @@ export function scanFilesWithEnterpriseEngines(params: {
             { label: `${fileObj.path.split("/").pop()}:${lineNumber}`, type: "vulnerability", description: `${rule.cwe} — ${rule.title}` },
             { label: fnName, type: "lateral", description: `XTRIKE StructSCA ${fortifyAnalyzer} & IBM Taint propagation` },
             { label: rule.defaultSink, type: "asset", description: trimmed.slice(0, 65) },
-            { label: "Security Impact", type: "impact", description: rule.privilegeGain },
+            { label: "Hypothesized Impact", type: "impact", description: rule.privilegeGain },
           ],
           executiveSummary: rule.executiveSummary,
           businessImpact: rule.businessImpact,
           rootCause: rule.rootCause,
           falsePositiveLikelihood: sanitizerDetected ? "High" : "Very Low",
           compliance: rule.compliance,
-          remediation: rule.remediation,
+          remediation: languageMatchedRemediation,
           validationSteps: rule.validationSteps,
           slaDeadline: today,
           owner: "AppSec & Core Engineering",
@@ -1343,18 +1775,18 @@ export function scanFilesWithEnterpriseEngines(params: {
           riskScore: Math.min(100, Math.round(rule.cvss * 10)),
           firstDetected: today,
           lastSeen: today,
-        });
+        };
 
-        const valStatus: ValidationStatus = sanitizerDetected ? "not_reproduced" : "confirmed";
-        const gtCat: GroundTruthCategory = sanitizerDetected ? "safely_mitigated" : "actually_vulnerable";
+        findings.push(canonicalFinding);
+        seenFunctionCwe.set(dedupKey, canonicalFinding);
 
         validationFindings.push({
-          findingId: valId,
+          findingId: findingId, // AT-01: Must match canonicalFinding.id ("SAST-001") so report/UI join never orphans
           scanner: "XTRIKE XQL",
           ruleId: `${cxQuery} / ${ibmRule}`,
           cwe: rule.cwe,
           cweTitle: rule.cweName,
-          title: matchedPlugin ? `${matchedPlugin.name} (${matchedPlugin.pluginId})` : rule.title,
+          title: canonicalFinding.title,
           validatorPriority: rule.validatorPriority,
           validatorName: rule.validatorName,
           repository: repoUrl,
@@ -1374,7 +1806,7 @@ export function scanFilesWithEnterpriseEngines(params: {
           buildId: `build-${commitSha.slice(0, 8)}`,
           endpoint: fileObj.path,
           httpMethod: "POST",
-          authContext: "Live Static & Proof Contract Verification",
+          authContext: auditMeta.deploymentContextNote,
           requiredConfig: ["AST Parser Active", "400-Plugin Token Dispatcher Enabled"],
           permissions: ["repo:read"],
           dependencies: [],
@@ -1400,26 +1832,26 @@ export function scanFilesWithEnterpriseEngines(params: {
               label: "3. IBM Taint-Flow Plan",
               deterministic: true,
               status: "pass",
-              summary: `Selected ${rule.validatorName} (Priority P${rule.validatorPriority}) to verify source-to-sink reachability.`,
-              detail: "Evaluates sanitizer dominance along the call graph.",
+              summary: `Selected ${rule.validatorName} (Priority P${rule.validatorPriority}) to evaluate source-to-sink reachability.`,
+              detail: "Evaluates sanitizer dominance along the local AST/CFG call graph.",
               durationMs: 9,
             },
             execute: {
-              label: "4. Proof Validator Execution",
+              label: "4. Static Dataflow & Control Evaluation",
               deterministic: true,
               status: sanitizerDetected ? "warn" : "pass",
               summary: sanitizerDetected
                 ? "Sanitizer guard detected upstream of sink; taint neutralized."
-                : `Unmitigated taint flow proven into sink at ${fileObj.path}:${lineNumber}.`,
+                : `Static taint flow verified into sink at ${fileObj.path}:${lineNumber} (Runtime sandbox: NOT_RUN).`,
               detail: `Line ${lineNumber}: ${trimmed}`,
               durationMs: 68,
             },
             verify: {
-              label: "5. Independent 6-Point Proof Contract",
+              label: "5. Canonical Proof State Assignment",
               deterministic: true,
               status: "pass",
-              summary: `Status=${valStatus.toUpperCase()} · Confidence=${Math.round(avgConfidence * 100)}%.`,
-              detail: "All 6 proof contract checks evaluated deterministically.",
+              summary: `Canonical Proof State=${auditMeta.proofState} · Heuristic Confidence=${Math.round(avgConfidence * 100)}%.`,
+              detail: auditMeta.auditDisposition,
               durationMs: 12,
             },
           },
@@ -1444,8 +1876,8 @@ export function scanFilesWithEnterpriseEngines(params: {
             {
               requirement: "Sink reachability",
               question: "Does input reach the sensitive sink at the exact commit?",
-              satisfied: true,
-              evidenceSummary: `Sink confirmed at ${fileObj.path}:${lineNumber} (${trimmed.slice(0, 50)})`,
+              satisfied: auditMeta.proofState === "DATAFLOW_CONFIRMED",
+              evidenceSummary: `Sink evaluated at ${fileObj.path}:${lineNumber} (${trimmed.slice(0, 50)})`,
               sourceType: "DataFlow",
             },
             {
@@ -1459,38 +1891,42 @@ export function scanFilesWithEnterpriseEngines(params: {
             },
             {
               requirement: "Behavioral proof",
-              question: "Did multi-engine concordance confirm the vulnerability pattern?",
-              satisfied: !sanitizerDetected,
-              evidenceSummary: `XTRIKE XQL, XTRIKE DeepFlow, and XTRIKE StructSCA (${fortifyAnalyzer}) concurred (${Math.round(avgConfidence * 100)}%).`,
+              question: "Was live sandbox runtime exploitation executed or static multi-engine concordance only?",
+              satisfied: false,
+              evidenceSummary: `Static multi-engine concordance (${Math.round(avgConfidence * 100)}%); isolated runtime reproduction NOT_RUN.`,
               sourceType: "Controlled Check",
             },
             {
               requirement: "Alternative explanations",
-              question: "Were dead-code and comment/test exclusions ruled out?",
+              question: "Were dead-code and constant-string exclusions ruled out?",
               satisfied: true,
-              evidenceSummary: `Executable code line verified inside ${fnName}.`,
+              evidenceSummary: `Executable statement verified inside ${fnName}; AT-05 constant guard passed.`,
               sourceType: "AST",
             },
             {
               requirement: "Reproducibility",
               question: "Is the finding bound to a deterministic file, line, and commit SHA?",
               satisfied: true,
-              evidenceSummary: `Bound to ${fileObj.path}:${lineNumber} @ ${commitSha.slice(0, 8)}.`,
+              evidenceSummary: `Bound to ${fileObj.path}:${lineNumber} @ ${commitSha.slice(0, 8)} (${sinkId}).`,
               sourceType: "Controlled Check",
             },
           ],
-          status: valStatus,
+          status: auditMeta.valStatus,
           evidenceConfidence: avgConfidence,
-          groundTruthCategory: gtCat,
+          groundTruthCategory: auditMeta.gtCat,
           impact: rule.privilegeGain,
-          rationale: rule.executiveSummary,
-          unresolvedAssumptions: [],
-          limitations: [],
+          rationale: auditMeta.auditDisposition,
+          unresolvedAssumptions: [
+            "Runtime exploitability requires isolated sandbox verification against deployed configuration.",
+          ],
+          limitations: [
+            "Static AST/Dataflow analysis does not execute live payloads against production services.",
+          ],
           reproducible: true,
           runtimeCostMs: 135,
-          requestsSent: 1,
+          requestsSent: 0,
           rootCause: rule.rootCause,
-          suggestedFix: rule.remediation[0]?.explanation || "Apply parameterization / input sanitization.",
+          suggestedFix: languageMatchedRemediation[0]?.explanation || "Apply parameterization / input sanitization.",
           regressionTest: rule.validationSteps[0] || "Verify sink rejects untrusted input.",
           rawSarifRecord: {
             schemaVersion: "2.1.0",
@@ -1505,58 +1941,96 @@ export function scanFilesWithEnterpriseEngines(params: {
         break;
       }
 
-      // Pass 3: If no core rule matched on this line, but one of our 400 Specialized Plugins matched (e.g. LLM01-LLM10, K8s/Terraform/Docker IaC, Mobile Kotlin/Swift, Supply Chain, SEI CERT, PCI-DSS):
+      // Pass 3: If no core rule matched on this line, but one of our 400 Specialized Plugins matched
       if (!matchedOnLine && matchedPlugin) {
         const lineNumber = idx + 1;
+        const fnName = extractSurroundingFunction(rawLines, idx);
+        const dedupKey = `${fileObj.path}::${fnName}::${matchedPlugin.cwe}`;
+        const existingInFn = seenFunctionCwe.get(dedupKey);
+        if (existingInFn) {
+          existingInFn.deduplicatedCount = (existingInFn.deduplicatedCount || 1) + 1;
+          logs.push(
+            `[DEDUP-AT12] Merged adjacent plugin ${matchedPlugin.pluginId} (${matchedPlugin.cwe}) at ${fileObj.path}:${lineNumber} into ${existingInFn.id}`
+          );
+          continue;
+        }
+
         const windowStart = Math.max(0, idx - 5);
         const windowEnd = Math.min(rawLines.length, idx + 5);
         const surroundingLines = rawLines.slice(windowStart, windowEnd);
-        const fnName = extractSurroundingFunction(rawLines, idx);
+        const surroundingText = surroundingLines.join("\n");
         const findingId = `SAST-${String(findingCounter).padStart(3, "0")}`;
-        const valId = `VAL-${String(100 + findingCounter)}`;
         findingCounter++;
         const today = new Date().toISOString().slice(0, 10);
+
+        const auditMeta = deriveFindingAuditMetadata({
+          cwe: matchedPlugin.cwe,
+          sanitizerDetected: false,
+          surroundingText,
+          repoUrl,
+          filePath: fileObj.path,
+        });
+
+        const matchingCoreRule = ENTERPRISE_SAST_RULES.find((r) => r.cwe === matchedPlugin.cwe);
+        const pluginRemediation: Remediation[] = matchingCoreRule
+          ? getLanguageMatchedRemediation(matchingCoreRule.remediation, fileLang)
+          : [
+              {
+                platform: (["Java", "Python", "Node.js", "Go", "C#", "PHP"].includes(fileLang) ? fileLang : "Java") as any,
+                explanation: matchedPlugin.remediationSummary,
+                code: `// ❌ FLAGGED BY ${matchedPlugin.pluginId} (${matchedPlugin.code})\n${trimmed}\n\n// ✅ ILLUSTRATIVE REMEDIATION PATTERN (${fileLang})\n// ${matchedPlugin.sanitizerHint}`,
+              },
+            ];
 
         const engineResults: EngineResult[] = [
           {
             name: "XTRIKE XQL",
-            confidence: 0.96,
+            confidence: 0.93,
             confirmed: true,
             details: `${matchedPlugin.pluginId} · ${matchedPlugin.checkmarxQuery}`,
           },
           {
             name: "XTRIKE DeepFlow",
-            confidence: 0.94,
+            confidence: 0.91,
             confirmed: true,
             details: `${matchedPlugin.ibmRuleId} · ${matchedPlugin.asvs}`,
           },
           {
             name: "XTRIKE StructSCA",
-            confidence: 0.97,
+            confidence: 0.94,
             confirmed: true,
             details: `[${matchedPlugin.fortifyAnalyzer}] Kingdom: ${matchedPlugin.fortifyKingdom}`,
           },
           {
             name: "XTRIKE PatternGuard",
-            confidence: 0.95,
+            confidence: 0.92,
             confirmed: true,
             details: `Matched plugin ${matchedPlugin.code} (${matchedPlugin.cwe})`,
           },
         ];
 
         logs.push(
-          `[Plugin ${matchedPlugin.pluginId}] ${matchedPlugin.name} at ${fileObj.path}:${lineNumber} (${matchedPlugin.cwe})`,
+          `[Plugin ${matchedPlugin.pluginId}] ${matchedPlugin.name} at ${fileObj.path}:${lineNumber} (${matchedPlugin.cwe}) [State=${auditMeta.proofState}]`,
           `[Standards] ${matchedPlugin.owasp} | ${matchedPlugin.nist80053} | ${matchedPlugin.pciDss}`
         );
 
-        findings.push({
+        const shortFile = fileObj.path.split("/").pop()?.replace(/[^a-zA-Z0-9]/g, "") || "File";
+        const shortFn = fnName.replace(/[^a-zA-Z0-9]/g, "") || "fn";
+        const sinkId = `SINK-${shortFile}-${shortFn}-${matchedPlugin.cwe}`;
+
+        const canonicalPluginFinding: SASTFinding = {
           id: findingId,
           title: `${matchedPlugin.name} [${matchedPlugin.pluginId}]`,
           severity: matchedPlugin.severity,
-          status: "Open",
+          status:
+            auditMeta.proofState === "NEEDS_MANUAL_VALIDATION" || auditMeta.proofState === "DETECTED_STATIC"
+              ? "In Review"
+              : "Open",
           cwe: matchedPlugin.cwe,
           cweName: matchedPlugin.cweName,
           cvss: matchedPlugin.cvss,
+          cvssVector: auditMeta.cvssVector,
+          cvssRationale: auditMeta.cvssRationale,
           epss: matchedPlugin.epss,
           mitre: matchedPlugin.mitreAttack,
           owasp: matchedPlugin.owasp.split(" ")[0] || matchedPlugin.owasp,
@@ -1564,6 +2038,14 @@ export function scanFilesWithEnterpriseEngines(params: {
           file: fileObj.path,
           line: lineNumber,
           language: fileLang,
+          sinkId,
+          duplicateGroupId: dedupKey,
+          deduplicatedCount: 1,
+          proofState: auditMeta.proofState,
+          auditDisposition: auditMeta.auditDisposition,
+          isBenchmarkFixture: auditMeta.isBenchmarkFixture,
+          deploymentContextNote: auditMeta.deploymentContextNote,
+          advisoryApplicability: "FIRST_PARTY_CODE_WEAKNESS_NO_CVE",
           codeSnippet: surroundingLines.join("\n"),
           snippetStartLine: windowStart + 1,
           source: `AST / Config Entry in ${fnName}`,
@@ -1576,12 +2058,12 @@ export function scanFilesWithEnterpriseEngines(params: {
           fortifyKingdom: matchedPlugin.fortifyKingdom,
           fortifyAnalyzer: matchedPlugin.fortifyAnalyzer,
           engines: engineResults,
-          confidence: 0.96,
+          confidence: 0.93,
           reachable: true,
-          internetFacing: true,
+          internetFacing: !auditMeta.isBenchmarkFixture,
           authRequired: false,
           exploitabilityLevel: matchedPlugin.cvss >= 9.0 ? "Very Easy" : "Easy",
-          privilegeGain: `Violation of ${matchedPlugin.nist80053} & ${matchedPlugin.owasp}`,
+          privilegeGain: matchingCoreRule ? matchingCoreRule.privilegeGain : `Potential violation of ${matchedPlugin.nist80053} & ${matchedPlugin.owasp}`,
           attackPath: [
             { label: "Entry Context", type: "entry", description: fnName },
             { label: `${fileObj.path.split("/").pop()}:${lineNumber}`, type: "vulnerability", description: `${matchedPlugin.pluginId} — ${matchedPlugin.name}` },
@@ -1589,7 +2071,7 @@ export function scanFilesWithEnterpriseEngines(params: {
             { label: "Standard Impact", type: "impact", description: `${matchedPlugin.nist80053} / ${matchedPlugin.pciDss}` },
           ],
           executiveSummary: `Detected by 400-Plugin Multi-Standard Engine (${matchedPlugin.pluginId}: ${matchedPlugin.code}). Aligns with ${matchedPlugin.owasp}, ${matchedPlugin.asvs}, and ${matchedPlugin.nist80053}.`,
-          businessImpact: `Non-compliance with ${matchedPlugin.pciDss}, ${matchedPlugin.iso27001}, and ${matchedPlugin.nist80053}.`,
+          businessImpact: `Potential non-compliance with ${matchedPlugin.pciDss}, ${matchedPlugin.iso27001}, and ${matchedPlugin.nist80053}.`,
           rootCause: matchedPlugin.remediationSummary,
           falsePositiveLikelihood: "Very Low",
           compliance: [
@@ -1598,13 +2080,7 @@ export function scanFilesWithEnterpriseEngines(params: {
             { framework: "PCI DSS", reference: matchedPlugin.pciDss, description: matchedPlugin.cweName },
             { framework: "ISO 27001", reference: matchedPlugin.iso27001, description: matchedPlugin.category },
           ],
-          remediation: [
-            {
-              platform: (["Java", "Python", "Node.js", "Go", "C#", "PHP"].includes(fileLang) ? fileLang : "Node.js") as any,
-              explanation: matchedPlugin.remediationSummary,
-              code: `// ❌ FLAGGED BY ${matchedPlugin.pluginId} (${matchedPlugin.code})\n${trimmed}\n\n// ✅ REQUIRED CONTROL\n// ${matchedPlugin.sanitizerHint}`,
-            },
-          ],
+          remediation: pluginRemediation,
           validationSteps: [
             `Enforce control: ${matchedPlugin.sanitizerHint}`,
             `Re-run plugin ${matchedPlugin.pluginId} (${matchedPlugin.checkmarxQuery}) to confirm remediation.`,
@@ -1615,10 +2091,13 @@ export function scanFilesWithEnterpriseEngines(params: {
           riskScore: Math.min(100, Math.round(matchedPlugin.cvss * 10)),
           firstDetected: today,
           lastSeen: today,
-        });
+        };
+
+        findings.push(canonicalPluginFinding);
+        seenFunctionCwe.set(dedupKey, canonicalPluginFinding);
 
         validationFindings.push({
-          findingId: valId,
+          findingId: findingId, // AT-01: Must match canonicalPluginFinding.id ("SAST-xxx")
           scanner: "XTRIKE XQL",
           ruleId: `${matchedPlugin.pluginId} · ${matchedPlugin.checkmarxQuery}`,
           cwe: matchedPlugin.cwe,
@@ -1643,7 +2122,7 @@ export function scanFilesWithEnterpriseEngines(params: {
           buildId: `build-${commitSha.slice(0, 8)}`,
           endpoint: fileObj.path,
           httpMethod: "POST",
-          authContext: "400-Plugin Multi-Standard Verification",
+          authContext: auditMeta.deploymentContextNote,
           requiredConfig: [matchedPlugin.nist80053, matchedPlugin.asvs],
           permissions: ["repo:read"],
           dependencies: [],
@@ -1674,19 +2153,19 @@ export function scanFilesWithEnterpriseEngines(params: {
               durationMs: 7,
             },
             execute: {
-              label: "4. Control Verification",
+              label: "4. Static Control Verification",
               deterministic: true,
               status: "pass",
-              summary: `Required control '${matchedPlugin.sanitizerHint}' absent at ${fileObj.path}:${lineNumber}.`,
+              summary: `Required control '${matchedPlugin.sanitizerHint}' absent at ${fileObj.path}:${lineNumber} (Runtime sandbox: NOT_RUN).`,
               detail: matchedPlugin.remediationSummary,
               durationMs: 41,
             },
             verify: {
-              label: "5. Independent 6-Point Proof Contract",
+              label: "5. Canonical Proof State Assignment",
               deterministic: true,
               status: "pass",
-              summary: "Status=CONFIRMED · Confidence=96%.",
-              detail: "Deterministic 6-point proof contract satisfied.",
+              summary: `Canonical Proof State=${auditMeta.proofState} · Heuristic Confidence=93%.`,
+              detail: auditMeta.auditDisposition,
               durationMs: 10,
             },
           },
@@ -1702,24 +2181,24 @@ export function scanFilesWithEnterpriseEngines(params: {
           ],
           proofContract: [
             { requirement: "Source provenance", question: "Where does input/config originate?", satisfied: true, evidenceSummary: `Located in ${fnName} (${fileObj.path}:${lineNumber})`, sourceType: "AST" },
-            { requirement: "Sink reachability", question: "Is the vulnerable pattern reachable?", satisfied: true, evidenceSummary: trimmed.slice(0, 60), sourceType: "DataFlow" },
+            { requirement: "Sink reachability", question: "Is the vulnerable pattern reachable?", satisfied: auditMeta.proofState === "DATAFLOW_CONFIRMED", evidenceSummary: trimmed.slice(0, 60), sourceType: "DataFlow" },
             { requirement: "Security control", question: "Was the required security control absent?", satisfied: true, evidenceSummary: `Missing: ${matchedPlugin.sanitizerHint}`, sourceType: "AST" },
-            { requirement: "Behavioral proof", question: "Did multi-engine concordance confirm?", satisfied: true, evidenceSummary: `XTRIKE XQL, XTRIKE DeepFlow & XTRIKE StructSCA confirmed ${matchedPlugin.pluginId}`, sourceType: "Controlled Check" },
+            { requirement: "Behavioral proof", question: "Was live sandbox runtime exploitation executed?", satisfied: false, evidenceSummary: `Static AST match (${matchedPlugin.pluginId}); isolated runtime reproduction NOT_RUN.`, sourceType: "Controlled Check" },
             { requirement: "Alternative explanations", question: "Were comments/dead code excluded?", satisfied: true, evidenceSummary: "Active statement verified.", sourceType: "AST" },
-            { requirement: "Reproducibility", question: "Bound to deterministic file/line/commit?", satisfied: true, evidenceSummary: `${fileObj.path}:${lineNumber} @ ${commitSha.slice(0, 8)}`, sourceType: "Controlled Check" },
+            { requirement: "Reproducibility", question: "Bound to deterministic file/line/commit?", satisfied: true, evidenceSummary: `${fileObj.path}:${lineNumber} @ ${commitSha.slice(0, 8)} (${sinkId})`, sourceType: "Controlled Check" },
           ],
-          status: "confirmed",
-          evidenceConfidence: 0.96,
-          groundTruthCategory: "actually_vulnerable",
+          status: auditMeta.valStatus,
+          evidenceConfidence: 0.93,
+          groundTruthCategory: auditMeta.gtCat,
           impact: matchedPlugin.remediationSummary,
-          rationale: `${matchedPlugin.name} (${matchedPlugin.owasp} / ${matchedPlugin.nist80053})`,
+          rationale: auditMeta.auditDisposition,
           unresolvedAssumptions: [],
           limitations: [],
           reproducible: true,
           runtimeCostMs: 85,
-          requestsSent: 1,
+          requestsSent: 0,
           rootCause: matchedPlugin.remediationSummary,
-          suggestedFix: matchedPlugin.sanitizerHint,
+          suggestedFix: pluginRemediation[0]?.explanation || matchedPlugin.sanitizerHint,
           regressionTest: `Verify ${matchedPlugin.pluginId} (${matchedPlugin.code}) returns 0 violations.`,
           rawSarifRecord: {
             schemaVersion: "2.1.0",

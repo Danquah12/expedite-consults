@@ -1,6 +1,6 @@
 export type Severity = "Critical" | "High" | "Medium" | "Low";
 
-export type Status = "Open" | "In Progress" | "Resolved" | "False Positive";
+export type Status = "Open" | "In Progress" | "In Review" | "Resolved" | "False Positive";
 
 export type EngineName =
   | "XTRIKE XQL"
@@ -39,6 +39,16 @@ export type Remediation = {
 
 export type ExploitabilityLevel = "Very Easy" | "Easy" | "Moderate" | "Difficult" | "Very Difficult";
 
+export type CanonicalProofState =
+  | "DETECTED_STATIC"
+  | "DATAFLOW_CONFIRMED"
+  | "PATH_FEASIBLE"
+  | "RUNTIME_REPRODUCED"
+  | "IMPACT_CONFIRMED"
+  | "NEEDS_MANUAL_VALIDATION"
+  | "MITIGATED_BY_GUARD"
+  | "INCONCLUSIVE";
+
 export type DeepExploitabilityDossier = {
   enumerationPhase: {
     discoveryPass:
@@ -54,7 +64,7 @@ export type DeepExploitabilityDossier = {
       advisoryId: string;
       cveId: string;
       ghRepoMatches: number;
-      exploitMaturity: "PoC Public on GitHub" | "Functional Verification Module" | "High-Signal Advisory";
+      exploitMaturity: "PoC Public on GitHub" | "Functional Verification Module" | "High-Signal Advisory" | "CWE Taxonomy Pattern (No Product CVE)";
       summary: string;
     };
     searchsploit: {
@@ -86,7 +96,18 @@ export type DeepExploitabilityDossier = {
       phase: string;
       probeType: string;
       targetBoundary: string;
-      resultStatus: "EXPLOITABLE (Confirmed)" | "PARTIAL BYPASS (Chained)" | "GUARDED";
+      resultStatus:
+        | "DATAFLOW_CONFIRMED (Needs Runtime Reproduction)"
+        | "DATAFLOW_CONFIRMED (Runtime: NOT_RUN)"
+        | "PATH_FEASIBLE (Static Constraints Satisfied)"
+        | "NEEDS_MANUAL_VALIDATION (Context/Sink Dependent)"
+        | "NEEDS_MANUAL_VALIDATION"
+        | "STATIC_CANDIDATE"
+        | "RUNTIME_REPRODUCED (Sandbox Verified)"
+        | "MITIGATED_BY_GUARD (Not Exploitable)"
+        | "EXPLOITABLE (Confirmed)"
+        | "PARTIAL BYPASS (Chained)"
+        | "GUARDED";
       evidenceLog: string;
     };
     reEnumeration: {
@@ -121,10 +142,22 @@ export type SASTFinding = {
   cwe: string;
   cweName: string;
   cvss: number;
+  cvssVector?: string;
+  cvssRationale?: string;
   epss: number; // 0–1 probability
   mitre: string;
   owasp: string;
   owaspCategory: string;
+
+  // Canonical State Machine & Deduplication Identity (AT-01, AT-12, AT-17)
+  sinkId?: string;
+  duplicateGroupId?: string;
+  deduplicatedCount?: number;
+  proofState?: CanonicalProofState;
+  auditDisposition?: string;
+  isBenchmarkFixture?: boolean;
+  deploymentContextNote?: string;
+  advisoryApplicability?: "DEPENDENCY_VERSION_MATCHED" | "FIRST_PARTY_CODE_WEAKNESS_NO_CVE";
 
   // Location
   file: string;

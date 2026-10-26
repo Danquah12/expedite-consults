@@ -92,6 +92,7 @@ public class BenchmarkTest00001 extends HttpServlet {
         language: "Java",
         content: `package org.owasp.benchmark.testcode;
 import java.io.File;
+import java.nio.file.Files;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -99,8 +100,11 @@ public class BenchmarkTest00017 {
     public void runCommandAndFile(HttpServletRequest request, HttpServletResponse response) throws Exception {
         String cmd = request.getHeader("X-Benchmark-Command");
         Runtime.getRuntime().exec("sh -c " + cmd);
-        File target = new File("/var/owasp/data/" + request.getParameter("reportFile"));
-        response.getWriter().write(target.getCanonicalPath());
+        String reportParam = request.getParameter("reportFile");
+        File target = new File("/var/owasp/data/" + reportParam);
+        byte[] content = Files.readAllBytes(target.toPath());
+        response.setContentType("text/html;charset=UTF-8");
+        response.getWriter().println("<div>Loaded report (" + content.length + " bytes): " + reportParam + "</div>");
     }
 }`,
       },

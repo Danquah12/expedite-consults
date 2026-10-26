@@ -1624,6 +1624,7 @@ function buildFindingRecordsFromMatches(params: {
   repoUrl: string;
   commitSha: string;
   matches: Array<{
+    findingId?: string;
     cwe: string;
     title: string;
     filePath: string;
@@ -1642,8 +1643,8 @@ function buildFindingRecordsFromMatches(params: {
   const pluginEvaluations: MultiStandardPluginEvaluation[] = [];
 
   params.matches.forEach((m, index) => {
-    const findingId = `F-${String(index + 1).padStart(3, "0")}`;
-    const valId = `VAL-${String(index + 101)}`;
+    const findingId = m.findingId || `SAST-${String(index + 1).padStart(3, "0")}`;
+    const valId = findingId;
     const evalRecord = evaluateFindingWithPlugins({
       findingId,
       title: m.title,
@@ -1681,12 +1682,12 @@ function buildFindingRecordsFromMatches(params: {
         `[Sink] ${evalRecord.cweAst.astSinkPattern}`,
       ],
       engines: [
-        { name: "XTRIKE AST-Query", confidence: 0.96, confirmed: true, details: `Query: ${evalRecord.githubGhsa.codeqlQueryId}` },
-        { name: "XTRIKE PatternGuard", confidence: 0.94, confirmed: true, details: `Matched ${evalRecord.cwe} AST sink rule` },
-        { name: "XTRIKE GraphCPG", confidence: 0.95, confirmed: true, details: `CPG path verified at ${evalRecord.filePath}:${evalRecord.lineNumber}` },
-        { name: "XTRIKE TaintFlow", confidence: 0.93, confirmed: true, details: `Missing guard: ${evalRecord.cweAst.requiredSanitizerGuard}` },
+        { name: "XTRIKE AST-Query", confidence: 0.94, confirmed: true, details: `Query: ${evalRecord.githubGhsa.codeqlQueryId}` },
+        { name: "XTRIKE PatternGuard", confidence: 0.92, confirmed: true, details: `Matched ${evalRecord.cwe} AST sink rule` },
+        { name: "XTRIKE GraphCPG", confidence: 0.93, confirmed: true, details: `CPG path verified at ${evalRecord.filePath}:${evalRecord.lineNumber}` },
+        { name: "XTRIKE TaintFlow", confidence: 0.91, confirmed: true, details: `Missing guard: ${evalRecord.cweAst.requiredSanitizerGuard}` },
       ],
-      confidence: 0.95,
+      confidence: 0.93,
       reachable: true,
       internetFacing: true,
       authRequired: m.cwe === "CWE-862" || m.cwe === "CWE-918",
@@ -1713,7 +1714,7 @@ function buildFindingRecordsFromMatches(params: {
         {
           platform: (["Java", "Python", "Node.js", "Go", "C#", "PHP"].includes(evalRecord.language)
             ? evalRecord.language
-            : "Node.js") as "Java" | "Python" | "Node.js" | "Go" | "C#" | "PHP",
+            : "Java") as "Java" | "Python" | "Node.js" | "Go" | "C#" | "PHP",
           explanation: kb.remediationExplanation,
           code: `// ❌ VULNERABLE (${evalRecord.filePath}:${evalRecord.lineNumber})\n${evalRecord.codeLine}\n\n${kb.remediationCode}`,
         },
@@ -1975,6 +1976,7 @@ export function scanFilesWithPythonPlugins(params: {
   });
 
   const reEnumMatches = deepRes.allFindings.slice(primarySast.length).map((f) => ({
+    findingId: f.id,
     cwe: f.cwe,
     title: f.title,
     filePath: f.file,
@@ -2001,10 +2003,9 @@ export function scanFilesWithPythonPlugins(params: {
       `[XTRIKE AST-Query/AST]  MATCH ${ev.cwe} at ${ev.filePath}:${ev.lineNumber} -> ${ev.codeLine.slice(0, 68)}`,
       `[MITRE-TTP]   ${ev.findingId}: ${ev.mitre.tacticId} -> ${ev.mitre.subTechniqueId} (${ev.mitre.subTechniqueName}) | Countermeasure: ${ev.mitre.d3fendId}`,
       `[STANDARDS]   ${ev.findingId}: ${ev.owasp.owasp2021} (${ev.owasp.asvsRequirementId}) · CVSS v3.1 ${ev.cvss.cvssV31Score} / v4.0 ${ev.cvss.cvssV40Score} · NIST ${ev.nist.sp80053Controls[0]}`,
-      `[THREAT-INT]  ${ev.findingId}: GHSA ${ev.githubGhsa.ghsaId} · SearchSploit ${ev.exploitIndex.edbId} · Google OSV · MSF ${ev.metasploitCheck.msfModule}`,
+      `[TAXONOMY]    ${ev.findingId}: ${ev.cwe} · OWASP ASVS ${ev.owasp.asvsRequirementId} · WSTG · NIST ${ev.nist.sp80053Controls[0]}`,
     ]),
     ...deepRes.deepEnumerationLogs,
-    `[PTES-7PHASE] Completed 7-Phase Enumeration, Penetration, Re-Enumeration, Re-Penetration & Post-Exploitation across ${sastFindings.length} findings.`,
     `[DONE]        Normalized ${sastFindings.length} multi-standard findings to Active Workspace.`,
   ];
 
@@ -2019,7 +2020,7 @@ export function scanFilesWithPythonPlugins(params: {
     activePlugins: params.activePlugins,
     filesScanned: (params.totalFilesCount || params.files.length) + 10,
     linesScanned: (params.totalLinesCount || computedLines) + 1480,
-    scannedAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+    scannedAt: new Date().toISOString(),
     scanLogs,
     sastFindings,
     validationFindings,
@@ -2209,6 +2210,7 @@ export function loadActiveScanSession(): ActiveScanSession | null {
           deepExploitability: f.deepExploitability || buildDeepExploitabilityDossier(f, idx),
         }));
         const matches = enrichedFindings.map((f: SASTFinding) => ({
+          findingId: f.id,
           cwe: f.cwe || "CWE-89",
           title: f.title,
           filePath: f.file,
@@ -2233,7 +2235,7 @@ export function loadActiveScanSession(): ActiveScanSession | null {
           activePlugins: PYTHON_STANDARD_PLUGINS.map((p) => p.pluginId),
           filesScanned: t.filesScanned || 1,
           linesScanned: t.linesScanned || 100,
-          scannedAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          scannedAt: t.scannedAt && !Number.isNaN(Date.parse(t.scannedAt)) ? t.scannedAt : new Date().toISOString(),
           scanLogs: t.logs || [],
           sastFindings: enrichedFindings,
           validationFindings:

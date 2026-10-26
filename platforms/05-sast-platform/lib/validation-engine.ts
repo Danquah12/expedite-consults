@@ -9,6 +9,7 @@ export type GroundTruthCategory =
   | "actually_vulnerable"
   | "safely_mitigated"
   | "unreachable_or_inactive"
+  | "environment_dependent"
   | "insufficient_context";
 
 export type LifecycleStageKey =
