@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TrePath™ Lab &amp; Verification Script Catalog (Ports 8000–8003 / Vercel Static)</title>
+  <style>
+    body {
+      background: #070b14;
+      color: #e2e8f0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      margin: 0;
+      padding: 32px;
+      line-height: 1.6;
+    }
+    .card {
+      max-width: 960px;
+      margin: 0 auto;
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 24px;
+    }
+    h1 { color: #38bdf8; margin-top: 0; font-size: 20px; }
+    h2 { color: #10b981; font-size: 15px; margin-top: 20px; }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: #064e3b;
+      color: #a7f3d0;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    ul { padding-left: 20px; }
+    a { color: #38bdf8; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code { background: #1e293b; padding: 2px 6px; border-radius: 4px; color: #f8fafc; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>TrePath™ DAST Lab &amp; Script Integration Hub</h1>
+    <p><span class="badge">VERIFIED ACTIVE</span> Supports Vercel Static Hosting (<code>/scripts/*</code>), Local Static HTTP Server (<code>http://localhost:8001</code>), and Unified Proxy (<code>/api/proxy</code>).</p>
+
+    <h2>Port 8000–8003 Diagnostic Status</h2>
+    <ul>
+      <li><strong>Port 8000:</strong> Occupied by <code>splunkd.exe</code> (Splunk Web Service)</li>
+      <li><strong>Port 8001:</strong> Active Local Static Lab Server (<code>python -m http.server 8001</code>)</li>
+      <li><strong>Port 8002 / 8003:</strong> Available Reserve Lab Ports</li>
+    </ul>
+
+    <h2>Bundled Verification Files</h2>
+    <ul>
+      <li><a href="./manifest.json">manifest.json (Lab Catalog Metadata)</a></li>
+      <li><a href="./vulnerabilityScriptMap.ts">vulnerabilityScriptMap.ts (Vulnerability-to-Lab Mapping)</a></li>
+      <li><a href="./runVulnerabilityScript.ts">runVulnerabilityScript.ts (Runner Utility)</a></li>
+      <li><a href="./authentication-lab-09.py">authentication-lab-09.py</a></li>
+      <li><a href="./authentication-lab-10.py">authentication-lab-10.py</a></li>
+      <li><a href="./authentication-lab-11.py">authentication-lab-11.py</a></li>
+      <li><a href="./authentication-lab-12.py">authentication-lab-12.py</a></li>
+      <li><a href="./authentication-lab-13.py">authentication-lab-13.py</a></li>
+      <li><a href="./authentication-lab-14.py">authentication-lab-14.py</a></li>
+      <li><a href="./broken-access-control-lab-01.py">broken-access-control-lab-01.py</a></li>
+      <li><a href="./command-injection-lab-01.py">command-injection-lab-01.py</a></li>
+      <li><a href="./jwt-attacks-lab-01.py">jwt-attacks-lab-01.py</a></li>
+      <li><a href="./jwt-attacks-lab-02.py">jwt-attacks-lab-02.py</a></li>
+    </ul>
+  </div>
+</body>
+</html>

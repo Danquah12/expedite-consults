@@ -108,8 +108,24 @@ interface OwaspBenchmarkTarget {
 
 const OWASP_GITHUB_TEST_TARGETS: OwaspBenchmarkTarget[] = [
   {
+    id: "owasp-juice-shop-live",
+    name: "OWASP Juice Shop (Live Deployed Application Instance)",
+    url: "https://juice-shop.herokuapp.com/",
+    category: "DAST_SAST_COMBINED",
+    stack: "Node.js / Express / Angular / SQLite (Live Interactive App)",
+    benchmarkFocus: "Live OWASP Top 10 SPA, REST API, JWT, SQLi & XSS Verification"
+  },
+  {
+    id: "trepath-local-lab-8001",
+    name: "TrePath Local Lab Server (Port 8001 / /api/proxy)",
+    url: "http://localhost:8001/index.html",
+    category: "DAST_SAST_COMBINED",
+    stack: "Local Python HTTP Server (Port 8001) + Vercel /scripts Static",
+    benchmarkFocus: "Integrated Port 8000–8003 Lab Catalog & /api/proxy Verification"
+  },
+  {
     id: "owasp-vwad",
-    name: "OWASP VWAD (Vulnerable Web Applications Directory)",
+    name: "OWASP VWAD Directory Subdomain (vwad.owasp.org)",
     url: "https://vwad.owasp.org/",
     category: "OWASP_PORTAL",
     stack: "OWASP Official Web Directory Portal",
@@ -117,43 +133,43 @@ const OWASP_GITHUB_TEST_TARGETS: OwaspBenchmarkTarget[] = [
   },
   {
     id: "owasp-juice-shop-portal",
-    name: "OWASP Juice Shop (Official Project Portal)",
+    name: "OWASP Juice Shop [Static Docs Portal on owasp.org — Not Live App]",
     url: "https://owasp.org/www-project-juice-shop/",
     category: "OWASP_PORTAL",
-    stack: "OWASP Project Site (Cloudflare / GitHub Pages)",
-    benchmarkFocus: "OWASP Top 10 Modern JS / SPA Security Benchmark Portal"
+    stack: "OWASP Static Project Docs Site (Cloudflare / GitHub Pages)",
+    benchmarkFocus: "Documentation Portal Header/DNS Audit Only (Use juice-shop.herokuapp.com for Live App)"
   },
   {
     id: "owasp-webgoat-portal",
-    name: "OWASP WebGoat (Official Project Portal)",
+    name: "OWASP WebGoat [Static Docs Portal on owasp.org — Not Live App]",
     url: "https://owasp.org/www-project-webgoat/",
     category: "OWASP_PORTAL",
-    stack: "OWASP Project Site (Java / Spring Benchmark Docs)",
-    benchmarkFocus: "OWASP Top 10 & WSTG Interactive Training Portal"
+    stack: "OWASP Static Project Docs Site (Cloudflare / GitHub Pages)",
+    benchmarkFocus: "Documentation Portal Header/DNS Audit Only"
   },
   {
     id: "owasp-shepherd-portal",
-    name: "OWASP Security Shepherd (Official Project Portal)",
+    name: "OWASP Security Shepherd [Static Docs Portal on owasp.org — Not Live App]",
     url: "https://owasp.org/www-project-security-shepherd/",
     category: "OWASP_PORTAL",
-    stack: "OWASP Project Site (Web & Mobile AppSec)",
-    benchmarkFocus: "OWASP Web & Mobile AppSec Verification Portal"
+    stack: "OWASP Static Project Docs Site (Web & Mobile AppSec)",
+    benchmarkFocus: "Documentation Portal Header/DNS Audit Only"
   },
   {
     id: "owasp-vwad-project",
-    name: "OWASP Vulnerable Web Applications Directory Project",
+    name: "OWASP VWAD [Static Docs Portal on owasp.org — Not Live App]",
     url: "https://owasp.org/www-project-vulnerable-web-applications-directory/",
     category: "OWASP_PORTAL",
-    stack: "OWASP Project Documentation Portal",
+    stack: "OWASP Static Project Documentation Portal",
     benchmarkFocus: "Registry of Online, Offline & Containerized Vulnerable Apps"
   },
   {
     id: "owasp-crapi-portal",
-    name: "OWASP crAPI (Completely Ridiculous API)",
+    name: "OWASP crAPI [Static Docs Portal on owasp.org — Not Live App]",
     url: "https://owasp.org/projects/crapi",
     category: "OWASP_PORTAL",
-    stack: "OWASP API Security Top 10 Benchmark",
-    benchmarkFocus: "BOLA, BFLA, Mass Assignment, SSRF & JWT API Security"
+    stack: "OWASP Static Project Documentation Portal",
+    benchmarkFocus: "Documentation Portal Header/DNS Audit Only"
   },
   {
     id: "gh-dvwa",
@@ -1641,7 +1657,7 @@ export default function EnginePage() {
       if (savedResults) {
         const parsedRes = JSON.parse(savedResults);
         if (Array.isArray(parsedRes) && parsedRes.length > 0) {
-          const validFreshResults = parsedRes.filter((r: any) => r?.schemaVersion === "6.5.0-trepath-verified");
+          const validFreshResults = parsedRes.filter((r: any) => r?.schemaVersion === "6.6.0-trepath-audit2-verified");
           if (validFreshResults.length > 0) {
             setEngineResults(validFreshResults);
           } else {
@@ -1837,7 +1853,7 @@ export default function EnginePage() {
     const alreadyProbed = engineResults.some(
       r =>
         !r?.isPrivateLab &&
-        r?.schemaVersion === "6.5.0-trepath-verified" &&
+        r?.schemaVersion === "6.6.0-trepath-audit2-verified" &&
         (normalizeTargetIdentity(r?.targetUrl) === primaryTargetIdentity ||
           normalizeTargetIdentity(r?.finalUrl) === primaryTargetIdentity) &&
         Array.isArray(r?.liveFindings) &&

@@ -1,0 +1,7 @@
+{
+  "name": "ui-panel",
+  "type": "ui",
+  "entry": "src/index.html",
+  "title": "DAST Engine",
+  "description": "Embedded DAST security platform UI."
+}

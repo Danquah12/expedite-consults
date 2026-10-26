@@ -1,0 +1,10 @@
+{
+  "name": "run_report",
+  "description": "Read a scanner report JSON file and invoke the applyVulnScript skill for each finding.",
+  "script": "node run_report.js",
+  "type": "command",
+  "timeout": 300,
+  "env": {
+    "REPORT_PATH": "${REPORT_PATH}"
+  }
+}

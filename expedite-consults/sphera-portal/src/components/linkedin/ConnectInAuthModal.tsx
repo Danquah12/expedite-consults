@@ -14,7 +14,7 @@ import {
   ChevronUp
 } from "lucide-react"
 import { UserProfile } from "@/lib/linkedin-data"
-import { saveStoredUser, saveStoredSessionRoute } from "@/lib/connectin-storage"
+import { saveStoredUser, saveStoredSessionRoute, getVaultProfileForUser } from "@/lib/connectin-storage"
 import { createUniqueUserProfile, resolveDisplayName, isSuperAdminUser } from "@/lib/connectin-profile"
 import { findProfessionById, PROFESSION_ENCLAVES } from "@/lib/connectin-professions"
 import { ProfessionSearchPopout } from "@/components/linkedin/ProfessionSearchPopout"
@@ -236,6 +236,7 @@ export function ConnectInAuthModal({
   const [joinPhone, setJoinPhone] = useState("")
   const [joinPassword, setJoinPassword] = useState("")
   const [joinRole, setJoinRole] = useState<'personal' | 'enterprise' | 'creator' | 'seller' | 'developer'>('personal')
+  const [joinProfessionId, setJoinProfessionId] = useState<string>("carpenter")
   const [joinChannel, setJoinChannel] = useState<'email' | 'sms' | 'call'>('email')
   const [joinStep, setJoinStep] = useState<'form' | '2fa'>('form')
   const [join2FACode, setJoin2FACode] = useState("")
@@ -360,6 +361,11 @@ export function ConnectInAuthModal({
     try {
       const resolvedName = resolveDisplayName("", signInEmail)
       const verifyTarget = activeTargetDisplay || (signInChannel === 'email' ? signInEmail : (signInPhone || signInEmail))
+      const vaultProfile = getVaultProfileForUser({ email: signInEmail, name: resolvedName })
+      const explicitProf = signInProfessionId !== "auto_detect" ? findProfessionById(signInProfessionId) : null
+      const vaultProf = (!explicitProf && vaultProfile?.professionId) ? findProfessionById(vaultProfile.professionId) : null
+      const selectedProf = explicitProf || vaultProf
+
       const res = await fetch("/api/connectin/auth/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -368,7 +374,12 @@ export function ConnectInAuthModal({
           email: signInEmail,
           phone: signInPhone,
           code,
-          name: resolvedName,
+          name: vaultProfile?.name || resolvedName,
+          professionId: selectedProf?.id || vaultProfile?.professionId,
+          profession: selectedProf?.title || vaultProfile?.profession,
+          professionCategory: selectedProf?.categoryName || vaultProfile?.professionCategory,
+          professionEnclave: selectedProf?.enclaveId || vaultProfile?.professionEnclave,
+          headline: explicitProf ? explicitProf.defaultHeadline : vaultProfile?.headline,
           otpChallengeToken
         })
       })
@@ -378,12 +389,11 @@ export function ConnectInAuthModal({
         throw new Error(data.error || "Invalid verification code.")
       }
 
-      const selectedProf = signInProfessionId !== "auto_detect" ? findProfessionById(signInProfessionId) : null
-      const effectiveProfessionId = selectedProf?.id || data.profile?.professionId
-      const effectiveEnclave = selectedProf?.enclaveId || data.profile?.professionEnclave
+      const effectiveProfessionId = selectedProf?.id || vaultProfile?.professionId || data.profile?.professionId
+      const effectiveEnclave = selectedProf?.enclaveId || vaultProfile?.professionEnclave || data.profile?.professionEnclave
 
       const baseProfile = data.profile || createUniqueUserProfile({
-        name: resolvedName,
+        name: vaultProfile?.name || resolvedName,
         email: signInEmail,
         role: "personal",
         professionId: effectiveProfessionId,
@@ -391,7 +401,7 @@ export function ConnectInAuthModal({
       })
 
       const generatedDomainProfile = selectedProf ? createUniqueUserProfile({
-        name: resolvedName,
+        name: vaultProfile?.name || resolvedName,
         email: signInEmail,
         professionId: selectedProf.id,
         professionEnclave: selectedProf.enclaveId,
@@ -401,19 +411,20 @@ export function ConnectInAuthModal({
       // Always inject email — API's UserProfileRecord has no email field
       const profileToSave = {
         ...baseProfile,
+        ...(vaultProfile || {}),
         email: signInEmail,
-        id: data.profile?.userId || data.user?.id || data.profile?.id || baseProfile.id,
+        id: data.profile?.userId || data.user?.id || data.profile?.id || vaultProfile?.id || baseProfile.id,
         ...(selectedProf && generatedDomainProfile ? {
           profession: selectedProf.title,
           professionId: selectedProf.id,
           professionCategory: selectedProf.categoryName,
           professionEnclave: selectedProf.enclaveId,
-          headline: selectedProf.defaultHeadline,
-          experience: generatedDomainProfile.experience,
-          certifications: generatedDomainProfile.certifications,
-          skills: generatedDomainProfile.skills,
-          coverImage: generatedDomainProfile.coverImage,
-          about: generatedDomainProfile.about
+          headline: explicitProf ? selectedProf.defaultHeadline : (vaultProfile?.headline || selectedProf.defaultHeadline),
+          experience: (vaultProfile?.experience && vaultProfile.experience.length > 0 && !explicitProf) ? vaultProfile.experience : generatedDomainProfile.experience,
+          certifications: (vaultProfile?.certifications && vaultProfile.certifications.length > 0 && !explicitProf) ? vaultProfile.certifications : generatedDomainProfile.certifications,
+          skills: (vaultProfile?.skills && vaultProfile.skills.length > 0 && !explicitProf) ? vaultProfile.skills : generatedDomainProfile.skills,
+          coverImage: vaultProfile?.coverImage || generatedDomainProfile.coverImage,
+          about: (vaultProfile?.about && !explicitProf) ? vaultProfile.about : generatedDomainProfile.about
         } : {})
       }
 
@@ -459,6 +470,7 @@ export function ConnectInAuthModal({
     try {
       const fullName = `${joinFirstName} ${joinLastName}`.trim()
       const resolvedName = resolveDisplayName(fullName, joinEmail)
+      const selectedProf = findProfessionById(joinProfessionId)
 
       const res = await fetch("/api/connectin/auth/register", {
         method: "POST",
@@ -470,6 +482,10 @@ export function ConnectInAuthModal({
           phone: joinPhone,
           password: joinPassword,
           role: joinRole,
+          professionId: joinProfessionId,
+          profession: selectedProf?.title,
+          professionCategory: selectedProf?.categoryName,
+          professionEnclave: selectedProf?.enclaveId,
           twoFactorChannel: effectiveChannel
         })
       })
@@ -519,6 +535,7 @@ export function ConnectInAuthModal({
       const fullName = `${joinFirstName} ${joinLastName}`.trim()
       const resolvedName = resolveDisplayName(fullName, joinEmail)
       const verifyTarget = joinChannel === 'email' ? joinEmail : (joinPhone || joinEmail)
+      const selectedProf = findProfessionById(joinProfessionId)
 
       const res = await fetch("/api/connectin/auth/verify-otp", {
         method: "POST",
@@ -530,6 +547,10 @@ export function ConnectInAuthModal({
           code,
           name: resolvedName,
           role: joinRole,
+          professionId: joinProfessionId,
+          profession: selectedProf?.title,
+          professionCategory: selectedProf?.categoryName,
+          professionEnclave: selectedProf?.enclaveId,
           otpChallengeToken
         })
       })
@@ -550,15 +571,21 @@ export function ConnectInAuthModal({
         joinRole === 'creator' ? 'creator' :
         joinRole === 'seller' ? 'seller' : 'personal'
 
-      // Always inject email — API's UserProfileRecord has no email field
+      // Always inject email and registered profession
       const profileToSave = {
         ...(data.profile || createUniqueUserProfile({
           name: resolvedName,
           email: joinEmail,
-          role: joinRole
+          role: joinRole,
+          professionId: selectedProf?.id || joinProfessionId,
+          professionEnclave: selectedProf?.enclaveId
         })),
         email: joinEmail,
-        id: data.profile?.userId || data.user?.id || data.profile?.id
+        id: data.profile?.userId || data.user?.id || data.profile?.id,
+        profession: data.profile?.profession || selectedProf?.title || 'Master Carpenter (Framing & Finish Joinery)',
+        professionId: data.profile?.professionId || selectedProf?.id || joinProfessionId,
+        professionCategory: data.profile?.professionCategory || selectedProf?.categoryName || 'Skilled Trades & Construction',
+        professionEnclave: data.profile?.professionEnclave || selectedProf?.enclaveId || 'trades_construction'
       }
 
       saveStoredUser(profileToSave)
@@ -1201,6 +1228,15 @@ export function ConnectInAuthModal({
                       onChange={(e) => setJoinPassword(e.target.value)}
                       placeholder="••••••••••••"
                       className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-base sm:text-xs focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
+                    />
+                  </div>
+
+                  <div>
+                    <ProfessionSearchPopout
+                      value={joinProfessionId}
+                      onChange={(profId) => setJoinProfessionId(profId)}
+                      label="Your Profession (Assigns Your Enclave & Video)"
+                      compact
                     />
                   </div>
 

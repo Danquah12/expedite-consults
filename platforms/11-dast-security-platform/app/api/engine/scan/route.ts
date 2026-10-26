@@ -856,8 +856,12 @@ async function queryPublicDnsSecurity(host: string): Promise<{
 }> {
   const cleanHost = host.replace(/:\d+$/, "");
   const apexHost = cleanHost.replace(/^www\./i, "");
+  const hostLabels = apexHost.split(".");
+  const parentDomain =
+    hostLabels.length > 2 ? hostLabels.slice(-2).join(".") : apexHost;
+  const dnsQueryTimestamp = new Date().toISOString();
   try {
-    const [txtRes, dmarcRes, caaRes, aRes, aaaaRes, mxRes, nsRes] = await Promise.allSettled([
+    const [txtRes, dmarcRes, caaRes, parentCaaRes, aRes, aaaaRes, mxRes, nsRes] = await Promise.allSettled([
       fetch(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(apexHost)}&type=TXT`, {
         headers: { Accept: "application/dns-json" },
         signal: AbortSignal.timeout(2500)
@@ -866,10 +870,16 @@ async function queryPublicDnsSecurity(host: string): Promise<{
         headers: { Accept: "application/dns-json" },
         signal: AbortSignal.timeout(2500)
       }),
-      fetch(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(apexHost)}&type=CAA`, {
+      fetch(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(cleanHost)}&type=CAA`, {
         headers: { Accept: "application/dns-json" },
         signal: AbortSignal.timeout(2500)
       }),
+      parentDomain !== cleanHost
+        ? fetch(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(parentDomain)}&type=CAA`, {
+            headers: { Accept: "application/dns-json" },
+            signal: AbortSignal.timeout(2500)
+          })
+        : Promise.resolve(null),
       fetch(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(cleanHost)}&type=A`, {
         headers: { Accept: "application/dns-json" },
         signal: AbortSignal.timeout(2500)
@@ -895,7 +905,9 @@ async function queryPublicDnsSecurity(host: string): Promise<{
     const aaaaRecords: string[] = [];
     const mxRecords: string[] = [];
     const nsRecords: string[] = [];
-    const rawParts: string[] = [];
+    const rawParts: string[] = [
+      `Resolver: Cloudflare DoH 1.1.1.1 (https://cloudflare-dns.com/dns-query) | Timestamp: ${dnsQueryTimestamp}`
+    ];
 
     if (aRes.status === "fulfilled" && aRes.value.ok) {
       const data = await aRes.value.json();
@@ -948,10 +960,19 @@ async function queryPublicDnsSecurity(host: string): Promise<{
 
     if (caaRes.status === "fulfilled" && caaRes.value.ok) {
       const data = await caaRes.value.json();
-      rawParts.push(`CAA (${apexHost}): Status=${data?.Status ?? 0}, Answers=${JSON.stringify(data?.Answer || [])}`);
+      rawParts.push(`CAA (${cleanHost}): RCODE=${data?.Status ?? 0}, Answers=${JSON.stringify(data?.Answer || [])}`);
       const answers: Array<{ data?: string }> = Array.isArray(data?.Answer) ? data.Answer : [];
       if (answers.length > 0 && answers[0]?.data) {
-        caaRecord = answers[0].data;
+        caaRecord = `${answers[0].data} (on ${cleanHost})`;
+      }
+    }
+
+    if (!caaRecord && parentCaaRes.status === "fulfilled" && parentCaaRes.value && parentCaaRes.value.ok) {
+      const data = await parentCaaRes.value.json();
+      rawParts.push(`CAA Parent (${parentDomain}): RCODE=${data?.Status ?? 0}, Answers=${JSON.stringify(data?.Answer || [])}`);
+      const answers: Array<{ data?: string }> = Array.isArray(data?.Answer) ? data.Answer : [];
+      if (answers.length > 0 && answers[0]?.data) {
+        caaRecord = `${answers[0].data} (inherited from parent ${parentDomain})`;
       }
     }
 
@@ -2114,8 +2135,22 @@ async function probeTarget(
 
     // Finding 1: Missing or Weak Content-Security-Policy (CSP) & Directive Gaps (Consolidated CWE-693)
     const cspRaw = securityHeaders.cspValue || "";
+    const cspReportOnlyRaw = headersMap["content-security-policy-report-only"] || "";
+    const scriptSrcMatch = cspRaw.match(/script-src\s+([^;]+)/i);
+    const defaultSrcMatch = cspRaw.match(/default-src\s+([^;]+)/i);
+    const styleSrcMatch = cspRaw.match(/style-src\s+([^;]+)/i);
+    const scriptUnsafeInline = Boolean(
+      (scriptSrcMatch && /unsafe-inline/i.test(scriptSrcMatch[1])) ||
+      (!scriptSrcMatch && defaultSrcMatch && /unsafe-inline/i.test(defaultSrcMatch[1]))
+    );
+    const styleUnsafeInline = Boolean(styleSrcMatch && /unsafe-inline/i.test(styleSrcMatch[1]));
     const hasUnsafeInline = Boolean(cspRaw && /unsafe-inline/i.test(cspRaw));
     const hasUnsafeEval = Boolean(cspRaw && /unsafe-eval/i.test(cspRaw));
+    const unsafeInlineDirectives = [
+      scriptSrcMatch && /unsafe-inline/i.test(scriptSrcMatch[1]) ? "script-src 'unsafe-inline'" : null,
+      !scriptSrcMatch && defaultSrcMatch && /unsafe-inline/i.test(defaultSrcMatch[1]) ? "default-src 'unsafe-inline' (inherited by script-src)" : null,
+      styleUnsafeInline ? "style-src 'unsafe-inline'" : null
+    ].filter(Boolean);
     const hasCdnGadgetWildcards = Boolean(cspRaw && /(\*\.(jsdelivr\.net|cloudflare\.com|google\.com|gstatic\.com|googleapis\.com|unpkg\.com|cdnjs\.cloudflare\.com)|cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com|code\.jquery\.com)/i.test(cspRaw));
     const connectSrcMatch = cspRaw.match(/connect-src\s+([^;]+)/i);
     const frameSrcMatch = cspRaw.match(/frame-src\s+([^;]+)/i);
@@ -2127,7 +2162,7 @@ async function probeTarget(
 
     if (!securityHeaders.csp || hasUnsafeInline || hasUnsafeEval || hasConnectWildcard || hasFrameWildcard || missingFrameAncestors || missingFormAction || missingBaseUri) {
       const weaknessParts = [
-        hasUnsafeInline ? "'unsafe-inline'" : null,
+        hasUnsafeInline ? (unsafeInlineDirectives.length > 0 ? unsafeInlineDirectives.join(" & ") : "'unsafe-inline'") : null,
         hasUnsafeEval ? "'unsafe-eval'" : null,
         hasConnectWildcard ? "connect-src *" : null,
         hasFrameWildcard ? "frame-src *" : null,
@@ -2137,11 +2172,18 @@ async function probeTarget(
         missingBaseUri ? "missing 'base-uri'" : null
       ].filter(Boolean);
       const cspPreview = cspRaw.length > 160 ? `${cspRaw.slice(0, 160)}... [${cspRaw.length} chars total]` : cspRaw;
-      const cspVector = "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:C/C:L/I:L/A:N";
+      const reportOnlyStatusText = cspReportOnlyRaw
+        ? `Content-Security-Policy-Report-Only: PRESENT ("${cspReportOnlyRaw.slice(0, 100)}")`
+        : "Content-Security-Policy-Report-Only: ABSENT";
+      // If unsafe-inline is ONLY in style-src (and script-src does NOT permit unsafe-inline), use Low severity (CVSS 3.1); otherwise Medium (CVSS 4.7)
+      const cspVector =
+        securityHeaders.csp && !scriptUnsafeInline && !hasUnsafeEval
+          ? "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:N/I:L/A:N"
+          : "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:C/C:L/I:L/A:N";
       const cspCalc = calculateCvss31FromVector(cspVector);
       const xssVerificationContext = canaryReflectionHit?.unescapedReflection
         ? `Active XSS canary probing also verified unescaped parameter reflection on ${canaryReflectionHit.testedUrl} (${canaryReflectionHit.paramName}).`
-        : `No active XSS injection vulnerability was verified across ${spideredPages.length} spidered page(s), ${domDiscoveryParsed.formsFound.length} HTML form(s), and ${discoveredParameters.length} discovered parameter(s); however, Medium severity (CVSS ${cspCalc.score.toFixed(1)}, Validated Control Gap) is justified because the page loads ${domDiscoveryParsed.scriptsFound.length} script resource(s) where '${hasUnsafeInline ? "unsafe-inline" : "missing script-src restriction"}' removes browser-enforced script containment if any future client-side or template injection sink is introduced.`;
+        : `No active XSS injection vulnerability was verified across ${spideredPages.length} spidered page(s), ${domDiscoveryParsed.formsFound.length} HTML form(s), and ${discoveredParameters.length} discovered parameter(s). ${cspCalc.severityBand} severity (CVSS ${cspCalc.score.toFixed(1)}, Validated Control Gap) reflects that the page loads ${domDiscoveryParsed.scriptsFound.length} script resource(s) where ${weaknessParts[0] || "missing script-src restriction"} reduces browser-enforced containment (${reportOnlyStatusText}).`;
 
       liveFindings.push({
         id: `LIVE-${host}-CSP`,
@@ -2152,7 +2194,7 @@ async function probeTarget(
         confidence: "Confirmed",
         plugin: "Header",
         url: finalUrl,
-        parameter: "Content-Security-Policy",
+        parameter: "Content-Security-Policy / Content-Security-Policy-Report-Only",
         method: "GET",
         owaspRef: "A05:2021-Security Misconfiguration · WSTG-CONF-07 · ASVS V14.4.3",
         cweId: "CWE-693",
@@ -2160,10 +2202,10 @@ async function probeTarget(
         cvssScore: cspCalc.score,
         validationState: "Validated Control Gap",
         findingClassification: "Hardening Control Gap",
-        retestPassCriteria: `Run 'curl -s -I "${finalUrl}"' and verify the HTTP response includes a 'Content-Security-Policy' header defining 'default-src', 'script-src' (using cryptographic nonces/hashes instead of 'unsafe-inline'), 'object-src \\'none\\'', 'base-uri \\'self\\'', and 'frame-ancestors' without breaking legitimate application scripts.`,
+        retestPassCriteria: `Run 'curl -s -I "${finalUrl}"' and verify the HTTP response includes an enforcing 'Content-Security-Policy' header defining 'default-src', 'script-src' (using cryptographic nonces/hashes instead of 'unsafe-inline'), 'object-src \\'none\\'', 'base-uri \\'self\\'', and 'frame-ancestors' without breaking legitimate application scripts.`,
         description: !securityHeaders.csp
-          ? `[Observation State: Validated Control Gap — Not an Exploited Vulnerability] Live HTTP response inspection of ${finalUrl} (HTTP ${statusCode}, ${responseTimeMs}ms) confirmed that the server does not return a 'Content-Security-Policy' (CSP) header. ${xssVerificationContext}`
-          : `[Observation State: Validated Control Gap — Not an Exploited Vulnerability] Live HTTP response inspection of ${finalUrl} captured a ${cspRaw.length}-character Content-Security-Policy header exhibiting ${weaknessParts.join(", ")} (Captured policy: "${cspPreview}"). ${xssVerificationContext}`,
+          ? `[Observation State: Validated Control Gap — Not an Exploited Vulnerability] Live HTTP response inspection of ${finalUrl} (HTTP ${statusCode}, ${responseTimeMs}ms) confirmed that the server does not return an enforcing 'Content-Security-Policy' header (${reportOnlyStatusText}). ${xssVerificationContext}`
+          : `[Observation State: Validated Control Gap — Not an Exploited Vulnerability] Live HTTP response inspection of ${finalUrl} captured an enforcing ${cspRaw.length}-character Content-Security-Policy header exhibiting ${weaknessParts.join(", ")} (Full Enforcing Policy: "${cspPreview}" | ${reportOnlyStatusText}). ${xssVerificationContext}`,
         impact: `[Observed vs. Inferred Impact]: Observed state is a permissive/absent CSP directive across ${domDiscoveryParsed.scriptsFound.length} loaded script(s). Inferred consequence: if an independent Cross-Site Scripting (XSS) or DOM injection sink is introduced in application code or third-party scripts, the browser cannot block unauthorized inline script execution.`,
         remediation: !securityHeaders.csp
           ? "Inventory all legitimate first-party and third-party scripts loaded by the site and deploy a staged policy using 'Content-Security-Policy-Report-Only' first to verify compatibility before enforcing 'Content-Security-Policy: default-src \\'self\\'; object-src \\'none\\'; base-uri \\'self\\'; frame-ancestors \\'self\\'' in production."
@@ -3318,14 +3360,24 @@ async function probeTarget(
       ? `${tlsSecurity.issuerOrg}${tlsSecurity.issuerCn ? ` (${tlsSecurity.issuerCn})` : ""}`
       : "Let's Encrypt / Organization's Active CA";
 
+    const cleanHostnameOnly = host.replace(/:\d+$/, "");
+    const parentApexDomain =
+      apexDomain.split(".").length > 2
+        ? apexDomain.split(".").slice(-2).join(".")
+        : apexDomain;
+    const queriedHierarchyLabel =
+      cleanHostnameOnly !== parentApexDomain
+        ? `${cleanHostnameOnly} and parent apex ${parentApexDomain}`
+        : apexDomain;
+
     liveFindings.push({
       id: `LIVE-${host}-DNS-CAA`,
-      title: `DNS Certificate Authority Authorization (CAA) Policy Record Absent on ${apexDomain}`,
+      title: `DNS Certificate Authority Authorization (CAA) Policy Record Absent on ${queriedHierarchyLabel}`,
       severity: caaCalc.severityBand,
       confidence: "Confirmed",
       plugin: "Header",
       url: finalUrl,
-      parameter: `DNS CAA (${apexDomain})`,
+      parameter: `DNS CAA (${queriedHierarchyLabel})`,
       method: "GET",
       owaspRef: "A05:2021-Security Misconfiguration · RFC 8659 (DNS CAA)",
       cweId: "CWE-295",
@@ -3333,8 +3385,8 @@ async function probeTarget(
       cvssScore: caaCalc.score,
       validationState: "Observed Configuration State",
       findingClassification: "Informational Observation",
-      retestPassCriteria: `Run 'nslookup -type=caa ${apexDomain}' and verify an RFC 8659 CAA record authorizing the organization's active Certificate Authority (e.g., '0 issue "${recommendedCaDomain}"') is returned.`,
-      description: `[Observation State: Observed Configuration State — Informational Policy Hardening Opportunity (CVSS 0.0)] Live DNS-over-HTTPS (DoH) CAA (RRtype 257) query for ${apexDomain} returned DNS Status NOERROR (RCODE 0) with zero CAA records across the apex zone. Note: Absence of a CAA record is a policy-hardening opportunity and is NOT evidence of certificate compromise or unauthorized TLS issuance (as publicly trusted CAs still enforce Domain Control Validation). Live TLS inspection on port 443 identified the active certificate issuer as '${detectedCaSummary}'.`,
+      retestPassCriteria: `Run 'nslookup -type=caa ${parentApexDomain}' and verify an RFC 8659 CAA record authorizing the organization's active Certificate Authority (e.g., '0 issue "${recommendedCaDomain}"') is returned.`,
+      description: `[Observation State: Observed Configuration State — Informational Policy Hardening Opportunity (CVSS 0.0)] Live DNS-over-HTTPS (DoH) CAA (RRtype 257) queries via Cloudflare 1.1.1.1 (https://cloudflare-dns.com/dns-query) at ${nowTime} across the RFC 8659 domain hierarchy (${queriedHierarchyLabel}) returned DNS Status NOERROR (RCODE 0) with zero CAA records. Note: Absence of a CAA record is a policy-hardening opportunity and is NOT evidence of certificate compromise or unauthorized TLS issuance (as publicly trusted CAs still enforce Domain Control Validation). Live TLS inspection on port 443 identified the active certificate issuer as '${detectedCaSummary}'.`,
       impact: `[Observed vs. Inferred Impact]: Without a DNS CAA policy record on ${apexDomain}, the DNS zone does not restrict certificate issuance strictly to '${detectedCaSummary}' (${recommendedCaDomain}); however, this carries 0.0 standalone exploitability without a separate domain-validation or DNS-control compromise.`,
       remediation: `Publish an RFC 8659 DNS CAA record on ${apexDomain} aligned with the organization's active TLS Certificate Authority ('${detectedCaSummary}'): '${apexDomain}. IN CAA 0 issue "${recommendedCaDomain}"' (and include any secondary backup CAs used by CDN/cloud providers).`,
       evidence: {
@@ -4528,7 +4580,7 @@ async function probeTarget(
   };
 
   return {
-    schemaVersion: "6.5.0-trepath-verified",
+    schemaVersion: "6.6.0-trepath-audit2-verified",
     targetUrl: cleanUrl,
     finalUrl,
     host,

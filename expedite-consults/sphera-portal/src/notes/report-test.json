@@ -1,0 +1,7 @@
+[
+  {
+    "scanner": "ZAP",
+    "finding": "Clickjacking",
+    "targetUrl": "https://example.com"
+  }
+]

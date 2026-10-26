@@ -139,6 +139,15 @@ export const ENTERPRISE_SOLUTIONS_DATA: SolutionPackage[] = [
     },
     recommendedProducts: [
       {
+        id: 'prod_aagiis_federal_rmf',
+        name: 'Aagiis — Federal Compliance Solutions | DoD RMF & DCSA NISP Platform (DoDI 8510.01)',
+        icon: '🛡️',
+        tagline: 'End-to-end DoD RMF (DoDI 8510.01), DCSA NISP (32 CFR Part 117), DISA STIG/SCAP (.cklb) & ATO platform.',
+        price: 'Enterprise / Free Trial',
+        trialAvailable: true,
+        actionText: 'Launch Aagiis'
+      },
+      {
         id: 'oscal-cato-machine',
         name: 'OSCAL Automated cATO Dossier Generator',
         icon: '📑',

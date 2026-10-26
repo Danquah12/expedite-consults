@@ -30,7 +30,8 @@ import {
   WheelVideoTalk,
   extractYouTubeId,
   getStoredCustomVideos,
-  saveStoredCustomVideo
+  saveStoredCustomVideo,
+  getMatchedWheelVideoForUser
 } from "@/lib/connectin-videos"
 import { PROFESSION_ENCLAVES, ALL_PROFESSIONS, findEnclaveById } from "@/lib/connectin-professions"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
@@ -124,6 +125,12 @@ export function ConnectInVideoWheel({
 
   const extractedVideoId = useMemo(() => extractYouTubeId(submitUrl), [submitUrl])
 
+  // Video assigned to the logged-in user based on the profession selected at registration
+  const assignedUserVideo = useMemo(
+    () => getMatchedWheelVideoForUser(user),
+    [user?.professionId, user?.profession, user?.professionEnclave, user?.headline]
+  )
+
   // Professions available in current selected enclave filter
   const availableProfessions = useMemo(() => {
     if (selectedFilter === "all") return ALL_PROFESSIONS
@@ -131,7 +138,7 @@ export function ConnectInVideoWheel({
     return ALL_PROFESSIONS.filter(p => p.enclaveId === targetEnclaveId)
   }, [selectedFilter, effectiveEnclaveId])
 
-  // Filter talks based on selected enclave, profession, and search query
+  // Filter talks based on selected enclave, profession, and search query — always placing the user's assigned profession video first
   const filteredTalks = useMemo(() => {
     let list = allTalks
     if (selectedFilter === "my_enclave") {
@@ -153,8 +160,20 @@ export function ConnectInVideoWheel({
           (t.tags || []).some(tag => tag.toLowerCase().includes(q))
       )
     }
+
+    // Place the user's assigned profession video #1 first when in default view or matching enclave/profession
+    if (
+      assignedUserVideo &&
+      !q &&
+      selectedProfessionId === "all" &&
+      (selectedFilter === "all" || selectedFilter === "my_enclave" || selectedFilter === assignedUserVideo.enclaveId)
+    ) {
+      const rest = list.filter(t => t.id !== assignedUserVideo.id)
+      return [assignedUserVideo, ...rest]
+    }
+
     return list
-  }, [allTalks, selectedFilter, effectiveEnclaveId, selectedProfessionId, professionSearchQuery])
+  }, [allTalks, selectedFilter, effectiveEnclaveId, selectedProfessionId, professionSearchQuery, assignedUserVideo])
 
   // Smooth scroll left / right
   const scrollWheel = (direction: 'left' | 'right') => {
@@ -215,7 +234,7 @@ export function ConnectInVideoWheel({
 
   // Social Share Payload Generator — uses ConnectLn OpenGraph Card URL so WhatsApp, LinkedIn, Facebook, and X render the Profile Picture + ConnectLn Logo Card
   const getVideoSharePayload = (video: WheelVideoTalk) => {
-    const connectInUrl = `https://www.connectln.app/connectin?video=${encodeURIComponent(video.youtubeId)}&plate=${encodeURIComponent(video.serialPlate)}&v=connectln5`
+    const connectInUrl = `https://www.connectln.app/connectin?video=${encodeURIComponent(video.youtubeId)}&plate=${encodeURIComponent(video.serialPlate)}&v=connectln8`
     const ytUrl = `https://www.youtube.com/watch?v=${video.youtubeId}`
     const takeaways = video.takeaways.map(t => `• ${t}`).join('\n')
     const hashtags = (video.tags || []).join(' ')
@@ -553,6 +572,60 @@ export function ConnectInVideoWheel({
         </span>
       </div>
 
+      {/* Assigned Profession Video Highlight Bar — Matches User's Registered Profession */}
+      {assignedUserVideo && (
+        <div
+          onClick={() => setActiveVideo(assignedUserVideo)}
+          className="mb-2.5 rounded-xl border border-amber-500/40 bg-gradient-to-r from-[#26201A] via-[#2B241D] to-[#1F1B18] p-2.5 sm:px-3.5 sm:py-2.5 flex flex-wrap items-center justify-between gap-2.5 cursor-pointer hover:border-amber-400 transition-all shadow-sm"
+        >
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <div className="relative h-9 w-9 rounded-full overflow-hidden border-2 border-[#0066FF] shrink-0 bg-zinc-900">
+              <img
+                src={userProfilePic}
+                alt={user?.name || "Member"}
+                onError={(e) => {
+                  e.currentTarget.src = "/brand/kwesi-avatar.png"
+                }}
+                className="h-full w-full object-cover"
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 border border-amber-400/40 px-2 py-0.5 text-[10px] font-extrabold text-amber-300">
+                  🎯 Assigned to Your Profession
+                </span>
+                <span className="rounded bg-[#A64532] px-1.5 py-0.5 font-mono text-[10px] font-bold text-white">
+                  {assignedUserVideo.serialPlate}
+                </span>
+                {user?.profession && (
+                  <span className="text-[10px] font-semibold text-sky-300">
+                    · {user.profession}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs font-bold text-white leading-snug break-words mt-0.5">
+                {assignedUserVideo.title}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                setActiveVideo(assignedUserVideo)
+              }}
+              style={{ backgroundColor: "#A64532", color: "#FFFFFF" }}
+              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold shadow-xs hover:opacity-95 transition-opacity cursor-pointer"
+            >
+              <Play className="h-3 w-3 fill-current" />
+              <span>Watch My Profession Video</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* The Wheel Horizontal Scrolling Track */}
       <div
         ref={trackRef}
@@ -580,11 +653,14 @@ export function ConnectInVideoWheel({
         ) : (
           filteredTalks.map((talk) => {
             const talkEnclave = talk.enclaveId ? findEnclaveById(talk.enclaveId) : null
+            const isAssignedToUser = assignedUserVideo?.id === talk.id
             return (
               <div
                 key={talk.id}
                 onClick={() => setActiveVideo(talk)}
-                className="group relative h-[19.5rem] w-[14.5rem] sm:w-[16rem] shrink-0 snap-center rounded-2xl overflow-hidden border border-[#3E3832] bg-[#25211D] hover:border-[#0066FF] transition-all duration-300 hover:scale-[1.02] cursor-pointer flex flex-col justify-between shadow-md"
+                className={`group relative h-[19.5rem] w-[14.5rem] sm:w-[16rem] shrink-0 snap-center rounded-2xl overflow-hidden border bg-[#25211D] hover:border-[#0066FF] transition-all duration-300 hover:scale-[1.02] cursor-pointer flex flex-col justify-between shadow-md ${
+                  isAssignedToUser ? "border-amber-400 ring-1 ring-amber-400/50" : "border-[#3E3832]"
+                }`}
               >
                 {/* Top Serial Plate Badge */}
                 <div className="p-2.5 flex items-center justify-between border-b border-[#35302B] bg-[#1F1B18]/90 z-10">
@@ -731,13 +807,12 @@ export function ConnectInVideoWheel({
         >
           {activeVideo && (
             <div className="flex flex-col max-h-[92vh] overflow-hidden">
-              {/* Header: Top Title Row + Dedicated Always-Visible Sharing Toolbar Row (Pinned & Never Clipped!) */}
+              {/* Header: Top Title Row + Post to ConnectLn Feed + Close X */}
               <div
-                className="shrink-0 p-3 sm:p-3.5 border-b space-y-2"
+                className="shrink-0 p-3 sm:p-3.5 border-b"
                 style={{ backgroundColor: '#F8FAFC', borderColor: '#E2E8F0' }}
               >
-                {/* Row 1: Avatar + High-Contrast Plate + Full Title + Close X */}
-                <div className="flex items-start justify-between gap-2.5 pr-6">
+                <div className="flex items-center justify-between gap-2.5 pr-6 flex-wrap">
                   <div className="flex items-center gap-2.5 min-w-0 flex-1">
                     <img
                       src={userProfilePic}
@@ -766,110 +841,45 @@ export function ConnectInVideoWheel({
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setActiveVideo(null)}
-                    style={{ backgroundColor: '#1E293B', color: '#FFFFFF' }}
-                    className="p-1.5 rounded-full hover:opacity-90 transition-opacity cursor-pointer shrink-0 shadow-xs"
-                    title="Close"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {onShareVideoToFeed && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onShareVideoToFeed(activeVideo)
+                          setShareFeedback("✓ Posted to your ConnectLn Feed with your Profile Picture + ConnectLn Card!")
+                          setTimeout(() => setShareFeedback(null), 3500)
+                          setActiveVideo(null)
+                        }}
+                        style={{ backgroundColor: '#0066FF', color: '#FFFFFF' }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold shadow-sm transition-all cursor-pointer hover:opacity-95"
+                        title="Share video to ConnectLn Feed with your profile picture banner"
+                      >
+                        <Send className="h-3 w-3" />
+                        <span>Post to ConnectLn Feed</span>
+                      </button>
+                    )}
 
-                {/* Row 2: Always-Visible Multi-Platform Share Bar in Header (Never Clipped!) */}
-                <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
-                  {/* 1. Post to ConnectLn Feed */}
-                  {onShareVideoToFeed && (
                     <button
                       type="button"
-                      onClick={() => {
-                        onShareVideoToFeed(activeVideo)
-                        setShareFeedback("✓ Posted to your ConnectLn Feed with your Profile Picture + ConnectLn Card!")
-                        setTimeout(() => setShareFeedback(null), 3500)
-                        setActiveVideo(null)
-                      }}
-                      style={{ backgroundColor: '#0066FF', color: '#FFFFFF' }}
-                      className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold shadow-sm transition-all cursor-pointer hover:opacity-95"
-                      title="Share video to ConnectLn Feed with your profile picture banner"
+                      onClick={() => setActiveVideo(null)}
+                      style={{ backgroundColor: '#1E293B', color: '#FFFFFF' }}
+                      className="p-1.5 rounded-full hover:opacity-90 transition-opacity cursor-pointer shrink-0 shadow-xs"
+                      title="Close"
                     >
-                      <Send className="h-3 w-3" />
-                      <span>Post to ConnectLn Feed</span>
+                      <X className="h-4 w-4" />
                     </button>
-                  )}
-
-                  {/* 2. Direct WhatsApp Share (Prominently Visible!) */}
-                  <button
-                    type="button"
-                    onClick={() => handleShareToWhatsApp(activeVideo)}
-                    style={{ backgroundColor: '#25D366', color: '#FFFFFF' }}
-                    className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold shadow-sm transition-all cursor-pointer hover:opacity-95"
-                    title="Share masterclass directly to WhatsApp"
-                  >
-                    <svg className="w-3.5 h-3.5 fill-current shrink-0" viewBox="0 0 24 24">
-                      <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.303-.058.116-.087.188-.173.289l-.26.303c-.087.087-.177.181-.076.354.101.173.449.741.964 1.201.662.591 1.221.774 1.394.86.173.086.275.072.376-.043.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.043.072.043.419-.101.824z" />
-                      <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2.348 21.652l4.636-1.04A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.25c-1.63 0-3.14-.492-4.404-1.336l-.315-.21-2.753.618.63-2.683-.231-.328A8.212 8.212 0 013.75 12c0-4.549 3.701-8.25 8.25-8.25s8.25 3.701 8.25 8.25-3.701 8.25-8.25 8.25z" />
-                    </svg>
-                    <span>WhatsApp</span>
-                  </button>
-
-                  {/* 3. LinkedIn */}
-                  <button
-                    type="button"
-                    onClick={() => handleShareToLinkedIn(activeVideo)}
-                    style={{ backgroundColor: '#0A66C2', color: '#FFFFFF' }}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold shadow-sm transition-all cursor-pointer hover:opacity-95"
-                    title="Share to LinkedIn"
-                  >
-                    <span>LinkedIn</span>
-                  </button>
-
-                  {/* 4. X (Twitter) */}
-                  <button
-                    type="button"
-                    onClick={() => handleShareToTwitter(activeVideo)}
-                    style={{ backgroundColor: '#0F172A', color: '#FFFFFF' }}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold shadow-sm transition-all cursor-pointer hover:opacity-95"
-                    title="Share to X (Twitter)"
-                  >
-                    <span>X / Post</span>
-                  </button>
-
-                  {/* 5. Facebook */}
-                  <button
-                    type="button"
-                    onClick={() => handleShareToFacebook(activeVideo)}
-                    style={{ backgroundColor: '#1877F2', color: '#FFFFFF' }}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold shadow-sm transition-all cursor-pointer hover:opacity-95"
-                    title="Share to Facebook"
-                  >
-                    <span>Facebook</span>
-                  </button>
-
-                  {/* 6. Full Share Card Modal Trigger */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setVideoToShare(activeVideo)
-                      setIsShareModalOpen(true)
-                    }}
-                    style={{ backgroundColor: '#7C3AED', color: '#FFFFFF' }}
-                    className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold shadow-sm transition-all cursor-pointer hover:opacity-95"
-                    title="Open full Share Card with Instagram, Email & ConnectLn Banner"
-                  >
-                    <Share2 className="h-3 w-3" />
-                    <span>All Platforms &amp; Card</span>
-                  </button>
+                  </div>
                 </div>
               </div>
 
-              {/* Scrollable Modal Body so Video + Full ConnectLn Card + Bottom Share Bars Are All Accessible & Visible */}
+              {/* Scrollable Modal Body */}
               <div
                 className="flex-1 overflow-y-auto"
                 style={{ backgroundColor: '#FFFFFF', color: '#0F172A' }}
               >
-                {/* Balanced YouTube Video Player (Leaves plenty of room for the ConnectLn Profile Card below it!) */}
-                <div className="relative h-[210px] sm:h-[250px] w-full bg-black">
+                {/* Balanced YouTube Video Player */}
+                <div className="relative h-[220px] sm:h-[260px] w-full bg-black">
                   <iframe
                     src={`https://www.youtube-nocookie.com/embed/${activeVideo.youtubeId}?autoplay=1&rel=0&modestbranding=1`}
                     title={activeVideo.title}
@@ -879,14 +889,15 @@ export function ConnectInVideoWheel({
                   />
                 </div>
 
-                {/* Video Notes, Signature Profile Picture + ConnectLn Card, Takeaways & High-Contrast Bottom Share/Action Bar */}
+                {/* Video Notes, Signature Profile Picture + ConnectLn Card, Takeaways & Single Bottom Share Bar */}
                 <div
                   className="p-3.5 sm:p-5 space-y-4"
                   style={{ backgroundColor: '#FFFFFF', color: '#0F172A' }}
                 >
-                  {/* Signature Profile Picture + ConnectLn Video Share Card Embedded Directly in Modal */}
+                  {/* Signature Profile Picture + ConnectLn Video Share Card (Middle duplicate share bar hidden) */}
                   <VideoShareBanner
                     compact
+                    hideShareBar
                     avatarUrl={userProfilePic}
                     authorName={user?.name || "Kwesi Asiedu"}
                     authorHeadline={user?.headline || activeVideo.speakerTitle}
@@ -932,7 +943,7 @@ export function ConnectInVideoWheel({
                   </ul>
                 </div>
 
-                {/* BOTTOM SECTION: High-Contrast Hashtags + Full Social Platform Sharing Bar + Action Buttons */}
+                {/* BOTTOM SECTION: High-Contrast Hashtags + Single Clean Multi-Platform Sharing Bar + Action Buttons */}
                 <div
                   className="pt-3 border-t space-y-3"
                   style={{ borderColor: '#CBD5E1' }}
@@ -982,7 +993,7 @@ export function ConnectInVideoWheel({
                     </div>
                   </div>
 
-                  {/* 2. Dedicated Bottom Multi-Platform Sharing Strip (WhatsApp, LinkedIn, X, Facebook, Instagram, Email) */}
+                  {/* 2. Single Dedicated Bottom Multi-Platform Sharing Strip (WhatsApp, LinkedIn, X, Facebook, Instagram, Email) */}
                   <div
                     className="p-3 rounded-2xl border flex flex-wrap items-center justify-between gap-2"
                     style={{ backgroundColor: '#F1F5F9', borderColor: '#CBD5E1' }}
@@ -1102,6 +1113,7 @@ export function ConnectInVideoWheel({
               {/* Signature Profile Picture + ConnectLn Video Share Banner Preview */}
               <VideoShareBanner
                 compact
+                hideShareBar
                 avatarUrl={userProfilePic}
                 authorName={user?.name || "Kwesi Asiedu"}
                 authorHeadline={user?.headline || videoToShare.speakerTitle}

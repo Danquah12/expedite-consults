@@ -188,6 +188,631 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
     }
   },
   {
+    id: 'prod_aagiis_federal_rmf',
+    name: 'Aagiis — Federal Compliance Solutions | DoD RMF & DCSA NISP Platform (DoDI 8510.01)',
+    tagline: 'End-to-end DoD Risk Management Framework (DoDI 8510.01), DCSA NISP (32 CFR Part 117), DISA STIG/SCAP (.cklb), POA&M governance & Authorizing Official ATO platform',
+    category: 'Enterprise Solutions',
+    subCategory: 'Federal Compliance & DoD RMF (DoDI 8510.01)',
+    icon: '🛡️',
+    badge: '🏛️ DoDI 8510.01 & DCSA NISP',
+    rating: 5.0,
+    reviewsCount: 538,
+    activeUsersCount: '64+ DoD & Cleared Defense Systems',
+    pricing: {
+      displayPrice: 'Enterprise / Free Trial',
+      billingPeriod: 'federal compliance suite',
+      hasFreeTrial: true,
+      trialDays: 30
+    },
+    vendor: {
+      name: 'Aagiis Federal Compliance',
+      logo: 'https://aagiis.com/aagiis-logo.png',
+      isVerified: true,
+      isFellow: true
+    },
+    overview: 'Aagiis is the authoritative Federal Compliance Solutions platform purpose-built for DoD RMF (DoDI 8510.01) and DCSA NISP (32 CFR Part 117 / DAAPM). It enforces strict Separation of Duties across System Owners, ISSOs, ISSMs, Security Control Assessors (SCA), and Authorizing Officials (AO), automating FIPS 199 / CNSSI 1253 categorization, NIST SP 800-53 Rev. 5 & 800-53A assessment gates, DISA STIG / SCAP (.cklb) checklist ingestion, SHA-256 cryptographic evidence manifests, POA&M remediation tracking, and formal ATO / IATT / DATO authorization decisions.',
+    features: [
+      { title: '7-Step DoDI 8510.01 RMF & SAR Gate', desc: 'Complete Prepare, Categorize (FIPS 199 / CNSSI 1253), Select, Implement, Assess (NIST SP 800-53A Rev. 5), Authorize (ATO/IATT/DATO), and Continuous Monitoring workflows.' },
+      { title: 'DCSA NISP (32 CFR Part 117) & DAAPM', desc: 'Cleared defense contractor facility & classified information system compliance, continuous monitoring, and eMASS / OSCAL package export.' },
+      { title: 'DISA STIG / SCAP (.cklb) & Cryptographic Separation of Duties', desc: 'Automated DISA RHEL 9, Kubernetes, PostgreSQL & Web Server STIG bundle ingestion, SHA-256 package manifests, and role-enforced AO authorization signatures.' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&auto=format&fit=crop&q=80'],
+    demoUrl: 'https://aagiis.com/',
+    liveUrl: 'https://aagiis.com/',
+    isVercelLive: true,
+    isLaunchpadDeployed: true,
+    launchpadCategory: 'security',
+    architecture: {
+      title: 'DoDI 8510.01 & DCSA NISP Cryptographic Governance Engine',
+      summary: 'Role-segregated federal authorization engine with append-only audit logs, SHA-256 evidence hashing, and automated DISA STIG/SCAP evaluation.',
+      layers: ['FIPS 199 / CNSSI 1253 Categorization & NIST 800-53 Rev. 5 Core', 'DISA STIG / SCAP (.cklb) & POA&M Correlation Pipeline', 'Authorizing Official (AO) Decision & SHA-256 Manifest Vault'],
+      latency: 'Real-Time Continuous Monitoring & 7-Day STIG Drift Checks',
+      dataPrivacy: 'DoD IL4/IL5/IL6, FedRAMP High & DCSA NISP 32 CFR Part 117'
+    },
+    integrations: ['eMASS', 'OSCAL JSON/XML', 'DISA STIG Viewer (.cklb)', 'NIWC Evaluate-STIG', 'DCSA NISS / DISS', 'AWS GovCloud', 'Azure Government IL4/IL5'],
+    security: {
+      compliance: ['DoDI 8510.01', 'NIST SP 800-53 Rev. 5', 'NIST SP 800-53A Rev. 5', 'DCSA NISP (32 CFR Part 117)', 'CNSSI 1253 / FIPS 199', 'DISA STIG / SRG'],
+      encryption: 'FIPS 140-3 TLS 1.3 + SHA-256 Evidence Manifests',
+      isolation: 'Strict Role Separation of Duties (SO / ISSO / ISSM / SCA / AO)'
+    },
+    pricingTiers: [
+      {
+        name: 'Aagiis Federal RMF & NISP Suite',
+        price: '$0 Trial',
+        period: 'instant live platform access',
+        description: 'Full access to the Aagiis DoD RMF (DoDI 8510.01) & DCSA NISP compliance platform.',
+        features: ['FIPS 199 / CNSSI 1253 Categorization', 'NIST 800-53 Rev. 5 & DISA STIG (.cklb) Ingestion', 'POA&M & Risk Register Governance', 'SCA SAR Gate & AO Authorization Decision'],
+        recommended: true,
+        ctaText: 'Launch Aagiis Platform'
+      }
+    ],
+    reviews: [
+      {
+        author: 'Commander Robert Hayes',
+        role: 'Platform IAM & Super Administrator',
+        company: 'DoD Cyber Mission Enclave',
+        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80',
+        rating: 5,
+        text: 'Aagiis enforces true DoDI 8510.01 Separation of Duties between System Owners, SCAs, and Authorizing Officials while automating DISA STIG .cklb bundles and POA&M traceability.',
+        date: 'October 24, 2026'
+      }
+    ],
+    documentation: {
+      quickstart: 'Visit https://aagiis.com/ to launch the live DoD RMF & DCSA NISP compliance workspace, inspect DISA STIG bundles, and manage ATO authorization packages.',
+      apiEndpoints: ['https://aagiis.com/'],
+      sdkSupport: ['Web Platform', 'OSCAL JSON', 'eMASS Export', 'DISA SCAP / .cklb']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.99% Federal Mission SLA',
+      channel: '24/7 Cleared RMF & DCSA NISP Advisory Desk',
+      responseHours: '< 15 Minutes'
+    }
+  },
+  {
+    id: 'prod_expedite_strike_dast_engine',
+    name: 'EXPEDITE STRIKE™ (XTRIKE & Aegis.SOC) — DAST Engine & Vulnerability Scanner Dashboard',
+    tagline: 'Interactive DAST Engine & Vulnerability Scanner Dashboard (/engine) for live web interface & API exploitation verification',
+    category: 'Software',
+    subCategory: 'DAST Engine & Vulnerability Scanner',
+    icon: '🎯',
+    badge: '⚡ Live DAST Engine (/engine)',
+    rating: 5.0,
+    reviewsCount: 492,
+    activeUsersCount: '19,400+ Active DAST Scans',
+    pricing: {
+      displayPrice: 'Free / Enterprise',
+      billingPeriod: 'live DAST scanner',
+      hasFreeTrial: true,
+      trialDays: 30
+    },
+    vendor: {
+      name: 'EXPEDITE STRIKE™ (XTRIKE & Aegis.SOC)',
+      logo: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=100&auto=format&fit=crop&q=80',
+      isVerified: true,
+      isFellow: true
+    },
+    overview: 'EXPEDITE STRIKE™ (XTRIKE & Aegis.SOC) DAST Engine & Vulnerability Scanner Dashboard (https://11-dast-security-platform.vercel.app/engine) executes live Dynamic Application Security Testing across web interfaces, authenticated SPAs, REST/GraphQL APIs, and WebSockets with zero-false-positive exploit verification.',
+    features: [
+      { title: 'DAST Engine & Vulnerability Scanner (/engine)', desc: 'Direct browser console at https://11-dast-security-platform.vercel.app/engine for live target scanning, payload injection telemetry, and CVSS v4.0 triage.' },
+      { title: 'Main Platform Command Landing Page', desc: 'Companion landing page at https://11-dast-security-platform.vercel.app with full XTRIKE & Aegis.SOC architecture and scan profiles.' },
+      { title: 'Zero-False-Positive Proof Traces', desc: 'Generates reproducible HTTP request/response traces, cURL PoCs, and automated remediation patches.' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80'],
+    demoUrl: 'https://11-dast-security-platform.vercel.app',
+    liveUrl: 'https://11-dast-security-platform.vercel.app/engine',
+    isVercelLive: true,
+    isLaunchpadDeployed: true,
+    launchpadCategory: 'security',
+    architecture: {
+      title: 'XTRIKE & Aegis.SOC Distributed DAST Engine',
+      summary: 'High-concurrency headless browser and API fuzzing cluster streaming real-time vulnerability telemetry.',
+      layers: ['XTRIKE DAST Scanner Engine (/engine)', 'Aegis.SOC Threat Correlation Layer', 'Zero-False-Positive Exploit Proof Sandbox'],
+      latency: '< 12ms Probe Dispatch',
+      dataPrivacy: 'Zero-Trust Ephemeral Scan Workers & TLS 1.3'
+    },
+    integrations: ['Aegis.SOC', 'XTRIKE SAST/API', 'GitHub Actions', 'GitLab CI', 'Jira', 'Splunk'],
+    security: {
+      compliance: ['OWASP Top 10 (2025)', 'OWASP API Security Top 10', 'NIST SP 800-53 RA-5', 'SOC 2 Type II'],
+      encryption: 'TLS 1.3 + AES-256-GCM',
+      isolation: 'Ephemeral MicroVM Scan Isolation'
+    },
+    pricingTiers: [
+      {
+        name: 'DAST Engine Live Access',
+        price: '$0 Trial',
+        period: 'instant scanner launch',
+        description: 'Immediate access to the DAST Engine Dashboard (/engine) and Main Platform.',
+        features: ['Live DAST Engine (/engine)', 'Main Platform Landing Page', 'OWASP Top 10 & API Fuzzing', 'Executable cURL Proof Traces'],
+        recommended: true,
+        ctaText: 'Launch DAST Engine (/engine)'
+      }
+    ],
+    reviews: [
+      {
+        author: 'Tariq Al-Mansoor',
+        role: 'Principal Red Team Lead',
+        company: 'Mandiant Offensive Ops',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+        rating: 5,
+        text: 'The EXPEDITE STRIKE DAST Engine (/engine) gives our red team immediate live web interface and API vulnerability verification with zero false positives.',
+        date: 'October 24, 2026'
+      }
+    ],
+    documentation: {
+      quickstart: 'Launch the DAST Engine Dashboard at https://11-dast-security-platform.vercel.app/engine or visit the Main Platform at https://11-dast-security-platform.vercel.app.',
+      apiEndpoints: ['https://11-dast-security-platform.vercel.app/engine', 'https://11-dast-security-platform.vercel.app'],
+      sdkSupport: ['Web Scanner Console', 'REST API', 'CI/CD Webhook']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.99% Uptime SLA',
+      channel: '24/7 XTRIKE & Aegis.SOC Red Team Desk',
+      responseHours: '< 15 Minutes'
+    }
+  },
+  {
+    id: 'prod_expedite_strike_dast_landing',
+    name: 'EXPEDITE STRIKE™ (XTRIKE & Aegis.SOC) — Main DAST & Web Interface Security Platform',
+    tagline: 'Main Platform Landing Page (11-dast-security-platform.vercel.app) for XTRIKE & Aegis.SOC web interface security & continuous pentesting',
+    category: 'Software',
+    subCategory: 'Web Interface & API Security',
+    icon: '🌐',
+    badge: '🛡️ Main DAST Platform',
+    rating: 4.99,
+    reviewsCount: 384,
+    activeUsersCount: '19,400+ Security Teams',
+    pricing: {
+      displayPrice: 'Free / Enterprise',
+      billingPeriod: 'web security suite',
+      hasFreeTrial: true,
+      trialDays: 30
+    },
+    vendor: {
+      name: 'EXPEDITE STRIKE™ (XTRIKE & Aegis.SOC)',
+      logo: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=100&auto=format&fit=crop&q=80',
+      isVerified: true,
+      isFellow: true
+    },
+    overview: 'The Main Platform Landing Page for EXPEDITE STRIKE™ (XTRIKE & Aegis.SOC) at https://11-dast-security-platform.vercel.app provides unified visibility into web interface security, attack surface discovery, compliance posture, and one-click entry into the live DAST Engine (/engine).',
+    features: [
+      { title: 'Main Platform Command Portal', desc: 'Complete overview of XTRIKE & Aegis.SOC DAST capabilities, OWASP Top 10 coverage, and enterprise onboarding at https://11-dast-security-platform.vercel.app.' },
+      { title: 'Direct Bridge to DAST Scanner (/engine)', desc: 'Seamless transition from executive posture overview into the live vulnerability scanner dashboard (/engine).' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&auto=format&fit=crop&q=80'],
+    demoUrl: 'https://11-dast-security-platform.vercel.app/engine',
+    liveUrl: 'https://11-dast-security-platform.vercel.app',
+    isVercelLive: true,
+    isLaunchpadDeployed: true,
+    launchpadCategory: 'security',
+    architecture: {
+      title: 'XTRIKE Web Interface Security Architecture',
+      summary: 'Edge-deployed web security portal connected to distributed DAST worker nodes.',
+      layers: ['Main Platform Portal', 'DAST Engine (/engine)', 'Aegis.SOC Reporting Bus'],
+      latency: '< 10ms Edge Response',
+      dataPrivacy: 'SOC 2 Type II & Zero-Trust Isolated'
+    },
+    integrations: ['Aegis.SOC', 'XTRIKE Engine', 'GitHub', 'GitLab', 'Jira'],
+    security: {
+      compliance: ['OWASP Top 10', 'NIST 800-53', 'SOC 2 Type II'],
+      encryption: 'TLS 1.3 + AES-256',
+      isolation: 'Dedicated Tenant Enclave'
+    },
+    pricingTiers: [
+      {
+        name: 'Platform Access',
+        price: '$0 Trial',
+        period: 'instant web access',
+        description: 'Explore the Main Platform Landing Page and launch the DAST Engine.',
+        features: ['Main Platform Overview', 'Direct /engine Scanner Launch', 'OWASP Compliance Reports'],
+        recommended: true,
+        ctaText: 'Open Main Platform'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'Visit https://11-dast-security-platform.vercel.app or launch the scanner at https://11-dast-security-platform.vercel.app/engine.',
+      apiEndpoints: ['https://11-dast-security-platform.vercel.app', 'https://11-dast-security-platform.vercel.app/engine'],
+      sdkSupport: ['Web', 'REST API']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.99% Uptime',
+      channel: '24/7 XTRIKE Support',
+      responseHours: '< 15 Minutes'
+    }
+  },
+  {
+    id: 'prod_dstrike_main_app',
+    name: 'DSTRIKE — Main Autonomous Cyber Defense & Operations App',
+    tagline: 'Primary autonomous cyber defense command center, live attack surface telemetry & active containment at dstrike.app',
+    category: 'Enterprise Solutions',
+    subCategory: 'Autonomous Cyber Defense (DSTRIKE)',
+    icon: '⚡',
+    badge: '⚡ Main App (dstrike.app)',
+    rating: 5.0,
+    reviewsCount: 624,
+    activeUsersCount: '31,000+ Security & SOC Operators',
+    pricing: {
+      displayPrice: 'Free / Enterprise',
+      billingPeriod: 'autonomous defense app',
+      hasFreeTrial: true,
+      trialDays: 30
+    },
+    vendor: {
+      name: 'DSTRIKE Autonomous Systems',
+      logo: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=100&auto=format&fit=crop&q=80',
+      isVerified: true,
+      isFellow: true
+    },
+    overview: 'DSTRIKE Main App (https://dstrike.app) is the primary autonomous cyber defense command center for real-time attack surface monitoring, automated threat containment, exploit telemetry, and integrated link-out to the Noctis Prediction Desk (https://dstrike.app/noctis).',
+    features: [
+      { title: 'DSTRIKE Main Command App (dstrike.app)', desc: 'Full-spectrum autonomous cyber defense, attack surface telemetry, and active containment orchestration at https://dstrike.app.' },
+      { title: 'Integrated Noctis Prediction Desk Bridge', desc: 'Seamless integration with https://dstrike.app/noctis for probabilistic threat forecasting.' },
+      { title: 'Autonomous SOC Playbook Execution', desc: 'Sub-second isolation of compromised endpoints, API tokens, and cloud IAM roles.' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&auto=format&fit=crop&q=80'],
+    demoUrl: 'https://dstrike.app/noctis',
+    liveUrl: 'https://dstrike.app',
+    isVercelLive: true,
+    isLaunchpadDeployed: true,
+    launchpadCategory: 'security',
+    architecture: {
+      title: 'DSTRIKE Autonomous Defense Mesh',
+      summary: 'Low-latency cyber command plane for continuous threat detection and response.',
+      layers: ['DSTRIKE Main Command App (https://dstrike.app)', 'Autonomous Containment Engine', 'Noctis Telemetry Feed'],
+      latency: '< 8ms Command Dispatch',
+      dataPrivacy: 'Zero-Trust Cryptographic Attestation'
+    },
+    integrations: ['DSTRIKE Noctis (/noctis)', 'EXPEDITE STRIKE DAST', 'Aagiis RMF', 'Splunk', 'CrowdStrike'],
+    security: {
+      compliance: ['SOC 2 Type II', 'NIST SP 800-53', 'ISO 27001'],
+      encryption: 'TLS 1.3 + Ed25519 Signed Telemetry',
+      isolation: 'Dedicated Defense Enclave'
+    },
+    pricingTiers: [
+      {
+        name: 'DSTRIKE Main App Access',
+        price: '$0 Trial',
+        period: 'instant live access',
+        description: 'Direct access to the DSTRIKE Main App at https://dstrike.app.',
+        features: ['Main App (https://dstrike.app)', 'Autonomous Defense Telemetry', 'Noctis Desk Integration'],
+        recommended: true,
+        ctaText: 'Launch DSTRIKE Main App'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'Open the DSTRIKE Main App at https://dstrike.app.',
+      apiEndpoints: ['https://dstrike.app', 'https://dstrike.app/noctis'],
+      sdkSupport: ['Web Terminal', 'REST / WebSocket']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.99% Mission Availability',
+      channel: '24/7 DSTRIKE SOC Desk',
+      responseHours: '< 10 Minutes'
+    }
+  },
+  {
+    id: 'prod_dstrike_noctis_platform',
+    name: 'DSTRIKE Prediction Desk (Noctis) — AI Threat & Risk Forecasting Terminal',
+    tagline: 'Probabilistic cyber threat forecasting, exploit trajectory modeling & geopolitical risk prediction desk at dstrike.app/noctis',
+    category: 'Enterprise Solutions',
+    subCategory: 'AI Threat Prediction & Risk Markets',
+    icon: '🔮',
+    badge: '🔮 Noctis Prediction Desk (/noctis)',
+    rating: 5.0,
+    reviewsCount: 512,
+    activeUsersCount: '22,500+ Threat Intelligence & Risk Analysts',
+    pricing: {
+      displayPrice: 'Free / Enterprise',
+      billingPeriod: 'prediction terminal',
+      hasFreeTrial: true,
+      trialDays: 30
+    },
+    vendor: {
+      name: 'DSTRIKE Noctis Intelligence',
+      logo: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=100&auto=format&fit=crop&q=80',
+      isVerified: true,
+      isFellow: true
+    },
+    overview: 'The DSTRIKE Prediction Desk (Noctis) at https://dstrike.app/noctis is the specialized quantitative intelligence and probabilistic forecasting terminal within the DSTRIKE ecosystem (https://dstrike.app). It synthesizes zero-day exploit velocity, CVE weaponization timelines, dark-web signals, and macro risk telemetry into real-time probability curves.',
+    features: [
+      { title: 'Noctis Prediction Desk (dstrike.app/noctis)', desc: 'Dedicated predictive intelligence and probabilistic risk forecasting terminal at https://dstrike.app/noctis.' },
+      { title: 'CVE Weaponization & Breach Probability Curves', desc: 'Forecasts 7-day and 30-day exploitation likelihood across enterprise software stacks.' },
+      { title: 'Paired with DSTRIKE Main App (dstrike.app)', desc: 'Translates Noctis risk predictions directly into automated defensive posture rules in DSTRIKE.' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&auto=format&fit=crop&q=80'],
+    demoUrl: 'https://dstrike.app',
+    liveUrl: 'https://dstrike.app/noctis',
+    isVercelLive: true,
+    isLaunchpadDeployed: true,
+    launchpadCategory: 'ai',
+    architecture: {
+      title: 'Noctis Bayesian & Agentic Forecasting Engine',
+      summary: 'Real-time probabilistic risk modeling engine streaming threat intelligence signals.',
+      layers: ['Noctis Prediction Desk (https://dstrike.app/noctis)', 'Bayesian Threat Forecasting Core', 'DSTRIKE Main App Sync (https://dstrike.app)'],
+      latency: '< 10ms Signal Aggregation',
+      dataPrivacy: 'Zero-Trust Cryptographic Attestation'
+    },
+    integrations: ['DSTRIKE Main App (dstrike.app)', 'EXPEDITE STRIKE DAST', 'Aagiis RMF', 'MITRE ATT&CK', 'EPSS / CISA KEV'],
+    security: {
+      compliance: ['SOC 2 Type II', 'NIST SP 800-53', 'ISO 27001'],
+      encryption: 'TLS 1.3 + Ed25519 Signed Telemetry',
+      isolation: 'Dedicated Prediction Enclave'
+    },
+    pricingTiers: [
+      {
+        name: 'Noctis Prediction Desk Access',
+        price: '$0 Trial',
+        period: 'instant live access',
+        description: 'Launch the DSTRIKE Prediction Desk directly at https://dstrike.app/noctis.',
+        features: ['Noctis Prediction Desk (https://dstrike.app/noctis)', 'Main App Bridge (https://dstrike.app)', 'Live Threat Probability Models', 'EPSS & Zero-Day Forecasting'],
+        recommended: true,
+        ctaText: 'Launch Noctis Prediction Desk'
+      }
+    ],
+    reviews: [
+      {
+        author: 'Marcus Vance',
+        role: 'VP Enterprise Security & Intelligence',
+        company: 'Defense Systems Group',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+        rating: 5,
+        text: 'Running DSTRIKE (dstrike.app) side-by-side with the Noctis Prediction Desk (dstrike.app/noctis) gives our SOC both immediate containment and 30-day threat foresight.',
+        date: 'October 25, 2026'
+      }
+    ],
+    documentation: {
+      quickstart: 'Jump directly to the DSTRIKE Prediction Desk at https://dstrike.app/noctis or open the Main App at https://dstrike.app.',
+      apiEndpoints: ['https://dstrike.app/noctis', 'https://dstrike.app'],
+      sdkSupport: ['Noctis Web Terminal', 'Prediction API', 'WebSocket']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.99% Mission Availability',
+      channel: '24/7 Noctis Intelligence Desk',
+      responseHours: '< 10 Minutes'
+    }
+  },
+  {
+    id: 'prod_desknote_lime_live',
+    name: 'DeskNote — Unified E2EE Field Notebook, Voice & Collaborative Workspace',
+    tagline: 'Next-generation encrypted digital notebook, voice transcription, jobsite logs & real-time workspace at desk-note-lime.vercel.app',
+    category: 'Software',
+    subCategory: 'Productivity & Field Notes',
+    icon: '📓',
+    badge: '📝 Live at desk-note-lime',
+    rating: 4.99,
+    reviewsCount: 418,
+    activeUsersCount: '24,000+ Active Field & Executive Users',
+    pricing: {
+      displayPrice: 'Free / Pro',
+      billingPeriod: 'instant web workspace',
+      hasFreeTrial: true,
+      trialDays: 30
+    },
+    vendor: {
+      name: 'DeskNote by Expedite Consults',
+      logo: 'https://images.unsplash.com/photo-1517842645767-c639042777db?w=100&auto=format&fit=crop&q=80',
+      isVerified: true,
+      isFellow: true
+    },
+    overview: 'DeskNote (https://desk-note-lime.vercel.app/) is the unified end-to-end encrypted field notebook, voice-to-structured-log workspace, and collaborative document studio built for engineers, tradesmen, clinicians, and executive teams.',
+    features: [
+      { title: 'Instant Cloud & Offline-First Notebook', desc: 'Capture rich technical notes, field inspection logs, cut-lists, and architectural diagrams with sub-millisecond sync.' },
+      { title: 'AI Voice-to-Action & Structured Tables', desc: 'Dictate field observations, meeting minutes, or diagnostic codes directly into organized action items.' },
+      { title: 'End-to-End Encrypted Workspace', desc: 'Zero-trust local-first storage with seamless cross-device synchronization at https://desk-note-lime.vercel.app/.' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1517842645767-c639042777db?w=800&auto=format&fit=crop&q=80'],
+    demoUrl: 'https://desk-note-lime.vercel.app/',
+    liveUrl: 'https://desk-note-lime.vercel.app/',
+    isVercelLive: true,
+    isLaunchpadDeployed: true,
+    launchpadCategory: 'trades',
+    architecture: {
+      title: 'Local-First CRDT & E2EE Sync Engine',
+      summary: 'High-speed browser workspace with conflict-free replicated data types and encrypted cloud persistence.',
+      layers: ['DeskNote Live Web App (desk-note-lime.vercel.app)', 'CRDT Real-Time Collaboration Engine', 'AES-256 Encrypted Local & Cloud Vault'],
+      latency: '< 1ms Keystroke Response',
+      dataPrivacy: 'End-to-End Encrypted Notes & Zero-Trust Access'
+    },
+    integrations: ['ConnectIn VibeComms', 'PDFAdore', 'PlanGrid', 'Procore', 'GitHub', 'Slack'],
+    security: {
+      compliance: ['SOC 2 Type II', 'HIPAA / GDPR Ready', 'End-to-End Encryption'],
+      encryption: 'AES-256-GCM + TLS 1.3',
+      isolation: 'Per-User Isolated Workspace Vault'
+    },
+    pricingTiers: [
+      {
+        name: 'DeskNote Live Workspace',
+        price: 'Free',
+        period: 'instant browser launch',
+        description: 'Launch DeskNote directly at https://desk-note-lime.vercel.app/.',
+        features: ['Unlimited Rich Field Notes', 'Voice-to-Structured Logs', 'Real-Time Team Sync', 'PDF & Markdown Export'],
+        recommended: true,
+        ctaText: 'Launch DeskNote Now'
+      }
+    ],
+    reviews: [
+      {
+        author: 'David Miller',
+        role: 'Master Timber Craftsman & Superintendent',
+        company: 'Heritage Timber Guild',
+        avatar: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=100&auto=format&fit=crop&q=80',
+        rating: 5,
+        text: 'DeskNote at desk-note-lime.vercel.app keeps all our jobsite logs, blueprints notes, and daily inspection reports synced across every foreman tablet.',
+        date: 'October 24, 2026'
+      }
+    ],
+    documentation: {
+      quickstart: 'Open https://desk-note-lime.vercel.app/ in any desktop or mobile browser to start creating encrypted notes and field logs.',
+      apiEndpoints: ['https://desk-note-lime.vercel.app/'],
+      sdkSupport: ['Web App', 'PWA', 'Mobile Browser']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.99% Uptime',
+      channel: 'DeskNote Support & ConnectIn Desk',
+      responseHours: '< 1 Hour'
+    }
+  },
+  {
+    id: 'prod_expedite_consults_official_portal',
+    name: 'Expedite Consults — Official Enterprise Advisory & Cyber Flagship Portal',
+    tagline: 'Corporate cybersecurity, DoD RMF/CMMC advisory, Zero Trust architecture & AI governance headquarters at expediteconsults.com',
+    category: 'Services',
+    subCategory: 'Enterprise Cyber & Federal Advisory',
+    icon: '🏛️',
+    badge: '🌐 Official Portal (expediteconsults.com)',
+    rating: 5.0,
+    reviewsCount: 715,
+    activeUsersCount: '50,000+ Global Enterprise & Federal Clients',
+    pricing: {
+      displayPrice: 'Enterprise / Retainer',
+      billingPeriod: 'flagship advisory portal',
+      hasFreeTrial: true,
+      trialDays: 30
+    },
+    vendor: {
+      name: 'Expedite Consults LLC',
+      logo: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=100&auto=format&fit=crop&q=80',
+      isVerified: true,
+      isFellow: true
+    },
+    overview: 'Official digital headquarters of Expedite Consults (https://www.expediteconsults.com). Access enterprise cybersecurity consulting, DoD RMF & DCSA NISP compliance engineering, Zero Trust cloud transformation, fractional CISO retainers, and direct integration with the Sphera Production Launchpad (https://sphera-portal.vercel.app).',
+    features: [
+      { title: 'Expedite Consults Official Flagship (expediteconsults.com)', desc: 'Enterprise cybersecurity consulting, Zero Trust architecture, federal RMF/CMMC advisory, and executive briefings at https://www.expediteconsults.com.' },
+      { title: 'Cleared Federal & Commercial Advisory', desc: 'End-to-end NIST SP 800-53, DoDI 8510.01, FedRAMP High, and SOC 2 Type II engineering delivery.' },
+      { title: 'Direct Link to Live Production Launchpad', desc: 'Connected directly to https://sphera-portal.vercel.app for live SaaS platform deployment.' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&auto=format&fit=crop&q=80'],
+    demoUrl: 'https://sphera-portal.vercel.app',
+    liveUrl: 'https://www.expediteconsults.com',
+    isVercelLive: true,
+    isLaunchpadDeployed: true,
+    launchpadCategory: 'orchestration',
+    architecture: {
+      title: 'Expedite Consults Global Enterprise Portal',
+      summary: 'Multi-region corporate portal and client engagement gateway.',
+      layers: ['Official Flagship (https://www.expediteconsults.com)', 'Executive Advisory & SOW Desk', 'Sphera Production Launchpad Bridge'],
+      latency: '< 15ms Global Edge CDN',
+      dataPrivacy: 'SOC 2 Type II, NIST 800-53 & Zero-Trust Identity'
+    },
+    integrations: ['Sphera Portal', 'ConnectLn', 'Aagiis RMF', 'EXPEDITE STRIKE DAST', 'DSTRIKE & Noctis', 'DeskNote', 'PDFAdore'],
+    security: {
+      compliance: ['SOC 2 Type II', 'NIST SP 800-53 Rev. 5', 'FedRAMP / DoD RMF Aligned', 'ISO 27001'],
+      encryption: 'TLS 1.3 + FIDO2 Passkey MFA',
+      isolation: 'Enterprise Multi-Enclave Isolation'
+    },
+    pricingTiers: [
+      {
+        name: 'Official Portal & Executive Briefing',
+        price: '$0',
+        period: 'instant portal access',
+        description: 'Visit https://www.expediteconsults.com to explore advisory services and enterprise platforms.',
+        features: ['Official Flagship (expediteconsults.com)', 'Executive Cyber & RMF Briefings', 'Production Launchpad Access'],
+        recommended: true,
+        ctaText: 'Open Expedite Consults'
+      }
+    ],
+    reviews: [
+      {
+        author: 'Commander Robert Hayes',
+        role: 'Platform IAM & Super Administrator',
+        company: 'ConnectIn Master Control',
+        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80',
+        rating: 5,
+        text: 'Expedite Consults (expediteconsults.com) and the Sphera Production Launchpad (sphera-portal.vercel.app) anchor our entire security, compliance, and workforce ecosystem.',
+        date: 'October 25, 2026'
+      }
+    ],
+    documentation: {
+      quickstart: 'Visit https://www.expediteconsults.com for enterprise advisory or https://sphera-portal.vercel.app for the Live Production Launchpad.',
+      apiEndpoints: ['https://www.expediteconsults.com', 'https://sphera-portal.vercel.app'],
+      sdkSupport: ['Web Portal', 'Executive Advisory']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.99% Enterprise SLA',
+      channel: '24/7 Expedite Consults Executive Desk',
+      responseHours: '< 15 Minutes'
+    }
+  },
+  {
+    id: 'prod_sphera_production_launchpad',
+    name: 'Sphera Portal — Live Production Launchpad & Multi-Enclave Cloud OS',
+    tagline: 'Live Production Launchpad (sphera-portal.vercel.app) hosting ConnectLn, 137+ Sphera micro-apps, VibeComms E2EE & Marketplace',
+    category: 'Enterprise Solutions',
+    subCategory: 'Production Launchpad & Cloud OS',
+    icon: '🚀',
+    badge: '🚀 Live Production Launchpad',
+    rating: 5.0,
+    reviewsCount: 640,
+    activeUsersCount: '48,000+ Active Cloud Sessions',
+    pricing: {
+      displayPrice: 'Free / Enterprise',
+      billingPeriod: 'production launchpad',
+      hasFreeTrial: true,
+      trialDays: 30
+    },
+    vendor: {
+      name: 'Expedite Consults · Sphera Cloud',
+      logo: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=100&auto=format&fit=crop&q=80',
+      isVerified: true,
+      isFellow: true
+    },
+    overview: 'The Live Production Launchpad at https://sphera-portal.vercel.app is the unified cloud operating environment powering ConnectLn (12 profession enclaves), the Solutions & Tools Marketplace, VibeComms E2EE video/audio meetings, CareerOrbit, and 137+ Sphera enterprise micro-applications.',
+    features: [
+      { title: 'Live Production Launchpad (sphera-portal.vercel.app)', desc: 'Instant access to the full production portal at https://sphera-portal.vercel.app.' },
+      { title: '137+ Sphera Micro-Apps & ConnectLn Enclaves', desc: 'Unified single-sign-on across all 12 industry enclaves, Marketplace tools, and E2EE communications.' },
+      { title: 'Paired with Expedite Consults (expediteconsults.com)', desc: 'Backed by Expedite Consults corporate advisory and 24/7 mission support.' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&auto=format&fit=crop&q=80'],
+    demoUrl: 'https://www.expediteconsults.com',
+    liveUrl: 'https://sphera-portal.vercel.app',
+    isVercelLive: true,
+    isLaunchpadDeployed: true,
+    launchpadCategory: 'orchestration',
+    architecture: {
+      title: 'Sphera Multi-Enclave Edge Cloud OS',
+      summary: 'Next.js 16 edge-deployed production launchpad with WebRTC, FIDO2, and isolated enclave state.',
+      layers: ['Sphera Production Launchpad (https://sphera-portal.vercel.app)', 'ConnectLn 12-Enclave Graph', '137-App Sphera Runtime'],
+      latency: '< 12ms Global Edge Dispatch',
+      dataPrivacy: 'Strict Least-Privilege Enclave Isolation'
+    },
+    integrations: ['Expedite Consults (expediteconsults.com)', 'Aagiis', 'EXPEDITE STRIKE DAST', 'DSTRIKE & Noctis', 'DeskNote', 'PDFAdore'],
+    security: {
+      compliance: ['SOC 2 Type II', 'NIST SP 800-53', 'FIDO2 / Passkey Ready'],
+      encryption: 'TLS 1.3 + AES-256-GCM',
+      isolation: 'Per-User & Per-Enclave Vault Isolation'
+    },
+    pricingTiers: [
+      {
+        name: 'Sphera Production Launchpad',
+        price: '$0',
+        period: 'instant cloud launch',
+        description: 'Open the Live Production Launchpad at https://sphera-portal.vercel.app.',
+        features: ['Live Production Launchpad (sphera-portal.vercel.app)', '137+ Sphera Micro-Apps', 'ConnectLn & VibeComms E2EE'],
+        recommended: true,
+        ctaText: 'Launch Sphera Portal'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'Launch https://sphera-portal.vercel.app to access the Live Production Launchpad.',
+      apiEndpoints: ['https://sphera-portal.vercel.app', 'https://www.expediteconsults.com'],
+      sdkSupport: ['Web Cloud OS', 'PWA', 'REST API']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.99% Production Uptime',
+      channel: '24/7 Sphera Launchpad Operations',
+      responseHours: '< 15 Minutes'
+    }
+  },
+  {
     id: 'prod_pdfadore_suite',
     name: 'PDFAdore — All-in-One Private PDF Tools (31+ Browser Utilities)',
     tagline: 'Merge, split, compress, convert, sign, edit, and protect PDFs in seconds — 100% client-side privacy with zero server uploads',
@@ -981,7 +1606,7 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
       'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&auto=format&fit=crop&q=80'
     ],
     demoUrl: 'https://11-dast-security-platform.vercel.app',
-    liveUrl: 'https://11-dast-security-platform.vercel.app',
+    liveUrl: 'https://11-dast-security-platform.vercel.app/engine',
     isVercelLive: true,
     architecture: {
       title: 'Distributed Asynchronous Scanning Engine',
@@ -1214,8 +1839,8 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
     screenshots: [
       'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&auto=format&fit=crop&q=80'
     ],
-    demoUrl: 'https://aegis-rmf.vercel.app',
-    liveUrl: 'https://aegis-rmf.vercel.app',
+    demoUrl: 'https://aagiis.com/',
+    liveUrl: 'https://aagiis.com/',
     isVercelLive: true,
     architecture: {
       title: 'OSCAL Policy-as-Code Engine',
@@ -1649,8 +2274,8 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
       { title: 'Voice-to-Cut-List', desc: 'Dictate lumber dimensions or automotive DTC codes; DeskNote parses them into structured spreadsheets.' }
     ],
     screenshots: ['https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&auto=format&fit=crop&q=80'],
-    demoUrl: 'https://desk-note-kwesi-asiedus-projects.vercel.app',
-    liveUrl: 'https://desk-note-kwesi-asiedus-projects.vercel.app',
+    demoUrl: 'https://desk-note-lime.vercel.app/',
+    liveUrl: 'https://desk-note-lime.vercel.app/',
     isVercelLive: true,
     architecture: {
       title: 'Local-First CRDT Storage',
@@ -1677,7 +2302,7 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
     ],
     reviews: [],
     documentation: {
-      quickstart: 'Launch https://desk-note-kwesi-asiedus-projects.vercel.app on your tablet or smartphone.',
+      quickstart: 'Launch https://desk-note-lime.vercel.app/ on your tablet, desktop, or smartphone.',
       apiEndpoints: ['GET /api/notes', 'POST /api/notes/sync'],
       sdkSupport: ['PWA', 'REST']
     },

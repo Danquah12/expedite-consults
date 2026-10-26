@@ -552,12 +552,12 @@ export const initialPosts: Post[] = [
     hashtags: ['#Safety', '#OSHA', '#Construction', '#Compliance', '#ConnectLn', '#RealWork'],
     media: {
       type: 'video',
-      url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-      youtubeId: '5a73W9f6g7s',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&auto=format&fit=crop&q=80',
-      title: 'OSHA Fall Protection & Harness Inspection — 4-Point Field Protocol',
-      description: 'Inspector Ray Vance · Certified Safety Director (CSP, OSHA 500)',
-      duration: '5:05',
+      url: 'https://www.youtube.com/watch?v=9mwE1Aih9uU',
+      youtubeId: '9mwE1Aih9uU',
+      thumbnailUrl: 'https://i.ytimg.com/vi/9mwE1Aih9uU/hqdefault.jpg',
+      title: 'OSHA 30 Jobsite Fall Protection & Subpart M Compliance',
+      description: 'Expedite Safety Directorate · Authorized OSHA 500 Instructor',
+      duration: '4:22',
       serialPlate: 'CLN-CMP01',
       brandName: 'ConnectLn',
       takeaways: [

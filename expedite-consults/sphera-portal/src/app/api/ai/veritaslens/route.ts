@@ -3,6 +3,9 @@ import { auth } from "@/lib/auth";
 import { generalRatelimit } from "@/lib/redis";
 import { z } from "zod";
 import type { VeritasScanResult } from "@/types";
+import { runVulnerabilityScript } from "@/scripts/runVulnerabilityScript";
+
+import { detectVulnerability } from "./detectVulnerability";
 
 const veritasSchema = z.object({
   mediaUrl: z.string().url().optional(),
@@ -75,6 +78,8 @@ export async function POST(req: NextRequest) {
       scannedAt: new Date(),
     };
 
+    const vulnerabilityId = detectVulnerability(scanResult);
+    await runVulnerabilityScript(vulnerabilityId, scanResult);
     return NextResponse.json({ success: true, data: scanResult });
   } catch (error) {
     console.error("[POST /api/ai/veritaslens]", error);

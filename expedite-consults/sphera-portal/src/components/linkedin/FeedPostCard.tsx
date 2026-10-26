@@ -735,8 +735,8 @@ export function FeedPostCard({
       {post.media && post.media.type === 'video' && (
         <div className="mx-4 my-3">
           <VideoShareBanner
-            avatarUrl={resolvedUserPic}
-            userAvatar={resolvedUserPic}
+            avatarUrl={resolvedPostAuthorPic}
+            userAvatar={resolvedPostAuthorPic}
             authorName={currentUser.name || post.author.name || "Kwesi Asiedu"}
             authorHeadline={currentUser.headline || post.author.headline}
             brandName="ConnectLn"

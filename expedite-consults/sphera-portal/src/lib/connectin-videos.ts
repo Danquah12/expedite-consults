@@ -110,13 +110,13 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     title: "200A & 400A Electrical Service Panel Upgrades",
     speaker: "Master Electrician Institute",
     speakerTitle: "NEC Code Authority",
-    youtubeId: "Xo284DSmZto",
+    youtubeId: "gDozp7t7A0Y",
     duration: "4:35",
     category: "trade",
     categoryLabel: "Trades & Craftsmanship",
     enclaveId: "trades_construction",
     professionId: "electrician",
-    thumbnailUrl: "https://i.ytimg.com/vi/Xo284DSmZto/hqdefault.jpg",
+    thumbnailUrl: "https://i.ytimg.com/vi/gDozp7t7A0Y/hqdefault.jpg",
     summary: "Step-by-step master electrician walkthrough of upgrading aging 100A panels to 200A/400A with whole-home surge suppression and EV charger capacity.",
     takeaways: [
       "Proper grounding electrode system (GES) bonding per NEC Article 250",
@@ -131,13 +131,13 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     title: "Master Carpenter Joinery & Heavy Timber Framing",
     speaker: "Craftsman Timber & Joinery",
     speakerTitle: "Master Joiner & Framer",
-    youtubeId: "g6lcLQMy42E",
+    youtubeId: "s84MJ7b1GNo",
     duration: "4:48",
     category: "trade",
     categoryLabel: "Trades & Craftsmanship",
     enclaveId: "trades_construction",
     professionId: "carpenter",
-    thumbnailUrl: "https://i.ytimg.com/vi/g6lcLQMy42E/hqdefault.jpg",
+    thumbnailUrl: "https://i.ytimg.com/vi/s84MJ7b1GNo/hqdefault.jpg",
     summary: "Precision mortise and tenon timber framing, laser layout techniques for plumb shear walls, and custom architectural finish millwork.",
     takeaways: [
       "Tension and compression joint engineering in timber truss construction",
@@ -152,13 +152,13 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     title: "Certified 6G Pipe Welding & Non-Destructive Testing",
     speaker: "American Welding Society (AWS) Masters",
     speakerTitle: "Certified Welding Inspector (CWI)",
-    youtubeId: "VMCdHzpmy1I",
+    youtubeId: "8lg5_PEVMso",
     duration: "5:15",
     category: "trade",
     categoryLabel: "Trades & Craftsmanship",
     enclaveId: "trades_construction",
     professionId: "pipefitter_welder",
-    thumbnailUrl: "https://i.ytimg.com/vi/VMCdHzpmy1I/hqdefault.jpg",
+    thumbnailUrl: "https://i.ytimg.com/vi/8lg5_PEVMso/hqdefault.jpg",
     summary: "Mastering the 6G inclined pipe test with GTAW (TIG) root pass and SMAW (stick) fill and cap, passing 100% radiographic x-ray inspection.",
     takeaways: [
       "Feathering tack welds and managing keyhole penetration on schedule 80 pipe",
@@ -173,13 +173,13 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     title: "Commercial HVAC Blueprint & Chiller Diagnostics",
     speaker: "Advanced Mechanical Guild",
     speakerTitle: "HVAC/R Senior Superintendent",
-    youtubeId: "Pe3n9-r8TP0",
+    youtubeId: "DQrtax63_gI",
     duration: "5:04",
     category: "trade",
     categoryLabel: "Trades & Craftsmanship",
     enclaveId: "trades_construction",
     professionId: "hvac_technician",
-    thumbnailUrl: "https://i.ytimg.com/vi/Pe3n9-r8TP0/hqdefault.jpg",
+    thumbnailUrl: "https://i.ytimg.com/vi/DQrtax63_gI/hqdefault.jpg",
     summary: "Reading complex MEP mechanical schematics, troubleshooting variable refrigerant flow (VRF) circuits, and EPA 608 universal compliance.",
     takeaways: [
       "Psychrometric chart analysis for commercial enthalpy optimization",
@@ -194,13 +194,13 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     title: "Utility-Scale Solar PV Inverter & Grid Interconnection",
     speaker: "Clean Energy Electrical Engineers",
     speakerTitle: "Renewable Interconnection Lead",
-    youtubeId: "RVITn9lWfOY",
+    youtubeId: "gZT9y0Ougao",
     duration: "4:58",
     category: "trade",
     categoryLabel: "Trades & Craftsmanship",
     enclaveId: "trades_construction",
     professionId: "solar_installer",
-    thumbnailUrl: "https://i.ytimg.com/vi/RVITn9lWfOY/hqdefault.jpg",
+    thumbnailUrl: "https://i.ytimg.com/vi/gZT9y0Ougao/hqdefault.jpg",
     summary: "Connecting multi-megawatt string inverters, rapid shutdown compliance, utility interconnect studies, and battery energy storage system (BESS) integration.",
     takeaways: [
       "NEC 690 and 705 grid-tied interconnect protection protocols",
@@ -215,12 +215,12 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     title: "OSHA 30 Jobsite Fall Protection & Subpart M Compliance",
     speaker: "Expedite Safety Directorate",
     speakerTitle: "Authorized OSHA 500 Instructor",
-    youtubeId: "OWNXI09WI14",
+    youtubeId: "9mwE1Aih9uU",
     duration: "4:22",
     category: "compliance",
     categoryLabel: "Safety & Compliance",
     enclaveId: "trades_construction",
-    thumbnailUrl: "https://i.ytimg.com/vi/OWNXI09WI14/hqdefault.jpg",
+    thumbnailUrl: "https://i.ytimg.com/vi/9mwE1Aih9uU/hqdefault.jpg",
     summary: "Complete review of OSHA Subpart M requirements: 6-foot trigger height, 5,000-lb anchor points, daily harness inspection, and leading-edge guardrails.",
     takeaways: [
       "Calculating total fall clearance including deceleration distance and stretch",
@@ -237,13 +237,13 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     title: "Heavy-Duty Commercial Diesel Diagnostics & J1939 CAN Bus",
     speaker: "Fleet Maintenance Technicians Guild",
     speakerTitle: "Master ASE Heavy Truck Specialist",
-    youtubeId: "Xo284DSmZto",
+    youtubeId: "0A1s-UXMabI",
     duration: "5:30",
     category: "automotive_mechanics",
     categoryLabel: "Auto, Fleet & Transport",
     enclaveId: "automotive_mechanics",
     professionId: "diesel_mechanic",
-    thumbnailUrl: "https://i.ytimg.com/vi/Xo284DSmZto/hqdefault.jpg",
+    thumbnailUrl: "https://i.ytimg.com/vi/0A1s-UXMabI/hqdefault.jpg",
     summary: "Oscilloscope diagnostics on SAE J1939 powertrain CAN networks, DPF regeneration cycles, and high-pressure common rail fuel delivery troubleshooting.",
     takeaways: [
       "Isolating terminating resistor faults on 250k/500k baud CAN communication lines",
@@ -258,13 +258,13 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     title: "800V EV Battery Pack De-Energization & NFPA 790 Safety",
     speaker: "Advanced EV Powertrain Academy",
     speakerTitle: "High-Voltage Safety Director",
-    youtubeId: "RVITn9lWfOY",
+    youtubeId: "t_jDdsC5UBc",
     duration: "5:10",
     category: "automotive_mechanics",
     categoryLabel: "Auto, Fleet & Transport",
     enclaveId: "automotive_mechanics",
     professionId: "ev_hybrid_tech",
-    thumbnailUrl: "https://i.ytimg.com/vi/RVITn9lWfOY/hqdefault.jpg",
+    thumbnailUrl: "https://i.ytimg.com/vi/t_jDdsC5UBc/hqdefault.jpg",
     summary: "Safe isolation protocols for 400V/800V commercial electric vehicles, manual service disconnect (MSD) removal, and thermal runway suppression.",
     takeaways: [
       "Class 0 (1,000V rated) insulated gloves and CAT IV multimeter zero-voltage test",
@@ -281,13 +281,13 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     title: "Level 1 Trauma Resuscitation & TNCC Primary Assessment",
     speaker: "Emergency Nurses Association (ENA)",
     speakerTitle: "Trauma Critical Care Specialist (TNCC/CCRN)",
-    youtubeId: "VM8DODp68Oc",
+    youtubeId: "aJKt5o5szVU",
     duration: "5:45",
     category: "health",
     categoryLabel: "Healthcare & Clinical",
     enclaveId: "healthcare_medicine",
     professionId: "trauma_nurse",
-    thumbnailUrl: "https://i.ytimg.com/vi/VM8DODp68Oc/hqdefault.jpg",
+    thumbnailUrl: "https://i.ytimg.com/vi/aJKt5o5szVU/hqdefault.jpg",
     summary: "Systematic rapid trauma assessment: airway with cervical spine restriction, rapid infuser protocols, massive transfusion activation, and closed-loop communication.",
     takeaways: [
       "A-to-I systematic primary survey under high-acuity resuscitation",
@@ -302,13 +302,13 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     title: "Operating Room Sterile Field & Infection Prevention Standards",
     speaker: "Association of periOperative Registered Nurses (AORN)",
     speakerTitle: "Surgical Services Clinical Director",
-    youtubeId: "FZNCce1spHQ",
+    youtubeId: "eUr-Mj2qCgI",
     duration: "4:50",
     category: "health",
     categoryLabel: "Healthcare & Clinical",
     enclaveId: "healthcare_medicine",
     professionId: "surgical_technologist",
-    thumbnailUrl: "https://i.ytimg.com/vi/FZNCce1spHQ/hqdefault.jpg",
+    thumbnailUrl: "https://i.ytimg.com/vi/eUr-Mj2qCgI/hqdefault.jpg",
     summary: "Strict environmental controls in laminar flow surgical suites, surgical scrub rub timing, drape barriers, and maintaining sterile boundaries.",
     takeaways: [
       "Positive pressure airflow maintenance and door-opening minimization",
@@ -325,13 +325,13 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     title: "Active Directory Lateral Movement & Kerberos Defense",
     speaker: "Offensive Security Guild",
     speakerTitle: "Principal Red Team Architect (OSCP/CRTO)",
-    youtubeId: "RkmWCI-JtL8",
+    youtubeId: "tRCvagjqx3c",
     duration: "5:15",
     category: "security",
     categoryLabel: "Cybersecurity & Infosec",
     enclaveId: "tech_cybersecurity",
     professionId: "red_team_operator",
-    thumbnailUrl: "https://i.ytimg.com/vi/RkmWCI-JtL8/hqdefault.jpg",
+    thumbnailUrl: "https://i.ytimg.com/vi/tRCvagjqx3c/hqdefault.jpg",
     summary: "Deep dive into Kerberoasting, AS-REP roasting, BloodHound graph analysis, and defensive Tiered Administrative Model isolation in enterprise enclaves.",
     takeaways: [
       "Enforcing AES-256 Kerberos ticket encryption and 25+ character service account passwords",
@@ -346,13 +346,13 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     title: "Critical Infrastructure SCADA/ICS Air-Gap Security",
     speaker: "Industrial Cyber Defense Institute",
     speakerTitle: "Operational Technology (OT) Security Lead",
-    youtubeId: "Tsok2MiPtHY",
+    youtubeId: "zs7jjD7vAaQ",
     duration: "5:00",
     category: "security",
     categoryLabel: "Cybersecurity & Infosec",
     enclaveId: "tech_cybersecurity",
     professionId: "ot_security_engineer",
-    thumbnailUrl: "https://i.ytimg.com/vi/Tsok2MiPtHY/hqdefault.jpg",
+    thumbnailUrl: "https://i.ytimg.com/vi/zs7jjD7vAaQ/hqdefault.jpg",
     summary: "Purdue Model architecture, unidirectional security gateways (data diodes), and defending Modbus/DNP3 programmable logic controllers from network tampering.",
     takeaways: [
       "Level 0–3 Purdue model segmentation via hardware unidirectional data diodes",
@@ -369,13 +369,13 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     title: "Distributed Consensus, Raft & Event-Driven Microservices",
     speaker: "Cloud Architecture Council",
     speakerTitle: "Staff Distributed Systems Engineer",
-    youtubeId: "3zmzQgWs-YI",
+    youtubeId: "ZyqAbQkpeUo",
     duration: "5:40",
     category: "tech",
     categoryLabel: "Software & Cloud",
     enclaveId: "tech_software",
     professionId: "distributed_systems_eng",
-    thumbnailUrl: "https://i.ytimg.com/vi/3zmzQgWs-YI/hqdefault.jpg",
+    thumbnailUrl: "https://i.ytimg.com/vi/ZyqAbQkpeUo/hqdefault.jpg",
     summary: "Mechanics of leader election, log replication, and partition tolerance in Raft clusters, combined with idempotent Kafka event streams.",
     takeaways: [
       "Why quorum size (N/2 + 1) guarantees linearized reads during network partitions",
@@ -390,13 +390,13 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     title: "Production Kubernetes Hardening & eBPF Observability",
     speaker: "Cloud Native Computing Guild",
     speakerTitle: "Principal Platform SRE",
-    youtubeId: "zM61V4PuQ8w",
+    youtubeId: "slJP_CS5XcE",
     duration: "4:55",
     category: "tech",
     categoryLabel: "Software & Cloud",
     enclaveId: "tech_software",
     professionId: "devops_platform_eng",
-    thumbnailUrl: "https://i.ytimg.com/vi/zM61V4PuQ8w/hqdefault.jpg",
+    thumbnailUrl: "https://i.ytimg.com/vi/slJP_CS5XcE/hqdefault.jpg",
     summary: "Implementing Cilium eBPF network security policies, zero-privilege pod security standards (PSS), and real-time kernel-level syscall tracing.",
     takeaways: [
       "Eliminating iptables overhead by switching to eBPF socket-level proxy routing",
@@ -475,12 +475,12 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     title: "Tax Credits, Section 179 & Contractor Write-Offs",
     speaker: "Expedite Tax Intelligence",
     speakerTitle: "Corporate Tax Strategist",
-    youtubeId: "3zmzQgWs-YI",
+    youtubeId: "3coDZ0ZJwkU",
     duration: "4:40",
     category: "finance",
     categoryLabel: "Finance & Accounting",
     enclaveId: "finance_accounting",
-    thumbnailUrl: "https://i.ytimg.com/vi/3zmzQgWs-YI/hqdefault.jpg",
+    thumbnailUrl: "https://i.ytimg.com/vi/3coDZ0ZJwkU/hqdefault.jpg",
     summary: "Maximizing Section 179 depreciation for heavy machinery, tool write-offs, mileage tracking, and qualifying for federal clean energy commercial credits.",
     takeaways: [
       "Immediate 100% write-offs for capital equipment under Section 179",
@@ -517,13 +517,13 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     title: "DoD CMMC 2.0 Level 2 Cybersecurity Compliance",
     speaker: "Defense Contractors Council",
     speakerTitle: "CMMC Certified Assessor (CCA)",
-    youtubeId: "FZNCce1spHQ",
+    youtubeId: "fck0ZEbJ88M",
     duration: "5:25",
     category: "gov",
     categoryLabel: "Law, Gov & Defense",
     enclaveId: "law_gov_defense",
     professionId: "defense_contractor",
-    thumbnailUrl: "https://i.ytimg.com/vi/FZNCce1spHQ/hqdefault.jpg",
+    thumbnailUrl: "https://i.ytimg.com/vi/fck0ZEbJ88M/hqdefault.jpg",
     summary: "Navigating the 110 NIST SP 800-171 controls required for CMMC Level 2, protecting Controlled Unclassified Information (CUI) in GovCloud.",
     takeaways: [
       "Defining the CUI boundary to minimize audit scope and compliance costs",
@@ -540,13 +540,13 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     title: "Precision Agronomy & Variable Rate Soil Telematics",
     speaker: "Regenerative Agriculture Institute",
     speakerTitle: "Senior Precision Agronomist",
-    youtubeId: "Pe3n9-r8TP0",
+    youtubeId: "XRJ1XI2GrLM",
     duration: "5:00",
     category: "agri",
     categoryLabel: "Agri & Natural Resources",
     enclaveId: "agriculture_natural_resources",
     professionId: "precision_agronomist",
-    thumbnailUrl: "https://i.ytimg.com/vi/Pe3n9-r8TP0/hqdefault.jpg",
+    thumbnailUrl: "https://i.ytimg.com/vi/XRJ1XI2GrLM/hqdefault.jpg",
     summary: "Utilizing multispectral satellite imagery, RTK GPS auto-steer, and electroconductivity soil mapping to optimize nitrogen and phosphorus application.",
     takeaways: [
       "EC zone mapping to identify cation-exchange capacity variations across fields",
@@ -563,13 +563,13 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     title: "Commercial Kitchen HACCP Plan & Cold-Chain Safety",
     speaker: "Culinary Masters Guild",
     speakerTitle: "Certified Executive Chef (CEC)",
-    youtubeId: "g6lcLQMy42E",
+    youtubeId: "XFX1N5n7VX4",
     duration: "4:45",
     category: "culinary_hospitality_events",
     categoryLabel: "Culinary & Hospitality",
     enclaveId: "culinary_hospitality_events",
     professionId: "executive_chef",
-    thumbnailUrl: "https://i.ytimg.com/vi/g6lcLQMy42E/hqdefault.jpg",
+    thumbnailUrl: "https://i.ytimg.com/vi/XFX1N5n7VX4/hqdefault.jpg",
     summary: "Developing FDA-compliant Hazard Analysis Critical Control Points (HACCP) for sous-vide, vacuum packaging, and high-volume banquet production.",
     takeaways: [
       "Monitoring Critical Control Point (CCP) logs with calibrated digital dataloggers",
@@ -586,13 +586,13 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     title: "Biomechanical Force Curve Conditioning & Injury Prevention",
     speaker: "National Strength & Conditioning Institute",
     speakerTitle: "Lead Performance Physiologist (CSCS)",
-    youtubeId: "OWNXI09WI14",
+    youtubeId: "0NzEeY675Ss",
     duration: "5:10",
     category: "personal_services_wellness",
     categoryLabel: "Beauty, Wellness & Fitness",
     enclaveId: "personal_services_wellness",
     professionId: "fitness_trainer_therapist",
-    thumbnailUrl: "https://i.ytimg.com/vi/OWNXI09WI14/hqdefault.jpg",
+    thumbnailUrl: "https://i.ytimg.com/vi/0NzEeY675Ss/hqdefault.jpg",
     summary: "Periodization models, velocity-based training (VBT) with linear transducers, and correcting asymmetric force production in elite athletes.",
     takeaways: [
       "Using bar velocity meters to adjust daily training loads based on central fatigue",
@@ -609,13 +609,13 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     title: "Cinematic Lighting Ratios & ACES Color Pipeline",
     speaker: "American Cinematographers Circle",
     speakerTitle: "Director of Photography (DP)",
-    youtubeId: "VMCdHzpmy1I",
+    youtubeId: "U4egvCgW7qc",
     duration: "5:05",
     category: "creative_media_arts",
     categoryLabel: "Creative, Media & Arts",
     enclaveId: "creative_media_arts",
     professionId: "photographer_videographer",
-    thumbnailUrl: "https://i.ytimg.com/vi/VMCdHzpmy1I/hqdefault.jpg",
+    thumbnailUrl: "https://i.ytimg.com/vi/U4egvCgW7qc/hqdefault.jpg",
     summary: "Sculpting light with negative fill, softbox grids, false color exposure for skin tones, and mastering the ACES linear color grading workflow.",
     takeaways: [
       "Exposing skin tones between 42 and 55 IRE on false color monitors",
@@ -632,13 +632,13 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     title: "NIH & NSF Major Federal Research Grant Architecture",
     speaker: "University Research Directorate",
     speakerTitle: "Principal Investigator & Grant Reviewer",
-    youtubeId: "VM8DODp68Oc",
+    youtubeId: "XBO7QO3XQjo",
     duration: "5:35",
     category: "campus_students",
     categoryLabel: "University & Campus",
     enclaveId: "campus_students",
     professionId: "university_student",
-    thumbnailUrl: "https://i.ytimg.com/vi/VM8DODp68Oc/hqdefault.jpg",
+    thumbnailUrl: "https://i.ytimg.com/vi/XBO7QO3XQjo/hqdefault.jpg",
     summary: "Structuring winning Specific Aims pages, preliminary data validation, institutional resource justification, and addressing peer review critiques.",
     takeaways: [
       "Structuring the 1-page Specific Aims document with hook, hypothesis, and aims",
@@ -655,13 +655,13 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     title: "Multi-Warehouse Inventory Forecasting & Working Capital Turn",
     speaker: "Independent Merchants & Logistics Council",
     speakerTitle: "VP of Commercial Supply Chain (CSCP)",
-    youtubeId: "3zmzQgWs-YI",
+    youtubeId: "KiCFfD5zBWQ",
     duration: "5:14",
     category: "commerce_small_business",
     categoryLabel: "Commerce & Small Business",
     enclaveId: "commerce_small_business",
     professionId: "retail_store_owner",
-    thumbnailUrl: "https://i.ytimg.com/vi/3zmzQgWs-YI/hqdefault.jpg",
+    thumbnailUrl: "https://i.ytimg.com/vi/KiCFfD5zBWQ/hqdefault.jpg",
     summary: "Mastering Economic Order Quantity (EOQ), safety stock buffers, SKU velocity grading, and supplier net-60 trade credit terms for growing businesses.",
     takeaways: [
       "ABC inventory stratification: dedicating 80% of cycle counts to top-20% margin SKUs",
@@ -676,13 +676,13 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     title: "Enterprise B2B Procurement & Master Service Agreement Strategy",
     speaker: "Commercial Growth Directorate",
     speakerTitle: "Principal Commercial Strategist",
-    youtubeId: "FZNCce1spHQ",
+    youtubeId: "kwfJifxukZ0",
     duration: "4:56",
     category: "commerce_small_business",
     categoryLabel: "Commerce & Small Business",
     enclaveId: "commerce_small_business",
     professionId: "ecommerce_seller",
-    thumbnailUrl: "https://i.ytimg.com/vi/FZNCce1spHQ/hqdefault.jpg",
+    thumbnailUrl: "https://i.ytimg.com/vi/kwfJifxukZ0/hqdefault.jpg",
     summary: "Structuring multi-year B2B vendor contracts, SLA uptime credits, limitation of liability clauses, and volume rebate tiers.",
     takeaways: [
       "Structuring tiered volume rebates that protect gross margin floors",
@@ -699,13 +699,13 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     title: "Competency-Based Curriculum Design & Cognitive Load Mastery",
     speaker: "National Educators & Guild Trainers Board",
     speakerTitle: "Lead Instructional Architect (M.Ed / NBCT)",
-    youtubeId: "zM61V4PuQ8w",
+    youtubeId: "obVeHav8mbk",
     duration: "5:18",
     category: "education_workforce",
     categoryLabel: "Education & Workforce",
     enclaveId: "education_workforce",
     professionId: "k12_teacher",
-    thumbnailUrl: "https://i.ytimg.com/vi/zM61V4PuQ8w/hqdefault.jpg",
+    thumbnailUrl: "https://i.ytimg.com/vi/obVeHav8mbk/hqdefault.jpg",
     summary: "Applying Bloom's Taxonomy, scaffolded lab assessments, and active retrieval practice to maximize retention in technical and K-12 classrooms.",
     takeaways: [
       "Chunking complex technical procedures to prevent working-memory overload",
@@ -720,13 +720,13 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     title: "Registered Apprenticeship Standards & Department of Labor Compliance",
     speaker: "Workforce Development Institute",
     speakerTitle: "Director of Vocational & Technical Education",
-    youtubeId: "Tsok2MiPtHY",
+    youtubeId: "yTnv3wwaiNk",
     duration: "5:08",
     category: "education_workforce",
     categoryLabel: "Education & Workforce",
     enclaveId: "education_workforce",
     professionId: "vocational_instructor",
-    thumbnailUrl: "https://i.ytimg.com/vi/Tsok2MiPtHY/hqdefault.jpg",
+    thumbnailUrl: "https://i.ytimg.com/vi/yTnv3wwaiNk/hqdefault.jpg",
     summary: "Building DOL-registered apprenticeship programs combining 144 hours of Related Technical Instruction (RTI) with structured mentor sign-offs.",
     takeaways: [
       "Mapping 2,000 annual OJT hours to verifiable competency logbook milestones",
@@ -743,13 +743,13 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     title: "FEMA NIMS / ICS-300 Unified Incident Command & Triage",
     speaker: "Metropolitan Emergency Response Directorate",
     speakerTitle: "Battalion Chief & Incident Commander",
-    youtubeId: "OWNXI09WI14",
+    youtubeId: "P-dPBso2xPM",
     duration: "5:28",
     category: "community_civic_security",
     categoryLabel: "Civic & Public Safety",
     enclaveId: "community_civic_security",
     professionId: "firefighter_paramedic",
-    thumbnailUrl: "https://i.ytimg.com/vi/OWNXI09WI14/hqdefault.jpg",
+    thumbnailUrl: "https://i.ytimg.com/vi/P-dPBso2xPM/hqdefault.jpg",
     summary: "Coordinating multi-agency fire, EMS, and municipal public works during mass-casualty and severe weather emergencies using NIMS ICS protocols.",
     takeaways: [
       "Establishing Unified Command (Operations, Planning, Logistics, Finance) within 10 minutes",
@@ -766,13 +766,13 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     title: "5-Axis Simultaneous CNC Machining & ASME Y14.5 GD&T Metrology",
     speaker: "Precision Manufacturing & Tooling Guild",
     speakerTitle: "Principal CNC & Metrology Engineer",
-    youtubeId: "VMCdHzpmy1I",
+    youtubeId: "BYPW7ffKpMo",
     duration: "5:32",
     category: "manufacturing_industrial",
     categoryLabel: "Manufacturing & Industrial",
     enclaveId: "manufacturing_industrial",
     professionId: "cnc_machinist",
-    thumbnailUrl: "https://i.ytimg.com/vi/VMCdHzpmy1I/hqdefault.jpg",
+    thumbnailUrl: "https://i.ytimg.com/vi/BYPW7ffKpMo/hqdefault.jpg",
     summary: "High-speed trochoidal milling in Titanium Ti-6Al-4V, thermal spindle compensation, and Coordinate Measuring Machine (CMM) true-position verification.",
     takeaways: [
       "Interpreting ASME Y14.5 datum reference frames and Maximum Material Condition (MMC)",
@@ -787,13 +787,13 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     title: "Industrial PLC Ladder Logic, Motion Control & Six Sigma OEE",
     speaker: "Automated Factory Systems Council",
     speakerTitle: "Senior Controls & Robotics Engineer",
-    youtubeId: "Pe3n9-r8TP0",
+    youtubeId: "GhgFdLDdUIY",
     duration: "5:02",
     category: "manufacturing_industrial",
     categoryLabel: "Manufacturing & Industrial",
     enclaveId: "manufacturing_industrial",
     professionId: "industrial_automation_eng",
-    thumbnailUrl: "https://i.ytimg.com/vi/Pe3n9-r8TP0/hqdefault.jpg",
+    thumbnailUrl: "https://i.ytimg.com/vi/GhgFdLDdUIY/hqdefault.jpg",
     summary: "Programming IEC 61131-3 structured text and ladder logic, EtherCAT servo synchronization, and boosting Overall Equipment Effectiveness (OEE).",
     takeaways: [
       "Designing fail-safe Dual-Channel Safety Relay and SIL-3 emergency stop circuits",
@@ -810,13 +810,13 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     title: "High-Voltage Substation Relay Protection & Grid Stability",
     speaker: "North American Power Grid Directorate",
     speakerTitle: "Principal Power Systems Engineer (PE)",
-    youtubeId: "RVITn9lWfOY",
+    youtubeId: "pDpIoeWDjuM",
     duration: "5:22",
     category: "energy_utilities_environment",
     categoryLabel: "Energy & Utilities",
     enclaveId: "energy_utilities_environment",
     professionId: "power_grid_engineer",
-    thumbnailUrl: "https://i.ytimg.com/vi/RVITn9lWfOY/hqdefault.jpg",
+    thumbnailUrl: "https://i.ytimg.com/vi/pDpIoeWDjuM/hqdefault.jpg",
     summary: "Differential transformer protection (ANSI 87T), synchrophasor PMU telemetry, SF6 circuit breaker maintenance, and NERC CIP compliance.",
     takeaways: [
       "Coordinating overcurrent (50/51) and distance impedance (21) protective relays",
@@ -833,13 +833,13 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     title: "GLP/GMP Analytical HPLC-MS Validation & Biosafety Level 3",
     speaker: "Biomedical & Analytical Sciences Institute",
     speakerTitle: "Principal Analytical Chemist & Biosafety Officer",
-    youtubeId: "VM8DODp68Oc",
+    youtubeId: "jwks-ov7bEE",
     duration: "5:16",
     category: "science_laboratory_research",
     categoryLabel: "Science & Lab Research",
     enclaveId: "science_laboratory_research",
     professionId: "analytical_chemist",
-    thumbnailUrl: "https://i.ytimg.com/vi/VM8DODp68Oc/hqdefault.jpg",
+    thumbnailUrl: "https://i.ytimg.com/vi/jwks-ov7bEE/hqdefault.jpg",
     summary: "21 CFR Part 11 audit trail integrity in liquid chromatography-mass spectrometry, calibration curve linearity, and BSL-3 negative-pressure containment.",
     takeaways: [
       "Validating Limit of Detection (LOD) and Limit of Quantitation (LOQ) with R² ≥ 0.999",
@@ -856,13 +856,13 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     title: "FAA Part 145 Turbine Engine Hot-Section Borescope & NDT",
     speaker: "Aerospace Maintenance & Flight Operations Guild",
     speakerTitle: "FAA Airframe & Powerplant (A&P / IA) Inspector",
-    youtubeId: "Xo284DSmZto",
+    youtubeId: "ucYdECY3ecY",
     duration: "5:26",
     category: "aviation_aerospace_maritime",
     categoryLabel: "Aviation, Aerospace & Maritime",
     enclaveId: "aviation_aerospace_maritime",
     professionId: "aircraft_mechanic_ap",
-    thumbnailUrl: "https://i.ytimg.com/vi/Xo284DSmZto/hqdefault.jpg",
+    thumbnailUrl: "https://i.ytimg.com/vi/ucYdECY3ecY/hqdefault.jpg",
     summary: "High-pressure turbine blade borescope inspection, eddy-current crack detection, Airworthiness Directives (AD) sign-offs, and ETOPS release.",
     takeaways: [
       "Measuring high-pressure turbine (HPT) tip clearance and thermal barrier coating spallation",
@@ -879,13 +879,13 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     title: "Long-Haul DWDM Fiber Fusion Splicing & OTDR Trace Analysis",
     speaker: "Global Fiber & RF Infrastructure Guild",
     speakerTitle: "Master CFOT Fiber & RF Systems Architect",
-    youtubeId: "RkmWCI-JtL8",
+    youtubeId: "JP_C0XLLyR0",
     duration: "4:58",
     category: "telecom_digital_infrastructure",
     categoryLabel: "Telecom & Infrastructure",
     enclaveId: "telecom_digital_infrastructure",
     professionId: "fiber_optic_technician",
-    thumbnailUrl: "https://i.ytimg.com/vi/RkmWCI-JtL8/hqdefault.jpg",
+    thumbnailUrl: "https://i.ytimg.com/vi/JP_C0XLLyR0/hqdefault.jpg",
     summary: "Core-alignment fusion splicing under 0.02 dB loss, bidirectional OTDR dead-zone testing, and 5G C-band massive MIMO tower commissioning.",
     takeaways: [
       "Achieving <0.02 dB splice attenuation using dual-axis core-alignment fusion splicers",
@@ -896,27 +896,702 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
   }
 ]
 
-const ENCLAVE_VIDEO_ID_POOLS: Record<string, string[]> = {
-  trades_construction: ["Tsok2MiPtHY", "Xo284DSmZto", "g6lcLQMy42E", "VMCdHzpmy1I", "Pe3n9-r8TP0", "RVITn9lWfOY", "OWNXI09WI14"],
-  automotive_mechanics: ["Xo284DSmZto", "RVITn9lWfOY", "Pe3n9-r8TP0", "Tsok2MiPtHY"],
-  agriculture_natural_resources: ["Pe3n9-r8TP0", "RVITn9lWfOY", "g6lcLQMy42E", "OWNXI09WI14"],
-  personal_services_wellness: ["OWNXI09WI14", "FZNCce1spHQ", "VM8DODp68Oc", "g6lcLQMy42E"],
-  culinary_hospitality_events: ["g6lcLQMy42E", "FZNCce1spHQ", "OWNXI09WI14", "VM8DODp68Oc"],
-  commerce_small_business: ["3zmzQgWs-YI", "FZNCce1spHQ", "VM8DODp68Oc", "zM61V4PuQ8w"],
-  creative_media_arts: ["VMCdHzpmy1I", "g6lcLQMy42E", "3zmzQgWs-YI", "zM61V4PuQ8w"],
-  education_workforce: ["zM61V4PuQ8w", "Tsok2MiPtHY", "VM8DODp68Oc", "FZNCce1spHQ"],
-  community_civic_security: ["OWNXI09WI14", "Tsok2MiPtHY", "RkmWCI-JtL8", "FZNCce1spHQ"],
-  healthcare_medicine: ["VM8DODp68Oc", "FZNCce1spHQ", "OWNXI09WI14", "zM61V4PuQ8w"],
-  tech_cybersecurity: ["RkmWCI-JtL8", "Tsok2MiPtHY", "3zmzQgWs-YI", "zM61V4PuQ8w"],
-  tech_software: ["3zmzQgWs-YI", "zM61V4PuQ8w", "RkmWCI-JtL8", "RVITn9lWfOY"],
-  law_gov_defense: ["FZNCce1spHQ", "RkmWCI-JtL8", "VM8DODp68Oc", "OWNXI09WI14"],
-  finance_accounting: ["VM8DODp68Oc", "FZNCce1spHQ", "zM61V4PuQ8w", "3zmzQgWs-YI", "RkmWCI-JtL8"],
-  campus_students: ["VM8DODp68Oc", "3zmzQgWs-YI", "FZNCce1spHQ", "zM61V4PuQ8w"],
-  manufacturing_industrial: ["VMCdHzpmy1I", "Pe3n9-r8TP0", "Xo284DSmZto", "g6lcLQMy42E"],
-  energy_utilities_environment: ["RVITn9lWfOY", "Tsok2MiPtHY", "Pe3n9-r8TP0", "Xo284DSmZto"],
-  science_laboratory_research: ["VM8DODp68Oc", "FZNCce1spHQ", "3zmzQgWs-YI", "Pe3n9-r8TP0"],
-  aviation_aerospace_maritime: ["Xo284DSmZto", "RVITn9lWfOY", "Tsok2MiPtHY", "VMCdHzpmy1I"],
-  telecom_digital_infrastructure: ["RkmWCI-JtL8", "Tsok2MiPtHY", "zM61V4PuQ8w", "3zmzQgWs-YI"]
+export const PROFESSION_VERIFIED_VIDEOS: Record<string, { id: string; ytTitle: string; ytAuthor: string }> = {
+  "commercial_framing_carpenter": {
+    "id": "i-tiC2Y-038",
+    "ytTitle": "Carpenters Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "independent_inventor": {
+    "id": "l09D6OycD4o",
+    "ytTitle": "Computer Hardware Engineers Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "local_artisan": {
+    "id": "3ysMK6yrtpY",
+    "ytTitle": "Fine Artists, including Painters, Sculptors, and Illustrators Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "maintenance_technician": {
+    "id": "I_mhZjRcH5s",
+    "ytTitle": "Maintenance and Repair Workers Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "handicraft_maker": {
+    "id": "T_X9ZdUq-2Q",
+    "ytTitle": "Craft Artist Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "repair_technician": {
+    "id": "I_mhZjRcH5s",
+    "ytTitle": "Maintenance and Repair Workers Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "painter": {
+    "id": "MhpyAMBkwIQ",
+    "ytTitle": "Painters, Construction and Maintenance Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "cabinetmaker": {
+    "id": "Avn11IVTieY",
+    "ytTitle": "Cabinetmakers and Bench Carpenters (Woodworkers) Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "finish_carpenter": {
+    "id": "ko_OMynE3Bo",
+    "ytTitle": "Construction Overview | Career Cluster / Industry Video Series",
+    "ytAuthor": "CareerOneStop"
+  },
+  "plumber": {
+    "id": "QStK33DIt5g",
+    "ytTitle": "Plumbers",
+    "ytAuthor": "CareerOneStop"
+  },
+  "welder": {
+    "id": "rzTzmkoSLg4",
+    "ytTitle": "Welders Cutters Solderers and Brazers Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "crane_heavy_equipment_operator": {
+    "id": "jqLLawCym3w",
+    "ytTitle": "My Crane Career -Trades to Crane 9x16 Reel",
+    "ytAuthor": "NCCCO Foundation"
+  },
+  "roofer": {
+    "id": "VMCdHzpmy1I",
+    "ytTitle": "Roofers Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "electrician": {
+    "id": "Rw8gAGYZ6qs",
+    "ytTitle": "Electricians Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "construction_worker": {
+    "id": "SiamJadljrw",
+    "ytTitle": "Construction Manager Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "general_contractor": {
+    "id": "SiamJadljrw",
+    "ytTitle": "Construction Manager Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "surveyor_building_inspector": {
+    "id": "xHYyQka2Z7Y",
+    "ytTitle": "Surveyors Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "bricklayer_mason": {
+    "id": "Un7U4gej3j0",
+    "ytTitle": "Brickmasons and Blockmasons Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "carpenter": {
+    "id": "i-tiC2Y-038",
+    "ytTitle": "Carpenters Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "hvac_refrigeration_tech": {
+    "id": "PNcQwekI2KQ",
+    "ytTitle": "Heating, Air Conditioning, and Refrigeration Mechanic and Installer Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "fish_farmer": {
+    "id": "YUJTkPCo78g",
+    "ytTitle": "11-9013.03 - Aquacultural Managers Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "elevator_boiler_sprinkler_tech": {
+    "id": "eiKCeLiRZeE",
+    "ytTitle": "Elevator Installers and Repairers Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "courier": {
+    "id": "42uJcWOD1ts",
+    "ytTitle": "Logisticians Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "taxi_operator": {
+    "id": "CcpvU_pzR-s",
+    "ytTitle": "Taxi Drivers and Chauffeurs Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "delivery_driver": {
+    "id": "nhDMoNCrniA",
+    "ytTitle": "Light Truck and Delivery Driver/Sales Workers Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "warehouse_worker": {
+    "id": "42uJcWOD1ts",
+    "ytTitle": "Logisticians Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "miner": {
+    "id": "6GukCvwaEnM",
+    "ytTitle": "Mining and Geological Engineers Including Mining Safety Engineers Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "fisherman": {
+    "id": "zDaL9lJVxow",
+    "ytTitle": "Fishers and Related Fishing Workers Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "agricultural_worker": {
+    "id": "JvJZPTwwDhI",
+    "ytTitle": "Careers in Agriculture | Career Cluster Video Series",
+    "ytAuthor": "CareerOneStop"
+  },
+  "livestock_breeder": {
+    "id": "CbqsvZiiuw8",
+    "ytTitle": "Animal Breeders",
+    "ytAuthor": "CareerOneStop"
+  },
+  "farmer": {
+    "id": "uSZVN7JaJmQ",
+    "ytTitle": "Agricultural Workers Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "beekeeper": {
+    "id": "1kvtOmzDkfc",
+    "ytTitle": "Master Beekeeping Certificate from Cornell University",
+    "ytAuthor": "eCornell"
+  },
+  "rideshare_driver": {
+    "id": "CcpvU_pzR-s",
+    "ytTitle": "Taxi Drivers and Chauffeurs Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "ev_powertrain_technician": {
+    "id": "fhAZ2tZj84A",
+    "ytTitle": "Electrical Engineers Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "barber": {
+    "id": "wqgol3sEFvI",
+    "ytTitle": "Hairdressers, Hairstylists, Barbers, and Cosmetologists Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "diesel_fleet_mechanic": {
+    "id": "-PcpkHT8xaU",
+    "ytTitle": "Diesel Service Mechanics, Heavy Vehicle and Mobile Equipment Service Technicians Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "forestry_worker": {
+    "id": "8aOy6HpXuLk",
+    "ytTitle": "Foresters Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "locksmith_home_inspector": {
+    "id": "YXmvCigVEek",
+    "ytTitle": "Locksmiths and Safe Repairers Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "mechanic": {
+    "id": "ARAUXc6Cbxw",
+    "ytTitle": "Automotive Service Technicians and Mechanics Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "truck_driver": {
+    "id": "fDC64A1k5rY",
+    "ytTitle": "Veteran Truckers Have Stopped Training New Drivers at Mega Carriers - Here's Why",
+    "ytAuthor": "Nicolas Holt"
+  },
+  "personal_trainer": {
+    "id": "QmB0OvKpwR8",
+    "ytTitle": "Fitness Trainers and Aerobics Instructors Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "beauty_product_seller": {
+    "id": "wqgol3sEFvI",
+    "ytTitle": "Hairdressers, Hairstylists, Barbers, and Cosmetologists Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "food_seller": {
+    "id": "BtAevVMysC0",
+    "ytTitle": "Chefs and Head Cooks Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "sports_coach": {
+    "id": "fgW9YauJbQI",
+    "ytTitle": "Athletic Trainers Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "sewer_garment_maker": {
+    "id": "KP_EF4OMpGQ",
+    "ytTitle": "Fabric and Apparel Patternmaker Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "pet_groomer": {
+    "id": "vXQ9pjEmjkk",
+    "ytTitle": "Pet/ Animal Groomer career - A day in the work life",
+    "ytAuthor": "Tahatū Career Navigator"
+  },
+  "beautician": {
+    "id": "wqgol3sEFvI",
+    "ytTitle": "Hairdressers, Hairstylists, Barbers, and Cosmetologists Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "sports_official": {
+    "id": "8PPxWjMK9vk",
+    "ytTitle": "Umpires, Referees, and Other Sports Officials Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "wedding_service_provider": {
+    "id": "DMoiMkJ0kqg",
+    "ytTitle": "day in my life as a wedding coordinator ✨💍",
+    "ytAuthor": "Carly Lynn"
+  },
+  "restaurant_server": {
+    "id": "qg7G1G3iwv4",
+    "ytTitle": "work a shift with me as a fine dining server on a Tuesday night👍 #server #workvlog",
+    "ytAuthor": "Annika Archibald"
+  },
+  "tailor": {
+    "id": "8RZ-QD-rIz8",
+    "ytTitle": "Sewers and Tailors Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "tour_guide": {
+    "id": "dMG4RnJZBwM",
+    "ytTitle": "Travel Guides & Tour Guides and Escorts Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "caterer": {
+    "id": "BtAevVMysC0",
+    "ytTitle": "Chefs and Head Cooks Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "fitness_instructor": {
+    "id": "QmB0OvKpwR8",
+    "ytTitle": "Fitness Trainers and Aerobics Instructors Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "domestic_worker": {
+    "id": "IZQ9QFrD3Jc",
+    "ytTitle": "Maid and Housekeeping Cleaner Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "event_planner": {
+    "id": "JjVva0cJI-k",
+    "ytTitle": "Meeting, Convention, and Event Planners Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "hospitality_worker": {
+    "id": "Q7tTV5Ki5KU",
+    "ytTitle": "Hospitality and Tourism Overview | Career Cluster / Industry Video Series",
+    "ytAuthor": "CareerOneStop"
+  },
+  "cleaner": {
+    "id": "3pZIBcPzE8M",
+    "ytTitle": "Janitors, Housekeeping, and Cleaning Workers and Supervisors Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "hairstylist": {
+    "id": "wqgol3sEFvI",
+    "ytTitle": "Hairdressers, Hairstylists, Barbers, and Cosmetologists Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "landscaper": {
+    "id": "hETBKWFRIlU",
+    "ytTitle": "Expert Commercial Property Services in Toronto GTA | MILTONSTONE Asphalt, Concrete, & Interlocking",
+    "ytAuthor": "MILTON STONE | Oakville Landscape Contractor Pools"
+  },
+  "dentist": {
+    "id": "xjSg0OIigI0",
+    "ytTitle": "Dentists, General Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "street_vendor": {
+    "id": "EK9_RipD4w8",
+    "ytTitle": "Retail Sales Workers Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "translator_interpreter": {
+    "id": "QQ7xfQqRhKk",
+    "ytTitle": "Interpreters and Translators Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "independent_writer": {
+    "id": "y-5cvUiXW7I",
+    "ytTitle": "Writers and Authors Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "independent_consultant": {
+    "id": "NeveJDtJ1Ug",
+    "ytTitle": "Business Management and Administration Overview | Career Cluster/Industry Video Series",
+    "ytAuthor": "CareerOneStop"
+  },
+  "actor": {
+    "id": "RrrnUDgW-gU",
+    "ytTitle": "Actors Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "small_shop_owner": {
+    "id": "EK9_RipD4w8",
+    "ytTitle": "Retail Sales Workers Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "market_trader": {
+    "id": "wULJrt8TERU",
+    "ytTitle": "Online Merchants Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "veterinarian": {
+    "id": "oVADsUt6474",
+    "ytTitle": "Veterinarians Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "graphic_designer": {
+    "id": "dt6td67yF9E",
+    "ytTitle": "Graphic Designer Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "musician": {
+    "id": "6QiYFsdYKbY",
+    "ytTitle": "Musicians and Singers Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "artist_craftsperson": {
+    "id": "3ysMK6yrtpY",
+    "ytTitle": "Fine Artists, including Painters, Sculptors, and Illustrators Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "sign_language_interpreter": {
+    "id": "QQ7xfQqRhKk",
+    "ytTitle": "Interpreters and Translators Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "realtor": {
+    "id": "Fh03puSzv7g",
+    "ytTitle": "Real Estate Agents and Brokers Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "home_based_business_owner": {
+    "id": "HsR3xY5ifzU",
+    "ytTitle": "Careers in Management and Entrepreneurship | Career Cluster Video Series",
+    "ytAuthor": "CareerOneStop"
+  },
+  "photographer": {
+    "id": "dmS_aX8obCo",
+    "ytTitle": "Photographers Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "dancer": {
+    "id": "FtSPtJmzXH4",
+    "ytTitle": "Dancers Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "content_creator": {
+    "id": "dt6td67yF9E",
+    "ytTitle": "Graphic Designer Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "laundry_service_provider": {
+    "id": "7utEz_T_81k",
+    "ytTitle": "Laundry, Dry Cleaning, Textile, and Garment Related Worker Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "filmmaker": {
+    "id": "a3TG2BhntlY",
+    "ytTitle": "Film and Video Editors Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "elderly_care_worker": {
+    "id": "S3iiYP_ZJSI",
+    "ytTitle": "Healthcare Social Workers Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "childcare_worker": {
+    "id": "SyaadOdVyAE",
+    "ytTitle": "Preschool Teachers, Except Special Education Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "trade_school_student": {
+    "id": "aPtHL33Velc",
+    "ytTitle": "Educational, Guidance, School, and Vocational Counselor Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "caregiver": {
+    "id": "7llPqIH-DdQ",
+    "ytTitle": "Personal Care Aide Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "vocational_trainer": {
+    "id": "EQcg5di-Nz4",
+    "ytTitle": "Career and Technical Education Teachers Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "school_leaver": {
+    "id": "VRB818Z8Xhs",
+    "ytTitle": "Elementary School Teachers, Except Special Education Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "community_organizer": {
+    "id": "LXbb-QGigwA",
+    "ytTitle": "Overview of CareerOneStop.org for Workforce Professionals",
+    "ytAuthor": "CareerOneStop"
+  },
+  "volunteer": {
+    "id": "LXbb-QGigwA",
+    "ytTitle": "Overview of CareerOneStop.org for Workforce Professionals",
+    "ytAuthor": "CareerOneStop"
+  },
+  "community_health_worker": {
+    "id": "S3iiYP_ZJSI",
+    "ytTitle": "Healthcare Social Workers Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "career_changer": {
+    "id": "ko_OMynE3Bo",
+    "ytTitle": "Construction Overview | Career Cluster / Industry Video Series",
+    "ytAuthor": "CareerOneStop"
+  },
+  "home_health_aide": {
+    "id": "y_AyWpdXW5o",
+    "ytTitle": "Home Health Aides Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "apprentice": {
+    "id": "Rw8gAGYZ6qs",
+    "ytTitle": "Electricians Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "registered_nurse": {
+    "id": "x4Y_2fpET0U",
+    "ytTitle": "Registered Nurses Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "military_veteran": {
+    "id": "3aPURRP-AOs",
+    "ytTitle": "Turn Your Military Experience into a Civilian Career | CareerOneStop",
+    "ytAuthor": "CareerOneStop"
+  },
+  "unemployed_job_seeker": {
+    "id": "zDqK9DaCDg4",
+    "ytTitle": "Secretaries and Administrative Assistants Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "tutor": {
+    "id": "aPtHL33Velc",
+    "ytTitle": "Educational, Guidance, School, and Vocational Counselor Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "animal_trainer": {
+    "id": "NikLNYdWlys",
+    "ytTitle": "Animal Trainers Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "physician": {
+    "id": "6Ixvw0PpE6s",
+    "ytTitle": "Medical Specialties Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "driving_instructor": {
+    "id": "4r-QVk5-umI",
+    "ytTitle": "Education and Training Careers| Career Cluster/Industry Video Series",
+    "ytAuthor": "CareerOneStop"
+  },
+  "security_guard": {
+    "id": "SfdJ2Eh4bHw",
+    "ytTitle": "Security Guards and Gaming Surveillance Officers Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "factory_worker": {
+    "id": "vbb4SZOTK2Y",
+    "ytTitle": "Manufacturing Career Overview | Career Cluster / Industry Video Series",
+    "ytAuthor": "CareerOneStop"
+  },
+  "private_investigator_executive_protection": {
+    "id": "PNOImo84oHI",
+    "ytTitle": "Private Detectives and Investigators Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "emergency_dispatcher_resilience": {
+    "id": "mFB5YEzQUfI",
+    "ytTitle": "Public Safety Telecommunicators Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "bookkeeper_payroll_tax_specialist": {
+    "id": "EsOkxSjUEI0",
+    "ytTitle": "Bookkeeping, Accounting, and Auditing Clerk Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "municipal_public_works_inspector": {
+    "id": "n5-xhZWFzJo",
+    "ytTitle": "Your Career In Municipal Public Works",
+    "ytAuthor": "Association of Ontario Road Supervisors"
+  },
+  "paralegal_court_reporter": {
+    "id": "zFykfBc-oIA",
+    "ytTitle": "Paralegals and Legal Assistants Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "religious_worker_clergy": {
+    "id": "j1t-b6hMAz8",
+    "ytTitle": "Clergy and Directors of Religious Activities and Education Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "waste_management_worker": {
+    "id": "lxmbHQnxnZg",
+    "ytTitle": "Environmental Science and Protection Technician, Including Health Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "industrial_ot_cyber_technician": {
+    "id": "cVZktAEtWE4",
+    "ytTitle": "Information Security Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "ai_workflow_nocode_specialist": {
+    "id": "D6B1IyVLc7E",
+    "ytTitle": "Technical Writers",
+    "ytAuthor": "CareerOneStop"
+  },
+  "corporate_attorney": {
+    "id": "aK2PVtgWLp8",
+    "ytTitle": "Lawyer Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "notary_contract_licensing_specialist": {
+    "id": "Y521vszn1bM",
+    "ytTitle": "Pros and Cons | Notary & Loan Signing Agent Career",
+    "ytAuthor": "SHAUNA SAGAJI"
+  },
+  "nonprofit_worker": {
+    "id": "Hik6s9nEA2w",
+    "ytTitle": "Public Relations and Fundraising Manager Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "insurance_claims_loan_microfinance": {
+    "id": "BPw4pUuJlYM",
+    "ytTitle": "Claims Adjusters, Appraisers, Examiners, and Investigators Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "red_team_operator": {
+    "id": "cVZktAEtWE4",
+    "ytTitle": "Information Security Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "cpa_accountant": {
+    "id": "u9pgua9hT6k",
+    "ytTitle": "Accountants and Auditors Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "firefighter_search_rescue": {
+    "id": "DNK5dYGn3Fg",
+    "ytTitle": "Firefighters Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "software_engineer": {
+    "id": "_WQ_VV4pXPc",
+    "ytTitle": "Software Developers Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "youth_mentor": {
+    "id": "aPtHL33Velc",
+    "ytTitle": "Educational, Guidance, School, and Vocational Counselor Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "water_wastewater_sanitation_tech": {
+    "id": "-8r6ajEIiQE",
+    "ytTitle": "Water Resource Specialists Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "wind_solar_battery_tech": {
+    "id": "k46_I9_vCOU",
+    "ytTitle": "Solar Photovoltaic Installers Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "digital_twin_autonomous_green_tech": {
+    "id": "-3GjrJG6Ds8",
+    "ytTitle": "Robotics, Electro-Mechanical and Mechatronics Technologists and Technicians Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "maritime_shipbuilder_harbor_pilot": {
+    "id": "445nfaA6gdI",
+    "ytTitle": "Marine Engineer and Naval Architect Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "pcb_microsoldering_horologist_tech": {
+    "id": "Xwc54GYJPNk",
+    "ytTitle": "Qualcomm PM4250 IC Rework & Micro-soldering 🛠️🔥#Mrmobilemode",
+    "ytAuthor": "Mrmobilemode"
+  },
+  "archaeology_museum_conservator": {
+    "id": "ypxwqsWshJ0",
+    "ytTitle": "Anthropologists and Archaeologists Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "chemical_materials_forensic_tech": {
+    "id": "tLwKn5W7Bjo",
+    "ytTitle": "Chemical Technician Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "grid_substation_powerplant_operator": {
+    "id": "apNN1p1VCUw",
+    "ytTitle": "About the North American Electric Reliability Corporation (NERC)",
+    "ytAuthor": "NERC"
+  },
+  "robotics_automation_ndt_tech": {
+    "id": "-3GjrJG6Ds8",
+    "ytTitle": "Robotics, Electro-Mechanical and Mechatronics Technologists and Technicians Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "leather_footwear_equipment_lifecycle": {
+    "id": "OosJnsGEEQQ",
+    "ytTitle": "Shoe Maker and Shoe Machine Operator Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "aerospace_spacecraft_drone_tech": {
+    "id": "bnxcib-8S4s",
+    "ytTitle": "Aerospace Engineers Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "aircraft_mechanic_avionics_atc": {
+    "id": "oByvKU2CwHs",
+    "ytTitle": "Aircraft and Avionics Equipment Mechanics and Technicians Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "mining_geology_blasting_tech": {
+    "id": "6GukCvwaEnM",
+    "ytTitle": "Mining and Geological Engineers Including Mining Safety Engineers Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "molding_additive_packaging_tech": {
+    "id": "MBQx7TOL1iM",
+    "ytTitle": "Molders, Shapers and Casters, Except Metal and Plastic Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "commercial_diver_underwater_welder": {
+    "id": "unSbXz7U1WA",
+    "ytTitle": "Commercial Diver Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "fiber_optic_tower_datacenter_tech": {
+    "id": "k-FdW1hY7cc",
+    "ytTitle": "Fiber Optic Technicians",
+    "ytAuthor": "CareerOneStop"
+  },
+  "biotech_pharma_microbiology_tech": {
+    "id": "c2b7a89VSw8",
+    "ytTitle": "Biochemists and Biophysicists Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "college_student": {
+    "id": "ISmxPVS5O2c",
+    "ytTitle": "Postsecondary Teacher Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "cnc_machinist_tool_die": {
+    "id": "OWNXI09WI14",
+    "ytTitle": "Machinists Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "literacy_instructor": {
+    "id": "fxgWjQrwBls",
+    "ytTitle": "Adult Basic and Secondary Education and Literacy Teachers and Instructors Career Video",
+    "ytAuthor": "CareerOneStop"
+  }
 }
 
 const ENCLAVE_SERIAL_PREFIXES: Record<string, string> = {
@@ -945,24 +1620,18 @@ const ENCLAVE_SERIAL_PREFIXES: Record<string, string> = {
 const DURATION_OPTIONS = ["4:42", "5:05", "5:18", "4:55", "5:30", "4:48", "5:12", "5:24"]
 
 function buildComprehensiveProfessionWheelTalks(): WheelVideoTalk[] {
-  const existingProfessionIds = new Set(
-    CORE_EDUCATIONAL_WHEEL_TALKS.map(t => t.professionId).filter(Boolean)
-  )
-
   const generatedTalks: WheelVideoTalk[] = []
   const enclaveCounters: Record<string, number> = {}
 
   for (let i = 0; i < ALL_PROFESSIONS.length; i++) {
     const prof = ALL_PROFESSIONS[i]
-    if (existingProfessionIds.has(prof.id)) continue
-
     const enclave = PROFESSION_ENCLAVES.find(e => e.id === prof.enclaveId) || PROFESSION_ENCLAVES[0]
     const prefix = ENCLAVE_SERIAL_PREFIXES[enclave.id] || "PRO"
     enclaveCounters[enclave.id] = (enclaveCounters[enclave.id] || 10) + 1
     const serialNum = enclaveCounters[enclave.id]
 
-    const videoPool = ENCLAVE_VIDEO_ID_POOLS[enclave.id] || ENCLAVE_VIDEO_ID_POOLS.trades_construction
-    const youtubeId = videoPool[i % videoPool.length]
+    const verified = PROFESSION_VERIFIED_VIDEOS[prof.id]
+    const youtubeId = verified ? verified.id : "Rw8gAGYZ6qs"
     const duration = DURATION_OPTIONS[i % DURATION_OPTIONS.length]
 
     const primaryTool = prof.tools?.[0]
@@ -977,9 +1646,9 @@ function buildComprehensiveProfessionWheelTalks(): WheelVideoTalk[] {
     generatedTalks.push({
       id: `wheel-prof-${prof.id}`,
       serialPlate: `CLN-${prefix}${serialNum}`,
-      title: `${prof.title}: Masterclass & Field Standards`,
-      speaker: `${enclave.shortName} Guild Directorate`,
-      speakerTitle: headlineLead,
+      title: `${prof.title} — Career Masterclass & Field Standards`,
+      speaker: verified?.ytAuthor ? `${verified.ytAuthor} · ${enclave.shortName}` : `${enclave.shortName} Guild Directorate`,
+      speakerTitle: verified?.ytTitle || headlineLead,
       youtubeId,
       duration,
       category: enclave.id,
@@ -987,15 +1656,15 @@ function buildComprehensiveProfessionWheelTalks(): WheelVideoTalk[] {
       enclaveId: enclave.id,
       professionId: prof.id,
       thumbnailUrl: `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`,
-      summary: `${prof.defaultHeadline}. Masterclass briefing covering ${(prof.typicalSkills || []).slice(0, 4).join(", ")}${primaryTool ? `, and field execution using ${primaryTool.name}` : ""}.`,
+      summary: `Official ${prof.title} briefing (${verified?.ytTitle || prof.defaultHeadline}). Covers core field responsibilities, ${(prof.typicalSkills || []).slice(0, 4).join(", ")}${primaryTool ? `, and operational execution with ${primaryTool.name}` : ""}.`,
       takeaways: [
-        `Core Field Competencies: ${(prof.typicalSkills || []).slice(0, 3).join(" · ")}`,
+        `Core Profession Competencies: ${(prof.typicalSkills || []).slice(0, 3).join(" · ")}`,
         primaryTool
           ? `Specialized Instrument & Workflow: ${primaryTool.name} — ${primaryTool.description}`
           : `Operational Execution: ${(prof.typicalSkills || []).slice(2, 5).join(" · ")}`,
         secondaryTool
           ? `Quality & Compliance Standard: ${secondaryTool.name} (${secondaryTool.badge || "Guild Verified"})`
-          : `Verified ${enclave.securityClearanceTier} safety, inspection & peer quality standards`
+          : `Verified ${enclave.securityClearanceTier} safety, licensing & professional quality standards`
       ],
       tags: [...skillTags, ...(enclave.feedTags || []).slice(0, 2)]
     })
@@ -1028,6 +1697,68 @@ function buildComprehensiveProfessionWheelTalks(): WheelVideoTalk[] {
 }
 
 export const EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = buildComprehensiveProfessionWheelTalks()
+
+/**
+ * Resolves the exact educational video talk assigned to a user based on the profession
+ * they selected at the time of registration (matching professionId, profession title, or enclave).
+ */
+export function getMatchedWheelVideoForUser(user?: {
+  professionId?: string
+  profession?: string
+  professionEnclave?: string
+  headline?: string
+} | null): WheelVideoTalk {
+  if (!user) return EDUCATIONAL_WHEEL_TALKS[0]
+
+  // 1. Direct match on professionId (prefer the dedicated profession masterclass wheel-prof-<id>)
+  if (user.professionId) {
+    const exactProfTalk = EDUCATIONAL_WHEEL_TALKS.find(
+      t => t.id === `wheel-prof-${user.professionId}` || t.professionId === user.professionId
+    )
+    if (exactProfTalk) return exactProfTalk
+  }
+
+  // 2. Match by profession title string against ALL_PROFESSIONS
+  if (user.profession) {
+    const cleanProf = user.profession.trim().toLowerCase()
+    const matchedProfDef = ALL_PROFESSIONS.find(
+      p =>
+        p.title.toLowerCase() === cleanProf ||
+        p.id.toLowerCase() === cleanProf ||
+        cleanProf.includes(p.title.toLowerCase()) ||
+        p.title.toLowerCase().includes(cleanProf)
+    )
+    if (matchedProfDef) {
+      const exactTalk = EDUCATIONAL_WHEEL_TALKS.find(
+        t => t.id === `wheel-prof-${matchedProfDef.id}` || t.professionId === matchedProfDef.id
+      )
+      if (exactTalk) return exactTalk
+    }
+  }
+
+  // 3. Match by user headline keywords against ALL_PROFESSIONS
+  if (user.headline) {
+    const cleanHeadline = user.headline.toLowerCase()
+    const matchedByHeadline = ALL_PROFESSIONS.find(p => {
+      const mainTitle = p.title.replace(/\(.*?\)/g, "").split("/")[0].split("&")[0].trim().toLowerCase()
+      return mainTitle.length >= 5 && cleanHeadline.includes(mainTitle)
+    })
+    if (matchedByHeadline) {
+      const exactTalk = EDUCATIONAL_WHEEL_TALKS.find(
+        t => t.id === `wheel-prof-${matchedByHeadline.id}` || t.professionId === matchedByHeadline.id
+      )
+      if (exactTalk) return exactTalk
+    }
+  }
+
+  // 4. Fallback to user's professionEnclave
+  if (user.professionEnclave) {
+    const enclaveTalk = EDUCATIONAL_WHEEL_TALKS.find(t => t.enclaveId === user.professionEnclave)
+    if (enclaveTalk) return enclaveTalk
+  }
+
+  return EDUCATIONAL_WHEEL_TALKS[0]
+}
 
 export const ONBOARDING_GUIDE_CHAPTERS: OnboardingGuideChapter[] = [
   {

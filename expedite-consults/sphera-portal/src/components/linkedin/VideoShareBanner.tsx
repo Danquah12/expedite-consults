@@ -2,7 +2,7 @@
 
 import React, { useState } from "react"
 import { Play, ShieldCheck, Share2, Copy, Check, Mail } from "lucide-react"
-import { resolveUserProfilePicture } from "@/lib/connectin-storage"
+import { resolveUserProfilePicture, isDefaultPlaceholderAvatar } from "@/lib/connectin-storage"
 
 export interface VideoShareBannerProps {
   /** Sharer's profile picture (circular on the left inside the ConnectLn Logo Card) */
@@ -37,6 +37,8 @@ export interface VideoShareBannerProps {
   onWatchClick?: () => void
   /** Compact variant for smaller cards/modals */
   compact?: boolean
+  /** Hide the bottom share bar when embedded in a modal that already has a share bar */
+  hideShareBar?: boolean
 }
 
 export function VideoShareBanner({
@@ -56,12 +58,17 @@ export function VideoShareBanner({
   takeaways = [],
   onPlayClick,
   onWatchClick,
-  compact = false
+  compact = false,
+  hideShareBar = false
 }: VideoShareBannerProps) {
   const [isPlayingInline, setIsPlayingInline] = useState(false)
   const [copiedLink, setCopiedLink] = useState(false)
 
-  const resolvedAvatar = resolveUserProfilePicture(null, avatarUrl || userAvatar)
+  const candidateAvatar = avatarUrl || userAvatar
+  const resolvedAvatar =
+    candidateAvatar && !isDefaultPlaceholderAvatar(candidateAvatar)
+      ? candidateAvatar
+      : resolveUserProfilePicture(null, candidateAvatar)
   const resolvedAuthor = authorName || userName || "Kwesi Asiedu"
   const resolvedHeadline = authorHeadline || userHeadline
   const resolvedPlayHandler = onPlayClick || onWatchClick
@@ -101,7 +108,7 @@ export function VideoShareBanner({
   // ConnectLn OpenGraph URL so WhatsApp, LinkedIn, X, Facebook, and messages render the ConnectLn Logo + Profile Picture Card
   const resolvedShareUrl = `https://www.connectln.app/connectin?video=${encodeURIComponent(
     resolvedYtId || ""
-  )}&plate=${encodeURIComponent(serialPlate || "CLN-VID")}&v=connectln5`
+  )}&plate=${encodeURIComponent(serialPlate || "CLN-VID")}&v=connectln8`
 
   const resolvedThumb =
     thumbnailUrl ||
@@ -380,100 +387,102 @@ export function VideoShareBanner({
         </div>
       )}
 
-      {/* Multi-Platform Direct Sharing Bar (WhatsApp, LinkedIn, X, Facebook, Email, Copy Link) — Always Visible */}
-      <div
-        className="px-3.5 py-2 border-t flex flex-wrap items-center justify-between gap-2"
-        style={{
-          backgroundColor: "#1F1C1A",
-          borderColor: "rgba(255,255,255,0.1)"
-        }}
-      >
-        <span
-          className="text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1.5 shrink-0"
-          style={{ color: "#D6D1C7" }}
+      {/* Multi-Platform Direct Sharing Bar (WhatsApp, LinkedIn, X, Facebook, Email, Copy Link) */}
+      {!hideShareBar && (
+        <div
+          className="px-3.5 py-2 border-t flex flex-wrap items-center justify-between gap-2"
+          style={{
+            backgroundColor: "#1F1C1A",
+            borderColor: "rgba(255,255,255,0.1)"
+          }}
         >
-          <Share2 className="h-3 w-3" style={{ color: "#A64532" }} />
-          <span>Share ConnectLn Card:</span>
-        </span>
-
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {/* WhatsApp */}
-          <button
-            type="button"
-            onClick={handleWhatsAppShare}
-            style={{ backgroundColor: "#25D366", color: "#FFFFFF" }}
-            className="px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-2xs hover:opacity-90 transition-opacity cursor-pointer"
-            title="Share on WhatsApp"
+          <span
+            className="text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1.5 shrink-0"
+            style={{ color: "#D6D1C7" }}
           >
-            <svg className="w-3 h-3 fill-current shrink-0" viewBox="0 0 24 24">
-              <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.303-.058.116-.087.188-.173.289l-.26.303c-.087.087-.177.181-.076.354.101.173.449.741.964 1.201.662.591 1.221.774 1.394.86.173.086.275.072.376-.043.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.043.072.043.419-.101.824z" />
-              <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2.348 21.652l4.636-1.04A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.25c-1.63 0-3.14-.492-4.404-1.336l-.315-.21-2.753.618.63-2.683-.231-.328A8.212 8.212 0 013.75 12c0-4.549 3.701-8.25 8.25-8.25s8.25 3.701 8.25 8.25-3.701 8.25-8.25 8.25z" />
-            </svg>
-            <span>WhatsApp</span>
-          </button>
+            <Share2 className="h-3 w-3" style={{ color: "#A64532" }} />
+            <span>Share ConnectLn Card:</span>
+          </span>
 
-          {/* LinkedIn */}
-          <button
-            type="button"
-            onClick={handleLinkedInShare}
-            style={{ backgroundColor: "#0A66C2", color: "#FFFFFF" }}
-            className="px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-2xs hover:opacity-90 transition-opacity cursor-pointer"
-            title="Share on LinkedIn"
-          >
-            <span>LinkedIn</span>
-          </button>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {/* WhatsApp */}
+            <button
+              type="button"
+              onClick={handleWhatsAppShare}
+              style={{ backgroundColor: "#25D366", color: "#FFFFFF" }}
+              className="px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-2xs hover:opacity-90 transition-opacity cursor-pointer"
+              title="Share on WhatsApp"
+            >
+              <svg className="w-3 h-3 fill-current shrink-0" viewBox="0 0 24 24">
+                <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.303-.058.116-.087.188-.173.289l-.26.303c-.087.087-.177.181-.076.354.101.173.449.741.964 1.201.662.591 1.221.774 1.394.86.173.086.275.072.376-.043.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.043.072.043.419-.101.824z" />
+                <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2.348 21.652l4.636-1.04A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.25c-1.63 0-3.14-.492-4.404-1.336l-.315-.21-2.753.618.63-2.683-.231-.328A8.212 8.212 0 013.75 12c0-4.549 3.701-8.25 8.25-8.25s8.25 3.701 8.25 8.25-3.701 8.25-8.25 8.25z" />
+              </svg>
+              <span>WhatsApp</span>
+            </button>
 
-          {/* X / Twitter */}
-          <button
-            type="button"
-            onClick={handleTwitterShare}
-            style={{ backgroundColor: "#0F172A", color: "#FFFFFF" }}
-            className="px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-2xs hover:opacity-90 transition-opacity cursor-pointer"
-            title="Share on X (Twitter)"
-          >
-            <span>X / Post</span>
-          </button>
+            {/* LinkedIn */}
+            <button
+              type="button"
+              onClick={handleLinkedInShare}
+              style={{ backgroundColor: "#0A66C2", color: "#FFFFFF" }}
+              className="px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-2xs hover:opacity-90 transition-opacity cursor-pointer"
+              title="Share on LinkedIn"
+            >
+              <span>LinkedIn</span>
+            </button>
 
-          {/* Facebook */}
-          <button
-            type="button"
-            onClick={handleFacebookShare}
-            style={{ backgroundColor: "#1877F2", color: "#FFFFFF" }}
-            className="px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-2xs hover:opacity-90 transition-opacity cursor-pointer"
-            title="Share on Facebook"
-          >
-            <span>Facebook</span>
-          </button>
+            {/* X / Twitter */}
+            <button
+              type="button"
+              onClick={handleTwitterShare}
+              style={{ backgroundColor: "#0F172A", color: "#FFFFFF" }}
+              className="px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-2xs hover:opacity-90 transition-opacity cursor-pointer"
+              title="Share on X (Twitter)"
+            >
+              <span>X / Post</span>
+            </button>
 
-          {/* Email */}
-          <button
-            type="button"
-            onClick={handleEmailShare}
-            style={{ backgroundColor: "#A64532", color: "#FFFFFF" }}
-            className="px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-2xs hover:opacity-90 transition-opacity cursor-pointer"
-            title="Share via Email"
-          >
-            <Mail className="h-2.5 w-2.5" />
-            <span>Email</span>
-          </button>
+            {/* Facebook */}
+            <button
+              type="button"
+              onClick={handleFacebookShare}
+              style={{ backgroundColor: "#1877F2", color: "#FFFFFF" }}
+              className="px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-2xs hover:opacity-90 transition-opacity cursor-pointer"
+              title="Share on Facebook"
+            >
+              <span>Facebook</span>
+            </button>
 
-          {/* Copy Link */}
-          <button
-            type="button"
-            onClick={handleCopyShareLink}
-            style={{ backgroundColor: "#2C2825", color: "#F5F0EB" }}
-            className="px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-2xs hover:opacity-90 transition-opacity cursor-pointer border border-white/10"
-            title="Copy Direct Share Link"
-          >
-            {copiedLink ? (
-              <Check className="h-2.5 w-2.5 text-emerald-400" />
-            ) : (
-              <Copy className="h-2.5 w-2.5" />
-            )}
-            <span>{copiedLink ? "Copied!" : "Copy Link"}</span>
-          </button>
+            {/* Email */}
+            <button
+              type="button"
+              onClick={handleEmailShare}
+              style={{ backgroundColor: "#A64532", color: "#FFFFFF" }}
+              className="px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-2xs hover:opacity-90 transition-opacity cursor-pointer"
+              title="Share via Email"
+            >
+              <Mail className="h-2.5 w-2.5" />
+              <span>Email</span>
+            </button>
+
+            {/* Copy Link */}
+            <button
+              type="button"
+              onClick={handleCopyShareLink}
+              style={{ backgroundColor: "#2C2825", color: "#F5F0EB" }}
+              className="px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-2xs hover:opacity-90 transition-opacity cursor-pointer border border-white/10"
+              title="Copy Direct Share Link"
+            >
+              {copiedLink ? (
+                <Check className="h-2.5 w-2.5 text-emerald-400" />
+              ) : (
+                <Copy className="h-2.5 w-2.5" />
+              )}
+              <span>{copiedLink ? "Copied!" : "Copy Link"}</span>
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

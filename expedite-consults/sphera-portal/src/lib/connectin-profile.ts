@@ -293,30 +293,59 @@ export function createUniqueUserProfile(params: UserInitParams): UserProfile {
     }
   }
 
-  // 3. Official & Verified Avatars
+  // 3. Official & Verified Avatars (Distinct per logged-in user & profession enclave)
   let avatarUrl = params.avatar
-  if (!avatarUrl) {
+  if (!avatarUrl || avatarUrl.includes("api.dicebear.com")) {
     if (cleanName.includes("Commander Robert Hayes") || cleanEmail.includes("robert.hayes") || cleanEmail === "sec-admin@connectin.internal") {
       avatarUrl = "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80"
     } else if (cleanName.includes("Kwesi Asiedu") || cleanName.includes("Emmanuel Asiedu") || cleanEmail.includes("kasiedu") || cleanEmail.includes("asiedudanquah")) {
       avatarUrl = "/brand/kwesi-avatar.png"
     } else if (cleanName.includes("Alex Taylor") || cleanEmail.includes("alex.taylor")) {
-      avatarUrl = "/brand/kwesi-avatar.png"
+      avatarUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80"
     } else if (cleanName.includes("Elena Rostova") || cleanEmail.includes("elena.nurse")) {
       avatarUrl = "https://images.unsplash.com/photo-1594824813571-638f02614d3f?w=400&auto=format&fit=crop&q=80" // Trauma nurse in scrubs
     } else if (cleanName.includes("Angela Vance") || cleanEmail.includes("angela.vance")) {
       avatarUrl = "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&auto=format&fit=crop&q=80" // Attending surgeon in white coat
-    } else if (cleanName.includes("David Miller") || cleanEmail.includes("david.miller")) {
-      avatarUrl = "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=400&auto=format&fit=crop&q=80" // Master timber craftsman
+    } else if (cleanName.includes("David Miller") || cleanEmail.includes("david.miller") || cleanName.toLowerCase().includes("yaw appiah")) {
+      avatarUrl = "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=400&auto=format&fit=crop&q=80" // Master craftsman / structural welder
     } else if (cleanName.includes("Marcus Miller") || cleanEmail.includes("marcus.mechanic")) {
       avatarUrl = "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=400&auto=format&fit=crop&q=80" // Diagnostic master auto tech
     } else if (cleanName.includes("Tariq Al-Mansoor") || cleanEmail.includes("tariq.cyber")) {
       avatarUrl = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80" // Red team security lead
     } else if (cleanName.includes("James Kowalski") || cleanEmail.includes("kowalski")) {
       avatarUrl = "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80" // SCADA OT engineer
+    } else if (enclaveId === "trades_construction") {
+      avatarUrl = "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=400&auto=format&fit=crop&q=80"
+    } else if (enclaveId === "automotive_mechanics") {
+      avatarUrl = "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=400&auto=format&fit=crop&q=80"
+    } else if (enclaveId === "healthcare_medicine") {
+      avatarUrl = professionId?.includes("nurse")
+        ? "https://images.unsplash.com/photo-1594824813571-638f02614d3f?w=400&auto=format&fit=crop&q=80"
+        : "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&auto=format&fit=crop&q=80"
+    } else if (enclaveId === "tech_cybersecurity") {
+      avatarUrl = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80"
+    } else if (enclaveId === "tech_software") {
+      avatarUrl = "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&auto=format&fit=crop&q=80"
+    } else if (enclaveId === "law_gov_defense") {
+      avatarUrl = "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&auto=format&fit=crop&q=80"
+    } else if (enclaveId === "finance_accounting") {
+      avatarUrl = "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80"
+    } else if (enclaveId === "agriculture_natural_resources") {
+      avatarUrl = "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80"
+    } else if (enclaveId === "personal_services_wellness") {
+      avatarUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80"
+    } else if (enclaveId === "culinary_hospitality_events") {
+      avatarUrl = "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=400&auto=format&fit=crop&q=80"
+    } else if (enclaveId === "commerce_small_business") {
+      avatarUrl = "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=400&auto=format&fit=crop&q=80"
+    } else if (enclaveId === "creative_media_arts") {
+      avatarUrl = "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&auto=format&fit=crop&q=80"
+    } else if (enclaveId === "education_workforce") {
+      avatarUrl = "https://images.unsplash.com/photo-1544717305-2782549b5136?w=400&auto=format&fit=crop&q=80"
+    } else if (enclaveId === "community_civic_security") {
+      avatarUrl = "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80"
     } else {
-      const avatarSeed = encodeURIComponent(`${cleanName}-${cleanEmail}`)
-      avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${avatarSeed}&backgroundColor=0a66c2,4338ca,0070f3&textColor=ffffff&fontWeight=700`
+      avatarUrl = "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=400&auto=format&fit=crop&q=80"
     }
   }
 

@@ -1,0 +1,11 @@
+{
+  "name": "dast-brain",
+  "version": "1.0.0",
+  "description": "DAST Brain plugin – automates scanner integration and vulnerability script execution.",
+  "assets": {
+    "skills": ["applyVulnScript", "startEngagement"],
+    "hooks": ["postScannerHook"],
+    "rules": ["autoApplyVulnFinding"],
+    "uiExtensions": ["ui-panel"]
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "platform": "TrePath DAST & Web Security Verification Lab Catalog",
+  "version": "6.6.0-trepath-verified",
+  "portConfiguration": {
+    "checkedRange": [8000, 8001, 8002, 8003],
+    "port8000Status": "Occupied by splunkd.exe (PID 5236 — Splunk Web)",
+    "activeLocalLabServerPort": 8001,
+    "fallbackLocalPorts": [8001, 8002, 8003],
+    "vercelStaticBasePath": "/scripts",
+    "vercelProxyEndpoint": "/api/proxy"
+  },
+  "integrationModes": {
+    "mode1_vercelStatic": "https://11-dast-security-platform.vercel.app/scripts/",
+    "mode2_localStaticServer": "http://localhost:8001/",
+    "mode3_tightProxy": "https://11-dast-security-platform.vercel.app/api/proxy?file=manifest.json"
+  },
+  "bundledFiles": [
+    "authentication-lab-09.py",
+    "authentication-lab-10.py",
+    "authentication-lab-11.py",
+    "authentication-lab-12.py",
+    "authentication-lab-13.py",
+    "authentication-lab-14.py",
+    "broken-access-control-lab-01.py",
+    "command-injection-lab-01.py",
+    "jwt-attacks-lab-01.py",
+    "jwt-attacks-lab-02.py",
+    "vulnerabilityScriptMap.ts",
+    "runVulnerabilityScript.ts"
+  ]
+}

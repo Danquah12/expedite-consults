@@ -68,7 +68,7 @@ export function LeftSidebarProfile({
       return [
         ...adminShortcuts,
         { id: 'skillhands', label: '🛠️ SkillHands Trade Hub', badge: 'Live App', url: 'https://skillhands-client.vercel.app' },
-        { id: 'desknote', label: '📓 DeskNote Field Notebook', badge: 'Live App', url: 'https://desk-note-kwesi-asiedus-projects.vercel.app' },
+        { id: 'desknote', label: '📓 DeskNote Field Notebook', badge: 'Live App', url: 'https://desk-note-lime.vercel.app/' },
         { id: 'vibetok_trades', label: '🎥 VibeTok Trade Videos', badge: 'Live Hub', url: 'https://vibetok-learning-hub.vercel.app' },
         { id: 'bazaar_trades', label: '🛍️ Bazaar Trade Market', badge: 'Commerce', url: 'https://bazaar-standalone.vercel.app' },
         { id: 'blueprints', label: '📐 Blueprint & CAD Specs', badge: 'Active' },
@@ -86,7 +86,7 @@ export function LeftSidebarProfile({
     if (effectiveEnclaveId === 'automotive_mechanics') {
       return [
         ...adminShortcuts,
-        { id: 'desknote_auto', label: '📓 DeskNote Diagnostic Logs', badge: 'Live App', url: 'https://desk-note-kwesi-asiedus-projects.vercel.app' },
+        { id: 'desknote_auto', label: '📓 DeskNote Diagnostic Logs', badge: 'Live App', url: 'https://desk-note-lime.vercel.app/' },
         { id: 'skillhands_auto', label: '🛠️ SkillHands Auto Techs', badge: 'Live App', url: 'https://skillhands-client.vercel.app' },
         { id: 'vibetok_auto', label: '🎥 VibeTok Auto Masterclasses', badge: 'Live Hub', url: 'https://vibetok-learning-hub.vercel.app' },
         { id: 'diagnostic_scanner', label: '📟 Snap-On ZEUS+ Diagnostic Hub', badge: 'CAN-FD' },
@@ -104,6 +104,7 @@ export function LeftSidebarProfile({
       return [
         ...adminShortcuts,
         { id: 'vibetok_med', label: '🎥 VibeTok Grand Rounds Video', badge: 'Live Hub', url: 'https://vibetok-learning-hub.vercel.app' },
+        { id: 'desknote_med', label: '📓 DeskNote Clinical Notes', badge: 'Live App', url: 'https://desk-note-lime.vercel.app/' },
         { id: 'esi_trauma', label: '🩺 Level 1 Trauma Triage & ESI', badge: 'TNCC Ready' },
         { id: 'surgical_roster', label: '🔪 OR Schedule & Instrument Packs', badge: 'OR Suite' },
         { id: 'shifts', label: '🕒 Nurse Shift & Locum Exchange', badge: 'Hospital' },
@@ -119,12 +120,18 @@ export function LeftSidebarProfile({
     if (effectiveEnclaveId === 'tech_cybersecurity') {
       return [
         ...adminShortcuts,
-        { id: 'dast_platform', label: '🎯 11-DAST Pentest Platform', badge: 'Live Pentest', url: 'https://11-dast-security-platform.vercel.app' },
+        { id: 'aagiis_rmf', label: '🛡️ Aagiis — DoD RMF & DCSA NISP', badge: 'DoDI 8510.01', url: 'https://aagiis.com/' },
+        { id: 'expedite_strike_engine', label: '🎯 EXPEDITE STRIKE™ DAST Engine', badge: '/engine', url: 'https://11-dast-security-platform.vercel.app/engine' },
+        { id: 'dast_platform', label: '🌐 11-DAST Platform Landing', badge: 'Landing', url: 'https://11-dast-security-platform.vercel.app' },
+        { id: 'dstrike_main', label: '⚡ DSTRIKE Main App', badge: 'dstrike.app', url: 'https://dstrike.app' },
+        { id: 'dstrike_noctis', label: '🔮 DSTRIKE Prediction Desk', badge: '/noctis', url: 'https://dstrike.app/noctis' },
+        { id: 'expedite_official', label: '🏛️ Expedite Consults Official', badge: 'Portal', url: 'https://www.expediteconsults.com' },
+        { id: 'sphera_launchpad', label: '🚀 Sphera Production Launchpad', badge: 'Launchpad', url: 'https://sphera-portal.vercel.app' },
+        { id: 'desknote_cyber', label: '📓 DeskNote Pentest Notebook', badge: 'Live App', url: 'https://desk-note-lime.vercel.app/' },
         { id: 'exploit_platform', label: '🕸️ 14-Exploitability Attack Graph', badge: 'Live Graph', url: 'https://14-exploitability-platform.vercel.app' },
         { id: 'malware_platform', label: '🔬 16-Malware Analysis Sandbox', badge: 'Live Sandbox', url: 'https://16-malware-analysis-platform.vercel.app' },
         { id: 'ransomware_platform', label: '☣️ 17-Ransomware Recovery Console', badge: 'Live Recovery', url: 'https://17-ransomware-recovery-platform.vercel.app' },
         { id: 'cloud_cspm', label: '☁️ 19-Cloud Security CSPM', badge: 'Live CSPM', url: 'https://19-cloud-security-platform.vercel.app' },
-        { id: 'expedite_defense', label: '🏛️ Expedite Security Operations', badge: 'Portal', url: 'https://expedite-consults.vercel.app' },
         { id: 'careerorbit_cyber', label: '🪐 CareerOrbit Cyber Passport', badge: 'Live Orbit', url: 'https://careerorbit-standalone.vercel.app' },
         { id: 'vibetok_cyber', label: '🎥 VibeTok Cyber Labs', badge: 'Live Hub', url: 'https://vibetok-learning-hub.vercel.app' },
         { id: 'bounties', label: '🏆 High-Severity Bug Bounties', badge: '$25K-$50K' },
@@ -137,10 +144,13 @@ export function LeftSidebarProfile({
     if (effectiveEnclaveId === 'law_gov_defense') {
       return [
         ...adminShortcuts,
-        { id: 'aegis_rmf', label: '🛡️ Aegis RMF Continuous ATO', badge: 'Live cATO', url: 'https://aegis-rmf.vercel.app' },
+        { id: 'aegis_rmf', label: '🛡️ Aagiis — DoD RMF & DCSA NISP', badge: 'DoDI 8510.01', url: 'https://aagiis.com/' },
+        { id: 'expedite_strike_gov', label: '🎯 EXPEDITE STRIKE™ DAST Engine', badge: '/engine', url: 'https://11-dast-security-platform.vercel.app/engine' },
+        { id: 'dstrike_gov', label: '⚡ DSTRIKE & Noctis Desk', badge: 'dstrike.app', url: 'https://dstrike.app/noctis' },
+        { id: 'expedite_advisory', label: '🏛️ Expedite Consults Official', badge: 'Advisory', url: 'https://www.expediteconsults.com' },
+        { id: 'sphera_gov', label: '🚀 Sphera Production Launchpad', badge: 'Launchpad', url: 'https://sphera-portal.vercel.app' },
         { id: 'threat_modeling', label: '📐 15-Threat Modeling Suite', badge: 'Live STRIDE', url: 'https://15-threat-modeling-platform.vercel.app' },
         { id: 'secrets_vault', label: '🔐 07-Secrets Detection Platform', badge: 'Live Secrets', url: 'https://07-secrets-platform.vercel.app' },
-        { id: 'expedite_advisory', label: '🏛️ Expedite Defense Advisory', badge: 'Advisory', url: 'https://expedite-consults.vercel.app' },
         { id: 'sam_gov', label: '🏛️ Federal SAM.gov RFP Feed', badge: 'SAM.gov' },
         { id: 'cmmc_audit', label: '🛡️ CMMC 2.0 Audit Workspace', badge: 'Level 3' },
         { id: 'procurement', label: '🏢 Defense Procurement', badge: '$2.4M Spend' },
@@ -153,6 +163,8 @@ export function LeftSidebarProfile({
     if (effectiveEnclaveId === 'finance_accounting') {
       return [
         ...adminShortcuts,
+        { id: 'dstrike_fin', label: '🔮 DSTRIKE Noctis Prediction Desk', badge: '/noctis', url: 'https://dstrike.app/noctis' },
+        { id: 'desknote_fin', label: '📓 DeskNote Audit & Ledger Notes', badge: 'Live App', url: 'https://desk-note-lime.vercel.app/' },
         { id: 'gaap_ledger', label: '📑 GAAP Ledger Reconciler', badge: 'GAAP Ready' },
         { id: 'dcf_engine', label: '📈 Valuation DCF Engine', badge: 'Realtime' },
         { id: 'edgar_feed', label: '🏛️ SEC EDGAR 10-K Stream', badge: 'EDGAR Live' },
@@ -166,7 +178,7 @@ export function LeftSidebarProfile({
     if (effectiveEnclaveId === 'agriculture_natural_resources') {
       return [
         ...adminShortcuts,
-        { id: 'desknote_ag', label: '📓 DeskNote Field Notebook', badge: 'Live App', url: 'https://desk-note-kwesi-asiedus-projects.vercel.app' },
+        { id: 'desknote_ag', label: '📓 DeskNote Field Notebook', badge: 'Live App', url: 'https://desk-note-lime.vercel.app/' },
         { id: 'skillhands_ag', label: '🛠️ SkillHands Agronomy Hub', badge: 'Live App', url: 'https://skillhands-client.vercel.app' },
         { id: 'vibetok_ag', label: '🎥 VibeTok Ag & Farming', badge: 'Live Hub', url: 'https://vibetok-learning-hub.vercel.app' },
         { id: 'soil_iot', label: '🌱 Soil Sensor IoT & Irrigation', badge: 'Telemetry' },
@@ -184,7 +196,7 @@ export function LeftSidebarProfile({
         ...adminShortcuts,
         { id: 'bazaar_beauty', label: '🛍️ Bazaar Grooming Market', badge: 'Live Shop', url: 'https://bazaar-standalone.vercel.app' },
         { id: 'vibetok_wellness', label: '🎥 VibeTok Grooming & Fitness', badge: 'Live Hub', url: 'https://vibetok-learning-hub.vercel.app' },
-        { id: 'desknote_client', label: '📓 DeskNote Client Formula Ledger', badge: 'Live App', url: 'https://desk-note-kwesi-asiedus-projects.vercel.app' },
+        { id: 'desknote_client', label: '📓 DeskNote Client Formula Ledger', badge: 'Live App', url: 'https://desk-note-lime.vercel.app/' },
         { id: 'chair_booking', label: '💈 Chair & Studio Calendar', badge: 'Square Sync' },
         { id: 'strength_biomech', label: '🏋️ 1RM & Biomechanics Calc', badge: 'Kinematics' },
         { id: 'color_ratio', label: '🎨 Color Formulation Matrix', badge: 'Olaplex/Gold' },
@@ -199,7 +211,7 @@ export function LeftSidebarProfile({
         ...adminShortcuts,
         { id: 'bazaar_food', label: '🛍️ Bazaar Wholesale Pantry', badge: 'Wholesale', url: 'https://bazaar-standalone.vercel.app' },
         { id: 'vibetok_culinary', label: '🎥 VibeTok Culinary Masterclasses', badge: 'Live Hub', url: 'https://vibetok-learning-hub.vercel.app' },
-        { id: 'desknote_kitchen', label: '📓 DeskNote Kitchen Prep Logs', badge: 'Live App', url: 'https://desk-note-kwesi-asiedus-projects.vercel.app' },
+        { id: 'desknote_kitchen', label: '📓 DeskNote Kitchen Prep Logs', badge: 'Live App', url: 'https://desk-note-lime.vercel.app/' },
         { id: 'beo_manager', label: '📋 Banquet Event Orders (BEO)', badge: '14 Events' },
         { id: 'food_costing', label: '🍳 Food Cost & Portion Yield Calc', badge: 'Prime Cost' },
         { id: 'haccp_log', label: '🌡️ HACCP Critical Cold-Chain Log', badge: 'FDA ServSafe' },
@@ -213,7 +225,7 @@ export function LeftSidebarProfile({
       return [
         ...adminShortcuts,
         { id: 'bazaar_commerce', label: '🛍️ Bazaar Merchant Storefront', badge: 'Storefront', url: 'https://bazaar-standalone.vercel.app' },
-        { id: 'desknote_crm', label: '📓 DeskNote Client CRM Ledger', badge: 'Live App', url: 'https://desk-note-kwesi-asiedus-projects.vercel.app' },
+        { id: 'desknote_crm', label: '📓 DeskNote Client CRM Ledger', badge: 'Live App', url: 'https://desk-note-lime.vercel.app/' },
         { id: 'vibetok_retail', label: '🎥 VibeTok Merchant Academy', badge: 'Live Hub', url: 'https://vibetok-learning-hub.vercel.app' },
         { id: 'mls_feed', label: '🏡 Live MLS Property Stream', badge: 'MLS Direct' },
         { id: 'cap_rate', label: '📊 Commercial Cap Rate & NOI Calc', badge: 'Yield' },
@@ -228,7 +240,7 @@ export function LeftSidebarProfile({
       return [
         ...adminShortcuts,
         { id: 'vibetok_creative', label: '🎥 VibeTok Creator Hub', badge: 'Live Hub', url: 'https://vibetok-learning-hub.vercel.app' },
-        { id: 'desknote_script', label: '📓 DeskNote Storyboard & Script', badge: 'Live App', url: 'https://desk-note-kwesi-asiedus-projects.vercel.app' },
+        { id: 'desknote_script', label: '📓 DeskNote Storyboard & Script', badge: 'Live App', url: 'https://desk-note-lime.vercel.app/' },
         { id: 'careerorbit_creative', label: '🪐 CareerOrbit Artist Passport', badge: 'Live Orbit', url: 'https://careerorbit-standalone.vercel.app' },
         { id: 'atmos_desk', label: '🎧 Dolby Atmos Stems & Mixing Desk', badge: '7.1.4 Surround' },
         { id: 'lut_manager', label: '🎞️ ARRI / RED RAW LUT & Grade Lab', badge: 'DaVinci' },
@@ -243,7 +255,7 @@ export function LeftSidebarProfile({
       return [
         ...adminShortcuts,
         { id: 'vibetok_edu', label: '🎥 VibeTok Educational Video Hub', badge: 'Live Hub', url: 'https://vibetok-learning-hub.vercel.app' },
-        { id: 'desknote_tutor', label: '📓 DeskNote Student Diagnostic Logs', badge: 'Live App', url: 'https://desk-note-kwesi-asiedus-projects.vercel.app' },
+        { id: 'desknote_tutor', label: '📓 DeskNote Student Diagnostic Logs', badge: 'Live App', url: 'https://desk-note-lime.vercel.app/' },
         { id: 'careerorbit_apprentice', label: '🪐 CareerOrbit Apprenticeship Track', badge: 'Live Orbit', url: 'https://careerorbit-standalone.vercel.app' },
         { id: 'sat_act_rubric', label: '📚 SAT/ACT & Diagnostic Rubric', badge: 'College Board' },
         { id: 'apprentice_hours', label: '⏱️ OJT Apprenticeship Hours Log', badge: 'DoL Certified' },
@@ -257,7 +269,7 @@ export function LeftSidebarProfile({
     if (effectiveEnclaveId === 'community_civic_security') {
       return [
         ...adminShortcuts,
-        { id: 'desknote_civic', label: '📓 DeskNote Incident Log & Post Orders', badge: 'Live App', url: 'https://desk-note-kwesi-asiedus-projects.vercel.app' },
+        { id: 'desknote_civic', label: '📓 DeskNote Incident Log & Post Orders', badge: 'Live App', url: 'https://desk-note-lime.vercel.app/' },
         { id: 'careerorbit_vet', label: '🪐 CareerOrbit Veteran Transition Hub', badge: 'Live Orbit', url: 'https://careerorbit-standalone.vercel.app' },
         { id: 'vibetok_security', label: '🎥 VibeTok Physical Security Labs', badge: 'Live Hub', url: 'https://vibetok-learning-hub.vercel.app' },
         { id: 'perimeter_threat', label: '🛡️ Perimeter Access & Threat Matrix', badge: 'CCTV/Access' },
@@ -272,6 +284,12 @@ export function LeftSidebarProfile({
     // Default: Software Engineering & Cloud Infrastructure
     return [
       ...adminShortcuts,
+      { id: 'aagiis_dev', label: '🛡️ Aagiis — DoD RMF & DCSA NISP', badge: 'DoDI 8510.01', url: 'https://aagiis.com/' },
+      { id: 'expedite_strike_dev', label: '🎯 EXPEDITE STRIKE™ DAST Engine', badge: '/engine', url: 'https://11-dast-security-platform.vercel.app/engine' },
+      { id: 'dstrike_dev', label: '⚡ DSTRIKE & Noctis Desk', badge: 'dstrike.app', url: 'https://dstrike.app' },
+      { id: 'desknote_dev', label: '📓 DeskNote Dev Notebook', badge: 'Live App', url: 'https://desk-note-lime.vercel.app/' },
+      { id: 'expedite_portal_dev', label: '🏛️ Expedite Consults Portal', badge: 'Official', url: 'https://www.expediteconsults.com' },
+      { id: 'sphera_portal_dev', label: '🚀 Sphera Production Launchpad', badge: 'Launchpad', url: 'https://sphera-portal.vercel.app' },
       { id: 'sast_platform', label: '🔍 05-SAST Static Code Analyzer', badge: 'Live SAST', url: 'https://05-sast-platform.vercel.app' },
       { id: 'sca_platform', label: '📦 06-SCA AI-BOM Dependency Guard', badge: 'Live SCA', url: 'https://06-sca-platform.vercel.app' },
       { id: 'iac_platform', label: '☁️ 10-IaC Terraform Guard', badge: 'Live IaC', url: 'https://10-iac-security-platform.vercel.app' },

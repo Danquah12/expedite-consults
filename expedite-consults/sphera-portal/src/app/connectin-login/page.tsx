@@ -22,7 +22,7 @@ import {
 } from "lucide-react"
 import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
 import { DEMO_AUTH_PERSONAS, AuthPersona } from "@/components/linkedin/ConnectInAuthModal"
-import { saveStoredUser, saveStoredSessionRoute } from "@/lib/connectin-storage"
+import { saveStoredUser, saveStoredSessionRoute, getVaultProfileForUser } from "@/lib/connectin-storage"
 import { createUniqueUserProfile, resolveDisplayName, isSuperAdminUser } from "@/lib/connectin-profile"
 import { PROFESSION_ENCLAVES, findProfessionById, findEnclaveById, getProfessionsByEnclave } from "@/lib/connectin-professions"
 import { ProfessionSearchPopout } from "@/components/linkedin/ProfessionSearchPopout"
@@ -190,6 +190,11 @@ export default function ConnectInLoginPage() {
     try {
       const resolvedName = resolveDisplayName("", signInEmail)
       const verifyTarget = activeSignInTarget || (signInChannel === 'email' ? signInEmail : (signInPhone || signInEmail))
+      const vaultProfile = getVaultProfileForUser({ email: signInEmail, name: resolvedName })
+      const explicitProf = signInProfessionId !== "auto_detect" ? findProfessionById(signInProfessionId) : null
+      const vaultProf = (!explicitProf && vaultProfile?.professionId) ? findProfessionById(vaultProfile.professionId) : null
+      const selectedProf = explicitProf || vaultProf
+
       const res = await fetch("/api/connectin/auth/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -198,7 +203,12 @@ export default function ConnectInLoginPage() {
           email: signInEmail,
           phone: signInPhone,
           code,
-          name: resolvedName,
+          name: vaultProfile?.name || resolvedName,
+          professionId: selectedProf?.id || vaultProfile?.professionId,
+          profession: selectedProf?.title || vaultProfile?.profession,
+          professionCategory: selectedProf?.categoryName || vaultProfile?.professionCategory,
+          professionEnclave: selectedProf?.enclaveId || vaultProfile?.professionEnclave,
+          headline: explicitProf ? explicitProf.defaultHeadline : vaultProfile?.headline,
           otpChallengeToken
         })
       })
@@ -208,12 +218,11 @@ export default function ConnectInLoginPage() {
         throw new Error(data.error || "Invalid verification code.")
       }
 
-      const selectedProf = signInProfessionId !== "auto_detect" ? findProfessionById(signInProfessionId) : null
-      const effectiveProfessionId = selectedProf?.id || data.profile?.professionId
-      const effectiveEnclave = selectedProf?.enclaveId || data.profile?.professionEnclave
+      const effectiveProfessionId = selectedProf?.id || vaultProfile?.professionId || data.profile?.professionId
+      const effectiveEnclave = selectedProf?.enclaveId || vaultProfile?.professionEnclave || data.profile?.professionEnclave
 
       const baseProfile = data.profile || createUniqueUserProfile({
-        name: resolvedName,
+        name: vaultProfile?.name || resolvedName,
         email: signInEmail,
         role: "personal",
         professionId: effectiveProfessionId,
@@ -221,7 +230,7 @@ export default function ConnectInLoginPage() {
       })
 
       const generatedDomainProfile = selectedProf ? createUniqueUserProfile({
-        name: resolvedName,
+        name: vaultProfile?.name || resolvedName,
         email: signInEmail,
         professionId: selectedProf.id,
         professionEnclave: selectedProf.enclaveId,
@@ -230,19 +239,20 @@ export default function ConnectInLoginPage() {
 
       const profileToSave = {
         ...baseProfile,
+        ...(vaultProfile || {}),
         email: signInEmail,
-        id: data.profile?.userId || data.user?.id || data.profile?.id || baseProfile.id,
+        id: data.profile?.userId || data.user?.id || data.profile?.id || vaultProfile?.id || baseProfile.id,
         ...(selectedProf && generatedDomainProfile ? {
           profession: selectedProf.title,
           professionId: selectedProf.id,
           professionCategory: selectedProf.categoryName,
           professionEnclave: selectedProf.enclaveId,
-          headline: selectedProf.defaultHeadline,
-          experience: generatedDomainProfile.experience,
-          certifications: generatedDomainProfile.certifications,
-          skills: generatedDomainProfile.skills,
-          coverImage: generatedDomainProfile.coverImage,
-          about: generatedDomainProfile.about
+          headline: explicitProf ? selectedProf.defaultHeadline : (vaultProfile?.headline || selectedProf.defaultHeadline),
+          experience: (vaultProfile?.experience && vaultProfile.experience.length > 0 && !explicitProf) ? vaultProfile.experience : generatedDomainProfile.experience,
+          certifications: (vaultProfile?.certifications && vaultProfile.certifications.length > 0 && !explicitProf) ? vaultProfile.certifications : generatedDomainProfile.certifications,
+          skills: (vaultProfile?.skills && vaultProfile.skills.length > 0 && !explicitProf) ? vaultProfile.skills : generatedDomainProfile.skills,
+          coverImage: vaultProfile?.coverImage || generatedDomainProfile.coverImage,
+          about: (vaultProfile?.about && !explicitProf) ? vaultProfile.about : generatedDomainProfile.about
         } : {})
       }
 
@@ -431,7 +441,9 @@ export default function ConnectInLoginPage() {
         email: persona.email,
         role: persona.role,
         avatar: persona.avatar,
-        headline: persona.title
+        headline: persona.title,
+        professionId: persona.professionId,
+        professionEnclave: persona.professionEnclave
       })
 
       saveStoredUser(richProfile)
@@ -449,6 +461,8 @@ export default function ConnectInLoginPage() {
           lastName: cleanName.split(" ").slice(1).join(" "),
           email: persona.email,
           role: persona.role,
+          professionId: persona.professionId,
+          professionEnclave: persona.professionEnclave,
           twoFactorChannel: "email"
         })
       }).catch(() => {})

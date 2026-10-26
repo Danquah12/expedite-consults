@@ -60,11 +60,103 @@ function writeJsonMap<T>(storageKey: string, map: Record<string, T>) {
 
 export function isDefaultPlaceholderAvatar(url?: string | null): boolean {
   if (!url || typeof url !== 'string' || !url.trim()) return true
+  return url.includes('api.dicebear.com')
+}
+
+export function isKwesiAccount(user?: Partial<UserProfile> | null): boolean {
+  if (!user) return true
+  const email = String((user as any).email || '').toLowerCase().trim()
+  const name = String(user.name || '').toLowerCase().trim()
+  if (!email && !name) return true
   return (
-    url.includes('api.dicebear.com') ||
-    url.includes('photo-1507003211169-0a1dd7228f2d') ||
-    url.includes('photo-1534528741775-53994a69daeb')
+    email === 'kasiedu@expedite-consults.com' ||
+    email === 'asiedudanquah@gmail.com' ||
+    email.includes('kasiedu') ||
+    email.includes('asiedudanquah') ||
+    name.includes('kwesi asiedu') ||
+    name.includes('emmanuel asiedu')
   )
+}
+
+export function getDefaultPortraitForUser(user?: Partial<UserProfile> | null): string {
+  if (!user || isKwesiAccount(user)) {
+    return '/brand/kwesi-avatar.png'
+  }
+  const cleanName = String(user.name || '').toLowerCase().trim()
+  const cleanEmail = String((user as any).email || '').toLowerCase().trim()
+  const enclaveId = String(user.professionEnclave || '').toLowerCase().trim()
+  const professionId = String(user.professionId || user.profession || '').toLowerCase().trim()
+
+  if (cleanName.includes('robert hayes') || cleanEmail.includes('robert.hayes') || cleanEmail === 'sec-admin@connectin.internal') {
+    return 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80'
+  }
+  if (cleanName.includes('alex taylor') || cleanEmail.includes('alex.taylor')) {
+    return 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80'
+  }
+  if (cleanName.includes('elena rostova') || cleanEmail.includes('elena.nurse')) {
+    return 'https://images.unsplash.com/photo-1594824813571-638f02614d3f?w=400&auto=format&fit=crop&q=80'
+  }
+  if (cleanName.includes('angela vance') || cleanEmail.includes('angela.vance')) {
+    return 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&auto=format&fit=crop&q=80'
+  }
+  if (cleanName.includes('david miller') || cleanEmail.includes('david.miller') || cleanName.includes('yaw appiah')) {
+    return 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=400&auto=format&fit=crop&q=80'
+  }
+  if (cleanName.includes('marcus miller') || cleanEmail.includes('marcus.mechanic')) {
+    return 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=400&auto=format&fit=crop&q=80'
+  }
+  if (cleanName.includes('tariq') || cleanEmail.includes('tariq.cyber')) {
+    return 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80'
+  }
+  if (cleanName.includes('kowalski') || cleanEmail.includes('kowalski')) {
+    return 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80'
+  }
+
+  if (enclaveId === 'trades_construction' || professionId.includes('welder') || professionId.includes('carpenter') || professionId.includes('electrician') || professionId.includes('plumber')) {
+    return 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=400&auto=format&fit=crop&q=80'
+  }
+  if (enclaveId === 'automotive_mechanics' || professionId.includes('mechanic') || professionId.includes('diesel')) {
+    return 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=400&auto=format&fit=crop&q=80'
+  }
+  if (enclaveId === 'healthcare_medicine') {
+    return professionId.includes('nurse')
+      ? 'https://images.unsplash.com/photo-1594824813571-638f02614d3f?w=400&auto=format&fit=crop&q=80'
+      : 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&auto=format&fit=crop&q=80'
+  }
+  if (enclaveId === 'tech_cybersecurity') {
+    return 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80'
+  }
+  if (enclaveId === 'tech_software') {
+    return 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&auto=format&fit=crop&q=80'
+  }
+  if (enclaveId === 'law_gov_defense') {
+    return 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&auto=format&fit=crop&q=80'
+  }
+  if (enclaveId === 'finance_accounting') {
+    return 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80'
+  }
+  if (enclaveId === 'agriculture_natural_resources') {
+    return 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80'
+  }
+  if (enclaveId === 'personal_services_wellness') {
+    return 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80'
+  }
+  if (enclaveId === 'culinary_hospitality_events') {
+    return 'https://images.unsplash.com/photo-1583394838336-acd977736f90?w=400&auto=format&fit=crop&q=80'
+  }
+  if (enclaveId === 'commerce_small_business') {
+    return 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=400&auto=format&fit=crop&q=80'
+  }
+  if (enclaveId === 'creative_media_arts') {
+    return 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&auto=format&fit=crop&q=80'
+  }
+  if (enclaveId === 'education_workforce') {
+    return 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=400&auto=format&fit=crop&q=80'
+  }
+  if (enclaveId === 'community_civic_security') {
+    return 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80'
+  }
+  return 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=400&auto=format&fit=crop&q=80'
 }
 
 export function isDefaultPlaceholderCover(url?: string | null): boolean {
@@ -76,13 +168,18 @@ export function savePersistentAvatar(avatarUrl: string, user?: Partial<UserProfi
   if (typeof window === 'undefined' || !avatarUrl) return
   try {
     const targetUser = user || getRawCurrentStoredUser()
+    if (!isKwesiAccount(targetUser) && avatarUrl === '/brand/kwesi-avatar.png') {
+      return
+    }
     const keys = getAccountKeysForUser(targetUser)
     if (keys.length > 0) {
       const avatarMap = readJsonMap<string>(STORAGE_KEYS.AVATAR_MAP)
       keys.forEach(k => { avatarMap[k] = avatarUrl })
       writeJsonMap(STORAGE_KEYS.AVATAR_MAP, avatarMap)
     }
-    localStorage.setItem(STORAGE_KEYS.AVATAR, avatarUrl)
+    if (isKwesiAccount(targetUser)) {
+      localStorage.setItem(STORAGE_KEYS.AVATAR, avatarUrl)
+    }
   } catch (e) {
     console.error('Failed to save persistent avatar', e)
   }
@@ -92,18 +189,23 @@ export function loadPersistentAvatar(user?: Partial<UserProfile> | null): string
   if (typeof window === 'undefined') return null
   try {
     const targetUser = user || getRawCurrentStoredUser()
+    const isKwesi = isKwesiAccount(targetUser)
     const keys = getAccountKeysForUser(targetUser)
     if (keys.length > 0) {
       const avatarMap = readJsonMap<string>(STORAGE_KEYS.AVATAR_MAP)
       for (const k of keys) {
-        if (avatarMap[k] && !isDefaultPlaceholderAvatar(avatarMap[k])) {
-          return avatarMap[k]
+        const candidate = avatarMap[k]
+        if (candidate && !isDefaultPlaceholderAvatar(candidate)) {
+          if (!isKwesi && candidate === '/brand/kwesi-avatar.png') continue
+          return candidate
         }
       }
     }
-    const directSaved = localStorage.getItem(STORAGE_KEYS.AVATAR)
-    if (directSaved && !isDefaultPlaceholderAvatar(directSaved)) {
-      return directSaved
+    if (isKwesi) {
+      const directSaved = localStorage.getItem(STORAGE_KEYS.AVATAR)
+      if (directSaved && !isDefaultPlaceholderAvatar(directSaved)) {
+        return directSaved
+      }
     }
     return null
   } catch {
@@ -112,25 +214,34 @@ export function loadPersistentAvatar(user?: Partial<UserProfile> | null): string
 }
 
 export function resolveUserProfilePicture(user?: Partial<UserProfile> | null, fallbackUrl?: string | null): string {
+  const targetUser = user || getRawCurrentStoredUser()
+  const isKwesi = isKwesiAccount(targetUser)
+
   // 1. If user has a custom data:image/ photo directly on the object, use it immediately
-  if (user?.avatar && user.avatar.startsWith('data:image/')) {
-    return user.avatar
+  if (targetUser?.avatar && targetUser.avatar.startsWith('data:image/')) {
+    return targetUser.avatar
   }
-  // 2. Check persistent avatar storage for this user
-  const persistent = loadPersistentAvatar(user)
+  // 2. Check persistent avatar storage strictly for this user
+  const persistent = loadPersistentAvatar(targetUser)
   if (persistent && !isDefaultPlaceholderAvatar(persistent)) {
-    return persistent
+    if (isKwesi || persistent !== '/brand/kwesi-avatar.png') {
+      return persistent
+    }
   }
-  // 3. Check user.avatar if not a generic placeholder
-  if (user?.avatar && !isDefaultPlaceholderAvatar(user.avatar)) {
-    return user.avatar
+  // 3. Check user.avatar if not a generic placeholder (and not stale kwesi-avatar for non-Kwesi user)
+  if (targetUser?.avatar && !isDefaultPlaceholderAvatar(targetUser.avatar)) {
+    if (isKwesi || targetUser.avatar !== '/brand/kwesi-avatar.png') {
+      return targetUser.avatar
+    }
   }
-  // 4. Check fallbackUrl if not a generic placeholder
+  // 4. Check fallbackUrl if not a generic placeholder (and not stale kwesi-avatar for non-Kwesi user)
   if (fallbackUrl && !isDefaultPlaceholderAvatar(fallbackUrl)) {
-    return fallbackUrl
+    if (isKwesi || fallbackUrl !== '/brand/kwesi-avatar.png') {
+      return fallbackUrl
+    }
   }
-  // 5. Guaranteed portrait fallback (blue-ringed user profile portrait)
-  return '/brand/kwesi-avatar.png'
+  // 5. Return the user's appropriate default portrait based on who is logged in
+  return getDefaultPortraitForUser(targetUser)
 }
 
 export function savePersistentCover(coverUrl: string, user?: Partial<UserProfile> | null) {
@@ -274,17 +385,24 @@ export function getExplicitStoredUser(): UserProfile | null {
       const persistentAvatar = loadPersistentAvatar({ ...merged, email })
       const persistentCover = loadPersistentCover({ ...merged, email })
 
-      // Prioritize custom uploaded avatar strictly for this user account, with /brand/kwesi-avatar.png as portrait fallback
+      // Prioritize custom uploaded avatar strictly for this user account, with profession-aware portrait fallback
+      const validMergedAvatar = !isDefaultPlaceholderAvatar(merged.avatar) && (isKwesi || merged.avatar !== '/brand/kwesi-avatar.png')
+        ? merged.avatar
+        : null
+      const validVaultAvatar = !isDefaultPlaceholderAvatar(vaultEntry?.avatar) && (isKwesi || vaultEntry?.avatar !== '/brand/kwesi-avatar.png')
+        ? vaultEntry!.avatar!
+        : null
+
       const resolvedAvatar =
         (merged.avatar && merged.avatar.startsWith('data:image/'))
           ? merged.avatar
           : persistentAvatar
           ? persistentAvatar
-          : !isDefaultPlaceholderAvatar(merged.avatar)
-          ? merged.avatar
-          : !isDefaultPlaceholderAvatar(vaultEntry?.avatar)
-          ? vaultEntry!.avatar!
-          : '/brand/kwesi-avatar.png'
+          : validMergedAvatar
+          ? validMergedAvatar
+          : validVaultAvatar
+          ? validVaultAvatar
+          : getDefaultPortraitForUser({ ...merged, email })
 
       const resolvedCover = !isDefaultPlaceholderCover(merged.coverImage)
         ? merged.coverImage

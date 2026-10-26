@@ -148,9 +148,19 @@ export function MarketplaceView({
     // 1. Strict Enclave Least-Privilege Isolation
     // Only apply enclave restriction when in 'Discover' without search query and when showAllEcosystem is false
     const isGlobalCategory = ['Cybersecurity', 'Launchpad', 'Software', 'AI', 'Cloud', 'Training', 'Enterprise', 'Solutions', 'Sphera', 'Deals'].includes(selectedMainCategory)
-    const isFeaturedGlobalApp = p.id === 'prod_expedite_ecosystem_launchpad' || p.id === 'prod_pdfadore_suite'
+    const isFeaturedGlobalApp =
+      p.id === 'prod_expedite_ecosystem_launchpad' ||
+      p.id === 'prod_aagiis_federal_rmf' ||
+      p.id === 'prod_expedite_strike_dast_engine' ||
+      p.id === 'prod_expedite_strike_dast_landing' ||
+      p.id === 'prod_dstrike_main_app' ||
+      p.id === 'prod_dstrike_noctis_platform' ||
+      p.id === 'prod_desknote_lime_live' ||
+      p.id === 'prod_expedite_consults_official_portal' ||
+      p.id === 'prod_sphera_production_launchpad' ||
+      p.id === 'prod_pdfadore_suite'
 
-    if (!showAllEcosystem && !searchQuery.trim() && !isGlobalCategory && !isFeaturedGlobalApp) {
+    if (!showAllEcosystem && !searchQuery.trim() && !isGlobalCategory && !isFeaturedGlobalApp && selectedSubCategory === 'All') {
       if (userEnclave === 'trades_construction') {
         if (p.professionEnclave && p.professionEnclave !== 'trades_construction') return false
         if (!p.professionEnclave && !['Tools & Joinery', 'CAD & Measurement', 'Lumber & Materials', 'Hardware', 'Trades & Vocational Network', 'Productivity & Field Notes', 'Trade Machinery & Commerce', 'Video Masterclasses & Tutorials'].includes(p.subCategory)) return false
@@ -178,24 +188,79 @@ export function MarketplaceView({
     else if (selectedMainCategory === 'Training') matchCategory = p.category === 'Training'
     else if (selectedMainCategory === 'Enterprise') matchCategory = p.category === 'Enterprise Solutions'
     else if (selectedMainCategory === 'Cybersecurity') {
-      matchCategory = p.subCategory.toLowerCase().includes('cyber') || 
-                      p.overview.toLowerCase().includes('security') || 
-                      p.name.toLowerCase().includes('strike') || 
-                      p.name.toLowerCase().includes('aegis') || 
-                      p.name.toLowerCase().includes('sast') || 
+      matchCategory = p.subCategory.toLowerCase().includes('cyber') ||
+                      p.subCategory.toLowerCase().includes('dast') ||
+                      p.subCategory.toLowerCase().includes('rmf') ||
+                      p.subCategory.toLowerCase().includes('security') ||
+                      p.overview.toLowerCase().includes('security') ||
+                      p.name.toLowerCase().includes('strike') ||
+                      p.name.toLowerCase().includes('aagiis') ||
+                      p.name.toLowerCase().includes('aegis') ||
+                      p.name.toLowerCase().includes('sast') ||
                       p.name.toLowerCase().includes('axiom') ||
                       p.launchpadCategory === 'security' ||
                       p.launchpadCategory === 'orchestration'
     }
-    else if (selectedMainCategory === 'AI') matchCategory = p.subCategory.toLowerCase().includes('ai') || p.overview.toLowerCase().includes('ai')
+    else if (selectedMainCategory === 'AI') {
+      matchCategory = p.subCategory.toLowerCase().includes('ai') ||
+                      p.subCategory.toLowerCase().includes('prediction') ||
+                      p.overview.toLowerCase().includes('ai') ||
+                      p.name.toLowerCase().includes('noctis') ||
+                      p.launchpadCategory === 'ai'
+    }
     else if (selectedMainCategory === 'Cloud') matchCategory = p.subCategory.toLowerCase().includes('cloud') || p.overview.toLowerCase().includes('cloud')
     else if (selectedMainCategory === 'Deals') matchCategory = p.pricing.hasFreeTrial || p.badge?.includes('Featured') || false
 
-    const matchSubCategory = selectedSubCategory === 'All' || selectedSubCategory.startsWith('All') || p.subCategory === selectedSubCategory
+    let matchSubCategory = true
+    if (selectedSubCategory === 'All' || selectedSubCategory.startsWith('All')) {
+      matchSubCategory = true
+    } else if (selectedSubCategory === 'Compliance_RMF') {
+      matchSubCategory =
+        p.id === 'prod_aagiis_federal_rmf' ||
+        p.id === 'prod_aegis_rmf' ||
+        p.subCategory.toLowerCase().includes('compliance') ||
+        p.subCategory.toLowerCase().includes('rmf') ||
+        p.subCategory.toLowerCase().includes('cato')
+    } else if (selectedSubCategory === 'DAST_Offensive') {
+      matchSubCategory =
+        p.id === 'prod_expedite_strike_dast_engine' ||
+        p.id === 'prod_expedite_strike_dast_landing' ||
+        p.id === 'prod_11_dast' ||
+        p.id === 'prod_05_sast' ||
+        p.subCategory.toLowerCase().includes('dast') ||
+        p.subCategory.toLowerCase().includes('web interface') ||
+        p.name.toLowerCase().includes('dast')
+    } else if (selectedSubCategory === 'Cyber_Prediction') {
+      matchSubCategory =
+        p.id === 'prod_dstrike_main_app' ||
+        p.id === 'prod_dstrike_noctis_platform' ||
+        p.id === 'prod_axiom' ||
+        p.name.toLowerCase().includes('dstrike') ||
+        p.name.toLowerCase().includes('noctis') ||
+        p.subCategory.toLowerCase().includes('prediction')
+    } else if (selectedSubCategory === 'Productivity_Notes') {
+      matchSubCategory =
+        p.id === 'prod_desknote_lime_live' ||
+        p.id === 'prod_desknote' ||
+        p.id === 'prod_pdfadore_suite' ||
+        p.subCategory.toLowerCase().includes('productivity') ||
+        p.subCategory.toLowerCase().includes('field notes')
+    } else if (selectedSubCategory === 'Portals_Launchpads') {
+      matchSubCategory =
+        p.id === 'prod_expedite_consults_official_portal' ||
+        p.id === 'prod_sphera_production_launchpad' ||
+        p.id === 'prod_expedite_ecosystem_launchpad' ||
+        p.id === 'prod_aegis_mission_control' ||
+        p.launchpadCategory === 'orchestration'
+    } else {
+      matchSubCategory = p.subCategory === selectedSubCategory
+    }
+
     const matchSearch = !searchQuery || (
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.tagline.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.overview.toLowerCase().includes(searchQuery.toLowerCase())
+      p.overview.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.subCategory.toLowerCase().includes(searchQuery.toLowerCase())
     )
     return matchCategory && matchSubCategory && matchSearch
   })
@@ -280,9 +345,10 @@ export function MarketplaceView({
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-24">
-      {/* 1. TOP MARKETPLACE BANNER */}
-      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+      {/* 1. TOP MARKETPLACE BANNER & FLAGSHIP CARDS GRID */}
+      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs space-y-5">
+        {/* Header Row */}
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="rounded-full bg-blue-50 dark:bg-blue-950/50 px-3 py-0.5 text-xs font-semibold text-[#0A66C2] dark:text-sky-300 border border-blue-200/60 dark:border-blue-800/60 flex items-center gap-1.5">
@@ -296,16 +362,16 @@ export function MarketplaceView({
 
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
               {userEnclave === 'trades_construction'
-                ? "Skilled Trades Tools, CAD Equipment & Materials"
+                ? "Skilled Trades Tools, CAD Equipment & Enterprise Platforms"
                 : userEnclave === 'healthcare_medicine'
                 ? "Clinical Diagnostic Devices, Surgical Sets & Solutions"
                 : userEnclave === 'automotive_mechanics'
                 ? "Diagnostic Scan Tools, Lab Scopes & Shop Equipment"
                 : "Discover Tools, Products & Enterprise Solutions"}
             </h1>
-            <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-2xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-3xl leading-relaxed">
               {userEnclave === 'trades_construction'
-                ? "Procure verified trade tools, CAD equipment, lumber indices, joinery jigs, and OSHA-compliant safety gear."
+                ? "Procure verified trade tools, CAD equipment, lumber indices, joinery jigs, and enterprise security & productivity suites."
                 : userEnclave === 'healthcare_medicine'
                 ? "Procure clinical ultrasound devices, rapid infusion systems, orthopedic hardware, and verified medical supplies."
                 : userEnclave === 'automotive_mechanics'
@@ -314,34 +380,14 @@ export function MarketplaceView({
             </p>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0 flex-wrap">
-            <a
-              href="https://expedite-consults.vercel.app/launchpad"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white px-4 py-2 text-xs font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer transition-all"
-            >
-              <Sparkles className="h-3.5 w-3.5 text-amber-300" />
-              <span>Ecosystem Launchpad (67+ Apps) ↗</span>
-            </a>
-
-            <a
-              href="https://www.pdfadore.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-full bg-rose-600 hover:bg-rose-500 text-white px-4 py-2 text-xs font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer transition-all"
-            >
-              <span>📄</span>
-              <span>PDFAdore (31+ PDF Tools) ↗</span>
-            </a>
-
+          <div className="flex items-center gap-2 flex-wrap shrink-0">
             <button
               type="button"
               onClick={() => {
                 setSelectedMainCategory('Launchpad')
                 setSelectedSubCategory('All')
               }}
-              className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white px-4 py-2 text-xs font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer transition-colors"
+              className="rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white px-3.5 py-2 text-xs font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer transition-colors"
             >
               <Sparkles className="h-3.5 w-3.5" />
               <span>Launchpad Fleet Catalog</span>
@@ -350,7 +396,7 @@ export function MarketplaceView({
             <button
               type="button"
               onClick={() => setSelectedMainCategory('Solutions')}
-              className="rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 px-4 py-2 text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+              className="rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 px-3.5 py-2 text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
             >
               <Zap className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
               <span>Solutions Hub</span>
@@ -359,7 +405,7 @@ export function MarketplaceView({
             <button
               type="button"
               onClick={() => setIsVendorModalOpen(true)}
-              className="rounded-full bg-purple-50 dark:bg-purple-950/50 hover:bg-purple-100 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 px-4 py-2 text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+              className="rounded-xl bg-purple-50 dark:bg-purple-950/50 hover:bg-purple-100 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 px-3.5 py-2 text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
             >
               <PlusCircle className="h-3.5 w-3.5" />
               <span>List Product / Service</span>
@@ -367,9 +413,373 @@ export function MarketplaceView({
           </div>
         </div>
 
-        {/* Master Category Tabs */}
-        <div className="mt-5 pt-3.5 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs scrollbar-none w-full">
+        {/* FEATURED PLATFORMS IN CARDS (ALL 8 VISIBLE IN A RESPONSIVE CARD GRID — NOTHING HIDDEN) */}
+        <div className="space-y-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2">
+              <span className="rounded-md bg-[#0A66C2]/10 text-[#0A66C2] dark:text-sky-400 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider">
+                📂 Categorized Flagship Platforms (8 Live Cards)
+              </span>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                Every platform organized into dedicated cards with direct launch buttons
+              </span>
+            </div>
+            {selectedSubCategory !== 'All' && (
+              <button
+                type="button"
+                onClick={() => setSelectedSubCategory('All')}
+                className="text-xs font-bold text-[#0A66C2] hover:underline cursor-pointer"
+              >
+                Show All Categories ✕
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            {/* Card 1: Aagiis — Federal Compliance & DoD RMF */}
+            <div className="rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/40 dark:bg-emerald-950/20 p-3.5 flex flex-col justify-between space-y-3 shadow-2xs hover:shadow-md transition-all">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-1.5">
+                  <span className="rounded-md bg-emerald-600 text-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                    1. Federal Compliance &amp; RMF
+                  </span>
+                  <span className="text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-300">
+                    DoDI 8510.01
+                  </span>
+                </div>
+                <div className="flex items-start gap-2 pt-0.5">
+                  <span className="text-xl shrink-0">🛡️</span>
+                  <div>
+                    <h3 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 leading-snug">
+                      Aagiis — Federal Compliance Solutions
+                    </h3>
+                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-0.5">
+                      DoD RMF &amp; DCSA NISP Platform (DoDI 8510.01), Continuous ATO (cATO), eMASS &amp; NIST 800-53 Rev 5.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="pt-2 border-t border-emerald-200/60 dark:border-emerald-800/50 flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedSubCategory('Compliance_RMF')}
+                  className="text-[11px] font-semibold text-emerald-800 dark:text-emerald-300 hover:underline cursor-pointer"
+                >
+                  Filter Category
+                </button>
+                <a
+                  href="https://aagiis.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
+                >
+                  <span>Launch aagiis.com ↗</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Card 2: EXPEDITE STRIKE™ — DAST Engine (/engine) */}
+            <div className="rounded-xl border border-red-200 dark:border-red-900/60 bg-red-50/40 dark:bg-red-950/20 p-3.5 flex flex-col justify-between space-y-3 shadow-2xs hover:shadow-md transition-all">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-1.5">
+                  <span className="rounded-md bg-red-600 text-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                    2. DAST &amp; Vulnerability Engine
+                  </span>
+                  <span className="text-[10px] font-mono font-bold text-red-700 dark:text-red-300">
+                    XTRIKE · /engine
+                  </span>
+                </div>
+                <div className="flex items-start gap-2 pt-0.5">
+                  <span className="text-xl shrink-0">🎯</span>
+                  <div>
+                    <h3 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 leading-snug">
+                      EXPEDITE STRIKE™ — DAST Engine Dashboard
+                    </h3>
+                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-0.5">
+                      XTRIKE &amp; Aegis.SOC live DAST Engine &amp; Vulnerability Scanner Dashboard for web &amp; API targets.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="pt-2 border-t border-red-200/60 dark:border-red-800/50 flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedSubCategory('DAST_Offensive')}
+                  className="text-[11px] font-semibold text-red-800 dark:text-red-300 hover:underline cursor-pointer"
+                >
+                  Filter Category
+                </button>
+                <a
+                  href="https://11-dast-security-platform.vercel.app/engine"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-lg bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
+                >
+                  <span>Open DAST /engine ↗</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Card 3: EXPEDITE STRIKE™ — Main Platform Landing Page */}
+            <div className="rounded-xl border border-orange-200 dark:border-orange-900/60 bg-orange-50/40 dark:bg-orange-950/20 p-3.5 flex flex-col justify-between space-y-3 shadow-2xs hover:shadow-md transition-all">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-1.5">
+                  <span className="rounded-md bg-orange-600 text-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                    2. Web Interface Security
+                  </span>
+                  <span className="text-[10px] font-mono font-bold text-orange-700 dark:text-orange-300">
+                    OWASP Top 10
+                  </span>
+                </div>
+                <div className="flex items-start gap-2 pt-0.5">
+                  <span className="text-xl shrink-0">🌐</span>
+                  <div>
+                    <h3 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 leading-snug">
+                      EXPEDITE STRIKE™ — Main Platform Landing
+                    </h3>
+                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-0.5">
+                      Main DAST &amp; Web Interface Security Platform command portal, architecture specs &amp; compliance matrix.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="pt-2 border-t border-orange-200/60 dark:border-orange-800/50 flex items-center justify-between gap-2">
+                <a
+                  href="https://11-dast-security-platform.vercel.app/engine"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[11px] font-semibold text-orange-800 dark:text-orange-300 hover:underline"
+                >
+                  Engine ↗
+                </a>
+                <a
+                  href="https://11-dast-security-platform.vercel.app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-lg bg-orange-600 hover:bg-orange-700 text-white px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
+                >
+                  <span>Main Landing Page ↗</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Card 4: DSTRIKE — Main App */}
+            <div className="rounded-xl border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/40 dark:bg-indigo-950/20 p-3.5 flex flex-col justify-between space-y-3 shadow-2xs hover:shadow-md transition-all">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-1.5">
+                  <span className="rounded-md bg-indigo-700 text-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                    3. Autonomous Cyber Defense
+                  </span>
+                  <span className="text-[10px] font-mono font-bold text-indigo-700 dark:text-indigo-300">
+                    dstrike.app
+                  </span>
+                </div>
+                <div className="flex items-start gap-2 pt-0.5">
+                  <span className="text-xl shrink-0">⚡</span>
+                  <div>
+                    <h3 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 leading-snug">
+                      DSTRIKE — Main App
+                    </h3>
+                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-0.5">
+                      Autonomous cyber defense, attack surface management, and continuous threat telemetry platform.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="pt-2 border-t border-indigo-200/60 dark:border-indigo-800/50 flex items-center justify-between gap-2">
+                <a
+                  href="https://dstrike.app/noctis"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[11px] font-semibold text-indigo-800 dark:text-indigo-300 hover:underline"
+                >
+                  Noctis Desk ↗
+                </a>
+                <a
+                  href="https://dstrike.app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-lg bg-indigo-700 hover:bg-indigo-800 text-white px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
+                >
+                  <span>Launch dstrike.app ↗</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Card 5: DSTRIKE Prediction Desk (Noctis) */}
+            <div className="rounded-xl border border-violet-200 dark:border-violet-900/60 bg-violet-50/40 dark:bg-violet-950/20 p-3.5 flex flex-col justify-between space-y-3 shadow-2xs hover:shadow-md transition-all">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-1.5">
+                  <span className="rounded-md bg-violet-700 text-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                    3. Threat Prediction Desk
+                  </span>
+                  <span className="text-[10px] font-mono font-bold text-violet-700 dark:text-violet-300">
+                    /noctis
+                  </span>
+                </div>
+                <div className="flex items-start gap-2 pt-0.5">
+                  <span className="text-xl shrink-0">🔮</span>
+                  <div>
+                    <h3 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 leading-snug">
+                      DSTRIKE Prediction Desk (Noctis)
+                    </h3>
+                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-0.5">
+                      Probabilistic cyber threat forecasting, zero-day exploit probability curves &amp; geopolitical risk modeling.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="pt-2 border-t border-violet-200/60 dark:border-violet-800/50 flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedSubCategory('Cyber_Prediction')}
+                  className="text-[11px] font-semibold text-violet-800 dark:text-violet-300 hover:underline cursor-pointer"
+                >
+                  Filter Category
+                </button>
+                <a
+                  href="https://dstrike.app/noctis"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-lg bg-violet-700 hover:bg-violet-800 text-white px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
+                >
+                  <span>Open /noctis ↗</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Card 6: DeskNote — Productivity & Field Notes */}
+            <div className="rounded-xl border border-lime-300 dark:border-lime-900/60 bg-lime-50/40 dark:bg-lime-950/20 p-3.5 flex flex-col justify-between space-y-3 shadow-2xs hover:shadow-md transition-all">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-1.5">
+                  <span className="rounded-md bg-lime-700 text-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                    4. Productivity &amp; Field Notes
+                  </span>
+                  <span className="text-[10px] font-mono font-bold text-lime-800 dark:text-lime-300">
+                    E2EE Notebook
+                  </span>
+                </div>
+                <div className="flex items-start gap-2 pt-0.5">
+                  <span className="text-xl shrink-0">📓</span>
+                  <div>
+                    <h3 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 leading-snug">
+                      DeskNote — Productivity Workspace
+                    </h3>
+                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-0.5">
+                      Tactile multi-subject digital notebook with voice notes, sketch canvas, punch-lists &amp; AES-256 encryption.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="pt-2 border-t border-lime-200/60 dark:border-lime-800/50 flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedSubCategory('Productivity_Notes')}
+                  className="text-[11px] font-semibold text-lime-800 dark:text-lime-300 hover:underline cursor-pointer"
+                >
+                  Filter Category
+                </button>
+                <a
+                  href="https://desk-note-lime.vercel.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-lg bg-lime-700 hover:bg-lime-800 text-white px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
+                >
+                  <span>Launch DeskNote ↗</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Card 7: Expedite Consults — Official Enterprise Portal */}
+            <div className="rounded-xl border border-sky-200 dark:border-sky-900/60 bg-sky-50/40 dark:bg-sky-950/20 p-3.5 flex flex-col justify-between space-y-3 shadow-2xs hover:shadow-md transition-all">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-1.5">
+                  <span className="rounded-md bg-[#0A66C2] text-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                    5. Enterprise Advisory Portal
+                  </span>
+                  <span className="text-[10px] font-mono font-bold text-[#0A66C2] dark:text-sky-300">
+                    Official HQ
+                  </span>
+                </div>
+                <div className="flex items-start gap-2 pt-0.5">
+                  <span className="text-xl shrink-0">🏛️</span>
+                  <div>
+                    <h3 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 leading-snug">
+                      Expedite Consults — Official Portal
+                    </h3>
+                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-0.5">
+                      Enterprise Cyber, AI &amp; Federal Advisory headquarters for DevSecOps, Zero Trust &amp; executive retainers.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="pt-2 border-t border-sky-200/60 dark:border-sky-800/50 flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedSubCategory('Portals_Launchpads')}
+                  className="text-[11px] font-semibold text-[#0A66C2] dark:text-sky-300 hover:underline cursor-pointer"
+                >
+                  Filter Category
+                </button>
+                <a
+                  href="https://www.expediteconsults.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-lg bg-[#0A66C2] hover:bg-[#004182] text-white px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
+                >
+                  <span>expediteconsults.com ↗</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Card 8: Sphera Portal — Live Production Launchpad */}
+            <div className="rounded-xl border border-purple-200 dark:border-purple-900/60 bg-purple-50/40 dark:bg-purple-950/20 p-3.5 flex flex-col justify-between space-y-3 shadow-2xs hover:shadow-md transition-all">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-1.5">
+                  <span className="rounded-md bg-purple-700 text-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                    5. Production Launchpad
+                  </span>
+                  <span className="text-[10px] font-mono font-bold text-purple-700 dark:text-purple-300">
+                    Cloud OS
+                  </span>
+                </div>
+                <div className="flex items-start gap-2 pt-0.5">
+                  <span className="text-xl shrink-0">🚀</span>
+                  <div>
+                    <h3 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 leading-snug">
+                      Sphera Portal — Production Launchpad
+                    </h3>
+                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-0.5">
+                      Live multi-enclave Cloud OS hosting ConnectLn, Career Passport, Bazaar Marketplace &amp; Campus Hubs.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="pt-2 border-t border-purple-200/60 dark:border-purple-800/50 flex items-center justify-between gap-2">
+                <a
+                  href="https://www.pdfadore.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[11px] font-semibold text-purple-800 dark:text-purple-300 hover:underline"
+                >
+                  PDFAdore ↗
+                </a>
+                <a
+                  href="https://sphera-portal.vercel.app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-lg bg-purple-700 hover:bg-purple-800 text-white px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
+                >
+                  <span>sphera-portal ↗</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Master Category Tabs (Wrapped cleanly into cards/pills so none are hidden off-screen) */}
+        <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 space-y-2.5">
+          <div className="flex items-center gap-1.5 flex-wrap text-xs">
             {marketplaceTabs.map((cat: any) => {
               const isSelected = selectedMainCategory === cat.id
               return (
@@ -380,7 +790,7 @@ export function MarketplaceView({
                     setSelectedMainCategory(cat.id as any)
                     setSelectedSubCategory('All')
                   }}
-                  className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
+                  className={`rounded-xl px-3.5 py-2 text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
                     isSelected
                       ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
                       : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700 border border-zinc-200/70 dark:border-zinc-700/70"
@@ -391,31 +801,32 @@ export function MarketplaceView({
               )
             })}
           </div>
-        </div>
 
-        {/* QUICK SOLUTIONS ACTION BAR */}
-        <div className="mt-3 pt-3 border-t border-white/10 flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 shrink-0 mr-1 flex items-center gap-1">
-            <Zap className="h-3 w-3" /> I need to:
-          </span>
-          {[
-            { label: '🔐 Secure my AWS cloud', id: 'sol_secure_aws' },
-            { label: '📋 Achieve FedRAMP & cATO', id: 'sol_fedramp_cato' },
-            { label: '🛡️ Autonomous PenTest & ASPM', id: 'sol_pentest_aspm' },
-            { label: '🤖 Deploy AI Securely (MCP)', id: 'sol_ai_security' }
-          ].map((sol) => (
-            <button
-              key={sol.id}
-              onClick={() => {
-                setSelectedMainCategory('Solutions')
-                const matched = solutions.find(s => s.id === sol.id)
-                if (matched) setSelectedSolution(matched)
-              }}
-              className="rounded-full bg-white/15 hover:bg-white/25 text-white text-xs px-3 py-1 font-semibold transition-all shrink-0 border border-white/10 hover:border-amber-300"
-            >
-              {sol.label}
-            </button>
-          ))}
+          {/* QUICK SOLUTIONS ACTION BAR (High-contrast & wrapped so nothing is hidden) */}
+          <div className="pt-2.5 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-2 flex-wrap text-xs">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 shrink-0 mr-1 flex items-center gap-1">
+              <Zap className="h-3.5 w-3.5 fill-amber-500 text-amber-500" /> Outcome Blueprints:
+            </span>
+            {[
+              { label: '🔐 Secure my AWS cloud', id: 'sol_secure_aws' },
+              { label: '📋 Achieve FedRAMP & cATO', id: 'sol_fedramp_cato' },
+              { label: '🛡️ Autonomous PenTest & ASPM', id: 'sol_pentest_aspm' },
+              { label: '🤖 Deploy AI Securely (MCP)', id: 'sol_ai_security' }
+            ].map((sol) => (
+              <button
+                key={sol.id}
+                type="button"
+                onClick={() => {
+                  setSelectedMainCategory('Solutions')
+                  const matched = solutions.find(s => s.id === sol.id)
+                  if (matched) setSelectedSolution(matched)
+                }}
+                className="rounded-lg bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-900 dark:text-amber-200 text-xs px-3 py-1.5 font-semibold transition-all border border-amber-200/80 dark:border-amber-800/60 cursor-pointer"
+              >
+                {sol.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -761,7 +1172,7 @@ export function MarketplaceView({
               </div>
 
               {/* Sub-Category Filter Pills */}
-              <div className="pt-2 border-t border-white/10 flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
+              <div className="pt-2 border-t border-white/10 flex items-center gap-1.5 flex-wrap text-xs">
                 {[
                   { id: 'All', label: '🚀 All Fleet (26+)' },
                   { id: 'security', label: '🛡️ Cyber & PenTest' },
@@ -777,7 +1188,7 @@ export function MarketplaceView({
                     <button
                       key={sub.id}
                       onClick={() => setSelectedSubCategory(sub.id)}
-                      className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all shrink-0 ${
+                      className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
                         isSubSelected
                           ? "bg-purple-600 text-white shadow-md font-black ring-2 ring-purple-400/40"
                           : "bg-white/10 text-white/80 hover:bg-white/20 hover:text-white border border-white/10"
@@ -833,60 +1244,273 @@ export function MarketplaceView({
             </div>
           </div>
 
-          {/* PROMINENT ECOSYSTEM FLEET & MISSION CONTROL SPOTLIGHT BAR */}
-          {selectedMainCategory !== 'Launchpad' && (
-            <div className="rounded-2xl border border-purple-500/40 bg-gradient-to-r from-purple-950/70 via-slate-900/90 to-indigo-950/70 p-4 text-white shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-purple-500/20 border border-purple-400/40 flex items-center justify-center text-xl shrink-0">
-                  🚀
-                </div>
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-black text-sm text-white">
-                      Expedite Digital Ecosystem Launchpad &amp; Featured Cloud Suites
-                    </span>
-                    <span className="rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 text-[10px] px-2 py-0.5 font-bold uppercase tracking-wider">
-                      67+ Live Platforms
-                    </span>
-                  </div>
-                  <p className="text-xs text-purple-200/80">
-                    Launch the 67+ Platform Digital Ecosystem Launchpad, PDFAdore (31+ Private PDF Tools), Ægis Mission Control, AXIOM ASPM &amp; SAST Proof Engine across all enclaves.
-                  </p>
-                </div>
+          {/* CATEGORIZED ECOSYSTEM DIRECTORY & STRUCTURED MARKETPLACE PILLARS */}
+          <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 sm:p-5 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#0A66C2] dark:text-sky-400">
+                  📂 Structured Marketplace Taxonomy
+                </span>
+                <h3 className="text-sm sm:text-base font-bold text-zinc-900 dark:text-zinc-100">
+                  Browse Featured Platforms by Category
+                </h3>
               </div>
-
-              <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                <a
-                  href="https://expedite-consults.vercel.app/launchpad"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-xl bg-gradient-to-r from-teal-400 to-emerald-500 hover:from-teal-300 hover:to-emerald-400 text-zinc-950 font-black text-xs px-3.5 py-2 flex items-center gap-1.5 shadow-md transition-all hover:scale-105"
-                >
-                  <Zap className="h-3.5 w-3.5 fill-zinc-950 text-zinc-950" />
-                  <span>Ecosystem Launchpad ↗</span>
-                </a>
-
-                <a
-                  href="https://www.pdfadore.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black text-xs px-3.5 py-2 flex items-center gap-1.5 shadow-md transition-all hover:scale-105"
-                >
-                  <span>📄 PDFAdore (31+ PDF Tools) ↗</span>
-                </a>
-
-                <button
-                  onClick={() => {
-                    setSelectedMainCategory('Launchpad')
-                    setSelectedSubCategory('All')
-                  }}
-                  className="rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs px-3.5 py-2 font-bold transition-all border border-white/15"
-                >
-                  Open Launchpad Fleet →
-                </button>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {[
+                  { id: 'All', label: '✨ All Categories' },
+                  { id: 'Compliance_RMF', label: '🏛️ Federal Compliance & RMF' },
+                  { id: 'DAST_Offensive', label: '🎯 DAST & Web Security' },
+                  { id: 'Cyber_Prediction', label: '⚡ Cyber Defense & Prediction' },
+                  { id: 'Productivity_Notes', label: '📓 Productivity & Field Notes' },
+                  { id: 'Portals_Launchpads', label: '🚀 Enterprise Portals & Launchpads' }
+                ].map((catFilter) => {
+                  const isActive = selectedSubCategory === catFilter.id
+                  return (
+                    <button
+                      key={catFilter.id}
+                      type="button"
+                      onClick={() => setSelectedSubCategory(catFilter.id)}
+                      className={`rounded-full px-3 py-1 text-[11px] font-bold transition-all cursor-pointer ${
+                        isActive
+                          ? "bg-[#0A66C2] text-white shadow-xs"
+                          : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                      }`}
+                    >
+                      {catFilter.label}
+                    </button>
+                  )
+                })}
               </div>
             </div>
-          )}
+
+            {/* 5 Categorized Shelf Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+              {/* Category 1: Federal Compliance & DoD RMF */}
+              <div
+                onClick={() => setSelectedSubCategory(selectedSubCategory === 'Compliance_RMF' ? 'All' : 'Compliance_RMF')}
+                className={`rounded-xl border p-3.5 transition-all cursor-pointer flex flex-col justify-between space-y-2.5 ${
+                  selectedSubCategory === 'Compliance_RMF'
+                    ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/30 ring-2 ring-emerald-500/30"
+                    : "border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/40 hover:border-emerald-400"
+                }`}
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-lg">🛡️</span>
+                    <span className="rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 text-[9px] font-bold uppercase">
+                      DoDI 8510.01 · NISP
+                    </span>
+                  </div>
+                  <h4 className="font-bold text-xs text-zinc-900 dark:text-zinc-100">
+                    1. Federal Compliance &amp; DoD RMF
+                  </h4>
+                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-snug">
+                    Aagiis DoD RMF, DCSA NISP (32 CFR Part 117), DISA STIG &amp; cATO governance.
+                  </p>
+                </div>
+                <div className="pt-2 border-t border-zinc-200/70 dark:border-zinc-700/60 flex flex-col gap-1">
+                  <a
+                    href="https://aagiis.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 hover:underline flex items-center justify-between"
+                  >
+                    <span>🛡️ Aagiis Platform</span>
+                    <span>aagiis.com ↗</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* Category 2: DAST & Web Interface Security */}
+              <div
+                onClick={() => setSelectedSubCategory(selectedSubCategory === 'DAST_Offensive' ? 'All' : 'DAST_Offensive')}
+                className={`rounded-xl border p-3.5 transition-all cursor-pointer flex flex-col justify-between space-y-2.5 ${
+                  selectedSubCategory === 'DAST_Offensive'
+                    ? "border-orange-500 bg-orange-50/50 dark:bg-orange-950/30 ring-2 ring-orange-500/30"
+                    : "border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/40 hover:border-orange-400"
+                }`}
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-lg">🎯</span>
+                    <span className="rounded-full bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300 px-2 py-0.5 text-[9px] font-bold uppercase">
+                      XTRIKE &amp; Aegis.SOC
+                    </span>
+                  </div>
+                  <h4 className="font-bold text-xs text-zinc-900 dark:text-zinc-100">
+                    2. DAST &amp; Web Security
+                  </h4>
+                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-snug">
+                    EXPEDITE STRIKE™ Live DAST Engine (/engine) &amp; Vulnerability Scanner.
+                  </p>
+                </div>
+                <div className="pt-2 border-t border-zinc-200/70 dark:border-zinc-700/60 flex flex-col gap-1">
+                  <a
+                    href="https://11-dast-security-platform.vercel.app/engine"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-[11px] font-bold text-orange-700 dark:text-orange-400 hover:underline flex items-center justify-between"
+                  >
+                    <span>🎯 DAST Engine</span>
+                    <span>/engine ↗</span>
+                  </a>
+                  <a
+                    href="https://11-dast-security-platform.vercel.app"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-300 hover:underline flex items-center justify-between"
+                  >
+                    <span>🌐 Main Landing</span>
+                    <span>Platform ↗</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* Category 3: Cyber Defense & Threat Prediction */}
+              <div
+                onClick={() => setSelectedSubCategory(selectedSubCategory === 'Cyber_Prediction' ? 'All' : 'Cyber_Prediction')}
+                className={`rounded-xl border p-3.5 transition-all cursor-pointer flex flex-col justify-between space-y-2.5 ${
+                  selectedSubCategory === 'Cyber_Prediction'
+                    ? "border-violet-500 bg-violet-50/50 dark:bg-violet-950/30 ring-2 ring-violet-500/30"
+                    : "border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/40 hover:border-violet-400"
+                }`}
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-lg">🔮</span>
+                    <span className="rounded-full bg-violet-100 dark:bg-violet-950 text-violet-800 dark:text-violet-300 px-2 py-0.5 text-[9px] font-bold uppercase">
+                      DSTRIKE &amp; Noctis
+                    </span>
+                  </div>
+                  <h4 className="font-bold text-xs text-zinc-900 dark:text-zinc-100">
+                    3. Cyber Defense &amp; Prediction
+                  </h4>
+                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-snug">
+                    DSTRIKE Autonomous Cyber Defense &amp; Noctis Threat Prediction Desk.
+                  </p>
+                </div>
+                <div className="pt-2 border-t border-zinc-200/70 dark:border-zinc-700/60 flex flex-col gap-1">
+                  <a
+                    href="https://dstrike.app"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-[11px] font-bold text-violet-700 dark:text-violet-400 hover:underline flex items-center justify-between"
+                  >
+                    <span>⚡ Main App</span>
+                    <span>dstrike.app ↗</span>
+                  </a>
+                  <a
+                    href="https://dstrike.app/noctis"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-[11px] font-semibold text-fuchsia-700 dark:text-fuchsia-400 hover:underline flex items-center justify-between"
+                  >
+                    <span>🔮 Prediction Desk</span>
+                    <span>/noctis ↗</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* Category 4: Productivity, Field Notes & Document Tools */}
+              <div
+                onClick={() => setSelectedSubCategory(selectedSubCategory === 'Productivity_Notes' ? 'All' : 'Productivity_Notes')}
+                className={`rounded-xl border p-3.5 transition-all cursor-pointer flex flex-col justify-between space-y-2.5 ${
+                  selectedSubCategory === 'Productivity_Notes'
+                    ? "border-lime-500 bg-lime-50/50 dark:bg-lime-950/30 ring-2 ring-lime-500/30"
+                    : "border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/40 hover:border-lime-400"
+                }`}
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-lg">📓</span>
+                    <span className="rounded-full bg-lime-100 dark:bg-lime-950 text-lime-800 dark:text-lime-300 px-2 py-0.5 text-[9px] font-bold uppercase">
+                      E2EE Workspace
+                    </span>
+                  </div>
+                  <h4 className="font-bold text-xs text-zinc-900 dark:text-zinc-100">
+                    4. Productivity &amp; Field Notes
+                  </h4>
+                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-snug">
+                    DeskNote E2EE digital notebook, voice logs &amp; PDFAdore utilities.
+                  </p>
+                </div>
+                <div className="pt-2 border-t border-zinc-200/70 dark:border-zinc-700/60 flex flex-col gap-1">
+                  <a
+                    href="https://desk-note-lime.vercel.app/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-[11px] font-bold text-lime-700 dark:text-lime-400 hover:underline flex items-center justify-between"
+                  >
+                    <span>📓 DeskNote Live</span>
+                    <span>desk-note ↗</span>
+                  </a>
+                  <a
+                    href="https://www.pdfadore.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 hover:underline flex items-center justify-between"
+                  >
+                    <span>📄 PDFAdore</span>
+                    <span>pdfadore.com ↗</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* Category 5: Enterprise Portals & Production Launchpads */}
+              <div
+                onClick={() => setSelectedSubCategory(selectedSubCategory === 'Portals_Launchpads' ? 'All' : 'Portals_Launchpads')}
+                className={`rounded-xl border p-3.5 transition-all cursor-pointer flex flex-col justify-between space-y-2.5 ${
+                  selectedSubCategory === 'Portals_Launchpads'
+                    ? "border-sky-500 bg-sky-50/50 dark:bg-sky-950/30 ring-2 ring-sky-500/30"
+                    : "border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/40 hover:border-sky-400"
+                }`}
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-lg">🏛️</span>
+                    <span className="rounded-full bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300 px-2 py-0.5 text-[9px] font-bold uppercase">
+                      Official Flagship
+                    </span>
+                  </div>
+                  <h4 className="font-bold text-xs text-zinc-900 dark:text-zinc-100">
+                    5. Portals &amp; Launchpads
+                  </h4>
+                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-snug">
+                    Expedite Consults Official Portal &amp; Sphera Live Production Launchpad.
+                  </p>
+                </div>
+                <div className="pt-2 border-t border-zinc-200/70 dark:border-zinc-700/60 flex flex-col gap-1">
+                  <a
+                    href="https://www.expediteconsults.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-[11px] font-bold text-[#0A66C2] dark:text-sky-400 hover:underline flex items-center justify-between"
+                  >
+                    <span>🏛️ Expedite Consults</span>
+                    <span>Official ↗</span>
+                  </a>
+                  <a
+                    href="https://sphera-portal.vercel.app"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center justify-between"
+                  >
+                    <span>🚀 Sphera Launchpad</span>
+                    <span>Live Portal ↗</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredProducts.map((product) => (
@@ -898,19 +1522,12 @@ export function MarketplaceView({
                   {/* Top Badges Strip */}
                   <div className="flex items-center justify-between gap-2 flex-wrap">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      {product.isLaunchpadDeployed && (
-                        <span className="rounded-md bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-indigo-500/20 text-purple-700 dark:text-purple-300 border border-purple-400/40 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
-                          <Sparkles className="h-3 w-3 text-amber-500" /> Launchpad Fleet
-                        </span>
-                      )}
-                      {product.livePort && (
-                        <span className="rounded-md bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/40 px-2 py-0.5 text-[10px] font-mono font-bold">
-                          ⚡ PORT {product.livePort}
-                        </span>
-                      )}
+                      <span className="rounded-md bg-blue-50 dark:bg-blue-950/60 text-[#0A66C2] dark:text-sky-300 border border-blue-200/70 dark:border-blue-800/70 px-2 py-0.5 text-[10px] font-bold">
+                        📂 {product.category} · {product.subCategory}
+                      </span>
                       {product.isVercelLive && (
                         <span className="rounded-md bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-400/40 px-2 py-0.5 text-[10px] font-mono font-bold">
-                          ☁️ VERCEL LIVE
+                          ☁️ LIVE
                         </span>
                       )}
                     </div>
@@ -969,7 +1586,7 @@ export function MarketplaceView({
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2">
+                <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2 flex-wrap">
                   <button
                     onClick={() => {
                       setSelectedProduct(product)
@@ -980,7 +1597,7 @@ export function MarketplaceView({
                     View Details →
                   </button>
 
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 flex-wrap">
                     {product.liveUrl && (
                       <button
                         onClick={() => {
@@ -993,17 +1610,38 @@ export function MarketplaceView({
                             window.open(product.liveUrl, '_blank', 'noopener,noreferrer')
                           }
                         }}
-                        className="rounded-full bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-xs font-bold shadow-xs transition-all flex items-center gap-1"
-                        title="Launch deployed application"
+                        className="rounded-full bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-xs font-bold shadow-xs transition-all flex items-center gap-1 cursor-pointer"
+                        title={product.liveUrl}
                       >
                         <Zap className="h-3 w-3 fill-amber-300 text-amber-300" />
-                        <span>Launch App</span>
+                        <span>Launch Live ↗</span>
                       </button>
+                    )}
+
+                    {product.demoUrl && product.demoUrl !== product.liveUrl && product.demoUrl.startsWith('http') && (
+                      <a
+                        href={product.demoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-full bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 text-xs font-bold shadow-xs transition-all flex items-center gap-1 cursor-pointer"
+                        title={product.demoUrl}
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        <span>
+                          {product.demoUrl.includes('/noctis')
+                            ? 'Noctis Desk ↗'
+                            : product.demoUrl.includes('/engine')
+                            ? 'DAST Engine ↗'
+                            : product.demoUrl.includes('sphera-portal')
+                            ? 'Sphera Launchpad ↗'
+                            : 'Companion URL ↗'}
+                        </span>
+                      </a>
                     )}
 
                     <button
                       onClick={() => handleGenerateLicense(product, 'trial')}
-                      className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white px-3.5 py-1.5 text-xs font-bold shadow-xs transition-all"
+                      className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white px-3 py-1.5 text-xs font-bold shadow-xs transition-all cursor-pointer"
                     >
                       {product.pricing.hasFreeTrial ? "Free Trial" : "Buy Now"}
                     </button>

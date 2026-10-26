@@ -109,19 +109,21 @@ function generateMultiPageAssessmentPdfBuffer(params: {
     .map((tr, i) => {
       const shortLbl =
         i === 0
-          ? "Ref Q1"
+          ? "Measured Baseline"
           : i === 1
-          ? "Ref Q2"
+          ? "Phase 1 Forecast (Unverified)"
           : i === 2
-          ? "Ref Q3"
-          : i === 3
-          ? "Measured DAST"
-          : i === 4
-          ? "Phase 1 Forecast"
-          : "Retest Target";
+          ? "Phase 2 Forecast (Unverified)"
+          : "Phase 3 Forecast (Pending Retest)";
       return `${shortLbl}[${tr.postureScore}/100]`;
     })
     .join(" ===> ");
+
+  const scoredValidatedTotal =
+    execSummary.findingsSummary.critical +
+    execSummary.findingsSummary.high +
+    execSummary.findingsSummary.medium +
+    execSummary.findingsSummary.low;
 
   const docLines: PdfLineItem[] = [
     { text: "TrePath - DAST & WEB INTERFACE SECURITY ASSESSMENT REPORT", bold: true, size: 12, colorRgb: [0.02, 0.35, 0.65] },
@@ -146,8 +148,8 @@ function generateMultiPageAssessmentPdfBuffer(params: {
     ...wrapTextLine(`  Published Scoring Formula: ${execSummary.scoringMethodology.formulaText}`, 94).map(ln => ({ text: `  ${ln}`, bold: true, size: 8, colorRgb: [0.05, 0.25, 0.55] as [number, number, number] })),
     { text: "" },
     { text: "3. Findings Summary & Severity Breakdown Table", bold: true, size: 9.5, colorRgb: [0.05, 0.15, 0.35] },
-    { text: `  A total of ${execSummary.findingsSummary.totalFindings} confirmed findings were identified (${execSummary.findingsSummary.informational} informational observations):`, bold: true, size: 8.5 },
-    { text: `    - Critical: ${execSummary.findingsSummary.critical} (Confirmed)   |   High: ${execSummary.findingsSummary.high} (Confirmed)   |   Medium: ${execSummary.findingsSummary.medium}   |   Low: ${execSummary.findingsSummary.low}   |   Informational: ${execSummary.findingsSummary.informational}`, bold: true, size: 8.5, colorRgb: [0.75, 0.08, 0.2] },
+    { text: `  Total Recorded Observations: ${execSummary.findingsSummary.totalFindings} (${scoredValidatedTotal} Scored Findings + ${execSummary.findingsSummary.informational} Informational Observations [0-Pt Deduction] => ${execSummary.scoringMethodology.deduplicatedClusterCount} Deduplicated Root-Cause CWE Clusters):`, bold: true, size: 8.5 },
+    { text: `    - Critical: ${execSummary.findingsSummary.critical}   |   High: ${execSummary.findingsSummary.high}   |   Medium: ${execSummary.findingsSummary.medium}   |   Low: ${execSummary.findingsSummary.low}   |   Informational (0-Pt): ${execSummary.findingsSummary.informational}   |   Scored CWE Clusters: ${execSummary.scoringMethodology.deduplicatedClusterCount}`, bold: true, size: 8.5, colorRgb: [0.75, 0.08, 0.2] },
     { text: "  +---------------+------+----------+----------+---------------------------------------------------+--------------------+", bold: true, size: 7.2 },
     { text: "  | Severity      | Conf | Risk %   | Max CVSS | Business Risk Exposure                            | Remediation SLA    |", bold: true, size: 7.2, colorRgb: [0.05, 0.25, 0.55] },
     { text: "  +---------------+------+----------+----------+---------------------------------------------------+--------------------+", bold: true, size: 7.2 },
@@ -862,7 +864,7 @@ export async function POST(req: NextRequest) {
 
         <h3 style="margin:12px 0 6px 0;font-size:14px;color:#0f172a;">3. Findings Summary &amp; Severity Breakdown Table</h3>
         <p style="margin:0 0 6px 0;font-size:12.5px;color:#1e293b;">
-          A total of <strong>${execSum.findingsSummary.totalFindings} confirmed findings</strong> were identified (plus ${execSum.findingsSummary.informational} informational hardening observations):
+          Total Recorded Observations: <strong>${execSum.findingsSummary.totalFindings}</strong> &mdash; comprising <strong>${execSum.findingsSummary.critical + execSum.findingsSummary.high + execSum.findingsSummary.medium + execSum.findingsSummary.low} Scored Validated Findings</strong> (${execSum.findingsSummary.critical} Critical, ${execSum.findingsSummary.high} High, ${execSum.findingsSummary.medium} Medium, ${execSum.findingsSummary.low} Low) and <strong>${execSum.findingsSummary.informational} Informational Observations</strong> (0-point score deduction), grouped into <strong>${execSum.scoringMethodology.deduplicatedClusterCount} Deduplicated Root-Cause CWE Clusters</strong>:
         </p>
         <div class="table-wrap" style="margin-bottom:10px;">
           <table style="width:100%;border-collapse:collapse;font-size:11.5px;background:#ffffff;border:1px solid #cbd5e1;">
@@ -1118,7 +1120,7 @@ export async function POST(req: NextRequest) {
       `Published Scoring Formula: ${execSumText.scoringMethodology.formulaText}`,
       ``,
       `3. Findings Summary & Severity Breakdown Table`,
-      `A total of ${execSumText.findingsSummary.totalFindings} confirmed findings were identified:`,
+      `Total Recorded Observations: ${execSumText.findingsSummary.totalFindings} (${execSumText.findingsSummary.critical + execSumText.findingsSummary.high + execSumText.findingsSummary.medium + execSumText.findingsSummary.low} Scored Validated Findings + ${execSumText.findingsSummary.informational} Informational Observations [0-Pt Deduction] => ${execSumText.scoringMethodology.deduplicatedClusterCount} Deduplicated Root-Cause CWE Clusters):`,
       ...execSumText.severityBreakdownTable.map(
         r => `- ${r.severity}: ${r.confirmedCount} Confirmed (${r.potentialCount} Potential) | Risk Share: ${r.riskWeightPct} | Max CVSS: ${r.maxCvss} | Exposure: ${r.businessRiskExposure} | SLA: ${r.remediationSla}`
       ),

@@ -98,6 +98,7 @@ import {
 } from "@/lib/connectin-storage"
 import { isSuperAdminUser } from "@/lib/connectin-profile"
 import { PROFESSION_ENCLAVES, findEnclaveById, findProfessionById } from "@/lib/connectin-professions"
+import { getMatchedWheelVideoForUser } from "@/lib/connectin-videos"
 import { SlidersHorizontal, Sparkles, Bell, CheckCircle2, ShieldCheck, Filter, Bookmark, Vote, BookOpen, ExternalLink, ChevronDown, ChevronUp } from "lucide-react"
 import { useLanguage } from "@/context/LanguageContext"
 
@@ -385,6 +386,93 @@ export default function LinkedInPage() {
       saveStoredUser(userData)
     }
   }, [userData, hasHydrated, isAuthenticated])
+
+  // Automatically sync the user's active enclave and assigned featured video post to the profession selected at registration
+  useEffect(() => {
+    if (!userData) return
+    if (userData.professionEnclave) {
+      setSelectedEnclaves([userData.professionEnclave])
+    }
+    const matchedTalk = getMatchedWheelVideoForUser(userData)
+    if (!matchedTalk) return
+
+    const resolvedPic = resolveUserProfilePicture(userData)
+    const ytUrl = `https://www.youtube.com/watch?v=${matchedTalk.youtubeId}`
+
+    setPosts(prev => {
+      const updatedPost: Post = {
+        id: 'post_dstrike_wheel_masterclass',
+        professionEnclave: 'all',
+        author: {
+          id: userData.id || 'user_current',
+          name: userData.name || 'Kwesi Asiedu',
+          headline: userData.headline || `${userData.profession || matchedTalk.categoryLabel} · Verified ConnectLn Member`,
+          avatar: resolvedPic,
+          connectionDegree: 'You',
+          isFollowing: false
+        },
+        timestamp: `Just now · 🎯 Assigned to ${userData.profession || matchedTalk.categoryLabel} · 🌐`,
+        visibility: 'Public',
+        postType: 'standard',
+        feedCategory: 'for_you',
+        feedSubCategory: 'All',
+        content: `🎬 Assigned Profession Masterclass on ConnectLn The Wheel: "${matchedTalk.title}" (${matchedTalk.serialPlate})\n\n${matchedTalk.summary}`,
+        hashtags: matchedTalk.tags && matchedTalk.tags.length > 0 ? matchedTalk.tags : ['#ConnectLn', '#Masterclass', '#RealWork'],
+        media: {
+          type: 'video',
+          url: ytUrl,
+          youtubeId: matchedTalk.youtubeId,
+          thumbnailUrl: `https://i.ytimg.com/vi/${matchedTalk.youtubeId}/hqdefault.jpg`,
+          title: matchedTalk.title,
+          description: `${matchedTalk.speaker} · ${matchedTalk.speakerTitle}`,
+          duration: matchedTalk.duration,
+          serialPlate: matchedTalk.serialPlate,
+          brandName: 'ConnectLn',
+          takeaways: matchedTalk.takeaways,
+          aspectRatio: '16:9'
+        },
+        stats: {
+          likesCount: 412,
+          commentsCount: 38,
+          repostsCount: 64,
+          reactionsBreakdown: { like: 240, celebrate: 92, support: 40, love: 28, insightful: 12, funny: 0 }
+        },
+        userReaction: null,
+        isSaved: false,
+        comments: []
+      }
+
+      const existingIdx = prev.findIndex(p => p.id === 'post_dstrike_wheel_masterclass')
+      if (existingIdx >= 0) {
+        const current = prev[existingIdx]
+        if (
+          current.media?.youtubeId === matchedTalk.youtubeId &&
+          current.media?.title === matchedTalk.title &&
+          current.author?.name === updatedPost.author.name &&
+          current.author?.avatar === updatedPost.author.avatar
+        ) {
+          return prev
+        }
+        const copy = [...prev]
+        copy[existingIdx] = {
+          ...current,
+          ...updatedPost,
+          stats: current.stats || updatedPost.stats,
+          comments: current.comments || []
+        }
+        return copy
+      }
+      return [updatedPost, ...prev]
+    })
+  }, [
+    userData?.id,
+    userData?.name,
+    userData?.headline,
+    userData?.avatar,
+    userData?.professionId,
+    userData?.profession,
+    userData?.professionEnclave
+  ])
 
   useEffect(() => {
     if (hasHydrated && isAuthenticated) {
