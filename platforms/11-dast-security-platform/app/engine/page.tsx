@@ -1641,7 +1641,7 @@ export default function EnginePage() {
       if (savedResults) {
         const parsedRes = JSON.parse(savedResults);
         if (Array.isArray(parsedRes) && parsedRes.length > 0) {
-          const validFreshResults = parsedRes.filter((r: any) => r?.schemaVersion === "6.3.0-deep-scanner-verified");
+          const validFreshResults = parsedRes.filter((r: any) => r?.schemaVersion === "6.4.0-audit-verified");
           if (validFreshResults.length > 0) {
             setEngineResults(validFreshResults);
           } else {
@@ -1837,7 +1837,7 @@ export default function EnginePage() {
     const alreadyProbed = engineResults.some(
       r =>
         !r?.isPrivateLab &&
-        r?.schemaVersion === "6.3.0-deep-scanner-verified" &&
+        r?.schemaVersion === "6.4.0-audit-verified" &&
         (normalizeTargetIdentity(r?.targetUrl) === primaryTargetIdentity ||
           normalizeTargetIdentity(r?.finalUrl) === primaryTargetIdentity) &&
         Array.isArray(r?.liveFindings) &&

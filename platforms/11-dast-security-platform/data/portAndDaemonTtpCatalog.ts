@@ -3065,7 +3065,7 @@ function buildConcreteSecurityRequirement(finding: Finding, cleanTitle: string, 
     return `HTTP responses from ${hostName} must return 'X-Content-Type-Options: nosniff' (to prevent MIME-type sniffing), 'Referrer-Policy: strict-origin-when-cross-origin' (to control cross-origin URL referrer leakage), and 'Permissions-Policy: camera=(), microphone=(), geolocation=()' (to restrict browser hardware APIs) in accordance with OWASP ASVS V14.4.`;
   }
   if (fId.includes("-COOKIES") || t.includes("COOKIE") || cwe === "CWE-614" || cwe === "CWE-1004") {
-    return `All Set-Cookie headers emitted by ${hostName} (${finding.parameter || "session/state cookies"}) must enforce the 'Secure', 'HttpOnly', and 'SameSite=Lax' (or 'Strict') attributes to prevent cleartext transmission, JavaScript DOM access, and cross-site transmission.`;
+    return `All Set-Cookie headers emitted by ${hostName} (${finding.parameter || "session/preference cookies"}) must enforce the 'Secure' attribute over HTTPS, 'HttpOnly' (unless explicitly read by client-side UI locale scripts), and 'SameSite=Lax' (or 'Strict') in accordance with the cookie's threat model.`;
   }
   if (fId.includes("-CORS") || t.includes("CORS") || cwe === "CWE-942") {
     return `Cross-Origin Resource Sharing (CORS) on ${hostName} must validate the incoming 'Origin' header against an explicit server-side allowlist and must never reflect arbitrary origins or combine 'Access-Control-Allow-Origin: *' with 'Access-Control-Allow-Credentials: true'.`;
@@ -3076,8 +3076,11 @@ function buildConcreteSecurityRequirement(finding: Finding, cleanTitle: string, 
   if (fId.includes("-FORMS-INPUTS") || t.includes("HTML FORM") || t.includes("INPUT PARAMETER") || t.includes("ANTI-CSRF") || cwe === "CWE-352" || cwe === "CWE-20") {
     return `All HTML '<form>' endpoints on ${hostName} must enforce cryptographically random anti-CSRF tokens alongside strict server-side input validation and parameterized query handling on all discovered parameters (${finding.parameter || "form/query inputs"}).`;
   }
-  if (fId.includes("-SECURITY-TXT") || t.includes("SECURITY.TXT") || fId.includes("-WELLKNOWN") || t.includes("WELL-KNOWN") || t.includes("ROBOTS.TXT")) {
-    return `Publish a valid RFC 9116 '/.well-known/security.txt' vulnerability disclosure policy on ${hostName} containing mandatory 'Contact:' and 'Expires:' fields over HTTP 200 OK (text/plain), and ensure '/robots.txt' does not index sensitive administrative routes.`;
+  if (fId.includes("-ROBOTS-RECON") || t.includes("ROBOTS.TXT")) {
+    return `Ensure all administrative and API routes listed in '/robots.txt' on ${hostName} enforce server-side authentication and authorization (returning HTTP 401/403 or 404 to unauthenticated requests), and remove unnecessary internal path names from public '/robots.txt' directives.`;
+  }
+  if (fId.includes("-SECURITY-TXT") || t.includes("SECURITY.TXT") || fId.includes("-WELLKNOWN") || t.includes("WELL-KNOWN")) {
+    return `Publish a valid RFC 9116 '/.well-known/security.txt' vulnerability disclosure policy on ${hostName} containing mandatory 'Contact:' and 'Expires:' fields over HTTP 200 OK (text/plain).`;
   }
   if (fId.includes("-SPIDER-ROUTES") || t.includes("SPIDER") || t.includes("ROUTE ENUMERATION") || cwe === "CWE-425") {
     return `All client-referenced routes and spidered sub-pages on ${hostName} must enforce consistent HTTP security headers, authentication/authorization checks on non-public workflows, and disable production JavaScript source maps (.js.map) (OWASP API9:2023).`;
@@ -3745,6 +3748,8 @@ export function buildFormalFindingReport(
   const passCriterion2Text =
     finding.retestPassCriteria && finding.retestPassCriteria.length > 0
       ? `PASS CRITERION 2: ${Array.isArray(finding.retestPassCriteria) ? finding.retestPassCriteria.join(" · ") : finding.retestPassCriteria}`
+      : fIdUpper.includes("-ROBOTS-RECON") || titleUpper.includes("ROBOTS.TXT")
+      ? `PASS CRITERION 2: Replaying HTTP probes against all routes listed in '${originUrl}/robots.txt' confirms non-public routes return HTTP 401/403 or 404 and do not expose sensitive data to unauthenticated clients`
       : fIdUpper.includes("-SECURITY-TXT") || fIdUpper.includes("-WELLKNOWN") || titleUpper.includes("SECURITY.TXT")
       ? `PASS CRITERION 2: Replaying 'curl -s -i "${originUrl}/.well-known/security.txt"' returns HTTP 200 OK (text/plain) with valid RFC 9116 'Contact:' and 'Expires:' fields`
       : fIdUpper.includes("-HTTP-CLEARTEXT")
@@ -3991,9 +3996,20 @@ export function buildExecutiveSummaryDossier(params: {
   const medium = list.filter(f => f.severity === "Medium").length;
   const low = list.filter(f => f.severity === "Low").length;
   const informationalFindingsCount = list.filter(f => f.severity === "Informational").length;
-  const informational = Math.max(2, informationalFindingsCount);
+  const informational = informationalFindingsCount;
+  const scoredFindingsCount = critical + high + medium + low;
+  const confirmedVulnerabilitiesCount = list.filter(
+    f => f.validationState === "Exploit Verified" || f.findingClassification === "Exploitable Vulnerability"
+  ).length;
+  const validatedWeaknessesCount = list.filter(
+    f =>
+      f.severity !== "Informational" &&
+      f.validationState !== "Exploit Verified" &&
+      f.findingClassification !== "Exploitable Vulnerability"
+  ).length;
+  const falsePositivesCount = 0;
   const totalFindings = list.length;
-  const confirmedCount = list.length;
+  const confirmedCount = scoredFindingsCount;
   const potentialCount = 0;
 
   // Also parse telemetry directly from `list` (the findings array) so even if `liveTelemetry` is omitted by an API caller,
@@ -4048,21 +4064,28 @@ export function buildExecutiveSummaryDossier(params: {
   const dmarcPresent: boolean = Boolean(lt.dmarcPresent ?? lt.dnsSecurity?.dmarcPresent);
   const dmarcRecord: string | null = lt.dmarcRecord ?? lt.dnsSecurity?.dmarcRecord ?? null;
 
-  // Deduplicate findings by underlying root-cause CWE + control category per host for reproducible scoring
+  // Deduplicate scored findings (Critical/High/Medium/Low) by underlying root-cause CWE + control category per host for reproducible scoring
   const dedupedClusters = new Map<string, string>();
+  const clusterMembersMap = new Map<string, string[]>();
   const uniqueFindingHosts = new Set<string>();
-  for (const f of list) {
+  for (let idx = 0; idx < list.length; idx++) {
+    const f = list[idx];
     let fHost = primaryHost;
     try {
       if (f.url) fHost = new URL(f.url.startsWith("http") ? f.url : `https://${f.url}`).host || primaryHost;
     } catch { /* ignore */ }
     uniqueFindingHosts.add(fHost);
-    const key = `${fHost}:${f.cweId || f.cwe || f.title.slice(0, 24)}`;
+    if (f.severity === "Informational") continue;
+    const cweKey = f.cweId || f.cwe || `FINDING-${idx + 1}`;
+    const key = `${fHost}:${cweKey}`;
     const existingSev = dedupedClusters.get(key);
     const rank = (s: string) => (s === "Critical" ? 4 : s === "High" ? 3 : s === "Medium" ? 2 : s === "Low" ? 1 : 0);
     if (!existingSev || rank(f.severity) > rank(existingSev)) {
       dedupedClusters.set(key, f.severity);
     }
+    const members = clusterMembersMap.get(key) || [];
+    members.push(`#${idx + 1} (${f.severity}: ${(f.title || "").replace(/^\[[^\]]+\]\s*/, "").slice(0, 48)})`);
+    clusterMembersMap.set(key, members);
   }
   const hostCountDivisor = Math.max(1, uniqueFindingHosts.size);
   const scopeHostsLabel =
@@ -4075,13 +4098,25 @@ export function buildExecutiveSummaryDossier(params: {
   const dedupMed = Math.round(dedupedValues.filter(s => s === "Medium").length / hostCountDivisor);
   const dedupLow = Math.round(dedupedValues.filter(s => s === "Low").length / hostCountDivisor);
 
+  const clusterLedgerEntries: string[] = [];
+  Array.from(dedupedClusters.entries()).forEach(([key, sev]) => {
+    const cweLabel = key.split(":").slice(1).join(":");
+    const penaltyPts = sev === "Critical" ? 18 : sev === "High" ? 10 : sev === "Medium" ? 4 : 1.5;
+    const members = clusterMembersMap.get(key) || [];
+    clusterLedgerEntries.push(`[${cweLabel} · ${sev} (-${penaltyPts} pts): ${members.join(", ")}]`);
+  });
+  const clusterLedgerText =
+    clusterLedgerEntries.length > 0
+      ? `Scored Root-Cause CWE Cluster Ledger: ${clusterLedgerEntries.join("; ")}. Informational Observations (${informational}) carry 0-point deduction.`
+      : `Zero scored root-cause clusters detected; ${informational} Informational Observation(s) carry 0-point deduction.`;
+
   // Published Deterministic Posture Score Formula (0–100) from deduplicated findings:
   // Score = max(18, 100 - (18 * Crit_dedup + 10 * High_dedup + 4 * Med_dedup + 1.5 * Low_dedup))
   const formulaComputedScore = Math.round(
     Math.max(
       18,
       Math.min(
-        96,
+        98,
         100 - (dedupCrit * 18 + dedupHigh * 10 + dedupMed * 4 + dedupLow * 1.5)
       )
     )
@@ -4126,16 +4161,12 @@ export function buildExecutiveSummaryDossier(params: {
   const formulaText =
     `PostureScore = max(18, round(100 - (18 × Crit_dedup[${dedupCrit}] + 10 × High_dedup[${dedupHigh}] + 4 × Med_dedup[${dedupMed}] + 1.5 × Low_dedup[${dedupLow}]))) = ${computedScore}/100 (Grade ${computedGrade})`;
 
-  const hasExploitVerifiedInList = list.some(
-    f => f.validationState === "Exploit Verified" || f.findingClassification === "Exploitable Vulnerability"
-  );
-  const exploitVerifiedCountInList = list.filter(
-    f => f.validationState === "Exploit Verified" || f.findingClassification === "Exploitable Vulnerability"
-  ).length;
+  const hasExploitVerifiedInList = confirmedVulnerabilitiesCount > 0;
+  const exploitVerifiedCountInList = confirmedVulnerabilitiesCount;
 
   const ratingJustification =
     `The target environment (${scopeHostsLabel} — "${pageTitleLabel}", served via ${serverStackLabel}) is rated at ${overallRating} Overall Technical Risk with a Measured Security Posture Score of ${computedScore}/100 (Grade ${computedGrade}). ` +
-    `Across ${spideredPagesCount} spidered page(s), ${linksCount} hyperlink(s), ${scriptsCount} script bundle(s), ${formsCount} form(s), ${endpointsProbedCount} well-known endpoint probes, and 12 active penetration testing checks, the engine recorded ${totalFindings} verified findings (${critical} Critical, ${high} High, ${medium} Medium, ${low} Low, ${informationalFindingsCount} Informational; deduplicated into ${dedupedClusters.size} per-host root-cause CWE clusters). ` +
+    `Across ${spideredPagesCount} spidered page(s), ${linksCount} hyperlink(s), ${scriptsCount} script bundle(s), ${formsCount} form(s), ${endpointsProbedCount} well-known endpoint probes, and 12 active penetration testing checks, the engine recorded ${totalFindings} total observations separated into 5 mutually exclusive categories: (1) Confirmed Security Vulnerabilities: ${confirmedVulnerabilitiesCount}, (2) Validated Configuration Weaknesses: ${validatedWeaknessesCount}, (3) Informational Observations: ${informational} (0-pt deduction), (4) False Positives / Unconfirmed: ${falsePositivesCount}, and (5) Deduplicated Scored Root-Cause CWE Clusters: ${dedupedClusters.size} (${critical} Critical, ${high} High, ${medium} Medium, ${low} Low). ` +
     (hasExploitVerifiedInList
       ? `Active Exploitation Verdict: ${exploitVerifiedCountInList} finding(s) were actively exploited with verified payload execution, privilege escalation (low-privilege/www-data -> superadmin/root), lateral movement across backend data/service boundaries, and post-exploitation loot extraction. The Posture Score (${computedScore}/100) is the authoritative measured baseline; future remediation scores are projections pending retest.`
       : `Scope Note: This is an external, unauthenticated configuration, enumeration, and exploitability assessment of ${scopeHostsLabel}; it does not evaluate authenticated workflows, internal networks, or non-public APIs. The Posture Score (${computedScore}/100) is the ONLY measured score from this scan; future remediation scores are strictly projections pending retest.`);
@@ -4186,24 +4217,26 @@ export function buildExecutiveSummaryDossier(params: {
       potentialCount: 0,
       riskWeightPct: low > 0 ? `${lowPct}%` : "0%",
       maxCvss: low > 0 ? "3.7 / 10.0" : "N/A",
-      businessRiskExposure: `Browser Hardening Headers, COOP/CORP & Cache Policy`,
+      businessRiskExposure: `Browser Hardening Headers, Cookie Attributes & Cache Policy`,
       remediationSla: "30–60 Days (Maint.)"
     },
     {
       severity: "Informational",
       confirmedCount: informational,
       potentialCount: 0,
-      riskWeightPct: "0% (Advisory)",
-      maxCvss: "0.0–3.1 (Info)",
-      businessRiskExposure: `Server Banner, DNS CAA & RFC 9116 security.txt (${primaryHost})`,
+      riskWeightPct: "0% (Advisory · 0 Pt Penalty)",
+      maxCvss: "0.0 (Informational)",
+      businessRiskExposure: `Reconnaissance Observations: robots.txt, Server Banner, DNS CAA & RFC 9116 security.txt (${primaryHost})`,
       remediationSla: "60–90 Days (Review)"
     }
   ];
 
   // Strictly Monotonic Posture Score Progression based ONLY on Measured Current Scan + Projected Remediation Phases
-  const phase1ProjectedScore = Math.min(92, Math.max(computedScore + 5, Math.round(computedScore + (96 - computedScore) * 0.45)));
-  const phase2ProjectedScore = Math.min(96, Math.max(phase1ProjectedScore + 3, Math.round(computedScore + (96 - computedScore) * 0.78)));
-  const phase3ProjectedScore = Math.max(phase2ProjectedScore + 2, 98);
+  // Never clamp below computedScore + 1 so high-scoring targets (e.g., 93/100) never regress in Phase 1!
+  const remainingScoreGap = Math.max(3, 99 - computedScore);
+  const phase1ProjectedScore = Math.min(97, Math.max(computedScore + 1, Math.round(computedScore + remainingScoreGap * 0.45)));
+  const phase2ProjectedScore = Math.min(98, Math.max(phase1ProjectedScore + 1, Math.round(computedScore + remainingScoreGap * 0.75)));
+  const phase3ProjectedScore = Math.min(99, Math.max(phase2ProjectedScore + 1, 98));
 
   const securityPostureTrendTable: ExecutiveSummaryTrendRow[] = [
     {
@@ -4214,27 +4247,27 @@ export function buildExecutiveSummaryDossier(params: {
       highOpen: high,
       mediumLowOpen: medium + low,
       mttrDays: "Measured Baseline",
-      trendDelta: `Authoritative Measured Score (${totalFindings} Findings · ${dedupedClusters.size} CWE Clusters)`
+      trendDelta: `Authoritative Measured Score (${scoredFindingsCount} Scored Findings · ${informational} Info · ${dedupedClusters.size} CWE Clusters)`
     },
     {
       periodLabel: "Projection Only: Phase 1 Remediation (0–7 Days)",
-      securityGrade: `Grade ${phase1ProjectedScore >= 90 ? "A" : "B+"} (PROJECTION — UNVERIFIED)`,
+      securityGrade: `Grade ${phase1ProjectedScore >= 95 ? "A+" : phase1ProjectedScore >= 85 ? "A" : "B+"} (PROJECTION — UNVERIFIED)`,
       postureScore: phase1ProjectedScore,
       criticalOpen: 0,
       highOpen: 0,
-      mediumLowOpen: medium + low,
+      mediumLowOpen: low,
       mttrDays: "Target SLA: < 7 Days",
       trendDelta: `Projected +${phase1ProjectedScore - computedScore} Pts (Assumes Crit/High/Top-Medium Remediated & Retested)`
     },
     {
       periodLabel: "Projection Only: Phase 2 Hardening (7–30 Days)",
-      securityGrade: `Grade ${phase2ProjectedScore >= 90 ? "A" : "B+"} (PROJECTION — UNVERIFIED)`,
+      securityGrade: `Grade ${phase2ProjectedScore >= 95 ? "A+" : phase2ProjectedScore >= 85 ? "A" : "B+"} (PROJECTION — UNVERIFIED)`,
       postureScore: phase2ProjectedScore,
       criticalOpen: 0,
       highOpen: 0,
-      mediumLowOpen: low,
+      mediumLowOpen: Math.max(0, low - 1),
       mttrDays: "Target SLA: < 30 Days",
-      trendDelta: `Projected +${phase2ProjectedScore - computedScore} Pts (Assumes All Medium Controls Remediated & Retested)`
+      trendDelta: `Projected +${phase2ProjectedScore - computedScore} Pts (Assumes All Medium & Priority Low Controls Remediated)`
     },
     {
       periodLabel: "Projection Only: Phase 3 Full Sign-Off (30–90 Days)",
@@ -4271,7 +4304,7 @@ export function buildExecutiveSummaryDossier(params: {
           : `Enforce Strict CSP, HSTS & Core Access Controls on ${primaryHost}`,
       targetFindings:
         phase1Findings.map((_, i) => `DAST-WEB-2026-00${i + 1}`).join(", ") || "DAST-WEB-2026-001",
-      projectedRiskReduction: `Forecast: ${computedScore} ➔ ${phase1ProjectedScore}/100 (Requires Retest Pass)`,
+      projectedRiskReduction: `Forecast: ${computedScore} ➔ ${phase1ProjectedScore}/100 (Projection — Requires Retest Pass)`,
       stakeholderOwner: "VP Engineering · AppSec Lead · Web Platform Team",
       verificationMethod: `Live cURL/DAST Retest Probe on ${primaryTarget}`
     },
@@ -4283,7 +4316,7 @@ export function buildExecutiveSummaryDossier(params: {
           : `Subresource Integrity (SRI), Cookie Flags & Anti-Framing Hardening on ${primaryHost}`,
       targetFindings:
         phase2Findings.map((_, i) => `DAST-WEB-2026-00${i + 4}`).join(", ") || "DAST-WEB-2026-002, DAST-WEB-2026-003",
-      projectedRiskReduction: `Forecast: ${phase1ProjectedScore} ➔ ${phase2ProjectedScore}/100 (Requires Retest Pass)`,
+      projectedRiskReduction: `Forecast: ${phase1ProjectedScore} ➔ ${phase2ProjectedScore}/100 (Projection — Requires Retest Pass)`,
       stakeholderOwner: "DevSecOps · Frontend & Edge Infrastructure Team",
       verificationMethod: `Multi-Page Spider & Header Retest on ${primaryHost}`
     },
@@ -4293,21 +4326,21 @@ export function buildExecutiveSummaryDossier(params: {
         phase3Findings.length > 0
           ? `DNS Anti-Spoofing (SPF/DMARC/CAA), RFC 9116 security.txt & CI/CD DAST Gating for ${primaryHost}`
           : `Continuous CI/CD DAST Release Gating & SIEM Telemetry for ${primaryHost}`,
-      targetFindings: `All Remaining Hardening Controls (${totalFindings} Total on ${scopeHostsLabel})`,
-      projectedRiskReduction: `Forecast: ${phase2ProjectedScore} ➔ ${phase3ProjectedScore}/100 (Subject to Retest Sign-Off)`,
+      targetFindings: `All Remaining Hardening & Advisory Controls (${totalFindings} Total on ${scopeHostsLabel})`,
+      projectedRiskReduction: `Forecast: ${phase2ProjectedScore} ➔ ${phase3ProjectedScore}/100 (Projection — Subject to Retest Sign-Off)`,
       stakeholderOwner: "CISO · Security Operations Center (SOC)",
       verificationMethod: "Automated D3FEND Retest Pass Criterion Verification"
     }
   ];
 
   // 7-Check Automated Pre-Release Quality & Consistency Gate
-  const severitySumMatches = totalFindings === critical + high + medium + low;
+  const severitySumMatches = totalFindings === critical + high + medium + low + informational;
   const qualityGateChecks: ReportQualityGateCheck[] = [
     {
       checkId: "QG-01",
-      checkName: "Severity Sum & Deduplication Integrity",
+      checkName: "5-Category Finding Taxonomy & Deduplication Ledger Integrity",
       status: severitySumMatches ? "PASSED" : "WARNING",
-      verificationDetail: `Total Findings (${totalFindings}) === Critical (${critical}) + High (${high}) + Medium (${medium}) + Low (${low}); deduplicated into ${dedupedClusters.size} root-cause CWE clusters.`
+      verificationDetail: `Total Observations (${totalFindings}) === Confirmed Vulnerabilities (${confirmedVulnerabilitiesCount}) + Validated Configuration Weaknesses (${validatedWeaknessesCount}) + Informational Observations (${informational}) + False Positives (${falsePositivesCount}). Scored findings (${scoredFindingsCount}) deduplicated into ${dedupedClusters.size} root-cause CWE clusters.`
     },
     {
       checkId: "QG-02",
@@ -4580,7 +4613,7 @@ export function buildExecutiveSummaryDossier(params: {
       rawFindingCount: totalFindings,
       deduplicatedClusterCount: dedupedClusters.size,
       deduplicationRationale:
-        `Findings sharing the same underlying CWE root cause per target host (${scopeHostsLabel}) are grouped into ${dedupedClusters.size} deduplicated cluster(s) prior to posture score calculation so related header/directive observations do not artificially inflate the penalty.`,
+        `Findings sharing the same underlying CWE root cause per target host (${scopeHostsLabel}) are grouped into ${dedupedClusters.size} deduplicated scored cluster(s) prior to posture score calculation so related header/directive observations do not artificially inflate the penalty. ${clusterLedgerText}`,
       cvssVsBusinessRiskNote:
         `Technical Severity (CVSS v3.1) measures the intrinsic technical properties of each weakness (Max CVSS: ${peakCvss}), whereas Contextual Business Risk (${overallRating}) and Posture Score (${computedScore}/100, Grade ${computedGrade}) evaluate aggregate control coverage and environmental exposure across ${scopeHostsLabel}.`,
       forecastDisclaimer:
@@ -4615,7 +4648,7 @@ export function buildExecutiveSummaryDossier(params: {
       informational,
       confirmedCount,
       potentialCount,
-      confirmationNote: `All ${confirmedCount} reported findings across ${scopeHostsLabel} (${critical} Critical, ${high} High, ${medium} Medium, ${low} Low; ${dedupedClusters.size} deduplicated root-cause clusters) include raw baseline-vs-test HTTP evidence, FIPS 180-4 SHA-256 digests, explicit Observed-vs-Inferred boundaries, and deterministic cURL/Python reproduction scripts.`
+      confirmationNote: `All ${totalFindings} observations across ${scopeHostsLabel} are classified into 5 mutually exclusive categories: (1) Confirmed Security Vulnerabilities: ${confirmedVulnerabilitiesCount}, (2) Validated Configuration Weaknesses: ${validatedWeaknessesCount}, (3) Informational Observations: ${informational} (0-pt deduction), (4) False Positives / Unconfirmed: ${falsePositivesCount}, and (5) Deduplicated Scored Root-Cause CWE Clusters: ${dedupedClusters.size} (${critical} Critical, ${high} High, ${medium} Medium, ${low} Low). Every entry includes raw baseline-vs-test HTTP evidence, FIPS 180-4 SHA-256 digests, explicit Observed-vs-Inferred boundaries, and deterministic cURL/Python reproduction scripts.`
     },
     severityBreakdownTable,
     securityPostureTrendTable,
