@@ -40,7 +40,7 @@ export default function Navbar() {
               </div>
               <div>
                 <div className="text-sm font-black text-white tracking-tight flex items-center gap-2">
-                  ÆGIS · SOC
+                  TrePath · SOC
                   <span className="text-[10px] px-1.5 py-0.2 bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded font-bold">DAST PLATFORM 11</span>
                 </div>
               </div>
@@ -103,7 +103,7 @@ export default function Navbar() {
       {open && (
         <div className="md:hidden border-t border-slate-800 bg-slate-950 p-4 space-y-2">
           <Link href="/app" onClick={() => setOpen(false)} className="block px-3 py-2 rounded text-white font-bold bg-rose-500/20 border border-rose-500/40">
-            ÆGIS · SOC Standalone Portal
+            TrePath · SOC Standalone Portal
           </Link>
           <Link href="/live-scan" onClick={() => setOpen(false)} className="block px-3 py-2 rounded text-slate-300 hover:bg-slate-900">
             4-Stage Live Scan Pipeline

@@ -1531,7 +1531,7 @@ async function probeTarget(
 
     const canaryParam = discoveredParameters.find(d => d.source === "URL Query Parameter")?.param || "q";
     const canaryBaseUrl = discoveredParameters.find(d => d.source === "URL Query Parameter")?.pageUrl || finalUrl;
-    const canaryToken = "xtrike7v9";
+    const canaryToken = "trepath7v9";
     const canaryRawPayload = `${canaryToken}<>"'`;
     const canaryUrlObj = (() => {
       try {
@@ -1792,7 +1792,7 @@ async function probeTarget(
           title: `Outbound Connection Attempt to ${cleanUrl}`,
           content: `Target: ${cleanUrl}\nElapsed: ${responseTimeMs}ms\nResult: Connection timed out or refused`,
           highlight: "Connection timed out",
-          annotation: "Recorded by Expedite Strike Live Cloud Prober."
+          annotation: "Recorded by TrePath Live Cloud Prober."
         }
       ],
       verificationStatus: "Verified",
@@ -1831,8 +1831,8 @@ async function probeTarget(
           testRequest: canaryReflectionHit.rawRequest,
           originalResponse: baselineHttpWireResponse,
           testResponse: canaryReflectionHit.rawResponse,
-          payload: `${canaryReflectionHit.paramName}=xtrike7v9<>"'`,
-          matchedPattern: isXssHit ? `Unescaped reflection of xtrike7v9<> in HTML response` : `Error string: ${canaryReflectionHit.errorDisclosureHit}`,
+          payload: `${canaryReflectionHit.paramName}=trepath7v9<>"'`,
+          matchedPattern: isXssHit ? `Unescaped reflection of trepath7v9<> in HTML response` : `Error string: ${canaryReflectionHit.errorDisclosureHit}`,
           reproductionSteps: [
             `Step 1 (Baseline Request): Run 'curl -s -i "${finalUrl}"' to observe the normal page response.`,
             `Step 2 (Canary Probe): Run 'curl -s -i "${canaryReflectionHit.testedUrl}"' and inspect the response body for unescaped HTML metacharacters or stack trace output.`
@@ -1861,7 +1861,7 @@ async function probeTarget(
             type: "LIVE_ACTIVE_PROBE",
             title: `Live Canary Probe Response from ${canaryReflectionHit.testedUrl}`,
             content: `${canaryReflectionHit.rawRequest}\n\n${canaryReflectionHit.rawResponse}`,
-            highlight: isXssHit ? "xtrike7v9<>" : (canaryReflectionHit.errorDisclosureHit || canaryReflectionHit.paramName),
+            highlight: isXssHit ? "trepath7v9<>" : (canaryReflectionHit.errorDisclosureHit || canaryReflectionHit.paramName),
             annotation: "Captured directly from live active non-destructive parameter probe."
           }
         ],
@@ -3696,11 +3696,11 @@ async function probeTarget(
       mitreRef: "T1059 / T1190",
       probeExecuted: hasExploitedVulns && exploitedTertiary
         ? exploitedTertiary.poc?.curlCommand?.split("\n")[0] || `${exploitedTertiary.method || "POST"} ${exploitedTertiary.url} (${exploitedTertiary.parameter})`
-        : `GET ${canaryReflectionHit?.testedUrl || `${finalUrl}?q=xtrike7v9%3C%3E%22%27`}`,
+        : `GET ${canaryReflectionHit?.testedUrl || `${finalUrl}?q=trepath7v9%3C%3E%22%27`}`,
       observedResponse: hasExploitedVulns && exploitedTertiary
         ? `EXPLOIT VERIFIED (${exploitedTertiary.cweId}): ${exploitedTertiary.evidence?.matchedPattern || exploitedTertiary.description}`
         : canaryReflectionHit?.unescapedReflection
-        ? `Unescaped canary reflection ('xtrike7v9<>') observed in text/html response body`
+        ? `Unescaped canary reflection ('trepath7v9<>') observed in text/html response body`
         : `Canary metacharacters properly encoded or not reflected unescaped in HTML response`,
       verdict: hasExploitedVulns || canaryReflectionHit?.unescapedReflection ? "VULNERABLE" : "NOT_VULNERABLE",
       rationale: hasExploitedVulns && exploitedTertiary
@@ -4060,7 +4060,7 @@ async function probeTarget(
     }
   ];
 
-  // Dedicated Engine #1: Enumeration Engine (XTRIKE-EnumCore™)
+  // Dedicated Engine #1: Enumeration Engine (TrePath-EnumCore™)
   // Compares every finding from the scan engines against SearchSploit, Exploit-DB, GitHub Security Advisories (GHSA),
   // Google OSINT, NVD/CVE, and FIRST EPSS / CISA KEV to determine whether it is a candidate for Penetration Testing Assessment.
   const enumerationRecords = liveFindings.map((f, fIdx) => {
@@ -4253,7 +4253,7 @@ async function probeTarget(
     };
   });
 
-  // Dedicated Engine #2: Penetration Testing & Exploitability Assessment Engine (Aegis.SOC-PentestValidator™)
+  // Dedicated Engine #2: Penetration Testing & Exploitability Assessment Engine (TrePath-PentestValidator™)
   // Executes and records the actual Exploitability Assessment for every finding so the report proves whether each finding is exploitable.
   const pentestAssessments = liveFindings.map((f, fIdx) => {
     const fId = String(f.id || "").toUpperCase();
@@ -4284,7 +4284,7 @@ async function probeTarget(
         cweId: cwe,
         candidateClassification: enumRec.candidateClassification,
         exploitabilityTestId: "PT-04 (Reflected XSS & DOM Script Sink Exploitability Probe)",
-        validationProbeExecuted: `GET ${finalUrl}${finalUrl.includes("?") ? "&" : "?"}xtrike_probe=xtrike_canary_9f2a + DOM inline script sink audit across ${spideredPages.length} page(s)`,
+        validationProbeExecuted: `GET ${finalUrl}${finalUrl.includes("?") ? "&" : "?"}trepath_probe=trepath_canary_9f2a + DOM inline script sink audit across ${spideredPages.length} page(s)`,
         observedTargetResponse: canaryReflectionHit?.unescapedReflection
           ? `Canary reflected unescaped on ${canaryReflectionHit.testedUrl} (param: ${canaryReflectionHit.paramName})`
           : `HTTP ${statusCode} — Permissive/absent Content-Security-Policy observed, but 0/${discoveredParameters.length} discovered parameters and ${domDiscoveryParsed.formsFound.length} form(s) reflected unescaped canary payloads`,
@@ -4436,7 +4436,7 @@ async function probeTarget(
   });
 
   const enumerationEngine: NonNullable<IntrusionAssessmentResult["enumerationEngine"]> = {
-    engineName: "XTRIKE-EnumCore™ v6.4 — Multi-Database Vulnerability & Exploit Enumeration Engine",
+    engineName: "TrePath-EnumCore™ v6.4 — Multi-Database Vulnerability & Exploit Enumeration Engine",
     databasesQueried: [
       "SearchSploit / Exploit-DB Offline & Online Index",
       "GitHub Security Advisories (GHSA)",
@@ -4453,7 +4453,7 @@ async function probeTarget(
   };
 
   const pentestAssessmentEngine: NonNullable<IntrusionAssessmentResult["pentestAssessmentEngine"]> = {
-    engineName: "Aegis.SOC-PentestValidator™ v6.4 — Active Penetration Testing & Exploitability Verification Engine",
+    engineName: "TrePath-PentestValidator™ v6.4 — Active Penetration Testing & Exploitability Verification Engine",
     methodology: hasExploitedVulns
       ? "PTES Phase 4–6 + OWASP WSTG v4.2 Full Active Exploitation, Privilege Escalation (LNX-PE / WIN-PE), Lateral Movement (LNX-LM / WIN-LM), and Post-Exploitation Loot Verification"
       : "PTES Phase 4/5 + OWASP WSTG v4.2 Safe Exploitability Verification (Canary Reflection, Independent Port 80 Downgrade Check, Arbitrary/Null CORS Origin Probe, Soft-404 Config & /robots.txt Route Probe, Cookie Attribute/Purpose & DoH DNS Verification)",
@@ -4528,7 +4528,7 @@ async function probeTarget(
   };
 
   return {
-    schemaVersion: "6.4.0-audit-verified",
+    schemaVersion: "6.5.0-trepath-verified",
     targetUrl: cleanUrl,
     finalUrl,
     host,
@@ -4586,12 +4586,12 @@ async function probeTarget(
     },
     openvas: {
       host,
-      nvtFeedVersion: "XTRIKE-Live-Verifier v6.0",
+      nvtFeedVersion: "TrePath-Live-Verifier v6.0",
       nvtsChecked: 1420,
       vulnerabilities: openvasVulns
     },
     zap: {
-      version: "XTRIKE-WebPulse v6.0 (OWASP WSTG v4.2 / ASVS v4.0.3)",
+      version: "TrePath-WebPulse v6.0 (OWASP WSTG v4.2 / ASVS v4.0.3)",
       spiderUrlsFound: crawledRoutes.length,
       ajaxSpiderDomNodes: domDiscoveryParsed.linksFound.length + domDiscoveryParsed.scriptsFound.length + domDiscoveryParsed.formsFound.length,
       passiveRulesChecked: 250,
@@ -4600,7 +4600,7 @@ async function probeTarget(
       alerts: zapAlerts
     },
     burp: {
-      version: "Aegis.SOC-Verifier v6.0",
+      version: "TrePath-Verifier v6.0",
       collaboratorPayloadsSent: isPrivateIp ? 36 : 10,
       issues: burpIssues
     }
@@ -4610,7 +4610,7 @@ async function probeTarget(
 export async function GET() {
   return NextResponse.json({
     status: "ok",
-    engine: "EXPEDITE STRIKE™ Live External & Lab Multi-Framework DAST Engine",
+    engine: "TrePath™ Live External & Lab Multi-Framework DAST Engine",
     version: "6.0.0-forensic-verified",
     totalPlugins: 1500,
     pluginsByScanner: {

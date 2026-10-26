@@ -19,18 +19,18 @@ interface ValidationJob {
 }
 
 const jobs: ValidationJob[] = [
-  { id: "VAL-001", title: "SQL Injection", findingId: "F-001", status: "VERIFIED", confidence: 97, severity: "Critical", method: "Baseline→Test→Control", attempts: 3, duration: "4.2s", validator: "AXIOM Verification Engine v2.1", jiraTicket: "JRA-2847" },
-  { id: "VAL-002", title: "Stored XSS", findingId: "F-002", status: "VERIFIED", confidence: 94, severity: "High", method: "Baseline→Test→Control", attempts: 2, duration: "3.1s", validator: "AXIOM Verification Engine v2.1", jiraTicket: "JRA-2848" },
-  { id: "VAL-003", title: "SSRF", findingId: "F-003", status: "VERIFIED", confidence: 99, severity: "Critical", method: "Baseline→Test→Control", attempts: 3, duration: "5.8s", validator: "AXIOM Verification Engine v2.1", jiraTicket: "JRA-2849" },
-  { id: "VAL-004", title: "IDOR", findingId: "F-004", status: "VERIFIED", confidence: 88, severity: "High", method: "Baseline→Test→Control", attempts: 2, duration: "2.7s", validator: "AXIOM Verification Engine v2.1", jiraTicket: "JRA-2850" },
-  { id: "VAL-005", title: "CORS Misconfig", findingId: "F-005", status: "VERIFIED", confidence: 91, severity: "High", method: "Baseline→Test→Control", attempts: 3, duration: "3.9s", validator: "AXIOM Verification Engine v2.1", jiraTicket: "JRA-2851" },
-  { id: "VAL-006", title: "Auth Bypass", findingId: "F-006", status: "FAILED", confidence: 34, severity: "High", method: "Baseline→Test→Control", attempts: 3, duration: "6.1s", validator: "AXIOM Verification Engine v2.1" },
-  { id: "VAL-007", title: "Path Traversal", findingId: "F-007", status: "PENDING", confidence: null, severity: "Medium", method: "Baseline→Test→Control", attempts: 0, duration: "—", validator: "AXIOM Verification Engine v2.1" },
-  { id: "VAL-008", title: "Open Redirect", findingId: "F-008", status: "PENDING", confidence: null, severity: "Medium", method: "Baseline→Test→Control", attempts: 0, duration: "—", validator: "AXIOM Verification Engine v2.1" },
+  { id: "VAL-001", title: "SQL Injection", findingId: "F-001", status: "VERIFIED", confidence: 97, severity: "Critical", method: "Baseline→Test→Control", attempts: 3, duration: "4.2s", validator: "TrePath Verification Engine v2.1", jiraTicket: "JRA-2847" },
+  { id: "VAL-002", title: "Stored XSS", findingId: "F-002", status: "VERIFIED", confidence: 94, severity: "High", method: "Baseline→Test→Control", attempts: 2, duration: "3.1s", validator: "TrePath Verification Engine v2.1", jiraTicket: "JRA-2848" },
+  { id: "VAL-003", title: "SSRF", findingId: "F-003", status: "VERIFIED", confidence: 99, severity: "Critical", method: "Baseline→Test→Control", attempts: 3, duration: "5.8s", validator: "TrePath Verification Engine v2.1", jiraTicket: "JRA-2849" },
+  { id: "VAL-004", title: "IDOR", findingId: "F-004", status: "VERIFIED", confidence: 88, severity: "High", method: "Baseline→Test→Control", attempts: 2, duration: "2.7s", validator: "TrePath Verification Engine v2.1", jiraTicket: "JRA-2850" },
+  { id: "VAL-005", title: "CORS Misconfig", findingId: "F-005", status: "VERIFIED", confidence: 91, severity: "High", method: "Baseline→Test→Control", attempts: 3, duration: "3.9s", validator: "TrePath Verification Engine v2.1", jiraTicket: "JRA-2851" },
+  { id: "VAL-006", title: "Auth Bypass", findingId: "F-006", status: "FAILED", confidence: 34, severity: "High", method: "Baseline→Test→Control", attempts: 3, duration: "6.1s", validator: "TrePath Verification Engine v2.1" },
+  { id: "VAL-007", title: "Path Traversal", findingId: "F-007", status: "PENDING", confidence: null, severity: "Medium", method: "Baseline→Test→Control", attempts: 0, duration: "—", validator: "TrePath Verification Engine v2.1" },
+  { id: "VAL-008", title: "Open Redirect", findingId: "F-008", status: "PENDING", confidence: null, severity: "Medium", method: "Baseline→Test→Control", attempts: 0, duration: "—", validator: "TrePath Verification Engine v2.1" },
 ];
 
 const workflowSteps = [
-  { label: "Finding Received (from Scanner Service)", done: true, time: "2026-08-21 19:05:00", detail: "Source: AXIOM Scanner Engine" },
+  { label: "Finding Received (from Scanner Service)", done: true, time: "2026-08-21 19:05:00", detail: "Source: TrePath Scanner Engine" },
   { label: "Baseline Captured", done: true, time: "2026-08-21 19:05:01", detail: "200 OK baseline captured" },
   { label: "Test Payload Sent", done: true, time: "2026-08-21 19:05:02", detail: "SQLi payload injected" },
   { label: "Response Analyzed", done: true, time: "2026-08-21 19:05:03", detail: "Anomalous response detected" },
@@ -404,7 +404,7 @@ export default function ValidationPage() {
                     <div style={{ fontSize: 13, color: "var(--fg)" }}>
                       DNS callback received from{" "}
                       <span style={{ fontFamily: "monospace", color: "var(--green)" }}>api.target.com</span>{" "}
-                      to AXIOM OOB server at{" "}
+                      to TrePath OOB server at{" "}
                       <span style={{ fontFamily: "monospace", color: "var(--primary)" }}>oob.axiom-verify.io</span>
                     </div>
                     <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>

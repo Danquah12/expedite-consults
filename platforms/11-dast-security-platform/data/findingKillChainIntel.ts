@@ -120,7 +120,7 @@ export function getFindingDeepDiveIntel(finding: Finding, fallbackUrl?: string):
           mitreTacticId: "TA0043 / TA0001",
           mitreTechniqueId: isDnsFinding ? "T1590.002" : "T1592.002",
           mitreTechniqueName: "Stage 1 — Discovery & Safe Read-Only Probe (Observed Fact)",
-          sourceContext: `EXPEDITE STRIKE™ Outbound HTTPS/DoH Scanner`,
+          sourceContext: `TrePath™ Outbound HTTPS/DoH Scanner`,
           targetContext: `${cleanUrl} (${host})`,
           deepDiveMechanism: `Observed Fact: Sent a non-destructive read-only probe to ${cleanUrl} and inspected '${param}'. Directly observed: ${matchedFact}.`,
           verificationCommand: cliVerifyCmd,

@@ -16,12 +16,12 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: { default: "EXPEDITE STRIKE™ (XTRIKE & Aegis.SOC) — DAST & Web Interface Security Platform", template: "%s | EXPEDITE STRIKE™ DAST" },
-  description: "Dynamic Application Security Testing (DAST) & Web Interface Security Assessment Platform powered by XTRIKE™ and Aegis.SOC™ with visual exploitation evidence and automated reporting.",
+  title: { default: "TrePath™ — DAST & Web Interface Security Platform", template: "%s | TrePath™ DAST" },
+  description: "Dynamic Application Security Testing (DAST) & Web Interface Security Assessment Platform powered by TrePath™ and TrePath™ with visual exploitation evidence and automated reporting.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "XTRIKE DAST",
+    title: "TrePath DAST",
   },
 };
 

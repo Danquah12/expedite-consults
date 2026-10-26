@@ -555,7 +555,7 @@ export default function SecurityOverviewPage() {
             <Flame size={13} /> DAST Vuln Management
           </Link>
           <Link href="/app" className="btn-primary" style={{ textDecoration: "none", fontSize: 11.5 }}>
-            Launch ÆGIS · SOC Portal <ArrowRight size={13} />
+            Launch TrePath · SOC Portal <ArrowRight size={13} />
           </Link>
         </div>
       </div>
@@ -585,7 +585,7 @@ export default function SecurityOverviewPage() {
             </button>
           </div>
           <div style={{ fontSize: 11.5, color: "#64748b", display: "flex", alignItems: "center", gap: 8, marginTop: 2, flexWrap: "wrap" }}>
-            <span>XTRIKE™ & Aegis.SOC™ · 8-Stage Autonomous Engine Brain · PTES & NIST SP 800-115</span>
+            <span>TrePath™ · 8-Stage Autonomous Engine Brain · PTES & NIST SP 800-115</span>
           </div>
         </div>
 
@@ -1177,7 +1177,7 @@ export default function SecurityOverviewPage() {
                       Vuln Mgmt →
                     </Link>
                     <Link href="/app" style={{ fontSize: 11, color: "#cbd5e1", textDecoration: "none", fontWeight: 500 }}>
-                      ÆGIS SOC →
+                      TrePath SOC →
                     </Link>
                     <Link href="/engine" style={{ fontSize: 11, color: "#cbd5e1", textDecoration: "none", fontWeight: 500 }}>
                       Engine Brain →
@@ -1838,7 +1838,7 @@ export default function SecurityOverviewPage() {
                   Open in DAST Vuln Mgmt (0–100) →
                 </Link>
                 <Link href="/app" className="btn-secondary" style={{ textDecoration: "none", fontSize: 11 }}>
-                  Replay in ÆGIS · SOC Portal →
+                  Replay in TrePath · SOC Portal →
                 </Link>
                 <Link href="/engine" className="btn-primary" style={{ textDecoration: "none", fontSize: 11 }}>
                   Open Full Dossier in Engine Brain →

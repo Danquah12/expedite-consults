@@ -95,7 +95,7 @@ export default function LiveScanPage() {
       .then(r => r.json())
       .then(d => {
         setBackendOk(d.status === "ok");
-        addLog(`[BACKEND] Connected — AXIOM v${d.version} · ${d.engines || 4} engines loaded`);
+        addLog(`[BACKEND] Connected — TrePath v${d.version} · ${d.engines || 4} engines loaded`);
       })
       .catch(() => {
         fetch(`/api/engine/scan`)
@@ -679,7 +679,7 @@ export default function LiveScanPage() {
                                 Prioritize in DAST Vuln Mgmt →
                               </Link>
                               <Link href="/app" className="btn-secondary" style={{ textDecoration: "none", fontSize: 10.5 }}>
-                                Replay in ÆGIS · SOC Portal →
+                                Replay in TrePath · SOC Portal →
                               </Link>
                               <Link href="/engine" className="btn-primary" style={{ textDecoration: "none", fontSize: 10.5 }}>
                                 Open in Engine Brain →

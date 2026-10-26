@@ -57,7 +57,7 @@ const DEMO_URLS: CrawlUrl[] = [
 ];
 
 const DEMO_LOG = [
-  "Initializing AXIOM Web Spider v4.0...",
+  "Initializing TrePath Web Spider v4.0...",
   "Loading Playwright headless Chromium...",
   "Opening target — 200 OK",
   "Fingerprinting server: Apache/2.2.8 (Ubuntu) PHP/5.2.4",

@@ -300,7 +300,7 @@ function AegisSocContent() {
     setAiMessages([
       {
         role: "assistant",
-        text: `Hello, I am your **ÆGIS · Engine Brain AI Security Copilot**. I am wired directly to the live **Engine Brain DAST Penetration Testing Results** for **${selectedTarget.host}** (${selectedTarget.url}).
+        text: `Hello, I am your **TrePath · Engine Brain AI Security Copilot**. I am wired directly to the live **Engine Brain DAST Penetration Testing Results** for **${selectedTarget.host}** (${selectedTarget.url}).
 
 - **Engine Brain Status**: ${isEngineSynced ? "LIVE SYNCHRONIZED TELEMETRY" : "ACTIVE ENGINE BRAIN BASELINE"}
 - **Overall DAST Risk Score**: **${avgRisk}/100** (${critCount} Critical Exploits confirmed with 0% false positives)
@@ -532,7 +532,7 @@ ${execSummary.highLevelRecommendations.map(r => `  - **${r.priorityWindow}**: ${
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-semibold text-white tracking-tight">ÆGIS · SOC PORTAL</span>
+                <span className="text-sm font-semibold text-white tracking-tight">TrePath · SOC PORTAL</span>
                 <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
                   ● ENGINE BRAIN WIRED
                 </span>
@@ -1522,7 +1522,7 @@ ${execSummary.highLevelRecommendations.map(r => `  - **${r.priorityWindow}**: ${
 
 export default function AegisSocStandalonePage() {
   return (
-    <Suspense fallback={<div className="p-8 text-xs text-slate-400 bg-slate-950 h-full flex items-center justify-center">Loading ÆGIS · SOC Portal...</div>}>
+    <Suspense fallback={<div className="p-8 text-xs text-slate-400 bg-slate-950 h-full flex items-center justify-center">Loading TrePath · SOC Portal...</div>}>
       <AegisSocContent />
     </Suspense>
   );

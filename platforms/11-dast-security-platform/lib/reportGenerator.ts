@@ -131,7 +131,7 @@ function getFindingPoC(f: any): any {
   const param = f.parameter || "q";
   return {
     description: `Reproduces and confirms ${f.title || "vulnerability"} against target endpoint.`,
-    curlCommand: `curl -i -s -k -X ${f.method || "GET"} "${target}${param ? `?${param}=test_probe` : ""}" \\\n  -H "User-Agent: AXIOM-Security-Audit" \\\n  -H "Accept: application/json, text/html"`,
+    curlCommand: `curl -i -s -k -X ${f.method || "GET"} "${target}${param ? `?${param}=test_probe` : ""}" \\\n  -H "User-Agent: TrePath-Security-Audit" \\\n  -H "Accept: application/json, text/html"`,
     expectedResult: `Backend responds with status code and payload delta confirming the active vulnerability state.`,
     severity: f.severity || "Medium"
   };
@@ -165,7 +165,7 @@ export function generateHTMLReport(
   findings: Finding[],
   meta?: ReportMeta
 ): string {
-  const reportName  = meta?.name        ?? "AXIOM Full-Stack Security Assessment Report";
+  const reportName  = meta?.name        ?? "TrePath Full-Stack Security Assessment Report";
   const target      = meta?.target      ?? "Target System";
   const environment = meta?.environment ?? "Production / Staging";
   const profile     = meta?.profile     ?? "Standard 22-Stage DAST";
@@ -337,7 +337,7 @@ export function generateHTMLReport(
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${escapeHtml(reportName)} - AXIOM Security Intelligence</title>
+  <title>${escapeHtml(reportName)} - TrePath Security Intelligence</title>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     html{font-size:16px}
@@ -497,7 +497,7 @@ export function generateHTMLReport(
   <div style="max-width:1100px;margin:0 auto;padding:0 24px;">
     <div class="footer">
       <div>
-        <div class="footer-brand">AXIOM Security Intelligence Platform v4.0</div>
+        <div class="footer-brand">TrePath Security Intelligence Platform v4.0</div>
         <div class="footer-version">DAST Exploitation &amp; Verification Engine &mdash; ${escapeHtml(reportDate)}</div>
       </div>
       <div class="footer-confidential">CONFIDENTIAL &bull; CHAIN OF CUSTODY VERIFIED</div>

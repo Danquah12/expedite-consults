@@ -160,7 +160,7 @@ const VIEWS: Record<
       { id: "sha1", label: "SHA256-1", type: "verification", x: 180, y: 340, metadata: { Hash: "3a4f...e8b1", Verified: "Yes", Date: "Aug 20" } },
       { id: "sha2", label: "SHA256-2", type: "verification", x: 400, y: 340, metadata: { Hash: "9c2d...a471", Verified: "Yes", Date: "Aug 20" } },
       { id: "sha3", label: "SHA256-3", type: "verification", x: 620, y: 340, metadata: { Hash: "1b7e...f903", Verified: "Yes", Date: "Aug 20" } },
-      { id: "sig", label: "Signature", type: "application", x: 400, y: 460, metadata: { Key: "AXIOM-KEY-2026", Valid: "Yes", Chain: "Complete" } },
+      { id: "sig", label: "Signature", type: "application", x: 400, y: 460, metadata: { Key: "TrePath-KEY-2026", Valid: "Yes", Chain: "Complete" } },
     ],
     edges: [
       { from: "f001", to: "req" },

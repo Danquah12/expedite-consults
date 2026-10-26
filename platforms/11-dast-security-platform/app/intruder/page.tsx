@@ -617,7 +617,7 @@ ${responseBody}`;
             <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 16px", background: "var(--surface)", borderBottom: "1px solid var(--border)" }}>
               <div style={{ background: "rgba(232,145,45,0.15)", borderRadius: 4, width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>🚀</div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 12, fontWeight: 700 }}>AXIOM Vector Attack — {mode} Mode</div>
+                <div style={{ fontSize: 12, fontWeight: 700 }}>TrePath Vector Attack — {mode} Mode</div>
                 <div style={{ fontSize: 9.5, color: "var(--muted)" }}>Target URI: {useHttps ? "https" : "http"}://{targetHost}:{targetPort}</div>
               </div>
               

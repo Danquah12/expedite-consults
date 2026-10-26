@@ -1788,7 +1788,7 @@ export const OWASP_40_MAPPED_CWE_AUDIT_CATALOG: OwaspMappedCweAuditEntry[] = [
     domainCategory: "Path, Link & File Resolution",
     owaspMapping: "A01:2021 · ASVS V12.3.1 / V12.4.2",
     mitreAttackRef: "TA0004 · T1548 / T1068",
-    scannerEngineRule: "Aegis.SOC Host & Archive Link-Resolution Auditor (LNX-PE-008)",
+    scannerEngineRule: "TrePath Host & Archive Link-Resolution Auditor (LNX-PE-008)",
     defensiveVerificationProcedure:
       "Audits archive extractors (`.zip`/`.tar`) and file readers to confirm `O_NOFOLLOW` / `lstat` verification prior to opening files.",
     d3fendAndRemediation: "D3-FH · Use `O_NOFOLLOW` when opening files in shared directories and reject symlink/junction entries during archive extraction.",
@@ -1840,7 +1840,7 @@ export const OWASP_40_MAPPED_CWE_AUDIT_CATALOG: OwaspMappedCweAuditEntry[] = [
     domainCategory: "Sensitive Information & Source Exposure",
     owaspMapping: "A01:2021 · OWASP API3:2023 (BOPLA) · ASVS V8.3.1",
     mitreAttackRef: "TA0009 / TA0010 · T1213 / T1567",
-    scannerEngineRule: "XTRIKE API Over-Fetching & Query-String Secret Leak Auditor (WEB-AUD-017)",
+    scannerEngineRule: "TrePath API Over-Fetching & Query-String Secret Leak Auditor (WEB-AUD-017)",
     defensiveVerificationProcedure:
       "Checks outbound HTTP responses and URL query strings to verify that session tokens, password hashes, or sensitive fields are never transmitted in URLs or excessive JSON DTOs.",
     d3fendAndRemediation: "D3-OTF · Use strict response DTO serializers (excluding `password_hash`/`secret`) and never pass sensitive tokens in GET query parameters.",
@@ -1957,7 +1957,7 @@ export const OWASP_40_MAPPED_CWE_AUDIT_CATALOG: OwaspMappedCweAuditEntry[] = [
     domainCategory: "Sensitive Information & Source Exposure",
     owaspMapping: "A01:2021 · GDPR / PCI-DSS v4.0 · ASVS V8.3",
     mitreAttackRef: "TA0009 · T1213 / T1005",
-    scannerEngineRule: "Aegis.SOC PII & Regulated Field Masking Auditor (`WEB-AUD-017`)",
+    scannerEngineRule: "TrePath PII & Regulated Field Masking Auditor (`WEB-AUD-017`)",
     defensiveVerificationProcedure:
       "Audits API JSON payloads and logs for unmasked PII (email, SSN, payment card PAN, phone numbers) accessible without owner authorization.",
     d3fendAndRemediation: "D3-DLP · Mask or tokenize PII fields at the API serialization layer and enforce field-level GraphQL/REST authorization.",
@@ -2302,12 +2302,12 @@ export function getDaemonFindingTtpDossier(finding: Finding, fallbackUrl?: strin
 
   const daemonLabel =
     daemonSource === "NMAP"
-      ? "XTRIKE-NetRecon™ · Aegis.SOC Port & Service Mapper (Embedded Core: Nmap NSE v7.94 · 65,535 TCP + 65,535 UDP)"
+      ? "TrePath-NetRecon™ · TrePath Port & Service Mapper (Embedded Core: Nmap NSE v7.94 · 65,535 TCP + 65,535 UDP)"
       : daemonSource === "OPENVAS"
-      ? "Aegis.SOC-VulnCore™ · XTRIKE Infrastructure & CVE Auditor (Embedded Core: OpenVAS / Greenbone GVM v22.4.1 NVT)"
+      ? "TrePath-VulnCore™ · TrePath Infrastructure & CVE Auditor (Embedded Core: OpenVAS / Greenbone GVM v22.4.1 NVT)"
       : daemonSource === "BURP"
-      ? "XTRIKE-StrikeFuzzer™ · Aegis.SOC OAST & Injection Core (Embedded Core: Burp Suite Enterprise v2023.10)"
-      : "XTRIKE-WebPulse™ · Aegis.SOC Active/Passive DAST Daemon (Embedded Core: OWASP ZAP v2.14.0 + Manual Verification)";
+      ? "TrePath-StrikeFuzzer™ · TrePath OAST & Injection Core (Embedded Core: Burp Suite Enterprise v2023.10)"
+      : "TrePath-WebPulse™ · TrePath Active/Passive DAST Daemon (Embedded Core: OWASP ZAP v2.14.0 + Manual Verification)";
 
   const ttp = finding.ttp?.[0];
   const isLiveExternalFinding = String(finding.id || "").startsWith("LIVE-");
@@ -2434,7 +2434,7 @@ export function getDaemonFindingTtpDossier(finding: Finding, fallbackUrl?: strin
       daemonSource,
       daemonLabel,
       portSpectrumCovered: isLiveExternalFinding ? "HTTPS/HTTP & DNS DoH Edge Endpoints (80/443/tcp · 53/udp)" : "TCP 1–65535 & UDP 1–65535 (131,070 Transport Sockets)",
-      staticAuditIdentifier: "STATIC-XTRIKE-NETRECON-65535-AUDIT",
+      staticAuditIdentifier: "STATIC-TREPATH-NETRECON-65535-AUDIT",
       mappedDaemonScripts: isLiveExternalFinding
         ? [
             "http-headers.nse & http-security-headers.nse (80/443/tcp)",
@@ -2451,7 +2451,7 @@ export function getDaemonFindingTtpDossier(finding: Finding, fallbackUrl?: strin
             "quic-info.nse (443/udp)",
             "vulners.nse (CPE/CVE Lookup)"
           ],
-      staticAuditSummary: `Static transport-layer and DNS security audit for ${url}. Maps each responding edge service to its XTRIKE-NetRecon™ assessment check.`,
+      staticAuditSummary: `Static transport-layer and DNS security audit for ${url}. Maps each responding edge service to its TrePath-NetRecon™ assessment check.`,
       tacticId: ttp?.tacticId || "TA0043 / TA0007",
       tacticName: ttp?.tactic || "Reconnaissance & Network Service Discovery",
       techniqueId: ttp?.techniqueId || "T1046 / T1595.001",
@@ -2459,7 +2459,7 @@ export function getDaemonFindingTtpDossier(finding: Finding, fallbackUrl?: strin
       procedureSummary:
         ttp?.procedure ||
         `Adversaries inspect DNS records and web edge services on ${url} to evaluate domain anti-spoofing and transport security controls (${cwe} · ${owasp}).`,
-      ttpEvidenceArtifact: `[XTRIKE-NETRECON / AEGIS.SOC TTP ARTIFACT · ${cwe}] Service & DNS State Ledger recorded for ${url} | Matched Indicator: ${finding.evidence?.matchedPattern || "Edge service and DNS policy verified"}`,
+      ttpEvidenceArtifact: `[TrePath-NETRECON / TrePath TTP ARTIFACT · ${cwe}] Service & DNS State Ledger recorded for ${url} | Matched Indicator: ${finding.evidence?.matchedPattern || "Edge service and DNS policy verified"}`,
       siemAndNetworkIndicators: [
         `Edge / DNS Telemetry: Non-destructive HTTP and DNS-over-HTTPS verification probes against ${url}`,
         `Service Policy Audit: ${finding.evidence?.matchedPattern || "Observed header/DNS record state recorded on scoped host"}`,
@@ -2489,7 +2489,7 @@ export function getDaemonFindingTtpDossier(finding: Finding, fallbackUrl?: strin
         "OID 1.3.6.1.4.1.25623.1.0.105931 (gb_http_security_headers.nasl)",
         "OID 1.3.6.1.4.1.25623.1.0.117234 (gb_apache_cve_2023_25690.nasl)"
       ],
-      staticAuditSummary: `Static SCAP/NVT configuration and access-control audit for ${url} (parameter '${finding.parameter || "id"}'). Maps the detected HTTP/API port to Aegis.SOC-VulnCore™ (Embedded Greenbone NASL) assessment plugins.`,
+      staticAuditSummary: `Static SCAP/NVT configuration and access-control audit for ${url} (parameter '${finding.parameter || "id"}'). Maps the detected HTTP/API port to TrePath-VulnCore™ (Embedded Greenbone NASL) assessment plugins.`,
       tacticId: ttp?.tacticId || "TA0001 / TA0004",
       tacticName: ttp?.tactic || "Initial Access & Privilege Escalation",
       techniqueId: ttp?.techniqueId || "T1190 / T1078",
@@ -2497,7 +2497,7 @@ export function getDaemonFindingTtpDossier(finding: Finding, fallbackUrl?: strin
       procedureSummary:
         ttp?.procedure ||
         `Missing object-level authorization or security header controls on ${url} allow unauthorized access to protected resource records or weaken browser security policy (${cwe} · ${owasp}).`,
-      ttpEvidenceArtifact: `[AEGIS.SOC-VULNCORE / XTRIKE TTP ARTIFACT · ${cwe}] NVT QoD 98%+ Differential Record on ${finding.method} ${url} | Matched Indicator: ${finding.evidence?.matchedPattern || "Authorization / header policy differential confirmed"}`,
+      ttpEvidenceArtifact: `[TREPATH-VULNCORE / TrePath TTP ARTIFACT · ${cwe}] NVT QoD 98%+ Differential Record on ${finding.method} ${url} | Matched Indicator: ${finding.evidence?.matchedPattern || "Authorization / header policy differential confirmed"}`,
       siemAndNetworkIndicators: [
         `API Gateway / Access Log: Parameter '${finding.parameter || "id"}' accessed across distinct resource identifiers on ${url}`,
         `Response Header & Body Audit: ${finding.evidence?.matchedPattern || "HTTP 200 OK returned with mismatched resource ownership"}`,
@@ -2521,13 +2521,13 @@ export function getDaemonFindingTtpDossier(finding: Finding, fallbackUrl?: strin
       daemonSource,
       daemonLabel,
       portSpectrumCovered: "Application & Ephemeral Outbound Ports (1–65535 TCP/UDP Egress)",
-      staticAuditIdentifier: "STATIC-XTRIKE-STRIKEFUZZER-OOB-AUDIT",
+      staticAuditIdentifier: "STATIC-TREPATH-STRIKEFUZZER-OOB-AUDIT",
       mappedDaemonScripts: [
         "Burp-Issue-204900 (SSRF / Out-of-Band Callback Auditor)",
         "Burp-Issue-5243392 (CORS Arbitrary Origin Reflection Auditor)",
         "Burp-TLS-Cookie-Attribute-Scanner"
       ],
-      staticAuditSummary: `Static server-side URL parser, CORS origin policy, and egress boundary audit for ${url} (parameter '${finding.parameter || "callback_url"}'). Maps the target port to XTRIKE-StrikeFuzzer™ (Embedded Burp Enterprise) passive/active audit checks.`,
+      staticAuditSummary: `Static server-side URL parser, CORS origin policy, and egress boundary audit for ${url} (parameter '${finding.parameter || "callback_url"}'). Maps the target port to TrePath-StrikeFuzzer™ (Embedded Burp Enterprise) passive/active audit checks.`,
       tacticId: ttp?.tacticId || "TA0006 / TA0011",
       tacticName: ttp?.tactic || "Credential Access & Application Layer Protocol",
       techniqueId: ttp?.techniqueId || "T1528 / T1090.001",
@@ -2535,7 +2535,7 @@ export function getDaemonFindingTtpDossier(finding: Finding, fallbackUrl?: strin
       procedureSummary:
         ttp?.procedure ||
         `Unvalidated URL parameters or overly permissive CORS trust policies on ${url} allow server-side requests to internal network segments or cross-origin data reads (${cwe} · ${owasp}).`,
-      ttpEvidenceArtifact: `[XTRIKE-STRIKEFUZZER / AEGIS.SOC TTP ARTIFACT · ${cwe}] Outbound Egress & Origin Policy Record on ${finding.method} ${url} | Matched Indicator: ${finding.evidence?.matchedPattern || "Outbound/origin policy boundary weakness confirmed"}`,
+      ttpEvidenceArtifact: `[TREPATH-STRIKEFUZZER TTP ARTIFACT · ${cwe}] Outbound Egress & Origin Policy Record on ${finding.method} ${url} | Matched Indicator: ${finding.evidence?.matchedPattern || "Outbound/origin policy boundary weakness confirmed"}`,
       siemAndNetworkIndicators: [
         `Application Egress Telemetry: Server-initiated request or cross-origin reflection observed on ${url}`,
         `Boundary Audit Proof: ${finding.evidence?.matchedPattern || "Permissive URL/CORS configuration detected"}`,
@@ -2558,7 +2558,7 @@ export function getDaemonFindingTtpDossier(finding: Finding, fallbackUrl?: strin
     daemonSource: "ZAP",
     daemonLabel,
     portSpectrumCovered: "HTTP/HTTPS & API Service Ports (80/443/tcp)",
-    staticAuditIdentifier: "STATIC-XTRIKE-WEBPULSE-WSTG-AUDIT",
+    staticAuditIdentifier: "STATIC-TREPATH-WEBPULSE-WSTG-AUDIT",
     mappedDaemonScripts: isLiveExternalFinding
       ? [
           "ZAP-10038 (Content-Security-Policy Directive Audit – WSTG-CONF-07)",
@@ -2573,7 +2573,7 @@ export function getDaemonFindingTtpDossier(finding: Finding, fallbackUrl?: strin
           "ZAP-10038 / ZAP-10035 / ZAP-10020 (CSP / HSTS / XFO Passive Rules)",
           "ZAP-10010 / ZAP-10054 (Cookie HttpOnly / SameSite / Secure Rules)"
         ],
-    staticAuditSummary: `Static OWASP WSTG v4.2 security configuration, DOM script, and header audit on ${url} (control '${finding.parameter || "HTTP Response"}'). Maps the detected HTTP/HTTPS endpoint to XTRIKE-WebPulse™ / Aegis.SOC (Embedded OWASP ZAP) audit rules.`,
+    staticAuditSummary: `Static OWASP WSTG v4.2 security configuration, DOM script, and header audit on ${url} (control '${finding.parameter || "HTTP Response"}'). Maps the detected HTTP/HTTPS endpoint to TrePath-WebPulse™ (Embedded OWASP ZAP) audit rules.`,
     tacticId: ttp?.tacticId || "TA0043 / TA0005",
     tacticName: ttp?.tactic || "Reconnaissance & Defense Evasion",
     techniqueId: ttp?.techniqueId || "T1592.002 / T1562",
@@ -2581,7 +2581,7 @@ export function getDaemonFindingTtpDossier(finding: Finding, fallbackUrl?: strin
     procedureSummary:
       ttp?.procedure ||
       `Missing or permissive security directives on ${url} (control '${finding.parameter || "N/A"}') weaken browser-enforced defense-in-depth protections (${cwe} · ${owasp}).`,
-    ttpEvidenceArtifact: `[XTRIKE-WEBPULSE / AEGIS.SOC TTP ARTIFACT · ${cwe}] WSTG Rule Match on ${finding.method} ${url} | Matched Indicator: ${finding.evidence?.matchedPattern || "HTTP response differential verified"}`,
+    ttpEvidenceArtifact: `[TREPATH-WEBPULSE TTP ARTIFACT · ${cwe}] WSTG Rule Match on ${finding.method} ${url} | Matched Indicator: ${finding.evidence?.matchedPattern || "HTTP response differential verified"}`,
     siemAndNetworkIndicators: [
       `HTTP Inspection Telemetry: Security directive or DOM control evaluated on ${finding.method} ${url}`,
       `Matched Detection Signature: ${finding.evidence?.matchedPattern || "Application response differential recorded"}`,
@@ -2601,7 +2601,7 @@ export function getDaemonFindingTtpDossier(finding: Finding, fallbackUrl?: strin
 }
 
 /**
- * Proprietary XTRIKE™ & Aegis.SOC™ Brand Layer Mapping for Embedded Daemons
+ * Proprietary TrePath™ Brand Layer Mapping for Embedded Daemons
  */
 export const XTRIKE_AEGIS_DAEMON_BRANDING: Record<
   string,
@@ -2614,38 +2614,38 @@ export const XTRIKE_AEGIS_DAEMON_BRANDING: Record<
   }
 > = {
   NMAP: {
-    brandCode: "XTRIKE-RECON",
-    brandName: "XTRIKE-NetRecon™ · Aegis.SOC Port & Service Mapper",
-    shortTabName: "XTRIKE-Recon (Nmap)",
-    cliBinary: "xtrike-netrecon",
+    brandCode: "TrePath-RECON",
+    brandName: "TrePath-NetRecon™ · TrePath Port & Service Mapper",
+    shortTabName: "TrePath-Recon (Nmap)",
+    cliBinary: "trepath-netrecon",
     embeddedEngine: "Nmap 7.95 NSE (65,535 TCP + 65,535 UDP)"
   },
   OPENVAS: {
     brandCode: "AEGIS-VULNCORE",
-    brandName: "Aegis.SOC-VulnCore™ · XTRIKE Infrastructure & CVE Auditor",
-    shortTabName: "Aegis.SOC-VulnCore (OpenVAS)",
-    cliBinary: "aegis-vulncore",
+    brandName: "TrePath-VulnCore™ · TrePath Infrastructure & CVE Auditor",
+    shortTabName: "TrePath-VulnCore (OpenVAS)",
+    cliBinary: "trepath-vulncore",
     embeddedEngine: "OpenVAS GVM 22.4 NVT Feed"
   },
   ZAP: {
-    brandCode: "XTRIKE-WEBPULSE",
-    brandName: "XTRIKE-WebPulse™ · Aegis.SOC Active/Passive DAST Daemon",
-    shortTabName: "XTRIKE-WebPulse (ZAP)",
-    cliBinary: "xtrike-webpulse",
+    brandCode: "TrePath-WEBPULSE",
+    brandName: "TrePath-WebPulse™ · TrePath Active/Passive DAST Daemon",
+    shortTabName: "TrePath-WebPulse (ZAP)",
+    cliBinary: "trepath-webpulse",
     embeddedEngine: "OWASP ZAP v2.14.0 Active/Passive DAST"
   },
   BURP: {
-    brandCode: "XTRIKE-FUZZER",
-    brandName: "XTRIKE-StrikeFuzzer™ · Aegis.SOC OAST & Injection Core",
-    shortTabName: "XTRIKE-Fuzzer (Burp)",
-    cliBinary: "xtrike-fuzzer",
+    brandCode: "TrePath-FUZZER",
+    brandName: "TrePath-StrikeFuzzer™ · TrePath OAST & Injection Core",
+    shortTabName: "TrePath-Fuzzer (Burp)",
+    cliBinary: "trepath-fuzzer",
     embeddedEngine: "Burp Suite Pro Intruder & OAST"
   },
   POST_EXPLOIT: {
     brandCode: "AEGIS-APEX",
-    brandName: "Aegis.SOC-Apex™ · XTRIKE PrivEsc & Lateral Orchestrator",
-    shortTabName: "Aegis.SOC-Apex (Post-Exploit)",
-    cliBinary: "aegis-apex",
+    brandName: "TrePath-Apex™ · TrePath PrivEsc & Lateral Orchestrator",
+    shortTabName: "TrePath-Apex (Post-Exploit)",
+    cliBinary: "trepath-apex",
     embeddedEngine: "PTES Phase 6 / MITRE v15 Post-Exploit"
   }
 };
@@ -2911,7 +2911,7 @@ function buildExploitInterceptorSvgDataUri(opts: {
   <circle cx="20" cy="22" r="6" fill="#f43f5e"/>
   <circle cx="38" cy="22" r="6" fill="#f59e0b"/>
   <circle cx="56" cy="22" r="6" fill="#10b981"/>
-  <text x="76" y="26" fill="#f8fafc" font-family="monospace" font-size="11.5" font-weight="bold">XTRIKE™ / Aegis.SOC™ DAST Forensic Exchange Recorder — ${escapeSvgXml(opts.findingId)} (${escapeSvgXml(opts.cwe)})</text>
+  <text x="76" y="26" fill="#f8fafc" font-family="monospace" font-size="11.5" font-weight="bold">TrePath™ DAST Forensic Exchange Recorder — ${escapeSvgXml(opts.findingId)} (${escapeSvgXml(opts.cwe)})</text>
   <rect x="665" y="10" width="200" height="22" rx="4" fill="#0284c7"/>
   <text x="765" y="25" text-anchor="middle" fill="#ffffff" font-family="monospace" font-size="10" font-weight="bold">${escapeSvgXml(badgeText.slice(0, 26))}</text>
 
@@ -2996,15 +2996,15 @@ function buildPostExploitTerminalSvgDataUri(opts: {
   <circle cx="20" cy="22" r="6" fill="#f43f5e"/>
   <circle cx="38" cy="22" r="6" fill="#f59e0b"/>
   <circle cx="56" cy="22" r="6" fill="#10b981"/>
-  <text x="76" y="26" fill="#f8fafc" font-family="monospace" font-size="11.5" font-weight="bold">Aegis.SOC-Apex™ Reproducible Verification Console — ${escapeSvgXml(opts.findingId)} (${escapeSvgXml(opts.hostName)})</text>
+  <text x="76" y="26" fill="#f8fafc" font-family="monospace" font-size="11.5" font-weight="bold">TrePath-Apex™ Reproducible Verification Console — ${escapeSvgXml(opts.findingId)} (${escapeSvgXml(opts.hostName)})</text>
   <rect x="665" y="10" width="200" height="22" rx="4" fill="#7e22ce"/>
   <text x="765" y="25" text-anchor="middle" fill="#ffffff" font-family="monospace" font-size="10" font-weight="bold">REPRODUCIBLE CLI TRACE</text>
 
   <!-- Terminal Shell Session -->
   <rect x="16" y="54" width="848" height="156" rx="6" fill="#020409" stroke="#334155"/>
-  <text x="28" y="76" fill="#38bdf8" font-family="monospace" font-size="11" font-weight="bold">auditor@xtrike-verify:~$ ${escapeSvgXml(opts.cliCmd1.slice(0, 78))}</text>
+  <text x="28" y="76" fill="#38bdf8" font-family="monospace" font-size="11" font-weight="bold">auditor@trepath-verify:~$ ${escapeSvgXml(opts.cliCmd1.slice(0, 78))}</text>
   <text x="28" y="96" fill="#a7f3d0" font-family="monospace" font-size="10.5">${escapeSvgXml(opts.cliOut1.slice(0, 92))}</text>
-  <text x="28" y="122" fill="#e879f9" font-family="monospace" font-size="11" font-weight="bold">auditor@xtrike-verify:~$ ${escapeSvgXml(opts.cliCmd2.slice(0, 78))}</text>
+  <text x="28" y="122" fill="#e879f9" font-family="monospace" font-size="11" font-weight="bold">auditor@trepath-verify:~$ ${escapeSvgXml(opts.cliCmd2.slice(0, 78))}</text>
   <text x="28" y="142" fill="#fde68a" font-family="monospace" font-size="10.5">${escapeSvgXml(opts.cliOut2.slice(0, 92))}</text>
   <rect x="28" y="156" width="824" height="42" rx="4" fill="#1e1b4b" stroke="#c084fc" stroke-width="1"/>
   <text x="40" y="174" fill="#c084fc" font-family="monospace" font-size="10.5" font-weight="bold">⚡ OBSERVED SECURITY BOUNDARY &amp; CONTROL EVALUATION:</text>
@@ -3020,7 +3020,7 @@ function buildPostExploitTerminalSvgDataUri(opts: {
 
   <!-- Footer Forensic Bar -->
   <rect x="16" y="348" width="848" height="28" rx="5" fill="#0f172a" stroke="#1e293b"/>
-  <text x="28" y="366" fill="#cbd5e1" font-family="monospace" font-size="10">🛡️ Collected by XTRIKE™ DAST &amp; Aegis.SOC-Apex™ · FIPS 180-4 SHA-256: ${escapeSvgXml(opts.sha256Short)}</text>
+  <text x="28" y="366" fill="#cbd5e1" font-family="monospace" font-size="10">🛡️ Collected by TrePath™ DAST · FIPS 180-4 SHA-256: ${escapeSvgXml(opts.sha256Short)}</text>
   <text x="852" y="366" text-anchor="end" fill="#c084fc" font-family="monospace" font-size="10" font-weight="bold">FIG-${escapeSvgXml(opts.findingId)}-B</text>
 </svg>`;
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
@@ -3111,7 +3111,7 @@ function buildConcreteSecurityRequirement(finding: Finding, cleanTitle: string, 
 
 /**
  * Generates a complete, executive + technical DAST, Enumeration & Exploitability Assessment Finding Report
- * with XTRIKE™ / Aegis.SOC™ branding, real FIPS 180-4 SHA-256 digests, 4-state validation status,
+ * with TrePath™ branding, real FIPS 180-4 SHA-256 digests, 4-state validation status,
  * Enumeration Engine correlation (SearchSploit / Exploit-DB / GitHub GHSA / Google OSINT),
  * Penetration Testing Exploitability Assessment results, and Observed-vs-Inferred separation.
  */
@@ -3240,13 +3240,13 @@ export function buildFormalFindingReport(
   // Enumeration Engine & Penetration Testing Exploitability Assessment Summary per Finding
   const enumerationAndExploitabilityVerdict =
     validationState === "Exploit Verified"
-      ? `Enumeration Engine (SearchSploit / Exploit-DB / GitHub GHSA / ${owasp}): Matched active ${cwe} exploit signature on ${hostName} (${finding.parameter || "endpoint"}) and classified as an Active Penetration Testing Exploit Target. Penetration Testing Assessment (Aegis.SOC-PentestValidator™): Executed controlled exploit payload against ${url}, confirmed indicator '${finding.evidence?.matchedPattern || cleanTitle}', and verified privilege escalation, lateral pivot, and data/credential extraction.`
+      ? `Enumeration Engine (SearchSploit / Exploit-DB / GitHub GHSA / ${owasp}): Matched active ${cwe} exploit signature on ${hostName} (${finding.parameter || "endpoint"}) and classified as an Active Penetration Testing Exploit Target. Penetration Testing Assessment (TrePath-PentestValidator™): Executed controlled exploit payload against ${url}, confirmed indicator '${finding.evidence?.matchedPattern || cleanTitle}', and verified privilege escalation, lateral pivot, and data/credential extraction.`
       : fIdUpper.includes("-CSP") || cwe === "CWE-693"
-      ? `Enumeration Engine (SearchSploit / Exploit-DB / GitHub GHSA / WSTG-CONF-07): Classified as a Defense-in-Depth Browser Hardening Gap & Candidate for XSS Sink Exploitability Check. Penetration Testing Assessment (Aegis.SOC-PentestValidator™ PT-04): Probed discovered URL parameters and DOM scripts on ${hostName} using benign canary tokens ('xtrike_canary_9f2a'); NO unescaped XSS reflection or active script injection vulnerability was verified.`
+      ? `Enumeration Engine (SearchSploit / Exploit-DB / GitHub GHSA / WSTG-CONF-07): Classified as a Defense-in-Depth Browser Hardening Gap & Candidate for XSS Sink Exploitability Check. Penetration Testing Assessment (TrePath-PentestValidator™ PT-04): Probed discovered URL parameters and DOM scripts on ${hostName} using benign canary tokens ('trepath_canary_9f2a'); NO unescaped XSS reflection or active script injection vulnerability was verified.`
       : fIdUpper.includes("-HTTP-CLEARTEXT")
-      ? `Enumeration Engine (WSTG-CRYP-01 / RFC 6797): Classified as a Transport Hardening Candidate. Penetration Testing Assessment (Aegis.SOC-PentestValidator™ PT-01): Independently probed plain HTTP port 80 ('http://${hostName}/' with redirect-follow disabled) separately from HTTPS port 443; verified that port 80 serves HTTP 200 OK cleartext HTML rather than a 301/308 redirect to HTTPS.`
+      ? `Enumeration Engine (WSTG-CRYP-01 / RFC 6797): Classified as a Transport Hardening Candidate. Penetration Testing Assessment (TrePath-PentestValidator™ PT-01): Independently probed plain HTTP port 80 ('http://${hostName}/' with redirect-follow disabled) separately from HTTPS port 443; verified that port 80 serves HTTP 200 OK cleartext HTML rather than a 301/308 redirect to HTTPS.`
       : fIdUpper.includes("-HSTS")
-      ? `Enumeration Engine (WSTG-CRYP-01): Classified as an HTTPS Transport Policy Check. Penetration Testing Assessment (Aegis.SOC-PentestValidator™ PT-01): Verified Strict-Transport-Security header on 'https://${hostName}/' independently from plain HTTP port 80 redirect behavior.`
+      ? `Enumeration Engine (WSTG-CRYP-01): Classified as an HTTPS Transport Policy Check. Penetration Testing Assessment (TrePath-PentestValidator™ PT-01): Verified Strict-Transport-Security header on 'https://${hostName}/' independently from plain HTTP port 80 redirect behavior.`
       : fIdUpper.includes("-HARDENING") || cwe === "CWE-16"
       ? `Enumeration Engine (OWASP ASVS V14.4): Classified as a Browser Hardening Control Gap (NOT an active exploit). Penetration Testing Assessment: Verified each header's distinct security function independently — 'X-Content-Type-Options: nosniff' (MIME-sniffing prevention), 'Referrer-Policy' (URL referrer leakage control), and 'Permissions-Policy' (browser hardware API restriction).`
       : fIdUpper.includes("-BANNER") || cwe === "CWE-497"
@@ -3259,7 +3259,7 @@ export function buildFormalFindingReport(
       ? `Enumeration Engine (RFC 7208 SPF / RFC 7489 DMARC): Classified as a Domain Email Authentication Control Gap. Penetration Testing Assessment (PT-11): Queried Cloudflare DoH independently for SPF and '_dmarc.${hostName}'; noted that SPF '~all' is a soft-fail policy (not proof of active spoofing) and that missing DMARC leaves receiver handling of unaligned mail unpoliced.`
       : fIdUpper.includes("-DNS-CAA") || cwe === "CWE-295"
       ? `Enumeration Engine (RFC 8659 CAA): Classified as an Informational DNS Certificate Policy Observation. Penetration Testing Assessment (PT-12): Queried DNS RRtype 257 (CAA) for '${hostName}'; absence of CAA does not bypass domain-control validation (DCV) or allow unauthorized TLS certificate issuance.`
-      : `Enumeration Engine (SearchSploit / Exploit-DB / GitHub GHSA / OWASP WSTG): Correlated ${cwe} on ${hostName} as a ${findingClassification}. Penetration Testing Assessment (Aegis.SOC-PentestValidator™): Executed safe non-destructive verification against ${url} (${validationState}).`;
+      : `Enumeration Engine (SearchSploit / Exploit-DB / GitHub GHSA / OWASP WSTG): Correlated ${cwe} on ${hostName} as a ${findingClassification}. Penetration Testing Assessment (TrePath-PentestValidator™): Executed safe non-destructive verification against ${url} (${validationState}).`;
 
   const exploitationStatusLabel =
     validationState === "Exploit Verified"
@@ -3422,38 +3422,38 @@ export function buildFormalFindingReport(
 
   const liveMappedScripts =
     cwe === "CWE-693"
-      ? ["ZAP-10038 (Content-Security-Policy Scanner – WSTG-CONF-07)", "Aegis.SOC-PentestValidator PT-04 (Reflected XSS & DOM Sink Exploitability Verifier)"]
+      ? ["ZAP-10038 (Content-Security-Policy Scanner – WSTG-CONF-07)", "TrePath-PentestValidator PT-04 (Reflected XSS & DOM Sink Exploitability Verifier)"]
       : fIdUpper.includes("-HTTP-CLEARTEXT")
-      ? ["Aegis.SOC-PentestValidator PT-01 (Independent Port 80 HTTP Cleartext vs. 301/308 Redirect Verifier – WSTG-CRYP-01)"]
+      ? ["TrePath-PentestValidator PT-01 (Independent Port 80 HTTP Cleartext vs. 301/308 Redirect Verifier – WSTG-CRYP-01)"]
       : cwe === "CWE-319" || fIdUpper.includes("-HSTS")
       ? ["ZAP-10035 (Strict-Transport-Security Verifier – WSTG-CRYP-01)", "Nmap ssl-enum-ciphers & HTTPS Transport Auditor"]
       : cwe === "CWE-1021"
-      ? ["ZAP-10020 (X-Frame-Options & CSP frame-ancestors Scanner – WSTG-CLNT-09)", "Aegis.SOC-PentestValidator PT-09 (Clickjacking Framing Exploitability Check)"]
+      ? ["ZAP-10020 (X-Frame-Options & CSP frame-ancestors Scanner – WSTG-CLNT-09)", "TrePath-PentestValidator PT-09 (Clickjacking Framing Exploitability Check)"]
       : cwe === "CWE-16"
       ? ["ZAP-10021 (X-Content-Type-Options nosniff Verifier)", "ZAP-10050 (Referrer-Policy & Permissions-Policy Verifier – ASVS V14.4)"]
       : cwe === "CWE-614" || cwe === "CWE-1004"
-      ? ["ZAP-10010/10011/10054 (Cookie Secure/HttpOnly/SameSite Auditor)", "Aegis.SOC-PentestValidator PT-10 (Session Cookie Theft Precondition Check)"]
+      ? ["ZAP-10010/10011/10054 (Cookie Secure/HttpOnly/SameSite Auditor)", "TrePath-PentestValidator PT-10 (Session Cookie Theft Precondition Check)"]
       : cwe === "CWE-942"
-      ? ["ZAP-40040 (CORS Header & Origin Reflection Verifier)", "Aegis.SOC-PentestValidator PT-02 (Arbitrary & Null Origin Reflection Exploitability Probe)"]
+      ? ["ZAP-40040 (CORS Header & Origin Reflection Verifier)", "TrePath-PentestValidator PT-02 (Arbitrary & Null Origin Reflection Exploitability Probe)"]
       : cwe === "CWE-829" || cwe === "CWE-353"
       ? ["ZAP-90003 (Subresource Integrity Attribute Missing – WSTG-CLNT-01 / ASVS V14.2.2)"]
       : cwe === "CWE-352" || cwe === "CWE-20" || fIdUpper.includes("-FORMS-INPUTS")
-      ? ["ZAP-10202 (Absence of Anti-CSRF Tokens – WSTG-SESS-05)", "Aegis.SOC-PentestValidator PT-04/PT-05 (Parameter Reflection & Error-Boundary Prober)"]
+      ? ["ZAP-10202 (Absence of Anti-CSRF Tokens – WSTG-SESS-05)", "TrePath-PentestValidator PT-04/PT-05 (Parameter Reflection & Error-Boundary Prober)"]
       : cwe === "CWE-525" || fIdUpper.includes("-CACHE-ISOLATION")
       ? ["ZAP-10049 (Cache-Control & Cross-Origin Isolation COOP/CORP Verifier – WSTG-CLNT-14)"]
       : fIdUpper.includes("-DNS-CAA") || cwe === "CWE-295"
-      ? ["Cloudflare DoH RFC 8659 DNS CAA Verifier (Aegis.SOC-PentestValidator PT-12)"]
+      ? ["Cloudflare DoH RFC 8659 DNS CAA Verifier (TrePath-PentestValidator PT-12)"]
       : cwe === "CWE-290" || fIdUpper.includes("-DNS")
-      ? ["Cloudflare DoH RFC 7208 SPF & RFC 7489 DMARC Verifier (Aegis.SOC-PentestValidator PT-11)"]
+      ? ["Cloudflare DoH RFC 7208 SPF & RFC 7489 DMARC Verifier (TrePath-PentestValidator PT-11)"]
       : fIdUpper.includes("-SECURITY-TXT") || fIdUpper.includes("-WELLKNOWN") || titleUpper.includes("SECURITY.TXT")
       ? ["RFC 9116 /.well-known/security.txt Compliance Check (WSTG-INFO-03)"]
       : cwe === "CWE-425" || fIdUpper.includes("-SPIDER-ROUTES") || titleUpper.includes("SPIDER")
       ? ["WSTG-INFO-06 / WSTG-INFO-07 (Application Entrypoints & Client-Side JS Bundle Route Extractor)"]
       : cwe === "CWE-1059" || fIdUpper.includes("-UNREACHABLE")
-      ? ["XTRIKE-NetRecon HTTPS/HTTP Reachability & DNS Resolution Verifier"]
+      ? ["TrePath-NetRecon HTTPS/HTTP Reachability & DNS Resolution Verifier"]
       : [
           "ZAP-10036 (Server & Technology Banner Fingerprint Verifier – WSTG-INFO-02)",
-          "XTRIKE-EnumCore (SearchSploit / Exploit-DB / GitHub GHSA / NVD CVE Correlator)"
+          "TrePath-EnumCore (SearchSploit / Exploit-DB / GitHub GHSA / NVD CVE Correlator)"
         ];
 
   const mappedAssessmentScriptsFinal = isLiveFinding ? liveMappedScripts : d.mappedDaemonScripts;
@@ -3498,7 +3498,7 @@ export function buildFormalFindingReport(
   const testReqText = redactSensitiveTokens(
     finding.evidence?.testRequest ||
     finding.evidence?.originalRequest ||
-    `${finding.method || "GET"} ${pathOnly} HTTP/1.1\nHost: ${hostName}\nUser-Agent: XTRIKE-WebPulse/6.1 (Non-Destructive Validator)`
+    `${finding.method || "GET"} ${pathOnly} HTTP/1.1\nHost: ${hostName}\nUser-Agent: TrePath-WebPulse/6.1 (Non-Destructive Validator)`
   );
   const testRespText = redactSensitiveTokens(
     finding.evidence?.testResponse ||
@@ -3548,7 +3548,7 @@ export function buildFormalFindingReport(
           capturedCommandOrRequest:
             `curl -i -s -k "${originUrl}/.env.backup" | head -n 15`,
           capturedOutputOrLoot: redactSensitiveTokens(
-            `HTTP/1.1 200 OK\nContent-Type: text/plain; charset=utf-8\n\nJWT_SECRET="xtrike_prod_hs256_master_signing_key_2026"\nDB_ADMIN_URI="postgres://admin:P@ssw0rd_ProdDb_9941!@${hostName}:5432/prod_core"\n[NOTE: Sensitive secret values automatically redacted by EXPEDITE STRIKE Release Gate]`
+            `HTTP/1.1 200 OK\nContent-Type: text/plain; charset=utf-8\n\nJWT_SECRET="xtrike_prod_hs256_master_signing_key_2026"\nDB_ADMIN_URI="postgres://admin:P@ssw0rd_ProdDb_9941!@${hostName}:5432/prod_core"\n[NOTE: Sensitive secret values automatically redacted by TrePath Release Gate]`
           ),
           customerCiSummary:
             `Establishes that the configuration backup file was publicly reachable over HTTP 200 OK while redacting sensitive key values.`
@@ -3792,8 +3792,8 @@ export function buildFormalFindingReport(
     fourStageEvidenceGate,
     observedVsInferred,
     evidence: {
-      forensicHeader: `[${d.daemonSource === "ZAP" ? "XTRIKE-WEBPULSE / OWASP ZAP" : d.daemonSource === "NMAP" ? "XTRIKE-NETRECON / NMAP" : d.daemonSource === "OPENVAS" ? "AEGIS.SOC-VULNCORE / OPENVAS" : "XTRIKE-FUZZER / BURP"} RECORD · ${cwe} · STATE: ${validationState.toUpperCase()} · CLASS: ${findingClassification.toUpperCase()}]`,
-      ruleMatchLine: `WSTG / Aegis.SOC Rule Match on ${finding.method || "GET"} ${url}`,
+      forensicHeader: `[${d.daemonSource === "ZAP" ? "TrePath-WEBPULSE / OWASP ZAP" : d.daemonSource === "NMAP" ? "TrePath-NETRECON / NMAP" : d.daemonSource === "OPENVAS" ? "TREPATH-VULNCORE / OPENVAS" : "TrePath-FUZZER / BURP"} RECORD · ${cwe} · STATE: ${validationState.toUpperCase()} · CLASS: ${findingClassification.toUpperCase()}]`,
+      ruleMatchLine: `WSTG / TrePath Rule Match on ${finding.method || "GET"} ${url}`,
       matchedIndicator,
       concreteSecurityRequirement,
       mappedAssessmentScripts: mappedAssessmentScriptsFinal,
@@ -4594,8 +4594,8 @@ export function buildExecutiveSummaryDossier(params: {
     canonicalScanRecord: {
       scanId: params.engagementId || `EXP-SCAN-${todayIso.replace(/-/g, "")}-${primaryHost.slice(0, 8).toUpperCase()}`,
       scannerVersion: hasExploitVerifiedInList
-        ? "EXPEDITE STRIKE™ (XTRIKE™ & Aegis.SOC™) v6.1 — Active Exploitation, PrivEsc & Lateral Movement Engine"
-        : "EXPEDITE STRIKE™ (XTRIKE™ & Aegis.SOC™) v6.1 — Read-Only Forensic Verifier",
+        ? "TrePath™ v6.1 — Active Exploitation, PrivEsc & Lateral Movement Engine"
+        : "TrePath™ v6.1 — Read-Only Forensic Verifier",
       crawlProfile: "Multi-Page Same-Origin DOM Spider + 10 Well-Known Endpoint Probes + Active Exploit & PrivEsc Verification",
       authState: hasExploitVerifiedInList
         ? "Authorized Active Exploitation Mode (Initial Access -> Privilege Escalation -> Lateral Movement -> Loot Verification)"
@@ -4704,7 +4704,7 @@ export function buildExecutiveSummaryDossier(params: {
       nextStepsChecklist: [
         `1. Remediate Phase 1 priority findings on ${scopeHostsLabel} (${list.slice(0, 2).map(f => summarizeFindingShort(f.title)).join(", ") || "CSP & HSTS hardening"}).`,
         `2. Deploy updated HTTP security headers, SRI hashes, and DNS records on ${serverStackLabel}.`,
-        `3. Execute the 'Verify Fix (Retest)' probes in the XTRIKE™ & Aegis.SOC™ Portal against ${primaryTarget}; mark findings Remediated only after all pass criteria succeed.`,
+        `3. Execute the 'Verify Fix (Retest)' probes in the TrePath™ Portal against ${primaryTarget}; mark findings Remediated only after all pass criteria succeed.`,
         `4. Export the SARIF v2.1.0 / JSON dossier for ${primaryHost} into CI/CD pipelines for continuous regression gating.`
       ]
     }

@@ -18,7 +18,7 @@ const PIPELINE_STAGES = [
   { id:"canon",  label:"Canonical Findings", records:148, extra:"8 failed schema validation",     color:"var(--primary)", status:"Complete" },
   { id:"corr",   label:"Correlation",        records:142, extra:"6 merged as duplicates",         color:"var(--yellow)",  status:"Processing"},
   { id:"dedup",  label:"Deduplication",      records:138, extra:"4 additional duplicates removed",color:"var(--green)",   status:"Complete" },
-  { id:"axiom",  label:"AXIOM Finding",      records:138, extra:"138 verified findings",          color:"var(--primary)", status:"Complete" },
+  { id:"axiom",  label:"TrePath Finding",      records:138, extra:"138 verified findings",          color:"var(--primary)", status:"Complete" },
 ];
 
 const ADAPTERS = [

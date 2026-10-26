@@ -55,7 +55,7 @@ const PLUGINS: Plugin[] = [
     category: "Validation",
     rating: 4.9,
     downloads: 8234,
-    author: "AXIOM Labs",
+    author: "TrePath Labs",
     permissions: ["findings.read", "findings.write"],
     description:
       "Deep SQLi validation with time-based blind and UNION detection",
@@ -84,7 +84,7 @@ const PLUGINS: Plugin[] = [
     downloads: 6721,
     author: "ServiceNow",
     permissions: ["tickets.create", "tickets.update"],
-    description: "Auto-create ServiceNow incidents from AXIOM findings",
+    description: "Auto-create ServiceNow incidents from TrePath findings",
     installed: false,
     reviews: 124,
   },
@@ -110,7 +110,7 @@ const PLUGINS: Plugin[] = [
     downloads: 11234,
     author: "ProjectDiscovery",
     permissions: ["scan.create", "findings.write"],
-    description: "Run Nuclei templates as AXIOM scan plugins",
+    description: "Run Nuclei templates as TrePath scan plugins",
     installed: false,
     reviews: 298,
   },
@@ -135,7 +135,7 @@ const PLUGINS: Plugin[] = [
     category: "AI",
     rating: 4.7,
     downloads: 3210,
-    author: "AXIOM Labs",
+    author: "TrePath Labs",
     permissions: ["findings.read", "reports.generate"],
     description: "LLM-powered risk analysis and remediation suggestions",
     installed: false,
@@ -516,7 +516,7 @@ function PluginModal({
               marginLeft: 4,
             }}
           >
-            · Signed by AXIOM Certificate Authority ·
+            · Signed by TrePath Certificate Authority ·
             SHA256:a1b2c3d4e5f6...
           </span>
         </div>
@@ -580,7 +580,7 @@ function PluginModal({
             Dependencies
           </h3>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            {["AXIOM SDK ≥ 1.0", "Node.js ≥ 18"].map((dep) => (
+            {["TrePath SDK ≥ 1.0", "Node.js ≥ 18"].map((dep) => (
               <span
                 key={dep}
                 style={{

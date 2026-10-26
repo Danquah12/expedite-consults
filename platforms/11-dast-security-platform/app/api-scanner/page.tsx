@@ -464,7 +464,7 @@ export default function ApiScannerPage() {
                             </div>
                             <div>
                               <div style={{ fontSize:9, color:"var(--muted)", marginBottom:2 }}>SOURCE</div>
-                              <div style={{ fontSize:11, color:"var(--muted)" }}>{selFinding.source || selFinding.plugin || "AXIOM ZAP"}</div>
+                              <div style={{ fontSize:11, color:"var(--muted)" }}>{selFinding.source || selFinding.plugin || "TrePath ZAP"}</div>
                             </div>
                           </div>
                         </div>
@@ -525,12 +525,12 @@ export default function ApiScannerPage() {
                     <pre className="http-raw" style={{ borderRadius:8, border:"1px solid var(--border)", margin:0 }}>
 {`${selected.method} ${target}${selected.path} HTTP/1.1
 Host: ${selected.host || hostFromTarget}
-User-Agent: Mozilla/5.0 (AXIOM-Scanner/4.0)
+User-Agent: Mozilla/5.0 (TrePath-Scanner/4.0)
 Authorization: Bearer eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0...
 Accept: application/json, text/html, */*
 Accept-Language: en-US,en;q=0.9
 Content-Type: application/json
-X-Scan-ID: AXIOM-${Date.now().toString(36).toUpperCase()}
+X-Scan-ID: TrePath-${Date.now().toString(36).toUpperCase()}
 X-Forwarded-For: 127.0.0.1
 Connection: close`}
                     </pre>
@@ -541,7 +541,7 @@ Connection: close`}
                         <pre style={{ background:"#010409", border:"1px solid rgba(239,83,80,0.3)", borderRadius:8, padding:"12px 14px", fontFamily:"'Cascadia Code','Fira Code',monospace", fontSize:10.5, color:"#ff7b72", lineHeight:1.8, overflowX:"auto", margin:0 }}>
 {`${selected.method} ${target}${selected.path} HTTP/1.1
 Host: ${selected.host || hostFromTarget}
-User-Agent: Mozilla/5.0 (AXIOM-Scanner/4.0)
+User-Agent: Mozilla/5.0 (TrePath-Scanner/4.0)
 
 [PAYLOAD]: ${getPayload(endpointFindings[0]).split("\n")[0]}`}
                         </pre>

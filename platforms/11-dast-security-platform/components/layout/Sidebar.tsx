@@ -52,7 +52,7 @@ export const UI_THEMES: Array<{
   },
   {
     id: "emerald-soc",
-    name: "Aegis Emerald SOC (Dark)",
+    name: "TrePath Emerald SOC (Dark)",
     shortLabel: "Emerald SOC",
     swatchBg: "#06100c",
     swatchAccent: "#10b981",
@@ -76,7 +76,7 @@ const SECTIONS = [
     items: [
       { href: "/vuln-management", icon: ShieldAlert,      label: "DAST Vuln Mgmt",    badge: "0-100", hot: true },
       { href: "/engine",          icon: Brain,            label: "Engine Brain",      badge: "AUTO", hot: true },
-      { href: "/app",             icon: Swords,           label: "ÆGIS · SOC Portal", badge: "PRO", hot: true },
+      { href: "/app",             icon: Swords,           label: "TrePath · SOC Portal", badge: "PRO", hot: true },
       { href: "/",                icon: LayoutDashboard,  label: "Security Overview" },
       { href: "/live-scan",       icon: Waypoints,        label: "4-Stage Pipeline",  badge: "LIVE", hot: true },
     ],
@@ -84,7 +84,7 @@ const SECTIONS = [
   {
     title: "AI & Threat Intel",
     items: [
-      { href: "/copilot",         icon: MessageSquare,    label: "AXIOM Copilot",     badge: "AI",   hot: true },
+      { href: "/copilot",         icon: MessageSquare,    label: "TrePath Copilot",     badge: "AI",   hot: true },
       { href: "/knowledge-graph", icon: Share2,           label: "Knowledge Graph",   badge: "GNN",  hot: true },
       { href: "/ai",              icon: Bot,              label: "Autonomous Analyst" },
     ],
@@ -244,7 +244,7 @@ export default function Sidebar() {
             </div>
             <div>
               <div style={{ fontSize: 11.5, fontWeight: 800, color: "var(--fg)", lineHeight: 1.1, whiteSpace: "nowrap" }}>
-                XTRIKE™ · DAST
+                TrePath™ · DAST
               </div>
               <div style={{ fontSize: 8.5, color: "var(--muted)", fontWeight: 600, fontFamily: "monospace", whiteSpace: "nowrap" }}>
                 WEB &amp; API SECURITY
@@ -280,7 +280,7 @@ export default function Sidebar() {
           {[
             { href: "/vuln-management", label: "Vuln Mgmt" },
             { href: "/engine", label: "Engine Brain" },
-            { href: "/app", label: "ÆGIS · SOC" },
+            { href: "/app", label: "TrePath · SOC" },
             { href: "/", label: "Overview" }
           ].map(nav => {
             const isAct = path === nav.href;
@@ -344,7 +344,7 @@ export default function Sidebar() {
                 </div>
                 <div>
                   <div style={{ fontSize: 12.5, fontWeight: 800, color: "var(--fg)", letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: 5 }}>
-                    XTRIKE™ · DAST
+                    TrePath™ · DAST
                     <span style={{ fontSize: 8.5, background: "var(--pill-tint)", color: "var(--fg)", border: "1px solid var(--pill-border)", borderRadius: 4, padding: "0 4px", fontWeight: 700 }}>WEB</span>
                   </div>
                   <div style={{ fontSize: 9, color: "var(--muted)", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>ENTERPRISE DAST PLATFORM</div>

@@ -30,16 +30,16 @@ import DastVulnManagementTab from "@/components/vuln-management/DastVulnManageme
 
 const BACKEND_URL = "http://localhost:3001";
 
-// ─── PTES + NIST SP 800-115 + MITRE ATT&CK® v15 (14 Tactics) + OWASP Top 10 Pipeline (XTRIKE™ & Aegis.SOC™ Branded) ───
+// ─── PTES + NIST SP 800-115 + MITRE ATT&CK® v15 (14 Tactics) + OWASP Top 10 Pipeline (TrePath™ Branded) ───
 const PIPELINE = [
   { id: "scope",        label: "PTES P1 · NIST §2 · MITRE TA0042/TA0043 (Recon & Prep)",                      icon: "🎯", color: "#4fc3f7" },
-  { id: "nmap",         label: "PTES P2 · XTRIKE-NetRecon™ · MITRE TA0043/TA0007 (Embedded Nmap NSE)",        icon: "📡", color: "#a5d6a7" },
-  { id: "openvas_scan", label: "PTES P3-4 · Aegis.SOC-VulnCore™ · MITRE TA0001/TA0007 (Embedded OpenVAS)",    icon: "🛡",  color: "#80cbc4" },
-  { id: "zap_scan",     label: "PTES P5 · XTRIKE-WebPulse™ · MITRE TA0001–TA0006 (Embedded OWASP ZAP)",       icon: "⚡", color: "#4fc3f7" },
-  { id: "burp_scan",    label: "PTES P5 · XTRIKE-StrikeFuzzer™ · MITRE TA0006/TA0011 (Embedded Burp OAST)",   icon: "🔍", color: "#ff8a65" },
-  { id: "post_assess",  label: "PTES P6 · Aegis.SOC-Apex™ · MITRE TA0003–TA0010 (PrivEsc · Lateral · Exfil)", icon: "🔑", color: "#c084fc" },
-  { id: "copilot",      label: "Aegis.SOC AI Copilot · MITRE 14-Tactic Kill-Chain Synthesis",                 icon: "🧠", color: "#60a5fa" },
-  { id: "report",       label: "PTES P7 · MITRE TA0040 · XTRIKE™ / Aegis.SOC™ Formal Report & Retest",        icon: "📄", color: "#dce775" },
+  { id: "nmap",         label: "PTES P2 · TrePath-NetRecon™ · MITRE TA0043/TA0007 (Embedded Nmap NSE)",        icon: "📡", color: "#a5d6a7" },
+  { id: "openvas_scan", label: "PTES P3-4 · TrePath-VulnCore™ · MITRE TA0001/TA0007 (Embedded OpenVAS)",    icon: "🛡",  color: "#80cbc4" },
+  { id: "zap_scan",     label: "PTES P5 · TrePath-WebPulse™ · MITRE TA0001–TA0006 (Embedded OWASP ZAP)",       icon: "⚡", color: "#4fc3f7" },
+  { id: "burp_scan",    label: "PTES P5 · TrePath-StrikeFuzzer™ · MITRE TA0006/TA0011 (Embedded Burp OAST)",   icon: "🔍", color: "#ff8a65" },
+  { id: "post_assess",  label: "PTES P6 · TrePath-Apex™ · MITRE TA0003–TA0010 (PrivEsc · Lateral · Exfil)", icon: "🔑", color: "#c084fc" },
+  { id: "copilot",      label: "TrePath AI Copilot · MITRE 14-Tactic Kill-Chain Synthesis",                 icon: "🧠", color: "#60a5fa" },
+  { id: "report",       label: "PTES P7 · MITRE TA0040 · TrePath™ Formal Report & Retest",        icon: "📄", color: "#dce775" },
 ] as const;
 
 type Stage = typeof PIPELINE[number]["id"];
@@ -528,11 +528,11 @@ const OWASP_GITHUB_TEST_TARGETS: OwaspBenchmarkTarget[] = [
 ];
 
 const INITIAL_SCANNERS: ScannerItem[] = [
-  { id: "nmap",         tabId: "NMAP",         stepOrder: 1, name: "XTRIKE-NetRecon™ (Nmap)",         enabled: true, color: "#a5d6a7", version: "Nmap NSE v7.94 · TA0043",         endpoint: "/api/engine/scan (TLS/TCP/DoH)", activeRequests: 0, findingsFound: 0, status: "STANDBY" },
-  { id: "openvas",      tabId: "OPENVAS",      stepOrder: 2, name: "Aegis.SOC-VulnCore™ (OpenVAS/Nessus)", enabled: true, color: "#80cbc4", version: "OpenVAS 22.4 & Nessus 10.7", endpoint: "/api/engine/scan (NVT/NASL)",    activeRequests: 0, findingsFound: 0, status: "STANDBY" },
-  { id: "zap",          tabId: "ZAP",          stepOrder: 3, name: "XTRIKE-WebPulse™ (OWASP ZAP)",    enabled: true, color: "#4fc3f7", version: "OWASP ZAP v2.14 · WSTG",          endpoint: "/api/zap + /api/engine/scan",    activeRequests: 0, findingsFound: 0, status: "STANDBY" },
-  { id: "burp",         tabId: "BURP",         stepOrder: 4, name: "XTRIKE-StrikeFuzzer™ (Burp)",     enabled: true, color: "#ff8a65", version: "Burp Suite v2023.10 · OAST/Fuzz", endpoint: "/api/engine/scan (CORS/Canary)", activeRequests: 0, findingsFound: 0, status: "STANDBY" },
-  { id: "post_exploit", tabId: "POST_EXPLOIT", stepOrder: 5, name: "Aegis.SOC-Apex™ (Verify/CWE)",    enabled: true, color: "#c084fc", version: "40-CWE & MITRE 14 · TA0004",      endpoint: "/api/engine/scan (SHA-256 PoC)", activeRequests: 0, findingsFound: 0, status: "STANDBY" },
+  { id: "nmap",         tabId: "NMAP",         stepOrder: 1, name: "TrePath-NetRecon™ (Nmap)",         enabled: true, color: "#a5d6a7", version: "Nmap NSE v7.94 · TA0043",         endpoint: "/api/engine/scan (TLS/TCP/DoH)", activeRequests: 0, findingsFound: 0, status: "STANDBY" },
+  { id: "openvas",      tabId: "OPENVAS",      stepOrder: 2, name: "TrePath-VulnCore™ (OpenVAS/Nessus)", enabled: true, color: "#80cbc4", version: "OpenVAS 22.4 & Nessus 10.7", endpoint: "/api/engine/scan (NVT/NASL)",    activeRequests: 0, findingsFound: 0, status: "STANDBY" },
+  { id: "zap",          tabId: "ZAP",          stepOrder: 3, name: "TrePath-WebPulse™ (OWASP ZAP)",    enabled: true, color: "#4fc3f7", version: "OWASP ZAP v2.14 · WSTG",          endpoint: "/api/zap + /api/engine/scan",    activeRequests: 0, findingsFound: 0, status: "STANDBY" },
+  { id: "burp",         tabId: "BURP",         stepOrder: 4, name: "TrePath-StrikeFuzzer™ (Burp)",     enabled: true, color: "#ff8a65", version: "Burp Suite v2023.10 · OAST/Fuzz", endpoint: "/api/engine/scan (CORS/Canary)", activeRequests: 0, findingsFound: 0, status: "STANDBY" },
+  { id: "post_exploit", tabId: "POST_EXPLOIT", stepOrder: 5, name: "TrePath-Apex™ (Verify/CWE)",    enabled: true, color: "#c084fc", version: "40-CWE & MITRE 14 · TA0004",      endpoint: "/api/engine/scan (SHA-256 PoC)", activeRequests: 0, findingsFound: 0, status: "STANDBY" },
 ];
 
 // ─── Complete 14-Tactic MITRE ATT&CK® Enterprise v15 Kill-Chain Matrix (Start to End) ───
@@ -550,7 +550,7 @@ const MITRE_ATTACK_14_TACTICS = [
   { order: 11, tacticId: "TA0009", tactic: "Collection",              techniques: "T1213 (Data from Info Repositories), T1119 (Automated Collection)",        ptesNist: "PTES P5–P6 · NIST §5",   engineModule: "Step 3: OWASP ZAP + OpenVAS",      labValidation: "Collected sample user table hashes, OpenAPI schemas, and SuperAdmin profile metadata for evidence",   d3fend: "D3-DLP (Database Activity Monitoring)",   status: "VALIDATED" },
   { order: 12, tacticId: "TA0011", tactic: "Command and Control (C2)",techniques: "T1071.001 (Web Protocols), T1090.001 (Internal Connection Proxy / SSRF)",  ptesNist: "PTES P5 · OWASP A10",    engineModule: "Step 4: Burp Collaborator OOB",    labValidation: "Validated asynchronous Out-of-Band DNS/HTTP callback & loopback proxy to 127.0.0.1:8080 via SSRF",   d3fend: "D3-EFA (Egress Traffic Filtering)",       status: "VALIDATED" },
   { order: 13, tacticId: "TA0010", tactic: "Exfiltration",            techniques: "T1567 (Exfiltration Over Web Service), T1041 (Exfil Over C2 Channel)",     ptesNist: "PTES P6 · NIST §5.2",    engineModule: "Step 5 & 6: Post-Assess & Copilot",labValidation: "Verified data boundary exposure via HTTP response reflection & signed SHA-256 evidence manifests",      d3fend: "D3-OTF (Outbound Traffic Filtering)",     status: "VALIDATED" },
-  { order: 14, tacticId: "TA0040", tactic: "Impact & Retest Sign-Off",techniques: "T1565 (Data Manipulation Risk), T1499 (Endpoint DoS Risk) + D3FEND Retest",ptesNist: "PTES P7 · NIST §6",      engineModule: "Step 7: EXPEDITE STRIKE™ Dossier", labValidation: "Assessed business blast radius (CVSS 9.8), verified zero lab disruption & enabled Post-Fix Retest",    d3fend: "D3-RTV (Post-Remediation Retest Sign-Off)",status: "VALIDATED" },
+  { order: 14, tacticId: "TA0040", tactic: "Impact & Retest Sign-Off",techniques: "T1565 (Data Manipulation Risk), T1499 (Endpoint DoS Risk) + D3FEND Retest",ptesNist: "PTES P7 · NIST §6",      engineModule: "Step 7: TrePath™ Dossier", labValidation: "Assessed business blast radius (CVSS 9.8), verified zero lab disruption & enabled Post-Fix Retest",    d3fend: "D3-RTV (Post-Remediation Retest Sign-Off)",status: "VALIDATED" },
 ];
 
 // ─── OWASP Top 10 (2021 A01–A10) Complete Validation Matrix (+ MITRE ATT&CK) ──
@@ -575,7 +575,7 @@ const PTES_NIST_PHASES = [
   { ptesPhase: "Phase 4: Vulnerability Analysis", nistPhase: "NIST SP 800-115 §4: Vulnerability Assessment", mitreTactics: "TA0001 Initial Access · TA0007 Discovery (T1595.002)", engineModule: "OpenVAS / Greenbone GVM v22.4.1 (94,218 NVTs)", deliverable: "SCAP/CVE Correlation (CVE-2023-25690, CVE-2022-42889, BOLA OID 108566 · QoD 98%)", status: "COMPLETE" },
   { ptesPhase: "Phase 5: Exploitation & Validation", nistPhase: "NIST SP 800-115 §5: Attack (Verification)", mitreTactics: "TA0001 Initial Access · TA0002 Execution · TA0006 Cred Access · TA0011 C2", engineModule: "OWASP ZAP Active Suite + Burp Collaborator", deliverable: "Zero-False-Positive PoC Validation across all OWASP Top 10 (A01–A10) categories", status: "COMPLETE" },
   { ptesPhase: "Phase 6: Post-Exploitation & Pivoting", nistPhase: "NIST SP 800-115 §5.2: Post-Assessment & Lateral", mitreTactics: "TA0003 Persistence · TA0004 PrivEsc · TA0005 Evasion · TA0008 Lateral · TA0010 Exfil", engineModule: "PrivEsc, Lateral Movement & Post-Assessment Brain", deliverable: "www-data ➔ superadmin/root elevation path, 192.168.195.140 ➔ .139 DB pivot, & artifact cleanup", status: "COMPLETE" },
-  { ptesPhase: "Phase 7: Reporting & Retest Sign-Off", nistPhase: "NIST SP 800-115 §6: Reporting & Remediation", mitreTactics: "TA0040 Impact · MITRE D3FEND™ Countermeasures & Retest", engineModule: "EXPEDITE STRIKE™ Printable Dossier & Retest Verifier", deliverable: "Cryptographically signed PTES/NIST/MITRE/OWASP Printable PDF Dossier & Post-Fix Retest Certificate", status: "COMPLETE" },
+  { ptesPhase: "Phase 7: Reporting & Retest Sign-Off", nistPhase: "NIST SP 800-115 §6: Reporting & Remediation", mitreTactics: "TA0040 Impact · MITRE D3FEND™ Countermeasures & Retest", engineModule: "TrePath™ Printable Dossier & Retest Verifier", deliverable: "Cryptographically signed PTES/NIST/MITRE/OWASP Printable PDF Dossier & Post-Fix Retest Certificate", status: "COMPLETE" },
 ];
 
 // ─── Privilege Escalation, Lateral Movement & Post-Assessment Telemetry ──────
@@ -624,7 +624,7 @@ const AUTONOMOUS_8_STAGE_WORKFLOW = [
   { stageNum: 4, name: "4. EXECUTE",    title: "Controlled, Rate-Limited Dynamic Testing",  detail: "Runs authorized WSTG/ZAP/OpenVAS/Burp probes + Business Logic, Stateful Session, and Differential Role checks within virtual lab guardrails.", standards: "OWASP WSTG · API Top 10 · MITRE TA0001/02", status: "COMPLETED" },
   { stageNum: 5, name: "5. VALIDATE",   title: "Independent Exploitability Verification",   detail: "Executes secondary out-of-band / differential verification to prove exploitability safely (0% false positives) and classify CONFIRMED vs SUSPECTED.", standards: "NIST §5 · PTES P5 · ASVS Verification",     status: "COMPLETED" },
   { stageNum: 6, name: "6. CORRELATE",  title: "Attack-Path Graph & Root-Cause Grouping",   detail: "Chains moderate/high weaknesses into 4 full Compromise Paths (e.g., .env leak + BOLA ➔ Forged Admin JWT) and clusters findings into 4 Root Causes.", standards: "MITRE ATT&CK 14 Tactics · CWE · NIST SSDF",status: "COMPLETED" },
-  { stageNum: 7, name: "7. REPORT",     title: "Evidence-Traceable Dossier Generation",     detail: "Produces cryptographically signed (SHA-256) EXPEDITE STRIKE™ Dossier with HTTP transcripts, reproduction CLI, and multi-standard mappings.", standards: "PTES P7 · NIST §6 · OWASP Top 10",         status: "COMPLETED" },
+  { stageNum: 7, name: "7. REPORT",     title: "Evidence-Traceable Dossier Generation",     detail: "Produces cryptographically signed (SHA-256) TrePath™ Dossier with HTTP transcripts, reproduction CLI, and multi-standard mappings.", standards: "PTES P7 · NIST §6 · OWASP Top 10",         status: "COMPLETED" },
   { stageNum: 8, name: "8. RETEST",     title: "Automated Remediation & Regression Check",  detail: "Re-runs targeted verification probes after developer patches, checks for regressions across releases, and issues D3FEND™ Sign-Off Certificates.", standards: "ASVS Retest · MITRE D3FEND™ · NIST RV.2",  status: "ACTIVE & READY" },
 ];
 
@@ -864,7 +864,7 @@ Content-Type: application/json
     appendixId: "APPENDIX C",
     title: "Sample Collected Privilege Escalation & Lateral Movement Evidence (PTES Phase 6 / NIST §5.2)",
     host: "192.168.195.140 (Container Root Elevation) ➔ 192.168.195.139:3306 (Lateral DB Pivot)",
-    tool: "AXIOM PrivEsc & Lateral Movement Brain (ZAP #90020 RCE + SUID Audit + Cross-Host MySQL Handshake)",
+    tool: "TrePath PrivEsc & Lateral Movement Brain (ZAP #90020 RCE + SUID Audit + Cross-Host MySQL Handshake)",
     sha256: "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae",
     rawArtifact: `--- [EVIDENCE C.1: OS Command Injection (#90020) & SUID Privilege Escalation to uid=0(root)] ---
 POST /api/diagnostics/ping HTTP/1.1
@@ -1641,7 +1641,7 @@ export default function EnginePage() {
       if (savedResults) {
         const parsedRes = JSON.parse(savedResults);
         if (Array.isArray(parsedRes) && parsedRes.length > 0) {
-          const validFreshResults = parsedRes.filter((r: any) => r?.schemaVersion === "6.4.0-audit-verified");
+          const validFreshResults = parsedRes.filter((r: any) => r?.schemaVersion === "6.5.0-trepath-verified");
           if (validFreshResults.length > 0) {
             setEngineResults(validFreshResults);
           } else {
@@ -1837,7 +1837,7 @@ export default function EnginePage() {
     const alreadyProbed = engineResults.some(
       r =>
         !r?.isPrivateLab &&
-        r?.schemaVersion === "6.4.0-audit-verified" &&
+        r?.schemaVersion === "6.5.0-trepath-verified" &&
         (normalizeTargetIdentity(r?.targetUrl) === primaryTargetIdentity ||
           normalizeTargetIdentity(r?.finalUrl) === primaryTargetIdentity) &&
         Array.isArray(r?.liveFindings) &&
@@ -2405,7 +2405,7 @@ export default function EnginePage() {
           ...ap,
           title: `Live Outbound HTTPS/TLS X.509 Handshake, HTTP Headers & Cloudflare DoH DNS Capture (${liveRes.host})`,
           host: allScopedUrlsStr,
-          tool: "EXPEDITE STRIKE™ Live Outbound HTTPS/TLS Socket Inspector + Cloudflare DoH DNS Resolver",
+          tool: "TrePath™ Live Outbound HTTPS/TLS Socket Inspector + Cloudflare DoH DNS Resolver",
           sha256: uniqueSha256,
           rawArtifact: `[LIVE OUTBOUND HTTPS/TLS X.509 & CLOUDFLARE DoH DNS TELEMETRY — ${liveRes.timestamp || new Date().toISOString()}]\nTarget Scanned: ${liveRes.targetUrl}\nResolved Final URL: ${liveRes.finalUrl}\nHTTP Status: ${liveRes.statusCode} | Response Latency: ${liveRes.responseTimeMs}ms | Security Grade: ${liveRes.securityGrade || "B"} (${liveRes.securityScore || 78}/100)\nServer Banner: ${liveRes.serverHeader}${liveRes.poweredByHeader ? ` | X-Powered-By: ${liveRes.poweredByHeader}` : ""}\n${tlsInfo}\n${redirectInfo}\nDNS SPF: ${liveRes.dnsSecurity?.spfPresent ? liveRes.dnsSecurity.spfRecord : "MISSING"}\nDNS DMARC: ${liveRes.dnsSecurity?.dmarcPresent ? liveRes.dnsSecurity.dmarcRecord : "MISSING"}\nDNS CAA: ${liveRes.dnsSecurity?.caaPresent ? liveRes.dnsSecurity.caaRecord : "MISSING"}\n\n--- [RAW HTTP RESPONSE HEADERS CAPTURED FROM ${liveRes.host}] ---\n${rawHeadersBlock}`
         };
@@ -2415,7 +2415,7 @@ export default function EnginePage() {
           ...ap,
           title: `Live Multi-Page DOM Spider, Hyperlink & Script Bundle Surface Log (${liveRes.host})`,
           host: allScopedUrlsStr,
-          tool: "XTRIKE-WebPulse™ Multi-Page Same-Origin DOM Spider & Subresource Integrity (SRI) Auditor",
+          tool: "TrePath-WebPulse™ Multi-Page Same-Origin DOM Spider & Subresource Integrity (SRI) Auditor",
           sha256: uniqueSha256,
           rawArtifact: `[LIVE MULTI-PAGE DOM SPIDER & SCRIPT INVENTORY — ${liveRes.host}]\nRoot Document Title: "${liveRes.domDiscovery?.pageTitle || liveRes.host}"\nPages Spidered: ${spideredPages.length} | Total Hyperlinks: ${liveRes.domDiscovery?.linksFound?.length || 0} | Script Bundles: ${liveRes.domDiscovery?.scriptsFound?.length || 0} | HTML Forms: ${liveRes.domDiscovery?.formsFound?.length || 0}\n\n--- [CRAWLED SUB-PAGES] ---\n${spideredPages.map((p: any, i: number) => `[${i + 1}] ${p.url} ➔ HTTP ${p.status} (${p.latencyMs}ms) | Title="${p.title}" | Links=${p.linksCount} | Scripts=${p.scriptsCount} | Forms=${p.formsCount}`).join("\n") || `1. ${liveRes.finalUrl} (HTTP ${liveRes.statusCode})`}\n\n--- [DISCOVERED SCRIPT BUNDLES] ---\n${(liveRes.domDiscovery?.scriptsFound || []).slice(0, 15).map((s: string, i: number) => `[Script #${i + 1}] ${s}`).join("\n") || "(Inline scripts only)"}`
         };
@@ -2425,7 +2425,7 @@ export default function EnginePage() {
           ...ap,
           title: `Live Endpoint Exposure, Soft-404 Filtered Probes & Active Parameter Check Matrix (${liveRes.host})`,
           host: allScopedUrlsStr,
-          tool: "XTRIKE-NetRecon™ Soft-404-Filtered Endpoint & Canary Reflection Prober (WSTG-INFO-03 / RFC 9116)",
+          tool: "TrePath-NetRecon™ Soft-404-Filtered Endpoint & Canary Reflection Prober (WSTG-INFO-03 / RFC 9116)",
           sha256: uniqueSha256,
           rawArtifact: `[LIVE WELL-KNOWN & SENSITIVE ENDPOINT PROBE MATRIX — ${liveRes.host}]\n${wellKnownProbes.map((p: any) => `• ${String(p.path).padEnd(32, " ")} ➔ HTTP ${p.status} (${p.reachable ? "VERIFIED REACHABLE" : "NOT EXPOSED / FILTERED"})${p.reachable && p.snippet ? `\n  Excerpt: ${String(p.snippet).slice(0, 160).replace(/\s+/g, " ")}` : ""}`).join("\n") || "Well-known probes completed."}\n\n--- [DISCOVERED INPUT & QUERY PARAMETERS (${liveRes.deepSpider?.discoveredParameters?.length || 0})] ---\n${(liveRes.deepSpider?.discoveredParameters || []).slice(0, 15).map((dp: any) => `• param="${dp.param}" | source=${dp.source} | page=${dp.pageUrl}`).join("\n") || "(No exposed query/form parameters on root surface)"}`
         };
@@ -2434,7 +2434,7 @@ export default function EnginePage() {
         ...ap,
         title: `Cryptographic Chain-of-Custody & Verified Finding Digest Ledger (${liveRes.host})`,
         host: allScopedUrlsStr,
-        tool: "Aegis.SOC™ Read-Only Forensic Verifier & FIPS 180-4 SHA-256 Ledger",
+        tool: "TrePath™ Read-Only Forensic Verifier & FIPS 180-4 SHA-256 Ledger",
         sha256: uniqueSha256,
         rawArtifact: `[VERIFIED FINDING LEDGER & CHAIN OF CUSTODY — ${liveRes.host}]\nMeasured Security Posture: ${liveRes.securityScore}/100 (Grade ${liveRes.securityGrade}) | Total Verified Findings: ${liveFList.length}\nRules of Engagement: Non-Destructive Read-Only External Assessment (Zero state-changing payloads or OS/DB intrusion)\n\n${liveFList.map((lf, i) => `[${i + 1}] ${lf.id} | ${lf.severity.toUpperCase()} | ${lf.cweId} | ${lf.title}\n    Endpoint: ${lf.method} ${lf.url} (${lf.parameter})\n    Matched Indicator: ${lf.evidence?.matchedPattern || "Verified"}\n    Remediation: ${lf.remediation}`).join("\n\n")}`
       };
@@ -2494,7 +2494,7 @@ export default function EnginePage() {
         {
           tool: {
             driver: {
-              name: "EXPEDITE STRIKE™ Multi-Framework Autonomous DAST Engine",
+              name: "TrePath™ Multi-Framework Autonomous DAST Engine",
               organization: "Expedite Consults",
               version: "5.2.0",
               informationUri: "https://11-dast-security-platform.vercel.app/engine",
@@ -2655,7 +2655,7 @@ export default function EnginePage() {
     });
     const payload = {
       dossierMetadata: {
-        platform: "EXPEDITE STRIKE™ Multi-Framework Autonomous Security Brain v5.5",
+        platform: "TrePath™ Multi-Framework Autonomous Security Brain v5.5",
         clientOrganization: clientOrgName,
         leadAssessor: leadAssessorName,
         engagementId,
@@ -3388,7 +3388,7 @@ ${f.remediation}
             engineStep: 5,
             brainStage: 5,
             pluginCode: "EXP-PLG-504",
-            msg: `🔑 [Aegis.SOC-Apex™ Forensic Verifier] Independent exploitability & wire-evidence verification complete across ${urlsToProbe.join(", ")} — 0 false positives retained.`
+            msg: `🔑 [TrePath-Apex™ Forensic Verifier] Independent exploitability & wire-evidence verification complete across ${urlsToProbe.join(", ")} — 0 false positives retained.`
           });
         } else {
           combinedLiveAndDeep.forEach((lf, fIdx) => {
@@ -3479,7 +3479,7 @@ ${f.remediation}
               ? `⚡ [OWASP ZAP Deep Passive/Active Inspection #${i + 1}] Auditing DOM sink/source trees, SRI integrity & cookie directives on ${pageSample.url} (HTTP ${pageSample.status})`
               : tTag === "BURP"
               ? `🔍 [Burp Suite Repeater & Intruder Check #${i + 1}] Verifying response differential, soft-404 fingerprint & CORS origin handling on ${primaryR.host}${wkSample.path} (HTTP ${wkSample.status})`
-              : `🔑 [Aegis.SOC-Apex™ Evidence Integrity Check #${i + 1}] Validating deterministic reproduction & SHA-256 evidence chain across ${primaryR.host} (${combinedLiveAndDeep.length} verified findings)`;
+              : `🔑 [TrePath-Apex™ Evidence Integrity Check #${i + 1}] Validating deterministic reproduction & SHA-256 evidence chain across ${primaryR.host} (${combinedLiveAndDeep.length} verified findings)`;
           const insertIdx = Math.min(
             finalScheduledEvents.length - 1,
             Math.max(1, Math.floor(((i + 1) / (extraNeeded + 1)) * finalScheduledEvents.length))
@@ -3922,7 +3922,7 @@ ${f.remediation}
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>EXPEDITE STRIKE™ — Automated Penetration Testing &amp; DAST Validation Dossier (${escHtml(allScopedUrlsStr)})</title>
+  <title>TrePath™ — Automated Penetration Testing &amp; DAST Validation Dossier (${escHtml(allScopedUrlsStr)})</title>
   <style>
     @page { size: A4; margin: 14mm; }
     * { box-sizing: border-box; }
@@ -4044,14 +4044,14 @@ ${f.remediation}
 </head>
 <body>
   <div class="no-print">
-    <div><strong>🌐 EXPEDITE STRIKE™ (XTRIKE™ &amp; Aegis.SOC™) — DAST &amp; Web Interface Security Assessment Report (${escHtml(allScopedUrlsStr)})</strong></div>
+    <div><strong>🌐 TrePath™ (TrePath™) — DAST &amp; Web Interface Security Assessment Report (${escHtml(allScopedUrlsStr)})</strong></div>
     <button class="print-btn" onclick="window.print()">🖨️ Print / Save DAST &amp; Web Interface Security Report as PDF</button>
   </div>
 
   <div class="header">
     <div>
-      <div style="font-size:11px;font-weight:800;color:#0284c7;letter-spacing:0.08em;">🌐 EXPEDITE CONSULTS · XTRIKE™ &amp; AEGIS.SOC™ DAST (DYNAMIC APPLICATION SECURITY TESTING) v5.7 · ${escHtml(classificationLevel)}</div>
-      <h1 style="margin:4px 0;font-size:20px;">XTRIKE™ &amp; Aegis.SOC™ — DAST &amp; Web Interface Security Assessment Report</h1>
+      <div style="font-size:11px;font-weight:800;color:#0284c7;letter-spacing:0.08em;">🌐 EXPEDITE CONSULTS · TrePath™ DAST (DYNAMIC APPLICATION SECURITY TESTING) v5.7 · ${escHtml(classificationLevel)}</div>
+      <h1 style="margin:4px 0;font-size:20px;">TrePath™ — DAST &amp; Web Interface Security Assessment Report</h1>
       <div style="font-size:11.5px;color:#0f172a;margin:3px 0;">
         <strong>Prepared For Client:</strong> <span class="badge std-badge">${escHtml(clientOrgName)}</span> &nbsp;|&nbsp;
         <strong>Lead Assessor:</strong> ${escHtml(leadAssessorName)} &nbsp;|&nbsp;
@@ -4334,7 +4334,7 @@ ${f.remediation}
     <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #d8b4fe;padding-bottom:8px;margin-bottom:10px;">
       <div>
         <div style="font-size:10px;font-family:monospace;font-weight:800;color:#6d28d9;">
-          🔎 DEDICATED ENGINE #1 · XTRIKE-ENUMCORE™ VULNERABILITY &amp; EXPLOIT DATABASE ENUMERATION ENGINE
+          🔎 DEDICATED ENGINE #1 · TrePath-ENUMCORE™ VULNERABILITY &amp; EXPLOIT DATABASE ENUMERATION ENGINE
         </div>
         <h2 style="margin:2px 0 0 0;border:none;padding:0;font-size:15.5px;color:#0f172a;">
           Enumeration Engine: Comparing Scan Findings Against SearchSploit, Exploit-DB, GitHub Advisories (GHSA), Google OSINT &amp; NVD/CVE
@@ -4396,7 +4396,7 @@ ${f.remediation}
     <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #6ee7b7;padding-bottom:8px;margin-bottom:10px;">
       <div>
         <div style="font-size:10px;font-family:monospace;font-weight:800;color:#047857;">
-          ⚔️ DEDICATED ENGINE #2 · AEGIS.SOC-PENTESTVALIDATOR™ PENETRATION TESTING &amp; EXPLOITABILITY ASSESSMENT ENGINE
+          ⚔️ DEDICATED ENGINE #2 · TREPATH-PENTESTVALIDATOR™ PENETRATION TESTING &amp; EXPLOITABILITY ASSESSMENT ENGINE
         </div>
         <h2 style="margin:2px 0 0 0;border:none;padding:0;font-size:15.5px;color:#0f172a;">
           Penetration Testing &amp; Exploitability Assessment: Validating Whether Candidates Are Exploitable for Intrusion or Compromise
@@ -4730,7 +4730,7 @@ ${f.remediation}
               ptesPhase: "Phase 2: Intelligence Gathering",
               nistPhase: "NIST §3.1 Discovery (Passive/Active)",
               mitreTactics: "TA0043 Reconnaissance",
-              engineModule: "XTRIKE-NetRecon + DoH-DNS",
+              engineModule: "TrePath-NetRecon + DoH-DNS",
               deliverable: `Captured live HTTP ${primaryLiveTelemetry?.statusCode || 200} headers (${primaryLiveTelemetry?.serverHeader || "Web Edge"}), Cloudflare DoH SPF/DMARC/CAA records, and 10 well-known discovery endpoints on ${primaryHost}.`,
               status: "VERIFIED"
             },
@@ -4738,7 +4738,7 @@ ${f.remediation}
               ptesPhase: "Phase 3: Threat Modeling",
               nistPhase: "NIST §3.2 Attack Surface Mapping",
               mitreTactics: "TA0042 Resource Dev · TA0001",
-              engineModule: "XTRIKE-DeepSpider-AST",
+              engineModule: "TrePath-DeepSpider-AST",
               deliverable: `Mapped ${primaryLiveTelemetry?.deepSpider?.spideredPages?.length || 1} spidered page(s), ${primaryLiveTelemetry?.domDiscovery?.linksFound?.length || 0} hyperlink(s), ${primaryLiveTelemetry?.domDiscovery?.scriptsFound?.length || 0} script bundle(s), and ${primaryLiveTelemetry?.deepSpider?.discoveredParameters?.length || 0} input/query parameter(s) on ${primaryHost}.`,
               status: "VERIFIED"
             },
@@ -4746,7 +4746,7 @@ ${f.remediation}
               ptesPhase: "Phase 4: Vulnerability Analysis",
               nistPhase: "NIST §4 Vulnerability Identification",
               mitreTactics: "TA0005 Defense Evasion · TA0007",
-              engineModule: "XTRIKE-WebPulse (OWASP WSTG)",
+              engineModule: "TrePath-WebPulse (OWASP WSTG)",
               deliverable: `Identified and verified ${reportItems.length} security findings (${execSum.scoringMethodology.deduplicatedClusterCount} deduplicated CWE clusters) across CSP, HSTS, framing, headers, SRI, and DNS controls on ${primaryHost}.`,
               status: "VERIFIED"
             },
@@ -4754,7 +4754,7 @@ ${f.remediation}
               ptesPhase: "Phase 5: Exploitation (Read-Only Verification)",
               nistPhase: "NIST §5 Security Control Validation",
               mitreTactics: "TA0002 Execution · TA0006",
-              engineModule: "Aegis.SOC-Forensic-Verifier",
+              engineModule: "TrePath-Forensic-Verifier",
               deliverable: `Executed non-destructive baseline-vs-test HTTP/DNS probes on ${primaryHost}, recording exact header/DOM differentials and FIPS 180-4 SHA-256 digests with zero service disruption.`,
               status: "VERIFIED"
             },
@@ -4812,7 +4812,7 @@ ${f.remediation}
           <td><strong>${escHtml(row.id)}</strong></td>
           <td><strong>${escHtml(row.name)}</strong></td>
           <td><span class="badge mitre-badge">${escHtml(row.mitre)}</span></td>
-          <td><code>XTRIKE-WebPulse / Live Prober</code> (${escHtml(topMatch ? topMatch.cweId : "WSTG v4.2")})</td>
+          <td><code>TrePath-WebPulse / Live Prober</code> (${escHtml(topMatch ? topMatch.cweId : "WSTG v4.2")})</td>
           <td>${escHtml(topMatch ? `${topMatch.title} (${matchedLive.length} finding(s) verified on ${primaryHost})` : `No unauthenticated vulnerability triggered on ${primaryHost} during non-destructive read-only assessment`)}</td>
           <td><span class="badge ${topMatch ? (topMatch.severity === "Critical" ? "crit" : topMatch.severity === "High" ? "high" : "med") : "verified"}">${escHtml(topMatch ? topMatch.severity : "Pass / Hardened")}</span></td>
           <td><span class="badge verified">✓ ${topMatch ? "VERIFIED FINDING" : "AUDITED (PASS)"}</span></td>
@@ -5100,7 +5100,7 @@ ${f.remediation}
     </tbody>
   </table>` : ""}
 
-  <h2>10. Formal Penetration Testing Finding Dossiers (DAST-WEB-2026-001 – DAST-WEB-2026-${String(reportItems.length).padStart(3, "0")}) — XTRIKE™ &amp; Aegis.SOC™</h2>
+  <h2>10. Formal Penetration Testing Finding Dossiers (DAST-WEB-2026-001 – DAST-WEB-2026-${String(reportItems.length).padStart(3, "0")}) — TrePath™</h2>
   ${reportItems.map((f, idx) => {
     const rt = getRetestRecord(f, idx);
     const isFixed = rt.status === "VERIFIED_FIXED" || rt.status === "MITIGATED_WAF";
@@ -6461,7 +6461,7 @@ ${f.remediation}
                 🌐 DAST · DYNAMIC APPLICATION SECURITY TESTING
               </span>
               <h1 style={{ fontSize: 16, fontWeight: 800, color: "#f8fafc", margin: 0, letterSpacing: "-0.01em" }}>
-                EXPEDITE STRIKE™ — DAST &amp; Web Interface Security Platform
+                TrePath™ — DAST &amp; Web Interface Security Platform
               </h1>
               <span style={{
                 fontSize: 10,
@@ -6477,7 +6477,7 @@ ${f.remediation}
               </span>
             </div>
             <p style={{ fontSize: 11, color: "#94a3b8", margin: "2px 0 0 0" }}>
-              Live DAST Web Interface &amp; API Exploitation Scanner (XTRIKE™ &amp; Aegis.SOC™) · OWASP WSTG / Top 10 · Visual Exploit Evidence · 65,535 TCP/UDP Port Recon · Auto-Email Report
+              Live DAST Web Interface &amp; API Exploitation Scanner (TrePath™) · OWASP WSTG / Top 10 · Visual Exploit Evidence · 65,535 TCP/UDP Port Recon · Auto-Email Report
             </p>
           </div>
         </div>
@@ -6719,11 +6719,11 @@ ${f.remediation}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 5, flex: 1, flexWrap: "wrap" }}>
             {[
-              { step: 1, tab: "NMAP" as LogTab,         label: "1. XTRIKE-NetRecon (Nmap)" },
-              { step: 2, tab: "OPENVAS" as LogTab,      label: "2. Aegis.SOC-VulnCore (OpenVAS)" },
-              { step: 3, tab: "ZAP" as LogTab,          label: "3. XTRIKE-WebPulse (OWASP ZAP)" },
-              { step: 4, tab: "BURP" as LogTab,         label: "4. XTRIKE-StrikeFuzzer (Burp)" },
-              { step: 5, tab: "POST_EXPLOIT" as LogTab, label: "5. Aegis.SOC-Apex (PrivEsc)" },
+              { step: 1, tab: "NMAP" as LogTab,         label: "1. TrePath-NetRecon (Nmap)" },
+              { step: 2, tab: "OPENVAS" as LogTab,      label: "2. TrePath-VulnCore (OpenVAS)" },
+              { step: 3, tab: "ZAP" as LogTab,          label: "3. TrePath-WebPulse (OWASP ZAP)" },
+              { step: 4, tab: "BURP" as LogTab,         label: "4. TrePath-StrikeFuzzer (Burp)" },
+              { step: 5, tab: "POST_EXPLOIT" as LogTab, label: "5. TrePath-Apex (PrivEsc)" },
               { step: 6, tab: "AI" as LogTab,           label: "6. Autonomous DAST Brain" },
               { step: 7, tab: "REPORT" as LogTab,       label: "7. DAST Web Interface Report" },
             ].map((item, idx) => {
@@ -7318,7 +7318,7 @@ ${f.remediation}
                     🧪 OWASP &amp; GITHUB BENCHMARK TEST SUITE ({OWASP_GITHUB_TEST_TARGETS.length} TARGETS)
                   </span>
                   <span style={{ fontSize: 10.5, color: "var(--fg-2)" }}>
-                    Select one or multiple OWASP / GitHub Vulnerable Application links below to test Enumeration (`XTRIKE-EnumCore™`), Exploitability Assessment (`Aegis.SOC-PentestValidator™`), and Live DAST Scanning:
+                    Select one or multiple OWASP / GitHub Vulnerable Application links below to test Enumeration (`TrePath-EnumCore™`), Exploitability Assessment (`TrePath-PentestValidator™`), and Live DAST Scanning:
                   </span>
                 </div>
 
@@ -9419,7 +9419,7 @@ ${f.remediation}
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
                         <div>
                           <div style={{ fontSize: 10, fontFamily: "monospace", fontWeight: 900, color: "#c084fc", letterSpacing: "0.05em" }}>
-                            🔎 DEDICATED ENGINE #1 · XTRIKE-ENUMCORE™ (SEARCHSPLOIT · EXPLOIT-DB · GITHUB GHSA · GOOGLE OSINT · NVD/CVE)
+                            🔎 DEDICATED ENGINE #1 · TrePath-ENUMCORE™ (SEARCHSPLOIT · EXPLOIT-DB · GITHUB GHSA · GOOGLE OSINT · NVD/CVE)
                           </div>
                           <strong style={{ fontSize: 14, color: "#f8fafc" }}>
                             Enumeration Engine — Comparing Scan Findings to Public Exploit &amp; Advisory Databases ({primaryHost})
@@ -9489,7 +9489,7 @@ ${f.remediation}
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
                         <div>
                           <div style={{ fontSize: 10, fontFamily: "monospace", fontWeight: 900, color: "#34d399", letterSpacing: "0.05em" }}>
-                            ⚔️ DEDICATED ENGINE #2 · AEGIS.SOC-PENTESTVALIDATOR™ (ACTIVE NON-DESTRUCTIVE EXPLOITABILITY ASSESSMENT ENGINE)
+                            ⚔️ DEDICATED ENGINE #2 · TREPATH-PENTESTVALIDATOR™ (ACTIVE NON-DESTRUCTIVE EXPLOITABILITY ASSESSMENT ENGINE)
                           </div>
                           <strong style={{ fontSize: 14, color: "#f8fafc" }}>
                             Penetration Testing &amp; Exploitability Assessment — Validating Candidate Exploitability &amp; Intrusion Risk ({primaryHost})
@@ -12154,7 +12154,7 @@ ${f.remediation}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, paddingBottom: 8, borderBottom: "1px solid var(--border)" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                       <strong style={{ fontSize: 12.5, color: "#60a5fa" }}>
-                        🧠 EXPEDITE STRIKE™ Autonomous Testing &amp; Verification Brain (14 Standards · 15 Capabilities · 8-Stage Workflow)
+                        🧠 TrePath™ Autonomous Testing &amp; Verification Brain (14 Standards · 15 Capabilities · 8-Stage Workflow)
                       </strong>
                       <span style={{ fontSize: 9.5, background: "rgba(16,185,129,0.2)", color: "#10b981", padding: "2px 6px", borderRadius: 4, fontWeight: 800 }}>
                         ● LIVE TARGET: {primaryHost} ({reportFindings.length} VALIDATED FINDINGS)

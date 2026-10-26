@@ -4,7 +4,7 @@ import { Settings, Bell, Plug, Terminal, Key, Save, Copy, CheckCircle, RefreshCw
 
 type SettingsTab = "General" | "Notifications" | "Integrations" | "CI/CD" | "API Keys";
 
-const GITHUB_ACTIONS_YAML = `name: AXIOM DAST Security Scan
+const GITHUB_ACTIONS_YAML = `name: TrePath DAST Security Scan
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
   dast-scan:
     runs-on: ubuntu-latest
     steps:
-      - name: Run AXIOM DAST Scan
+      - name: Run TrePath DAST Scan
         uses: axiom-security/axiom-action@v1
         with:
           target: \${{ vars.STAGING_URL }}
@@ -55,7 +55,7 @@ const JENKINS_GROOVY = `pipeline {
     TARGET_URL    = "\${params.TARGET_URL}"
   }
   stages {
-    stage('AXIOM DAST') {
+    stage('TrePath DAST') {
       steps {
         sh """
           axiom scan \\
@@ -71,7 +71,7 @@ const JENKINS_GROOVY = `pipeline {
         always {
           publishHTML([
             reportDir: '.', reportFiles: 'axiom-report.html',
-            reportName: 'AXIOM DAST Report'
+            reportName: 'TrePath DAST Report'
           ])
         }
       }
@@ -180,7 +180,7 @@ export default function SettingsPage() {
           {tab === "General" && (
             <div>
               <div style={{ fontSize:14, fontWeight:700, color:"var(--fg)", marginBottom:14 }}>General Settings</div>
-              <FormField label="Platform Name"        placeholder="AXIOM Security Intelligence" defaultValue="AXIOM Security Intelligence" />
+              <FormField label="Platform Name"        placeholder="TrePath Security Intelligence" defaultValue="TrePath Security Intelligence" />
               <FormField label="Organization Name"    placeholder="Your Company" />
               <FormField label="OOB Server Domain"    placeholder="ax1m9f3k.axiom-oob.io" defaultValue="ax1m9f3k.axiom-oob.io" />
               <FormField label="Default Scan Profile" placeholder="Standard" defaultValue="Standard" />
@@ -289,7 +289,7 @@ export default function SettingsPage() {
                   <span style={{ fontSize:13, fontWeight:700, color:"var(--fg)" }}>🟣 Linear</span>
                   <Toggle value={false} onChange={()=>{}} />
                 </div>
-                <div style={{ fontSize:11, color:"var(--muted)" }}>Enable to auto-create Linear issues from AXIOM findings.</div>
+                <div style={{ fontSize:11, color:"var(--muted)" }}>Enable to auto-create Linear issues from TrePath findings.</div>
               </div>
             </div>
           )}
@@ -299,7 +299,7 @@ export default function SettingsPage() {
             <div>
               <div style={{ fontSize:14, fontWeight:700, color:"var(--fg)", marginBottom:6 }}>CI/CD Pipeline Integration</div>
               <p style={{ fontSize:12, color:"var(--muted)", marginBottom:16, lineHeight:1.7 }}>
-                Run AXIOM as a gate in your CI/CD pipeline. The scanner returns <code>exit 1</code> when Critical or High findings are detected — blocking the deployment.
+                Run TrePath as a gate in your CI/CD pipeline. The scanner returns <code>exit 1</code> when Critical or High findings are detected — blocking the deployment.
               </p>
               <div style={{ fontSize:12, fontWeight:600, color:"var(--fg)", marginBottom:8 }}>GitHub Actions</div>
               <CodeBlock code={GITHUB_ACTIONS_YAML} lang="github-actions.yml" />

@@ -322,7 +322,7 @@ export default function AuditPage() {
         <div>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: "var(--fg)" }}>📋 Audit Log</h1>
           <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--muted)" }}>
-            Complete audit trail of all AXIOM platform events — Aug 21, 2026
+            Complete audit trail of all TrePath platform events — Aug 21, 2026
           </p>
         </div>
         <span style={{

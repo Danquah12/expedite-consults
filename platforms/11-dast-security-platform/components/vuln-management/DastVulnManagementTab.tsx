@@ -833,7 +833,7 @@ export default function DastVulnManagementTab({
             ? `// Fix CWE-287: Block dotfiles at WAF & verify RS256 Asymmetric JWT\nlocation ~ /\\.(?!well-known).* { deny all; return 404; }\nJwtParser parser = Jwts.parserBuilder().setSigningKey(kmsPublicKey).build();`
             : `// Fix ${cweStr}: Enforce strict server-side security headers & output encoding\nStrict-Transport-Security: max-age=63072000; includeSubDomains; preload\nContent-Security-Policy: default-src 'self'; frame-ancestors 'none'; object-src 'none';\nX-Frame-Options: DENY\nX-Content-Type-Options: nosniff`,
         attackChainHint: liveChainText,
-        aiCopilotExplanation: `🧠 Aegis.SOC™ AI Copilot: Validated ${id} (${cweStr} · ${sevNorm}) on ${endpointStr}. ${matchingPentestExecution ? `Pentest Assessment Verdict: ${matchingPentestExecution.pentestVerdict} (${matchingPentestExecution.exploitReadiness}).` : `Mapped to ${autoSuggestedMitre.map(m => m.techniqueId).join(", ")}.`}`,
+        aiCopilotExplanation: `🧠 TrePath™ AI Copilot: Validated ${id} (${cweStr} · ${sevNorm}) on ${endpointStr}. ${matchingPentestExecution ? `Pentest Assessment Verdict: ${matchingPentestExecution.pentestVerdict} (${matchingPentestExecution.exploitReadiness}).` : `Mapped to ${autoSuggestedMitre.map(m => m.techniqueId).join(", ")}.`}`,
         customFields: wf.customFields ?? {
           complianceFramework: `${owaspStr} · NIST SP 800-115 · PTES`,
           internalTrackingId: `EXT-TRACK-00${idx + 1}`,
@@ -1222,7 +1222,7 @@ export default function DastVulnManagementTab({
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `XTRIKE-Engine-Brain-DAST-Vuln-Management-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `TrePath-Engine-Brain-DAST-Vuln-Management-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -1255,7 +1255,7 @@ export default function DastVulnManagementTab({
               </span>
             </div>
             <h2 style={{ margin: "6px 0 2px 0", fontSize: 16.5, fontWeight: 800, color: "#f8fafc", letterSpacing: "-0.01em" }}>
-              XTRIKE™ &amp; Aegis.SOC™ — Enterprise DAST Vulnerability Management &amp; Risk Prioritization Center
+              TrePath™ — Enterprise DAST Vulnerability Management &amp; Risk Prioritization Center
             </h2>
             <div style={{ fontSize: 11.5, color: "#94a3b8" }}>
               Directly powered by live <strong style={{ color: "#e2e8f0" }}>Engine Brain DAST Penetration Testing telemetry</strong> across <code style={{ color: "#38bdf8" }}>{effectiveTargets.join(", ")}</code> — uniting Application Context, Crown Jewels, Configurable 0–100 Risk Scoring, Proof Screenshots, Two-Way Ticket Sync, and Automated Retests.

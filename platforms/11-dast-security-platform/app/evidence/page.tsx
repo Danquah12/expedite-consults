@@ -36,7 +36,7 @@ export default function EvidencePage() {
   const [showAllEvidence, setShowAllEvidence] = useState(false);
 
   // Report meta fields — hydrated from real scan context on mount
-  const [scanName,  setScanName]  = useState("AXIOM Full-Stack Security Scan");
+  const [scanName,  setScanName]  = useState("TrePath Full-Stack Security Scan");
   const [target,    setTarget]    = useState("Loading...");
   const [env,       setEnv]       = useState("Lab / VMware");
   const [profile,   setProfile]   = useState("Standard");
@@ -81,7 +81,7 @@ export default function EvidencePage() {
             .then(r => r.json())
             .then(p => {
               if (p.duration) setDuration(`${p.duration}s`);
-              if (p.totalFindings) setScanName(`AXIOM Scan — ${p.totalFindings} findings across ${stored.targets || "targets"}`);
+              if (p.totalFindings) setScanName(`TrePath Scan — ${p.totalFindings} findings across ${stored.targets || "targets"}`);
             })
             .catch(() => {});
         }
@@ -119,7 +119,7 @@ export default function EvidencePage() {
     setShowReportModal(false);
   };
   const doDownloadJSON = () => downloadBlob(
-    JSON.stringify({ meta: { generated: new Date().toISOString(), tool: "AXIOM v4.0", scanName, target, environment: env, profile, duration, totalFindings: findings.length, liveBackend: liveMode }, findings: findings }, null, 2),
+    JSON.stringify({ meta: { generated: new Date().toISOString(), tool: "TrePath v4.0", scanName, target, environment: env, profile, duration, totalFindings: findings.length, liveBackend: liveMode }, findings: findings }, null, 2),
     `axiom-report-${date}.json`, "application/json"
   );
   const doDownloadCSV = () => downloadBlob(generateCSV(findings), `axiom-report-${date}.csv`, "text/csv");
@@ -341,15 +341,15 @@ export default function EvidencePage() {
               {tab === "POC" && (() => {
                 const poc = selected.poc || {
                   description: `Reproduces and validates ${selected.title} against target endpoint using 3-way baseline verification.`,
-                  curlCommand: `curl -i -s -k -X ${selected.method || "GET"} "${selected.url}${selected.parameter ? `?${selected.parameter}=test_probe` : ""}" \\\n  -H "User-Agent: AXIOM-Exploit-Engine/4.0" \\\n  -H "Accept: application/json, text/html"`,
-                  pythonScript: `import requests\n\nTARGET = "${selected.url}"\n\nsession = requests.Session()\nsession.headers["User-Agent"] = "AXIOM-Exploit-Engine/4.0"\n\n# Baseline Request\nr_base = session.request("${selected.method || "GET"}", TARGET)\nprint("[*] Baseline status:", r_base.status_code)\n\n# Exploit Verification Probe\nparams = {"${selected.parameter || "probe"}": "test_payload"}\nr_test = session.request("${selected.method || "GET"}", TARGET, params=params)\nprint("[+] Exploit status:", r_test.status_code)\nprint("[+] Response snippet:", r_test.text[:300])`,
+                  curlCommand: `curl -i -s -k -X ${selected.method || "GET"} "${selected.url}${selected.parameter ? `?${selected.parameter}=test_probe` : ""}" \\\n  -H "User-Agent: TrePath-Exploit-Engine/4.0" \\\n  -H "Accept: application/json, text/html"`,
+                  pythonScript: `import requests\n\nTARGET = "${selected.url}"\n\nsession = requests.Session()\nsession.headers["User-Agent"] = "TrePath-Exploit-Engine/4.0"\n\n# Baseline Request\nr_base = session.request("${selected.method || "GET"}", TARGET)\nprint("[*] Baseline status:", r_base.status_code)\n\n# Exploit Verification Probe\nparams = {"${selected.parameter || "probe"}": "test_payload"}\nr_test = session.request("${selected.method || "GET"}", TARGET, params=params)\nprint("[+] Exploit status:", r_test.status_code)\nprint("[+] Response snippet:", r_test.text[:300])`,
                   expectedResult: `Backend responds with status reflecting ${selected.title}, confirming the execution path without false positives.`,
                   severity: selected.severity || "Critical"
                 };
                 return (
                   <div>
                     <div style={{ padding:"8px 12px", background:"rgba(239,83,80,0.08)", border:"1px solid rgba(239,83,80,0.25)", borderRadius:6, fontSize:11, color:"#ef9a9a", marginBottom:14, lineHeight:1.6 }}>
-                      ⚠️ <strong>Proof of Concept (PoC) — Verified Diagnostic Payload.</strong> Used by the AXIOM Verification Engine for deterministic exploit confirmation and compliance auditing.
+                      ⚠️ <strong>Proof of Concept (PoC) — Verified Diagnostic Payload.</strong> Used by the TrePath Verification Engine for deterministic exploit confirmation and compliance auditing.
                     </div>
                     <p style={{ fontSize:12.5, color:"#e2e8f0", lineHeight:1.7, marginBottom:14 }}>{poc.description}</p>
                     <div style={{ marginBottom:6, fontSize:10.5, color:"var(--primary)", fontWeight:700 }}>Expected Outcome vs Observed Behavior</div>
@@ -382,7 +382,7 @@ export default function EvidencePage() {
                       label: "HTTP Baseline vs Test Frame Comparison",
                       content: `=== BASELINE REQUEST ===\n${selected.method || "GET"} ${selected.url} HTTP/1.1\nHost: target.local\nAccept: application/json\n\nHTTP/1.1 200 OK\nContent-Type: application/json\n\n=== EXPLOITED TEST REQUEST ===\n${selected.method || "GET"} ${selected.url}?${selected.parameter || "probe"}=test_verification HTTP/1.1\nHost: target.local\n\nHTTP/1.1 200 OK\n{"vulnerability_confirmed": true, "plugin": "${selected.plugin}"}`,
                       highlight: selected.parameter ? `${selected.parameter}=test_verification` : selected.title,
-                      annotation: `Verified by AXIOM 3-way Baseline-Test-Control Engine. Reproducibility score: 100%. False positive probability: 0.0%.`
+                      annotation: `Verified by TrePath 3-way Baseline-Test-Control Engine. Reproducibility score: 100%. False positive probability: 0.0%.`
                     },
                     {
                       id: "ev-auto-2",

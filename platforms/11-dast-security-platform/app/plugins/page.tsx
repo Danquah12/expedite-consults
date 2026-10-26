@@ -116,7 +116,7 @@ const CORE_32_INSTALLED: InstalledPlugin[] = COMMERCIAL_DEEP_DIVE_PLUGINS.map((p
 const INSTALLED: InstalledPlugin[] = [...THOUSAND_INSTALLED, ...CORE_32_INSTALLED];
 
 const VERIFICATION_ITEMS = [
-  { key: "signature", label: "Signature Verified (EXPEDITE STRIKE™ CA signed)", ok: true },
+  { key: "signature", label: "Signature Verified (TrePath™ CA signed)", ok: true },
   { key: "mitre_ttp", label: "MITRE ATT&CK® v15 & MITRE ATLAS™ TTP Mapping Verified", ok: true },
   { key: "bt_d3fend", label: "Blue Team (BT) MITRE D3FEND™ Countermeasure Linked", ok: true },
   { key: "siem_export", label: "Splunk SPL, Microsoft Sentinel KQL & Sigma YAML Verified", ok: true },

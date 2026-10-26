@@ -208,7 +208,7 @@ function generateResponse(
       return { content: `🚫 Access Denied — Evidence download requires evidence.read permission. Your role (${role}) does not have this permission. Contact your Security Admin.`, denied: true, contextData: "RBAC policy enforced", resultSummary: "DENIED: insufficient permissions" };
     }
     return {
-      content: `📦 Evidence package for ${firstId} ready for download.\n\n• request.http (2.4 KB)\n• response.http (18.7 KB)\n• screenshot-001.png (340 KB)\n• sha256-manifest.json\n\nAll artifacts signed with AXIOM key. SHA-256 integrity verified.\nFinding: ${firstName}\nTarget: ${firstTarget2}`,
+      content: `📦 Evidence package for ${firstId} ready for download.\n\n• request.http (2.4 KB)\n• response.http (18.7 KB)\n• screenshot-001.png (340 KB)\n• sha256-manifest.json\n\nAll artifacts signed with TrePath key. SHA-256 integrity verified.\nFinding: ${firstName}\nTarget: ${firstTarget2}`,
       denied: false, contextData: "findings, evidence vault", resultSummary: `Evidence package ${firstId} — 4 artifacts exported`,
     };
   }
@@ -308,7 +308,7 @@ export default function CopilotPage() {
       id: "welcome",
       role: "copilot",
       content:
-        "👋 Hello! I'm AXIOM Copilot — your AI-powered security assistant. I can search findings, create tickets, analyze risk across your knowledge graph, generate reports, and more.\n\nSelect a role in the left panel to simulate RBAC permissions, then ask me anything.",
+        "👋 Hello! I'm TrePath Copilot — your AI-powered security assistant. I can search findings, create tickets, analyze risk across your knowledge graph, generate reports, and more.\n\nSelect a role in the left panel to simulate RBAC permissions, then ask me anything.",
       timestamp: new Date().toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
@@ -506,7 +506,7 @@ export default function CopilotPage() {
                 letterSpacing: "0.05em",
               }}
             >
-              AXIOM Copilot
+              TrePath Copilot
             </span>
           </div>
 
@@ -705,7 +705,7 @@ export default function CopilotPage() {
         >
           <div>
             <div style={{ color: "var(--fg)", fontWeight: 700, fontSize: 15 }}>
-              AXIOM Copilot
+              TrePath Copilot
             </div>
             <div style={{ color: "var(--muted)", fontSize: 11, marginTop: 1 }}>
               AI-Powered Security Assistant · Role:{" "}
@@ -802,7 +802,7 @@ export default function CopilotPage() {
                       fontSize: 12,
                     }}
                   >
-                    {msg.role === "user" ? selectedRole : "AXIOM Copilot"}
+                    {msg.role === "user" ? selectedRole : "TrePath Copilot"}
                   </span>
                   <span style={{ color: "var(--muted)", fontSize: 10 }}>
                     {msg.timestamp}
@@ -915,7 +915,7 @@ export default function CopilotPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask AXIOM Copilot anything about your security posture..."
+              placeholder="Ask TrePath Copilot anything about your security posture..."
               disabled={processing}
               rows={1}
               style={{

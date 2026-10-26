@@ -124,7 +124,7 @@ function generateMultiPageAssessmentPdfBuffer(params: {
     .join(" ===> ");
 
   const docLines: PdfLineItem[] = [
-    { text: "XTRIKE & AEGIS.SOC - DAST & WEB INTERFACE SECURITY ASSESSMENT REPORT", bold: true, size: 12, colorRgb: [0.02, 0.35, 0.65] },
+    { text: "TrePath - DAST & WEB INTERFACE SECURITY ASSESSMENT REPORT", bold: true, size: 12, colorRgb: [0.02, 0.35, 0.65] },
     { text: "Dynamic Application Security Testing (DAST) | OWASP WSTG v4.2 | OWASP Top 10 | MITRE ATT&CK v15 | NIST SP 800-115", bold: true, size: 8, colorRgb: [0.25, 0.32, 0.45] },
     { text: "==============================================================================================", bold: true, size: 9 },
     { text: `Target Scope: ${targetUrls.join(", ")}`, bold: true, size: 9 },
@@ -376,7 +376,7 @@ function generateMultiPageAssessmentPdfBuffer(params: {
   for (let i = 0; i < docLines.length; i += linesPerPage) {
     pages.push(docLines.slice(i, i + linesPerPage));
   }
-  if (pages.length === 0) pages.push([{ text: "XTRIKE & Aegis.SOC DAST Report", bold: true, size: 12 }]);
+  if (pages.length === 0) pages.push([{ text: "TrePath DAST Report", bold: true, size: 12 }]);
 
   const objects: string[] = [];
   const pageObjNums: number[] = [];
@@ -399,7 +399,7 @@ function generateMultiPageAssessmentPdfBuffer(params: {
     const streamCmds: string[] = [];
     // Top header bar
     streamCmds.push("0.06 0.09 0.16 rg 36 756 540 20 re f");
-    streamCmds.push("BT /F2 8.5 Tf 1 1 1 rg 44 763 Td (XTRIKE & AEGIS.SOC - DAST & WEB INTERFACE SECURITY ASSESSMENT DOSSIER) Tj ET");
+    streamCmds.push("BT /F2 8.5 Tf 1 1 1 rg 44 763 Td (TrePath - DAST & WEB INTERFACE SECURITY ASSESSMENT DOSSIER) Tj ET");
     streamCmds.push(`BT /F1 8 Tf 0.75 0.88 0.98 rg 470 763 Td (Page ${pIdx + 1} of ${pages.length}) Tj ET`);
 
     let y = 738;
@@ -490,7 +490,7 @@ export async function POST(req: NextRequest) {
     const lowCount = findings.filter(f => f.severity === "Low").length;
 
     const timestampIso = new Date().toISOString();
-    const messageId = `<xtrike-aegis-soc-${Date.now()}-${crypto
+    const messageId = `<trepath-dast-${Date.now()}-${crypto
       .randomBytes(4)
       .toString("hex")}@${primaryHost || "dast.local"}>`;
 
@@ -508,13 +508,13 @@ export async function POST(req: NextRequest) {
 
     const subject =
       body.subject?.trim() ||
-      `[XTRIKE™ & Aegis.SOC™ DAST WEB INTERFACE REPORT] ${critCount} Critical, ${highCount} High Web Findings on ${primaryHost} (DAST-WEB-2026 Dossier)`;
+      `[TrePath™ DAST WEB INTERFACE REPORT] ${critCount} Critical, ${highCount} High Web Findings on ${primaryHost} (DAST-WEB-2026 Dossier)`;
 
     const fromEmail =
       body.smtpConfig?.fromEmail?.trim() ||
       process.env.RESEND_FROM_EMAIL ||
       process.env.REPORT_FROM_EMAIL ||
-      "Expedite Strike Security <auth@expediteconsults.com>";
+      "TrePath Security <auth@expediteconsults.com>";
 
     // Build Executive + Technical HTML Email Dossier in the DAST-WEB-2026-XXX Format
     const findingsRowsHtml = findings
@@ -765,7 +765,7 @@ export async function POST(req: NextRequest) {
   <div class="report-shell" style="max-width:920px;margin:0 auto;background:#ffffff;border:1px solid #cbd5e1;border-radius:10px;overflow:hidden;">
     <div class="report-pad" style="background:#0f172a;color:#f8fafc;padding:20px 24px;border-bottom:4px solid #06b6d4;">
       <div style="font-size:11px;font-family:monospace;color:#38bdf8;font-weight:700;letter-spacing:0.06em;">
-        🌐 XTRIKE™ &amp; AEGIS.SOC™ v3.0 · DAST (DYNAMIC APPLICATION SECURITY TESTING) &amp; WEB INTERFACE SECURITY REPORT
+        🌐 TrePath™ v3.0 · DAST (DYNAMIC APPLICATION SECURITY TESTING) &amp; WEB INTERFACE SECURITY REPORT
       </div>
       <h1 style="margin:6px 0 4px 0;font-size:20px;color:#ffffff;">
         DAST &amp; Web Interface Security Assessment Report (OWASP WSTG v4.2 · OWASP Top 10 · MITRE ATT&amp;CK® v15)
@@ -810,7 +810,7 @@ export async function POST(req: NextRequest) {
         <div><strong>Recipients:</strong> ${escapeHtml(recipients.join(", "))}${
       ccRecipients.length > 0 ? ` (CC: ${escapeHtml(ccRecipients.join(", "))})` : ""
     }</div>
-        <div><strong>XTRIKE™ &amp; Aegis.SOC™ DAST Engines:</strong> XTRIKE-WebPulse™ (OWASP ZAP DAST) · XTRIKE-StrikeFuzzer™ (Burp DAST) · Aegis.SOC-VulnCore™ (OpenVAS) · XTRIKE-NetRecon™ (Nmap) · Aegis.SOC-Apex™</div>
+        <div><strong>TrePath™ DAST Engines:</strong> TrePath-WebPulse™ (OWASP ZAP DAST) · TrePath-StrikeFuzzer™ (Burp DAST) · TrePath-VulnCore™ (OpenVAS) · TrePath-NetRecon™ (Nmap) · TrePath-Apex™</div>
       </div>
 
       ${(() => {
@@ -1086,7 +1086,7 @@ export async function POST(req: NextRequest) {
       </div>
 
       <div style="border-top:1px solid #cbd5e1;padding-top:12px;font-size:11px;color:#64748b;">
-        Dispatched automatically by <strong>XTRIKE™ &amp; Aegis.SOC™ DAST &amp; Web Interface Security Assessment Platform</strong> upon scan completion. Includes Executive Summary (with Visual Graphs, Multi-Quarter Posture Trends, and Tables), Sample Collected Exploitation Evidence, and Visual Exploitation Screenshots for Customer CI.
+        Dispatched automatically by <strong>TrePath™ DAST &amp; Web Interface Security Assessment Platform</strong> upon scan completion. Includes Executive Summary (with Visual Graphs, Multi-Quarter Posture Trends, and Tables), Sample Collected Exploitation Evidence, and Visual Exploitation Screenshots for Customer CI.
       </div>
     </div>
   </div>
@@ -1095,7 +1095,7 @@ export async function POST(req: NextRequest) {
 
     const execSumText = buildExecutiveSummaryDossier({ targetUrls, findings, liveTelemetry: body.liveTelemetry });
     const textContent = [
-      `XTRIKE™ & AEGIS.SOC™ — DAST & WEB INTERFACE SECURITY ASSESSMENT REPORT`,
+      `TrePath™ — DAST & WEB INTERFACE SECURITY ASSESSMENT REPORT`,
       `========================================================================`,
       `Assessment Focus: Dynamic Application Security Testing (DAST) & Web Interface Security`,
       `Target Scope: ${targetUrls.join(", ")}`,
@@ -1225,8 +1225,8 @@ export async function POST(req: NextRequest) {
     const safeHostSlug = (primaryHost || "dast-target")
       .replace(/[^a-zA-Z0-9.-]/g, "-")
       .replace(/-+/g, "-");
-    const htmlFilename = `XTRIKE-DAST-Web-Interface-Security-Report-${safeHostSlug}.html`;
-    const pdfFilename = `XTRIKE-DAST-Web-Interface-Security-Report-${safeHostSlug}.pdf`;
+    const htmlFilename = `TrePath-DAST-Web-Interface-Security-Report-${safeHostSlug}.html`;
+    const pdfFilename = `TrePath-DAST-Web-Interface-Security-Report-${safeHostSlug}.pdf`;
 
     const htmlBuffer = Buffer.from(htmlContent, "utf8");
     const htmlBase64 = htmlBuffer.toString("base64");
@@ -1330,8 +1330,8 @@ export async function POST(req: NextRequest) {
       try {
         const verifiedSender =
           fromEmail.includes("@expediteconsults.com")
-            ? (fromEmail.includes("<") ? fromEmail : `Expedite Strike Security <${fromEmail}>`)
-            : "Expedite Strike Security <auth@expediteconsults.com>";
+            ? (fromEmail.includes("<") ? fromEmail : `TrePath Security <${fromEmail}>`)
+            : "TrePath Security <auth@expediteconsults.com>";
 
         const res = await fetch("https://api.resend.com/emails", {
           method: "POST",
@@ -1386,7 +1386,7 @@ export async function POST(req: NextRequest) {
                 ...(ccRecipients.length > 0 ? { cc: ccRecipients.map(email => ({ email })) } : {})
               }
             ],
-            from: { email: fromEmail.replace(/.*<|>.*/g, "") || "assessments@expedite-consults.local", name: "Expedite Strike Autonomous DAST" },
+            from: { email: fromEmail.replace(/.*<|>.*/g, "") || "assessments@expedite-consults.local", name: "TrePath Autonomous DAST" },
             subject,
             content: [
               { type: "text/plain", value: textContent },
