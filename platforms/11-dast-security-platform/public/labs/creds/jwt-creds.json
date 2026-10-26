@@ -1,0 +1,5 @@
+{
+  "jwtSecret": "test-secret-key-12345",
+  "issuer": "test-issuer",
+  "audience": "test-audience"
+}

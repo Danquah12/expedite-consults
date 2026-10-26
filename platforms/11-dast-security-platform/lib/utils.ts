@@ -28,8 +28,8 @@ export function statusColor(s: number): string {
 export function pluginColor(p: VulnPlugin): string {
   const map: Record<VulnPlugin, string> = {
     SQLi: "#ef5350", XSS: "#ffb74d", SSRF: "#4fc3f7", CSRF: "#ce93d8",
-    IDOR: "#f48fb1", JWT: "#80cbc4", CORS: "#80deea", OpenRedirect: "#a5d6a7",
-    PathTraversal: "#ffe082", XXE: "#ffcc80", SSTI: "#ef9a9a", CMDi: "#ff5252",
+    IDOR: "#f48fb1", BOLA: "#f48fb1", JWT: "#80cbc4", CORS: "#80deea", OpenRedirect: "#a5d6a7",
+    PathTraversal: "#ffe082", XXE: "#ffcc80", SSTI: "#ef9a9a", CMDi: "#ff5252", CmdInjection: "#ff5252",
     LFI: "#ff8a65", Header: "#90a4ae", Auth: "#b39ddb",
   };
   return map[p] || "#90a4ae";

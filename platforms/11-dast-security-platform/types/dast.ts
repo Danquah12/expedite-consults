@@ -4,7 +4,7 @@ export type HttpMethod   = "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "HEAD" 
 export type Severity     = "Critical" | "High" | "Medium" | "Low" | "Informational";
 export type Confidence   = "Confirmed" | "High" | "Medium" | "Low";
 export type ScanStatus   = "idle" | "running" | "paused" | "completed" | "error";
-export type VulnPlugin   = "SQLi" | "XSS" | "SSRF" | "CSRF" | "IDOR" | "JWT" | "CORS" | "OpenRedirect" | "PathTraversal" | "XXE" | "SSTI" | "CMDi" | "LFI" | "Header" | "Auth";
+export type VulnPlugin   = "SQLi" | "XSS" | "SSRF" | "CSRF" | "IDOR" | "BOLA" | "JWT" | "CORS" | "OpenRedirect" | "PathTraversal" | "XXE" | "SSTI" | "CMDi" | "CmdInjection" | "LFI" | "Header" | "Auth";
 
 // ─── Proxy ──────────────────────────────────────────────────────────────────
 
