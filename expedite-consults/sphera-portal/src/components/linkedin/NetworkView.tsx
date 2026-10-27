@@ -153,8 +153,27 @@ export function NetworkView({
   // Feedback toast
   const [toastMessage, setToastMessage] = useState<string | null>(null)
 
-  // Live collections
-  const [connections, setConnections] = useState<ConnectedMember[]>(() => getEnclaveConnectedMembers(enclaveId))
+  // Persistent custom-added and removed 1st-degree connections
+  const [customConnections, setCustomConnections] = useState<ConnectedMember[]>(() => {
+    if (typeof window === 'undefined') return []
+    try {
+      const raw = localStorage.getItem('connectin_my_custom_connections_v2')
+      return raw ? JSON.parse(raw) : []
+    } catch {
+      return []
+    }
+  })
+
+  const [removedConnectionNames, setRemovedConnectionNames] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return []
+    try {
+      const raw = localStorage.getItem('connectin_my_removed_connections_v2')
+      return raw ? JSON.parse(raw) : []
+    } catch {
+      return []
+    }
+  })
+
   const [outboundInvites, setOutboundInvites] = useState<OutboundInvitation[]>(initialOutboundInvitations)
   const [catchUpEvents, setCatchUpEvents] = useState<CatchUpEvent[]>(initialCatchUpEvents)
   const [companies, setCompanies] = useState<CompanyNetworkItem[]>(() => getEnclaveCompanies(enclaveId))
@@ -164,7 +183,6 @@ export function NetworkView({
   const [invitations, setInvitations] = useState<any[]>(() => getEnclaveInvitations(enclaveId))
 
   useEffect(() => {
-    setConnections(getEnclaveConnectedMembers(enclaveId))
     setCompanies(getEnclaveCompanies(enclaveId))
     setOrganizations(getEnclaveOrganizations(enclaveId))
     setCircles(getEnclaveCircles(enclaveId))
@@ -172,6 +190,89 @@ export function NetworkView({
     setInvitations(getEnclaveInvitations(enclaveId))
     setSelectedCapability('All')
   }, [enclaveId])
+
+  // Build unified, deduplicated 1st-degree connections list so count ALWAYS matches the exact items in My Connections
+  const connections: ConnectedMember[] = React.useMemo(() => {
+    const removedSet = new Set(removedConnectionNames.map(n => n.toLowerCase().trim()))
+    const myNormName = String(currentUser?.name || '').toLowerCase().trim()
+    const seenNames = new Set<string>()
+    const list: ConnectedMember[] = []
+
+    const pushUnique = (item: ConnectedMember) => {
+      if (!item || !item.name) return
+      const norm = item.name.toLowerCase().trim()
+      if (!norm || norm === myNormName || removedSet.has(norm) || seenNames.has(norm)) return
+      seenNames.add(norm)
+      list.push(item)
+    }
+
+    // 1. Newly accepted / custom-added connections first
+    for (const c of customConnections) {
+      pushUnique(c)
+    }
+
+    // 2. Any member in suggestedPeople who is currently connected (isConnected === true)
+    for (const p of suggestedPeople) {
+      if (p.isConnected) {
+        const safeCaps = (p.capabilities || []).map((cap: any) =>
+          typeof cap === 'string' ? cap : String(cap?.name || cap || '')
+        ).filter(Boolean)
+        pushUnique({
+          id: `conn_sug_${p.id}`,
+          name: p.name,
+          headline: p.headline,
+          avatar: p.avatar,
+          connectedSince: 'Connected on ConnectLn',
+          capabilities: safeCaps.length > 0 ? safeCaps : ['Verified Specialist'],
+          verifiedBadges: p.verifiedBadges || ['✓ Verified Member'],
+          mutualCount: p.mutualConnections || 18,
+          isOnline: true
+        })
+      }
+    }
+
+    // 3. Active enclave 1st-degree connections
+    for (const c of getEnclaveConnectedMembers(enclaveId)) {
+      pushUnique(c)
+    }
+
+    // 4. Healthcare, Clinical Pharmacy, Nursing, Medical Aide & Admin 1st-degree peers
+    for (const c of getEnclaveConnectedMembers('healthcare_medicine')) {
+      pushUnique(c)
+    }
+
+    // 5. Core global 1st-degree connections
+    for (const c of initialConnectedMembers) {
+      pushUnique(c)
+    }
+
+    return list
+  }, [customConnections, suggestedPeople, enclaveId, removedConnectionNames, currentUser?.name])
+
+  // Keep user profile connectionsCount synced with the exact count of My Connections
+  useEffect(() => {
+    if (onUpdateConnectionsCount && currentUser?.connectionsCount !== connections.length) {
+      onUpdateConnectionsCount(connections.length)
+    }
+  }, [connections.length])
+
+  const saveCustomConnections = (next: ConnectedMember[]) => {
+    setCustomConnections(next)
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('connectin_my_custom_connections_v2', JSON.stringify(next))
+      } catch {}
+    }
+  }
+
+  const saveRemovedConnectionNames = (next: string[]) => {
+    setRemovedConnectionNames(next)
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('connectin_my_removed_connections_v2', JSON.stringify(next))
+      } catch {}
+    }
+  }
 
   const showToast = (msg: string) => {
     setToastMessage(msg)
@@ -186,6 +287,11 @@ export function NetworkView({
     // Remove from invitations
     setInvitations(prev => prev.filter(inv => inv.id !== id))
 
+    const normInviteName = invite.name.toLowerCase().trim()
+    if (removedConnectionNames.some(n => n.toLowerCase().trim() === normInviteName)) {
+      saveRemovedConnectionNames(removedConnectionNames.filter(n => n.toLowerCase().trim() !== normInviteName))
+    }
+
     // Add to 1st-degree connections
     const newConn: ConnectedMember = {
       id: 'conn_' + Date.now(),
@@ -193,19 +299,15 @@ export function NetworkView({
       headline: invite.headline,
       avatar: invite.avatar,
       connectedSince: 'Connected just now',
-      capabilities: invite.capabilities,
+      capabilities: invite.capabilities || ['Verified Specialist'],
       verifiedBadges: ['✓ Verified Member'],
-      mutualCount: invite.mutualCount,
+      mutualCount: invite.mutualCount || 15,
       isOnline: true,
       email: invite.email
     }
 
-    setConnections(prev => [newConn, ...prev])
-    if (onUpdateConnectionsCount) {
-      onUpdateConnectionsCount((currentUser?.connectionsCount || 842) + 1)
-    }
-
-    showToast(`🎉 You and ${invite.name} are now connected!`)
+    saveCustomConnections([newConn, ...customConnections.filter(c => c.name.toLowerCase().trim() !== normInviteName)])
+    showToast(`🎉 You and ${invite.name} are now connected! (${connections.length + 1} Connections)`)
   }
 
   // Handle Ignore Inbound Invitation
@@ -279,12 +381,38 @@ export function NetworkView({
     }
   }
 
-  // Handle Send Connection with optional note
+  // Handle Send Connection with optional note — immediately connects and adds to My Connections + logs in Invitations Sent
   const handleSendConnectionWithNote = (personId: string, note?: string) => {
     const person = suggestedPeople.find(p => p.id === personId)
     if (!person) return
 
+    const normName = person.name.toLowerCase().trim()
+    if (removedConnectionNames.some(n => n.toLowerCase().trim() === normName)) {
+      saveRemovedConnectionNames(removedConnectionNames.filter(n => n.toLowerCase().trim() !== normName))
+    }
+
     onToggleConnect(personId)
+
+    const safeCaps = (person.capabilities || []).map((cap: any) =>
+      typeof cap === 'string' ? cap : String(cap?.name || cap || '')
+    ).filter(Boolean)
+
+    const newConn: ConnectedMember = {
+      id: `conn_${person.id}_${Date.now()}`,
+      name: person.name,
+      headline: person.headline,
+      avatar: person.avatar,
+      connectedSince: 'Connected just now',
+      capabilities: safeCaps.length > 0 ? safeCaps : ['Verified Specialist'],
+      verifiedBadges: person.verifiedBadges || ['✓ Verified Member'],
+      mutualCount: person.mutualConnections || 18,
+      isOnline: true
+    }
+
+    saveCustomConnections([
+      newConn,
+      ...customConnections.filter(c => c.name.toLowerCase().trim() !== normName)
+    ])
 
     const newOutbound: OutboundInvitation = {
       id: 'out_' + Date.now(),
@@ -298,7 +426,7 @@ export function NetworkView({
     }
 
     setOutboundInvites(prev => [newOutbound, ...prev])
-    showToast(`✓ Invitation sent to ${person.name}${note ? ' with your custom note' : ''}!`)
+    showToast(`✓ Connected with ${person.name}${note ? ' (Note delivered)' : ''}! Added to My Connections.`)
   }
 
   // Handle New Invites from InviteModal (email / sms)
@@ -328,18 +456,27 @@ export function NetworkView({
     showToast(`✓ Endorsed ${skill} for connection!`)
   }
 
-  // Remove connection
+  // Remove connection — immediately removes from My Connections and decrements count
   const handleRemoveConnection = (connId: string, name: string) => {
-    if (confirm(`Are you sure you want to remove ${name} from your 1st-degree network?`)) {
-      setConnections(prev => prev.filter(c => c.id !== connId))
-      showToast(`Removed ${name} from connections.`)
+    const normName = name.toLowerCase().trim()
+    saveCustomConnections(customConnections.filter(c => c.id !== connId && c.name.toLowerCase().trim() !== normName))
+    if (!removedConnectionNames.some(n => n.toLowerCase().trim() === normName)) {
+      saveRemovedConnectionNames([...removedConnectionNames, normName])
     }
+    const matchedSuggested = suggestedPeople.find(p => p.name.toLowerCase().trim() === normName && p.isConnected)
+    if (matchedSuggested) {
+      onToggleConnect(matchedSuggested.id)
+    }
+    showToast(`Removed ${name} from My Connections.`)
   }
 
   // Filtered Connections
   const filteredConnections = connections.filter(c => {
     const safeCaps = (c.capabilities || []).map((cap: any) => (typeof cap === 'string' ? cap : String(cap?.name || cap || '')))
-    const matchCapability = selectedCapability === 'All' || safeCaps.includes(selectedCapability)
+    const matchCapability =
+      selectedCapability === 'All' ||
+      safeCaps.some(cap => cap.toLowerCase().includes(selectedCapability.toLowerCase())) ||
+      c.headline.toLowerCase().includes(selectedCapability.toLowerCase())
     const matchSearch = !searchFilter || (
       c.name.toLowerCase().includes(searchFilter.toLowerCase()) ||
       c.headline.toLowerCase().includes(searchFilter.toLowerCase()) ||
@@ -352,11 +489,23 @@ export function NetworkView({
     return 0 // default recent
   })
 
+  const connectedNamesSet = React.useMemo(
+    () => new Set(connections.map(c => c.name.toLowerCase().trim())),
+    [connections]
+  )
+
   // Filter People based on Capability, Search, and Enclave Prioritization
   const filteredPeople = suggestedPeople
+    .map(p => ({
+      ...p,
+      isConnected: p.isConnected || connectedNamesSet.has(String(p.name || '').toLowerCase().trim())
+    }))
     .filter(p => {
       const safeCaps = (p.capabilities || []).map((cap: any) => (typeof cap === 'string' ? cap : String(cap?.name || cap || '')))
-      const matchCapability = selectedCapability === 'All' || safeCaps.includes(selectedCapability)
+      const matchCapability =
+        selectedCapability === 'All' ||
+        safeCaps.some(cap => cap.toLowerCase().includes(selectedCapability.toLowerCase())) ||
+        String(p.headline || '').toLowerCase().includes(selectedCapability.toLowerCase())
       const matchSearch = !searchFilter || (
         String(p.name || '').toLowerCase().includes(searchFilter.toLowerCase()) ||
         String(p.headline || '').toLowerCase().includes(searchFilter.toLowerCase()) ||
@@ -397,7 +546,8 @@ export function NetworkView({
     return matchCapability && matchSearch
   })
 
-  const totalConnectionsDisplay = (currentUser?.connectionsCount || 842) + (connections.length - initialConnectedMembers.length)
+  // Exact 1-to-1 count matching the actual 1st-degree connections in My Connections
+  const totalConnectionsDisplay = connections.length
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-16">
@@ -720,7 +870,11 @@ export function NetworkView({
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800 pb-3">
                   <div>
                     <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                      <span>{totalConnectionsDisplay} Connections</span>
+                      <span>
+                        {filteredConnections.length === totalConnectionsDisplay
+                          ? `${totalConnectionsDisplay} Connections`
+                          : `${filteredConnections.length} of ${totalConnectionsDisplay} Connections`}
+                      </span>
                       <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300">
                         1st Degree
                       </span>
@@ -1265,17 +1419,15 @@ export function NetworkView({
 
                       <button
                         onClick={() => {
-                          if (person.isConnected) return
-                          if (person.isPending) {
-                            onToggleConnect(person.id)
-                          } else {
-                            setConnectNoteTarget(person)
-                            setIsConnectNoteModalOpen(true)
+                          if (person.isConnected) {
+                            setActiveTab('connections')
+                            return
                           }
+                          handleSendConnectionWithNote(person.id)
                         }}
                         className={`flex-1 rounded-full py-1.5 text-[11px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
                           person.isConnected
-                            ? "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200"
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:text-emerald-300"
                             : person.isPending
                             ? "border border-zinc-300 text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400"
                             : "bg-[#0A66C2] text-white hover:bg-[#004182] shadow-2xs"

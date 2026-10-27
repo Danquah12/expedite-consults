@@ -689,7 +689,7 @@ export function FloatingMessagingDock({
       )}
 
       {/* 2. Collapsible Messaging Dock Drawer (Desktop Right Corner) */}
-      <div className="hidden lg:block pointer-events-auto w-72 rounded-t-xl border border-zinc-300 bg-white shadow-2xl overflow-hidden">
+      <div className="hidden sm:block pointer-events-auto w-72 rounded-t-xl border border-zinc-300 bg-white shadow-2xl overflow-hidden">
         {/* Dock Header Bar */}
         <div
           onClick={() => setIsDockOpen(!isDockOpen)}

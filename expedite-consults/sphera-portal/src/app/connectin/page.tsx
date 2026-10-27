@@ -1093,27 +1093,31 @@ export default function LinkedInPage() {
 
   // Handle Connect / Follow Toggles
   const handleToggleConnect = (personId: string) => {
-    const targetPerson = suggestedPeople.find(p => p.id === personId)
-    setSuggestedPeople(prev =>
-      prev.map(person => {
-        if (person.id !== personId) return person
+    const normInput = String(personId || "").toLowerCase().trim()
+    const targetPerson = suggestedPeople.find(
+      p => p.id === personId || p.name.toLowerCase().trim() === normInput
+    )
+    setSuggestedPeople(prev => {
+      const updated = prev.map(person => {
+        if (person.id !== personId && person.name.toLowerCase().trim() !== normInput) {
+          return person
+        }
         if (person.isConnected) {
           return { ...person, isConnected: false, isPending: false }
         }
-        if (person.isPending) {
-          return { ...person, isPending: false }
-        }
-        return { ...person, isPending: true }
+        return { ...person, isConnected: true, isPending: false }
       })
-    )
-    if (targetPerson && !targetPerson.isConnected && !targetPerson.isPending) {
+      saveStoredConnections(updated)
+      return updated
+    })
+    if (targetPerson && !targetPerson.isConnected) {
       trackUserActivity({
         actionType: 'USER_CONNECTED',
-        actionLabel: 'Sent Connection Request',
+        actionLabel: 'Connected with Member',
         category: 'network',
         targetId: personId,
         targetTitle: targetPerson.name,
-        details: `Requested connection with ${targetPerson.name} (${targetPerson.headline})`,
+        details: `Connected with ${targetPerson.name} (${targetPerson.headline})`,
         user: userData
       })
     }
