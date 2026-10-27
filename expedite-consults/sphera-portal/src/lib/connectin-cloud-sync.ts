@@ -393,3 +393,167 @@ export async function appendCloudTelemetry(partial: {
     console.warn("[connectin-cloud-sync] appendCloudTelemetry notice:", err)
   }
 }
+
+const SYNC_DM_MAP_NAME = "connectin_dm_conversations_v1"
+
+export interface CloudDirectMessage {
+  id: string
+  senderName: string
+  senderEmail?: string
+  senderAvatar: string
+  senderRole: string
+  recipientName: string
+  recipientEmail?: string
+  subject?: string
+  text: string
+  attachment?: string
+  timestamp: string
+  createdAtIso: string
+  readBy: string[]
+}
+
+export interface CloudDirectConversation {
+  pairKey: string
+  participantA: {
+    id?: string
+    name: string
+    email?: string
+    avatar: string
+    headline: string
+  }
+  participantB: {
+    id?: string
+    name: string
+    email?: string
+    avatar: string
+    headline: string
+  }
+  messages: CloudDirectMessage[]
+  updatedAtIso: string
+}
+
+export function normalizeParticipantKey(nameOrEmail?: string): string {
+  return String(nameOrEmail || "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ")
+}
+
+export function makeDmPairKey(userA: string, userB: string): string {
+  const normA = normalizeParticipantKey(userA).replace(/[^a-z0-9]/g, "_") || "user_a"
+  const normB = normalizeParticipantKey(userB).replace(/[^a-z0-9]/g, "_") || "user_b"
+  const sorted = [normA, normB].sort()
+  const raw = `${sorted[0]}__${sorted[1]}`
+  const hash = crypto.createHash("md5").update(raw).digest("hex").slice(0, 8)
+  return `dm_pair__${sorted[0].slice(0, 22)}__${sorted[1].slice(0, 22)}_${hash}`
+}
+
+/**
+ * Upserts a bilateral direct message conversation into the global Twilio Sync Map (`connectin_dm_conversations_v1`)
+ * so that whenever User A sends a message to User B, User B immediately receives it on any device or session.
+ */
+export async function upsertCloudDirectConversation(convo: CloudDirectConversation): Promise<boolean> {
+  const auth = getTwilioAuthHeader()
+  if (!auth) return false
+
+  try {
+    const key = convo.pairKey
+    const sanitizeAvatar = (av: string, fallbackName: string) =>
+      av && av.startsWith("data:") && av.length > 4000
+        ? `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(fallbackName)}&backgroundColor=0a66c2`
+        : av || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(fallbackName)}&backgroundColor=0a66c2`
+
+    const compactConvo: CloudDirectConversation = {
+      ...convo,
+      participantA: {
+        ...convo.participantA,
+        avatar: sanitizeAvatar(convo.participantA.avatar, convo.participantA.name),
+        headline: (convo.participantA.headline || "").slice(0, 160)
+      },
+      participantB: {
+        ...convo.participantB,
+        avatar: sanitizeAvatar(convo.participantB.avatar, convo.participantB.name),
+        headline: (convo.participantB.headline || "").slice(0, 160)
+      },
+      // Keep last 25 messages to stay well within Twilio Sync 16KB item limit
+      messages: (convo.messages || []).slice(-25).map(m => ({
+        ...m,
+        senderAvatar: sanitizeAvatar(m.senderAvatar, m.senderName),
+        senderRole: (m.senderRole || "").slice(0, 120),
+        text: (m.text || "").slice(0, 600)
+      }))
+    }
+
+    const baseUrl = `https://sync.twilio.com/v1/Services/default/Maps/${SYNC_DM_MAP_NAME}`
+    const serialized = JSON.stringify(compactConvo)
+
+    const updateRes = await fetch(`${baseUrl}/Items/${encodeURIComponent(key)}`, {
+      method: "POST",
+      headers: {
+        Authorization: auth,
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: new URLSearchParams({ Data: serialized }).toString()
+    })
+
+    if (updateRes.ok) return true
+
+    if (updateRes.status === 404) {
+      await fetch("https://sync.twilio.com/v1/Services/default/Maps", {
+        method: "POST",
+        headers: {
+          Authorization: auth,
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: new URLSearchParams({ UniqueName: SYNC_DM_MAP_NAME }).toString()
+      }).catch(() => {})
+
+      const createRes = await fetch(`${baseUrl}/Items`, {
+        method: "POST",
+        headers: {
+          Authorization: auth,
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: new URLSearchParams({
+          Key: key,
+          Data: serialized
+        }).toString()
+      })
+      return createRes.ok
+    }
+
+    return false
+  } catch (err) {
+    console.warn("[connectin-cloud-sync] upsertCloudDirectConversation notice:", err)
+    return false
+  }
+}
+
+/**
+ * Fetches all bilateral direct message conversations from the global Twilio Sync Map (`connectin_dm_conversations_v1`).
+ */
+export async function pullCloudDirectConversations(): Promise<CloudDirectConversation[]> {
+  const auth = getTwilioAuthHeader()
+  if (!auth) return []
+
+  try {
+    const url = `https://sync.twilio.com/v1/Services/default/Maps/${SYNC_DM_MAP_NAME}/Items?PageSize=100`
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { Authorization: auth },
+      cache: "no-store"
+    })
+    if (!res.ok) return []
+
+    const json = await res.json()
+    return Array.isArray(json.items)
+      ? json.items
+          .map((it: any) => it.data as CloudDirectConversation)
+          .filter((d: any) => d && d.pairKey && Array.isArray(d.messages))
+      : []
+  } catch (err) {
+    console.warn("[connectin-cloud-sync] pullCloudDirectConversations notice:", err)
+    return []
+  }
+}
+

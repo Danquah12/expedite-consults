@@ -1,11 +1,10 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useRef, useCallback } from "react"
 import {
   ChevronUp,
   ChevronDown,
   X,
-  Send,
   Edit3,
   Search,
   CheckCheck,
@@ -17,6 +16,14 @@ import {
 import { UserProfile } from "@/lib/linkedin-data"
 import { getEnclaveB2BThreads, B2BConversationThread, B2BMessageItem } from "@/lib/b2b-messaging-data"
 import { resolveUserProfilePicture } from "@/lib/connectin-storage"
+import {
+  getLocalBilateralThreadsForViewer,
+  mergeBilateralAndServerThreads,
+  recordLocalBilateralDirectMessage,
+  markLocalBilateralConversationRead,
+  doesDmParticipantMatch,
+  normalizeDmName
+} from "@/lib/direct-mailbox-sync"
 
 export interface DirectMessageRecipient {
   id?: string
@@ -40,6 +47,9 @@ export function FloatingMessagingDock({
   onCloseComposeRecipient,
 }: FloatingMessagingDockProps) {
   const enclaveId = currentUser?.professionEnclave || "trades_construction"
+  const viewerName = currentUser?.name || ""
+  const viewerEmail = (currentUser as any)?.email || ""
+
   const [isDockOpen, setIsDockOpen] = useState(false)
   const [threads, setThreads] = useState<B2BConversationThread[]>(() =>
     getEnclaveB2BThreads(enclaveId)
@@ -52,33 +62,97 @@ export function FloatingMessagingDock({
   const [showWhyFreeTooltip, setShowWhyFreeTooltip] = useState(false)
   const [attachedFileName, setAttachedFileName] = useState<string | null>(null)
   const [sentConfirmation, setSentConfirmation] = useState<string | null>(null)
+  const [incomingAlertBanner, setIncomingAlertBanner] = useState<string | null>(null)
 
   const imageInputRef = useRef<HTMLInputElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
+  const autoOpenedMsgIdsRef = useRef<Set<string>>(new Set())
+
+  const syncMailbox = useCallback(async () => {
+    const localBilateral = getLocalBilateralThreadsForViewer(viewerName, viewerEmail, enclaveId)
+    const encThreads = getEnclaveB2BThreads(enclaveId)
+    const initialMerged = mergeBilateralAndServerThreads(localBilateral, encThreads)
+
+    try {
+      const res = await fetch(
+        `/api/connectin/messages?enclave=${encodeURIComponent(enclaveId)}&viewerName=${encodeURIComponent(viewerName)}&viewerEmail=${encodeURIComponent(viewerEmail)}`,
+        { cache: "no-store" }
+      )
+      if (res.ok) {
+        const data = await res.json()
+        if (data?.threads && Array.isArray(data.threads) && data.threads.length > 0) {
+          const finalMerged = mergeBilateralAndServerThreads(localBilateral, data.threads)
+          setThreads(finalMerged)
+
+          // Update activeChatThread if currently open so live incoming messages appear immediately
+          setActiveChatThread((prev) => {
+            if (!prev) return null
+            const updatedMatch = finalMerged.find(
+              (t) =>
+                t.id === prev.id ||
+                normalizeDmName(t.title) === normalizeDmName(prev.title)
+            )
+            return updatedMatch
+              ? {
+                  ...updatedMatch,
+                  title: prev.title,
+                  subtitle: prev.subtitle || updatedMatch.subtitle,
+                  avatar: prev.avatar || updatedMatch.avatar,
+                }
+              : prev
+          })
+
+          // If the current user has a new unread direct message (dm_pair__...), pop open the message box automatically!
+          const unreadDirectThread = finalMerged.find(
+            (t) => t.id.startsWith("dm_pair__") && (t.unreadCount || 0) > 0
+          )
+          if (unreadDirectThread) {
+            const latestMsg = unreadDirectThread.messages[unreadDirectThread.messages.length - 1]
+            const triggerKey = `${viewerName}__${unreadDirectThread.id}__${latestMsg?.id || "init"}`
+            if (!autoOpenedMsgIdsRef.current.has(triggerKey)) {
+              autoOpenedMsgIdsRef.current.add(triggerKey)
+              setActiveChatThread(unreadDirectThread)
+              setIncomingAlertBanner(
+                `📩 New message received from ${unreadDirectThread.title}`
+              )
+              setTimeout(() => setIncomingAlertBanner(null), 6000)
+            }
+          }
+          return
+        }
+      }
+    } catch {
+      // Fallback to local merged threads
+    }
+
+    setThreads(initialMerged)
+  }, [enclaveId, viewerName, viewerEmail])
 
   useEffect(() => {
-    const encThreads = getEnclaveB2BThreads(enclaveId)
-    setThreads(encThreads)
-
-    fetch(`/api/connectin/messages?enclave=${encodeURIComponent(enclaveId)}`, {
-      cache: "no-store",
-    })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data?.threads && Array.isArray(data.threads) && data.threads.length > 0) {
-          setThreads(data.threads)
-        }
-      })
-      .catch(() => {})
-  }, [enclaveId])
+    syncMailbox()
+    const interval = setInterval(syncMailbox, 4000)
+    const handleStorageOrCustom = () => {
+      syncMailbox()
+    }
+    window.addEventListener("connectin_dm_updated", handleStorageOrCustom)
+    window.addEventListener("storage", handleStorageOrCustom)
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener("connectin_dm_updated", handleStorageOrCustom)
+      window.removeEventListener("storage", handleStorageOrCustom)
+    }
+  }, [syncMailbox])
 
   // Whenever composeRecipient is triggered from Network, Profile, Feed, or Analytics, open the "New message" user box immediately
   useEffect(() => {
     if (!composeRecipient || !composeRecipient.name) return
 
     const targetNameNorm = composeRecipient.name.toLowerCase().trim()
-    const existing = threads.find(
+    const localBilateral = getLocalBilateralThreadsForViewer(viewerName, viewerEmail, enclaveId)
+    const combined = mergeBilateralAndServerThreads(localBilateral, threads)
+
+    const existing = combined.find(
       (t) => t.title.toLowerCase().trim() === targetNameNorm
     )
 
@@ -92,6 +166,7 @@ export function FloatingMessagingDock({
           existing.avatar ||
           `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(composeRecipient.name)}&backgroundColor=0a66c2`,
       })
+      markLocalBilateralConversationRead(composeRecipient.name, viewerName)
     } else {
       const safeAvatar =
         composeRecipient.avatar ||
@@ -125,6 +200,19 @@ export function FloatingMessagingDock({
   const totalUnread = threads.reduce((acc, t) => acc + (t.unreadCount || 0), 0)
 
   const handleCloseChatBox = () => {
+    if (activeChatThread && viewerName) {
+      markLocalBilateralConversationRead(activeChatThread.title, viewerName)
+      fetch("/api/connectin/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "mark_read",
+          enclave: enclaveId,
+          threadId: activeChatThread.id,
+          viewerName,
+        }),
+      }).catch(() => {})
+    }
     setActiveChatThread(null)
     setShowWhyFreeTooltip(false)
     if (onCloseComposeRecipient) {
@@ -137,46 +225,72 @@ export function FloatingMessagingDock({
     const trimmed = miniMessageInput.trim()
     if ((!trimmed && !attachedFileName) || !activeChatThread) return
 
+    const currentSubject = subjectInput.trim()
+    const currentAttachment = attachedFileName
+
     const composedBody = [
-      subjectInput.trim() ? `Subject: ${subjectInput.trim()}` : "",
+      currentSubject ? `Subject: ${currentSubject}` : "",
       trimmed,
-      attachedFileName ? `📎 Attached: ${attachedFileName}` : "",
+      currentAttachment ? `📎 Attached: ${currentAttachment}` : "",
     ]
       .filter(Boolean)
       .join("\n")
+
+    const senderDisplayName = currentUser?.name || "You"
+    const senderPic = resolveUserProfilePicture(currentUser, currentUser?.avatar)
+    const recipientName = activeChatThread.title
+    const recipientSubtitle = activeChatThread.subtitle
+    const recipientAvatar = activeChatThread.avatar
+
+    // 1. Persist immediately to shared bilateral local mailbox so recipient sees it in 0ms on same browser/tabs
+    recordLocalBilateralDirectMessage({
+      senderName: senderDisplayName,
+      senderEmail: viewerEmail,
+      senderAvatar: senderPic,
+      senderRole: currentUser?.headline || "Verified ConnectLn Member",
+      recipientName,
+      recipientAvatar,
+      recipientSubtitle,
+      subject: currentSubject || undefined,
+      text: composedBody,
+      attachment: currentAttachment || undefined,
+    })
 
     const newMsg: B2BMessageItem = {
       id: "mini_msg_" + Date.now(),
       sender: {
         id: "me",
-        name: currentUser?.name || "You",
-        avatar: currentUser?.avatar || "",
-        role: currentUser?.headline || "Verified ConnectIn Member",
+        name: senderDisplayName,
+        avatar: senderPic,
+        role: currentUser?.headline || "Verified ConnectLn Member",
       },
       text: composedBody,
       timestamp: "Just now",
+      attachments: currentAttachment
+        ? [{ name: currentAttachment, type: "Document" }]
+        : undefined,
     }
 
     const targetId = activeChatThread.id
 
-    const updated = threads.map((t) =>
-      t.id === targetId
-        ? {
-            ...t,
-            unreadCount: 0,
-            lastMessage: trimmed || `Attached ${attachedFileName}`,
-            lastMessageTime: "Just now",
-            messages: [...t.messages, newMsg],
-          }
-        : t
+    setThreads((prev) =>
+      prev.map((t) =>
+        t.id === targetId || normalizeDmName(t.title) === normalizeDmName(recipientName)
+          ? {
+              ...t,
+              unreadCount: 0,
+              lastMessage: trimmed || `Attached ${currentAttachment}`,
+              lastMessageTime: "Just now",
+              messages: [...t.messages, newMsg],
+            }
+          : t
+      )
     )
-
-    setThreads(updated)
     setActiveChatThread((prev) =>
       prev
         ? {
             ...prev,
-            lastMessage: trimmed || `Attached ${attachedFileName}`,
+            lastMessage: trimmed || `Attached ${currentAttachment}`,
             lastMessageTime: "Just now",
             messages: [...prev.messages, newMsg],
           }
@@ -185,13 +299,14 @@ export function FloatingMessagingDock({
     setSubjectInput("")
     setMiniMessageInput("")
     setAttachedFileName(null)
-    setSentConfirmation(`Message sent to ${activeChatThread.title.split(" ")[0]}!`)
-    setTimeout(() => setSentConfirmation(null), 3000)
+    setSentConfirmation(`Delivered to ${recipientName}'s Inbox ✓✓`)
+    setTimeout(() => setSentConfirmation(null), 4000)
 
     setTimeout(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
     }, 100)
 
+    // 2. Sync to global cloud backend (/api/connectin/messages -> Twilio Sync Map) so recipient receives it on any device
     try {
       const res = await fetch("/api/connectin/messages", {
         method: "POST",
@@ -201,43 +316,62 @@ export function FloatingMessagingDock({
           enclave: enclaveId,
           threadId: targetId,
           text: composedBody,
-          senderName: currentUser?.name || "You",
-          senderAvatar: currentUser?.avatar,
+          subject: currentSubject || undefined,
+          attachment: currentAttachment || undefined,
+          senderName: senderDisplayName,
+          senderEmail: viewerEmail,
+          senderAvatar: senderPic,
           senderRole: currentUser?.headline,
+          recipientName,
+          recipientSubtitle,
+          recipientAvatar,
+          channelType: "People",
         }),
       })
       const data = await res.json()
-      if (data?.ok && data.autoReply) {
-        setTimeout(() => {
-          setThreads((prev) =>
-            prev.map((t) =>
-              t.id === targetId
+      if (data?.ok) {
+        if (data.threadId && data.threadId !== targetId) {
+          setActiveChatThread((prev) =>
+            prev ? { ...prev, id: data.threadId } : null
+          )
+        }
+        if (data.autoReply) {
+          setTimeout(() => {
+            setThreads((prev) =>
+              prev.map((t) =>
+                t.id === targetId ||
+                t.id === data.threadId ||
+                normalizeDmName(t.title) === normalizeDmName(recipientName)
+                  ? {
+                      ...t,
+                      lastMessage: data.autoReply.text,
+                      lastMessageTime: "Just now",
+                      messages: [...t.messages, data.autoReply],
+                    }
+                  : t
+              )
+            )
+            setActiveChatThread((prev) =>
+              prev &&
+              (prev.id === targetId ||
+                prev.id === data.threadId ||
+                normalizeDmName(prev.title) === normalizeDmName(recipientName))
                 ? {
-                    ...t,
+                    ...prev,
                     lastMessage: data.autoReply.text,
                     lastMessageTime: "Just now",
-                    messages: [...t.messages, data.autoReply],
+                    messages: [...prev.messages, data.autoReply],
                   }
-                : t
+                : prev
             )
-          )
-          setActiveChatThread((prev) =>
-            prev && prev.id === targetId
-              ? {
-                  ...prev,
-                  lastMessage: data.autoReply.text,
-                  lastMessageTime: "Just now",
-                  messages: [...prev.messages, data.autoReply],
-                }
-              : prev
-          )
-          setTimeout(() => {
-            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-          }, 100)
-        }, 800)
+            setTimeout(() => {
+              messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+            }, 100)
+          }, 800)
+        }
       }
     } catch {
-      // Ignore network errors in mini dock
+      // Local mailbox already saved
     }
   }
 
@@ -311,6 +445,19 @@ export function FloatingMessagingDock({
               </button>
             </div>
           </div>
+
+          {incomingAlertBanner && (
+            <div className="bg-emerald-600 text-white px-4 py-1.5 text-xs font-bold flex items-center justify-between shrink-0">
+              <span>{incomingAlertBanner}</span>
+              <button
+                type="button"
+                onClick={() => setIncomingAlertBanner(null)}
+                className="text-white/80 hover:text-white ml-2"
+              >
+                ✕
+              </button>
+            </div>
+          )}
 
           {/* Recipient Info Row: Avatar + Bold Name + Multi-line Headline */}
           <div className="flex items-start gap-3 border-b border-zinc-200 bg-white px-4 py-3 shrink-0">
@@ -394,13 +541,22 @@ export function FloatingMessagingDock({
             />
           </div>
 
-          {/* Message History (if any messages sent) + Warm Cream "Write a message..." Textarea */}
+          {/* Message History (if any messages sent or received) + Warm Cream "Write a message..." Textarea */}
           <div className="flex-1 flex flex-col overflow-y-auto px-3.5 py-3 bg-white gap-2.5">
             {activeChatThread.messages.length > 0 && (
-              <div className="max-h-36 overflow-y-auto space-y-2 pr-1 border-b border-zinc-100 pb-2 text-xs">
+              <div className="max-h-40 overflow-y-auto space-y-2 pr-1 border-b border-zinc-100 pb-2 text-xs">
                 {activeChatThread.messages.map((msg) => {
-                  const isMe = msg.sender.id === "me" || msg.sender.name === "You"
+                  const isMe =
+                    msg.sender.id === "me" ||
+                    msg.sender.name === "You" ||
+                    doesDmParticipantMatch(msg.sender.name, viewerName)
                   const myPic = resolveUserProfilePicture(currentUser, msg.sender.avatar)
+                  const senderPic = isMe
+                    ? myPic
+                    : msg.sender.avatar ||
+                      activeChatThread.avatar ||
+                      `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(msg.sender.name)}&backgroundColor=0a66c2`
+
                   return (
                     <div
                       key={msg.id}
@@ -410,20 +566,26 @@ export function FloatingMessagingDock({
                         className={`max-w-[85%] rounded-xl px-3 py-2 leading-relaxed whitespace-pre-line ${
                           isMe
                             ? "bg-[#0A66C2] text-white rounded-br-xs"
-                            : "bg-zinc-100 text-zinc-800 border border-zinc-200 rounded-bl-xs"
+                            : "bg-emerald-50 text-zinc-900 border border-emerald-200 rounded-bl-xs shadow-2xs"
                         }`}
                       >
                         <div className="flex items-center gap-1.5 mb-0.5">
-                          {isMe && (
-                            <img
-                              src={myPic}
-                              alt="You"
-                              className="h-4 w-4 rounded-full object-cover"
-                            />
-                          )}
-                          <span className="font-bold text-[10px] opacity-90">
+                          <img
+                            src={senderPic}
+                            alt={isMe ? "You" : msg.sender.name}
+                            onError={(e) => {
+                              e.currentTarget.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(msg.sender.name || "User")}&backgroundColor=0a66c2`
+                            }}
+                            className="h-4 w-4 rounded-full object-cover"
+                          />
+                          <span className="font-bold text-[10px] opacity-95">
                             {isMe ? currentUser?.name || "You" : msg.sender.name}
                           </span>
+                          {!isMe && (
+                            <span className="ml-auto rounded bg-emerald-600 text-white px-1.5 py-0.2 text-[9px] font-bold">
+                              Received
+                            </span>
+                          )}
                         </div>
                         <p className="text-xs">{msg.text}</p>
                         <div className="mt-1 text-[9px] text-right flex items-center justify-end gap-1 opacity-75">
@@ -609,19 +771,35 @@ export function FloatingMessagingDock({
                 <div
                   key={t.id}
                   onClick={() => {
-                    setActiveChatThread(t)
+                    setActiveChatThread({ ...t, unreadCount: 0 })
+                    markLocalBilateralConversationRead(t.title, viewerName)
                     setThreads((prev) =>
                       prev.map((th) =>
                         th.id === t.id ? { ...th, unreadCount: 0 } : th
                       )
                     )
+                    fetch("/api/connectin/messages", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        action: "mark_read",
+                        enclave: enclaveId,
+                        threadId: t.id,
+                        viewerName,
+                      }),
+                    }).catch(() => {})
                   }}
-                  className="flex items-start gap-2.5 p-2.5 hover:bg-zinc-50 cursor-pointer transition-colors"
+                  className={`flex items-start gap-2.5 p-2.5 hover:bg-zinc-50 cursor-pointer transition-colors ${
+                    (t.unreadCount || 0) > 0 ? "bg-blue-50/50" : ""
+                  }`}
                 >
                   <div className="relative shrink-0">
                     <img
                       src={t.avatar}
                       alt={t.title}
+                      onError={(e) => {
+                        e.currentTarget.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(t.title)}&backgroundColor=0a66c2`
+                      }}
                       className="h-8 w-8 rounded-full object-cover"
                     />
                     {t.onlineStatus === "online" && (
@@ -629,15 +807,31 @@ export function FloatingMessagingDock({
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-1">
                       <p className="font-bold text-xs text-zinc-900 truncate">
                         {t.title}
                       </p>
-                      <span className="text-[10px] text-zinc-400">
-                        {t.lastMessageTime}
-                      </span>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {(t.unreadCount || 0) > 0 && (
+                          <span
+                            className="rounded-full bg-[#0A66C2] px-1.5 py-0.2 text-[9px] font-bold"
+                            style={{ color: "#FFFFFF" }}
+                          >
+                            {t.unreadCount}
+                          </span>
+                        )}
+                        <span className="text-[10px] text-zinc-400">
+                          {t.lastMessageTime}
+                        </span>
+                      </div>
                     </div>
-                    <p className="text-[11px] text-zinc-500 truncate mt-0.5">
+                    <p
+                      className={`text-[11px] truncate mt-0.5 ${
+                        (t.unreadCount || 0) > 0
+                          ? "font-bold text-zinc-900"
+                          : "text-zinc-500"
+                      }`}
+                    >
                       {t.lastMessage}
                     </p>
                   </div>

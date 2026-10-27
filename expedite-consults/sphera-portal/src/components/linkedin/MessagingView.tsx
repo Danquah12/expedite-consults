@@ -9,6 +9,13 @@ import {
 } from '@/lib/b2b-messaging-data';
 import { PROFESSION_ENCLAVES } from '@/lib/connectin-professions';
 import { resolveUserProfilePicture } from '@/lib/connectin-storage';
+import {
+    getLocalBilateralThreadsForViewer,
+    mergeBilateralAndServerThreads,
+    recordLocalBilateralDirectMessage,
+    markLocalBilateralConversationRead,
+    doesDmParticipantMatch,
+} from '@/lib/direct-mailbox-sync';
 
 type ChannelFilterType = 'All' | 'People' | 'Companies' | 'Products' | 'Communities';
 
@@ -459,47 +466,62 @@ export function MessagingView({
         }
     }, [currentUser?.professionEnclave]);
 
-    // Load threads from backend API + local fallback whenever selectedEnclave changes
+    // Load threads from backend API + local bilateral mailbox whenever selectedEnclave or currentUser changes
     useEffect(() => {
         let cancelled = false;
+        const vName = currentUser?.name || '';
+        const vEmail = currentUser?.email || '';
 
-        // Immediately populate with local data for zero-latency switch
-        const immediate = getEnclaveB2BThreads(selectedEnclave);
+        // Immediately populate with local bilateral DMs + enclave threads for zero-latency switch
+        const localBilateral = getLocalBilateralThreadsForViewer(vName, vEmail, selectedEnclave);
+        const immediate = mergeBilateralAndServerThreads(
+            localBilateral,
+            getEnclaveB2BThreads(selectedEnclave)
+        );
         setThreads(immediate);
         setSelectedThreadId((prev) =>
             immediate.some((t) => t.id === prev) ? prev : immediate[0]?.id || ''
         );
 
-        const fetchLiveThreads = async () => {
-            setIsLoadingThreads(true);
+        const fetchLiveThreads = async (showSpinner = false) => {
+            if (showSpinner) setIsLoadingThreads(true);
             try {
+                const freshLocal = getLocalBilateralThreadsForViewer(vName, vEmail, selectedEnclave);
                 const res = await fetch(
-                    `/api/connectin/messages?enclave=${encodeURIComponent(selectedEnclave)}`,
+                    `/api/connectin/messages?enclave=${encodeURIComponent(selectedEnclave)}&viewerName=${encodeURIComponent(vName)}&viewerEmail=${encodeURIComponent(vEmail)}`,
                     { cache: 'no-store' }
                 );
                 if (!res.ok) return;
                 const data = await res.json();
                 if (!cancelled && Array.isArray(data.threads) && data.threads.length > 0) {
-                    setThreads(data.threads);
+                    const merged = mergeBilateralAndServerThreads(freshLocal, data.threads);
+                    setThreads(merged);
                     setSelectedThreadId((prev) =>
-                        data.threads.some((t: B2BConversationThread) => t.id === prev)
+                        merged.some((t: B2BConversationThread) => t.id === prev)
                             ? prev
-                            : data.threads[0].id
+                            : merged[0].id
                     );
                 }
             } catch {
                 // Keep immediate fallback threads
             } finally {
-                if (!cancelled) setIsLoadingThreads(false);
+                if (!cancelled && showSpinner) setIsLoadingThreads(false);
             }
         };
 
-        fetchLiveThreads();
+        fetchLiveThreads(true);
+        const pollId = setInterval(() => fetchLiveThreads(false), 4000);
+        const handleSyncEvent = () => fetchLiveThreads(false);
+        window.addEventListener('connectin_dm_updated', handleSyncEvent);
+        window.addEventListener('storage', handleSyncEvent);
 
         return () => {
             cancelled = true;
+            clearInterval(pollId);
+            window.removeEventListener('connectin_dm_updated', handleSyncEvent);
+            window.removeEventListener('storage', handleSyncEvent);
         };
-    }, [selectedEnclave]);
+    }, [selectedEnclave, currentUser?.name, currentUser?.email]);
 
     // Filter threads based on activeChannel & searchQuery
     const filteredThreads = threads.filter((t) => {
@@ -724,6 +746,9 @@ export function MessagingView({
 
     const handleSelectThread = (thread: B2BConversationThread) => {
         setSelectedThreadId(thread.id);
+        if (currentUser?.name) {
+            markLocalBilateralConversationRead(thread.title, currentUser.name);
+        }
         if (thread.unreadCount > 0) {
             setThreads((prev) =>
                 prev.map((t) => (t.id === thread.id ? { ...t, unreadCount: 0 } : t))
@@ -735,6 +760,7 @@ export function MessagingView({
                     action: 'mark_read',
                     enclave: selectedEnclave,
                     threadId: thread.id,
+                    viewerName: currentUser?.name || '',
                 }),
             }).catch(() => {});
         }
@@ -745,6 +771,7 @@ export function MessagingView({
         if ((!trimmed && !pendingAttachment) || !activeThread || isSending) return;
 
         const senderName = currentUser?.name || 'You';
+        const senderEmail = currentUser?.email || '';
         const senderAvatar =
             currentUser?.avatar ||
             'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150';
@@ -773,6 +800,21 @@ export function MessagingView({
 
         const targetThreadId = activeThread.id;
         const targetEntityName = activeThread.title;
+
+        // If People DM, persist immediately in bilateral local mailbox so recipient receives it in 0ms
+        if (activeThread.channelType === 'People' || targetThreadId.startsWith('dm_pair__')) {
+            recordLocalBilateralDirectMessage({
+                senderName,
+                senderEmail,
+                senderAvatar,
+                senderRole,
+                recipientName: activeThread.title,
+                recipientAvatar: activeThread.avatar,
+                recipientSubtitle: activeThread.subtitle,
+                text: finalText,
+                attachment: pendingAttachment || undefined,
+            });
+        }
 
         // Optimistically append message
         setThreads((prev) =>
@@ -807,8 +849,13 @@ export function MessagingView({
                     text: finalText,
                     attachment: sentAttachment || undefined,
                     senderName,
+                    senderEmail,
                     senderAvatar,
                     senderRole,
+                    recipientName: activeThread.title,
+                    recipientSubtitle: activeThread.subtitle,
+                    recipientAvatar: activeThread.avatar,
+                    channelType: activeThread.channelType,
                 }),
             });
 
@@ -819,7 +866,7 @@ export function MessagingView({
                 if (data?.ok && data.autoReply) {
                     setThreads((prev) =>
                         prev.map((t) => {
-                            if (t.id !== targetThreadId) return t;
+                            if (t.id !== targetThreadId && t.id !== data.threadId) return t;
                             const exists = t.messages.some((m) => m.id === data.autoReply.id);
                             if (exists) return t;
                             return {
@@ -1407,7 +1454,12 @@ export function MessagingView({
 
                             {activeThread.messages.map((msg) => {
                                 const isMe =
-                                    msg.sender.id === 'me' || msg.sender.name === 'You';
+                                    msg.sender.id === 'me' ||
+                                    msg.sender.name === 'You' ||
+                                    doesDmParticipantMatch(
+                                        msg.sender.name,
+                                        currentUser?.name || ''
+                                    );
                                 const myResolvedPic = resolveUserProfilePicture(
                                     currentUser,
                                     msg.sender.avatar
