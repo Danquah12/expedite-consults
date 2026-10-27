@@ -657,6 +657,175 @@ export function getProfileTailoredAnalytics(
           category: 'peer'
         }
       ]
+    },
+    law_gov_defense: {
+      companies: [
+        { name: 'U.S. Federal Judiciary, Supreme & Superior Courts', percentage: 28, logo: '👩‍⚖️' },
+        { name: 'Cravath, Kirkland & Ellis & AmLaw 100 Trial Firms', percentage: 24, logo: '⚖️' },
+        { name: 'JAMS Arbitration, AAA & Chambers Panels', percentage: 18, logo: '🏛️' },
+        { name: 'U.S. Department of Justice (DOJ) & Public Defenders', percentage: 14, logo: '📜' },
+        { name: 'Fortune 500 General Counsel & Legal Operations', percentage: 10, logo: '💼' },
+        { name: 'Veritext, Lexis+ & Westlaw Legal Network', percentage: 6, logo: '🖋️' }
+      ],
+      jobRoles: [
+        { role: 'Presiding Judges, Magistrates & Administrative Law Judges', percentage: 32 },
+        { role: 'Managing Partners, Trial Lawyers & Litigation Chairs (JD/Esq.)', percentage: 30 },
+        { role: 'General Counsel, Corporate M&A & Patent Attorneys', percentage: 22 },
+        { role: 'Judicial Nominations & Legal Executive Search Partners', percentage: 16 }
+      ],
+      credentialTiers: [
+        { label: 'Active Bar (JD/Esq.)', percent: 58 },
+        { label: 'Judicial Chambers', percent: 27 },
+        { label: 'Supreme Court Bar', percent: 15 }
+      ],
+      peakNote: `Presiding Judges, AmLaw 100 Managing Partners & General Counsel inspecting ${safeName}'s Bar & Chambers credentials spike +51% mid-week.`,
+      viewers: [
+        {
+          name: 'Hon. Justice Eleanor Vance, JD',
+          headline: 'Presiding Judge, U.S. Magistrate & JAMS Neutral Arbitrator @ Federal & State Courts',
+          avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80',
+          company: 'U.S. Courts & JAMS Chambers',
+          location: 'Washington, DC',
+          viewedAt: '10 minutes ago',
+          viewVector: `Judicial Chambers & Bar Directory: "${primaryRole} · ${skill1}"`,
+          clearanceLevel: 'Presiding Judge · Chambers Verified',
+          mutualConnectionsCount: 31,
+          mutualConnectionName: 'Kwame Boateng, JD, Esq.',
+          category: 'executive'
+        },
+        {
+          name: 'Kwame Boateng, JD, Esq.',
+          headline: 'Senior Trial Lawyer & Chair of Commercial Litigation @ Cravath / Trial Bar',
+          avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
+          company: 'AmLaw 100 Trial Litigation',
+          location: 'New York, NY',
+          viewedAt: '42 minutes ago',
+          viewVector: `Co-Counsel & Trial Brief Match: "${skill1} + ${skill2}"`,
+          clearanceLevel: 'Supreme Court & State Bar Verified',
+          mutualConnectionsCount: 27,
+          category: 'peer'
+        },
+        {
+          name: 'Victoria Sterling, JD',
+          headline: 'General Counsel & VP of Legal Retention @ Fortune 100 Enterprise',
+          avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&auto=format&fit=crop&q=80',
+          company: 'Lockheed & Fortune 100 Legal',
+          location: 'Washington, DC / NY',
+          viewedAt: '2 hours ago',
+          viewVector: `Outside Counsel & Arbitration Panel Roster: "${skill3}"`,
+          clearanceLevel: 'General Counsel · Legal Buyer',
+          mutualConnectionsCount: 19,
+          category: 'buyer'
+        },
+        {
+          name: 'Jonathan Reynolds, Esq.',
+          headline: 'Managing Director — Partner, Judge & Judicial Clerk Recruiting @ Major, Lindsey & Africa',
+          avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80',
+          company: 'Major, Lindsey & Africa Legal Search',
+          location: 'Boston, MA / DC',
+          viewedAt: 'Yesterday at 3:40 PM',
+          viewVector: `Legal Search: "${primaryRole}" (${cleanLocation})`,
+          clearanceLevel: 'Verified Bar Search Partner',
+          mutualConnectionsCount: 22,
+          category: 'recruiter'
+        }
+      ]
+    },
+    energy_utilities_environment: {
+      companies: [
+        { name: 'Sunrun, Tesla Energy & First Solar Microgrids', percentage: 29, logo: '☀️' },
+        { name: 'NextEra Energy & SOLV Utility Solar O&M', percentage: 24, logo: '⚡' },
+        { name: 'Enphase, SolarEdge & SMA Inverter Network', percentage: 18, logo: '🔋' },
+        { name: 'Duke Energy & NERC High-Voltage Grid Ops', percentage: 14, logo: '🗼' },
+        { name: 'Freeport-McMoRan & Veolia Environmental', percentage: 9, logo: '💧' },
+        { name: 'Commercial EPC & Municipal Microgrid Buyers', percentage: 6, logo: '🏢' }
+      ],
+      jobRoles: [
+        { role: 'Solar EPC Directors, NABCEP Leads & Microgrid Superintendents', percentage: 36 },
+        { role: 'Utility O&M Managers & Battery Storage (BESS) Commissioning Leads', percentage: 28 },
+        { role: 'Commercial Solar Project Buyers & Grid Interconnection Engineers', percentage: 21 },
+        { role: 'Clean Energy & Utility Technical Talent Recruiters', percentage: 15 }
+      ],
+      credentialTiers: [
+        { label: 'NABCEP PVIP / NEC 690', percent: 59 },
+        { label: 'Tesla / Enphase Cert.', percent: 27 },
+        { label: 'NFPA 70E / NERC', percent: 14 }
+      ],
+      peakNote: `Solar EPC Superintendents, Tesla/Enphase Commissioning Leads & Clean Energy Buyers inspecting ${safeName}'s profile spike +49% mid-week.`,
+      viewers: [
+        {
+          name: 'Diego Alvarez, NABCEP PVIP',
+          headline: 'Director of Solar PV Field Operations & Tesla Powerwall Microgrids @ Sunrun / Tesla Energy',
+          avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80',
+          company: 'Sunrun & Tesla Energy Partner',
+          location: 'Austin, TX',
+          viewedAt: '14 minutes ago',
+          viewVector: `NABCEP Solar & Microgrid Directory: "${primaryRole} · ${skill1}"`,
+          clearanceLevel: 'NABCEP PVIP · Master Solar Installer',
+          mutualConnectionsCount: 25,
+          category: 'executive'
+        },
+        {
+          name: 'Marcus Vance, PE',
+          headline: 'VP of Utility Solar EPC Procurement & BESS Commissioning @ NextEra Energy',
+          avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
+          company: 'NextEra Energy Resources',
+          location: 'Juno Beach, FL / Austin, TX',
+          viewedAt: '1 hour ago',
+          viewVector: `Solar Subcontractor & O&M Roster: "${skill1} + ${skill2}"`,
+          clearanceLevel: 'Utility EPC Buyer',
+          mutualConnectionsCount: 18,
+          category: 'buyer'
+        }
+      ]
+    },
+    telecom_digital_infrastructure: {
+      companies: [
+        { name: 'DIRECTV, Dish Commercial SMATV & Mastec Advanced Tech', percentage: 28, logo: '📡' },
+        { name: 'Starlink Commercial, HughesNet & VSAT Integrators', percentage: 23, logo: '🛰️' },
+        { name: 'Comcast Xfinity, Charter Spectrum & DOCSIS Broadband', percentage: 19, logo: '📺' },
+        { name: 'CEDIA Pro-AV, Crestron/Control4 & IP CCTV Integrators', percentage: 15, logo: '🔊' },
+        { name: 'Equinix Data Centers & Crown Castle Fiber Ops', percentage: 10, logo: '🗼' },
+        { name: 'Hospitality, Stadium & Multi-Family AV Buyers', percentage: 5, logo: '🏨' }
+      ],
+      jobRoles: [
+        { role: 'DirecTV / Satellite Field Operations Managers & SMATV Headend Leads', percentage: 35 },
+        { role: 'Starlink/VSAT, Cable Broadband (DOCSIS) & Fiber Superintendents', percentage: 28 },
+        { role: 'Commercial Pro-AV, Home Theater & CCTV Integration Buyers', percentage: 22 },
+        { role: 'Telecom, Satellite & AV Field Recruiting Partners', percentage: 15 }
+      ],
+      credentialTiers: [
+        { label: 'SBCA / DirecTV SWM', percent: 57 },
+        { label: 'CEDIA / NCTI DOCSIS', percent: 29 },
+        { label: 'FOA Fiber / BICSI', percent: 14 }
+      ],
+      peakNote: `DirecTV Field Regional Managers, Starlink/Broadband Contractors & Commercial AV Buyers inspecting ${safeName}'s profile spike +47% mid-week.`,
+      viewers: [
+        {
+          name: 'Darnell Jackson, SBCA, CEDIA',
+          headline: 'Regional Field Director — DirecTV Commercial SMATV, Starlink & Pro-AV @ DIRECTV / Mastec',
+          avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&auto=format&fit=crop&q=80',
+          company: 'DIRECTV & Mastec Field Ops',
+          location: 'Atlanta, GA / Dallas, TX',
+          viewedAt: '11 minutes ago',
+          viewVector: `Satellite, Broadband & Pro-AV Search: "${primaryRole} · ${skill1}"`,
+          clearanceLevel: 'SBCA / DirecTV Master Certified',
+          mutualConnectionsCount: 23,
+          category: 'executive'
+        },
+        {
+          name: 'Carlos Mendez, RCDD',
+          headline: 'VP of Commercial Hospitality AV, Sports Bar SMATV & Fiber Procurement @ Encore / Comcast',
+          avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80',
+          company: 'Commercial AV & Broadband Network',
+          location: 'Denver, CO',
+          viewedAt: '55 minutes ago',
+          viewVector: `Commercial Dish, Coax & AV Work Order Desk: "${skill1} + ${skill2}"`,
+          clearanceLevel: 'Commercial AV & Telecom Buyer',
+          mutualConnectionsCount: 16,
+          category: 'buyer'
+        }
+      ]
     }
   }
 

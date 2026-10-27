@@ -59,6 +59,12 @@ function getEnclaveJobCategories(enclaveId?: string) {
     case 'all':
       return [
         { id: 'All', label: 'All Live Openings', icon: '🌐' },
+        { id: 'Herbal, Botanical & Integrative Medicine', label: 'Herbal & Botanical Medicine (RH-AHG/ND)', icon: '🌿' },
+        { id: 'Dentistry & Oral Surgery', label: 'Dentists & Oral Surgery (DDS/DMD/RDH)', icon: '🦷' },
+        { id: 'Solar Energy & Photovoltaic Systems', label: 'Solar PV Technicians & Microgrids', icon: '☀️' },
+        { id: 'DirecTV, Satellite Dish, Cable & AV Systems', label: 'DirecTV, Satellite Dish, Cable & AV Techs', icon: '📡' },
+        { id: 'Lawyers & Legal Counsel', label: 'Lawyers & Trial Attorneys (JD / Esq.)', icon: '⚖️' },
+        { id: 'Judges, Judiciary & Magistrates', label: 'Judges, Magistrates & ALJs', icon: '👩‍⚖️' },
         { id: 'Pharmacy & Pharmacology', label: 'Pharmacy (PharmD & CPhT)', icon: '💊' },
         { id: 'Physicians & Surgeons', label: 'Doctors & Surgeons (MD/DO)', icon: '🩺' },
         { id: 'Nursing & Advanced Practice', label: 'Nurses (RN, CCRN, NP, LPN)', icon: '❤️‍🩹' },
@@ -68,8 +74,7 @@ function getEnclaveJobCategories(enclaveId?: string) {
         { id: 'Medical & Hospital Administration', label: 'Medical & Hospital Admin (MHA/FACHE)', icon: '📋' },
         { id: 'Recommended', label: 'Recommended for You', icon: '⭐' },
         { id: 'Remote', label: 'Remote Roles', icon: '🌍' },
-        { id: 'Full-time', label: 'Full-time Direct Hire', icon: '💼' },
-        { id: 'Contract', label: 'Contract & Fractional', icon: '📜' }
+        { id: 'Full-time', label: 'Full-time Direct Hire', icon: '💼' }
       ]
     case 'trades_construction':
       return [
@@ -95,10 +100,11 @@ function getEnclaveJobCategories(enclaveId?: string) {
       ]
     case 'energy_utilities_environment':
       return [
-        { id: 'All', label: 'All Energy, Mining & Water Roles', icon: '⚡' },
+        { id: 'All', label: 'All Solar, Energy, Mining & Water Roles', icon: '☀️' },
+        { id: 'Solar Energy & Photovoltaic Systems', label: 'Solar PV Technicians, Inverters & Powerwall', icon: '☀️' },
         { id: 'Recommended', label: 'Recommended for You', icon: '⭐' },
         { id: 'Wind & Renewables', label: 'GWO Wind Turbine & Offshore', icon: '🌬️' },
-        { id: 'Solar & Grid Storage', label: 'NABCEP Solar, BESS & Substations', icon: '☀️' },
+        { id: 'Grid & Utilities', label: 'NERC Grid & High-Voltage Substations', icon: '⚡' },
         { id: 'Mining & Geology', label: 'Mining, Drilling & Geology', icon: '⛏️' },
         { id: 'Water & Sanitation', label: 'Water Treatment & Waste Recovery', icon: '💧' },
         { id: 'Full-time', label: 'Full-time', icon: '💼' }
@@ -123,7 +129,8 @@ function getEnclaveJobCategories(enclaveId?: string) {
       ]
     case 'telecom_digital_infrastructure':
       return [
-        { id: 'All', label: 'All Telecom, Data Center & Repair', icon: '📡' },
+        { id: 'All', label: 'All DirecTV, Satellite, Fiber & AV Roles', icon: '📡' },
+        { id: 'DirecTV, Satellite Dish, Cable & AV Systems', label: 'DirecTV, Satellite Dish, Starlink, Cable & Pro-AV', icon: '📡' },
         { id: 'Recommended', label: 'Recommended for You', icon: '⭐' },
         { id: 'Fiber & 5G Telecom', label: 'OSP Fiber Splicing & Tower Rigging', icon: '🗼' },
         { id: 'Data Center Infrastructure', label: 'Hyperscale AI Data Center Ops', icon: '🖥️' },
@@ -189,8 +196,9 @@ function getEnclaveJobCategories(enclaveId?: string) {
       ]
     case 'healthcare_medicine':
       return [
-        { id: 'All', label: 'All Clinical, Pharmacy & Health Roles', icon: '🏥' },
-        { id: 'Recommended', label: 'Recommended for You', icon: '⭐' },
+        { id: 'All', label: 'All Clinical, Herbal, Dental, Pharmacy & Health Roles', icon: '🏥' },
+        { id: 'Herbal, Botanical & Integrative Medicine', label: 'Herbal Medicine & Phytotherapy (RH-AHG / ND)', icon: '🌿' },
+        { id: 'Dentistry & Oral Surgery', label: 'Dentists, Oral Surgeons & Hygienists (DDS/DMD/RDH)', icon: '🦷' },
         { id: 'Pharmacy & Pharmacology', label: 'Pharmacists & Pharmacy Techs (PharmD & CPhT)', icon: '💊' },
         { id: 'Physicians & Surgeons', label: 'Doctors, Physicians & Surgeons (MD/DO)', icon: '🩺' },
         { id: 'Nursing & Advanced Practice', label: 'Nurses (RN, CCRN, NP, LPN)', icon: '❤️‍🩹' },
@@ -198,7 +206,7 @@ function getEnclaveJobCategories(enclaveId?: string) {
         { id: 'Medical Aides & Clinical Support', label: 'Medical Assistants, CNAs & EMS (CCMA, EMT)', icon: '🩹' },
         { id: 'Diagnostic Imaging & Allied Health', label: 'Surgical, Radiology, Resp & Lab Techs', icon: '🩻' },
         { id: 'Medical & Hospital Administration', label: 'Medical & Hospital Admin (MHA/FACHE/CPC)', icon: '📋' },
-        { id: 'Dental & Veterinary', label: 'Dental (DDS) & Veterinary (DVM)', icon: '🦷' },
+        { id: 'Recommended', label: 'Recommended for You', icon: '⭐' },
         { id: 'Locum Tenens', label: 'Locum Tenens & Travel PRN', icon: '🌍' }
       ]
     case 'education_workforce':
@@ -238,12 +246,14 @@ function getEnclaveJobCategories(enclaveId?: string) {
       ]
     case 'law_gov_defense':
       return [
-        { id: 'All', label: 'All Legal, Paralegal & Defense Roles', icon: '⚖️' },
-        { id: 'Recommended', label: 'Recommended for You', icon: '⭐' },
+        { id: 'All', label: 'All Lawyers, Judges & Legal Roles', icon: '⚖️' },
+        { id: 'Lawyers & Legal Counsel', label: 'Lawyers & Trial Attorneys (JD / Esq.)', icon: '⚖️' },
+        { id: 'Judges, Judiciary & Magistrates', label: 'Judges, Magistrates, ALJs & Law Clerks', icon: '👩‍⚖️' },
+        { id: 'Corporate & Gov Counsel', label: 'General Counsel, M&A & IP Lawyers', icon: '📜' },
+        { id: 'Paralegal & Court Ops', label: 'Paralegals, Court Reporters & Notaries', icon: '🖋️' },
         { id: 'Defense & Clearance', label: 'Cleared Defense (Secret / TS-SCI)', icon: '🛡️' },
-        { id: 'Corporate & Gov Counsel', label: 'Corporate & Federal Counsel (JD)', icon: '📜' },
-        { id: 'Paralegal & Court Ops', label: 'Paralegal, Court Reporter & Notary', icon: '🖋️' },
-        { id: 'Government', label: 'Federal GS & Public Sector', icon: '🏛️' }
+        { id: 'Government', label: 'Federal GS & Judiciary Admin', icon: '🏛️' },
+        { id: 'Recommended', label: 'Recommended for You', icon: '⭐' }
       ]
     case 'finance_accounting':
       return [
@@ -321,11 +331,11 @@ export function JobsView({
   // Primary Master Mode
   const [masterMode, setMasterMode] = useState<'find' | 'applications' | 'recruiting' | 'resumeprep'>('find')
 
-  // Active Profession Enclave Filter (Default to 'healthcare_medicine' when user opens Jobs so Pharmacists, Doctors, Nurses, Nursing Technicians, Medical Aides & Admin are immediately visible, or sync when user explicitly switches enclave)
+  // Active Profession Enclave Filter (Default to 'all' so Herbal Medicine, Dentists, Solar Technicians, DirecTV/Satellite Techs, Lawyers, Judges, Pharmacists, Doctors, Nurses & Nursing Techs are all visible immediately at the top)
   const [selectedEnclave, setSelectedEnclave] = useState<string>(
     currentUser?.professionEnclave && currentUser.professionEnclave !== 'trades_construction'
       ? currentUser.professionEnclave
-      : 'healthcare_medicine'
+      : 'all'
   )
 
   useEffect(() => {

@@ -1386,30 +1386,82 @@ export const GLOBAL_JOBS_CATALOG: GlobalJobItem[] = [
     tags: ['Medical & Hospital Administration', 'Hospital Administrator', 'Recommended', 'Full-time']
   },
   {
+    id: 'health_herbal_1',
+    countryCode: 'US',
+    countryName: 'United States',
+    professionEnclave: 'healthcare_medicine',
+    professionId: 'herbal_medicine_practitioner',
+    domainCategory: 'Herbal, Botanical & Integrative Medicine',
+    title: 'Clinical Herbalist, Phytotherapy Formulator & Botanical Medicine Specialist (RH-AHG / ND)',
+    company: 'Cleveland Clinic Integrative Medicine & Gaia Herbs / Pharmaca Botanical Labs',
+    companyLogo: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=100&auto=format&fit=crop&q=80',
+    location: 'Boston, MA / Austin, TX / Remote Consults (Hybrid)',
+    hub: 'Boston, MA',
+    workplaceType: 'Hybrid',
+    employmentType: 'Full-time',
+    postedTime: '1 hour ago',
+    applicantsCount: 11,
+    salaryRange: '$92,000 - $148,000 / yr + Formulation Royalties',
+    easyApply: true,
+    requiredProductExperience: ['Registered Herbalist (RH-AHG) / Naturopathic Doctor (ND)', 'Clinical Phytotherapy, Pharmacognosy, cGMP Extraction & Herb-Drug Safety'],
+    description: 'Lead clinical herbal medicine consultations, bespoke botanical tincture/decoction compounding, HPTLC/HPLC phytochemical standardization, and cytochrome P450 herb-drug interaction screening for integrative oncology, metabolic, and immune care.',
+    requirements: ['Registered Herbalist (RH-AHG), Master of Science in Clinical Herbal Medicine, or Doctor of Naturopathic Medicine (ND)', 'Deep expertise in pharmacognosy, WHO/USP botanical monographs, and FDA 21 CFR Part 111 cGMP herbal quality systems', 'Clinical mastery of adaptogens, standardized phyto-extracts, and integrative herb-pharmaceutical safety'],
+    languageRequirement: 'English',
+    applyUrl: 'https://jobs.clevelandclinic.org/',
+    source: 'Integrative & Botanical Medicine ATS',
+    tags: ['Herbal, Botanical & Integrative Medicine', 'Herbal Medicine', 'Clinical Herbalist', 'Phytotherapy', 'Naturopathic', 'Recommended', 'Full-time']
+  },
+  {
     id: 'health_4',
     countryCode: 'US',
     countryName: 'United States',
     professionEnclave: 'healthcare_medicine',
     professionId: 'dentist',
-    domainCategory: 'Dental & Veterinary',
-    title: 'Lead Doctor of Dental Surgery (DDS / DMD) — Implant & Prosthodontics',
-    company: 'Mayo Clinic Dental Specialties',
+    domainCategory: 'Dentistry & Oral Surgery',
+    title: 'Lead Dentist (DDS / DMD), Orthodontist & Oral-Maxillofacial Implant Surgeon',
+    company: 'Mayo Clinic Dental Specialties & Aspen / Pacific Dental Services',
     companyLogo: 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=100&auto=format&fit=crop&q=80',
-    location: 'Austin, TX / Rochester (On-site)',
+    location: 'Austin, TX / New York, NY / Boston, MA (On-site)',
     hub: 'Austin, TX',
     workplaceType: 'On-site',
     employmentType: 'Full-time',
-    postedTime: '1 day ago',
-    applicantsCount: 6,
-    salaryRange: '$285,000 - $420,000 / yr',
+    postedTime: '1 hour ago',
+    applicantsCount: 9,
+    salaryRange: '$285,000 - $445,000 / yr + Production Bonus',
     easyApply: true,
-    requiredProductExperience: ['DDS/DMD State Dental License', 'CBCT 3D Guided Implantology & CEREC CAD/CAM'],
-    description: 'Perform full-arch zygomatic and endosseous dental implant restorations, CBCT 3D surgical guide planning, CEREC same-day zirconia prosthetics, and complex oral rehabilitation.',
-    requirements: ['DDS or DMD from a CODA-accredited dental school', 'Active Dental License and IV Moderate Sedation permit', 'Proficiency in 3Shape/CEREC digital dentistry and guided implant surgery'],
+    requiredProductExperience: ['DDS / DMD State Dental License & DEA Registration', 'CBCT 3D Guided Implantology, CEREC CAD/CAM, Invisalign & Endodontics'],
+    description: 'Perform comprehensive restorative and cosmetic dentistry, full-arch zygomatic/endosseous dental implants, CBCT 3D surgical guide planning, CEREC same-day zirconia crowns/veneers, orthodontic aligner therapy, and surgical extractions.',
+    requirements: ['Doctor of Dental Surgery (DDS) or Doctor of Medicine in Dentistry (DMD) from a CODA-accredited dental school', 'Active State Dental License, DEA registration, and IV/Oral Conscious Sedation permit', 'Proficiency in 3Shape/CEREC digital dentistry, rotary endodontics, and guided implant surgery'],
     languageRequirement: 'English',
     applyUrl: 'https://jobs.mayoclinic.org/',
-    source: 'Mayo Clinic Careers',
-    tags: ['Dental & Veterinary', 'Dentistry', 'Surgery', 'Full-time']
+    source: 'Mayo Clinic & Dental Specialty ATS',
+    tags: ['Dentistry & Oral Surgery', 'Dental & Veterinary', 'Dentist', 'DDS / DMD', 'Orthodontist', 'Oral Surgery', 'Recommended', 'Full-time']
+  },
+  {
+    id: 'health_dentist_2',
+    countryCode: 'US',
+    countryName: 'United States',
+    professionEnclave: 'healthcare_medicine',
+    professionId: 'dental_hygienist_assistant',
+    domainCategory: 'Dentistry & Oral Surgery',
+    title: 'Registered Dental Hygienist (RDH), EFDA & Certified Dental Assistant (CDA)',
+    company: 'NYU College of Dentistry Clinics & Heartland Dental Network',
+    companyLogo: 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=100&auto=format&fit=crop&q=80',
+    location: 'New York, NY / Washington, DC / Seattle, WA (On-site)',
+    hub: 'New York, NY',
+    workplaceType: 'On-site',
+    employmentType: 'Full-time',
+    postedTime: '2 hours ago',
+    applicantsCount: 14,
+    salaryRange: '$88,000 - $124,000 / yr + $7,500 Sign-On Bonus',
+    easyApply: true,
+    requiredProductExperience: ['Registered Dental Hygienist (RDH) or DANB CDA / EFDA License', 'Ultrasonic Periodontal Scaling, Digital Intraoral X-Rays & Local Block Anesthesia'],
+    description: 'Perform ultrasonic periodontal scaling and root planing (SRP), digital DEXIS intraoral and panoramic radiography, laser bacterial reduction, local infiltration/block anesthesia, and four-handed chairside surgical dental assisting.',
+    requirements: ['Active Registered Dental Hygienist (RDH) license or DANB Certified Dental Assistant (CDA / EFDA) credential', 'Local anesthesia & nitrous oxide monitoring certifications and current BLS card', 'Experience with Dentrix, Eaglesoft, or Open Dental charting'],
+    languageRequirement: 'English',
+    applyUrl: 'https://jobs.heartland.com/',
+    source: 'Dental Clinical Talent Portal',
+    tags: ['Dentistry & Oral Surgery', 'Dental & Veterinary', 'Dentist', 'Dental Hygienist', 'RDH', 'Dental Assistant', 'Recommended', 'Full-time']
   },
   {
     id: 'health_5',
@@ -1964,14 +2016,144 @@ export const GLOBAL_JOBS_CATALOG: GlobalJobItem[] = [
   },
 
   // =========================================================================
-  // 14. LAW, GOVERNMENT & DEFENSE CONTRACTING (law_gov_defense)
+  // 14. LAWYERS, JUDGES, COURTS, PARALEGAL & DEFENSE (law_gov_defense)
   // =========================================================================
+  {
+    id: 'law_lawyer_1',
+    countryCode: 'US',
+    countryName: 'United States',
+    professionEnclave: 'law_gov_defense',
+    professionId: 'trial_litigation_lawyer',
+    domainCategory: 'Lawyers & Legal Counsel',
+    title: 'Senior Trial Lawyer & Civil/Commercial Litigation Attorney (JD / Esq.)',
+    company: 'Cravath, Swaine & Moore LLP & Kirkland & Ellis Litigation',
+    companyLogo: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=100&auto=format&fit=crop&q=80',
+    location: 'New York, NY / Washington, DC (Hybrid)',
+    hub: 'New York, NY',
+    workplaceType: 'Hybrid',
+    employmentType: 'Full-time',
+    postedTime: '1 hour ago',
+    applicantsCount: 14,
+    salaryRange: '$245,000 - $415,000 / yr + Trial Bonus',
+    easyApply: true,
+    requiredProductExperience: ['Active State Bar Admission (JD / Esq.) & First-Chair Jury Trials', 'Westlaw Precision, Lexis+ & Federal PACER / CM-ECF'],
+    description: 'Serve as first-chair and second-chair trial counsel in high-stakes commercial, antitrust, securities, and constitutional litigation across U.S. District Courts and Circuit Courts of Appeals. Lead witness depositions, Daubert motions, summary judgment briefings, and jury voir dire.',
+    requirements: ['Juris Doctor (J.D.) and active Bar admission in good standing', '4+ years civil or commercial trial litigation experience (AmLaw 100, boutique trial firm, or federal clerkship)', 'Proven mastery of Federal Rules of Civil Procedure (FRCP) and Federal Rules of Evidence (FRE)'],
+    languageRequirement: 'Fluent English',
+    applyUrl: 'https://www.cravath.com/careers',
+    source: 'AmLaw Litigation Direct ATS',
+    tags: ['Lawyers & Legal Counsel', 'Trial Lawyer', 'Attorney', 'Litigation', 'JD / Esq.', 'Recommended']
+  },
+  {
+    id: 'law_judge_1',
+    countryCode: 'US',
+    countryName: 'United States',
+    professionEnclave: 'law_gov_defense',
+    professionId: 'judge_judicial_magistrate',
+    domainCategory: 'Judges, Judiciary & Magistrates',
+    title: 'Presiding Judge, U.S. Magistrate Judge & Administrative Law Judge (ALJ)',
+    company: 'U.S. Federal Judiciary / State Supreme & Superior Courts',
+    companyLogo: 'https://images.unsplash.com/photo-1453945619913-79ec89a82c51?w=100&auto=format&fit=crop&q=80',
+    location: 'Washington, DC / New York / Regional Courthouses',
+    hub: 'Washington, DC / MD / VA',
+    workplaceType: 'On-site',
+    employmentType: 'Full-time',
+    postedTime: '2 hours ago',
+    applicantsCount: 9,
+    salaryRange: '$205,000 - $243,300 / yr (Judicial Statutory Scale)',
+    easyApply: true,
+    requiredProductExperience: ['10+ Years Bar Standing (JD) & Trial/Appellate Bench Mastery', 'Federal Rules of Evidence (FRE), Daubert Rulings & Judicial Opinions'],
+    description: 'Preside over civil, criminal, constitutional, and administrative bench and jury proceedings. Issue dispositive written judicial opinions, rule on evidentiary admissibility (FRE 403/702), manage multi-district litigation dockets, and conduct settlement conferences.',
+    requirements: ['Juris Doctor (J.D.) with 7–10+ years active Bar membership in good standing', 'Distinguished record in trial litigation, appellate practice, or prior judicial/magistrate service', 'Impeccable judicial temperament, statutory construction mastery, and ethical standing'],
+    languageRequirement: 'Fluent English',
+    applyUrl: 'https://www.uscourts.gov/careers',
+    source: 'U.S. Courts & Judicial Nominations Portal',
+    tags: ['Judges, Judiciary & Magistrates', 'Judge', 'Magistrate', 'Administrative Law Judge', 'Judiciary', 'Recommended']
+  },
+  {
+    id: 'law_lawyer_2',
+    countryCode: 'US',
+    countryName: 'United States',
+    professionEnclave: 'law_gov_defense',
+    professionId: 'criminal_defense_prosecutor_lawyer',
+    domainCategory: 'Lawyers & Legal Counsel',
+    title: 'Criminal Defense Trial Lawyer, Assistant U.S. Attorney (AUSA) & Public Defender (JD)',
+    company: 'U.S. Department of Justice (DOJ) & NACDL Criminal Trial Bar',
+    companyLogo: 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?w=100&auto=format&fit=crop&q=80',
+    location: 'Boston, MA / Washington, DC / Chicago, IL (On-site)',
+    hub: 'Boston, MA',
+    workplaceType: 'On-site',
+    employmentType: 'Full-time',
+    postedTime: '3 hours ago',
+    applicantsCount: 16,
+    salaryRange: '$148,000 - $235,000 / yr',
+    easyApply: true,
+    requiredProductExperience: ['Active Bar License (JD) & Felony Jury Trial Advocacy', '4th/5th/6th Amendment Suppression, Brady Discovery & Sentencing'],
+    description: 'Litigate felony criminal jury trials, white-collar regulatory investigations, grand jury indictments, 4th Amendment suppression hearings, Brady/Giglio evidentiary disclosures, and federal sentencing hearings.',
+    requirements: ['Juris Doctor (J.D.) and active state/federal Bar admission', '3+ years felony criminal defense, public defender, or prosecutorial (ADA / AUSA) courtroom experience', 'Strong command of forensic cross-examination and U.S. Sentencing Guidelines'],
+    languageRequirement: 'Fluent English',
+    applyUrl: 'https://www.justice.gov/legal-careers',
+    source: 'DOJ & Criminal Defense Bar ATS',
+    tags: ['Lawyers & Legal Counsel', 'Criminal Defense Lawyer', 'Prosecutor', 'Public Defender', 'Trial Attorney', 'Recommended']
+  },
+  {
+    id: 'law_judge_2',
+    countryCode: 'US',
+    countryName: 'United States',
+    professionEnclave: 'law_gov_defense',
+    professionId: 'administrative_law_judge_arbitrator',
+    domainCategory: 'Judges, Judiciary & Magistrates',
+    title: 'Commercial Arbitrator, JAMS Neutral Judge, Mediator & Judicial Law Clerk (JD)',
+    company: 'JAMS Arbitration, American Arbitration Association (AAA) & Federal Chambers',
+    companyLogo: 'https://images.unsplash.com/photo-1521791055366-0d553872125f?w=100&auto=format&fit=crop&q=80',
+    location: 'San Francisco, CA / New York, NY / Hybrid',
+    hub: 'San Francisco, CA',
+    workplaceType: 'Hybrid',
+    employmentType: 'Full-time',
+    postedTime: '3 hours ago',
+    applicantsCount: 11,
+    salaryRange: '$185,000 - $360,000 / yr',
+    easyApply: true,
+    requiredProductExperience: ['JAMS / AAA / ICC Arbitration Rules & Judicial Clerkship', 'Bench Memoranda, Binding Arbitration Awards & ADR Mediation'],
+    description: 'Adjudicate complex domestic and international commercial arbitrations, mediate high-value corporate/employment disputes, or draft chambers bench memoranda and appellate opinions for federal circuit and district judges.',
+    requirements: ['Juris Doctor (J.D.) with honors, Law Review / Moot Court, or judicial/ADR experience', 'Expertise in Federal Arbitration Act (FAA), AAA/JAMS rules, and Bluebook legal writing'],
+    languageRequirement: 'Fluent English',
+    applyUrl: 'https://www.jamsadr.com/careers',
+    source: 'JAMS & Federal Chambers Portal',
+    tags: ['Judges, Judiciary & Magistrates', 'Judge', 'Arbitrator', 'Mediator', 'Judicial Law Clerk', 'Recommended']
+  },
+  {
+    id: 'law_lawyer_3',
+    countryCode: 'US',
+    countryName: 'United States',
+    professionEnclave: 'law_gov_defense',
+    professionId: 'ip_patent_tax_estate_lawyer',
+    domainCategory: 'Lawyers & Legal Counsel',
+    title: 'USPTO Patent & IP Attorney, Immigration Lawyer & Civil Rights Counsel (JD)',
+    company: 'Fish & Richardson P.C., Fragomen Worldwide & Constitutional Law Center',
+    companyLogo: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=100&auto=format&fit=crop&q=80',
+    location: 'Austin, TX / Silicon Valley / Remote Options',
+    hub: 'Austin, TX',
+    workplaceType: 'Hybrid',
+    employmentType: 'Full-time',
+    postedTime: '4 hours ago',
+    applicantsCount: 13,
+    salaryRange: '$195,000 - $330,000 / yr',
+    easyApply: true,
+    requiredProductExperience: ['USPTO Patent Bar / State Bar (JD) / LL.M. Tax & Estate', 'PTAB IPR Litigation, USCIS EB-1/O-1 Petitions & § 1983 Civil Rights'],
+    description: 'Prosecute and litigate AI/semiconductor/biotech patents before the USPTO and PTAB, represent global talent and families in USCIS/EOIR immigration proceedings, or structure complex tax & fiduciary estate plans.',
+    requirements: ['Juris Doctor (J.D.) and active Bar membership (USPTO Registration No. for Patent roles)', 'Experience in IP patent litigation, employment/family immigration, fiduciary estates, or civil rights law'],
+    languageRequirement: 'Fluent English',
+    applyUrl: 'https://www.fr.com/careers/',
+    source: 'Specialty Legal Bar Portal',
+    tags: ['Lawyers & Legal Counsel', 'Patent Lawyer', 'Immigration Lawyer', 'Family & Estate Lawyer', 'Civil Rights', 'Recommended']
+  },
   {
     id: 'gov_1',
     countryCode: 'US',
     countryName: 'United States',
     professionEnclave: 'law_gov_defense',
-    domainCategory: 'Recommended',
+    domainCategory: 'Defense & Clearance',
     title: 'Principal DoD RMF / CMMC Level 3 Security Authorization Architect',
     company: 'Booz Allen Hamilton — National Defense',
     companyLogo: 'https://images.unsplash.com/photo-1541354329998-f4d9a9f9297f?w=100&auto=format&fit=crop&q=80',
@@ -1997,9 +2179,10 @@ export const GLOBAL_JOBS_CATALOG: GlobalJobItem[] = [
     countryCode: 'US',
     countryName: 'United States',
     professionEnclave: 'law_gov_defense',
-    domainCategory: 'Recommended',
-    title: 'Senior Corporate Counsel — Technology, Privacy & Federal Contracts (JD)',
-    company: 'Lockheed Martin Legal & Government Affairs',
+    professionId: 'corporate_attorney',
+    domainCategory: 'Corporate & Gov Counsel',
+    title: 'General Counsel & Senior Corporate M&A / Federal Contracts Lawyer (JD)',
+    company: 'Lockheed Martin Legal & Skadden Corporate M&A',
     companyLogo: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=100&auto=format&fit=crop&q=80',
     location: 'Washington, DC / MD / VA (Hybrid)',
     hub: 'Washington, DC / MD / VA',
@@ -2007,15 +2190,15 @@ export const GLOBAL_JOBS_CATALOG: GlobalJobItem[] = [
     employmentType: 'Full-time',
     postedTime: '1 day ago',
     applicantsCount: 11,
-    salaryRange: '$215,000 - $285,000 / yr + Bonus',
+    salaryRange: '$225,000 - $340,000 / yr + Bonus',
     easyApply: true,
-    requiredProductExperience: ['Juris Doctor (JD) & Active Bar Admission', 'FAR / DFARS Procurement & IP Licensing'],
-    description: 'Advise executive leadership on FAR/DFARS federal defense procurements, OTA agreements, ITAR/EAR export controls, AI data governance, and strategic M&A transactions.',
-    requirements: ['Juris Doctor (J.D.) with active State Bar membership in good standing', '6+ years AmLaw 100 or defense/tech in-house legal counsel experience', 'Deep knowledge of FAR/DFARS, Bid Protests, and cybersecurity incident disclosure'],
+    requiredProductExperience: ['Juris Doctor (JD) & Active Bar Admission', 'Corporate M&A, SEC Governance & FAR / DFARS Procurement'],
+    description: 'Advise executive leadership and Boards of Directors on corporate M&A transactions, SEC regulatory compliance, FAR/DFARS federal defense procurements, ITAR export controls, and AI data governance.',
+    requirements: ['Juris Doctor (J.D.) with active State Bar membership in good standing', '6+ years AmLaw 100 or in-house General Counsel legal experience', 'Deep knowledge of corporate governance, M&A, and regulatory compliance'],
     languageRequirement: 'English',
     applyUrl: 'https://www.lockheedmartinjobs.com/',
     source: 'Lockheed Martin Careers',
-    tags: ['Corporate & Gov Counsel', 'Legal', 'Defense & Clearance', 'Recommended']
+    tags: ['Corporate & Gov Counsel', 'Lawyers & Legal Counsel', 'General Counsel', 'Lawyer', 'Recommended']
   },
   {
     id: 'gov_3',
@@ -2023,8 +2206,8 @@ export const GLOBAL_JOBS_CATALOG: GlobalJobItem[] = [
     countryName: 'United States',
     professionEnclave: 'law_gov_defense',
     domainCategory: 'Government',
-    title: 'Supervisory IT Program Manager & Digital Transformation Lead (GS-15)',
-    company: 'U.S. Digital Service / Department of Defense',
+    title: 'Supervisory Legal & Policy Program Director (GS-15)',
+    company: 'U.S. Department of Justice / Federal Judiciary Admin',
     companyLogo: 'https://images.unsplash.com/photo-1572021335469-31706a17aaef?w=100&auto=format&fit=crop&q=80',
     location: 'Washington, DC / US Remote',
     hub: 'Washington, DC / MD / VA',
@@ -2034,9 +2217,9 @@ export const GLOBAL_JOBS_CATALOG: GlobalJobItem[] = [
     applicantsCount: 21,
     salaryRange: '$163,964 - $191,900 / yr (GS-15 Federal Scale)',
     easyApply: true,
-    requiredProductExperience: ['FAC-P/PM Senior Level III or PMP', 'Federal IT Modernization & Zero Trust Mandate'],
-    description: 'Direct a $120M federal cloud modernization portfolio. Prepare USAJOBS Executive Core Qualifications (ECQs) and oversee multi-vendor agile delivery teams.',
-    requirements: ['1+ year specialized experience equivalent to GS-14 in federal or enterprise IT program management', 'PMP or DAWIA/FAC-P/PM Senior certification', 'Experience with OMB M-22-09 federal Zero Trust architecture mandates'],
+    requiredProductExperience: ['Juris Doctor (JD) or FAC-P/PM Senior Level III', 'Federal Regulatory Policy & Court Modernization'],
+    description: 'Direct federal regulatory enforcement, court case management modernization, and interagency legal policy initiatives.',
+    requirements: ['1+ year specialized experience equivalent to GS-14 in federal legal or regulatory program management', 'JD, MPA, or PMP certification'],
     languageRequirement: 'English',
     applyUrl: 'https://www.usajobs.gov/',
     source: 'USAJOBS Official Feed',
@@ -2486,6 +2669,58 @@ export const GLOBAL_JOBS_CATALOG: GlobalJobItem[] = [
   // 17. ENERGY, UTILITIES, MINING, WATER & SANITATION (energy_utilities_environment)
   // =========================================================================
   {
+    id: 'solar_tech_1',
+    countryCode: 'US',
+    countryName: 'United States',
+    professionEnclave: 'energy_utilities_environment',
+    professionId: 'solar_pv_microgrid_technician',
+    domainCategory: 'Solar Energy & Photovoltaic Systems',
+    title: 'Lead NABCEP Solar PV Technician, Rooftop/Commercial Array Installer & Powerwall Specialist',
+    company: 'Sunrun Commercial Solar, Tesla Energy & First Solar Microgrids',
+    companyLogo: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=100&auto=format&fit=crop&q=80',
+    location: 'Austin, TX / San Francisco, CA / Phoenix, AZ (On-site)',
+    hub: 'Austin, TX',
+    workplaceType: 'On-site',
+    employmentType: 'Full-time',
+    postedTime: '1 hour ago',
+    applicantsCount: 12,
+    salaryRange: '$88,000 - $136,000 / yr + Per-kW Install Bonus & Company Truck',
+    easyApply: true,
+    requiredProductExperience: ['NABCEP PV Installation Professional & NEC Article 690 / 706', 'Enphase IQ8 Microinverters, SolarEdge, SMA & Tesla Powerwall 3 BESS'],
+    description: 'Lead residential, commercial, and utility-scale solar photovoltaic (PV) installations, commission Enphase/SolarEdge string & microinverter arrays, wire NEC Article 690 rapid-shutdown combiners, integrate Tesla Powerwall 3 / LFP battery energy storage systems (BESS), and run IV-curve tracer & thermal drone inspections.',
+    requirements: ['NABCEP PV Installation Professional (PVIP) or PV Associate credential (or 2+ years hands-on solar PV installation experience)', 'Working mastery of NEC Article 690/706 solar electrical code, conduit bending, and rooftop fall protection (OSHA 10/30)', 'Valid driver’s license; no 4-year college degree required (STARs & trade electricians welcome)'],
+    languageRequirement: 'Fluent English',
+    applyUrl: 'https://careers.sunrun.com/',
+    source: 'Solar & Clean Energy Direct ATS',
+    tags: ['Solar Energy & Photovoltaic Systems', 'Solar Technician', 'Solar PV', 'NABCEP', 'Powerwall Battery', 'Recommended', 'Full-time']
+  },
+  {
+    id: 'solar_tech_2',
+    countryCode: 'US',
+    countryName: 'United States',
+    professionEnclave: 'energy_utilities_environment',
+    professionId: 'solar_pv_microgrid_technician',
+    domainCategory: 'Solar Energy & Photovoltaic Systems',
+    title: 'Utility-Scale Solar O&M Field Service Technician & Inverter Commissioning Lead',
+    company: 'NextEra Energy Solar & SOLV Energy Utility Operations',
+    companyLogo: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=100&auto=format&fit=crop&q=80',
+    location: 'Austin, TX / Las Vegas, NV / Southeast Hub (On-site)',
+    hub: 'Austin, TX',
+    workplaceType: 'On-site',
+    employmentType: 'Full-time',
+    postedTime: '2 hours ago',
+    applicantsCount: 9,
+    salaryRange: '$94,000 - $142,000 / yr + Overtime & Field Per Diem',
+    easyApply: true,
+    requiredProductExperience: ['1500V DC Utility Solar Arrays, Central Inverters & NEXTracker', 'Fluke Solmetric PVA-1500 IV-Curve Tracer & NFPA 70E Arc-Flash'],
+    description: 'Perform preventive and corrective O&M on 250MW+ 1500V DC utility-scale solar farms. Troubleshoot central inverters (SMA / Sungrow / Power Electronics), calibrate single-axis solar trackers (NEXTracker / Array Technologies), and diagnose ground faults.',
+    requirements: ['2+ years utility or commercial solar PV maintenance, inverter commissioning, or industrial electrical troubleshooting', 'NFPA 70E arc-flash qualification and familiarity with SCADA solar telemetry'],
+    languageRequirement: 'Fluent English',
+    applyUrl: 'https://jobs.nexteraenergy.com/',
+    source: 'NextEra & SOLV Energy ATS',
+    tags: ['Solar Energy & Photovoltaic Systems', 'Solar Technician', 'Solar O&M', 'Inverter Tech', 'Renewable Energy', 'Recommended']
+  },
+  {
     id: 'energy_1',
     countryCode: 'US',
     countryName: 'United States',
@@ -2745,8 +2980,60 @@ export const GLOBAL_JOBS_CATALOG: GlobalJobItem[] = [
   },
 
   // =========================================================================
-  // 20. TELECOM, ELECTRONICS REPAIR & FRONTIER TECH (telecom_digital_infrastructure)
+  // 20. TELECOM, DIRECTV / SATELLITE, BROADBAND, AV & FRONTIER TECH (telecom_digital_infrastructure)
   // =========================================================================
+  {
+    id: 'directv_sat_1',
+    countryCode: 'US',
+    countryName: 'United States',
+    professionEnclave: 'telecom_digital_infrastructure',
+    professionId: 'directv_satellite_broadband_av_tech',
+    domainCategory: 'DirecTV, Satellite Dish, Cable & AV Systems',
+    title: 'DirecTV Commercial & Residential Satellite Dish Technician, SWM Headend & Pro-AV Installer',
+    company: 'DIRECTV Field Operations, Mastec Advanced Technologies & Dish Commercial',
+    companyLogo: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=100&auto=format&fit=crop&q=80',
+    location: 'Austin, TX / Dallas / Atlanta / Nationwide Field Fleet (On-site)',
+    hub: 'Austin, TX',
+    workplaceType: 'On-site',
+    employmentType: 'Full-time',
+    postedTime: '1 hour ago',
+    applicantsCount: 15,
+    salaryRange: '$76,000 - $118,000 / yr + Take-Home Service Van & Per-Job Commission',
+    easyApply: true,
+    requiredProductExperience: ['DirecTV SWM-30 Multiswitch, Commercial SMATV/MATV & SBCA Satellite Certified', '99°/101°/103° Ku/Ka-Band Dish Alignment, AIM Meter, RG-6/RG-11 Coax & Pro-AV'],
+    description: 'Install, align, and troubleshoot residential and commercial DirecTV / Dish Network satellite TV systems, sports bar / hotel / stadium SMATV headend racks, SWM-30 multiswitches, Genie 2 wireless servers, and commercial 4K HDMI-over-IP audio/video matrix walls.',
+    requirements: ['SBCA Satellite Certification or 1+ year hands-on experience as a DirecTV, Dish Network, cable TV, or commercial AV field technician', 'Proficiency with DirecTV AIM / Trilithic / VeEX signal meters, RG-6/RG-11 compression terminations, wall fishing, and ladder safety', 'Valid driver’s license; take-home company van, fuel card, and specialized meter kit provided'],
+    languageRequirement: 'Fluent English (Bilingual Spanish a plus)',
+    applyUrl: 'https://www.directv.com/careers/',
+    source: 'DIRECTV & Mastec Field ATS',
+    tags: ['DirecTV, Satellite Dish, Cable & AV Systems', 'DirecTV Technician', 'Satellite Dish Installer', 'Commercial AV', 'Cable & Coax', 'Recommended', 'Full-time']
+  },
+  {
+    id: 'directv_sat_2',
+    countryCode: 'US',
+    countryName: 'United States',
+    professionEnclave: 'telecom_digital_infrastructure',
+    professionId: 'directv_satellite_broadband_av_tech',
+    domainCategory: 'DirecTV, Satellite Dish, Cable & AV Systems',
+    title: 'Starlink / VSAT Satellite Internet Installer, DOCSIS Cable Broadband & Smart Home CCTV Tech',
+    company: 'Starlink Commercial Integrators, Comcast Xfinity / Charter Spectrum & CEDIA Pro-AV',
+    companyLogo: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=100&auto=format&fit=crop&q=80',
+    location: 'New York, NY / Washington, DC / Seattle, WA (On-site)',
+    hub: 'New York, NY',
+    workplaceType: 'On-site',
+    employmentType: 'Full-time',
+    postedTime: '2 hours ago',
+    applicantsCount: 11,
+    salaryRange: '$82,000 - $126,000 / yr + Overtime & Vehicle Allowance',
+    easyApply: true,
+    requiredProductExperience: ['Starlink Enterprise / VSAT Terminal & DOCSIS 3.1/4.0 Coax/Fiber ONT', 'CEDIA Home Theater, Control4/Crestron Automation & PoE IP CCTV Security'],
+    description: 'Deploy enterprise Starlink High-Performance & maritime/rural VSAT satellite dishes, troubleshoot DOCSIS 3.1/4.0 HFC coaxial and GPON fiber-to-the-home (FTTH) broadband drops, and integrate Dolby Atmos home theaters, commercial sound systems, and PoE IP security camera networks.',
+    requirements: ['NCTI Broadband, SBCA Satellite, or CEDIA Cabling/AV certification (or equivalent field installation experience)', 'Mastery of dBmV/MER/BER spectrum analyzers, Cat6A/Coax/Fiber termination, and multi-room AV distribution'],
+    languageRequirement: 'Fluent English',
+    applyUrl: 'https://jobs.comcast.com/',
+    source: 'Satellite, Broadband & Pro-AV Portal',
+    tags: ['DirecTV, Satellite Dish, Cable & AV Systems', 'Starlink & VSAT', 'Cable Broadband Tech', 'Home Theater & CCTV', 'DirecTV Related', 'Recommended']
+  },
   {
     id: 'telecom_1',
     countryCode: 'US',
@@ -3307,19 +3594,109 @@ export const initialCandidatesData: CandidateProfile[] = [
     professionEnclave: 'automotive_mechanics'
   },
   {
+    id: 'cand_judge_eleanor',
+    name: 'Hon. Justice Eleanor Vance, JD',
+    headline: 'Presiding Judge (Ret.), JAMS Neutral Arbitrator & Appellate Justice | 22 Yrs Bench & Trial Experience',
+    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=80',
+    location: 'Washington, DC / New York, NY',
+    clearance: 'Federal Judicial Chambers & Active Multi-State Bar',
+    experienceYears: 22,
+    capabilities: ['Bench & Jury Trial Presiding', 'Federal Rules of Evidence (FRE)', 'Appellate Opinion Writing', 'JAMS / AAA Arbitration'],
+    verifiedProducts: ['Federal Judicial Center Benchbook ✓', 'Westlaw Precision & Lexis+ Chambers ✓'],
+    certifications: ['Juris Doctor (JD)', 'JAMS Panel Neutral', 'American Bar Association Judicial Fellow'],
+    matchScore: 99,
+    currentStatus: 'Ready to Start',
+    professionEnclave: 'law_gov_defense'
+  },
+  {
+    id: 'cand_lawyer_kwame',
+    name: 'Kwame Boateng, JD, Esq.',
+    headline: 'Senior Trial Lawyer & Appellate Litigator | First-Chair Commercial, Constitutional & Criminal Defense',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+    location: 'New York, NY / Boston, MA / Washington, DC',
+    clearance: 'Supreme Court Bar, NY & DC Bar Admission',
+    experienceYears: 11,
+    capabilities: ['First-Chair Jury Trials', 'Appellate Oral Argument', 'Commercial & Civil Rights Litigation', 'White-Collar Defense'],
+    verifiedProducts: ['PACER / CM-ECF Federal E-Filing ✓', 'Westlaw KeyCite & Relativity E-Discovery ✓'],
+    certifications: ['Juris Doctor (JD)', 'U.S. Supreme Court Bar', 'Fellow — American College of Trial Lawyers'],
+    matchScore: 99,
+    currentStatus: 'Open to Offers',
+    professionEnclave: 'law_gov_defense'
+  },
+  {
     id: 'cand_5',
     name: 'Alexander Novak, JD, CISSP',
-    headline: 'Principal DoD RMF / CMMC 2.0 Assessor & Federal Acquisition Counsel | TS/SCI',
+    headline: 'General Counsel, Federal Acquisition Attorney & CMMC 2.0 Lead | TS/SCI',
     avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&auto=format&fit=crop&q=80',
     location: 'Washington, DC / Northern VA',
-    clearance: 'Active Top Secret / SCI',
+    clearance: 'Active Top Secret / SCI & Bar Admission',
     experienceYears: 14,
-    capabilities: ['NIST 800-53 Rev 5', 'FAR/DFARS Law', 'CMMC Level 3', 'FedRAMP High'],
+    capabilities: ['Corporate M&A & Governance', 'FAR/DFARS Law', 'CMMC Level 3', 'FedRAMP High'],
     verifiedProducts: ['eMASS & Xacta 360 Verified ✓', 'FedRAMP 3PAO Suite ✓'],
-    certifications: ['Active Bar Admission', 'CISSP-ISSAP', 'CCA (Certified CMMC Assessor)'],
+    certifications: ['Active Bar Admission (JD)', 'CISSP-ISSAP', 'CCA (Certified CMMC Assessor)'],
     matchScore: 98,
     currentStatus: 'Ready to Start',
     professionEnclave: 'law_gov_defense'
+  },
+  {
+    id: 'cand_herbal_seraphina',
+    name: 'Dr. Seraphina Mensah, ND, RH (AHG)',
+    headline: 'Clinical Herbalist, Naturopathic Botanical Formulator & Pharmacognosy Director | cGMP & Herb-Drug Safety',
+    avatar: 'https://images.unsplash.com/photo-1594824813571-638f02614d3f?w=200&auto=format&fit=crop&q=80',
+    location: 'Boston, MA / Austin, TX / Accra',
+    clearance: 'Registered Herbalist (AHG) & Naturopathic Medical License',
+    experienceYears: 10,
+    capabilities: ['Clinical Phytotherapy', 'Pharmacognosy & HPTLC Assay', 'Herb-Drug Interaction Screening', 'cGMP Botanical Extraction'],
+    verifiedProducts: ['WHO / USP Botanical Monographs ✓', 'CYP450 Herb-Drug Safety Matrix ✓', 'FDA 21 CFR 111 cGMP Vault ✓'],
+    certifications: ['RH (AHG) Registered Herbalist', 'Doctor of Naturopathic Medicine (ND)', 'MSc Pharmacognosy'],
+    matchScore: 99,
+    currentStatus: 'Ready to Start',
+    professionEnclave: 'healthcare_medicine'
+  },
+  {
+    id: 'cand_dentist_marcus',
+    name: 'Dr. Marcus Thorne, DDS, MS',
+    headline: 'Doctor of Dental Surgery (DDS), Prosthodontist & CBCT Guided Implant Surgeon | CEREC CAD/CAM',
+    avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=200&auto=format&fit=crop&q=80',
+    location: 'Austin, TX / New York, NY',
+    clearance: 'Active Multi-State DDS Dental License & IV Sedation Permit',
+    experienceYears: 11,
+    capabilities: ['CBCT 3D Guided Dental Implants', 'CEREC Same-Day Zirconia', 'Orthodontics & Invisalign', 'Rotary Endodontics'],
+    verifiedProducts: ['Planmeca / Carestream 3D CBCT ✓', '3Shape Trios & CEREC CAD/CAM ✓', 'Dentrix Enterprise ✓'],
+    certifications: ['Doctor of Dental Surgery (DDS)', 'ICOI Fellow (Implantology)', 'ADA Board Member'],
+    matchScore: 99,
+    currentStatus: 'Open to Offers',
+    professionEnclave: 'healthcare_medicine'
+  },
+  {
+    id: 'cand_solar_diego',
+    name: 'Diego Alvarez, NABCEP PVIP',
+    headline: 'Lead NABCEP Solar PV Technician, Microgrid Inverter Specialist & Tesla Powerwall 3 Master Installer',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+    location: 'Austin, TX / Phoenix, AZ / San Francisco, CA',
+    clearance: 'NABCEP PVIP, OSHA 30 & NFPA 70E Arc-Flash Certified',
+    experienceYears: 8,
+    capabilities: ['NABCEP Rooftop & Utility Solar PV', 'Enphase IQ8 / SolarEdge / SMA Inverters', 'Tesla Powerwall 3 BESS', 'NEC Article 690 / 706'],
+    verifiedProducts: ['Fluke Solmetric PVA-1500 IV-Curve ✓', 'Enphase Installer Portal & SolarEdge SetApp ✓', 'Tesla Certified Installer ✓'],
+    certifications: ['NABCEP PV Installation Professional (PVIP)', 'OSHA 30 Construction', 'NFPA 70E High-Voltage'],
+    matchScore: 99,
+    currentStatus: 'Ready to Start',
+    professionEnclave: 'energy_utilities_environment'
+  },
+  {
+    id: 'cand_directv_darnell',
+    name: 'Darnell Jackson, SBCA, CEDIA',
+    headline: 'Master DirecTV & Commercial Satellite Dish Technician | Starlink/VSAT, DOCSIS Broadband & Pro-AV Integrator',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80',
+    location: 'Atlanta, GA / Dallas, TX / Washington, DC',
+    clearance: 'SBCA Satellite, DirecTV Commercial SMATV & CEDIA Certified',
+    experienceYears: 9,
+    capabilities: ['DirecTV SWM-30 & Commercial SMATV Headends', '99°/101°/103° Ku/Ka Dish Alignment', 'Starlink & VSAT Commissioning', 'DOCSIS 3.1/4.0 Coax & Pro-AV Matrix'],
+    verifiedProducts: ['DirecTV AIM 2.0 Satellite Meter ✓', 'VeEX DOCSIS 3.1/4.0 & OTDR Analyzer ✓', 'Crestron / Control4 Commercial AV ✓'],
+    certifications: ['SBCA Certified Satellite Installer', 'DirecTV Commercial DRE / SMATV Master', 'CEDIA ESC-T & NCTI Master Tech'],
+    matchScore: 99,
+    currentStatus: 'Ready to Start',
+    professionEnclave: 'telecom_digital_infrastructure'
   },
   {
     id: 'cand_6',
@@ -3400,9 +3777,9 @@ export function getJobFlywheelRecommendation(job: GlobalJobItem): {
       }
     case 'healthcare_medicine':
       return {
-        primarySkill: 'Board Certification (ABMS) / AACN CCRN / ATLS',
-        secondarySkill: 'Epic EHR Clinical Workflows & Trauma Protocols',
-        badgeText: '✓ Verified Clinical & Licensure Fit'
+        primarySkill: 'MD/DO, PharmD, DDS Dentist, RH-AHG Herbalist & RN/PCT',
+        secondarySkill: 'Epic EHR, CBCT Dental, Phytotherapy & Clinical Protocols',
+        badgeText: '✓ Verified Clinical, Dental & Herbal Fit'
       }
     case 'education_workforce':
       return {
@@ -3430,9 +3807,9 @@ export function getJobFlywheelRecommendation(job: GlobalJobItem): {
       }
     case 'law_gov_defense':
       return {
-        primarySkill: 'NIST SP 800-53 Rev 5 (RMF) & CMMC 2.0 Level 3',
-        secondarySkill: 'FAR/DFARS Federal Procurement & Active Clearance',
-        badgeText: '✓ Cleared Defense & Legal Fit'
+        primarySkill: 'Active Bar Admission (JD / Esq.) & Judicial Chambers',
+        secondarySkill: 'First-Chair Trial Litigation, FRE/FRCP & Westlaw/PACER',
+        badgeText: '✓ Verified Bar, Judicial & Legal Fit'
       }
     case 'finance_accounting':
       return {
@@ -3448,9 +3825,9 @@ export function getJobFlywheelRecommendation(job: GlobalJobItem): {
       }
     case 'energy_utilities_environment':
       return {
-        primarySkill: 'GWO Wind / NABCEP Solar & NERC Grid Operator',
-        secondarySkill: 'MSHA Mining / Grade IV Water & 40-Hr HAZWOPER',
-        badgeText: '✓ Verified Energy, Mining & Utility Fit'
+        primarySkill: 'NABCEP Solar PV Technician, Enphase/SolarEdge & Powerwall',
+        secondarySkill: 'NEC Article 690, GWO Wind, NERC Grid & MSHA/Water Ops',
+        badgeText: '✓ Verified Solar PV, Energy & Utility Fit'
       }
     case 'science_laboratory_research':
       return {
@@ -3466,9 +3843,9 @@ export function getJobFlywheelRecommendation(job: GlobalJobItem): {
       }
     case 'telecom_digital_infrastructure':
       return {
-        primarySkill: 'FOA CFOT Fiber Splicing & NWSA 5G Tower Climbing',
-        secondarySkill: 'IPC-7711 PCB Micro-Soldering & 3D LiDAR Digital Twins',
-        badgeText: '✓ Verified Telecom, Repair & Frontier Fit'
+        primarySkill: 'DirecTV SWM / Satellite Dish, Starlink & DOCSIS Broadband',
+        secondarySkill: 'Commercial Pro-AV, FOA Fiber Splicing & 5G Tower Tech',
+        badgeText: '✓ Verified DirecTV, Satellite, Fiber & AV Fit'
       }
     default:
       return {
@@ -3482,7 +3859,7 @@ export function getJobFlywheelRecommendation(job: GlobalJobItem): {
 export function getEnclaveSearchPlaceholder(enclaveId: string, countryName: string): string {
   switch (enclaveId) {
     case 'all':
-      return `Search all 20 industries & 300+ professions in ${countryName} (e.g. Pharmacist, Doctor MD/DO, Nurse RN, Nursing Technician, Carpenter, CNC Machinist, CPA)...`
+      return `Search all 20 industries in ${countryName} (e.g. Lawyer, Judge, Herbal Medicine, Dentist DDS, Solar Technician, DirecTV / Satellite Tech, Pharmacist, Doctor, Nurse)...`
     case 'trades_construction':
       return `Search construction & MEP in ${countryName} (e.g. Timber Carpenter, Bricklayer, HVAC/R, Elevator Tech, BIM Quantity Surveyor)...`
     case 'automotive_mechanics':
@@ -3498,7 +3875,7 @@ export function getEnclaveSearchPlaceholder(enclaveId: string, countryName: stri
     case 'creative_media_arts':
       return `Search creative & practical design in ${countryName} (e.g. Upholsterer, Sign Fabricator, Set Builder, Filmmaker, Florist)...`
     case 'healthcare_medicine':
-      return `Search medicine, pharmacy & nursing in ${countryName} (e.g. Pharmacist PharmD, Doctor MD/DO, Registered Nurse RN, Nursing Technician PCT/CNA, Medical Assistant, Hospital Admin)...`
+      return `Search medicine, herbal, dental, pharmacy & nursing in ${countryName} (e.g. Herbal Medicine RH-AHG/ND, Dentist DDS/RDH, Pharmacist PharmD, Doctor MD, Nurse RN, Nursing Tech)...`
     case 'education_workforce':
       return `Search education, accessibility & STARs in ${countryName} (e.g. Vocational Instructor, Braille Transcriber, Assistive Tech, Apprentice)...`
     case 'community_civic_security':
@@ -3508,19 +3885,19 @@ export function getEnclaveSearchPlaceholder(enclaveId: string, countryName: stri
     case 'tech_software':
       return `Search software, AI workflows & no-code in ${countryName} (e.g. Next.js Engineer, AI Workflow Tech, Technical Writer, No-Code)...`
     case 'law_gov_defense':
-      return `Search legal, paralegal & compliance in ${countryName} (e.g. Paralegal, Court Reporter, Notary, Contract Admin, Defense Counsel)...`
+      return `Search lawyers, judges, courts & legal in ${countryName} (e.g. Trial Lawyer JD/Esq., Presiding Judge, Magistrate, Criminal Defense Attorney, Patent Lawyer, Paralegal)...`
     case 'finance_accounting':
       return `Search finance, tax & claims in ${countryName} (e.g. Bookkeeper, Payroll CPP, Catastrophe Claims Adjuster, Loan Officer, CPA)...`
     case 'manufacturing_industrial':
       return `Search manufacturing & machining in ${countryName} (e.g. 5-Axis CNC Machinist, Tool & Die, FANUC Robotics, NDT Inspector, Molding)...`
     case 'energy_utilities_environment':
-      return `Search energy, mining & water in ${countryName} (e.g. Wind Turbine Tech, Solar PV, Substation Operator, Miner, Water Plant)...`
+      return `Search solar, energy, mining & water in ${countryName} (e.g. NABCEP Solar PV Technician, Solar Inverter/Powerwall Tech, Wind Turbine, Substation, Miner)...`
     case 'science_laboratory_research':
       return `Search science, lab & biotech in ${countryName} (e.g. cGMP Bioprocess Tech, HPLC Analyst, Materials Tester, Forensic Lab, Archaeologist)...`
     case 'aviation_aerospace_maritime':
       return `Search aviation, space & maritime in ${countryName} (e.g. FAA A&P Mechanic, Avionics, Spacecraft Tech, Commercial Diver, Marine Engineer)...`
     case 'telecom_digital_infrastructure':
-      return `Search telecom, micro-repair & frontier tech in ${countryName} (e.g. Fiber Splicer, Tower Climber, PCB Micro-Soldering, Watchmaker, Digital Twin)...`
+      return `Search DirecTV, satellite, cable, AV & fiber in ${countryName} (e.g. DirecTV Satellite Dish Tech, Starlink/VSAT, Cable Broadband DOCSIS, Pro-AV, Fiber Splicer)...`
     default:
       return `Search cybersecurity & OT security roles in ${countryName} (e.g. OT/SCADA Cyber Tech, Red Team, Cloud Security)...`
   }
@@ -4148,8 +4525,34 @@ export function getLocalizedJobsForCountryAndEnclave(
   const orderedPool =
     !enclaveId || enclaveId === 'all'
       ? [
-          ...combinedPool.filter(j => j.professionEnclave === 'healthcare_medicine'),
-          ...combinedPool.filter(j => j.professionEnclave !== 'healthcare_medicine')
+          ...combinedPool.filter(
+            j =>
+              j.domainCategory === 'Herbal, Botanical & Integrative Medicine' ||
+              j.domainCategory === 'Dentistry & Oral Surgery' ||
+              j.domainCategory === 'Solar Energy & Photovoltaic Systems' ||
+              j.domainCategory === 'DirecTV, Satellite Dish, Cable & AV Systems' ||
+              j.domainCategory === 'Lawyers & Legal Counsel' ||
+              j.domainCategory === 'Judges, Judiciary & Magistrates'
+          ),
+          ...combinedPool.filter(
+            j =>
+              j.professionEnclave === 'healthcare_medicine' &&
+              j.domainCategory !== 'Herbal, Botanical & Integrative Medicine' &&
+              j.domainCategory !== 'Dentistry & Oral Surgery'
+          ),
+          ...combinedPool.filter(
+            j =>
+              j.professionEnclave === 'law_gov_defense' &&
+              j.domainCategory !== 'Lawyers & Legal Counsel' &&
+              j.domainCategory !== 'Judges, Judiciary & Magistrates'
+          ),
+          ...combinedPool.filter(
+            j =>
+              j.professionEnclave !== 'healthcare_medicine' &&
+              j.professionEnclave !== 'law_gov_defense' &&
+              j.domainCategory !== 'Solar Energy & Photovoltaic Systems' &&
+              j.domainCategory !== 'DirecTV, Satellite Dish, Cable & AV Systems'
+          )
         ]
       : combinedPool
 

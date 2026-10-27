@@ -1251,15 +1251,38 @@ export const PROFESSION_ENCLAVES: ProfessionEnclave[] = [
         ]
       },
       {
-        id: "dentist",
-        title: "General & Cosmetic Dentist (DDS / DMD)",
+        id: "herbal_medicine_practitioner",
+        title: "Clinical Herbalist, Phytotherapy & Botanical Medicine Practitioner (RH-AHG / ND)",
         enclaveId: "healthcare_medicine",
-        categoryName: "Dentistry & Oral Health",
-        defaultHeadline: "Doctor of Dental Surgery (DDS) · Restorative Dentistry, Digital CBCT Diagnostics & Implantology",
-        typicalSkills: ["Digital CBCT Scans", "Crown & Bridge", "Composite Restorations", "Endodontics", "Local Anesthesia", "Periodontal Care"],
+        categoryName: "Herbal, Botanical & Integrative Medicine",
+        defaultHeadline: "Registered Clinical Herbalist (RH-AHG) & Naturopathic Botanical Specialist · Phytotherapy Formulation, Pharmacognosy, cGMP Herbal Extraction & Herb-Drug Safety",
+        typicalSkills: ["Clinical Phytotherapy & Herbal Compounding", "Pharmacognosy & Botanical Extraction", "WHO / cGMP Herbal Standardization", "Herb-Drug Interaction Screening", "Tinctures, Decoctions & Phyto-Formulation", "Naturopathic & Traditional Medicine"],
         tools: [
-          { name: "Dental CBCT & Radiograph Viewer", icon: "🦷", description: "3D panoramic radiograph analysis, implant angulation and caries mapping", badge: "DICOM Live" },
-          { name: "ADA Dental Procedure Code (CDT) Vault", icon: "📋", description: "CDT billing codes, insurance pre-authorizations and periodontal chart logs", badge: "ADA Code" }
+          { name: "Herbal Pharmacopoeia & Herb-Drug Interaction Checker", icon: "🌿", description: "Clinical botanical monographs, cytochrome P450 herb-drug interaction matrix and phyto-dosage calculator", badge: "RH-AHG / WHO" },
+          { name: "cGMP Botanical Extraction & Phytochemical Assay Log", icon: "🧪", description: "Solvent ratio extraction logs, HPTLC/HPLC alkaloid standardization and herbal batch COA vault", badge: "cGMP Verified" }
+        ]
+      },
+      {
+        id: "dentist",
+        title: "Dentist, Orthodontist & Oral-Maxillofacial Surgeon (DDS / DMD)",
+        enclaveId: "healthcare_medicine",
+        categoryName: "Dentistry & Oral Surgery",
+        defaultHeadline: "Doctor of Dental Surgery (DDS / DMD) · Restorative & Cosmetic Dentistry, Digital CBCT Diagnostics, Orthodontics & Oral Implant Surgery",
+        typicalSkills: ["Digital CBCT 3D Scans", "Dental Implants & Oral Surgery", "Orthodontics & Invisalign", "Crown, Bridge & Veneers", "Endodontics (Root Canal)", "Periodontal Surgery & Local Anesthesia"],
+        tools: [
+          { name: "Dental CBCT 3D Radiograph & Implant Planner", icon: "🦷", description: "3D panoramic radiograph analysis, mandibular nerve tracing, implant angulation and caries mapping", badge: "DICOM Live" },
+          { name: "ADA Dental Procedure Code (CDT) & Periodontal Vault", icon: "📋", description: "CDT billing codes, orthodontic cephalometric tracing and 6-point periodontal chart logs", badge: "ADA / DDS" }
+        ]
+      },
+      {
+        id: "dental_hygienist_assistant",
+        title: "Registered Dental Hygienist (RDH), EFDA & Certified Dental Assistant (CDA)",
+        enclaveId: "healthcare_medicine",
+        categoryName: "Dentistry & Oral Surgery",
+        defaultHeadline: "Registered Dental Hygienist (RDH, BS) & Certified Dental Assistant (CDA) · Ultrasonic Periodontal Scaling, Digital Intraoral X-Rays & Chairside Surgical Assisting",
+        typicalSkills: ["Ultrasonic Scaling & Root Planing", "Digital Intraoral Radiography (DANB RHS)", "Periodontal Probing & Charting", "Four-Handed Chairside Dentistry", "Autoclave Sterilization & OSHA Infection Control", "Local Block Anesthesia & Nitrous Oxide Monitoring"],
+        tools: [
+          { name: "Periodontal Probing & Ultrasonic Prophylaxis Console", icon: "🪥", description: "Six-point pocket depth charting, gingival bleeding indices and DANB radiation safety logs", badge: "RDH / DANB" }
         ]
       },
       {
@@ -1703,28 +1726,107 @@ export const PROFESSION_ENCLAVES: ProfessionEnclave[] = [
     ]
   },
 
-  // ─── 13. LAW, PARALEGAL, COMPLIANCE & NATIONAL DEFENSE ──────────
+  // ─── 13. LAWYERS, JUDGES, COURTS, PARALEGAL & NATIONAL DEFENSE ──
   {
     id: "law_gov_defense",
-    name: "Law, Paralegal, Regulatory Compliance & Defense",
-    shortName: "Law, Paralegal & Compliance",
-    icon: "🏛️",
-    tagline: "Paralegal dockets, court reporting, notary seals, contract admin, e-discovery & NIST cATO defense",
-    description: "Dedicated workspace for paralegals, legal secretaries, court reporters, notaries, contract administrators, licensing coordinators, court interpreters, and defense counsel.",
-    themeColor: "from-slate-700 via-slate-800 to-zinc-950",
-    accentBorder: "border-slate-500",
-    badgeBg: "bg-slate-50 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800",
-    badgeText: "text-slate-800 dark:text-slate-300",
-    securityClearanceTier: "Legal & Regulatory Compliance Credential (Level 4)",
-    feedTags: ["#Paralegal", "#CourtReporter", "#Notary", "#ContractAdmin", "#EDiscovery", "#Compliance", "#Defense"],
+    name: "Lawyers, Judges, Courts, Paralegal & Defense",
+    shortName: "Lawyers, Judges & Legal",
+    icon: "⚖️",
+    tagline: "Trial lawyers, federal & state judges, judicial chambers, litigation dockets, appellate briefs, paralegals & defense",
+    description: "Dedicated workspace for trial lawyers, corporate & IP attorneys, criminal defense lawyers, prosecutors, federal & state judges, administrative law judges (ALJs), magistrates, arbitrators, judicial law clerks, paralegals, court reporters, notaries, and defense counsel.",
+    themeColor: "from-slate-700 via-indigo-900 to-zinc-950",
+    accentBorder: "border-indigo-500",
+    badgeBg: "bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800",
+    badgeText: "text-indigo-800 dark:text-indigo-300",
+    securityClearanceTier: "Bar Admission (JD / Esq.) & Judicial Chambers Credential (Level 4)",
+    feedTags: ["#Lawyer", "#Judge", "#Judiciary", "#TrialAttorney", "#Litigation", "#AppellateLaw", "#CriminalDefense", "#Paralegal", "#CourtReporter", "#Arbitration", "#Compliance"],
     professions: [
       {
-        id: "corporate_attorney",
-        title: "General Counsel & Regulatory Compliance Attorney",
+        id: "trial_litigation_lawyer",
+        title: "Trial Lawyer & Civil/Commercial Litigation Attorney (JD / Esq.)",
         enclaveId: "law_gov_defense",
-        categoryName: "Law, Gov & Defense",
-        defaultHeadline: "General Counsel · Federal Contracting, CMMC Cybersecurity Defense & M&A Governance",
-        typicalSkills: ["Federal Acquisition Regs (FAR)", "ITAR Compliance", "CMMC Level 2", "Export Controls", "Corporate M&A"],
+        categoryName: "Lawyers & Legal Counsel",
+        defaultHeadline: "Lead Trial Lawyer & Litigation Partner (JD / Esq.) · Complex Commercial Trials, Jury Voir Dire, Appellate Briefs & Class Actions",
+        typicalSkills: ["First-Chair Jury Trials", "Civil Procedure (FRCP)", "Appellate Oral Argument", "Westlaw / LexisNexis Research", "Depositions & Cross-Examination", "Summary Judgment Briefs"],
+        tools: [
+          { name: "PACER / CM-ECF Federal Court Docket & Brief Vault", icon: "⚖️", description: "Live federal/state case docket alerts, Bluebook citation checker & trial exhibit binder", badge: "Bar Verified" },
+          { name: "Westlaw Precision & Lexis+ Case Law Shepardizer", icon: "📚", description: "KeyCite/Shepard's precedent validation, judicial motion analytics & jury verdict database", badge: "Litigation" }
+        ]
+      },
+      {
+        id: "judge_judicial_magistrate",
+        title: "Federal & State Court Judge, Magistrate & Appellate Justice",
+        enclaveId: "law_gov_defense",
+        categoryName: "Judges, Judiciary & Magistrates",
+        defaultHeadline: "Honorable Presiding Judge & Judicial Magistrate · Civil & Criminal Bench Trials, Constitutional Rulings, Evidentiary Hearings & Sentencing",
+        typicalSkills: ["Judicial Opinion Drafting", "Federal Rules of Evidence (FRE)", "Bench Trials & Injunctions", "Constitutional Interpretation", "Case Management Orders", "Sentencing Guidelines"],
+        tools: [
+          { name: "Judicial Chambers Benchbook & Evidentiary Ruling Console", icon: "👩‍⚖️", description: "FRE 403/702 Daubert admissibility checklists, bench memorandum templates & docket calendar", badge: "Judiciary" },
+          { name: "Sentencing Guidelines & Opinion Citation Verifier", icon: "🏛️", description: "U.S. Sentencing Commission guideline matrix, statutory construction & chambers clerk workflow", badge: "Chambers" }
+        ]
+      },
+      {
+        id: "criminal_defense_prosecutor_lawyer",
+        title: "Criminal Defense Lawyer, Prosecutor (ADA / AUSA) & Public Defender",
+        enclaveId: "law_gov_defense",
+        categoryName: "Lawyers & Legal Counsel",
+        defaultHeadline: "Trial Attorney · White-Collar & Felony Criminal Defense, Constitutional 4th/5th/6th Amendment Litigation & Brady Discovery",
+        typicalSkills: ["Felony Jury Trials", "Brady / Giglio Discovery", "4th Amendment Suppression Motions", "Grand Jury Practice", "Forensic Evidence Cross-Exam", "Plea & Sentencing Advocacy"],
+        tools: [
+          { name: "Criminal Discovery, Body-Cam & Suppression Motion Desk", icon: "🛡️", description: "Brady disclosure tracker, evidentiary chain-of-custody audit & bail/sentencing calculator", badge: "Trial Bar" }
+        ]
+      },
+      {
+        id: "administrative_law_judge_arbitrator",
+        title: "Administrative Law Judge (ALJ), Arbitrator & Certified Mediator",
+        enclaveId: "law_gov_defense",
+        categoryName: "Judges, Judiciary & Magistrates",
+        defaultHeadline: "Administrative Law Judge (ALJ) & JAMS/AAA Neutral Arbitrator · Regulatory Adjudication, Commercial Arbitration Awards & Settlement Mediation",
+        typicalSkills: ["Administrative Procedure Act (APA)", "AAA / JAMS / ICC Arbitration", "Evidentiary Administrative Hearings", "Mediation & ADR Settlement", "Final Agency Decisions"],
+        tools: [
+          { name: "APA Adjudication & Arbitration Award Drafting Suite", icon: "📜", description: "Administrative record indexing, evidentiary weight findings & binding arbitration award builder", badge: "ALJ / JAMS" }
+        ]
+      },
+      {
+        id: "family_immigration_humanrights_lawyer",
+        title: "Immigration, Family Law, Civil Rights & Constitutional Lawyer (JD)",
+        enclaveId: "law_gov_defense",
+        categoryName: "Lawyers & Legal Counsel",
+        defaultHeadline: "Managing Attorney · Employment/Family Immigration (EB-1/O-1/H-1B), Domestic Relations, Civil Rights (§ 1983) & Asylum Advocacy",
+        typicalSkills: ["USCIS / EOIR Immigration Filings", "Family Law & Child Custody", "42 U.S.C. § 1983 Civil Rights", "Equitable Asset Division", "Appellate Habeas Corpus"],
+        tools: [
+          { name: "USCIS Visa Priority & Family Support Guideline Calculator", icon: "🌎", description: "Visa Bulletin priority tracker, I-140/I-485 petition assembly & state domestic support worksheets", badge: "AILA / Family" }
+        ]
+      },
+      {
+        id: "ip_patent_tax_estate_lawyer",
+        title: "Intellectual Property (USPTO Patent), Tax, Real Estate & Estate Lawyer",
+        enclaveId: "law_gov_defense",
+        categoryName: "Lawyers & Legal Counsel",
+        defaultHeadline: "USPTO Registered Patent Attorney & Tax/Trusts Counsel (JD / LL.M.) · Patent Prosecution, PTAB IPRs, Commercial Real Estate & Estate Planning",
+        typicalSkills: ["USPTO Patent Prosecution", "Trademark & Copyright Litigation", "IRS Tax Controversy (LL.M.)", "Fiduciary Trusts & Estates", "Commercial Real Estate Closings"],
+        tools: [
+          { name: "USPTO Patent Claim Chart & Fiduciary Estate Modeler", icon: "💡", description: "Prior art claim construction matrix, PTAB docket tracker & generation-skipping trust calculator", badge: "USPTO Bar" }
+        ]
+      },
+      {
+        id: "judicial_law_clerk_court_counsel",
+        title: "Judicial Law Clerk, Appellate Chambers Counsel & Clerk of Court",
+        enclaveId: "law_gov_defense",
+        categoryName: "Judges, Judiciary & Magistrates",
+        defaultHeadline: "Federal Judicial Law Clerk & Appellate Staff Attorney · Bench Memoranda, Certiorari Petitions, Opinion Drafting & Court Administration",
+        typicalSkills: ["Bench Memoranda Drafting", "Bluebook Law Review Editing", "Statutory & Constitutional Research", "Oral Argument Prep", "Court Docket Administration"],
+        tools: [
+          { name: "Chambers Bench Memo & Bluebook Citation Engine", icon: "✒️", description: "Record cite verification, circuit split tracker & chambers opinion workflow", badge: "Chambers Clerk" }
+        ]
+      },
+      {
+        id: "corporate_attorney",
+        title: "General Counsel, M&A & Regulatory Compliance Lawyer (JD)",
+        enclaveId: "law_gov_defense",
+        categoryName: "Corporate & Gov Counsel",
+        defaultHeadline: "General Counsel & Corporate M&A Partner (JD) · SEC Governance, Federal Contracting, CMMC Cybersecurity Defense & Cross-Border Deals",
+        typicalSkills: ["Corporate M&A & Venture Deals", "SEC Governance & Compliance", "Federal Acquisition Regs (FAR)", "ITAR / Export Controls", "CMMC Level 2"],
         tools: [
           { name: "Aegis RMF Continuous ATO Platform", icon: "📜", description: "NIST SP 800-53 OSCAL machine-readable compliance & continuous POAM engine", badge: "LIVE cATO" },
           { name: "15-Threat Modeling Suite", icon: "🛡️", description: "STRIDE automated threat vector analysis & architectural mitigation catalog", badge: "LIVE VERCEL" }
@@ -1734,7 +1836,7 @@ export const PROFESSION_ENCLAVES: ProfessionEnclave[] = [
         id: "paralegal_court_reporter",
         title: "Certified Paralegal, Court Reporter & E-Discovery Specialist",
         enclaveId: "law_gov_defense",
-        categoryName: "Legal, Regulatory & Compliance Support",
+        categoryName: "Paralegal & Court Ops",
         defaultHeadline: "NALA Certified Paralegal & RPR Realtime Court Reporter · Litigation Docketing, Stenography, Relativity E-Discovery & Subpoenas",
         typicalSkills: ["NALA CP Certification", "225 WPM Stenography", "Relativity E-Discovery", "PACER E-Filing", "Process Service"],
         tools: [
@@ -1745,7 +1847,7 @@ export const PROFESSION_ENCLAVES: ProfessionEnclave[] = [
         id: "notary_contract_licensing_specialist",
         title: "Notary Signing Agent, Contract Administrator & Permit Coordinator",
         enclaveId: "law_gov_defense",
-        categoryName: "Legal, Regulatory & Compliance Support",
+        categoryName: "Paralegal & Court Ops",
         defaultHeadline: "NNA Certified Notary Signing Agent & Contract Administrator · Loan Closings, CLM Redlines, Records Management & Municipal Licensing",
         typicalSkills: ["NNA Loan Signing", "Remote Online Notarization (RON)", "Contract Lifecycle (CLM)", "IAPP CIPP Privacy", "Permit Coordination"],
         tools: [
@@ -1901,21 +2003,33 @@ export const PROFESSION_ENCLAVES: ProfessionEnclave[] = [
   // ─── 17. ENERGY, UTILITIES, MINING, WATER & SANITATION OPS ──────
   {
     id: "energy_utilities_environment",
-    name: "Energy, Utilities, Mining, Water & Environmental Ops",
-    shortName: "Energy, Mining & Utilities",
-    icon: "⚡",
-    tagline: "Wind turbines, solar microgrids, high-voltage substations, mining geology, water treatment & waste ops",
-    description: "Dedicated workspace for solar/wind technicians, grid substation operators, nuclear/hydro plant operators, battery storage & EV charger installers, miners, geotechnical/blasting specialists, water/wastewater operators, well drillers, and hazardous waste sanitation crews.",
+    name: "Solar Energy, Utilities, Mining, Water & Environmental Ops",
+    shortName: "Solar, Energy & Utilities",
+    icon: "☀️",
+    tagline: "Solar PV technicians, microgrids, wind turbines, high-voltage substations, mining geology & water treatment",
+    description: "Dedicated workspace for NABCEP solar PV technicians, rooftop/utility solar installers, solar inverter & battery storage (BESS) specialists, wind turbine technicians, grid substation operators, miners, geotechnical/blasting specialists, water/wastewater operators, well drillers, and hazardous waste sanitation crews.",
     themeColor: "from-emerald-600 via-teal-700 to-slate-900",
     accentBorder: "border-emerald-500",
     badgeBg: "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800",
     badgeText: "text-emerald-800 dark:text-emerald-300",
-    securityClearanceTier: "NERC Grid Operator & MSHA / GWO Certified (Level 3)",
-    feedTags: ["#RenewableEnergy", "#WindTurbine", "#SolarInstall", "#Substation", "#Mining", "#WaterTreatment", "#WasteManagement", "#GridOps"],
+    securityClearanceTier: "NABCEP PV / NERC Grid Operator & MSHA / GWO Certified (Level 3)",
+    feedTags: ["#SolarTechnician", "#SolarPV", "#NABCEP", "#RenewableEnergy", "#WindTurbine", "#Substation", "#Mining", "#WaterTreatment"],
     professions: [
       {
+        id: "solar_pv_microgrid_technician",
+        title: "NABCEP Solar PV Technician, Rooftop/Utility Installer & Solar Inverter Specialist",
+        enclaveId: "energy_utilities_environment",
+        categoryName: "Solar Energy & Photovoltaic Systems",
+        defaultHeadline: "NABCEP Certified Solar PV Installation Professional · Rooftop & Utility-Scale Arrays, Enphase/SolarEdge Inverters, NEC 690 & Tesla Powerwall BESS Commissioning",
+        typicalSkills: ["NABCEP PV Installation Professional", "Enphase / SolarEdge / SMA String & Micro-Inverters", "NEC Article 690 Solar Electrical Code", "Tesla Powerwall & Solar BESS Commissioning", "IV-Curve Tracing & Thermal Drone Inspection", "Rooftop Racking & Ground-Mount Arrays"],
+        tools: [
+          { name: "Solar PV String Sizer, NEC 690 & IV-Curve Analyzer", icon: "☀️", description: "Voc temperature coefficient calculations, MPPT inverter string sizing, IV-curve fill factor and shade irradiance maps", badge: "NABCEP PVIP" },
+          { name: "Inverter Telemetry & Battery Storage Commissioning Console", icon: "🔋", description: "Enphase/SolarEdge microinverter grid-tie diagnostics, rapid shutdown (RSD) verification and BESS state-of-charge balancing", badge: "NEC 690 / 706" }
+        ]
+      },
+      {
         id: "wind_solar_battery_tech",
-        title: "NABCEP Solar, GWO Wind Turbine & Utility Battery Storage Technician",
+        title: "GWO Wind Turbine, Solar Microgrid & Utility Battery Storage Technician",
         enclaveId: "energy_utilities_environment",
         categoryName: "Renewable Energy & Grid Storage",
         defaultHeadline: "GWO Certified Wind Turbine Technician & NABCEP PV Installer · 300ft Nacelle Pitch Hydraulics, BESS Megapacks & EV Fast Chargers",
@@ -2073,21 +2187,33 @@ export const PROFESSION_ENCLAVES: ProfessionEnclave[] = [
     ]
   },
 
-  // ─── 20. TELECOM, ELECTRONICS REPAIR & EMERGING FRONTIER TECH ───
+  // ─── 20. TELECOM, DIRECTV / SATELLITE, BROADBAND, AV & FRONTIER TECH ───
   {
     id: "telecom_digital_infrastructure",
-    name: "Telecom, Fiber, Micro-Electronics Repair & Frontier Tech",
-    shortName: "Telecom, Repair & Frontier Tech",
+    name: "DirecTV, Satellite Dish, Fiber, Broadband, Pro-AV & Frontier Tech",
+    shortName: "DirecTV, Satellite, Fiber & AV",
     icon: "📡",
-    tagline: "Fiber-optic splicing, 5G tower climbing, data center hardware, PCB micro-soldering & digital twins",
-    description: "Dedicated workspace for fiber-optic splicers, telecom tower climbers, RF broadcast engineers, data center hardware techs, PCB micro-soldering specialists, watchmakers/horologists, autonomous vehicle techs, digital twin & 3D reality capture specialists, and battery recycling / carbon accounting technicians.",
+    tagline: "DirecTV & satellite dish technicians, Starlink/VSAT, cable broadband, fiber splicing, Pro-AV & 5G towers",
+    description: "Dedicated workspace for DirecTV & Dish Network satellite installers, Starlink/VSAT techs, coaxial/DOCSIS cable broadband technicians, CCTV & commercial/home theater AV integrators, fiber-optic splicers, 5G tower climbers, data center hardware techs, and PCB micro-soldering specialists.",
     themeColor: "from-violet-600 via-purple-800 to-indigo-950",
     accentBorder: "border-violet-500",
     badgeBg: "bg-violet-50 dark:bg-violet-950/40 border-violet-200 dark:border-violet-800",
     badgeText: "text-violet-800 dark:text-violet-300",
-    securityClearanceTier: "FOA Master Fiber / IPC-7711 / NWate Tower Certified (Level 3)",
-    feedTags: ["#FiberOptics", "#TowerClimber", "#DataCenterTech", "#MicroSoldering", "#PCBRepair", "#Horology", "#DigitalTwin", "#BatteryRecycling"],
+    securityClearanceTier: "SBCA Satellite / DirecTV SWM / FOA Master Fiber / CEDIA Certified (Level 3)",
+    feedTags: ["#DirecTV", "#SatelliteTechnician", "#StarlinkInstaller", "#CableBroadband", "#ProAV", "#FiberOptics", "#TowerClimber", "#CCTVSecurity"],
     professions: [
+      {
+        id: "directv_satellite_broadband_av_tech",
+        title: "DirecTV / Satellite Dish Technician, Starlink/VSAT Installer, Cable Broadband & Pro-AV Specialist",
+        enclaveId: "telecom_digital_infrastructure",
+        categoryName: "DirecTV, Satellite Dish, Cable & AV Systems",
+        defaultHeadline: "SBCA Certified DirecTV & Satellite Dish Master Technician · SWM Multiswitch & Commercial SMATV Headends, Ku/Ka-Band Dish Alignment, Starlink/VSAT, DOCSIS 3.1/4.0 Coax & CEDIA Home Theater / CCTV",
+        typicalSkills: ["DirecTV SWM Multiswitch & Commercial SMATV/MATV", "Ku/Ka-Band Satellite Dish Azimuth/Elevation Alignment", "Starlink & VSAT Satellite Terminal Commissioning", "RG-6/RG-11 Coax Compression & dBmV Signal Meters", "DOCSIS 3.1/4.0 Cable Broadband & Fiber ONT", "Home Theater, Commercial Pro-AV & IP CCTV Installation"],
+        tools: [
+          { name: "DirecTV SWM & Satellite Transponder Azimuth/dBmV Meter", icon: "📡", description: "99°/101°/103° orbital slot look-angle calculator, LNB transponder MER/BER signal lock and SWM-30 multiswitch port allocation", badge: "DirecTV / SBCA" },
+          { name: "DOCSIS Coax/Fiber Signal Analyzer & Commercial AV Matrix", icon: "📺", description: "RG-6/RG-11 dBmV ingress/SNR spectrum analyzer, HDMI-over-IP commercial bar/hotel headend matrix and PoE NVR camera commissioning", badge: "NCTI / CEDIA" }
+        ]
+      },
       {
         id: "fiber_optic_tower_datacenter_tech",
         title: "FOA Fiber-Optic Splicer, 5G Tower Climber & Data Center Hardware Tech",

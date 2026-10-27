@@ -577,6 +577,128 @@ export const initialPosts: Post[] = [
     isSaved: false,
     comments: []
   },
+  // ─── 0A. LAWYERS & JUDGES ENCLAVE BRIEFING ───
+  {
+    id: 'post_lawyers_judges_chambers',
+    professionEnclave: 'law_gov_defense',
+    targetProfessions: ['trial_litigation_lawyer', 'judge_judicial_magistrate', 'criminal_defense_prosecutor_lawyer'],
+    author: {
+      id: 'author_judge_eleanor',
+      name: 'Hon. Justice Eleanor Vance, JD',
+      headline: 'Presiding Judge, U.S. Magistrate & JAMS Neutral Arbitrator · Federal & State Trial Chambers',
+      avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80',
+      connectionDegree: '1st',
+      isFollowing: true
+    },
+    timestamp: '8m ago · ⚖️ Lawyers & Judges Chambers · 🌐',
+    visibility: 'Public',
+    postType: 'standard',
+    feedCategory: 'for_you',
+    feedSubCategory: 'All',
+    content: `⚖️ Chambers & Trial Bar Practice Note: Daubert Expert Gatekeeping (FRE 702) & Summary Judgment Standards in 2026
+
+Whether you are appearing as First-Chair Trial Counsel, Criminal Defense Attorney, Prosecutor, or presiding on the Bench as a Judge or Magistrate:
+• Under the amended Federal Rule of Evidence 702, proponents of expert testimony must demonstrate by a preponderance of the evidence that the expert's methodology is reliably applied to the facts—no longer treated as a mere weight-of-the-evidence jury question.
+• Pinpoint record citations in Rule 56 Summary Judgment statements and Bluebook appellate briefs remain the fastest way to win credibility in Judicial Chambers.
+
+Full Benchbook templates, PACER docket checklists, and JAMS arbitration clauses are live in the Lawyers & Judges workspace. 👇`,
+    hashtags: ['#Lawyers', '#Judges', '#TrialLawyer', '#Judiciary', '#Litigation', '#ConnectLn'],
+    media: {
+      type: 'image',
+      url: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=1200&auto=format&fit=crop&q=80',
+      title: 'Federal & State Judicial Chambers & Trial Advocacy',
+      description: 'FRE 702 Daubert evidentiary standards, trial motions, and judicial opinion drafting.'
+    },
+    stats: {
+      likesCount: 518,
+      commentsCount: 64,
+      repostsCount: 89,
+      reactionsBreakdown: { like: 310, celebrate: 112, support: 44, love: 22, insightful: 30, funny: 0 }
+    },
+    userReaction: null,
+    isSaved: false,
+    comments: []
+  },
+  // ─── 0B. HERBAL MEDICINE & DENTISTS (DDS / RDH) CLINICAL BRIEFING ───
+  {
+    id: 'post_herbal_dentist_clinical',
+    professionEnclave: 'healthcare_medicine',
+    targetProfessions: ['herbal_medicine_practitioner', 'dentist', 'dental_hygienist_assistant'],
+    author: {
+      id: 'author_herbal_dentist',
+      name: 'Dr. Seraphina Mensah, ND, RH (AHG) & Dr. Marcus Thorne, DDS',
+      headline: 'Clinical Herbalist (RH-AHG / ND) & Doctor of Dental Surgery (DDS) · Integrative Phytotherapy & CBCT Oral Surgery',
+      avatar: 'https://images.unsplash.com/photo-1594824813571-638f02614d3f?w=400&auto=format&fit=crop&q=80',
+      connectionDegree: '1st',
+      isFollowing: true
+    },
+    timestamp: '11m ago · 🌿🦷 Herbal Medicine & Dentistry · 🌐',
+    visibility: 'Public',
+    postType: 'standard',
+    feedCategory: 'for_you',
+    feedSubCategory: 'All',
+    content: `🌿🦷 Clinical Crossover: Phytotherapy Standardization (RH-AHG / ND) & Digital CBCT Implant Dentistry (DDS / RDH)
+
+Two rapidly growing clinical tracks now live across ConnectLn Healthcare:
+1. **Herbal & Botanical Medicine**: HPTLC standardized botanical extracts, cytochrome P450 herb-drug interaction screening prior to surgery/anesthesia (e.g. holding high-dose Ginkgo, Garlic, or Panax ginseng 7 days pre-op to preserve platelet hemostasis), and cGMP tincture compounding.
+2. **Dentistry & Oral Surgery (DDS / DMD / RDH)**: 3D CBCT mandibular nerve tracing, CEREC same-day zirconia prosthetics, Invisalign orthodontics, and ultrasonic periodontal scaling with botanical antimicrobial oral rinses.`,
+    hashtags: ['#HerbalMedicine', '#Dentist', '#Phytotherapy', '#OralSurgery', '#DentalHygienist', '#Healthcare'],
+    media: {
+      type: 'image',
+      url: 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=1200&auto=format&fit=crop&q=80',
+      title: 'Clinical Herbal Medicine (RH-AHG) & 3D CBCT Dental Surgery (DDS)',
+      description: 'WHO/cGMP botanical pharmacognosy alongside guided dental implantology and periodontal care.'
+    },
+    stats: {
+      likesCount: 476,
+      commentsCount: 53,
+      repostsCount: 74,
+      reactionsBreakdown: { like: 280, celebrate: 104, support: 42, love: 31, insightful: 19, funny: 0 }
+    },
+    userReaction: null,
+    isSaved: false,
+    comments: []
+  },
+  // ─── 0C. SOLAR PV TECHNICIANS & DIRECTV / SATELLITE / AV FIELD BRIEFING ───
+  {
+    id: 'post_solar_directv_field_ops',
+    professionEnclave: 'energy_utilities_environment',
+    targetProfessions: ['solar_pv_microgrid_technician', 'directv_satellite_broadband_av_tech'],
+    author: {
+      id: 'author_solar_directv',
+      name: 'Diego Alvarez, NABCEP PVIP & Darnell Jackson, SBCA',
+      headline: 'NABCEP Solar PV Master Technician & DirecTV / Satellite / Starlink / Pro-AV Lead Installer',
+      avatar: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=400&auto=format&fit=crop&q=80',
+      connectionDegree: '1st',
+      isFollowing: true
+    },
+    timestamp: '14m ago · ☀️📡 Solar PV & DirecTV Satellite Field Ops · 🌐',
+    visibility: 'Public',
+    postType: 'standard',
+    feedCategory: 'for_you',
+    feedSubCategory: 'All',
+    content: `☀️📡 Rooftop & Commercial Field Commissioning: NABCEP Solar PV Microgrids + DirecTV SMATV / Starlink / Pro-AV
+
+Big week for hands-on field technicians on ConnectLn:
+• **Solar Technicians (NABCEP)**: Commissioned a 48kW commercial rooftop array with Enphase IQ8P microinverters, NEC Article 690 rapid shutdown, Fluke PVA-1500 IV-curve verification, and triple Tesla Powerwall 3 BESS backup.
+• **DirecTV, Satellite & Pro-AV Technicians (SBCA / CEDIA)**: Peaked a 99°/101°/103° Ka/Ku-band commercial DirecTV SWM-30 headend rack (+14.8 dB MER lock on AIM 2.0 meter), bonded a Starlink High-Performance business failover dish, and balanced DOCSIS 3.1 coax & 4K HDMI-over-IP matrix walls.`,
+    hashtags: ['#SolarTechnician', '#DirecTV', '#SatelliteTech', '#NABCEP', '#Starlink', '#ProAV'],
+    media: {
+      type: 'image',
+      url: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=1200&auto=format&fit=crop&q=80',
+      title: 'NABCEP Solar PV Array & DirecTV / Satellite Commercial Headend Commissioning',
+      description: 'NEC 690 solar inverter/battery telemetry and SBCA satellite transponder alignment.'
+    },
+    stats: {
+      likesCount: 439,
+      commentsCount: 47,
+      repostsCount: 68,
+      reactionsBreakdown: { like: 265, celebrate: 98, support: 38, love: 21, insightful: 17, funny: 0 }
+    },
+    userReaction: null,
+    isSaved: false,
+    comments: []
+  },
   // ─── 1. SKILLED TRADES & CRAFTSMANSHIP ENCLAVE (CARPENTER, CONTRACTOR, TRADES) ───
   {
     id: 'post_carpenter_timber_frame',
@@ -2059,6 +2181,96 @@ export const suggestedConnections: SuggestedConnection[] = [
     matchScore: 98,
     isConnected: false,
     isPending: false
+  },
+  {
+    id: 'sugg_judge_eleanor',
+    name: 'Hon. Justice Eleanor Vance, JD',
+    headline: 'Presiding Judge, U.S. Magistrate & JAMS Neutral Arbitrator · 22 Yrs Bench & Appellate Opinions',
+    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1453945619913-79ec89a82c51?w=600&auto=format&fit=crop&q=80',
+    mutualConnections: 58,
+    mutualName: 'Kwame Boateng, JD, Esq.',
+    capabilities: ['Judicial Bench & Jury Presiding', 'Federal Rules of Evidence (FRE)', 'Appellate Opinions', 'JAMS / AAA Arbitration'],
+    verifiedBadges: ['✓ Federal & State Judiciary', '✓ JAMS Panel Judge'],
+    circle: 'Judges, Magistrates & Trial Bar Chambers',
+    matchScore: 99,
+    isConnected: false,
+    isPending: false
+  },
+  {
+    id: 'sugg_lawyer_kwame',
+    name: 'Kwame Boateng, JD, Esq.',
+    headline: 'Senior Trial Lawyer & Appellate Litigator · First-Chair Commercial, Constitutional & Criminal Defense',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&auto=format&fit=crop&q=80',
+    mutualConnections: 51,
+    mutualName: 'Hon. Justice Eleanor Vance',
+    capabilities: ['First-Chair Jury Trials', 'Supreme Court & Appellate Briefs', 'Commercial & Civil Rights Litigation', 'Criminal Defense'],
+    verifiedBadges: ['✓ Active Bar (JD / Esq.)', '✓ Trial Lawyers Fellow'],
+    circle: 'Judges, Magistrates & Trial Bar Chambers',
+    matchScore: 99,
+    isConnected: false,
+    isPending: false
+  },
+  {
+    id: 'sugg_herbal_seraphina',
+    name: 'Dr. Seraphina Mensah, ND, RH (AHG)',
+    headline: 'Clinical Herbalist, Phytotherapy Formulator & Botanical Medicine Specialist · cGMP & Herb-Drug Safety',
+    avatar: 'https://images.unsplash.com/photo-1594824813571-638f02614d3f?w=400&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&auto=format&fit=crop&q=80',
+    mutualConnections: 39,
+    mutualName: 'Dr. Kwame Mensah, PharmD',
+    capabilities: ['Clinical Herbal Medicine & Phytotherapy', 'Pharmacognosy & Botanical Extraction', 'CYP450 Herb-Drug Safety', 'WHO / cGMP Standardization'],
+    verifiedBadges: ['✓ RH (AHG) Herbalist', '✓ Naturopathic Doctor (ND)'],
+    circle: 'Clinical Herbal Medicine, Pharmacy & Integrative Guild',
+    matchScore: 99,
+    isConnected: false,
+    isPending: false
+  },
+  {
+    id: 'sugg_dentist_marcus',
+    name: 'Dr. Marcus Thorne, DDS, MS',
+    headline: 'Doctor of Dental Surgery (DDS), Orthodontist & CBCT Guided Oral Implant Surgeon',
+    avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=400&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=600&auto=format&fit=crop&q=80',
+    mutualConnections: 42,
+    mutualName: 'Dr. Nana Yaw Owusu, MD',
+    capabilities: ['Dentistry & Oral Implant Surgery (DDS)', '3D CBCT & CEREC CAD/CAM', 'Orthodontics & Invisalign', 'Endodontics & Periodontics'],
+    verifiedBadges: ['✓ Licensed Dentist (DDS)', '✓ ICOI Implant Fellow'],
+    circle: 'American & Global Dental Surgeons (DDS / DMD / RDH)',
+    matchScore: 99,
+    isConnected: false,
+    isPending: false
+  },
+  {
+    id: 'sugg_solar_diego',
+    name: 'Diego Alvarez, NABCEP PVIP',
+    headline: 'Lead NABCEP Solar PV Technician, Rooftop/Utility Array Installer & Tesla Powerwall 3 Specialist',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=600&auto=format&fit=crop&q=80',
+    mutualConnections: 37,
+    mutualName: 'David Miller',
+    capabilities: ['NABCEP Solar PV Installation', 'Enphase IQ8 / SolarEdge / SMA Inverters', 'Tesla Powerwall 3 BESS', 'NEC Article 690 & IV-Curve Tracing'],
+    verifiedBadges: ['✓ NABCEP PVIP Certified', '✓ Tesla Powerwall Master'],
+    circle: 'NABCEP Solar PV Technicians & Microgrid Guild',
+    matchScore: 99,
+    isConnected: false,
+    isPending: false
+  },
+  {
+    id: 'sugg_directv_darnell',
+    name: 'Darnell Jackson, SBCA, CEDIA',
+    headline: 'Master DirecTV & Satellite Dish Technician · Starlink/VSAT, Cable Broadband (DOCSIS) & Pro-AV Integrator',
+    avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=600&auto=format&fit=crop&q=80',
+    mutualConnections: 34,
+    mutualName: 'Diego Alvarez, NABCEP',
+    capabilities: ['DirecTV SWM-30 & Commercial SMATV Headends', '99°/101°/103° Ku/Ka Satellite Alignment', 'Starlink & VSAT Commissioning', 'DOCSIS 3.1/4.0 Coax & Pro-AV Matrix'],
+    verifiedBadges: ['✓ DirecTV / SBCA Master', '✓ CEDIA & NCTI Broadband'],
+    circle: 'DirecTV, Satellite Dish, Starlink & Pro-AV Technicians',
+    matchScore: 99,
+    isConnected: false,
+    isPending: false
   }
 ]
 
@@ -2227,6 +2439,96 @@ export const initialConnectedMembers: ConnectedMember[] = [
     company: 'Regional Ambulatory & Specialty Clinics',
     location: 'Atlanta, GA',
     email: 'ama.serwaa@regionalclinics.org'
+  },
+  {
+    id: 'conn_12_judge',
+    name: 'Hon. Justice Eleanor Vance, JD',
+    headline: 'Presiding Judge, U.S. Magistrate & JAMS Neutral Arbitrator · Federal & State Judiciary',
+    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1453945619913-79ec89a82c51?w=600&auto=format&fit=crop&q=80',
+    connectedSince: 'Connected 2 weeks ago',
+    capabilities: ['Judicial Bench & Jury Presiding', 'Federal Rules of Evidence (FRE)', 'JAMS / AAA Arbitration'],
+    verifiedBadges: ['✓ Presiding Judge (JD)', '✓ JAMS Neutral'],
+    mutualCount: 58,
+    isOnline: true,
+    company: 'U.S. Courts & JAMS Chambers',
+    location: 'Washington, DC',
+    email: 'justice.vance@chambers-judiciary.org'
+  },
+  {
+    id: 'conn_13_lawyer',
+    name: 'Kwame Boateng, JD, Esq.',
+    headline: 'Senior Trial Lawyer & Appellate Litigator · First-Chair Civil, Criminal & Constitutional Law',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&auto=format&fit=crop&q=80',
+    connectedSince: 'Connected 1 month ago',
+    capabilities: ['First-Chair Trial Litigation', 'Appellate Oral Argument', 'Commercial & Defense Law'],
+    verifiedBadges: ['✓ Active Bar (JD / Esq.)', '✓ Supreme Court Bar'],
+    mutualCount: 51,
+    isOnline: true,
+    company: 'Boateng & Vance Trial Counsel LLP',
+    location: 'New York, NY',
+    email: 'k.boateng@trialcounsel-llp.com'
+  },
+  {
+    id: 'conn_14_herbal',
+    name: 'Dr. Seraphina Mensah, ND, RH (AHG)',
+    headline: 'Clinical Herbalist, Phytotherapy Formulator & Botanical Medicine Director',
+    avatar: 'https://images.unsplash.com/photo-1594824813571-638f02614d3f?w=200&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&auto=format&fit=crop&q=80',
+    connectedSince: 'Connected 2 weeks ago',
+    capabilities: ['Clinical Herbal Medicine (RH-AHG)', 'Phytotherapy & Pharmacognosy', 'Herb-Drug Safety'],
+    verifiedBadges: ['✓ RH (AHG) Herbalist', '✓ Licensed ND'],
+    mutualCount: 39,
+    isOnline: true,
+    company: 'Integrative Botanical & Phytotherapy Center',
+    location: 'Boston, MA',
+    email: 'dr.seraphina@botanicalmedicine.org'
+  },
+  {
+    id: 'conn_15_dentist',
+    name: 'Dr. Marcus Thorne, DDS, MS',
+    headline: 'Doctor of Dental Surgery (DDS), Orthodontist & CBCT Guided Oral Implant Surgeon',
+    avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=200&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=600&auto=format&fit=crop&q=80',
+    connectedSince: 'Connected 3 weeks ago',
+    capabilities: ['Dentistry & Oral Surgery (DDS)', 'CBCT 3D Dental Implants', 'Orthodontics & CEREC'],
+    verifiedBadges: ['✓ Licensed Dentist (DDS)', '✓ ICOI Fellow'],
+    mutualCount: 42,
+    isOnline: true,
+    company: 'Thorne Dental Implant & Orthodontic Center',
+    location: 'Austin, TX',
+    email: 'dr.thorne@thornedental-dds.com'
+  },
+  {
+    id: 'conn_16_solar',
+    name: 'Diego Alvarez, NABCEP PVIP',
+    headline: 'Lead NABCEP Solar PV Technician, Microgrid Inverter & Tesla Powerwall 3 Master Installer',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=600&auto=format&fit=crop&q=80',
+    connectedSince: 'Connected 1 month ago',
+    capabilities: ['NABCEP Solar PV Installation', 'Enphase / SolarEdge Inverters', 'Tesla Powerwall 3 BESS'],
+    verifiedBadges: ['✓ NABCEP PVIP', '✓ NEC 690 Solar Master'],
+    mutualCount: 37,
+    isOnline: true,
+    company: 'SunGrid Solar & Microgrid Systems',
+    location: 'Austin, TX',
+    email: 'diego.alvarez@sungridsolar.io'
+  },
+  {
+    id: 'conn_17_directv',
+    name: 'Darnell Jackson, SBCA, CEDIA',
+    headline: 'Master DirecTV & Commercial Satellite Dish Technician · Starlink, DOCSIS Broadband & Pro-AV',
+    avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=600&auto=format&fit=crop&q=80',
+    connectedSince: 'Connected 2 weeks ago',
+    capabilities: ['DirecTV SWM & Commercial SMATV', 'Satellite Dish Alignment', 'Starlink, Cable & Pro-AV'],
+    verifiedBadges: ['✓ DirecTV / SBCA Master', '✓ CEDIA Pro-AV'],
+    mutualCount: 34,
+    isOnline: true,
+    company: 'Apex Satellite, Broadband & Commercial AV',
+    location: 'Atlanta, GA',
+    email: 'd.jackson@apexsatellite-av.com'
   }
 ]
 

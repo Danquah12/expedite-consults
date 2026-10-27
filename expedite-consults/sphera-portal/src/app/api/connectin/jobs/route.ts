@@ -45,17 +45,17 @@ function classifyProfessionEnclave(title: string, category: string, tags: string
   if (/(cnc|machinist|tool & die|toolmaker|plc|mechatronics|injection molding|lean|six sigma|quality inspector|packaging|textile|footwear)/.test(text)) {
     return "manufacturing_industrial"
   }
-  if (/(wind turbine|solar|nabcep|substation|grid|lineman|mining|geolog|drilling|water treatment|wastewater|recycling|environmental remediation|nuclear|hydroelectric)/.test(text)) {
+  if (/(wind turbine|solar|photovoltaic|nabcep|inverter|powerwall|substation|grid|lineman|mining|geolog|drilling|water treatment|wastewater|recycling|environmental remediation|nuclear|hydroelectric)/.test(text)) {
     return "energy_utilities_environment"
   }
   if (/(laboratory|biotech|bioprocess|chemist|hplc|forensic|microbiolog|clinical trial|archaeolog|museum|assay)/.test(text)) {
     return "science_laboratory_research"
   }
-  if (/(aircraft|aviation|avionics|a&p|aerospace|spacecraft|satellite|drone|uav|maritime|marine|shipyard|commercial diver|seafarer)/.test(text)) {
-    return "aviation_aerospace_maritime"
-  }
-  if (/(fiber|splicer|otdr|telecom|tower climber|data center|bicsi|pcb|micro-soldering|electronics repair|watchmaker|horolog|semiconductor)/.test(text)) {
+  if (/(directv|dish network|satellite dish|satellite tv|smatv|matv|vsat|starlink|coax|docsis|cable broadband|pro-av|home theater|cctv|fiber|splicer|otdr|telecom|tower climber|data center|bicsi|pcb|micro-soldering|electronics repair|watchmaker|horolog|semiconductor)/.test(text)) {
     return "telecom_digital_infrastructure"
+  }
+  if (/(aircraft|aviation|avionics|a&p|aerospace|spacecraft|orbital|drone|uav|maritime|marine|shipyard|commercial diver|seafarer)/.test(text)) {
+    return "aviation_aerospace_maritime"
   }
   if (/(automotive|mechanic|diesel|powertrain|technician.*ev|ase |fleet maintenance|collision|locomotive|rail|customs broker)/.test(text)) {
     return "automotive_mechanics"
@@ -75,7 +75,7 @@ function classifyProfessionEnclave(title: string, category: string, tags: string
   if (/(video|film|audio|sound|design|creative|graphic|animator|brand|interpreter|asl|media|writer|upholster|signage|set builder|luthier)/.test(text)) {
     return "creative_media_arts"
   }
-  if (/(surgeon|nurse|physician|doctor|clinical|medical|hospital|dental|dentist|veterinar|pharmac|therapist|radiologic|paramedic|phlebotom|sterile processing|bmet)/.test(text)) {
+  if (/(surgeon|nurse|physician|doctor|clinical|medical|hospital|dental|dentist|orthodont|hygienist|herbal|phytotherap|botanical medicine|naturopath|veterinar|pharmac|therapist|radiologic|paramedic|phlebotom|sterile processing|bmet)/.test(text)) {
     return "healthcare_medicine"
   }
   if (/(professor|teacher|educator|curriculum|faculty|instructor|academic|school|teaching|braille|assistive tech|archivist|librarian)/.test(text)) {
@@ -90,7 +90,7 @@ function classifyProfessionEnclave(title: string, category: string, tags: string
   if (/(cyber|security|pentest|soc |threat|appsec|infosec|zero trust|red team|cissp|devsecops|scada security)/.test(text)) {
     return "tech_cybersecurity"
   }
-  if (/(counsel|attorney|lawyer|legal|compliance|defense|clearance|federal|government|rmf|cmmc|policy|paralegal|court reporter|notary)/.test(text)) {
+  if (/(judge|magistrate|judiciary|arbitrator|mediator|law clerk|counsel|attorney|lawyer|litigator|prosecutor|public defender|legal|compliance|defense|clearance|federal|government|rmf|cmmc|policy|paralegal|court reporter|notary)/.test(text)) {
     return "law_gov_defense"
   }
   if (/(finance|accountant|accounting|cpa|cfa|controller|audit|fp&a|tax|investment|treasury|fintech|bookkeeper|payroll|claims adjuster|actuar)/.test(text)) {
