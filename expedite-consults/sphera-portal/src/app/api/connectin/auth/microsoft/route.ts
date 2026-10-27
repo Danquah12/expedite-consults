@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
 import { connectinDb } from "@/lib/connectin-db"
-import { isSuperAdminUser, resolveDisplayName } from "@/lib/connectin-profile"
+import {
+  isSuperAdminUser,
+  isDedicatedAdminAccount,
+  resolveDisplayName,
+  getKnownDemoPersonaAvatar,
+  generatePersonalSignatureAvatar,
+  isForeignPersonaAvatar
+} from "@/lib/connectin-profile"
+import { findProfessionById } from "@/lib/connectin-professions"
+import { resolveRequestGeoLocation, upsertCloudUser, appendCloudTelemetry } from "@/lib/connectin-cloud-sync"
 
 export async function POST(req: NextRequest) {
   try {
@@ -8,19 +17,33 @@ export async function POST(req: NextRequest) {
     const {
       email,
       name: incomingName,
-      professionId: incomingProfessionId
+      professionId: incomingProfessionId,
+      clientTimezone
     } = body
 
     if (!email || !email.includes("@")) {
       return NextResponse.json({ error: "A valid Microsoft Entra ID email is required." }, { status: 400 })
     }
 
+    const geo = resolveRequestGeoLocation(req, clientTimezone, body.location)
     const cleanEmail = email.toLowerCase().trim()
     const displayName = incomingName?.trim() || resolveDisplayName("", cleanEmail)
     const isSuperAdmin = isSuperAdminUser({ name: displayName, email: cleanEmail })
     const userRole = isSuperAdmin ? "admin" : "personal"
 
-    let user = connectinDb.findUserByEmail(cleanEmail)
+    const resolvedAvatar =
+      getKnownDemoPersonaAvatar({ name: displayName, email: cleanEmail }) ||
+      generatePersonalSignatureAvatar({ name: displayName, email: cleanEmail })
+
+    const matchingUsers = connectinDb.getUsers().filter(u => u.email.toLowerCase().trim() === cleanEmail)
+    let user = matchingUsers.find(u => {
+      const p = connectinDb.findProfileByUserId(u.id)
+      if (!p) return false
+      if (incomingName && incomingName.trim()) {
+        return p.name.toLowerCase().trim() === displayName.toLowerCase().trim()
+      }
+      return true
+    })
 
     if (!user) {
       const created = connectinDb.createUser(
@@ -37,9 +60,9 @@ export async function POST(req: NextRequest) {
           headline: isSuperAdmin
             ? "Platform IAM Architect & Root Authority · Expedite Consults"
             : "Verified Professional · Microsoft Entra ID",
-          avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayName)}&backgroundColor=00a4ef`,
+          avatar: resolvedAvatar,
           coverImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80",
-          location: "United States · Microsoft Entra ID Verified",
+          location: geo.locationLabel,
           about: `Verified member on ConnectLn Zero-Trust Network authenticated via Microsoft Entra ID (${cleanEmail}).`,
           skills: ["Microsoft Entra ID", "Azure Cloud", "Zero-Trust Architecture", "ASPM", "DevSecOps"],
           clearanceLevel: isSuperAdmin ? "Top Secret / Sovereign Enclave Root" : "Standard Verified Identity (Level 2)",
@@ -72,9 +95,9 @@ export async function POST(req: NextRequest) {
         headline: isSuperAdmin
           ? "Platform IAM Architect & Root Authority · Expedite Consults"
           : "Verified Professional · ConnectLn Member",
-        avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayName)}&backgroundColor=00a4ef`,
+        avatar: resolvedAvatar,
         coverImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80",
-        location: "United States · Microsoft Entra ID Verified",
+        location: geo.locationLabel,
         about: `Verified member on ConnectLn Zero-Trust Network authenticated via Microsoft Entra ID (${cleanEmail}).`,
         skills: ["Microsoft Entra ID", "Azure Cloud", "Zero-Trust Architecture", "ASPM"],
         clearanceLevel: isSuperAdmin ? "Top Secret / Sovereign Enclave Root" : "Standard Verified Identity (Level 2)",
@@ -90,11 +113,137 @@ export async function POST(req: NextRequest) {
         professionCategory: isSuperAdmin ? "Legal & Governance" : "Skilled Trades & Construction",
         professionEnclave: isSuperAdmin ? "law_gov_defense" : "trades_construction"
       }
+    } else {
+      if (incomingName?.trim() && profile.name !== displayName) {
+        profile.name = displayName
+      }
+      if (
+        (incomingName?.trim() && profile.name === displayName) ||
+        !profile.avatar ||
+        profile.avatar.includes("api.dicebear.com") ||
+        isForeignPersonaAvatar(profile.avatar, { name: profile.name, email: cleanEmail })
+      ) {
+        profile.avatar =
+          getKnownDemoPersonaAvatar({ name: profile.name, email: cleanEmail }) ||
+          generatePersonalSignatureAvatar({ name: profile.name, email: cleanEmail, professionEnclave: profile.professionEnclave })
+      }
     }
 
+    const nowIso = new Date().toISOString()
+    const timeStr = new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
+    connectinDb.touchUserLogin(user.id, "Microsoft Entra ID")
+    connectinDb.recordActivity({
+      id: `ACT-MS-${Date.now()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
+      userId: user.id,
+      userName: profile.name || displayName,
+      userEmail: cleanEmail,
+      userAvatar: profile.avatar || resolvedAvatar,
+      userRole: isSuperAdmin ? "SUPER_ADMIN" : "PERSONAL",
+      actionType: "USER_LOGIN",
+      actionLabel: `Signed In via Microsoft Entra ID ✓ (${geo.locationLabel})`,
+      category: "auth",
+      targetTitle: "Microsoft Entra ID (Azure AD SSO)",
+      details: `Authenticated via Microsoft Entra ID as ${profile.name || displayName} (${cleanEmail}) from ${geo.locationLabel}`,
+      timestampIso: nowIso,
+      timestampDisplay: new Date(nowIso).toLocaleString([], {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      })
+    })
+
     // Create session
-    const session = connectinDb.createSession(user.id, "Microsoft Entra ID / Web")
-    const targetUrl = isSuperAdmin ? "/connectin-admin" : "/connectin"
+    const session = connectinDb.createSession(user.id, {
+      ipAddress: geo.ipAddress,
+      userAgent: geo.userAgent,
+      location: geo.locationLabel
+    })
+    const shouldOpenAdminPortal = isDedicatedAdminAccount({
+      name: displayName,
+      email: cleanEmail,
+      professionId: incomingProfessionId
+    })
+    const targetUrl = shouldOpenAdminPortal ? "/connectin-admin" : "/connectin"
+    const effectiveRole = isSuperAdmin ? "admin" : (user.role === "admin" ? "personal" : user.role)
+
+    const selectedProf = incomingProfessionId && incomingProfessionId !== "auto_detect"
+      ? findProfessionById(incomingProfessionId)
+      : null
+
+    await Promise.all([
+      upsertCloudUser({
+        id: user.id,
+        email: user.email,
+        phone: user.phone || "",
+        name: profile.name || displayName,
+        role: effectiveRole,
+        status: user.status,
+        headline: selectedProf?.defaultHeadline || profile.headline,
+        avatar: profile.avatar || resolvedAvatar,
+        coverImage: profile.coverImage,
+        location: geo.locationLabel,
+        countryName: geo.countryName,
+        countryCode: geo.countryCode,
+        isOutsideUS: geo.isOutsideUS,
+        ipAddress: geo.ipAddress,
+        profession: selectedProf?.title || profile.profession,
+        professionId: selectedProf?.id || profile.professionId,
+        professionCategory: selectedProf?.categoryName || profile.professionCategory,
+        professionEnclave: selectedProf?.enclaveId || profile.professionEnclave,
+        authProvider: "Microsoft Entra ID",
+        lastLoginAt: nowIso,
+        createdAt: user.createdAt,
+        updatedAt: nowIso
+      }),
+      appendCloudTelemetry({
+        activityLog: {
+          id: `act_ms_${user.id}_${Date.now().toString().slice(-5)}`,
+          userId: user.id,
+          userName: profile.name || displayName,
+          userEmail: cleanEmail,
+          userAvatar: profile.avatar || resolvedAvatar,
+          userHeadline: selectedProf?.defaultHeadline || profile.headline,
+          actionType: "USER_LOGIN",
+          actionLabel: `Signed In via Microsoft Entra ID (${geo.locationLabel})`,
+          category: "auth",
+          targetTitle: `Microsoft Entra ID · ${geo.locationLabel}`,
+          details: `Authenticated via Microsoft Entra ID from ${geo.locationLabel} (IP: ${geo.ipAddress})`,
+          timestamp: `${timeStr} · ${geo.countryName}`,
+          createdAtIso: nowIso
+        },
+        auditLog: {
+          id: `LOG-${Date.now().toString().slice(-6)}`,
+          adminEmail: cleanEmail,
+          action: "USER_ACTIVATED",
+          targetEntity: `${profile.name || displayName} (${cleanEmail})`,
+          reason: `Member sign-in via Microsoft Entra ID from ${geo.locationLabel}`,
+          ipAddress: `${geo.ipAddress} (${geo.locationLabel})`,
+          timestamp: `${timeStr}`,
+          status: "Success"
+        },
+        socEvent: {
+          id: `SOC-LIVE-${Date.now().toString().slice(-5)}`,
+          severity: "Low",
+          eventType: `Microsoft Entra ID Login (${geo.countryName})`,
+          sourceIp: `${geo.ipAddress} (${geo.locationLabel})`,
+          targetAccount: `${profile.name || displayName} (${cleanEmail})`,
+          mitigationAction: `Verified Microsoft Entra ID Session Created`,
+          timestamp: "Just Now"
+        },
+        verification: {
+          id: `VER-${user.id}`,
+          applicantName: profile.name || displayName,
+          applicantEmail: cleanEmail,
+          applicantAvatar: profile.avatar || resolvedAvatar,
+          requestType: "Executive Identity",
+          submittedDocument: `Microsoft Entra ID (${geo.locationLabel})`,
+          organizationName: selectedProf?.title || profile.profession || "ConnectIn Global Network",
+          submittedAt: "Just Now",
+          status: "Approved"
+        }
+      })
+    ])
 
     const response = NextResponse.json({
       success: true,
@@ -104,20 +253,26 @@ export async function POST(req: NextRequest) {
         id: user.id,
         email: user.email,
         phone: user.phone,
-        role: user.role,
+        role: effectiveRole,
         status: user.status,
-        profession: profile.profession,
-        professionEnclave: profile.professionEnclave
+        profession: selectedProf?.title || profile.profession,
+        professionEnclave: selectedProf?.enclaveId || profile.professionEnclave,
+        authProvider: "Microsoft Entra ID",
+        lastLoginAt: nowIso
       },
       profile: {
         ...profile,
+        id: user.id,
+        userId: user.id,
         email: user.email,
-        role: user.role,
+        role: effectiveRole,
         roles: isSuperAdmin ? ["SUPER_ADMIN", "Platform IAM Architect", "Root Authority"] : ["NORMAL_USER"],
-        profession: profile.profession || (isSuperAdmin ? "Platform IAM Architect" : "Master Carpenter (Framing & Finish Joinery)"),
-        professionId: profile.professionId || (isSuperAdmin ? "platform_admin" : "carpenter"),
-        professionCategory: profile.professionCategory || (isSuperAdmin ? "Legal & Governance" : "Skilled Trades & Construction"),
-        professionEnclave: profile.professionEnclave || (isSuperAdmin ? "law_gov_defense" : "trades_construction")
+        profession: selectedProf?.title || profile.profession || (isSuperAdmin ? "Platform IAM Architect" : "Master Carpenter (Framing & Finish Joinery)"),
+        professionId: selectedProf?.id || ((!isSuperAdmin && profile.professionId === "platform_admin") ? "carpenter" : (profile.professionId || (isSuperAdmin ? "platform_admin" : "carpenter"))),
+        professionCategory: selectedProf?.categoryName || profile.professionCategory || (isSuperAdmin ? "Legal & Governance" : "Skilled Trades & Construction"),
+        professionEnclave: selectedProf?.enclaveId || profile.professionEnclave || (isSuperAdmin ? "law_gov_defense" : "trades_construction"),
+        authProvider: "Microsoft Entra ID",
+        lastLoginAt: nowIso
       },
       session: {
         sessionId: session.sessionId,

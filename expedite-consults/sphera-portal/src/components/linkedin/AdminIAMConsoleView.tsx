@@ -83,7 +83,13 @@ import {
   UserEnforcementStatus
 } from "@/lib/connectin-iam-data"
 import { UserProfile } from "@/lib/linkedin-data"
-import { loadStoredAdminUsers, saveStoredAdminUsers, registerNewUserInDirectory } from "@/lib/connectin-storage"
+import {
+  loadStoredAdminUsers,
+  saveStoredAdminUsers,
+  registerNewUserInDirectory,
+  loadStoredUserActivityLogs,
+  UserActivityEvent
+} from "@/lib/connectin-storage"
 
 interface AdminIAMConsoleViewProps {
   currentUser: UserProfile
@@ -97,6 +103,7 @@ export function AdminIAMConsoleView({
   // Navigation tabs
   const [activeAdminTab, setActiveAdminTab] = useState<
     | 'overview'
+    | 'user_activity'
     | 'users'
     | 'content'
     | 'moderation'
@@ -112,8 +119,12 @@ export function AdminIAMConsoleView({
   >('overview')
 
   // Live state
-  const [users, setUsers] = useState<AdminUserRecord[]>(ADMIN_USERS_DIRECTORY)
+  const [users, setUsers] = useState<AdminUserRecord[]>(() => loadStoredAdminUsers())
+  const [userActivityLogs, setUserActivityLogs] = useState<UserActivityEvent[]>(() => loadStoredUserActivityLogs())
+  const [activityFilter, setActivityFilter] = useState<'all' | 'likes' | 'comments' | 'reposts_shares' | 'content_profile' | 'auth'>('all')
+  const [activitySearch, setActivitySearch] = useState("")
   const [isLoadingUsers, setIsLoadingUsers] = useState(false)
+  const [userFilter, setUserFilter] = useState<'all' | 'new_and_logged_in' | 'admins'>('all')
   const [contentItems, setContentItems] = useState<AdminContentRecord[]>(ADMIN_CONTENT_DIRECTORY)
   const [cases, setCases] = useState<ModerationCase[]>(MODERATION_CASES_DATA)
   const [companies, setCompanies] = useState<AdminCompanyRecord[]>(ADMIN_COMPANIES_DIRECTORY)
@@ -158,23 +169,100 @@ export function AdminIAMConsoleView({
     setTimeout(() => setActionNotice(null), 4000)
   }
 
-  // Live Server Data Fetcher
+  // Helper to identify whether a record is a newly registered / logged-in user vs static demo directory
+  const isNewOrLoggedInUser = (u: AdminUserRecord) => {
+    const emailLower = String(u.email || "").toLowerCase().trim()
+    const lastLoginStr = String(u.lastLogin || "")
+    const mfaStr = String(u.mfaStatus || "")
+
+    // Any account with an explicit live login timestamp or Google/Microsoft SSO badge is a real logged-in user
+    if (
+      lastLoginStr.includes("Logged In") ||
+      lastLoginStr.includes("Just now") ||
+      mfaStr.includes("Google SSO") ||
+      mfaStr.includes("Microsoft SSO")
+    ) {
+      return true
+    }
+
+    // Static seed emails that have not actively logged in during a live session
+    const staticSeedEmails = new Set([
+      "alex.taylor@expedite-consults.com",
+      "alex.taylor@connectin.com",
+      "sec-admin@connectin.internal",
+      "commander.robert.hayes@connectin.com",
+      "marcus.vance@defense-systems.com",
+      "sarah.chen@defense-studio.tv",
+      "david.k@expedite-labs.io",
+      "dmitri.v@unknown-proxy.io",
+      "elena.rostova@stanford.edu",
+      "spam_lead_gen@crawler.net",
+      "marcus.vance@cloudscaleglobal.io"
+    ])
+    return !staticSeedEmails.has(emailLower)
+  }
+
+  // Live Server Data Fetcher (Synced Globally via Cloud Sync Map & Telemetry)
   const fetchLiveAdminData = async () => {
     setIsLoadingUsers(true)
+    const localUsers = loadStoredAdminUsers()
+    const localActivity = loadStoredUserActivityLogs()
     try {
-      const res = await fetch("/api/connectin/admin")
+      const res = await fetch("/api/connectin/admin", { cache: "no-store" })
       if (res.ok) {
         const data = await res.json()
+        if (data.activityLogs && Array.isArray(data.activityLogs)) {
+          const actMap = new Map<string, UserActivityEvent>()
+          ;[...(data.activityLogs as UserActivityEvent[]), ...localActivity].forEach(ev => {
+            if (ev && ev.id && !actMap.has(ev.id)) {
+              actMap.set(ev.id, ev)
+            }
+          })
+          setUserActivityLogs(Array.from(actMap.values()))
+        } else {
+          setUserActivityLogs(localActivity)
+        }
+
+        if (Array.isArray(data.verifications) && data.verifications.length > 0) {
+          setVerifications(data.verifications)
+        }
+        if (Array.isArray(data.auditLogs) && data.auditLogs.length > 0) {
+          setAuditLogs(data.auditLogs)
+        }
+        if (Array.isArray(data.socEvents) && data.socEvents.length > 0) {
+          setSocEvents(data.socEvents)
+        }
+
         if (data.users && Array.isArray(data.users)) {
-          const localUsers = loadStoredAdminUsers()
-          const combined = Array.from(
-            new Map([...ADMIN_USERS_DIRECTORY, ...localUsers, ...data.users].map(u => [u.email.toLowerCase(), u])).values()
-          )
-          setUsers(combined)
+          const deduped = new Map<string, AdminUserRecord>()
+          const getKey = (item: AdminUserRecord) =>
+            `${String(item.name || "").toLowerCase().trim()}::${String(item.email || "").toLowerCase().trim()}`
+
+          // Put live global server users & logged-in users FIRST before static demo directory
+          const liveServerUsers = (data.users as AdminUserRecord[]).filter(isNewOrLoggedInUser)
+          ;[
+            ...liveServerUsers,
+            ...localUsers.filter(isNewOrLoggedInUser),
+            ...data.users,
+            ...localUsers,
+            ...ADMIN_USERS_DIRECTORY
+          ].forEach(item => {
+            if (!item || !item.email) return
+            const key = getKey(item)
+            if (!deduped.has(key)) {
+              deduped.set(key, item)
+            }
+          })
+          setUsers(Array.from(deduped.values()))
+          return
         }
       }
+      setUsers(localUsers)
+      setUserActivityLogs(localActivity)
     } catch (err) {
       console.warn("Could not fetch live admin users:", err)
+      setUsers(localUsers)
+      setUserActivityLogs(localActivity)
     } finally {
       setIsLoadingUsers(false)
     }
@@ -354,6 +442,7 @@ export function AdminIAMConsoleView({
       title: "Core Operations",
       items: [
         { id: 'overview', label: 'Dashboard & Metrics', icon: BarChart3, badge: 'Live' },
+        { id: 'user_activity', label: 'User Activity Log', icon: Activity, badge: userActivityLogs.length },
         { id: 'users', label: 'User Management', icon: Users, badge: users.length },
         { id: 'content', label: 'Content & Feed', icon: FileText, badge: contentItems.length },
         { id: 'moderation', label: 'Moderation Center', icon: ShieldAlert, badge: cases.filter(c => c.status !== 'Action Enforced').length, highlight: true }
@@ -534,12 +623,18 @@ export function AdminIAMConsoleView({
             <div className="space-y-5">
               {/* Key Metrics Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
-                <div className="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-                  <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Total Users</span>
-                  <p className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-zinc-100 mt-1">
-                    {EXECUTIVE_ANALYTICS_DATA.totalUsers.toLocaleString()}
+                <div
+                  onClick={() => {
+                    setUserFilter('new_and_logged_in')
+                    setActiveAdminTab('users')
+                  }}
+                  className="rounded-2xl border border-emerald-500/40 bg-emerald-50/40 dark:bg-emerald-950/20 p-4 dark:border-emerald-800 cursor-pointer hover:border-emerald-500 transition-all"
+                >
+                  <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">New &amp; Logged-In Users</span>
+                  <p className="text-xl sm:text-2xl font-black text-emerald-700 dark:text-emerald-300 mt-1">
+                    {users.filter(isNewOrLoggedInUser).length} New · {users.length} Total
                   </p>
-                  <span className="text-[10px] text-emerald-600 font-bold">+{EXECUTIVE_ANALYTICS_DATA.newUsersToday.toLocaleString()} today</span>
+                  <span className="text-[10px] text-emerald-600 font-bold">Click to filter new sign-ins →</span>
                 </div>
 
                 <div className="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
@@ -559,11 +654,306 @@ export function AdminIAMConsoleView({
                 </div>
 
                 <div className="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-                  <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Posts & Connections</span>
+                  <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Posts &amp; Connections</span>
                   <p className="text-xl sm:text-2xl font-black text-purple-600 dark:text-purple-400 mt-1">
                     {EXECUTIVE_ANALYTICS_DATA.connectionsToday.toLocaleString()}
                   </p>
                   <span className="text-[10px] text-zinc-400 font-medium">{EXECUTIVE_ANALYTICS_DATA.postsToday.toLocaleString()} posts today</span>
+                </div>
+              </div>
+
+              {/* ─── LIVE NEW USERS & RECENT SIGN-INS TRACKER ─── */}
+              <div className="rounded-2xl border-2 border-[#0A66C2]/30 bg-white dark:bg-zinc-900 p-5 shadow-xs space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800 pb-3.5">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="relative flex h-2.5 w-2.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                      </span>
+                      <h3 className="font-bold text-sm sm:text-base text-zinc-900 dark:text-zinc-100">
+                        New Users &amp; Logged-In Members (Live Tracker)
+                      </h3>
+                      <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/60 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                        {users.filter(isNewOrLoggedInUser).length} New Sign-Ups · {users.length} Total Tracked
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                      Real-time feed of newly registered accounts and members who have signed in across ConnectLn.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={fetchLiveAdminData}
+                      disabled={isLoadingUsers}
+                      className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <RefreshCw className={`h-3.5 w-3.5 ${isLoadingUsers ? "animate-spin text-[#0A66C2]" : ""}`} />
+                      <span>{isLoadingUsers ? "Syncing..." : "Refresh"}</span>
+                    </button>
+                    <button
+                      onClick={() => setIsAddUserModalOpen(true)}
+                      className="rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <UserPlus className="h-3.5 w-3.5" />
+                      <span>+ Add Member</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveAdminTab('users')}
+                      className="text-xs font-bold text-[#0A66C2] hover:underline pl-1 cursor-pointer"
+                    >
+                      Full Directory →
+                    </button>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-zinc-50 dark:bg-zinc-800/60 border-b border-zinc-200 dark:border-zinc-800 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                      <tr>
+                        <th className="py-2.5 px-3">User Identity</th>
+                        <th className="py-2.5 px-3">Account Type</th>
+                        <th className="py-2.5 px-3">Login &amp; Registration Status</th>
+                        <th className="py-2.5 px-3">Profession / Enclave</th>
+                        <th className="py-2.5 px-3 text-right">Inspect</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                      {users.slice(0, 10).map((u) => {
+                        const isNew = isNewOrLoggedInUser(u)
+                        return (
+                          <tr
+                            key={`${u.id}-${u.name}-${u.email}`}
+                            className={`transition-colors ${
+                              isNew
+                                ? "bg-emerald-50/40 dark:bg-emerald-950/15 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/30"
+                                : "hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40"
+                            }`}
+                          >
+                            <td className="py-2.5 px-3">
+                              <div className="flex items-center gap-2.5">
+                                <img
+                                  src={u.avatar}
+                                  alt={u.name}
+                                  className="h-9 w-9 rounded-full object-cover border border-zinc-200 dark:border-zinc-700 shrink-0"
+                                />
+                                <div>
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span className="font-bold text-zinc-900 dark:text-zinc-100">{u.name}</span>
+                                    {isNew && (
+                                      <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white">
+                                        NEW USER · LOGGED IN
+                                      </span>
+                                    )}
+                                    {(u.mfaStatus?.includes("Google SSO") || u.lastLogin?.includes("Google SSO")) && (
+                                      <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white">
+                                        GOOGLE SSO ✓
+                                      </span>
+                                    )}
+                                    {(u.mfaStatus?.includes("Microsoft SSO") || u.lastLogin?.includes("Microsoft")) && (
+                                      <span className="rounded-full bg-sky-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white">
+                                        MICROSOFT SSO ✓
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-[11px] text-zinc-500 font-mono">{u.email}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-2.5 px-3">
+                              <div className="flex flex-wrap gap-1">
+                                {u.roles.map(r => (
+                                  <span
+                                    key={r}
+                                    className={`rounded px-1.5 py-0.5 text-[9px] font-bold ${
+                                      r.includes("ADMIN")
+                                        ? "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300"
+                                        : "bg-blue-50 text-[#0A66C2] dark:bg-blue-950/60 dark:text-sky-300"
+                                    }`}
+                                  >
+                                    {r}
+                                  </span>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="py-2.5 px-3">
+                              <div className="space-y-0.5">
+                                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                                  {u.lastLogin || "Active Now · Logged In"}
+                                </span>
+                                <p className="text-[10px] text-zinc-400">
+                                  Joined: {u.registeredAt || "Today"}
+                                </p>
+                              </div>
+                            </td>
+                            <td className="py-2.5 px-3">
+                              <span className="text-[11px] text-zinc-700 dark:text-zinc-300 font-medium line-clamp-1">
+                                {u.organization || u.headline}
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-3 text-right">
+                              <button
+                                onClick={() => setSelectedUser(u)}
+                                className="rounded-lg bg-zinc-100 hover:bg-[#0A66C2] hover:text-white px-2.5 py-1 text-xs font-bold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 transition-colors cursor-pointer"
+                              >
+                                Inspect
+                              </button>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* ─── LIVE USER ACTIVITY STREAM (LIKES, COMMENTS, REPOSTS, SHARES, LOGINS) ─── */}
+              <div className="rounded-2xl border-2 border-purple-500/30 bg-white dark:bg-zinc-900 p-5 shadow-xs space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800 pb-3.5">
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Activity className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                      <h3 className="font-bold text-sm sm:text-base text-zinc-900 dark:text-zinc-100">
+                        Live User Activity Log (Likes, Comments, Reposts, Shares &amp; Logins)
+                      </h3>
+                      <span className="rounded-full bg-purple-100 dark:bg-purple-950/60 px-2.5 py-0.5 text-[10px] font-bold text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                        {userActivityLogs.length} Tracked Events
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                      Real-time telemetry of everything users do across the platform: Likes/Reactions, Comments, Reposts, External Shares, Posts, Resumes, and Sign-Ins.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={fetchLiveAdminData}
+                      className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <RefreshCw className={`h-3.5 w-3.5 ${isLoadingUsers ? "animate-spin text-purple-600" : ""}`} />
+                      <span>Refresh Log</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveAdminTab('user_activity')}
+                      className="rounded-xl bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer"
+                    >
+                      Open Full Activity Log ({userActivityLogs.length}) →
+                    </button>
+                  </div>
+                </div>
+
+                {/* Activity Mini Summary Pills */}
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                  <div
+                    onClick={() => {
+                      setActivityFilter('likes')
+                      setActiveAdminTab('user_activity')
+                    }}
+                    className="rounded-xl border border-blue-200 dark:border-blue-900/50 bg-blue-50/40 dark:bg-blue-950/20 p-2.5 cursor-pointer hover:border-[#0A66C2] transition-all"
+                  >
+                    <p className="text-[10px] font-bold uppercase text-[#0A66C2] dark:text-sky-400">👍 Likes &amp; Reactions</p>
+                    <p className="text-lg font-black text-zinc-900 dark:text-zinc-100 mt-0.5">
+                      {userActivityLogs.filter(e => e.actionType === 'POST_LIKED' || e.actionType === 'POST_UNLIKED').length}
+                    </p>
+                  </div>
+                  <div
+                    onClick={() => {
+                      setActivityFilter('comments')
+                      setActiveAdminTab('user_activity')
+                    }}
+                    className="rounded-xl border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/40 dark:bg-emerald-950/20 p-2.5 cursor-pointer hover:border-emerald-500 transition-all"
+                  >
+                    <p className="text-[10px] font-bold uppercase text-emerald-700 dark:text-emerald-400">💬 Comments &amp; Replies</p>
+                    <p className="text-lg font-black text-zinc-900 dark:text-zinc-100 mt-0.5">
+                      {userActivityLogs.filter(e => e.actionType === 'POST_COMMENTED' || e.actionType === 'COMMENT_REPLIED').length}
+                    </p>
+                  </div>
+                  <div
+                    onClick={() => {
+                      setActivityFilter('reposts_shares')
+                      setActiveAdminTab('user_activity')
+                    }}
+                    className="rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50/40 dark:bg-amber-950/20 p-2.5 cursor-pointer hover:border-amber-500 transition-all"
+                  >
+                    <p className="text-[10px] font-bold uppercase text-amber-700 dark:text-amber-400">🔁 Reposts &amp; Shares</p>
+                    <p className="text-lg font-black text-zinc-900 dark:text-zinc-100 mt-0.5">
+                      {userActivityLogs.filter(e => e.actionType === 'POST_REPOSTED' || e.actionType === 'POST_SHARED').length}
+                    </p>
+                  </div>
+                  <div
+                    onClick={() => {
+                      setActivityFilter('content_profile')
+                      setActiveAdminTab('user_activity')
+                    }}
+                    className="rounded-xl border border-purple-200 dark:border-purple-900/50 bg-purple-50/40 dark:bg-purple-950/20 p-2.5 cursor-pointer hover:border-purple-500 transition-all"
+                  >
+                    <p className="text-[10px] font-bold uppercase text-purple-700 dark:text-purple-400">📝 Posts &amp; Resumes</p>
+                    <p className="text-lg font-black text-zinc-900 dark:text-zinc-100 mt-0.5">
+                      {userActivityLogs.filter(e => ['POST_CREATED', 'POST_SAVED', 'POLL_VOTED', 'RESUME_UPLOADED', 'PROFILE_UPDATED', 'USER_CONNECTED'].includes(e.actionType)).length}
+                    </p>
+                  </div>
+                  <div
+                    onClick={() => {
+                      setActivityFilter('auth')
+                      setActiveAdminTab('user_activity')
+                    }}
+                    className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50 p-2.5 cursor-pointer hover:border-zinc-400 transition-all"
+                  >
+                    <p className="text-[10px] font-bold uppercase text-zinc-500">🔐 Sign-Ins &amp; Auth</p>
+                    <p className="text-lg font-black text-zinc-900 dark:text-zinc-100 mt-0.5">
+                      {userActivityLogs.filter(e => e.category === 'auth').length}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Recent 6 Activity Events */}
+                <div className="divide-y divide-zinc-100 dark:divide-zinc-800 text-xs">
+                  {userActivityLogs.slice(0, 6).map((ev) => (
+                    <div key={ev.id} className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex items-start gap-2.5">
+                        <img
+                          src={ev.userAvatar}
+                          alt={ev.userName}
+                          className="h-8 w-8 rounded-full object-cover border border-zinc-200 dark:border-zinc-700 shrink-0 mt-0.5"
+                        />
+                        <div>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="font-bold text-zinc-900 dark:text-zinc-100">{ev.userName}</span>
+                            <span className="text-[10px] font-mono text-zinc-400">({ev.userEmail})</span>
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                                ev.actionType === 'POST_LIKED'
+                                  ? "bg-blue-100 text-[#0A66C2] dark:bg-blue-950/60 dark:text-sky-300"
+                                  : ev.actionType === 'POST_COMMENTED' || ev.actionType === 'COMMENT_REPLIED'
+                                  ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
+                                  : ev.actionType === 'POST_REPOSTED' || ev.actionType === 'POST_SHARED'
+                                  ? "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
+                                  : ev.category === 'auth'
+                                  ? "bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300"
+                                  : "bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200"
+                              }`}
+                            >
+                              {ev.actionLabel}
+                            </span>
+                            {ev.targetTitle && (
+                              <span className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-300">
+                                → {ev.targetTitle}
+                              </span>
+                            )}
+                          </div>
+                          {ev.details && (
+                            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 line-clamp-1">
+                              {ev.details}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0 pl-10 sm:pl-0">
+                        <span className="text-[10px] font-mono text-zinc-400">{ev.timestampDisplay}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -663,40 +1053,242 @@ export function AdminIAMConsoleView({
             </div>
           )}
 
-          {/* MODULE 2: USER MANAGEMENT */}
-          {activeAdminTab === 'users' && (
+          {/* MODULE 1B: FULL USER ACTIVITY LOG (LIKES, COMMENTS, REPOSTS, SHARES, LOGINS) */}
+          {activeAdminTab === 'user_activity' && (
             <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-zinc-400" />
-                  <input
-                    type="text"
-                    placeholder="Search users by name, email, ID, organization..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full rounded-xl bg-zinc-50 pl-10 pr-4 py-2 text-xs sm:text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
-                  />
-                </div>
-                <div className="flex items-center gap-2">
+              <div className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h3 className="font-bold text-base sm:text-lg text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                      <Activity className="h-5 w-5 text-[#0A66C2]" />
+                      <span>System-Wide User Activity &amp; Engagement Log</span>
+                    </h3>
+                    <p className="text-xs text-zinc-500 mt-0.5">
+                      Complete real-time log tracking every user interaction: Likes, Reactions, Comments, Replies, Reposts, Social Shares, Post Creation, Resume Uploads, Connections, and Sign-Ins.
+                    </p>
+                  </div>
                   <button
                     onClick={fetchLiveAdminData}
                     disabled={isLoadingUsers}
-                    className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
-                    title="Refresh live user registrations from database"
+                    className="rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white px-4 py-2 text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer self-start sm:self-auto"
                   >
-                    <RefreshCw className={`h-3.5 w-3.5 ${isLoadingUsers ? "animate-spin text-[#0A66C2]" : ""}`} />
-                    <span>{isLoadingUsers ? "Syncing..." : "Refresh Live Users"}</span>
+                    <RefreshCw className={`h-3.5 w-3.5 ${isLoadingUsers ? "animate-spin" : ""}`} />
+                    <span>{isLoadingUsers ? "Syncing..." : "Refresh Activity Stream"}</span>
+                  </button>
+                </div>
+
+                {/* Search & Category Filter Pills */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-zinc-400" />
+                    <input
+                      type="text"
+                      placeholder="Search by user name, email, action (like, comment, repost, share), or content..."
+                      value={activitySearch}
+                      onChange={(e) => setActivitySearch(e.target.value)}
+                      className="w-full rounded-xl bg-zinc-50 pl-10 pr-4 py-2 text-xs sm:text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 flex-wrap">
+                  {[
+                    { id: 'all', label: `All Activity (${userActivityLogs.length})` },
+                    {
+                      id: 'likes',
+                      label: `👍 Likes & Reactions (${userActivityLogs.filter(e => e.actionType === 'POST_LIKED' || e.actionType === 'POST_UNLIKED').length})`
+                    },
+                    {
+                      id: 'comments',
+                      label: `💬 Comments & Replies (${userActivityLogs.filter(e => e.actionType === 'POST_COMMENTED' || e.actionType === 'COMMENT_REPLIED').length})`
+                    },
+                    {
+                      id: 'reposts_shares',
+                      label: `🔁 Reposts & Shares (${userActivityLogs.filter(e => e.actionType === 'POST_REPOSTED' || e.actionType === 'POST_SHARED').length})`
+                    },
+                    {
+                      id: 'content_profile',
+                      label: `📝 Posts, Resumes & Network (${userActivityLogs.filter(e => ['POST_CREATED', 'POST_SAVED', 'POLL_VOTED', 'RESUME_UPLOADED', 'PROFILE_UPDATED', 'USER_CONNECTED'].includes(e.actionType)).length})`
+                    },
+                    {
+                      id: 'auth',
+                      label: `🔐 Sign-Ins (${userActivityLogs.filter(e => e.category === 'auth').length})`
+                    }
+                  ].map((pill) => (
+                    <button
+                      key={pill.id}
+                      onClick={() => setActivityFilter(pill.id as any)}
+                      className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                        activityFilter === pill.id
+                          ? "bg-[#0A66C2] text-white shadow-xs"
+                          : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200"
+                      }`}
+                    >
+                      {pill.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-zinc-50 dark:bg-zinc-800/60 border-b border-zinc-200 dark:border-zinc-800 text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+                      <tr>
+                        <th className="py-3 px-4">User</th>
+                        <th className="py-3 px-3">Action Performed</th>
+                        <th className="py-3 px-3">Target &amp; Details</th>
+                        <th className="py-3 px-4 text-right">Timestamp</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                      {userActivityLogs
+                        .filter((ev) => {
+                          if (activityFilter === 'likes') return ev.actionType === 'POST_LIKED' || ev.actionType === 'POST_UNLIKED'
+                          if (activityFilter === 'comments') return ev.actionType === 'POST_COMMENTED' || ev.actionType === 'COMMENT_REPLIED'
+                          if (activityFilter === 'reposts_shares') return ev.actionType === 'POST_REPOSTED' || ev.actionType === 'POST_SHARED'
+                          if (activityFilter === 'content_profile') return ['POST_CREATED', 'POST_SAVED', 'POLL_VOTED', 'RESUME_UPLOADED', 'PROFILE_UPDATED', 'USER_CONNECTED'].includes(ev.actionType)
+                          if (activityFilter === 'auth') return ev.category === 'auth'
+                          return true
+                        })
+                        .filter((ev) => {
+                          if (!activitySearch.trim()) return true
+                          const q = activitySearch.toLowerCase()
+                          return (
+                            ev.userName.toLowerCase().includes(q) ||
+                            ev.userEmail.toLowerCase().includes(q) ||
+                            ev.actionLabel.toLowerCase().includes(q) ||
+                            (ev.targetTitle || '').toLowerCase().includes(q) ||
+                            (ev.details || '').toLowerCase().includes(q)
+                          )
+                        })
+                        .map((ev) => (
+                          <tr key={ev.id} className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40 transition-colors">
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-2.5">
+                                <img
+                                  src={ev.userAvatar}
+                                  alt={ev.userName}
+                                  className="h-9 w-9 rounded-full object-cover border border-zinc-200 dark:border-zinc-700 shrink-0"
+                                />
+                                <div>
+                                  <p className="font-bold text-zinc-900 dark:text-zinc-100">{ev.userName}</p>
+                                  <p className="text-[11px] font-mono text-zinc-400">{ev.userEmail}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-3 px-3">
+                              <span
+                                className={`inline-block rounded-full px-2.5 py-1 text-[10px] font-bold ${
+                                  ev.actionType === 'POST_LIKED'
+                                    ? "bg-blue-100 text-[#0A66C2] dark:bg-blue-950/60 dark:text-sky-300"
+                                    : ev.actionType === 'POST_COMMENTED' || ev.actionType === 'COMMENT_REPLIED'
+                                    ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
+                                    : ev.actionType === 'POST_REPOSTED' || ev.actionType === 'POST_SHARED'
+                                    ? "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
+                                    : ev.category === 'auth'
+                                    ? "bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300"
+                                    : "bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200"
+                                }`}
+                              >
+                                {ev.actionLabel}
+                              </span>
+                            </td>
+                            <td className="py-3 px-3 max-w-md">
+                              {ev.targetTitle && (
+                                <p className="font-bold text-zinc-800 dark:text-zinc-200 text-xs">
+                                  {ev.targetTitle}
+                                </p>
+                              )}
+                              {ev.details && (
+                                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-snug">
+                                  {ev.details}
+                                </p>
+                              )}
+                            </td>
+                            <td className="py-3 px-4 text-right font-mono text-[11px] text-zinc-400 whitespace-nowrap">
+                              {ev.timestampDisplay}
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* MODULE 2: USER MANAGEMENT */}
+          {activeAdminTab === 'users' && (
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-zinc-400" />
+                    <input
+                      type="text"
+                      placeholder="Search users by name, email, ID, organization..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full rounded-xl bg-zinc-50 pl-10 pr-4 py-2 text-xs sm:text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={fetchLiveAdminData}
+                      disabled={isLoadingUsers}
+                      className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                      title="Refresh live user registrations from database"
+                    >
+                      <RefreshCw className={`h-3.5 w-3.5 ${isLoadingUsers ? "animate-spin text-[#0A66C2]" : ""}`} />
+                      <span>{isLoadingUsers ? "Syncing..." : "Refresh Live Users"}</span>
+                    </button>
+                    <button
+                      onClick={() => setIsAddUserModalOpen(true)}
+                      className="rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white px-4 py-2 text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
+                    >
+                      <UserPlus className="h-3.5 w-3.5" />
+                      <span>+ Add Member</span>
+                    </button>
+                    <span className="text-xs text-zinc-400 font-mono self-center pl-1 hidden sm:inline">
+                      {users.length} accounts
+                    </span>
+                  </div>
+                </div>
+
+                {/* Filter Pills for New & Logged-In Users vs All Accounts */}
+                <div className="flex items-center gap-2 flex-wrap pt-1">
+                  <button
+                    onClick={() => setUserFilter('all')}
+                    className={`rounded-full px-3.5 py-1 text-xs font-bold transition-all cursor-pointer ${
+                      userFilter === 'all'
+                        ? "bg-[#0A66C2] text-white shadow-xs"
+                        : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200"
+                    }`}
+                  >
+                    All Accounts ({users.length})
                   </button>
                   <button
-                    onClick={() => setIsAddUserModalOpen(true)}
-                    className="rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white px-4 py-2 text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
+                    onClick={() => setUserFilter('new_and_logged_in')}
+                    className={`rounded-full px-3.5 py-1 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                      userFilter === 'new_and_logged_in'
+                        ? "bg-emerald-600 text-white shadow-xs"
+                        : "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100"
+                    }`}
                   >
-                    <UserPlus className="h-3.5 w-3.5" />
-                    <span>+ Add Member</span>
+                    <span className="h-2 w-2 rounded-full bg-current"></span>
+                    <span>New &amp; Logged-In Users ({users.filter(isNewOrLoggedInUser).length})</span>
                   </button>
-                  <span className="text-xs text-zinc-400 font-mono self-center pl-1 hidden sm:inline">
-                    {users.length} accounts
-                  </span>
+                  <button
+                    onClick={() => setUserFilter('admins')}
+                    className={`rounded-full px-3.5 py-1 text-xs font-bold transition-all cursor-pointer ${
+                      userFilter === 'admins'
+                        ? "bg-purple-600 text-white shadow-xs"
+                        : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200"
+                    }`}
+                  >
+                    Administrators ({users.filter(u => u.roles.some(r => r.includes("ADMIN"))).length})
+                  </button>
                 </div>
               </div>
 
@@ -707,14 +1299,19 @@ export function AdminIAMConsoleView({
                       <tr>
                         <th className="py-3 px-4">Member Identity</th>
                         <th className="py-3 px-3">Roles</th>
+                        <th className="py-3 px-3">Last Login / Joined</th>
                         <th className="py-3 px-3">Status</th>
                         <th className="py-3 px-3">Verification</th>
-                        <th className="py-3 px-3">Risk</th>
                         <th className="py-3 px-4 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                       {users
+                        .filter(u => {
+                          if (userFilter === 'new_and_logged_in') return isNewOrLoggedInUser(u)
+                          if (userFilter === 'admins') return u.roles.some(r => r.includes("ADMIN"))
+                          return true
+                        })
                         .filter(u =>
                           !searchQuery ||
                           u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -722,85 +1319,110 @@ export function AdminIAMConsoleView({
                           u.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           u.organization.toLowerCase().includes(searchQuery.toLowerCase())
                         )
-                        .map((u) => (
-                          <tr key={u.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition-colors">
-                            <td className="py-3 px-4">
-                              <div className="flex items-center gap-3">
-                                <img src={u.avatar} alt={u.name} className="h-9 w-9 rounded-full object-cover border border-zinc-200 dark:border-zinc-700" />
-                                <div>
-                                  <h5 className="font-bold text-zinc-900 dark:text-zinc-100">{u.name}</h5>
-                                  <p className="text-[11px] text-zinc-400 font-mono">{u.email} · {u.id}</p>
+                        .map((u) => {
+                          const isNew = isNewOrLoggedInUser(u)
+                          return (
+                            <tr
+                              key={`${u.id}-${u.name}-${u.email}`}
+                              className={`transition-colors ${
+                                isNew
+                                  ? "bg-emerald-50/40 dark:bg-emerald-950/15 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/30"
+                                  : "hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30"
+                              }`}
+                            >
+                              <td className="py-3 px-4">
+                                <div className="flex items-center gap-3">
+                                  <img src={u.avatar} alt={u.name} className="h-9 w-9 rounded-full object-cover border border-zinc-200 dark:border-zinc-700" />
+                                  <div>
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <h5 className="font-bold text-zinc-900 dark:text-zinc-100">{u.name}</h5>
+                                      {isNew && (
+                                        <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white">
+                                          NEW USER · LOGGED IN
+                                        </span>
+                                      )}
+                                      {(u.mfaStatus?.includes("Google SSO") || u.lastLogin?.includes("Google SSO")) && (
+                                        <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white">
+                                          GOOGLE SSO ✓
+                                        </span>
+                                      )}
+                                      {(u.mfaStatus?.includes("Microsoft SSO") || u.lastLogin?.includes("Microsoft")) && (
+                                        <span className="rounded-full bg-sky-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white">
+                                          MICROSOFT SSO ✓
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-[11px] text-zinc-400 font-mono">{u.email} · {u.id}</p>
+                                  </div>
                                 </div>
-                              </div>
-                            </td>
-                            <td className="py-3 px-3">
-                              <div className="flex flex-wrap gap-1">
-                                {u.roles.map(r => (
-                                  <span key={r} className="rounded bg-zinc-100 px-1.5 py-0.2 text-[9px] font-bold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-                                    {r}
+                              </td>
+                              <td className="py-3 px-3">
+                                <div className="flex flex-wrap gap-1">
+                                  {u.roles.map(r => (
+                                    <span key={r} className="rounded bg-zinc-100 px-1.5 py-0.2 text-[9px] font-bold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                                      {r}
+                                    </span>
+                                  ))}
+                                </div>
+                              </td>
+                              <td className="py-3 px-3">
+                                <div className="space-y-0.5">
+                                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                                    {u.lastLogin || "Active Now"}
                                   </span>
-                                ))}
-                              </div>
-                            </td>
-                            <td className="py-3 px-3">
-                              <span
-                                className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                                  u.enforcementStatus === 'Active'
-                                    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
-                                    : u.enforcementStatus === 'Suspended'
-                                    ? "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300"
-                                    : "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
-                                }`}
-                              >
-                                {u.enforcementStatus}
-                              </span>
-                            </td>
-                            <td className="py-3 px-3">
-                              <span className="text-[11px] text-zinc-600 dark:text-zinc-300 font-medium">
-                                {u.verificationLevel}
-                              </span>
-                            </td>
-                            <td className="py-3 px-3">
-                              <span
-                                className={`font-bold ${
-                                  u.riskLevel === 'Severe'
-                                    ? "text-red-600"
-                                    : u.riskLevel === 'High'
-                                    ? "text-amber-600"
-                                    : "text-emerald-600"
-                                }`}
-                              >
-                                {u.riskLevel}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4 text-right">
-                              <div className="flex items-center justify-end gap-1.5">
-                                <button
-                                  onClick={() => setSelectedUser(u)}
-                                  className="rounded-lg bg-zinc-100 hover:bg-[#0A66C2] hover:text-white px-2.5 py-1 text-xs font-bold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 transition-colors"
+                                  <p className="text-[10px] text-zinc-400">
+                                    Joined: {u.registeredAt || "Today"}
+                                  </p>
+                                </div>
+                              </td>
+                              <td className="py-3 px-3">
+                                <span
+                                  className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                                    u.enforcementStatus === 'Active'
+                                      ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+                                      : u.enforcementStatus === 'Suspended'
+                                      ? "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300"
+                                      : "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+                                  }`}
                                 >
-                                  Inspect
-                                </button>
-                                {u.enforcementStatus === 'Active' ? (
+                                  {u.enforcementStatus}
+                                </span>
+                              </td>
+                              <td className="py-3 px-3">
+                                <span className="text-[11px] text-zinc-600 dark:text-zinc-300 font-medium">
+                                  {u.verificationLevel}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4 text-right">
+                                <div className="flex items-center justify-end gap-1.5">
                                   <button
-                                    onClick={() => handleUpdateUserStatus(u.id, 'Suspended')}
-                                    className="rounded-lg border border-red-300 text-red-600 hover:bg-red-50 px-2 py-1 text-xs font-bold transition-colors"
-                                    title="Suspend User"
+                                    onClick={() => setSelectedUser(u)}
+                                    className="rounded-lg bg-zinc-100 hover:bg-[#0A66C2] hover:text-white px-2.5 py-1 text-xs font-bold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 transition-colors cursor-pointer"
                                   >
-                                    Suspend
+                                    Inspect
                                   </button>
-                                ) : (
-                                  <button
-                                    onClick={() => handleUpdateUserStatus(u.id, 'Active')}
-                                    className="rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 px-2 py-1 text-xs font-bold transition-colors"
-                                  >
-                                    Activate
-                                  </button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
+                                  {u.enforcementStatus === 'Active' ? (
+                                    <button
+                                      onClick={() => handleUpdateUserStatus(u.id, 'Suspended')}
+                                      className="rounded-lg border border-red-300 text-red-600 hover:bg-red-50 px-2 py-1 text-xs font-bold transition-colors cursor-pointer"
+                                      title="Suspend User"
+                                    >
+                                      Suspend
+                                    </button>
+                                  ) : (
+                                    <button
+                                      onClick={() => handleUpdateUserStatus(u.id, 'Active')}
+                                      className="rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 px-2 py-1 text-xs font-bold transition-colors cursor-pointer"
+                                    >
+                                      Activate
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          )
+                        })}
                     </tbody>
                   </table>
                 </div>

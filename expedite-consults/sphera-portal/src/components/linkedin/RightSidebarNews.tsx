@@ -27,6 +27,7 @@ interface RightSidebarNewsProps {
   onNewsClick?: (headline: string) => void
   onNavigateTab?: (tab: string) => void
   onOpenAIAssistant?: (initialQuery?: string) => void
+  onSelectMember?: (member: any) => void
 }
 
 export function RightSidebarNews({
@@ -35,7 +36,8 @@ export function RightSidebarNews({
   onToggleConnect,
   onNewsClick,
   onNavigateTab,
-  onOpenAIAssistant
+  onOpenAIAssistant,
+  onSelectMember
 }: RightSidebarNewsProps) {
   const [showAllNews, setShowAllNews] = useState(false)
   const [sidebarQuery, setSidebarQuery] = useState("")
@@ -44,53 +46,73 @@ export function RightSidebarNews({
 
   return (
     <aside className="space-y-3">
-      {/* 0. VIBE AI EMBEDDED Q&A CARD */}
+      {/* 0. NOCTIS EMBEDDED Q&A CARD (https://dstrike.app/noctis) */}
       <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3.5 shadow-xs space-y-2.5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-lg bg-[#0A66C2]/10 dark:bg-[#0A66C2]/20 flex items-center justify-center text-[#0A66C2] dark:text-[#70B5F9]">
+        <div className="flex items-center justify-between gap-2">
+          <a
+            href="https://dstrike.app/noctis"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 group min-w-0"
+            title="Open Noctis — https://dstrike.app/noctis"
+          >
+            <div className="h-7 w-7 rounded-lg bg-[#0A66C2]/10 dark:bg-[#0A66C2]/20 flex items-center justify-center text-[#0A66C2] dark:text-[#70B5F9] shrink-0 group-hover:bg-[#0A66C2] group-hover:text-white transition-colors">
               <Sparkles className="h-4 w-4" />
             </div>
-            <div>
-              <h3 className="font-bold text-xs text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
-                <span>{t("ask_vibe_ai", "Ask Vibe AI")}</span>
+            <div className="min-w-0">
+              <h3 className="font-bold text-xs text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2] dark:group-hover:text-[#70B5F9] flex items-center gap-1.5 transition-colors">
+                <span>{t("ask_vibe_ai", "Ask Noctis")}</span>
                 <span className="rounded bg-amber-100 dark:bg-amber-950/50 text-[#7A4B00] dark:text-amber-300 text-[9px] font-bold px-1.5 py-0.2 border border-amber-300/40">
-                  {t("qa_badge", "AI")}
+                  {t("qa_badge", "Q&A")}
                 </span>
               </h3>
-              <p className="text-[10px] text-zinc-500 dark:text-zinc-400">{t("vibe_ai_desc", "Campus & Professional Intelligence")}</p>
+              <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
+                {t("vibe_ai_desc", "Campus & Professional Intelligence")}
+              </p>
             </div>
-          </div>
-          <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 text-[9px] font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+          </a>
+          <a
+            href="https://dstrike.app/noctis"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-full bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/50 px-2 py-0.5 text-[9px] font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1 shrink-0 transition-colors"
+            title="Launch https://dstrike.app/noctis"
+          >
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            {t("vibe_online", "Online")}
-          </span>
+            <span>{t("vibe_online", "Online")}</span>
+          </a>
         </div>
 
         <p className="text-[11px] text-zinc-600 dark:text-zinc-300 leading-relaxed">
-          {t("vibe_question_help", "Ask questions about DoD Zero Trust, RMF ATO, career strategy, tools, certifications, or code.")}
+          {t("noctis_question_help", "Ask Noctis about DoD Zero Trust, RMF ATO, career strategy, tools, certifications, or code.")}
         </p>
 
         {/* Query Input */}
         <div className="flex items-center gap-1.5 bg-zinc-50 dark:bg-zinc-800/80 rounded-lg p-1 border border-zinc-200 dark:border-zinc-700/80 focus-within:border-[#0A66C2] focus-within:ring-1 focus-within:ring-[#0A66C2]/20 transition-all">
           <input
             type="text"
-            placeholder={t("ask_vibe_placeholder", "Ask Vibe a question...")}
+            placeholder={t("ask_noctis_placeholder", "Ask Noctis a question...")}
             value={sidebarQuery}
             onChange={(e) => setSidebarQuery(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && onOpenAIAssistant) {
-                onOpenAIAssistant(sidebarQuery)
-                setSidebarQuery("")
+              if (e.key === 'Enter') {
+                if (onOpenAIAssistant) {
+                  onOpenAIAssistant(sidebarQuery)
+                  setSidebarQuery("")
+                } else {
+                  window.open("https://dstrike.app/noctis", "_blank", "noopener,noreferrer")
+                }
               }
             }}
             className="flex-1 bg-transparent px-2.5 py-1 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none"
           />
           <button
             onClick={() => {
-              if (onOpenAIAssistant) {
+              if (sidebarQuery.trim() && onOpenAIAssistant) {
                 onOpenAIAssistant(sidebarQuery)
                 setSidebarQuery("")
+              } else {
+                window.open("https://dstrike.app/noctis", "_blank", "noopener,noreferrer")
               }
             }}
             className="rounded-md bg-[#0A66C2] hover:bg-[#004182] px-2.5 py-1 text-xs font-semibold text-white transition-colors shrink-0 cursor-pointer shadow-2xs flex items-center gap-1"
@@ -211,16 +233,25 @@ export function RightSidebarNews({
               <img
                 src={person.avatar}
                 alt={person.name}
-                className="h-10 w-10 rounded-full object-cover shrink-0 ring-1 ring-zinc-200 dark:ring-zinc-800"
+                onClick={() => onSelectMember?.(person)}
+                className="h-10 w-10 rounded-full object-cover shrink-0 ring-1 ring-zinc-200 dark:ring-zinc-800 cursor-pointer hover:ring-2 hover:ring-[#0A66C2] transition-all"
+                title={`Open ${person.name}'s Workspace`}
               />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1">
-                  <p className="font-bold text-xs text-zinc-900 hover:underline hover:text-[#0A66C2] cursor-pointer truncate dark:text-zinc-100">
+                  <p
+                    onClick={() => onSelectMember?.(person)}
+                    className="font-bold text-xs text-zinc-900 hover:underline hover:text-[#0A66C2] cursor-pointer truncate dark:text-zinc-100"
+                    title={`Open ${person.name}'s Workspace`}
+                  >
                     {person.name}
                   </p>
                   <ShieldCheck className="h-3.5 w-3.5 text-[#0A66C2] shrink-0" />
                 </div>
-                <p className="text-[11px] text-zinc-500 line-clamp-2 dark:text-zinc-400 leading-tight">
+                <p
+                  onClick={() => onSelectMember?.(person)}
+                  className="text-[11px] text-zinc-500 line-clamp-2 dark:text-zinc-400 leading-tight cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-300"
+                >
                   {person.headline}
                 </p>
                 <button

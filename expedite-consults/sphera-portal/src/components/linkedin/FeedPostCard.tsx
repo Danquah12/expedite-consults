@@ -44,7 +44,7 @@ import {
 } from "@/components/ui/dialog"
 import { useLanguage } from "@/context/LanguageContext"
 import { translatePostText } from "@/lib/translations/post-translator"
-import { resolveUserProfilePicture } from "@/lib/connectin-storage"
+import { resolveUserProfilePicture, generatePersonalSignatureAvatar, trackUserActivity } from "@/lib/connectin-storage"
 import { VideoShareBanner } from "./VideoShareBanner"
 
 interface FeedPostCardProps {
@@ -55,6 +55,7 @@ interface FeedPostCardProps {
   onToggleSave: (postId: string) => void
   onFollowToggle?: (authorId: string) => void
   onVotePoll?: (postId: string, optionId: string) => void
+  onSelectMember?: (member: any) => void
 }
 
 const reactionIcons: Record<ReactionType, { label: string; icon: string; color: string }> = {
@@ -73,7 +74,8 @@ export function FeedPostCard({
   onAddComment,
   onToggleSave,
   onFollowToggle,
-  onVotePoll
+  onVotePoll,
+  onSelectMember
 }: FeedPostCardProps) {
   const { t, language } = useLanguage()
   const [isExpanded, setIsExpanded] = useState(false)
@@ -86,6 +88,8 @@ export function FeedPostCard({
   const [showMenu, setShowMenu] = useState(false)
   const [copiedLink, setCopiedLink] = useState(false)
   const [isFollowing, setIsFollowing] = useState(post.author.isFollowing ?? false)
+  const [isReposted, setIsReposted] = useState(false)
+  const [localRepostBonus, setLocalRepostBonus] = useState(0)
 
   // Product Discovery Modal State
   const [activeProductModal, setActiveProductModal] = useState<'view' | 'demo' | 'docs' | 'pricing' | 'trial' | 'buy' | null>(null)
@@ -107,11 +111,47 @@ export function FeedPostCard({
   const isLongText = activeContent.length > 240
   const displayedContent = isExpanded || !isLongText ? activeContent : activeContent.slice(0, 240) + "..."
 
+  const [showShareModal, setShowShareModal] = useState(false)
+  const isCurrentUserPost =
+    post.author.connectionDegree === 'You' ||
+    post.id === 'post_dstrike_wheel_masterclass' ||
+    post.media?.type === 'video'
+  const resolvedAuthorName = isCurrentUserPost
+    ? (currentUser.name || post.author.name)
+    : post.author.name
+  const resolvedAuthorHeadline = isCurrentUserPost
+    ? (currentUser.headline || post.author.headline)
+    : post.author.headline
+  const resolvedUserPic = resolveUserProfilePicture(currentUser)
+  const resolvedPostAuthorPic = isCurrentUserPost
+    ? resolvedUserPic
+    : (post.author.avatar || generatePersonalSignatureAvatar({ name: post.author.name }))
+
+  const postSnippet = (post.content || post.media?.title || "").slice(0, 90).replace(/\n/g, " ").trim()
+
   const handleReactionSelect = (type: ReactionType) => {
     if (post.userReaction === type) {
       onToggleReaction(post.id, null)
+      trackUserActivity({
+        actionType: 'POST_UNLIKED',
+        actionLabel: `Removed Reaction (${reactionIcons[type].icon} ${reactionIcons[type].label})`,
+        category: 'engagement',
+        targetId: post.id,
+        targetTitle: `Post by ${resolvedAuthorName}`,
+        details: `Removed reaction on "${postSnippet}..."`,
+        user: currentUser
+      })
     } else {
       onToggleReaction(post.id, type)
+      trackUserActivity({
+        actionType: 'POST_LIKED',
+        actionLabel: `Reacted ${reactionIcons[type].icon} ${reactionIcons[type].label} to Post`,
+        category: 'engagement',
+        targetId: post.id,
+        targetTitle: `Post by ${resolvedAuthorName}`,
+        details: `Reacted ${reactionIcons[type].icon} ${reactionIcons[type].label} on "${postSnippet}..."`,
+        user: currentUser
+      })
     }
     setShowReactionPicker(false)
   }
@@ -119,29 +159,56 @@ export function FeedPostCard({
   const handlePostComment = (e: React.FormEvent) => {
     e.preventDefault()
     if (!newCommentText.trim()) return
-    onAddComment(post.id, newCommentText.trim())
+    const text = newCommentText.trim()
+    onAddComment(post.id, text)
+    trackUserActivity({
+      actionType: 'POST_COMMENTED',
+      actionLabel: 'Commented on Post',
+      category: 'engagement',
+      targetId: post.id,
+      targetTitle: `Post by ${resolvedAuthorName}`,
+      details: `Comment: "${text}" (on post: "${postSnippet}...")`,
+      user: currentUser
+    })
     setNewCommentText("")
   }
 
   const handlePostReply = (parentCommentId: string) => {
     if (!replyText.trim()) return
-    onAddComment(post.id, replyText.trim(), parentCommentId)
+    const text = replyText.trim()
+    onAddComment(post.id, text, parentCommentId)
+    trackUserActivity({
+      actionType: 'COMMENT_REPLIED',
+      actionLabel: 'Replied to a Comment',
+      category: 'engagement',
+      targetId: post.id,
+      targetTitle: `Post by ${resolvedAuthorName}`,
+      details: `Reply: "${text}"`,
+      user: currentUser
+    })
     setReplyText("")
     setReplyToId(null)
   }
 
-  const [showShareModal, setShowShareModal] = useState(false)
-  const resolvedUserPic = resolveUserProfilePicture(currentUser)
-  const resolvedPostAuthorPic =
-    post.author.connectionDegree === 'You' || post.media?.type === 'video'
-      ? resolveUserProfilePicture(currentUser, post.author.avatar)
-      : post.author.avatar || resolvedUserPic
+  const handleRepostClick = () => {
+    setIsReposted(true)
+    setLocalRepostBonus(prev => prev + 1)
+    trackUserActivity({
+      actionType: 'POST_REPOSTED',
+      actionLabel: 'Reposted to Network Feed',
+      category: 'engagement',
+      targetId: post.id,
+      targetTitle: `Post by ${resolvedAuthorName}`,
+      details: `Reposted "${postSnippet}..." to network feed`,
+      user: currentUser
+    })
+  }
 
   const getPostShareData = () => {
     const origin = "https://www.connectln.app"
     const postUrl = `${origin}/connectin?v=connectln5`
     const snippet = (post.content || "").slice(0, 100).replace(/\n/g, ' ').trim()
-    const text = `ConnectLn · Shared by ${post.author.name}:\n\n"${snippet}..."\n\n${postUrl}`
+    const text = `ConnectLn · Shared by ${resolvedAuthorName}:\n\n"${snippet}..."\n\n${postUrl}`
     return { origin, postUrl, snippet, text }
   }
 
@@ -150,6 +217,15 @@ export function FeedPostCard({
     navigator.clipboard?.writeText(postUrl)
     setCopiedLink(true)
     setTimeout(() => setCopiedLink(false), 2000)
+    trackUserActivity({
+      actionType: 'POST_SHARED',
+      actionLabel: 'Shared Post (Copied Link)',
+      category: 'engagement',
+      targetId: post.id,
+      targetTitle: `Post by ${resolvedAuthorName}`,
+      details: `Copied share link for "${postSnippet}..."`,
+      user: currentUser
+    })
     setShowMenu(false)
     setShowShareModal(false)
   }
@@ -157,6 +233,15 @@ export function FeedPostCard({
   const handleShareWhatsApp = () => {
     const { text } = getPostShareData()
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank")
+    trackUserActivity({
+      actionType: 'POST_SHARED',
+      actionLabel: 'Shared Post via WhatsApp',
+      category: 'engagement',
+      targetId: post.id,
+      targetTitle: `Post by ${resolvedAuthorName}`,
+      details: `Shared "${postSnippet}..." to WhatsApp`,
+      user: currentUser
+    })
     setShowMenu(false)
     setShowShareModal(false)
   }
@@ -164,14 +249,32 @@ export function FeedPostCard({
   const handleShareFacebook = () => {
     const { postUrl, text } = getPostShareData()
     window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(postUrl)}&quote=${encodeURIComponent(text)}`, "_blank")
+    trackUserActivity({
+      actionType: 'POST_SHARED',
+      actionLabel: 'Shared Post via Facebook',
+      category: 'engagement',
+      targetId: post.id,
+      targetTitle: `Post by ${resolvedAuthorName}`,
+      details: `Shared "${postSnippet}..." to Facebook`,
+      user: currentUser
+    })
     setShowMenu(false)
     setShowShareModal(false)
   }
 
   const handleShareTwitter = () => {
     const { postUrl, snippet } = getPostShareData()
-    const text = `Post by ${post.author.name} on ConnectIn: "${snippet}..."`
+    const text = `Post by ${resolvedAuthorName} on ConnectIn: "${snippet}..."`
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(postUrl)}`, "_blank")
+    trackUserActivity({
+      actionType: 'POST_SHARED',
+      actionLabel: 'Shared Post via 𝕏 (Twitter)',
+      category: 'engagement',
+      targetId: post.id,
+      targetTitle: `Post by ${resolvedAuthorName}`,
+      details: `Shared "${postSnippet}..." to 𝕏`,
+      user: currentUser
+    })
     setShowMenu(false)
     setShowShareModal(false)
   }
@@ -184,6 +287,15 @@ export function FeedPostCard({
       }
     } catch {}
     window.open("https://www.instagram.com/", "_blank")
+    trackUserActivity({
+      actionType: 'POST_SHARED',
+      actionLabel: 'Shared Post via Instagram',
+      category: 'engagement',
+      targetId: post.id,
+      targetTitle: `Post by ${resolvedAuthorName}`,
+      details: `Shared "${postSnippet}..." to Instagram`,
+      user: currentUser
+    })
     setShowMenu(false)
     setShowShareModal(false)
   }
@@ -191,12 +303,22 @@ export function FeedPostCard({
   const handleShareLinkedIn = () => {
     const { postUrl } = getPostShareData()
     window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(postUrl)}`, "_blank")
+    trackUserActivity({
+      actionType: 'POST_SHARED',
+      actionLabel: 'Shared Post via LinkedIn',
+      category: 'engagement',
+      targetId: post.id,
+      targetTitle: `Post by ${resolvedAuthorName}`,
+      details: `Shared "${postSnippet}..." to LinkedIn`,
+      user: currentUser
+    })
     setShowMenu(false)
     setShowShareModal(false)
   }
 
   const handleVote = (optionId: string) => {
     if (!localPoll || localPoll.userVotedOptionId) return
+    const votedOpt = localPoll.options.find(o => o.id === optionId)
     const updatedOptions = localPoll.options.map(opt =>
       opt.id === optionId ? { ...opt, votes: opt.votes + 1 } : opt
     )
@@ -207,6 +329,15 @@ export function FeedPostCard({
       options: updatedOptions
     }
     setLocalPoll(updatedPoll)
+    trackUserActivity({
+      actionType: 'POLL_VOTED',
+      actionLabel: 'Voted in Poll',
+      category: 'engagement',
+      targetId: post.id,
+      targetTitle: `Poll by ${resolvedAuthorName}`,
+      details: `Voted "${votedOpt?.text || optionId}" on poll "${localPoll.question}"`,
+      user: currentUser
+    })
     if (onVotePoll) onVotePoll(post.id, optionId)
   }
 
@@ -223,20 +354,42 @@ export function FeedPostCard({
       {/* Post Header */}
       <div className="flex items-start justify-between p-4 pb-2">
         <div className="flex items-start gap-3 min-w-0">
-          <div className="relative h-12 w-12 shrink-0 rounded-full overflow-hidden ring-2 ring-[#0066FF]">
+          <div
+            onClick={() =>
+              onSelectMember?.({
+                id: post.author.id,
+                name: resolvedAuthorName,
+                headline: resolvedAuthorHeadline,
+                avatar: resolvedPostAuthorPic
+              })
+            }
+            className="relative h-12 w-12 shrink-0 rounded-full overflow-hidden ring-2 ring-[#0066FF] cursor-pointer hover:ring-[#0A66C2] transition-all"
+            title={`Open ${resolvedAuthorName}'s Workspace`}
+          >
             <img
               src={resolvedPostAuthorPic}
-              alt={post.author.name}
+              alt={resolvedAuthorName}
               onError={(e) => {
-                e.currentTarget.src = "/brand/kwesi-avatar.png"
+                e.currentTarget.src = generatePersonalSignatureAvatar({ name: resolvedAuthorName })
               }}
               className="h-full w-full object-cover"
             />
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="font-bold text-sm text-zinc-900 hover:underline hover:text-[#0A66C2] cursor-pointer dark:text-zinc-100">
-                {post.author.name}
+              <span
+                onClick={() =>
+                  onSelectMember?.({
+                    id: post.author.id,
+                    name: resolvedAuthorName,
+                    headline: resolvedAuthorHeadline,
+                    avatar: resolvedPostAuthorPic
+                  })
+                }
+                className="font-bold text-sm text-zinc-900 hover:underline hover:text-[#0A66C2] cursor-pointer dark:text-zinc-100"
+                title={`Open ${resolvedAuthorName}'s Workspace`}
+              >
+                {resolvedAuthorName}
               </span>
               {post.author.connectionDegree !== 'You' && (
                 <span className="text-xs text-zinc-400 font-normal">
@@ -264,7 +417,7 @@ export function FeedPostCard({
               )}
             </div>
             <p className="text-xs text-zinc-500 truncate dark:text-zinc-400 mt-0.5">
-              {post.author.headline}
+              {resolvedAuthorHeadline}
             </p>
             <div className="flex items-center gap-1 text-[11px] text-zinc-400 mt-0.5">
               <span>{post.timestamp}</span>
@@ -698,14 +851,14 @@ export function FeedPostCard({
             <div className="flex items-center gap-2.5 min-w-0">
               <img
                 src={resolvedPostAuthorPic}
-                alt={post.author.name}
+                alt={resolvedAuthorName}
                 onError={(e) => {
-                  e.currentTarget.src = "/brand/kwesi-avatar.png"
+                  e.currentTarget.src = generatePersonalSignatureAvatar({ name: resolvedAuthorName })
                 }}
                 className="h-9 w-9 rounded-full object-cover ring-2 ring-[#0066FF] shrink-0"
               />
               <div className="min-w-0">
-                <p className="text-xs font-extrabold truncate" style={{ color: '#F5F0EB' }}>{post.author.name}</p>
+                <p className="text-xs font-extrabold truncate" style={{ color: '#F5F0EB' }}>{resolvedAuthorName}</p>
                 <p className="text-[10px] truncate" style={{ color: '#9E9891' }}>Tickets, vouches, and real work</p>
               </div>
             </div>
@@ -737,11 +890,11 @@ export function FeedPostCard({
           <VideoShareBanner
             avatarUrl={resolvedPostAuthorPic}
             userAvatar={resolvedPostAuthorPic}
-            authorName={currentUser.name || post.author.name || "Kwesi Asiedu"}
-            authorHeadline={currentUser.headline || post.author.headline}
+            authorName={resolvedAuthorName}
+            authorHeadline={resolvedAuthorHeadline}
             brandName="ConnectLn"
             videoTitle={post.media.title || "ConnectLn Masterclass & Technical Briefing"}
-            videoSubtitle={post.media.description || post.author.headline}
+            videoSubtitle={post.media.description || resolvedAuthorHeadline}
             youtubeId={post.media.youtubeId}
             thumbnailUrl={post.media.thumbnailUrl}
             videoUrl={post.media.url}
@@ -780,7 +933,7 @@ export function FeedPostCard({
           </button>
           <span>·</span>
           <span className="hover:underline hover:text-[#0A66C2]">
-            {post.stats.repostsCount} {t("reposts_count", "reposts")}
+            {post.stats.repostsCount + localRepostBonus} {t("reposts_count", "reposts")}
           </span>
         </div>
       </div>
@@ -841,11 +994,15 @@ export function FeedPostCard({
 
         {/* Repost Button */}
         <button
-          onClick={() => alert("Post reposted to your network!")}
-          className="flex items-center gap-1 sm:gap-1.5 rounded-md px-2 sm:px-3 py-2 text-[11px] sm:text-xs text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-colors"
+          onClick={handleRepostClick}
+          className={`flex items-center gap-1 sm:gap-1.5 rounded-md px-2 sm:px-3 py-2 text-[11px] sm:text-xs transition-colors cursor-pointer ${
+            isReposted
+              ? "text-emerald-600 dark:text-emerald-400 font-bold"
+              : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          }`}
         >
           <Repeat2 className="h-4 w-4" />
-          <span>{t("repost", "Repost")}</span>
+          <span>{isReposted ? "Reposted ✓" : t("repost", "Repost")}</span>
         </button>
 
         {/* Multi-Social Share Button & Popover */}

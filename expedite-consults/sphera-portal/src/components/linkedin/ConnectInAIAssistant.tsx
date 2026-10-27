@@ -1197,14 +1197,19 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
             </div>
             <div className="min-w-0">
               <DialogTitle className="font-bold text-sm text-white flex items-center gap-2 truncate">
-                <span>Vibe AI Intelligence</span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[9px] font-mono text-emerald-300 border border-emerald-500/30 shrink-0">
+                <span>Noctis Intelligence</span>
+                <a
+                  href="https://dstrike.app/noctis"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 px-2 py-0.5 text-[9px] font-mono text-emerald-300 border border-emerald-500/30 shrink-0"
+                >
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  Live Embedded
-                </span>
+                  dstrike.app/noctis ↗
+                </a>
               </DialogTitle>
               <p className="text-[11px] text-zinc-400 truncate">
-                Campus Q&amp;A, Career Intelligence &amp; Technical Analysis
+                Noctis Q&amp;A, Prediction Desk &amp; Technical Analysis
               </p>
             </div>
           </div>
@@ -1233,7 +1238,7 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
               )}
             >
               <Sparkles className="h-3.5 w-3.5 text-amber-300" />
-              Vibe AI Career Studio (Live)
+              Noctis Live (dstrike.app/noctis)
             </button>
           </div>
 
@@ -1249,7 +1254,7 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
                   setIframeKey(k => k + 1)
                 }}
                 className="h-8 w-8 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 hover:text-white flex items-center justify-center transition-colors border border-zinc-700/60 cursor-pointer"
-                title="Reload Live Studio"
+                title="Reload Noctis"
               >
                 <RefreshCw className="h-3.5 w-3.5" />
               </button>
@@ -1262,11 +1267,11 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
               {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
             </button>
             <a
-              href="https://tuhousing.vercel.app/"
+              href="https://dstrike.app/noctis"
               target="_blank"
               rel="noopener noreferrer"
               className="h-8 w-8 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 hover:text-white flex items-center justify-center transition-colors border border-zinc-700/60 cursor-pointer"
-              title="Open Career & AI Studio in New Window"
+              title="Open Noctis (https://dstrike.app/noctis) in New Window"
             >
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
@@ -1319,11 +1324,11 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
                 className="px-3 py-1 text-xs font-semibold rounded-md flex items-center gap-1 bg-[#0A66C2] text-white"
               >
                 <Sparkles className="h-3 w-3 text-amber-300" />
-                Career AI Studio
+                Noctis Live
               </button>
             </div>
 
-            {/* Live Career & Resume AI Studio Iframe */}
+            {/* Live Noctis Iframe */}
             <div className="relative flex-1 w-full h-full min-h-0 bg-white dark:bg-zinc-950">
               {isIframeLoading && (
                 <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/95 dark:bg-zinc-950/95 text-zinc-900 dark:text-zinc-100 gap-3 p-4">
@@ -1332,8 +1337,8 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
                     <Sparkles className="h-5 w-5 text-[#0A66C2]" />
                   </div>
                   <div className="text-center space-y-1">
-                    <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">Connecting to Live Career &amp; Resume AI Studio...</p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">Loading ATS Resume Tailor, Cover Letter Generator &amp; Career Intelligence</p>
+                    <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">Connecting to Noctis (https://dstrike.app/noctis)...</p>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">Loading Noctis Intelligence &amp; Prediction Desk</p>
                   </div>
                 </div>
               )}
@@ -1341,11 +1346,11 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
               <iframe
                 ref={iframeRef}
                 key={`${iframeKey}_${language}`}
-                src="https://tuhousing.vercel.app/"
+                src="https://dstrike.app/noctis"
                 className="w-full h-full border-0 bg-white dark:bg-zinc-950"
                 allow="camera; microphone; display-capture; autoplay; clipboard-write; fullscreen"
                 onLoad={() => setIsIframeLoading(false)}
-                title="ConnectIn Live Career & Resume AI Studio"
+                title="Noctis — https://dstrike.app/noctis"
               />
             </div>
           </div>

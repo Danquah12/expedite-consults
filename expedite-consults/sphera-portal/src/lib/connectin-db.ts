@@ -91,6 +91,58 @@ export interface ConnectInDatabaseSchema {
 // Initial Anchor Accounts
 const INITIAL_USERS: UserRecord[] = [
   {
+    id: "USR-89450",
+    email: "kofi.agyarko@connectin.com",
+    phone: "+233 24 555 0194",
+    role: "personal",
+    status: "Active",
+    mfaEnabled: true,
+    mfaChannel: "email",
+    createdAt: "2026-10-27T19:20:00Z",
+    updatedAt: "2026-10-27T19:35:00Z",
+    lastLoginAt: "2026-10-27T19:35:00Z",
+    authProvider: "Email 2FA"
+  } as any,
+  {
+    id: "USR-89451",
+    email: "isaac.boye@connectin.com",
+    phone: "+233 20 555 0412",
+    role: "personal",
+    status: "Active",
+    mfaEnabled: true,
+    mfaChannel: "email",
+    createdAt: "2026-10-27T19:22:00Z",
+    updatedAt: "2026-10-27T19:35:00Z",
+    lastLoginAt: "2026-10-27T19:35:00Z",
+    authProvider: "Email 2FA"
+  } as any,
+  {
+    id: "USR-89452",
+    email: "patience.addo@connectin.com",
+    phone: "+1 (240) 555-0821",
+    role: "personal",
+    status: "Active",
+    mfaEnabled: true,
+    mfaChannel: "email",
+    createdAt: "2026-10-27T19:15:00Z",
+    updatedAt: "2026-10-27T19:32:00Z",
+    lastLoginAt: "2026-10-27T19:32:00Z",
+    authProvider: "Email 2FA"
+  } as any,
+  {
+    id: "USR-85100",
+    email: "kasiedu@syneren.com",
+    phone: "+1 (240) 555-0614",
+    role: "personal",
+    status: "Active",
+    mfaEnabled: true,
+    mfaChannel: "email",
+    createdAt: "2026-10-27T18:50:00Z",
+    updatedAt: "2026-10-27T19:32:00Z",
+    lastLoginAt: "2026-10-27T19:32:00Z",
+    authProvider: "Email 2FA"
+  } as any,
+  {
     id: "USR-89400",
     email: "kasiedu@expedite-consults.com",
     phone: "+1 (240) 260-7898",
@@ -203,6 +255,94 @@ const INITIAL_USERS: UserRecord[] = [
 ]
 
 const INITIAL_PROFILES: UserProfileRecord[] = [
+  {
+    userId: "USR-89450",
+    name: "Kofi Agyarko",
+    headline: "Senior Cloud Infrastructure & Enterprise Systems Specialist · ConnectIn Verified Member",
+    avatar: "https://api.dicebear.com/7.x/initials/svg?seed=Kofi+Agyarko&backgroundColor=0a66c2",
+    coverImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80",
+    location: "Accra, Ghana 🇬🇭 · Global Verified Enclave",
+    about: "Verified member on ConnectIn Global Network specializing in enterprise systems, cloud security, and cross-border engineering operations.",
+    skills: ["Cloud Infrastructure", "Enterprise Systems", "Zero Trust Security", "Project Operations"],
+    clearanceLevel: "Standard Verified Identity (Level 2)",
+    fido2MfaVerified: true,
+    cryptoVerificationBadge: "0xED25519_KOFI_AGYARKO",
+    skillMatrixScore: 94.2,
+    connectionsCount: 380,
+    followersCount: 940,
+    profileViews: 210,
+    postImpressions: 4200,
+    profession: "Full-Stack & Cloud Systems Engineer",
+    professionId: "software_engineer",
+    professionCategory: "Technology, Software & AI",
+    professionEnclave: "tech_cybersecurity"
+  },
+  {
+    userId: "USR-89451",
+    name: "Isaac Boye",
+    headline: "Operations & Technical Specialist · ConnectIn Verified Network",
+    avatar: "https://api.dicebear.com/7.x/initials/svg?seed=Isaac+Boye&backgroundColor=0f766e",
+    coverImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80",
+    location: "Accra, Ghana 🇬🇭 · Global Verified Enclave",
+    about: "Verified professional on ConnectIn Global Network driving operational excellence, technical systems delivery, and quality assurance.",
+    skills: ["Technical Operations", "Systems Engineering", "Quality Assurance", "Field Compliance"],
+    clearanceLevel: "Standard Verified Identity (Level 2)",
+    fido2MfaVerified: true,
+    cryptoVerificationBadge: "0xED25519_ISAAC_BOYE",
+    skillMatrixScore: 93.5,
+    connectionsCount: 315,
+    followersCount: 820,
+    profileViews: 185,
+    postImpressions: 3600,
+    profession: "Licensed Master Electrician",
+    professionId: "electrician",
+    professionCategory: "Skilled Trades & Construction",
+    professionEnclave: "trades_construction"
+  },
+  {
+    userId: "USR-89452",
+    name: "Patience Addo",
+    headline: "Doctor of Veterinary Medicine (DVM) · Small Animal Surgery, Pharmacology & Preventive Care",
+    avatar: "https://api.dicebear.com/7.x/initials/svg?seed=Patience+Addo&backgroundColor=4338ca",
+    coverImage: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=1200&auto=format&fit=crop&q=80",
+    location: "Washington DC-Baltimore Area · Verified Identity",
+    about: "Doctor of Veterinary Medicine (DVM) operating in the Healthcare & Clinical Medicine Enclave on ConnectIn.",
+    skills: ["Veterinary Surgery", "Pharmacology", "Preventive Care", "Clinical Diagnostics"],
+    clearanceLevel: "Standard Verified Identity (Level 2)",
+    fido2MfaVerified: true,
+    cryptoVerificationBadge: "0xED25519_PATIENCE_ADDO",
+    skillMatrixScore: 95.0,
+    connectionsCount: 410,
+    followersCount: 1120,
+    profileViews: 260,
+    postImpressions: 5100,
+    profession: "Doctor of Veterinary Medicine (DVM)",
+    professionId: "veterinarian",
+    professionCategory: "Healthcare & Medicine",
+    professionEnclave: "healthcare_medicine"
+  },
+  {
+    userId: "USR-85100",
+    name: "Yaw Appiah",
+    headline: "Certified Structural Welder (AWS D1.1 / ASME IX) · TIG Exotic Alloys, Pipe & Ironwork",
+    avatar: "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=400&auto=format&fit=crop&q=80",
+    coverImage: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1200&auto=format&fit=crop&q=80",
+    location: "Washington DC-Baltimore Area · Verified Enclave",
+    about: "Certified Structural Welder (AWS D1.1 / ASME IX) specializing in TIG exotic alloys, high-pressure pipefitting, and structural ironwork.",
+    skills: ["TIG (GTAW)", "MIG (GMAW)", "Pipe 6G Position", "AWS D1.1 Code", "NDT Testing"],
+    clearanceLevel: "Master Tradesman & Site Superintendent (Level 2)",
+    fido2MfaVerified: true,
+    cryptoVerificationBadge: "0xED25519_YAW_APPIAH",
+    skillMatrixScore: 96.0,
+    connectionsCount: 490,
+    followersCount: 1340,
+    profileViews: 310,
+    postImpressions: 6400,
+    profession: "Certified Master Welder & Structural Fabricator",
+    professionId: "welder",
+    professionCategory: "Skilled Trades & Construction",
+    professionEnclave: "trades_construction"
+  },
   {
     userId: "USR-89400",
     name: "Kwesi Asiedu",
@@ -420,10 +560,11 @@ const INITIAL_POSTS: PostRecord[] = [
   }
 ]
 
-// In-Memory Database Store (with file persistence fallback for local dev)
+// In-Memory Database Store (with /tmp & file persistence for Vercel + local dev)
 class ConnectInDatabase {
   private data: ConnectInDatabaseSchema
   private dbFilePath: string
+  private tmpFilePath: string
 
   constructor() {
     const primaryDir = path.join(process.cwd(), "data", "db")
@@ -431,79 +572,138 @@ class ConnectInDatabase {
       if (!fs.existsSync(primaryDir)) fs.mkdirSync(primaryDir, { recursive: true })
     } catch {}
     this.dbFilePath = path.join(primaryDir, "connectin_db.json")
+    this.tmpFilePath = path.join(os.tmpdir(), "connectin_db.json")
     this.data = this.loadData()
+  }
+
+  private getReadableDbPaths(): string[] {
+    const paths: string[] = []
+    try {
+      if (fs.existsSync(this.tmpFilePath)) paths.push(this.tmpFilePath)
+    } catch {}
+    try {
+      if (fs.existsSync(this.dbFilePath)) paths.push(this.dbFilePath)
+    } catch {}
+    return paths
   }
 
   private loadData(): ConnectInDatabaseSchema {
     try {
-      if (fs.existsSync(this.dbFilePath)) {
-        const raw = fs.readFileSync(this.dbFilePath, "utf8")
-        const parsed = JSON.parse(raw)
-        if (parsed && Array.isArray(parsed.users)) {
-          const userMap = new Map<string, UserRecord>()
-          for (const u of INITIAL_USERS) userMap.set(u.email.toLowerCase(), u)
-          for (const u of (parsed.users || [])) userMap.set(u.email.toLowerCase(), u)
+      const userMap = new Map<string, UserRecord>()
+      const profileMap = new Map<string, UserProfileRecord>()
+      let sessions: SessionRecord[] = []
+      let otps: OTPRecord[] = []
+      let posts: PostRecord[] = INITIAL_POSTS
+      let activityLogs: any[] = []
 
-          const profileMap = new Map<string, UserProfileRecord>()
-          for (const p of INITIAL_PROFILES) profileMap.set(p.userId, p)
-          for (const p of (parsed.profiles || [])) profileMap.set(p.userId, p)
-
-          return {
-            users: Array.from(userMap.values()),
-            profiles: Array.from(profileMap.values()),
-            sessions: parsed.sessions || [],
-            otps: parsed.otps || [],
-            posts: parsed.posts && parsed.posts.length > 0 ? parsed.posts : INITIAL_POSTS
+      for (const filePath of this.getReadableDbPaths()) {
+        try {
+          const raw = fs.readFileSync(filePath, "utf8")
+          const parsed = JSON.parse(raw)
+          if (parsed && Array.isArray(parsed.users)) {
+            for (const u of parsed.users) {
+              if (u && u.id && !userMap.has(u.id)) userMap.set(u.id, u)
+            }
+            for (const p of (parsed.profiles || [])) {
+              if (p && p.userId && !profileMap.has(p.userId)) profileMap.set(p.userId, p)
+            }
+            if (sessions.length === 0 && Array.isArray(parsed.sessions)) sessions = parsed.sessions
+            if (otps.length === 0 && Array.isArray(parsed.otps)) otps = parsed.otps
+            if (Array.isArray(parsed.posts) && parsed.posts.length > 0) posts = parsed.posts
+            if (activityLogs.length === 0 && Array.isArray(parsed.activityLogs)) activityLogs = parsed.activityLogs
           }
-        }
+        } catch {}
       }
+
+      for (const u of INITIAL_USERS) {
+        if (!userMap.has(u.id)) userMap.set(u.id, u)
+      }
+      for (const p of INITIAL_PROFILES) {
+        if (!profileMap.has(p.userId)) profileMap.set(p.userId, p)
+      }
+
+      const result: any = {
+        users: Array.from(userMap.values()),
+        profiles: Array.from(profileMap.values()),
+        sessions,
+        otps,
+        posts,
+        activityLogs
+      }
+      return result
     } catch (e) {
       console.warn("Could not read persistent DB file, initializing fresh store:", e)
     }
 
     return {
-      users: INITIAL_USERS,
-      profiles: INITIAL_PROFILES,
+      users: [...INITIAL_USERS],
+      profiles: [...INITIAL_PROFILES],
       sessions: [],
       otps: [],
-      posts: INITIAL_POSTS
+      posts: [...INITIAL_POSTS]
     }
   }
 
   public refreshFromDisk() {
     try {
-      if (fs.existsSync(this.dbFilePath)) {
-        const raw = fs.readFileSync(this.dbFilePath, "utf8")
-        const parsed = JSON.parse(raw)
-        if (parsed && Array.isArray(parsed.users)) {
-          const userMap = new Map<string, UserRecord>()
-          for (const u of INITIAL_USERS) userMap.set(u.email.toLowerCase(), u)
-          for (const u of (parsed.users || [])) userMap.set(u.email.toLowerCase(), u)
-          for (const u of this.data.users) userMap.set(u.email.toLowerCase(), u)
+      const userMap = new Map<string, UserRecord>()
+      const profileMap = new Map<string, UserProfileRecord>()
 
-          const profileMap = new Map<string, UserProfileRecord>()
-          for (const p of INITIAL_PROFILES) profileMap.set(p.userId, p)
-          for (const p of (parsed.profiles || [])) profileMap.set(p.userId, p)
-          for (const p of this.data.profiles) profileMap.set(p.userId, p)
-
-          this.data.users = Array.from(userMap.values())
-          this.data.profiles = Array.from(profileMap.values())
-          if (Array.isArray(parsed.otps)) this.data.otps = parsed.otps
-          if (Array.isArray(parsed.sessions)) this.data.sessions = parsed.sessions
-          if (Array.isArray(parsed.posts) && parsed.posts.length > 0) this.data.posts = parsed.posts
-        }
+      // 1. Put current in-memory users FIRST (newest at index 0)
+      for (const u of this.data.users) {
+        if (u && u.id && !userMap.has(u.id)) userMap.set(u.id, u)
       }
+      for (const p of this.data.profiles) {
+        if (p && p.userId && !profileMap.has(p.userId)) profileMap.set(p.userId, p)
+      }
+
+      // 2. Merge persisted disk users (/tmp first, then project data/db)
+      for (const filePath of this.getReadableDbPaths()) {
+        try {
+          const raw = fs.readFileSync(filePath, "utf8")
+          const parsed = JSON.parse(raw)
+          if (parsed && Array.isArray(parsed.users)) {
+            for (const u of parsed.users) {
+              if (u && u.id && !userMap.has(u.id)) userMap.set(u.id, u)
+            }
+            for (const p of (parsed.profiles || [])) {
+              if (p && p.userId && !profileMap.has(p.userId)) profileMap.set(p.userId, p)
+            }
+            if (Array.isArray(parsed.activityLogs)) {
+              const existingLogs = (this.data as any).activityLogs || []
+              const logMap = new Map<string, any>()
+              ;[...existingLogs, ...parsed.activityLogs].forEach((l: any) => {
+                if (l && l.id && !logMap.has(l.id)) logMap.set(l.id, l)
+              })
+              ;(this.data as any).activityLogs = Array.from(logMap.values()).slice(0, 500)
+            }
+          }
+        } catch {}
+      }
+
+      // 3. Ensure anchor users exist at the end
+      for (const u of INITIAL_USERS) {
+        if (!userMap.has(u.id)) userMap.set(u.id, u)
+      }
+      for (const p of INITIAL_PROFILES) {
+        if (!profileMap.has(p.userId)) profileMap.set(p.userId, p)
+      }
+
+      this.data.users = Array.from(userMap.values())
+      this.data.profiles = Array.from(profileMap.values())
     } catch (e) {
-      // in serverless read-only mode, keep in-memory
+      // keep in-memory
     }
   }
 
   private saveData() {
+    const serialized = JSON.stringify(this.data, null, 2)
     try {
-      fs.writeFileSync(this.dbFilePath, JSON.stringify(this.data, null, 2), "utf8")
-    } catch (e) {
-      // In serverless read-only environments (Vercel lambdas), memory stays hot
-    }
+      fs.writeFileSync(this.tmpFilePath, serialized, "utf8")
+    } catch {}
+    try {
+      fs.writeFileSync(this.dbFilePath, serialized, "utf8")
+    } catch {}
   }
 
   // ─── USER & AUTH OPERATIONS ───
@@ -559,6 +759,140 @@ class ConnectInDatabase {
     return { user: newUser, profile: newProfile }
   }
 
+  public touchUserLogin(userId: string, authProvider?: string): void {
+    this.refreshFromDisk()
+    const idx = this.data.users.findIndex(u => u.id === userId)
+    if (idx === -1) return
+    const now = new Date().toISOString()
+    const user = this.data.users[idx]
+    user.updatedAt = now
+    ;(user as any).lastLoginAt = now
+    if (authProvider) {
+      ;(user as any).authProvider = authProvider
+    }
+    if (idx > 0) {
+      this.data.users.splice(idx, 1)
+      this.data.users.unshift(user)
+    }
+    this.saveData()
+  }
+
+  public mergeCloudUsers(items: any[]): void {
+    this.refreshFromDisk()
+    let modified = false
+
+    for (const item of items) {
+      if (!item || !item.email) continue
+      const cleanEmail = String(item.email).toLowerCase().trim()
+      const cleanName = String(item.name || cleanEmail.split("@")[0]).trim()
+
+      let existingUser = this.data.users.find(u => {
+        const p = this.data.profiles.find(pr => pr.userId === u.id)
+        const pName = (p?.name || "").toLowerCase().trim()
+        const targetName = cleanName.toLowerCase().trim()
+        if (pName && targetName && pName !== targetName) {
+          return false
+        }
+        if (item.id && u.id === item.id) return true
+        return u.email.toLowerCase().trim() === cleanEmail && (!pName || pName === targetName)
+      })
+
+      if (!existingUser) {
+        const newId = item.id && !this.findUserById(item.id)
+          ? item.id
+          : `USR-${Math.floor(10000 + Math.random() * 90000)}`
+        const newUser: any = {
+          id: newId,
+          email: cleanEmail,
+          phone: item.phone || "",
+          role: item.role || "personal",
+          status: item.status || "Active",
+          mfaEnabled: true,
+          mfaChannel: item.mfaChannel || "email",
+          createdAt: item.createdAt || new Date().toISOString(),
+          updatedAt: item.updatedAt || item.lastLoginAt || new Date().toISOString(),
+          lastLoginAt: item.lastLoginAt || item.updatedAt || new Date().toISOString(),
+          authProvider: item.authProvider,
+          countryName: item.countryName,
+          countryCode: item.countryCode,
+          isOutsideUS: item.isOutsideUS,
+          ipAddress: item.ipAddress
+        }
+        const newProfile: UserProfileRecord = {
+          userId: newId,
+          name: cleanName,
+          headline: item.headline || item.profession || "Verified ConnectIn Member",
+          avatar:
+            item.avatar ||
+            `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(cleanName + "-" + cleanEmail)}&backgroundColor=0a66c2`,
+          coverImage:
+            item.coverImage ||
+            "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80",
+          location: item.location || "Global Verified Member",
+          about: item.about || `Verified professional on ConnectIn.`,
+          skills: Array.isArray(item.skills) ? item.skills : [],
+          clearanceLevel: "Standard Verified Identity (Level 2)",
+          fido2MfaVerified: true,
+          cryptoVerificationBadge: `0xED25519_${newId}`,
+          skillMatrixScore: 92.0,
+          connectionsCount: 0,
+          followersCount: 0,
+          profileViews: 1,
+          postImpressions: 0,
+          profession: item.profession,
+          professionId: item.professionId,
+          professionCategory: item.professionCategory,
+          professionEnclave: item.professionEnclave
+        }
+        this.data.users.unshift(newUser)
+        this.data.profiles.unshift(newProfile)
+        modified = true
+      } else {
+        const uAny = existingUser as any
+        if (item.lastLoginAt && (!uAny.lastLoginAt || new Date(item.lastLoginAt) >= new Date(uAny.lastLoginAt))) {
+          uAny.lastLoginAt = item.lastLoginAt
+          uAny.updatedAt = item.updatedAt || item.lastLoginAt
+          modified = true
+        }
+        if (item.authProvider && !uAny.authProvider) {
+          uAny.authProvider = item.authProvider
+          modified = true
+        }
+        if (item.countryName) uAny.countryName = item.countryName
+        if (item.countryCode) uAny.countryCode = item.countryCode
+        if (item.isOutsideUS !== undefined) uAny.isOutsideUS = item.isOutsideUS
+        if (item.ipAddress) uAny.ipAddress = item.ipAddress
+
+        const existingProf = this.data.profiles.find(p => p.userId === existingUser!.id)
+        if (existingProf) {
+          if (item.location && (!existingProf.location || existingProf.location.includes("United States"))) {
+            existingProf.location = item.location
+            modified = true
+          }
+          if (item.headline && (!existingProf.headline || existingProf.headline.includes("ConnectIn Member"))) {
+            existingProf.headline = item.headline
+            modified = true
+          }
+          if (item.profession && !existingProf.profession) {
+            existingProf.profession = item.profession
+            existingProf.professionId = item.professionId
+            existingProf.professionCategory = item.professionCategory
+            existingProf.professionEnclave = item.professionEnclave
+            modified = true
+          }
+          if (item.avatar && (!existingProf.avatar || existingProf.avatar.includes("api.dicebear.com"))) {
+            existingProf.avatar = item.avatar
+            modified = true
+          }
+        }
+      }
+    }
+
+    if (modified) {
+      this.saveData()
+    }
+  }
+
   public updateUser(userId: string, updates: Partial<UserRecord>): boolean {
     const user = this.data.users.find(u => u.id === userId)
     if (!user) return false
@@ -577,28 +911,52 @@ class ConnectInDatabase {
   }
 
   public updateUserProfile(
-    identifier: { userId?: string; email?: string; name?: string },
+    identifier: { userId?: string; email?: string; name?: string; role?: UserRecord["role"] },
     updates: Partial<UserProfileRecord>
   ): UserProfileRecord | null {
     this.refreshFromDisk()
+    const cleanEmail = String(identifier.email || "").toLowerCase().trim()
+    const cleanName = String(updates.name || identifier.name || "").trim()
+
     let user: UserRecord | undefined
+    let profile: UserProfileRecord | undefined
+
     if (identifier.userId) {
-      user = this.findUserById(identifier.userId)
-    }
-    if (!user && identifier.email) {
-      user = this.findUserByEmail(identifier.email)
+      const candidateUser = this.findUserById(identifier.userId)
+      const candidateProfile = this.findProfileByUserId(identifier.userId)
+      if (
+        candidateUser &&
+        candidateProfile &&
+        (!cleanName || candidateProfile.name.toLowerCase().trim() === cleanName.toLowerCase())
+      ) {
+        user = candidateUser
+        profile = candidateProfile
+      }
     }
 
-    let profile = user
-      ? this.findProfileByUserId(user.id)
-      : identifier.userId
-      ? this.findProfileByUserId(identifier.userId)
-      : undefined
+    if (!profile && cleanEmail) {
+      const matchingUsers = this.data.users.filter(u => u.email.toLowerCase().trim() === cleanEmail)
+      for (const u of matchingUsers) {
+        const p = this.findProfileByUserId(u.id)
+        if (p && (!cleanName || p.name.toLowerCase().trim() === cleanName.toLowerCase())) {
+          user = u
+          profile = p
+          break
+        }
+      }
+    }
 
-    if (!profile && identifier.name) {
-      profile = this.data.profiles.find(
-        p => p.name.toLowerCase() === identifier.name!.toLowerCase()
+    if (!profile && cleanName) {
+      const p = this.data.profiles.find(
+        item => item.name.toLowerCase().trim() === cleanName.toLowerCase()
       )
+      if (p) {
+        const u = this.findUserById(p.userId)
+        if (!cleanEmail || (u && u.email.toLowerCase().trim() === cleanEmail)) {
+          user = u
+          profile = p
+        }
+      }
     }
 
     if (profile) {
@@ -615,8 +973,61 @@ class ConnectInDatabase {
         ...(updates.professionCategory ? { professionCategory: updates.professionCategory } : {}),
         ...(updates.professionEnclave ? { professionEnclave: updates.professionEnclave } : {})
       })
+      if (user) {
+        user.updatedAt = new Date().toISOString()
+      }
       this.saveData()
       return profile
+    }
+
+    // Auto-register new user & profile if not yet present in server store
+    if (cleanEmail || cleanName) {
+      const resolvedId =
+        identifier.userId && !this.findUserById(identifier.userId)
+          ? identifier.userId
+          : `USR-${Math.floor(10000 + Math.random() * 90000)}`
+      const now = new Date().toISOString()
+      const resolvedEmail = cleanEmail || `${cleanName.toLowerCase().replace(/\s+/g, ".")}@connectin.app`
+      const resolvedName = cleanName || resolvedEmail.split("@")[0]
+
+      const newUser: UserRecord = {
+        id: resolvedId,
+        email: resolvedEmail,
+        role: identifier.role || "personal",
+        status: "Active",
+        mfaEnabled: true,
+        mfaChannel: "email",
+        createdAt: now,
+        updatedAt: now
+      }
+
+      const newProfile: UserProfileRecord = {
+        userId: resolvedId,
+        name: resolvedName,
+        headline: updates.headline || updates.profession || "Verified ConnectIn Member",
+        avatar: updates.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(resolvedName + "-" + resolvedEmail)}&backgroundColor=0a66c2`,
+        coverImage: updates.coverImage || "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80",
+        location: updates.location || "United States · Verified",
+        about: updates.about || `Verified professional on ConnectIn.`,
+        skills: updates.skills || [],
+        clearanceLevel: "Standard Verified Identity (Level 2)",
+        fido2MfaVerified: true,
+        cryptoVerificationBadge: `0xED25519_${resolvedId}`,
+        skillMatrixScore: 92.0,
+        connectionsCount: 0,
+        followersCount: 0,
+        profileViews: 1,
+        postImpressions: 0,
+        profession: updates.profession,
+        professionId: updates.professionId,
+        professionCategory: updates.professionCategory,
+        professionEnclave: updates.professionEnclave
+      }
+
+      this.data.users.unshift(newUser)
+      this.data.profiles.unshift(newProfile)
+      this.saveData()
+      return newProfile
     }
 
     return null
@@ -815,7 +1226,20 @@ class ConnectInDatabase {
     return true
   }
 
-  // ─── ADMIN DIRECTORY ───
+  // ─── ADMIN DIRECTORY & ACTIVITY LOGS ───
+
+  public recordActivity(event: any) {
+    this.refreshFromDisk()
+    const logs = (this.data as any).activityLogs || []
+    ;(this.data as any).activityLogs = [event, ...logs.filter((e: any) => e.id !== event.id)].slice(0, 500)
+    this.saveData()
+    return event
+  }
+
+  public getActivityLogs(): any[] {
+    this.refreshFromDisk()
+    return (this.data as any).activityLogs || []
+  }
 
   public getAllUsersWithProfiles() {
     this.refreshFromDisk()

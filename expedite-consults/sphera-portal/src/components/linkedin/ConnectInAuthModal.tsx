@@ -14,8 +14,8 @@ import {
   ChevronUp
 } from "lucide-react"
 import { UserProfile } from "@/lib/linkedin-data"
-import { saveStoredUser, saveStoredSessionRoute, getVaultProfileForUser } from "@/lib/connectin-storage"
-import { createUniqueUserProfile, resolveDisplayName, isSuperAdminUser } from "@/lib/connectin-profile"
+import { saveStoredUser, saveStoredSessionRoute, getVaultProfileForUser, getDefaultPortraitForUser } from "@/lib/connectin-storage"
+import { createUniqueUserProfile, resolveDisplayName, isSuperAdminUser, isDedicatedAdminAccount, isExactKwesiUser, isForeignPersonaAvatar } from "@/lib/connectin-profile"
 import { findProfessionById, PROFESSION_ENCLAVES } from "@/lib/connectin-professions"
 import { ProfessionSearchPopout } from "@/components/linkedin/ProfessionSearchPopout"
 import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
@@ -220,6 +220,7 @@ export function ConnectInAuthModal({
   const [showPassword, setShowPassword] = useState(false)
 
   // Sign In State
+  const [signInName, setSignInName] = useState("")
   const [signInEmail, setSignInEmail] = useState("")
   const [signInPhone, setSignInPhone] = useState("")
   const [signInPassword, setSignInPassword] = useState("")
@@ -294,7 +295,7 @@ export function ConnectInAuthModal({
     if (channelOverride) setSignInChannel(channelOverride)
 
     let effectivePhone = signInPhone
-    if (!effectivePhone && (signInEmail.includes("kasiedu") || signInEmail.includes("asiedu"))) {
+    if (!effectivePhone && isExactKwesiUser({ name: signInName, email: signInEmail })) {
       effectivePhone = "+1 (240) 260-7898"
       setSignInPhone(effectivePhone)
     }
@@ -308,10 +309,13 @@ export function ConnectInAuthModal({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          name: signInName,
           email: signInEmail,
           phone: effectivePhone,
           password: signInPassword,
-          channel: effectiveChannel
+          channel: effectiveChannel,
+          professionId: signInProfessionId !== "auto_detect" ? signInProfessionId : undefined,
+          clientTimezone: typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : undefined
         })
       })
 
@@ -359,9 +363,10 @@ export function ConnectInAuthModal({
     setSuccessMessage("Verifying security code...")
 
     try {
-      const resolvedName = resolveDisplayName("", signInEmail)
+      const resolvedName = resolveDisplayName(signInName, signInEmail)
       const verifyTarget = activeTargetDisplay || (signInChannel === 'email' ? signInEmail : (signInPhone || signInEmail))
-      const vaultProfile = getVaultProfileForUser({ email: signInEmail, name: resolvedName })
+      const vaultProfile = getVaultProfileForUser({ email: signInEmail, name: signInName.trim() || resolvedName })
+      const finalName = signInName.trim() || vaultProfile?.name || resolvedName
       const explicitProf = signInProfessionId !== "auto_detect" ? findProfessionById(signInProfessionId) : null
       const vaultProf = (!explicitProf && vaultProfile?.professionId) ? findProfessionById(vaultProfile.professionId) : null
       const selectedProf = explicitProf || vaultProf
@@ -374,7 +379,7 @@ export function ConnectInAuthModal({
           email: signInEmail,
           phone: signInPhone,
           code,
-          name: vaultProfile?.name || resolvedName,
+          name: finalName,
           professionId: selectedProf?.id || vaultProfile?.professionId,
           profession: selectedProf?.title || vaultProfile?.profession,
           professionCategory: selectedProf?.categoryName || vaultProfile?.professionCategory,
@@ -392,27 +397,45 @@ export function ConnectInAuthModal({
       const effectiveProfessionId = selectedProf?.id || vaultProfile?.professionId || data.profile?.professionId
       const effectiveEnclave = selectedProf?.enclaveId || vaultProfile?.professionEnclave || data.profile?.professionEnclave
 
-      const baseProfile = data.profile || createUniqueUserProfile({
-        name: vaultProfile?.name || resolvedName,
+      const freshProfile = createUniqueUserProfile({
+        name: finalName,
         email: signInEmail,
         role: "personal",
         professionId: effectiveProfessionId,
         professionEnclave: effectiveEnclave
       })
 
+      const baseProfile = data.profile || freshProfile
+
       const generatedDomainProfile = selectedProf ? createUniqueUserProfile({
-        name: vaultProfile?.name || resolvedName,
+        name: finalName,
         email: signInEmail,
         professionId: selectedProf.id,
         professionEnclave: selectedProf.enclaveId,
         role: "personal"
       }) : null
 
-      // Always inject email — API's UserProfileRecord has no email field
+      const candidateAvatar = vaultProfile?.avatar || data.profile?.avatar || baseProfile.avatar
+      const safeAvatar = (candidateAvatar && !isForeignPersonaAvatar(candidateAvatar, { name: finalName, email: signInEmail }))
+        ? candidateAvatar
+        : getDefaultPortraitForUser({ name: finalName, email: signInEmail, professionEnclave: effectiveEnclave } as any)
+
+      const isAdminUser = isSuperAdminUser({ name: finalName, email: signInEmail })
+      const shouldOpenAdminPortal = isDedicatedAdminAccount({
+        name: finalName,
+        email: signInEmail,
+        professionId: signInProfessionId
+      })
+
+      // Always inject email, explicit name, and isolated avatar
       const profileToSave = {
         ...baseProfile,
         ...(vaultProfile || {}),
+        name: finalName,
         email: signInEmail,
+        avatar: safeAvatar,
+        role: isAdminUser ? "admin" : "personal",
+        roles: isAdminUser ? ["SUPER_ADMIN"] : ["NORMAL_USER"],
         id: data.profile?.userId || data.user?.id || data.profile?.id || vaultProfile?.id || baseProfile.id,
         ...(selectedProf && generatedDomainProfile ? {
           profession: selectedProf.title,
@@ -428,9 +451,7 @@ export function ConnectInAuthModal({
         } : {})
       }
 
-      const isAdminUser = isSuperAdminUser({ ...profileToSave, email: signInEmail })
-
-      const targetTab = isAdminUser ? 'adminiam' : 'home'
+      const targetTab = shouldOpenAdminPortal ? 'adminiam' : 'home'
 
       saveStoredUser(profileToSave)
       saveStoredSessionRoute(targetTab, 'personal')
@@ -439,7 +460,7 @@ export function ConnectInAuthModal({
       }
 
       setSuccessMessage(
-        isAdminUser
+        shouldOpenAdminPortal
           ? `✓ Authenticated as Administrator! Opening Control Center...`
           : `✓ Authenticated! Welcome, ${profileToSave.name}`
       )
@@ -571,17 +592,27 @@ export function ConnectInAuthModal({
         joinRole === 'creator' ? 'creator' :
         joinRole === 'seller' ? 'seller' : 'personal'
 
-      // Always inject email and registered profession
-      const profileToSave = {
-        ...(data.profile || createUniqueUserProfile({
-          name: resolvedName,
-          email: joinEmail,
-          role: joinRole,
-          professionId: selectedProf?.id || joinProfessionId,
-          professionEnclave: selectedProf?.enclaveId
-        })),
+      // Always inject email, explicit name, and isolated avatar
+      const freshJoinProfile = createUniqueUserProfile({
+        name: resolvedName,
         email: joinEmail,
-        id: data.profile?.userId || data.user?.id || data.profile?.id,
+        role: joinRole,
+        professionId: selectedProf?.id || joinProfessionId,
+        professionEnclave: selectedProf?.enclaveId
+      })
+      const joinCandidateAvatar = data.profile?.avatar || freshJoinProfile.avatar
+      const safeJoinAvatar = (joinCandidateAvatar && !isForeignPersonaAvatar(joinCandidateAvatar, { name: resolvedName, email: joinEmail }))
+        ? joinCandidateAvatar
+        : getDefaultPortraitForUser({ name: resolvedName, email: joinEmail, professionEnclave: selectedProf?.enclaveId || 'trades_construction' } as any)
+
+      const profileToSave = {
+        ...(data.profile || freshJoinProfile),
+        name: resolvedName,
+        email: joinEmail,
+        avatar: safeJoinAvatar,
+        role: (joinRole === 'admin' ? 'personal' : joinRole) as any,
+        roles: ["NORMAL_USER"],
+        id: data.profile?.userId || data.user?.id || data.profile?.id || freshJoinProfile.id,
         profession: data.profile?.profession || selectedProf?.title || 'Master Carpenter (Framing & Finish Joinery)',
         professionId: data.profile?.professionId || selectedProf?.id || joinProfessionId,
         professionCategory: data.profile?.professionCategory || selectedProf?.categoryName || 'Skilled Trades & Construction',
@@ -731,6 +762,18 @@ export function ConnectInAuthModal({
                   showAutoDetectOption={true}
                 />
 
+                {/* Full Name Input */}
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{t("full_name", "Full Name (for your profile & signature)")}</label>
+                  <input
+                    type="text"
+                    value={signInName}
+                    onChange={(e) => setSignInName(e.target.value)}
+                    placeholder="e.g. Michael Mensah (optional if already registered)"
+                    className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
+                  />
+                </div>
+
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{t("email_or_phone", "Email address or username")}</label>
                   <input
@@ -738,7 +781,7 @@ export function ConnectInAuthModal({
                     required
                     value={signInEmail}
                     onChange={(e) => setSignInEmail(e.target.value)}
-                    placeholder="e.g. asiedudanquah@gmail.com"
+                    placeholder="e.g. name@company.com"
                     className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
                   />
                 </div>
@@ -762,7 +805,7 @@ export function ConnectInAuthModal({
                       type="button"
                       onClick={() => {
                         setSignInChannel('sms')
-                        if (!signInPhone && (signInEmail.includes('kasiedu') || signInEmail.includes('asiedu'))) {
+                        if (!signInPhone && isExactKwesiUser({ name: signInName, email: signInEmail })) {
                           setSignInPhone('+1 (240) 260-7898')
                         }
                       }}
@@ -778,7 +821,7 @@ export function ConnectInAuthModal({
                       type="button"
                       onClick={() => {
                         setSignInChannel('call')
-                        if (!signInPhone && (signInEmail.includes('kasiedu') || signInEmail.includes('asiedu'))) {
+                        if (!signInPhone && isExactKwesiUser({ name: signInName, email: signInEmail })) {
                           setSignInPhone('+1 (240) 260-7898')
                         }
                       }}
@@ -1502,6 +1545,7 @@ export function ConnectInAuthModal({
         isOpen={isGoogleModalOpen}
         onClose={() => setIsGoogleModalOpen(false)}
         initialEmail={signInEmail || joinEmail}
+        initialName={signInName || `${joinFirstName} ${joinLastName}`.trim()}
         professionId={signInProfessionId !== "auto_detect" ? signInProfessionId : undefined}
         onSuccess={(user) => {
           onLoginSuccess(user, user.role === 'admin' ? 'adminiam' : 'home', 'personal')
@@ -1513,6 +1557,7 @@ export function ConnectInAuthModal({
         isOpen={isMicrosoftModalOpen}
         onClose={() => setIsMicrosoftModalOpen(false)}
         initialEmail={signInEmail || joinEmail}
+        initialName={signInName || `${joinFirstName} ${joinLastName}`.trim()}
         professionId={signInProfessionId !== "auto_detect" ? signInProfessionId : undefined}
         onSuccess={(user) => {
           onLoginSuccess(user, user.role === 'admin' ? 'adminiam' : 'home', 'personal')

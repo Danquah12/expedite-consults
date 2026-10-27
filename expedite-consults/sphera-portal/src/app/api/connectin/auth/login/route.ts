@@ -3,28 +3,42 @@ import { connectinDb } from "@/lib/connectin-db"
 import { sendConnectInOTPEmail } from "@/lib/connectin-email"
 import { sendConnectInSMS, formatE164Phone } from "@/lib/connectin-sms"
 import { createDynamicOTP } from "@/lib/connectin-otp"
+import { resolveRequestGeoLocation, upsertCloudUser, appendCloudTelemetry } from "@/lib/connectin-cloud-sync"
+import { findProfessionById } from "@/lib/connectin-professions"
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { email, password, channel = "email" } = body
+    const { email, password, channel = "email", clientTimezone } = body
 
     if (!email && !body.phone) {
       return NextResponse.json({ error: "Email or phone number is required." }, { status: 400 })
     }
 
+    const geo = resolveRequestGeoLocation(req, clientTimezone, body.location)
     const cleanTarget = (email || body.phone || "").toLowerCase().trim()
     const isPhoneInput = !cleanTarget.includes("@") && /^[+\d\s().-]+$/.test(cleanTarget)
     const effectiveChannel: "email" | "sms" | "call" = channel === "call" ? "call" : (channel === "sms" || isPhoneInput ? "sms" : "email")
+    const incomingName = typeof body.name === "string" ? body.name.trim() : ""
+    const profDef = body.professionId && body.professionId !== "auto_detect" ? findProfessionById(body.professionId) : undefined
 
-    let user = isPhoneInput
-      ? connectinDb.findUserByPhone(cleanTarget) || connectinDb.findUserByEmail(cleanTarget)
-      : connectinDb.findUserByEmail(cleanTarget)
+    const candidateUsers = isPhoneInput
+      ? connectinDb.getUsers().filter(u => u.phone === cleanTarget || u.email.toLowerCase().trim() === cleanTarget)
+      : connectinDb.getUsers().filter(u => u.email.toLowerCase().trim() === cleanTarget)
+
+    let user = candidateUsers.find(u => {
+      const p = connectinDb.findProfileByUserId(u.id)
+      if (!p) return false
+      if (incomingName) {
+        return p.name.toLowerCase().trim() === incomingName.toLowerCase()
+      }
+      return true
+    })
 
     if (!user) {
-      const defaultName = isPhoneInput
+      const defaultName = incomingName || (isPhoneInput
         ? "ConnectIn Member"
-        : (cleanTarget.split("@")[0] || "Member").replace(/[._-]/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase())
+        : (cleanTarget.split("@")[0] || "Member").replace(/[._-]/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase()))
 
       const created = connectinDb.createUser(
         {
@@ -37,23 +51,96 @@ export async function POST(req: NextRequest) {
         },
         {
           name: defaultName,
-          headline: "Verified Professional · ConnectIn Member",
+          headline: profDef?.defaultHeadline || "Verified Professional · ConnectIn Member",
           avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(defaultName + "-" + cleanTarget)}&backgroundColor=0a66c2`,
           coverImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80",
-          location: "United States · Cryptographically Verified",
+          location: geo.locationLabel,
           about: "Verified member on ConnectIn Zero-Trust Network.",
-          skills: [],
+          skills: profDef?.typicalSkills || [],
           clearanceLevel: "Standard Verified Identity (Level 2)",
           fido2MfaVerified: true,
           cryptoVerificationBadge: "0xED25519_SESSION_INITIALIZED",
-          skillMatrixScore: 50.0,
+          skillMatrixScore: 88.0,
           connectionsCount: 0,
           followersCount: 0,
           profileViews: 0,
-          postImpressions: 0
+          postImpressions: 0,
+          profession: profDef?.title,
+          professionId: profDef?.id,
+          professionCategory: profDef?.categoryName,
+          professionEnclave: profDef?.enclaveId
         }
       )
       user = created.user
+    }
+
+    const activeProfile = connectinDb.findProfileByUserId(user.id)
+    if (activeProfile) {
+      connectinDb.touchUserLogin(user.id, `${effectiveChannel.toUpperCase()} 2FA`)
+      const nowIso = new Date().toISOString()
+      const timeStr = new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
+      await Promise.all([
+        upsertCloudUser({
+          id: user.id,
+          email: user.email,
+          phone: user.phone || "",
+          name: activeProfile.name,
+          role: user.role,
+          status: user.status,
+          headline: activeProfile.headline,
+          avatar: activeProfile.avatar,
+          coverImage: activeProfile.coverImage,
+          location: activeProfile.location && !activeProfile.location.includes("United States") ? activeProfile.location : geo.locationLabel,
+          countryName: geo.countryName,
+          countryCode: geo.countryCode,
+          isOutsideUS: geo.isOutsideUS,
+          ipAddress: geo.ipAddress,
+          profession: activeProfile.profession,
+          professionId: activeProfile.professionId,
+          professionCategory: activeProfile.professionCategory,
+          professionEnclave: activeProfile.professionEnclave,
+          authProvider: `${effectiveChannel.toUpperCase()} 2FA`,
+          lastLoginAt: nowIso,
+          createdAt: user.createdAt,
+          updatedAt: nowIso
+        }),
+        appendCloudTelemetry({
+          activityLog: {
+            id: `act_signin_${user.id}_${Date.now().toString().slice(-5)}`,
+            userId: user.id,
+            userName: activeProfile.name,
+            userEmail: user.email,
+            userAvatar: activeProfile.avatar,
+            userHeadline: activeProfile.headline,
+            actionType: "USER_LOGIN",
+            actionLabel: `Signed In via ${effectiveChannel.toUpperCase()} 2FA (${geo.locationLabel})`,
+            category: "auth",
+            targetTitle: `${effectiveChannel.toUpperCase()} 2FA · ${geo.locationLabel}`,
+            details: `Authenticated sign-in from ${geo.locationLabel} (IP: ${geo.ipAddress})`,
+            timestamp: `${timeStr} · ${geo.countryName}`,
+            createdAtIso: nowIso
+          },
+          auditLog: {
+            id: `LOG-${Date.now().toString().slice(-6)}`,
+            adminEmail: user.email,
+            action: "USER_ACTIVATED",
+            targetEntity: `${activeProfile.name} (${user.email})`,
+            reason: `Member sign-in via ${effectiveChannel.toUpperCase()} 2FA from ${geo.locationLabel}`,
+            ipAddress: `${geo.ipAddress} (${geo.locationLabel})`,
+            timestamp: `${timeStr}`,
+            status: "Success"
+          },
+          socEvent: {
+            id: `SOC-LIVE-${Date.now().toString().slice(-5)}`,
+            severity: "Low",
+            eventType: `Member Sign-In (${geo.countryName})`,
+            sourceIp: `${geo.ipAddress} (${geo.locationLabel})`,
+            targetAccount: `${activeProfile.name} (${user.email})`,
+            mitigationAction: `Verified 2FA Dispatch & Session Created`,
+            timestamp: "Just Now"
+          }
+        })
+      ])
     }
 
     if (user.status === "Suspended" || user.status === "Banned") {

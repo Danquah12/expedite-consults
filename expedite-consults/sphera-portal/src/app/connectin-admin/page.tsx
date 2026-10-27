@@ -14,22 +14,34 @@ export default function ConnectInAdminPage() {
   const router = useRouter()
   const [userData, setUserData] = useState<UserProfile>(defaultUser)
   const [isMounted, setIsMounted] = useState(false)
+  const [isAdminVerified, setIsAdminVerified] = useState(false)
 
   useEffect(() => {
     setIsMounted(true)
     const stored = getExplicitStoredUser()
     if (stored) {
       setUserData(stored)
+      if (isSuperAdminUser(stored)) {
+        setIsAdminVerified(true)
+      } else {
+        setIsAdminVerified(false)
+        router.replace("/connectin")
+      }
+    } else {
+      setIsAdminVerified(false)
+      router.replace("/connectin")
     }
-  }, [])
+  }, [router])
 
-  const isAdminUser = isSuperAdminUser(userData)
+  if (!isMounted) {
+    return null
+  }
 
   return (
     <div className="min-h-screen bg-[#F4F2EE] text-zinc-900 antialiased dark:bg-[#000000] dark:text-zinc-100 selection:bg-[#0A66C2] selection:text-white">
       {/* Top Navbar */}
       <LinkedInNavbar
-        activeTab="adminiam"
+        activeTab={isAdminVerified ? "adminiam" : "home"}
         onSelectTab={(tab) => {
           if (tab === 'home' || tab === 'network' || tab === 'jobs' || tab === 'marketplace' || tab === 'messaging') {
             router.push(`/connectin?tab=${tab}`)
@@ -42,7 +54,7 @@ export default function ConnectInAdminPage() {
 
       {/* Main Admin Content */}
       <main className="mx-auto max-w-7xl px-3 sm:px-6 pt-5">
-        {isMounted && !isAdminUser ? (
+        {!isAdminVerified ? (
           /* ─── STRICT ZERO-TRUST 403 ACCESS DENIED GUARD ─── */
           <div className="max-w-2xl mx-auto my-16 bg-white dark:bg-zinc-900 rounded-3xl border border-red-200 dark:border-red-900/60 p-8 sm:p-12 text-center shadow-2xl space-y-6 animate-in fade-in zoom-in-95">
             <div className="h-20 w-20 rounded-3xl bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 flex items-center justify-center mx-auto text-3xl shadow-inner">

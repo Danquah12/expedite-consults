@@ -21,7 +21,8 @@ export async function GET(req: NextRequest) {
         if (user) {
           const profile = connectinDb.findProfileByUserId(user.id)
           const activeSessions = connectinDb.getUserSessions(user.id)
-          const isSuperAdmin = isSuperAdminUser(user) || isSuperAdminUser(profile)
+          const isSuperAdmin = isSuperAdminUser({ name: profile?.name, email: user.email })
+          const effectiveRole = isSuperAdmin ? "admin" : (user.role === "admin" ? "personal" : user.role)
 
           return NextResponse.json({
             authenticated: true,
@@ -29,12 +30,12 @@ export async function GET(req: NextRequest) {
               id: user.id,
               email: user.email,
               phone: user.phone,
-              role: isSuperAdmin ? "admin" : user.role,
+              role: effectiveRole,
               status: user.status
             },
             profile: profile ? {
               ...profile,
-              role: isSuperAdmin ? "admin" : user.role,
+              role: effectiveRole,
               roles: isSuperAdmin ? ["SUPER_ADMIN", "Platform IAM Architect", "Root Authority"] : ["NORMAL_USER"]
             } : profile,
             session: {

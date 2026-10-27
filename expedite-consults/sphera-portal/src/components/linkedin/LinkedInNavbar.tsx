@@ -43,11 +43,12 @@ import {
   Key,
   ExternalLink
 } from "lucide-react"
-import { UserProfile, SuggestedConnection } from "@/lib/linkedin-data"
+import { UserProfile, SuggestedConnection, getEnclaveConnectedMembers } from "@/lib/linkedin-data"
 import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
 import { isSuperAdminUser } from "@/lib/connectin-profile"
 import { getCategorizedMoreMenu, getEnclaveSearchPlaceholder, getEnclaveModules } from "@/lib/connectin-navbar-data"
-import { findEnclaveById } from "@/lib/connectin-professions"
+import { findEnclaveById, ALL_PROFESSIONS, PROFESSION_ENCLAVES } from "@/lib/connectin-professions"
+import { loadStoredAdminUsers } from "@/lib/connectin-storage"
 import { ThemeColorSwitcher } from "@/components/theme/ThemeColorSwitcher"
 import { LanguageSwitcher } from "@/components/language/LanguageSwitcher"
 import { useLanguage } from "@/context/LanguageContext"
@@ -68,6 +69,7 @@ interface LinkedInNavbarProps {
   onSelectWorkspace?: (ws: 'personal' | 'enterprise' | 'creator' | 'seller') => void
   suggestedPeople?: SuggestedConnection[]
   onToggleConnect?: (personId: string) => void
+  onSelectMember?: (member: any) => void
   onOpenVideoGuide?: () => void
 }
 
@@ -87,6 +89,7 @@ export function LinkedInNavbar({
   onSelectWorkspace,
   suggestedPeople = [],
   onToggleConnect,
+  onSelectMember,
   onOpenVideoGuide
 }: LinkedInNavbarProps) {
   const [isMeOpen, setIsMeOpen] = useState(false)
@@ -96,6 +99,15 @@ export function LinkedInNavbar({
   const [isWorkspaceMenuOpen, setIsWorkspaceMenuOpen] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [isSearchFocused, setIsSearchFocused] = useState(false)
+  const [searchDropdownTab, setSearchDropdownTab] = useState<'all' | 'members' | 'modules' | 'skills'>('all')
+  const [liveDirectoryUsers, setLiveDirectoryUsers] = useState<Array<{
+    id: string
+    name: string
+    headline: string
+    avatar: string
+    capabilities: string[]
+    role: string
+  }>>([])
   const [connectedIds, setConnectedIds] = useState<Set<string>>(new Set())
   const { t } = useLanguage()
 
@@ -218,6 +230,59 @@ export function LinkedInNavbar({
 
   const categorizedMoreMenu = getCategorizedMoreMenu(user.professionEnclave, isAdminUser, user.profession)
 
+  // Load all registered accounts from localStorage vault + /api/connectin/users
+  useEffect(() => {
+    const loadAllUsers = () => {
+      try {
+        const localAccounts = loadStoredAdminUsers().map((acc, idx) => ({
+          id: acc.id || `vault_${idx}_${acc.email}`,
+          name: acc.name || acc.email.split("@")[0],
+          headline: acc.headline || `${acc.organization || "Verified Member"} · ConnectIn`,
+          avatar: acc.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(acc.name || acc.email)}&backgroundColor=0a66c2`,
+          capabilities: [
+            acc.organization || "Professional",
+            acc.verificationLevel || "Verified Member"
+          ],
+          role: acc.roles?.[0] || "Member"
+        }))
+        setLiveDirectoryUsers(prev => {
+          const combined = [...localAccounts, ...prev]
+          return combined.filter((item, index, self) =>
+            index === self.findIndex(t => t.name.toLowerCase() === item.name.toLowerCase())
+          )
+        })
+      } catch {
+        // ignore storage errors
+      }
+    }
+
+    loadAllUsers()
+
+    fetch("/api/connectin/users")
+      .then(res => res.json())
+      .then(data => {
+        if (data?.users && Array.isArray(data.users)) {
+          const apiUsers = data.users.map((u: any) => ({
+            id: u.id || `api_${u.email || u.name}`,
+            name: u.name || "ConnectIn Member",
+            headline: u.headline || `${u.profession || "Professional"} · ${u.company || "ConnectIn"}`,
+            avatar: u.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.name || "Member")}&backgroundColor=0a66c2`,
+            capabilities: Array.isArray(u.capabilities) && u.capabilities.length > 0
+              ? u.capabilities
+              : [u.profession || "Enterprise", u.clearance || "Verified"].filter(Boolean),
+            role: u.role || u.profession || "Member"
+          }))
+          setLiveDirectoryUsers(prev => {
+            const combined = [...apiUsers, ...prev]
+            return combined.filter((item, index, self) =>
+              index === self.findIndex(t => t.name.toLowerCase() === item.name.toLowerCase())
+            )
+          })
+        }
+      })
+      .catch(() => {})
+  }, [isSearchFocused])
+
   // Complete directory profiles (merging suggested with verified seed accounts)
   const defaultDirectory = [
     {
@@ -278,8 +343,21 @@ export function LinkedInNavbar({
     }
   ]
 
-  // Combined searchable member pool
+  // All enclave members across every profession enclave
+  const allEnclaveMembers = PROFESSION_ENCLAVES.flatMap(enclave =>
+    getEnclaveConnectedMembers(enclave.id).map(m => ({
+      id: m.id,
+      name: m.name,
+      headline: m.headline,
+      avatar: m.avatar,
+      capabilities: m.capabilities || [enclave.label],
+      role: enclave.shortLabel
+    }))
+  )
+
+  // Combined searchable member pool across live registered accounts, suggested people, seed directory, and all enclaves
   const allSearchableMembers = [
+    ...liveDirectoryUsers,
     ...suggestedPeople.map(p => ({
       id: p.id,
       name: p.name,
@@ -288,31 +366,92 @@ export function LinkedInNavbar({
       capabilities: p.capabilities || [],
       role: "Member"
     })),
-    ...defaultDirectory
+    ...defaultDirectory,
+    ...allEnclaveMembers
   ].filter((item, index, self) =>
     index === self.findIndex(t => t.name.toLowerCase() === item.name.toLowerCase())
-  ).filter(p => p.name.toLowerCase() !== (user?.name || "").toLowerCase())
+  )
+
+  // Core Platform Modules & Connected Ecosystem Apps + All Enclave Modules
+  const CORE_PLATFORM_MODULES = [
+    { id: "home", label: "Home Feed & Command Stream", icon: "🏠", badge: "Core", desc: "Primary professional feed, announcements, and enclave updates", url: undefined as string | undefined },
+    { id: "network", label: "My Network & Member Directory", icon: "👥", badge: "Core", desc: "Discover and connect with verified professionals across all enclaves", url: undefined },
+    { id: "jobs", label: "Jobs & Talent Board", icon: "💼", badge: "Careers", desc: "Cleared roles, enterprise positions, and AI-matched opportunities", url: undefined },
+    { id: "careersuite", label: "Resume Prep & CareerSuite AI", icon: "📄", badge: "AI", desc: "Upload resume, ATS optimizer, salary intelligence, and interview simulator", url: undefined },
+    { id: "messaging", label: "Encrypted Messaging", icon: "💬", badge: "Comms", desc: "Direct messages and end-to-end encrypted professional threads", url: undefined },
+    { id: "vibecomms", label: "VibeChat & Video Conferencing", icon: "📹", badge: "Live", desc: "HD video meetings, screen sharing, and team war rooms", url: undefined },
+    { id: "pulserooms", label: "Pulse Audio Rooms", icon: "🎙️", badge: "Live Audio", desc: "Live interactive audio stages, townhalls, and expert panels", url: undefined },
+    { id: "marketplace", label: "Enterprise Marketplace & Bazaar", icon: "🛍️", badge: "Commerce", desc: "Hardware, SaaS licenses, consulting templates, and enterprise gear", url: undefined },
+    { id: "learning", label: "Learning Academy & Certifications", icon: "🎓", badge: "CEU/CPE", desc: "Accredited courses, certifications, and hands-on skill tracks", url: undefined },
+    { id: "media", label: "ConnectIn Media & Broadcasts", icon: "📺", badge: "Video", desc: "Keynotes, technical briefings, and industry documentaries", url: undefined },
+    { id: "wallet", label: "Wallet, Escrow & Invoicing", icon: "💳", badge: "Finance", desc: "Manage milestone escrow, payouts, invoices, and treasury", url: undefined },
+    { id: "company", label: "Companies & Organizations", icon: "🏢", badge: "Directory", desc: "Explore verified enterprise organizations and defense contractors", url: undefined },
+    { id: "guilds", label: "Professional Guilds & Working Groups", icon: "🛡️", badge: "Community", desc: "Join specialized domain guilds and standards committees", url: undefined },
+    { id: "bounties", label: "Bounties & Paid Challenges", icon: "🎯", badge: "Rewards", desc: "Bug bounties, engineering challenges, and rapid task rewards", url: undefined },
+    { id: "events", label: "Conferences & Events", icon: "📅", badge: "Events", desc: "Summits, workshops, expos, and networking meetups", url: undefined },
+    { id: "procurement", label: "RFPs & Enterprise Procurement", icon: "📋", badge: "Contracts", desc: "Government and enterprise RFPs, bids, and vendor solicitations", url: undefined },
+    { id: "launchpad", label: "Startup Launchpad & Deal Flow", icon: "🚀", badge: "Venture", desc: "Pitch decks, founder incubators, and venture capital matching", url: undefined },
+    { id: "mentorship", label: "Executive Mentorship & Coaching", icon: "🧭", badge: "Growth", desc: "1-on-1 mentorship with industry fellows and senior leaders", url: undefined },
+    { id: "trustcenter", label: "Trust Center & Compliance Vault", icon: "🔒", badge: "Security", desc: "SOC 2, FedRAMP, ISO 27001 attestations, and clearance verification", url: undefined },
+    { id: "labs", label: "R&D Papers, Patents & Labs", icon: "🧪", badge: "Research", desc: "Peer-reviewed technical papers, benchmarks, and datasets", url: undefined },
+    { id: "profile", label: "My Profile & Portfolio", icon: "👤", badge: "Account", desc: "View and customize your professional profile, skills, and resume", url: undefined },
+    { id: "security", label: "Account Security & IAM Settings", icon: "🔑", badge: "Security", desc: "Passkeys, MFA, active sessions, and privacy controls", url: undefined },
+    { id: "ext-noctis-ai", label: "Ask Noctis AI", icon: "🌌", badge: "Live App", desc: "Autonomous Cyber & Enterprise Intelligence Assistant (dstrike.app/noctis)", url: "https://dstrike.app/noctis" },
+    { id: "ext-pdfadore", label: "PDFAdore Document Suite", icon: "📑", badge: "Live App", desc: "Sign, convert, redact, and analyze PDF documents", url: "https://www.pdfadore.com" },
+    { id: "ext-launchpad", label: "Expedite Launchpad Hub", icon: "⚡", badge: "Live App", desc: "Unified Expedite Consults enterprise application portal", url: "https://launchpad.expediteconsults.com" },
+  ]
+
+  const allEnclaveModules = [
+    ... getEnclaveModules(user.professionEnclave, isAdminUser),
+    ...PROFESSION_ENCLAVES.flatMap(e => getEnclaveModules(e.id, isAdminUser))
+  ]
+
+  const ALL_MODULES = [...CORE_PLATFORM_MODULES, ...allEnclaveModules].filter(
+    (mod, idx, self) =>
+      idx === self.findIndex(m => m.id === mod.id || m.label.toLowerCase() === mod.label.toLowerCase())
+  )
+
+  // Multi-word token matcher so users can search any combination of words
+  const matchesSearchTokens = (fields: (string | undefined)[], query: string) => {
+    const q = query.toLowerCase().trim()
+    if (!q) return true
+    const tokens = q.split(/\s+/).filter(Boolean)
+    const haystack = fields.filter(Boolean).join(" ").toLowerCase()
+    return tokens.every(token => haystack.includes(token))
+  }
 
   // Filter members by query
   const matchingMembers = (searchQuery.trim()
     ? allSearchableMembers.filter(p =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
-        p.headline.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
-        p.capabilities?.some(c => c.toLowerCase().includes(searchQuery.toLowerCase().trim()))
+        matchesSearchTokens([p.name, p.headline, p.role, ...(p.capabilities || [])], searchQuery)
       )
-    : allSearchableMembers
-  ).slice(0, 4)
+    : allSearchableMembers.filter(p => p.name.toLowerCase() !== (user?.name || "").toLowerCase())
+  ).slice(0, searchDropdownTab === 'members' ? 12 : 5)
 
-  // Module & Hub fast shortcuts
-  const ALL_MODULES = getEnclaveModules(user.professionEnclave, isAdminUser)
-
-  const matchingModules = searchQuery.trim()
+  // Filter modules by query (also show top modules when browsing)
+  const matchingModules = (searchQuery.trim()
     ? ALL_MODULES.filter(m =>
-        m.label.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
-        m.desc.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
-        m.id.toLowerCase().includes(searchQuery.toLowerCase().trim())
-      ).slice(0, 3)
-    : []
+        matchesSearchTokens([m.label, m.desc, m.id, m.badge], searchQuery)
+      )
+    : ALL_MODULES
+  ).slice(0, searchDropdownTab === 'modules' ? 12 : 5)
+
+  // Filter skills, professions & role tools from ALL_PROFESSIONS
+  const matchingSkillsAndRoles = (searchQuery.trim()
+    ? ALL_PROFESSIONS.filter(prof =>
+        matchesSearchTokens(
+          [
+            prof.title,
+            prof.categoryLabel,
+            prof.enclaveId,
+            ...prof.typicalSkills,
+            ...prof.tools.map(t => `${t.label} ${t.desc}`)
+          ],
+          searchQuery
+        )
+      )
+    : ALL_PROFESSIONS.filter(p => p.enclaveId === user.professionEnclave || p.title === user.profession)
+  ).slice(0, searchDropdownTab === 'skills' ? 12 : 5)
 
   const handleConnectClick = (e: React.MouseEvent, personId: string) => {
     e.stopPropagation()
@@ -333,7 +472,7 @@ export function LinkedInNavbar({
             <input
               autoFocus
               type="text"
-              placeholder={t("search_placeholder", "Search members, skills, hubs...")}
+              placeholder={t("search_placeholder", "Search members, modules, skills...")}
               value={searchQuery}
               onChange={(e) => {
                 onSearchChange(e.target.value)
@@ -400,7 +539,7 @@ export function LinkedInNavbar({
               />
               <input
                 type="text"
-                placeholder={t("search_placeholder", "Search...")}
+                placeholder={t("search_placeholder", "Search members, modules, skills...")}
                 value={searchQuery}
                 onChange={(e) => {
                   onSearchChange(e.target.value)
@@ -426,34 +565,75 @@ export function LinkedInNavbar({
                 </button>
               )}
             </div>
+          </div>
 
-            {/* Live Autocomplete Popover Dropdown */}
-            {isSearchFocused && (
-              <>
-                <div
-                  className="fixed inset-0 z-40 bg-black/10 backdrop-blur-2xs"
-                  onClick={() => setIsSearchFocused(false)}
-                />
-                <div className="fixed sm:absolute left-2 right-2 sm:left-0 sm:right-auto top-14 sm:top-12 z-50 w-auto sm:w-[480px] lg:w-[540px] max-w-[calc(100vw-16px)] rounded-2xl border border-zinc-200 bg-white p-3 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 space-y-2.5 max-h-[80vh] overflow-y-auto">
-                  {/* Header info */}
-                  <div className="flex items-center justify-between border-b border-zinc-100 pb-2 dark:border-zinc-800">
-                    <span className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1">
-                      <Sparkles className="h-3 w-3 text-[#0A66C2]" />
-                      {searchQuery.trim() ? `Results for "${searchQuery}"` : "Suggested Members & Discovery"}
+          {/* Live Autocomplete Popover Dropdown (Works on both Desktop and Mobile Search) */}
+          {isSearchFocused && (
+            <>
+              <div
+                className="fixed inset-0 z-40 bg-black/10 backdrop-blur-2xs"
+                onClick={() => setIsSearchFocused(false)}
+              />
+              <div className="fixed sm:absolute left-2 right-2 sm:left-0 sm:right-auto top-14 sm:top-12 z-50 w-auto sm:w-[520px] lg:w-[580px] max-w-[calc(100vw-16px)] rounded-2xl border border-zinc-200 bg-white p-3 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 space-y-2.5 max-h-[82vh] overflow-y-auto">
+                {/* Header info & Category Filter Pills */}
+                <div className="space-y-2 border-b border-zinc-100 pb-2.5 dark:border-zinc-800">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
+                      <Sparkles className="h-3.5 w-3.5 text-[#0A66C2]" />
+                      {searchQuery.trim()
+                        ? `Universal Search Results for "${searchQuery}"`
+                        : "Search Members, Platform Modules, Skills & Professions"}
                     </span>
                     <button
+                      type="button"
                       onClick={() => setIsSearchFocused(false)}
-                      className="text-[10px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+                      className="text-[10px] font-semibold text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 px-1.5 py-0.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800"
                     >
                       Close ✕
                     </button>
                   </div>
 
-                  {/* Matching People Section */}
+                  {/* Category Filter Pills */}
+                  <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                    {[
+                      { id: 'all', label: 'All Results' },
+                      { id: 'members', label: `Members (${matchingMembers.length})` },
+                      { id: 'modules', label: `Modules & Hubs (${matchingModules.length})` },
+                      { id: 'skills', label: `Skills & Roles (${matchingSkillsAndRoles.length})` }
+                    ].map((tab) => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setSearchDropdownTab(tab.id as any)}
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition-all shrink-0 cursor-pointer ${
+                          searchDropdownTab === tab.id
+                            ? "bg-[#0A66C2] text-white shadow-xs"
+                            : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Matching People & Members Section */}
+                {(searchDropdownTab === 'all' || searchDropdownTab === 'members') && (
                   <div className="space-y-1.5">
-                    <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400">
-                      People &amp; Profiles
-                    </p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400">
+                        People &amp; Verified Members
+                      </p>
+                      {searchDropdownTab === 'all' && matchingMembers.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setSearchDropdownTab('members')}
+                          className="text-[10px] font-bold text-[#0A66C2] hover:underline"
+                        >
+                          View More →
+                        </button>
+                      )}
+                    </div>
                     {matchingMembers.length > 0 ? (
                       <div className="space-y-1">
                         {matchingMembers.map((member) => {
@@ -462,8 +642,13 @@ export function LinkedInNavbar({
                             <div
                               key={member.id}
                               onClick={() => {
-                                onSelectTab('network')
+                                if (onSelectMember) {
+                                  onSelectMember(member)
+                                } else {
+                                  onSelectTab('profile')
+                                }
                                 setIsSearchFocused(false)
+                                setIsMobileSearchOpen(false)
                               }}
                               className="group flex items-center justify-between gap-2 rounded-xl p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                             >
@@ -474,21 +659,38 @@ export function LinkedInNavbar({
                                   className="h-8 w-8 rounded-full object-cover shrink-0 border border-zinc-200 dark:border-zinc-700"
                                 />
                                 <div className="min-w-0">
-                                  <div className="flex items-center gap-1">
+                                  <div className="flex items-center gap-1.5">
                                     <p className="font-bold text-xs text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2] truncate">
                                       {member.name}
                                     </p>
                                     <ShieldCheck className="h-3 w-3 text-[#0A66C2] shrink-0" />
+                                    {member.role && (
+                                      <span className="text-[9px] font-semibold px-1.5 py-0.2 rounded bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 shrink-0">
+                                        {member.role}
+                                      </span>
+                                    )}
                                   </div>
                                   <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
                                     {member.headline}
                                   </p>
+                                  {member.capabilities && member.capabilities.length > 0 && (
+                                    <div className="flex flex-wrap gap-1 mt-0.5">
+                                      {member.capabilities.slice(0, 3).map((cap) => (
+                                        <span
+                                          key={cap}
+                                          className="text-[9px] px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 font-medium"
+                                        >
+                                          {cap}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                               <button
                                 type="button"
                                 onClick={(e) => handleConnectClick(e, member.id)}
-                                className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold shrink-0 transition-all ${
+                                className={`rounded-full px-2.5 py-1 text-[10px] font-bold shrink-0 transition-all ${
                                   isConnected
                                     ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
                                     : "bg-[#0A66C2] text-white hover:bg-[#004182]"
@@ -501,18 +703,31 @@ export function LinkedInNavbar({
                         })}
                       </div>
                     ) : (
-                      <div className="p-3 text-center text-xs text-zinc-500 dark:text-zinc-400">
-                        {t("no_members_found", `No members matching "${searchQuery}". Try Omnisearch below.`)}
+                      <div className="p-2.5 text-center text-xs text-zinc-500 dark:text-zinc-400">
+                        No members matching &ldquo;{searchQuery}&rdquo;
                       </div>
                     )}
                   </div>
+                )}
 
-                  {/* Matching Modules Section */}
-                  {matchingModules.length > 0 && (
-                    <div className="space-y-1.5 border-t border-zinc-100 pt-2 dark:border-zinc-800">
+                {/* Matching Modules & Platform Hubs Section */}
+                {(searchDropdownTab === 'all' || searchDropdownTab === 'modules') && (
+                  <div className="space-y-1.5 border-t border-zinc-100 pt-2 dark:border-zinc-800">
+                    <div className="flex items-center justify-between">
                       <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400">
-                        {t("hubs_and_modules", "Platform Hubs & Modules")}
+                        {t("hubs_and_modules", "Platform Hubs, Modules & Connected Apps")}
                       </p>
+                      {searchDropdownTab === 'all' && matchingModules.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setSearchDropdownTab('modules')}
+                          className="text-[10px] font-bold text-[#0A66C2] hover:underline"
+                        >
+                          View All Modules →
+                        </button>
+                      )}
+                    </div>
+                    {matchingModules.length > 0 ? (
                       <div className="space-y-1">
                         {matchingModules.map((mod) => (
                           <button
@@ -525,10 +740,11 @@ export function LinkedInNavbar({
                                 onSelectTab(mod.id)
                               }
                               setIsSearchFocused(false)
+                              setIsMobileSearchOpen(false)
                             }}
                             className="w-full flex items-center justify-between rounded-xl p-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors group cursor-pointer"
                           >
-                            <div className="flex items-center gap-2 min-w-0">
+                            <div className="flex items-center gap-2.5 min-w-0">
                               <span className="text-base shrink-0">{mod.icon}</span>
                               <div className="min-w-0">
                                 <div className="flex items-center gap-1.5">
@@ -547,36 +763,119 @@ export function LinkedInNavbar({
                             {mod.url ? (
                               <ExternalLink className="h-3.5 w-3.5 text-zinc-400 group-hover:text-[#0A66C2] shrink-0" />
                             ) : (
-                              <span className="text-xs text-zinc-400 group-hover:text-[#0A66C2] shrink-0">→</span>
+                              <span className="text-xs text-zinc-400 group-hover:text-[#0A66C2] shrink-0">Open →</span>
                             )}
                           </button>
                         ))}
                       </div>
-                    </div>
-                  )}
-
-                  {/* Omnisearch Action CTA */}
-                  <div className="border-t border-zinc-100 pt-2 dark:border-zinc-800">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onOpenUniversalSearch && onOpenUniversalSearch()
-                        setIsSearchFocused(false)
-                      }}
-                      className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 p-2 text-center text-xs font-bold text-white shadow-xs hover:from-blue-700 hover:to-indigo-700 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                    >
-                      <Search className="h-3.5 w-3.5" />
-                      <span>
-                        {searchQuery.trim()
-                          ? t("search_all_results", `Search all results for "${searchQuery}" in Omnisearch →`).replace("{query}", searchQuery)
-                          : t("search_open_omnisearch", "Open Universal Omnisearch Directory →")}
-                      </span>
-                    </button>
+                    ) : (
+                      <div className="p-2.5 text-center text-xs text-zinc-500 dark:text-zinc-400">
+                        No modules matching &ldquo;{searchQuery}&rdquo;
+                      </div>
+                    )}
                   </div>
+                )}
+
+                {/* Matching Skills, Professions & Role Tools Section */}
+                {(searchDropdownTab === 'all' || searchDropdownTab === 'skills') && (
+                  <div className="space-y-1.5 border-t border-zinc-100 pt-2 dark:border-zinc-800">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400">
+                        Skills, Professions &amp; Role Workbenches
+                      </p>
+                      {searchDropdownTab === 'all' && matchingSkillsAndRoles.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setSearchDropdownTab('skills')}
+                          className="text-[10px] font-bold text-[#0A66C2] hover:underline"
+                        >
+                          View All Skills →
+                        </button>
+                      )}
+                    </div>
+                    {matchingSkillsAndRoles.length > 0 ? (
+                      <div className="space-y-1">
+                        {matchingSkillsAndRoles.map((prof) => (
+                          <div
+                            key={prof.id}
+                            onClick={() => {
+                              if (onSwitchEnclave && prof.enclaveId !== user.professionEnclave) {
+                                onSwitchEnclave(prof.enclaveId, prof.title)
+                              } else {
+                                onSelectTab('jobs')
+                              }
+                              setIsSearchFocused(false)
+                              setIsMobileSearchOpen(false)
+                            }}
+                            className="group flex items-start justify-between gap-2 rounded-xl p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                          >
+                            <div className="flex items-start gap-2.5 min-w-0">
+                              <span className="text-base shrink-0 mt-0.5">{prof.icon}</span>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <p className="font-bold text-xs text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2] truncate">
+                                    {prof.title}
+                                  </p>
+                                  <span className="text-[9px] font-mono font-semibold px-1.5 py-0.2 rounded bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 shrink-0">
+                                    {prof.categoryLabel}
+                                  </span>
+                                </div>
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                  {prof.typicalSkills.slice(0, 4).map((skill) => (
+                                    <span
+                                      key={skill}
+                                      className="text-[9px] px-1.5 py-0.2 rounded-md bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 font-medium"
+                                    >
+                                      ✓ {skill}
+                                    </span>
+                                  ))}
+                                  {prof.tools.slice(0, 2).map((tool) => (
+                                    <span
+                                      key={tool.id}
+                                      className="text-[9px] px-1.5 py-0.2 rounded-md bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 font-medium"
+                                    >
+                                      {tool.icon} {tool.label}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                            <span className="text-[10px] font-bold text-[#0A66C2] shrink-0 self-center">
+                              Switch Role →
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-2.5 text-center text-xs text-zinc-500 dark:text-zinc-400">
+                        No skills or professions matching &ldquo;{searchQuery}&rdquo;
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Omnisearch Action CTA */}
+                <div className="border-t border-zinc-100 pt-2 dark:border-zinc-800">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onOpenUniversalSearch && onOpenUniversalSearch()
+                      setIsSearchFocused(false)
+                      setIsMobileSearchOpen(false)
+                    }}
+                    className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 p-2 text-center text-xs font-bold text-white shadow-xs hover:from-blue-700 hover:to-indigo-700 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <Search className="h-3.5 w-3.5" />
+                    <span>
+                      {searchQuery.trim()
+                        ? t("search_all_results", `Search all results for "${searchQuery}" in Omnisearch →`).replace("{query}", searchQuery)
+                        : t("search_open_omnisearch", "Open Full-Screen Universal Omnisearch Directory →")}
+                    </span>
+                  </button>
                 </div>
-              </>
-            )}
-          </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Center Primary Navigation Tabs (Visible on lg: screens and above) */}
@@ -654,18 +953,20 @@ export function LinkedInNavbar({
           {/* Subtle Divider for desktop */}
           <div className="hidden lg:block h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-0.5" />
 
-          {/* Vibe AI Global Assistant Launcher Button - LinkedIn Premium Styling */}
-          <button
-            onClick={onOpenAIAssistant}
+          {/* Ask Noctis Global Assistant & Platform Launcher Button (https://dstrike.app/noctis) */}
+          <a
+            href="https://dstrike.app/noctis"
+            target="_blank"
+            rel="noopener noreferrer"
             className="group flex items-center gap-1 sm:gap-1.5 rounded-full bg-[#FBF5E9] hover:bg-[#F5EAD2] dark:bg-amber-950/30 dark:hover:bg-amber-950/50 text-[#7A4B00] dark:text-amber-200 border border-[#C88A24]/40 dark:border-amber-700/50 px-2 sm:px-2.5 py-1 text-xs font-semibold shadow-2xs transition-all shrink-0 cursor-pointer"
-            title="Ask Vibe AI — Interactive Q&A, Campus Intelligence & Answers"
+            title="Ask Noctis — https://dstrike.app/noctis"
           >
             <Sparkles className="h-3.5 w-3.5 text-[#C88A24] dark:text-amber-300 transition-transform group-hover:scale-110 shrink-0" />
-            <span className="hidden sm:inline text-xs font-semibold">Vibe</span>
+            <span className="hidden sm:inline text-xs font-semibold">Ask Noctis</span>
             <span className="hidden xl:inline rounded bg-amber-200/60 dark:bg-amber-900/60 px-1.5 py-0.2 text-[9px] font-bold text-[#5C3800] dark:text-amber-100">
               Q&amp;A
             </span>
-          </button>
+          </a>
 
           {/* "Me" Profile Menu Dropdown — Always Visible with Label */}
           <div ref={meMenuRef} className="relative shrink-0">

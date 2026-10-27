@@ -2,7 +2,7 @@
 
 import React, { useState } from "react"
 import { Play, ShieldCheck, Share2, Copy, Check, Mail } from "lucide-react"
-import { resolveUserProfilePicture, isDefaultPlaceholderAvatar } from "@/lib/connectin-storage"
+import { resolveUserProfilePicture, isDefaultPlaceholderAvatar, generatePersonalSignatureAvatar, isForeignPersonaAvatar } from "@/lib/connectin-storage"
 
 export interface VideoShareBannerProps {
   /** Sharer's profile picture (circular on the left inside the ConnectLn Logo Card) */
@@ -64,12 +64,12 @@ export function VideoShareBanner({
   const [isPlayingInline, setIsPlayingInline] = useState(false)
   const [copiedLink, setCopiedLink] = useState(false)
 
+  const resolvedAuthor = authorName || userName || "ConnectIn Member"
   const candidateAvatar = avatarUrl || userAvatar
   const resolvedAvatar =
-    candidateAvatar && !isDefaultPlaceholderAvatar(candidateAvatar)
+    candidateAvatar && !isDefaultPlaceholderAvatar(candidateAvatar) && !isForeignPersonaAvatar(candidateAvatar, { name: resolvedAuthor })
       ? candidateAvatar
-      : resolveUserProfilePicture(null, candidateAvatar)
-  const resolvedAuthor = authorName || userName || "Kwesi Asiedu"
+      : resolveUserProfilePicture({ name: resolvedAuthor, avatar: candidateAvatar } as any)
   const resolvedHeadline = authorHeadline || userHeadline
   const resolvedPlayHandler = onPlayClick || onWatchClick
 
@@ -209,7 +209,7 @@ export function VideoShareBanner({
                 src={resolvedAvatar}
                 alt={resolvedAuthor}
                 onError={(e) => {
-                  e.currentTarget.src = "/brand/kwesi-avatar.png"
+                  e.currentTarget.src = generatePersonalSignatureAvatar({ name: resolvedAuthor })
                 }}
                 className="h-full w-full object-cover object-center"
               />

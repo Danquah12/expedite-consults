@@ -49,6 +49,8 @@ interface ResumeUploadModalProps {
     updateSkills?: boolean
     extractedSkills?: string[]
     appendMode?: boolean
+    fileName?: string
+    candidateName?: string
   }) => void
   currentHeadline?: string
   currentEnclave?: string
@@ -262,17 +264,27 @@ export function ResumeUploadModal({
   // Apply to profile
   const handleApply = () => {
     if (editableExperiences.length === 0) return
-    onApplyExperience(editableExperiences, {
-      updateHeadline,
-      newHeadline: parsedData?.headline || editableExperiences[0]?.role,
-      updateAbout,
-      newAbout: parsedData?.about,
-      updateSkills,
-      extractedSkills: parsedData?.skills || editableExperiences.flatMap(e => e.skills || []),
-      appendMode
-    })
-    handleReset()
-    onClose()
+    const resolvedFileName =
+      selectedFile?.name ||
+      (activeUploadTab === 'preset'
+        ? `${DEMO_RESUME_PRESETS.find(p => p.id === selectedPresetId)?.title || 'Verified_Enclave'}_Resume.pdf`
+        : 'Pasted_Resume_Profile.pdf')
+    try {
+      onApplyExperience(editableExperiences, {
+        updateHeadline,
+        newHeadline: parsedData?.headline || editableExperiences[0]?.role,
+        updateAbout,
+        newAbout: parsedData?.about,
+        updateSkills,
+        extractedSkills: parsedData?.skills || editableExperiences.flatMap(e => e.skills || []),
+        appendMode,
+        fileName: resolvedFileName,
+        candidateName: parsedData?.candidateName
+      })
+    } finally {
+      handleReset()
+      onClose()
+    }
   }
 
   return (

@@ -24,15 +24,15 @@ export interface UserInitParams {
 }
 
 export function resolveDisplayName(rawName?: string, email?: string): string {
-  if (rawName && rawName.trim().length > 0) {
+  if (rawName && rawName.trim().length > 0 && rawName.trim().toLowerCase() !== "connectin member" && rawName.trim().toLowerCase() !== "member") {
     return rawName.trim()
   }
   const cleanEmail = (email || "").toLowerCase().trim()
-  if (cleanEmail === "asiedudanquah@gmail.com" || cleanEmail.includes("asiedudanquah")) {
+  if (cleanEmail === "asiedudanquah@gmail.com") {
     return "Kwesi Asiedu"
   }
-  if (cleanEmail === "kasiedu@expedite-consults.com" || cleanEmail === "kasiedu@expediteconsults.com" || cleanEmail.includes("kasiedu")) {
-    return "Emmanuel Asiedu"
+  if (cleanEmail === "kasiedu@expedite-consults.com" || cleanEmail === "kasiedu@expediteconsults.com") {
+    return "Kwesi Asiedu"
   }
   const prefix = cleanEmail.split("@")[0] || ""
   if (prefix.includes(".") || prefix.includes("_") || prefix.includes("-")) {
@@ -41,66 +41,220 @@ export function resolveDisplayName(rawName?: string, email?: string): string {
   return prefix ? prefix.charAt(0).toUpperCase() + prefix.slice(1) : "ConnectIn Member"
 }
 
+const DEMO_STOCK_AVATARS = [
+  "/brand/kwesi-avatar.png",
+  "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e",
+  "https://images.unsplash.com/photo-1534528741775-53994a69daeb",
+  "https://images.unsplash.com/photo-1594824813571-638f02614d3f",
+  "https://images.unsplash.com/photo-1559839734-2b71ea197ec2",
+  "https://images.unsplash.com/photo-1540569014015-19a7be504e3a",
+  "https://images.unsplash.com/photo-1581092160607-ee22621dd758",
+  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
+  "https://images.unsplash.com/photo-1500648767791-00dcc994a43e",
+  "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2",
+  "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7",
+  "https://images.unsplash.com/photo-1560250097-0b93528c311a",
+  "https://images.unsplash.com/photo-1583394838336-acd977736f90",
+  "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e",
+  "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6",
+  "https://images.unsplash.com/photo-1544717305-2782549b5136"
+]
+
+export function isExactKwesiUser(user?: { name?: string; email?: string } | null): boolean {
+  if (!user) return false
+  const cleanEmail = String(user.email || "").toLowerCase().trim()
+  const cleanName = String(user.name || "").toLowerCase().trim()
+  const isKwesiEmail =
+    cleanEmail === "kasiedu@expedite-consults.com" ||
+    cleanEmail === "kasiedu@expediteconsults.com" ||
+    cleanEmail === "asiedudanquah@gmail.com"
+  const isKwesiName =
+    cleanName === "kwesi asiedu" ||
+    cleanName === "emmanuel asiedu" ||
+    cleanName.startsWith("kwesi asiedu ") ||
+    cleanName.startsWith("emmanuel asiedu ")
+  if (cleanName && !isKwesiName) {
+    return false
+  }
+  if (cleanEmail && !isKwesiEmail && !cleanEmail.startsWith("kwesi.asiedu@")) {
+    return false
+  }
+  return isKwesiEmail || isKwesiName
+}
+
+export function getKnownDemoPersonaAvatar(user?: { name?: string; email?: string } | null): string | null {
+  if (!user) return null
+  if (isExactKwesiUser(user)) {
+    return "/brand/kwesi-avatar.png"
+  }
+  const cleanName = String(user.name || "").toLowerCase().trim()
+  const cleanEmail = String(user.email || "").toLowerCase().trim()
+
+  if (cleanName === "commander robert hayes" || cleanEmail === "commander.robert.hayes@connectin.com" || cleanEmail === "sec-admin@connectin.internal") {
+    return "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80"
+  }
+  if (cleanName === "alex taylor" || cleanEmail === "alex.taylor@connectin.com") {
+    return "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80"
+  }
+  if (cleanName.startsWith("elena rostova") || cleanEmail === "elena.nurse@connectin.com") {
+    return "https://images.unsplash.com/photo-1594824813571-638f02614d3f?w=400&auto=format&fit=crop&q=80"
+  }
+  if (cleanName.includes("angela vance") || cleanEmail === "angela.vance@connectin.com") {
+    return "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&auto=format&fit=crop&q=80"
+  }
+  if (cleanName === "david miller" || cleanEmail === "david.miller@connectin.com" || cleanName === "yaw appiah" || cleanEmail === "yaw.appiah@connectin.com") {
+    return "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=400&auto=format&fit=crop&q=80"
+  }
+  if (cleanName.startsWith("marcus miller") || cleanEmail === "marcus.mechanic@connectin.com") {
+    return "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=400&auto=format&fit=crop&q=80"
+  }
+  if (cleanName.startsWith("tariq al-mansoor") || cleanEmail === "tariq.cyber@connectin.com" || cleanName === "marcus vance" || cleanEmail === "marcus.vance@defense-systems.com") {
+    return "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80"
+  }
+  if (cleanName.startsWith("james kowalski") || cleanEmail === "james.kowalski@connectin.com" || cleanName.startsWith("david k") || cleanEmail === "david.k@expedite-labs.io") {
+    return "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80"
+  }
+  if (cleanName.startsWith("sarah chen") || cleanEmail === "sarah.chen@defense-studio.tv" || cleanName === "rhoda mensah" || cleanEmail === "rhoda.mensah@expedite-consults.com") {
+    return "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80"
+  }
+  return null
+}
+
+export function generatePersonalSignatureAvatar(user?: { name?: string; email?: string; professionEnclave?: string } | null): string {
+  const rawName = resolveDisplayName(user?.name, user?.email)
+  const cleanEmail = String(user?.email || "").toLowerCase().trim()
+  const parts = rawName.replace(/[^a-zA-Z0-9\s-]/g, "").trim().split(/\s+/).filter(Boolean)
+  const initials =
+    parts.length >= 2
+      ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
+      : (parts[0] ? parts[0].slice(0, 2).toUpperCase() : "CL")
+
+  const seedStr = `${rawName.toLowerCase()}::${cleanEmail}`
+  let hash = 0
+  for (let i = 0; i < seedStr.length; i++) {
+    hash = (hash * 31 + seedStr.charCodeAt(i)) >>> 0
+  }
+
+  const palettes = [
+    ["#0A66C2", "#003B73", "#38BDF8"],
+    ["#0F766E", "#115E59", "#2DD4BF"],
+    ["#4338CA", "#312E81", "#818CF8"],
+    ["#B45309", "#78350F", "#FBBF24"],
+    ["#15803D", "#14532D", "#4ADE80"],
+    ["#BE123C", "#881337", "#FB7185"],
+    ["#6D28D9", "#4C1D95", "#C084FC"],
+    ["#0369A1", "#0C4A6E", "#7DD3FC"],
+    ["#C2410C", "#7C2D12", "#FB923C"],
+    ["#1D4ED8", "#1E3A8A", "#60A5FA"],
+    ["#047857", "#064E3B", "#34D399"],
+    ["#334155", "#0F172A", "#94A3B8"]
+  ]
+  const [c1, c2, accent] = palettes[hash % palettes.length]
+  const safeDisplay = rawName.replace(/[<>&"']/g, "").slice(0, 20)
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+    <defs>
+      <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="${c1}" />
+        <stop offset="100%" stop-color="${c2}" />
+      </linearGradient>
+    </defs>
+    <rect width="400" height="400" rx="200" fill="url(#bg)" />
+    <circle cx="200" cy="200" r="184" fill="none" stroke="${accent}" stroke-width="5" stroke-opacity="0.55" />
+    <text x="200" y="218" text-anchor="middle" fill="#FFFFFF" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="138" font-weight="800" letter-spacing="2">${initials}</text>
+    <rect x="50" y="286" width="300" height="46" rx="23" fill="#0F172A" fill-opacity="0.76" stroke="${accent}" stroke-width="1.5" stroke-opacity="0.6" />
+    <text x="200" y="315" text-anchor="middle" fill="#F8FAFC" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="21" font-weight="700" letter-spacing="0.5">${safeDisplay}</text>
+  </svg>`
+
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
+}
+
+export function isForeignPersonaAvatar(url?: string | null, user?: { name?: string; email?: string } | null): boolean {
+  if (!url || typeof url !== "string" || !url.trim()) return true
+  const trimmed = url.trim()
+  if (trimmed.includes("api.dicebear.com")) return true
+
+  // Check if this URL is one of the hardcoded demo/enclave stock portraits
+  const matchesDemoStock = DEMO_STOCK_AVATARS.some(stock => trimmed.includes(stock))
+  if (matchesDemoStock) {
+    const allowedDemoAvatar = getKnownDemoPersonaAvatar(user)
+    if (!allowedDemoAvatar || !trimmed.includes(allowedDemoAvatar.split("?")[0])) {
+      return true
+    }
+  }
+
+  // If it's a generated SVG signature avatar, verify it contains the current user's name
+  if (trimmed.startsWith("data:image/svg+xml")) {
+    const expectedName = resolveDisplayName(user?.name, user?.email).replace(/[<>&"']/g, "").slice(0, 20)
+    if (expectedName && !decodeURIComponent(trimmed).includes(expectedName)) {
+      return true
+    }
+  }
+
+  return false
+}
+
+const DEDICATED_ADMIN_EMAILS = new Set([
+  "sec-admin@connectin.internal",
+  "commander.robert.hayes@connectin.com",
+  "admin@connectin.com",
+  "admin@expedite-consults.com",
+  "admin@expediteconsults.com"
+])
+
+const KNOWN_ADMIN_NAMES = new Set([
+  "kwesi asiedu",
+  "emmanuel asiedu",
+  "commander robert hayes",
+  "robert hayes",
+  "platform admin",
+  "system administrator",
+  "security administrator"
+])
+
 export function isSuperAdminUser(userOrEmailOrName?: any): boolean {
   if (!userOrEmailOrName) return false
 
   if (typeof userOrEmailOrName === "string") {
     const s = userOrEmailOrName.toLowerCase().trim()
     return (
-      s === "sec-admin@connectin.internal" ||
-      s.includes("admin") ||
-      s.includes("commander") ||
-      s.includes("robert.hayes") ||
-      s.includes("robert hayes") ||
-      s.includes("kasiedu") ||
-      s.includes("asiedudanquah") ||
-      s.includes("alex.taylor") ||
-      s.includes("alex taylor") ||
-      s.includes("kwesi asiedu") ||
-      s.includes("emmanuel asiedu")
+      DEDICATED_ADMIN_EMAILS.has(s) ||
+      KNOWN_ADMIN_NAMES.has(s) ||
+      s === "kasiedu@expedite-consults.com" ||
+      s === "kasiedu@expediteconsults.com"
     )
   }
 
-  const role = String(userOrEmailOrName.role || "").toLowerCase()
-  const roles: string[] = Array.isArray(userOrEmailOrName.roles)
-    ? userOrEmailOrName.roles.map((r: any) => String(r).toUpperCase())
-    : []
   const email = String(userOrEmailOrName.email || "").toLowerCase().trim()
-  const name = String(userOrEmailOrName.name || "").toLowerCase().trim()
+  const rawName = String(userOrEmailOrName.name || "").toLowerCase().trim()
+  const cleanName = rawName && !rawName.includes("@") ? rawName : ""
 
-  if (
-    role === "admin" ||
-    roles.includes("SUPER_ADMIN") ||
-    roles.includes("PLATFORM_ADMIN") ||
-    roles.includes("FOUNDER & CSO") ||
-    roles.some((r) => r.includes("ADMIN"))
-  ) {
+  // If the user explicitly signed in with a personal name that is NOT one of the known admin names,
+  // they are signing in as a normal/new user — never treat them as an admin even if sharing an email for 2FA testing.
+  if (cleanName && !KNOWN_ADMIN_NAMES.has(cleanName)) {
+    return false
+  }
+
+  if (DEDICATED_ADMIN_EMAILS.has(email)) {
     return true
   }
 
-  if (
-    email === "sec-admin@connectin.internal" ||
-    email.includes("admin") ||
-    email.includes("commander") ||
-    email.includes("robert.hayes") ||
-    email.includes("kasiedu") ||
-    email.includes("asiedudanquah") ||
-    email.includes("alex.taylor")
-  ) {
+  if (isExactKwesiUser({ name: cleanName, email })) {
     return true
   }
 
-  if (
-    name.includes("commander") ||
-    name.includes("robert hayes") ||
-    name.includes("kwesi asiedu") ||
-    name.includes("emmanuel asiedu") ||
-    name.includes("alex taylor")
-  ) {
+  if (cleanName && KNOWN_ADMIN_NAMES.has(cleanName) && !email) {
     return true
   }
 
   return false
+}
+
+export function isDedicatedAdminAccount(user?: any): boolean {
+  if (!isSuperAdminUser(user)) return false
+  const email = String(user?.email || "").toLowerCase().trim()
+  const profId = String(user?.professionId || "").toLowerCase().trim()
+  return DEDICATED_ADMIN_EMAILS.has(email) || profId === "platform_admin"
 }
 
 /**
@@ -112,8 +266,8 @@ export function createUniqueUserProfile(params: UserInitParams): UserProfile {
   const cleanName = resolveDisplayName(params.name, cleanEmail)
   
   const isAdmin = isSuperAdminUser({ ...params, name: cleanName, email: cleanEmail })
-  const role = isAdmin ? "admin" : (params.role || "personal")
-  const userId = params.id || `usr_${cleanEmail.replace(/[^a-z0-9]/g, "_")}`
+  const role = isAdmin ? "admin" : (params.role === "admin" ? "personal" : (params.role || "personal"))
+  const userId = params.id || `usr_${cleanEmail.replace(/[^a-z0-9]/g, "_")}_${cleanName.toLowerCase().replace(/[^a-z0-9]/g, "_")}`
 
   // 1. Determine Profession & Enclave intelligently
   let professionId = params.professionId
@@ -293,60 +447,15 @@ export function createUniqueUserProfile(params: UserInitParams): UserProfile {
     }
   }
 
-  // 3. Official & Verified Avatars (Distinct per logged-in user & profession enclave)
+  // 3. Official & Verified Avatars (Strictly isolated per user — never assign another person's photo to a different user)
   let avatarUrl = params.avatar
-  if (!avatarUrl || avatarUrl.includes("api.dicebear.com")) {
-    if (cleanName.includes("Commander Robert Hayes") || cleanEmail.includes("robert.hayes") || cleanEmail === "sec-admin@connectin.internal") {
-      avatarUrl = "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80"
-    } else if (cleanName.includes("Kwesi Asiedu") || cleanName.includes("Emmanuel Asiedu") || cleanEmail.includes("kasiedu") || cleanEmail.includes("asiedudanquah")) {
-      avatarUrl = "/brand/kwesi-avatar.png"
-    } else if (cleanName.includes("Alex Taylor") || cleanEmail.includes("alex.taylor")) {
-      avatarUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80"
-    } else if (cleanName.includes("Elena Rostova") || cleanEmail.includes("elena.nurse")) {
-      avatarUrl = "https://images.unsplash.com/photo-1594824813571-638f02614d3f?w=400&auto=format&fit=crop&q=80" // Trauma nurse in scrubs
-    } else if (cleanName.includes("Angela Vance") || cleanEmail.includes("angela.vance")) {
-      avatarUrl = "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&auto=format&fit=crop&q=80" // Attending surgeon in white coat
-    } else if (cleanName.includes("David Miller") || cleanEmail.includes("david.miller") || cleanName.toLowerCase().includes("yaw appiah")) {
-      avatarUrl = "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=400&auto=format&fit=crop&q=80" // Master craftsman / structural welder
-    } else if (cleanName.includes("Marcus Miller") || cleanEmail.includes("marcus.mechanic")) {
-      avatarUrl = "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=400&auto=format&fit=crop&q=80" // Diagnostic master auto tech
-    } else if (cleanName.includes("Tariq Al-Mansoor") || cleanEmail.includes("tariq.cyber")) {
-      avatarUrl = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80" // Red team security lead
-    } else if (cleanName.includes("James Kowalski") || cleanEmail.includes("kowalski")) {
-      avatarUrl = "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80" // SCADA OT engineer
-    } else if (enclaveId === "trades_construction") {
-      avatarUrl = "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=400&auto=format&fit=crop&q=80"
-    } else if (enclaveId === "automotive_mechanics") {
-      avatarUrl = "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=400&auto=format&fit=crop&q=80"
-    } else if (enclaveId === "healthcare_medicine") {
-      avatarUrl = professionId?.includes("nurse")
-        ? "https://images.unsplash.com/photo-1594824813571-638f02614d3f?w=400&auto=format&fit=crop&q=80"
-        : "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&auto=format&fit=crop&q=80"
-    } else if (enclaveId === "tech_cybersecurity") {
-      avatarUrl = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80"
-    } else if (enclaveId === "tech_software") {
-      avatarUrl = "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&auto=format&fit=crop&q=80"
-    } else if (enclaveId === "law_gov_defense") {
-      avatarUrl = "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&auto=format&fit=crop&q=80"
-    } else if (enclaveId === "finance_accounting") {
-      avatarUrl = "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80"
-    } else if (enclaveId === "agriculture_natural_resources") {
-      avatarUrl = "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80"
-    } else if (enclaveId === "personal_services_wellness") {
-      avatarUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80"
-    } else if (enclaveId === "culinary_hospitality_events") {
-      avatarUrl = "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=400&auto=format&fit=crop&q=80"
-    } else if (enclaveId === "commerce_small_business") {
-      avatarUrl = "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=400&auto=format&fit=crop&q=80"
-    } else if (enclaveId === "creative_media_arts") {
-      avatarUrl = "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&auto=format&fit=crop&q=80"
-    } else if (enclaveId === "education_workforce") {
-      avatarUrl = "https://images.unsplash.com/photo-1544717305-2782549b5136?w=400&auto=format&fit=crop&q=80"
-    } else if (enclaveId === "community_civic_security") {
-      avatarUrl = "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80"
-    } else {
-      avatarUrl = "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=400&auto=format&fit=crop&q=80"
-    }
+  if (!avatarUrl || isForeignPersonaAvatar(avatarUrl, { name: cleanName, email: cleanEmail })) {
+    const knownDemoAvatar = getKnownDemoPersonaAvatar({ name: cleanName, email: cleanEmail })
+    avatarUrl = knownDemoAvatar || generatePersonalSignatureAvatar({
+      name: cleanName,
+      email: cleanEmail,
+      professionEnclave: enclaveId
+    })
   }
 
   // 4. Headline
@@ -364,13 +473,7 @@ export function createUniqueUserProfile(params: UserInitParams): UserProfile {
   let skills = params.skills || []
   let featured = []
 
-  const isKwesiUser =
-    cleanName.toLowerCase().includes("kwesi") ||
-    cleanEmail.includes("asiedudanquah") ||
-    cleanEmail.includes("kasiedu") ||
-    searchTarget.includes("syneren") ||
-    searchTarget.includes("pentagon") ||
-    searchTarget.includes("dtsa")
+  const isKwesiUser = isExactKwesiUser({ name: cleanName, email: cleanEmail })
 
   if (isKwesiUser) {
     if (experience.length === 0 || !params.experience) {

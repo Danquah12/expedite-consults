@@ -1,7 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
 import { connectinDb } from "@/lib/connectin-db"
 import { validateOTP } from "@/lib/connectin-otp"
-import { isSuperAdminUser, resolveDisplayName } from "@/lib/connectin-profile"
+import {
+  resolveRequestGeoLocation,
+  upsertCloudUser,
+  appendCloudTelemetry
+} from "@/lib/connectin-cloud-sync"
+import {
+  isSuperAdminUser,
+  resolveDisplayName,
+  getKnownDemoPersonaAvatar,
+  generatePersonalSignatureAvatar,
+  isForeignPersonaAvatar
+} from "@/lib/connectin-profile"
 import { findProfessionById, findEnclaveById } from "@/lib/connectin-professions"
 
 export async function POST(req: NextRequest) {
@@ -25,6 +36,7 @@ export async function POST(req: NextRequest) {
     }
 
     const cleanTarget = target.toLowerCase().trim()
+    const cleanEmail = (body.email ? String(body.email) : cleanTarget).toLowerCase().trim()
     const cookieChallenge = req.cookies.get("connectin_otp_challenge")?.value
     const challengeToken = incomingChallengeToken || cookieChallenge
 
@@ -53,8 +65,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Determine displayName intelligently from user input or email structure
-    const displayName = resolveDisplayName(incomingName, cleanTarget)
-    const isSuperAdmin = isSuperAdminUser({ name: displayName, email: cleanTarget, role: incomingRole })
+    const displayName = resolveDisplayName(incomingName, cleanEmail)
+    const isSuperAdmin = isSuperAdminUser({ name: displayName, email: cleanEmail, role: incomingRole })
     const userRole = isSuperAdmin ? "admin" : (incomingRole || "personal")
 
     // Resolve profession details if provided
@@ -62,7 +74,23 @@ export async function POST(req: NextRequest) {
     const enclaveDef = profDef ? findEnclaveById(profDef.enclaveId) : (incomingEnclave ? findEnclaveById(incomingEnclave) : undefined)
 
     // 2. Find or auto-hydrate user across serverless lambdas
-    let user = connectinDb.findUserByEmail(cleanTarget)
+    // Match by BOTH email and name (when incomingName is provided) so signing in with a new name creates a distinct user record
+    const allMatchingEmailUsers = connectinDb
+      .getUsers()
+      .filter(
+        u =>
+          u.email.toLowerCase().trim() === cleanEmail ||
+          (cleanTarget.includes("@") && u.email.toLowerCase().trim() === cleanTarget)
+      )
+
+    let user = allMatchingEmailUsers.find(u => {
+      const p = connectinDb.findProfileByUserId(u.id)
+      if (!p) return false
+      if (incomingName && incomingName.trim()) {
+        return p.name.toLowerCase().trim() === displayName.toLowerCase().trim()
+      }
+      return true
+    })
     let profile = user ? connectinDb.findProfileByUserId(user.id) : undefined
 
     if (!user || !profile) {
@@ -78,9 +106,13 @@ export async function POST(req: NextRequest) {
         ? profDef.typicalSkills
         : (isSuperAdmin ? ["Zero Trust IAM", "eBPF SIEM Telemetry", "FedRAMP High IAM"] : ["Trade Skills", "Project Management"])
 
+      const resolvedAvatar =
+        getKnownDemoPersonaAvatar({ name: displayName, email: cleanEmail }) ||
+        generatePersonalSignatureAvatar({ name: displayName, email: cleanEmail, professionEnclave: finalEnclaveId })
+
       const created = connectinDb.createUser(
         {
-          email: cleanTarget,
+          email: cleanEmail,
           role: userRole,
           status: "Active",
           mfaEnabled: true,
@@ -89,9 +121,7 @@ export async function POST(req: NextRequest) {
         {
           name: displayName,
           headline: finalHeadline,
-          avatar: isSuperAdmin && cleanNameOrEmailIsHayes(displayName, cleanTarget)
-            ? "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80"
-            : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayName + "-" + cleanTarget)}&backgroundColor=0a66c2,4338ca,0070f3&textColor=ffffff&fontWeight=700`,
+          avatar: resolvedAvatar,
           coverImage: finalEnclaveId === 'trades_construction'
             ? "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1200&auto=format&fit=crop&q=80"
             : finalEnclaveId === 'healthcare_medicine'
@@ -117,11 +147,39 @@ export async function POST(req: NextRequest) {
       user = created.user
       profile = created.profile
     } else {
+      const nameChanged = Boolean(incomingName?.trim() && profile.name.toLowerCase().trim() !== displayName.toLowerCase().trim())
       if (isSuperAdmin && user.role !== "admin") {
         user.role = "admin"
+      } else if (!isSuperAdmin && user.role === "admin") {
+        user.role = userRole
       }
       if (displayName && profile.name !== displayName) {
         profile.name = displayName
+      }
+      // If name changed to a non-admin user, ensure admin-specific headline/profession don't bleed over
+      if (nameChanged && !isSuperAdmin) {
+        const nextProfTitle = profDef?.title || incomingProfession || "Master Carpenter (Framing & Finish Joinery)"
+        const nextProfId = profDef?.id || incomingProfessionId || "carpenter"
+        const nextCategory = profDef?.categoryName || incomingCategory || "Skilled Trades & Construction"
+        const nextEnclave = profDef?.enclaveId || incomingEnclave || "trades_construction"
+        profile.profession = nextProfTitle
+        profile.professionId = nextProfId
+        profile.professionCategory = nextCategory
+        profile.professionEnclave = nextEnclave
+        profile.headline = incomingHeadline || profDef?.defaultHeadline || `${nextProfTitle} · Verified ConnectIn Member`
+        profile.about = `Verified ${nextProfTitle} operating in the ${enclaveDef?.name || 'ConnectIn'} Enclave.`
+        profile.clearanceLevel = enclaveDef?.securityClearanceTier || "Standard Verified Identity (Level 2)"
+      }
+      // If name changed or existing avatar belongs to a foreign persona, regenerate user's personal signature avatar
+      if (
+        nameChanged ||
+        !profile.avatar ||
+        profile.avatar.includes("api.dicebear.com") ||
+        isForeignPersonaAvatar(profile.avatar, { name: profile.name, email: cleanEmail })
+      ) {
+        profile.avatar =
+          getKnownDemoPersonaAvatar({ name: profile.name, email: cleanEmail }) ||
+          generatePersonalSignatureAvatar({ name: profile.name, email: cleanEmail, professionEnclave: profile.professionEnclave })
       }
       // If incoming profession information was submitted during OTP, update profile
       if (profDef) {
@@ -145,19 +203,106 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    function cleanNameOrEmailIsHayes(name: string, email: string) {
-      return name.toLowerCase().includes("robert hayes") || email.toLowerCase().includes("robert.hayes") || email.toLowerCase() === "sec-admin@connectin.internal"
+    // 3. Resolve real global Geo-IP / Country location & persist to global Cloud Sync Map
+    const geo = resolveRequestGeoLocation(req, body.clientTimezone, body.location)
+    if (!profile.location || profile.location.includes("United States") || profile.location.includes("Cryptographically")) {
+      profile.location = isSuperAdmin
+        ? `Washington, DC · ${geo.locationLabel}`
+        : geo.locationLabel
     }
 
-    // 3. Create persistent cryptographic session
-    const ipAddress = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "127.0.0.1"
-    const userAgent = req.headers.get("user-agent") || "Web Browser"
+    const authMethodLabel = cleanTarget.includes("@") ? "Email 2FA" : "Phone/SMS 2FA"
+    connectinDb.touchUserLogin(user.id, authMethodLabel)
+    ;(user as any).countryName = geo.countryName
+    ;(user as any).countryCode = geo.countryCode
+    ;(user as any).isOutsideUS = geo.isOutsideUS
+    ;(user as any).ipAddress = geo.ipAddress
 
     const session = connectinDb.createSession(user.id, {
-      ipAddress: Array.isArray(ipAddress) ? ipAddress[0] : ipAddress.split(",")[0],
-      userAgent,
-      location: "United States · Cryptographic Enclave"
+      ipAddress: geo.ipAddress,
+      userAgent: geo.userAgent,
+      location: geo.locationLabel
     })
+
+    const effectiveRole = isSuperAdmin ? "admin" : (user.role === "admin" ? "personal" : user.role)
+    const nowIso = new Date().toISOString()
+    const timeStr = new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
+
+    await Promise.all([
+      upsertCloudUser({
+        id: user.id,
+        email: user.email,
+        phone: user.phone || "",
+        name: profile.name,
+        role: effectiveRole,
+        status: user.status,
+        headline: profile.headline,
+        avatar: profile.avatar,
+        coverImage: profile.coverImage,
+        location: profile.location,
+        countryName: geo.countryName,
+        countryCode: geo.countryCode,
+        isOutsideUS: geo.isOutsideUS,
+        ipAddress: geo.ipAddress,
+        about: profile.about,
+        skills: profile.skills,
+        profession: profile.profession,
+        professionId: profile.professionId,
+        professionCategory: profile.professionCategory,
+        professionEnclave: profile.professionEnclave,
+        authProvider: authMethodLabel,
+        lastLoginAt: nowIso,
+        createdAt: user.createdAt || nowIso,
+        updatedAt: nowIso
+      }),
+      appendCloudTelemetry({
+        activityLog: {
+          id: `act_otp_${user.id}_${Date.now().toString().slice(-5)}`,
+          userId: user.id,
+          userName: profile.name,
+          userEmail: user.email,
+          userAvatar: profile.avatar,
+          userHeadline: profile.headline,
+          actionType: "USER_LOGIN",
+          actionLabel: `Signed In via ${authMethodLabel} (${geo.locationLabel})`,
+          category: "auth",
+          targetTitle: `${authMethodLabel} · ${geo.locationLabel}`,
+          details: `Verified 2FA login from ${geo.locationLabel} (IP: ${geo.ipAddress})`,
+          timestamp: `${timeStr} · ${geo.countryName}`,
+          createdAtIso: nowIso
+        },
+        auditLog: {
+          id: `LOG-${Date.now().toString().slice(-6)}`,
+          adminEmail: user.email,
+          action: "USER_ACTIVATED",
+          targetEntity: `${profile.name} (${user.email})`,
+          reason: `2FA authenticated login from ${geo.locationLabel}`,
+          ipAddress: `${geo.ipAddress} (${geo.locationLabel})`,
+          timestamp: timeStr,
+          status: "Success"
+        },
+        socEvent: {
+          id: `SOC-OTP-${Date.now().toString().slice(-5)}`,
+          severity: "Low",
+          eventType: `2FA Authenticated Session (${geo.countryName})`,
+          sourceIp: `${geo.ipAddress} (${geo.locationLabel})`,
+          targetAccount: `${profile.name} (${user.email})`,
+          mitigationAction: `Verified ${authMethodLabel} Session Active`,
+          timestamp: "Just Now"
+        },
+        verification: {
+          id: `VER-${user.id}`,
+          applicantName: profile.name,
+          applicantEmail: user.email,
+          applicantAvatar: profile.avatar,
+          requestType: "Executive Identity",
+          submittedDocument: `${authMethodLabel} (${geo.locationLabel})`,
+          organizationName: profile.profession || "ConnectIn Global Network",
+          submittedAt: "Just Now",
+          status: "Approved"
+        }
+      })
+    ])
 
     const response = NextResponse.json({
       success: true,
@@ -166,18 +311,22 @@ export async function POST(req: NextRequest) {
         id: user.id,
         email: user.email,
         phone: user.phone,
-        role: user.role,
+        role: effectiveRole,
         status: user.status,
+        location: profile.location,
+        countryName: geo.countryName,
+        countryCode: geo.countryCode,
         profession: profile.profession,
         professionEnclave: profile.professionEnclave
       },
       profile: {
         ...profile,
         email: user.email,
-        role: user.role,
+        location: profile.location,
+        role: effectiveRole,
         roles: isSuperAdmin ? ["SUPER_ADMIN", "Platform IAM Architect", "Root Authority"] : ["NORMAL_USER"],
         profession: profile.profession || (isSuperAdmin ? "Platform IAM Architect" : "Master Carpenter (Framing & Finish Joinery)"),
-        professionId: profile.professionId || (isSuperAdmin ? "platform_admin" : "carpenter"),
+        professionId: (!isSuperAdmin && profile.professionId === "platform_admin") ? "carpenter" : (profile.professionId || (isSuperAdmin ? "platform_admin" : "carpenter")),
         professionCategory: profile.professionCategory || (isSuperAdmin ? "Legal & Governance" : "Skilled Trades & Construction"),
         professionEnclave: profile.professionEnclave || (isSuperAdmin ? "law_gov_defense" : "trades_construction")
       },
@@ -185,6 +334,7 @@ export async function POST(req: NextRequest) {
         sessionId: session.sessionId,
         token: session.token,
         deviceName: session.deviceName,
+        location: geo.locationLabel,
         createdAt: session.createdAt
       }
     })

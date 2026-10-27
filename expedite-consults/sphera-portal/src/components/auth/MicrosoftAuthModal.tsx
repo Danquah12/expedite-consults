@@ -6,13 +6,14 @@ import {
   DialogContent,
 } from "@/components/ui/dialog"
 import { Loader2, ArrowRight, UserPlus, CheckCircle2, AlertCircle, X } from "lucide-react"
-import { saveStoredUser, saveStoredSessionRoute } from "@/lib/connectin-storage"
-import { isSuperAdminUser } from "@/lib/connectin-profile"
+import { saveStoredUser, saveStoredSessionRoute, getDefaultPortraitForUser, loadStoredAdminUsers, trackUserActivity } from "@/lib/connectin-storage"
+import { isSuperAdminUser, isDedicatedAdminAccount, isExactKwesiUser, isForeignPersonaAvatar, generatePersonalSignatureAvatar, resolveDisplayName } from "@/lib/connectin-profile"
 
 interface MicrosoftAuthModalProps {
   isOpen: boolean
   onClose: () => void
   initialEmail?: string
+  initialName?: string
   professionId?: string
   onSuccess?: (user: any) => void
 }
@@ -21,10 +22,12 @@ export function MicrosoftAuthModal({
   isOpen,
   onClose,
   initialEmail = "",
+  initialName = "",
   professionId = "auto_detect",
   onSuccess
 }: MicrosoftAuthModalProps) {
   const [isUsingCustom, setIsUsingCustom] = useState(false)
+  const [customName, setCustomName] = useState("")
   const [customEmail, setCustomEmail] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null)
@@ -32,31 +35,69 @@ export function MicrosoftAuthModal({
   const [successNotice, setSuccessNotice] = useState<string | null>(null)
 
   const activeEmailClean = initialEmail.trim().toLowerCase()
+  const activeNameClean = initialName.trim()
   const hasPrefilled = activeEmailClean.includes("@")
+  const prefilledName = activeNameClean
+    ? activeNameClean
+    : isExactKwesiUser({ email: activeEmailClean })
+    ? "Kwesi Asiedu"
+    : resolveDisplayName("", activeEmailClean)
 
-  const accounts = [
+  const recentStoredAccounts = typeof window !== "undefined"
+    ? loadStoredAdminUsers()
+        .filter(u =>
+          u.email &&
+          !u.email.endsWith("@connectin.internal") &&
+          !u.email.endsWith("@unknown-proxy.io") &&
+          !u.email.endsWith("@crawler.net") &&
+          !u.email.startsWith("alex.taylor@") &&
+          !u.email.startsWith("marcus.vance@") &&
+          !u.email.startsWith("sarah.chen@") &&
+          !u.email.startsWith("david.k@") &&
+          !u.email.startsWith("elena.rostova@")
+        )
+        .slice(0, 4)
+        .map(u => ({
+          email: u.email.toLowerCase().trim(),
+          name: u.name,
+          workspace: u.email.includes("expedite-consults") ? "Expedite Consults Entra ID" : "Work or school account",
+          avatar: u.avatar || generatePersonalSignatureAvatar({ name: u.name, email: u.email }),
+          isCurrent: false
+        }))
+    : []
+
+  const rawAccounts = [
     ...(hasPrefilled ? [{
       email: activeEmailClean,
-      name: activeEmailClean.includes("kasied") ? "Kwesi Asiedu" : (activeEmailClean.split("@")[0].replace(/[._-]/g, " ")),
+      name: prefilledName,
       workspace: activeEmailClean.includes("expedite-consults") ? "Expedite Consults Entra ID" : "Work or school account",
-      avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(activeEmailClean)}&backgroundColor=00a4ef`,
+      avatar: generatePersonalSignatureAvatar({ name: prefilledName, email: activeEmailClean }),
       isCurrent: true
     }] : []),
+    ...recentStoredAccounts,
     ...(!activeEmailClean.startsWith("kasied1@") ? [{
       email: "kasied1@expedite-consults.com",
       name: "Kasied1 Asiedu",
       workspace: "Expedite Consults Entra ID",
-      avatar: "https://api.dicebear.com/7.x/initials/svg?seed=kasied1&backgroundColor=00a4ef",
+      avatar: generatePersonalSignatureAvatar({ name: "Kasied1 Asiedu", email: "kasied1@expedite-consults.com" }),
       isCurrent: false
     }] : []),
     ...(!activeEmailClean.startsWith("kasiedu@") ? [{
       email: "kasiedu@expedite-consults.com",
       name: "Kwesi Asiedu (Root Authority)",
       workspace: "Expedite Consults Enterprise",
-      avatar: "https://api.dicebear.com/7.x/initials/svg?seed=kasiedu&backgroundColor=1e293b",
+      avatar: "/brand/kwesi-avatar.png",
       isCurrent: false
     }] : []),
   ]
+
+  const seenAccountKeys = new Set<string>()
+  const accounts = rawAccounts.filter(acc => {
+    const key = `${acc.name.toLowerCase().trim()}::${acc.email.toLowerCase().trim()}`
+    if (seenAccountKeys.has(key)) return false
+    seenAccountKeys.add(key)
+    return true
+  })
 
   const handleSelectAccount = async (accountEmail: string, accountName?: string) => {
     setIsLoading(true)
@@ -65,12 +106,13 @@ export function MicrosoftAuthModal({
     setSuccessNotice(`Authenticating with Microsoft Entra ID...`)
 
     try {
+      const cleanName = (accountName || "").replace(/\s*\([^)]*\)/g, "").trim()
       const res = await fetch("/api/connectin/auth/microsoft", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: accountEmail,
-          name: accountName || "",
+          name: cleanName,
           professionId: professionId !== "auto_detect" ? professionId : undefined
         })
       })
@@ -80,17 +122,55 @@ export function MicrosoftAuthModal({
         throw new Error(data.error || "Microsoft authentication failed")
       }
 
-      const profileToSave = data.profile || data.user
-      const isAdmin = isSuperAdminUser(profileToSave)
-      const targetTab = isAdmin ? "adminiam" : "home"
-      const targetUrl = data.targetUrl || (isAdmin ? "/connectin-admin" : "/connectin")
+      const rawProfile = data.profile || data.user
+      const finalName = cleanName || rawProfile?.name || resolveDisplayName("", accountEmail)
+      const safeAvatar = (rawProfile?.avatar && !isForeignPersonaAvatar(rawProfile.avatar, { name: finalName, email: accountEmail }))
+        ? rawProfile.avatar
+        : getDefaultPortraitForUser({ name: finalName, email: accountEmail, professionEnclave: rawProfile?.professionEnclave } as any)
+
+      const isAdmin = isSuperAdminUser({ name: finalName, email: accountEmail })
+      const shouldOpenAdminPortal = isDedicatedAdminAccount({
+        name: finalName,
+        email: accountEmail,
+        professionId: professionId !== "auto_detect" ? professionId : undefined
+      })
+
+      const nowIso = new Date().toISOString()
+      const profileToSave = {
+        ...rawProfile,
+        id: data.user?.id || rawProfile?.userId || rawProfile?.id || `USR-MS-${Date.now().toString(36).toUpperCase()}`,
+        userId: data.user?.id || rawProfile?.userId || rawProfile?.id,
+        name: finalName,
+        email: accountEmail,
+        avatar: safeAvatar,
+        role: isAdmin ? "admin" : "personal",
+        roles: isAdmin ? ["SUPER_ADMIN"] : ["NORMAL_USER"],
+        authProvider: "Microsoft Entra ID",
+        lastLoginAt: nowIso
+      }
+      const targetTab = shouldOpenAdminPortal ? "adminiam" : "home"
+      const targetUrl = shouldOpenAdminPortal ? "/connectin-admin" : "/connectin"
 
       saveStoredUser(profileToSave)
       saveStoredSessionRoute(targetTab, "personal")
+      trackUserActivity({
+        actionType: "USER_LOGIN",
+        actionLabel: "Signed In via Microsoft Entra ID ✓",
+        category: "auth",
+        targetTitle: "Microsoft Entra ID",
+        details: `Authenticated via Microsoft Entra ID as ${finalName} (${accountEmail})`,
+        user: profileToSave as any
+      })
       if (typeof window !== "undefined") {
         localStorage.removeItem("connectin_is_signed_out")
         sessionStorage.setItem("connectin_authenticated", "true")
       }
+
+      await fetch("/api/connectin/users", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profileToSave)
+      }).catch(() => {})
 
       setSuccessNotice(`✓ Verified as ${profileToSave.name}! Launching ConnectLn...`)
 
@@ -100,7 +180,7 @@ export function MicrosoftAuthModal({
 
       setTimeout(() => {
         window.location.href = targetUrl
-      }, 350)
+      }, 250)
     } catch (err: any) {
       setIsLoading(false)
       setSelectedEmail(null)
@@ -115,7 +195,7 @@ export function MicrosoftAuthModal({
       setErrorMessage("Please enter a valid work or school email address.")
       return
     }
-    handleSelectAccount(customEmail.trim().toLowerCase())
+    handleSelectAccount(customEmail.trim().toLowerCase(), customName.trim())
   }
 
   return (
@@ -235,7 +315,20 @@ export function MicrosoftAuthModal({
               </button>
             </>
           ) : (
-            <form onSubmit={handleCustomSubmit} className="space-y-4 pt-1">
+            <form onSubmit={handleCustomSubmit} className="space-y-3 pt-1">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                  Full Name (for your profile & signature)
+                </label>
+                <input
+                  type="text"
+                  autoFocus
+                  placeholder="e.g. Michael Mensah"
+                  value={customName}
+                  onChange={(e) => setCustomName(e.target.value)}
+                  className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-transparent p-3 text-base sm:text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#00a4ef]"
+                />
+              </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
                   Enter your Microsoft or Corporate Email
@@ -243,7 +336,6 @@ export function MicrosoftAuthModal({
                 <input
                   type="email"
                   required
-                  autoFocus
                   placeholder="you@company.com"
                   value={customEmail}
                   onChange={(e) => setCustomEmail(e.target.value)}

@@ -94,10 +94,16 @@ import {
   loadStoredConnections,
   saveStoredConnections,
   loadStoredSessionRoute,
-  resolveUserProfilePicture
+  resolveUserProfilePicture,
+  trackUserActivity,
+  loadStoredAdminUsers
 } from "@/lib/connectin-storage"
-import { isSuperAdminUser } from "@/lib/connectin-profile"
-import { PROFESSION_ENCLAVES, findEnclaveById, findProfessionById } from "@/lib/connectin-professions"
+import { isSuperAdminUser, createUniqueUserProfile, isForeignPersonaAvatar } from "@/lib/connectin-profile"
+import {
+  PROFESSION_ENCLAVES,
+  findEnclaveById,
+  findProfessionById
+} from "@/lib/connectin-professions"
 import { getMatchedWheelVideoForUser } from "@/lib/connectin-videos"
 import { SlidersHorizontal, Sparkles, Bell, CheckCircle2, ShieldCheck, Filter, Bookmark, Vote, BookOpen, ExternalLink, ChevronDown, ChevronUp } from "lucide-react"
 import { useLanguage } from "@/context/LanguageContext"
@@ -155,6 +161,7 @@ export default function LinkedInPage() {
   const [activeWorkspace, setActiveWorkspace] = useState<'personal' | 'enterprise' | 'creator' | 'seller'>('personal')
 
   const [userData, setUserData] = useState<UserProfile>(initialCurrentUser)
+  const [inspectedMember, setInspectedMember] = useState<UserProfile | null>(null)
   const [posts, setPosts] = useState<Post[]>(initialPosts)
   const [suggestedPeople, setSuggestedPeople] = useState<SuggestedConnection[]>(suggestedConnections)
   const [feedSort, setFeedSort] = useState<'top' | 'recent'>('top')
@@ -240,37 +247,49 @@ export default function LinkedInPage() {
           const savedRoute = loadStoredSessionRoute()
           if (savedPosts && savedPosts.length > 0) setPosts(savedPosts)
           if (savedConnections && savedConnections.length > 0) setSuggestedPeople(savedConnections)
-          if (resolvedUrlTab) {
+          if (resolvedUrlTab && (resolvedUrlTab !== 'adminiam' || isSuperAdminUser(explicitUser))) {
             setActiveTab(resolvedUrlTab as any)
-          } else if (savedRoute.tab) {
+          } else if (savedRoute.tab && (savedRoute.tab !== 'adminiam' || isSuperAdminUser(explicitUser))) {
             setActiveTab(savedRoute.tab as any)
+          } else {
+            setActiveTab('home')
           }
           if (savedRoute.workspace) setActiveWorkspace(savedRoute.workspace)
           setHasHydrated(true)
         }
-        // Silently refresh from server — never overwrites user's locally saved avatar, cover photo, or profile edits
+        // Silently refresh from server — only if server session email AND name match active user, and never overwrites user's locally saved name, avatar, role, or cover photo
         try {
           const meRes = await fetch("/api/connectin/auth/me")
           if (meRes.ok && isMounted) {
             const meData = await meRes.json()
             if (meData.authenticated && meData.profile) {
               const latestExplicit = getExplicitStoredUser() || explicitUser
-              const refreshed: UserProfile = {
-                ...meData.profile,
-                ...latestExplicit,
-                email: (latestExplicit as any)?.email || meData.profile.email || meData.user?.email,
-                id: (latestExplicit as any)?.id || meData.profile.userId || meData.user?.id || explicitUser.id,
-                avatar:
-                  latestExplicit.avatar && !latestExplicit.avatar.includes("api.dicebear.com")
-                    ? latestExplicit.avatar
-                    : meData.profile.avatar || latestExplicit.avatar,
-                coverImage:
-                  latestExplicit.coverImage && !latestExplicit.coverImage.includes("photo-1550751827-4bd374c3f58b")
-                    ? latestExplicit.coverImage
-                    : meData.profile.coverImage || latestExplicit.coverImage,
+              const explicitEmail = ((latestExplicit as any)?.email || "").toLowerCase().trim()
+              const serverEmail = (meData.profile.email || meData.user?.email || "").toLowerCase().trim()
+              const explicitName = (latestExplicit.name || "").toLowerCase().trim()
+              const serverName = (meData.profile.name || "").toLowerCase().trim()
+              if (
+                (!explicitEmail || !serverEmail || explicitEmail === serverEmail) &&
+                (!explicitName || !serverName || explicitName === serverName)
+              ) {
+                const isAdmin = isSuperAdminUser({ name: latestExplicit.name || meData.profile.name, email: explicitEmail || serverEmail })
+                const refreshed: UserProfile = {
+                  ...meData.profile,
+                  ...latestExplicit,
+                  name: latestExplicit.name || meData.profile.name,
+                  email: (latestExplicit as any)?.email || meData.profile.email || meData.user?.email,
+                  id: (latestExplicit as any)?.id || meData.profile.userId || meData.user?.id || explicitUser.id,
+                  role: isAdmin ? "admin" : "personal",
+                  roles: isAdmin ? ["SUPER_ADMIN"] : ["NORMAL_USER"],
+                  avatar: latestExplicit.avatar || meData.profile.avatar,
+                  coverImage:
+                    latestExplicit.coverImage && !latestExplicit.coverImage.includes("photo-1550751827-4bd374c3f58b")
+                      ? latestExplicit.coverImage
+                      : meData.profile.coverImage || latestExplicit.coverImage,
+                }
+                saveStoredUser(refreshed)
+                setUserData(getExplicitStoredUser() || refreshed)
               }
-              saveStoredUser(refreshed)
-              setUserData(getExplicitStoredUser() || refreshed)
             }
           }
         } catch (e) { /* silent */ }
@@ -329,9 +348,10 @@ export default function LinkedInPage() {
               id: meData.profile.userId || meData.user?.id,
             }
             saveStoredUser(profile)
-            setUserData(getExplicitStoredUser() || profile)
+            const storedAfterSave = getExplicitStoredUser() || profile
+            setUserData(storedAfterSave)
             setIsAuthenticated(true)
-            if (resolvedUrlTab) {
+            if (resolvedUrlTab && (resolvedUrlTab !== 'adminiam' || isSuperAdminUser(storedAfterSave))) {
               setActiveTab(resolvedUrlTab as any)
             }
             const savedPosts = loadStoredPosts()
@@ -356,6 +376,13 @@ export default function LinkedInPage() {
     return () => { isMounted = false }
   }, [router])
 
+  // Hard guard: Normal users must never land on the adminiam tab
+  useEffect(() => {
+    if (activeTab === 'adminiam' && !isSuperAdminUser(userData)) {
+      setActiveTab('home')
+    }
+  }, [activeTab, userData])
+
   // Sign out handler: Completely signs out and redirects to login without background
   const handleSignOut = async () => {
     try {
@@ -367,6 +394,7 @@ export default function LinkedInPage() {
       localStorage.removeItem("connectin_user_profile")
       localStorage.removeItem("connectin_user_v1")
       localStorage.removeItem("connectin_session_route")
+      localStorage.removeItem("connectin_active_tab_v1")
       localStorage.removeItem("connectin_verified")
       localStorage.setItem("connectin_is_signed_out", "true")
       setIsAuthenticated(false)
@@ -480,56 +508,133 @@ export default function LinkedInPage() {
     }
   }, [suggestedPeople, hasHydrated, isAuthenticated])
 
-  // Sync live registered users from database into suggested network
+  // Sync live registered users from database into suggested network & push active user heartbeat globally
   useEffect(() => {
     let isMounted = true
 
     const syncLiveUsers = async () => {
       try {
-        const res = await fetch("/api/connectin/users")
+        // 1. Fire non-blocking heartbeat push of current user + local accounts (stripping heavy data:image avatars)
+        if (userData && userData.name) {
+          const clientTimezone =
+            typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : undefined
+          const localDir = loadStoredAdminUsers()
+            .slice(0, 8)
+            .map(bu => ({
+              ...bu,
+              avatar: bu.avatar && !bu.avatar.startsWith("data:") ? bu.avatar : undefined
+            }))
+          const safeAvatar =
+            userData.avatar && !userData.avatar.startsWith("data:")
+              ? userData.avatar
+              : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(userData.name)}&backgroundColor=0a66c2`
+
+          fetch("/api/connectin/users", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              id: userData.id,
+              userId: (userData as any).userId || userData.id,
+              email: (userData as any).email,
+              name: userData.name,
+              role: (userData as any).role || "personal",
+              headline: userData.headline,
+              avatar: safeAvatar,
+              coverImage: userData.coverImage && !userData.coverImage.startsWith("data:") ? userData.coverImage : undefined,
+              location: userData.location,
+              about: userData.about,
+              skills: Array.isArray(userData.skills)
+                ? userData.skills.map((s: any) => (typeof s === "string" ? s : s?.name)).filter(Boolean)
+                : [],
+              profession: userData.profession,
+              professionId: userData.professionId,
+              professionCategory: userData.professionCategory,
+              professionEnclave: userData.professionEnclave,
+              authProvider: (userData as any).authProvider || "Active Session",
+              clientTimezone,
+              batchUsers: localDir
+            })
+          }).catch(() => {})
+        }
+
+        // 2. Immediately pull all globally synced users from Cloud Sync Map
+        const res = await fetch("/api/connectin/users", { cache: "no-store" })
         if (res.ok && isMounted) {
           const data = await res.json()
           if (data.success && Array.isArray(data.users)) {
-            const liveSuggested: SuggestedConnection[] = data.users
-              .filter((u: any) => u.id !== userData?.id && u.email !== userData?.email && u.name?.toLowerCase() !== userData?.name?.toLowerCase())
-              .map((u: any) => {
-                const prof = u.professionId ? findProfessionById(u.professionId) : undefined
-                const enclaveId = u.professionEnclave || prof?.enclaveId
-                const enclave = enclaveId ? findEnclaveById(enclaveId) : undefined
+            const seenLiveIds = new Set<string>()
+            const seenLiveNames = new Set<string>()
+            const liveSuggested: SuggestedConnection[] = []
 
-                // Dynamic domain capabilities tailored to profession
-                const userSkills: string[] = (u.skills && u.skills.length > 0)
-                  ? u.skills
-                  : (prof?.typicalSkills && prof.typicalSkills.length > 0)
-                    ? prof.typicalSkills
-                    : (enclave?.skills && enclave.skills.length > 0)
-                      ? enclave.skills.slice(0, 4)
-                      : ['Technical Architecture', 'Domain Security', 'Zero Trust', 'Compliance']
+            for (const u of data.users) {
+              if (!u || !u.name) continue
+              const normName = String(u.name).toLowerCase().trim()
+              if (
+                u.id === userData?.id ||
+                normName === String(userData?.name || "").toLowerCase().trim() ||
+                seenLiveNames.has(normName)
+              ) {
+                continue
+              }
+              seenLiveNames.add(normName)
+              const uniqueId = seenLiveIds.has(u.id)
+                ? `${u.id}_${normName.replace(/[^a-z0-9]/g, "")}`
+                : u.id || `USR_${normName.replace(/[^a-z0-9]/g, "")}`
+              seenLiveIds.add(uniqueId)
 
-                const enclaveBadge = enclave ? `${enclave.icon} ${enclave.shortName} Enclave` : '✓ Verified Member'
+              const prof = u.professionId ? findProfessionById(u.professionId) : undefined
+              const enclaveId = u.professionEnclave || prof?.enclaveId
+              const enclave = enclaveId ? findEnclaveById(enclaveId) : undefined
 
-                return {
-                  id: u.id,
-                  name: u.name,
-                  headline: u.headline || `${u.profession || 'Specialist'} · ConnectIn Verified Network`,
-                  avatar: u.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.name)}&backgroundColor=0a66c2`,
-                  mutualConnections: Math.floor(Math.random() * 25) + 8,
-                  capabilities: userSkills.slice(0, 4),
-                  verifiedBadges: [enclaveBadge, '✓ 2FA Active'],
-                  circle: enclave ? `${enclave.icon} ${enclave.name}` : 'ConnectIn Verified Network',
-                  matchScore: 96,
-                  isConnected: false,
-                  isPending: false
-                }
+              // Normalize skills strictly to string[] so capabilities never contains objects
+              const normalizedRawSkills: string[] = Array.isArray(u.skills)
+                ? u.skills
+                    .map((s: any) => (typeof s === "string" ? s : s?.name ? String(s.name) : ""))
+                    .filter(Boolean)
+                : []
+
+              const userSkills: string[] =
+                normalizedRawSkills.length > 0
+                  ? normalizedRawSkills
+                  : prof?.typicalSkills && prof.typicalSkills.length > 0
+                  ? prof.typicalSkills
+                  : enclave?.skills && enclave.skills.length > 0
+                  ? enclave.skills.slice(0, 4)
+                  : ["Technical Architecture", "Domain Security", "Zero Trust", "Compliance"]
+
+              const enclaveBadge = enclave ? `${enclave.icon} ${enclave.shortName} Enclave` : "✓ Verified Member"
+              const cleanAvatar =
+                u.avatar &&
+                !u.avatar.startsWith("data:image/svg+xml") &&
+                !isForeignPersonaAvatar(u.avatar, { name: u.name, email: u.email })
+                  ? u.avatar
+                  : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.name)}&backgroundColor=0a66c2`
+
+              liveSuggested.push({
+                id: uniqueId,
+                name: u.name,
+                headline: u.headline || `${u.profession || "Specialist"} · ConnectIn Verified Network`,
+                avatar: cleanAvatar,
+                mutualConnections: 14,
+                capabilities: userSkills.slice(0, 4).map(String),
+                verifiedBadges: [enclaveBadge, "✓ 2FA Active"],
+                circle: enclave ? `${enclave.icon} ${enclave.name}` : "ConnectIn Verified Network",
+                matchScore: 96,
+                isConnected: false,
+                isPending: false
               })
+            }
 
             setSuggestedPeople(prev => {
               const liveMap = new Map(liveSuggested.map(p => [p.id, p]))
               const liveNameMap = new Map(liveSuggested.map(p => [p.name.toLowerCase().trim(), p]))
-              
-              // Upgrade any existing stale connections with fresh profession data & badges
+
+              // Upgrade any existing connections with fresh profession data & sanitized string capabilities
               const updatedPrev = prev.map(p => {
                 const fresh = liveMap.get(p.id) || liveNameMap.get(p.name.toLowerCase().trim())
+                const safePrevCaps = Array.isArray(p.capabilities)
+                  ? p.capabilities.map((c: any) => (typeof c === "string" ? c : String(c?.name || c || ""))).filter(Boolean)
+                  : []
                 if (fresh) {
                   return {
                     ...p,
@@ -540,7 +645,10 @@ export default function LinkedInPage() {
                     circle: fresh.circle
                   }
                 }
-                return p
+                return {
+                  ...p,
+                  capabilities: safePrevCaps
+                }
               })
 
               const existingIds = new Set(updatedPrev.map(p => p.id))
@@ -548,7 +656,6 @@ export default function LinkedInPage() {
               const freshUnseen = liveSuggested.filter(
                 p => !existingIds.has(p.id) && !existingNames.has(p.name.toLowerCase().trim())
               )
-              if (freshUnseen.length === 0 && updatedPrev.every((p, i) => p === prev[i])) return prev
               const merged = [...freshUnseen, ...updatedPrev]
               saveStoredConnections(merged)
               return merged
@@ -563,6 +670,166 @@ export default function LinkedInPage() {
     syncLiveUsers()
     return () => { isMounted = false }
   }, [userData?.id, userData?.email, userData?.name])
+
+  // Open any clicked member's full Workspace & Identity
+  const handleInspectMember = (memberInput: any) => {
+    if (!memberInput) return
+    const targetName = String(memberInput.name || "").trim()
+    if (!targetName) return
+
+    try {
+      // If the user clicked on their own name/card, open their own workspace
+      if (
+        targetName.toLowerCase() === String(userData.name || "").toLowerCase().trim() ||
+        (memberInput.id && memberInput.id === userData.id)
+      ) {
+        setInspectedMember(null)
+        setActiveTab("profile")
+        if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" })
+        return
+      }
+
+      const adminMatches = loadStoredAdminUsers()
+      const matchedDir = adminMatches.find(
+        a => a.name.toLowerCase().trim() === targetName.toLowerCase()
+      )
+      const matchedSuggested = suggestedPeople.find(
+        s => s.name.toLowerCase().trim() === targetName.toLowerCase() || (memberInput.id && s.id === memberInput.id)
+      )
+
+      const rawHeadline = String(
+        memberInput.headline ||
+        memberInput.role ||
+        matchedSuggested?.headline ||
+        matchedDir?.headline ||
+        "Verified Specialist · ConnectIn Network"
+      )
+
+      const rawCapabilities: string[] = (
+        memberInput.capabilities ||
+        (Array.isArray(memberInput.skills) ? memberInput.skills : matchedSuggested?.capabilities) ||
+        []
+      )
+        .map((s: any) => (typeof s === "string" ? s : s?.name ? String(s.name) : ""))
+        .filter(Boolean)
+
+      const rawBadges: string[] = (
+        memberInput.verifiedBadges || matchedSuggested?.verifiedBadges || []
+      )
+        .map((b: any) => String(b || ""))
+        .filter(Boolean)
+
+      const safeMemberEmail = `${targetName.toLowerCase().replace(/[^a-z0-9]/g, ".")}@connectin.app`
+      const detectionText = `${rawHeadline} ${rawCapabilities.join(" ")} ${rawBadges.join(" ")} ${memberInput.circle || ""} ${matchedDir?.organization || ""}`
+
+      const baseDetected = createUniqueUserProfile({
+        id: memberInput.id || matchedSuggested?.id || matchedDir?.id || `member_${targetName.toLowerCase().replace(/[^a-z0-9]/g, "_")}`,
+        name: targetName,
+        email: safeMemberEmail,
+        headline: detectionText,
+        profession: memberInput.profession || undefined,
+        location: memberInput.location || matchedDir?.location
+      })
+
+      const enclaveDef = baseDetected.professionEnclave ? findEnclaveById(baseDetected.professionEnclave) : undefined
+      const cleanProfessionTitle =
+        memberInput.profession ||
+        baseDetected.profession ||
+        rawHeadline.split("·")[0]?.split("@")[0]?.trim() ||
+        "Verified Specialist"
+
+      const rawSkillsSource =
+        rawCapabilities.length > 0
+          ? rawCapabilities
+          : Array.isArray(baseDetected.skills)
+          ? baseDetected.skills
+          : ["Domain Architecture", "Verified Execution", "Zero Trust", "Strategic Leadership"]
+
+      const resolvedSkills = rawSkillsSource.map((item: any, idx: number) => {
+        const skillName = typeof item === "string" ? item : String(item?.name || "Verified Competency")
+        return {
+          name: skillName,
+          endorsements: typeof item === "object" && item?.endorsements ? Number(item.endorsements) : Math.max(18, 52 - idx * 5),
+          endorsers:
+            typeof item === "object" && Array.isArray(item?.endorsers)
+              ? item.endorsers
+              : ["Verified Peer Network", "ConnectIn Guild"]
+        }
+      })
+
+      const resolvedCompany =
+        memberInput.company ||
+        memberInput.org ||
+        matchedDir?.organization ||
+        (rawHeadline.includes("@") ? rawHeadline.split("@")[1]?.split("·")[0]?.trim() : "") ||
+        enclaveDef?.name ||
+        "ConnectIn Verified Enterprise"
+
+      const resolvedLocation =
+        memberInput.location ||
+        matchedDir?.location ||
+        baseDetected.location ||
+        "United States · Verified Enclave"
+
+      const candidateAvatar =
+        memberInput.avatar ||
+        matchedSuggested?.avatar ||
+        matchedDir?.avatar ||
+        ""
+
+      const safeAvatar =
+        candidateAvatar &&
+        !candidateAvatar.startsWith("data:image/svg+xml") &&
+        !isForeignPersonaAvatar(candidateAvatar, { name: targetName, email: safeMemberEmail })
+          ? candidateAvatar
+          : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(targetName)}&backgroundColor=0a66c2`
+
+      const memberProfile: UserProfile = {
+        ...baseDetected,
+        id: memberInput.id || matchedSuggested?.id || matchedDir?.id || baseDetected.id,
+        name: targetName,
+        headline: rawHeadline,
+        profession: cleanProfessionTitle,
+        avatar: safeAvatar,
+        coverImage:
+          memberInput.coverImage ||
+          matchedSuggested?.coverImage ||
+          baseDetected.coverImage ||
+          "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&auto=format&fit=crop&q=80",
+        location: resolvedLocation,
+        connectionsCount: memberInput.connectionsCount || matchedDir?.connectionsCount || baseDetected.connectionsCount || 640,
+        about:
+          memberInput.about ||
+          `${targetName} is a verified ${cleanProfessionTitle} operating in the ${enclaveDef?.name || baseDetected.professionCategory || "ConnectIn"} community on ConnectIn. "${rawHeadline}". Specializing in ${resolvedSkills.map((s) => s.name).slice(0, 4).join(", ")}.`,
+        skills: resolvedSkills,
+        experience:
+          Array.isArray(memberInput.experience) && memberInput.experience.length > 0
+            ? memberInput.experience
+            : [
+                {
+                  id: `exp_${targetName.replace(/[^a-zA-Z0-9]/g, "_")}_1`,
+                  role: rawHeadline.split("·")[0]?.split("@")[0]?.trim() || cleanProfessionTitle,
+                  company: resolvedCompany,
+                  companyLogo: "https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?w=100&auto=format&fit=crop&q=80",
+                  employmentType: "Full-time",
+                  duration: "2022 - Present · 4 yrs",
+                  location: resolvedLocation,
+                  description: `Leading ${cleanProfessionTitle} operations, field standards, and verified deliverables across ${resolvedSkills.map((s) => s.name).slice(0, 3).join(", ")}.`,
+                  skills: resolvedSkills.map((s) => s.name).slice(0, 4)
+                },
+                ...(Array.isArray(baseDetected.experience) ? baseDetected.experience.slice(1) : [])
+              ]
+      }
+
+      setInspectedMember(memberProfile)
+      setActiveTab("profile")
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, behavior: "smooth" })
+      }
+    } catch (err) {
+      console.error("[ConnectIn] Failed to inspect member workspace:", err)
+    }
+  }
 
   // Handle Post Creation
   const handleAddPost = (newPostData: Omit<Post, 'id' | 'timestamp' | 'stats' | 'comments'>) => {
@@ -592,6 +859,15 @@ export default function LinkedInPage() {
     }
 
     setPosts(prev => [newPost, ...prev])
+    trackUserActivity({
+      actionType: 'POST_CREATED',
+      actionLabel: `Published a New Post (${newPost.media?.type ? newPost.media.type.toUpperCase() : 'Feed Post'})`,
+      category: 'content',
+      targetId: newPost.id,
+      targetTitle: `Post by ${userData.name}`,
+      details: (newPost.content || '').slice(0, 140),
+      user: userData
+    })
   }
 
   // Share any video from The Wheel or Media Hub directly to the ConnectLn Feed with the user's Profile Picture + ConnectLn Logo Card
@@ -610,6 +886,14 @@ export default function LinkedInPage() {
   }) => {
     const ytUrl = video.youtubeId ? `https://www.youtube.com/watch?v=${video.youtubeId}` : "https://www.connectln.app/connectin"
     const resolvedPic = resolveUserProfilePicture(userData)
+    trackUserActivity({
+      actionType: 'POST_SHARED',
+      actionLabel: 'Shared Video from The Wheel to Feed',
+      category: 'engagement',
+      targetTitle: video.title,
+      details: `Shared video "${video.title}" (${video.speaker || 'ConnectLn Masterclass'}) to Feed`,
+      user: userData
+    })
     handleAddPost({
       author: {
         id: userData.id,
@@ -744,13 +1028,25 @@ export default function LinkedInPage() {
 
   // Handle Post Save
   const handleToggleSave = (postId: string) => {
+    const targetPost = posts.find(p => p.id === postId)
+    const nextSaved = targetPost ? !targetPost.isSaved : true
     setPosts(prev =>
       prev.map(p => (p.id === postId ? { ...p, isSaved: !p.isSaved } : p))
     )
+    trackUserActivity({
+      actionType: 'POST_SAVED',
+      actionLabel: nextSaved ? 'Bookmarked / Saved Post' : 'Removed Post Bookmark',
+      category: 'engagement',
+      targetId: postId,
+      targetTitle: targetPost ? `Post by ${targetPost.author.name}` : postId,
+      details: targetPost ? `Saved post: "${(targetPost.content || '').slice(0, 90)}..."` : 'Saved post to bookmarks',
+      user: userData
+    })
   }
 
   // Handle Connect / Follow Toggles
   const handleToggleConnect = (personId: string) => {
+    const targetPerson = suggestedPeople.find(p => p.id === personId)
     setSuggestedPeople(prev =>
       prev.map(person => {
         if (person.id !== personId) return person
@@ -763,6 +1059,17 @@ export default function LinkedInPage() {
         return { ...person, isPending: true }
       })
     )
+    if (targetPerson && !targetPerson.isConnected && !targetPerson.isPending) {
+      trackUserActivity({
+        actionType: 'USER_CONNECTED',
+        actionLabel: 'Sent Connection Request',
+        category: 'network',
+        targetId: personId,
+        targetTitle: targetPerson.name,
+        details: `Requested connection with ${targetPerson.name} (${targetPerson.headline})`,
+        user: userData
+      })
+    }
   }
 
   // Add Certificate from Learning View to Profile
@@ -883,6 +1190,7 @@ export default function LinkedInPage() {
       <LinkedInNavbar
         activeTab={activeTab}
         onSelectTab={(tab) => {
+          if (tab === 'profile') setInspectedMember(null)
           setActiveTab(tab as any)
           setSelectedTagFilter(null)
         }}
@@ -892,6 +1200,7 @@ export default function LinkedInPage() {
         onSearchChange={setSearchQuery}
         suggestedPeople={suggestedPeople}
         onToggleConnect={handleToggleConnect}
+        onSelectMember={handleInspectMember}
         onOpenAIAssistant={() => setIsAIAssistantOpen(true)}
         onOpenUniversalSearch={() => setIsUniversalSearchOpen(true)}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
@@ -916,12 +1225,18 @@ export default function LinkedInPage() {
             <div className="hidden md:block md:col-span-4 lg:col-span-3">
               <LeftSidebarProfile
                 user={userData}
-                onViewProfile={() => setActiveTab('profile')}
+                onViewProfile={() => {
+                  setInspectedMember(null)
+                  setActiveTab('profile')
+                }}
                 onSelectTag={(tag) => {
                   setSelectedTagFilter(tag)
                   setActiveFeedCategory('for_you')
                 }}
-                onNavigateTab={(tab) => setActiveTab(tab as any)}
+                onNavigateTab={(tab) => {
+                  if (tab === 'profile') setInspectedMember(null)
+                  setActiveTab(tab as any)
+                }}
                 onOpenIDModal={() => setIsIDModalOpen(true)}
                 onOpenInboundBountiesModal={() => setIsInboundBountiesModalOpen(true)}
                 onOpenAuthModal={() => setIsAuthModalOpen(true)}
@@ -938,7 +1253,10 @@ export default function LinkedInPage() {
               <div className="md:hidden flex items-center justify-between rounded-2xl border border-zinc-200/90 bg-white p-3 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
                 <button
                   type="button"
-                  onClick={() => setActiveTab('profile')}
+                  onClick={() => {
+                    setInspectedMember(null)
+                    setActiveTab('profile')
+                  }}
                   className="flex items-center gap-2.5 min-w-0 text-left focus:outline-none flex-1 mr-2 cursor-pointer"
                 >
                   <div className="relative h-10 w-10 shrink-0 rounded-full overflow-hidden border border-zinc-300 dark:border-zinc-700">
@@ -954,7 +1272,10 @@ export default function LinkedInPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setActiveTab('profile')}
+                  onClick={() => {
+                    setInspectedMember(null)
+                    setActiveTab('profile')
+                  }}
                   className="rounded-full bg-blue-50 dark:bg-blue-900/30 text-[#0A66C2] dark:text-blue-300 border border-blue-200 dark:border-blue-800 px-3 py-1 text-xs font-semibold shrink-0 hover:bg-blue-100 transition-colors cursor-pointer"
                 >
                   Profile →
@@ -1473,6 +1794,7 @@ export default function LinkedInPage() {
                     onAddComment={handleAddComment}
                     onToggleSave={handleToggleSave}
                     onVotePoll={handleVotePoll}
+                    onSelectMember={handleInspectMember}
                   />
                 ))}
 
@@ -1502,6 +1824,7 @@ export default function LinkedInPage() {
                 news={trendingNews}
                 suggestedPeople={suggestedPeople}
                 onToggleConnect={handleToggleConnect}
+                onSelectMember={handleInspectMember}
                 onNewsClick={(headline) => setSearchQuery(headline.slice(0, 15))}
                 onNavigateTab={(tab) => setActiveTab(tab as any)}
                 onOpenAIAssistant={(query) => {
@@ -1513,17 +1836,33 @@ export default function LinkedInPage() {
           </div>
         )}
 
-        {/* VIEW 2: MY WORKSPACE (PROFILE, PORTFOLIO, SKILLS, PRODUCTS) */}
+        {/* VIEW 2: MY WORKSPACE (OR INSPECTED MEMBER WORKSPACE) */}
         {activeTab === 'profile' && (
           <ProfileView
-            user={userData}
-            onBackToFeed={() => setActiveTab('home')}
+            user={inspectedMember || userData}
+            isViewingOtherMember={Boolean(inspectedMember)}
+            onReturnToOwnWorkspace={() => setInspectedMember(null)}
+            onConnectMember={(idOrName) => handleToggleConnect(idOrName)}
+            onBackToFeed={() => {
+              if (inspectedMember) {
+                setInspectedMember(null)
+                setActiveTab('network')
+              } else {
+                setActiveTab('home')
+              }
+            }}
             onNavigateMarketplace={() => setActiveTab('marketplace')}
             onNavigateJobs={(searchKeyword) => {
               if (searchKeyword) setSearchQuery(searchKeyword)
               setActiveTab('jobs')
             }}
-            onUpdateUser={(updated) => setUserData(updated)}
+            onUpdateUser={(updated) => {
+              if (inspectedMember) {
+                setInspectedMember(updated)
+              } else {
+                setUserData(updated)
+              }
+            }}
             onOpenAnalytics={(tab) => {
               setAnalyticsModalTab(tab)
               setIsAnalyticsModalOpen(true)
@@ -1538,6 +1877,7 @@ export default function LinkedInPage() {
             suggestedPeople={suggestedPeople}
             onToggleConnect={handleToggleConnect}
             currentUser={userData}
+            onSelectMember={handleInspectMember}
             onNavigateMessaging={(person) => setActiveTab('messaging')}
             onUpdateConnectionsCount={(newCount) => setUserData(prev => ({ ...prev, connectionsCount: newCount }))}
           />
@@ -1854,21 +2194,23 @@ export default function LinkedInPage() {
         )}
       </main>
 
-      {/* Floating "Ask Vibe AI" Quick Launcher Pill - LinkedIn Human Floating Helper */}
+      {/* Floating "Ask Noctis" Quick Launcher Pill (https://dstrike.app/noctis) */}
       <div className="fixed bottom-4 left-4 z-40">
-        <button
-          onClick={() => setIsAIAssistantOpen(true)}
+        <a
+          href="https://dstrike.app/noctis"
+          target="_blank"
+          rel="noopener noreferrer"
           className="flex items-center gap-2.5 rounded-full bg-white dark:bg-[#1B1F23] text-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700 shadow-lg hover:shadow-xl hover:border-[#0A66C2] px-4 py-2.5 text-xs font-semibold transition-all cursor-pointer group"
-          title="Ask Vibe AI anything (Cyber, Engineering, Career, Tools)"
+          title="Ask Noctis (https://dstrike.app/noctis)"
         >
           <div className="h-6 w-6 rounded-full bg-[#FBF5E9] dark:bg-amber-950/40 flex items-center justify-center text-[#C88A24] dark:text-amber-300 border border-[#C88A24]/30">
             <Sparkles className="h-3.5 w-3.5" />
           </div>
-          <span className="font-semibold tracking-tight">Ask Vibe AI</span>
+          <span className="font-semibold tracking-tight">Ask Noctis</span>
           <span className="hidden sm:inline text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
             Q&amp;A
           </span>
-        </button>
+        </a>
       </div>
 
       {/* Signature Persistent Floating Bottom-Right Messaging Dock */}
@@ -1892,6 +2234,7 @@ export default function LinkedInPage() {
         initialQuery={searchQuery}
         currentUser={userData}
         onNavigateTab={(tab) => setActiveTab(tab as any)}
+        onSelectMember={handleInspectMember}
       />
 
       {/* ConnectIn Portable Professional ID Modal */}

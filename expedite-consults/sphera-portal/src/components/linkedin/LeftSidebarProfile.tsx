@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect, useMemo } from "react"
 import {
   Bookmark,
   Users,
@@ -21,11 +21,14 @@ import {
   Sparkles,
   ShieldCheck,
   Flame,
-  ExternalLink
+  ExternalLink,
+  SlidersHorizontal,
+  Pin,
+  Check
 } from "lucide-react"
 import { UserProfile } from "@/lib/linkedin-data"
 import { isSuperAdminUser } from "@/lib/connectin-profile"
-import { findEnclaveById } from "@/lib/connectin-professions"
+import { findEnclaveById, ALL_PROFESSIONS, ProfessionDefinition } from "@/lib/connectin-professions"
 import { useLanguage } from "@/context/LanguageContext"
 import { TradeEnclaveWidgets } from "@/components/linkedin/TradeEnclaveWidgets"
 
@@ -51,17 +54,85 @@ export function LeftSidebarProfile({
   onOpenAnalytics
 }: LeftSidebarProfileProps) {
   const [isRecentExpanded, setIsRecentExpanded] = useState(true)
+  const [isAllToolsExpanded, setIsAllToolsExpanded] = useState(false)
+  const [isCustomizingCenter, setIsCustomizingCenter] = useState(false)
+  const [customProfessionId, setCustomProfessionId] = useState<string>("")
+  const [pinnedIds, setPinnedIds] = useState<string[]>([])
+  const [professionFilterQuery, setProfessionFilterQuery] = useState("")
   const { t } = useLanguage()
 
   const isAdminUser = isSuperAdminUser(user)
-  const effectiveEnclaveId = user.professionEnclave || (isAdminUser ? 'law_gov_defense' : 'trades_construction')
+  const userStorageKey = `connectin_cmd_center_${(user.email || user.name || 'default').toLowerCase().replace(/[^a-z0-9]/g, '_')}`
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    try {
+      const savedProf = localStorage.getItem(`${userStorageKey}_prof`)
+      const savedPins = localStorage.getItem(`${userStorageKey}_pins`)
+      if (savedProf) setCustomProfessionId(savedProf)
+      else setCustomProfessionId("")
+      if (savedPins) setPinnedIds(JSON.parse(savedPins))
+      else setPinnedIds([])
+    } catch {}
+  }, [userStorageKey, user.profession])
+
+  // Match the logged-in user's individual profession to a specific ProfessionDefinition
+  const matchedProfession: ProfessionDefinition | undefined = useMemo(() => {
+    if (customProfessionId) {
+      const found = ALL_PROFESSIONS.find(p => p.id === customProfessionId)
+      if (found) return found
+    }
+    const rawProf = (user.profession || "").trim().toLowerCase()
+    const rawHeadline = (user.headline || "").trim().toLowerCase()
+
+    if (rawProf) {
+      // 1. Exact ID or title match
+      const exact = ALL_PROFESSIONS.find(
+        p => p.id.toLowerCase() === rawProf || p.title.toLowerCase() === rawProf
+      )
+      if (exact) return exact
+
+      // 2. Substring match on title
+      const sub = ALL_PROFESSIONS.find(
+        p => p.title.toLowerCase().includes(rawProf) || rawProf.includes(p.id.replace(/_/g, ' '))
+      )
+      if (sub) return sub
+    }
+
+    // 3. Keyword overlap scoring across title + typicalSkills + categoryName
+    const searchTokens = `${rawProf} ${rawHeadline}`
+      .split(/[^a-z0-9]+/)
+      .filter(tok => tok.length >= 3 && !['and', 'the', 'for', 'senior', 'lead', 'master', 'certified', 'verified', 'specialist'].includes(tok))
+
+    const candidatePool = user.professionEnclave
+      ? ALL_PROFESSIONS.filter(p => p.enclaveId === user.professionEnclave)
+      : ALL_PROFESSIONS
+
+    let bestMatch: ProfessionDefinition | undefined = candidatePool[0]
+    let bestScore = -1
+    for (const prof of candidatePool) {
+      const haystack = `${prof.id} ${prof.title} ${prof.categoryName} ${prof.typicalSkills.join(' ')}`.toLowerCase()
+      let score = 0
+      for (const tok of searchTokens) {
+        if (haystack.includes(tok)) score += 2
+      }
+      if (score > bestScore) {
+        bestScore = score
+        bestMatch = prof
+      }
+    }
+    return bestMatch
+  }, [customProfessionId, user.profession, user.headline, user.professionEnclave])
+
+  const effectiveEnclaveId = matchedProfession?.enclaveId || user.professionEnclave || (isAdminUser ? 'law_gov_defense' : 'trades_construction')
   const enclaveInfo = findEnclaveById(effectiveEnclaveId)
+  const displayProfessionTitle = matchedProfession?.title || user.profession || 'Verified Specialist'
 
   // Enclave-Segregated Command Center Workspace Tools (Strict Need-to-Know)
   const getShortcutsForEnclave = () => {
     const adminShortcuts = isAdminUser ? [
-      { id: 'adminiam', label: '🛡️ Admin IAM Console', badge: 'Privileged' },
-      { id: 'auth_gate', label: '🔑 Switch Persona / Role', badge: 'Enclaves' }
+      { id: 'adminiam', label: '🛡️ Admin IAM Console', badge: 'Privileged', isCore: true },
+      { id: 'auth_gate', label: '🔑 Switch Persona / Role', badge: 'Enclaves', isCore: true }
     ] : []
 
     if (effectiveEnclaveId === 'trades_construction') {
@@ -305,7 +376,78 @@ export function LeftSidebarProfile({
     ]
   }
 
-  const workspaceShortcuts = getShortcutsForEnclave()
+  const allEnclaveShortcuts = getShortcutsForEnclave()
+
+  // Build individual profession-specific tools from matchedProfession.tools + enclave shortcuts
+  const { primaryShortcuts, extraShortcuts, allCustomizableShortcuts } = useMemo(() => {
+    const roleTools = (matchedProfession?.tools || []).map((tool, idx) => ({
+      id: `prof_tool_${matchedProfession?.id || 'role'}_${idx}`,
+      label: `${tool.icon} ${tool.name}`,
+      badge: tool.badge || 'Role Tool',
+      description: tool.description,
+      isRoleSpecific: true,
+      targetTab: 'learning'
+    }))
+
+    // Merge role-specific tools at the top (after any Super Admin shortcuts), avoiding duplicates
+    const adminItems = allEnclaveShortcuts.filter((s: any) => s.id === 'adminiam' || s.id === 'auth_gate')
+    const nonAdminEnclaveItems = allEnclaveShortcuts.filter((s: any) => s.id !== 'adminiam' && s.id !== 'auth_gate')
+
+    // Pick the most relevant enclave items for this specific profession
+    const profKeywords = `${matchedProfession?.title || ''} ${(matchedProfession?.typicalSkills || []).join(' ')}`.toLowerCase()
+    const scoredEnclaveItems = [...nonAdminEnclaveItems].sort((a, b) => {
+      const aMatch = profKeywords.split(/\s+/).some(w => w.length > 3 && a.label.toLowerCase().includes(w)) ? 1 : 0
+      const bMatch = profKeywords.split(/\s+/).some(w => w.length > 3 && b.label.toLowerCase().includes(w)) ? 1 : 0
+      return bMatch - aMatch
+    })
+
+    const combined = [...adminItems, ...roleTools, ...scoredEnclaveItems]
+
+    // If user has custom pinned tool IDs, show those first
+    if (pinnedIds.length > 0) {
+      const pinned = combined.filter(item => pinnedIds.includes(item.id))
+      const unpinned = combined.filter(item => !pinnedIds.includes(item.id))
+      return {
+        primaryShortcuts: pinned.length > 0 ? pinned : combined.slice(0, 6),
+        extraShortcuts: pinned.length > 0 ? unpinned : combined.slice(6),
+        allCustomizableShortcuts: combined
+      }
+    }
+
+    // Default focused view: Admin (if admin) + Role-Specific Tools + Top 3 Enclave Essentials (max 6 items total)
+    const defaultCount = isAdminUser ? 6 : 5
+    return {
+      primaryShortcuts: combined.slice(0, defaultCount),
+      extraShortcuts: combined.slice(defaultCount),
+      allCustomizableShortcuts: combined
+    }
+  }, [matchedProfession, allEnclaveShortcuts, pinnedIds, isAdminUser])
+
+  const handleSelectCustomProfession = (profId: string) => {
+    setCustomProfessionId(profId)
+    setPinnedIds([])
+    try {
+      if (profId) {
+        localStorage.setItem(`${userStorageKey}_prof`, profId)
+      } else {
+        localStorage.removeItem(`${userStorageKey}_prof`)
+      }
+      localStorage.removeItem(`${userStorageKey}_pins`)
+    } catch {}
+  }
+
+  const handleTogglePin = (toolId: string) => {
+    setPinnedIds(prev => {
+      const base = prev.length > 0 ? prev : primaryShortcuts.map(s => s.id)
+      const next = base.includes(toolId)
+        ? base.filter(id => id !== toolId)
+        : [...base, toolId]
+      try {
+        localStorage.setItem(`${userStorageKey}_pins`, JSON.stringify(next))
+      } catch {}
+      return next
+    })
+  }
 
   // Enclave-Segregated Recent & Followed Groups
   const getRecentItemsForEnclave = () => {
@@ -460,6 +602,21 @@ export function LeftSidebarProfile({
   }
 
   const recentItems = getRecentItemsForEnclave()
+  const visibleShortcuts = isAllToolsExpanded
+    ? [...primaryShortcuts, ...extraShortcuts]
+    : primaryShortcuts
+
+  const filteredProfessionsForPicker = useMemo(() => {
+    const q = professionFilterQuery.trim().toLowerCase()
+    const enclaveProfs = ALL_PROFESSIONS.filter(p => p.enclaveId === effectiveEnclaveId)
+    if (!q) return enclaveProfs
+    return ALL_PROFESSIONS.filter(
+      p =>
+        p.title.toLowerCase().includes(q) ||
+        p.categoryName.toLowerCase().includes(q) ||
+        p.typicalSkills.some(s => s.toLowerCase().includes(q))
+    ).slice(0, 25)
+  }, [professionFilterQuery, effectiveEnclaveId])
 
   return (
     <aside className="space-y-3">
@@ -531,10 +688,10 @@ export function LeftSidebarProfile({
                 </span>
               </div>
               <p className="text-[11px] font-semibold text-zinc-800 dark:text-zinc-200 truncate">
-                {user.profession || 'Master Carpenter (Framing & Finish Joinery)'}
+                {displayProfessionTitle}
               </p>
               <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium truncate">
-                Verified Specialist
+                {matchedProfession?.categoryName || 'Verified Specialist'}
               </p>
             </div>
 
@@ -603,40 +760,170 @@ export function LeftSidebarProfile({
           </div>
         </div>
 
-        {/* Personal Command Center Shortcuts */}
-        <div className="border-t border-zinc-100 p-2.5 text-xs dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-900/50 space-y-1">
-          <p className="px-2 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
-            {t("personal_command_center", "Personal Command Center")}
-          </p>
-          {workspaceShortcuts.map((ws) => (
+        {/* Profession-Tailored Personal Command Center */}
+        <div className="border-t border-zinc-100 p-2.5 text-xs dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-900/50 space-y-1.5">
+          <div className="flex items-center justify-between px-2">
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 truncate">
+                {t("personal_command_center", "Personal Command Center")}
+              </p>
+              <p className="text-[10px] text-[#0A66C2] dark:text-sky-400 font-semibold truncate" title={displayProfessionTitle}>
+                🎯 {displayProfessionTitle}
+              </p>
+            </div>
             <button
-              key={ws.id + ws.label}
-              onClick={() => {
-                if ((ws as any).url) {
-                  window.open((ws as any).url, '_blank', 'noopener,noreferrer')
-                } else if (ws.id === 'auth_gate' && onOpenAuthModal) {
-                  onOpenAuthModal()
-                } else if (ws.id === 'inbound_bounty' && onOpenInboundBountiesModal) {
-                  onOpenInboundBountiesModal()
-                } else if (onNavigateTab) {
-                  onNavigateTab(ws.id)
-                } else {
-                  onViewProfile()
-                }
-              }}
-              className="flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left text-zinc-700 hover:bg-white hover:shadow-xs dark:text-zinc-300 dark:hover:bg-zinc-800 transition-all group cursor-pointer"
+              type="button"
+              onClick={() => setIsCustomizingCenter(!isCustomizingCenter)}
+              className={`rounded-lg px-2 py-1 text-[10px] font-bold flex items-center gap-1 transition-colors cursor-pointer shrink-0 ${
+                isCustomizingCenter
+                  ? "bg-[#0A66C2] text-white"
+                  : "bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:border-[#0A66C2]"
+              }`}
+              title="Customize Command Center for your specific profession"
             >
-              <div className="flex items-center gap-1.5 min-w-0 flex-1 mr-2">
-                <span className="font-medium truncate group-hover:text-[#0A66C2]">{ws.label}</span>
-                {(ws as any).url && (
-                  <ExternalLink className="h-3 w-3 text-zinc-400 group-hover:text-[#0A66C2] shrink-0" />
-                )}
-              </div>
-              <span className="rounded-md bg-zinc-100 px-1.5 py-0.2 text-[9px] font-bold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 shrink-0">
-                {ws.badge}
-              </span>
+              <SlidersHorizontal className="h-3 w-3" />
+              <span>{isCustomizingCenter ? "Done" : "Customize"}</span>
             </button>
-          ))}
+          </div>
+
+          {/* Inline Profession & Tool Pin Customizer Drawer */}
+          {isCustomizingCenter && (
+            <div className="mx-1 rounded-xl border border-[#0A66C2]/30 bg-white dark:bg-zinc-900 p-2.5 space-y-2.5 shadow-sm">
+              <div className="space-y-1">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                  1. Tailor to Your Exact Profession
+                </label>
+                <input
+                  type="text"
+                  value={professionFilterQuery}
+                  onChange={(e) => setProfessionFilterQuery(e.target.value)}
+                  placeholder="Search 170+ professions (e.g. Nurse, Electrician, IAM, CPA)..."
+                  className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-2 py-1 text-[11px] text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-[#0A66C2]"
+                />
+                <select
+                  value={matchedProfession?.id || ""}
+                  onChange={(e) => handleSelectCustomProfession(e.target.value)}
+                  className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2 py-1 text-[11px] font-semibold text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-[#0A66C2]"
+                >
+                  {filteredProfessionsForPicker.map((prof) => (
+                    <option key={prof.id} value={prof.id}>
+                      {prof.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                    2. Pin Your Top Tools
+                  </label>
+                  {pinnedIds.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPinnedIds([])
+                        try { localStorage.removeItem(`${userStorageKey}_pins`) } catch {}
+                      }}
+                      className="text-[10px] font-semibold text-[#0A66C2] hover:underline cursor-pointer"
+                    >
+                      Reset Default
+                    </button>
+                  )}
+                </div>
+                <div className="max-h-40 overflow-y-auto space-y-1 pr-1">
+                  {allCustomizableShortcuts.map((item) => {
+                    const activeSet = pinnedIds.length > 0 ? pinnedIds : primaryShortcuts.map(s => s.id)
+                    const isPinned = activeSet.includes(item.id)
+                    return (
+                      <button
+                        key={item.id + item.label}
+                        type="button"
+                        onClick={() => handleTogglePin(item.id)}
+                        className={`flex w-full items-center justify-between rounded-lg px-2 py-1 text-left text-[11px] border transition-colors cursor-pointer ${
+                          isPinned
+                            ? "border-[#0A66C2]/40 bg-blue-50/60 dark:bg-blue-950/30 text-zinc-900 dark:text-zinc-100 font-semibold"
+                            : "border-zinc-200/60 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                        }`}
+                      >
+                        <span className="truncate pr-2">{item.label}</span>
+                        <span className="shrink-0 flex items-center gap-1 text-[9px] font-bold">
+                          {isPinned ? (
+                            <span className="text-[#0A66C2] dark:text-sky-400 flex items-center gap-0.5">
+                              <Check className="h-3 w-3" /> Pinned
+                            </span>
+                          ) : (
+                            <span className="text-zinc-400">+ Pin</span>
+                          )}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Focused Role-Specific Shortcuts List */}
+          <div className="space-y-0.5">
+            {visibleShortcuts.map((ws: any) => (
+              <button
+                key={ws.id + ws.label}
+                onClick={() => {
+                  if (ws.url) {
+                    window.open(ws.url, '_blank', 'noopener,noreferrer')
+                  } else if (ws.id === 'auth_gate' && onOpenAuthModal) {
+                    onOpenAuthModal()
+                  } else if (ws.id === 'inbound_bounty' && onOpenInboundBountiesModal) {
+                    onOpenInboundBountiesModal()
+                  } else if (ws.targetTab && onNavigateTab) {
+                    onNavigateTab(ws.targetTab)
+                  } else if (onNavigateTab) {
+                    onNavigateTab(ws.id)
+                  } else {
+                    onViewProfile()
+                  }
+                }}
+                title={ws.description || ws.label}
+                className="flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left text-zinc-700 hover:bg-white hover:shadow-xs dark:text-zinc-300 dark:hover:bg-zinc-800 transition-all group cursor-pointer"
+              >
+                <div className="flex items-center gap-1.5 min-w-0 flex-1 mr-2">
+                  <span className="font-medium truncate group-hover:text-[#0A66C2]">{ws.label}</span>
+                  {ws.url && (
+                    <ExternalLink className="h-3 w-3 text-zinc-400 group-hover:text-[#0A66C2] shrink-0" />
+                  )}
+                </div>
+                <span className={`rounded-md px-1.5 py-0.2 text-[9px] font-bold shrink-0 ${
+                  ws.isRoleSpecific
+                    ? "bg-blue-50 text-[#0A66C2] border border-blue-200/60 dark:bg-blue-950/50 dark:text-sky-300 dark:border-blue-800/60"
+                    : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
+                }`}>
+                  {ws.badge}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {/* Expand / Collapse Extra Enclave Tools Toggle */}
+          {extraShortcuts.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setIsAllToolsExpanded(!isAllToolsExpanded)}
+              className="mt-1 flex w-full items-center justify-center gap-1 rounded-lg border border-zinc-200/80 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 py-1.5 text-[11px] font-semibold text-zinc-600 dark:text-zinc-300 hover:text-[#0A66C2] hover:border-[#0A66C2]/40 transition-colors cursor-pointer"
+            >
+              {isAllToolsExpanded ? (
+                <>
+                  <span>Show Focused Role View</span>
+                  <ChevronUp className="h-3.5 w-3.5" />
+                </>
+              ) : (
+                <>
+                  <span>+ {extraShortcuts.length} More {enclaveInfo?.shortName || 'Enclave'} Tools</span>
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </>
+              )}
+            </button>
+          )}
         </div>
       </div>
 

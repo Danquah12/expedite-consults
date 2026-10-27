@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useRef } from "react"
+import React, { useState, useRef, useEffect } from "react"
 import {
   MapPin,
   Briefcase,
@@ -67,7 +67,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { createUniqueUserProfile } from "@/lib/connectin-profile"
-import { saveStoredUser, savePersistentAvatar, savePersistentCover } from "@/lib/connectin-storage"
+import { saveStoredUser, savePersistentAvatar, savePersistentCover, trackUserActivity } from "@/lib/connectin-storage"
 import {
   ProfileViewerItem,
   ContentReachData,
@@ -82,6 +82,9 @@ import { getQualifiedJobsForSkills, SkillQualifiedJob } from "@/lib/skill-qualif
 
 interface ProfileViewProps {
   user: UserProfile
+  isViewingOtherMember?: boolean
+  onReturnToOwnWorkspace?: () => void
+  onConnectMember?: (memberIdOrName: string) => void
   onBackToFeed?: () => void
   onNavigateMarketplace?: () => void
   onNavigateJobs?: (searchKeyword?: string) => void
@@ -92,6 +95,9 @@ interface ProfileViewProps {
 
 export function ProfileView({
   user,
+  isViewingOtherMember = false,
+  onReturnToOwnWorkspace,
+  onConnectMember,
   onBackToFeed,
   onNavigateMarketplace,
   onNavigateJobs,
@@ -120,13 +126,15 @@ export function ProfileView({
       updateSkills?: boolean
       extractedSkills?: string[]
       appendMode?: boolean
+      fileName?: string
+      candidateName?: string
     }
   ) => {
     const formattedNewExp = newExperiences.map(e => ({
       id: e.id,
       role: e.role,
       company: e.company,
-      companyLogo: e.companyLogo || 'https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?w=100&auto=format&fit=crop&q=80',
+      companyLogo: e.companyLogo || 'https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?w=100&auto=format&fit=crop&80',
       employmentType: e.employmentType || 'Full-time',
       duration: e.duration,
       location: e.location,
@@ -138,41 +146,70 @@ export function ProfileView({
       ? [...user.experience, ...formattedNewExp]
       : formattedNewExp
 
+    const normalizedExistingSkills = (user.skills || []).map((s: any) =>
+      typeof s === 'string'
+        ? { name: s, endorsements: 52, endorsers: ['Verified Resume NLP'] }
+        : { ...s, name: String(s?.name || '') }
+    ).filter(s => s.name.trim().length > 0)
+
+    let mergedSkills = normalizedExistingSkills
+    if (options.updateSkills && options.extractedSkills && options.extractedSkills.length > 0) {
+      const existingSkillNames = normalizedExistingSkills.map(s => s.name.toLowerCase())
+      const additionalSkills = options.extractedSkills
+        .filter(s => Boolean(s) && !existingSkillNames.includes(String(s).toLowerCase()))
+        .map(s => ({ name: String(s), endorsements: 1, endorsers: ['Verified Resume NLP'] }))
+      mergedSkills = [...normalizedExistingSkills, ...additionalSkills]
+    }
+
+    const uploadedResumeMeta = {
+      fileName: options.fileName || 'Uploaded_Resume.pdf',
+      uploadedAt: new Date().toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }),
+      positionsCount: finalExperiences.length,
+      skillsCount: mergedSkills.length,
+      candidateName: options.candidateName || user.name
+    }
+
     const updatedUser: UserProfile = {
       ...user,
       experience: finalExperiences,
       headline: options.updateHeadline && options.newHeadline ? options.newHeadline : user.headline,
       about: options.updateAbout && options.newAbout ? options.newAbout : user.about,
-    }
-
-    if (options.updateSkills && options.extractedSkills && options.extractedSkills.length > 0) {
-      const existingSkillNames = (user.skills || []).map(s => s.name.toLowerCase())
-      const additionalSkills = options.extractedSkills
-        .filter(s => !existingSkillNames.includes(s.toLowerCase()))
-        .map(s => ({ name: s, endorsements: 1, endorsers: ['Verified Resume NLP'] }))
-      updatedUser.skills = [...(user.skills || []), ...additionalSkills]
+      skills: mergedSkills,
+      ...({ uploadedResume: uploadedResumeMeta } as any)
     }
 
     saveStoredUser(updatedUser)
+    trackUserActivity({
+      actionType: 'RESUME_UPLOADED',
+      actionLabel: 'Uploaded & Applied Resume to Profile',
+      category: 'profile',
+      targetTitle: uploadedResumeMeta.fileName,
+      details: `Applied ${finalExperiences.length} career positions & ${mergedSkills.length} skills from "${uploadedResumeMeta.fileName}"`,
+      user: updatedUser
+    })
     if (onUpdateUser) {
       onUpdateUser(updatedUser)
     }
 
-    // Immediately close modal and switch to the Experience section of the workspace
+    // Immediately close modal and exit to the Profile section so the user can view the updated profile and uploaded resume
     setIsResumeModalOpen(false)
-    setWorkspaceSection('experience')
+    setWorkspaceSection('profile')
 
-    setResumeSuccessBanner(`🎉 Successfully saved ${newExperiences.length} career positions to your Workspace experience!`)
-    setTimeout(() => setResumeSuccessBanner(null), 6000)
+    setResumeSuccessBanner(
+      `✓ Resume "${uploadedResumeMeta.fileName}" saved & applied to your Profile! Updated ${finalExperiences.length} career positions and ${mergedSkills.length} verified skills.`
+    )
+    setTimeout(() => setResumeSuccessBanner(null), 9000)
 
-    // Smooth scroll down to the experience section
+    // Smooth scroll to the uploaded resume & experience section on the Profile view
     if (typeof window !== "undefined") {
       setTimeout(() => {
-        const el = document.getElementById("workspace-experience-section")
+        const el =
+          document.getElementById("profile-uploaded-resume-section") ||
+          document.getElementById("workspace-experience-section")
         if (el) {
           el.scrollIntoView({ behavior: "smooth", block: "start" })
         }
-      }, 100)
+      }, 120)
     }
   }
 
@@ -238,6 +275,12 @@ export function ProfileView({
   const [workspaceSection, setWorkspaceSection] = useState<
     'profile' | 'portfolio' | 'skills' | 'certifications' | 'experience' | 'publications' | 'reviews' | 'products' | 'analytics'
   >('profile')
+  const [isMemberConnected, setIsMemberConnected] = useState<boolean>(false)
+
+  useEffect(() => {
+    setWorkspaceSection('profile')
+    setIsMemberConnected(false)
+  }, [user.id, user.name])
 
   const [analyticsSubTab, setAnalyticsSubTab] = useState<'viewers' | 'reach' | 'discoveries'>('viewers')
   const [viewers, setViewers] = useState<ProfileViewerItem[]>(() => loadStoredProfileViewers())
@@ -260,12 +303,44 @@ export function ProfileView({
     })
   }
 
-  // Photo & Cover Attachment State
+  // Photo & Cover Attachment + Interactive Trim/Crop State
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false)
   const [photoModalTab, setPhotoModalTab] = useState<'avatar' | 'cover'>('avatar')
   const [customAvatarUrl, setCustomAvatarUrl] = useState("")
   const [customCoverUrl, setCustomCoverUrl] = useState("")
   const [photoSuccessMsg, setPhotoSuccessMsg] = useState<string | null>(null)
+
+  // Avatar Trim / Fit Controls
+  const [pendingAvatarSrc, setPendingAvatarSrc] = useState<string | null>(null)
+  const [avatarZoom, setAvatarZoom] = useState<number>(1)
+  const [avatarOffsetX, setAvatarOffsetX] = useState<number>(0)
+  const [avatarOffsetY, setAvatarOffsetY] = useState<number>(0)
+  const [avatarRotate, setAvatarRotate] = useState<number>(0)
+  const [isDraggingAvatar, setIsDraggingAvatar] = useState<boolean>(false)
+  const avatarDragStartRef = useRef<{ x: number; y: number; startX: number; startY: number } | null>(null)
+
+  // Cover Trim / Fit Controls
+  const [pendingCoverSrc, setPendingCoverSrc] = useState<string | null>(null)
+  const [coverZoom, setCoverZoom] = useState<number>(1)
+  const [coverOffsetX, setCoverOffsetX] = useState<number>(0)
+  const [coverOffsetY, setCoverOffsetY] = useState<number>(0)
+  const [isDraggingCover, setIsDraggingCover] = useState<boolean>(false)
+  const coverDragStartRef = useRef<{ x: number; y: number; startX: number; startY: number } | null>(null)
+
+  const resetAvatarTrimControls = (src: string | null = null) => {
+    setPendingAvatarSrc(src)
+    setAvatarZoom(1)
+    setAvatarOffsetX(0)
+    setAvatarOffsetY(0)
+    setAvatarRotate(0)
+  }
+
+  const resetCoverTrimControls = (src: string | null = null) => {
+    setPendingCoverSrc(src)
+    setCoverZoom(1)
+    setCoverOffsetX(0)
+    setCoverOffsetY(0)
+  }
 
   const avatarFileInputRef = useRef<HTMLInputElement>(null)
   const coverFileInputRef = useRef<HTMLInputElement>(null)
@@ -286,7 +361,7 @@ export function ProfileView({
     file: File,
     maxWidth: number,
     maxHeight: number,
-    quality: number = 0.86
+    quality: number = 0.9
   ): Promise<string> => {
     return new Promise((resolve) => {
       const reader = new FileReader()
@@ -326,6 +401,75 @@ export function ProfileView({
     })
   }
 
+  const renderTrimmedImageToDataUrl = (
+    sourceUrl: string,
+    targetWidth: number,
+    targetHeight: number,
+    zoom: number,
+    offsetX: number,
+    offsetY: number,
+    rotateDeg: number,
+    previewWidth: number,
+    previewHeight: number
+  ): Promise<string> => {
+    return new Promise((resolve) => {
+      if (typeof window === 'undefined' || !sourceUrl) {
+        resolve(sourceUrl)
+        return
+      }
+      // If no trim/zoom/pan/rotation was applied, return source directly
+      if (zoom === 1 && offsetX === 0 && offsetY === 0 && rotateDeg === 0) {
+        resolve(sourceUrl)
+        return
+      }
+      const img = new window.Image()
+      if (!sourceUrl.startsWith('data:')) {
+        img.crossOrigin = 'anonymous'
+      }
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas')
+          canvas.width = targetWidth
+          canvas.height = targetHeight
+          const ctx = canvas.getContext('2d')
+          if (!ctx) {
+            resolve(sourceUrl)
+            return
+          }
+          // Subtle neutral background when zoomed out (< 1x) to fit full portrait
+          ctx.fillStyle = '#1e293b'
+          ctx.fillRect(0, 0, targetWidth, targetHeight)
+
+          const baseScale = Math.max(targetWidth / img.width, targetHeight / img.height)
+          const drawW = img.width * baseScale
+          const drawH = img.height * baseScale
+
+          const scaleFactorX = targetWidth / previewWidth
+          const scaleFactorY = targetHeight / previewHeight
+
+          ctx.save()
+          ctx.translate(
+            targetWidth / 2 + offsetX * scaleFactorX,
+            targetHeight / 2 + offsetY * scaleFactorY
+          )
+          ctx.scale(zoom, zoom)
+          if (rotateDeg !== 0) {
+            ctx.rotate((rotateDeg * Math.PI) / 180)
+          }
+          ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH)
+          ctx.restore()
+
+          const croppedDataUrl = canvas.toDataURL('image/jpeg', 0.9)
+          resolve(croppedDataUrl)
+        } catch {
+          resolve(sourceUrl)
+        }
+      }
+      img.onerror = () => resolve(sourceUrl)
+      img.src = sourceUrl
+    })
+  }
+
   const handleUpdateAvatar = (newAvatarUrl: string) => {
     savePersistentAvatar(newAvatarUrl, user)
     const updated: UserProfile = {
@@ -333,13 +477,38 @@ export function ProfileView({
       avatar: newAvatarUrl
     }
     saveStoredUser(updated)
+    trackUserActivity({
+      actionType: 'PROFILE_UPDATED',
+      actionLabel: 'Updated & Trimmed Profile Picture',
+      category: 'profile',
+      targetTitle: user.name,
+      details: 'Saved trimmed & fitted profile picture to account vault',
+      user: updated
+    })
     if (onUpdateUser) {
       onUpdateUser(updated)
     }
     setEditAvatar(newAvatarUrl)
-    setPhotoSuccessMsg("Profile picture saved permanently to your isolated account vault!")
+    resetAvatarTrimControls(null)
+    setPhotoSuccessMsg("Profile picture trimmed & saved permanently to your profile!")
     setTimeout(() => setPhotoSuccessMsg(null), 4000)
     setIsPhotoModalOpen(false)
+  }
+
+  const handleSaveTrimmedAvatar = async () => {
+    const activeSrc = pendingAvatarSrc || user.avatar
+    const trimmedDataUrl = await renderTrimmedImageToDataUrl(
+      activeSrc,
+      560,
+      560,
+      avatarZoom,
+      avatarOffsetX,
+      avatarOffsetY,
+      avatarRotate,
+      144,
+      144
+    )
+    handleUpdateAvatar(trimmedDataUrl)
   }
 
   const handleUpdateCover = (newCoverUrl: string) => {
@@ -353,33 +522,60 @@ export function ProfileView({
       onUpdateUser(updated)
     }
     setEditCover(newCoverUrl)
-    setPhotoSuccessMsg("Cover photo saved permanently to your isolated account vault!")
+    resetCoverTrimControls(null)
+    setPhotoSuccessMsg("Cover banner trimmed & saved permanently to your profile!")
     setTimeout(() => setPhotoSuccessMsg(null), 4000)
     setIsPhotoModalOpen(false)
+  }
+
+  const handleSaveTrimmedCover = async () => {
+    const activeSrc = pendingCoverSrc || user.coverImage || "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1200&auto=format&fit=crop&q=80"
+    const trimmedDataUrl = await renderTrimmedImageToDataUrl(
+      activeSrc,
+      1400,
+      460,
+      coverZoom,
+      coverOffsetX,
+      coverOffsetY,
+      0,
+      360,
+      112
+    )
+    handleUpdateCover(trimmedDataUrl)
   }
 
   const handleAvatarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const dataUrl = await compressImageFile(file, 560, 560, 0.86)
+    const dataUrl = await compressImageFile(file, 900, 900, 0.9)
     if (dataUrl) {
-      handleUpdateAvatar(dataUrl)
+      // Load into interactive Trim & Fit editor so user can adjust zoom/position before saving
+      setPendingAvatarSrc(dataUrl)
+      setAvatarZoom(0.9)
+      setAvatarOffsetX(0)
+      setAvatarOffsetY(8)
+      setAvatarRotate(0)
     }
+    e.target.value = ""
   }
 
   const handleCoverFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const dataUrl = await compressImageFile(file, 1400, 500, 0.85)
+    const dataUrl = await compressImageFile(file, 1600, 700, 0.88)
     if (dataUrl) {
-      handleUpdateCover(dataUrl)
+      setPendingCoverSrc(dataUrl)
+      setCoverZoom(1)
+      setCoverOffsetX(0)
+      setCoverOffsetY(0)
     }
+    e.target.value = ""
   }
 
   const handleEditAvatarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const dataUrl = await compressImageFile(file, 560, 560, 0.86)
+    const dataUrl = await compressImageFile(file, 900, 900, 0.9)
     if (dataUrl) {
       setEditAvatar(dataUrl)
       savePersistentAvatar(dataUrl, user)
@@ -651,7 +847,54 @@ export function ProfileView({
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-20">
-      {/* 1. TOP MY WORKSPACE COMMAND BAR */}
+      {/* 0. MEMBER WORKSPACE INSPECTION BANNER (Shown when viewing another member's workspace) */}
+      {isViewingOtherMember && (
+        <div className="rounded-2xl border-2 border-[#0A66C2]/40 bg-gradient-to-r from-blue-50 via-white to-indigo-50/70 dark:from-blue-950/40 dark:via-zinc-900 dark:to-indigo-950/30 p-3.5 sm:p-4 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
+          <div className="flex items-center gap-3 min-w-0">
+            <img
+              src={user.avatar}
+              alt={user.name}
+              className="h-11 w-11 rounded-full object-cover border-2 border-[#0A66C2] shrink-0 shadow-xs"
+            />
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="rounded-full bg-[#0A66C2] px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-white">
+                  Viewing Member Workspace
+                </span>
+                <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100 truncate">
+                  {user.name}
+                </span>
+              </div>
+              <p className="text-xs text-zinc-600 dark:text-zinc-300 truncate mt-0.5">
+                {user.headline}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap shrink-0">
+            {onReturnToOwnWorkspace && (
+              <button
+                type="button"
+                onClick={onReturnToOwnWorkspace}
+                className="rounded-xl bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-white text-white dark:text-zinc-900 px-3.5 py-2 text-xs font-bold shadow-xs transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                <span>👤 My Own Workspace</span>
+              </button>
+            )}
+            {onBackToFeed && (
+              <button
+                type="button"
+                onClick={onBackToFeed}
+                className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 px-3.5 py-2 text-xs font-bold transition-all cursor-pointer"
+              >
+                ← Back to Network / Feed
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 1. TOP WORKSPACE COMMAND BAR */}
       <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1.5">
@@ -666,19 +909,27 @@ export function ProfileView({
             </div>
 
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-              My Workspace &amp; Identity
+              {isViewingOtherMember ? `${user.name}'s Workspace & Identity` : 'My Workspace & Identity'}
             </h1>
             <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-2xl leading-relaxed">
-              Manage your professional profile, work experience, verified skills, certifications, peer reviews, and your seller listings.
+              {isViewingOtherMember
+                ? `Explore ${user.name}'s verified professional profile, work experience, verified skills, certifications, peer reviews, and workspace portfolio.`
+                : 'Manage your professional profile, work experience, verified skills, certifications, peer reviews, and your seller listings.'}
             </p>
           </div>
 
           {/* Quick Metrics */}
           <div className="flex items-center gap-3 shrink-0">
             <div className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 p-3.5 text-center min-w-[130px]">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 dark:text-zinc-400">Seller MRR</span>
-              <p className="text-xl font-black text-emerald-600 dark:text-emerald-400">$122.7K</p>
-              <span className="text-[10px] text-zinc-400">4 Active Listings</span>
+              <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 dark:text-zinc-400">
+                {isViewingOtherMember ? 'Connections' : 'Seller MRR'}
+              </span>
+              <p className="text-xl font-black text-emerald-600 dark:text-emerald-400">
+                {isViewingOtherMember ? `${(user.connectionsCount || 842).toLocaleString()}+` : '$122.7K'}
+              </p>
+              <span className="text-[10px] text-zinc-400">
+                {isViewingOtherMember ? 'Verified Network' : '4 Active Listings'}
+              </span>
             </div>
             <div className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 p-3.5 text-center min-w-[130px]">
               <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 dark:text-zinc-400">Rating</span>
@@ -699,7 +950,7 @@ export function ProfileView({
             { id: 'experience', label: '🏛️ Experience' },
             { id: 'publications', label: '📑 Publications' },
             { id: 'reviews', label: '⭐ Reviews' },
-            { id: 'products', label: '🛍️ My Products' }
+            { id: 'products', label: isViewingOtherMember ? `🛍️ ${user.name.split(' ')[0]}'s Products` : '🛍️ My Products' }
           ].map((sec) => {
             const isSelected = workspaceSection === sec.id
             return (
@@ -743,21 +994,23 @@ export function ProfileView({
                 alt="Banner"
                 className="h-full w-full object-cover opacity-75"
               />
-              {/* Button to attach / change cover picture */}
-              <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPhotoModalTab('cover')
-                    setIsPhotoModalOpen(true)
-                  }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/60 hover:bg-black/85 text-white backdrop-blur-md border border-white/25 text-xs font-semibold shadow-lg transition-all cursor-pointer"
-                  title="Change Cover Banner Photo"
-                >
-                  <Camera className="h-3.5 w-3.5" />
-                  <span>Change Cover</span>
-                </button>
-              </div>
+              {/* Button to attach / change cover picture (Owner only) */}
+              {!isViewingOtherMember && (
+                <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPhotoModalTab('cover')
+                      setIsPhotoModalOpen(true)
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/60 hover:bg-black/85 text-white backdrop-blur-md border border-white/25 text-xs font-semibold shadow-lg transition-all cursor-pointer"
+                    title="Change Cover Banner Photo"
+                  >
+                    <Camera className="h-3.5 w-3.5" />
+                    <span>Change Cover</span>
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Profile Avatar & Primary Details */}
@@ -771,33 +1024,37 @@ export function ProfileView({
                         alt={user.name}
                         className="h-full w-full object-cover"
                       />
-                      {/* Hover Overlay Button to Change Avatar */}
+                      {/* Hover Overlay Button to Change Avatar (Owner only) */}
+                      {!isViewingOtherMember && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPhotoModalTab('avatar')
+                            setIsPhotoModalOpen(true)
+                          }}
+                          className="absolute inset-0 bg-black/55 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-opacity cursor-pointer backdrop-blur-2xs"
+                          title="Attach or change profile photo"
+                        >
+                          <Camera className="h-6 w-6 mb-1 text-white" />
+                          <span className="text-[10px] font-bold">Change Photo</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Camera icon badge at bottom right (Owner only) */}
+                    {!isViewingOtherMember && (
                       <button
                         type="button"
                         onClick={() => {
                           setPhotoModalTab('avatar')
                           setIsPhotoModalOpen(true)
                         }}
-                        className="absolute inset-0 bg-black/55 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-opacity cursor-pointer backdrop-blur-2xs"
-                        title="Attach or change profile photo"
+                        className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white flex items-center justify-center shadow-md border-2 border-white dark:border-zinc-900 cursor-pointer transition-transform hover:scale-110"
+                        title="Upload or Change Profile Photo"
                       >
-                        <Camera className="h-6 w-6 mb-1 text-white" />
-                        <span className="text-[10px] font-bold">Change Photo</span>
+                        <Camera className="h-4 w-4" />
                       </button>
-                    </div>
-
-                    {/* Camera icon badge at bottom right */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPhotoModalTab('avatar')
-                        setIsPhotoModalOpen(true)
-                      }}
-                      className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white flex items-center justify-center shadow-md border-2 border-white dark:border-zinc-900 cursor-pointer transition-transform hover:scale-110"
-                      title="Upload or Change Profile Photo"
-                    >
-                      <Camera className="h-4 w-4" />
-                    </button>
+                    )}
                   </div>
 
                   <div className="space-y-1 pt-1">
@@ -827,54 +1084,113 @@ export function ProfileView({
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                  {/* Direct 1-Click WhatsApp Share Button */}
-                  <button
-                    type="button"
-                    onClick={handleShareToWhatsApp}
-                    className="rounded-full bg-[#25D366] hover:bg-[#20ba5a] text-white px-3.5 py-2 text-xs font-bold shadow-md shadow-emerald-500/20 flex items-center gap-1.5 transition-all cursor-pointer hover:scale-105 active:scale-95"
-                    title="Share profile directly to WhatsApp friends"
-                  >
-                    <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
-                      <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.303-.058.116-.087.188-.173.289l-.26.303c-.087.087-.177.181-.076.354.101.173.449.741.964 1.201.662.591 1.221.774 1.394.86.173.086.275.072.376-.043.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.043.072.043.419-.101.824z" />
-                      <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2.348 21.652l4.636-1.04A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.25c-1.63 0-3.14-.492-4.404-1.336l-.315-.21-2.753.618.63-2.683-.231-.328A8.212 8.212 0 013.75 12c0-4.549 3.701-8.25 8.25-8.25s8.25 3.701 8.25 8.25-3.701 8.25-8.25 8.25z" />
-                    </svg>
-                    <span>Share on WhatsApp</span>
-                  </button>
+                  {isViewingOtherMember ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsMemberConnected(true)
+                          if (onConnectMember) onConnectMember(user.id || user.name)
+                          setPhotoSuccessMsg(`✓ Connection request sent to ${user.name}!`)
+                          setTimeout(() => setPhotoSuccessMsg(null), 4000)
+                        }}
+                        className={`rounded-full px-4 py-2 text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all cursor-pointer ${
+                          isMemberConnected
+                            ? "bg-emerald-600 text-white"
+                            : "bg-[#0A66C2] hover:bg-[#004182] text-white"
+                        }`}
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        <span>{isMemberConnected ? `Connected with ${user.name.split(' ')[0]} ✓` : `+ Connect with ${user.name.split(' ')[0]}`}</span>
+                      </button>
 
-                  {/* Share Menu Trigger */}
-                  <button
-                    type="button"
-                    onClick={() => setIsShareModalOpen(true)}
-                    className="rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-3.5 py-2 text-xs font-bold border border-zinc-200 dark:border-zinc-700 shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer"
-                    title="Share Profile Link & Channels"
-                  >
-                    <Share2 className="h-3.5 w-3.5 text-zinc-500 dark:text-zinc-400" />
-                    <span>Share</span>
-                  </button>
+                      <button
+                        type="button"
+                        onClick={() => onNavigateMessaging && onNavigateMessaging(user.name)}
+                        className="rounded-full bg-sky-50 dark:bg-sky-950/40 border border-sky-300 dark:border-sky-800 hover:bg-sky-100 px-4 py-2 text-xs font-bold text-[#0A66C2] dark:text-sky-300 shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                      >
+                        <MessageSquarePlus className="h-3.5 w-3.5" />
+                        <span>Message {user.name.split(' ')[0]}</span>
+                      </button>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditName(user.name)
-                      setEditHeadline(user.headline)
-                      setEditLocation(user.location)
-                      setEditAbout(user.about)
-                      setEditAvatar(user.avatar)
-                      setEditCover(user.coverImage || "")
-                      setIsEditProfileOpen(true)
-                    }}
-                    className="rounded-full bg-sky-50 dark:bg-sky-950/40 border border-sky-300 dark:border-sky-800 hover:bg-sky-100 dark:hover:bg-sky-900/60 px-4 py-2 text-xs font-bold text-[#0A66C2] dark:text-sky-300 shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
-                  >
-                    <Edit3 className="h-3.5 w-3.5" />
-                    <span>Edit Profile</span>
-                  </button>
-                  <button
-                    onClick={() => setWorkspaceSection('products')}
-                    className="rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 px-4 py-2 text-xs font-bold text-white shadow-md flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Store className="h-3.5 w-3.5" />
-                    <span>Manage My Products</span>
-                  </button>
+                      <button
+                        type="button"
+                        onClick={handleShareToWhatsApp}
+                        className="rounded-full bg-[#25D366] hover:bg-[#20ba5a] text-white px-3.5 py-2 text-xs font-bold shadow-md shadow-emerald-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
+                      >
+                        <span>Share on WhatsApp</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setWorkspaceSection('portfolio')}
+                        className="rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 px-4 py-2 text-xs font-bold text-white shadow-md flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Briefcase className="h-3.5 w-3.5" />
+                        <span>View {user.name.split(' ')[0]}&apos;s Portfolio</span>
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      {/* Direct 1-Click WhatsApp Share Button */}
+                      <button
+                        type="button"
+                        onClick={handleShareToWhatsApp}
+                        className="rounded-full bg-[#25D366] hover:bg-[#20ba5a] text-white px-3.5 py-2 text-xs font-bold shadow-md shadow-emerald-500/20 flex items-center gap-1.5 transition-all cursor-pointer hover:scale-105 active:scale-95"
+                        title="Share profile directly to WhatsApp friends"
+                      >
+                        <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
+                          <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.303-.058.116-.087.188-.173.289l-.26.303c-.087.087-.177.181-.076.354.101.173.449.741.964 1.201.662.591 1.221.774 1.394.86.173.086.275.072.376-.043.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.043.072.043.419-.101.824z" />
+                          <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2.348 21.652l4.636-1.04A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.25c-1.63 0-3.14-.492-4.404-1.336l-.315-.21-2.753.618.63-2.683-.231-.328A8.212 8.212 0 013.75 12c0-4.549 3.701-8.25 8.25-8.25s8.25 3.701 8.25 8.25-3.701 8.25-8.25 8.25z" />
+                        </svg>
+                        <span>Share on WhatsApp</span>
+                      </button>
+
+                      {/* Share Menu Trigger */}
+                      <button
+                        type="button"
+                        onClick={() => setIsShareModalOpen(true)}
+                        className="rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-3.5 py-2 text-xs font-bold border border-zinc-200 dark:border-zinc-700 shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer"
+                        title="Share Profile Link & Channels"
+                      >
+                        <Share2 className="h-3.5 w-3.5 text-zinc-500 dark:text-zinc-400" />
+                        <span>Share</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setIsResumeModalOpen(true)}
+                        className="rounded-full bg-linear-to-r from-sky-600 to-[#0A66C2] hover:from-sky-500 hover:to-[#004182] px-4 py-2 text-xs font-bold text-white shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
+                      >
+                        <FileText className="h-3.5 w-3.5" />
+                        <span>Upload Resume</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditName(user.name)
+                          setEditHeadline(user.headline)
+                          setEditLocation(user.location)
+                          setEditAbout(user.about)
+                          setEditAvatar(user.avatar)
+                          setEditCover(user.coverImage || "")
+                          setIsEditProfileOpen(true)
+                        }}
+                        className="rounded-full bg-sky-50 dark:bg-sky-950/40 border border-sky-300 dark:border-sky-800 hover:bg-sky-100 dark:hover:bg-sky-900/60 px-4 py-2 text-xs font-bold text-[#0A66C2] dark:text-sky-300 shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                      >
+                        <Edit3 className="h-3.5 w-3.5" />
+                        <span>Edit Profile</span>
+                      </button>
+                      <button
+                        onClick={() => setWorkspaceSection('products')}
+                        className="rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 px-4 py-2 text-xs font-bold text-white shadow-md flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Store className="h-3.5 w-3.5" />
+                        <span>Manage My Products</span>
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -883,7 +1199,7 @@ export function ProfileView({
                 <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
                   About &amp; Architectural Focus
                 </h3>
-                <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed max-w-4xl">
+                <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed max-w-4xl whitespace-pre-line">
                   {user.about}
                 </p>
               </div>
@@ -997,6 +1313,169 @@ export function ProfileView({
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* UPLOADED RESUME & WORK EXPERIENCE SECTION DIRECTLY ON PROFILE */}
+          <div
+            id="profile-uploaded-resume-section"
+            className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-5"
+          >
+            {resumeSuccessBanner && (
+              <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 p-4 text-xs sm:text-sm font-bold text-emerald-900 dark:text-emerald-200 flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="flex items-center gap-2.5">
+                  <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                  <span>{resumeSuccessBanner}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setResumeSuccessBanner(null)}
+                  className="text-emerald-600 hover:text-emerald-800 p-1 cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
+            {/* Header & Uploaded Resume Status Badge */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-100 dark:border-zinc-800">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Briefcase className="h-5 w-5 text-[#0A66C2]" />
+                  <h3 className="font-bold text-base sm:text-lg text-zinc-900 dark:text-zinc-100">
+                    Uploaded Resume &amp; Work Experience ({user.experience?.length || 0})
+                  </h3>
+                  {(user as any).uploadedResume?.fileName && (
+                    <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 px-3 py-0.5 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                      <FileText className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                      <span>{(user as any).uploadedResume.fileName}</span>
+                      {(user as any).uploadedResume.uploadedAt && (
+                        <span className="text-[10px] font-normal opacity-80">· Synced {(user as any).uploadedResume.uploadedAt}</span>
+                      )}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  Your extracted resume positions, accomplishments, and verified skills applied directly to your Profile.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setIsResumeModalOpen(true)}
+                  className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white px-4 py-2 text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Upload className="h-3.5 w-3.5" />
+                  <span>{(user as any).uploadedResume?.fileName ? "Update Resume" : "Upload Resume"}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingExperience(null)
+                    setIsExpFormModalOpen(true)
+                  }}
+                  className="rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-3.5 py-2 text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>Add Position</span>
+                </button>
+              </div>
+            </div>
+
+            {user.experience && user.experience.length > 0 ? (
+              <div className="space-y-4">
+                {user.experience.map((exp, i) => (
+                  <div
+                    key={exp.id || i}
+                    className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/40 p-5 space-y-2.5 relative group hover:border-zinc-300 dark:hover:border-zinc-700 transition-all"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="font-bold text-sm sm:text-base text-zinc-900 dark:text-zinc-100">
+                            {exp.role}
+                          </h4>
+                          {exp.duration?.includes('Present') && (
+                            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                              Current Role
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs sm:text-sm font-semibold text-[#0A66C2] dark:text-sky-400">
+                          {exp.company}
+                        </p>
+                        <p className="text-xs text-zinc-500">
+                          {exp.duration} · {exp.location}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingExperience({
+                              id: exp.id || 'exp_' + i,
+                              role: exp.role,
+                              company: exp.company,
+                              employmentType: exp.employmentType || 'Full-time',
+                              duration: exp.duration,
+                              location: exp.location,
+                              description: exp.description,
+                              skills: exp.skills || []
+                            })
+                            setIsExpFormModalOpen(true)
+                          }}
+                          className="p-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 text-xs font-medium flex items-center gap-1 cursor-pointer"
+                          title="Edit position"
+                        >
+                          <Edit3 className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline">Edit</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteExperience(exp.id)}
+                          className="p-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-red-50 dark:hover:bg-red-950/50 text-zinc-400 hover:text-red-500 cursor-pointer"
+                          title="Delete position"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed whitespace-pre-line">
+                      {exp.description}
+                    </p>
+
+                    {exp.skills && exp.skills.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {exp.skills.map((sk: string) => (
+                          <span
+                            key={sk}
+                            className="rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 px-2 py-0.5 text-[11px] font-medium text-zinc-700 dark:text-zinc-300"
+                          >
+                            {sk}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-800 p-6 text-center space-y-3">
+                <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
+                  No work experience uploaded yet. Upload your resume to automatically build your profile experience and skills.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setIsResumeModalOpen(true)}
+                  className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white px-5 py-2 text-xs font-bold shadow-xs inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+                  <span>Upload Resume (Auto-Build)</span>
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Reconciled Trade Dispatch, Expiration Desk & Hall Invites for Trades Enclave */}
@@ -3288,13 +3767,24 @@ export function ProfileView({
                       />
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <button
                       type="button"
                       onClick={() => editAvatarFileInputRef.current?.click()}
                       className="px-2.5 py-1 text-[11px] font-semibold rounded-md bg-[#0A66C2] text-white hover:bg-[#004182] flex items-center gap-1 cursor-pointer"
                     >
                       <Upload className="h-3 w-3" /> Upload File
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEditProfileOpen(false)
+                        setPhotoModalTab('avatar')
+                        setIsPhotoModalOpen(true)
+                      }}
+                      className="px-2.5 py-1 text-[11px] font-semibold rounded-md bg-emerald-600 text-white hover:bg-emerald-700 flex items-center gap-1 cursor-pointer"
+                    >
+                      ✂️ Trim &amp; Fit
                     </button>
                     <input
                       type="file"
@@ -3408,18 +3898,27 @@ export function ProfileView({
         </DialogContent>
       </Dialog>
 
-      {/* Dedicated Profile & Cover Photo Attachment Dialog */}
-      <Dialog open={isPhotoModalOpen} onOpenChange={setIsPhotoModalOpen}>
-        <DialogContent className="max-w-md rounded-3xl bg-white p-5 sm:p-6 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl">
+      {/* Dedicated Profile & Cover Photo Attachment + Interactive Trim/Fit Dialog */}
+      <Dialog
+        open={isPhotoModalOpen}
+        onOpenChange={(open) => {
+          setIsPhotoModalOpen(open)
+          if (!open) {
+            setIsDraggingAvatar(false)
+            setIsDraggingCover(false)
+          }
+        }}
+      >
+        <DialogContent className="max-w-md max-h-[92vh] overflow-y-auto rounded-3xl bg-white p-5 sm:p-6 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
               <Camera className="h-5 w-5 text-[#0A66C2]" />
-              <span>{photoModalTab === 'avatar' ? 'Attach Profile Picture' : 'Attach Cover Banner Photo'}</span>
+              <span>{photoModalTab === 'avatar' ? 'Attach & Trim Profile Picture' : 'Attach & Trim Cover Banner'}</span>
             </DialogTitle>
           </DialogHeader>
 
           {/* Tab Switcher */}
-          <div className="flex rounded-xl bg-zinc-100 dark:bg-zinc-800 p-1 text-xs font-bold mt-2">
+          <div className="flex rounded-xl bg-zinc-100 dark:bg-zinc-800 p-1 text-xs font-bold mt-1">
             <button
               type="button"
               onClick={() => setPhotoModalTab('avatar')}
@@ -3445,14 +3944,215 @@ export function ProfileView({
           </div>
 
           {photoModalTab === 'avatar' ? (
-            <div className="space-y-4 pt-2">
-              {/* Current Avatar Preview */}
-              <div className="flex flex-col items-center justify-center p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800">
-                <div className="relative h-24 w-24 rounded-full overflow-hidden border-4 border-[#0A66C2] shadow-lg">
-                  <img src={user.avatar} alt={user.name} className="h-full w-full object-cover" />
+            <div className="space-y-3.5 pt-1">
+              {/* Interactive Draggable & Zoomable Circular Crop Frame */}
+              <div className="flex flex-col items-center justify-center p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800 space-y-2.5">
+                <div
+                  onMouseDown={(e) => {
+                    e.preventDefault()
+                    setIsDraggingAvatar(true)
+                    avatarDragStartRef.current = {
+                      x: e.clientX,
+                      y: e.clientY,
+                      startX: avatarOffsetX,
+                      startY: avatarOffsetY
+                    }
+                  }}
+                  onMouseMove={(e) => {
+                    if (!isDraggingAvatar || !avatarDragStartRef.current) return
+                    const dx = e.clientX - avatarDragStartRef.current.x
+                    const dy = e.clientY - avatarDragStartRef.current.y
+                    setAvatarOffsetX(Math.max(-90, Math.min(90, Math.round(avatarDragStartRef.current.startX + dx))))
+                    setAvatarOffsetY(Math.max(-90, Math.min(90, Math.round(avatarDragStartRef.current.startY + dy))))
+                  }}
+                  onMouseUp={() => setIsDraggingAvatar(false)}
+                  onMouseLeave={() => setIsDraggingAvatar(false)}
+                  onTouchStart={(e) => {
+                    const touch = e.touches[0]
+                    if (!touch) return
+                    setIsDraggingAvatar(true)
+                    avatarDragStartRef.current = {
+                      x: touch.clientX,
+                      y: touch.clientY,
+                      startX: avatarOffsetX,
+                      startY: avatarOffsetY
+                    }
+                  }}
+                  onTouchMove={(e) => {
+                    if (!isDraggingAvatar || !avatarDragStartRef.current) return
+                    const touch = e.touches[0]
+                    if (!touch) return
+                    const dx = touch.clientX - avatarDragStartRef.current.x
+                    const dy = touch.clientY - avatarDragStartRef.current.y
+                    setAvatarOffsetX(Math.max(-90, Math.min(90, Math.round(avatarDragStartRef.current.startX + dx))))
+                    setAvatarOffsetY(Math.max(-90, Math.min(90, Math.round(avatarDragStartRef.current.startY + dy))))
+                  }}
+                  onTouchEnd={() => setIsDraggingAvatar(false)}
+                  className="relative h-36 w-36 rounded-full overflow-hidden border-4 border-[#0A66C2] shadow-lg bg-slate-800 cursor-grab active:cursor-grabbing select-none touch-none"
+                  title="Drag photo with mouse or finger to reposition inside circle"
+                >
+                  <img
+                    src={pendingAvatarSrc || user.avatar}
+                    alt={user.name}
+                    draggable={false}
+                    style={{
+                      transform: `translate(${avatarOffsetX}px, ${avatarOffsetY}px) scale(${avatarZoom}) rotate(${avatarRotate}deg)`,
+                      transformOrigin: "center center"
+                    }}
+                    className="h-full w-full object-cover pointer-events-none transition-transform duration-75"
+                  />
+                  {/* Subtle framing crosshair ring */}
+                  <div className="pointer-events-none absolute inset-0 rounded-full ring-1 ring-inset ring-white/30" />
                 </div>
-                <p className="text-xs font-bold text-zinc-800 dark:text-zinc-200 mt-2">{user.name}</p>
-                <p className="text-[11px] text-zinc-500">Live ConnectIn Profile Picture</p>
+
+                <div className="text-center">
+                  <p className="text-xs font-bold text-zinc-800 dark:text-zinc-200">{user.name}</p>
+                  <p className="text-[11px] text-[#0A66C2] dark:text-sky-400 font-semibold">
+                    ✋ Drag photo to reposition · Zoom {Math.round(avatarZoom * 100)}%
+                  </p>
+                </div>
+
+                {/* 1-Click Quick Fit Presets */}
+                <div className="flex flex-wrap items-center justify-center gap-1.5 w-full pt-0.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAvatarZoom(0.82)
+                      setAvatarOffsetX(0)
+                      setAvatarOffsetY(14)
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold shadow-xs cursor-pointer transition-all"
+                    title="Zoom out slightly and shift down so your full head and glasses fit cleanly in the circle"
+                  >
+                    ✨ Fit Full Headshot
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAvatarZoom(0.68)
+                      setAvatarOffsetX(0)
+                      setAvatarOffsetY(10)
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-[#0A66C2] dark:text-sky-300 border border-blue-200 dark:border-blue-800 text-[11px] font-bold cursor-pointer transition-all"
+                  >
+                    🖼️ Fit Whole Photo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAvatarRotate((prev) => (prev + 90) % 360)}
+                    className="px-2.5 py-1 rounded-lg bg-zinc-200/80 dark:bg-zinc-700 hover:bg-zinc-300 text-zinc-700 dark:text-zinc-200 text-[11px] font-bold cursor-pointer transition-all"
+                  >
+                    🔄 Rotate 90°
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAvatarZoom(1)
+                      setAvatarOffsetX(0)
+                      setAvatarOffsetY(0)
+                      setAvatarRotate(0)
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-zinc-200/80 dark:bg-zinc-700 hover:bg-zinc-300 text-zinc-700 dark:text-zinc-200 text-[11px] font-bold cursor-pointer transition-all"
+                  >
+                    ↺ Reset
+                  </button>
+                </div>
+
+                {/* Fine-Tune Trim Sliders (Zoom, Vertical Position, Horizontal Position) */}
+                <div className="w-full space-y-2 pt-1.5 border-t border-zinc-200/70 dark:border-zinc-700/70 text-[11px]">
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between font-bold text-zinc-700 dark:text-zinc-300">
+                      <span>🔍 Zoom / Trim to Fit</span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setAvatarZoom(z => Math.max(0.55, Number((z - 0.08).toFixed(2))))}
+                          className="h-5 w-5 rounded bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100 font-black flex items-center justify-center cursor-pointer"
+                        >
+                          −
+                        </button>
+                        <span className="font-mono text-[10px] w-10 text-center">{Math.round(avatarZoom * 100)}%</span>
+                        <button
+                          type="button"
+                          onClick={() => setAvatarZoom(z => Math.min(2.4, Number((z + 0.08).toFixed(2))))}
+                          className="h-5 w-5 rounded bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100 font-black flex items-center justify-center cursor-pointer"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                    <input
+                      type="range"
+                      min="0.55"
+                      max="2.4"
+                      step="0.02"
+                      value={avatarZoom}
+                      onChange={(e) => setAvatarZoom(parseFloat(e.target.value))}
+                      className="w-full accent-[#0A66C2] cursor-pointer h-1.5"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between font-semibold text-zinc-600 dark:text-zinc-300">
+                        <span>↕️ Up / Down</span>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setAvatarOffsetY(y => Math.max(-90, y - 6))}
+                            className="px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-[10px] font-bold cursor-pointer"
+                            title="Move photo up"
+                          >
+                            ↑
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setAvatarOffsetY(y => Math.min(90, y + 6))}
+                            className="px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-[10px] font-bold cursor-pointer"
+                            title="Move photo down so forehead fits"
+                          >
+                            ↓
+                          </button>
+                        </div>
+                      </div>
+                      <input
+                        type="range"
+                        min="-90"
+                        max="90"
+                        step="1"
+                        value={avatarOffsetY}
+                        onChange={(e) => setAvatarOffsetY(parseInt(e.target.value, 10))}
+                        className="w-full accent-[#0A66C2] cursor-pointer h-1.5"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between font-semibold text-zinc-600 dark:text-zinc-300">
+                        <span>↔️ Left / Right</span>
+                        <span className="font-mono text-[10px] text-zinc-400">{avatarOffsetX}px</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="-90"
+                        max="90"
+                        step="1"
+                        value={avatarOffsetX}
+                        onChange={(e) => setAvatarOffsetX(parseInt(e.target.value, 10))}
+                        className="w-full accent-[#0A66C2] cursor-pointer h-1.5"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Save & Apply Trimmed Photo Button */}
+                <button
+                  type="button"
+                  onClick={handleSaveTrimmedAvatar}
+                  className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 cursor-pointer transition-all"
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span>Save &amp; Apply Fitted Picture to Profile ✓</span>
+                </button>
               </div>
 
               {/* Option 1: Upload from device */}
@@ -3470,12 +4170,12 @@ export function ProfileView({
                   className="w-full py-2.5 px-4 rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white font-bold text-xs shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 cursor-pointer transition-all"
                 >
                   <Upload className="h-4 w-4" />
-                  <span>Upload Photo from Computer / Phone</span>
+                  <span>Upload New Photo from Computer / Phone</span>
                 </button>
               </div>
 
               {/* Option 2: Enter direct image URL */}
-              <div className="space-y-1.5 pt-1">
+              <div className="space-y-1.5 pt-0.5">
                 <label className="text-[11px] font-bold text-zinc-600 dark:text-zinc-300">Or Paste Image URL:</label>
                 <div className="flex gap-2">
                   <input
@@ -3489,14 +4189,14 @@ export function ProfileView({
                     type="button"
                     onClick={() => {
                       if (customAvatarUrl.trim()) {
-                        handleUpdateAvatar(customAvatarUrl.trim())
+                        setPendingAvatarSrc(customAvatarUrl.trim())
                         setCustomAvatarUrl("")
                       }
                     }}
                     disabled={!customAvatarUrl.trim()}
                     className="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-black text-white text-xs font-bold cursor-pointer disabled:opacity-40"
                   >
-                    Apply
+                    Load
                   </button>
                 </div>
               </div>
@@ -3528,16 +4228,98 @@ export function ProfileView({
             </div>
           ) : (
             <div className="space-y-4 pt-2">
-              {/* Current Cover Preview */}
-              <div className="p-2 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800">
-                <div className="relative h-24 w-full rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-700">
+              {/* Interactive Draggable & Zoomable Cover Preview */}
+              <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800 space-y-2.5">
+                <div
+                  onMouseDown={(e) => {
+                    e.preventDefault()
+                    setIsDraggingCover(true)
+                    coverDragStartRef.current = {
+                      x: e.clientX,
+                      y: e.clientY,
+                      startX: coverOffsetX,
+                      startY: coverOffsetY
+                    }
+                  }}
+                  onMouseMove={(e) => {
+                    if (!isDraggingCover || !coverDragStartRef.current) return
+                    const dx = e.clientX - coverDragStartRef.current.x
+                    const dy = e.clientY - coverDragStartRef.current.y
+                    setCoverOffsetX(Math.max(-140, Math.min(140, Math.round(coverDragStartRef.current.startX + dx))))
+                    setCoverOffsetY(Math.max(-100, Math.min(100, Math.round(coverDragStartRef.current.startY + dy))))
+                  }}
+                  onMouseUp={() => setIsDraggingCover(false)}
+                  onMouseLeave={() => setIsDraggingCover(false)}
+                  className="relative h-28 w-full rounded-xl overflow-hidden border-2 border-[#0A66C2] bg-slate-800 cursor-grab active:cursor-grabbing select-none"
+                >
                   <img
-                    src={user.coverImage || "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1200&auto=format&fit=crop&q=80"}
+                    src={pendingCoverSrc || user.coverImage || "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1200&auto=format&fit=crop&q=80"}
                     alt="Cover Banner"
-                    className="h-full w-full object-cover"
+                    draggable={false}
+                    style={{
+                      transform: `translate(${coverOffsetX}px, ${coverOffsetY}px) scale(${coverZoom})`,
+                      transformOrigin: "center center"
+                    }}
+                    className="h-full w-full object-cover pointer-events-none transition-transform duration-75"
                   />
                 </div>
-                <p className="text-[11px] text-zinc-500 text-center mt-1.5">Live Profile Cover Banner</p>
+                <p className="text-[11px] text-[#0A66C2] dark:text-sky-400 font-semibold text-center">
+                  ✋ Drag banner to reposition · Zoom {Math.round(coverZoom * 100)}%
+                </p>
+
+                {/* Cover Trim Sliders */}
+                <div className="space-y-2 pt-1 border-t border-zinc-200/70 dark:border-zinc-700/70 text-[11px]">
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between font-bold text-zinc-700 dark:text-zinc-300">
+                      <span>🔍 Banner Zoom / Fit</span>
+                      <span className="font-mono text-[10px]">{Math.round(coverZoom * 100)}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0.6"
+                      max="2.4"
+                      step="0.02"
+                      value={coverZoom}
+                      onChange={(e) => setCoverZoom(parseFloat(e.target.value))}
+                      className="w-full accent-[#0A66C2] cursor-pointer h-1.5"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div className="space-y-1">
+                      <span className="font-semibold text-zinc-600 dark:text-zinc-300">↕️ Vertical Fit</span>
+                      <input
+                        type="range"
+                        min="-100"
+                        max="100"
+                        step="1"
+                        value={coverOffsetY}
+                        onChange={(e) => setCoverOffsetY(parseInt(e.target.value, 10))}
+                        className="w-full accent-[#0A66C2] cursor-pointer h-1.5"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <span className="font-semibold text-zinc-600 dark:text-zinc-300">↔️ Horizontal Fit</span>
+                      <input
+                        type="range"
+                        min="-140"
+                        max="140"
+                        step="1"
+                        value={coverOffsetX}
+                        onChange={(e) => setCoverOffsetX(parseInt(e.target.value, 10))}
+                        className="w-full accent-[#0A66C2] cursor-pointer h-1.5"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleSaveTrimmedCover}
+                  className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 cursor-pointer transition-all"
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span>Save &amp; Apply Fitted Banner to Profile ✓</span>
+                </button>
               </div>
 
               {/* Option 1: Upload from device */}
@@ -3574,14 +4356,14 @@ export function ProfileView({
                     type="button"
                     onClick={() => {
                       if (customCoverUrl.trim()) {
-                        handleUpdateCover(customCoverUrl.trim())
+                        setPendingCoverSrc(customCoverUrl.trim())
                         setCustomCoverUrl("")
                       }
                     }}
                     disabled={!customCoverUrl.trim()}
                     className="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-black text-white text-xs font-bold cursor-pointer disabled:opacity-40"
                   >
-                    Apply
+                    Load
                   </button>
                 </div>
               </div>

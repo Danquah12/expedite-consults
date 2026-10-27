@@ -22,8 +22,8 @@ import {
 } from "lucide-react"
 import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
 import { DEMO_AUTH_PERSONAS, AuthPersona } from "@/components/linkedin/ConnectInAuthModal"
-import { saveStoredUser, saveStoredSessionRoute, getVaultProfileForUser } from "@/lib/connectin-storage"
-import { createUniqueUserProfile, resolveDisplayName, isSuperAdminUser } from "@/lib/connectin-profile"
+import { saveStoredUser, saveStoredSessionRoute, getVaultProfileForUser, getDefaultPortraitForUser } from "@/lib/connectin-storage"
+import { createUniqueUserProfile, resolveDisplayName, isSuperAdminUser, isDedicatedAdminAccount, isExactKwesiUser, isForeignPersonaAvatar } from "@/lib/connectin-profile"
 import { PROFESSION_ENCLAVES, findProfessionById, findEnclaveById, getProfessionsByEnclave } from "@/lib/connectin-professions"
 import { ProfessionSearchPopout } from "@/components/linkedin/ProfessionSearchPopout"
 import { ThemeColorSwitcher } from "@/components/theme/ThemeColorSwitcher"
@@ -45,6 +45,7 @@ export default function ConnectInLoginPage() {
   const [showPassword, setShowPassword] = useState(false)
 
   // Sign In Form State
+  const [signInName, setSignInName] = useState("")
   const [signInEmail, setSignInEmail] = useState("")
   const [signInPhone, setSignInPhone] = useState("")
   const [signInPassword, setSignInPassword] = useState("")
@@ -122,7 +123,7 @@ export default function ConnectInLoginPage() {
     if (channelOverride) setSignInChannel(channelOverride)
 
     let effectivePhone = signInPhone
-    if (!effectivePhone && (signInEmail.includes("kasiedu") || signInEmail.includes("asiedu"))) {
+    if (!effectivePhone && isExactKwesiUser({ name: signInName, email: signInEmail })) {
       effectivePhone = "+1 (240) 260-7898"
       setSignInPhone(effectivePhone)
     }
@@ -136,10 +137,13 @@ export default function ConnectInLoginPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          name: signInName,
           email: signInEmail,
           phone: effectivePhone,
           password: signInPassword,
-          channel: effectiveChannel
+          channel: effectiveChannel,
+          professionId: signInProfessionId !== "auto_detect" ? signInProfessionId : undefined,
+          clientTimezone: typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : undefined
         })
       })
 
@@ -188,9 +192,10 @@ export default function ConnectInLoginPage() {
     setSuccessMessage("Verifying security code...")
 
     try {
-      const resolvedName = resolveDisplayName("", signInEmail)
+      const resolvedName = resolveDisplayName(signInName, signInEmail)
       const verifyTarget = activeSignInTarget || (signInChannel === 'email' ? signInEmail : (signInPhone || signInEmail))
-      const vaultProfile = getVaultProfileForUser({ email: signInEmail, name: resolvedName })
+      const vaultProfile = getVaultProfileForUser({ email: signInEmail, name: signInName.trim() || resolvedName })
+      const finalName = signInName.trim() || vaultProfile?.name || resolvedName
       const explicitProf = signInProfessionId !== "auto_detect" ? findProfessionById(signInProfessionId) : null
       const vaultProf = (!explicitProf && vaultProfile?.professionId) ? findProfessionById(vaultProfile.professionId) : null
       const selectedProf = explicitProf || vaultProf
@@ -203,7 +208,7 @@ export default function ConnectInLoginPage() {
           email: signInEmail,
           phone: signInPhone,
           code,
-          name: vaultProfile?.name || resolvedName,
+          name: finalName,
           professionId: selectedProf?.id || vaultProfile?.professionId,
           profession: selectedProf?.title || vaultProfile?.profession,
           professionCategory: selectedProf?.categoryName || vaultProfile?.professionCategory,
@@ -221,26 +226,44 @@ export default function ConnectInLoginPage() {
       const effectiveProfessionId = selectedProf?.id || vaultProfile?.professionId || data.profile?.professionId
       const effectiveEnclave = selectedProf?.enclaveId || vaultProfile?.professionEnclave || data.profile?.professionEnclave
 
-      const baseProfile = data.profile || createUniqueUserProfile({
-        name: vaultProfile?.name || resolvedName,
+      const freshProfile = createUniqueUserProfile({
+        name: finalName,
         email: signInEmail,
         role: "personal",
         professionId: effectiveProfessionId,
         professionEnclave: effectiveEnclave
       })
 
+      const baseProfile = data.profile || freshProfile
+
       const generatedDomainProfile = selectedProf ? createUniqueUserProfile({
-        name: vaultProfile?.name || resolvedName,
+        name: finalName,
         email: signInEmail,
         professionId: selectedProf.id,
         professionEnclave: selectedProf.enclaveId,
         role: "personal"
       }) : null
 
+      const candidateAvatar = vaultProfile?.avatar || data.profile?.avatar || baseProfile.avatar
+      const safeAvatar = (candidateAvatar && !isForeignPersonaAvatar(candidateAvatar, { name: finalName, email: signInEmail }))
+        ? candidateAvatar
+        : getDefaultPortraitForUser({ name: finalName, email: signInEmail, professionEnclave: effectiveEnclave } as any)
+
+      const isAdminUser = isSuperAdminUser({ name: finalName, email: signInEmail })
+      const shouldOpenAdminPortal = isDedicatedAdminAccount({
+        name: finalName,
+        email: signInEmail,
+        professionId: signInProfessionId
+      })
+
       const profileToSave = {
         ...baseProfile,
         ...(vaultProfile || {}),
+        name: finalName,
         email: signInEmail,
+        avatar: safeAvatar,
+        role: isAdminUser ? "admin" : "personal",
+        roles: isAdminUser ? ["SUPER_ADMIN"] : ["NORMAL_USER"],
         id: data.profile?.userId || data.user?.id || data.profile?.id || vaultProfile?.id || baseProfile.id,
         ...(selectedProf && generatedDomainProfile ? {
           profession: selectedProf.title,
@@ -256,10 +279,8 @@ export default function ConnectInLoginPage() {
         } : {})
       }
 
-      const isAdminUser = isSuperAdminUser({ ...profileToSave, email: signInEmail })
-
-      const targetTab = isAdminUser ? 'adminiam' : 'home'
-      const targetUrl = isAdminUser ? '/connectin-admin' : '/connectin'
+      const targetTab = shouldOpenAdminPortal ? 'adminiam' : 'home'
+      const targetUrl = shouldOpenAdminPortal ? '/connectin-admin' : '/connectin'
 
       saveStoredUser(profileToSave)
       saveStoredSessionRoute(targetTab, 'personal')
@@ -269,7 +290,7 @@ export default function ConnectInLoginPage() {
       }
 
       setSuccessMessage(
-        isAdminUser 
+        shouldOpenAdminPortal 
           ? `✓ Verified as Platform Administrator (${profileToSave.name})! Launching Master Control Enclave...`
           : `✓ Verified as ${profileToSave.name} (${selectedProf?.title || profileToSave.profession || 'Professional'})! Launching your ${selectedProf?.categoryName || 'segregated'} workspace...`
       )
@@ -291,7 +312,7 @@ export default function ConnectInLoginPage() {
     if (channelOverride) setJoinChannel(channelOverride)
 
     let effectivePhone = joinPhone
-    if (!effectivePhone && (joinEmail.includes("kasiedu") || joinEmail.includes("asiedu"))) {
+    if (!effectivePhone && isExactKwesiUser({ name: `${joinFirstName} ${joinLastName}`, email: joinEmail })) {
       effectivePhone = "+1 (240) 260-7898"
       setJoinPhone(effectivePhone)
     }
@@ -393,15 +414,28 @@ export default function ConnectInLoginPage() {
       const targetTab = 'home'
       const targetWorkspace = 'personal'
 
-      const profileToSave = {
-        ...(data.profile || createUniqueUserProfile({
-          name: resolvedName,
-          email: joinEmail,
-          phone: joinPhone,
-          role: joinRole
-        })),
+      const freshJoinProfile = createUniqueUserProfile({
+        name: resolvedName,
         email: joinEmail,
-        id: data.profile?.userId || data.user?.id || data.profile?.id,
+        phone: joinPhone,
+        role: joinRole,
+        professionId: joinProfessionId,
+        professionEnclave: effectiveEnclave
+      })
+
+      const joinCandidateAvatar = data.profile?.avatar || freshJoinProfile.avatar
+      const safeJoinAvatar = (joinCandidateAvatar && !isForeignPersonaAvatar(joinCandidateAvatar, { name: resolvedName, email: joinEmail }))
+        ? joinCandidateAvatar
+        : getDefaultPortraitForUser({ name: resolvedName, email: joinEmail, professionEnclave: effectiveEnclave } as any)
+
+      const profileToSave = {
+        ...(data.profile || freshJoinProfile),
+        name: resolvedName,
+        email: joinEmail,
+        avatar: safeJoinAvatar,
+        role: "personal" as const,
+        roles: ["NORMAL_USER"],
+        id: data.profile?.userId || data.user?.id || data.profile?.id || freshJoinProfile.id,
         profession: data.profile?.profession || selectedProf?.title || 'Master Carpenter (Framing & Finish Joinery)',
         professionId: data.profile?.professionId || selectedProf?.id || 'carpenter',
         professionCategory: data.profile?.professionCategory || selectedProf?.categoryName || 'Skilled Trades & Construction',
@@ -577,6 +611,20 @@ export default function ConnectInLoginPage() {
                       showAutoDetectOption={true}
                     />
 
+                    {/* Full Name Input (Ensures unique identity, signature & profile badge per user) */}
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                        {t("full_name", "Full Name (for your profile & signature)")}
+                      </label>
+                      <input
+                        type="text"
+                        value={signInName}
+                        onChange={(e) => setSignInName(e.target.value)}
+                        placeholder="e.g. Michael Mensah (optional if already registered)"
+                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3.5 py-2.5 text-base sm:text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
+                      />
+                    </div>
+
                     {/* Email Input */}
                     <div className="space-y-1">
                       <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
@@ -587,7 +635,7 @@ export default function ConnectInLoginPage() {
                         required
                         value={signInEmail}
                         onChange={(e) => setSignInEmail(e.target.value)}
-                        placeholder="e.g. asiedudanquah@gmail.com"
+                        placeholder="e.g. name@company.com"
                         className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3.5 py-2.5 text-base sm:text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
                       />
                     </div>
@@ -613,7 +661,7 @@ export default function ConnectInLoginPage() {
                           type="button"
                           onClick={() => {
                             setSignInChannel('sms')
-                            if (!signInPhone && (signInEmail.includes('kasiedu') || signInEmail.includes('asiedu'))) {
+                            if (!signInPhone && isExactKwesiUser({ name: signInName, email: signInEmail })) {
                               setSignInPhone('+1 (240) 260-7898')
                             }
                           }}
@@ -629,7 +677,7 @@ export default function ConnectInLoginPage() {
                           type="button"
                           onClick={() => {
                             setSignInChannel('call')
-                            if (!signInPhone && (signInEmail.includes('kasiedu') || signInEmail.includes('asiedu'))) {
+                            if (!signInPhone && isExactKwesiUser({ name: signInName, email: signInEmail })) {
                               setSignInPhone('+1 (240) 260-7898')
                             }
                           }}
@@ -1417,6 +1465,7 @@ export default function ConnectInLoginPage() {
         isOpen={isGoogleModalOpen}
         onClose={() => setIsGoogleModalOpen(false)}
         initialEmail={signInEmail || joinEmail}
+        initialName={signInName || `${joinFirstName} ${joinLastName}`.trim()}
         professionId={signInProfessionId !== "auto_detect" ? signInProfessionId : joinProfessionId}
       />
 
@@ -1424,6 +1473,7 @@ export default function ConnectInLoginPage() {
         isOpen={isMicrosoftModalOpen}
         onClose={() => setIsMicrosoftModalOpen(false)}
         initialEmail={signInEmail || joinEmail}
+        initialName={signInName || `${joinFirstName} ${joinLastName}`.trim()}
         professionId={signInProfessionId !== "auto_detect" ? signInProfessionId : joinProfessionId}
       />
     </div>

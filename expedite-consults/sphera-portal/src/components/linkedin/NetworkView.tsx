@@ -74,6 +74,7 @@ import { ConnectWithNoteModal } from "./ConnectWithNoteModal"
 interface NetworkViewProps {
   suggestedPeople: SuggestedConnection[]
   onToggleConnect: (personId: string) => void
+  onSelectMember?: (member: any) => void
   currentUser?: UserProfile
   onNavigateMessaging?: (personName?: string) => void
   onUpdateConnectionsCount?: (newCount: number) => void
@@ -126,6 +127,7 @@ export function getEnclaveCapabilityFilters(enclaveId?: string) {
 export function NetworkView({
   suggestedPeople,
   onToggleConnect,
+  onSelectMember,
   currentUser = defaultUser,
   onNavigateMessaging,
   onUpdateConnectionsCount
@@ -336,11 +338,12 @@ export function NetworkView({
 
   // Filtered Connections
   const filteredConnections = connections.filter(c => {
-    const matchCapability = selectedCapability === 'All' || c.capabilities.includes(selectedCapability)
+    const safeCaps = (c.capabilities || []).map((cap: any) => (typeof cap === 'string' ? cap : String(cap?.name || cap || '')))
+    const matchCapability = selectedCapability === 'All' || safeCaps.includes(selectedCapability)
     const matchSearch = !searchFilter || (
       c.name.toLowerCase().includes(searchFilter.toLowerCase()) ||
       c.headline.toLowerCase().includes(searchFilter.toLowerCase()) ||
-      c.capabilities.some(cap => cap.toLowerCase().includes(searchFilter.toLowerCase()))
+      safeCaps.some(cap => cap.toLowerCase().includes(searchFilter.toLowerCase()))
     )
     return matchCapability && matchSearch
   }).sort((a, b) => {
@@ -352,18 +355,21 @@ export function NetworkView({
   // Filter People based on Capability, Search, and Enclave Prioritization
   const filteredPeople = suggestedPeople
     .filter(p => {
-      const matchCapability = selectedCapability === 'All' || p.capabilities?.includes(selectedCapability)
+      const safeCaps = (p.capabilities || []).map((cap: any) => (typeof cap === 'string' ? cap : String(cap?.name || cap || '')))
+      const matchCapability = selectedCapability === 'All' || safeCaps.includes(selectedCapability)
       const matchSearch = !searchFilter || (
-        p.name.toLowerCase().includes(searchFilter.toLowerCase()) ||
-        p.headline.toLowerCase().includes(searchFilter.toLowerCase()) ||
-        p.capabilities?.some(c => c.toLowerCase().includes(searchFilter.toLowerCase()))
+        String(p.name || '').toLowerCase().includes(searchFilter.toLowerCase()) ||
+        String(p.headline || '').toLowerCase().includes(searchFilter.toLowerCase()) ||
+        safeCaps.some(c => c.toLowerCase().includes(searchFilter.toLowerCase()))
       )
       return matchCapability && matchSearch
     })
     .sort((a, b) => {
       if (enclaveId) {
-        const aMatches = capabilityFilters.some(cf => cf.id !== 'All' && a.capabilities?.includes(cf.id))
-        const bMatches = capabilityFilters.some(cf => cf.id !== 'All' && b.capabilities?.includes(cf.id))
+        const aCaps = (a.capabilities || []).map((cap: any) => (typeof cap === 'string' ? cap : String(cap?.name || cap || '')))
+        const bCaps = (b.capabilities || []).map((cap: any) => (typeof cap === 'string' ? cap : String(cap?.name || cap || '')))
+        const aMatches = capabilityFilters.some(cf => cf.id !== 'All' && aCaps.includes(cf.id))
+        const bMatches = capabilityFilters.some(cf => cf.id !== 'All' && bCaps.includes(cf.id))
         if (aMatches && !bMatches) return -1
         if (!aMatches && bMatches) return 1
       }
@@ -756,11 +762,15 @@ export function NetworkView({
                     filteredConnections.map((conn) => (
                       <div key={conn.id} className="py-4 first:pt-2 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div className="flex items-start gap-3 min-w-0 flex-1">
-                          <div className="relative shrink-0">
+                          <div
+                            onClick={() => onSelectMember?.(conn)}
+                            className="relative shrink-0 cursor-pointer group"
+                            title={`Open ${conn.name}'s Workspace`}
+                          >
                             <img
                               src={conn.avatar}
                               alt={conn.name}
-                              className="h-14 w-14 rounded-full object-cover border border-zinc-200 dark:border-zinc-800"
+                              className="h-14 w-14 rounded-full object-cover border border-zinc-200 dark:border-zinc-800 group-hover:ring-2 group-hover:ring-[#0A66C2] transition-all"
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement
                                 target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(conn.name)}&backgroundColor=0a66c2`
@@ -773,7 +783,10 @@ export function NetworkView({
 
                           <div className="min-w-0 space-y-1">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100 hover:text-[#0A66C2] cursor-pointer">
+                              <h4
+                                onClick={() => onSelectMember?.(conn)}
+                                className="font-bold text-sm text-zinc-900 dark:text-zinc-100 hover:text-[#0A66C2] hover:underline cursor-pointer"
+                              >
                                 {conn.name}
                               </h4>
                               {conn.verifiedBadges?.map((b, i) => (
@@ -783,7 +796,10 @@ export function NetworkView({
                               ))}
                             </div>
 
-                            <p className="text-xs text-zinc-500 line-clamp-1 dark:text-zinc-400">
+                            <p
+                              onClick={() => onSelectMember?.(conn)}
+                              className="text-xs text-zinc-500 line-clamp-1 dark:text-zinc-400 cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-200"
+                            >
                               {conn.headline}
                             </p>
 
@@ -813,6 +829,13 @@ export function NetworkView({
 
                         {/* Actions */}
                         <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                          <button
+                            onClick={() => onSelectMember?.(conn)}
+                            className="rounded-full border border-[#0A66C2] px-3.5 py-1.5 text-xs font-bold text-[#0A66C2] hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors cursor-pointer"
+                          >
+                            View Workspace
+                          </button>
+
                           <button
                             onClick={() => {
                               if (onNavigateMessaging) {
@@ -863,18 +886,21 @@ export function NetworkView({
                 <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
                   {invitations.map((inv) => (
                     <div key={inv.id} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 first:pt-1 last:pb-0">
-                      <div className="flex items-center gap-3">
+                      <div
+                        onClick={() => onSelectMember?.(inv)}
+                        className="flex items-center gap-3 cursor-pointer group"
+                      >
                         <img
                           src={inv.avatar}
                           alt={inv.name}
-                          className="h-14 w-14 rounded-full object-cover border border-zinc-200 dark:border-zinc-800 shrink-0"
+                          className="h-14 w-14 rounded-full object-cover border border-zinc-200 dark:border-zinc-800 shrink-0 group-hover:ring-2 group-hover:ring-[#0A66C2] transition-all"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement
                             target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(inv.name)}&backgroundColor=0a66c2`
                           }}
                         />
                         <div className="min-w-0 space-y-0.5">
-                          <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
+                          <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2] group-hover:underline">
                             {inv.name}
                           </h4>
                           <p className="text-xs text-zinc-500 truncate dark:text-zinc-400">
@@ -889,6 +915,12 @@ export function NetworkView({
                       </div>
 
                       <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                        <button
+                          onClick={() => onSelectMember?.(inv)}
+                          className="rounded-full border border-[#0A66C2] px-3.5 py-1.5 text-xs font-bold text-[#0A66C2] hover:bg-blue-50 dark:hover:bg-blue-950/40"
+                        >
+                          View Workspace
+                        </button>
                         <button
                           onClick={() => handleIgnoreInvite(inv.id)}
                           className="rounded-full border border-zinc-300 px-4 py-1.5 text-xs font-bold text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
@@ -949,18 +981,21 @@ export function NetworkView({
                 <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
                   {outboundInvites.map((inv) => (
                     <div key={inv.id} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 first:pt-1 last:pb-0">
-                      <div className="flex items-start gap-3 min-w-0">
+                      <div
+                        onClick={() => onSelectMember?.(inv)}
+                        className="flex items-start gap-3 min-w-0 cursor-pointer group"
+                      >
                         <img
                           src={inv.avatar}
                           alt={inv.name}
-                          className="h-12 w-12 rounded-full object-cover border border-zinc-200 dark:border-zinc-800 shrink-0"
+                          className="h-12 w-12 rounded-full object-cover border border-zinc-200 dark:border-zinc-800 shrink-0 group-hover:ring-2 group-hover:ring-[#0A66C2] transition-all"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement
                             target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(inv.name)}&backgroundColor=0a66c2`
                           }}
                         />
                         <div className="min-w-0 space-y-0.5">
-                          <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
+                          <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2] group-hover:underline">
                             {inv.name}
                           </h4>
                           <p className="text-xs text-zinc-500 truncate dark:text-zinc-400">
@@ -980,6 +1015,12 @@ export function NetworkView({
                       </div>
 
                       <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                        <button
+                          onClick={() => onSelectMember?.(inv)}
+                          className="rounded-full border border-[#0A66C2] px-3 py-1.5 text-xs font-bold text-[#0A66C2] hover:bg-blue-50 dark:hover:bg-blue-950/40"
+                        >
+                          View Workspace
+                        </button>
                         <button
                           onClick={() => handleResendOutbound(inv.id)}
                           className="rounded-full border border-zinc-300 px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800 flex items-center gap-1"
@@ -1023,18 +1064,21 @@ export function NetworkView({
                   <div className="divide-y divide-blue-100/80 dark:divide-blue-900/40">
                     {invitations.map((inv) => (
                       <div key={inv.id} className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 first:pt-0 last:pb-0">
-                        <div className="flex items-center gap-3">
+                        <div
+                          onClick={() => onSelectMember?.(inv)}
+                          className="flex items-center gap-3 cursor-pointer group"
+                        >
                           <img
                             src={inv.avatar}
                             alt={inv.name}
-                            className="h-10 w-10 rounded-full object-cover border border-zinc-200 dark:border-zinc-800 shrink-0"
+                            className="h-10 w-10 rounded-full object-cover border border-zinc-200 dark:border-zinc-800 shrink-0 group-hover:ring-2 group-hover:ring-[#0A66C2] transition-all"
                             onError={(e) => {
                               const target = e.target as HTMLImageElement
                               target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(inv.name)}&backgroundColor=0a66c2`
                             }}
                           />
                           <div className="min-w-0">
-                            <h4 className="font-bold text-xs text-zinc-900 dark:text-zinc-100">
+                            <h4 className="font-bold text-xs text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2] group-hover:underline">
                               {inv.name}
                             </h4>
                             <p className="text-[11px] text-zinc-500 truncate dark:text-zinc-400">
@@ -1044,6 +1088,12 @@ export function NetworkView({
                         </div>
 
                         <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            onClick={() => onSelectMember?.(inv)}
+                            className="rounded-full border border-[#0A66C2] px-2.5 py-1 text-xs font-bold text-[#0A66C2] hover:bg-blue-50 dark:hover:bg-blue-950/40"
+                          >
+                            Workspace
+                          </button>
                           <button
                             onClick={() => handleIgnoreInvite(inv.id)}
                             className="rounded-full border border-zinc-300 px-3 py-1 text-xs font-bold text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
@@ -1070,7 +1120,7 @@ export function NetworkView({
                     <span className="text-[#0A66C2] font-extrabold">{selectedCapability}</span>
                   </h3>
                   <p className="text-xs text-zinc-500">
-                    Matches based on shared technical competencies, mutual circles, and security domains.
+                    Matches based on shared technical competencies, mutual circles, and security domains. Click any member to open their workspace.
                   </p>
                 </div>
                 <span className="text-xs text-zinc-500 font-medium">
@@ -1082,23 +1132,31 @@ export function NetworkView({
                 {filteredPeople.map((person) => (
                   <div
                     key={person.id}
-                    className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xs hover:border-[#0A66C2] hover:shadow-md transition-all dark:border-zinc-800 dark:bg-zinc-900 flex flex-col justify-between"
+                    className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xs hover:border-[#0A66C2] hover:shadow-md transition-all dark:border-zinc-800 dark:bg-zinc-900 flex flex-col justify-between group"
                   >
                     <div>
                       {/* Cover & Avatar */}
-                      <div className="relative h-20 w-full overflow-hidden bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800">
+                      <div
+                        onClick={() => onSelectMember?.(person)}
+                        className="relative h-20 w-full overflow-hidden bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 cursor-pointer"
+                        title={`Open ${person.name}'s Workspace`}
+                      >
                         {person.coverImage && (
                           <img
                             src={person.coverImage}
                             alt=""
-                            className="h-full w-full object-cover opacity-50"
+                            className="h-full w-full object-cover opacity-50 group-hover:scale-105 transition-transform duration-300"
                           />
                         )}
                       </div>
 
                       <div className="relative z-10 px-4 pb-3 pt-0">
                         <div className="-mt-10 mb-2 flex justify-between items-end">
-                          <div className="relative h-16 w-16 rounded-full border-2 border-white bg-white shadow-md dark:border-zinc-900 dark:bg-zinc-800 overflow-hidden shrink-0 ring-2 ring-black/5 dark:ring-white/10">
+                          <div
+                            onClick={() => onSelectMember?.(person)}
+                            className="relative h-16 w-16 rounded-full border-2 border-white bg-white shadow-md dark:border-zinc-900 dark:bg-zinc-800 overflow-hidden shrink-0 ring-2 ring-black/5 dark:ring-white/10 cursor-pointer hover:ring-[#0A66C2] transition-all"
+                            title={`Open ${person.name}'s Workspace`}
+                          >
                             <img
                               src={person.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(person.name)}&backgroundColor=0a66c2`}
                               alt={person.name}
@@ -1116,10 +1174,17 @@ export function NetworkView({
                           )}
                         </div>
 
-                        <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100 hover:text-[#0A66C2] cursor-pointer">
+                        <h4
+                          onClick={() => onSelectMember?.(person)}
+                          className="font-bold text-sm text-zinc-900 dark:text-zinc-100 hover:text-[#0A66C2] hover:underline cursor-pointer"
+                          title={`Open ${person.name}'s Workspace`}
+                        >
                           {person.name}
                         </h4>
-                        <p className="text-xs text-zinc-500 line-clamp-2 mt-0.5 dark:text-zinc-400 min-h-[32px]">
+                        <p
+                          onClick={() => onSelectMember?.(person)}
+                          className="text-xs text-zinc-500 line-clamp-2 mt-0.5 dark:text-zinc-400 min-h-[32px] cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-300"
+                        >
                           {person.headline}
                         </p>
 
@@ -1152,19 +1217,23 @@ export function NetworkView({
                         {/* Capabilities Tags */}
                         {person.capabilities && (
                           <div className="flex flex-wrap gap-1 mt-2">
-                            {person.capabilities.map((cap) => (
-                              <span
-                                key={cap}
-                                onClick={() => setSelectedCapability(cap)}
-                                className={`rounded-full px-2 py-0.5 text-[10px] font-medium cursor-pointer transition-colors ${
-                                  selectedCapability === cap
-                                    ? "bg-[#0A66C2] text-white font-bold"
-                                    : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300"
-                                }`}
-                              >
-                                {cap}
-                              </span>
-                            ))}
+                            {person.capabilities.map((rawCap: any, capIdx: number) => {
+                              const cap = typeof rawCap === "string" ? rawCap : String(rawCap?.name || rawCap || "")
+                              if (!cap) return null
+                              return (
+                                <span
+                                  key={`${cap}_${capIdx}`}
+                                  onClick={() => setSelectedCapability(cap)}
+                                  className={`rounded-full px-2 py-0.5 text-[10px] font-medium cursor-pointer transition-colors ${
+                                    selectedCapability === cap
+                                      ? "bg-[#0A66C2] text-white font-bold"
+                                      : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300"
+                                  }`}
+                                >
+                                  {cap}
+                                </span>
+                              )
+                            })}
                           </div>
                         )}
 
@@ -1176,7 +1245,15 @@ export function NetworkView({
                     </div>
 
                     {/* Bottom Actions */}
-                    <div className="p-3 pt-0 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center gap-2 mt-2">
+                    <div className="p-3 pt-2 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center gap-1.5 mt-2">
+                      <button
+                        onClick={() => onSelectMember?.(person)}
+                        className="flex-1 rounded-full border border-[#0A66C2] py-1.5 text-xs font-bold text-[#0A66C2] hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-all flex items-center justify-center gap-1 cursor-pointer"
+                        title={`Open ${person.name}'s Workspace`}
+                      >
+                        <span>View Workspace</span>
+                      </button>
+
                       <button
                         onClick={() => {
                           if (person.isConnected) return
@@ -1187,7 +1264,7 @@ export function NetworkView({
                             setIsConnectNoteModalOpen(true)
                           }
                         }}
-                        className={`flex-1 rounded-full py-1.5 text-xs font-bold transition-all flex items-center justify-center gap-1 ${
+                        className={`flex-1 rounded-full py-1.5 text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
                           person.isConnected
                             ? "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200"
                             : person.isPending
@@ -1215,7 +1292,7 @@ export function NetworkView({
                           setWarmIntroTarget(person)
                           setIsWarmIntroOpen(true)
                         }}
-                        className="rounded-full bg-purple-50 p-2 text-purple-700 hover:bg-purple-100 border border-purple-200 dark:bg-purple-950 dark:text-purple-300"
+                        className="rounded-full bg-purple-50 p-2 text-purple-700 hover:bg-purple-100 border border-purple-200 dark:bg-purple-950 dark:text-purple-300 shrink-0 cursor-pointer"
                         title="AI Warm Intro Request"
                       >
                         <Sparkles className="h-3.5 w-3.5 text-amber-500" />

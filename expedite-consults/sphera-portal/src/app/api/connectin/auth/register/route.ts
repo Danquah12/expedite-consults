@@ -4,6 +4,7 @@ import { sendConnectInOTPEmail } from "@/lib/connectin-email"
 import { sendConnectInSMS, formatE164Phone } from "@/lib/connectin-sms"
 import { createDynamicOTP } from "@/lib/connectin-otp"
 import { findProfessionById, findEnclaveById } from "@/lib/connectin-professions"
+import { resolveRequestGeoLocation, upsertCloudUser } from "@/lib/connectin-cloud-sync"
 import crypto from "crypto"
 
 export async function POST(req: NextRequest) {
@@ -20,13 +21,15 @@ export async function POST(req: NextRequest) {
       profession: incomingProfession,
       professionCategory: incomingCategory,
       professionEnclave: incomingEnclave,
-      twoFactorChannel = "email"
+      twoFactorChannel = "email",
+      clientTimezone
     } = body
 
     if (!email || !firstName) {
       return NextResponse.json({ error: "First name and email are required." }, { status: 400 })
     }
 
+    const geo = resolveRequestGeoLocation(req, clientTimezone, body.location)
     const cleanEmail = email.toLowerCase().trim()
     const fullName = `${firstName} ${lastName || ""}`.trim()
     let rawPhone = phone ? String(phone).trim() : ""
@@ -80,7 +83,7 @@ export async function POST(req: NextRequest) {
     // 3. If user doesn't exist yet, stage or create in DB
     const existingUser = connectinDb.findUserByEmail(cleanEmail)
     if (!existingUser) {
-      connectinDb.createUser(
+      const created = connectinDb.createUser(
         {
           email: cleanEmail,
           phone: phone || "",
@@ -99,7 +102,7 @@ export async function POST(req: NextRequest) {
             : finalEnclaveId === 'healthcare_medicine'
             ? "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=1200&auto=format&fit=crop&q=80"
             : "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80",
-          location: "United States · Cryptographically Verified",
+          location: geo.locationLabel,
           about: `Verified ${finalProfessionTitle} operating within the ${enclaveDef?.name || 'ConnectIn'} Enclave.`,
           skills: finalSkills,
           clearanceLevel: finalClearance,
@@ -116,6 +119,30 @@ export async function POST(req: NextRequest) {
           professionEnclave: finalEnclaveId
         }
       )
+      await upsertCloudUser({
+        id: created.user.id,
+        email: created.user.email,
+        phone: created.user.phone || "",
+        name: created.profile.name,
+        role: created.user.role,
+        status: created.user.status,
+        headline: created.profile.headline,
+        avatar: created.profile.avatar,
+        coverImage: created.profile.coverImage,
+        location: geo.locationLabel,
+        countryName: geo.countryName,
+        countryCode: geo.countryCode,
+        isOutsideUS: geo.isOutsideUS,
+        ipAddress: geo.ipAddress,
+        profession: finalProfessionTitle,
+        professionId: finalProfessionId,
+        professionCategory: finalCategory,
+        professionEnclave: finalEnclaveId,
+        authProvider: `${twoFactorChannel.toUpperCase()} 2FA`,
+        lastLoginAt: new Date().toISOString(),
+        createdAt: created.user.createdAt,
+        updatedAt: created.user.updatedAt
+      })
     } else {
       const existingProfile = connectinDb.findProfileByUserId(existingUser.id)
       if (existingProfile) {
@@ -124,6 +151,7 @@ export async function POST(req: NextRequest) {
         existingProfile.professionCategory = finalCategory
         existingProfile.professionEnclave = finalEnclaveId
         existingProfile.headline = finalHeadline
+        existingProfile.location = geo.locationLabel
         if (finalSkills.length > 0) existingProfile.skills = finalSkills
         existingProfile.clearanceLevel = finalClearance
       }

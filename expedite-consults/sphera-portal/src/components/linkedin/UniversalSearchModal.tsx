@@ -29,12 +29,15 @@ import { getEnclaveMarketplaceProducts } from "@/lib/marketplace-engine-data"
 import { getEnclaveLearningCourses } from "@/lib/learning-platform-data"
 import { getEnclavePulseArticles } from "@/lib/pulse-news-data"
 import { getEnclaveModules } from "@/lib/connectin-navbar-data"
+import { ALL_PROFESSIONS, PROFESSION_ENCLAVES } from "@/lib/connectin-professions"
+import { loadStoredAdminUsers } from "@/lib/connectin-storage"
 
 interface UniversalSearchModalProps {
   isOpen: boolean
   onClose: () => void
   initialQuery?: string
   onNavigateTab: (tab: string) => void
+  onSelectMember?: (member: any) => void
   currentUser?: UserProfile
 }
 
@@ -54,102 +57,116 @@ export function UniversalSearchModal({
   onClose,
   initialQuery = "",
   onNavigateTab,
+  onSelectMember,
   currentUser
 }: UniversalSearchModalProps) {
   const enclaveId = currentUser?.professionEnclave || 'trades_construction'
   const [query, setQuery] = useState(initialQuery || "")
   const [selectedCategory, setSelectedCategory] = useState<string>("All")
 
-  const basePeople: PersonSearchResult[] = (getEnclaveConnectedMembers(enclaveId) || []).map(m => ({
+  // Gather members across current enclave + all 20 enclaves
+  const allEnclavePeople: PersonSearchResult[] = [
+    ...(getEnclaveConnectedMembers(enclaveId) || []),
+    ...PROFESSION_ENCLAVES.flatMap(e => getEnclaveConnectedMembers(e.id) || [])
+  ].map(m => ({
     id: m.id,
     name: m.name || "Verified Member",
     role: m.headline || "ConnectIn Professional",
-    org: m.mutualClearance || "Verified Trade Network",
+    org: m.mutualClearance || "Verified ConnectIn Network",
     rating: 4.95,
     verified: true,
     avatar: m.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=Member&backgroundColor=0a66c2",
-    skills: Array.isArray(m.tags) ? m.tags : []
-  }))
+    skills: Array.isArray(m.tags) ? m.tags : (Array.isArray((m as any).capabilities) ? (m as any).capabilities : [])
+  })).filter((item, idx, self) =>
+    idx === self.findIndex(t => (t.name || "").toLowerCase() === (item.name || "").toLowerCase())
+  )
 
-  const [liveUsers, setLiveUsers] = useState<PersonSearchResult[]>(basePeople)
+  const [liveUsers, setLiveUsers] = useState<PersonSearchResult[]>(allEnclavePeople)
   const [connectedIds, setConnectedIds] = useState<Set<string>>(new Set())
   const [isLoadingUsers, setIsLoadingUsers] = useState(false)
 
-  useEffect(() => {
-    setLiveUsers((getEnclaveConnectedMembers(enclaveId) || []).map(m => ({
-      id: m.id,
-      name: m.name || "Verified Member",
-      role: m.headline || "ConnectIn Professional",
-      org: m.mutualClearance || "Verified Trade Network",
-      rating: 4.95,
-      verified: true,
-      avatar: m.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=Member&backgroundColor=0a66c2",
-      skills: Array.isArray(m.tags) ? m.tags : []
-    })))
-  }, [enclaveId])
-
-  // Platform Modules & Connected Apps (including Resume Preparation App, Ecosystem Launchpad, and PDFAdore)
-  const ALL_MODULES = [
-    {
-      id: "careersuite",
-      label: "Expedite CareerSuite™ — Resume Preparation App",
-      desc: "Embedded AI Resume Tailoring, ATS Fit Score, Corporate & USAJOBS Federal KSAs, and Profile Maximizer",
-      icon: "📝",
-      url: "https://tuhousing.vercel.app/",
-      isExternal: false,
-      badge: "RESUME AI"
-    },
-    {
-      id: "expedite-ecosystem-launchpad",
-      label: "Expedite Consults — Digital Ecosystem Launchpad (67+ Platforms)",
-      desc: "Unified command center to launch 67+ live production platforms across AI, Cybersecurity, Healthcare, Cloud, and E-Commerce (https://expedite-consults.vercel.app/launchpad)",
-      icon: "🚀",
-      url: "https://expedite-consults.vercel.app/launchpad",
-      isExternal: true,
-      badge: "67+ APPS"
-    },
-    {
-      id: "pdfadore-suite",
-      label: "PDFAdore — All-in-One Private PDF Tools (31+ Utilities)",
-      desc: "100% browser-based private PDF workstation: Merge, Split, Compress, Sign, Redact, OCR, Watermark & Convert PDFs with zero server uploads (https://www.pdfadore.com/)",
-      icon: "📄",
-      url: "https://www.pdfadore.com/",
-      isExternal: true,
-      badge: "PDF SUITE"
-    },
-    ...(getEnclaveModules(enclaveId, true) || [])
+  // Core Platform Modules & Connected Ecosystem Apps + All Enclave Modules
+  const CORE_MODULES = [
+    { id: "home", label: "Home Feed & Command Stream", desc: "Primary professional feed, announcements, and enclave updates", icon: "🏠", url: undefined as string | undefined, isExternal: false, badge: "CORE" },
+    { id: "network", label: "My Network & Member Directory", desc: "Discover and connect with verified professionals across all enclaves", icon: "👥", url: undefined, isExternal: false, badge: "CORE" },
+    { id: "jobs", label: "Jobs & Talent Board", desc: "Cleared roles, enterprise positions, and AI-matched opportunities", icon: "💼", url: undefined, isExternal: false, badge: "CAREERS" },
+    { id: "careersuite", label: "Expedite CareerSuite™ — Resume Preparation App", desc: "Embedded AI Resume Tailoring, ATS Fit Score, Corporate & USAJOBS Federal KSAs, and Profile Maximizer", icon: "📝", url: undefined, isExternal: false, badge: "RESUME AI" },
+    { id: "messaging", label: "Encrypted Messaging", desc: "Direct messages and end-to-end encrypted professional threads", icon: "💬", url: undefined, isExternal: false, badge: "COMMS" },
+    { id: "vibecomms", label: "VibeChat & Video Conferencing", desc: "HD video meetings, screen sharing, and team war rooms", icon: "📹", url: undefined, isExternal: false, badge: "LIVE" },
+    { id: "pulserooms", label: "Pulse Audio Rooms", desc: "Live interactive audio stages, townhalls, and expert panels", icon: "🎙️", url: undefined, isExternal: false, badge: "AUDIO" },
+    { id: "marketplace", label: "Enterprise Marketplace & Bazaar", desc: "Hardware, SaaS licenses, consulting templates, and enterprise gear", icon: "🛍️", url: undefined, isExternal: false, badge: "COMMERCE" },
+    { id: "learning", label: "Learning Academy & Certifications", desc: "Accredited courses, certifications, and hands-on skill tracks", icon: "🎓", url: undefined, isExternal: false, badge: "CEU/CPE" },
+    { id: "media", label: "ConnectIn Media & Broadcasts", desc: "Keynotes, technical briefings, and industry documentaries", icon: "📺", url: undefined, isExternal: false, badge: "VIDEO" },
+    { id: "wallet", label: "Wallet, Escrow & Invoicing", desc: "Manage milestone escrow, payouts, invoices, and treasury", icon: "💳", url: undefined, isExternal: false, badge: "FINANCE" },
+    { id: "company", label: "Companies & Organizations", desc: "Explore verified enterprise organizations and defense contractors", icon: "🏢", url: undefined, isExternal: false, badge: "DIRECTORY" },
+    { id: "guilds", label: "Professional Guilds & Working Groups", desc: "Join specialized domain guilds and standards committees", icon: "🛡️", url: undefined, isExternal: false, badge: "GUILD" },
+    { id: "bounties", label: "Bounties & Paid Challenges", desc: "Bug bounties, engineering challenges, and rapid task rewards", icon: "🎯", url: undefined, isExternal: false, badge: "REWARDS" },
+    { id: "events", label: "Conferences & Events", desc: "Summits, workshops, expos, and networking meetups", icon: "📅", url: undefined, isExternal: false, badge: "EVENTS" },
+    { id: "procurement", label: "RFPs & Enterprise Procurement", desc: "Government and enterprise RFPs, bids, and vendor solicitations", icon: "📋", url: undefined, isExternal: false, badge: "CONTRACTS" },
+    { id: "launchpad", label: "Startup Launchpad & Deal Flow", desc: "Pitch decks, founder incubators, and venture capital matching", icon: "🚀", url: undefined, isExternal: false, badge: "VENTURE" },
+    { id: "mentorship", label: "Executive Mentorship & Coaching", desc: "1-on-1 mentorship with industry fellows and senior leaders", icon: "🧭", url: undefined, isExternal: false, badge: "GROWTH" },
+    { id: "trustcenter", label: "Trust Center & Compliance Vault", desc: "SOC 2, FedRAMP, ISO 27001 attestations, and clearance verification", icon: "🔒", url: undefined, isExternal: false, badge: "SECURITY" },
+    { id: "labs", label: "R&D Papers, Patents & Labs", desc: "Peer-reviewed technical papers, benchmarks, and datasets", icon: "🧪", url: undefined, isExternal: false, badge: "RESEARCH" },
+    { id: "profile", label: "My Profile & Portfolio", desc: "View and customize your professional profile, skills, and resume", icon: "👤", url: undefined, isExternal: false, badge: "PROFILE" },
+    { id: "security", label: "Account Security & IAM Settings", desc: "Passkeys, MFA, active sessions, and privacy controls", icon: "🔑", url: undefined, isExternal: false, badge: "SECURITY" },
+    { id: "ask-noctis-ai", label: "Ask Noctis — Autonomous AI Command Assistant", desc: "Autonomous Cyber & Enterprise Intelligence Assistant (https://dstrike.app/noctis)", icon: "🌌", url: "https://dstrike.app/noctis", isExternal: true, badge: "LIVE AI" },
+    { id: "expedite-ecosystem-launchpad", label: "Expedite Consults — Digital Ecosystem Launchpad (67+ Platforms)", desc: "Unified command center to launch 67+ live production platforms across AI, Cybersecurity, Healthcare, Cloud, and E-Commerce", icon: "🚀", url: "https://launchpad.expediteconsults.com", isExternal: true, badge: "67+ APPS" },
+    { id: "pdfadore-suite", label: "PDFAdore — All-in-One Private PDF Tools (31+ Utilities)", desc: "100% browser-based private PDF workstation: Merge, Split, Compress, Sign, Redact, OCR, Watermark & Convert PDFs", icon: "📄", url: "https://www.pdfadore.com/", isExternal: true, badge: "PDF SUITE" },
   ]
 
-  const ALL_JOBS = (getEnclaveGlobalJobs(enclaveId) || []).map(j => ({
+  const ALL_MODULES = [
+    ...CORE_MODULES,
+    ...(getEnclaveModules(enclaveId, false) || []),
+    ...PROFESSION_ENCLAVES.flatMap(e => getEnclaveModules(e.id, false) || [])
+  ].filter((mod, idx, self) =>
+    idx === self.findIndex(m => m.id === mod.id || (m.label || "").toLowerCase() === (mod.label || "").toLowerCase())
+  )
+
+  const ALL_JOBS = [
+    ...(getEnclaveGlobalJobs(enclaveId) || []),
+    ...PROFESSION_ENCLAVES.flatMap(e => getEnclaveGlobalJobs(e.id) || [])
+  ].map(j => ({
     title: String(j.title || "Open Role"),
     company: String(j.company || "Verified Employer"),
     salary: String(j.salaryRange || (j as any).salary || "Competitive Compensation"),
     clearance: String(j.clearanceRequired || (j as any).clearance || "Verified Identity"),
     skills: Array.isArray(j.tags) ? j.tags.map(String) : []
-  }))
+  })).filter((job, idx, self) =>
+    idx === self.findIndex(t => t.title === job.title && t.company === job.company)
+  )
 
-  const ALL_PRODUCTS = (getEnclaveMarketplaceProducts(enclaveId) || []).map(p => ({
+  const ALL_PRODUCTS = [
+    ...(getEnclaveMarketplaceProducts(enclaveId) || []),
+    ...PROFESSION_ENCLAVES.flatMap(e => getEnclaveMarketplaceProducts(e.id) || [])
+  ].map(p => ({
     name: String(p.name || "Enterprise Solution"),
-    icon: p.icon || (enclaveId === 'trades_construction' ? '🧰' : (enclaveId === 'healthcare_medicine' ? '🩺' : (enclaveId === 'automotive_mechanics' ? '🔧' : '🛡️'))),
+    icon: p.icon || '🧰',
     tagline: String(p.tagline || p.overview || (p as any).description || "Verified ConnectIn Marketplace solution"),
     price: typeof p.pricing === 'object' && p.pricing !== null
       ? String(p.pricing.displayPrice || "$0")
       : String(p.pricing || "$0"),
     category: String(p.category || "Software")
-  }))
+  })).filter((prod, idx, self) =>
+    idx === self.findIndex(t => t.name === prod.name)
+  )
 
   const ALL_SERVICES = [
     { name: `${currentUser?.profession || 'Professional'} Verified Advisory Sprint`, vendor: "ConnectIn Verified Network", startingPrice: "$8,500 / Project", desc: "Expert assessment, compliance audit, and operational readiness." },
     { name: "Full-Scope Safety & Process Audit", vendor: "Ecosystem Quality Group", startingPrice: "$12,000 / Engagement", desc: "Rigorous standards inspection and field certification." }
   ]
 
-  const ALL_COURSES = (getEnclaveLearningCourses(enclaveId) || []).map(c => ({
+  const ALL_COURSES = [
+    ...(getEnclaveLearningCourses(enclaveId) || []),
+    ...PROFESSION_ENCLAVES.flatMap(e => getEnclaveLearningCourses(e.id) || [])
+  ].map(c => ({
     title: String(c.title || "Masterclass Course"),
     duration: String(c.duration || "4h 30m"),
     labs: 3,
     level: String(c.level || "Intermediate"),
     instructor: String(c.instructor?.name || "Verified Instructor")
-  }))
+  })).filter((course, idx, self) =>
+    idx === self.findIndex(t => t.title === course.title)
+  )
 
   const ALL_RESEARCH = (getEnclavePulseArticles(enclaveId) || []).map(a => ({
     title: String(a.title || "Technical Briefing"),
@@ -165,18 +182,33 @@ export function UniversalSearchModal({
     }
   }, [isOpen, initialQuery])
 
-  // Fetch live registered users from API
+  // Fetch live registered users from localStorage vault + API
   useEffect(() => {
     if (!isOpen) return
 
     const fetchUsers = async () => {
       setIsLoadingUsers(true)
       try {
+        const localVaultPeople: PersonSearchResult[] = loadStoredAdminUsers().map((acc, idx) => ({
+          id: acc.id || `vault_${idx}_${acc.email}`,
+          name: String(acc.name || acc.email.split("@")[0]),
+          role: String(acc.headline || `${acc.organization || "Verified Member"} · ConnectIn`),
+          org: String(acc.organization || "ConnectIn Member"),
+          rating: 4.95,
+          verified: true,
+          avatar: acc.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(acc.name || acc.email)}&backgroundColor=0a66c2`,
+          skills: [
+            acc.organization || "Verified Member",
+            acc.verificationLevel || "ConnectIn Network"
+          ]
+        }))
+
+        let apiPeople: PersonSearchResult[] = []
         const res = await fetch("/api/connectin/users")
         if (res.ok) {
           const data = await res.json()
           if (data.success && Array.isArray(data.users)) {
-            const apiPeople: PersonSearchResult[] = data.users.map((u: any) => ({
+            apiPeople = data.users.map((u: any) => ({
               id: u.id,
               name: String(u.name || "ConnectIn Member"),
               role: String(u.headline || "ConnectIn Member"),
@@ -184,15 +216,17 @@ export function UniversalSearchModal({
               rating: 4.9,
               verified: true,
               avatar: u.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.name || "Member")}&backgroundColor=0a66c2`,
-              skills: ["Verified Member", "Zero Trust", "ConnectIn Network"]
+              skills: Array.isArray(u.capabilities) && u.capabilities.length > 0
+                ? u.capabilities
+                : ["Verified Member", u.profession || "ConnectIn Network"].filter(Boolean)
             }))
-
-            const merged = [...apiPeople, ...basePeople].filter((item, index, self) =>
-              index === self.findIndex(t => (t.name || "").toLowerCase() === (item.name || "").toLowerCase())
-            )
-            setLiveUsers(merged)
           }
         }
+
+        const merged = [...localVaultPeople, ...apiPeople, ...allEnclavePeople].filter((item, index, self) =>
+          index === self.findIndex(t => (t.name || "").toLowerCase() === (item.name || "").toLowerCase())
+        )
+        setLiveUsers(merged)
       } catch (err) {
         console.warn("Failed to load users for omnisearch:", err)
       } finally {
@@ -201,85 +235,67 @@ export function UniversalSearchModal({
     }
 
     fetchUsers()
-  }, [isOpen])
+  }, [isOpen, enclaveId])
 
   const q = (query || "").toLowerCase().trim()
 
-  // Filter modules & hubs
-  const filteredModules = ALL_MODULES.filter(m => {
+  const matchesTokens = (fields: (string | undefined)[]) => {
     if (!q) return true
-    return (
-      (m.label || "").toLowerCase().includes(q) ||
-      (m.desc || "").toLowerCase().includes(q) ||
-      (m.id || "").toLowerCase().includes(q)
-    )
-  })
+    const tokens = q.split(/\s+/).filter(Boolean)
+    const haystack = fields.filter(Boolean).join(" ").toLowerCase()
+    return tokens.every(token => haystack.includes(token))
+  }
+
+  // Filter modules & hubs
+  const filteredModules = ALL_MODULES.filter(m =>
+    matchesTokens([m.label, m.desc, m.id, m.badge])
+  )
 
   // Filter people
-  const filteredPeople = liveUsers.filter(p => {
-    if (!q) return true
-    return (
-      (p.name || "").toLowerCase().includes(q) ||
-      (p.role || "").toLowerCase().includes(q) ||
-      (p.org || "").toLowerCase().includes(q) ||
-      p.skills?.some(s => (s || "").toLowerCase().includes(q))
-    )
-  })
+  const filteredPeople = liveUsers.filter(p =>
+    matchesTokens([p.name, p.role, p.org, ...(p.skills || [])])
+  )
+
+  // Filter skills & professions
+  const filteredSkillsAndProfessions = ALL_PROFESSIONS.filter(prof =>
+    matchesTokens([
+      prof.title,
+      prof.categoryLabel,
+      prof.enclaveId,
+      ...prof.typicalSkills,
+      ...prof.tools.map(t => `${t.label} ${t.desc}`)
+    ])
+  )
 
   // Filter jobs
-  const filteredJobs = ALL_JOBS.filter(j => {
-    if (!q) return true
-    return (
-      (j.title || "").toLowerCase().includes(q) ||
-      (j.company || "").toLowerCase().includes(q) ||
-      (j.clearance || "").toLowerCase().includes(q) ||
-      j.skills?.some(s => (s || "").toLowerCase().includes(q))
-    )
-  })
+  const filteredJobs = ALL_JOBS.filter(j =>
+    matchesTokens([j.title, j.company, j.clearance, ...(j.skills || [])])
+  )
 
   // Filter products
-  const filteredProducts = ALL_PRODUCTS.filter(prod => {
-    if (!q) return true
-    return (
-      (prod.name || "").toLowerCase().includes(q) ||
-      (prod.tagline || "").toLowerCase().includes(q) ||
-      (prod.category || "").toLowerCase().includes(q)
-    )
-  })
+  const filteredProducts = ALL_PRODUCTS.filter(prod =>
+    matchesTokens([prod.name, prod.tagline, prod.category])
+  )
 
   // Filter services
-  const filteredServices = ALL_SERVICES.filter(s => {
-    if (!q) return true
-    return (
-      (s.name || "").toLowerCase().includes(q) ||
-      (s.vendor || "").toLowerCase().includes(q) ||
-      (s.desc || "").toLowerCase().includes(q)
-    )
-  })
+  const filteredServices = ALL_SERVICES.filter(s =>
+    matchesTokens([s.name, s.vendor, s.desc])
+  )
 
   // Filter courses
-  const filteredCourses = ALL_COURSES.filter(c => {
-    if (!q) return true
-    return (
-      (c.title || "").toLowerCase().includes(q) ||
-      (c.instructor || "").toLowerCase().includes(q) ||
-      (c.level || "").toLowerCase().includes(q)
-    )
-  })
+  const filteredCourses = ALL_COURSES.filter(c =>
+    matchesTokens([c.title, c.instructor, c.level])
+  )
 
   // Filter research
-  const filteredResearch = ALL_RESEARCH.filter(r => {
-    if (!q) return true
-    return (
-      (r.title || "").toLowerCase().includes(q) ||
-      (r.author || "").toLowerCase().includes(q) ||
-      (r.format || "").toLowerCase().includes(q)
-    )
-  })
+  const filteredResearch = ALL_RESEARCH.filter(r =>
+    matchesTokens([r.title, r.author, r.format])
+  )
 
   const totalResultsCount =
     filteredModules.length +
     filteredPeople.length +
+    filteredSkillsAndProfessions.length +
     filteredJobs.length +
     filteredProducts.length +
     filteredServices.length +
@@ -289,7 +305,8 @@ export function UniversalSearchModal({
   const categoryCounts = [
     { id: "All", label: "All Results", count: String(totalResultsCount) },
     { id: "People", label: "People & Members", count: String(filteredPeople.length), targetTab: "network" },
-    { id: "Modules", label: "Hubs & Apps", count: String(filteredModules.length), targetTab: "home" },
+    { id: "Modules", label: "Modules & Hubs", count: String(filteredModules.length), targetTab: "home" },
+    { id: "Skills", label: "Skills & Professions", count: String(filteredSkillsAndProfessions.length), targetTab: "jobs" },
     { id: "Jobs", label: "Jobs", count: String(filteredJobs.length), targetTab: "jobs" },
     { id: "Products", label: "Products", count: String(filteredProducts.length), targetTab: "marketplace" },
     { id: "Services", label: "Services", count: String(filteredServices.length), targetTab: "marketplace" },
@@ -315,7 +332,7 @@ export function UniversalSearchModal({
                 ConnectIn Universal Omnisearch Directory
               </span>
               <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                {isLoadingUsers ? "Indexing members..." : `${totalResultsCount} members, jobs, hubs & assets indexed`}
+                {isLoadingUsers ? "Indexing members..." : `${totalResultsCount} members, modules, skills, jobs & assets indexed`}
               </span>
             </div>
             {isLoadingUsers && (
@@ -327,7 +344,7 @@ export function UniversalSearchModal({
             <Search className="absolute left-4 top-3.5 h-5 w-5 text-zinc-400" />
             <input
               type="text"
-              placeholder="Search members (Rhoda, Kwesi, Alex...), Resume Prep, jobs, solutions, courses..."
+              placeholder="Search anything: members, modules, skills, professions, jobs, courses..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               autoFocus
@@ -409,7 +426,15 @@ export function UniversalSearchModal({
                   return (
                     <div
                       key={personKey}
-                      className="rounded-xl border border-zinc-200 bg-white p-3.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 flex items-center justify-between gap-3 hover:border-blue-300 dark:hover:border-blue-700 transition-colors"
+                      onClick={() => {
+                        onClose()
+                        if (onSelectMember) {
+                          onSelectMember(p)
+                        } else {
+                          onNavigateTab('profile')
+                        }
+                      }}
+                      className="rounded-xl border border-zinc-200 bg-white p-3.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 flex items-center justify-between gap-3 hover:border-[#0A66C2] dark:hover:border-blue-600 transition-colors cursor-pointer group"
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <img
@@ -419,7 +444,7 @@ export function UniversalSearchModal({
                         />
                         <div className="min-w-0">
                           <div className="flex items-center gap-1">
-                            <p className="font-bold text-zinc-900 dark:text-zinc-100 truncate">{p.name}</p>
+                            <p className="font-bold text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2] truncate">{p.name}</p>
                             <ShieldCheck className="h-3.5 w-3.5 text-[#0A66C2] shrink-0" />
                           </div>
                           <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">{p.role}</p>
@@ -430,7 +455,7 @@ export function UniversalSearchModal({
                         </div>
                       </div>
 
-                      <div className="flex flex-col gap-1 shrink-0">
+                      <div className="flex flex-col gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
                         <button
                           type="button"
                           onClick={() => handleConnectPerson(personKey)}
@@ -446,11 +471,15 @@ export function UniversalSearchModal({
                           type="button"
                           onClick={() => {
                             onClose()
-                            onNavigateTab('network')
+                            if (onSelectMember) {
+                              onSelectMember(p)
+                            } else {
+                              onNavigateTab('profile')
+                            }
                           }}
-                          className="text-[10px] text-zinc-400 hover:text-[#0A66C2] text-center cursor-pointer"
+                          className="text-[10px] font-bold text-[#0A66C2] hover:underline text-center cursor-pointer"
                         >
-                          View Profile
+                          View Workspace →
                         </button>
                       </div>
                     </div>
@@ -508,6 +537,75 @@ export function UniversalSearchModal({
                         {mod.isExternal && <ExternalLink className="h-3 w-3" />}
                       </button>
                     </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 1.8. SKILLS, PROFESSIONS & ROLE WORKBENCHES */}
+          {(selectedCategory === "All" || selectedCategory === "Skills") && filteredSkillsAndProfessions.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-purple-600" />
+                  <span>Skills, Professions &amp; Role Workbenches ({filteredSkillsAndProfessions.length} found)</span>
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => { onClose(); onNavigateTab('jobs'); }}
+                  className="text-[#0A66C2] font-bold hover:underline cursor-pointer"
+                >
+                  Explore Roles &amp; Jobs →
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {filteredSkillsAndProfessions.slice(0, selectedCategory === "Skills" ? 40 : 8).map((prof) => (
+                  <div
+                    key={prof.id}
+                    className="rounded-xl border border-zinc-200 bg-white p-3.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 flex items-start justify-between gap-3 hover:border-purple-300 dark:hover:border-purple-700 transition-colors"
+                  >
+                    <div className="space-y-1.5 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-lg shrink-0">{prof.icon}</span>
+                        <p className="font-bold text-zinc-900 dark:text-zinc-100 truncate">{prof.title}</p>
+                        <span className="rounded bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 px-1.5 py-0.5 text-[9px] font-mono font-bold shrink-0">
+                          {prof.categoryLabel}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {prof.typicalSkills.map((skill) => (
+                          <span
+                            key={skill}
+                            className="rounded-md bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 px-1.5 py-0.5 text-[10px] font-medium"
+                          >
+                            ✓ {skill}
+                          </span>
+                        ))}
+                      </div>
+                      <div className="flex flex-wrap gap-1 pt-0.5">
+                        {prof.tools.map((tool) => (
+                          <span
+                            key={tool.id}
+                            className="rounded-md bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 px-1.5 py-0.5 text-[10px] font-medium"
+                          >
+                            {tool.icon} {tool.label}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onClose()
+                        onNavigateTab('jobs')
+                      }}
+                      className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white px-3 py-1 text-[11px] font-bold shrink-0 cursor-pointer"
+                    >
+                      View Roles
+                    </button>
                   </div>
                 ))}
               </div>
