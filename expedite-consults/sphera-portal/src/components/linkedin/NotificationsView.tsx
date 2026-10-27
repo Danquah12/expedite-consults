@@ -229,8 +229,20 @@ export function NotificationsView({ onNavigateTab }: NotificationsViewProps) {
                 </div>
               </div>
 
-              {/* 1-Click Action Button */}
-              <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+              {/* 1-Click Action Button + Optional Live External Link */}
+              <div className="flex items-center gap-2 flex-wrap shrink-0 self-end sm:self-center">
+                {notif.externalUrl && (
+                  <a
+                    href={notif.externalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="rounded-full px-3.5 py-2 text-xs font-extrabold text-emerald-700 dark:text-emerald-300 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:hover:bg-emerald-900/60 border border-emerald-300 dark:border-emerald-700 transition-all flex items-center gap-1 shadow-xs"
+                  >
+                    <span>{notif.externalLabel || 'Live Portal'}</span>
+                    <span>↗</span>
+                  </a>
+                )}
                 <button
                   onClick={() => handleNotificationAction(notif)}
                   className={`rounded-full px-4 py-2 text-xs font-extrabold text-white transition-all flex items-center gap-1.5 shadow-sm ${

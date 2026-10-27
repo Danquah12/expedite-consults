@@ -14,7 +14,7 @@ import { NetworkView } from "@/components/linkedin/NetworkView"
 import { JobsView } from "@/components/linkedin/JobsView"
 import { MessagingView } from "@/components/linkedin/MessagingView"
 import { NotificationsView } from "@/components/linkedin/NotificationsView"
-import { FloatingMessagingDock } from "@/components/linkedin/FloatingMessagingDock"
+import { FloatingMessagingDock, DirectMessageRecipient } from "@/components/linkedin/FloatingMessagingDock"
 
 const LearningView = dynamic(
   () => import("@/components/linkedin/LearningView").then((m) => m.LearningView),
@@ -162,6 +162,53 @@ export default function LinkedInPage() {
 
   const [userData, setUserData] = useState<UserProfile>(initialCurrentUser)
   const [inspectedMember, setInspectedMember] = useState<UserProfile | null>(null)
+  const [composeRecipient, setComposeRecipient] = useState<DirectMessageRecipient | null>(null)
+
+  const handleOpenDirectMessage = (personInput?: any) => {
+    if (!personInput) {
+      setActiveTab('messaging')
+      return
+    }
+    if (typeof personInput === 'object' && personInput.name) {
+      setComposeRecipient({
+        id: personInput.id,
+        name: personInput.name,
+        headline: personInput.headline || 'Verified ConnectLn Professional · Championing Culture, Compliance & Connection',
+        avatar: personInput.avatar
+      })
+      return
+    }
+    const nameStr = String(personInput).trim()
+    const matchedSuggested = suggestedPeople.find(p => p.name.toLowerCase() === nameStr.toLowerCase())
+    const matchedAdmin = loadStoredAdminUsers().find(u => u.name.toLowerCase() === nameStr.toLowerCase())
+    if (inspectedMember && inspectedMember.name.toLowerCase() === nameStr.toLowerCase()) {
+      setComposeRecipient({
+        id: inspectedMember.id,
+        name: inspectedMember.name,
+        headline: inspectedMember.headline,
+        avatar: inspectedMember.avatar
+      })
+    } else if (matchedSuggested) {
+      setComposeRecipient({
+        id: matchedSuggested.id,
+        name: matchedSuggested.name,
+        headline: matchedSuggested.headline,
+        avatar: matchedSuggested.avatar
+      })
+    } else if (matchedAdmin) {
+      setComposeRecipient({
+        id: matchedAdmin.id,
+        name: matchedAdmin.name,
+        headline: matchedAdmin.headline || `${matchedAdmin.role} at ${matchedAdmin.company}`,
+        avatar: matchedAdmin.avatar
+      })
+    } else {
+      setComposeRecipient({
+        name: nameStr,
+        headline: 'Senior Talent & Clinical Operations Specialist, Championing Culture, Compliance & Connection'
+      })
+    }
+  }
   const [posts, setPosts] = useState<Post[]>(initialPosts)
   const [suggestedPeople, setSuggestedPeople] = useState<SuggestedConnection[]>(suggestedConnections)
   const [feedSort, setFeedSort] = useState<'top' | 'recent'>('top')
@@ -1867,7 +1914,7 @@ export default function LinkedInPage() {
               setAnalyticsModalTab(tab)
               setIsAnalyticsModalOpen(true)
             }}
-            onNavigateMessaging={(person) => setActiveTab('messaging')}
+            onNavigateMessaging={(person) => handleOpenDirectMessage(person)}
           />
         )}
 
@@ -1878,7 +1925,7 @@ export default function LinkedInPage() {
             onToggleConnect={handleToggleConnect}
             currentUser={userData}
             onSelectMember={handleInspectMember}
-            onNavigateMessaging={(person) => setActiveTab('messaging')}
+            onNavigateMessaging={(person) => handleOpenDirectMessage(person)}
             onUpdateConnectionsCount={(newCount) => setUserData(prev => ({ ...prev, connectionsCount: newCount }))}
           />
         )}
@@ -2217,6 +2264,8 @@ export default function LinkedInPage() {
       <FloatingMessagingDock
         currentUser={userData}
         onOpenFullMessaging={() => setActiveTab('messaging')}
+        composeRecipient={composeRecipient}
+        onCloseComposeRecipient={() => setComposeRecipient(null)}
       />
 
       {/* ConnectIn AI Global Platform Assistant Modal */}
@@ -2272,7 +2321,8 @@ export default function LinkedInPage() {
         initialTab={analyticsModalTab}
         currentUser={userData}
         onNavigateMessaging={(personName) => {
-          setActiveTab('messaging')
+          setIsAnalyticsModalOpen(false)
+          handleOpenDirectMessage(personName)
         }}
         onNavigateTab={(tab) => setActiveTab(tab as any)}
       />

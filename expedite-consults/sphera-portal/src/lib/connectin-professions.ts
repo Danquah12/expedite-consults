@@ -1038,18 +1038,174 @@ export const PROFESSION_ENCLAVES: ProfessionEnclave[] = [
   // ─── 8. HEALTHCARE, CLINICAL, DENTAL & CAREGIVING ───────────────
   {
     id: "healthcare_medicine",
-    name: "Healthcare, Clinical, Dental & Caregiving",
-    shortName: "Healthcare & Caregiving",
+    name: "Healthcare, Pharmacy, Nursing, Clinical & Medical Administration",
+    shortName: "Healthcare & Medicine",
     icon: "🩺",
-    tagline: "Electronic health records, surgical suites, dental radiology, home health & palliative care",
-    description: "Dedicated workspace for dentists, veterinarians, animal trainers, home health aides, caregivers, elderly care workers, childcare leads, nurses, and physicians.",
+    tagline: "Clinical pharmacy, physicians, nursing, medical aides, hospital administration, surgical suites & allied health",
+    description: "Dedicated workspace for pharmacists, physicians, surgeons, nurse practitioners, registered nurses, LPNs, certified medical assistants & aides, hospital administrators, paramedics, dentists, and caregivers.",
     themeColor: "from-teal-600 via-emerald-700 to-cyan-800",
     accentBorder: "border-teal-500",
     badgeBg: "bg-teal-50 dark:bg-teal-950/40 border-teal-200 dark:border-teal-800",
     badgeText: "text-teal-800 dark:text-teal-300",
     securityClearanceTier: "HIPAA Clinical Credential & Medical Board Licensed (Level 3)",
-    feedTags: ["#Healthcare", "#Dentistry", "#Veterinary", "#Nursing", "#HomeHealth", "#Caregivers", "#ElderlyCare", "#Childcare", "#Medicine"],
+    feedTags: ["#Healthcare", "#Pharmacy", "#Doctors", "#Nursing", "#MedicalAides", "#HealthcareAdmin", "#ClinicalMedicine", "#HospitalOps", "#PublicHealth"],
     professions: [
+      {
+        id: "pharmacist",
+        title: "Doctor of Pharmacy & Clinical Pharmacist (PharmD, BCPS)",
+        enclaveId: "healthcare_medicine",
+        categoryName: "Pharmacy & Pharmacology",
+        defaultHeadline: "Doctor of Pharmacy (PharmD, BCPS) · Clinical Pharmacotherapy, Antimicrobial Stewardship, USP <797>/<800> Sterile IV Compounding & Medication Safety",
+        typicalSkills: ["Pharmacokinetics (AUC/MIC)", "Antimicrobial Stewardship", "USP <797>/<800> IV Compounding", "Drug Interaction Verification", "Oncology & ICU Dosing", "Immunization Delivery"],
+        tools: [
+          { name: "NIH DailyMed & OpenFDA Clinical Formulary", icon: "💊", description: "Live FDA drug monographs, renal CrCl dosing adjustments, IV compatibility and black-box safety alerts", badge: "NIH DailyMed Live" },
+          { name: "Barcode Medication Administration (BCMA) Verifier", icon: "🧬", description: "High-alert anticoagulant, insulin and chemotherapy order verification and PharmD consult log", badge: "USP <797> Ready" }
+        ]
+      },
+      {
+        id: "pharmacy_technician",
+        title: "Certified Pharmacy Technician (CPhT, CSPT)",
+        enclaveId: "healthcare_medicine",
+        categoryName: "Pharmacy & Pharmacology",
+        defaultHeadline: "Certified Compounded Sterile Preparation Pharmacy Technician (CPhT, CSPT) · Pyxis/Omnicell Automation, Cleanroom Aseptic IV Admixture & Narcotic Vault Control",
+        typicalSkills: ["Sterile IV Admixture", "Pyxis / Omnicell Restocking", "DEA Controlled Substance Logs", "Third-Party Prior Authorization", "Unit-Dose Packaging"],
+        tools: [
+          { name: "Cleanroom Hood & Automated Dispensing Log", icon: "🧪", description: "ISO Class 5 laminar airflow pressure logs, beyond-use date (BUD) labels and narcotic cycle counts", badge: "CPhT Verified" }
+        ]
+      },
+      {
+        id: "physician",
+        title: "Board-Certified Attending Physician (MD / DO)",
+        enclaveId: "healthcare_medicine",
+        categoryName: "Physicians & Surgeons",
+        defaultHeadline: "Board-Certified Attending Physician (MD, FACP) · Internal Medicine, Point-of-Care Ultrasound (POCUS), Complex Diagnostics & Evidence-Based Care",
+        typicalSkills: ["Clinical Diagnostics", "Differential Diagnosis", "Point-of-Care Ultrasound (POCUS)", "Inpatient Rounding", "Pharmacotherapy", "Medical Research"],
+        tools: [
+          { name: "PubMed & MDCalc Clinical Decision Support", icon: "📚", description: "Peer-reviewed treatment algorithms, sepsis SOFA/HEART scores, clinical trial data and drug interaction checker", badge: "MDCalc Live" },
+          { name: "HL7 FHIR Inpatient Order Set & H&P Builder", icon: "🩺", description: "Admission history & physicals, ICD-10 diagnostic coding and multidisciplinary consult orders", badge: "FHIR R4" }
+        ]
+      },
+      {
+        id: "surgeon_specialist_md",
+        title: "Trauma & Surgical Attending Specialist (MD, FACS, FACEP)",
+        enclaveId: "healthcare_medicine",
+        categoryName: "Physicians & Surgeons",
+        defaultHeadline: "Attending Trauma Surgeon & Emergency Medicine Specialist (MD, FACS) · Level 1 Trauma Resuscitation, Robotic Laparoscopy & Surgical ICU",
+        typicalSkills: ["ATLS Level 1 Trauma", "Robotic & Laparoscopic Surgery", "eFAST Ultrasound", "Massive Transfusion Protocol", "Critical Care Airway Management"],
+        tools: [
+          { name: "Surgical WHO Safe Checklist & Intraoperative Log", icon: "🔪", description: "Pre-incision time-out verification, robotic port mapping, blood loss tracking and post-op ICU orders", badge: "ACS Trauma" }
+        ]
+      },
+      {
+        id: "nurse_practitioner_pa",
+        title: "Nurse Practitioner & Physician Assistant (APRN, DNP, PA-C)",
+        enclaveId: "healthcare_medicine",
+        categoryName: "Nursing & Advanced Practice",
+        defaultHeadline: "Board-Certified Family & Acute Care Nurse Practitioner (DNP, APRN, FNP-BC) · Autonomous Prescribing, Chronic Disease Management & Telehealth",
+        typicalSkills: ["Advanced Physical Assessment", "DEA Schedule II-V Prescribing", "Chronic Disease Management", "Minor Office Procedures", "Diagnostic Interpretation"],
+        tools: [
+          { name: "Advanced Practice e-Prescribe & Telehealth Workbench", icon: "📋", description: "Electronic prescribing (EPCS), lab panel interpretation and outpatient care pathway templates", badge: "APRN / PA-C" }
+        ]
+      },
+      {
+        id: "registered_nurse",
+        title: "Registered Nurse — Inpatient & Med-Surg (BSN, RN)",
+        enclaveId: "healthcare_medicine",
+        categoryName: "Nursing & Advanced Practice",
+        defaultHeadline: "Registered Nurse (BSN, RN) · Inpatient Telemetry, High-Alert IV Medication Administration, Wound Care & SBAR Shift Handoffs",
+        typicalSkills: ["IV Therapy & Central Lines", "Cardiac Telemetry Monitoring", "5-Rights Medication Admin", "SBAR Clinical Handoffs", "Patient & Family Advocacy"],
+        tools: [
+          { name: "Clinical EHR & MAR Medication Administration Record", icon: "💉", description: "Real-time barcode MAR verification, intake/output balance and SBAR shift handoff board", badge: "EHR Ready" }
+        ]
+      },
+      {
+        id: "critical_care_er_nurse",
+        title: "ICU Critical Care & Emergency Trauma Nurse (RN, CCRN, CEN)",
+        enclaveId: "healthcare_medicine",
+        categoryName: "Nursing & Advanced Practice",
+        defaultHeadline: "Critical Care & Emergency Trauma Nurse (BSN, RN, CCRN, CEN) · Hemodynamic Vasopressor Titration, CRRT, Mechanical Ventilation & ESI Triage",
+        typicalSkills: ["Vasopressor Titration", "Mechanical Ventilation & ABGs", "TNCC / ACLS / PALS", "Continuous Renal Replacement (CRRT)", "Emergency Severity Index (ESI) Triage"],
+        tools: [
+          { name: "ICU Hemodynamic & Drip Titration Flowsheet", icon: "❤️‍🩹", description: "Norepinephrine/propofol weight-based mcg/kg/min calculators, arterial line MAP tracking and ventilator weaning logs", badge: "CCRN / CEN" }
+        ]
+      },
+      {
+        id: "licensed_practical_nurse",
+        title: "Licensed Practical / Vocational Nurse (LPN / LVN)",
+        enclaveId: "healthcare_medicine",
+        categoryName: "Nursing & Advanced Practice",
+        defaultHeadline: "Licensed Practical Nurse (LPN / LVN) · Subacute Rehab, Complex Wound Dressing, Tracheostomy Care & Long-Term Medication Pass",
+        typicalSkills: ["Subacute Medication Pass", "Stage I-IV Wound Care", "Tracheostomy & G-Tube Care", "Blood Glucose & Insulin Protocols", "CNA Team Supervision"],
+        tools: [
+          { name: "Subacute Wound & Skilled Nursing Flowsheet", icon: "🩹", description: "Braden scale pressure injury scoring, dressing change schedules and physician notification logs", badge: "LPN Skilled Care" }
+        ]
+      },
+      {
+        id: "medical_assistant_aide",
+        title: "Certified Medical Assistant & Clinical Nursing Aide (CCMA, CNA)",
+        enclaveId: "healthcare_medicine",
+        categoryName: "Medical Aides & Clinical Support",
+        defaultHeadline: "Certified Clinical Medical Assistant & Nursing Aide (CCMA, CNA, CPT) · Venipuncture Phlebotomy, 12-Lead ECG, Vitals Triage & Bedside Patient Care",
+        typicalSkills: ["Venipuncture Phlebotomy", "12-Lead ECG Acquisition", "Vital Signs & Rooming Triage", "CLIA-Waived Point-of-Care Testing", "Sterile Autoclave Instrument Prep", "Patient Mobility & ADLs"],
+        tools: [
+          { name: "Ambulatory Rooming, Vitals & Phlebotomy Triage Board", icon: "🩺", description: "Rapid outpatient rooming queue, orthostatic vitals, CLIA point-of-care strep/flu/A1c logs and vaccine cold-chain tracking", badge: "CCMA / CNA" }
+        ]
+      },
+      {
+        id: "medical_administrator",
+        title: "Hospital & Healthcare System Administrator (MHA, FACHE)",
+        enclaveId: "healthcare_medicine",
+        categoryName: "Medical & Hospital Administration",
+        defaultHeadline: "Fellow of the American College of Healthcare Executives (MHA, MBA, FACHE) · Hospital Operations, Joint Commission Accreditation, HIPAA Governance & Clinical Staffing",
+        typicalSkills: ["Hospital Operations & Bed Flow", "Joint Commission (TJC) Accreditation", "HIPAA & CMS Regulatory Compliance", "Value-Based Care & Revenue Cycle", "Physician/Nurse Recruitment & Retention"],
+        tools: [
+          { name: "Hospital Command Center: Census, ED Boarding & CMS Quality Radar", icon: "🏥", description: "Real-time inpatient bed occupancy, ICU nurse-to-patient staffing ratios, HCAHPS scores and Joint Commission audit readiness", badge: "FACHE Command" }
+        ]
+      },
+      {
+        id: "medical_billing_him",
+        title: "Health Information & Medical Coding Administrator (RHIA, CPC)",
+        enclaveId: "healthcare_medicine",
+        categoryName: "Medical & Hospital Administration",
+        defaultHeadline: "Registered Health Information Administrator & Certified Professional Coder (RHIA, CPC) · ICD-10-CM/PCS, CPT Revenue Integrity & HIPAA Privacy",
+        typicalSkills: ["ICD-10-CM / CPT-4 / HCPCS Coding", "DRG Clinical Documentation Improvement (CDI)", "HIPAA Release of Information", "Claims Denial Management", "EHR Interoperability"],
+        tools: [
+          { name: "CMS ICD-10 / CPT Revenue Cycle & DRG Auditor", icon: "📊", description: "Automated clinical documentation query generator, NCCI edits validator and clean-claim scrubber", badge: "RHIA / CPC" }
+        ]
+      },
+      {
+        id: "paramedic_emt",
+        title: "Critical Care Paramedic & EMS Specialist (NRP, FP-C, EMT)",
+        enclaveId: "healthcare_medicine",
+        categoryName: "Emergency Medical Services (EMS)",
+        defaultHeadline: "National Registered Critical Care Paramedic (NRP, FP-C) · Pre-Hospital 12-Lead STEMI Telemetry, RSI Airway Management & Helicopter/Ground EMS",
+        typicalSkills: ["Pre-Hospital ACLS / PALS / PHTLS", "12-Lead ECG STEMI Recognition", "Endotracheal Intubation & Cricothyrotomy", "Field Trauma Triage", "Mobile ICU Interfacility Transport"],
+        tools: [
+          { name: "NEMSIS ePCR Field Telemetry & Hospital Pre-Alert", icon: "🚑", description: "Live 12-lead ECG transmission to cath lab, trauma center ETA pre-alerts and controlled medication box sign-off", badge: "NRP / EMS" }
+        ]
+      },
+      {
+        id: "radiology_imaging_tech",
+        title: "Radiologic, CT/MRI & Diagnostic Ultrasound Technologist (RT, RDMS)",
+        enclaveId: "healthcare_medicine",
+        categoryName: "Diagnostic Imaging & Allied Health",
+        defaultHeadline: "Registered Radiologic & MRI Technologist (ARRT RT(R)(CT)(MR), RDMS) · High-Resolution Cross-Sectional Imaging, Contrast Safety & PACS DICOM",
+        typicalSkills: ["CT Stroke Perfusion & Angiography", "3T MRI Safety Screening", "Vascular & Abdominal Sonography", "ALARA Radiation Protection", "IV Power Injector Contrast"],
+        tools: [
+          { name: "PACS DICOM Modality Worklist & MRI Zone IV Safety Screener", icon: "🩻", description: "Ferromagnetic implant screening, eGFR contrast nephropathy checks and STAT stroke CT protocol timer", badge: "ARRT / RDMS" }
+        ]
+      },
+      {
+        id: "physical_occupational_therapist",
+        title: "Doctor of Physical & Occupational Therapy (DPT, OTR/L)",
+        enclaveId: "healthcare_medicine",
+        categoryName: "Rehabilitation & Allied Health",
+        defaultHeadline: "Doctor of Physical Therapy (DPT, OCS) · Post-Operative Orthopedic Rehabilitation, Neuro-Motor Gait Recovery & Functional Mobility",
+        typicalSkills: ["Orthopedic Manual Therapy", "Post-Stroke Neuro Rehabilitation", "Gait & Balance Biomechanics", "Therapeutic Exercise Prescription", "Adaptive ADL Equipment"],
+        tools: [
+          { name: "Goniometric Range-of-Motion (ROM) & Functional Outcome Tracker", icon: "🏃", description: "Joint ROM progression charts, Berg Balance scoring and return-to-work/sport milestones", badge: "DPT / OTR" }
+        ]
+      },
       {
         id: "dentist",
         title: "General & Cosmetic Dentist (DDS / DMD)",
@@ -1088,7 +1244,7 @@ export const PROFESSION_ENCLAVES: ProfessionEnclave[] = [
         id: "home_health_aide",
         title: "Certified Home Health Aide (CHHA)",
         enclaveId: "healthcare_medicine",
-        categoryName: "Caregiving & Home Support",
+        categoryName: "Medical Aides & Clinical Support",
         defaultHeadline: "Certified Home Health Aide · Activities of Daily Living (ADLs), Vital Signs & In-Home Patient Dignity",
         typicalSkills: ["ADL Assistance", "Vital Signs Monitoring", "Bed Transfer Mechanics", "Medication Reminders", "Infection Control"],
         tools: [
@@ -1099,7 +1255,7 @@ export const PROFESSION_ENCLAVES: ProfessionEnclave[] = [
         id: "caregiver",
         title: "Professional Caregiver & Family Support Specialist",
         enclaveId: "healthcare_medicine",
-        categoryName: "Caregiving & Home Support",
+        categoryName: "Medical Aides & Clinical Support",
         defaultHeadline: "Professional Caregiver · Compassionate Respite Care, Mobility Assistance & Daily Life Enrichment",
         typicalSkills: ["Compassionate Care", "Fall Prevention", "Nutritional Meals", "Emergency Response", "Companionship"],
         tools: [
@@ -1121,7 +1277,7 @@ export const PROFESSION_ENCLAVES: ProfessionEnclave[] = [
         id: "elderly_care_worker",
         title: "Geriatric & Memory Care Specialist",
         enclaveId: "healthcare_medicine",
-        categoryName: "Caregiving & Home Support",
+        categoryName: "Medical Aides & Clinical Support",
         defaultHeadline: "Memory Care Specialist · Dementia Support, Fall Prevention Protocols & Palliative Comfort",
         typicalSkills: ["Dementia Validation Therapy", "Transfer Safety", "Sundowning Mitigation", "Palliative Care", "Skin Integrity"],
         tools: [
@@ -1132,33 +1288,11 @@ export const PROFESSION_ENCLAVES: ProfessionEnclave[] = [
         id: "community_health_worker",
         title: "Community Health Outreach Navigator",
         enclaveId: "healthcare_medicine",
-        categoryName: "Caregiving & Home Support",
+        categoryName: "Public Health & Outreach",
         defaultHeadline: "Community Health Worker · Social Determinants of Health (SDOH), Healthcare Access & Immunization Drives",
         typicalSkills: ["SDOH Assessment", "Healthcare Navigation", "Bilingual Outreach", "Cultural Competency", "Public Health"],
         tools: [
           { name: "Community Resource & Benefit Directory", icon: "🤝", description: "Food security programs, Medicaid enrollment guides and clinic transportation vouchers", badge: "Public Health" }
-        ]
-      },
-      {
-        id: "registered_nurse",
-        title: "Registered Nurse (BSN, RN)",
-        enclaveId: "healthcare_medicine",
-        categoryName: "Nursing & Clinical Care",
-        defaultHeadline: "Registered Nurse (BSN, RN) · Inpatient Telemetry, Medication Administration & Patient Advocacy",
-        typicalSkills: ["IV Infusions", "Telemetry Monitoring", "Medication Admin", "Patient Education", "EHR Documentation"],
-        tools: [
-          { name: "Clinical EHR & MAR Medication Log", icon: "💊", description: "Medication administration records, dosage checks and clinical shift handoff notes", badge: "EHR Ready" }
-        ]
-      },
-      {
-        id: "physician",
-        title: "Board-Certified Attending Physician (MD / DO)",
-        enclaveId: "healthcare_medicine",
-        categoryName: "Physician & Clinical Specialties",
-        defaultHeadline: "Board-Certified Attending Physician · Internal Medicine, Diagnostic Workups & Evidence-Based Protocols",
-        typicalSkills: ["Clinical Diagnostics", "Differential Diagnosis", "Pharmacotherapy", "Patient Management", "Medical Research"],
-        tools: [
-          { name: "UpToDate & PubMed Clinical Evidence", icon: "📚", description: "Peer-reviewed treatment algorithms, clinical trial summaries and drug interaction checker", badge: "UpToDate" }
         ]
       }
     ]

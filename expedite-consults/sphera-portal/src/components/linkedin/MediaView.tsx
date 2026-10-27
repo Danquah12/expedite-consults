@@ -290,9 +290,71 @@ export function MediaView({
         activeEnclaveId={enclaveId}
         user={currentUser}
         title="The Wheel — Multi-Profession Masterclasses & Briefings"
-        subtitle="Curated trade apprenticeships, software architecture, healthcare, and verified field briefings across all disciplines."
+        subtitle="Curated Clinical Pharmacists, Physicians, Surgeons, ICU/ER Nurses, Medical Assistants/CNAs, Hospital Administrators, Trade Apprenticeships & Software Architecture."
         onShareVideoToFeed={onShareVideoToFeed}
       />
+
+      {/* Live Embedded Clinical, Pharmacy, Nursing, Medical Aide & Hospital Admin Reference Portals */}
+      <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 p-4 text-white shadow-md">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="space-y-0.5">
+            <span className="text-[10px] uppercase tracking-wider font-mono text-emerald-300 font-bold flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+              Live Health, Clinical Pharmacy, Nursing, Medical Aide &amp; Hospital Admin Portals
+            </span>
+            <p className="text-xs text-zinc-300">
+              Instant 1-click access to live federal and clinical reference platforms for Pharmacists, Doctors, Nurses, Medical Assistants, and Administrators:
+            </p>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <a
+              href="https://dailymed.nlm.nih.gov/dailymed/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 px-3 py-1.5 text-[11px] font-bold text-emerald-200 flex items-center gap-1 transition-all"
+            >
+              <span>💊 NIH DailyMed (Pharmacy)</span>
+              <ExternalLink className="h-3 w-3" />
+            </a>
+            <a
+              href="https://www.mdcalc.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/40 px-3 py-1.5 text-[11px] font-bold text-sky-200 flex items-center gap-1 transition-all"
+            >
+              <span>🩺 MDCalc (700+ Calculators)</span>
+              <ExternalLink className="h-3 w-3" />
+            </a>
+            <a
+              href="https://pubmed.ncbi.nlm.nih.gov/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-400/40 px-3 py-1.5 text-[11px] font-bold text-indigo-200 flex items-center gap-1 transition-all"
+            >
+              <span>🧬 NIH PubMed (36M+ Papers)</span>
+              <ExternalLink className="h-3 w-3" />
+            </a>
+            <a
+              href="https://open.fda.gov/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 px-3 py-1.5 text-[11px] font-bold text-amber-200 flex items-center gap-1 transition-all"
+            >
+              <span>🚨 OpenFDA (Drug Safety)</span>
+              <ExternalLink className="h-3 w-3" />
+            </a>
+            <a
+              href="https://www.open-emr.org/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/40 px-3 py-1.5 text-[11px] font-bold text-purple-200 flex items-center gap-1 transition-all"
+            >
+              <span>🏥 OpenEMR (Hospital &amp; CNA EHR)</span>
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
+        </div>
+      </div>
 
       {/* ========================================================================= */}
       {/* VIEW: FOR YOU & FOLLOWING (THE INTERACTIVE PROFESSIONAL WATCH EXPERIENCE) */}
@@ -305,51 +367,63 @@ export function MediaView({
               <div className="rounded-2xl border border-zinc-200 bg-white overflow-hidden shadow-md dark:border-zinc-800 dark:bg-zinc-900 space-y-4">
                 {/* Video Player Display Container */}
                 <div className="relative aspect-video w-full bg-slate-950 overflow-hidden group">
-                  <img
-                    src={selectedVideo.thumbnail}
-                    alt=""
-                    className={`h-full w-full object-cover transition-opacity duration-300 ${isPlaying ? "opacity-75" : "opacity-90"}`}
-                  />
+                  {isPlaying && selectedVideo.youtubeId ? (
+                    <iframe
+                      src={`https://www.youtube.com/embed/${selectedVideo.youtubeId}?autoplay=1&rel=0`}
+                      title={selectedVideo.title}
+                      className="h-full w-full border-0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                    />
+                  ) : (
+                    <>
+                      <img
+                        src={selectedVideo.thumbnail}
+                        alt=""
+                        className={`h-full w-full object-cover transition-opacity duration-300 ${isPlaying ? "opacity-75" : "opacity-90"}`}
+                      />
 
-                  {/* Player Overlay Controls */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 flex flex-col justify-between p-4 text-white">
-                    <div className="flex items-center justify-between">
-                      <span className="rounded-full bg-black/60 backdrop-blur-md px-3 py-1 text-[11px] font-bold border border-white/20 flex items-center gap-1.5">
-                        <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-                        {selectedVideo.visibility} Professional Video
-                      </span>
-                      <span className="rounded-full bg-purple-500/80 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-mono font-bold">
-                        1080p 60fps
-                      </span>
-                    </div>
+                      {/* Player Overlay Controls */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 flex flex-col justify-between p-4 text-white">
+                        <div className="flex items-center justify-between">
+                          <span className="rounded-full bg-black/60 backdrop-blur-md px-3 py-1 text-[11px] font-bold border border-white/20 flex items-center gap-1.5">
+                            <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+                            {selectedVideo.visibility} Professional Video
+                          </span>
+                          <span className="rounded-full bg-purple-500/80 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-mono font-bold">
+                            1080p 60fps
+                          </span>
+                        </div>
 
-                    {/* Center Play/Pause Trigger */}
-                    <div className="flex items-center justify-center">
-                      <button
-                        onClick={() => setIsPlaying(!isPlaying)}
-                        className="h-16 w-16 rounded-full bg-white/90 hover:bg-white text-zinc-950 flex items-center justify-center shadow-2xl transition-transform hover:scale-110"
-                      >
-                        {isPlaying ? <Pause className="h-7 w-7 fill-current" /> : <Play className="h-7 w-7 fill-current ml-1" />}
-                      </button>
-                    </div>
+                        {/* Center Play/Pause Trigger */}
+                        <div className="flex items-center justify-center">
+                          <button
+                            onClick={() => setIsPlaying(!isPlaying)}
+                            className="h-16 w-16 rounded-full bg-white/90 hover:bg-white text-zinc-950 flex items-center justify-center shadow-2xl transition-transform hover:scale-110 cursor-pointer"
+                          >
+                            {isPlaying ? <Pause className="h-7 w-7 fill-current" /> : <Play className="h-7 w-7 fill-current ml-1" />}
+                          </button>
+                        </div>
 
-                    {/* Bottom Progress Bar & Time */}
-                    <div className="space-y-1">
-                      <div className="h-1.5 w-full bg-white/30 rounded-full overflow-hidden cursor-pointer">
-                        <div
-                          className="h-full bg-[#0A66C2] transition-all duration-300"
-                          style={{ width: `${Math.min(100, (currentPlaybackSeconds / selectedVideo.durationSeconds) * 100)}%` }}
-                        />
+                        {/* Bottom Progress Bar & Time */}
+                        <div className="space-y-1">
+                          <div className="h-1.5 w-full bg-white/30 rounded-full overflow-hidden cursor-pointer">
+                            <div
+                              className="h-full bg-[#0A66C2] transition-all duration-300"
+                              style={{ width: `${Math.min(100, (currentPlaybackSeconds / selectedVideo.durationSeconds) * 100)}%` }}
+                            />
+                          </div>
+                          <div className="flex items-center justify-between text-[11px] font-mono text-zinc-300">
+                            <span>{Math.floor(currentPlaybackSeconds / 60)}:{String(currentPlaybackSeconds % 60).padStart(2, '0')} / {selectedVideo.duration}</span>
+                            <span className="flex items-center gap-2">
+                              <Volume2 className="h-3.5 w-3.5" />
+                              <Maximize2 className="h-3.5 w-3.5" />
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex items-center justify-between text-[11px] font-mono text-zinc-300">
-                        <span>{Math.floor(currentPlaybackSeconds / 60)}:{String(currentPlaybackSeconds % 60).padStart(2, '0')} / {selectedVideo.duration}</span>
-                        <span className="flex items-center gap-2">
-                          <Volume2 className="h-3.5 w-3.5" />
-                          <Maximize2 className="h-3.5 w-3.5" />
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                    </>
+                  )}
                 </div>
 
                 <div className="p-5 space-y-5">
@@ -563,23 +637,58 @@ export function MediaView({
 
                         <div className="text-right shrink-0">
                           <span className="font-mono text-sm font-black text-emerald-400 block">{selectedVideo.embeddedProduct.price}</span>
-                          <span className="text-[10px] text-zinc-400">14-Day Free Evaluation</span>
+                          <span className="text-[10px] text-zinc-400">Live Reference &amp; Evaluation</span>
                         </div>
                       </div>
 
                       <div className="pt-2 border-t border-white/10 flex items-center justify-between flex-wrap gap-2">
-                        <button
-                          onClick={() => onNavigateTab('marketplace')}
-                          className="rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-400 hover:to-indigo-400 text-white font-bold px-4 py-1.5 text-xs shadow-md"
-                        >
-                          Launch 14-Day Free Sandbox →
-                        </button>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {selectedVideo.embeddedProduct.liveUrl && (
+                            <a
+                              href={selectedVideo.embeddedProduct.liveUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-1.5 text-xs shadow-md flex items-center gap-1.5"
+                            >
+                              <span>Launch Live Portal ↗</span>
+                            </a>
+                          )}
+                          <button
+                            onClick={() => onNavigateTab('marketplace')}
+                            className="rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-400 hover:to-indigo-400 text-white font-bold px-4 py-1.5 text-xs shadow-md"
+                          >
+                            View in Marketplace →
+                          </button>
+                        </div>
                         <button
                           onClick={() => onNavigateTab('messaging')}
                           className="rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold px-4 py-1.5 text-xs border border-white/20"
                         >
-                          Request Architecture Briefing
+                          Request Clinical / Architecture Briefing
                         </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 4.5. LIVE RESOURCES & EMBEDDED PORTAL LINKS */}
+                  {selectedVideo.resources && selectedVideo.resources.length > 0 && (
+                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4 dark:border-emerald-900/50 dark:bg-emerald-950/20 space-y-2 text-xs">
+                      <span className="font-bold text-emerald-900 dark:text-emerald-200 flex items-center gap-1.5">
+                        <ExternalLink className="h-4 w-4 text-emerald-600" />
+                        Live Portals &amp; Clinical / Technical Reference Links:
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedVideo.resources.map((res, rIdx) => (
+                          <a
+                            key={rIdx}
+                            href={res.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-xl bg-white hover:bg-emerald-50 dark:bg-zinc-900 dark:hover:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 px-3 py-2 text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 shadow-2xs transition-all"
+                          >
+                            <span>{res.label}</span>
+                          </a>
+                        ))}
                       </div>
                     </div>
                   )}

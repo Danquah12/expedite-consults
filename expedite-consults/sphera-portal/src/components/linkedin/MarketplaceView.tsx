@@ -103,8 +103,18 @@ export function MarketplaceView({
   const [showAllEcosystem, setShowAllEcosystem] = useState<boolean>(false)
 
   // Solutions Layer State
-  const [solutions, setSolutions] = useState<SolutionPackage[]>(ENTERPRISE_SOLUTIONS_DATA)
+  const [solutions] = useState<SolutionPackage[]>(ENTERPRISE_SOLUTIONS_DATA)
   const [selectedSolution, setSelectedSolution] = useState<SolutionPackage | null>(ENTERPRISE_SOLUTIONS_DATA[0])
+  const [showFlagshipInSolutions, setShowFlagshipInSolutions] = useState<boolean>(false)
+  const [solutionActionModal, setSolutionActionModal] = useState<{
+    type: 'sow' | 'expert'
+    title: string
+    provider: string
+    price: string
+    detail: string
+  } | null>(null)
+  const [solutionActionSuccess, setSolutionActionSuccess] = useState<boolean>(false)
+  const [solutionActionNotes, setSolutionActionNotes] = useState<string>("")
 
   // Selected Product Detail Modal
   const [selectedProduct, setSelectedProduct] = useState<MarketplaceProduct | null>(null)
@@ -124,6 +134,21 @@ export function MarketplaceView({
   const [newVendorDesc, setNewVendorDesc] = useState("")
 
   const userEnclave = currentUser?.professionEnclave || 'trades_construction'
+
+  const activateSolutionsHub = (solutionId?: string) => {
+    setSelectedMainCategory('Solutions')
+    setShowFlagshipInSolutions(false)
+    if (solutionId) {
+      const matched = solutions.find(s => s.id === solutionId)
+      if (matched) setSelectedSolution(matched)
+    } else if (!selectedSolution) {
+      setSelectedSolution(solutions[0])
+    }
+    setTimeout(() => {
+      const el = document.getElementById('solutions-blueprint-hub')
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }, 60)
+  }
 
   // Filter Products strictly based on user enclave and category selection
   const filteredProducts = MASTER_MARKETPLACE_PRODUCTS.filter(p => {
@@ -293,10 +318,12 @@ export function MarketplaceView({
 
   const marketplaceTabs = (() => {
     const launchpadTab = { id: 'Launchpad', label: '🚀 Launchpad Fleet (24+ Deployed)', isLaunchpad: true }
+    const solutionsTab = { id: 'Solutions', label: '⚡ Solutions Hub (Outcome Blueprints)', isSolutions: true }
 
     if (userEnclave === 'trades_construction') {
       return [
         launchpadTab,
+        solutionsTab,
         { id: 'Cybersecurity', label: '🛡️ Cybersecurity & DevSecOps' },
         { id: 'Discover', label: '✨ All Trade Tools & Lumber' },
         { id: 'Software', label: '🧰 Power Tools & Joinery' },
@@ -308,17 +335,19 @@ export function MarketplaceView({
     if (userEnclave === 'healthcare_medicine') {
       return [
         launchpadTab,
-        { id: 'Cybersecurity', label: '🛡️ Cybersecurity & HIPAA' },
-        { id: 'Discover', label: '✨ All Medical & Surgical' },
-        { id: 'Software', label: '🩺 Diagnostic Ultrasound & POCUS' },
-        { id: 'Enterprise', label: '🩸 Trauma & Rapid Infusion' },
-        { id: 'Services', label: '🔪 Surgical Hardware & Implants' },
+        solutionsTab,
+        { id: 'Discover', label: '✨ All Clinical, Pharmacy & Hospital' },
+        { id: 'Enterprise', label: '💊 Pharmacy, Formulary & Hospital EHR' },
+        { id: 'Software', label: '🩺 Physicians, Nursing & MDCalc' },
+        { id: 'Services', label: '🔪 Surgical, Medical Aides & Implants' },
+        { id: 'Cybersecurity', label: '🛡️ HIPAA & Clinical Security' },
         { id: 'Deals', label: '🏷️ Hospital RFP Deals' },
       ]
     }
     if (userEnclave === 'automotive_mechanics') {
       return [
         launchpadTab,
+        solutionsTab,
         { id: 'Cybersecurity', label: '🛡️ Cybersecurity & CAN Bus' },
         { id: 'Discover', label: '✨ All Diagnostic Gear' },
         { id: 'Software', label: '🧰 Snap-on & Scan Tools' },
@@ -329,8 +358,8 @@ export function MarketplaceView({
     }
     return [
       launchpadTab,
+      solutionsTab,
       { id: 'Discover', label: '✨ Discover' },
-      { id: 'Solutions', label: '🎯 Solutions (Business Outcomes)', isSolutions: true },
       { id: 'Software', label: '💻 Software' },
       { id: 'Services', label: '🛠️ Services' },
       { id: 'Cybersecurity', label: '🛡️ Cybersecurity' },
@@ -387,7 +416,11 @@ export function MarketplaceView({
                 setSelectedMainCategory('Launchpad')
                 setSelectedSubCategory('All')
               }}
-              className="rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white px-3.5 py-2 text-xs font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer transition-colors"
+              className={`rounded-xl px-3.5 py-2 text-xs font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer transition-all ${
+                selectedMainCategory === 'Launchpad'
+                  ? "bg-purple-600 text-white ring-2 ring-purple-400/50 shadow-md"
+                  : "bg-[#0A66C2] hover:bg-[#004182] text-white"
+              }`}
             >
               <Sparkles className="h-3.5 w-3.5" />
               <span>Launchpad Fleet Catalog</span>
@@ -395,11 +428,15 @@ export function MarketplaceView({
 
             <button
               type="button"
-              onClick={() => setSelectedMainCategory('Solutions')}
-              className="rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 px-3.5 py-2 text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+              onClick={() => activateSolutionsHub()}
+              className={`rounded-xl px-3.5 py-2 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all ${
+                selectedMainCategory === 'Solutions'
+                  ? "bg-amber-500 hover:bg-amber-400 text-zinc-950 border border-amber-400 shadow-md ring-2 ring-amber-400/50"
+                  : "bg-amber-50 dark:bg-amber-950/50 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700 shadow-2xs"
+              }`}
             >
-              <Zap className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
-              <span>Solutions Hub</span>
+              <Zap className={`h-3.5 w-3.5 ${selectedMainCategory === 'Solutions' ? 'text-zinc-950 fill-zinc-950' : 'text-amber-500 fill-amber-500'}`} />
+              <span>{selectedMainCategory === 'Solutions' ? 'Solutions Hub (Active)' : 'Solutions Hub'}</span>
             </button>
 
             <button
@@ -413,10 +450,10 @@ export function MarketplaceView({
           </div>
         </div>
 
-        {/* FEATURED PLATFORMS IN CARDS (ALL 8 VISIBLE IN A RESPONSIVE CARD GRID — NOTHING HIDDEN) */}
+        {/* FEATURED PLATFORMS IN CARDS (Automatically collapses when Solutions Hub is active so Solutions Blueprints appear immediately above the fold!) */}
         <div className="space-y-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
           <div className="flex items-center justify-between gap-2 flex-wrap">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="rounded-md bg-[#0A66C2]/10 text-[#0A66C2] dark:text-sky-400 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider">
                 📂 Categorized Flagship Platforms (8 Live Cards)
               </span>
@@ -424,17 +461,29 @@ export function MarketplaceView({
                 Every platform organized into dedicated cards with direct launch buttons
               </span>
             </div>
-            {selectedSubCategory !== 'All' && (
-              <button
-                type="button"
-                onClick={() => setSelectedSubCategory('All')}
-                className="text-xs font-bold text-[#0A66C2] hover:underline cursor-pointer"
-              >
-                Show All Categories ✕
-              </button>
-            )}
+            <div className="flex items-center gap-2">
+              {selectedMainCategory === 'Solutions' && (
+                <button
+                  type="button"
+                  onClick={() => setShowFlagshipInSolutions(!showFlagshipInSolutions)}
+                  className="rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 px-2.5 py-1 text-xs font-bold cursor-pointer transition-colors"
+                >
+                  {showFlagshipInSolutions ? '▲ Hide 8 Flagship Cards' : '▼ Show 8 Flagship Cards'}
+                </button>
+              )}
+              {selectedSubCategory !== 'All' && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedSubCategory('All')}
+                  className="text-xs font-bold text-[#0A66C2] hover:underline cursor-pointer"
+                >
+                  Show All Categories ✕
+                </button>
+              )}
+            </div>
           </div>
 
+          {(selectedMainCategory !== 'Solutions' || showFlagshipInSolutions) && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
             {/* Card 1: Aagiis — Federal Compliance & DoD RMF */}
             <div className="rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/40 dark:bg-emerald-950/20 p-3.5 flex flex-col justify-between space-y-3 shadow-2xs hover:shadow-md transition-all">
@@ -775,6 +824,7 @@ export function MarketplaceView({
               </div>
             </div>
           </div>
+          )}
         </div>
 
         {/* Master Category Tabs (Wrapped cleanly into cards/pills so none are hidden off-screen) */}
@@ -787,12 +837,18 @@ export function MarketplaceView({
                   key={cat.id}
                   type="button"
                   onClick={() => {
-                    setSelectedMainCategory(cat.id as any)
-                    setSelectedSubCategory('All')
+                    if (cat.id === 'Solutions') {
+                      activateSolutionsHub()
+                    } else {
+                      setSelectedMainCategory(cat.id as any)
+                      setSelectedSubCategory('All')
+                    }
                   }}
                   className={`rounded-xl px-3.5 py-2 text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
                     isSelected
-                      ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
+                      ? cat.id === 'Solutions'
+                        ? "bg-amber-500 text-zinc-950 font-bold shadow-sm ring-2 ring-amber-400/50"
+                        : "bg-[#0A66C2] text-white font-semibold shadow-xs"
                       : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700 border border-zinc-200/70 dark:border-zinc-700/70"
                   }`}
                 >
@@ -811,21 +867,26 @@ export function MarketplaceView({
               { label: '🔐 Secure my AWS cloud', id: 'sol_secure_aws' },
               { label: '📋 Achieve FedRAMP & cATO', id: 'sol_fedramp_cato' },
               { label: '🛡️ Autonomous PenTest & ASPM', id: 'sol_pentest_aspm' },
-              { label: '🤖 Deploy AI Securely (MCP)', id: 'sol_ai_security' }
-            ].map((sol) => (
-              <button
-                key={sol.id}
-                type="button"
-                onClick={() => {
-                  setSelectedMainCategory('Solutions')
-                  const matched = solutions.find(s => s.id === sol.id)
-                  if (matched) setSelectedSolution(matched)
-                }}
-                className="rounded-lg bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-900 dark:text-amber-200 text-xs px-3 py-1.5 font-semibold transition-all border border-amber-200/80 dark:border-amber-800/60 cursor-pointer"
-              >
-                {sol.label}
-              </button>
-            ))}
+              { label: '🤖 Deploy AI Securely (MCP)', id: 'sol_ai_security' },
+              { label: '🏗️ Jobsite CAD & Total Station', id: 'sol_trades_cad_jobsite' },
+              { label: '🏥 Clinical Pharmacy, Nursing & Admin', id: 'sol_clinical_pharmacy_health' }
+            ].map((sol) => {
+              const isPillActive = selectedMainCategory === 'Solutions' && selectedSolution?.id === sol.id
+              return (
+                <button
+                  key={sol.id}
+                  type="button"
+                  onClick={() => activateSolutionsHub(sol.id)}
+                  className={`rounded-lg text-xs px-3 py-1.5 font-semibold transition-all border cursor-pointer ${
+                    isPillActive
+                      ? "bg-amber-500 text-zinc-950 border-amber-500 font-bold shadow-xs ring-2 ring-amber-400/40"
+                      : "bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-900 dark:text-amber-200 border-amber-200/80 dark:border-amber-800/60"
+                  }`}
+                >
+                  {sol.label}
+                </button>
+              )
+            })}
           </div>
         </div>
       </div>
@@ -834,22 +895,31 @@ export function MarketplaceView({
       {/* 2. SOLUTIONS LAYER: SOLVING BUSINESS OUTCOMES */}
       {/* ========================================================================= */}
       {selectedMainCategory === 'Solutions' ? (
-        <div className="space-y-6">
+        <div id="solutions-blueprint-hub" className="space-y-6">
           {/* Solutions Problem Selector Ribbon */}
-          <div className="rounded-2xl border border-amber-500/40 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-4">
-            <div>
-              <span className="rounded-full bg-amber-100 px-3 py-0.5 text-xs font-bold text-amber-900 dark:bg-amber-950 dark:text-amber-300">
-                🎯 ConnectIn Enterprise Solutions Blueprint
-              </span>
-              <h2 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-zinc-100 mt-1">
-                Select Your Business Objective
-              </h2>
-              <p className="text-xs text-zinc-500 max-w-2xl">
-                Instead of searching fragmented tool lists, choose your outcome to get an interconnected blueprint: Products + Services + Verified Experts + Training Labs.
-              </p>
+          <div className="rounded-2xl border-2 border-amber-500/60 bg-white p-5 shadow-md dark:border-amber-500/40 dark:bg-zinc-900 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <span className="rounded-full bg-amber-100 px-3 py-0.5 text-xs font-bold text-amber-900 dark:bg-amber-950 dark:text-amber-300">
+                  🎯 ConnectIn Enterprise &amp; Clinical Solutions Blueprint Hub
+                </span>
+                <h2 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-zinc-100 mt-1">
+                  Select Your Business or Clinical Objective
+                </h2>
+                <p className="text-xs text-zinc-500 max-w-2xl">
+                  Instead of searching fragmented tool lists, choose your outcome to get an interconnected blueprint: Live Platforms + Consulting Retainers + Verified Experts + Accredited Training Labs + Open Requisitions.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedMainCategory('Discover')}
+                className="rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 px-3.5 py-2 text-xs font-bold shrink-0 cursor-pointer transition-colors self-start"
+              >
+                ← Back to All Marketplace Tools
+              </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {solutions.map((sol) => {
                 const isSelected = selectedSolution?.id === sol.id
                 return (
@@ -874,7 +944,9 @@ export function MarketplaceView({
 
                     <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-[10px] text-zinc-400 font-mono">
                       <span>{sol.estimatedTime}</span>
-                      <span className="font-bold text-amber-700 dark:text-amber-300">View Blueprint →</span>
+                      <span className="font-bold text-amber-700 dark:text-amber-300">
+                        {isSelected ? '✓ Active Blueprint' : 'View Blueprint →'}
+                      </span>
                     </div>
                   </div>
                 )
@@ -910,13 +982,13 @@ export function MarketplaceView({
               <div className="space-y-3">
                 <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                   <Package className="h-4 w-4 text-purple-600" />
-                  <span>1. Recommended Enterprise Products (Instant Trials)</span>
+                  <span>1. Recommended Enterprise &amp; Clinical Platforms (Instant Live Launch &amp; Trials)</span>
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {selectedSolution.recommendedProducts.map((prod) => (
                     <div
                       key={prod.id}
-                      className="rounded-xl border border-zinc-200 bg-zinc-50/60 p-4 dark:border-zinc-800 dark:bg-zinc-800/40 flex items-start justify-between gap-3"
+                      className="rounded-xl border border-zinc-200 bg-zinc-50/60 p-4 dark:border-zinc-800 dark:bg-zinc-800/40 flex flex-col sm:flex-row sm:items-start justify-between gap-3"
                     >
                       <div className="flex items-start gap-3">
                         <span className="text-2xl">{prod.icon}</span>
@@ -929,12 +1001,25 @@ export function MarketplaceView({
                         </div>
                       </div>
 
-                      <button
-                        onClick={() => handleGenerateLicense(prod, 'trial')}
-                        className="rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-3 py-1.5 shadow-xs shrink-0"
-                      >
-                        {prod.actionText}
-                      </button>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {prod.liveUrl && (
+                          <a
+                            href={prod.liveUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 shadow-xs flex items-center gap-1"
+                          >
+                            <span>Launch Live ↗</span>
+                          </a>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleGenerateLicense(prod, 'trial')}
+                          className="rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-3 py-1.5 shadow-xs shrink-0 cursor-pointer"
+                        >
+                          {prod.actionText}
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -965,10 +1050,19 @@ export function MarketplaceView({
                           <span className="text-[10px] text-zinc-400">{srv.deliveryTimeline}</span>
                         </div>
                         <button
+                          type="button"
                           onClick={() => {
-                            if (onNavigateTab) onNavigateTab('messaging')
+                            setSolutionActionSuccess(false)
+                            setSolutionActionNotes("")
+                            setSolutionActionModal({
+                              type: 'sow',
+                              title: srv.name,
+                              provider: srv.provider,
+                              price: `${srv.price} (${srv.deliveryTimeline})`,
+                              detail: srv.scope
+                            })
                           }}
-                          className="rounded-lg bg-[#0A66C2] hover:bg-[#004182] text-white text-xs font-bold px-3 py-1.5 shadow-xs"
+                          className="rounded-lg bg-[#0A66C2] hover:bg-[#004182] text-white text-xs font-bold px-3 py-1.5 shadow-xs cursor-pointer"
                         >
                           Request Statement of Work
                         </button>
@@ -1005,10 +1099,19 @@ export function MarketplaceView({
                       <div className="text-right shrink-0">
                         <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200 block">{exp.hourlyRate}</span>
                         <button
+                          type="button"
                           onClick={() => {
-                            if (onNavigateTab) onNavigateTab('peerreview')
+                            setSolutionActionSuccess(false)
+                            setSolutionActionNotes("")
+                            setSolutionActionModal({
+                              type: 'expert',
+                              title: `1-on-1 Advisory Session with ${exp.name}`,
+                              provider: exp.role,
+                              price: exp.hourlyRate,
+                              detail: `Verified ${exp.badge} (${exp.rating}★ across ${exp.reviewsCount} engagements)`
+                            })
                           }}
-                          className="mt-1 text-[11px] font-bold text-[#0A66C2] hover:underline"
+                          className="mt-1 rounded-md bg-blue-50 dark:bg-blue-950/60 px-2.5 py-1 text-[11px] font-bold text-[#0A66C2] dark:text-sky-300 hover:bg-blue-100 cursor-pointer"
                         >
                           Book Slot →
                         </button>
@@ -1043,10 +1146,11 @@ export function MarketplaceView({
                       </div>
 
                       <button
+                        type="button"
                         onClick={() => {
                           if (onNavigateTab) onNavigateTab('learning')
                         }}
-                        className="text-xs font-bold text-[#0A66C2] hover:underline text-right block"
+                        className="text-xs font-bold text-[#0A66C2] hover:underline text-right block cursor-pointer"
                       >
                         Launch Interactive Lab →
                       </button>
@@ -1060,13 +1164,14 @@ export function MarketplaceView({
                 <div className="flex items-center justify-between">
                   <h4 className="font-bold text-xs sm:text-sm text-emerald-950 dark:text-emerald-300 flex items-center gap-1.5">
                     <Briefcase className="h-4 w-4 text-emerald-600" />
-                    <span>5. Need Engineers Experienced in This Solution?</span>
+                    <span>5. Need Verified Specialists Experienced in This Solution?</span>
                   </h4>
                   <button
+                    type="button"
                     onClick={() => {
                       if (onNavigateTab) onNavigateTab('jobs')
                     }}
-                    className="text-xs font-bold text-emerald-700 hover:underline dark:text-emerald-300"
+                    className="text-xs font-bold text-emerald-700 hover:underline dark:text-emerald-300 cursor-pointer"
                   >
                     View Matching Candidates →
                   </button>
@@ -1986,6 +2091,112 @@ export function MarketplaceView({
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* SOLUTIONS HUB SOW & EXPERT BOOKING MODAL */}
+      <Dialog open={!!solutionActionModal} onOpenChange={(open) => !open && setSolutionActionModal(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+              {solutionActionModal?.type === 'sow' ? (
+                <>
+                  <FileText className="h-5 w-5 text-[#0A66C2]" />
+                  <span>Request Statement of Work (SOW)</span>
+                </>
+              ) : (
+                <>
+                  <Calendar className="h-5 w-5 text-amber-500" />
+                  <span>Book 1-on-1 Subject Matter Expert Slot</span>
+                </>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+
+          {solutionActionModal && (
+            <div className="space-y-4 text-xs">
+              <div className="rounded-xl bg-zinc-50 dark:bg-zinc-800/70 p-3.5 border border-zinc-200 dark:border-zinc-700 space-y-1">
+                <p className="font-bold text-sm text-zinc-900 dark:text-zinc-100">{solutionActionModal.title}</p>
+                <p className="text-zinc-500 dark:text-zinc-400">{solutionActionModal.provider}</p>
+                <p className="text-[11px] text-zinc-600 dark:text-zinc-300 pt-1">{solutionActionModal.detail}</p>
+                <p className="font-bold text-emerald-600 dark:text-emerald-400 pt-1">{solutionActionModal.price}</p>
+              </div>
+
+              {solutionActionSuccess ? (
+                <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 p-4 text-center space-y-2">
+                  <p className="font-bold text-emerald-800 dark:text-emerald-300 text-sm">
+                    ✓ {solutionActionModal.type === 'sow' ? 'Statement of Work Dispatched!' : 'Advisory Session Slot Reserved!'}
+                  </p>
+                  <p className="text-zinc-600 dark:text-zinc-300">
+                    A dossier &amp; calendar invite has been generated for <strong>{currentUser.name}</strong>. You can also continue the conversation in Direct Messaging.
+                  </p>
+                  <div className="flex items-center justify-center gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSolutionActionModal(null)
+                        if (onNavigateTab) onNavigateTab('messaging')
+                      }}
+                      className="rounded-lg bg-[#0A66C2] hover:bg-[#004182] text-white font-bold px-3.5 py-2 cursor-pointer"
+                    >
+                      Open Direct Messaging →
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSolutionActionModal(null)}
+                      className="rounded-lg bg-zinc-200 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 font-bold px-3.5 py-2 cursor-pointer"
+                    >
+                      Done
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault()
+                    setSolutionActionSuccess(true)
+                  }}
+                  className="space-y-3"
+                >
+                  <div className="space-y-1">
+                    <label className="font-bold text-zinc-700 dark:text-zinc-300">
+                      {solutionActionModal.type === 'sow'
+                        ? 'Organization / Facility Scope & Target Timeline:'
+                        : 'Preferred Date/Time Window & Advisory Agenda:'}
+                    </label>
+                    <textarea
+                      rows={3}
+                      required
+                      value={solutionActionNotes}
+                      onChange={(e) => setSolutionActionNotes(e.target.value)}
+                      placeholder={
+                        solutionActionModal.type === 'sow'
+                          ? 'Describe your environment, compliance requirements, or clinical/field deployment goals...'
+                          : 'e.g., Thursday 2:00 PM EST — Review architecture blueprint and implementation checklist...'
+                      }
+                      className="w-full rounded-lg border border-zinc-300 p-2.5 dark:border-zinc-700 dark:bg-zinc-800"
+                    />
+                  </div>
+                  <div className="flex items-center justify-end gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setSolutionActionModal(null)}
+                      className="rounded-lg bg-zinc-100 dark:bg-zinc-800 px-3.5 py-2 font-bold text-zinc-700 dark:text-zinc-300 cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="rounded-lg bg-[#0A66C2] hover:bg-[#004182] px-4 py-2 font-bold text-white shadow-xs cursor-pointer"
+                    >
+                      {solutionActionModal.type === 'sow' ? 'Generate & Send SOW Request 🚀' : 'Confirm Advisory Slot 📅'}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
+

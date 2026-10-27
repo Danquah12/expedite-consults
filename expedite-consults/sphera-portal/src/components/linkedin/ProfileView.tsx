@@ -90,7 +90,7 @@ interface ProfileViewProps {
   onNavigateJobs?: (searchKeyword?: string) => void
   onUpdateUser?: (updated: UserProfile) => void
   onOpenAnalytics?: (tab: 'viewers' | 'reach' | 'discoveries') => void
-  onNavigateMessaging?: (personName?: string) => void
+  onNavigateMessaging?: (person?: any) => void
 }
 
 export function ProfileView({
@@ -1106,7 +1106,7 @@ export function ProfileView({
 
                       <button
                         type="button"
-                        onClick={() => onNavigateMessaging && onNavigateMessaging(user.name)}
+                        onClick={() => onNavigateMessaging && onNavigateMessaging(user)}
                         className="rounded-full bg-sky-50 dark:bg-sky-950/40 border border-sky-300 dark:border-sky-800 hover:bg-sky-100 px-4 py-2 text-xs font-bold text-[#0A66C2] dark:text-sky-300 shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
                       >
                         <MessageSquarePlus className="h-3.5 w-3.5" />

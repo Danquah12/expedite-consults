@@ -76,7 +76,7 @@ interface NetworkViewProps {
   onToggleConnect: (personId: string) => void
   onSelectMember?: (member: any) => void
   currentUser?: UserProfile
-  onNavigateMessaging?: (personName?: string) => void
+  onNavigateMessaging?: (person?: any) => void
   onUpdateConnectionsCount?: (newCount: number) => void
 }
 
@@ -94,13 +94,13 @@ export function getEnclaveCapabilityFilters(enclaveId?: string) {
   }
   if (enclaveId === 'healthcare_medicine') {
     return [
-      { id: 'All', label: 'All Clinical Specialties', icon: '🌐' },
-      { id: 'Trauma Surgery', label: 'Trauma Surgery', icon: '🔪' },
-      { id: 'Critical Care & Trauma Nursing', label: 'Critical Care Nursing', icon: '🩺' },
-      { id: 'Joint Reconstruction', label: 'Joint Reconstruction', icon: '🦴' },
-      { id: 'Level 1 Trauma Triage', label: 'Level 1 Trauma Triage', icon: '🚨' },
-      { id: 'MTP Rapid Infusion', label: 'MTP Rapid Infusion', icon: '🩸' },
-      { id: 'Arterial Lines', label: 'Arterial Lines & Resuscitation', icon: '💉' }
+      { id: 'All', label: 'All Clinical & Health Roles', icon: '🌐' },
+      { id: 'PharmD', label: 'Pharmacists (PharmD/BCPS)', icon: '💊' },
+      { id: 'Physician', label: 'Physicians & Surgeons (MD/DO)', icon: '🩺' },
+      { id: 'Critical Care', label: 'Nurses (RN/CCRN/NP)', icon: '🏥' },
+      { id: 'Medical Assistant', label: 'Medical Aides & CNAs (CCMA/CNA)', icon: '🩹' },
+      { id: 'Hospital Operations', label: 'Medical Administrators (MHA/FACHE)', icon: '📋' },
+      { id: 'Trauma Surgery', label: 'Trauma & Emergency Triage', icon: '🚨' }
     ]
   }
   if (enclaveId === 'automotive_mechanics') {
@@ -839,10 +839,10 @@ export function NetworkView({
                           <button
                             onClick={() => {
                               if (onNavigateMessaging) {
-                                onNavigateMessaging(conn.name)
+                                onNavigateMessaging(conn)
                               }
                             }}
-                            className="rounded-full bg-[#0A66C2] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#004182] transition-colors flex items-center gap-1.5 shadow-2xs"
+                            className="rounded-full bg-[#0A66C2] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#004182] transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
                           >
                             <MessageSquare className="h-3.5 w-3.5" />
                             <span>Message</span>
@@ -1248,10 +1248,19 @@ export function NetworkView({
                     <div className="p-3 pt-2 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center gap-1.5 mt-2">
                       <button
                         onClick={() => onSelectMember?.(person)}
-                        className="flex-1 rounded-full border border-[#0A66C2] py-1.5 text-xs font-bold text-[#0A66C2] hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-all flex items-center justify-center gap-1 cursor-pointer"
+                        className="flex-1 rounded-full border border-zinc-300 dark:border-zinc-700 py-1.5 text-[11px] font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-1 cursor-pointer"
                         title={`Open ${person.name}'s Workspace`}
                       >
-                        <span>View Workspace</span>
+                        <span>Workspace</span>
+                      </button>
+
+                      <button
+                        onClick={() => onNavigateMessaging && onNavigateMessaging(person)}
+                        className="flex-1 rounded-full border border-[#0A66C2] py-1.5 text-[11px] font-bold text-[#0A66C2] hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-all flex items-center justify-center gap-1 cursor-pointer"
+                        title={`Message ${person.name}`}
+                      >
+                        <MessageSquare className="h-3 w-3" />
+                        <span>Message</span>
                       </button>
 
                       <button
@@ -1264,7 +1273,7 @@ export function NetworkView({
                             setIsConnectNoteModalOpen(true)
                           }
                         }}
-                        className={`flex-1 rounded-full py-1.5 text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                        className={`flex-1 rounded-full py-1.5 text-[11px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
                           person.isConnected
                             ? "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200"
                             : person.isPending
@@ -1274,14 +1283,14 @@ export function NetworkView({
                       >
                         {person.isConnected ? (
                           <>
-                            <Check className="h-3.5 w-3.5 text-emerald-600" />
+                            <Check className="h-3 w-3 text-emerald-600" />
                             <span>Connected</span>
                           </>
                         ) : person.isPending ? (
                           <span>Pending</span>
                         ) : (
                           <>
-                            <UserPlus className="h-3.5 w-3.5" />
+                            <UserPlus className="h-3 w-3" />
                             <span>Connect</span>
                           </>
                         )}

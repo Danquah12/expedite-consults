@@ -274,48 +274,132 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     tags: ["#ElectricVehicles", "#HighVoltage", "#NFPA790", "#BatteryDiagnostics", "#EVTech"]
   },
 
-  // ─── 3. HEALTHCARE & MEDICINE (healthcare_medicine) ───────────────
+  // ─── 3. HEALTHCARE, PHARMACY, NURSING & MEDICAL ADMIN (healthcare_medicine) ───
+  {
+    id: "wheel-clinical-pharmacist-masterclass",
+    serialPlate: "CLN-MED01",
+    title: "Clinical Pharmacist Masterclass: Pharmacokinetics, USP <797>/<800> IV Compounding & Antimicrobial Stewardship",
+    speaker: "American Society of Health-System Pharmacists (ASHP) Guild",
+    speakerTitle: "Director of Clinical Pharmacy (PharmD, BCPS, BCCCP)",
+    youtubeId: "x4Y_2fpET0U",
+    duration: "5:38",
+    category: "health",
+    categoryLabel: "Pharmacy & Clinical Medicine",
+    enclaveId: "healthcare_medicine",
+    professionId: "pharmacist",
+    thumbnailUrl: "https://i.ytimg.com/vi/x4Y_2fpET0U/hqdefault.jpg",
+    summary: "Complete clinical pharmacy briefing covering Vancomycin AUC/MIC Bayesian dosing, renal CrCl adjustments, ISO Class 5 sterile IV compounding under USP <797>/<800>, and closed-loop barcode medication verification.",
+    takeaways: [
+      "Vancomycin AUC/MIC target 400–600 mg·hr/L to prevent acute kidney injury",
+      "USP <797> & <800> negative-pressure hazardous drug compounding and beyond-use dating",
+      "High-alert anticoagulant, insulin, and oncology order verification with NIH DailyMed & OpenFDA"
+    ],
+    tags: ["#Pharmacist", "#PharmD", "#ClinicalPharmacy", "#USP797", "#AntimicrobialStewardship", "#MedicationSafety"]
+  },
+  {
+    id: "wheel-attending-physician-rounds",
+    serialPlate: "CLN-MED02",
+    title: "Attending Physician Briefing: Bedside POCUS Ultrasound, Sepsis Bundle & Differential Diagnosis",
+    speaker: "American College of Physicians & Surgeons Council",
+    speakerTitle: "Board-Certified Attending Physician (MD, FACP, FACEP)",
+    youtubeId: "6Ixvw0PpE6s",
+    duration: "5:50",
+    category: "health",
+    categoryLabel: "Physicians & Surgeons",
+    enclaveId: "healthcare_medicine",
+    professionId: "physician",
+    thumbnailUrl: "https://i.ytimg.com/vi/6Ixvw0PpE6s/hqdefault.jpg",
+    summary: "Evidence-based inpatient and emergency medicine masterclass: RUSH exam point-of-care ultrasound (POCUS) for undifferentiated shock, Hour-1 Surviving Sepsis Campaign resuscitation, and multidisciplinary PharmD/RN rounding.",
+    takeaways: [
+      "Rapid Ultrasound for Shock and Hypotension (RUSH) cardiac, IVC, and eFAST windows",
+      "Surviving Sepsis Hour-1 bundle: blood cultures, broad-spectrum antibiotics, and 30 mL/kg crystalloid",
+      "Closed-loop diagnostic reasoning using MDCalc SOFA/HEART scores and HL7 FHIR order sets"
+    ],
+    tags: ["#Physician", "#Doctors", "#InternalMedicine", "#POCUS", "#SepsisProtocol", "#ClinicalDiagnostics"]
+  },
   {
     id: "wheel-trauma-resuscitation",
-    serialPlate: "CLN-MED01",
-    title: "Level 1 Trauma Resuscitation & TNCC Primary Assessment",
-    speaker: "Emergency Nurses Association (ENA)",
-    speakerTitle: "Trauma Critical Care Specialist (TNCC/CCRN)",
+    serialPlate: "CLN-MED03",
+    title: "Registered Nurse & ICU Critical Care: Hemodynamic Telemetry, Vasopressors & TNCC Resuscitation",
+    speaker: "Emergency & Critical Care Nurses Association (AACN / ENA)",
+    speakerTitle: "Chief Nursing Officer & Trauma Specialist (BSN, RN, CCRN)",
     youtubeId: "aJKt5o5szVU",
     duration: "5:45",
     category: "health",
-    categoryLabel: "Healthcare & Clinical",
+    categoryLabel: "Nursing & Critical Care",
     enclaveId: "healthcare_medicine",
-    professionId: "trauma_nurse",
+    professionId: "registered_nurse",
     thumbnailUrl: "https://i.ytimg.com/vi/aJKt5o5szVU/hqdefault.jpg",
-    summary: "Systematic rapid trauma assessment: airway with cervical spine restriction, rapid infuser protocols, massive transfusion activation, and closed-loop communication.",
+    summary: "Systematic critical care & inpatient nursing masterclass: norepinephrine/vasopressin titration to MAP >= 65 mmHg, central line bundle care, barcode MAR 5-Rights verification, and structured SBAR shift handoffs.",
     takeaways: [
-      "A-to-I systematic primary survey under high-acuity resuscitation",
-      "TEG-guided massive transfusion protocol (1:1:1 PRBC, FFP, platelets)",
-      "Continuous capnography interpretation during emergency intubation"
+      "A-to-I primary trauma survey and weight-based ICU vasopressor infusion titration",
+      "CLABSI/CAUTI zero-harm bundle compliance and arterial line waveform damping checks",
+      "Structured SBAR (Situation, Background, Assessment, Recommendation) bedside handoffs"
     ],
-    tags: ["#TraumaNursing", "#TNCC", "#CriticalCare", "#EmergencyMedicine", "#ACLS"]
+    tags: ["#RegisteredNurse", "#Nursing", "#CCRN", "#CriticalCare", "#TraumaNursing", "#PatientSafety"]
+  },
+  {
+    id: "wheel-medical-assistant-aide-triage",
+    serialPlate: "CLN-MED04",
+    title: "Medical Assistants & Nursing Aides (CCMA / CNA): 12-Lead ECG, Venipuncture & Vitals Triage",
+    speaker: "National Healthcareer & Clinical Support Guild",
+    speakerTitle: "Lead Clinical Medical Assistant & CNA Educator (CCMA, CNA, CPT)",
+    youtubeId: "y_AyWpdXW5o",
+    duration: "5:12",
+    category: "health",
+    categoryLabel: "Medical Aides & Clinical Support",
+    enclaveId: "healthcare_medicine",
+    professionId: "medical_assistant_aide",
+    thumbnailUrl: "https://i.ytimg.com/vi/y_AyWpdXW5o/hqdefault.jpg",
+    summary: "Essential clinical execution for Certified Medical Assistants (CCMA), Certified Nursing Assistants (CNA), and Home Health Aides: accurate 12-lead ECG precordial lead placement, order-of-draw venipuncture, orthostatic vitals, and safe patient transfers.",
+    takeaways: [
+      "CLSI order-of-draw venipuncture protocol (Blood Cultures -> Light Blue -> Gold -> Green -> Lavender)",
+      "Precordial V1–V6 12-lead ECG placement to prevent artifact and limb-lead reversal",
+      "Early Warning Score (MEWS) vital sign escalation, fall prevention, and autoclave spore testing"
+    ],
+    tags: ["#MedicalAssistant", "#CNA", "#MedicalAides", "#Phlebotomy", "#12LeadECG", "#PatientCare"]
+  },
+  {
+    id: "wheel-medical-administrator-command",
+    serialPlate: "CLN-MED05",
+    title: "Medical & Hospital Administration (MHA / FACHE): Joint Commission, HIPAA & Command Center Ops",
+    speaker: "American College of Healthcare Executives (ACHE) Practice",
+    speakerTitle: "Chief Operating Officer & Hospital Administrator (MHA, FACHE)",
+    youtubeId: "eUr-Mj2qCgI",
+    duration: "5:25",
+    category: "health",
+    categoryLabel: "Medical & Hospital Administration",
+    enclaveId: "healthcare_medicine",
+    professionId: "medical_administrator",
+    thumbnailUrl: "https://i.ytimg.com/vi/eUr-Mj2qCgI/hqdefault.jpg",
+    summary: "Executive hospital and clinic administration briefing: emergency department boarding mitigation, safe nurse-to-patient staffing matrices, Joint Commission (TJC) unannounced survey readiness, and HIPAA HITECH / HL7 FHIR revenue cycle governance.",
+    takeaways: [
+      "Real-time hospital bed-flow command center to cut ED boarding times by 42%",
+      "Joint Commission National Patient Safety Goals (NPSG) and CMS Star Rating optimization",
+      "HIPAA zero-trust EHR access auditing, ICD-10/DRG clean-claim integrity, and workforce retention"
+    ],
+    tags: ["#MedicalAdministrator", "#HospitalAdministration", "#FACHE", "#MHA", "#JointCommission", "#HIPAA"]
   },
   {
     id: "wheel-surgical-asepsis",
-    serialPlate: "CLN-MED02",
-    title: "Operating Room Sterile Field & Infection Prevention Standards",
+    serialPlate: "CLN-MED06",
+    title: "Operating Room Sterile Field, Robotic Surgery & Perioperative Standards",
     speaker: "Association of periOperative Registered Nurses (AORN)",
-    speakerTitle: "Surgical Services Clinical Director",
-    youtubeId: "eUr-Mj2qCgI",
+    speakerTitle: "Surgical Services Clinical Director (MD, FACS / CNOR)",
+    youtubeId: "xjSg0OIigI0",
     duration: "4:50",
     category: "health",
-    categoryLabel: "Healthcare & Clinical",
+    categoryLabel: "Surgical & Perioperative",
     enclaveId: "healthcare_medicine",
-    professionId: "surgical_technologist",
-    thumbnailUrl: "https://i.ytimg.com/vi/eUr-Mj2qCgI/hqdefault.jpg",
-    summary: "Strict environmental controls in laminar flow surgical suites, surgical scrub rub timing, drape barriers, and maintaining sterile boundaries.",
+    professionId: "surgeon_specialist_md",
+    thumbnailUrl: "https://i.ytimg.com/vi/xjSg0OIigI0/hqdefault.jpg",
+    summary: "Strict environmental controls in laminar flow surgical suites, WHO Safe Surgery Time-Out verification, robotic surgical arm draping, and perioperative infection prevention.",
     takeaways: [
-      "Positive pressure airflow maintenance and door-opening minimization",
-      "Sterility maintenance when draping robotic surgical arms",
-      "Immediate corrective action for intraoperative micro-perforations"
+      "WHO 3-phase Safe Surgery Checklist (Sign-In, Time-Out, Sign-Out) with surgeon, anesthesia, and RN",
+      "Positive pressure laminar airflow maintenance and sterile field boundary enforcement",
+      "Automated sponge/instrument RF count verification prior to fascial closure"
     ],
-    tags: ["#SurgicalTech", "#AORN", "#InfectionControl", "#OperatingRoom", "#Perioperative"]
+    tags: ["#Surgery", "#OperatingRoom", "#AORN", "#Surgeons", "#Perioperative", "#PatientSafety"]
   },
 
   // ─── 4. CYBERSECURITY & INFOSEC (tech_cybersecurity) ──────────────
@@ -1590,6 +1674,66 @@ export const PROFESSION_VERIFIED_VIDEOS: Record<string, { id: string; ytTitle: s
   "literacy_instructor": {
     "id": "fxgWjQrwBls",
     "ytTitle": "Adult Basic and Secondary Education and Literacy Teachers and Instructors Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "pharmacist": {
+    "id": "x4Y_2fpET0U",
+    "ytTitle": "Pharmacists & Clinical Pharmacology Career Masterclass",
+    "ytAuthor": "CareerOneStop / ASHP Clinical"
+  },
+  "pharmacy_technician": {
+    "id": "c2b7a89VSw8",
+    "ytTitle": "Pharmacy Technicians & Sterile Compounding Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "surgeon_specialist_md": {
+    "id": "6Ixvw0PpE6s",
+    "ytTitle": "Surgeons & Emergency Trauma Physicians Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "nurse_practitioner_pa": {
+    "id": "x4Y_2fpET0U",
+    "ytTitle": "Nurse Practitioners & Physician Assistants Clinical Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "critical_care_er_nurse": {
+    "id": "aJKt5o5szVU",
+    "ytTitle": "Critical Care & Emergency Trauma Registered Nurses Video",
+    "ytAuthor": "Emergency Nurses Association"
+  },
+  "licensed_practical_nurse": {
+    "id": "y_AyWpdXW5o",
+    "ytTitle": "Licensed Practical and Licensed Vocational Nurses Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "medical_assistant_aide": {
+    "id": "y_AyWpdXW5o",
+    "ytTitle": "Certified Medical Assistants & Nursing Aides (CCMA / CNA) Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "medical_administrator": {
+    "id": "eUr-Mj2qCgI",
+    "ytTitle": "Medical and Health Services Managers & Hospital Administrators Video",
+    "ytAuthor": "Healthcare Executive Directorate"
+  },
+  "medical_billing_him": {
+    "id": "ISmxPVS5O2c",
+    "ytTitle": "Health Information Technologists and Medical Registrars Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "paramedic_emt": {
+    "id": "aJKt5o5szVU",
+    "ytTitle": "Paramedics and Emergency Medical Technicians (EMT) Career Video",
+    "ytAuthor": "EMS & Trauma Directorate"
+  },
+  "radiology_imaging_tech": {
+    "id": "xjSg0OIigI0",
+    "ytTitle": "Radiologic, CT/MRI & Diagnostic Medical Sonographers Career Video",
+    "ytAuthor": "CareerOneStop"
+  },
+  "physical_occupational_therapist": {
+    "id": "6Ixvw0PpE6s",
+    "ytTitle": "Physical & Occupational Therapists Rehabilitation Career Video",
     "ytAuthor": "CareerOneStop"
   }
 }

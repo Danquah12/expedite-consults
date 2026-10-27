@@ -32,10 +32,12 @@ export interface CategorizedNotificationItem {
   targetTab: 'home' | 'jobs' | 'marketplace' | 'learning' | 'pulserooms' | 'messaging' | 'peerreview' | 'compensation'
   targetPayload?: string
   priority?: 'high' | 'normal' | 'critical'
+  externalUrl?: string
+  externalLabel?: string
 }
 
 export const INITIAL_CATEGORIZED_NOTIFICATIONS: CategorizedNotificationItem[] = [
-  // 1. SECURITY
+  // 1. SECURITY & CLINICAL SAFETY ALERTS
   {
     id: 'notif_sec_1',
     category: 'Security',
@@ -51,7 +53,47 @@ export const INITIAL_CATEGORIZED_NOTIFICATIONS: CategorizedNotificationItem[] = 
     unread: true,
     actionText: 'View Threat Playbook',
     targetTab: 'pulserooms',
-    priority: 'critical'
+    priority: 'critical',
+    externalUrl: 'https://www.cisa.gov/known-exploited-vulnerabilities-catalog',
+    externalLabel: 'Open CISA KEV Catalog ↗'
+  },
+  {
+    id: 'notif_health_fda_1',
+    category: 'Security',
+    subType: 'Security Advisory',
+    actor: {
+      name: 'FDA MedWatch & NIH DailyMed Pharmacology Alert',
+      avatar: 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=100&auto=format&fit=crop&q=80',
+      role: 'Clinical Pharmacy & Drug Safety Gateway'
+    },
+    title: '💊 Clinical Pharmacy Alert: USP <797>/<800> Sterile IV Compounding & High-Alert Heparin/Vancomycin Formulary Update',
+    description: 'Updated Bayesian AUC/MIC dosing nomograms and barcode medication administration (BCMA) guardrails published for Clinical Pharmacists (PharmD), ICU Nurses (RN/CCRN), and Attending Physicians.',
+    timestamp: '25m ago',
+    unread: true,
+    actionText: 'Open Clinical Solutions Hub',
+    targetTab: 'marketplace',
+    priority: 'critical',
+    externalUrl: 'https://dailymed.nlm.nih.gov/dailymed/',
+    externalLabel: 'Open NIH DailyMed Live ↗'
+  },
+  {
+    id: 'notif_health_tjc_2',
+    category: 'Security',
+    subType: 'Vulnerability Alert',
+    actor: {
+      name: 'The Joint Commission (TJC) & CDC Clinical Command',
+      avatar: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?w=100&auto=format&fit=crop&q=80',
+      role: 'Hospital Administration & Nursing Safety'
+    },
+    title: '🏥 Hospital Administration & Nursing Advisory: 2026 National Patient Safety Goals (NPSG) & Sepsis Hour-1 Bundle',
+    description: 'Mandatory checklist for Hospital Administrators (MHA/FACHE), RNs, LPNs, and Certified Medical Assistants (CCMA/CNA): 12-lead ECG triage timing, CLSI venipuncture blood culture order-of-draw, and HIPAA zero-trust EHR audit trails.',
+    timestamp: '1h ago',
+    unread: true,
+    actionText: 'Review Clinical Protocol',
+    targetTab: 'learning',
+    priority: 'high',
+    externalUrl: 'https://www.mdcalc.com/',
+    externalLabel: 'Launch MDCalc Clinical ↗'
   },
   {
     id: 'notif_sec_2',
@@ -67,10 +109,31 @@ export const INITIAL_CATEGORIZED_NOTIFICATIONS: CategorizedNotificationItem[] = 
     timestamp: '2h ago',
     unread: true,
     actionText: 'Apply Auto-PR Patch',
-    targetTab: 'marketplace'
+    targetTab: 'marketplace',
+    externalUrl: 'https://strike-2026-21.vercel.app',
+    externalLabel: 'Launch Expedite Strike ↗'
   },
 
   // 2. CAREER
+  {
+    id: 'notif_car_health_1',
+    category: 'Career',
+    subType: 'Job Match',
+    actor: {
+      name: 'Johns Hopkins & Mayo Clinic Clinical Recruiting',
+      avatar: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=100&auto=format&fit=crop&q=80',
+      role: 'Healthcare & Medical Talent Network'
+    },
+    title: '🩺 6 New Healthcare Requisitions: Clinical Pharmacist (PharmD), Attending MD, ICU RN, Medical Assistant (CCMA/CNA) & Hospital Administrator (MHA)',
+    description: 'Direct-hire and travel PRN openings with sign-on bonuses ($56K–$410K+) across Johns Hopkins, Mayo Clinic, Kaiser Permanente, and Mass General Brigham.',
+    timestamp: '45m ago',
+    unread: true,
+    actionText: 'View Clinical Jobs',
+    targetTab: 'jobs',
+    priority: 'high',
+    externalUrl: 'https://www.hopkinsmedicine.org/careers',
+    externalLabel: 'Hopkins Careers Portal ↗'
+  },
   {
     id: 'notif_car_1',
     category: 'Career',
@@ -122,6 +185,25 @@ export const INITIAL_CATEGORIZED_NOTIFICATIONS: CategorizedNotificationItem[] = 
 
   // 3. MARKETPLACE
   {
+    id: 'notif_mkt_health_1',
+    category: 'Marketplace',
+    subType: 'New Product',
+    actor: {
+      name: 'ConnectIn Clinical & Enterprise Solutions Hub',
+      avatar: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=100&auto=format&fit=crop&q=80',
+      role: 'Verified Clinical & Enterprise Platforms'
+    },
+    title: '⚡ New in Marketplace: NIH DailyMed Formulary, MDCalc Clinical Suite, PubMed & OpenFDA Drug Radar',
+    description: 'Instant live access for Pharmacists, Physicians, Nurses, Medical Assistants/Aides, and Hospital Administrators alongside Aagiis RMF & Expedite Strike.',
+    timestamp: '1h ago',
+    unread: true,
+    actionText: 'Open Marketplace Hub',
+    targetTab: 'marketplace',
+    priority: 'high',
+    externalUrl: 'https://pubmed.ncbi.nlm.nih.gov/',
+    externalLabel: 'Open NIH PubMed ↗'
+  },
+  {
     id: 'notif_mkt_1',
     category: 'Marketplace',
     subType: 'Trial Ending',
@@ -151,7 +233,9 @@ export const INITIAL_CATEGORIZED_NOTIFICATIONS: CategorizedNotificationItem[] = 
     timestamp: '1d ago',
     unread: false,
     actionText: 'Explore Product Page',
-    targetTab: 'marketplace'
+    targetTab: 'marketplace',
+    externalUrl: 'https://strike-2026-21.vercel.app',
+    externalLabel: 'Open Strike Live ↗'
   },
   {
     id: 'notif_mkt_3',
@@ -170,6 +254,23 @@ export const INITIAL_CATEGORIZED_NOTIFICATIONS: CategorizedNotificationItem[] = 
   },
 
   // 4. LEARNING
+  {
+    id: 'notif_lrn_health_1',
+    category: 'Learning',
+    subType: 'Course Reminder',
+    actor: {
+      name: 'The Wheel — Multi-Profession Masterclass & Briefing',
+      avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=100&auto=format&fit=crop&q=80',
+      role: 'CME / CEU Clinical & Multi-Profession Academy'
+    },
+    title: '🎬 New on The Wheel: Pharmacist USP <797>, Physician POCUS, ICU Nursing CCRN, Medical Aide ECG/Phlebotomy & Hospital Admin Briefings',
+    description: 'Watch verified video masterclasses for Pharmacists, Doctors, Nurses, Medical Assistants/Aides, and Medical Administrators on your Home feed or Learning Hub.',
+    timestamp: '30m ago',
+    unread: true,
+    actionText: 'Watch on The Wheel',
+    targetTab: 'home',
+    priority: 'high'
+  },
   {
     id: 'notif_lrn_1',
     category: 'Learning',
@@ -202,6 +303,22 @@ export const INITIAL_CATEGORIZED_NOTIFICATIONS: CategorizedNotificationItem[] = 
   },
 
   // 5. SOCIAL
+  {
+    id: 'notif_soc_health_1',
+    category: 'Social',
+    subType: 'Connection',
+    actor: {
+      name: 'Dr. Kwame Mensah, PharmD, BCPS & Evelyn Boateng, RN, CCRN',
+      avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=100&auto=format&fit=crop&q=80',
+      role: 'Healthcare, Pharmacy, Nursing & Medical Admin Guild'
+    },
+    title: 'Dr. Kwame Mensah (PharmD), Dr. Nana Yaw Owusu (MD), Evelyn Boateng (RN, CCRN), Samuel Tetteh (CCMA/CNA) & Richard Danquah (MHA, FACHE) joined your Clinical & Multi-Profession Network',
+    description: 'Inspect their full verified workspaces, clinical credentials, and peer validations in My Network.',
+    timestamp: '20m ago',
+    unread: true,
+    actionText: 'Explore Clinical Network',
+    targetTab: 'home'
+  },
   {
     id: 'notif_soc_1',
     category: 'Social',
@@ -251,3 +368,4 @@ export const INITIAL_CATEGORIZED_NOTIFICATIONS: CategorizedNotificationItem[] = 
     targetTab: 'home'
   }
 ]
+

@@ -27,6 +27,7 @@ export interface MediaVideoItem {
   category: 'Product Demo' | 'Technical Walkthrough' | 'Live Stream' | 'Webinar' | 'Podcast' | 'Learning' | 'Threat Intelligence'
   thumbnail: string
   videoUrl?: string
+  youtubeId?: string
   visibility: 'Public' | 'Connections Only' | 'Company Internal' | 'Subscriber Only'
   description: string
   likesCount: number
@@ -40,6 +41,7 @@ export interface MediaVideoItem {
     price: string
     tagline: string
     trialAvailable: boolean
+    liveUrl?: string
   }
   resources?: {
     type: 'github' | 'whitepaper' | 'docs' | 'course' | 'cert'
@@ -77,6 +79,7 @@ export interface MediaClipItem {
   actionType: 'Try Product' | 'Take Lab' | 'Follow Expert' | 'View Job'
   actionLabel: string
   actionTargetTab: string
+  externalUrl?: string
 }
 
 export interface LiveStreamEvent {
@@ -90,10 +93,12 @@ export interface LiveStreamEvent {
   liveViewersCount: number
   scheduledTime: string
   description: string
+  youtubeId?: string
   featuredProduct: {
     name: string
     icon: string
     price: string
+    liveUrl?: string
   }
 }
 
@@ -241,13 +246,91 @@ export const FEATURED_VIDEOS_DATA: MediaVideoItem[] = [
       { timestamp: '15:30', seconds: 930, speaker: 'Alex Taylor', text: 'Here is the ClusterMesh YAML configuration connecting multi-region AWS and on-prem clusters securely.' }
     ],
     resources: [
-      { type: 'github', label: 'eBPF Kubernetes YAML Manifests', url: '#' },
-      { type: 'cert', label: 'Claim Verified ConnectIn eBPF Badge', url: '#' }
+      { type: 'github', label: 'eBPF Kubernetes YAML Manifests', url: 'https://cilium.io/' },
+      { type: 'cert', label: 'Claim Verified ConnectIn eBPF Badge', url: 'https://www.cncf.io/' }
     ]
   }
 ]
 
 export const MEDIA_CLIPS_DATA: MediaClipItem[] = [
+  {
+    id: 'clip_pharm_1',
+    title: '60-Second Clinical Pearl: Vancomycin AUC/MIC vs Trough Monitoring & USP <797> IV Checks',
+    creatorName: 'Dr. Kwame Mensah, PharmD, BCPS',
+    creatorAvatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=100&auto=format&fit=crop&q=80',
+    creatorRole: 'Director of Clinical Pharmacy · Johns Hopkins Medicine',
+    duration: '0:56',
+    views: '148.2K',
+    likes: '12.4K',
+    thumbnail: 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=500&auto=format&fit=crop&q=80',
+    topic: 'Clinical Pharmacy & PharmD',
+    actionType: 'Try Product',
+    actionLabel: 'Open NIH DailyMed Live ↗',
+    actionTargetTab: 'marketplace',
+    externalUrl: 'https://dailymed.nlm.nih.gov/dailymed/'
+  },
+  {
+    id: 'clip_md_2',
+    title: 'Attending Physician Rapid Triage: Sepsis SOFA Score, Lactate Clearance & Vasopressor Timing',
+    creatorName: 'Dr. Sophia Chen, MD, FACP',
+    creatorAvatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=100&auto=format&fit=crop&q=80',
+    creatorRole: 'Chief of Internal Medicine · Mayo Clinic',
+    duration: '0:59',
+    views: '164.8K',
+    likes: '14.1K',
+    thumbnail: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=500&auto=format&fit=crop&q=80',
+    topic: 'Physicians & Internal Medicine',
+    actionType: 'Try Product',
+    actionLabel: 'Launch MDCalc Live ↗',
+    actionTargetTab: 'marketplace',
+    externalUrl: 'https://www.mdcalc.com/'
+  },
+  {
+    id: 'clip_rn_3',
+    title: 'ICU Nurse Shift Handoff: Norepinephrine Titration, Arterial Line Zeroing & BCMA Safety',
+    creatorName: 'Evelyn Boateng, BSN, RN, CCRN',
+    creatorAvatar: 'https://images.unsplash.com/photo-1594824813571-638f02614d3f?w=100&auto=format&fit=crop&q=80',
+    creatorRole: 'Critical Care ICU Charge Nurse · Kaiser Permanente',
+    duration: '0:55',
+    views: '132.0K',
+    likes: '10.8K',
+    thumbnail: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=500&auto=format&fit=crop&q=80',
+    topic: 'ICU & ER Nursing (RN/CCRN)',
+    actionType: 'View Job',
+    actionLabel: 'View Nursing & Clinical Jobs →',
+    actionTargetTab: 'jobs'
+  },
+  {
+    id: 'clip_ma_4',
+    title: 'Medical Assistant & CNA Mastery: 12-Lead ECG Lead Placement & Phlebotomy Order of Draw',
+    creatorName: 'Samuel Tetteh, CCMA, CNA, CPT',
+    creatorAvatar: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=100&auto=format&fit=crop&q=80',
+    creatorRole: 'Lead Certified Medical Assistant & CNA · Mount Sinai',
+    duration: '0:52',
+    views: '119.4K',
+    likes: '9.6K',
+    thumbnail: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=500&auto=format&fit=crop&q=80',
+    topic: 'Medical Assistants & CNAs',
+    actionType: 'Try Product',
+    actionLabel: 'Open OpenEMR Live ↗',
+    actionTargetTab: 'marketplace',
+    externalUrl: 'https://www.open-emr.org/'
+  },
+  {
+    id: 'clip_admin_5',
+    title: 'Hospital Administrator Briefing: Reducing ED Boarding by 34% with Real-Time Bed Telemetry',
+    creatorName: 'Richard Danquah, MHA, MBA, FACHE',
+    creatorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+    creatorRole: 'Chief Hospital Administrator · Mass General Brigham',
+    duration: '0:58',
+    views: '98.7K',
+    likes: '7.9K',
+    thumbnail: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?w=500&auto=format&fit=crop&q=80',
+    topic: 'Hospital Administration (MHA)',
+    actionType: 'View Job',
+    actionLabel: 'View Healthcare Admin Roles →',
+    actionTargetTab: 'jobs'
+  },
   {
     id: 'clip_1',
     title: '3 Common AWS IAM Mistakes That Expose GovCloud S3 Buckets',
@@ -262,40 +345,29 @@ export const MEDIA_CLIPS_DATA: MediaClipItem[] = [
     actionType: 'Try Product',
     actionLabel: 'Scan IAM in AXIOM →',
     actionTargetTab: 'marketplace'
-  },
-  {
-    id: 'clip_2',
-    title: '60-Second Explanation: What is Model Context Protocol (MCP) Security?',
-    creatorName: 'Elena Rostova',
-    creatorAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
-    creatorRole: 'Stanford AI Fellow',
-    duration: '0:54',
-    views: '89.2K',
-    likes: '6.4K',
-    thumbnail: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&auto=format&fit=crop&q=80',
-    topic: 'AI Safety & MCP',
-    actionType: 'Take Lab',
-    actionLabel: 'Launch MCP Sandbox →',
-    actionTargetTab: 'labs'
-  },
-  {
-    id: 'clip_3',
-    title: 'How to Answer: "How Do You Handle FedRAMP cATO Drift?" in Security Interviews',
-    creatorName: 'Marcus Vance',
-    creatorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
-    creatorRole: 'VP of Defense Engineering',
-    duration: '0:59',
-    views: '142.1K',
-    likes: '11.2K',
-    thumbnail: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=500&auto=format&fit=crop&q=80',
-    topic: 'Career & Interview Prep',
-    actionType: 'View Job',
-    actionLabel: 'View $215K+ Roles →',
-    actionTargetTab: 'jobs'
   }
 ]
 
 export const LIVE_STREAMS_DATA: LiveStreamEvent[] = [
+  {
+    id: 'live_health_grand_rounds',
+    title: 'LIVE Multi-Profession Grand Rounds: Clinical Pharmacy, Attending Physicians, ICU Nursing, Medical Aides & Hospital Command',
+    hostName: 'Dr. Kwame Mensah (PharmD), Dr. Sophia Chen (MD), Evelyn Boateng (RN) & Richard Danquah (MHA)',
+    hostAvatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=200&auto=format&fit=crop&q=80',
+    hostRole: 'Interdisciplinary Clinical Pharmacy, Medicine, Nursing & Hospital Admin Panel',
+    company: 'Johns Hopkins · Mayo Clinic · Mass General Brigham',
+    status: 'LIVE NOW',
+    liveViewersCount: 1428,
+    scheduledTime: 'Streaming Live · Interdisciplinary Hospital Command Broadcast',
+    description: 'Live interactive clinical walkthrough connecting Sterile Compounding Pharmacists (USP <797>/<800>), Attending Physicians, Critical Care Nurses, Certified Medical Assistants (CCMA/CNA), and Hospital Administrators with live NIH DailyMed and MDCalc telemetry.',
+    youtubeId: '9vJRopau0g0',
+    featuredProduct: {
+      name: 'NIH DailyMed & MDCalc Clinical Suite',
+      icon: '🏥',
+      price: 'Free Live Clinical Portals',
+      liveUrl: 'https://dailymed.nlm.nih.gov/dailymed/'
+    }
+  },
   {
     id: 'live_1',
     title: 'AXIOM 4.0 & Expedite Strike: Live Zero-Trust & cATO Interactive Teardown',
@@ -307,10 +379,12 @@ export const LIVE_STREAMS_DATA: LiveStreamEvent[] = [
     liveViewersCount: 842,
     scheduledTime: 'Streaming Live · Started 15 mins ago',
     description: 'Watch live red team adversary emulation against an AWS GovCloud multi-tenant cluster with automated GitHub fix PR dispatch and OSCAL assertion generation.',
+    youtubeId: 'L_Guz73e6fw',
     featuredProduct: {
       name: 'Expedite Strike ASPM',
       icon: '⚡',
-      price: '$499 / mo'
+      price: '$499 / mo',
+      liveUrl: 'https://dstrike-app.vercel.app'
     }
   }
 ]
@@ -448,6 +522,7 @@ export const TRADES_VIDEOS_DATA: MediaVideoItem[] = [
     uploadTimeAgo: '3 days ago',
     category: 'Technical Walkthrough',
     thumbnail: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1000&auto=format&fit=crop&q=80',
+    youtubeId: 'zu6p3_df20A',
     visibility: 'Public',
     description: 'Master carpenter David Miller demonstrates traditional draw-bored mortise and tenon joinery layout on 10x10 Douglas Fir posts with white oak octagonal trunnels and Festool Domino XL DF 700 integration.',
     likesCount: 2940,
@@ -488,6 +563,7 @@ export const TRADES_VIDEOS_DATA: MediaVideoItem[] = [
     uploadTimeAgo: '1 week ago',
     category: 'Learning',
     thumbnail: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1000&auto=format&fit=crop&q=80',
+    youtubeId: 'f4cT6_t7690',
     visibility: 'Public',
     description: 'Job-site superintendent Frank Gallagher breaks down OSHA Subpart M fall protection anchorages, spreader bar rigging, and 100% tie-off lifelines during commercial bent lifts.',
     likesCount: 1840,
@@ -505,6 +581,237 @@ export const TRADES_VIDEOS_DATA: MediaVideoItem[] = [
 
 export const HEALTHCARE_VIDEOS_DATA: MediaVideoItem[] = [
   {
+    id: 'vid_pharmacy_stewardship',
+    title: 'Clinical Pharmacy Masterclass: USP <797>/<800> IV Sterile Compounding, Pharmacokinetics & Antimicrobial Stewardship',
+    channelName: 'Dr. Kwame Mensah, PharmD, BCPS',
+    channelAvatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=200&auto=format&fit=crop&q=80',
+    channelRole: 'Director of Clinical Pharmacy & Antimicrobial Stewardship · Johns Hopkins Medicine',
+    channelFollowers: '84.6K Followers',
+    isVerifiedChannel: true,
+    duration: '29:45',
+    durationSeconds: 1785,
+    views: '92.4K views',
+    uploadTimeAgo: '1 day ago',
+    category: 'Technical Walkthrough',
+    thumbnail: 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=1000&auto=format&fit=crop&q=80',
+    youtubeId: '9vJRopau0g0',
+    visibility: 'Public',
+    description: 'Board-certified clinical pharmacist Dr. Kwame Mensah (PharmD, BCPS) and Lead CPhT sterile compounding technicians demonstrate ISO Class 5 laminar airflow hood IV admixture verification, Vancomycin AUC/MIC Bayesian dosing, Cockcroft-Gault renal clearance adjustments, and live FDA/NIH DailyMed drug interaction verification.',
+    likesCount: 5420,
+    commentsCount: 418,
+    chapters: [
+      { timestamp: '00:00', seconds: 0, title: 'USP <797> & <800> Cleanroom Gowning & ISO Class 5 Hood Verification' },
+      { timestamp: '07:20', seconds: 440, title: 'Vancomycin AUC/MIC & Aminoglycoside Renal Dosing Calculations' },
+      { timestamp: '15:45', seconds: 945, title: 'IV Y-Site Compatibility & Vasopressor Admixture Stability' },
+      { timestamp: '23:10', seconds: 1390, title: 'Live NIH DailyMed & OpenFDA Boxed Warning Telemetry Check' }
+    ],
+    transcript: [
+      { timestamp: '00:30', seconds: 30, speaker: 'Dr. Kwame Mensah, PharmD', text: 'Welcome pharmacists, pharmacy technicians, nurses, and physicians. Every IV admixture leaving our cleanroom undergoes barcode gravimetric verification.' },
+      { timestamp: '07:25', seconds: 445, speaker: 'Dr. Kwame Mensah, PharmD', text: 'For septic shock patients on piperacillin-tazobactam and vancomycin, we target an AUC24/MIC ratio between 400 and 600 mg·hr/L to prevent acute kidney injury.' },
+      { timestamp: '23:15', seconds: 1395, speaker: 'Dr. Kwame Mensah, PharmD', text: 'Use our embedded NIH DailyMed and OpenFDA links below to cross-check National Drug Codes (NDC) and lot recalls in real time.' }
+    ],
+    embeddedProduct: {
+      id: 'prod_nih_dailymed_pharmacy',
+      name: 'NIH DailyMed & RxNorm Clinical Formulary Portal',
+      icon: '💊',
+      price: 'Free Live NIH Portal',
+      tagline: 'Live FDA Structured Product Labeling, NDC lookup & IV compatibility.',
+      trialAvailable: true,
+      liveUrl: 'https://dailymed.nlm.nih.gov/dailymed/'
+    },
+    resources: [
+      { type: 'docs', label: 'Live Portal: NIH DailyMed Drug & NDC Lookup ↗', url: 'https://dailymed.nlm.nih.gov/dailymed/' },
+      { type: 'whitepaper', label: 'Live Portal: OpenFDA Drug Adverse Event & Recall API ↗', url: 'https://open.fda.gov/' },
+      { type: 'course', label: 'Live Portal: MDCalc Creatinine Clearance (Cockcroft-Gault) ↗', url: 'https://www.mdcalc.com/' }
+    ],
+    relatedJobs: [
+      { id: 'health_pharmacist_1', title: 'Director of Clinical Pharmacy & Antimicrobial Stewardship (PharmD, BCPS)', company: 'Johns Hopkins Medicine', location: 'Baltimore, MD / Hybrid', salary: '$168K - $205K' },
+      { id: 'health_pharmtech_2', title: 'Lead IV Sterile Compounding Pharmacy Technician (CPhT, CSPT)', company: 'Cleveland Clinic Health System', location: 'Cleveland, OH', salary: '$68K - $86K' }
+    ]
+  },
+  {
+    id: 'vid_physician_rounds',
+    title: 'Attending Physician & Internal Medicine Grand Rounds: Sepsis Resuscitation, Differential Diagnosis & MDCalc Bedside Scores',
+    channelName: 'Dr. Sophia Chen, MD, FACP',
+    channelAvatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=200&auto=format&fit=crop&q=80',
+    channelRole: 'Chief of Internal Medicine & Clinical Informatics · Mayo Clinic',
+    channelFollowers: '96.2K Followers',
+    isVerifiedChannel: true,
+    duration: '32:10',
+    durationSeconds: 1930,
+    views: '108.5K views',
+    uploadTimeAgo: '2 days ago',
+    category: 'Technical Walkthrough',
+    thumbnail: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1000&auto=format&fit=crop&q=80',
+    youtubeId: 'iG9CE55wbtY',
+    visibility: 'Public',
+    description: 'Dr. Sophia Chen, MD, FACP leads interdisciplinary inpatient rounds with Resident Physicians, Nurse Practitioners (DNP/PA-C), Clinical Pharmacists, and Bedside RNs—covering rapid shock differentiation with POCUS, SOFA/HEART score stratification on MDCalc, and evidence-based PubMed literature integration.',
+    likesCount: 6380,
+    commentsCount: 492,
+    chapters: [
+      { timestamp: '00:00', seconds: 0, title: 'Morning Interdisciplinary Huddle (MD, NP/PA, PharmD, RN, CNA)' },
+      { timestamp: '08:10', seconds: 490, title: 'Bedside POCUS Inferior Vena Cava & Cardiac Contractility Exam' },
+      { timestamp: '17:30', seconds: 1050, title: 'Live MDCalc Stratification: SOFA, Wells PE & CHA2DS2-VASc' },
+      { timestamp: '25:40', seconds: 1540, title: 'CPOE Order Sets & Pharmacy Med-Rec Sign-Off' }
+    ],
+    transcript: [
+      { timestamp: '00:40', seconds: 40, speaker: 'Dr. Sophia Chen, MD', text: 'Great inpatient medicine relies on tight closed-loop communication between the attending physician, nurse practitioner, clinical pharmacist, bedside nurse, and medical assistant.' },
+      { timestamp: '17:35', seconds: 1055, speaker: 'Dr. Sophia Chen, MD', text: 'Let us pull up MDCalc live at the bedside to compute the Sequential Organ Failure Assessment (SOFA) score and adjust our vasopressor and antibiotic targets.' }
+    ],
+    embeddedProduct: {
+      id: 'prod_mdcalc_clinical_decision',
+      name: 'MDCalc Clinical Decision Support (700+ Calculators)',
+      icon: '🩺',
+      price: 'Free Live Bedside Tool',
+      tagline: '700+ peer-reviewed medical calculators for Physicians, NPs, PAs, RNs & Pharmacists.',
+      trialAvailable: true,
+      liveUrl: 'https://www.mdcalc.com/'
+    },
+    resources: [
+      { type: 'docs', label: 'Live Portal: MDCalc Clinical Calculators (700+ Tools) ↗', url: 'https://www.mdcalc.com/' },
+      { type: 'whitepaper', label: 'Live Portal: NIH PubMed & MEDLINE Clinical Research ↗', url: 'https://pubmed.ncbi.nlm.nih.gov/' }
+    ],
+    relatedJobs: [
+      { id: 'health_physician_3', title: 'Attending Physician — Internal Medicine & Hospitalist Lead (MD / DO)', company: 'Mayo Clinic Health System', location: 'Rochester, MN', salary: '$310K - $395K' },
+      { id: 'health_np_pa_4', title: 'Lead Acute Care Nurse Practitioner / Physician Assistant (DNP, APRN, PA-C)', company: 'Kaiser Permanente Medical Group', location: 'Oakland, CA', salary: '$175K - $215K' }
+    ]
+  },
+  {
+    id: 'vid_icu_nursing_telemetry',
+    title: 'Critical Care & ER Nursing (BSN, RN, CCRN): Hemodynamic Telemetry, Vasopressor Titration & Sepsis Hour-1 Bundle',
+    channelName: 'Evelyn Boateng, BSN, RN, CCRN',
+    channelAvatar: 'https://images.unsplash.com/photo-1594824813571-638f02614d3f?w=200&auto=format&fit=crop&q=80',
+    channelRole: 'Critical Care ICU Charge Nurse & Trauma Resuscitation Lead',
+    channelFollowers: '74.1K Followers',
+    isVerifiedChannel: true,
+    duration: '26:30',
+    durationSeconds: 1590,
+    views: '83.7K views',
+    uploadTimeAgo: '3 days ago',
+    category: 'Learning',
+    thumbnail: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=1000&auto=format&fit=crop&q=80',
+    youtubeId: 'qp0HIF3SfI4',
+    visibility: 'Public',
+    description: 'ICU Charge Nurse Evelyn Boateng (BSN, RN, CCRN) walks Registered Nurses, LPNs, and Nursing Aides through arterial line phlebostatic axis leveling, Alaris smart-pump DERS guardrails, dual-RN high-alert insulin/heparin checks, and SBAR shift handoffs.',
+    likesCount: 4890,
+    commentsCount: 365,
+    chapters: [
+      { timestamp: '00:00', seconds: 0, title: 'Sepsis Hour-1 Bundle: Blood Cultures, Lactate & Broad-Spectrum IVs' },
+      { timestamp: '08:45', seconds: 525, title: 'Zeroing the Arterial Line at the 4th Intercostal Phlebostatic Axis' },
+      { timestamp: '16:20', seconds: 980, title: 'Smart Infusion Pump DERS Guardrails & Barcode Medication Scan (BCMA)' },
+      { timestamp: '22:00', seconds: 1320, title: 'Delegating Vital Signs & I&O Tracking to CNAs & Medical Assistants' }
+    ],
+    transcript: [
+      { timestamp: '00:50', seconds: 50, speaker: 'Evelyn Boateng, BSN, RN', text: 'In the ICU, nurses are the 24/7 defensive radar for the patient. Always draw two sets of blood cultures prior to starting IV piperacillin-tazobactam.' }
+    ],
+    embeddedProduct: {
+      id: 'prod_nih_pubmed_medline',
+      name: 'NIH PubMed & CDC Clinical Nursing Guidelines',
+      icon: '🧬',
+      price: 'Free Federal Portal',
+      tagline: 'Evidence-based nursing practice guidelines, sepsis bundles & MEDLINE.',
+      trialAvailable: true,
+      liveUrl: 'https://pubmed.ncbi.nlm.nih.gov/'
+    },
+    resources: [
+      { type: 'docs', label: 'Live Portal: NIH PubMed Nursing & Critical Care Evidence ↗', url: 'https://pubmed.ncbi.nlm.nih.gov/' },
+      { type: 'course', label: 'Live Portal: NIH DailyMed IV Medication Administration Guide ↗', url: 'https://dailymed.nlm.nih.gov/dailymed/' }
+    ],
+    relatedJobs: [
+      { id: 'health_trauma_nurse_1', title: 'Trauma Resuscitation & ICU Charge Nurse (BSN, RN, CCRN)', company: 'Johns Hopkins Medicine', location: 'Baltimore, MD', salary: '$118K - $152K' }
+    ]
+  },
+  {
+    id: 'vid_medical_aide_cna',
+    title: 'Certified Medical Assistants & Nursing Aides (CCMA, CNA, CPT): 12-Lead ECG, Venipuncture & EHR Triage Flowsheets',
+    channelName: 'Samuel Tetteh, CCMA, CNA, CPT',
+    channelAvatar: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=200&auto=format&fit=crop&q=80',
+    channelRole: 'Lead Certified Clinical Medical Assistant & Phlebotomy Instructor · Mount Sinai',
+    channelFollowers: '53.8K Followers',
+    isVerifiedChannel: true,
+    duration: '23:15',
+    durationSeconds: 1395,
+    views: '64.2K views',
+    uploadTimeAgo: '4 days ago',
+    category: 'Learning',
+    thumbnail: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=1000&auto=format&fit=crop&q=80',
+    youtubeId: 'arj7oStGLkU',
+    visibility: 'Public',
+    description: 'Complete practical field guide for Certified Medical Assistants (CCMA), Certified Nursing Assistants (CNA), Patient Care Technicians (PCT), and Phlebotomists: accurate precordial V1-V6 12-lead ECG placement, CLSI venipuncture order of draw, orthostatic vitals, and OpenEMR/Epic intake documentation.',
+    likesCount: 3910,
+    commentsCount: 274,
+    chapters: [
+      { timestamp: '00:00', seconds: 0, title: 'Patient Rooming, Orthostatic Vitals & Early Warning Score Escalation' },
+      { timestamp: '06:40', seconds: 400, title: '12-Lead ECG Anatomical Landmarks (V1-V6 Intercostal Placement)' },
+      { timestamp: '13:50', seconds: 830, title: 'CLSI Venipuncture Order of Draw (Blood Culture → Blue → Gold → Lavender)' },
+      { timestamp: '19:10', seconds: 1150, title: 'Point-of-Care CLIA-Waived A1c/Strep Testing & EHR Flowsheet Entry' }
+    ],
+    transcript: [
+      { timestamp: '00:35', seconds: 35, speaker: 'Samuel Tetteh, CCMA, CNA', text: 'Medical Assistants and CNAs are the frontline eyes and ears of the entire clinical care team. Accurate vitals and medication allergies caught during rooming save lives.' }
+    ],
+    embeddedProduct: {
+      id: 'prod_openemr_hospital_admin',
+      name: 'OpenEMR ONC-Certified Clinical Intake & Triage Suite',
+      icon: '🏥',
+      price: 'Free Live EHR Demo',
+      tagline: 'Vital signs flowsheets, ECG/Lab orders, immunization tracking & HL7 FHIR.',
+      trialAvailable: true,
+      liveUrl: 'https://www.open-emr.org/'
+    },
+    resources: [
+      { type: 'docs', label: 'Live Portal: OpenEMR Clinical Intake & Flowsheet Platform ↗', url: 'https://www.open-emr.org/' },
+      { type: 'cert', label: 'Live Portal: MDCalc Pediatric & Orthostatic Vitals Reference ↗', url: 'https://www.mdcalc.com/' }
+    ],
+    relatedJobs: [
+      { id: 'health_medaide_5', title: 'Senior Certified Clinical Medical Assistant & Patient Care Tech (CCMA / CNA)', company: 'Mount Sinai Health System', location: 'New York, NY', salary: '$56K - $72K' }
+    ]
+  },
+  {
+    id: 'vid_hospital_admin_command',
+    title: 'Medical & Hospital Administration (MHA, FACHE): Inpatient Capacity Command, Joint Commission & Revenue Cycle',
+    channelName: 'Richard Danquah, MHA, MBA, FACHE',
+    channelAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+    channelRole: 'Chief Hospital Administrator & VP of Clinical Operations · Mass General Brigham',
+    channelFollowers: '61.5K Followers',
+    isVerifiedChannel: true,
+    duration: '27:50',
+    durationSeconds: 1670,
+    views: '59.3K views',
+    uploadTimeAgo: '5 days ago',
+    category: 'Technical Walkthrough',
+    thumbnail: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1000&auto=format&fit=crop&q=80',
+    youtubeId: 'UF8uR6Z6KLc',
+    visibility: 'Public',
+    description: 'Fellow of the American College of Healthcare Executives Richard Danquah (MHA, MBA, FACHE) presents an executive walkthrough of real-time Hospital Bed Capacity Command Centers, nurse-to-patient staffing matrices, Joint Commission (TJC) survey readiness, CMS Star Ratings, and ICD-10/DRG revenue cycle governance.',
+    likesCount: 3640,
+    commentsCount: 219,
+    chapters: [
+      { timestamp: '00:00', seconds: 0, title: 'Hospital Capacity Command Center: Eliminating ED Boarding Bottlenecks' },
+      { timestamp: '08:15', seconds: 495, title: 'Balancing Nurse, Pharmacist, Physician & CNA Staffing Acuity Ratios' },
+      { timestamp: '16:30', seconds: 990, title: 'Joint Commission Accreditation, CMS Star Ratings & HIPAA 45 CFR § 164.312' },
+      { timestamp: '22:45', seconds: 1365, title: 'ICD-10-CM/PCS Coding, MS-DRG Case Mix Index & 340B Pharmacy Compliance' }
+    ],
+    transcript: [
+      { timestamp: '00:45', seconds: 45, speaker: 'Richard Danquah, MHA, FACHE', text: 'When medical administrators align pharmacy verification turnaround, environmental bed turnover, and nursing discharge lounges, ED boarding drops by over 30%.' }
+    ],
+    embeddedProduct: {
+      id: 'prod_openemr_hospital_admin',
+      name: 'OpenEMR & HL7 FHIR Hospital Administration & Revenue Cycle Suite',
+      icon: '🏥',
+      price: 'Free Live Portal',
+      tagline: 'Inpatient bed census, ICD-10/CPT claims clearinghouse & HIPAA audit controls.',
+      trialAvailable: true,
+      liveUrl: 'https://www.open-emr.org/'
+    },
+    resources: [
+      { type: 'docs', label: 'Live Portal: OpenEMR Hospital Practice & Revenue Cycle ↗', url: 'https://www.open-emr.org/' },
+      { type: 'whitepaper', label: 'Live Portal: OpenFDA Hospital Recall & Risk Surveillance ↗', url: 'https://open.fda.gov/' }
+    ],
+    relatedJobs: [
+      { id: 'health_medadmin_6', title: 'Vice President of Hospital Operations & Medical Administration (MHA, FACHE)', company: 'Mass General Brigham', location: 'Boston, MA', salary: '$210K - $275K' }
+    ]
+  },
+  {
     id: 'vid_pelvic_orif',
     title: 'Orthopedic Trauma Masterclass: Unstable Pelvic Ring Reconstruction & Anterior Column ORIF',
     channelName: 'Dr. Angela Vance, MD, FACS',
@@ -518,6 +825,7 @@ export const HEALTHCARE_VIDEOS_DATA: MediaVideoItem[] = [
     uploadTimeAgo: '4 days ago',
     category: 'Technical Walkthrough',
     thumbnail: 'https://images.unsplash.com/photo-1551076805-e1869033e561?w=1000&auto=format&fit=crop&q=80',
+    youtubeId: 'hN2e7_A1kBw',
     visibility: 'Public',
     description: 'Dr. Angela Vance provides an operative surgical walkthrough of an anterior column and posterior hemitransverse acetabular fracture repair using 3D anatomical templating and anatomical curved reconstruction plates.',
     likesCount: 4210,
@@ -538,37 +846,11 @@ export const HEALTHCARE_VIDEOS_DATA: MediaVideoItem[] = [
       icon: '🩺',
       price: '$2,899',
       tagline: 'Whole-body single-probe clinical ultrasound with cloud DICOM.',
-      trialAvailable: true
+      trialAvailable: true,
+      liveUrl: 'https://www.mdcalc.com/'
     },
     relatedJobs: [
       { id: 'job_surg_1', title: 'Attending Orthopedic Trauma Surgeon', company: 'Academic Health Network', location: 'Chicago, IL', salary: '$580K - $750K' }
-    ]
-  },
-  {
-    id: 'vid_trauma_pocus',
-    title: 'Emergency Trauma Resuscitation: Massive Transfusion Protocol (MTP) & Rapid Infusion',
-    channelName: 'Emergency Trauma Nursing Suite',
-    channelAvatar: 'https://images.unsplash.com/photo-1594824813571-638f02614d3f?w=200&auto=format&fit=crop&q=80',
-    channelRole: 'Trauma Resuscitation Nurse Lead · Emergency Services',
-    channelFollowers: '48.9K Followers',
-    isVerifiedChannel: true,
-    duration: '24:50',
-    durationSeconds: 1490,
-    views: '49.8K views',
-    uploadTimeAgo: '6 days ago',
-    category: 'Learning',
-    thumbnail: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=1000&auto=format&fit=crop&q=80',
-    visibility: 'Public',
-    description: 'Trauma nurse lead Elena Rostova demonstrates Belmont Rapid Infuser operation, whole blood warming protocols, and arterial line transducer leveling during hemorrhagic shock resuscitation.',
-    likesCount: 2680,
-    commentsCount: 154,
-    chapters: [
-      { timestamp: '00:00', seconds: 0, title: 'Level 1 Trauma Activation & Initial Survey' },
-      { timestamp: '06:30', seconds: 390, title: 'Belmont Rapid Infuser 500 mL/min Priming' },
-      { timestamp: '15:20', seconds: 920, title: 'Ionized Calcium & Arterial Blood Gas Titration' }
-    ],
-    transcript: [
-      { timestamp: '00:40', seconds: 40, speaker: 'Elena Rostova', text: 'When MTP is triggered, whole blood delivery must commence within 3 minutes through dual large-bore IVs.' }
     ]
   }
 ]
@@ -588,6 +870,7 @@ export const AUTOMOTIVE_VIDEOS_DATA: MediaVideoItem[] = [
     uploadTimeAgo: '3 days ago',
     category: 'Technical Walkthrough',
     thumbnail: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=1000&auto=format&fit=crop&q=80',
+    youtubeId: 'b7_G-tA5sP0',
     visibility: 'Public',
     description: 'Marcus Miller demonstrates high-voltage CAT IV 1000V de-energization, capacitor discharge verification, and oscilloscope diagnosis of Silicon Carbide (SiC) PWM gate driver circuits on commercial EV powertrains.',
     likesCount: 3890,
@@ -628,6 +911,7 @@ export const AUTOMOTIVE_VIDEOS_DATA: MediaVideoItem[] = [
     uploadTimeAgo: '1 week ago',
     category: 'Learning',
     thumbnail: 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=1000&auto=format&fit=crop&q=80',
+    youtubeId: 'r-qQ_5jX8c0',
     visibility: 'Public',
     description: 'Diagnosing CAN-FD baud rate transitions, termination resistance reflections, and terminal pin fretting on central gateway body control modules.',
     likesCount: 2310,
@@ -666,20 +950,60 @@ export const TRADES_PODCASTS_DATA: PodcastShow[] = [
 export const HEALTHCARE_PODCASTS_DATA: PodcastShow[] = [
   {
     id: 'show_trauma_rounds',
-    title: 'Trauma Bay Grand Rounds: Resuscitation, Surgery & Critical Care',
-    tagline: 'Evidence-based clinical discussions on emergency damage control surgery, massive transfusion protocols, and acute care.',
-    hostName: 'Dr. Angela Vance, MD, FACS',
-    hostRole: 'Chief of Orthopedic Trauma Surgery',
-    hostAvatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=200&auto=format&fit=crop&q=80',
+    title: 'Interdisciplinary Grand Rounds: Pharmacy, Medicine, Nursing, Medical Aides & Hospital Command',
+    tagline: 'Evidence-based clinical discussions uniting Clinical Pharmacists (PharmD), Attending Physicians (MD), ICU Nurses (RN), Medical Assistants (CCMA/CNA), and Hospital Administrators (MHA).',
+    hostName: 'Dr. Kwame Mensah, PharmD, BCPS & Dr. Sophia Chen, MD, FACP',
+    hostRole: 'Director of Clinical Pharmacy & Chief of Internal Medicine',
+    hostAvatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=200&auto=format&fit=crop&q=80',
     coverImage: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=800&auto=format&fit=crop&q=80',
     category: 'Leadership & CISO',
-    subscribersCount: '44.1K Subscribers',
+    subscribersCount: '68.4K Subscribers',
     rating: '4.99 ★',
-    reviewsCount: 512,
-    totalEpisodes: 26,
+    reviewsCount: 742,
+    totalEpisodes: 28,
     isMonetized: true,
-    monthlyMembershipPrice: '$19 / mo (CME Accreditation & Case Reviews)',
-    episodes: []
+    monthlyMembershipPrice: '$19 / mo (ACPE / AMA PRA Category 1 / ANCC CE Credits)',
+    episodes: [
+      {
+        id: 'ep_health_1',
+        showId: 'show_trauma_rounds',
+        title: 'Episode 28: Closed-Loop Sepsis & Medication Safety — From CNA Vitals Triage to Pharmacy AUC Dosing & ICU Nursing',
+        seasonNumber: 2,
+        episodeNumber: 28,
+        duration: '44:15',
+        durationSeconds: 2655,
+        releaseDate: 'October 25, 2026',
+        listensCount: '39.4K Listens',
+        rating: '4.99 ★',
+        isVideoPodcast: true,
+        videoThumbnail: 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=1000&auto=format&fit=crop&q=80',
+        description: 'How Medical Assistants and CNAs flagging early tachypnea during rooming, Attending Physicians ordering rapid point-of-care lactate, Clinical Pharmacists calculating Bayesian Vancomycin AUC/MIC in NIH DailyMed, and ICU Nurses executing smart-pump BCMA infusions cut sepsis mortality by 29%.',
+        guest: {
+          name: 'Evelyn Boateng, BSN, RN, CCRN & Richard Danquah, MHA, FACHE',
+          role: 'ICU Charge Nurse & Chief Hospital Administrator',
+          company: 'Kaiser Permanente & Mass General Brigham',
+          avatar: 'https://images.unsplash.com/photo-1594824813571-638f02614d3f?w=200&auto=format&fit=crop&q=80',
+          profileId: 'evelyn-boateng-rn'
+        },
+        chapters: [
+          { timestamp: '00:00', seconds: 0, title: 'Frontline Triage: Medical Assistants (CCMA) & CNAs Spotting Early Sepsis' },
+          { timestamp: '11:20', seconds: 680, title: 'Physician Diagnostic Workup & MDCalc SOFA Stratification' },
+          { timestamp: '23:45', seconds: 1425, title: 'Clinical Pharmacist USP <797> Stat Admixture & Renal Dosing' },
+          { timestamp: '34:10', seconds: 2050, title: 'Hospital Administrator Bed Command & CMS SEP-1 Quality Governance' }
+        ],
+        transcript: [
+          { timestamp: '00:40', seconds: 40, speaker: 'Dr. Kwame Mensah, PharmD', text: 'Every minute counts in septic shock. When our CNAs and Medical Assistants immediately escalate abnormal shock index vitals, pharmacy and nursing can deliver broad-spectrum antibiotics within 35 minutes.' },
+          { timestamp: '11:30', seconds: 690, speaker: 'Dr. Sophia Chen, MD', text: 'Using MDCalc and NIH DailyMed directly inside our EHR workflow eliminates dosing guesswork across the entire care team.' }
+        ],
+        connectedEntityGraph: {
+          person: { name: 'Dr. Kwame Mensah, PharmD, BCPS', role: 'Director of Clinical Pharmacy', avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=200&auto=format&fit=crop&q=80' },
+          company: { name: 'Johns Hopkins & Mayo Clinic Alliance', tier: 'Verified Academic Medical Center' },
+          product: { name: 'NIH DailyMed & MDCalc Clinical Suite (Free Live)', icon: '💊', trialAction: 'Launch Live Portals' },
+          job: { title: 'Director of Clinical Pharmacy ($205K) & ICU RN ($152K)', salary: '$152K - $205K', company: 'Johns Hopkins Medicine' },
+          course: { title: 'Interdisciplinary Sepsis, USP <797> Pharmacy & ICU Masterclass', badge: 'ACPE / AMA / ANCC CE' }
+        }
+      }
+    ]
   }
 ]
 
@@ -704,15 +1028,15 @@ export const AUTOMOTIVE_PODCASTS_DATA: PodcastShow[] = [
 ]
 
 export function getEnclaveMediaVideos(enclaveId?: string): MediaVideoItem[] {
-  if (enclaveId === 'trades_construction') return TRADES_VIDEOS_DATA
+  if (enclaveId === 'trades_construction') return [...TRADES_VIDEOS_DATA, ...HEALTHCARE_VIDEOS_DATA.slice(0, 2)]
   if (enclaveId === 'healthcare_medicine') return HEALTHCARE_VIDEOS_DATA
-  if (enclaveId === 'automotive_mechanics') return AUTOMOTIVE_VIDEOS_DATA
-  return FEATURED_VIDEOS_DATA
+  if (enclaveId === 'automotive_mechanics') return [...AUTOMOTIVE_VIDEOS_DATA, ...HEALTHCARE_VIDEOS_DATA.slice(0, 2)]
+  return [...HEALTHCARE_VIDEOS_DATA, ...FEATURED_VIDEOS_DATA]
 }
 
 export function getEnclavePodcasts(enclaveId?: string): PodcastShow[] {
-  if (enclaveId === 'trades_construction') return TRADES_PODCASTS_DATA
-  if (enclaveId === 'healthcare_medicine') return HEALTHCARE_PODCASTS_DATA
-  if (enclaveId === 'automotive_mechanics') return AUTOMOTIVE_PODCASTS_DATA
-  return PODCAST_SHOWS_DATA
+  if (enclaveId === 'trades_construction') return [...TRADES_PODCASTS_DATA, ...HEALTHCARE_PODCASTS_DATA]
+  if (enclaveId === 'healthcare_medicine') return [...HEALTHCARE_PODCASTS_DATA, ...PODCAST_SHOWS_DATA]
+  if (enclaveId === 'automotive_mechanics') return [...AUTOMOTIVE_PODCASTS_DATA, ...HEALTHCARE_PODCASTS_DATA]
+  return [...HEALTHCARE_PODCASTS_DATA, ...PODCAST_SHOWS_DATA]
 }

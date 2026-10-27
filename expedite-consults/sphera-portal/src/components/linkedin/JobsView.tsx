@@ -182,13 +182,15 @@ function getEnclaveJobCategories(enclaveId?: string) {
       ]
     case 'healthcare_medicine':
       return [
-        { id: 'All', label: 'All Clinical & Allied Health Roles', icon: '🏥' },
+        { id: 'All', label: 'All Clinical, Pharmacy & Health Roles', icon: '🏥' },
         { id: 'Recommended', label: 'Recommended for You', icon: '⭐' },
-        { id: 'Surgery', label: 'Surgery, OR & Sterile Processing', icon: '🔪' },
-        { id: 'Trauma & Emergency', label: 'Level 1 Trauma & Paramedic EMS', icon: '🩺' },
-        { id: 'Allied Health & Biomedical', label: 'Radiology, Lab, BMET & Rehab', icon: '🩻' },
+        { id: 'Pharmacy & Pharmacology', label: 'Pharmacy (PharmD & CPhT)', icon: '💊' },
+        { id: 'Physicians & Surgeons', label: 'Physicians & Surgeons (MD/DO)', icon: '🩺' },
+        { id: 'Nursing & Advanced Practice', label: 'Nursing (RN, CCRN, NP, LPN)', icon: '❤️‍🩹' },
+        { id: 'Medical Aides & Clinical Support', label: 'Medical Aides (CCMA, CNA, EMT)', icon: '🩹' },
+        { id: 'Medical & Hospital Administration', label: 'Medical & Hospital Admin (MHA/FACHE)', icon: '📋' },
         { id: 'Dental & Veterinary', label: 'Dental (DDS) & Veterinary (DVM)', icon: '🦷' },
-        { id: 'Locum Tenens', label: 'Locum Tenens & Travel PRN', icon: '📋' }
+        { id: 'Locum Tenens', label: 'Locum Tenens & Travel PRN', icon: '🌍' }
       ]
     case 'education_workforce':
       return [

@@ -1984,6 +1984,81 @@ export const suggestedConnections: SuggestedConnection[] = [
     matchScore: 94,
     isConnected: false,
     isPending: false
+  },
+  {
+    id: 'sug_pharmacist_kwame',
+    name: 'Dr. Kwame Mensah, PharmD, BCPS',
+    headline: 'Director of Clinical Pharmacy & Antimicrobial Stewardship · USP <797>/<800> Sterile IV Lead',
+    avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=400&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=600&auto=format&fit=crop&q=80',
+    mutualConnections: 49,
+    mutualName: 'Dr. Angela Vance',
+    capabilities: ['Clinical Pharmacy & Pharmacology', 'Vancomycin AUC Dosing', 'USP <797>/<800> IV Compounding', 'Antimicrobial Stewardship'],
+    verifiedBadges: ['✓ Board Certified (BCPS)', '✓ Licensed PharmD'],
+    circle: 'ASHP Clinical Pharmacists & Pharmacology Guild',
+    matchScore: 99,
+    isConnected: false,
+    isPending: false
+  },
+  {
+    id: 'sug_physician_sophia',
+    name: 'Dr. Sophia Chen, MD, FACP',
+    headline: 'Chief of Internal Medicine & Point-of-Care Ultrasound (POCUS) · Johns Hopkins Medicine',
+    avatar: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=400&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=600&auto=format&fit=crop&q=80',
+    mutualConnections: 61,
+    mutualName: 'Dr. Julian Sterling',
+    capabilities: ['Internal Medicine & Diagnostics', 'Bedside POCUS Ultrasound', 'Sepsis Resuscitation', 'HL7 FHIR Clinical Trials'],
+    verifiedBadges: ['✓ ABIM Board Certified', '✓ FACP Fellow'],
+    circle: 'Attending Physicians & Clinical Diagnostics Enclave',
+    matchScore: 98,
+    isConnected: false,
+    isPending: false
+  },
+  {
+    id: 'sug_nurse_evelyn',
+    name: 'Evelyn Boateng, BSN, RN, CCRN',
+    headline: 'Chief Nursing Officer (CNO) & ICU Critical Care Trauma Nurse · Magnet Hospital Lead',
+    avatar: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=400&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=600&auto=format&fit=crop&q=80',
+    mutualConnections: 54,
+    mutualName: 'Elena Rostova, RN',
+    capabilities: ['ICU & Trauma Nursing (CCRN)', 'Vasopressor Titration', 'Barcode MAR Safety', 'Nurse Staffing & SBAR'],
+    verifiedBadges: ['✓ AACN CCRN', '✓ Magnet CNO Fellow'],
+    circle: 'Critical Care & Registered Nurses Guild',
+    matchScore: 99,
+    isConnected: false,
+    isPending: false
+  },
+  {
+    id: 'sug_medaide_samuel',
+    name: 'Samuel Tetteh, CCMA, CNA, CPT',
+    headline: 'Lead Certified Clinical Medical Assistant & Nursing Aide · Phlebotomy, 12-Lead ECG & Triage',
+    avatar: 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=400&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=600&auto=format&fit=crop&q=80',
+    mutualConnections: 37,
+    mutualName: 'Evelyn Boateng, RN',
+    capabilities: ['Clinical Medical Assistant (CCMA)', 'Venipuncture Phlebotomy', '12-Lead ECG Triage', 'CNA Bedside Care'],
+    verifiedBadges: ['✓ NHA CCMA & CPT', '✓ State Certified CNA'],
+    circle: 'Medical Assistants, CNAs & Patient Care Guild',
+    matchScore: 97,
+    isConnected: false,
+    isPending: false
+  },
+  {
+    id: 'sug_medadmin_richard',
+    name: 'Richard Danquah, MHA, MBA, FACHE',
+    headline: 'Chief Hospital Administrator & VP of Clinical Operations · Joint Commission & HIPAA Lead',
+    avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?w=600&auto=format&fit=crop&q=80',
+    mutualConnections: 44,
+    mutualName: 'Dr. Kwame Mensah',
+    capabilities: ['Hospital & Medical Administration', 'Joint Commission (TJC) Audits', 'HIPAA HITECH Governance', 'HL7 FHIR Revenue Cycle'],
+    verifiedBadges: ['✓ FACHE Executive Fellow', '✓ MHA / HIMSS'],
+    circle: 'Healthcare Executives & Medical Administrators Council',
+    matchScore: 98,
+    isConnected: false,
+    isPending: false
   }
 ]
 
@@ -2077,6 +2152,81 @@ export const initialConnectedMembers: ConnectedMember[] = [
     company: 'SecureEnterprise Solutions',
     location: 'Denver, CO',
     email: 'carlos.mendez@sec-ent.com'
+  },
+  {
+    id: 'conn_7_pharmacist',
+    name: 'Dr. Kwame Mensah, PharmD, BCPS',
+    headline: 'Director of Clinical Pharmacy & Antimicrobial Stewardship · USP <797>/<800> Sterile IV Lead',
+    avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=200&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=600&auto=format&fit=crop&q=80',
+    connectedSince: 'Connected 2 months ago',
+    capabilities: ['Clinical Pharmacy & Pharmacology', 'USP <797>/<800> IV Compounding', 'Antimicrobial Stewardship'],
+    verifiedBadges: ['✓ PharmD, BCPS', '✓ ASHP Fellow'],
+    mutualCount: 53,
+    isOnline: true,
+    company: 'Johns Hopkins & ConnectIn Clinical Pharmacy',
+    location: 'Baltimore, MD',
+    email: 'k.mensah@clinicalpharmacy.org'
+  },
+  {
+    id: 'conn_8_physician',
+    name: 'Dr. Nana Yaw Owusu, MD, FACS',
+    headline: 'Attending Trauma Surgeon & Chief of Acute Care Medicine · Level 1 Trauma Center',
+    avatar: 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=200&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=600&auto=format&fit=crop&q=80',
+    connectedSince: 'Connected 3 months ago',
+    capabilities: ['Trauma & Acute Care Surgery', 'Point-of-Care Ultrasound (POCUS)', 'Critical Care Medicine'],
+    verifiedBadges: ['✓ MD, FACS', '✓ Board Certified Surgeon'],
+    mutualCount: 64,
+    isOnline: true,
+    company: 'Metro Academic Medical Center',
+    location: 'Boston, MA',
+    email: 'dr.owusu@metrohealth-trauma.org'
+  },
+  {
+    id: 'conn_9_nurse',
+    name: 'Evelyn Boateng, BSN, RN, CCRN',
+    headline: 'Chief Nursing Officer (CNO) & ICU Critical Care Nurse Lead · Magnet Health System',
+    avatar: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=200&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=600&auto=format&fit=crop&q=80',
+    connectedSince: 'Connected 1 month ago',
+    capabilities: ['ICU & Emergency Nursing', 'Hemodynamic Telemetry', 'SBAR Clinical Handoffs'],
+    verifiedBadges: ['✓ BSN, RN, CCRN', '✓ Chief Nursing Officer'],
+    mutualCount: 47,
+    isOnline: true,
+    company: 'Mass General Brigham / ConnectIn Health',
+    location: 'Boston, MA',
+    email: 'e.boateng@mgb-nursing.org'
+  },
+  {
+    id: 'conn_10_medadmin',
+    name: 'Richard Danquah, MHA, MBA, FACHE',
+    headline: 'Chief Hospital Administrator & VP of Clinical Operations · Joint Commission & HIPAA Compliance',
+    avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?w=600&auto=format&fit=crop&q=80',
+    connectedSince: 'Connected 2 months ago',
+    capabilities: ['Hospital Administration (MHA)', 'Joint Commission Accreditation', 'HIPAA & HL7 FHIR Ops'],
+    verifiedBadges: ['✓ FACHE Fellow', '✓ Hospital COO'],
+    mutualCount: 41,
+    isOnline: true,
+    company: 'Premier Integrated Health Network',
+    location: 'Washington, DC',
+    email: 'r.danquah@premierhealth-admin.org'
+  },
+  {
+    id: 'conn_11_medaide',
+    name: 'Ama Serwaa, CCMA, CNA, LPN',
+    headline: 'Senior Clinical Medical Assistant & Licensed Practical Nurse · Phlebotomy, 12-Lead ECG & Wound Care',
+    avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=200&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=600&auto=format&fit=crop&q=80',
+    connectedSince: 'Connected 3 weeks ago',
+    capabilities: ['Medical Assisting & Phlebotomy', '12-Lead ECG & Vitals Triage', 'Subacute Wound Care'],
+    verifiedBadges: ['✓ Licensed LPN', '✓ Certified CCMA / CNA'],
+    mutualCount: 35,
+    isOnline: true,
+    company: 'Regional Ambulatory & Specialty Clinics',
+    location: 'Atlanta, GA',
+    email: 'ama.serwaa@regionalclinics.org'
   }
 ]
 
@@ -2635,6 +2785,21 @@ export function getEnclaveConnectedMembers(enclaveId?: string): ConnectedMember[
   if (enclaveId === 'healthcare_medicine') {
     return [
       {
+        id: 'conn_hm_pharmacist_1',
+        name: 'Dr. Kwame Mensah, PharmD, BCPS',
+        headline: 'Director of Clinical Pharmacy & Antimicrobial Stewardship · USP <797>/<800> Sterile IV Lead',
+        avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=200&auto=format&fit=crop&q=80',
+        coverImage: 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=600&auto=format&fit=crop&q=80',
+        connectedSince: 'Connected 2 months ago',
+        capabilities: ['Clinical Pharmacy & Pharmacology', 'Vancomycin AUC Dosing', 'USP <797>/<800> IV Compounding', 'Antimicrobial Stewardship'],
+        verifiedBadges: ['✓ PharmD, BCPS', '✓ ASHP Fellow'],
+        mutualCount: 58,
+        isOnline: true,
+        company: 'Johns Hopkins Clinical Pharmacy Directorate',
+        location: 'Baltimore, MD',
+        email: 'k.mensah@clinicalpharmacy.org'
+      },
+      {
         id: 'conn_hm_1',
         name: 'Dr. Julian Sterling, MD, FACS',
         headline: 'Chief of Trauma & Acute Care Surgery · ACS Committee on Trauma',
@@ -2663,6 +2828,36 @@ export function getEnclaveConnectedMembers(enclaveId?: string): ConnectedMember[
         company: 'St. Jude Level 1 Trauma Center',
         location: 'Chicago, IL',
         email: 'elena.rostova@stjude-trauma.org'
+      },
+      {
+        id: 'conn_hm_medaide_1',
+        name: 'Samuel Tetteh, CCMA, CNA, CPT',
+        headline: 'Lead Certified Clinical Medical Assistant & Nursing Aide · Phlebotomy, 12-Lead ECG & Triage',
+        avatar: 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=200&auto=format&fit=crop&q=80',
+        coverImage: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=600&auto=format&fit=crop&q=80',
+        connectedSince: 'Connected 3 months ago',
+        capabilities: ['Clinical Medical Assistant (CCMA)', 'Venipuncture Phlebotomy', '12-Lead ECG Triage', 'CNA Bedside Care'],
+        verifiedBadges: ['✓ NHA CCMA & CPT', '✓ State Certified CNA'],
+        mutualCount: 39,
+        isOnline: true,
+        company: 'Regional Ambulatory & Specialty Clinics',
+        location: 'Atlanta, GA',
+        email: 's.tetteh@regionalclinics.org'
+      },
+      {
+        id: 'conn_hm_medadmin_1',
+        name: 'Richard Danquah, MHA, MBA, FACHE',
+        headline: 'Chief Hospital Administrator & VP of Clinical Operations · Joint Commission & HIPAA Lead',
+        avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&auto=format&fit=crop&q=80',
+        coverImage: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?w=600&auto=format&fit=crop&q=80',
+        connectedSince: 'Connected 5 months ago',
+        capabilities: ['Hospital & Medical Administration', 'Joint Commission (TJC) Audits', 'HIPAA HITECH Governance', 'HL7 FHIR Revenue Cycle'],
+        verifiedBadges: ['✓ FACHE Executive Fellow', '✓ MHA / HIMSS'],
+        mutualCount: 47,
+        isOnline: true,
+        company: 'Premier Integrated Health Network',
+        location: 'Washington, DC',
+        email: 'r.danquah@premierhealth-admin.org'
       },
       {
         id: 'conn_hm_3',
@@ -2752,25 +2947,36 @@ export function getEnclaveCompanies(enclaveId?: string): CompanyNetworkItem[] {
     return [
       {
         id: 'comp_hm_1',
-        name: 'American College of Surgeons (ACS)',
-        tagline: 'Advancing Surgical Standards, Trauma Verification & Clinical Practice',
-        logo: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=100&auto=format&fit=crop&q=80',
-        industry: 'Medical Associations',
-        followersCount: '140k followers',
-        capabilities: ['Trauma Surgery', 'MTP Rapid Infusion', 'Level 1 Trauma Triage'],
-        jobOpeningsCount: 18,
+        name: 'American Society of Health-System Pharmacists (ASHP)',
+        tagline: 'Advancing Clinical Pharmacy, USP <797>/<800> Sterile Compounding & Medication Safety',
+        logo: 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=100&auto=format&fit=crop&q=80',
+        industry: 'Clinical Pharmacy & Pharmacology',
+        followersCount: '195k followers',
+        capabilities: ['Clinical Pharmacy & Pharmacology', 'Antimicrobial Stewardship', 'USP <797>/<800> IV Compounding'],
+        jobOpeningsCount: 28,
         isFollowing: true
       },
       {
         id: 'comp_hm_2',
-        name: 'Butterfly Network Inc.',
-        tagline: 'Transforming Care with Handheld Point-of-Care Ultrasound & AI Telemetry',
+        name: 'Mayo Clinic & Academic Health Network',
+        tagline: 'Integrated Physician, Nursing, Pharmacy & Hospital Administration Excellence',
+        logo: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=100&auto=format&fit=crop&q=80',
+        industry: 'Hospitals & Health Systems',
+        followersCount: '840k followers',
+        capabilities: ['Trauma Surgery', 'Critical Care & Trauma Nursing', 'Hospital & Medical Administration'],
+        jobOpeningsCount: 64,
+        isFollowing: true
+      },
+      {
+        id: 'comp_hm_3',
+        name: 'Butterfly Network & MDCalc Clinical Suite',
+        tagline: 'Handheld Point-of-Care Ultrasound (POCUS) & Evidence-Based Clinical Decision Support',
         logo: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=100&auto=format&fit=crop&q=80',
-        industry: 'Medical Devices & HealthTech',
-        followersCount: '88k followers',
-        capabilities: ['Level 1 Trauma Triage', 'Critical Care & Trauma Nursing'],
-        jobOpeningsCount: 6,
-        isFollowing: false
+        industry: 'Medical Devices & Clinical HealthTech',
+        followersCount: '142k followers',
+        capabilities: ['Level 1 Trauma Triage', 'Critical Care & Trauma Nursing', 'Clinical Medical Assistant (CCMA)'],
+        jobOpeningsCount: 16,
+        isFollowing: true
       }
     ]
   }
@@ -2835,22 +3041,32 @@ export function getEnclaveOrganizations(enclaveId?: string): OrganizationNetwork
     return [
       {
         id: 'org_hm_1',
-        name: 'Emergency Nurses Association (ENA)',
-        tagline: 'Advancing Emergency Nursing Practice, TNCC & Pediatric Emergency Standards',
+        name: 'Emergency Nurses Association (ENA) & AACN',
+        tagline: 'Advancing Emergency & ICU Critical Care Nursing, TNCC, CCRN & Bedside Telemetry',
         logo: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=100&auto=format&fit=crop&q=80',
         type: 'Clinical Nursing Association',
         capabilities: ['Critical Care & Trauma Nursing', 'Level 1 Trauma Triage', 'Arterial Lines'],
-        membersCount: '95k members',
+        membersCount: '145k members',
         isFollowing: true
       },
       {
         id: 'org_hm_2',
-        name: 'American Academy of Orthopaedic Surgeons (AAOS)',
-        tagline: 'World Leader in Musculoskeletal Health Standards & Surgical Education',
-        logo: 'https://images.unsplash.com/photo-1551076805-e1869033e561?w=100&auto=format&fit=crop&q=80',
-        type: 'Surgical Specialty Academy',
-        capabilities: ['Trauma Surgery', 'Joint Reconstruction'],
-        membersCount: '130k members',
+        name: 'U.S. Food & Drug Administration (FDA) & NIH DailyMed',
+        tagline: 'Center for Drug Evaluation & Research (CDER), MedWatch Drug Safety & USP Standards',
+        logo: 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=100&auto=format&fit=crop&q=80',
+        type: 'Federal Public Health Agency',
+        capabilities: ['Clinical Pharmacy & Pharmacology', 'USP <797>/<800> IV Compounding', 'Antimicrobial Stewardship'],
+        membersCount: '310k members',
+        isFollowing: true
+      },
+      {
+        id: 'org_hm_3',
+        name: 'The Joint Commission (TJC) & ACHE',
+        tagline: 'Hospital Accreditation, National Patient Safety Goals (NPSG) & Healthcare Administration',
+        logo: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?w=100&auto=format&fit=crop&q=80',
+        type: 'Healthcare Accreditation & Executive Body',
+        capabilities: ['Hospital & Medical Administration', 'Joint Commission (TJC) Audits', 'HIPAA HITECH Governance'],
+        membersCount: '185k members',
         isFollowing: true
       }
     ]
@@ -2913,23 +3129,43 @@ export function getEnclaveCircles(enclaveId?: string): ProfessionalCircleItem[] 
   if (enclaveId === 'healthcare_medicine') {
     return [
       {
+        id: 'circle_hm_pharm',
+        name: 'Clinical Pharmacists, PharmD & USP <797>/<800> Guild',
+        icon: '💊',
+        description: 'Hospital & retail pharmacists sharing Vancomycin AUC/MIC dosing protocols, sterile IV compounding logs, and OpenFDA drug alerts.',
+        primaryCapability: 'Clinical Pharmacy & Pharmacology',
+        membersCount: '5,400 members',
+        recentActivity: 'Active 10m ago · 29 formulary & dosing reviews',
+        isJoined: true
+      },
+      {
         id: 'circle_hm_1',
-        name: 'Level 1 Trauma Resuscitation & MTP Enclave',
-        icon: '🩸',
-        description: 'Surgeons and emergency trauma nurses discussing low-titer whole blood protocols, TXA timing, and damage control resuscitation.',
+        name: 'Attending Physicians, Surgeons & Level 1 Trauma Enclave',
+        icon: '🩺',
+        description: 'Physicians and surgeons discussing POCUS ultrasound, sepsis Hour-1 resuscitation, and multidisciplinary rounding.',
         primaryCapability: 'MTP Rapid Infusion',
-        membersCount: '2,400 members',
-        recentActivity: 'Active today · 14 case discussions',
+        membersCount: '4,900 members',
+        recentActivity: 'Active today · 22 grand rounds cases',
         isJoined: true
       },
       {
         id: 'circle_hm_2',
-        name: 'Emergency Critical Care Nursing (TNCC / CCRN)',
-        icon: '🩺',
-        description: 'Trauma and ICU nurse leaders sharing point-of-care ultrasound techniques, arterial line monitoring, and sepsis bundles.',
+        name: 'Registered Nurses (RN / CCRN), LPNs & Medical Aides (CCMA / CNA)',
+        icon: '❤️‍🩹',
+        description: 'ICU/ER nurses, LPNs, Certified Medical Assistants, and CNAs sharing SBAR handoffs, 12-lead ECG triage, phlebotomy, and bedside care.',
         primaryCapability: 'Critical Care & Trauma Nursing',
-        membersCount: '4,100 members',
-        recentActivity: 'Active 20m ago · 38 clinical cases',
+        membersCount: '8,300 members',
+        recentActivity: 'Active 5m ago · 46 clinical shift discussions',
+        isJoined: true
+      },
+      {
+        id: 'circle_hm_admin',
+        name: 'Hospital & Medical Administrators (MHA / FACHE / RHIA)',
+        icon: '🏥',
+        description: 'Healthcare executives, practice managers, and HIM coding directors coordinating Joint Commission surveys, HIPAA compliance, and bed flow.',
+        primaryCapability: 'Hospital & Medical Administration',
+        membersCount: '3,600 members',
+        recentActivity: 'Active 30m ago · 19 accreditation & FHIR threads',
         isJoined: true
       }
     ]
@@ -2974,9 +3210,11 @@ export function getEnclaveTopics(enclaveId?: string): FollowedTopicItem[] {
 
   if (enclaveId === 'healthcare_medicine') {
     return [
-      { id: 'top_hm_1', name: 'Trauma Surgery & Resuscitation', hashtag: '#TraumaSurgery', followersCount: '520k followers', category: 'Surgical Care', isFollowing: true },
-      { id: 'top_hm_2', name: 'Critical Care & Emergency Nursing', hashtag: '#EmergencyNursing', followersCount: '480k followers', category: 'Clinical Practice', isFollowing: true },
-      { id: 'top_hm_3', name: 'Point-of-Care Ultrasound (POCUS)', hashtag: '#POCUS', followersCount: '310k followers', category: 'Clinical Devices', isFollowing: true }
+      { id: 'top_hm_pharm', name: 'Clinical Pharmacy & Pharmacology (PharmD)', hashtag: '#ClinicalPharmacy', followersCount: '610k followers', category: 'Pharmacy', isFollowing: true },
+      { id: 'top_hm_1', name: 'Physicians, Trauma Surgery & POCUS', hashtag: '#ClinicalMedicine', followersCount: '740k followers', category: 'Physicians & Surgeons', isFollowing: true },
+      { id: 'top_hm_2', name: 'Registered Nursing, ICU & Bedside Care', hashtag: '#NursingExcellence', followersCount: '890k followers', category: 'Nursing & Clinical', isFollowing: true },
+      { id: 'top_hm_aide', name: 'Medical Assistants, CNAs & Phlebotomy', hashtag: '#MedicalAides', followersCount: '420k followers', category: 'Clinical Support', isFollowing: true },
+      { id: 'top_hm_admin', name: 'Hospital & Medical Administration (FACHE)', hashtag: '#HealthcareAdmin', followersCount: '510k followers', category: 'Administration', isFollowing: true }
     ]
   }
 

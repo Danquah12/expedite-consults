@@ -20,6 +20,7 @@ export interface SolutionPackage {
     price: string
     trialAvailable: boolean
     actionText: string
+    liveUrl?: string
   }[]
   recommendedServices: {
     name: string
@@ -69,21 +70,23 @@ export const ENTERPRISE_SOLUTIONS_DATA: SolutionPackage[] = [
     recommendedProducts: [
       {
         id: 'axiom-cyber-suite',
-        name: 'AXIOM AI-Powered Cyber Suite',
+        name: 'DStrike & AXIOM AI-Powered Cyber Suite',
         icon: '🛡️',
-        tagline: 'Autonomous zero-trust verification and threat surface mapping.',
+        tagline: 'Autonomous zero-trust verification, threat surface mapping, and predictive cyber defense.',
         price: '$499 / mo',
         trialAvailable: true,
-        actionText: '14-Day Free Trial'
+        actionText: '14-Day Free Trial',
+        liveUrl: 'https://dstrike-app.vercel.app'
       },
       {
         id: 'sphera-app-12',
-        name: 'Sphera Zero-Trust Analyzer',
+        name: 'Noctis Threat Intelligence & Zero-Trust Analyzer',
         icon: '🔒',
-        tagline: 'Automated policy validator for microservice network topologies.',
+        tagline: 'Automated policy validator for microservice network topologies and dark-web telemetry.',
         price: 'Included in Suite',
         trialAvailable: true,
-        actionText: 'Launch App'
+        actionText: 'Launch App',
+        liveUrl: 'https://noctis-26.vercel.app'
       }
     ],
     recommendedServices: [
@@ -140,12 +143,13 @@ export const ENTERPRISE_SOLUTIONS_DATA: SolutionPackage[] = [
     recommendedProducts: [
       {
         id: 'prod_aagiis_federal_rmf',
-        name: 'Aagiis — Federal Compliance Solutions | DoD RMF & DCSA NISP Platform (DoDI 8510.01)',
+        name: 'Aagiis — Federal Compliance Solutions | DoD RMF & DCSA NISP Platform',
         icon: '🛡️',
         tagline: 'End-to-end DoD RMF (DoDI 8510.01), DCSA NISP (32 CFR Part 117), DISA STIG/SCAP (.cklb) & ATO platform.',
         price: 'Enterprise / Free Trial',
         trialAvailable: true,
-        actionText: 'Launch Aagiis'
+        actionText: '14-Day Free Trial',
+        liveUrl: 'https://aagiis.com'
       },
       {
         id: 'oscal-cato-machine',
@@ -154,16 +158,8 @@ export const ENTERPRISE_SOLUTIONS_DATA: SolutionPackage[] = [
         tagline: 'Real-time telemetry to NIST 800-53 machine-readable evidence.',
         price: '$799 / mo',
         trialAvailable: true,
-        actionText: 'Request Staging Key'
-      },
-      {
-        id: 'axiom-cloud-defense',
-        name: 'AXIOM FedRAMP Compliance Radar',
-        icon: '🏛️',
-        tagline: 'Continuous monitoring and drift detection for GovCloud.',
-        price: '$499 / mo',
-        trialAvailable: true,
-        actionText: '14-Day Free Trial'
+        actionText: 'Request Staging Key',
+        liveUrl: 'https://aagiis.com'
       }
     ],
     recommendedServices: [
@@ -220,21 +216,23 @@ export const ENTERPRISE_SOLUTIONS_DATA: SolutionPackage[] = [
     recommendedProducts: [
       {
         id: 'expedite-strike',
-        name: 'Expedite Strike & Fusion 2026',
+        name: 'Expedite Strike & Fusion 2026 (DAST Engine)',
         icon: '⚡',
-        tagline: 'Autonomous Red Teaming, ASPM & Hybrid AI AppSec.',
+        tagline: 'Autonomous Red Teaming, ASPM & Hybrid AI AppSec with live web scanning.',
         price: '$499 / mo',
         trialAvailable: true,
-        actionText: 'Launch 14-Day Sandbox'
+        actionText: 'Launch 14-Day Sandbox',
+        liveUrl: 'https://strike-2026-21.vercel.app'
       },
       {
         id: 'aegis-pentest',
-        name: 'ÆGIS SOC Autonomous PenTest Hub',
-        icon: '⚡',
-        tagline: 'Rust-accelerated attack chain execution engine.',
+        name: 'Expedite Strike Web Interface & PenTest Hub',
+        icon: '🎯',
+        tagline: 'Rust-accelerated attack chain execution engine and executive reporting portal.',
         price: '$899 / mo',
         trialAvailable: true,
-        actionText: 'Request Demo'
+        actionText: 'Request Demo',
+        liveUrl: 'https://strike-landing-chi.vercel.app'
       }
     ],
     recommendedServices: [
@@ -291,21 +289,23 @@ export const ENTERPRISE_SOLUTIONS_DATA: SolutionPackage[] = [
     recommendedProducts: [
       {
         id: 'veritaslens-intel',
-        name: 'VeritasLens NLP Media Intelligence',
-        icon: '🌐',
-        tagline: 'Real-time NLP bias clustering and fact verification.',
-        price: '$349 / mo',
+        name: 'DeskNote AI Workspace & Knowledge Engine',
+        icon: '📝',
+        tagline: 'AI-augmented engineering notes, technical runbooks, and secure document intelligence.',
+        price: '$29 / mo',
         trialAvailable: true,
-        actionText: 'Free Trial'
+        actionText: 'Free Trial',
+        liveUrl: 'https://desknote-lime.vercel.app'
       },
       {
         id: 'sphera-aibom',
-        name: 'Sphera AI-BOM & Token Guardrail Scanner',
-        icon: '🤖',
-        tagline: 'Token-level guardrail scanner for agentic pipelines.',
-        price: 'Included in Suite',
+        name: 'PDFAdore Suite (31+ Document & Redaction Tools)',
+        icon: '📄',
+        tagline: 'Zero-trust document sanitization, OCR, digital signatures, and PDF processing.',
+        price: 'Free / Pro',
         trialAvailable: true,
-        actionText: 'Try Micro-App'
+        actionText: 'Try Suite',
+        liveUrl: 'https://www.pdfadore.com/'
       }
     ],
     recommendedServices: [
@@ -344,5 +344,162 @@ export const ENTERPRISE_SOLUTIONS_DATA: SolutionPackage[] = [
         location: 'San Francisco, CA / Remote'
       }
     ]
+  },
+  {
+    id: 'sol_trades_cad_jobsite',
+    title: 'Modernize Jobsite CAD, Total Station & Field Operations',
+    icon: '🏗️',
+    problemStatement: 'Blueprint drift between architectural revisions and field crews, uncalibrated layout measurements, and delayed subcontractor milestone sign-offs.',
+    targetOutcome: 'Sub-millimeter robotic Total Station layout sync, live cloud field runbooks, and automated PDF blueprint markup across all site foremen.',
+    estimatedTime: '3 - 5 Days',
+    complianceFramework: 'OSHA 1926 · ISO 19650 BIM · ANSI Z87.1',
+    categories: ['Enterprise', 'Cloud'],
+    flywheel: {
+      contentTrigger: 'Field Report: "Eliminating Rework on Commercial Timber & Steel Structural Layouts"',
+      problemDefinition: 'Outdated paper blueprints and manual tape layouts cause costly structural rework.',
+      solutionArchitecture: 'Combine robotic laser layout telemetry with DeskNote field logs and PDFAdore blueprint annotation.'
+    },
+    recommendedProducts: [
+      {
+        id: 'trades-desknote-field',
+        name: 'DeskNote Field Log & Punch-List Workspace',
+        icon: '📝',
+        tagline: 'Real-time site foreman logs, inspection checklists, and crew punch-lists.',
+        price: '$19 / mo',
+        trialAvailable: true,
+        actionText: 'Start Free Trial',
+        liveUrl: 'https://desknote-lime.vercel.app'
+      },
+      {
+        id: 'trades-pdfadore-blueprints',
+        name: 'PDFAdore Blueprint Markup & Submittal Suite',
+        icon: '📐',
+        tagline: 'Instant blueprint merging, scale stamping, RFI redlining, and contractor sign-off.',
+        price: 'Free / Enterprise',
+        trialAvailable: true,
+        actionText: 'Open PDF Suite',
+        liveUrl: 'https://www.pdfadore.com/'
+      }
+    ],
+    recommendedServices: [
+      {
+        name: 'Turnkey BIM-to-Field Total Station Calibration & Crew Onboarding',
+        provider: 'ConnectIn Master Builders & Surveying Guild',
+        scope: '3D Point-Cloud Site Setup, Leica/Trimble Calibration & Foreman Workflow Setup',
+        price: '$4,200 / Site',
+        deliveryTimeline: '5 Days'
+      }
+    ],
+    recommendedExperts: [
+      {
+        name: 'Marcus Vance',
+        role: 'Master Timber Framer & Structural Layout Director',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+        rating: 4.99,
+        reviewsCount: 142,
+        hourlyRate: '$135 / hr',
+        badge: 'Master Guild Fellow'
+      }
+    ],
+    recommendedLearning: [
+      {
+        title: 'Robotic Total Station Layout, BIM Sync & Heavy Timber Joinery',
+        provider: 'ConnectIn Trade Academy',
+        duration: '12 Hours (Field Video Labs)',
+        skillsGained: ['Robotic Total Station', 'BIM 360 Field', 'Blueprint Redlining', 'OSHA Site Safety']
+      }
+    ],
+    recommendedJobs: [
+      {
+        title: 'Senior Commercial Site Superintendent (BIM / Layout)',
+        company: 'Turner Construction',
+        salary: '$145K - $175K + Bonus',
+        location: 'On-Site / Regional'
+      }
+    ]
+  },
+  {
+    id: 'sol_clinical_pharmacy_health',
+    title: 'Clinical Pharmacy, Nursing Telemetry & Hospital Administration',
+    icon: '🏥',
+    problemStatement: 'Fragmented medication reconciliation, high-alert IV dosing errors, ICU nurse handoff bottlenecks, and manual HIPAA / Joint Commission audit trails across multi-facility health systems.',
+    targetOutcome: 'Automated PharmD barcode medication verification (BCMA), real-time POCUS & ICU bedside nursing telemetry, Medical Aide triage workflows, and 100% Joint Commission & HIPAA compliance.',
+    estimatedTime: '1 - 3 Weeks',
+    complianceFramework: 'HIPAA HITECH · USP <797>/<800> · Joint Commission · HL7 FHIR R4',
+    categories: ['Enterprise', 'Compliance', 'Cloud'],
+    flywheel: {
+      contentTrigger: 'Clinical Briefing: "Eliminating High-Alert Anticoagulant & ICU Infusion Errors via PharmD + RN Closed-Loop Telemetry"',
+      problemDefinition: 'Disconnected pharmacy formularies, bedside infusion pumps, and EHR administration records create preventable adverse drug events (ADEs).',
+      solutionArchitecture: 'Unify NIH DailyMed/OpenFDA drug interaction checks, MDCalc bedside dosing, and HL7 FHIR nursing/medical-aide handoff boards.'
+    },
+    recommendedProducts: [
+      {
+        id: 'nih-dailymed-rxnorm',
+        name: 'NIH DailyMed & OpenFDA Clinical Pharmacology Hub',
+        icon: '💊',
+        tagline: 'Live FDA-approved drug labeling, IV compatibility, black-box warnings & PharmD formulary verification.',
+        price: 'Free / Public Health API',
+        trialAvailable: true,
+        actionText: 'Open NIH DailyMed',
+        liveUrl: 'https://dailymed.nlm.nih.gov/dailymed/'
+      },
+      {
+        id: 'mdcalc-clinical-suite',
+        name: 'MDCalc & PubMed Clinical Decision Support Suite',
+        icon: '🩺',
+        tagline: '900+ evidence-based clinical calculators, renal CrCl dosing, sepsis SOFA scores & bedside triage for MDs, RNs & PharmDs.',
+        price: 'Free / Hospital Enterprise',
+        trialAvailable: true,
+        actionText: 'Launch MDCalc Live',
+        liveUrl: 'https://www.mdcalc.com/'
+      }
+    ],
+    recommendedServices: [
+      {
+        name: 'Turnkey Hospital Pharmacy USP <797>/<800>, Nursing Telemetry & Joint Commission Readiness',
+        provider: 'ConnectIn Clinical Health & Hospital Administration Practice',
+        scope: 'Antimicrobial Stewardship, BCMA Infusion Integration, RN/CNA Staffing Ratios & HIPAA Audit',
+        price: '$9,800 / Facility',
+        deliveryTimeline: '2 Weeks'
+      }
+    ],
+    recommendedExperts: [
+      {
+        name: 'Dr. Kwame Mensah, PharmD, BCPS',
+        role: 'Director of Clinical Pharmacy & Antimicrobial Stewardship',
+        avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=100&auto=format&fit=crop&q=80',
+        rating: 4.99,
+        reviewsCount: 164,
+        hourlyRate: '$160 / hr',
+        badge: 'Board Certified Pharmacotherapist'
+      },
+      {
+        name: 'Evelyn Boateng, RN, BSN, CCRN',
+        role: 'Chief Nursing Officer (CNO) & Critical Care Trauma Lead',
+        avatar: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=100&auto=format&fit=crop&q=80',
+        rating: 4.98,
+        reviewsCount: 138,
+        hourlyRate: '$140 / hr',
+        badge: 'CCRN Trauma Fellow'
+      }
+    ],
+    recommendedLearning: [
+      {
+        title: 'Multidisciplinary Clinical Rounds: PharmD IV Dosing, ICU Nursing Triage & Hospital Admin',
+        provider: 'ConnectIn Health Academy & Johns Hopkins CME',
+        duration: '15 Hours (CME / CEU Accredited)',
+        skillsGained: ['Vancomycin AUC Dosing', 'ICU Vasopressor Titration', 'Medical Aide Vitals Triage', 'HL7 FHIR Revenue Cycle']
+      }
+    ],
+    recommendedJobs: [
+      {
+        title: 'Lead Clinical Specialist Pharmacist (Oncology / ICU) & Nurse Manager',
+        company: 'Mayo Clinic / Kaiser Permanente Health Network',
+        salary: '$165K - $210K + Sign-On Bonus',
+        location: 'Hybrid / Major Medical Centers'
+      }
+    ]
   }
 ]
+
+
