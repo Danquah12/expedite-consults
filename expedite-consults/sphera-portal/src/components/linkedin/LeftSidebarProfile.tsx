@@ -33,6 +33,25 @@ import { useLanguage } from "@/context/LanguageContext"
 import { TradeEnclaveWidgets } from "@/components/linkedin/TradeEnclaveWidgets"
 import { getProfileTailoredAnalytics } from "@/lib/connectin-analytics"
 
+const VALID_SIDEBAR_TABS = new Set([
+  'accountsecurity','adminiam','advisory','aiagents','bounties','careersuite','code','collaboration',
+  'company','compensation','ecosystem','events','guilds','home','jobs','labs','launchpad','learning',
+  'marketplace','media','mentorship','messaging','missions','network','notifications','peerreview',
+  'procurement','profile','pulserooms','sellercenter','startups','trustcenter','vibe','vibecomms',
+  'watercooler','wallet'
+])
+
+/** Maps any sidebar shortcut id to a tab that actually renders, so no menu item opens a blank view. */
+function resolveSidebarTab(id: string): string {
+  if (VALID_SIDEBAR_TABS.has(id)) return id
+  if (/(rfp|sam_gov|cmmc|osha|haccp|procure|subcontract)/.test(id)) return 'procurement'
+  if (/(shift|apprentice|call_sheet|chair|beo|schedule)/.test(id)) return 'jobs'
+  if (/(curriculum|sat_act|rubric|grant)/.test(id)) return 'learning'
+  if (/(ledger|dcf|lbo|edgar|cap_rate|mls|pos_|food_costing|grain|lumber|livestock|color_ratio|lut_)/.test(id)) return 'marketplace'
+  if (/(clinical|protocol|hipaa|surgical|esi_|va_navigator)/.test(id)) return 'guilds'
+  return 'labs'
+}
+
 interface LeftSidebarProfileProps {
   user: UserProfile
   onViewProfile: () => void
@@ -882,10 +901,8 @@ export function LeftSidebarProfile({
                     onOpenAuthModal()
                   } else if (ws.id === 'inbound_bounty' && onOpenInboundBountiesModal) {
                     onOpenInboundBountiesModal()
-                  } else if (ws.targetTab && onNavigateTab) {
-                    onNavigateTab(ws.targetTab)
                   } else if (onNavigateTab) {
-                    onNavigateTab(ws.id)
+                    onNavigateTab(resolveSidebarTab(ws.targetTab || ws.id))
                   } else {
                     onViewProfile()
                   }
