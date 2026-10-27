@@ -1141,6 +1141,17 @@ export const PROFESSION_ENCLAVES: ProfessionEnclave[] = [
         ]
       },
       {
+        id: "nursing_technician",
+        title: "Certified Nursing Technician & Patient Care Tech (PCT, CNA, Nursing Tech)",
+        enclaveId: "healthcare_medicine",
+        categoryName: "Nursing & Advanced Practice",
+        defaultHeadline: "Certified Nursing Technician & Inpatient Patient Care Technician (PCT, CNA, CPCT-A) · Bedside Vitals Telemetry, 12-Lead ECG, Venipuncture Phlebotomy, Foley/Wound Assist & Acute Nursing Support",
+        typicalSkills: ["Bedside Nursing Support", "12-Lead ECG & Telemetry Lead Placement", "Blood Glucose & Ortho Vitals", "Venipuncture Phlebotomy", "Foley Catheter & Sterile Dressing Assist", "Patient Mobility & Fall Prevention"],
+        tools: [
+          { name: "Inpatient Nursing Tech & PCT Bedside Flowsheet", icon: "🩺", description: "Hourly Q4H vitals, intake/output (I&O) fluid balance, blood glucose fingerstick logs and RN stat escalation alerts", badge: "PCT / CNA Live" }
+        ]
+      },
+      {
         id: "medical_assistant_aide",
         title: "Certified Medical Assistant & Clinical Nursing Aide (CCMA, CNA)",
         enclaveId: "healthcare_medicine",
@@ -1149,6 +1160,39 @@ export const PROFESSION_ENCLAVES: ProfessionEnclave[] = [
         typicalSkills: ["Venipuncture Phlebotomy", "12-Lead ECG Acquisition", "Vital Signs & Rooming Triage", "CLIA-Waived Point-of-Care Testing", "Sterile Autoclave Instrument Prep", "Patient Mobility & ADLs"],
         tools: [
           { name: "Ambulatory Rooming, Vitals & Phlebotomy Triage Board", icon: "🩺", description: "Rapid outpatient rooming queue, orthostatic vitals, CLIA point-of-care strep/flu/A1c logs and vaccine cold-chain tracking", badge: "CCMA / CNA" }
+        ]
+      },
+      {
+        id: "surgical_sterile_tech",
+        title: "Certified Surgical Technologist & Sterile Processing Tech (CST, CRCST)",
+        enclaveId: "healthcare_medicine",
+        categoryName: "Diagnostic Imaging & Allied Health",
+        defaultHeadline: "Certified Surgical Technologist & Sterile Processing Specialist (CST, CRCST) · Operating Room Scrub, DaVinci Robotic Draping, Laparoscopic Tray Assembly & Autoclave Biological Sterilization",
+        typicalSkills: ["OR Sterile Scrub & Mayo Stand Setup", "DaVinci Xi Robotic Instrument Draping", "Sponge, Sharp & Instrument Counts", "Steam & V-PRO Sterilization (CRCST)", "AAMI ST79 Compliance"],
+        tools: [
+          { name: "OR Surgical Preference Card & Sterile Tray Tracker", icon: "🔪", description: "Surgeon instrument preference cards, autoclave biological indicator logs and intraoperative count verification", badge: "CST / CRCST" }
+        ]
+      },
+      {
+        id: "respiratory_therapist",
+        title: "Registered Respiratory Therapist & Cardiopulmonary Specialist (RRT, CRT)",
+        enclaveId: "healthcare_medicine",
+        categoryName: "Diagnostic Imaging & Allied Health",
+        defaultHeadline: "Registered Respiratory Therapist (RRT, ACCS) · ICU Mechanical Ventilation, Arterial Blood Gas (ABG) Interpretation, High-Flow Nasal Cannula, Bronchoscopy Assist & Neonatal/Adult Airway Management",
+        typicalSkills: ["ICU Mechanical Ventilation ( Hamilton / Puritan Bennett )", "Arterial Blood Gas (ABG) Analysis", "BiPAP / CPAP & High-Flow O2", "Endotracheal Intubation Assist", "Pulmonary Function Testing (PFT)"],
+        tools: [
+          { name: "ICU Ventilator Weaning & ABG Oxygenation Calculator", icon: "🫁", description: "P/F ratio, A-a gradient, rapid shallow breathing index (RSBI) and ARDSnet lung-protective tidal volume calculator", badge: "RRT / ACCS" }
+        ]
+      },
+      {
+        id: "clinical_lab_phlebotomy_tech",
+        title: "Medical Laboratory Scientist & Phlebotomy Technician (MLS, MLT, CPT)",
+        enclaveId: "healthcare_medicine",
+        categoryName: "Diagnostic Imaging & Allied Health",
+        defaultHeadline: "ASCP Medical Laboratory Scientist & Phlebotomy Specialist (MLS, MLT, CPT) · Hematology Flow Cytometry, Blood Bank Crossmatching, Mass Spec Chemistry & STAT Venipuncture",
+        typicalSkills: ["Blood Bank Type & Crossmatch", "Hematology & Coagulation Assays", "Clinical Microbiology & PCR", "CLSI Venipuncture Order of Draw", "CAP / CLIA Quality Control"],
+        tools: [
+          { name: "LIS Critical Value & Blood Bank Crossmatch Console", icon: "🧪", description: "STAT troponin/lactate critical value callback log, Westgard QC rules and massive transfusion blood bank inventory", badge: "ASCP / CLIA" }
         ]
       },
       {

@@ -59,6 +59,13 @@ function getEnclaveJobCategories(enclaveId?: string) {
     case 'all':
       return [
         { id: 'All', label: 'All Live Openings', icon: '🌐' },
+        { id: 'Pharmacy & Pharmacology', label: 'Pharmacy (PharmD & CPhT)', icon: '💊' },
+        { id: 'Physicians & Surgeons', label: 'Doctors & Surgeons (MD/DO)', icon: '🩺' },
+        { id: 'Nursing & Advanced Practice', label: 'Nurses (RN, CCRN, NP, LPN)', icon: '❤️‍🩹' },
+        { id: 'Nursing Technician', label: 'Nursing Techs & PCTs (PCT, CNA)', icon: '🩺' },
+        { id: 'Medical Aides & Clinical Support', label: 'Medical Aides & EMS (CCMA, CNA, EMT)', icon: '🩹' },
+        { id: 'Diagnostic Imaging & Allied Health', label: 'Surgical, Radiology, Resp & Lab Techs', icon: '🩻' },
+        { id: 'Medical & Hospital Administration', label: 'Medical & Hospital Admin (MHA/FACHE)', icon: '📋' },
         { id: 'Recommended', label: 'Recommended for You', icon: '⭐' },
         { id: 'Remote', label: 'Remote Roles', icon: '🌍' },
         { id: 'Full-time', label: 'Full-time Direct Hire', icon: '💼' },
@@ -184,11 +191,13 @@ function getEnclaveJobCategories(enclaveId?: string) {
       return [
         { id: 'All', label: 'All Clinical, Pharmacy & Health Roles', icon: '🏥' },
         { id: 'Recommended', label: 'Recommended for You', icon: '⭐' },
-        { id: 'Pharmacy & Pharmacology', label: 'Pharmacy (PharmD & CPhT)', icon: '💊' },
-        { id: 'Physicians & Surgeons', label: 'Physicians & Surgeons (MD/DO)', icon: '🩺' },
-        { id: 'Nursing & Advanced Practice', label: 'Nursing (RN, CCRN, NP, LPN)', icon: '❤️‍🩹' },
-        { id: 'Medical Aides & Clinical Support', label: 'Medical Aides (CCMA, CNA, EMT)', icon: '🩹' },
-        { id: 'Medical & Hospital Administration', label: 'Medical & Hospital Admin (MHA/FACHE)', icon: '📋' },
+        { id: 'Pharmacy & Pharmacology', label: 'Pharmacists & Pharmacy Techs (PharmD & CPhT)', icon: '💊' },
+        { id: 'Physicians & Surgeons', label: 'Doctors, Physicians & Surgeons (MD/DO)', icon: '🩺' },
+        { id: 'Nursing & Advanced Practice', label: 'Nurses (RN, CCRN, NP, LPN)', icon: '❤️‍🩹' },
+        { id: 'Nursing Technician', label: 'Nursing Technicians & PCTs (PCT, CNA)', icon: '🩺' },
+        { id: 'Medical Aides & Clinical Support', label: 'Medical Assistants, CNAs & EMS (CCMA, EMT)', icon: '🩹' },
+        { id: 'Diagnostic Imaging & Allied Health', label: 'Surgical, Radiology, Resp & Lab Techs', icon: '🩻' },
+        { id: 'Medical & Hospital Administration', label: 'Medical & Hospital Admin (MHA/FACHE/CPC)', icon: '📋' },
         { id: 'Dental & Veterinary', label: 'Dental (DDS) & Veterinary (DVM)', icon: '🦷' },
         { id: 'Locum Tenens', label: 'Locum Tenens & Travel PRN', icon: '🌍' }
       ]
@@ -312,13 +321,15 @@ export function JobsView({
   // Primary Master Mode
   const [masterMode, setMasterMode] = useState<'find' | 'applications' | 'recruiting' | 'resumeprep'>('find')
 
-  // Active Profession Enclave Filter (Synced with currentUser.professionEnclave, or switchable to any of the 20 enclaves / 'all')
+  // Active Profession Enclave Filter (Default to 'healthcare_medicine' when user opens Jobs so Pharmacists, Doctors, Nurses, Nursing Technicians, Medical Aides & Admin are immediately visible, or sync when user explicitly switches enclave)
   const [selectedEnclave, setSelectedEnclave] = useState<string>(
-    currentUser?.professionEnclave || 'trades_construction'
+    currentUser?.professionEnclave && currentUser.professionEnclave !== 'trades_construction'
+      ? currentUser.professionEnclave
+      : 'healthcare_medicine'
   )
 
   useEffect(() => {
-    if (currentUser?.professionEnclave) {
+    if (currentUser?.professionEnclave && currentUser.professionEnclave !== 'trades_construction') {
       setSelectedEnclave(currentUser.professionEnclave)
       setSelectedDomain("All")
     }
@@ -837,7 +848,7 @@ export function JobsView({
               })}
             </div>
 
-            {/* ALL 20 PROFESSIONS SWITCHER BAR */}
+            {/* ALL 20 PROFESSIONS SWITCHER BAR (Healthcare & Medicine First) */}
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 text-xs">
               <span className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 shrink-0 mr-1">
                 Enclave:
@@ -855,7 +866,10 @@ export function JobsView({
                 <span>All {PROFESSION_ENCLAVES.length} Industry Enclaves</span>
               </button>
 
-              {PROFESSION_ENCLAVES.map((enc) => {
+              {[
+                ...PROFESSION_ENCLAVES.filter((e) => e.id === 'healthcare_medicine'),
+                ...PROFESSION_ENCLAVES.filter((e) => e.id !== 'healthcare_medicine')
+              ].map((enc) => {
                 const isSelected = selectedEnclave === enc.id
                 return (
                   <button
@@ -865,6 +879,8 @@ export function JobsView({
                     className={`rounded-full px-3 py-1 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
                       isSelected
                         ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
+                        : enc.id === 'healthcare_medicine'
+                        ? "bg-teal-50 dark:bg-teal-950/50 text-teal-800 dark:text-teal-200 border border-teal-300 dark:border-teal-700 font-semibold hover:bg-teal-100"
                         : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700 border border-zinc-200/70 dark:border-zinc-700/70"
                     }`}
                   >
@@ -875,8 +891,62 @@ export function JobsView({
               })}
             </div>
 
+            {/* DEDICATED MEDICINE, PHARMACY, DOCTORS, NURSES & NURSING TECHNICIANS QUICK-FILTER BAR */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 text-xs pt-1 border-t border-teal-100 dark:border-teal-900/50">
+              <span className="text-[11px] font-bold text-teal-700 dark:text-teal-300 shrink-0 mr-1 flex items-center gap-1">
+                <span>🏥</span>
+                <span>Medicine &amp; Clinical Roles:</span>
+              </span>
+              {[
+                { id: 'all_med', label: '🏥 All Medicine & Healthcare', profId: 'all', domain: 'All' },
+                { id: 'pharmacist', label: '💊 Pharmacists (PharmD)', profId: 'pharmacist', domain: 'All' },
+                { id: 'pharmacy_technician', label: '🧪 Pharmacy Techs (CPhT)', profId: 'pharmacy_technician', domain: 'All' },
+                { id: 'physician', label: '🩺 Doctors & Physicians (MD/DO)', profId: 'physician', domain: 'All' },
+                { id: 'surgeon_specialist_md', label: '🔪 Surgeons (MD, FACS)', profId: 'surgeon_specialist_md', domain: 'All' },
+                { id: 'registered_nurse', label: '❤️‍🩹 Registered Nurses (BSN, RN)', profId: 'registered_nurse', domain: 'All' },
+                { id: 'critical_care_er_nurse', label: '🚨 ICU & Trauma Nurses (CCRN)', profId: 'critical_care_er_nurse', domain: 'All' },
+                { id: 'nurse_practitioner_pa', label: '📋 Nurse Practitioners & PAs (APRN/PA-C)', profId: 'nurse_practitioner_pa', domain: 'All' },
+                { id: 'licensed_practical_nurse', label: '🩹 LPN / LVN Nurses', profId: 'licensed_practical_nurse', domain: 'All' },
+                { id: 'nursing_technician', label: '🩺 Nursing Technicians (PCT / CNA)', profId: 'nursing_technician', domain: 'All' },
+                { id: 'medical_assistant_aide', label: '💉 Medical Assistants & Aides (CCMA/CNA)', profId: 'medical_assistant_aide', domain: 'All' },
+                { id: 'surgical_sterile_tech', label: '🔪 Surgical & Sterile Techs (CST/CRCST)', profId: 'surgical_sterile_tech', domain: 'All' },
+                { id: 'respiratory_therapist', label: '🫁 Respiratory Therapists (RRT)', profId: 'respiratory_therapist', domain: 'All' },
+                { id: 'radiology_imaging_tech', label: '🩻 Radiology, CT/MRI & Ultrasound Techs', profId: 'radiology_imaging_tech', domain: 'All' },
+                { id: 'clinical_lab_phlebotomy_tech', label: '🧬 Clinical Lab & Phlebotomy Techs (MLS/CPT)', profId: 'clinical_lab_phlebotomy_tech', domain: 'All' },
+                { id: 'paramedic_emt', label: '🚑 Paramedics & EMTs (NRP)', profId: 'paramedic_emt', domain: 'All' },
+                { id: 'medical_administrator', label: '🏥 Medical & Hospital Admin (MHA/FACHE)', profId: 'medical_administrator', domain: 'All' },
+                { id: 'medical_billing_him', label: '📊 Medical Coding & Health Info (RHIA/CPC)', profId: 'medical_billing_him', domain: 'All' },
+                { id: 'physical_occupational_therapist', label: '🏃 Physical & Occupational Therapy (DPT/OTR)', profId: 'physical_occupational_therapist', domain: 'All' },
+                { id: 'dentist', label: '🦷 Dentists (DDS/DMD)', profId: 'dentist', domain: 'All' },
+                { id: 'veterinarian', label: '🐾 Veterinarians (DVM)', profId: 'veterinarian', domain: 'All' }
+              ].map((medRole) => {
+                const isActive =
+                  selectedEnclave === 'healthcare_medicine' &&
+                  selectedProfessionId === medRole.profId
+                return (
+                  <button
+                    key={medRole.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedEnclave('healthcare_medicine')
+                      setSelectedProfessionId(medRole.profId)
+                      setSelectedDomain(medRole.domain)
+                      setSearchQuery('')
+                    }}
+                    className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-all shrink-0 cursor-pointer ${
+                      isActive
+                        ? "bg-teal-600 text-white shadow-xs"
+                        : "bg-teal-50/80 dark:bg-teal-950/40 text-teal-900 dark:text-teal-200 hover:bg-teal-100 dark:hover:bg-teal-900/60 border border-teal-200/80 dark:border-teal-800/60"
+                    }`}
+                  >
+                    {medRole.label}
+                  </button>
+                )
+              })}
+            </div>
+
             {/* INDIVIDUAL PROFESSIONS BAR FOR SELECTED ENCLAVE */}
-            {selectedEnclave !== 'all' && currentEnclaveObj && currentEnclaveObj.professions.length > 0 && (
+            {selectedEnclave !== 'all' && selectedEnclave !== 'healthcare_medicine' && currentEnclaveObj && currentEnclaveObj.professions.length > 0 && (
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 text-xs pt-1 border-t border-zinc-100/80 dark:border-zinc-800/80">
                 <span className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 shrink-0 mr-1">
                   Profession ({currentEnclaveObj.professions.length}):
