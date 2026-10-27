@@ -76,7 +76,8 @@ import {
   saveStoredProfileViewers,
   loadStoredContentReach,
   loadStoredDirectoryDiscoveries,
-  recordProfileView
+  recordProfileView,
+  getProfileTailoredAnalytics
 } from "@/lib/connectin-analytics"
 import { getQualifiedJobsForSkills, SkillQualifiedJob } from "@/lib/skill-qualified-jobs"
 
@@ -277,18 +278,32 @@ export function ProfileView({
   >('profile')
   const [isMemberConnected, setIsMemberConnected] = useState<boolean>(false)
 
-  useEffect(() => {
-    setWorkspaceSection('profile')
-    setIsMemberConnected(false)
-  }, [user.id, user.name])
-
   const [analyticsSubTab, setAnalyticsSubTab] = useState<'viewers' | 'reach' | 'discoveries'>('viewers')
-  const [viewers, setViewers] = useState<ProfileViewerItem[]>(() => loadStoredProfileViewers())
-  const [reachData, setReachData] = useState<ContentReachData>(() => loadStoredContentReach())
-  const [discoveryData, setDiscoveryData] = useState<DirectoryDiscoveryData>(() => loadStoredDirectoryDiscoveries())
+  const tailoredAnalytics = React.useMemo(() => getProfileTailoredAnalytics(user), [
+    user.id,
+    user.name,
+    user.headline,
+    user.profession,
+    user.professionEnclave,
+    user.location,
+    user.profileViews,
+    user.postImpressions,
+    user.searchAppearances,
+    user.connectionsCount,
+    user.skills
+  ])
+  const [viewers, setViewers] = useState<ProfileViewerItem[]>(() => getProfileTailoredAnalytics(user).viewers)
+  const reachData = tailoredAnalytics.reachData
+  const discoveryData = tailoredAnalytics.discoveryData
   const [viewerCategoryFilter, setViewerCategoryFilter] = useState<'all' | 'recruiter' | 'buyer' | 'peer' | 'executive'>('all')
   const [analyticsTimeframe, setAnalyticsTimeframe] = useState<'7d' | '30d' | '90d' | '1y'>('30d')
   const [selectedTrendDay, setSelectedTrendDay] = useState<string | null>(null)
+
+  useEffect(() => {
+    setWorkspaceSection('profile')
+    setIsMemberConnected(false)
+    setViewers(getProfileTailoredAnalytics(user).viewers)
+  }, [user.id, user.name, user.professionEnclave, user.profession])
 
   const handleToggleViewerConnect = (viewerId: string) => {
     setViewers(prev => {
@@ -918,23 +933,51 @@ export function ProfileView({
             </p>
           </div>
 
-          {/* Quick Metrics */}
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 p-3.5 text-center min-w-[130px]">
+          {/* Quick Metrics Reflecting User Profile */}
+          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0 flex-wrap">
+            <div
+              onClick={() => setWorkspaceSection('analytics')}
+              className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 hover:border-[#0A66C2] p-3 text-center min-w-[115px] cursor-pointer transition-all"
+              title="Open Profile Analytics"
+            >
               <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 dark:text-zinc-400">
-                {isViewingOtherMember ? 'Connections' : 'Seller MRR'}
+                Profile Views
               </span>
-              <p className="text-xl font-black text-emerald-600 dark:text-emerald-400">
-                {isViewingOtherMember ? `${(user.connectionsCount || 842).toLocaleString()}+` : '$122.7K'}
+              <p className="text-lg sm:text-xl font-black text-[#0A66C2] dark:text-sky-400">
+                {tailoredAnalytics.effectiveProfileViews.toLocaleString()}
               </p>
               <span className="text-[10px] text-zinc-400">
-                {isViewingOtherMember ? 'Verified Network' : '4 Active Listings'}
+                {viewers.length} Direct Viewers
               </span>
             </div>
-            <div className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 p-3.5 text-center min-w-[130px]">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 dark:text-zinc-400">Rating</span>
-              <p className="text-xl font-black text-amber-500">4.98 ⭐</p>
-              <span className="text-[10px] text-zinc-400">127 Reviews</span>
+            <div
+              onClick={() => setWorkspaceSection('profile')}
+              className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 hover:border-emerald-500 p-3 text-center min-w-[115px] cursor-pointer transition-all"
+            >
+              <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 dark:text-zinc-400">
+                Connections
+              </span>
+              <p className="text-lg sm:text-xl font-black text-emerald-600 dark:text-emerald-400">
+                {(user.connectionsCount && user.connectionsCount > 0 ? user.connectionsCount : 14).toLocaleString()}
+              </p>
+              <span className="text-[10px] text-zinc-400">
+                Verified Network
+              </span>
+            </div>
+            <div
+              onClick={() => setWorkspaceSection('skills')}
+              className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 hover:border-amber-500 p-3 text-center min-w-[115px] cursor-pointer transition-all"
+              title="View Verified Skills & Endorsements"
+            >
+              <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 dark:text-zinc-400">
+                Verified Skills
+              </span>
+              <p className="text-lg sm:text-xl font-black text-amber-500">
+                {(user.skills?.length || enclaveWorkspace.verifiedSkills.length || 6)} ⭐
+              </p>
+              <span className="text-[10px] text-zinc-400">
+                {enclaveInfo?.shortName || 'Domain'} Verified
+              </span>
             </div>
           </div>
         </div>
@@ -1517,10 +1560,21 @@ export function ProfileView({
             ? 'Last 90 Days'
             : 'Last 12 Months'
 
-        const scaledProfileViews = Math.round((user.profileViews ?? 340) * (analyticsTimeframe === '30d' ? 1 : tfMultiplier / 4.2))
-        const scaledTotalReach = Math.round(reachData.totalReach * (analyticsTimeframe === '7d' ? 1 : tfMultiplier / 1.8))
-        const scaledUniqueViewers = Math.round(reachData.uniqueViewers * (analyticsTimeframe === '7d' ? 1 : tfMultiplier / 1.8))
-        const scaledDiscoveries = Math.round((user.searchAppearances ?? discoveryData.totalDiscoveries) * (analyticsTimeframe === '30d' ? 1 : tfMultiplier / 4.2))
+        const scaledProfileViews = Math.max(
+          viewers.length,
+          Math.round(tailoredAnalytics.effectiveProfileViews * (analyticsTimeframe === '30d' ? 1 : tfMultiplier / 4.2))
+        )
+        const scaledTotalReach = Math.round(tailoredAnalytics.effectiveTotalReach * (analyticsTimeframe === '7d' ? 1 : tfMultiplier / 1.8))
+        const scaledUniqueViewers = Math.round(tailoredAnalytics.effectiveUniqueViewers * (analyticsTimeframe === '7d' ? 1 : tfMultiplier / 1.8))
+        const scaledDiscoveries = Math.max(
+          12,
+          Math.round(tailoredAnalytics.effectiveDiscoveries * (analyticsTimeframe === '30d' ? 1 : tfMultiplier / 4.2))
+        )
+
+        const userTopSkillNames = (Array.isArray(user.skills) && user.skills.length > 0
+          ? user.skills.map((s: any) => (typeof s === 'string' ? s : s?.name)).filter(Boolean)
+          : enclaveWorkspace.verifiedSkills.map((vs) => vs.name)
+        ).slice(0, 4)
 
         // Daily trend series scaled by timeframe
         const trendSeries = reachData.dailyTrends.map((d, idx) => {
@@ -1581,16 +1635,16 @@ export function ProfileView({
         const personaDistribution = [
           {
             id: 'executive' as const,
-            label: 'C-Suite, CTOs & VP Executives',
+            label: `Executives & ${enclaveInfo?.shortName || 'Domain'} Directors`,
             percent: 38,
             count: Math.max(2, viewers.filter((v) => v.category === 'executive').length),
             color: 'bg-[#0A66C2]',
             badgeColor: 'text-[#0A66C2] dark:text-sky-400',
-            intent: 'Executive Advisory & Architecture Leadership'
+            intent: `Executive Leadership & ${user.profession || enclaveInfo?.shortName || 'Domain'} Advisory`
           },
           {
             id: 'buyer' as const,
-            label: 'Enterprise Procurement & RFP Buyers',
+            label: 'Enterprise Procurement & Contract Buyers',
             percent: 27,
             count: Math.max(1, viewers.filter((v) => v.category === 'buyer').length),
             color: 'bg-emerald-600',
@@ -1599,105 +1653,145 @@ export function ProfileView({
           },
           {
             id: 'recruiter' as const,
-            label: 'Principal Technical Recruiters',
+            label: `Principal ${enclaveInfo?.shortName || 'Technical'} Recruiters`,
             percent: 21,
             count: Math.max(1, viewers.filter((v) => v.category === 'recruiter').length),
             color: 'bg-purple-600',
             badgeColor: 'text-purple-600 dark:text-purple-400',
-            intent: 'Direct Principal / Fellow Hiring'
+            intent: `Direct ${user.profession || 'Specialist'} Hiring`
           },
           {
             id: 'peer' as const,
             label: 'Verified Fellows & Senior Peers',
             percent: 14,
-            count: Math.max(3, viewers.filter((v) => v.category === 'peer').length),
+            count: Math.max(2, viewers.filter((v) => v.category === 'peer').length),
             color: 'bg-amber-500',
             badgeColor: 'text-amber-600 dark:text-amber-400',
-            intent: 'Whitepaper Citations & Peer Attestations'
+            intent: 'Skill Endorsements & Peer Collaboration'
           }
         ]
 
         // Inbound discovery channel breakdown
         const inboundVectors = [
-          { channel: 'Enterprise Talent Directory Search', percent: 36, trend: '+28%', color: 'bg-[#0A66C2]' },
-          { channel: 'RFP Proposal & Vendor Roster Desk', percent: 26, trend: '+19%', color: 'bg-emerald-600' },
-          { channel: 'Feed Broadcasts & Technical Whitepapers', percent: 22, trend: '+34%', color: 'bg-purple-600' },
-          { channel: 'Gated Enclave & Direct Passport Links', percent: 16, trend: '+15%', color: 'bg-amber-500' }
+          { channel: `${enclaveInfo?.shortName || 'Enterprise'} Talent Directory Search`, percent: 36, trend: '+28%', color: 'bg-[#0A66C2]' },
+          { channel: 'Contract, Bid & Partner Roster Desk', percent: 26, trend: '+19%', color: 'bg-emerald-600' },
+          { channel: 'Feed Broadcasts & Case Study Publications', percent: 22, trend: '+34%', color: 'bg-purple-600' },
+          { channel: `Gated ${enclaveInfo?.shortName || 'Professional'} Enclave & Passport Links`, percent: 16, trend: '+15%', color: 'bg-amber-500' }
         ]
 
         return (
           <div className="space-y-6">
-            {/* Top Intelligence Header Banner */}
-            <div className="rounded-2xl border border-indigo-500/30 bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 p-6 text-white shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="rounded-full bg-sky-500/20 px-3 py-0.5 text-xs font-bold text-sky-300 border border-sky-400/30 flex items-center gap-1.5 w-fit">
-                    <Sparkles className="h-3.5 w-3.5 text-amber-300" />
-                    ConnectIn Intelligence Radar · {tfLabel}
-                  </span>
-                  <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[11px] font-bold text-emerald-300 border border-emerald-400/30">
-                    📈 +24.6% Engagement Velocity
-                  </span>
+            {/* Top Intelligence Header Banner Reflecting Active User Profile */}
+            <div className="rounded-2xl border border-indigo-500/30 bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 p-5 sm:p-6 text-white shadow-xl space-y-5">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="rounded-full bg-sky-500/20 px-3 py-0.5 text-xs font-bold text-sky-300 border border-sky-400/30 flex items-center gap-1.5 w-fit">
+                      <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+                      ConnectIn Intelligence Radar · {tfLabel}
+                    </span>
+                    <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[11px] font-bold text-emerald-300 border border-emerald-400/30">
+                      {enclaveInfo?.icon || '🛡️'} {enclaveInfo?.name || 'Verified Enclave'}
+                    </span>
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-black text-white">
+                    {user.name}&apos;s Profile Views, Content Reach &amp; Intelligence Analytics
+                  </h2>
+                  <p className="text-xs text-slate-200 max-w-2xl leading-relaxed opacity-90">
+                    Real-time telemetry tailored to <strong className="text-white">{user.name}</strong> ({user.headline || user.profession || 'Verified Specialist'}) — tracking exact member inspections, search queries matching your verified skills, and organization reach.
+                  </p>
                 </div>
-                <h2 className="text-xl sm:text-2xl font-black text-white">
-                  Member Profile Views, Content Reach &amp; User Intelligence Analytics
-                </h2>
-                <p className="text-xs text-slate-200 max-w-2xl leading-relaxed opacity-90">
-                  Interactive graphs, temporal trends, demographic segmentation, and organization-level analysis of the exact members inspecting your credentials and content.
-                </p>
-              </div>
 
-              <div className="flex flex-wrap items-center gap-2 shrink-0">
-                {/* Timeframe Switcher */}
-                <div className="flex items-center gap-1 bg-black/40 p-1.5 rounded-xl border border-white/15 text-xs font-bold">
-                  {(['7d', '30d', '90d', '1y'] as const).map((tf) => (
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  {/* Timeframe Switcher */}
+                  <div className="flex items-center gap-1 bg-black/40 p-1.5 rounded-xl border border-white/15 text-xs font-bold">
+                    {(['7d', '30d', '90d', '1y'] as const).map((tf) => (
+                      <button
+                        key={tf}
+                        type="button"
+                        onClick={() => setAnalyticsTimeframe(tf)}
+                        className={`px-2.5 py-1.5 rounded-lg transition-all uppercase cursor-pointer ${
+                          analyticsTimeframe === tf
+                            ? "bg-sky-500 text-white shadow-xs"
+                            : "text-slate-300 hover:text-white"
+                        }`}
+                      >
+                        {tf}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Sub-Tab Switcher */}
+                  <div className="flex items-center gap-1.5 bg-black/40 p-1.5 rounded-xl border border-white/15 text-xs font-bold">
                     <button
-                      key={tf}
                       type="button"
-                      onClick={() => setAnalyticsTimeframe(tf)}
-                      className={`px-2.5 py-1.5 rounded-lg transition-all uppercase cursor-pointer ${
-                        analyticsTimeframe === tf
-                          ? "bg-sky-500 text-white shadow-xs"
-                          : "text-slate-300 hover:text-white"
+                      onClick={() => setAnalyticsSubTab('viewers')}
+                      className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                        analyticsSubTab === 'viewers' ? "bg-white text-zinc-900 shadow-xs" : "text-slate-200 hover:text-white"
                       }`}
                     >
-                      {tf}
+                      <Eye className="h-3.5 w-3.5 text-[#0A66C2]" />
+                      <span>Viewers ({viewers.length})</span>
                     </button>
-                  ))}
+                    <button
+                      type="button"
+                      onClick={() => setAnalyticsSubTab('reach')}
+                      className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                        analyticsSubTab === 'reach' ? "bg-white text-zinc-900 shadow-xs" : "text-slate-200 hover:text-white"
+                      }`}
+                    >
+                      <TrendingUp className="h-3.5 w-3.5 text-purple-500" />
+                      <span>Reach</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAnalyticsSubTab('discoveries')}
+                      className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                        analyticsSubTab === 'discoveries' ? "bg-white text-zinc-900 shadow-xs" : "text-slate-200 hover:text-white"
+                      }`}
+                    >
+                      <Search className="h-3.5 w-3.5 text-emerald-500" />
+                      <span>Discoveries</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* User Profile Identity & Verified Skills Strip inside Analytics */}
+              <div className="rounded-xl bg-white/10 backdrop-blur-md border border-white/15 p-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <img
+                    src={user.avatar}
+                    alt={user.name}
+                    className="h-12 w-12 rounded-full object-cover border-2 border-sky-400 shrink-0 shadow-sm"
+                  />
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-black text-sm text-white truncate">{user.name}</span>
+                      <span className="rounded-full bg-sky-500/30 border border-sky-300/40 px-2 py-0.5 text-[10px] font-bold text-sky-200">
+                        {user.profession || enclaveInfo?.shortName || 'Verified Member'}
+                      </span>
+                      <span className="text-[11px] text-slate-300 flex items-center gap-1">
+                        <MapPin className="h-3 w-3 text-sky-400" />
+                        {user.location?.split('·')[0]?.trim() || 'United States'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-200 truncate mt-0.5">{user.headline}</p>
+                  </div>
                 </div>
 
-                {/* Sub-Tab Switcher */}
-                <div className="flex items-center gap-1.5 bg-black/40 p-1.5 rounded-xl border border-white/15 text-xs font-bold">
-                  <button
-                    type="button"
-                    onClick={() => setAnalyticsSubTab('viewers')}
-                    className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
-                      analyticsSubTab === 'viewers' ? "bg-white text-zinc-900 shadow-xs" : "text-slate-200 hover:text-white"
-                    }`}
-                  >
-                    <Eye className="h-3.5 w-3.5 text-[#0A66C2]" />
-                    <span>Viewers ({viewers.length})</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setAnalyticsSubTab('reach')}
-                    className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
-                      analyticsSubTab === 'reach' ? "bg-white text-zinc-900 shadow-xs" : "text-slate-200 hover:text-white"
-                    }`}
-                  >
-                    <TrendingUp className="h-3.5 w-3.5 text-purple-500" />
-                    <span>Reach</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setAnalyticsSubTab('discoveries')}
-                    className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
-                      analyticsSubTab === 'discoveries' ? "bg-white text-zinc-900 shadow-xs" : "text-slate-200 hover:text-white"
-                    }`}
-                  >
-                    <Search className="h-3.5 w-3.5 text-emerald-500" />
-                    <span>Discoveries</span>
-                  </button>
+                <div className="flex items-center gap-1.5 flex-wrap shrink-0">
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-sky-300 mr-1">
+                    Indexed Skills:
+                  </span>
+                  {userTopSkillNames.map((sk) => (
+                    <span
+                      key={sk}
+                      className="rounded-full bg-black/35 border border-white/15 px-2.5 py-0.5 text-[10px] font-semibold text-white"
+                    >
+                      ✓ {sk}
+                    </span>
+                  ))}
                 </div>
               </div>
             </div>
@@ -1730,7 +1824,7 @@ export function ProfileView({
                   ))}
                 </div>
                 <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                  84 Unique Enterprises · {tfLabel}
+                  {viewers.length} Direct Verified Viewers · {tfLabel}
                 </p>
               </div>
 
@@ -1789,7 +1883,7 @@ export function ProfileView({
                     />
                   ))}
                 </div>
-                <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate" title={discoveryData.topSearchKeywords[0]?.keyword}>
                   Top Query: &ldquo;{discoveryData.topSearchKeywords[0]?.keyword}&rdquo;
                 </p>
               </div>
@@ -1804,10 +1898,10 @@ export function ProfileView({
                 </div>
                 <div className="flex items-baseline justify-between gap-2">
                   <p className="text-2xl font-black text-zinc-900 dark:text-zinc-100">
-                    65.0%
+                    {tailoredAnalytics.decisionMakerRatio}
                   </p>
                   <span className="rounded-full bg-amber-100 dark:bg-amber-950/70 px-2 py-0.5 text-[10px] font-black text-amber-800 dark:text-amber-300">
-                    Top 1% Fellow
+                    {tailoredAnalytics.standingBadge}
                   </span>
                 </div>
                 <div className="flex items-end gap-1 h-7 pt-1">
@@ -1820,7 +1914,7 @@ export function ProfileView({
                   ))}
                 </div>
                 <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                  38% C-Suite/VP · 27% Enterprise Buyers
+                  38% Directors/VP · {(user.connectionsCount && user.connectionsCount > 0 ? user.connectionsCount : 14).toLocaleString()} Connections
                 </p>
               </div>
             </div>
@@ -2085,10 +2179,10 @@ export function ProfileView({
                 <div className="rounded-xl bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200/70 dark:border-indigo-900/50 p-3 text-xs space-y-1">
                   <p className="font-bold text-indigo-950 dark:text-indigo-200 flex items-center gap-1.5">
                     <Zap className="h-3.5 w-3.5 text-amber-500" />
-                    <span>Peak Traffic Window: Wednesday &amp; Thursday (9:00 AM – 2:00 PM EST)</span>
+                    <span>Peak Traffic Window: Wednesday &amp; Thursday (9:00 AM – 2:00 PM)</span>
                   </p>
                   <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
-                    Executive &amp; Defense Procurement activity spikes +46% mid-week following technical post broadcasts.
+                    {tailoredAnalytics.peakTrafficNote}
                   </p>
                 </div>
               </div>
@@ -2182,7 +2276,7 @@ export function ProfileView({
                     </p>
                   </div>
                   <span className="rounded-full bg-purple-50 dark:bg-purple-950 px-2.5 py-0.5 text-[10px] font-bold text-purple-700 dark:text-purple-300">
-                    6 Core Sectors
+                    {enclaveInfo?.shortName || 'Domain'} Sectors
                   </span>
                 </div>
 
@@ -2214,12 +2308,12 @@ export function ProfileView({
                 </div>
               </div>
 
-              {/* Analysis Chart 3: Inbound Discovery Channels & Security Clearance Breakdown */}
+              {/* Analysis Chart 3: Inbound Discovery Channels & Credential Tier Breakdown */}
               <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-xs space-y-4">
                 <div>
                   <h4 className="font-black text-sm text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
                     <ShieldCheck className="h-4 w-4 text-emerald-600" />
-                    <span>Discovery Vectors &amp; Clearance Tiers</span>
+                    <span>Discovery Vectors &amp; Credential Tiers</span>
                   </h4>
                   <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
                     How users discover your profile &amp; their verification tier
@@ -2251,28 +2345,34 @@ export function ProfileView({
                   ))}
                 </div>
 
-                {/* Viewer Clearance & Trust Tier Distribution */}
+                {/* Viewer Credential & Trust Tier Distribution */}
                 <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 space-y-2">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">
-                    Inspecting User Trust &amp; Clearance Tiers
+                    Inspecting User Credential &amp; Trust Tiers
                   </span>
                   <div className="grid grid-cols-3 gap-2 text-center">
                     <div className="rounded-xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/70 dark:border-blue-900/50 p-2">
-                      <p className="text-sm font-black text-[#0A66C2] dark:text-sky-400">57%</p>
-                      <span className="text-[10px] font-semibold text-zinc-600 dark:text-zinc-400 block">
-                        TS/SCI &amp; Poly
+                      <p className="text-sm font-black text-[#0A66C2] dark:text-sky-400">
+                        {tailoredAnalytics.credentialTiers[0]?.percent ?? 56}%
+                      </p>
+                      <span className="text-[10px] font-semibold text-zinc-600 dark:text-zinc-400 block truncate">
+                        {tailoredAnalytics.credentialTiers[0]?.label || 'Verified ID'}
                       </span>
                     </div>
                     <div className="rounded-xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/70 dark:border-emerald-900/50 p-2">
-                      <p className="text-sm font-black text-emerald-600 dark:text-emerald-400">29%</p>
-                      <span className="text-[10px] font-semibold text-zinc-600 dark:text-zinc-400 block">
-                        Secret / Buyer
+                      <p className="text-sm font-black text-emerald-600 dark:text-emerald-400">
+                        {tailoredAnalytics.credentialTiers[1]?.percent ?? 29}%
+                      </p>
+                      <span className="text-[10px] font-semibold text-zinc-600 dark:text-zinc-400 block truncate">
+                        {tailoredAnalytics.credentialTiers[1]?.label || 'Buyer / Lead'}
                       </span>
                     </div>
                     <div className="rounded-xl bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200/70 dark:border-amber-900/50 p-2">
-                      <p className="text-sm font-black text-amber-600 dark:text-amber-400">14%</p>
-                      <span className="text-[10px] font-semibold text-zinc-600 dark:text-zinc-400 block">
-                        Fellow Grade
+                      <p className="text-sm font-black text-amber-600 dark:text-amber-400">
+                        {tailoredAnalytics.credentialTiers[2]?.percent ?? 15}%
+                      </p>
+                      <span className="text-[10px] font-semibold text-zinc-600 dark:text-zinc-400 block truncate">
+                        {tailoredAnalytics.credentialTiers[2]?.label || 'Fellow Grade'}
                       </span>
                     </div>
                   </div>

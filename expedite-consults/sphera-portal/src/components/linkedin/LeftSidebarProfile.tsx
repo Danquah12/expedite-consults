@@ -31,6 +31,7 @@ import { isSuperAdminUser } from "@/lib/connectin-profile"
 import { findEnclaveById, ALL_PROFESSIONS, ProfessionDefinition } from "@/lib/connectin-professions"
 import { useLanguage } from "@/context/LanguageContext"
 import { TradeEnclaveWidgets } from "@/components/linkedin/TradeEnclaveWidgets"
+import { getProfileTailoredAnalytics } from "@/lib/connectin-analytics"
 
 interface LeftSidebarProfileProps {
   user: UserProfile
@@ -733,32 +734,37 @@ export function LeftSidebarProfile({
         </div>
 
         {/* Metrics & Analytics */}
-        <div className="border-t border-zinc-100 px-4 py-2 text-xs dark:border-zinc-800/80 space-y-1">
-          <div
-            onClick={() => onOpenAnalytics ? onOpenAnalytics('viewers') : onViewProfile()}
-            className="flex cursor-pointer items-center justify-between py-0.5 hover:text-[#0A66C2] group"
-            title="Inspect active member profile viewers"
-          >
-            <span className="text-zinc-500 dark:text-zinc-400 group-hover:text-[#0A66C2]">{t("profile_viewers", "Profile viewers")}</span>
-            <span className="font-semibold text-[#0A66C2]">{(user.profileViews ?? 1428).toLocaleString()}</span>
-          </div>
-          <div
-            onClick={() => onOpenAnalytics ? onOpenAnalytics('reach') : onViewProfile()}
-            className="flex cursor-pointer items-center justify-between py-0.5 hover:text-[#0A66C2] group"
-            title="Inspect multi-channel post broadcast reach"
-          >
-            <span className="text-zinc-500 dark:text-zinc-400 group-hover:text-purple-600">{t("content_reach", "Content reach")}</span>
-            <span className="font-semibold text-purple-600 dark:text-purple-400">{(user.postImpressions ?? 9840).toLocaleString()}</span>
-          </div>
-          <div
-            onClick={() => onOpenAnalytics ? onOpenAnalytics('discoveries') : onViewProfile()}
-            className="flex cursor-pointer items-center justify-between py-0.5 hover:text-[#0A66C2] group"
-            title="Inspect talent directory search queries and index matches"
-          >
-            <span className="text-zinc-500 dark:text-zinc-400 group-hover:text-emerald-600">{t("directory_discoveries", "Directory discoveries")}</span>
-            <span className="font-semibold text-emerald-600 dark:text-emerald-400">{(user.searchAppearances ?? 342).toLocaleString()}</span>
-          </div>
-        </div>
+        {(() => {
+          const sidebarAnalytics = getProfileTailoredAnalytics(user)
+          return (
+            <div className="border-t border-zinc-100 px-4 py-2 text-xs dark:border-zinc-800/80 space-y-1">
+              <div
+                onClick={() => onOpenAnalytics ? onOpenAnalytics('viewers') : onViewProfile()}
+                className="flex cursor-pointer items-center justify-between py-0.5 hover:text-[#0A66C2] group"
+                title="Inspect active member profile viewers"
+              >
+                <span className="text-zinc-500 dark:text-zinc-400 group-hover:text-[#0A66C2]">{t("profile_viewers", "Profile viewers")}</span>
+                <span className="font-semibold text-[#0A66C2]">{sidebarAnalytics.effectiveProfileViews.toLocaleString()}</span>
+              </div>
+              <div
+                onClick={() => onOpenAnalytics ? onOpenAnalytics('reach') : onViewProfile()}
+                className="flex cursor-pointer items-center justify-between py-0.5 hover:text-[#0A66C2] group"
+                title="Inspect multi-channel post broadcast reach"
+              >
+                <span className="text-zinc-500 dark:text-zinc-400 group-hover:text-purple-600">{t("content_reach", "Content reach")}</span>
+                <span className="font-semibold text-purple-600 dark:text-purple-400">{sidebarAnalytics.effectiveTotalReach.toLocaleString()}</span>
+              </div>
+              <div
+                onClick={() => onOpenAnalytics ? onOpenAnalytics('discoveries') : onViewProfile()}
+                className="flex cursor-pointer items-center justify-between py-0.5 hover:text-[#0A66C2] group"
+                title="Inspect talent directory search queries and index matches"
+              >
+                <span className="text-zinc-500 dark:text-zinc-400 group-hover:text-emerald-600">{t("directory_discoveries", "Directory discoveries")}</span>
+                <span className="font-semibold text-emerald-600 dark:text-emerald-400">{sidebarAnalytics.effectiveDiscoveries.toLocaleString()}</span>
+              </div>
+            </div>
+          )
+        })()}
 
         {/* Profession-Tailored Personal Command Center */}
         <div className="border-t border-zinc-100 p-2.5 text-xs dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-900/50 space-y-1.5">

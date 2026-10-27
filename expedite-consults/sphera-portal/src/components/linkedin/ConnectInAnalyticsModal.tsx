@@ -37,11 +37,9 @@ import {
   ProfileViewerItem,
   ContentReachData,
   DirectoryDiscoveryData,
-  loadStoredProfileViewers,
   saveStoredProfileViewers,
-  loadStoredContentReach,
-  loadStoredDirectoryDiscoveries,
-  recordProfileView
+  recordProfileView,
+  getProfileTailoredAnalytics
 } from "@/lib/connectin-analytics"
 
 interface ConnectInAnalyticsModalProps {
@@ -62,20 +60,29 @@ export function ConnectInAnalyticsModal({
   onNavigateTab
 }: ConnectInAnalyticsModalProps) {
   const [activeTab, setActiveTab] = useState<'viewers' | 'reach' | 'discoveries'>(initialTab)
-  const [viewers, setViewers] = useState<ProfileViewerItem[]>([])
-  const [reachData, setReachData] = useState<ContentReachData | null>(null)
-  const [discoveryData, setDiscoveryData] = useState<DirectoryDiscoveryData | null>(null)
+  const tailored = React.useMemo(() => getProfileTailoredAnalytics(currentUser), [
+    currentUser.id,
+    currentUser.name,
+    currentUser.headline,
+    currentUser.profession,
+    currentUser.professionEnclave,
+    currentUser.skills,
+    currentUser.profileViews,
+    currentUser.postImpressions,
+    currentUser.searchAppearances
+  ])
+  const [viewers, setViewers] = useState<ProfileViewerItem[]>(() => getProfileTailoredAnalytics(currentUser).viewers)
+  const reachData: ContentReachData = tailored.reachData
+  const discoveryData: DirectoryDiscoveryData = tailored.discoveryData
   const [viewerCategoryFilter, setViewerCategoryFilter] = useState<'all' | 'recruiter' | 'buyer' | 'peer' | 'executive'>('all')
   const [searchFilter, setSearchFilter] = useState("")
 
   useEffect(() => {
     if (isOpen) {
       setActiveTab(initialTab)
-      setViewers(loadStoredProfileViewers())
-      setReachData(loadStoredContentReach())
-      setDiscoveryData(loadStoredDirectoryDiscoveries())
+      setViewers(getProfileTailoredAnalytics(currentUser).viewers)
     }
-  }, [isOpen, initialTab])
+  }, [isOpen, initialTab, currentUser.id, currentUser.name, currentUser.professionEnclave])
 
   const handleToggleConnect = (viewerId: string) => {
     setViewers(prev => {
@@ -92,23 +99,28 @@ export function ConnectInAnalyticsModal({
 
   const handleSimulateNewViewer = () => {
     const demoNames = [
-      { name: "Col. Gregory Vance", title: "Principal Defense Fellow @ DARPA Cyber Directorate", company: "DARPA", clearance: "TS/SCI Polygraph (Q Cleared)", category: "executive" as const },
-      { name: "Amanda Sterling", title: "Global VP Technology Sourcing @ Northrop Grumman", company: "Northrop Grumman", clearance: "Enterprise Procurement Buyer", category: "buyer" as const },
-      { name: "Liam O'Connor", title: "Lead Threat Intelligence Architect @ Cisco Talos", company: "Cisco Systems", clearance: "Level 4 Verified Fellow", category: "peer" as const },
-      { name: "Maya Patel", title: "Senior Strategic Talent Partner @ Google DeepMind Gov", company: "Google", clearance: "Cleared Talent Partner", category: "recruiter" as const }
+      { name: "Col. Gregory Vance", title: `Principal Executive Director · ${currentUser.profession || 'Operations'}`, company: reachData.topCompanies[0]?.name || "Enterprise Group", clearance: tailored.credentialTiers[0]?.label || "Verified Executive", category: "executive" as const },
+      { name: "Amanda Sterling", title: "Global VP Technology & Contract Sourcing", company: reachData.topCompanies[1]?.name || "Global Enterprise", clearance: "Enterprise Procurement Buyer", category: "buyer" as const },
+      { name: "Liam O'Connor", title: `Lead ${currentUser.profession || 'Domain'} Specialist`, company: reachData.topCompanies[2]?.name || "Partner Network", clearance: "Level 4 Verified Fellow", category: "peer" as const },
+      { name: "Maya Patel", title: `Senior Strategic Talent Partner (${currentUser.profession || 'Specialist'})`, company: reachData.topCompanies[3]?.name || "Talent Partners", clearance: "Verified Talent Partner", category: "recruiter" as const }
     ]
     const chosen = demoNames[Math.floor(Math.random() * demoNames.length)]
-    const updated = recordProfileView({
+    const newItem: ProfileViewerItem = {
+      id: 'view_' + Date.now(),
       name: chosen.name,
       headline: chosen.title,
       company: chosen.company,
+      location: currentUser.location?.split('·')[0]?.trim() || 'United States',
+      viewedAt: 'Just now',
       clearanceLevel: chosen.clearance,
       category: chosen.category,
-      viewVector: "Real-Time Enclave Profile Discovery",
+      viewVector: `Real-Time Query: "${discoveryData.topSearchKeywords[0]?.keyword || currentUser.profession || 'Verified'}"`,
       mutualConnectionsCount: Math.floor(8 + Math.random() * 20),
-      avatar: `https://images.unsplash.com/photo-${1534528741775 + Math.floor(Math.random() * 1000)}?w=400&auto=format&fit=crop&q=80`
-    })
-    setViewers([...updated])
+      isConnected: false,
+      isPending: false,
+      avatar: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80`
+    }
+    setViewers(prev => [newItem, ...prev])
   }
 
   const filteredViewers = viewers.filter(v => {
@@ -138,13 +150,13 @@ export function ConnectInAnalyticsModal({
                   <Sparkles className="h-3.5 w-3.5 text-amber-300" />
                   ConnectIn Intelligence Radar
                 </span>
-                <span className="text-xs text-zinc-400 font-mono">Zero-Trust Analytics</span>
+                <span className="text-xs text-zinc-400 font-mono">{currentUser.name} · {currentUser.profession || 'Verified Profile'}</span>
               </div>
               <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-                <span>Analytics &amp; Network Intelligence</span>
+                <span>{currentUser.name}&apos;s Analytics &amp; Network Intelligence</span>
               </h2>
               <p className="text-xs text-zinc-400 max-w-2xl leading-relaxed">
-                Inspect real-time member profile views with full identity visibility, monitor multi-channel broadcast reach, and track recruiting discovery queries.
+                Real-time profile inspections, broadcast reach, and recruiting discovery queries tailored to {currentUser.headline || currentUser.name}.
               </p>
             </div>
 
@@ -171,7 +183,7 @@ export function ConnectInAnalyticsModal({
               <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono ${
                 activeTab === 'viewers' ? "bg-blue-100 text-[#0A66C2]" : "bg-white/10 text-zinc-300"
               }`}>
-                {(currentUser.profileViews || 1428).toLocaleString()}
+                {tailored.effectiveProfileViews.toLocaleString()}
               </span>
             </button>
 
@@ -188,7 +200,7 @@ export function ConnectInAnalyticsModal({
               <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono ${
                 activeTab === 'reach' ? "bg-purple-100 text-purple-700" : "bg-white/10 text-zinc-300"
               }`}>
-                {(currentUser.postImpressions || 9840).toLocaleString()}
+                {tailored.effectiveTotalReach.toLocaleString()}
               </span>
             </button>
 
@@ -205,7 +217,7 @@ export function ConnectInAnalyticsModal({
               <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono ${
                 activeTab === 'discoveries' ? "bg-emerald-100 text-emerald-700" : "bg-white/10 text-zinc-300"
               }`}>
-                {(currentUser.searchAppearances || 342).toLocaleString()}
+                {tailored.effectiveDiscoveries.toLocaleString()}
               </span>
             </button>
           </div>
@@ -227,7 +239,7 @@ export function ConnectInAnalyticsModal({
                     <Eye className="h-4 w-4 text-[#0A66C2]" />
                   </div>
                   <p className="text-2xl font-black text-zinc-900 dark:text-zinc-100">
-                    {(currentUser.profileViews || 1428).toLocaleString()}
+                    {tailored.effectiveProfileViews.toLocaleString()}
                   </p>
                   <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                     <ArrowUpRight className="h-3 w-3" /> +14.8% past 7 days
@@ -236,29 +248,33 @@ export function ConnectInAnalyticsModal({
 
                 <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 p-4 space-y-1">
                   <div className="flex items-center justify-between text-xs text-zinc-500">
-                    <span>Unique Enterprises</span>
+                    <span>Direct Viewers</span>
                     <Building2 className="h-4 w-4 text-purple-600" />
                   </div>
-                  <p className="text-2xl font-black text-zinc-900 dark:text-zinc-100">84 Orgs</p>
-                  <span className="text-[11px] text-zinc-500">DoD, AWS, Lockheed, Cisco</span>
+                  <p className="text-2xl font-black text-zinc-900 dark:text-zinc-100">{viewers.length} Members</p>
+                  <span className="text-[11px] text-zinc-500 truncate block">
+                    {reachData.topCompanies.slice(0, 2).map(c => c.name.split(' ')[0]).join(', ')} &amp; more
+                  </span>
                 </div>
 
                 <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 p-4 space-y-1">
                   <div className="flex items-center justify-between text-xs text-zinc-500">
-                    <span>Cleared Personnel</span>
+                    <span>Verified Credentials</span>
                     <ShieldCheck className="h-4 w-4 text-emerald-600" />
                   </div>
-                  <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">92.4%</p>
-                  <span className="text-[11px] text-zinc-500">TS/SCI &amp; Poly Verified</span>
+                  <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">94.2%</p>
+                  <span className="text-[11px] text-zinc-500 truncate block">
+                    {tailored.credentialTiers[0]?.label || 'Verified Domain ID'}
+                  </span>
                 </div>
 
                 <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 p-4 space-y-1">
                   <div className="flex items-center justify-between text-xs text-zinc-500">
-                    <span>Executive Ratio</span>
+                    <span>Decision-Makers</span>
                     <Award className="h-4 w-4 text-amber-500" />
                   </div>
-                  <p className="text-2xl font-black text-amber-600 dark:text-amber-400">58%</p>
-                  <span className="text-[11px] text-zinc-500">CTOs, CISOs &amp; VP Buyers</span>
+                  <p className="text-2xl font-black text-amber-600 dark:text-amber-400">{tailored.decisionMakerRatio}</p>
+                  <span className="text-[11px] text-zinc-500">{tailored.standingBadge}</span>
                 </div>
               </div>
 
@@ -413,7 +429,7 @@ export function ConnectInAnalyticsModal({
                 <div className="rounded-2xl border border-purple-200 dark:border-purple-900/60 bg-purple-50/40 dark:bg-purple-950/20 p-4 space-y-1">
                   <span className="text-xs text-purple-700 dark:text-purple-300 font-semibold">Total Content Reach</span>
                   <p className="text-2xl font-black text-purple-900 dark:text-purple-100">
-                    {(currentUser.postImpressions || reachData.totalReach).toLocaleString()}
+                    {tailored.effectiveTotalReach.toLocaleString()}
                   </p>
                   <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                     <ArrowUpRight className="h-3 w-3" /> +{reachData.weeklyChangePercent}% this week
@@ -423,9 +439,9 @@ export function ConnectInAnalyticsModal({
                 <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 p-4 space-y-1">
                   <span className="text-xs text-zinc-500">Unique Professionals</span>
                   <p className="text-2xl font-black text-zinc-900 dark:text-zinc-100">
-                    {reachData.uniqueViewers.toLocaleString()}
+                    {tailored.effectiveUniqueViewers.toLocaleString()}
                   </p>
-                  <span className="text-[11px] text-zinc-500">Across 6 Enterprise Sectors</span>
+                  <span className="text-[11px] text-zinc-500">Across {reachData.topCompanies.length} Enterprise Sectors</span>
                 </div>
 
                 <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 p-4 space-y-1">
@@ -437,9 +453,9 @@ export function ConnectInAnalyticsModal({
                 </div>
 
                 <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 p-4 space-y-1">
-                  <span className="text-xs text-zinc-500">Syndicated Re-shares</span>
-                  <p className="text-2xl font-black text-amber-600 dark:text-amber-400">245 Units</p>
-                  <span className="text-[11px] text-zinc-500">Cross-Guild Broadcasts</span>
+                  <span className="text-xs text-zinc-500">Verified Skills Indexed</span>
+                  <p className="text-2xl font-black text-amber-600 dark:text-amber-400">{Math.max(4, currentUser.skills?.length || 0)} Skills</p>
+                  <span className="text-[11px] text-zinc-500">{currentUser.profession || 'Guild Verified'}</span>
                 </div>
               </div>
 
@@ -568,7 +584,7 @@ export function ConnectInAnalyticsModal({
                 <div className="rounded-2xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/40 dark:bg-emerald-950/20 p-4 space-y-1">
                   <span className="text-xs text-emerald-700 dark:text-emerald-300 font-semibold">Total Discoveries</span>
                   <p className="text-2xl font-black text-emerald-900 dark:text-emerald-100">
-                    {(currentUser.searchAppearances || discoveryData.totalDiscoveries).toLocaleString()}
+                    {tailored.effectiveDiscoveries.toLocaleString()}
                   </p>
                   <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                     <ArrowUpRight className="h-3 w-3" /> +{discoveryData.weeklyChangePercent}% this week
@@ -586,15 +602,15 @@ export function ConnectInAnalyticsModal({
                 <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 p-4 space-y-1">
                   <span className="text-xs text-zinc-500">Top Matched Query</span>
                   <p className="text-base font-black text-[#0A66C2] truncate">
-                    "Zero Trust"
+                    &ldquo;{discoveryData.topSearchKeywords[0]?.keyword || currentUser.profession || 'Verified Specialist'}&rdquo;
                   </p>
-                  <span className="text-[11px] text-zinc-500">114 Direct Index Hits</span>
+                  <span className="text-[11px] text-zinc-500">{discoveryData.topSearchKeywords[0]?.occurrences || 114} Direct Index Hits</span>
                 </div>
 
                 <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 p-4 space-y-1">
                   <span className="text-xs text-zinc-500">Index Placement</span>
                   <p className="text-2xl font-black text-amber-600 dark:text-amber-400">#1 Result</p>
-                  <span className="text-[11px] text-zinc-500">For Cloud AppSec Lead</span>
+                  <span className="text-[11px] text-zinc-500 truncate block">For {currentUser.profession || currentUser.headline || 'Guild Specialist'}</span>
                 </div>
               </div>
 
