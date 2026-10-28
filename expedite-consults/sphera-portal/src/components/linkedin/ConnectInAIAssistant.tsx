@@ -37,6 +37,8 @@ import { UserProfile } from "@/lib/linkedin-data"
 import { useLanguage } from "@/context/LanguageContext"
 import { LanguageSwitcher } from "@/components/language/LanguageSwitcher"
 import { getLocalizedInitialMessage, getLocalizedAIAnswer } from "@/lib/translations/ai-responses"
+import { findConnectLnTopic, connectLnOverview } from "@/lib/connectln-knowledge"
+import { PROFESSION_ENCLAVES } from "@/lib/connectin-professions"
 
 interface ConnectInAIAssistantProps {
   isOpen: boolean
@@ -358,6 +360,24 @@ export function ConnectInAIAssistant({
       let reply: ChatMessage
       const lower = promptText.toLowerCase()
       const enclaveId = currentUser.professionEnclave || 'tech_cybersecurity'
+
+      // ConnectLn platform Q&A: answer from the knowledge base for platform/how-to questions
+      const kbTopic = findConnectLnTopic(promptText)
+      const asksPlatform = /connect\s?l[ni]|this (app|platform|site)|how (do|does|can|to)|where (is|can|do)|what (is|are|does)|tell me (about|everything)|everything about|features?/.test(lower)
+      if (kbTopic && asksPlatform) {
+        const wantsAll = /everything|all features|overview|full tour|tour/.test(lower)
+        const topicReply: ChatMessage = {
+          id: `ai_${Date.now()}`,
+          sender: 'assistant',
+          text: `📘 **${wantsAll ? 'ConnectLn — Full Overview' : kbTopic.title}**\n\n${wantsAll ? connectLnOverview() : kbTopic.answer()}`,
+          suggestedCards: kbTopic.tab
+            ? [{ title: kbTopic.title, category: 'ConnectLn Guide', actionText: kbTopic.tabLabel || 'Open', targetTab: kbTopic.tab, matchPercent: 'Platform Help' }]
+            : undefined
+        }
+        setMessages(prev => [...prev, topicReply])
+        setIsTyping(false)
+        return
+      }
 
       if (lower.includes('zero trust')) {
         reply = {
@@ -1152,7 +1172,9 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
           reply = {
             id: `ai_${Date.now()}`,
             sender: 'assistant',
-            text: `I processed your request for "${promptText}". ConnectIn AI has indexed relevant verified experts, technical courses, and enterprise solutions across our 20-enclave ecosystem.`,
+            text: kbTopic
+              ? `📘 **${kbTopic.title}**\n\n${kbTopic.answer()}`
+              : `I processed your request for "${promptText}". ConnectIn AI has indexed relevant verified experts, technical courses, and enterprise solutions across our ${PROFESSION_ENCLAVES.length}-enclave ecosystem.\n\nTip: ask me anything about ConnectLn — for example *"What can I do on ConnectLn?"*, *"How do I get verified?"* or *"Which professions are supported?"*`,
             suggestedCards: [
               {
                 title: "Explore Solutions Hub",
