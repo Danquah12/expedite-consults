@@ -30,6 +30,7 @@ import {
   calculateCvss31BaseScore,
   inferCvss31VectorForFinding,
   resolveTypedProofClassification,
+  normalizeFindingCvssAndProof,
   computeAuditableRiskWorksheet,
   runTenGateReportAcceptanceSuite,
 } from "@/lib/cvss31";
@@ -125,11 +126,6 @@ export default function ReportEnginePage() {
     }
   };
 
-  const rawFindings: SASTFinding[] = useMemo(
-    () => (activeSession?.sastFindings?.length ? activeSession.sastFindings : FINDINGS),
-    [activeSession]
-  );
-
   const rawValidationFindings: CanonicalValidationFinding[] = useMemo(
     () =>
       activeSession?.validationFindings?.length
@@ -143,6 +139,11 @@ export default function ReportEnginePage() {
     rawValidationFindings.forEach((vf) => map.set(vf.findingId, vf));
     return map;
   }, [rawValidationFindings]);
+
+  const rawFindings: SASTFinding[] = useMemo(() => {
+    const base = activeSession?.sastFindings?.length ? activeSession.sastFindings : FINDINGS;
+    return base.map((f) => normalizeFindingCvssAndProof(f, validationById.get(f.id)));
+  }, [activeSession, validationById]);
 
   const pluginEvalById = useMemo(() => {
     const map = new Map<string, MultiStandardPluginEvaluation>();
@@ -175,45 +176,52 @@ export default function ReportEnginePage() {
   const riskScore = riskWorksheet.compositeRiskScore;
   const avgConf = riskWorksheet.calibratedConfidencePercent;
 
-  // AT-01 & AT-PROOF-06: Derive all Executive Summary & Scorecard counts from the 7-state Typed Proof Model
+  // AT-01 & AT-PROOF-06: Derive all Executive Summary & Scorecard counts + IDs from the 7-state Typed Proof Model
   const canonicalStats = useMemo(() => {
     const total = filteredFindings.length;
-    let dataflowConfirmed = 0;
-    let guardAnalyzed = 0;
-    let pathFeasible = 0;
-    let detectedStatic = 0;
-    let needsManualValidation = 0;
-    let mitigatedByGuard = 0;
-    let runtimeReproduced = 0;
+    const dataflowIds: string[] = [];
+    const guardIds: string[] = [];
+    const pathFeasibleIds: string[] = [];
+    const detectedStaticIds: string[] = [];
+    const manualIds: string[] = [];
+    const mitigatedIds: string[] = [];
+    const runtimeIds: string[] = [];
 
     filteredFindings.forEach((f) => {
       const state = resolveCanonicalProofState(f, validationById.get(f.id));
       if (state === "RUNTIME_REPRODUCED" || state === "IMPACT_CONFIRMED") {
-        runtimeReproduced++;
+        runtimeIds.push(f.id);
       } else if (state === "DATAFLOW_CONFIRMED") {
-        dataflowConfirmed++;
+        dataflowIds.push(f.id);
       } else if (state === "GUARD_ANALYZED") {
-        guardAnalyzed++;
+        guardIds.push(f.id);
       } else if (state === "PATH_FEASIBLE") {
-        pathFeasible++;
+        pathFeasibleIds.push(f.id);
       } else if (state === "DETECTED_STATIC") {
-        detectedStatic++;
+        detectedStaticIds.push(f.id);
       } else if (state === "NEEDS_MANUAL_VALIDATION" || state === "INCONCLUSIVE") {
-        needsManualValidation++;
+        manualIds.push(f.id);
       } else if (state === "MITIGATED_BY_GUARD") {
-        mitigatedByGuard++;
+        mitigatedIds.push(f.id);
       }
     });
 
     return {
       total,
-      dataflowConfirmed,
-      guardAnalyzed,
-      pathFeasible,
-      detectedStatic,
-      needsManualValidation,
-      mitigatedByGuard,
-      runtimeReproduced,
+      dataflowConfirmed: dataflowIds.length,
+      guardAnalyzed: guardIds.length,
+      pathFeasible: pathFeasibleIds.length,
+      detectedStatic: detectedStaticIds.length,
+      needsManualValidation: manualIds.length,
+      mitigatedByGuard: mitigatedIds.length,
+      runtimeReproduced: runtimeIds.length,
+      dataflowIds,
+      guardIds,
+      pathFeasibleIds,
+      detectedStaticIds,
+      manualIds,
+      mitigatedIds,
+      runtimeIds,
     };
   }, [filteredFindings, validationById]);
 
@@ -256,17 +264,20 @@ export default function ReportEnginePage() {
       ``,
       `| Metric | Value |`,
       `| :--- | :--- |`,
-      `| **Composite Risk Score** | **${riskScore}/100** (Raw Weighted Sum: \`${riskWorksheet.rawWeightedSum}\` / \`${riskWorksheet.normalizationCeiling}\` — RELEASE GATE BLOCKED) |`,
-      `| **Total Evaluated Findings** | ${canonicalStats.total} |`,
+      `| **Composite Risk Score** | **${riskScore}/100** (Raw Weighted Sum: \`${riskWorksheet.rawWeightedSum}\` / \`${riskWorksheet.normalizationCeiling}\` — Primary Code: \`${riskWorksheet.primaryCodeWeightedSum}\` pts, Architectural Candidates: \`${riskWorksheet.architecturalCandidateWeightedSum}\` pts) |`,
+      `| **Total Evaluated Findings** | ${canonicalStats.total} (${riskWorksheet.primaryFindingsCount} Primary Scanned Code + ${riskWorksheet.architecturalCandidateCount} Pass-2/3 Architectural Candidates) |`,
       `| **Critical / High / Medium / Low** | ${counts.critical} / ${counts.high} / ${counts.medium} / ${counts.low} |`,
-      `| **DATAFLOW_CONFIRMED (Source-to-Sink Taint Flow Verified)** | ${canonicalStats.dataflowConfirmed} / ${canonicalStats.total} |`,
+      `| **DATAFLOW_CONFIRMED (Pass-1 Source-to-Sink Taint Flow Verified)** | ${canonicalStats.dataflowConfirmed} / ${canonicalStats.total} |`,
       `| **GUARD_ANALYZED (Auth / Config / Parser / Header Control Analyzed)** | ${canonicalStats.guardAnalyzed} / ${canonicalStats.total} |`,
-      `| **PATH_FEASIBLE (Concurrency / TOCTOU State Window Feasible)** | ${canonicalStats.pathFeasible} / ${canonicalStats.total} |`,
+      `| **PATH_FEASIBLE (Pass-2/3 Architectural Candidate / Concurrency Window)** | ${canonicalStats.pathFeasible} / ${canonicalStats.total} |`,
       `| **DETECTED_STATIC (Cryptographic / PRNG Primitive Identified)** | ${canonicalStats.detectedStatic} / ${canonicalStats.total} |`,
       `| **NEEDS_MANUAL_VALIDATION (Secret Provenance / Dependency Reachability)** | ${canonicalStats.needsManualValidation} / ${canonicalStats.total} |`,
       `| **MITIGATED_BY_GUARD (Upstream Sanitizer / Parameterization)** | ${canonicalStats.mitigatedByGuard} / ${canonicalStats.total} |`,
       `| **RUNTIME_REPRODUCED (Isolated Sandbox Exploit Executed)** | ${canonicalStats.runtimeReproduced} / ${canonicalStats.total} |`,
-      `| **Calibrated 4-Engine Consensus Confidence** | **${avgConf.toFixed(1)}%** (XQL: ${riskWorksheet.engineConcordance.xql}%, DeepFlow: ${riskWorksheet.engineConcordance.deepFlow}%, StructSCA: ${riskWorksheet.engineConcordance.structSca}%, AST-Query: ${riskWorksheet.engineConcordance.astQuery}%) |`,
+      `| **Multi-Engine Heuristic Concordance Index** | **${avgConf.toFixed(1)}%** (Inter-engine rule agreement across XQL: ${riskWorksheet.engineConcordance.xql}%, DeepFlow: ${riskWorksheet.engineConcordance.deepFlow}%, StructSCA: ${riskWorksheet.engineConcordance.structSca}%, AST-Query: ${riskWorksheet.engineConcordance.astQuery}% — not empirical exploitability probability) |`,
+      `| **Benchmark Ground-Truth Calibration (OWASP Benchmark Suite)** | Precision: **${riskWorksheet.benchmarkCalibration.measuredPrecisionPercent}%** · Recall: **${riskWorksheet.benchmarkCalibration.measuredRecallPercent}%** · False Confirmation Rate: **${riskWorksheet.benchmarkCalibration.falseConfirmationRatePercent}%** |`,
+
+
       ``,
       `## 2. XTRIKE 9-Plugin Standards & Offensive TTP Matrix`,
       ``,
@@ -1159,13 +1170,13 @@ export default function ReportEnginePage() {
                   }}
                 >
                   <div style={{ fontSize: 10, fontWeight: 800, color: "#2d6a4f", textTransform: "uppercase" }}>
-                    Heuristic Confidence
+                    Heuristic Concordance
                   </div>
                   <div style={{ fontSize: 26, fontWeight: 900, color: "#2d6a4f", marginTop: 4 }}>
                     {avgConf.toFixed(1)}%
                   </div>
                   <div style={{ fontSize: 10.5, color: "#21573e", marginTop: 2 }}>
-                    Static AST + Dataflow Score
+                    4-Engine Rule Agreement Index
                   </div>
                 </div>
               </div>
@@ -1187,19 +1198,22 @@ export default function ReportEnginePage() {
                 <code style={{ fontFamily: "monospace", fontWeight: 700 }}>{targetName}</code> (commit{" "}
                 <code style={{ fontFamily: "monospace" }}>{fullCommitSha.slice(0, 12)}</code>, scope:{" "}
                 <strong>{scopeQualificationLabel}</strong>). Out of{" "}
-                <strong>{canonicalStats.total} deduplicated findings</strong>:{" "}
+                <strong>{canonicalStats.total} deduplicated findings</strong> (comprising{" "}
+                <strong>{riskWorksheet.primaryFindingsCount} Pass-1 Primary Code Findings</strong> and{" "}
+                <strong>{riskWorksheet.architecturalCandidateCount} Pass-2/3 Architectural Candidate Hypotheses</strong>, with{" "}
+                <strong>{riskWorksheet.benchmarkCalibration.duplicateConsolidationCount} co-located sink(s) consolidated by shared root cause</strong>):{" "}
                 <strong>{canonicalStats.dataflowConfirmed} findings</strong> reached{" "}
                 <code style={{ fontFamily: "monospace", fontWeight: 700 }}>DATAFLOW_CONFIRMED</code>{" "}
-                (source-to-sink taint flow verified for SQLi, Deserialization, SSRF, Path Traversal, and Open Redirect),{" "}
+                (Pass-1 source-to-sink taint flow verified),{" "}
                 <strong>{canonicalStats.guardAnalyzed} findings</strong> reached{" "}
                 <code style={{ fontFamily: "monospace", fontWeight: 700 }}>GUARD_ANALYZED</code>{" "}
-                (authorization ownership, JWT algorithm pinning, parser flags, headers, cookies, CORS, and Terraform IAM),{" "}
-                <strong>{canonicalStats.pathFeasible} finding</strong> reached{" "}
+                (authorization ownership, JWT signature verification, mass assignment, XML parser flags, headers, cookies, CORS, and IAM controls),{" "}
+                <strong>{canonicalStats.pathFeasible} findings</strong> reached{" "}
                 <code style={{ fontFamily: "monospace", fontWeight: 700 }}>PATH_FEASIBLE</code>{" "}
-                (concurrency TOCTOU state window),{" "}
+                (Pass-2/3 architectural candidate hypotheses &amp; concurrency TOCTOU state windows),{" "}
                 <strong>{canonicalStats.detectedStatic} findings</strong> reached{" "}
                 <code style={{ fontFamily: "monospace", fontWeight: 700 }}>DETECTED_STATIC</code>{" "}
-                (MD5 password digest &amp; weak PRNG),{" "}
+                (cryptographic digest &amp; weak PRNG primitives),{" "}
                 <strong>{canonicalStats.needsManualValidation} findings</strong> are{" "}
                 <code style={{ fontFamily: "monospace", fontWeight: 700 }}>NEEDS_MANUAL_VALIDATION</code>{" "}
                 (secret provenance, dependency reachability &amp; DOM HTML provenance), and{" "}
@@ -1207,14 +1221,20 @@ export default function ReportEnginePage() {
                 <code style={{ fontFamily: "monospace", fontWeight: 700 }}>RUNTIME_REPRODUCED</code>{" "}
                 (isolated runtime sandbox verification was <strong>NOT_RUN</strong> during this static scan).
                 <div style={{ marginTop: 6, fontSize: 11, color: "#5c5349" }}>
-                  <strong>Risk vs. Confidence Separation (Review Issue 2):</strong>{" "}
-                  <strong>Composite Risk ({riskScore}/100)</strong> measures severity-weighted and reachability-adjusted potential exposure across open findings, whereas{" "}
-                  <strong>Calibrated Multi-Engine Confidence ({avgConf.toFixed(1)}%)</strong> measures the mean static agreement across the 4 analysis engines (
+                  <strong>Risk vs. Heuristic Concordance Separation &amp; Benchmark Calibration Disclosure:</strong>{" "}
+                  <strong>Composite Risk ({riskScore}/100)</strong> measures severity-weighted and reachability-adjusted potential exposure across evaluated findings (scaled dynamically to scope ceiling <code>{riskWorksheet.normalizationCeiling}</code>; Primary Scanned Code = <code>{riskWorksheet.primaryCodeWeightedSum} pts</code>, Architectural Candidates = <code>{riskWorksheet.architecturalCandidateWeightedSum} pts</code>).{" "}
+                  <strong>Multi-Engine Heuristic Concordance ({avgConf.toFixed(1)}%)</strong> is an engine-reported rule-agreement index across the 4 static analyzers (
                   <code>XTRIKE XQL={riskWorksheet.engineConcordance.xql}%</code>,{" "}
                   <code>DeepFlow={riskWorksheet.engineConcordance.deepFlow}%</code>,{" "}
                   <code>StructSCA={riskWorksheet.engineConcordance.structSca}%</code>,{" "}
-                  <code>AST-Query={riskWorksheet.engineConcordance.astQuery}%</code>).
+                  <code>AST-Query={riskWorksheet.engineConcordance.astQuery}%</code>) and should not be interpreted as an empirical 93.3% probability of live exploitability. Empirical ground-truth validation against labeled OWASP Benchmark fixtures measured{" "}
+                  <code>TP={riskWorksheet.benchmarkCalibration.truePositivesDetected}/{riskWorksheet.benchmarkCalibration.labeledVulnerableFixturesTested}</code> vulnerable fixtures and{" "}
+                  <code>TN={riskWorksheet.benchmarkCalibration.falsePositivesSuppressed}/{riskWorksheet.benchmarkCalibration.safeControlFixturesTested}</code> safe control fixtures suppressed (Precision:{" "}
+                  <strong>{riskWorksheet.benchmarkCalibration.measuredPrecisionPercent}%</strong>, Recall:{" "}
+                  <strong>{riskWorksheet.benchmarkCalibration.measuredRecallPercent}%</strong>, False Confirmation Rate:{" "}
+                  <strong>{riskWorksheet.benchmarkCalibration.falseConfirmationRatePercent}%</strong>).
                 </div>
+
               </div>
 
               {/* Reproducible Composite Risk & Multi-Engine Confidence Worksheet (Review Issue 2) */}
@@ -1237,10 +1257,10 @@ export default function ReportEnginePage() {
                   }}
                 >
                   <strong style={{ fontSize: 12, color: "#1f1b18" }}>
-                    Reproducible Composite Risk &amp; 4-Engine Concordance Worksheet (AT-CVSS-01 / AT-16)
+                    Reproducible Composite Risk, Scope Separation &amp; 4-Engine Concordance Worksheet (AT-CVSS-01 / AT-16)
                   </strong>
                   <span style={{ fontFamily: "monospace", fontSize: 11, color: "#8b4528", fontWeight: 700 }}>
-                    Raw Weighted Sum: {riskWorksheet.rawWeightedSum} / Ceiling: {riskWorksheet.normalizationCeiling} &rarr; Composite Risk = min(100, round(({riskWorksheet.rawWeightedSum}/{riskWorksheet.normalizationCeiling})&times;100)) = {riskScore}/100
+                    Primary: {riskWorksheet.primaryCodeWeightedSum} pts + Arch Candidates: {riskWorksheet.architecturalCandidateWeightedSum} pts = {riskWorksheet.rawWeightedSum} / Ceiling: {riskWorksheet.normalizationCeiling} &rarr; Risk = {riskScore}/100
                   </span>
                 </div>
 
@@ -1326,7 +1346,7 @@ export default function ReportEnginePage() {
                       Count
                     </th>
                     <th style={{ border: "1px solid #ddd3c2", padding: "8px 12px", textAlign: "left" }}>
-                      Evidence Basis &amp; Required Engineering Action
+                      Evaluated Findings in State &amp; Required Engineering Action
                     </th>
                   </tr>
                 </thead>
@@ -1342,7 +1362,11 @@ export default function ReportEnginePage() {
                       {canonicalStats.dataflowConfirmed}
                     </td>
                     <td style={{ border: "1px solid #ddd3c2", padding: "8px 12px" }}>
-                      Reserved strictly for genuine source-to-dangerous-sink taint flows (SQLi `F-001`, Deserialization `F-002`, SSRF `F-004`, Path Traversal `F-009`, Open Redirect `F-011`).
+                      Reserved strictly for Pass-1 primary source-to-dangerous-sink taint flows:{" "}
+                      <code style={{ fontFamily: "monospace", fontSize: 11 }}>
+                        {canonicalStats.dataflowIds.length > 0 ? canonicalStats.dataflowIds.join(", ") : "None"}
+                      </code>
+                      .
                     </td>
                   </tr>
                   <tr>
@@ -1356,7 +1380,11 @@ export default function ReportEnginePage() {
                       {canonicalStats.guardAnalyzed}
                     </td>
                     <td style={{ border: "1px solid #ddd3c2", padding: "8px 12px" }}>
-                      Access-control ownership (`F-003`), JWT algorithm pinning (`F-006`), CSRF (`F-008`), rate limiting (`F-018`), XML parser flags (`F-005`), headers/cookies/CORS (`F-012..F-015, F-020, F-021, F-023, F-025`), and Terraform IAM (`F-027`).
+                      Authorization ownership, JWT signature verification, mass assignment, XML parser flags, and security header/cookie/CORS/IAM guard inspections:{" "}
+                      <code style={{ fontFamily: "monospace", fontSize: 11 }}>
+                        {canonicalStats.guardIds.length > 0 ? canonicalStats.guardIds.join(", ") : "None"}
+                      </code>
+                      .
                     </td>
                   </tr>
                   <tr>
@@ -1364,13 +1392,17 @@ export default function ReportEnginePage() {
                       PATH_FEASIBLE
                     </td>
                     <td style={{ border: "1px solid #ddd3c2", padding: "8px 12px", fontFamily: "monospace" }}>
-                      CONCURRENCY_STATE (Async TOCTOU)
+                      ARCHITECTURAL_CANDIDATE / CONCURRENCY_STATE
                     </td>
                     <td style={{ border: "1px solid #ddd3c2", padding: "8px 12px", textAlign: "center", fontWeight: 800 }}>
                       {canonicalStats.pathFeasible}
                     </td>
                     <td style={{ border: "1px solid #ddd3c2", padding: "8px 12px" }}>
-                      Non-atomic check-then-act balance update (`F-026`) across `await` boundary without row-level locking (`SELECT ... FOR UPDATE`) or conditional atomic SQL decrement.
+                      Pass-2/3 architectural candidate hypotheses and concurrency TOCTOU state windows requiring targeted integration/sandbox verification:{" "}
+                      <code style={{ fontFamily: "monospace", fontSize: 11 }}>
+                        {canonicalStats.pathFeasibleIds.length > 0 ? canonicalStats.pathFeasibleIds.join(", ") : "None"}
+                      </code>
+                      .
                     </td>
                   </tr>
                   <tr>
@@ -1384,7 +1416,11 @@ export default function ReportEnginePage() {
                       {canonicalStats.detectedStatic}
                     </td>
                     <td style={{ border: "1px solid #ddd3c2", padding: "8px 12px" }}>
-                      Weak cryptographic digest (`F-010` MD5 password hash) and non-cryptographic PRNG (`F-017` `Math.random()` reset token) verified directly in AST.
+                      Weak cryptographic digest (MD5/SHA-1/ECB) and non-cryptographic PRNG primitives verified directly in AST:{" "}
+                      <code style={{ fontFamily: "monospace", fontSize: 11 }}>
+                        {canonicalStats.detectedStaticIds.length > 0 ? canonicalStats.detectedStaticIds.join(", ") : "None"}
+                      </code>
+                      .
                     </td>
                   </tr>
                   <tr>
@@ -1398,7 +1434,11 @@ export default function ReportEnginePage() {
                       {canonicalStats.needsManualValidation}
                     </td>
                     <td style={{ border: "1px solid #ddd3c2", padding: "8px 12px" }}>
-                      AWS example key provenance (`F-007` `AKIAIOSFODNN7EXAMPLE`), debug log/comment credentials (`F-016, F-022`), Commons Text 1.9 reachability (`F-019`), and React DOM sink provenance (`F-024`).
+                      Hardcoded secret provenance, vulnerable dependency reachability, and DOM HTML source provenance:{" "}
+                      <code style={{ fontFamily: "monospace", fontSize: 11 }}>
+                        {canonicalStats.manualIds.length > 0 ? canonicalStats.manualIds.join(", ") : "None"}
+                      </code>
+                      .
                     </td>
                   </tr>
                   <tr>
@@ -1412,7 +1452,11 @@ export default function ReportEnginePage() {
                       {canonicalStats.mitigatedByGuard}
                     </td>
                     <td style={{ border: "1px solid #ddd3c2", padding: "8px 12px" }}>
-                      Active parameterization, encoding, or canonical path guard detected upstream of sink; plus AT-05 constant-literal output suppression.
+                      Active parameterization, encoding, or canonical path guard detected upstream of sink; plus AT-05 constant-literal output suppression:{" "}
+                      <code style={{ fontFamily: "monospace", fontSize: 11 }}>
+                        {canonicalStats.mitigatedIds.length > 0 ? canonicalStats.mitigatedIds.join(", ") : "None"}
+                      </code>
+                      .
                     </td>
                   </tr>
                   <tr>
@@ -1610,6 +1654,34 @@ export default function ReportEnginePage() {
                             style={{
                               padding: "2px 8px",
                               borderRadius: 6,
+                              background:
+                                finding.findingOrigin === "ARCHITECTURAL_CANDIDATE_HYPOTHESIS"
+                                  ? "#fbf3e4"
+                                  : finding.findingOrigin === "MULTI_SINK_SHARED_ROOT_CAUSE"
+                                    ? "#e3f0e9"
+                                    : "#f3eee4",
+                              border: "1px solid #ddd3c2",
+                              fontSize: 10,
+                              fontWeight: 800,
+                              fontFamily: "monospace",
+                              color:
+                                finding.findingOrigin === "ARCHITECTURAL_CANDIDATE_HYPOTHESIS"
+                                  ? "#996b1f"
+                                  : finding.findingOrigin === "MULTI_SINK_SHARED_ROOT_CAUSE"
+                                    ? "#2d6a4f"
+                                    : "#1f1b18",
+                            }}
+                          >
+                            {finding.findingOrigin === "ARCHITECTURAL_CANDIDATE_HYPOTHESIS"
+                              ? "Pass-2/3 Architectural Candidate"
+                              : finding.findingOrigin === "MULTI_SINK_SHARED_ROOT_CAUSE"
+                                ? `Primary Code (Consolidated x${finding.deduplicatedCount || 2} Sinks)`
+                                : "Pass-1 Primary Scanned Code"}
+                          </span>
+                          <span
+                            style={{
+                              padding: "2px 8px",
+                              borderRadius: 6,
                               background: "#f3eee4",
                               border: "1px solid #ddd3c2",
                               fontSize: 10,
@@ -1693,7 +1765,7 @@ export default function ReportEnginePage() {
                             {finding.file}:{finding.line}
                           </code>{" "}
                           <span style={{ fontFamily: "monospace", fontSize: 10, color: "#8b4528", fontWeight: 700 }}>
-                            ({finding.language} &middot; {finding.sinkId || `${finding.id}-L${finding.line}`})
+                            ({finding.language} &middot; {finding.sinkId || `${finding.id}-L${finding.line}`} &middot; Root-Cause Group: {finding.rootCauseGroupId || `RC-${finding.id}`})
                           </span>
                         </div>
                         <div style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}>
@@ -1810,6 +1882,10 @@ export default function ReportEnginePage() {
                             </code>
                           </div>
                           <div style={{ marginTop: 3 }}>
+                            <strong>Static Guard &amp; Control-Dominance Analysis: </strong>
+                            <span>{finding.controlDominanceSummary || typedProof.controlDominanceSummary}</span>
+                          </div>
+                          <div style={{ marginTop: 3 }}>
                             <strong>Modeled Assumptions &amp; Static Scope Boundary: </strong>
                             <span>{typedProof.modeledAssumptions}</span>
                           </div>
@@ -1826,6 +1902,7 @@ export default function ReportEnginePage() {
                           </div>
                         </div>
                       </div>
+
 
                       {/* Technical Root Cause & Remediation */}
                       <div style={{ fontSize: 12, color: "#36302a", lineHeight: 1.55, marginBottom: 8, wordBreak: "break-word", overflowWrap: "anywhere" }}>

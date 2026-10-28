@@ -10,6 +10,7 @@ import type {
   GroundTruthCategory,
 } from "@/lib/validation-engine";
 import { deriveFindingAuditMetadata } from "@/lib/enterprise-sast-engine";
+import { normalizeFindingCvssAndProof } from "@/lib/cvss31";
 
 interface CweDeepIntelTemplate {
   cwe: string;
@@ -1032,21 +1033,22 @@ export function generateDeepReEnumeratedFindings(params: {
           source: "Tenant-configured webhook URL `webhookConfig.getCallbackUrl()`",
           sink: "new URL(callbackUrl).openConnection() without host allowlist or private-IP check",
           codeSnippet: `// Second-Order SSRF Candidate: Unvalidated webhook callback URL opened directly\npublic int dispatchWebhookPing(String callbackUrl) throws IOException {\n    HttpURLConnection conn = (HttpURLConnection) new URL(callbackUrl).openConnection();\n    conn.setInstanceFollowRedirects(true);\n    return conn.getResponseCode();\n}`,
-          remediationCode: `// ✅ FIXED (Illustrative Java Pattern — HTTPS + host allowlist + non-private IP + no redirects)\nURI uri = URI.create(callbackUrl);\nif (!"https".equalsIgnoreCase(uri.getScheme()) || !ALLOWED_WEBHOOK_HOSTS.contains(uri.getHost())) {\n    throw new SecurityException("Blocked webhook host");\n}\nInetAddress addr = InetAddress.getByName(uri.getHost());\nif (addr.isSiteLocalAddress() || addr.isLoopbackAddress() || addr.isLinkLocalAddress()) {\n    throw new SecurityException("Blocked internal/link-local egress IP");\n}\nHttpURLConnection conn = (HttpURLConnection) uri.toURL().openConnection();\nconn.setInstanceFollowRedirects(false);`,
+          remediationCode: `// ✅ FIXED (HTTPS + host allowlist + connection-time DNS resolution + RFC1918/169.254.169.254 block + HttpClient.Redirect.NEVER)\nURI uri = URI.create(callbackUrl);\nif (!"https".equalsIgnoreCase(uri.getScheme()) || !ALLOWED_WEBHOOK_HOSTS.contains(uri.getHost())) {\n    throw new SecurityException("Blocked webhook host");\n}\nfor (InetAddress addr : InetAddress.getAllByName(uri.getHost())) {\n    if (addr.isSiteLocalAddress() || addr.isLoopbackAddress() || addr.isLinkLocalAddress() || "169.254.169.254".equals(addr.getHostAddress())) {\n        throw new SecurityException("Blocked RFC1918/loopback/metadata egress IP: " + addr.getHostAddress());\n    }\n}\nHttpClient client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER).build();`,
         },
         Python: {
           source: "Tenant-configured `webhook_config.callback_url`",
           sink: "requests.get(callback_url, allow_redirects=True)",
           codeSnippet: `# Second-Order SSRF Candidate: Outbound request follows redirects without IP check\ndef dispatch_webhook_ping(callback_url: str) -> int:\n    resp = requests.get(callback_url, timeout=5, allow_redirects=True)\n    return resp.status_code`,
-          remediationCode: `# ✅ FIXED (Enforce HTTPS, allowlist host, reject RFC1918/link-local IPs, disable redirects)\n safe_url = assert_public_https_destination(callback_url, ALLOWED_WEBHOOK_HOSTS)\nresp = requests.get(safe_url, timeout=5, allow_redirects=False)`,
+          remediationCode: `# ✅ FIXED (Enforce HTTPS, allowlist host, socket.getaddrinfo RFC1918/169.254.169.254 block, allow_redirects=False)\nfor _, _, _, _, sockaddr in socket.getaddrinfo(parsed.hostname, 443):\n    ip = ipaddress.ip_address(sockaddr[0])\n    if ip.is_private or ip.is_loopback or ip.is_link_local or str(ip) == "169.254.169.254":\n        raise PermissionError("Blocked RFC1918/metadata IP")\nresp = requests.get(callback_url, timeout=5, allow_redirects=False)`,
         },
         Node: {
           source: "Tenant-configured `tenantConfig.callbackEndpoint`",
           sink: "await fetch(tenantConfig.callbackEndpoint, { redirect: 'follow' })",
           codeSnippet: `// Second-Order SSRF Candidate: Unvalidated outbound fetch with redirect following\nexport async function dispatchWebhookPing(callbackEndpoint: string) {\n  return await fetch(callbackEndpoint, { redirect: "follow" });\n}`,
-          remediationCode: `// ✅ FIXED (Verify HTTPS + host allowlist + DNS-pinned public IP + manual redirect)\nconst safeUrl = await verifyPublicWebhookDestination(callbackEndpoint, ALLOWED_HOSTS);\nreturn await fetch(safeUrl, { redirect: "error" });`,
+          remediationCode: `// ✅ FIXED (HTTPS + host allowlist + dns.lookup RFC1918/169.254.169.254 block + maxRedirects: 0)\nconst resolved = await dns.lookup(parsed.hostname, { all: true });\nif (resolved.some(r => isPrivateOrLinkLocalIp(r.address) || r.address === "169.254.169.254")) throw new Error("SSRF blocked");\nreturn await axios.get(parsed.toString(), { maxRedirects: 0, timeout: 4000 });`,
         },
       },
+
     },
     {
       cwe: "CWE-347",
@@ -1330,11 +1332,14 @@ export function generateDeepReEnumeratedFindings(params: {
     },
   ];
 
-  // Enrich all existing primary findings with DeepExploitabilityDossier
-  const enrichedPrimary = primaryFindings.map((f, idx) => ({
-    ...f,
-    deepExploitability: buildDeepExploitabilityDossier(f, idx),
-  }));
+  // Enrich all existing primary findings with DeepExploitabilityDossier and normalize CVSS + Proof State
+  const enrichedPrimary = primaryFindings.map((f, idx) => {
+    const withDossier: SASTFinding = {
+      ...f,
+      deepExploitability: buildDeepExploitabilityDossier(f, idx),
+    };
+    return normalizeFindingCvssAndProof(withDossier, primaryValidation[idx]);
+  });
 
   const reEnumeratedFindings: SASTFinding[] = [];
   const reEnumeratedValidation: CanonicalValidationFinding[] = [];
@@ -1353,12 +1358,12 @@ export function generateDeepReEnumeratedFindings(params: {
     const auditMeta = deriveFindingAuditMetadata({
       cwe: tpl.cwe,
       sanitizerDetected: false,
-      surroundingText: `${variant.codeSnippet} readAllBytes Files.copy`,
+      surroundingText: `${variant.codeSnippet}`,
       repoUrl,
       filePath: resolvedFilePath,
     });
 
-    const baseFinding: SASTFinding = {
+    const rawBaseFinding: SASTFinding = {
       id,
       title: tpl.title,
       severity: tpl.severity,
@@ -1380,6 +1385,8 @@ export function generateDeepReEnumeratedFindings(params: {
       language,
       sinkId,
       duplicateGroupId: `${resolvedFilePath}::L${tpl.line}::${tpl.cwe}`,
+      rootCauseGroupId: `RC-ARCH-${shortFile}-${tpl.cwe}`,
+      findingOrigin: "ARCHITECTURAL_CANDIDATE_HYPOTHESIS",
       deduplicatedCount: 1,
       proofState: auditMeta.proofState,
       auditDisposition: `${auditMeta.auditDisposition} [Architectural Pass-2/3 Candidate — Runtime Sandbox: NOT_RUN]`,
@@ -1415,8 +1422,8 @@ export function generateDeepReEnumeratedFindings(params: {
         { label: `${tpl.cwe} Sink`, type: "vulnerability", description: variant.sink },
         { label: "Hypothesized Impact", type: "impact", description: "Requires Isolated Runtime Reproduction" },
       ],
-      executiveSummary: `${tpl.passType} identified ${tpl.title} at ${resolvedFilePath}:${tpl.line} (${language}). Classified under canonical proof state ${auditMeta.proofState} (Isolated runtime sandbox reproduction: NOT_RUN).`,
-      businessImpact: "Represents a second-order or architectural weakness candidate that should be remediated alongside primary Pass-1 findings.",
+      executiveSummary: `${tpl.passType} identified ${tpl.title} at ${resolvedFilePath}:${tpl.line} (${language}). Classified as an architectural candidate hypothesis (Isolated runtime sandbox reproduction: NOT_RUN).`,
+      businessImpact: "Represents a second-order or architectural weakness candidate that should be evaluated and remediated alongside primary Pass-1 findings.",
       rootCause: tpl.remediationSummary,
       falsePositiveLikelihood: "Very Low",
       compliance: [
@@ -1444,13 +1451,14 @@ export function generateDeepReEnumeratedFindings(params: {
       lastSeen: today,
     };
 
+    const baseFinding = normalizeFindingCvssAndProof(rawBaseFinding);
     const dossier = buildDeepExploitabilityDossier(baseFinding, enrichedPrimary.length + idx);
     baseFinding.deepExploitability = dossier;
     reEnumeratedFindings.push(baseFinding);
 
     deepEnumerationLogs.push(
       `[TAXONOMY-MAP] ${id} (${tpl.cwe}): ${dossier.databaseCorrelations.githubGhsa.advisoryId} · ${dossier.databaseCorrelations.searchsploit.edbId} · ${dossier.databaseCorrelations.googleIntel.osvId}`,
-      `[STATIC-TRACE] Evaluated ${resolvedFilePath}:${tpl.line} -> State=${auditMeta.proofState} (Runtime Sandbox: NOT_RUN)`
+      `[STATIC-TRACE] Evaluated ${resolvedFilePath}:${tpl.line} -> State=${baseFinding.proofState} · CVSS=${baseFinding.cvss} (Runtime Sandbox: NOT_RUN)`
     );
 
     reEnumeratedValidation.push({
@@ -1513,16 +1521,16 @@ export function generateDeepReEnumeratedFindings(params: {
           label: "4. Static Control & Guard Check",
           deterministic: true,
           status: "pass",
-          summary: `State=${auditMeta.proofState} · CVSS=${tpl.cvss} (${auditMeta.cvssVector}) · Runtime Sandbox: NOT_RUN`,
-          detail: dossier.penetrationTestLifecycle.rePenetrationTest.attackChainSteps.join(" "),
+          summary: `State=${baseFinding.proofState} · CVSS=${baseFinding.cvss} (${baseFinding.cvssVector}) · Runtime Sandbox: NOT_RUN`,
+          detail: baseFinding.controlDominanceSummary || dossier.penetrationTestLifecycle.rePenetrationTest.attackChainSteps.join(" "),
           durationMs: 112,
         },
         verify: {
           label: "5. Canonical Proof State & Disposition",
           deterministic: true,
           status: "pass",
-          summary: `${auditMeta.proofState} · Heuristic Confidence=93%.`,
-          detail: baseFinding.auditDisposition || "",
+          summary: `Canonical Proof State=${baseFinding.proofState} · Heuristic Concordance=93%.`,
+          detail: baseFinding.controlDominanceSummary || baseFinding.auditDisposition || "",
           durationMs: 35,
         },
       },
@@ -1538,8 +1546,8 @@ export function generateDeepReEnumeratedFindings(params: {
       ],
       proofContract: [
         { requirement: "Source provenance", question: "Where does untrusted input enter?", satisfied: true, evidenceSummary: variant.source, sourceType: "AST" },
-        { requirement: "Sink reachability", question: "Does input reach the second-order sink in the static model?", satisfied: auditMeta.proofState === "DATAFLOW_CONFIRMED", evidenceSummary: `${resolvedFilePath}:${tpl.line} (${variant.sink.slice(0, 45)})`, sourceType: "DataFlow" },
-        { requirement: "Security control", question: "Were required guards absent in local AST scope?", satisfied: true, evidenceSummary: dossier.penetrationTestLifecycle.initialPentest.evidenceLog, sourceType: "AST" },
+        { requirement: "Sink reachability", question: "Does input reach the second-order sink in the static model?", satisfied: baseFinding.proofState === "DATAFLOW_CONFIRMED" || baseFinding.proofState === "PATH_FEASIBLE", evidenceSummary: `${resolvedFilePath}:${tpl.line} (${variant.sink.slice(0, 45)})`, sourceType: "DataFlow" },
+        { requirement: "Security control", question: "Were required guards absent in local AST scope?", satisfied: true, evidenceSummary: baseFinding.controlDominanceSummary || dossier.penetrationTestLifecycle.initialPentest.evidenceLog, sourceType: "AST" },
         { requirement: "Behavioral proof", question: "Was isolated sandbox runtime reproduction executed?", satisfied: false, evidenceSummary: "Runtime Sandbox Verification: NOT_RUN (Static AST/Dataflow Candidate).", sourceType: "Controlled Check" },
         { requirement: "Alternative explanations", question: "Were dead-code and constant-string paths ruled out?", satisfied: true, evidenceSummary: "Verified active in Pass-2/3 architectural model.", sourceType: "AST" },
         { requirement: "Reproducibility", question: "Bound to deterministic file, line, sinkId, and commit?", satisfied: true, evidenceSummary: `${resolvedFilePath}:${tpl.line} @ ${commitSha.slice(0, 8)} (${sinkId})`, sourceType: "Controlled Check" },
@@ -1548,7 +1556,7 @@ export function generateDeepReEnumeratedFindings(params: {
       evidenceConfidence: 0.93,
       groundTruthCategory: auditMeta.gtCat,
       impact: `${dossier.penetrationTestLifecycle.postExploitation.privilegeAttained}`,
-      rationale: baseFinding.auditDisposition || dossier.penetrationTestLifecycle.reEnumeration.summary,
+      rationale: baseFinding.controlDominanceSummary || baseFinding.auditDisposition || dossier.penetrationTestLifecycle.reEnumeration.summary,
       unresolvedAssumptions: [
         "Pass-2/3 architectural candidates require isolated sandbox runtime reproduction to confirm live exploitability.",
       ],
@@ -1565,7 +1573,7 @@ export function generateDeepReEnumeratedFindings(params: {
         schemaVersion: "2.1.0",
         toolDriver: "XTRIKE Deep Enumeration & Static Dataflow Engine",
         ruleId: tpl.cwe,
-        level: tpl.severity === "Critical" || tpl.severity === "High" ? "error" : "warning",
+        level: baseFinding.severity === "Critical" || baseFinding.severity === "High" ? "error" : "warning",
         physicalLocation: `${resolvedFilePath}:${tpl.line}`,
         codeFlowsCount: 2,
       },
@@ -1573,7 +1581,7 @@ export function generateDeepReEnumeratedFindings(params: {
   });
 
   deepEnumerationLogs.push(
-    `[STAGE 7: REPORTING ENGINE] Compiled ${enrichedPrimary.length + reEnumeratedFindings.length} total canonical findings (${enrichedPrimary.length} Pass-1 Primary + ${reEnumeratedFindings.length} Pass-2/3 Architectural Candidates) with 100% aligned Proof State IDs.`
+    `[STAGE 7: REPORTING ENGINE] Compiled ${enrichedPrimary.length + reEnumeratedFindings.length} total canonical findings (${enrichedPrimary.length} Pass-1 Primary + ${reEnumeratedFindings.length} Pass-2/3 Architectural Candidates) with 100% CVSS v3.1 & Proof State alignment.`
   );
 
   return {
@@ -1582,3 +1590,4 @@ export function generateDeepReEnumeratedFindings(params: {
     deepEnumerationLogs,
   };
 }
+

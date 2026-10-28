@@ -178,6 +178,12 @@ export type SASTFinding = {
   sinkId?: string;
   duplicateGroupId?: string;
   deduplicatedCount?: number;
+  rootCauseGroupId?: string;
+  findingOrigin?:
+    | "PRIMARY_CODE_VULNERABILITY"
+    | "MULTI_SINK_SHARED_ROOT_CAUSE"
+    | "ARCHITECTURAL_CANDIDATE_HYPOTHESIS";
+  controlDominanceSummary?: string;
   proofState?: CanonicalProofState;
   evidenceType?: EvidenceCategory;
   modeledAssumptions?: string;

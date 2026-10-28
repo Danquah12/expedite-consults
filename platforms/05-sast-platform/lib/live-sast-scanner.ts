@@ -4,6 +4,8 @@ import {
   buildDeepExploitabilityDossier,
   generateDeepReEnumeratedFindings,
 } from "@/lib/deep-enumeration-engine";
+import { normalizeFindingCvssAndProof } from "@/lib/cvss31";
+
 
 export type StandardPluginId =
   | "PY-PLUGIN-MITRE-TTP"
@@ -947,14 +949,19 @@ if (!jwtSecret || jwtSecret.length < 32) {
       verificationMode: "Controlled local canary listener & RFC1918/IMDS blocklist verification",
       telemetrySignature: "Verifies whether outbound HTTP client blocks link-local 169.254.169.254 and internal IPs.",
     },
-    remediationCode: `// ✅ REMEDIATED (HTTPS Only + Host Allowlist + Private IP Block)
+    remediationCode: `// ✅ REMEDIATED (HTTPS Only + Host Allowlist + dns.lookup RFC1918/169.254.169.254 Block + maxRedirects: 0 / HttpClient.Redirect.NEVER)
 const parsed = new URL(targetUrl);
 if (parsed.protocol !== "https:" || !ALLOWED_HOSTS.has(parsed.hostname)) {
   throw new Error("Outbound destination not permitted");
 }
-await fetch(parsed.toString(), { redirect: "error" });`,
-    remediationExplanation: "Restrict outbound requests to HTTPS, verify the hostname against an allowlist, and disable open redirects.",
+const resolved = await dns.lookup(parsed.hostname, { all: true });
+if (resolved.some(r => isPrivateOrLinkLocalIp(r.address) || r.address === "169.254.169.254")) {
+  throw new Error("SSRF blocked: private/loopback/metadata IP");
+}
+await axios.get(parsed.toString(), { maxRedirects: 0, timeout: 4000 });`,
+    remediationExplanation: "Restrict outbound requests to HTTPS, verify the hostname against an allowlist, resolve DNS at connection time to block RFC1918/loopback/link-local (169.254.169.254) IPs, and disable HTTP redirects (maxRedirects: 0 / HttpClient.Redirect.NEVER).",
   },
+
 
   "CWE-862": {
     cweId: "CWE-862",
@@ -1899,7 +1906,11 @@ function buildFindingRecordsFromMatches(params: {
     });
   });
 
-  return { sastFindings, validationFindings, pluginEvaluations };
+  const normalizedSastFindings = sastFindings.map((f, idx) =>
+    normalizeFindingCvssAndProof(f, validationFindings[idx])
+  );
+
+  return { sastFindings: normalizedSastFindings, validationFindings, pluginEvaluations };
 }
 
 export function scanFilesWithPythonPlugins(params: {
@@ -2207,6 +2218,50 @@ export async function runDynamicRepoOrCodeScan(params: {
   });
 }
 
+function consolidateAdjacentRootCauseFindings(
+  rawFindings: SASTFinding[],
+  rawValFindings?: CanonicalValidationFinding[]
+): { findings: SASTFinding[]; valFindings: CanonicalValidationFinding[] } {
+  const consolidated: SASTFinding[] = [];
+  const valById = new Map<string, CanonicalValidationFinding>();
+  (rawValFindings || []).forEach((vf) => valById.set(vf.findingId, vf));
+
+  for (const f of rawFindings) {
+    const isReEnum = f.id.startsWith("RE-ENUM-");
+    if (!isReEnum) {
+      const existing = consolidated.find(
+        (prev) =>
+          !prev.id.startsWith("RE-ENUM-") &&
+          prev.file === f.file &&
+          prev.cwe === f.cwe &&
+          Math.abs(prev.line - f.line) <= 8
+      );
+      if (existing) {
+        existing.deduplicatedCount = (existing.deduplicatedCount || 1) + 1;
+        existing.findingOrigin = "MULTI_SINK_SHARED_ROOT_CAUSE";
+        if (!existing.taintPath.some((step) => step.includes(`Line ${f.line}`))) {
+          existing.taintPath = [
+            ...existing.taintPath,
+            `Consolidated Co-Located Sink (Line ${f.line}): ${f.sink}`,
+          ];
+        }
+        continue;
+      }
+    }
+    const vf = valById.get(f.id);
+    const normalized = normalizeFindingCvssAndProof(f, vf);
+    if (vf && normalized.proofState) {
+      vf.lifecycle.verify.summary = `Canonical Proof State=${normalized.proofState} · Heuristic Concordance=${Math.round((normalized.confidence || 0.93) * 100)}%.`;
+      vf.lifecycle.verify.detail = normalized.controlDominanceSummary || normalized.auditDisposition || vf.lifecycle.verify.detail;
+    }
+    consolidated.push(normalized);
+  }
+
+  const keptIds = new Set(consolidated.map((f) => f.id));
+  const keptVal = (rawValFindings || []).filter((vf) => keptIds.has(vf.findingId));
+  return { findings: consolidated, valFindings: keptVal };
+}
+
 export function loadActiveScanSession(): ActiveScanSession | null {
   if (typeof window === "undefined") return null;
   try {
@@ -2216,7 +2271,9 @@ export function loadActiveScanSession(): ActiveScanSession | null {
     if (liveRaw) {
       const t = JSON.parse(liveRaw);
       if (t && Array.isArray(t.findings) && t.findings.length > 0) {
-        const enrichedFindings: SASTFinding[] = t.findings.map((f: SASTFinding, idx: number) => ({
+        const { findings: dedupedFindings, valFindings: dedupedVal } =
+          consolidateAdjacentRootCauseFindings(t.findings, t.validationFindings);
+        const enrichedFindings: SASTFinding[] = dedupedFindings.map((f: SASTFinding, idx: number) => ({
           ...f,
           deepExploitability: f.deepExploitability || buildDeepExploitabilityDossier(f, idx),
         }));
@@ -2250,8 +2307,8 @@ export function loadActiveScanSession(): ActiveScanSession | null {
           scanLogs: t.logs || [],
           sastFindings: enrichedFindings,
           validationFindings:
-            Array.isArray(t.validationFindings) && t.validationFindings.length > 0
-              ? t.validationFindings
+            dedupedVal.length > 0
+              ? dedupedVal
               : enriched.validationFindings,
           pluginEvaluations: enriched.pluginEvaluations,
         };
@@ -2262,16 +2319,22 @@ export function loadActiveScanSession(): ActiveScanSession | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as ActiveScanSession;
     if (parsed && Array.isArray(parsed.sastFindings)) {
-      parsed.sastFindings = parsed.sastFindings.map((f, idx) => ({
+      const { findings: dedupedFindings, valFindings: dedupedVal } =
+        consolidateAdjacentRootCauseFindings(parsed.sastFindings, parsed.validationFindings);
+      parsed.sastFindings = dedupedFindings.map((f, idx) => ({
         ...f,
         deepExploitability: f.deepExploitability || buildDeepExploitabilityDossier(f, idx),
       }));
+      if (dedupedVal.length > 0) {
+        parsed.validationFindings = dedupedVal;
+      }
     }
     return parsed;
   } catch {
     return null;
   }
 }
+
 
 /**
  * Completely clears all persisted and session scan information before a new scan starts.
