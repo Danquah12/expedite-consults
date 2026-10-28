@@ -23,9 +23,16 @@ import {
   type ActiveScanSession,
   type MultiStandardPluginEvaluation,
 } from "@/lib/live-sast-scanner";
-import { calculateRiskScore, severityCounts, averageConfidence } from "@/lib/risk";
+import { severityCounts } from "@/lib/risk";
 import { buildDeepExploitabilityDossier } from "@/lib/deep-enumeration-engine";
 import { getLanguageMatchedRemediation } from "@/lib/enterprise-sast-engine";
+import {
+  calculateCvss31BaseScore,
+  inferCvss31VectorForFinding,
+  resolveTypedProofClassification,
+  computeAuditableRiskWorksheet,
+  runTenGateReportAcceptanceSuite,
+} from "@/lib/cvss31";
 import type { SASTFinding, CanonicalProofState } from "@/types/sast";
 
 type ReportTemplate = "full_technical" | "executive_brief" | "compliance_attestation";
@@ -35,17 +42,7 @@ function resolveCanonicalProofState(
   f: SASTFinding,
   vf?: CanonicalValidationFinding
 ): CanonicalProofState {
-  if (f.proofState) return f.proofState;
-  if (f.status === "Resolved" || vf?.status === "not_reproduced") return "MITIGATED_BY_GUARD";
-  if (
-    f.cwe === "CWE-328" ||
-    f.cwe === "CWE-327" ||
-    f.cwe === "CWE-330"
-  ) {
-    return "DETECTED_STATIC";
-  }
-  if (f.cwe === "CWE-798" || vf?.status === "inconclusive") return "NEEDS_MANUAL_VALIDATION";
-  return "DATAFLOW_CONFIRMED";
+  return resolveTypedProofClassification(f, vf).proofState;
 }
 
 function formatValidIsoUtcTimestamp(raw?: string): string {
@@ -162,13 +159,23 @@ export default function ReportEnginePage() {
   }, [rawFindings, severityFilter, validationById]);
 
   const counts = useMemo(() => severityCounts(filteredFindings), [filteredFindings]);
-  const riskScore = useMemo(() => calculateRiskScore(filteredFindings), [filteredFindings]);
-  const avgConf = useMemo(() => averageConfidence(filteredFindings), [filteredFindings]);
+  const riskWorksheet = useMemo(
+    () => computeAuditableRiskWorksheet(filteredFindings, validationById),
+    [filteredFindings, validationById]
+  );
+  const acceptanceSuite = useMemo(
+    () => runTenGateReportAcceptanceSuite(filteredFindings, validationById),
+    [filteredFindings, validationById]
+  );
+  const riskScore = riskWorksheet.compositeRiskScore;
+  const avgConf = riskWorksheet.calibratedConfidencePercent;
 
-  // AT-01: Derive all Executive Summary & Scorecard counts from the EXACT same canonical state machine as the individual finding dossiers
+  // AT-01 & AT-PROOF-06: Derive all Executive Summary & Scorecard counts from the 7-state Typed Proof Model
   const canonicalStats = useMemo(() => {
     const total = filteredFindings.length;
     let dataflowConfirmed = 0;
+    let guardAnalyzed = 0;
+    let pathFeasible = 0;
     let detectedStatic = 0;
     let needsManualValidation = 0;
     let mitigatedByGuard = 0;
@@ -178,8 +185,12 @@ export default function ReportEnginePage() {
       const state = resolveCanonicalProofState(f, validationById.get(f.id));
       if (state === "RUNTIME_REPRODUCED" || state === "IMPACT_CONFIRMED") {
         runtimeReproduced++;
-      } else if (state === "DATAFLOW_CONFIRMED" || state === "PATH_FEASIBLE") {
+      } else if (state === "DATAFLOW_CONFIRMED") {
         dataflowConfirmed++;
+      } else if (state === "GUARD_ANALYZED") {
+        guardAnalyzed++;
+      } else if (state === "PATH_FEASIBLE") {
+        pathFeasible++;
       } else if (state === "DETECTED_STATIC") {
         detectedStatic++;
       } else if (state === "NEEDS_MANUAL_VALIDATION" || state === "INCONCLUSIVE") {
@@ -192,6 +203,8 @@ export default function ReportEnginePage() {
     return {
       total,
       dataflowConfirmed,
+      guardAnalyzed,
+      pathFeasible,
       detectedStatic,
       needsManualValidation,
       mitigatedByGuard,
@@ -234,19 +247,21 @@ export default function ReportEnginePage() {
       ``,
       `---`,
       ``,
-      `## 1. Executive Risk Posture & Canonical Proof State Scorecard`,
+      `## 1. Executive Risk Posture & Typed Proof State Scorecard`,
       ``,
       `| Metric | Value |`,
       `| :--- | :--- |`,
-      `| **Composite Risk Score** | **${riskScore}/100** (${riskScore >= 60 ? "RELEASE GATE BLOCKED — EVIDENCE & REMEDIATION REVIEW" : "MODERATE"}) |`,
+      `| **Composite Risk Score** | **${riskScore}/100** (Raw Weighted Sum: \`${riskWorksheet.rawWeightedSum}\` / \`${riskWorksheet.normalizationCeiling}\` — RELEASE GATE BLOCKED) |`,
       `| **Total Evaluated Findings** | ${canonicalStats.total} |`,
       `| **Critical / High / Medium / Low** | ${counts.critical} / ${counts.high} / ${counts.medium} / ${counts.low} |`,
-      `| **DATAFLOW_CONFIRMED (Static Source-to-Sink Verified; Runtime: NOT_RUN)** | ${canonicalStats.dataflowConfirmed} / ${canonicalStats.total} |`,
-      `| **DETECTED_STATIC (Cryptographic / PRNG / Structural Pattern)** | ${canonicalStats.detectedStatic} / ${canonicalStats.total} |`,
-      `| **NEEDS_MANUAL_VALIDATION (Hardcoded Secret Scope Verification)** | ${canonicalStats.needsManualValidation} / ${canonicalStats.total} |`,
+      `| **DATAFLOW_CONFIRMED (Source-to-Sink Taint Flow Verified)** | ${canonicalStats.dataflowConfirmed} / ${canonicalStats.total} |`,
+      `| **GUARD_ANALYZED (Auth / Config / Parser / Header Control Analyzed)** | ${canonicalStats.guardAnalyzed} / ${canonicalStats.total} |`,
+      `| **PATH_FEASIBLE (Concurrency / TOCTOU State Window Feasible)** | ${canonicalStats.pathFeasible} / ${canonicalStats.total} |`,
+      `| **DETECTED_STATIC (Cryptographic / PRNG Primitive Identified)** | ${canonicalStats.detectedStatic} / ${canonicalStats.total} |`,
+      `| **NEEDS_MANUAL_VALIDATION (Secret Provenance / Dependency Reachability)** | ${canonicalStats.needsManualValidation} / ${canonicalStats.total} |`,
       `| **MITIGATED_BY_GUARD (Upstream Sanitizer / Parameterization)** | ${canonicalStats.mitigatedByGuard} / ${canonicalStats.total} |`,
       `| **RUNTIME_REPRODUCED (Isolated Sandbox Exploit Executed)** | ${canonicalStats.runtimeReproduced} / ${canonicalStats.total} |`,
-      `| **Heuristic Multi-Engine Consensus Confidence** | ${avgConf.toFixed(1)}% (Calibrated Static + Dataflow Score) |`,
+      `| **Calibrated 4-Engine Consensus Confidence** | **${avgConf.toFixed(1)}%** (XQL: ${riskWorksheet.engineConcordance.xql}%, DeepFlow: ${riskWorksheet.engineConcordance.deepFlow}%, StructSCA: ${riskWorksheet.engineConcordance.structSca}%, AST-Query: ${riskWorksheet.engineConcordance.astQuery}%) |`,
       ``,
       `## 2. XTRIKE 9-Plugin Standards & Offensive TTP Matrix`,
       ``,
@@ -257,11 +272,13 @@ export default function ReportEnginePage() {
           `| \`${p.pluginId}\` | \`${p.modulePath}\` | ${p.standardVersion} | ${filteredFindings.length} evaluated |`
       ),
       ``,
-      `## 3. Detailed Finding Dossiers (CWE/ASVS/CAPEC Taxonomy & 3-Layer Evidence Separation)`,
+      `## 3. Detailed Finding Dossiers (Validated CVSS v3.1, Typed Proof Model & Language-Matched Remediation)`,
       ``,
       ...filteredFindings.flatMap((f, idx) => {
         const vf = validationById.get(f.id);
-        const canonicalState = resolveCanonicalProofState(f, vf);
+        const typedProof = resolveTypedProofClassification(f, vf);
+        const vector = inferCvss31VectorForFinding(f);
+        const computedScore = calculateCvss31BaseScore(vector);
         const matchedRemediations = getLanguageMatchedRemediation(f.remediation, f.language);
         const rem = matchedRemediations[0];
         const dossier = f.deepExploitability || buildDeepExploitabilityDossier(f);
@@ -269,20 +286,20 @@ export default function ReportEnginePage() {
         return [
           `### 3.${idx + 1} [${f.severity.toUpperCase()}] ${f.id} — ${f.title}`,
           `- **Location:** \`${f.file}:${f.line}\` (${f.language}) · **Sink ID:** \`${f.sinkId || `${f.id}-L${f.line}`}\` · **Pass:** ${enumerationPhase.discoveryPass}`,
-          `- **Canonical Proof State:** \`${canonicalState}\` · **Runtime Sandbox Verification:** \`NOT_RUN\``,
+          `- **Typed Proof State:** \`${typedProof.proofState}\` · **Evidence Category:** \`${typedProof.evidenceType}\` · **Runtime Sandbox Verification:** \`NOT_RUN\``,
+          `- **Modeled Assumptions & Scope:** ${typedProof.modeledAssumptions}`,
           `- **Audit Disposition:** ${f.auditDisposition || penetrationTestLifecycle.rePenetrationTest.verificationVerdict}`,
           `- **CWE / OWASP:** ${f.cwe} (${f.cweName}) · ${f.owasp} (${f.owaspCategory})`,
-          `- **CVSS v3.1 Base Score & Vector:** **${f.cvss}** (\`${f.cvssVector || "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"}\`) — ${f.cvssRationale || "Static AST severity calculation."}`,
-          `- **Taxonomy & Advisory Correlation (AT-03 First-Party Code Rule):**`,
+          `- **CVSS v3.1 Base Score & Vector (AT-CVSS-01 Verified):** **${f.cvss}** (Calculated: \`${computedScore}\` from \`${vector}\`) — ${f.cvssRationale || "FIRST.org CVSS v3.1 mathematical base score."}`,
+          `- **Taxonomy & Advisory Correlation:**`,
           `  - **OWASP ASVS / CWE:** \`${databaseCorrelations.githubGhsa.advisoryId}\` (${databaseCorrelations.githubGhsa.cveId})`,
           `  - **MITRE CAPEC Attack Pattern:** \`${databaseCorrelations.searchsploit.edbId}\` — ${databaseCorrelations.searchsploit.exploitTitle}`,
           `  - **OWASP WSTG & NIST SP 800-53:** \`${databaseCorrelations.googleIntel.osvId}\` · ${databaseCorrelations.googleIntel.projectZeroRef}`,
-          `- **Layer 1 — Observed Static AST & Dataflow Evidence:** \`${penetrationTestLifecycle.initialPentest.evidenceLog}\``,
-          `- **Layer 2 — Follow-Up Verification Checks:** ${penetrationTestLifecycle.reEnumeration.newlyDiscoveredSurface.join(" | ")}`,
-          `- **Layer 3 — Hypothesized Blast Radius (If Reachable in Production):** ${databaseCorrelations.otherDatabases.exploitabilityExtent}`,
+          `- **${typedProof.evidenceHeading}:** \`${f.source}\` -> ${f.taintPath.join(" -> ")} -> \`${f.sink}\``,
           `- **Executive Summary:** ${f.executiveSummary}`,
           `- **Root Cause:** ${f.rootCause}`,
-          `- **Illustrative Remediation Guidance (${rem?.platform || f.language}):** ${rem?.explanation || "Use parameterized bindings and strict input validation."}`,
+          `- **Language-Matched Remediation Guidance (${rem?.platform || f.language}):** ${rem?.explanation || "Use parameterized bindings and strict input validation."}`,
+          f.regressionTest ? `- **Regression Test:** ${f.regressionTest}` : ``,
           ``,
           `\`\`\`${f.language.toLowerCase()}`,
           `${rem?.code || f.codeSnippet || ""}`,
@@ -354,21 +371,61 @@ export default function ReportEnginePage() {
             driver: {
               name: "XTRIKE SAST Desk (XTRIKE XQL + XTRIKE DeepFlow + XTRIKE StructSCA + 9 Standards Plugins)",
               version: "4.2.0",
+              rules: filteredFindings.map((f) => ({
+                id: `${f.id}-${f.cwe}`,
+                name: f.title,
+                shortDescription: { text: `${f.cwe}: ${f.cweName}` },
+                properties: {
+                  "security-severity": String(f.cvss),
+                  cvssV31Vector: inferCvss31VectorForFinding(f),
+                  owasp: f.owasp,
+                  mitreAttack: f.mitre,
+                },
+              })),
             },
           },
-          results: rawValidationFindings.map((f) => ({
-            ruleId: f.ruleId,
-            level: f.rawSarifRecord.level,
-            message: { text: `${f.title} (${f.cwe})` },
-            locations: [{ physicalLocation: f.rawSarifRecord.physicalLocation }],
-            properties: {
-              cwe: f.cwe,
-              validationStatus: f.status,
-              evidenceConfidence: f.evidenceConfidence,
-              commitSha: f.commitSha,
-              language: f.language,
-            },
-          })),
+          results: filteredFindings.map((f) => {
+            const vf = validationById.get(f.id);
+            const typed = resolveTypedProofClassification(f, vf);
+            const vector = inferCvss31VectorForFinding(f);
+            const computedCvss = calculateCvss31BaseScore(vector);
+            return {
+              ruleId: `${f.id}-${f.cwe}`,
+              level:
+                f.severity === "Critical" || f.severity === "High"
+                  ? "error"
+                  : f.severity === "Medium"
+                    ? "warning"
+                    : "note",
+              message: { text: `${f.id}: ${f.title} (${f.cwe})` },
+              locations: [
+                {
+                  physicalLocation: {
+                    artifactLocation: { uri: f.file },
+                    region: {
+                      startLine: f.line,
+                      snippet: { text: f.codeSnippet || f.sink },
+                    },
+                  },
+                },
+              ],
+              properties: {
+                findingId: f.id,
+                cwe: f.cwe,
+                severity: f.severity,
+                cvssV31Score: f.cvss,
+                cvssV31CalculatedScore: computedCvss,
+                cvssV31Vector: vector,
+                proofState: typed.proofState,
+                evidenceType: typed.evidenceType,
+                modeledAssumptions: typed.modeledAssumptions,
+                runtimeSandboxStatus: "NOT_RUN",
+                commitSha: fullCommitSha,
+                language: f.language,
+                regressionTest: f.regressionTest || f.validationSteps[0] || "",
+              },
+            };
+          }),
         },
       ],
     };
@@ -1117,40 +1174,125 @@ export default function ReportEnginePage() {
                   fontSize: 12,
                   color: "#4a4239",
                   lineHeight: 1.6,
+                  marginBottom: 14,
                 }}
               >
-                <strong style={{ color: "#1f1b18" }}>Executive Assessment Synthesis &amp; Scope Qualification (AT-01 / AT-16 / AT-17):</strong>{" "}
-                XTRIKE SAST Desk executed a multi-engine static AST and dataflow assessment against{" "}
+                <strong style={{ color: "#1f1b18" }}>Executive Assessment Synthesis &amp; Typed Proof Separation (AT-01 / AT-PROOF-06 / AT-16 / AT-17):</strong>{" "}
+                XTRIKE SAST Desk executed a multi-engine static AST, guard, and dataflow assessment against{" "}
                 <code style={{ fontFamily: "monospace", fontWeight: 700 }}>{targetName}</code> (commit{" "}
                 <code style={{ fontFamily: "monospace" }}>{fullCommitSha.slice(0, 12)}</code>, scope:{" "}
                 <strong>{scopeQualificationLabel}</strong>). Out of{" "}
-                <strong>{canonicalStats.total} deduplicated findings</strong>,{" "}
+                <strong>{canonicalStats.total} deduplicated findings</strong>:{" "}
                 <strong>{canonicalStats.dataflowConfirmed} findings</strong> reached{" "}
                 <code style={{ fontFamily: "monospace", fontWeight: 700 }}>DATAFLOW_CONFIRMED</code>{" "}
-                (static source-to-sink taint flow verified without local sanitizer guard),{" "}
+                (source-to-sink taint flow verified for SQLi, Deserialization, SSRF, Path Traversal, and Open Redirect),{" "}
+                <strong>{canonicalStats.guardAnalyzed} findings</strong> reached{" "}
+                <code style={{ fontFamily: "monospace", fontWeight: 700 }}>GUARD_ANALYZED</code>{" "}
+                (authorization ownership, JWT algorithm pinning, parser flags, headers, cookies, CORS, and Terraform IAM),{" "}
+                <strong>{canonicalStats.pathFeasible} finding</strong> reached{" "}
+                <code style={{ fontFamily: "monospace", fontWeight: 700 }}>PATH_FEASIBLE</code>{" "}
+                (concurrency TOCTOU state window),{" "}
                 <strong>{canonicalStats.detectedStatic} findings</strong> reached{" "}
                 <code style={{ fontFamily: "monospace", fontWeight: 700 }}>DETECTED_STATIC</code>{" "}
-                (cryptographic/PRNG weakness),{" "}
+                (MD5 password digest &amp; weak PRNG),{" "}
                 <strong>{canonicalStats.needsManualValidation} findings</strong> are{" "}
                 <code style={{ fontFamily: "monospace", fontWeight: 700 }}>NEEDS_MANUAL_VALIDATION</code>{" "}
-                (hardcoded constants requiring deployment-scope verification), and{" "}
+                (secret provenance, dependency reachability &amp; DOM HTML provenance), and{" "}
                 <strong>{canonicalStats.runtimeReproduced} findings</strong> are{" "}
                 <code style={{ fontFamily: "monospace", fontWeight: 700 }}>RUNTIME_REPRODUCED</code>{" "}
                 (isolated runtime sandbox verification was <strong>NOT_RUN</strong> during this static scan).
                 <div style={{ marginTop: 6, fontSize: 11, color: "#5c5349" }}>
-                  <strong>Scoring Formula (AT-16):</strong>{" "}
-                  <code>CompositeRisk = min(100, round(Σ(w_sev × CVSS × ReachabilityFactor)))</code> where{" "}
-                  <code>w_Critical=2.5, w_High=1.6, w_Medium=0.8</code>.{" "}
-                  <code>HeuristicConfidence = mean(EngineConcordance_XQL, DeepFlow, StructSCA, ASTQuery)</code>{" "}
-                  rounded to 1 decimal place ({avgConf.toFixed(1)}%). Static source-to-sink reachability is reported as{" "}
-                  <code>DATAFLOW_CONFIRMED</code> and never overstated as live runtime exploitation without sandbox execution artifacts.
+                  <strong>Risk vs. Confidence Separation (Review Issue 2):</strong>{" "}
+                  <strong>Composite Risk ({riskScore}/100)</strong> measures severity-weighted and reachability-adjusted potential exposure across open findings, whereas{" "}
+                  <strong>Calibrated Multi-Engine Confidence ({avgConf.toFixed(1)}%)</strong> measures the mean static agreement across the 4 analysis engines (
+                  <code>XTRIKE XQL={riskWorksheet.engineConcordance.xql}%</code>,{" "}
+                  <code>DeepFlow={riskWorksheet.engineConcordance.deepFlow}%</code>,{" "}
+                  <code>StructSCA={riskWorksheet.engineConcordance.structSca}%</code>,{" "}
+                  <code>AST-Query={riskWorksheet.engineConcordance.astQuery}%</code>).
                 </div>
+              </div>
+
+              {/* Reproducible Composite Risk & Multi-Engine Confidence Worksheet (Review Issue 2) */}
+              <div
+                style={{
+                  border: "1px solid #ddd3c2",
+                  borderRadius: 10,
+                  background: "#ffffff",
+                  padding: "12px 14px",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: 8,
+                    marginBottom: 8,
+                  }}
+                >
+                  <strong style={{ fontSize: 12, color: "#1f1b18" }}>
+                    Reproducible Composite Risk &amp; 4-Engine Concordance Worksheet (AT-CVSS-01 / AT-16)
+                  </strong>
+                  <span style={{ fontFamily: "monospace", fontSize: 11, color: "#8b4528", fontWeight: 700 }}>
+                    Raw Weighted Sum: {riskWorksheet.rawWeightedSum} / Ceiling: {riskWorksheet.normalizationCeiling} &rarr; Composite Risk = min(100, round(({riskWorksheet.rawWeightedSum}/{riskWorksheet.normalizationCeiling})&times;100)) = {riskScore}/100
+                  </span>
+                </div>
+
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11.2 }}>
+                  <thead>
+                    <tr style={{ background: "#f3eee4", color: "#1f1b18" }}>
+                      <th style={{ border: "1px solid #ddd3c2", padding: "6px 10px", textAlign: "left" }}>
+                        FIRST.org Severity Band
+                      </th>
+                      <th style={{ border: "1px solid #ddd3c2", padding: "6px 10px", textAlign: "center" }}>
+                        Finding Count
+                      </th>
+                      <th style={{ border: "1px solid #ddd3c2", padding: "6px 10px", textAlign: "center" }}>
+                        Severity Weight (w_sev)
+                      </th>
+                      <th style={{ border: "1px solid #ddd3c2", padding: "6px 10px", textAlign: "center" }}>
+                        Mean Verified CVSS v3.1
+                      </th>
+                      <th style={{ border: "1px solid #ddd3c2", padding: "6px 10px", textAlign: "center" }}>
+                        Mean Reachability Factor
+                      </th>
+                      <th style={{ border: "1px solid #ddd3c2", padding: "6px 10px", textAlign: "right" }}>
+                        Subtotal Weighted Points (&Sigma; CVSS &times; w_sev &times; R)
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {riskWorksheet.severityBreakdown.map((row) => (
+                      <tr key={row.severity}>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "6px 10px", fontWeight: 800 }}>
+                          {row.severity}
+                        </td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "6px 10px", textAlign: "center", fontWeight: 700 }}>
+                          {row.count}
+                        </td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "6px 10px", textAlign: "center", fontFamily: "monospace" }}>
+                          {row.weight.toFixed(2)}
+                        </td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "6px 10px", textAlign: "center", fontFamily: "monospace" }}>
+                          {row.avgCvss.toFixed(2)}
+                        </td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "6px 10px", textAlign: "center", fontFamily: "monospace" }}>
+                          {row.avgReachabilityFactor.toFixed(2)}
+                        </td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "6px 10px", textAlign: "right", fontFamily: "monospace", fontWeight: 800 }}>
+                          {row.subtotalPoints.toFixed(2)} pts
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </section>
           )}
 
           {/* =================================================================
-           * SECTION 2: CANONICAL PROOF VALIDATION SCORECARD (AT-01)
+           * SECTION 2: 7-STATE TYPED PROOF MODEL SCORECARD (AT-01 / AT-PROOF-06)
            * ================================================================= */}
           {includeValidationScorecard && (
             <section className="print-avoid-break" style={{ marginBottom: 32 }}>
@@ -1162,7 +1304,7 @@ export default function ReportEnginePage() {
                 }}
               >
                 <h2 className="font-editorial" style={{ fontSize: 19, fontWeight: 700, color: "#1f1b18" }}>
-                  2. Canonical Proof State Machine Scorecard (AT-01 Reconciled)
+                  2. 7-State Typed Proof Model &amp; Evidence Category Scorecard (AT-01 / AT-PROOF-06)
                 </h2>
               </div>
 
@@ -1170,10 +1312,10 @@ export default function ReportEnginePage() {
                 <thead>
                   <tr style={{ background: "#f3eee4", color: "#1f1b18" }}>
                     <th style={{ border: "1px solid #ddd3c2", padding: "8px 12px", textAlign: "left" }}>
-                      Canonical Proof State (Matches Dossier Badge)
+                      Typed Proof State (Matches Dossier Badge)
                     </th>
                     <th style={{ border: "1px solid #ddd3c2", padding: "8px 12px", textAlign: "left" }}>
-                      Runtime Sandbox Status
+                      Evidence Category &amp; Sandbox Status
                     </th>
                     <th style={{ border: "1px solid #ddd3c2", padding: "8px 12px", textAlign: "center" }}>
                       Count
@@ -1189,13 +1331,41 @@ export default function ReportEnginePage() {
                       DATAFLOW_CONFIRMED
                     </td>
                     <td style={{ border: "1px solid #ddd3c2", padding: "8px 12px", fontFamily: "monospace" }}>
-                      NOT_RUN (Static AST + Taint)
+                      TAINT_DATAFLOW (Sandbox: NOT_RUN)
                     </td>
                     <td style={{ border: "1px solid #ddd3c2", padding: "8px 12px", textAlign: "center", fontWeight: 800 }}>
                       {canonicalStats.dataflowConfirmed}
                     </td>
                     <td style={{ border: "1px solid #ddd3c2", padding: "8px 12px" }}>
-                      Source-to-sink taint path verified in AST with no local sanitizer guard. Remediate sink and verify in isolated sandbox.
+                      Reserved strictly for genuine source-to-dangerous-sink taint flows (SQLi `F-001`, Deserialization `F-002`, SSRF `F-004`, Path Traversal `F-009`, Open Redirect `F-011`).
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style={{ border: "1px solid #ddd3c2", padding: "8px 12px", fontWeight: 800, color: "#8b4528", fontFamily: "monospace" }}>
+                      GUARD_ANALYZED
+                    </td>
+                    <td style={{ border: "1px solid #ddd3c2", padding: "8px 12px", fontFamily: "monospace" }}>
+                      AUTHORIZATION_ENFORCEMENT / CONFIGURATION_CONTROL
+                    </td>
+                    <td style={{ border: "1px solid #ddd3c2", padding: "8px 12px", textAlign: "center", fontWeight: 800 }}>
+                      {canonicalStats.guardAnalyzed}
+                    </td>
+                    <td style={{ border: "1px solid #ddd3c2", padding: "8px 12px" }}>
+                      Access-control ownership (`F-003`), JWT algorithm pinning (`F-006`), CSRF (`F-008`), rate limiting (`F-018`), XML parser flags (`F-005`), headers/cookies/CORS (`F-012..F-015, F-020, F-021, F-023, F-025`), and Terraform IAM (`F-027`).
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style={{ border: "1px solid #ddd3c2", padding: "8px 12px", fontWeight: 800, color: "#7a4b19", fontFamily: "monospace" }}>
+                      PATH_FEASIBLE
+                    </td>
+                    <td style={{ border: "1px solid #ddd3c2", padding: "8px 12px", fontFamily: "monospace" }}>
+                      CONCURRENCY_STATE (Async TOCTOU)
+                    </td>
+                    <td style={{ border: "1px solid #ddd3c2", padding: "8px 12px", textAlign: "center", fontWeight: 800 }}>
+                      {canonicalStats.pathFeasible}
+                    </td>
+                    <td style={{ border: "1px solid #ddd3c2", padding: "8px 12px" }}>
+                      Non-atomic check-then-act balance update (`F-026`) across `await` boundary without row-level locking (`SELECT ... FOR UPDATE`) or conditional atomic SQL decrement.
                     </td>
                   </tr>
                   <tr>
@@ -1203,13 +1373,13 @@ export default function ReportEnginePage() {
                       DETECTED_STATIC
                     </td>
                     <td style={{ border: "1px solid #ddd3c2", padding: "8px 12px", fontFamily: "monospace" }}>
-                      NOT_RUN (Static AST Rule)
+                      CRYPTOGRAPHIC_PRIMITIVE
                     </td>
                     <td style={{ border: "1px solid #ddd3c2", padding: "8px 12px", textAlign: "center", fontWeight: 800 }}>
                       {canonicalStats.detectedStatic}
                     </td>
                     <td style={{ border: "1px solid #ddd3c2", padding: "8px 12px" }}>
-                      Weak cryptographic primitive (MD5/AES-ECB) or non-cryptographic PRNG (`java.util.Random`) confirmed in code; remediate per usage context.
+                      Weak cryptographic digest (`F-010` MD5 password hash) and non-cryptographic PRNG (`F-017` `Math.random()` reset token) verified directly in AST.
                     </td>
                   </tr>
                   <tr>
@@ -1217,13 +1387,13 @@ export default function ReportEnginePage() {
                       NEEDS_MANUAL_VALIDATION
                     </td>
                     <td style={{ border: "1px solid #ddd3c2", padding: "8px 12px", fontFamily: "monospace" }}>
-                      MANUAL_SCOPE_CHECK
+                      SECRET_PROVENANCE / DEPENDENCY_VERSION
                     </td>
                     <td style={{ border: "1px solid #ddd3c2", padding: "8px 12px", textAlign: "center", fontWeight: 800 }}>
                       {canonicalStats.needsManualValidation}
                     </td>
                     <td style={{ border: "1px solid #ddd3c2", padding: "8px 12px" }}>
-                      Hardcoded credential/secret constant (`CWE-798`). Verify whether constant is a benchmark fixture or live deployed secret before key rotation.
+                      AWS example key provenance (`F-007` `AKIAIOSFODNN7EXAMPLE`), debug log/comment credentials (`F-016, F-022`), Commons Text 1.9 reachability (`F-019`), and React DOM sink provenance (`F-024`).
                     </td>
                   </tr>
                   <tr>
@@ -1347,7 +1517,10 @@ export default function ReportEnginePage() {
                 {filteredFindings.map((finding, index) => {
                   const vf = validationById.get(finding.id);
                   const pev = pluginEvalById.get(finding.id);
-                  const canonicalState = resolveCanonicalProofState(finding, vf);
+                  const typedProof = resolveTypedProofClassification(finding, vf);
+                  const canonicalState = typedProof.proofState;
+                  const validatedVector = inferCvss31VectorForFinding(finding);
+                  const computedCvss = calculateCvss31BaseScore(validatedVector);
                   const matchedRemediations = getLanguageMatchedRemediation(
                     finding.remediation,
                     finding.language
@@ -1434,12 +1607,13 @@ export default function ReportEnginePage() {
                               borderRadius: 6,
                               background: "#f3eee4",
                               border: "1px solid #ddd3c2",
-                              fontSize: 10.5,
-                              fontWeight: 700,
+                              fontSize: 10,
+                              fontWeight: 800,
                               fontFamily: "monospace",
+                              color: "#4a4239",
                             }}
                           >
-                            {enumerationPhase.discoveryPass}
+                            Evidence: {typedProof.evidenceType}
                           </span>
                           <span
                             style={{
@@ -1450,14 +1624,18 @@ export default function ReportEnginePage() {
                                   ? "#f9e6e6"
                                   : canonicalState === "NEEDS_MANUAL_VALIDATION"
                                     ? "#fbf3e4"
-                                    : "#f3eee4",
+                                    : canonicalState === "GUARD_ANALYZED"
+                                      ? "#f4e5dc"
+                                      : "#f3eee4",
                               border: "1px solid #ddd3c2",
                               color:
                                 canonicalState === "DATAFLOW_CONFIRMED"
                                   ? "#9e2a2b"
                                   : canonicalState === "NEEDS_MANUAL_VALIDATION"
                                     ? "#996b1f"
-                                    : "#1f1b18",
+                                    : canonicalState === "GUARD_ANALYZED"
+                                      ? "#8b4528"
+                                      : "#1f1b18",
                               fontSize: 10.5,
                               fontWeight: 800,
                               fontFamily: "monospace",
@@ -1497,7 +1675,7 @@ export default function ReportEnginePage() {
                         }}
                       >
                         <div style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}>
-                          <span style={{ color: "#5c5349", fontWeight: 600 }}>Source File, Line &amp; Sink ID: </span>
+                          <span style={{ color: "#5c5349", fontWeight: 600 }}>Source File, Line &amp; Language: </span>
                           <code
                             style={{
                               fontFamily: "monospace",
@@ -1509,8 +1687,8 @@ export default function ReportEnginePage() {
                           >
                             {finding.file}:{finding.line}
                           </code>{" "}
-                          <span style={{ fontFamily: "monospace", fontSize: 10, color: "#8b4528" }}>
-                            ({finding.sinkId || `${finding.id}-L${finding.line}`})
+                          <span style={{ fontFamily: "monospace", fontSize: 10, color: "#8b4528", fontWeight: 700 }}>
+                            ({finding.language} &middot; {finding.sinkId || `${finding.id}-L${finding.line}`})
                           </span>
                         </div>
                         <div style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}>
@@ -1520,10 +1698,13 @@ export default function ReportEnginePage() {
                           </span>
                         </div>
                         <div style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}>
-                          <span style={{ color: "#5c5349", fontWeight: 600 }}>CVSS v3.1 Vector (AT-13): </span>
+                          <span style={{ color: "#5c5349", fontWeight: 600 }}>CVSS v3.1 Vector &amp; Base Score (AT-CVSS-01): </span>
                           <code style={{ fontFamily: "monospace", fontSize: 10.5, fontWeight: 700, color: "#8b4528" }}>
-                            {finding.cvssVector || "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"}
-                          </code>
+                            {validatedVector}
+                          </code>{" "}
+                          <span style={{ fontSize: 10.5, fontWeight: 800, color: "#2d6a4f" }}>
+                            (= {computedCvss.toFixed(1)} Verified)
+                          </span>
                         </div>
                         <div style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}>
                           <span style={{ color: "#5c5349", fontWeight: 600 }}>MITRE ATT&amp;CK TTP: </span>
@@ -1547,7 +1728,7 @@ export default function ReportEnginePage() {
                         </div>
                       </div>
 
-                      {/* Taxonomy Correlation & 3-Layer Evidence Separation Block (AT-03 / AT-04 / Section 8) */}
+                      {/* Taxonomy Correlation & 3-Layer Evidence Separation Block (AT-03 / AT-04 / AT-PROOF-06) */}
                       <div
                         style={{
                           padding: "10px 12px",
@@ -1575,10 +1756,10 @@ export default function ReportEnginePage() {
                           }}
                         >
                           <strong style={{ color: "#8b4528", textTransform: "uppercase", fontSize: 10.5 }}>
-                            CWE / CAPEC / OWASP ASVS / WSTG Taxonomy &amp; 3-Layer Evidence Separation (AT-03 / AT-04)
+                            CWE / CAPEC / OWASP ASVS / WSTG Taxonomy &amp; Typed Proof Separation (AT-03 / AT-PROOF-06)
                           </strong>
                           <span style={{ fontWeight: 700, color: "#5c5349", fontSize: 10.5 }}>
-                            Advisory Rule: First-Party Code Weakness (0 False Product CVEs Attached)
+                            Pass: {enumerationPhase.discoveryPass} &middot; Advisory Scope: {finding.advisoryApplicability || "FIRST_PARTY_CODE_WEAKNESS_NO_CVE"}
                           </span>
                         </div>
 
@@ -1611,31 +1792,32 @@ export default function ReportEnginePage() {
                             &middot; {databaseCorrelations.googleIntel.projectZeroRef}
                           </div>
                           <div>
-                            <strong style={{ color: "#1f1b18" }}>CISA KEV / Product CVE: </strong>
-                            <code style={{ fontFamily: "monospace" }}>
-                              N/A (First-Party Source Code)
-                            </code>
+                            <strong style={{ color: "#1f1b18" }}>CVSS v3.1 Rationale: </strong>
+                            <span>{finding.cvssRationale || "FIRST.org CVSS v3.1 base score calculation."}</span>
                           </div>
                         </div>
 
                         <div style={{ borderTop: "1px solid #e4dccb", paddingTop: 6, color: "#36302a" }}>
                           <div>
-                            <strong>Layer 1 — Observed Static AST &amp; Dataflow Evidence: </strong>
+                            <strong>Layer 1 — Observed Static Evidence ({typedProof.evidenceType}): </strong>
                             <code style={{ fontFamily: "monospace", fontSize: 10.5, wordBreak: "break-word", overflowWrap: "anywhere" }}>
                               {penetrationTestLifecycle.initialPentest.evidenceLog}
                             </code>
                           </div>
                           <div style={{ marginTop: 3 }}>
-                            <strong>Layer 2 — Controlled Runtime Verification &amp; Follow-Up Checks: </strong>
+                            <strong>Modeled Assumptions &amp; Static Scope Boundary: </strong>
+                            <span>{typedProof.modeledAssumptions}</span>
+                          </div>
+                          <div style={{ marginTop: 3 }}>
+                            <strong>Layer 2 — Controlled Verification &amp; Follow-Up Checks: </strong>
                             <span style={{ fontFamily: "monospace", fontWeight: 700, color: "#8b4528" }}>
                               Runtime Sandbox: NOT_RUN
                             </span>{" "}
-                            &middot; {penetrationTestLifecycle.reEnumeration.newlyDiscoveredSurface.join(" · ")}
+                            &middot; {finding.validationSteps.join(" · ")}
                           </div>
                           <div style={{ marginTop: 3 }}>
-                            <strong>Layer 3 — Hypothesized Blast Radius (If Reachable in Production): </strong>
-                            {databaseCorrelations.otherDatabases.exploitabilityExtent} &middot;{" "}
-                            <strong>{penetrationTestLifecycle.postExploitation.privilegeAttained}</strong>
+                            <strong>Layer 3 — Hypothesized Blast Radius (If Unmitigated in Production): </strong>
+                            {finding.privilegeGain}
                           </div>
                         </div>
                       </div>
@@ -1647,16 +1829,25 @@ export default function ReportEnginePage() {
                       </div>
 
                       <div style={{ fontSize: 11.5, color: "#4a4239", lineHeight: 1.55, marginBottom: 8, wordBreak: "break-word", overflowWrap: "anywhere" }}>
-                        <strong>Taint Propagation Path: </strong>
-                        Source <code style={{ fontFamily: "monospace", background: "#f3eee4", padding: "1px 5px", wordBreak: "break-all" }}>{finding.source}</code>{" "}
-                        &rarr; {finding.taintPath.join(" → ")} &rarr; Sink{" "}
+                        <strong>{typedProof.evidenceHeading}: </strong>
+                        Origin <code style={{ fontFamily: "monospace", background: "#f3eee4", padding: "1px 5px", wordBreak: "break-all" }}>{finding.source}</code>{" "}
+                        &rarr; {finding.taintPath.join(" → ")} &rarr; Target{" "}
                         <code style={{ fontFamily: "monospace", background: "#f3eee4", padding: "1px 5px", wordBreak: "break-all" }}>{finding.sink}</code>
                       </div>
 
                       {rem && (
-                        <div style={{ fontSize: 12, color: "#21573e", lineHeight: 1.55, marginBottom: includeRemediationDiffs ? 12 : 0 }}>
-                          <strong>Language-Matched Remediation Guidance ({rem.platform} — AT-06): </strong>
+                        <div style={{ fontSize: 12, color: "#21573e", lineHeight: 1.55, marginBottom: 6 }}>
+                          <strong>Language-Matched Remediation Guidance ({rem.platform} — AT-REM-08): </strong>
                           {rem.explanation}
+                        </div>
+                      )}
+
+                      {finding.regressionTest && (
+                        <div style={{ fontSize: 11.2, color: "#8b4528", lineHeight: 1.5, marginBottom: includeRemediationDiffs ? 10 : 0 }}>
+                          <strong>Automated Regression Test Contract: </strong>
+                          <code style={{ fontFamily: "monospace", background: "#f3eee4", padding: "1px 6px" }}>
+                            {finding.regressionTest}
+                          </code>
                         </div>
                       )}
 
@@ -1715,7 +1906,7 @@ export default function ReportEnginePage() {
                                   marginBottom: 4,
                                 }}
                               >
-                                Illustrative {rem.platform} Remediation Pattern (Adapt &amp; Compile-Check Before Merge — AT-06 / AT-15)
+                                Implementation-Ready {rem.platform} Remediation Diff (AT-REM-08 / AT-15)
                               </div>
                               <pre
                                 style={{
@@ -1746,7 +1937,7 @@ export default function ReportEnginePage() {
           )}
 
           {/* =================================================================
-           * SECTION 5: METHODOLOGY, COVERAGE DISCLOSURE (AT-18), 18 ACCEPTANCE GATES LEDGER & SIGN-OFF
+           * SECTION 5: METHODOLOGY, MEASURABLE 10-GATE ACCEPTANCE SUITE & SIGN-OFF
            * ================================================================= */}
           {includeSignOff && (
             <section
@@ -1761,7 +1952,7 @@ export default function ReportEnginePage() {
                 className="font-editorial"
                 style={{ fontSize: 18, fontWeight: 700, color: "#1f1b18", marginBottom: 10 }}
               >
-                5. Methodology, Coverage Disclosure (AT-18), 18 Acceptance Gates Ledger &amp; Auditor Sign-Off
+                5. Methodology, Blind Spots Disclosure (AT-18), Measurable 10-Gate Acceptance Suite &amp; Auditor Sign-Off
               </h2>
 
               <div
@@ -1773,43 +1964,63 @@ export default function ReportEnginePage() {
                   fontSize: 11.5,
                   color: "#4a4239",
                   lineHeight: 1.55,
-                  marginBottom: 16,
+                  marginBottom: 14,
                 }}
               >
                 <div>
                   <strong style={{ color: "#1f1b18" }}>Methodology &amp; Known Blind Spots Disclosure (AT-18): </strong>
-                  This assessment combines single-pass AST token indexing, intra/inter-procedural source-to-sink dataflow tracing, and CWE/ASVS/CAPEC taxonomy mapping.{" "}
+                  This assessment combines single-pass AST token indexing, intra-procedural source-to-sink dataflow tracing, control-property guard analysis, and CWE/ASVS/CAPEC taxonomy mapping.{" "}
                   <strong>Runtime Verification Scope:</strong> Isolated sandbox runtime exploitation was{" "}
                   <code>NOT_RUN</code> during this static scan; therefore, static source-to-sink matches are classified as{" "}
                   <code>DATAFLOW_CONFIRMED</code> rather than <code>RUNTIME_REPRODUCED</code>.{" "}
                   <strong>Known Static Blind Spots:</strong> External API gateway / WAF policies, database Row-Level Security (RLS) policies outside repository code, runtime reflection/bytecode weaving, and live secret vault bindings require supplementary dynamic/configuration verification.
                 </div>
-                <div style={{ marginTop: 6 }}>
-                  <strong style={{ color: "#1f1b18" }}>Acceptance Gate Verification Ledger (AT-01 through AT-18): </strong>
-                  <code>AT-01</code> Canonical Proof State Reconciled &middot;{" "}
-                  <code>AT-02</code> ISO-8601 UTC Timestamp Validated &middot;{" "}
-                  <code>AT-03/04</code> 0 False Product CVEs on First-Party Code &middot;{" "}
-                  <code>AT-05</code> Constant-String Output XSS Suppressed &middot;{" "}
-                  <code>AT-06</code> 100% Language-Matched Remediation &middot;{" "}
-                  <code>AT-07</code> Path Traversal Paired with File I/O Sink &middot;{" "}
-                  <code>AT-08</code> Deserialization JEP 290 Guidance &middot;{" "}
-                  <code>AT-09</code> Re-Enumeration Labeled as Static Candidates (`Runtime: NOT_RUN`) &middot;{" "}
-                  <code>AT-10</code> Hardcoded Secrets Marked `NEEDS_MANUAL_VALIDATION` &middot;{" "}
-                  <code>AT-11</code> Blast Radius Separated as Hypothesis &middot;{" "}
-                  <code>AT-12</code> Function-Window Sink Deduplication Active &middot;{" "}
-                  <code>AT-13</code> CVSS v3.1 Vectors Attached &middot;{" "}
-                  <code>AT-14</code> SARIF 2.1.0 Export Available &middot;{" "}
-                  <code>AT-15</code> Illustrative Patch Labeling &middot;{" "}
-                  <code>AT-16</code> Risk &amp; Confidence Formula Documented &middot;{" "}
-                  <code>AT-17</code> Benchmark/Fixture Scope Qualified &middot;{" "}
-                  <code>AT-18</code> Coverage &amp; Blind Spots Disclosed.
+              </div>
+
+              {/* Live 10-Gate Measurable Acceptance Test Suite (Review Section 7) */}
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 12, fontWeight: 800, color: "#1f1b18", marginBottom: 6 }}>
+                  Measurable 10-Gate Release Acceptance Suite Execution Log (AT-CVSS-01 through AT-GATE-10)
                 </div>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11.2 }}>
+                  <thead>
+                    <tr style={{ background: "#f3eee4", color: "#1f1b18" }}>
+                      <th style={{ border: "1px solid #ddd3c2", padding: "6px 8px", textAlign: "left" }}>Gate ID</th>
+                      <th style={{ border: "1px solid #ddd3c2", padding: "6px 8px", textAlign: "left" }}>Acceptance Test &amp; Criterion</th>
+                      <th style={{ border: "1px solid #ddd3c2", padding: "6px 8px", textAlign: "center" }}>Status</th>
+                      <th style={{ border: "1px solid #ddd3c2", padding: "6px 8px", textAlign: "left" }}>Measured Metric</th>
+                      <th style={{ border: "1px solid #ddd3c2", padding: "6px 8px", textAlign: "left" }}>Verification Artifact</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {acceptanceSuite.map((gate) => (
+                      <tr key={gate.testId}>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "6px 8px", fontFamily: "monospace", fontWeight: 800, color: "#8b4528" }}>
+                          {gate.testId}
+                        </td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "6px 8px" }}>
+                          <div style={{ fontWeight: 700, color: "#1f1b18" }}>{gate.testName}</div>
+                          <div style={{ fontSize: 10.5, color: "#5c5349" }}>{gate.criterion}</div>
+                        </td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "6px 8px", textAlign: "center", fontWeight: 800, color: gate.status === "PASS" ? "#2d6a4f" : "#9e2a2b", fontFamily: "monospace" }}>
+                          {gate.status}
+                        </td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "6px 8px", fontFamily: "monospace", fontSize: 10.5 }}>
+                          {gate.measuredMetric}
+                        </td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "6px 8px", fontFamily: "monospace", fontSize: 10.5, color: "#5c5349" }}>
+                          {gate.evidenceArtifactRef}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
 
               <p style={{ fontSize: 12, color: "#4a4239", lineHeight: 1.55, marginBottom: 18 }}>
                 By signing below, the Lead Security Auditor and Engineering Owner attest that Report{" "}
                 <strong>{reportId}</strong> was deterministically produced by the{" "}
-                <strong>XTRIKE SAST Desk Hybrid AST &amp; Dataflow Engine</strong> in accordance with NIST SP 800-115, NIST SSDF (SP 800-218), OWASP ASVS v4.0.3, and the 18 Release-Gate Acceptance Criteria (`AT-01`–`AT-18`).
+                <strong>XTRIKE SAST Desk Hybrid AST &amp; Dataflow Engine</strong> in accordance with NIST SP 800-115, NIST SSDF (SP 800-218), OWASP ASVS v4.0.3, and the Measurable 10-Gate Acceptance Suite (`AT-CVSS-01`–`AT-GATE-10`).
               </p>
 
               <div

@@ -1352,19 +1352,25 @@ export function getLanguageMatchedRemediation(
   remediations: Remediation[],
   fileLang: string
 ): Remediation[] {
-  const normalizedTarget =
+  const exactTarget = fileLang.trim().toLowerCase();
+  const familyTarget =
     fileLang === "Kotlin" || fileLang === "Java"
-      ? "Java"
+      ? "java"
       : fileLang === "Python"
-        ? "Python"
-        : fileLang === "TypeScript" || fileLang === "Node.js" || fileLang === "JavaScript"
-          ? "Node.js"
-          : fileLang;
+        ? "python"
+        : fileLang === "TypeScript" ||
+            fileLang === "React / TypeScript" ||
+            fileLang === "Node.js" ||
+            fileLang === "JavaScript"
+          ? "node.js"
+          : exactTarget;
 
   const sorted = [...remediations].sort((a, b) => {
-    const aMatch = a.platform.toLowerCase() === normalizedTarget.toLowerCase() ? 0 : 1;
-    const bMatch = b.platform.toLowerCase() === normalizedTarget.toLowerCase() ? 0 : 1;
-    return aMatch - bMatch;
+    const aPlat = a.platform.trim().toLowerCase();
+    const bPlat = b.platform.trim().toLowerCase();
+    const aScore = aPlat === exactTarget ? 0 : aPlat === familyTarget ? 1 : 2;
+    const bScore = bPlat === exactTarget ? 0 : bPlat === familyTarget ? 1 : 2;
+    return aScore - bScore;
   });
   return sorted;
 }

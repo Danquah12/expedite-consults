@@ -38,10 +38,14 @@ export function calculateRiskScore(findings: SASTFinding[]): number {
   return Math.min(100, Math.round((raw / max) * 100));
 }
 
-/** Average confidence across all findings */
+/** Average confidence across all findings (normalized to 0–100 percentage scale) */
 export function averageConfidence(findings: SASTFinding[]): number {
   if (findings.length === 0) return 0;
-  return findings.reduce((acc, f) => acc + f.confidence, 0) / findings.length;
+  const sumPct = findings.reduce((acc, f) => {
+    const pct = f.confidence <= 1 ? f.confidence * 100 : f.confidence;
+    return acc + pct;
+  }, 0);
+  return Number((sumPct / findings.length).toFixed(1));
 }
 
 /** Severity counts */

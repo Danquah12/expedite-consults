@@ -32,7 +32,17 @@ export type ComplianceRef = {
 };
 
 export type Remediation = {
-  platform: "Java" | "Python" | "Node.js" | "Go" | "C#" | "PHP";
+  platform:
+    | "Java"
+    | "Python"
+    | "Node.js"
+    | "TypeScript"
+    | "React / TypeScript"
+    | "Terraform HCL"
+    | "Maven / XML"
+    | "Go"
+    | "C#"
+    | "PHP";
   code: string;
   explanation: string;
 };
@@ -42,12 +52,22 @@ export type ExploitabilityLevel = "Very Easy" | "Easy" | "Moderate" | "Difficult
 export type CanonicalProofState =
   | "DETECTED_STATIC"
   | "DATAFLOW_CONFIRMED"
+  | "GUARD_ANALYZED"
   | "PATH_FEASIBLE"
   | "RUNTIME_REPRODUCED"
   | "IMPACT_CONFIRMED"
   | "NEEDS_MANUAL_VALIDATION"
   | "MITIGATED_BY_GUARD"
   | "INCONCLUSIVE";
+
+export type EvidenceCategory =
+  | "TAINT_DATAFLOW"
+  | "AUTHORIZATION_ENFORCEMENT"
+  | "CONFIGURATION_CONTROL"
+  | "SECRET_PROVENANCE"
+  | "CRYPTOGRAPHIC_PRIMITIVE"
+  | "DEPENDENCY_VERSION"
+  | "CONCURRENCY_STATE";
 
 export type DeepExploitabilityDossier = {
   enumerationPhase: {
@@ -159,10 +179,16 @@ export type SASTFinding = {
   duplicateGroupId?: string;
   deduplicatedCount?: number;
   proofState?: CanonicalProofState;
+  evidenceType?: EvidenceCategory;
+  modeledAssumptions?: string;
+  regressionTest?: string;
   auditDisposition?: string;
   isBenchmarkFixture?: boolean;
   deploymentContextNote?: string;
-  advisoryApplicability?: "DEPENDENCY_VERSION_MATCHED" | "FIRST_PARTY_CODE_WEAKNESS_NO_CVE";
+  advisoryApplicability?:
+    | "DEPENDENCY_VERSION_MATCHED"
+    | "DEPENDENCY_MANIFEST_ADVISORY"
+    | "FIRST_PARTY_CODE_WEAKNESS_NO_CVE";
 
   // Location
   file: string;
