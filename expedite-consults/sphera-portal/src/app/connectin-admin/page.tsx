@@ -1,9 +1,9 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { AdminIAMConsoleView } from "@/components/linkedin/AdminIAMConsoleView"
-import { LinkedInNavbar } from "@/components/linkedin/LinkedInNavbar"
-import { currentUser as defaultUser, UserProfile } from "@/lib/linkedin-data"
+import { AdminIAMConsoleView } from "@/components/connectln/AdminIAMConsoleView"
+import { ConnectLnNavbar } from "@/components/connectln/ConnectLnNavbar"
+import { currentUser as defaultUser, UserProfile } from "@/lib/connectln-data"
 import { getExplicitStoredUser } from "@/lib/connectin-storage"
 import { isSuperAdminUser } from "@/lib/connectin-profile"
 import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
@@ -40,7 +40,7 @@ export default function ConnectInAdminPage() {
   return (
     <div className="min-h-screen bg-[#F4F2EE] text-zinc-900 antialiased dark:bg-[#000000] dark:text-zinc-100 selection:bg-[#0A66C2] selection:text-white">
       {/* Top Navbar */}
-      <LinkedInNavbar
+      <ConnectLnNavbar
         activeTab={isAdminVerified ? "adminiam" : "home"}
         onSelectTab={(tab) => {
           if (tab === 'home' || tab === 'network' || tab === 'jobs' || tab === 'marketplace' || tab === 'messaging') {

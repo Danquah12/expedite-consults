@@ -4,7 +4,7 @@
  * and Directory Discoveries (Search Appearances) to any UserProfile, Profession, Skills & Enclave.
  */
 
-import { UserProfile } from "./linkedin-data"
+import { UserProfile } from "./connectln-data"
 import { findEnclaveById } from "./connectin-professions"
 
 export interface ProfileViewerItem {

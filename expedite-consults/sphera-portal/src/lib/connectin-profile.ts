@@ -1,4 +1,4 @@
-import { UserProfile } from "./linkedin-data"
+import { UserProfile } from "./connectln-data"
 import { findProfessionById, findEnclaveById, getEnclaveForProfession, ALL_PROFESSIONS } from "./connectin-professions"
 import { KWESI_ASIEDU_PARSED_DATA } from "./resume-parser"
 

@@ -4,20 +4,20 @@ import React, { useState, useEffect } from "react"
 import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
 import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
-import { LinkedInNavbar } from "@/components/linkedin/LinkedInNavbar"
-import { LeftSidebarProfile } from "@/components/linkedin/LeftSidebarProfile"
-import { PostCreator } from "@/components/linkedin/PostCreator"
-import { FeedPostCard } from "@/components/linkedin/FeedPostCard"
-import { RightSidebarNews } from "@/components/linkedin/RightSidebarNews"
-import { ProfileView } from "@/components/linkedin/ProfileView"
-import { NetworkView } from "@/components/linkedin/NetworkView"
-import { JobsView } from "@/components/linkedin/JobsView"
-import { MessagingView } from "@/components/linkedin/MessagingView"
-import { NotificationsView } from "@/components/linkedin/NotificationsView"
-import { FloatingMessagingDock, DirectMessageRecipient } from "@/components/linkedin/FloatingMessagingDock"
+import { ConnectLnNavbar } from "@/components/connectln/ConnectLnNavbar"
+import { LeftSidebarProfile } from "@/components/connectln/LeftSidebarProfile"
+import { PostCreator } from "@/components/connectln/PostCreator"
+import { FeedPostCard } from "@/components/connectln/FeedPostCard"
+import { RightSidebarNews } from "@/components/connectln/RightSidebarNews"
+import { ProfileView } from "@/components/connectln/ProfileView"
+import { NetworkView } from "@/components/connectln/NetworkView"
+import { JobsView } from "@/components/connectln/JobsView"
+import { MessagingView } from "@/components/connectln/MessagingView"
+import { NotificationsView } from "@/components/connectln/NotificationsView"
+import { FloatingMessagingDock, DirectMessageRecipient } from "@/components/connectln/FloatingMessagingDock"
 
 const LearningView = dynamic(
-  () => import("@/components/linkedin/LearningView").then((m) => m.LearningView),
+  () => import("@/components/connectln/LearningView").then((m) => m.LearningView),
   {
     ssr: false,
     loading: () => (
@@ -29,7 +29,7 @@ const LearningView = dynamic(
 )
 
 const VibeUnifiedCommunicationsView = dynamic(
-  () => import("@/components/linkedin/VibeUnifiedCommunicationsView").then((m) => m.VibeUnifiedCommunicationsView),
+  () => import("@/components/connectln/VibeUnifiedCommunicationsView").then((m) => m.VibeUnifiedCommunicationsView),
   {
     ssr: false,
     loading: () => (
@@ -39,41 +39,41 @@ const VibeUnifiedCommunicationsView = dynamic(
     )
   }
 )
-import { PulseRoomsView } from "@/components/linkedin/PulseRoomsView"
-import { PeerReviewView } from "@/components/linkedin/PeerReviewView"
-import { CompensationCalculator } from "@/components/linkedin/CompensationCalculator"
-import { ProductLaunchLeaderboard } from "@/components/linkedin/ProductLaunchLeaderboard"
-import { WatercoolerBlindView } from "@/components/linkedin/WatercoolerBlindView"
-import { AdvisoryMarketplaceView } from "@/components/linkedin/AdvisoryMarketplaceView"
-import { StartupVentureView } from "@/components/linkedin/StartupVentureView"
-import { CareerSuiteView } from "@/components/linkedin/CareerSuiteView"
-import { MarketplaceView } from "@/components/linkedin/MarketplaceView"
-import { EcosystemView } from "@/components/linkedin/EcosystemView"
-import { CompanyPageView } from "@/components/linkedin/CompanyPageView"
-import { SellerCenterView } from "@/components/linkedin/SellerCenterView"
-import { TrustCenterView } from "@/components/linkedin/TrustCenterView"
-import { EventsView } from "@/components/linkedin/EventsView"
-import { ConnectInAIAssistant } from "@/components/linkedin/ConnectInAIAssistant"
-import { ProfessionalMissionsView } from "@/components/linkedin/ProfessionalMissionsView"
-import { ProcurementRFPView } from "@/components/linkedin/ProcurementRFPView"
-import { CollaborationIdeasView } from "@/components/linkedin/CollaborationIdeasView"
-import { MentorshipCreatorView } from "@/components/linkedin/MentorshipCreatorView"
-import { LabsView } from "@/components/linkedin/LabsView"
-import { UniversalSearchModal } from "@/components/linkedin/UniversalSearchModal"
-import { MediaView } from "@/components/linkedin/MediaView"
-import { AIAgentsStorefrontView } from "@/components/linkedin/AIAgentsStorefrontView"
-import { DeveloperCodeView } from "@/components/linkedin/DeveloperCodeView"
-import { WalletInvoicingView } from "@/components/linkedin/WalletInvoicingView"
-import { ProfessionalIDModal } from "@/components/linkedin/ProfessionalIDModal"
-import { GatedGuildsView } from "@/components/linkedin/GatedGuildsView"
-import { BountiesHackathonsView } from "@/components/linkedin/BountiesHackathonsView"
-import { InboundBountiesModal } from "@/components/linkedin/InboundBountiesModal"
-import { AccountSecurityView } from "@/components/linkedin/AccountSecurityView"
-import { AdminIAMConsoleView } from "@/components/linkedin/AdminIAMConsoleView"
-import { ConnectInAuthModal } from "@/components/linkedin/ConnectInAuthModal"
-import { ConnectInAnalyticsModal } from "@/components/linkedin/ConnectInAnalyticsModal"
-import { ConnectInVideoWheel } from "@/components/linkedin/ConnectInVideoWheel"
-import { ConnectInVideoGuideModal } from "@/components/linkedin/ConnectInVideoGuideModal"
+import { PulseRoomsView } from "@/components/connectln/PulseRoomsView"
+import { PeerReviewView } from "@/components/connectln/PeerReviewView"
+import { CompensationCalculator } from "@/components/connectln/CompensationCalculator"
+import { ProductLaunchLeaderboard } from "@/components/connectln/ProductLaunchLeaderboard"
+import { WatercoolerBlindView } from "@/components/connectln/WatercoolerBlindView"
+import { AdvisoryMarketplaceView } from "@/components/connectln/AdvisoryMarketplaceView"
+import { StartupVentureView } from "@/components/connectln/StartupVentureView"
+import { CareerSuiteView } from "@/components/connectln/CareerSuiteView"
+import { MarketplaceView } from "@/components/connectln/MarketplaceView"
+import { EcosystemView } from "@/components/connectln/EcosystemView"
+import { CompanyPageView } from "@/components/connectln/CompanyPageView"
+import { SellerCenterView } from "@/components/connectln/SellerCenterView"
+import { TrustCenterView } from "@/components/connectln/TrustCenterView"
+import { EventsView } from "@/components/connectln/EventsView"
+import { ConnectInAIAssistant } from "@/components/connectln/ConnectInAIAssistant"
+import { ProfessionalMissionsView } from "@/components/connectln/ProfessionalMissionsView"
+import { ProcurementRFPView } from "@/components/connectln/ProcurementRFPView"
+import { CollaborationIdeasView } from "@/components/connectln/CollaborationIdeasView"
+import { MentorshipCreatorView } from "@/components/connectln/MentorshipCreatorView"
+import { LabsView } from "@/components/connectln/LabsView"
+import { UniversalSearchModal } from "@/components/connectln/UniversalSearchModal"
+import { MediaView } from "@/components/connectln/MediaView"
+import { AIAgentsStorefrontView } from "@/components/connectln/AIAgentsStorefrontView"
+import { DeveloperCodeView } from "@/components/connectln/DeveloperCodeView"
+import { WalletInvoicingView } from "@/components/connectln/WalletInvoicingView"
+import { ProfessionalIDModal } from "@/components/connectln/ProfessionalIDModal"
+import { GatedGuildsView } from "@/components/connectln/GatedGuildsView"
+import { BountiesHackathonsView } from "@/components/connectln/BountiesHackathonsView"
+import { InboundBountiesModal } from "@/components/connectln/InboundBountiesModal"
+import { AccountSecurityView } from "@/components/connectln/AccountSecurityView"
+import { AdminIAMConsoleView } from "@/components/connectln/AdminIAMConsoleView"
+import { ConnectInAuthModal } from "@/components/connectln/ConnectInAuthModal"
+import { ConnectInAnalyticsModal } from "@/components/connectln/ConnectInAnalyticsModal"
+import { ConnectInVideoWheel } from "@/components/connectln/ConnectInVideoWheel"
+import { ConnectInVideoGuideModal } from "@/components/connectln/ConnectInVideoGuideModal"
 import {
   currentUser as initialCurrentUser,
   initialPosts,
@@ -84,7 +84,7 @@ import {
   SuggestedConnection,
   UserProfile,
   CourseItem
-} from "@/lib/linkedin-data"
+} from "@/lib/connectln-data"
 import {
   loadStoredPosts,
   saveStoredPosts,
@@ -108,7 +108,7 @@ import { getMatchedWheelVideoForUser } from "@/lib/connectin-videos"
 import { SlidersHorizontal, Sparkles, Bell, CheckCircle2, ShieldCheck, Filter, Bookmark, Vote, BookOpen, ExternalLink, ChevronDown, ChevronUp } from "lucide-react"
 import { useLanguage } from "@/context/LanguageContext"
 
-export default function LinkedInPage() {
+export default function ConnectLnPage() {
   const { t } = useLanguage()
   const [activeTab, setActiveTab] = useState<
     | 'home'
@@ -1238,7 +1238,7 @@ export default function LinkedInPage() {
   return (
     <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[var(--bg-core,#f3f2f0)] text-[var(--text-pure,#18181b)] antialiased transition-colors duration-300 selection:bg-[#0A66C2] selection:text-white">
       {/* Top Sticky Navigation */}
-      <LinkedInNavbar
+      <ConnectLnNavbar
         activeTab={activeTab}
         onSelectTab={(tab) => {
           if (tab === 'profile') setInspectedMember(null)

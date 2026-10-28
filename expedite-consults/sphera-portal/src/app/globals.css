@@ -10,7 +10,7 @@ body {
   position: relative;
 }
 
-/* ── 1. LINKEDIN CLASSIC SAND (Official Default) ────────────────────────── */
+/* ── 1. CONNECTLN CLASSIC SAND (Official Default) ────────────────────────── */
 :root, [data-theme="classic"], body[data-theme="classic"], html.classic {
   --bg-core: #f3f2ef;
   --bg-sidebar: #ffffff;
@@ -90,7 +90,7 @@ body {
   --color-text-muted: #64748b;
 }
 
-/* ── 3. LINKEDIN EXECUTIVE DARK ─────────────────────────────────── */
+/* ── 3. CONNECTLN EXECUTIVE DARK ─────────────────────────────────── */
 [data-theme="dark"], body[data-theme="dark"], html.dark {
   --bg-core: #121212;
   --bg-sidebar: #1b1f23;

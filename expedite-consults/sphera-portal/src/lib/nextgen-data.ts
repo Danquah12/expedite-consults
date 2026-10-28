@@ -193,7 +193,7 @@ export const productLaunchesData: ProductLaunchItem[] = [
   {
     id: 'launch_0',
     title: 'ConnectIn Next-Gen Ecosystem',
-    tagline: 'Professional network surpassing LinkedIn with AI Virality, Pulse Audio, and App Store',
+    tagline: 'Professional network with AI Virality, Pulse Audio, and App Store',
     thumbnail: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80',
     makers: [
       { name: 'Alex Taylor', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80' },

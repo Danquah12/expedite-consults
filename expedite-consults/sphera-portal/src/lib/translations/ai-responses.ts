@@ -1,5 +1,5 @@
 import { LanguageCode } from "./index";
-import { UserProfile } from "@/lib/linkedin-data";
+import { UserProfile } from "@/lib/connectln-data";
 
 export interface AIChatMessage {
   id: string;

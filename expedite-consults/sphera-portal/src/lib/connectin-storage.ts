@@ -1,6 +1,6 @@
 "use client"
 
-import { Post, UserProfile, MessageThread, SuggestedConnection, initialPosts, currentUser, initialMessages, suggestedConnections } from "./linkedin-data"
+import { Post, UserProfile, MessageThread, SuggestedConnection, initialPosts, currentUser, initialMessages, suggestedConnections } from "./connectln-data"
 import { AdminUserRecord, ADMIN_USERS_DIRECTORY } from "./connectin-iam-data"
 import {
   createUniqueUserProfile,

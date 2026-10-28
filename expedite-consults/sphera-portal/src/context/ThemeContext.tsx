@@ -35,14 +35,14 @@ export const THEME_OPTIONS: ThemeOption[] = [
   },
   {
     id: "classic",
-    label: "LinkedIn Classic Light",
+    label: "ConnectLn Classic Light",
     shortLabel: "Classic Sand",
     icon: "🏛️",
     bgHex: "#f3f2ef",
     cardHex: "#ffffff",
     borderHex: "#e5e7eb",
     isDark: false,
-    description: "Official LinkedIn warm sand canvas with clean white cards"
+    description: "Official ConnectLn warm sand canvas with clean white cards"
   },
   {
     id: "light",
@@ -57,14 +57,14 @@ export const THEME_OPTIONS: ThemeOption[] = [
   },
   {
     id: "dark",
-    label: "LinkedIn Executive Dark",
+    label: "ConnectLn Executive Dark",
     shortLabel: "Executive Dark",
     icon: "🌙",
     bgHex: "#121212",
     cardHex: "#1b1f23",
     borderHex: "#30363d",
     isDark: true,
-    description: "Official LinkedIn dark card architecture for low-light focus"
+    description: "Official ConnectLn dark card architecture for low-light focus"
   },
   {
     id: "slate",

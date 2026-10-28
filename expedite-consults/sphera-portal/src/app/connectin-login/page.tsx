@@ -21,11 +21,11 @@ import {
   ChevronUp
 } from "lucide-react"
 import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
-import { DEMO_AUTH_PERSONAS, AuthPersona } from "@/components/linkedin/ConnectInAuthModal"
+import { DEMO_AUTH_PERSONAS, AuthPersona } from "@/components/connectln/ConnectInAuthModal"
 import { saveStoredUser, saveStoredSessionRoute, getVaultProfileForUser, getDefaultPortraitForUser } from "@/lib/connectin-storage"
 import { createUniqueUserProfile, resolveDisplayName, isSuperAdminUser, isDedicatedAdminAccount, isExactKwesiUser, isForeignPersonaAvatar } from "@/lib/connectin-profile"
 import { PROFESSION_ENCLAVES, findProfessionById, findEnclaveById, getProfessionsByEnclave } from "@/lib/connectin-professions"
-import { ProfessionSearchPopout } from "@/components/linkedin/ProfessionSearchPopout"
+import { ProfessionSearchPopout } from "@/components/connectln/ProfessionSearchPopout"
 import { ThemeColorSwitcher } from "@/components/theme/ThemeColorSwitcher"
 import { LanguageSwitcher } from "@/components/language/LanguageSwitcher"
 import { useLanguage } from "@/context/LanguageContext"
@@ -515,7 +515,7 @@ export default function ConnectInLoginPage() {
 
   return (
     <div className="min-h-screen bg-[var(--bg-core,#f3f2f0)] text-[var(--text-pure,#18181b)] flex flex-col justify-between font-sans transition-colors duration-300 selection:bg-[#0A66C2] selection:text-white">
-      {/* ─── 1. TOP LINKEDIN-STYLE NAVBAR ─── */}
+      {/* ─── 1. TOP CONNECTLN NAVBAR ─── */}
       <header className="w-full bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 px-3 sm:px-6 md:px-12 py-2.5 sm:py-3 flex items-center justify-between shadow-xs">
         <Link href="/connectin" className="flex items-center gap-1.5 group shrink-0">
           <ConnectInLogo size="md" showSubtitle={true} />
@@ -744,7 +744,7 @@ export default function ConnectInLoginPage() {
                     </button>
                   </form>
 
-                  {/* LinkedIn-style Divider */}
+                  {/* ConnectLn Divider */}
                   <div className="relative flex items-center justify-center my-4">
                     <div className="w-full border-t border-zinc-200 dark:border-zinc-800" />
                     <span className="bg-white dark:bg-zinc-900 px-3 text-xs text-zinc-400 font-medium absolute">
@@ -1448,7 +1448,7 @@ export default function ConnectInLoginPage() {
         </div>
       </main>
 
-      {/* ─── 4. LINKEDIN-STYLE CLEAN FOOTER ─── */}
+      {/* ─── 4. CONNECTLN CLEAN FOOTER ─── */}
       <footer className="w-full bg-white dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800 py-4 px-6 text-center text-[11px] text-zinc-500 space-y-1">
         <div className="flex items-center justify-center gap-4 flex-wrap">
           <Link href="/about-us" className="hover:underline">{t("footer_about", "About")}</Link>

@@ -66,7 +66,7 @@ export const CONNECTLN_TOPICS: KnowledgeTopic[] = [
     title: 'Messaging',
     keywords: ['message', 'messages', 'messaging', 'dm', 'chat', 'inbox', 'compose', 'msgs', 'vibechat'],
     answer: () =>
-      `**Messaging** supports direct messages with real-time delivery between members and a floating **New Message** compose popup (LinkedIn-style). Unread incoming DMs pop up automatically. **VibeChat** (More menu) is the team/community chat space.`,
+      `**Messaging** supports direct messages with real-time delivery between members and a floating **New Message** compose popup (ConnectLn-style). Unread incoming DMs pop up automatically. **VibeChat** (More menu) is the team/community chat space.`,
     tab: 'messaging',
     tabLabel: 'Open Messaging'
   },
