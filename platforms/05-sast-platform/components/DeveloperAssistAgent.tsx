@@ -31,6 +31,7 @@ export function openAskNoctisPopup(initialQuestion?: string) {
 
 const QUICK_PROMPTS = [
   "Summarize current scan findings",
+  "Audit Cyber KPIs, 710 Hosts & OMD 2.5.0p17 Setup",
   "What SAST apps, modules & engines are in this platform?",
   "Inspect F-001 (CWE-89 SQL Injection) & remediation diff",
   "Inspect PLG-046 vs PLG-054 (CWE-94 Code Injection)",
@@ -38,6 +39,7 @@ const QUICK_PROMPTS = [
 ];
 
 const ASSET_PRESETS = [
+  { label: "Cyber KPIs & OMD 2.5.0p17", query: "Audit Cyber KPIs (16.8K vulns, 213 detections), 710 Fleet Hosts, and OMD 2.5.0p17 installation commands" },
   { label: "Finding F-001 (SQLi)", query: "Inspect finding F-001 and show taint trace and Java/Python/Node remediation" },
   { label: "Finding F-002 (Command Inj)", query: "Inspect finding F-002 and show taint trace and remediation" },
   { label: "Finding F-003 (SSRF)", query: "Inspect finding F-003 and show SSRF remediation" },
@@ -56,12 +58,12 @@ export function DeveloperAssistAgent() {
     plugins: 401,
     findings: 27,
     benchmarks: 58,
-    modules: 11,
+    modules: 12,
   });
   const [messages, setMessages] = useState<{ role: "assistant" | "user"; text: string }[]>([
     {
       role: "assistant",
-      text: "Hello! I am **Noctis**, running directly inside your **XTRIKE SAST Platform** pop-up via the Noctis API (`/api/noctis`).\n\nI have full access to all **XTRIKE SAST assets, apps, and resources**:\n• **401 SAST Plugins** (`PLG-001`–`PLG-401`)\n• **All Workspace & Live Scan Findings** (`F-001`–`F-027` + active scan session)\n• **Integrated SAST & DAST Benchmark Repositories**\n• **All 11 SAST Platform Apps & Engines** (Proof Engine, Taint Graph, Fusion, AI-BOM, MCP, Reports)\n\nAsk me any question below and I will fetch the answer right into this pop-up without leaving your current screen.",
+      text: "Hello! I am **Noctis**, running directly inside your **XTRIKE SAST Platform** pop-up via the Noctis API (`/api/noctis`).\n\nI have full access to all **XTRIKE SAST assets, apps, and resources**:\n• **401 SAST Plugins** (`PLG-001`–`PLG-401`)\n• **All Workspace & Live Scan Findings** (`F-001`–`F-027` + active scan session)\n• **Cyber KPIs, 710 Monitored Hosts, 15,808 Services & OMD `2.5.0p17` Installer**\n• **Integrated SAST & DAST Benchmark Repositories**\n• **All 12 SAST Platform Apps & Engines** (Proof Engine, Taint Graph, Cyber Monitor, Fusion, AI-BOM, MCP, Reports)\n\nAsk me any question below and I will fetch the answer right into this pop-up without leaving your current screen.",
     },
   ]);
 

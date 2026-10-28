@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { SAST_400_PLUGINS, type SASTPluginDefinition } from "@/lib/sast-400-plugins";
 import { BENCHMARK_32_REPOS, type BenchmarkRepoTarget } from "@/data/benchmark-repos";
+import { buildCyberMonitoringNoctisSummary } from "@/lib/cyber-monitoring-data";
 import FINDINGS from "@/data/findings";
 import type { SASTFinding } from "@/types/sast";
 
@@ -30,6 +31,12 @@ const SAST_PLATFORM_APPS_AND_MODULES = [
     name: "Triage Desk & Split Finding Inspector",
     route: "/dashboard",
     purpose: "Interactive vulnerability triage workspace with severity filters, composite risk gauge, compliance gates (PCI-DSS, NIST 800-53, ISO 27001, OWASP Top 10), and deep exploitability dossiers.",
+  },
+  {
+    id: "cyber-monitoring",
+    name: "Cyber KPI, Live Fleet Monitor & OMD 2.5.0p17 Runtime",
+    route: "/cyber-monitoring",
+    purpose: "Cyber Security Vulnerability KPI Dashboard (16.8K Open Vulns, 6.4K CVEs, 1.3K Remediations), Antivirus & Endpoint Detection KPIs (213 Detections, 32 Prevented, 1,765 OS Hosts), Live Fleet Monitor (710 Hosts, 15,808 Services, Honeycomb Host Grid, Top Alerters), and OMD 2.5.0p17 Package Installer (Ubuntu/Debian/SLES/RHEL wget, apt install, omd create/start monitoring).",
   },
   {
     id: "report-engine",
@@ -71,7 +78,7 @@ const SAST_PLATFORM_APPS_AND_MODULES = [
     id: "ask-noctis",
     name: "Ask Noctis (In-App AI SAST & AppSec Pop-up)",
     route: "/api/noctis",
-    purpose: "In-app pop-up assistant connected via API to Noctis with complete access to all XTRIKE SAST findings, 401 plugins, benchmark repositories, taint graphs, and remediation diffs.",
+    purpose: "In-app pop-up assistant connected via API to Noctis with complete access to all XTRIKE SAST findings, 401 plugins, benchmark repositories, taint graphs, Cyber KPIs, 710 monitored hosts, and OMD 2.5.0p17 installer packages.",
   },
 ];
 
@@ -80,10 +87,12 @@ const SAST_REPO_FILES = [
   { path: "lib/sast-400-plugins.ts", role: "401 enterprise SAST detection plugins (PLG-001 to PLG-401) with language-strict rules (e.g., PLG-046 Python vs PLG-054 Java)" },
   { path: "lib/deep-enumeration-engine.ts", role: "Evidence-bound finding dossier generator (CVSS v3.1 vectors, blast-radius breakdown, curl/Python probes, multi-step chains)" },
   { path: "lib/live-sast-scanner.ts", role: "Live scan session manager, 9 Python security standard plugins, and automatic state cleanup on new scan" },
+  { path: "lib/cyber-monitoring-data.ts", role: "Cyber Vulnerability KPIs (16.8K/6.4K/1.3K), Antivirus Telemetry (213 Detections, 1,765 OS Hosts), 710-Host Fleet Honeycomb & Top Alerters, and OMD 2.5.0p17 Debian/Ubuntu/SLES/RHEL package catalog" },
+  { path: "app/cyber-monitoring/page.tsx", role: "Interactive Cyber KPI, Antivirus Telemetry, Live Fleet Honeycomb Monitor & OMD 2.5.0p17 Site Provisioning Console" },
   { path: "lib/validation-engine.ts", role: "6-stage PTES / NIST 800-115 proof validation pipeline" },
   { path: "lib/pdf-report-generator.ts", role: "Executive & technical PDF audit report generator with release-gate reconciliation" },
   { path: "data/findings.ts", role: "Canonical catalog of 27 deep SAST findings (F-001 to F-027) with code snippets, taint paths, and multi-language fixes" },
-  { path: "data/benchmark-repos.ts", role: "Integrated SAST & DAST vulnerable benchmark repositories (OWASP Benchmark, Juice Shop, WebGoat, DVWA, crAPI, Semgrep, Gosec, etc.)" },
+  { path: "data/benchmark-repos.ts", role: "Integrated SAST & DAST vulnerable benchmark repositories (OWASP Benchmark, Juice Shop, WebGoat, DVWA, crAPI, Semgrep, Gosec, XTRIKE OMD Monitoring, etc.)" },
   { path: "types/sast.ts", role: "Canonical TypeScript schema for SASTFinding, ProofState, AttackNode, EngineResult, and Remediation" },
   { path: "components/finding/DeepExploitabilityPanel.tsx", role: "Proof Engine & Taint Graph UI distinguishing statically detected paths from verified runtime proof" },
   { path: "components/finding/DiffRemediation.tsx", role: "Language-verified AST remediation diff & regression test generator" },
@@ -279,6 +288,15 @@ function buildLocalSastAnswer(
       `- **Java Rule (\`${javaPlugin?.pluginId}: ${javaPlugin?.code}\` · MITRE \`${javaPlugin?.mitreAttack}\`):** Targets \`javax.tools.JavaCompiler.getTask(...)\` in \`BlindScript.java\`. Note that \`compiler.getTask(...)\` only initializes a compilation task; static analysis must verify whether \`task.call()\` executes and whether attacker input reaches the \`JavaFileObject\` source before claiming exploitability (**Proof Status: Needs Source-to-Execution Validation**).`,
       `\n#### Verified Java Remediation (\`BlindScript.java\`)\n\`\`\`java\n// Remove runtime JavaCompiler compilation of user-controlled source;\n// use a strict allowlist of pre-compiled strategies.\nMap<String, Runnable> ALLOWED_JOBS = Map.of(\n    \"dailyReport\", reportService::runDailyReport,\n    \"auditSync\", auditService::syncLedger\n);\nRunnable job = ALLOWED_JOBS.get(request.getParameter(\"jobName\"));\nif (job == null) {\n    throw new IllegalArgumentException(\"Disallowed job identifier\");\n}\njob.run();\n\`\`\``,
     ].join("\n");
+  }
+
+  // 7.5. Check if asking about Cyber KPIs, Antivirus KPIs, Fleet Monitoring (710 hosts, 15,808 services), or OMD 2.5.0p17 installation
+  if (
+    /\b(cyber\s*kpi|open\s*vulnerabilit|16\.8k|6\.4k|antivirus|hunting\s*leads|710\s*hosts|15,?808|top\s*alerters|honeycomb|omd|2\.5\.0p17|resolute_amd64|wget\s+https|apt\s+install|create\s+monitoring|start\s+monitoring|mkeventd|liveproxyd|cmc|cmkadmin|xtrikeadmin)\b/i.test(
+      q
+    )
+  ) {
+    return buildCyberMonitoringNoctisSummary();
   }
 
   // 8. Check if asking about Benchmark repositories

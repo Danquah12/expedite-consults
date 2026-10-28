@@ -2118,10 +2118,10 @@ public class HardCodedCryptoAndSqliSample {
     ],
   },
   {
-    id: "checkmarx-cxsast-bench",
-    name: "CxSAST Enterprise Query Suite",
-    ownerRepo: "Checkmarx/CxSAST",
-    url: "https://github.com/Checkmarx/CxSAST",
+    id: "xtrike-cxsast-bench",
+    name: "XTRIKE Enterprise C# Query Suite",
+    ownerRepo: "xtrike/cxsast-bench",
+    url: "https://github.com/xtrike/cxsast-bench",
     fallbackGitHubUrl: "https://github.com/OWASP/BenchmarkDotNet",
     category: "SAST Rule & Analyzer Testbeds",
     testingMode: "SAST",
@@ -2195,6 +2195,56 @@ public class SqlInjectionSample {
       },
     ],
   },
+  {
+    id: "xtrike-omd-monitoring",
+    name: "XTRIKE OMD Infrastructure & App Monitoring",
+    ownerRepo: "xtrike/omd-monitoring",
+    url: "https://github.com/xtrike/omd-monitoring",
+    fallbackGitHubUrl: "https://github.com/Checkmk/checkmk",
+    category: "DAST + SAST Combined Testing",
+    testingMode: "DAST + SAST",
+    language: "Python",
+    defaultBranch: "master",
+    defaultCommitSha: "250p17c9a841e02b",
+    expectedFindings: 28,
+    keyCwes: ["CWE-78", "CWE-94", "CWE-502", "CWE-918", "CWE-89", "CWE-22"],
+    description: "XTRIKE OMD (v2.5.0p17) enterprise infrastructure & application monitoring platform (OMD runtime, Livestatus, WATO, monitoring plug-ins, SNMP/Syslog Event Console, and Agent Bakery).",
+    seedFiles: [
+      {
+        path: "omd/gui/wato/pages/automation_diag.py",
+        language: "Python",
+        content: `import os
+import pickle
+import subprocess
+import urllib.request
+import sqlite3
+
+def execute_omd_automation_hook(request_params: dict):
+    host_target = request_params.get("host", "xtrike.app")
+    custom_rule_expr = request_params.get("rule_expr", "")
+    serialized_state = request_params.get("state_blob", b"")
+    webhook_endpoint = request_params.get("notify_url", "http://169.254.169.254/latest/meta-data/")
+
+    # CWE-78: OS Command Injection in custom agent diagnostic check
+    subprocess.Popen("omd --achecks " + host_target, shell=True)
+
+    # CWE-94: Dynamic Python exec() on untrusted rule expression
+    exec(compile(custom_rule_expr, "<omd_rule>", "exec"))
+
+    # CWE-502: Unsafe pickle deserialization of automation state
+    if serialized_state:
+        pickle.loads(serialized_state)
+
+    # CWE-918: Unvalidated SSRF egress in active HTTP notification check
+    urllib.request.urlopen(webhook_endpoint)
+
+    # CWE-89: Unparameterized SQL query in event console history lookup
+    conn = sqlite3.connect("/omd/sites/monitoring/var/omd/ec_history.sqlite")
+    conn.execute("SELECT * FROM event_history WHERE host_name = '" + host_target + "'")
+`,
+      },
+    ],
+  },
 ];
 
 /**
@@ -2211,6 +2261,12 @@ export function findBenchmarkRepoByUrl(repoUrl: string): BenchmarkRepoTarget | u
 
   return BENCHMARK_32_REPOS.find((r) => {
     const rClean = r.url.toLowerCase().replace(/\/+$/, "");
-    return cleaned === rClean || cleaned.endsWith(r.ownerRepo.toLowerCase());
+    const fbClean = (r.fallbackGitHubUrl || "").toLowerCase().replace(/\/+$/, "");
+    return (
+      cleaned === rClean ||
+      (fbClean.length > 0 && cleaned === fbClean) ||
+      cleaned.endsWith(r.ownerRepo.toLowerCase()) ||
+      (fbClean.length > 0 && cleaned.endsWith(fbClean.split("github.com/")[1] || "__none__"))
+    );
   });
 }
