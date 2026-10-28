@@ -11,6 +11,8 @@ export interface WheelVideoTalk {
   enclaveId?: string
   professionId?: string
   thumbnailUrl: string
+  /** Set when no verified video exists: opens a YouTube search for the career instead of embedding a generic video. */
+  searchUrl?: string
   summary: string
   takeaways: string[]
   tags: string[]
@@ -1800,7 +1802,8 @@ function buildComprehensiveProfessionWheelTalks(): WheelVideoTalk[] {
       enclaveId: enclave.id,
       professionId: prof.id,
       thumbnailUrl: `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`,
-      summary: `Official ${prof.title} briefing (${verified?.ytTitle || prof.defaultHeadline}). Covers core field responsibilities, ${(prof.typicalSkills || []).slice(0, 4).join(", ")}${primaryTool ? `, and operational execution with ${primaryTool.name}` : ""}.`,
+      searchUrl: verified ? undefined : `https://www.youtube.com/results?search_query=${encodeURIComponent(`how to become a ${prof.title.split(/[,(&]/)[0].trim()} career`)}`,
+      summary: `${verified ? "Official " : "Career briefing: "}${prof.title}${verified ? ` briefing (${verified.ytTitle})` : ""}. Covers core field responsibilities, ${(prof.typicalSkills || []).slice(0, 4).join(", ")}${primaryTool ? `, and operational execution with ${primaryTool.name}` : ""}.${verified ? "" : " No verified video has been curated for this career yet — use the button to find career videos on YouTube."}`,
       takeaways: [
         `Core Profession Competencies: ${(prof.typicalSkills || []).slice(0, 3).join(" · ")}`,
         primaryTool

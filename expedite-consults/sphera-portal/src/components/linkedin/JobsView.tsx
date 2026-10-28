@@ -1086,7 +1086,7 @@ export function JobsView({
                 <span className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 shrink-0">
                   Region ({COUNTRIES_CONFIG.length}):
                 </span>
-                {COUNTRIES_CONFIG.map((c) => {
+                {COUNTRIES_CONFIG.slice(0, 26).map((c) => {
                   const isSelected = selectedCountryCode === c.code
                   return (
                     <button
@@ -1104,6 +1104,17 @@ export function JobsView({
                     </button>
                   )
                 })}
+                <select
+                  aria-label="All regions of the world"
+                  value={COUNTRIES_CONFIG.findIndex((c) => c.code === selectedCountryCode) >= 26 ? selectedCountryCode : ""}
+                  onChange={(e) => e.target.value && handleCountryChange(e.target.value)}
+                  className="rounded-full px-3 py-1 text-xs font-medium shrink-0 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200/70 dark:border-zinc-700/70 cursor-pointer"
+                >
+                  <option value="">🌍 All regions ({COUNTRIES_CONFIG.length - 26} more)…</option>
+                  {[...COUNTRIES_CONFIG.slice(26)].sort((a, b) => a.name.localeCompare(b.name)).map((c) => (
+                    <option key={c.code} value={c.code}>{c.flag} {c.name}</option>
+                  ))}
+                </select>
               </div>
 
               <span className="text-xs text-zinc-600 dark:text-zinc-400 font-medium flex items-center gap-1.5 shrink-0">

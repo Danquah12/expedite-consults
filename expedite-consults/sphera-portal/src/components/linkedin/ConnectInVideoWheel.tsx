@@ -880,13 +880,26 @@ export function ConnectInVideoWheel({
               >
                 {/* Balanced YouTube Video Player */}
                 <div className="relative h-[220px] sm:h-[260px] w-full bg-black">
-                  <iframe
-                    src={`https://www.youtube-nocookie.com/embed/${activeVideo.youtubeId}?autoplay=1&rel=0&modestbranding=1`}
-                    title={activeVideo.title}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    className="h-full w-full border-0"
-                  />
+                  {activeVideo.searchUrl ? (
+                    <div className="h-full w-full flex flex-col items-center justify-center gap-3 p-4 text-center bg-linear-to-br from-[#1C1916] to-[#3a1f19]">
+                      <p className="text-sm font-bold text-[#EFE8DC]">No verified video for this career yet</p>
+                      <p className="text-xs text-[#EFE8DC]/70 max-w-xs">Watch real career videos for {activeVideo.title.replace(/ — Career Masterclass.*$/, '')} on YouTube.</p>
+                      <button
+                        onClick={() => window.open(activeVideo.searchUrl, '_blank', 'noopener,noreferrer')}
+                        className="rounded-full bg-[#A64532] hover:bg-[#8c3a2a] text-white px-4 py-2 text-xs font-bold cursor-pointer"
+                      >
+                        ▶ Find career videos on YouTube
+                      </button>
+                    </div>
+                  ) : (
+                    <iframe
+                      src={`https://www.youtube-nocookie.com/embed/${activeVideo.youtubeId}?autoplay=1&rel=0&modestbranding=1`}
+                      title={activeVideo.title}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      className="h-full w-full border-0"
+                    />
+                  )}
                 </div>
 
                 {/* Video Notes, Signature Profile Picture + ConnectLn Card, Takeaways & Single Bottom Share Bar */}

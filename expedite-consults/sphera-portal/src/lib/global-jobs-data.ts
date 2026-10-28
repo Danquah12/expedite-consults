@@ -1,3 +1,4 @@
+import { EXPANSION_COUNTRIES, EXPANSION_SALARY_MULTIPLIERS } from "./global-regions-expansion"
 import { ALL_PROFESSIONS, ProfessionDefinition } from "@/lib/connectin-professions"
 
 export interface CountryConfig {
@@ -78,7 +79,7 @@ export interface CandidateProfile {
   professionEnclave?: string
 }
 
-export const COUNTRIES_CONFIG: CountryConfig[] = [
+const BASE_COUNTRIES_CONFIG: CountryConfig[] = [
   {
     code: 'US',
     name: 'United States',
@@ -340,6 +341,9 @@ export const COUNTRIES_CONFIG: CountryConfig[] = [
     hubs: ['All Hubs', 'Cairo (New Administrative Capital / Smart Village)', 'Alexandria (Mediterranean Port)', 'Suez Canal Maritime Zone', 'Luxor / Aswan (Heritage & Tourism)', 'Remote Egypt']
   }
 ]
+
+/** All supported world regions: the 26 core markets plus the expansion regions (see global-regions-expansion.ts). */
+export const COUNTRIES_CONFIG: CountryConfig[] = [...BASE_COUNTRIES_CONFIG, ...EXPANSION_COUNTRIES]
 
 export const GLOBAL_JOBS_CATALOG: GlobalJobItem[] = [
   // =========================================================================
@@ -4291,7 +4295,7 @@ function convertUsdSalaryToCountry(usdRange: string, country: CountryConfig): st
     BR: 2.8,  // BRL scale
     MX: 9.2   // MXN scale
   }
-  const mult = multipliers[country.code] || 1
+  const mult = multipliers[country.code] ?? EXPANSION_SALARY_MULTIPLIERS[country.code] ?? 1
   const low = Math.round((lowBase * mult) / 1000) * 1000
   const high = Math.round((highBase * mult) / 1000) * 1000
 
@@ -4361,13 +4365,13 @@ function buildJobForProfessionInCountry(
     ? chosenEmployer.company
     : fallbackCorp
     ? `${fallbackCorp.prefix.split('/')[idx % fallbackCorp.prefix.split('/').length].trim()} — ${prof.categoryName}`
-    : `${baseEmployerName} (${country.name})`
+    : `${prof.categoryName} Employers & Training Providers (${country.name})`
 
   const applyUrl = chosenEmployer
     ? chosenEmployer.applyUrl
     : fallbackCorp
     ? fallbackCorp.url
-    : usDefaultList?.[0]?.applyUrl || 'https://www.connectln.app/connectin'
+    : 'https://www.connectln.app/connectin'
 
   const source = chosenEmployer
     ? chosenEmployer.source

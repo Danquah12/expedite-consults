@@ -52,7 +52,7 @@ interface ConnectInAIAssistantProps {
 
 /** Builds action buttons for a Noctis "How to become…" reply (Jobs, Resume Prep, Mentor, Learning, Network). */
 function careerCards(text: string): ChatMessage['suggestedCards'] | undefined {
-  const t = /^#\s*🧭\s*How to become:\s*(.+)$/m.exec(text || '')
+  const t = /^#\s*🧭\s*[^:\n]+:\s*(.+)$/m.exec(text || '')
   if (!t) return undefined
   const title = t[1].replace(/\s*\(.*?\)\s*/g, ' ').trim()
   const jobsSection = /Related jobs[^\n]*\n([^\n]+)/.exec(text)
