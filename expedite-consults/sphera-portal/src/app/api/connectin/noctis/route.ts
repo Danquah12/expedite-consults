@@ -43,7 +43,10 @@ export async function POST(req: Request) {
   try {
     const res = await fetch(NOCTIS_API_URL, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: {
+        'content-type': 'application/json',
+        ...(process.env.NOCTIS_API_KEY ? { 'x-noctis-key': process.env.NOCTIS_API_KEY } : {})
+      },
       body: JSON.stringify({
         turns: [...history, { role: 'user', content: grounded }],
         language: body?.language || 'English',
