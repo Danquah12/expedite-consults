@@ -45,6 +45,7 @@ import {
 import { useLanguage } from "@/context/LanguageContext"
 import { translatePostText } from "@/lib/translations/post-translator"
 import { resolveUserProfilePicture, generatePersonalSignatureAvatar, trackUserActivity } from "@/lib/connectin-storage"
+import { buildSharePreviewUrl, useSharePic } from "@/lib/connectin-share"
 import { VideoShareBanner } from "./VideoShareBanner"
 
 interface FeedPostCardProps {
@@ -204,11 +205,18 @@ export function FeedPostCard({
     })
   }
 
+  const sharerPic = useSharePic(resolveUserProfilePicture(currentUser))
   const getPostShareData = () => {
     const origin = "https://www.connectln.app"
-    const postUrl = `${origin}/connectin?v=connectln5`
     const snippet = (post.content || "").slice(0, 100).replace(/\n/g, ' ').trim()
-    const text = `ConnectLn · Shared by ${resolvedAuthorName}:\n\n"${snippet}..."\n\n${postUrl}`
+    const postUrl = buildSharePreviewUrl({
+      to: `/connectin?v=connectln5`,
+      title: snippet || `Post by ${resolvedAuthorName}`,
+      sharerName: currentUser?.name || "",
+      pic: sharerPic,
+      subtitle: `Post by ${resolvedAuthorName}`,
+    })
+    const text = `ConnectLn · Shared by ${currentUser?.name || resolvedAuthorName}:\n\n"${snippet}..."\n\n${postUrl}`
     return { origin, postUrl, snippet, text }
   }
 

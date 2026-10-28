@@ -37,6 +37,7 @@ import { PROFESSION_ENCLAVES, ALL_PROFESSIONS, findEnclaveById } from "@/lib/con
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { UserProfile } from "@/lib/linkedin-data"
 import { resolveUserProfilePicture, isKwesiAccount } from "@/lib/connectin-storage"
+import { buildSharePreviewUrl } from "@/lib/connectin-share"
 import { VideoShareBanner } from "./VideoShareBanner"
 
 interface ConnectInVideoWheelProps {
@@ -265,14 +266,13 @@ export function ConnectInVideoWheel({
   }, [userProfilePic, user])
 
   const buildShareUrl = (video: WheelVideoTalk) => {
-    const q = new URLSearchParams({
-      video: video.youtubeId,
-      plate: video.serialPlate,
-      n: user?.name || "",
-      t: video.title,
-      p: sharePic,
+    return buildSharePreviewUrl({
+      to: `/connectin?video=${encodeURIComponent(video.youtubeId)}&plate=${encodeURIComponent(video.serialPlate)}`,
+      title: video.title,
+      sharerName: user?.name || "",
+      pic: sharePic,
+      subtitle: video.serialPlate,
     })
-    return `https://www.connectln.app/connectin/share?${q.toString()}`
   }
   // Social Share Payload Generator — uses ConnectLn OpenGraph Card URL so WhatsApp, LinkedIn, Facebook, and X render the Profile Picture + ConnectLn Logo Card
   const getVideoSharePayload = (video: WheelVideoTalk) => {

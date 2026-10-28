@@ -67,7 +67,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { createUniqueUserProfile } from "@/lib/connectin-profile"
-import { saveStoredUser, savePersistentAvatar, savePersistentCover, trackUserActivity } from "@/lib/connectin-storage"
+import { saveStoredUser, savePersistentAvatar, savePersistentCover, trackUserActivity, resolveUserProfilePicture as resolveSharePhoto } from "@/lib/connectin-storage"
+import { buildSharePreviewUrl, useSharePic } from "@/lib/connectin-share"
 import {
   ProfileViewerItem,
   ContentReachData,
@@ -611,9 +612,16 @@ export function ProfileView({
   const [isShareModalOpen, setIsShareModalOpen] = useState(false)
   const [shareCopied, setShareCopied] = useState(false)
 
+  const profileSharePic = useSharePic(resolveSharePhoto(user as any))
   const getProfileSharePayload = () => {
     const origin = typeof window !== "undefined" ? window.location.origin : "https://sphera-portal.vercel.app"
-    const profileUrl = `${origin}/connectin`
+    const profileUrl = buildSharePreviewUrl({
+      to: `/connectin`,
+      title: `${user.name} on ConnectLn`,
+      sharerName: user.name,
+      pic: profileSharePic,
+      subtitle: user.headline || "",
+    })
     const headlineSnippet = user.headline || "ConnectIn Professional"
     const shareText = `👋 Connect with ${user.name} on ConnectIn!\n\n🏛️ ${headlineSnippet}\n📍 ${user.location}\n\nView full verified portfolio & career experience:\n${profileUrl}`
     return { origin, profileUrl, headlineSnippet, shareText }

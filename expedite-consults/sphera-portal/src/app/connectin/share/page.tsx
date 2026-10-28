@@ -9,7 +9,7 @@ export async function generateMetadata({ searchParams }: { searchParams: Params 
   const sp = await searchParams
   const name = one(sp.n)
   const title = one(sp.t) || "ConnectLn Masterclass"
-  const img = new URLSearchParams({ n: name, t: title, plate: one(sp.plate), p: one(sp.p) })
+  const img = new URLSearchParams({ n: name, t: title, plate: one(sp.d) || one(sp.plate), p: one(sp.p) })
   const image = `https://www.connectln.app/api/connectin/share-card?${img.toString()}`
   const desc = name ? `Shared by ${name} on ConnectLn — Tickets, vouches, and real work.` : "Shared on ConnectLn — Tickets, vouches, and real work."
   return {
@@ -22,6 +22,11 @@ export async function generateMetadata({ searchParams }: { searchParams: Params 
 
 export default async function SharePage({ searchParams }: { searchParams: Params }) {
   const sp = await searchParams
-  const target = `/connectin?video=${encodeURIComponent(one(sp.video))}&plate=${encodeURIComponent(one(sp.plate))}`
+  const to = one(sp.to)
+  // same-site paths only (no open redirect)
+  const target =
+    to.startsWith("/") && !to.startsWith("//")
+      ? to
+      : `/connectin?video=${encodeURIComponent(one(sp.video))}&plate=${encodeURIComponent(one(sp.plate))}`
   return <ShareRedirect target={target} />
 }

@@ -3,6 +3,7 @@
 import React, { useState } from "react"
 import { Play, ShieldCheck, Share2, Copy, Check, Mail } from "lucide-react"
 import { resolveUserProfilePicture, isDefaultPlaceholderAvatar, generatePersonalSignatureAvatar, isForeignPersonaAvatar } from "@/lib/connectin-storage"
+import { buildSharePreviewUrl, useSharePic } from "@/lib/connectin-share"
 
 export interface VideoShareBannerProps {
   /** Sharer's profile picture (circular on the left inside the ConnectLn Logo Card) */
@@ -71,6 +72,7 @@ export function VideoShareBanner({
       ? candidateAvatar
       : resolveUserProfilePicture({ name: resolvedAuthor, avatar: candidateAvatar } as any)
   const resolvedHeadline = authorHeadline || userHeadline
+  const sharePic = useSharePic(resolvedAvatar)
   const resolvedPlayHandler = onPlayClick || onWatchClick
 
   const handlePlayTrigger = (e: React.MouseEvent) => {
@@ -106,9 +108,13 @@ export function VideoShareBanner({
     })()
 
   // ConnectLn OpenGraph URL so WhatsApp, LinkedIn, X, Facebook, and messages render the ConnectLn Logo + Profile Picture Card
-  const resolvedShareUrl = `https://www.connectln.app/connectin?video=${encodeURIComponent(
-    resolvedYtId || ""
-  )}&plate=${encodeURIComponent(serialPlate || "CLN-VID")}&v=connectln8`
+  const resolvedShareUrl = buildSharePreviewUrl({
+    to: `/connectin?video=${encodeURIComponent(resolvedYtId || "")}&plate=${encodeURIComponent(serialPlate || "CLN-VID")}`,
+    title: videoTitle,
+    sharerName: resolvedAuthor,
+    pic: sharePic,
+    subtitle: serialPlate || "",
+  })
 
   const resolvedThumb =
     thumbnailUrl ||
