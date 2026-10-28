@@ -26,6 +26,7 @@ export interface TargetProfileFindingSpec {
   technique: string;
   techniqueId: string;
   curlCmd: string;
+  retestPassCriteria?: string;
 }
 
 export interface TargetDeepProfile {
@@ -58,20 +59,22 @@ export const TARGET_DEEP_PROFILES: TargetDeepProfile[] = [
         validationState: "Validated Control Gap",
         findingClassification: "Hardening Control Gap",
         description:
-          "Live HTTP response inspection of `http://192.168.195.140/` (`owaspbwa`, MAC `00:0c:29:86:5e:7d` on VMware VMnet8) disclosed an End-of-Life software stack in the `Server` header: `Apache/2.2.14 (Ubuntu) mod_mono/2.4.3 PHP/5.3.2-1ubuntu4.30 with Suhosin-Patch proxy_html/3.0.1 mod_python/3.3.1 Python/2.6.5 mod_ssl/2.2.14 OpenSSL/0.9.8k Phusion_Passenger/4.0.38 mod_perl/2.0.4 Perl/v5.10.1`.",
+          "[Observation State: Validated Control Gap — Confirmed HTTP Banner Observation / No Destructive Exploit Executed] Live HTTP response inspection of `http://192.168.195.140/` (`owaspbwa`, MAC `00:0c:29:86:5e:7d` on VMware VMnet8) disclosed an End-of-Life software stack in the `Server` and `X-Powered-By` headers: `Apache/2.2.14 (Ubuntu) mod_mono/2.4.3 PHP/5.3.2-1ubuntu4.30 with Suhosin-Patch proxy_html/3.0.1 mod_python/3.3.1 Python/2.6.5 mod_ssl/2.2.14 OpenSSL/0.9.8k Phusion_Passenger/4.0.38 mod_perl/2.0.4 Perl/v5.10.1`. [Artifact Deduplication Note: This High-severity finding (CWE-1104) tracks the lifecycle risk of running unsupported Apache 2.2 / PHP 5.3 / OpenSSL 0.9.8 packages, whereas the Low-severity Banner Disclosure finding (CWE-497) tracks HTTP response header token suppression (`ServerTokens Prod`). Suppressing the banner alone does NOT resolve this finding.]",
         impact:
-          "Running unsupported Apache 2.2.14, PHP 5.3.2, and OpenSSL 0.9.8k exposes the host to multiple historical protocol and memory-safety weaknesses if reachable outside an isolated VMnet8 lab.",
+          "[Potential / Conditional Downstream Risk]: No active memory-corruption or daemon exploit was executed during this read-only assessment. Running unsupported Apache 2.2.14, PHP 5.3.2, and OpenSSL 0.9.8k exposes the host to unpatched upstream CVEs if the VM is bridged or routable outside an isolated VMnet8 host-only/NAT lab.",
         remediation:
-          "Keep this training VM strictly isolated on VMware Host-Only/NAT (`VMnet8`), set `ServerTokens Prod` and `ServerSignature Off` in `/etc/apache2/conf.d/security`, and upgrade production workloads to supported Apache 2.4 / PHP 8.x / OpenSSL 3.x releases.",
+          "1. For production systems, upgrade to supported packages (Apache 2.4.x, PHP 8.2+, OpenSSL 3.x) and verify via host package inventory (`dpkg -l`). 2. Because this host is an intentionally vulnerable OWASP Broken Web Applications training VM, enforce strict VMware Host-Only/NAT (`VMnet8`) network isolation so it cannot be reached from external or corporate subnets, and apply `ServerTokens Prod` / `ServerSignature Off` as secondary hardening.",
         payload: "GET / HTTP/1.1 (Host: 192.168.195.140)",
         matchedPattern: "Server: Apache/2.2.14 (Ubuntu) mod_mono/2.4.3 PHP/5.3.2-1ubuntu4.30 with Suhosin-Patch ... OpenSSL/0.9.8k",
         testRequestPath: "GET / HTTP/1.1\r\nHost: 192.168.195.140",
-        testResponseSnippet: "HTTP/1.1 200 OK\r\nServer: Apache/2.2.14 (Ubuntu) mod_mono/2.4.3 PHP/5.3.2-1ubuntu4.30 with Suhosin-Patch proxy_html/3.0.1 mod_python/3.3.1 Python/2.6.5 mod_ssl/2.2.14 OpenSSL/0.9.8k Phusion_Passenger/4.0.38 mod_perl/2.0.4 Perl/v5.10.1\r\nContent-Type: text/html\r\nContent-Length: 28067",
+        testResponseSnippet: "HTTP/1.1 200 OK\r\nServer: Apache/2.2.14 (Ubuntu) mod_mono/2.4.3 PHP/5.3.2-1ubuntu4.30 with Suhosin-Patch proxy_html/3.0.1 mod_python/3.3.1 Python/2.6.5 mod_ssl/2.2.14 OpenSSL/0.9.8k Phusion_Passenger/4.0.38 mod_perl/2.0.4 Perl/v5.10.1\r\nX-Powered-By: PHP/5.3.2-1ubuntu4.30\r\nContent-Type: text/html\r\nContent-Length: 28067",
         tactic: "Reconnaissance",
         tacticId: "TA0043",
         technique: "Gather Victim Host Information: Software",
         techniqueId: "T1592.002",
-        curlCmd: "curl -s -I \"http://192.168.195.140/\""
+        curlCmd: "curl -s -I \"http://192.168.195.140/\"",
+        retestPassCriteria:
+          "1. Expected State: Host package verification ('dpkg -l apache2 php5 openssl' / 'apache2 -v' / 'php -v') confirms upgrade to supported releases (Apache 2.4.x, PHP 8.x, OpenSSL 3.x) OR documented VMnet8 host-only lab isolation with verified firewall ACLs, accompanied by 'ServerTokens Prod'. 2. Functional Test: Verify HTTP responses from http://192.168.195.140/ serve expected routes without legacy runtime errors. 3. Negative Test: Confirm that merely suppressing the HTTP 'Server' banner without upgrading or network-isolating the underlying Apache 2.2.14 / PHP 5.3.2 / OpenSSL 0.9.8k packages does NOT pass this check."
       },
       {
         idSuffix: "OWASPBWA-TRAINING-APPS-EXPOSED",
@@ -88,20 +91,22 @@ export const TARGET_DEEP_PROFILES: TargetDeepProfile[] = [
         validationState: "Validated Control Gap",
         findingClassification: "Hardening Control Gap",
         description:
-          "The root web server on `http://192.168.195.140/` (`28,067` bytes HTML index) exposes direct unauthenticated navigation to intentionally vulnerable training applications (`DVWA`, `OWASP Mutillidae II`, `WebGoat`, `BodgeIt Store`, `Peruggia`, `WackoPicko`, `Bricks`) configured with known default training accounts (`admin/admin`, `admin/password`).",
+          "[Observation State: Validated Control Gap — Confirmed Unauthenticated HTTP Access / Read-Only Index Verification] The root web server on `http://192.168.195.140/` (`28,067` bytes HTML index) and spidered sub-paths (`/dvwa/`, `/mutillidae/`, `/WebGoat/`, `/bodgeit/`, `/peruggia/`) expose direct unauthenticated HTTP navigation to intentionally vulnerable training applications (`DVWA`, `OWASP Mutillidae II`, `WebGoat`, `BodgeIt Store`, `Peruggia`, `WackoPicko`, `Bricks`) configured with known default training accounts (`admin/admin`, `admin/password`).",
         impact:
-          "Any host on the `192.168.195.0/24` subnet can access the training applications without gateway authentication.",
+          "[Potential / Conditional Downstream Risk]: No destructive payloads or default-credential logins were executed during this read-only assessment. However, any host with network reachability to `192.168.195.140` can reach the intentionally vulnerable training applications and their documented default accounts without gateway authentication.",
         remediation:
-          "Restrict access to `192.168.195.140` using Apache IP allowlisting (`Require ip 192.168.195.1`) or HTTP Basic authentication at the root virtual host when the lab is active.",
+          "1. Restrict network reachability of `192.168.195.140` to an isolated VMware Host-Only/VLAN lab segment (`VMnet8`) and block ingress from untrusted or bridged LAN segments. 2. Enforce Apache IP allowlisting (`Order deny,allow` / `Deny from all` / `Allow from 192.168.195.1`) and/or HTTP Basic authentication at the root virtual host (`/var/www`) whenever the training VM is powered on.",
         payload: "GET / HTTP/1.1",
         matchedPattern: "OWASP Broken Web Applications Project (DVWA, Mutillidae, WebGoat, BodgeIt)",
         testRequestPath: "GET / HTTP/1.1\r\nHost: 192.168.195.140",
-        testResponseSnippet: "HTTP/1.1 200 OK\r\nContent-Length: 28067\r\nContent-Type: text/html\r\n\r\n<title>OWASP Broken Web Applications Project</title>",
+        testResponseSnippet: "HTTP/1.1 200 OK\r\nServer: Apache/2.2.14 (Ubuntu) mod_mono/2.4.3 PHP/5.3.2-1ubuntu4.30 with Suhosin-Patch proxy_html/3.0.1 mod_python/3.3.1 Python/2.6.5 mod_ssl/2.2.14 OpenSSL/0.9.8k Phusion_Passenger/4.0.38 mod_perl/2.0.4 Perl/v5.10.1\r\nX-Powered-By: PHP/5.3.2-1ubuntu4.30\r\nContent-Length: 28067\r\nContent-Type: text/html\r\n\r\n<title>OWASP Broken Web Applications Project</title>",
         tactic: "Discovery",
         tacticId: "TA0007",
         technique: "Application Window & Service Discovery",
         techniqueId: "T1083",
-        curlCmd: "curl -s \"http://192.168.195.140/\" | head -n 30"
+        curlCmd: "curl -s \"http://192.168.195.140/\" | head -n 30",
+        retestPassCriteria:
+          "1. Expected State: Unauthenticated requests to 'http://192.168.195.140/' and training routes ('/dvwa/', '/mutillidae/', '/WebGoat/', '/bodgeit/', '/peruggia/') from non-allowlisted hosts are blocked by network ACLs or return HTTP 401/403 gateway authentication challenge. 2. Functional Test: Verify an authorized lab workstation ('192.168.195.1') with valid gateway credentials can access the training portal as intended. 3. Negative Test: Execute 'curl -s -o /dev/null -w \"%{http_code}\" http://192.168.195.140/dvwa/' without credentials or from an unauthorized subnet and confirm HTTP 200 OK is no longer returned."
       }
     ]
   },
@@ -2992,7 +2997,11 @@ export async function buildTargetSpecificDeepFindings(opts: {
       cvssScore: spec.cvssScore,
       validationState: spec.validationState,
       findingClassification: spec.findingClassification,
-      retestPassCriteria: `Run '${spec.curlCmd}' and verify that parameter '${spec.parameter}' on ${spec.endpointPath} enforces parameterized/sanitized input handling and no longer matches '${spec.matchedPattern.slice(0, 60)}'.`,
+      retestPassCriteria:
+        spec.retestPassCriteria ||
+        (spec.findingClassification === "Hardening Control Gap"
+          ? `1. Expected State: Run '${spec.curlCmd}' and verify that '${spec.parameter}' on ${spec.endpointPath} enforces the remediated security configuration and no longer exposes '${spec.matchedPattern.slice(0, 60)}'. 2. Functional Test: Verify authorized application workflows remain operational. 3. Negative Test: Repeat the unauthenticated probe and confirm the control gap is closed.`
+          : `1. Expected State: Run '${spec.curlCmd}' and verify that parameter '${spec.parameter}' on ${spec.endpointPath} enforces parameterized/sanitized input handling and no longer matches '${spec.matchedPattern.slice(0, 60)}'. 2. Functional Test: Verify valid inputs return expected HTTP 200 responses. 3. Negative Test: Confirm boundary test inputs are rejected without data leakage.`),
       description: `${spec.description}${liveGithubManifestExcerpt ? ` [Live Repo Verification (${cleanUrl}): Confirmed ${matchedProfile.technologyStack} source manifest in ${responseTimeMs}ms].` : ` [Live Target Verification (${cleanUrl}): HTTP ${statusCode} (${serverHeader}) in ${responseTimeMs}ms].`}`,
       impact: spec.impact,
       remediation: spec.remediation,

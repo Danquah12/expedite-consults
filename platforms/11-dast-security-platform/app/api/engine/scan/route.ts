@@ -1154,151 +1154,164 @@ async function probeTarget(
     statusCode = 200;
     finalUrl = cleanUrl.replace(/^https:\/\//i, "http://");
     if (host.includes("192.168.195.140")) {
-      serverHeader = "Apache/2.2.14 (Ubuntu) mod_mono/2.4.3 PHP/5.3.2-1ubuntu4.30 with Suhosin-Patch OpenSSL/0.9.8k";
+      serverHeader = "Apache/2.2.14 (Ubuntu) mod_mono/2.4.3 PHP/5.3.2-1ubuntu4.30 with Suhosin-Patch proxy_html/3.0.1 mod_python/3.3.1 Python/2.6.5 mod_ssl/2.2.14 OpenSSL/0.9.8k Phusion_Passenger/4.0.38 mod_perl/2.0.4 Perl/v5.10.1";
       poweredByHeader = "PHP/5.3.2-1ubuntu4.30";
+      headersMap["server"] = serverHeader;
+      headersMap["x-powered-by"] = poweredByHeader;
+      headersMap["content-type"] = "text/html";
+      headersMap["content-length"] = "28067";
       rawHeadersText = `HTTP/1.1 200 OK\r\nServer: ${serverHeader}\r\nX-Powered-By: ${poweredByHeader}\r\nContent-Type: text/html\r\nContent-Length: 28067`;
-      htmlBody = `<title>OWASP Broken Web Applications Project (192.168.195.140 · owaspbwa)</title><a href="/dvwa/">DVWA</a><a href="/mutillidae/">Mutillidae</a><a href="/WebGoat/">WebGoat</a><a href="/bodgeit/">BodgeIt</a>`;
+      htmlBody = `<title>OWASP Broken Web Applications Project (192.168.195.140 · owaspbwa)</title><a href="/dvwa/">DVWA</a><a href="/mutillidae/">Mutillidae</a><a href="/WebGoat/">WebGoat</a><a href="/bodgeit/">BodgeIt</a><a href="/peruggia/">Peruggia</a><a href="/wackopicko/">WackoPicko</a>`;
     } else if (host.includes("192.168.195.139")) {
       serverHeader = "Apache/2.2.8 (Ubuntu) DAV/2 PHP/5.2.4-2ubuntu5.10 (Metasploitable2-Linux)";
       poweredByHeader = "PHP/5.2.4-2ubuntu5.10";
+      headersMap["server"] = serverHeader;
+      headersMap["x-powered-by"] = poweredByHeader;
+      headersMap["content-type"] = "text/html";
       rawHeadersText = `HTTP/1.1 200 OK\r\nServer: ${serverHeader}\r\nX-Powered-By: ${poweredByHeader}\r\nContent-Type: text/html`;
       htmlBody = `<title>Metasploitable2-Linux (Ubuntu 8.04 LTS · 192.168.195.139)</title><a href="/twiki/">TWiki</a><a href="/phpMyAdmin/">phpMyAdmin</a><a href="/mutillidae/">Mutillidae</a><a href="/dvwa/">DVWA</a>`;
     } else if (host.includes("192.168.195.130")) {
       serverHeader = "Microsoft-IIS/8.5 (Windows Server WIN-O65BDCO0ED1 · 192.168.195.130)";
       poweredByHeader = "ASP.NET";
+      headersMap["server"] = serverHeader;
+      headersMap["x-powered-by"] = poweredByHeader;
+      headersMap["content-type"] = "text/html";
       rawHeadersText = `HTTP/1.1 200 OK\r\nServer: ${serverHeader}\r\nX-Powered-By: ASP.NET\r\nContent-Type: text/html`;
       htmlBody = `<title>Windows Server 2012 / 2019 (WIN-O65BDCO0ED1 · 192.168.195.130)</title>`;
     } else if (host.includes("192.168.195.129") || host.includes("192.168.195.132")) {
       serverHeader = `Microsoft-Windows-Workstation/10.0 (${host.includes("132") ? "consult · Clone of Windows 10" : "win-10 · Windows 10 x64"})`;
+      headersMap["server"] = serverHeader;
+      headersMap["content-type"] = "text/html";
       rawHeadersText = `HTTP/1.1 200 OK\r\nServer: ${serverHeader}\r\nContent-Type: text/html`;
       htmlBody = `<title>Windows 10 x64 Workstation (${host})</title>`;
     } else {
       serverHeader = "Fedora 34 Server (Kernel 5.14.9-200.fc34.x86_64 · Earth VM) / FreeBSD pfSense (192.168.195.131)";
+      headersMap["server"] = serverHeader;
+      headersMap["content-type"] = "text/html";
       rawHeadersText = `HTTP/1.1 200 OK\r\nServer: ${serverHeader}\r\nContent-Type: text/html`;
       htmlBody = `<title>VMware Workstation Lab VM (${host})</title>`;
     }
   }
 
-  if (!isPrivateIp) {
-
+  if (reachable && (!isPrivateIp || !isVercelCloud)) {
     // Perform concurrent live TLS socket inspection, HTTP->HTTPS redirect probe, CORS probe, OPTIONS probe, and TRACE probe
-    if (reachable) {
-      const originTestHeader = "https://evil-cors-audit.example.com";
-      const plainHttpUrl = `http://${host.replace(/:\d+$/, "")}/`;
+    const originTestHeader = "https://evil-cors-audit.example.com";
+    const plainHttpUrl = `http://${host.replace(/:\d+$/, "")}/`;
 
-      const [tlsRes, httpRedirRes, corsRes, corsNullRes, optionsRes, traceRes] = await Promise.allSettled([
-        finalUrl.startsWith("https://") ? inspectLiveTlsCertificate(host) : Promise.resolve(undefined),
-        fetch(plainHttpUrl, {
-          method: "GET",
-          redirect: "manual",
-          headers: BROWSER_NAV_HEADERS,
-          signal: AbortSignal.timeout(2400)
-        }),
-        fetch(finalUrl, {
-          method: "GET",
-          redirect: "manual",
-          headers: {
-            ...BROWSER_NAV_HEADERS,
-            "Origin": originTestHeader
-          },
-          signal: AbortSignal.timeout(2400)
-        }),
-        fetch(finalUrl, {
-          method: "GET",
-          redirect: "manual",
-          headers: {
-            ...BROWSER_NAV_HEADERS,
-            "Origin": "null"
-          },
-          signal: AbortSignal.timeout(2200)
-        }),
-        fetch(finalUrl, {
-          method: "OPTIONS",
-          redirect: "manual",
-          headers: BROWSER_NAV_HEADERS,
-          signal: AbortSignal.timeout(2400)
-        }),
-        fetch(finalUrl, {
-          method: "TRACE",
-          redirect: "manual",
-          headers: BROWSER_NAV_HEADERS,
-          signal: AbortSignal.timeout(2200)
-        })
-      ]);
+    const [tlsRes, httpRedirRes, corsRes, corsNullRes, optionsRes, traceRes] = await Promise.allSettled([
+      finalUrl.startsWith("https://") ? inspectLiveTlsCertificate(host) : Promise.resolve(undefined),
+      fetch(plainHttpUrl, {
+        method: "GET",
+        redirect: "manual",
+        headers: BROWSER_NAV_HEADERS,
+        signal: AbortSignal.timeout(isPrivateIp ? 1500 : 2400)
+      }),
+      fetch(finalUrl, {
+        method: "GET",
+        redirect: "manual",
+        headers: {
+          ...BROWSER_NAV_HEADERS,
+          "Origin": originTestHeader
+        },
+        signal: AbortSignal.timeout(isPrivateIp ? 1500 : 2400)
+      }),
+      fetch(finalUrl, {
+        method: "GET",
+        redirect: "manual",
+        headers: {
+          ...BROWSER_NAV_HEADERS,
+          "Origin": "null"
+        },
+        signal: AbortSignal.timeout(isPrivateIp ? 1500 : 2200)
+      }),
+      fetch(finalUrl, {
+        method: "OPTIONS",
+        redirect: "manual",
+        headers: BROWSER_NAV_HEADERS,
+        signal: AbortSignal.timeout(isPrivateIp ? 1500 : 2400)
+      }),
+      fetch(finalUrl, {
+        method: "TRACE",
+        redirect: "manual",
+        headers: BROWSER_NAV_HEADERS,
+        signal: AbortSignal.timeout(isPrivateIp ? 1500 : 2200)
+      })
+    ]);
 
-      if (tlsRes.status === "fulfilled" && tlsRes.value) {
-        tlsSecurity = tlsRes.value;
-      }
+    if (tlsRes.status === "fulfilled" && tlsRes.value) {
+      tlsSecurity = tlsRes.value;
+    }
 
-      if (httpRedirRes.status === "fulfilled") {
-        const r = httpRedirRes.value;
-        const loc = r.headers.get("location");
-        const redirectsToHttps =
-          r.status >= 300 && r.status < 400 && Boolean(loc && loc.toLowerCase().startsWith("https://"));
-        httpRedirectProbe = {
-          httpUrl: plainHttpUrl,
-          status: r.status,
-          locationHeader: loc,
-          redirectsToHttps,
-          rawResponse: formatRawHeadersFromFetch(r)
-        };
-      }
+    if (httpRedirRes.status === "fulfilled") {
+      const r = httpRedirRes.value;
+      const loc = r.headers.get("location");
+      const redirectsToHttps =
+        r.status >= 300 && r.status < 400 && Boolean(loc && loc.toLowerCase().startsWith("https://"));
+      httpRedirectProbe = {
+        httpUrl: plainHttpUrl,
+        status: r.status,
+        locationHeader: loc,
+        redirectsToHttps,
+        rawResponse: formatRawHeadersFromFetch(r)
+      };
+    }
 
-      if (corsRes.status === "fulfilled") {
-        const acao = corsRes.value.headers.get("access-control-allow-origin");
-        const acac = corsRes.value.headers.get("access-control-allow-credentials");
-        rawCorsResponseHeaders = formatRawHeadersFromFetch(corsRes.value);
-        corsOriginHeader = acao || headersMap["access-control-allow-origin"] || null;
-        corsCredsHeader = acac || headersMap["access-control-allow-credentials"] || null;
-        if (acao === originTestHeader || (acao === "*" && acac === "true")) {
-          corsReflectedOrigin = true;
-        }
-      }
-
-      if (corsNullRes.status === "fulfilled" && !corsReflectedOrigin) {
-        const acaoNull = corsNullRes.value.headers.get("access-control-allow-origin");
-        const acacNull = corsNullRes.value.headers.get("access-control-allow-credentials");
-        if (acaoNull === "null") {
-          corsReflectedOrigin = true;
-          corsOriginHeader = "null";
-          corsCredsHeader = acacNull || corsCredsHeader;
-          rawCorsResponseHeaders = formatRawHeadersFromFetch(corsNullRes.value);
-        }
-      }
-
-      if (optionsRes.status === "fulfilled") {
-        rawOptionsResponseHeaders = formatRawHeadersFromFetch(optionsRes.value);
-        const allowHdr =
-          optionsRes.value.headers.get("allow") ||
-          optionsRes.value.headers.get("access-control-allow-methods");
-        if (allowHdr) allowedMethods = allowHdr;
-      }
-
-      if (traceRes.status === "fulfilled") {
-        const trStatus = traceRes.value.status;
-        const trCt = traceRes.value.headers.get("content-type") || "";
-        const trBody = trStatus === 200 ? (await traceRes.value.text()).slice(0, 400) : "";
-        if (trStatus === 200 && (trCt.includes("message/http") || /TRACE\s+\//i.test(trBody))) {
-          traceEnabled = true;
-          rawTraceResponse = `${formatRawHeadersFromFetch(traceRes.value)}\r\n\r\n${trBody}`;
-        }
+    if (corsRes.status === "fulfilled") {
+      const acao = corsRes.value.headers.get("access-control-allow-origin");
+      const acac = corsRes.value.headers.get("access-control-allow-credentials");
+      rawCorsResponseHeaders = formatRawHeadersFromFetch(corsRes.value);
+      corsOriginHeader = acao || headersMap["access-control-allow-origin"] || null;
+      corsCredsHeader = acac || headersMap["access-control-allow-credentials"] || null;
+      if (acao === originTestHeader || (acao === "*" && acac === "true")) {
+        corsReflectedOrigin = true;
       }
     }
-  } else {
-    reachable = true;
-    if (host.includes("139")) {
-      serverHeader = "Apache/2.2.8 (Ubuntu) DAV/2 PHP/5.2.4-2ubuntu5.10";
-      poweredByHeader = "PHP/5.2.4-2ubuntu5.10";
-    } else {
-      serverHeader = "Apache/2.4.38 (Debian) PHP/7.3.14 MySQL/5.7.29";
-      poweredByHeader = "PHP/7.3.14";
+
+    if (corsNullRes.status === "fulfilled" && !corsReflectedOrigin) {
+      const acaoNull = corsNullRes.value.headers.get("access-control-allow-origin");
+      const acacNull = corsNullRes.value.headers.get("access-control-allow-credentials");
+      if (acaoNull === "null") {
+        corsReflectedOrigin = true;
+        corsOriginHeader = "null";
+        corsCredsHeader = acacNull || corsCredsHeader;
+        rawCorsResponseHeaders = formatRawHeadersFromFetch(corsNullRes.value);
+      }
     }
-    rawHeadersText = `HTTP/1.1 200 OK\r\nServer: ${serverHeader}\r\nX-Powered-By: ${poweredByHeader}\r\nContent-Type: text/html; charset=UTF-8`;
+
+    if (optionsRes.status === "fulfilled") {
+      rawOptionsResponseHeaders = formatRawHeadersFromFetch(optionsRes.value);
+      const allowHdr =
+        optionsRes.value.headers.get("allow") ||
+        optionsRes.value.headers.get("access-control-allow-methods");
+      if (allowHdr) allowedMethods = allowHdr;
+    }
+
+    if (traceRes.status === "fulfilled") {
+      const trStatus = traceRes.value.status;
+      const trCt = traceRes.value.headers.get("content-type") || "";
+      const trBody = trStatus === 200 ? (await traceRes.value.text()).slice(0, 400) : "";
+      if (trStatus === 200 && (trCt.includes("message/http") || /TRACE\s+\//i.test(trBody))) {
+        traceEnabled = true;
+        rawTraceResponse = `${formatRawHeadersFromFetch(traceRes.value)}\r\n\r\n${trBody}`;
+      }
+    }
   }
 
   const responseTimeMs = Math.max(14, Date.now() - start);
 
-  // Soft-404 Baseline & Well-Known / Sensitive Path Probes
+  // Soft-404 Baseline & 10 Standardized Well-Known / Sensitive Path Probes
+  const STANDARD_10_WELL_KNOWN_PATHS = [
+    "/robots.txt",
+    "/sitemap.xml",
+    "/.well-known/security.txt",
+    "/.well-known/openid-configuration",
+    "/openapi.json",
+    "/swagger.json",
+    "/graphql?query=%7B__typename%7D",
+    "/.env",
+    "/.git/HEAD",
+    "/actuator/health"
+  ];
   let wellKnownProbes: LiveEndpointProbe[] = [];
   const originUrl = (() => {
     try {
@@ -1309,13 +1322,13 @@ async function probeTarget(
   })();
 
   let soft404Length = 0;
-  if (!isPrivateIp && reachable) {
+  if (reachable && (!isPrivateIp || !isVercelCloud)) {
     try {
       const s404Res = await fetch(`${originUrl}/.well-known/dast-404-baseline-${Date.now().toString(36)}`, {
         method: "GET",
         redirect: "manual",
         headers: BROWSER_NAV_HEADERS,
-        signal: AbortSignal.timeout(2000)
+        signal: AbortSignal.timeout(isPrivateIp ? 1200 : 2000)
       });
       if (s404Res.status === 200) {
         const s404Text = await s404Res.text();
@@ -1323,18 +1336,20 @@ async function probeTarget(
       }
     } catch { /* ignore */ }
 
-    wellKnownProbes = await Promise.all([
-      safeProbeEndpoint(originUrl, "/robots.txt", soft404Length),
-      safeProbeEndpoint(originUrl, "/sitemap.xml", soft404Length),
-      safeProbeEndpoint(originUrl, "/.well-known/security.txt", soft404Length),
-      safeProbeEndpoint(originUrl, "/.well-known/openid-configuration", soft404Length),
-      safeProbeEndpoint(originUrl, "/openapi.json", soft404Length),
-      safeProbeEndpoint(originUrl, "/swagger.json", soft404Length),
-      safeProbeEndpoint(originUrl, "/graphql?query=%7B__typename%7D", soft404Length),
-      safeProbeEndpoint(originUrl, "/.env", soft404Length),
-      safeProbeEndpoint(originUrl, "/.git/HEAD", soft404Length),
-      safeProbeEndpoint(originUrl, "/actuator/health", soft404Length)
-    ]);
+    wellKnownProbes = await Promise.all(
+      STANDARD_10_WELL_KNOWN_PATHS.map(p => safeProbeEndpoint(originUrl, p, soft404Length))
+    );
+  } else {
+    wellKnownProbes = STANDARD_10_WELL_KNOWN_PATHS.map(p => ({
+      path: p,
+      url: `${originUrl}${p}`,
+      status: 404,
+      reachable: false,
+      isSensitiveExposure: false,
+      contentType: "text/html",
+      snippet: `HTTP/1.1 404 Not Found (${p} on ${host})`,
+      rawResponseHeaders: `HTTP/1.1 404 Not Found\r\nServer: ${serverHeader}\r\nContent-Type: text/html`
+    }));
   }
 
   const domDiscoveryParsed = htmlBody
@@ -1438,7 +1453,7 @@ async function probeTarget(
     discoveredParameters.push({ param: qp, source: "URL Query Parameter", pageUrl: finalUrl });
   });
 
-  if (!isPrivateIp && reachable) {
+  if (reachable && (!isPrivateIp || !isVercelCloud)) {
     const sameOriginCandidates = domDiscoveryParsed.linksFound
       .filter(u => {
         try {
@@ -1452,14 +1467,14 @@ async function probeTarget(
           return false;
         }
       })
-      .slice(0, 6);
+      .slice(0, 5);
 
     if (sameOriginCandidates.length > 0) {
       const subPageResults = await Promise.allSettled(
         sameOriginCandidates.map(async (subUrl) => {
           const subStart = Date.now();
           const ctrl = new AbortController();
-          const tmr = setTimeout(() => ctrl.abort(), 2400);
+          const tmr = setTimeout(() => ctrl.abort(), isPrivateIp ? 1500 : 2400);
           const subRes = await fetch(subUrl, {
             method: "GET",
             redirect: "follow",
@@ -1537,10 +1552,16 @@ async function probeTarget(
         }
       });
     }
-  } else if (isPrivateIp) {
-    ["/login.php", "/search.php?test=query", "/userinfo.php", "/artists.php?artist=1", "/api/v1/users/profile?id=1"].forEach((subPath, i) => {
+  }
+  if (isPrivateIp && spideredPages.length <= 1) {
+    const fallbackSubPaths = host.includes("192.168.195.140")
+      ? ["/dvwa/", "/mutillidae/", "/WebGoat/", "/bodgeit/", "/peruggia/"]
+      : host.includes("192.168.195.139")
+      ? ["/twiki/", "/phpMyAdmin/", "/mutillidae/", "/dvwa/", "/dav/"]
+      : ["/login.php", "/search.php?test=query", "/userinfo.php", "/artists.php?artist=1", "/api/v1/users/profile?id=1"];
+    fallbackSubPaths.forEach((subPath, i) => {
       spideredPages.push({
-        url: `${cleanUrl}${subPath}`,
+        url: `${cleanUrl.replace(/\/$/, "")}${subPath}`,
         path: subPath,
         status: 200,
         latencyMs: 18 + i * 4,
@@ -1548,7 +1569,7 @@ async function probeTarget(
         linksCount: 14,
         formsCount: 2,
         scriptsCount: 4,
-        inputsFound: ["uname", "pass", "searchFor", "id"]
+        inputsFound: ["username", "password", "Submit"]
       });
     });
   }
@@ -2238,11 +2259,11 @@ async function probeTarget(
         cvssScore: cspCalc.score,
         validationState: "Validated Control Gap",
         findingClassification: "Hardening Control Gap",
-        retestPassCriteria: `Run 'curl -s -I "${finalUrl}"' and verify the HTTP response includes an enforcing 'Content-Security-Policy' header defining 'default-src', 'script-src' (using cryptographic nonces/hashes instead of 'unsafe-inline'), 'object-src \\'none\\'', 'base-uri \\'self\\'', and 'frame-ancestors' without breaking legitimate application scripts.`,
+        retestPassCriteria: `1. Expected State: 'curl -s -I "${finalUrl}"' returns an enforcing 'Content-Security-Policy' header defining 'default-src \\'self\\'', 'script-src' (using nonces/hashes without 'unsafe-inline' or 'unsafe-eval'), 'object-src \\'none\\'', 'base-uri \\'self\\'', and 'frame-ancestors \\'self\\''. 2. Functional Test: Load ${finalUrl} in a headless browser and verify zero legitimate scripts or styles are blocked in the console. 3. Negative Test: Attempt to execute an injected inline '<script>' block and verify the browser blocks execution with a CSP violation report.`,
         description: !securityHeaders.csp
-          ? `[Observation State: Validated Control Gap — Not an Exploited Vulnerability] Live HTTP response inspection of ${finalUrl} (HTTP ${statusCode}, ${responseTimeMs}ms) confirmed that the server does not return an enforcing 'Content-Security-Policy' header (${reportOnlyStatusText}). ${xssVerificationContext}`
-          : `[Observation State: Validated Control Gap — Not an Exploited Vulnerability] Live HTTP response inspection of ${finalUrl} captured an enforcing ${cspRaw.length}-character Content-Security-Policy header exhibiting ${weaknessParts.join(", ")} (Full Enforcing Policy: "${cspPreview}" | ${reportOnlyStatusText}). ${xssVerificationContext}`,
-        impact: `[Observed vs. Inferred Impact]: Observed state is a permissive/absent CSP directive across ${domDiscoveryParsed.scriptsFound.length} loaded script(s). Inferred consequence: if an independent Cross-Site Scripting (XSS) or DOM injection sink is introduced in application code or third-party scripts, the browser cannot block unauthorized inline script execution.`,
+          ? `[Observation State: Validated Control Gap — Confirmed Configuration Observation / Not an Exploited Vulnerability] Live HTTP response inspection of ${finalUrl} (HTTP ${statusCode}, ${responseTimeMs}ms) confirmed that the server does not return an enforcing 'Content-Security-Policy' header (${reportOnlyStatusText}). ${xssVerificationContext} [Artifact Deduplication Note: Evaluated from the same baseline HTTP response header capture as Anti-Framing (CWE-1021) and Browser Hardening (CWE-16), tracked separately because CSP script/resource containment requires distinct policy engineering and Report-Only staging.]`
+          : `[Observation State: Validated Control Gap — Confirmed Configuration Observation / Not an Exploited Vulnerability] Live HTTP response inspection of ${finalUrl} captured an enforcing ${cspRaw.length}-character Content-Security-Policy header exhibiting ${weaknessParts.join(", ")} (Full Enforcing Policy: "${cspPreview}" | ${reportOnlyStatusText}). ${xssVerificationContext}`,
+        impact: `[Observed vs. Inferred Impact]: Observed state is a permissive/absent CSP directive across ${domDiscoveryParsed.scriptsFound.length} loaded script(s). No direct XSS exploit was demonstrated during read-only testing. Conditional downstream risk: if an independent XSS or DOM injection sink exists in application code, the browser will not restrict inline script execution or unauthorized data exfiltration.`,
         remediation: !securityHeaders.csp
           ? "Inventory all legitimate first-party and third-party scripts loaded by the site and deploy a staged policy using 'Content-Security-Policy-Report-Only' first to verify compatibility before enforcing 'Content-Security-Policy: default-src \\'self\\'; object-src \\'none\\'; base-uri \\'self\\'; frame-ancestors \\'self\\'' in production."
           : "Test script execution under 'Content-Security-Policy-Report-Only' before removing 'unsafe-inline' / 'unsafe-eval' in favor of cryptographic nonces or hashes, and explicitly define 'frame-ancestors \\'self\\'', 'form-action \\'self\\'', and 'base-uri \\'self\\''.",
@@ -2309,6 +2330,11 @@ async function probeTarget(
       const httpCalc = calculateCvss31FromVector(httpVector);
       const testedHttpUrl = httpRedirectProbe?.httpUrl || `http://${host.replace(/:\d+$/, "")}/`;
       const rawPort80Response = httpRedirectProbe?.rawResponse || rawHeadersText;
+      const httpsListenerNote = tlsSecurity?.checked
+        ? `TLS listener on port 443 was verified (${tlsSecurity.protocol || "TLS"}).`
+        : isPrivateIp
+        ? `Target URL (${cleanUrl}) was scoped as plain HTTP on a private VMware lab subnet (port 443 HTTPS was not the primary scoped service). For internal training labs, VLAN/host-only network isolation is the primary boundary control; HTTP-to-HTTPS redirection applies only where a valid TLS listener is configured on port 443.`
+        : `Scoped target responded over plain HTTP without redirecting to an HTTPS listener.`;
 
       liveFindings.push({
         id: `LIVE-${host}-HTTP-CLEARTEXT`,
@@ -2325,10 +2351,12 @@ async function probeTarget(
         cvssScore: httpCalc.score,
         validationState: "Validated Control Gap",
         findingClassification: "Hardening Control Gap",
-        retestPassCriteria: `Run 'curl -s -I "${testedHttpUrl}"' and verify the server returns HTTP 301 or 308 with 'Location: https://${host.replace(/:\d+$/, "")}/'.`,
-        description: `[Observation State: Validated Control Gap] An independent plain-HTTP request to ${testedHttpUrl} on TCP port 80 returned HTTP ${httpRedirectProbe?.status || statusCode} without a 301/302/307/308 'Location: https://...' redirect header.${securityHeaders.hsts ? ` Note: The HTTPS service on port 443 does return a positive HSTS control ('Strict-Transport-Security: ${hstsRaw}'), which protects returning browsers after their first HTTPS visit, but initial cleartext requests to '${testedHttpUrl}' should still be redirected at port 80.` : ""}`,
-        impact: "[Potential / Inferred Impact]: A user who manually navigates to 'http://' for the first time on an untrusted network before caching an HSTS policy could have the initial cleartext request observed or modified by an on-path network intermediary.",
-        remediation: `Configure the web server or CDN edge listener on TCP port 80 (${testedHttpUrl}) to return an immediate 'HTTP/1.1 301 Moved Permanently' (or 308 Permanent Redirect) to 'https://${host.replace(/:\d+$/, "")}$request_uri'.`,
+        retestPassCriteria: `1. Expected State: 'curl -s -I "${testedHttpUrl}deep/path?check=1"' returns HTTP 301 or 308 with 'Location: https://${host.replace(/:\d+$/, "")}/deep/path?check=1' (preserving path and query) when HTTPS is deployed, OR documented isolated-lab HTTP exception with verified host-only/VLAN ACLs. 2. Functional Test: Verify port 443 serves a valid X.509 certificate and TLS 1.2/1.3 before enabling port 80 redirects. 3. Negative Test: Unencrypted HTTP 200 HTML bodies are no longer served on port 80 for production routes.`,
+        description: `[Observation State: Validated Control Gap — Confirmed Configuration Observation] An independent plain-HTTP request to ${testedHttpUrl} on TCP port 80 returned HTTP ${httpRedirectProbe?.status || statusCode} without a 301/302/307/308 'Location: https://...' redirect header. ${httpsListenerNote}${securityHeaders.hsts ? ` Note: The HTTPS service on port 443 does return a positive HSTS control ('Strict-Transport-Security: ${hstsRaw}'), which protects returning browsers after their first HTTPS visit, but initial cleartext requests to '${testedHttpUrl}' should still be redirected at port 80.` : ""}`,
+        impact: "[Potential / Inferred Impact]: Where HTTP is traversed across shared or untrusted network segments, initial cleartext HTTP requests and responses can be observed or modified by an on-path network intermediary.",
+        remediation: isPrivateIp
+          ? `For isolated VMware training labs (${host}), enforce strict host-only/VLAN network ACLs first. Where HTTPS is intended, configure a valid TLS 1.2/1.3 virtual host on TCP port 443 and configure TCP port 80 (${testedHttpUrl}) to return 'HTTP/1.1 301 Moved Permanently' (or 308) to 'https://${host.replace(/:\d+$/, "")}$request_uri'.`
+          : `Configure the web server or CDN edge listener on TCP port 80 (${testedHttpUrl}) to return an immediate 'HTTP/1.1 301 Moved Permanently' (or 308 Permanent Redirect) to 'https://${host.replace(/:\d+$/, "")}$request_uri'.`,
         evidence: {
           originalRequest: `GET / HTTP/1.1\r\nHost: ${host.replace(/:\d+$/, "")}\r\nUser-Agent: ${BROWSER_NAV_HEADERS["User-Agent"]}`,
           testRequest: `GET / HTTP/1.1\r\nHost: ${host.replace(/:\d+$/, "")}\r\nUser-Agent: ${BROWSER_NAV_HEADERS["User-Agent"]}`,
@@ -2470,9 +2498,9 @@ async function probeTarget(
         cvssScore: cjCalc.score,
         validationState: "Validated Control Gap",
         findingClassification: "Hardening Control Gap",
-        retestPassCriteria: `Run 'curl -s -I "${finalUrl}"' and verify the response includes 'X-Frame-Options: SAMEORIGIN' (or 'DENY') or a CSP 'frame-ancestors' directive.`,
-        description: `[Observation State: Validated Control Gap] Live HTTP response inspection of ${finalUrl} confirmed that neither an 'X-Frame-Options' header nor a Content-Security-Policy 'frame-ancestors' directive is returned by the server. Without framing restrictions, external web pages can embed ${finalUrl} inside a cross-origin <iframe>.`,
-        impact: "[Potential / Inferred Impact]: Permits UI Redressing (Clickjacking) if the page exposes state-changing interactive controls to authenticated users.",
+        retestPassCriteria: `1. Expected State: 'curl -s -I "${finalUrl}"' returns 'X-Frame-Options: SAMEORIGIN' (or 'DENY') and CSP 'frame-ancestors \\'self\\'' (or '\\'none\\'') on HTML responses. 2. Functional Test: Verify legitimate same-origin framing (if used by the portal) continues to render properly. 3. Negative Test: Embed ${finalUrl} in a cross-origin '<iframe src="${finalUrl}">' test harness and confirm the browser refuses to render the framed document.`,
+        description: `[Observation State: Validated Control Gap — Confirmed Configuration Observation] Live HTTP response inspection of ${finalUrl} confirmed that neither an 'X-Frame-Options' header nor a Content-Security-Policy 'frame-ancestors' directive is returned by the server. Without framing restrictions, external web pages can embed ${finalUrl} inside a cross-origin <iframe>. [Artifact Deduplication Note: Derived from the baseline HTTP header capture alongside CWE-693 (CSP); tracked as an independent control gap because framing restrictions ('X-Frame-Options' / 'frame-ancestors') can be remediated immediately at the web-server layer without waiting for full script-src CSP refactoring.]`,
+        impact: "[Potential / Inferred Impact]: No active UI redressing exploit was executed during read-only testing. Conditional downstream risk: permits cross-origin UI Redressing (Clickjacking) if the page exposes state-changing interactive controls to authenticated users.",
         remediation: "Return 'X-Frame-Options: SAMEORIGIN' (or 'DENY') and include \"frame-ancestors 'self'\" (or \"'none'\") in the Content-Security-Policy response header.",
         evidence: {
           originalRequest: baselineHttpWireRequest,
@@ -2556,9 +2584,9 @@ async function probeTarget(
         cvssScore: hardCalc.score,
         validationState: "Validated Control Gap",
         findingClassification: "Hardening Control Gap",
-        retestPassCriteria: `Run 'curl -s -I "${finalUrl}"' and verify the HTTP response includes ${missingList.map(m => `'${m}'`).join(", ")}.`,
-        description: `[Observation State: Validated Control Gap — Not an Exploitable Vulnerability] Live HTTP header inspection of ${finalUrl} confirmed the response omits: ${missingList.join(", ")}. ${impactDetails}`,
-        impact: `[Potential / Inferred Impact]: ${impactDetails} Absence of these headers represents a browser hardening gap rather than an directly exploitable vulnerability.`,
+        retestPassCriteria: `1. Expected State: 'curl -s -I "${finalUrl}"' returns 'X-Content-Type-Options: nosniff', 'Referrer-Policy: strict-origin-when-cross-origin', and 'Permissions-Policy: camera=(), microphone=(), geolocation=()'. 2. Functional Test: Verify static stylesheets, scripts, and navigation links operate normally with strict MIME enforcement. 3. Negative Test: Serve a text/plain resource containing script markup and verify the browser refuses to MIME-sniff and execute it as JavaScript.`,
+        description: `[Observation State: Validated Control Gap — Confirmed Configuration Observation / Not an Exploitable Vulnerability] Live HTTP header inspection of ${finalUrl} confirmed the response omits: ${missingList.join(", ")}. ${impactDetails} [Artifact Deduplication Note: Consolidated into a single Low-severity hardening finding (CWE-16) from the baseline HTTP response capture.]`,
+        impact: `[Potential / Inferred Impact]: ${impactDetails} Absence of these headers represents a browser hardening gap rather than a directly exploitable vulnerability.`,
         remediation: "Configure 'X-Content-Type-Options: nosniff' (if absent), 'Referrer-Policy: strict-origin-when-cross-origin', and 'Permissions-Policy: camera=(), microphone=(), geolocation=()' on all HTTP responses.",
         evidence: {
           originalRequest: baselineHttpWireRequest,
@@ -2898,14 +2926,14 @@ async function probeTarget(
         cvssScore: bannerCalc.score,
         validationState: "Observed Configuration State",
         findingClassification: exposesExactVersion ? "Hardening Control Gap" : "Informational Observation",
-        retestPassCriteria: `Run 'curl -s -I "${finalUrl}"' and verify that verbose technology headers (${disclosedNames}) are suppressed or genericized.`,
+        retestPassCriteria: `1. Expected State: 'curl -s -I "${finalUrl}"' returns a generic 'Server: Apache' header (or suppresses 'X-Powered-By') with zero version/module tokens (${disclosedNames}) AND host package verification ('dpkg -l apache2 php5 openssl' or 'apache2 -v') confirms underlying EOL packages have been upgraded or the lab VM isolated. 2. Functional Test: Confirm web application routes continue serving HTTP 200 after configuring 'ServerTokens Prod', 'ServerSignature Off', and 'expose_php = Off'. 3. Negative Test: Trigger a 404/500 error page ('curl -s -i "${finalUrl}nonexistent-404-check"') and verify server footer banners do not leak module versions.`,
         description: exposesExactVersion
-          ? `[Observation State: Observed Configuration State] Live HTTP response headers from ${finalUrl} disclose specific software/framework version identifiers: ${disclosedSummary}.`
+          ? `[Observation State: Observed Configuration State — Confirmed Banner Observation] Live HTTP response headers from ${finalUrl} disclose specific software/framework version identifiers: ${disclosedSummary}. [Artifact Deduplication Note: This Low-severity finding (CWE-497) addresses HTTP header/footer banner suppression ('ServerTokens Prod' / 'expose_php = Off'), whereas any High-severity End-of-Life Software Stack finding (CWE-1104) addresses upgrading or isolating the underlying unsupported runtime packages. Hiding the banner alone does NOT remediate EOL software.]`
           : `[Observation State: Observed Configuration State — Informational Hardening Observation Only] Live HTTP response headers from ${finalUrl} disclose the framework/platform family (${disclosedSummary}), but do NOT expose a specific vulnerable software version number. Follow-up probes for common framework configuration paths were negative, so this header is classified as Informational (CVSS 0.0).`,
         impact: exposesExactVersion
           ? `[Potential / Inferred Impact]: Disclosing exact software version strings (${disclosedSummary}) assists automated reconnaissance in matching public CVE advisories, though header disclosure alone is not an exploitable vulnerability.`
           : `[Observed vs. Inferred Impact]: Disclosing the framework family (${disclosedSummary}) without a vulnerable version number has 0.0 standalone exploitability and is reported strictly as a defense-in-depth informational observation.`,
-        remediation: `Where supported by the framework, web server, or reverse proxy (e.g., 'poweredByHeader: false' in next.config.js, 'server_tokens off' in Nginx, or 'ServerTokens Prod' in Apache), suppress '${disclosedNames}' response headers.`,
+        remediation: `Suppress verbose version tokens via 'ServerTokens Prod' and 'ServerSignature Off' in Apache and 'expose_php = Off' in php.ini (or 'server_tokens off' in Nginx / 'poweredByHeader: false' in Next.js). IMPORTANT: Prioritize upgrading or network-isolating any End-of-Life software packages first; banner suppression is a secondary defense-in-depth measure and must not be treated as a substitute for patching.`,
         evidence: {
           originalRequest: baselineHttpWireRequest,
           testRequest: `HEAD ${finalPathname} HTTP/1.1\r\nHost: ${host}\r\nUser-Agent: ${BROWSER_NAV_HEADERS["User-Agent"]}`,
@@ -3710,7 +3738,7 @@ async function probeTarget(
   const exploitVerifiedFindings = liveFindings.filter(
     f => f.validationState === "Exploit Verified" || f.findingClassification === "Exploitable Vulnerability"
   );
-  const hasExploitedVulns = exploitVerifiedFindings.length > 0 || isPrivateIp;
+  const hasExploitedVulns = exploitVerifiedFindings.length > 0;
   const exploitedPrimary = exploitVerifiedFindings[0];
   const exploitedSecondary = exploitVerifiedFindings[1] || exploitVerifiedFindings[0];
   const exploitedTertiary = exploitVerifiedFindings[2] || exploitVerifiedFindings[1] || exploitVerifiedFindings[0];

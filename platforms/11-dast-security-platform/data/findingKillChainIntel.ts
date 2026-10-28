@@ -68,13 +68,23 @@ export function getFindingDeepDiveIntel(finding: Finding, fallbackUrl?: string):
   // 0. Dedicated Forensic-Accurate Branch for Live External Website Findings (LIVE-*)
   //    Ensures 100% alignment between Observed Facts, cURL verification scripts, and 4-Stage Evidence Gate
   //    without fabricating BOLA/IDOR, SQLi, RCE, or contradictory "CSP is missing" claims.
-  if ((finding.id || "").startsWith("LIVE-")) {
+  const isPlainHttp = cleanUrl.toLowerCase().startsWith("http://");
+  const isReadOnlyControlFinding =
+    (finding.id || "").startsWith("LIVE-") ||
+    (finding.id || "").startsWith("OWASPBWA-") ||
+    (Boolean(finding.validationState) &&
+      finding.validationState !== "Exploit Verified" &&
+      finding.findingClassification !== "Exploitable Vulnerability");
+
+  if (isReadOnlyControlFinding) {
     const isDnsFinding = cwe === "CWE-290" || cwe === "CWE-358" || titleUpper.includes("SPF") || titleUpper.includes("DMARC") || titleUpper.includes("CAA");
     const isCookieFinding = cwe === "CWE-614" || titleUpper.includes("COOKIE");
     const isSriFinding = cwe === "CWE-353" || cwe === "CWE-829" || titleUpper.includes("SUBRESOURCE INTEGRITY") || titleUpper.includes("SRI");
     const isCspFinding = titleUpper.includes("CONTENT-SECURITY-POLICY") || titleUpper.includes("CSP");
 
-    const cliVerifyCmd = isDnsFinding
+    const cliVerifyCmd = finding.poc?.curlCommand
+      ? finding.poc.curlCommand.split("\n")[0]
+      : isDnsFinding
       ? `curl -s -H "accept: application/dns-json" "https://cloudflare-dns.com/dns-query?name=${host}&type=TXT" && curl -s -H "accept: application/dns-json" "https://cloudflare-dns.com/dns-query?name=_dmarc.${host}&type=TXT"`
       : isCookieFinding
       ? `curl -s -I -L "${cleanUrl}" | grep -i "set-cookie"`
@@ -83,6 +93,10 @@ export function getFindingDeepDiveIntel(finding: Finding, fallbackUrl?: string):
       : isCspFinding
       ? `curl -s -I -L "${cleanUrl}" | grep -i "content-security-policy"`
       : `curl -s -I -L "${cleanUrl}"`;
+
+    const transportVerifyStep = isPlainHttp
+      ? `# 2. Plain HTTP Response Header & Banner Verification (Target Scoped as HTTP — TLS Port 443 Not Assumed)\ncurl -s -I "${cleanUrl}"`
+      : `# 2. TLS X.509 & HTTPS Header Verification\nopenssl s_client -connect ${host}:443 -servername ${host} </dev/null 2>/dev/null | openssl x509 -noout -subject -issuer -dates -fingerprint -sha256`;
 
     return {
       findingId: finding.id,
@@ -112,7 +126,7 @@ export function getFindingDeepDiveIntel(finding: Finding, fallbackUrl?: string):
         nucleiTemplateId: isDnsFinding ? "dns/txt-fingerprint.yaml" : "http/misconfiguration/http-missing-security-headers.yaml",
         nmapNseScript: isDnsFinding ? "dns-txt.nse" : isCookieFinding ? "http-cookie-flags.nse" : "http-security-headers.nse",
         zapPluginId: isCookieFinding ? "ZAP-10010 / ZAP-10054 (Cookie Attribute Passive Audit)" : isCspFinding ? "ZAP-10038 / ZAP-10055 (CSP Directive Passive Audit)" : "ZAP Passive Configuration Rule",
-        verificationScript: `# 1. Live Non-Destructive Control Verification against ${cleanUrl}\n${cliVerifyCmd}\n\n# 2. TLS X.509 & HTTP Header Verification\nopenssl s_client -connect ${host}:443 -servername ${host} </dev/null 2>/dev/null | openssl x509 -noout -subject -issuer -dates -fingerprint -sha256\n\n# 3. Directly Observed Fact During Scan\n# Matched Indicator: ${matchedFact}\n# Validation State: Confirmed Control Exposure (Safe Read-Only Probe — Zero Destructive Payloads Executed)`
+        verificationScript: `# 1. Live Non-Destructive Control Verification against ${cleanUrl}\n${cliVerifyCmd}\n\n${transportVerifyStep}\n\n# 3. Directly Observed Fact During Scan\n# Matched Indicator: ${matchedFact}\n# Validation State: Confirmed Configuration Observation / Control Gap (Safe Read-Only Probe — Zero Destructive Payloads Executed)`
       },
       killChainStages: [
         {
