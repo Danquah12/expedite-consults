@@ -2245,14 +2245,13 @@ export default function LinkedInPage() {
         )}
       </main>
 
-      {/* Floating "Ask Noctis" Quick Launcher Pill (https://dstrike.app/noctis) */}
+      {/* Floating "Ask Noctis" Quick Launcher Pill: opens the in-app Noctis chat */}
       <div className="fixed bottom-4 left-4 z-40">
-        <a
-          href="https://dstrike.app/noctis"
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          type="button"
+          onClick={() => setIsAIAssistantOpen(true)}
           className="flex items-center gap-2.5 rounded-full bg-white dark:bg-[#1B1F23] text-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700 shadow-lg hover:shadow-xl hover:border-[#0A66C2] px-4 py-2.5 text-xs font-semibold transition-all cursor-pointer group"
-          title="Ask Noctis (https://dstrike.app/noctis)"
+          title="Ask Noctis"
         >
           <div className="h-6 w-6 rounded-full bg-[#FBF5E9] dark:bg-amber-950/40 flex items-center justify-center text-[#C88A24] dark:text-amber-300 border border-[#C88A24]/30">
             <Sparkles className="h-3.5 w-3.5" />
@@ -2261,7 +2260,7 @@ export default function LinkedInPage() {
           <span className="hidden sm:inline text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
             Q&amp;A
           </span>
-        </a>
+        </button>
       </div>
 
       {/* Signature Persistent Floating Bottom-Right Messaging Dock */}

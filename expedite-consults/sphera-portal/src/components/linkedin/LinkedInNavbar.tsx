@@ -958,20 +958,22 @@ export function LinkedInNavbar({
           {/* Subtle Divider for desktop */}
           <div className="hidden lg:block h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-0.5" />
 
-          {/* Ask Noctis Global Assistant & Platform Launcher Button (https://dstrike.app/noctis) */}
-          <a
-            href="https://dstrike.app/noctis"
-            target="_blank"
-            rel="noopener noreferrer"
+          {/* Ask Noctis: opens the in-app Noctis chat (answers come from the Noctis API without leaving ConnectLn) */}
+          <button
+            type="button"
+            onClick={() => {
+              if (onOpenAIAssistant) onOpenAIAssistant()
+              else window.open("https://dstrike.app/noctis", "_blank", "noopener,noreferrer")
+            }}
             className="group flex items-center gap-1 sm:gap-1.5 rounded-full bg-[#FBF5E9] hover:bg-[#F5EAD2] dark:bg-amber-950/30 dark:hover:bg-amber-950/50 text-[#7A4B00] dark:text-amber-200 border border-[#C88A24]/40 dark:border-amber-700/50 px-2 sm:px-2.5 py-1 text-xs font-semibold shadow-2xs transition-all shrink-0 cursor-pointer"
-            title="Ask Noctis — https://dstrike.app/noctis"
+            title="Ask Noctis"
           >
             <Sparkles className="h-3.5 w-3.5 text-[#C88A24] dark:text-amber-300 transition-transform group-hover:scale-110 shrink-0" />
             <span className="hidden sm:inline text-xs font-semibold">Ask Noctis</span>
             <span className="hidden xl:inline rounded bg-amber-200/60 dark:bg-amber-900/60 px-1.5 py-0.2 text-[9px] font-bold text-[#5C3800] dark:text-amber-100">
               Q&amp;A
             </span>
-          </a>
+          </button>
 
           {/* "Me" Profile Menu Dropdown — Always Visible with Label */}
           <div ref={meMenuRef} className="relative shrink-0">
