@@ -1,5 +1,6 @@
 "use client"
 
+import { X } from "lucide-react"
 import React, { useState, useEffect } from "react"
 import {
   GraduationCap,
@@ -2443,6 +2444,18 @@ export function LearningView({
         <DialogContent className="max-w-6xl w-[96vw] max-h-[92vh] overflow-y-auto p-0 border-indigo-500/40 bg-zinc-50 dark:bg-zinc-950">
           {activeStepWhitePaper && activeRoadmapStep && (
             <div className="flex flex-col">
+              {/* Always-visible close button (stays on screen while scrolling) */}
+              <div className="sticky top-0 z-50 h-0 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => { setSelectedStepNumber(null); setHighlightedSkillName(null) }}
+                  aria-label="Close"
+                  title="Close"
+                  className="m-3 h-9 w-9 rounded-full bg-black/70 hover:bg-red-600 text-white flex items-center justify-center shadow-lg border border-white/30 cursor-pointer"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
               {/* Top Monograph Banner Header */}
               <div className="bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 text-white p-5 sm:p-6 border-b border-indigo-500/30 space-y-4">
                 <DialogHeader>
