@@ -1367,6 +1367,14 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
             >
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
+            <button
+              onClick={onClose}
+              className="h-8 w-8 rounded-lg bg-zinc-800/80 hover:bg-red-600 text-zinc-300 hover:text-white flex items-center justify-center transition-colors border border-zinc-700/60 cursor-pointer"
+              title="Close"
+              aria-label="Close Noctis Intelligence"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
         </div>
 
